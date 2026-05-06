@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+.next/
+out/
+dist/
+build/
+
+# Environment files (NEVER commit secrets)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Prisma — generated client (regenerated on deploy)
+# (do NOT ignore prisma/schema.prisma)
+
+# Vercel
+.vercel/
+
+# Test artifacts
+coverage/
+.vitest/
+
+# Misc
+*.tsbuildinfo
+next-env.d.ts

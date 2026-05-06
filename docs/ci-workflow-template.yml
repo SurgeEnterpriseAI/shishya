@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel old runs on the same ref when a new push lands.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint · Typecheck · Test · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    # The Next build needs a few env vars — they're placeholders, not secrets.
+    # Real secrets only go in production via the hosting provider's dashboard.
+    env:
+      DATABASE_URL: postgresql://placeholder@localhost:5432/x
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: placeholder-ci-secret-32chars-min-len-x
+      GOOGLE_CLIENT_ID: x
+      GOOGLE_CLIENT_SECRET: x
+      ANTHROPIC_API_KEY: x
+      ANTHROPIC_MODEL: claude-sonnet-4-5-20250929
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Production build
+        run: npx next build

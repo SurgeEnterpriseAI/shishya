@@ -1,0 +1,403 @@
+// Shishya — AI-tutored mock test platform
+// Database schema for users, exams, syllabus, questions, mocks, attempts, AI tutoring.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// AUTH (NextAuth-compatible)
+// ─────────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  preferredLang Language  @default(EN)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  enrollments     Enrollment[]
+  mocks           Mock[]
+  attempts        Attempt[]
+  weaknessMaps    WeaknessMap[]
+  chatSessions    ChatSession[]
+  progressEvents  ProgressEvent[]
+
+  @@index([email])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// EXAMS & SYLLABUS
+// ─────────────────────────────────────────────────────────────────────────
+
+model Exam {
+  id            String   @id @default(cuid())
+  code          String   @unique // e.g. "SSC_CGL", "NEET_UG"
+  name          String              // "SSC CGL Tier 1"
+  shortName     String              // "SSC CGL"
+  category      ExamCategory
+  description   String   @db.Text
+  durationMin   Int                 // exam duration in minutes
+  totalQuestions Int                // total Qs in real exam
+  totalMarks    Float
+  marksPerQ     Float
+  negativeMark  Float    @default(0)
+  languages     Language[]          // languages exam is offered in
+  active        Boolean  @default(true)
+  candidatesPerYear Int?            // approximate annual volume
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  subjects    Subject[]
+  questions   Question[]
+  mocks       Mock[]
+  enrollments Enrollment[]
+  weaknessMaps WeaknessMap[]
+  chatSessions ChatSession[]
+
+  @@index([code])
+  @@index([active])
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  examId    String
+  code      String   // e.g. "QUANT", "REASONING"
+  name      String   // "Quantitative Aptitude"
+  weight    Float    @default(1) // relative weightage
+  orderIdx  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  exam   Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  topics Topic[]
+
+  @@unique([examId, code])
+  @@index([examId])
+}
+
+model Topic {
+  id          String   @id @default(cuid())
+  subjectId   String
+  parentId    String?  // null for top-level topics; otherwise subtopic
+  code        String   // e.g. "quant.percentage"
+  name        String
+  description String?  @db.Text
+  syllabusText String? @db.Text  // detailed syllabus content for AI context
+  weight      Float    @default(1)
+  orderIdx    Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  parent    Topic?  @relation("TopicTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Topic[] @relation("TopicTree")
+  questions Question[]
+  weaknessMaps WeaknessMap[]
+
+  @@unique([subjectId, code])
+  @@index([parentId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// QUESTIONS
+// ─────────────────────────────────────────────────────────────────────────
+
+model Question {
+  id          String        @id @default(cuid())
+  examId      String
+  topicId     String
+  type        QuestionType  @default(MCQ)
+  difficulty  Difficulty    @default(MEDIUM)
+  body        String        @db.Text
+  options     Json          // [{ key: "A", text: "..." }, ...]
+  answerKey   String        // "A" | "B" | "C" | "D" — or comma-separated for multi-select
+  solution    String        @db.Text
+  hints       Json?         // optional array of progressive hints
+  language    Language      @default(EN)
+  source      QuestionSource @default(SME)
+  validated   Boolean       @default(false)
+  validatedBy String?
+  validatedAt DateTime?
+  tags        String[]      @default([])
+  pyqYear     Int?          // previous-year-question year, if applicable
+  metadata    Json?         // freeform: estimated time, similar Qs, etc.
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  exam     Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  topic    Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([examId, topicId])
+  @@index([difficulty])
+  @@index([validated])
+  @@index([language])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// ENROLLMENTS — student joining an exam track
+// ─────────────────────────────────────────────────────────────────────────
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  examId    String
+  targetDate DateTime?  // when the student plans to take the exam
+  goalScore Float?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, examId])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// MOCKS & ATTEMPTS
+// ─────────────────────────────────────────────────────────────────────────
+
+model Mock {
+  id          String     @id @default(cuid())
+  userId      String?    // null for system templates available to all users
+  examId      String
+  type        MockType
+  title       String
+  config      Json       // { topics: [...], difficultyMix: {...}, count, durationMin }
+  questionIds String[]   // ordered list of Question.id
+  generatedBy String     @default("system") // "system" | "ai" | "ai:diagnostic" | "user-request"
+  generationContext Json? // snapshot of student state at generation time
+  createdAt   DateTime   @default(now())
+
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam     Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  attempts Attempt[]
+
+  @@index([userId, examId])
+  @@index([type])
+}
+
+model Attempt {
+  id          String        @id @default(cuid())
+  mockId      String
+  userId      String
+  status      AttemptStatus @default(IN_PROGRESS)
+  startedAt   DateTime      @default(now())
+  finishedAt  DateTime?
+  durationSec Int?
+  answers     Json          // [{ questionId, chosen, correct, timeSec, marked }]
+  scoreRaw    Float?
+  scoreMax    Float?
+  scorePct    Float?
+  topicScores Json?         // { topicId: { correct, total, score } }
+  rank        Int?
+  percentile  Float?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  mock Mock @relation(fields: [mockId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, mockId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// AI STATE — weakness map, chat sessions, progress
+// ─────────────────────────────────────────────────────────────────────────
+
+model WeaknessMap {
+  id          String   @id @default(cuid())
+  userId      String
+  examId      String
+  topicId     String
+  masteryScore Float   @default(0) // 0.0 – 1.0
+  attemptsCount Int    @default(0)
+  correctCount Int     @default(0)
+  avgTimeSec  Float?
+  lastSeenAt  DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam  Exam  @relation(fields: [examId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, examId, topicId])
+  @@index([userId, examId])
+}
+
+model ChatSession {
+  id        String   @id @default(cuid())
+  userId    String
+  examId    String?
+  title     String?
+  contextSnapshot Json? // student state at session start
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam     Exam?          @relation(fields: [examId], references: [id], onDelete: SetNull)
+  messages ChatMessage[]
+
+  @@index([userId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      ChatRole
+  content   String   @db.Text
+  toolCalls Json?    // tool calls made by Claude in this turn
+  metadata  Json?    // tokens used, cache hits, latency
+  createdAt DateTime @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
+
+model ProgressEvent {
+  id        String        @id @default(cuid())
+  userId    String
+  examId    String?
+  type      ProgressType
+  delta     Float?        // numeric change (score, mastery, etc.)
+  metadata  Json?
+  createdAt DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([type])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────────────────
+
+enum Language {
+  EN
+  HI
+  TE
+  TA
+  KN
+  ML
+  MR
+  BN
+  GU
+  PA
+}
+
+enum ExamCategory {
+  GOVT_JOBS       // SSC, RRB
+  BANKING         // IBPS, SBI
+  CIVIL_SERVICES  // UPSC
+  MEDICAL         // NEET
+  ENGINEERING     // JEE, GATE
+  TEACHING        // CTET
+  UNIVERSITY      // CUET
+  MBA             // CAT
+  LAW             // CLAT
+  OTHER
+}
+
+enum QuestionType {
+  MCQ           // single correct
+  MSQ           // multiple correct
+  NUMERIC       // type-the-number
+  TRUE_FALSE
+  MATCH         // matching pairs
+  COMPREHENSION // passage-based parent (children are MCQs)
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionSource {
+  SME           // human subject-matter expert
+  AI_GENERATED  // generated by Claude, awaiting validation
+  AI_VALIDATED  // generated by Claude + reviewed by SME
+  PYQ           // previous year question (legally sourced)
+  COMMUNITY     // contributed by users
+}
+
+enum MockType {
+  DIAGNOSTIC      // first mock to map weaknesses
+  FULL            // mirrors real exam structure
+  SUBJECT         // single subject focus
+  TOPIC           // single topic drill
+  ADAPTIVE        // AI-generated based on weakness map
+  REVISION        // mistakes from past attempts
+  CHALLENGE       // harder than current level
+  USER_REQUEST    // user asked for specific config
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  ABANDONED
+  AUTO_SUBMITTED
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+  TOOL
+}
+
+enum ProgressType {
+  MOCK_COMPLETED
+  TOPIC_MASTERED
+  STREAK_DAY
+  WEAKNESS_IMPROVED
+  GOAL_REACHED
+  RANK_CHANGE
+}

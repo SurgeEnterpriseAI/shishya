@@ -1,0 +1,52 @@
+{
+  "name": "shishya",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-tutored mock test platform for India's top entrance exams. Free for every student.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "seed:exams": "tsx seed/exams/index.ts",
+    "seed:ssc-cgl": "tsx seed/exams/ssc-cgl-syllabus.ts && tsx seed/questions/ssc-cgl-quant.ts && tsx seed/questions/ssc-cgl-reasoning.ts && tsx seed/questions/ssc-cgl-english.ts",
+    "seed:rrb-ntpc": "tsx seed/exams/rrb-ntpc-syllabus.ts",
+    "seed:neet-ug": "tsx seed/exams/neet-ug-syllabus.ts && tsx seed/questions/neet-physics.ts",
+    "seed:all": "npm run seed:exams && npm run seed:ssc-cgl && npm run seed:rrb-ntpc && npm run seed:neet-ug",
+    "generate:questions": "tsx scripts/generate-questions.ts",
+    "smoke-test": "tsx scripts/smoke-test.ts",
+    "check-env": "tsx scripts/check-env.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.40.0",
+    "@auth/prisma-adapter": "^2.7.4",
+    "@prisma/client": "^5.22.0",
+    "clsx": "^2.1.1",
+    "next": "^15.1.6",
+    "next-auth": "^4.24.10",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "server-only": "^0.0.1",
+    "tailwind-merge": "^2.5.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "prisma": "^5.22.0",
+    "tailwindcss": "^3.4.15",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^4.1.5"
+  }
+}
