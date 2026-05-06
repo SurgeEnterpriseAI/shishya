@@ -4,8 +4,9 @@
   "private": true,
   "description": "AI-tutored mock test platform for India's top entrance exams. Free for every student.",
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
