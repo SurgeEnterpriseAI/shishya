@@ -1,31 +1,141 @@
-// Landing page — public, mobile-first, bilingual (English + Hindi).
-// Server Component — reads locale from cookie/session via getT().
+// Landing page — search-first, minimal, bilingual.
+// Server Component; the picker (search + chips + filter) is a client island.
 
 import Link from "next/link";
+import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { LangSwitcher } from "@/components/LangSwitcher";
+import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
+
+// Top 20 Indian entrance / job exams by approximate annual candidate volume.
+// `live: true` means we have validated questions for this exam in the DB; the
+// rest land at /exams/[code] and show "content coming soon" — students still
+// see the syllabus and can sign up for updates.
+const TOP_20_EXAMS: ExamCard[] = [
+  { code: "RRB_NTPC",     shortName: "RRB NTPC + Group D",  name: "Railway Recruitment Board",   category: "GOVT_JOBS",      candidatesPerYear: 12_500_000, live: false },
+  { code: "SSC_GD",       shortName: "SSC GD Constable",    name: "SSC General Duty Constable",  category: "GOVT_JOBS",      candidatesPerYear: 5_000_000,  live: false },
+  { code: "SSC_CGL",      shortName: "SSC CGL",             name: "SSC Combined Graduate Level", category: "GOVT_JOBS",      candidatesPerYear: 3_000_000,  live: true  },
+  { code: "SSC_CHSL",     shortName: "SSC CHSL",            name: "SSC Combined Higher Secondary", category: "GOVT_JOBS",    candidatesPerYear: 3_000_000,  live: false },
+  { code: "CTET",         shortName: "CTET",                name: "Central Teacher Eligibility Test", category: "TEACHING", candidatesPerYear: 3_000_000,  live: false },
+  { code: "STATE_TET",    shortName: "State TETs",          name: "State Teacher Eligibility Tests",  category: "TEACHING", candidatesPerYear: 2_500_000,  live: false },
+  { code: "NEET_UG",      shortName: "NEET UG",             name: "National Eligibility cum Entrance Test", category: "MEDICAL", candidatesPerYear: 2_400_000, live: false },
+  { code: "IBPS_PO",      shortName: "IBPS PO + Clerk",     name: "Institute of Banking Personnel Selection", category: "BANKING", candidatesPerYear: 4_000_000, live: false },
+  { code: "SBI_PO",       shortName: "SBI PO + Clerk",      name: "State Bank of India",          category: "BANKING",        candidatesPerYear: 3_000_000,  live: false },
+  { code: "AGNIVEER",     shortName: "Agniveer (Army/IAF)", name: "Indian Armed Forces Agnipath", category: "DEFENCE",        candidatesPerYear: 3_000_000,  live: false },
+  { code: "JEE_MAIN",     shortName: "JEE Main",            name: "Joint Entrance Examination",   category: "ENGINEERING",    candidatesPerYear: 1_400_000,  live: false },
+  { code: "CUET_UG",      shortName: "CUET UG",             name: "Common University Entrance Test", category: "UNIVERSITY",  candidatesPerYear: 1_400_000,  live: false },
+  { code: "UPSC_PRELIMS", shortName: "UPSC Prelims",        name: "UPSC Civil Services Examination", category: "CIVIL_SERVICES", candidatesPerYear: 1_100_000, live: false },
+  { code: "UGC_NET",      shortName: "UGC NET",             name: "University Grants Commission NET", category: "TEACHING",  candidatesPerYear: 1_000_000,  live: false },
+  { code: "STATE_PSC",    shortName: "State PSCs",          name: "State Public Service Commissions", category: "CIVIL_SERVICES", candidatesPerYear: 1_000_000, live: false },
+  { code: "NDA",          shortName: "NDA",                 name: "National Defence Academy",     category: "DEFENCE",        candidatesPerYear: 500_000,    live: false },
+  { code: "CAT",          shortName: "CAT",                 name: "Common Admission Test (IIMs)", category: "MBA",            candidatesPerYear: 350_000,    live: false },
+  { code: "CDS",          shortName: "CDS",                 name: "Combined Defence Services",    category: "DEFENCE",        candidatesPerYear: 300_000,    live: false },
+  { code: "GATE_CSE",     shortName: "GATE",                name: "Graduate Aptitude Test in Engineering", category: "ENGINEERING", candidatesPerYear: 100_000, live: false },
+  { code: "CLAT",         shortName: "CLAT",                name: "Common Law Admission Test",    category: "LAW",            candidatesPerYear: 70_000,     live: false },
+];
 
 export default async function HomePage() {
-  const { locale, t } = await getT();
+  const [{ locale, t }, session] = await Promise.all([getT(), auth()]);
+  const signedIn = Boolean(session?.user);
+
+  const catLabels: Record<string, string> = {
+    GOVT_JOBS:      t("land.cat.GOVT_JOBS"),
+    BANKING:        t("land.cat.BANKING"),
+    CIVIL_SERVICES: t("land.cat.CIVIL_SERVICES"),
+    MEDICAL:        t("land.cat.MEDICAL"),
+    ENGINEERING:    t("land.cat.ENGINEERING"),
+    TEACHING:       t("land.cat.TEACHING"),
+    UNIVERSITY:     t("land.cat.UNIVERSITY"),
+    MBA:            t("land.cat.MBA"),
+    LAW:            t("land.cat.LAW"),
+    DEFENCE:        t("land.cat.DEFENCE"),
+  };
+
   return (
     <main className="min-h-screen bg-saffron-50/30">
-      <SiteHeader locale={locale} t={t} />
-      <Hero t={t} />
-      <ValueProps t={t} />
-      <HowItWorks t={t} />
-      <ExamsGrid t={t} />
-      <SocialImpact t={t} />
-      <Footer t={t} />
+      <SiteHeader locale={locale} t={t} signedIn={signedIn} />
+
+      {/* ── Hero: brand line + search + chips + grid ───────────────── */}
+      <section className="container-prose pt-12 pb-16 sm:pt-16 sm:pb-20">
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-ink-900 sm:text-6xl">
+            {t("land.title")}
+            <span className="ml-2 bg-gradient-to-r from-saffron-600 to-saffron-400 bg-clip-text text-transparent">
+              {t("land.title.accent")}
+            </span>
+          </h1>
+          <p className="mx-auto mt-5 max-w-xl text-base text-ink-600 sm:text-lg">
+            {t("land.subtitle")}
+          </p>
+        </div>
+
+        <div className="mt-10">
+          <ExamPicker
+            exams={TOP_20_EXAMS}
+            signedIn={signedIn}
+            labels={{
+              searchPlaceholder: t("land.search.placeholder"),
+              searchLabel: t("land.search.label"),
+              noResults: t("land.no.results"),
+              catAll: t("land.cat.all"),
+              catLabels,
+              statusLive: t("land.status.live"),
+              statusComing: t("land.status.coming"),
+              candidatesPerYear: t("land.candidates"),
+            }}
+          />
+        </div>
+
+        {!signedIn && (
+          <div className="mt-10 text-center">
+            <Link href="/api/auth/signin/google?callbackUrl=%2Fdashboard" className="btn-primary">
+              {t("land.cta.start")}
+            </Link>
+          </div>
+        )}
+      </section>
+
+      {/* ── The Loop ─────────────────────────────────────────────── */}
+      <section id="how" className="border-t border-ink-200/50 bg-white py-16 sm:py-20">
+        <div className="container-prose">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
+              {t("loop.title")}
+            </h2>
+            <p className="mt-3 text-base text-ink-600">{t("loop.subtitle")}</p>
+          </div>
+
+          <ol className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <LoopStep icon="📝" title={t("loop.s1.title")} body={t("loop.s1.body")} />
+            <LoopStep icon="📊" title={t("loop.s2.title")} body={t("loop.s2.body")} />
+            <LoopStep icon="🤖" title={t("loop.s3.title")} body={t("loop.s3.body")} />
+            <LoopStep icon="💬" title={t("loop.s4.title")} body={t("loop.s4.body")} />
+          </ol>
+
+          <p className="mt-10 text-center text-xs text-ink-500">
+            <span className="font-medium text-ink-800">हर छात्र, एक ही मंच पर ·</span>{" "}
+            Built by <a className="underline hover:text-ink-700" href="https://surgesoftware.co.in">Surge</a>
+          </p>
+        </div>
+      </section>
+
+      <Footer />
     </main>
   );
 }
 
-type T = (k: any) => string;
-
 // ─────────────────────────────────────────────────────────────────────────
-// Header (landing-specific so it can show LangSwitcher even when logged out)
+// Pieces
 // ─────────────────────────────────────────────────────────────────────────
-function SiteHeader({ locale, t }: { locale: any; t: T }) {
+function SiteHeader({
+  locale,
+  t,
+  signedIn,
+}: {
+  locale: any;
+  t: (k: any) => string;
+  signedIn: boolean;
+}) {
   return (
     <header className="border-b border-ink-200/50 bg-white/70 backdrop-blur">
       <div className="container-prose flex h-16 items-center justify-between gap-3">
@@ -35,210 +145,44 @@ function SiteHeader({ locale, t }: { locale: any; t: T }) {
           </span>
           <span className="text-lg font-semibold tracking-tight text-ink-900">Shishya</span>
         </Link>
-        <nav className="hidden items-center gap-6 text-sm text-ink-700 sm:flex">
-          <a href="#exams" className="hover:text-ink-900">{t("nav.exams")}</a>
-          <a href="#how" className="hover:text-ink-900">{t("nav.howItWorks")}</a>
-          <a href="#impact" className="hover:text-ink-900">{t("nav.whyFree")}</a>
-        </nav>
         <div className="flex items-center gap-3">
           <LangSwitcher current={locale} />
-          <Link href="/api/auth/signin" className="btn-primary !py-2 !px-4 text-xs sm:text-sm">
-            {t("nav.signin")}
-          </Link>
+          {signedIn ? (
+            <Link href="/dashboard" className="btn-primary !py-2 !px-4 text-xs sm:text-sm">
+              {t("nav.dashboard")} →
+            </Link>
+          ) : (
+            <Link href="/api/auth/signin" className="btn-primary !py-2 !px-4 text-xs sm:text-sm">
+              {t("nav.signin.short")}
+            </Link>
+          )}
         </div>
       </div>
     </header>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Hero
-// ─────────────────────────────────────────────────────────────────────────
-function Hero({ t }: { t: T }) {
+function LoopStep({ icon, title, body }: { icon: string; title: string; body: string }) {
   return (
-    <section className="container-prose pt-12 pb-20 sm:pt-20 sm:pb-28">
-      <div className="mx-auto max-w-3xl text-center">
-        <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-saffron-200 bg-saffron-100/60 px-3 py-1 text-xs font-medium text-saffron-800">
-          <span className="h-1.5 w-1.5 rounded-full bg-saffron-500" />
-          {t("hero.badge")}
-        </p>
-        <h1 className="text-4xl font-bold tracking-tight text-ink-900 sm:text-6xl">
-          {t("hero.h1.line1")}
-          <span className="block bg-gradient-to-r from-saffron-600 to-saffron-400 bg-clip-text text-transparent">
-            {t("hero.h1.line2")}
-          </span>
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-ink-600">
-          {t("hero.body")} <span className="font-medium text-ink-800">{t("hero.body.bold")}</span>
-        </p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href="/api/auth/signin" className="btn-primary w-full sm:w-auto">
-            {t("hero.cta.primary")}
-          </Link>
-          <a href="#how" className="btn-secondary w-full sm:w-auto">
-            {t("hero.cta.secondary")}
-          </a>
-        </div>
-        <p className="mt-6 text-xs text-ink-500">
-          {t("hero.smallprint")}{" "}
-          <a className="underline hover:text-ink-700" href="https://surgesoftware.co.in">Surge</a>
-        </p>
+    <li className="rounded-lg border border-ink-200 bg-white p-5 shadow-sm">
+      <div className="text-3xl" aria-hidden>
+        {icon}
       </div>
-    </section>
+      <h3 className="mt-3 text-base font-semibold text-ink-900">{title}</h3>
+      <p className="mt-1 text-sm leading-relaxed text-ink-600">{body}</p>
+    </li>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Value props
-// ─────────────────────────────────────────────────────────────────────────
-function ValueProps({ t }: { t: T }) {
-  const items: Array<[string, string]> = [
-    ["values.diag.title", "values.diag.body"],
-    ["values.adapt.title", "values.adapt.body"],
-    ["values.expl.title", "values.expl.body"],
-    ["values.tutor.title", "values.tutor.body"],
-  ];
+function Footer() {
   return (
-    <section className="border-y border-ink-200/50 bg-white py-16">
-      <div className="container-prose">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {items.map(([title, body]) => (
-            <div key={title}>
-              <h3 className="text-base font-semibold text-ink-900">{t(title)}</h3>
-              <p className="mt-2 text-sm text-ink-600">{t(body)}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// How it works
-// ─────────────────────────────────────────────────────────────────────────
-function HowItWorks({ t }: { t: T }) {
-  const steps: Array<[string, string, string]> = [
-    ["01", "how.s1.title", "how.s1.body"],
-    ["02", "how.s2.title", "how.s2.body"],
-    ["03", "how.s3.title", "how.s3.body"],
-    ["04", "how.s4.title", "how.s4.body"],
-    ["05", "how.s5.title", "how.s5.body"],
-    ["06", "how.s6.title", "how.s6.body"],
-  ];
-
-  return (
-    <section id="how" className="container-prose py-20 sm:py-28">
-      <div className="mx-auto max-w-3xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
-          {t("how.h2")}
-        </h2>
-        <p className="mt-4 text-base text-ink-600">{t("how.body")}</p>
-      </div>
-      <ol className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {steps.map(([n, title, body]) => (
-          <li key={n} className="rounded-lg border border-ink-200 bg-white p-6 shadow-sm">
-            <div className="text-xs font-mono font-medium text-saffron-600">{n}</div>
-            <h3 className="mt-2 text-lg font-semibold text-ink-900">{t(title)}</h3>
-            <p className="mt-2 text-sm text-ink-600">{t(body)}</p>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// Exams grid
-// ─────────────────────────────────────────────────────────────────────────
-const EXAMS = [
-  { code: "SSC_CGL",      name: "SSC CGL",      cat: "Govt Jobs",      vol: "30L+/yr",  liveKey: true },
-  { code: "RRB_NTPC",     name: "RRB NTPC",     cat: "Railways",       vol: "1.25Cr/yr", liveKey: false },
-  { code: "IBPS_PO",      name: "IBPS PO",      cat: "Banking",        vol: "15L/yr",   liveKey: false },
-  { code: "NEET_UG",      name: "NEET UG",      cat: "Medical",        vol: "24L/yr",   liveKey: false },
-  { code: "JEE_MAIN",     name: "JEE Main",     cat: "Engineering",    vol: "14L/yr",   liveKey: false },
-  { code: "UPSC_PRELIMS", name: "UPSC Prelims", cat: "Civil Services", vol: "11L/yr",   liveKey: false },
-  { code: "CUET_UG",      name: "CUET UG",      cat: "University",     vol: "14L/yr",   liveKey: false },
-  { code: "CTET",         name: "CTET",         cat: "Teaching",       vol: "30L/yr",   liveKey: false },
-  { code: "GATE_CSE",     name: "GATE CSE",     cat: "Engineering",    vol: "1L/yr",    liveKey: false },
-  { code: "CAT",          name: "CAT",          cat: "MBA",            vol: "3.5L/yr",  liveKey: false },
-] as const;
-
-function ExamsGrid({ t }: { t: T }) {
-  return (
-    <section id="exams" className="border-t border-ink-200/50 bg-white py-20 sm:py-28">
-      <div className="container-prose">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
-            {t("exams.h2")}
-          </h2>
-          <p className="mt-4 text-base text-ink-600">{t("exams.body")}</p>
-        </div>
-        <ul className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {EXAMS.map((e) => (
-            <li
-              key={e.code}
-              className="group flex items-start justify-between rounded-md border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400 hover:shadow-sm"
-            >
-              <div>
-                <p className="text-sm font-semibold text-ink-900">{e.name}</p>
-                <p className="mt-0.5 text-xs text-ink-500">{e.cat} · {e.vol}</p>
-              </div>
-              <span
-                className={
-                  e.liveKey
-                    ? "rounded-full bg-saffron-100 px-2 py-0.5 text-xs font-medium text-saffron-800"
-                    : "rounded-full bg-ink-100 px-2 py-0.5 text-xs font-medium text-ink-600"
-                }
-              >
-                {e.liveKey ? t("exams.status.live") : t("exams.status.coming")}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// Social impact
-// ─────────────────────────────────────────────────────────────────────────
-function SocialImpact({ t }: { t: T }) {
-  return (
-    <section id="impact" className="bg-ink-900 py-20 text-white sm:py-28">
-      <div className="container-prose">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("impact.h2")}</h2>
-          <p className="mt-6 text-base text-ink-200">{t("impact.body1")}</p>
-          <p className="mt-4 text-base text-ink-200">
-            {t("impact.body2.prefix")}{" "}
-            <a className="underline" href="https://surgesoftware.co.in">Surge</a> {t("impact.body2.middle")}{" "}
-            <span className="font-medium text-white">{t("impact.body2.brand")}</span>{t("impact.body2.suffix")}
-          </p>
-          <p className="mt-8 text-sm text-ink-400">
-            <span className="font-medium text-ink-100">{t("impact.signoff.hi")}</span>
-            <span className="mx-2">·</span>
-            {t("impact.signoff.en")}
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// Footer
-// ─────────────────────────────────────────────────────────────────────────
-function Footer({ t }: { t: T }) {
-  return (
-    <footer className="border-t border-ink-200 bg-white py-12">
-      <div className="container-prose flex flex-col items-center justify-between gap-4 text-sm text-ink-500 sm:flex-row">
-        <p>© {new Date().getFullYear()} Shishya · {t("footer.built")}</p>
+    <footer className="border-t border-ink-200 bg-white py-10">
+      <div className="container-prose flex flex-col items-center justify-between gap-3 text-xs text-ink-500 sm:flex-row">
+        <p>© {new Date().getFullYear()} Shishya · Built by Surge Software Solutions</p>
         <div className="flex items-center gap-4">
-          <a href="https://github.com/SurgeEnterpriseAI" className="hover:text-ink-800">{t("footer.github")}</a>
-          <a href="mailto:venumuvva@surgesoftware.co.in" className="hover:text-ink-800">{t("footer.contact")}</a>
-          <a href="https://surgesoftware.co.in" className="hover:text-ink-800">{t("footer.surge")}</a>
+          <a href="https://github.com/SurgeEnterpriseAI/shishya" className="hover:text-ink-800">GitHub</a>
+          <a href="mailto:venumuvva@surgesoftware.co.in" className="hover:text-ink-800">Contact</a>
+          <a href="https://surgesoftware.co.in" className="hover:text-ink-800">Surge</a>
         </div>
       </div>
     </footer>
