@@ -2,13 +2,60 @@
 // keyed by locale, plus a helper that picks the right one. Falls back to
 // English on missing keys so we never crash on a missing translation.
 
-export const locales = ["en", "hi"] as const;
+// English + the 18 scheduled languages of India (the historical "Eighteen
+// Languages" list — pre-2003 schedule). Order: English first, then Hindi
+// (most spoken), then alphabetical by ISO code.
+export const locales = [
+  "en",   // English
+  "hi",   // Hindi (हिन्दी)
+  "as",   // Assamese (অসমীয়া)
+  "bn",   // Bengali (বাংলা)
+  "gu",   // Gujarati (ગુજરાતી)
+  "kn",   // Kannada (ಕನ್ನಡ)
+  "kok",  // Konkani (कोंकणी)
+  "ks",   // Kashmiri (कॉशुर)
+  "ml",   // Malayalam (മലയാളം)
+  "mni",  // Manipuri / Meitei (মণিপুরী)
+  "mr",   // Marathi (मराठी)
+  "ne",   // Nepali (नेपाली)
+  "or",   // Odia (ଓଡ଼ିଆ)
+  "pa",   // Punjabi (ਪੰਜਾਬੀ)
+  "sa",   // Sanskrit (संस्कृतम्)
+  "sd",   // Sindhi (سنڌي)
+  "ta",   // Tamil (தமிழ்)
+  "te",   // Telugu (తెలుగు)
+  "ur",   // Urdu (اردو)
+] as const;
 export type Locale = (typeof locales)[number];
 
+/** Native-script display names used in the language selector. */
 export const localeNames: Record<Locale, string> = {
-  en: "English",
-  hi: "हिन्दी",
+  en:  "English",
+  hi:  "हिन्दी",
+  as:  "অসমীয়া",
+  bn:  "বাংলা",
+  gu:  "ગુજરાતી",
+  kn:  "ಕನ್ನಡ",
+  kok: "कोंकणी",
+  ks:  "کٲشُر",
+  ml:  "മലയാളം",
+  mni: "মৈতৈলোন্",
+  mr:  "मराठी",
+  ne:  "नेपाली",
+  or:  "ଓଡ଼ିଆ",
+  pa:  "ਪੰਜਾਬੀ",
+  sa:  "संस्कृतम्",
+  sd:  "سنڌي",
+  ta:  "தமிழ்",
+  te:  "తెలుగు",
+  ur:  "اردو",
 };
+
+/** Right-to-left scripts (Perso-Arabic). Affects html dir attribute. */
+export const rtlLocales: ReadonlySet<Locale> = new Set(["ur", "sd", "ks"]);
+export function isRtl(locale: Locale): boolean {
+  return rtlLocales.has(locale);
+}
 
 export const dict = {
   en: {
@@ -434,6 +481,373 @@ export const dict = {
     "chat.starter.4": "Time and Work पर 10 सवालों का मॉक बनाइए।",
 
     "lang.switch": "भाषा",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Bengali (বাংলা) — full landing-page translations.
+  // Spoken by ~9.7Cr (West Bengal, Tripura).
+  // Other keys gracefully fall back to English via tk().
+  // ─────────────────────────────────────────────────────────────────────
+  bn: {
+    "land.title": "আপনার পরীক্ষা খুঁজুন।",
+    "land.title.accent": "বিনামূল্যে প্রস্তুতি নিন।",
+    "land.subtitle": "ভারতের শীর্ষ ২০ পরীক্ষা। AI-নির্মিত মক টেস্ট। সহজ লুপ — যতক্ষণ না আপনি প্রস্তুত।",
+    "land.search.placeholder": "আপনার পরীক্ষা খুঁজুন — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "সব",
+    "land.cat.GOVT_JOBS": "সরকারি চাকরি",
+    "land.cat.BANKING": "ব্যাঙ্কিং",
+    "land.cat.CIVIL_SERVICES": "সিভিল সার্ভিস",
+    "land.cat.MEDICAL": "মেডিকেল",
+    "land.cat.ENGINEERING": "ইঞ্জিনিয়ারিং",
+    "land.cat.TEACHING": "শিক্ষকতা",
+    "land.cat.UNIVERSITY": "বিশ্ববিদ্যালয়",
+    "land.cat.MBA": "MBA",
+    "land.cat.LAW": "আইন",
+    "land.cat.DEFENCE": "প্রতিরক্ষা",
+    "land.status.live": "চালু",
+    "land.status.coming": "শীঘ্রই",
+    "land.cta.start": "Google দিয়ে বিনামূল্যে শুরু করুন →",
+    "loop.title": "কীভাবে কাজ করে — একটি সহজ লুপ",
+    "features.title": "আপনার পরীক্ষা পাশ করার জন্য সব কিছু",
+    "progress.title": "আপনার অগ্রগতি, এক নজরে",
+    "nav.signin": "Google দিয়ে সাইন ইন",
+    "nav.signin.short": "সাইন ইন",
+    "nav.dashboard": "ড্যাশবোর্ড",
+    "lang.switch": "ভাষা",
+  },
+
+  // Telugu (తెలుగు) — ~8.2Cr speakers (Andhra Pradesh, Telangana)
+  te: {
+    "land.title": "మీ పరీక్షను కనుగొనండి.",
+    "land.title.accent": "ఉచితంగా సిద్ధం అవ్వండి.",
+    "land.subtitle": "భారత ఉత్తమ 20 పరీక్షలు. AI-నిర్మిత మాక్ టెస్ట్‌లు. మీరు సిద్ధమయ్యే వరకు సరళమైన లూప్.",
+    "land.search.placeholder": "మీ పరీక్షను శోధించండి — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "అన్నీ",
+    "land.cat.GOVT_JOBS": "ప్రభుత్వ ఉద్యోగాలు",
+    "land.cat.BANKING": "బ్యాంకింగ్",
+    "land.cat.CIVIL_SERVICES": "సివిల్ సర్వీసెస్",
+    "land.cat.MEDICAL": "మెడికల్",
+    "land.cat.ENGINEERING": "ఇంజినీరింగ్",
+    "land.cat.TEACHING": "ఉపాధ్యాయ",
+    "land.cat.UNIVERSITY": "విశ్వవిద్యాలయం",
+    "land.cat.MBA": "MBA",
+    "land.cat.LAW": "న్యాయ",
+    "land.cat.DEFENCE": "రక్షణ",
+    "land.status.live": "అందుబాటులో",
+    "land.status.coming": "త్వరలో",
+    "land.cta.start": "Google తో ఉచితంగా ప్రారంభించండి →",
+    "loop.title": "ఎలా పనిచేస్తుంది — ఒక సరళమైన లూప్",
+    "features.title": "మీ పరీక్ష పాస్ చేయడానికి అవసరమైన అన్నీ",
+    "progress.title": "మీ పురోగతి, ఒక చూపులో",
+    "nav.signin": "Google తో సైన్ ఇన్",
+    "nav.signin.short": "సైన్ ఇన్",
+    "nav.dashboard": "డ్యాష్‌బోర్డ్",
+    "lang.switch": "భాష",
+  },
+
+  // Marathi (मराठी) — ~8.3Cr speakers (Maharashtra, Goa)
+  mr: {
+    "land.title": "तुमची परीक्षा शोधा.",
+    "land.title.accent": "मोफत तयारी करा.",
+    "land.subtitle": "भारतातील शीर्ष 20 परीक्षा. AI-निर्मित मॉक. तयार होईपर्यंत सोपा चक्र.",
+    "land.search.placeholder": "तुमची परीक्षा शोधा — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "सर्व",
+    "land.cat.GOVT_JOBS": "सरकारी नोकरी",
+    "land.cat.BANKING": "बँकिंग",
+    "land.cat.CIVIL_SERVICES": "नागरी सेवा",
+    "land.cat.MEDICAL": "वैद्यकीय",
+    "land.cat.ENGINEERING": "अभियांत्रिकी",
+    "land.cat.TEACHING": "शिक्षण",
+    "land.cat.UNIVERSITY": "विद्यापीठ",
+    "land.cat.MBA": "MBA",
+    "land.cat.LAW": "कायदा",
+    "land.cat.DEFENCE": "संरक्षण",
+    "land.status.live": "उपलब्ध",
+    "land.status.coming": "लवकरच",
+    "land.cta.start": "Google ने मोफत सुरू करा →",
+    "loop.title": "कसे काम करते — एक साधा चक्र",
+    "features.title": "तुमची परीक्षा क्रॅक करण्यासाठी सर्व काही",
+    "progress.title": "तुमची प्रगती, एका नजरेत",
+    "nav.signin": "Google ने साइन इन",
+    "nav.signin.short": "साइन इन",
+    "nav.dashboard": "डॅशबोर्ड",
+    "lang.switch": "भाषा",
+  },
+
+  // Tamil (தமிழ்) — ~8Cr speakers (Tamil Nadu, Puducherry)
+  ta: {
+    "land.title": "உங்கள் தேர்வை கண்டறியுங்கள்.",
+    "land.title.accent": "இலவசமாக தயாராகுங்கள்.",
+    "land.subtitle": "இந்தியாவின் முதல் 20 தேர்வுகள். AI உருவாக்கிய மாக் டெஸ்ட். நீங்கள் தயாராகும் வரை எளிய சுழற்சி.",
+    "land.search.placeholder": "உங்கள் தேர்வைத் தேடுங்கள் — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "அனைத்தும்",
+    "land.cat.GOVT_JOBS": "அரசு வேலை",
+    "land.cat.BANKING": "வங்கி",
+    "land.cat.CIVIL_SERVICES": "சிவில் சர்வீஸ்",
+    "land.cat.MEDICAL": "மருத்துவம்",
+    "land.cat.ENGINEERING": "பொறியியல்",
+    "land.cat.TEACHING": "ஆசிரியர்",
+    "land.cat.UNIVERSITY": "பல்கலைக்கழகம்",
+    "land.cat.MBA": "MBA",
+    "land.cat.LAW": "சட்டம்",
+    "land.cat.DEFENCE": "பாதுகாப்பு",
+    "land.status.live": "கிடைக்கிறது",
+    "land.status.coming": "விரைவில்",
+    "land.cta.start": "Google உடன் இலவசமாக தொடங்கவும் →",
+    "loop.title": "எப்படி வேலை செய்கிறது — ஒரு எளிய சுழற்சி",
+    "features.title": "உங்கள் தேர்வை வெல்ல தேவையான அனைத்தும்",
+    "progress.title": "உங்கள் முன்னேற்றம், ஒரே பார்வையில்",
+    "nav.signin": "Google உடன் உள்நுழைய",
+    "nav.signin.short": "உள்நுழைய",
+    "nav.dashboard": "டாஷ்போர்டு",
+    "lang.switch": "மொழி",
+  },
+
+  // Gujarati (ગુજરાતી) — ~5.6Cr speakers
+  gu: {
+    "land.title": "તમારી પરીક્ષા શોધો.",
+    "land.title.accent": "મફત તૈયારી કરો.",
+    "land.subtitle": "ભારતની ટોચની 20 પરીક્ષાઓ. AI-નિર્મિત મોક. તમે તૈયાર ન થાવ ત્યાં સુધી સરળ લૂપ.",
+    "land.search.placeholder": "તમારી પરીક્ષા શોધો — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "બધા",
+    "land.cat.GOVT_JOBS": "સરકારી નોકરી",
+    "land.cat.BANKING": "બેન્કિંગ",
+    "land.cat.CIVIL_SERVICES": "નાગરિક સેવા",
+    "land.cat.MEDICAL": "મેડિકલ",
+    "land.cat.ENGINEERING": "ઇજનેરી",
+    "land.cat.TEACHING": "શિક્ષણ",
+    "land.cat.UNIVERSITY": "યુનિવર્સિટી",
+    "land.cat.MBA": "MBA",
+    "land.cat.LAW": "કાયદો",
+    "land.cat.DEFENCE": "સંરક્ષણ",
+    "land.status.live": "ઉપલબ્ધ",
+    "land.status.coming": "ટૂંક સમયમાં",
+    "land.cta.start": "Google થી મફત શરૂ કરો →",
+    "loop.title": "કેવી રીતે કામ કરે છે — એક સરળ લૂપ",
+    "features.title": "તમારી પરીક્ષા પાસ કરવા માટે બધું જ",
+    "progress.title": "તમારી પ્રગતિ, એક ઝલકમાં",
+    "nav.signin": "Google થી સાઇન ઇન કરો",
+    "nav.signin.short": "સાઇન ઇન",
+    "nav.dashboard": "ડેશબોર્ડ",
+    "lang.switch": "ભાષા",
+  },
+
+  // Kannada (ಕನ್ನಡ) — ~4.4Cr speakers (Karnataka)
+  kn: {
+    "land.title": "ನಿಮ್ಮ ಪರೀಕ್ಷೆಯನ್ನು ಹುಡುಕಿ.",
+    "land.title.accent": "ಉಚಿತವಾಗಿ ತಯಾರಾಗಿ.",
+    "land.subtitle": "ಭಾರತದ ಅಗ್ರ 20 ಪರೀಕ್ಷೆಗಳು. AI-ನಿರ್ಮಿತ ಮಾಕ್. ನೀವು ಸಿದ್ಧವಾಗುವವರೆಗೆ ಸರಳ ಲೂಪ್.",
+    "land.search.placeholder": "ನಿಮ್ಮ ಪರೀಕ್ಷೆಯನ್ನು ಹುಡುಕಿ — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "ಎಲ್ಲಾ",
+    "land.cat.GOVT_JOBS": "ಸರ್ಕಾರಿ ಉದ್ಯೋಗ",
+    "land.cat.BANKING": "ಬ್ಯಾಂಕಿಂಗ್",
+    "land.cat.CIVIL_SERVICES": "ನಾಗರಿಕ ಸೇವೆ",
+    "land.cat.MEDICAL": "ವೈದ್ಯಕೀಯ",
+    "land.cat.ENGINEERING": "ಎಂಜಿನಿಯರಿಂಗ್",
+    "land.cat.TEACHING": "ಬೋಧನೆ",
+    "land.cat.UNIVERSITY": "ವಿಶ್ವವಿದ್ಯಾಲಯ",
+    "land.cat.MBA": "MBA",
+    "land.cat.LAW": "ಕಾನೂನು",
+    "land.cat.DEFENCE": "ರಕ್ಷಣಾ",
+    "land.status.live": "ಲಭ್ಯವಿದೆ",
+    "land.status.coming": "ಶೀಘ್ರದಲ್ಲೇ",
+    "land.cta.start": "Google ನೊಂದಿಗೆ ಉಚಿತವಾಗಿ ಪ್ರಾರಂಭಿಸಿ →",
+    "loop.title": "ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ — ಸರಳ ಲೂಪ್",
+    "features.title": "ನಿಮ್ಮ ಪರೀಕ್ಷೆಯನ್ನು ಗೆಲ್ಲಲು ಬೇಕಾಗಿರುವ ಎಲ್ಲವೂ",
+    "progress.title": "ನಿಮ್ಮ ಪ್ರಗತಿ, ಒಂದು ನೋಟದಲ್ಲಿ",
+    "nav.signin": "Google ನೊಂದಿಗೆ ಸೈನ್ ಇನ್",
+    "nav.signin.short": "ಸೈನ್ ಇನ್",
+    "nav.dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+    "lang.switch": "ಭಾಷೆ",
+  },
+
+  // Malayalam (മലയാളം) — ~3.5Cr speakers (Kerala)
+  ml: {
+    "land.title": "നിങ്ങളുടെ പരീക്ഷ കണ്ടെത്തൂ.",
+    "land.title.accent": "സൗജന്യമായി തയ്യാറാകൂ.",
+    "land.subtitle": "ഇന്ത്യയിലെ മികച്ച 20 പരീക്ഷകൾ. AI നിർമ്മിത മോക്. നിങ്ങൾ തയ്യാറാകുന്നതുവരെ ലളിതമായ ലൂപ്പ്.",
+    "land.search.placeholder": "നിങ്ങളുടെ പരീക്ഷ തിരയുക — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "എല്ലാം",
+    "land.cat.GOVT_JOBS": "സർക്കാർ ജോലി",
+    "land.cat.BANKING": "ബാങ്കിംഗ്",
+    "land.cat.CIVIL_SERVICES": "സിവിൽ സർവീസ്",
+    "land.cat.MEDICAL": "മെഡിക്കൽ",
+    "land.cat.ENGINEERING": "എഞ്ചിനീയറിംഗ്",
+    "land.cat.TEACHING": "അധ്യാപനം",
+    "land.cat.UNIVERSITY": "സർവകലാശാല",
+    "land.cat.MBA": "MBA",
+    "land.cat.LAW": "നിയമം",
+    "land.cat.DEFENCE": "പ്രതിരോധം",
+    "land.status.live": "ലഭ്യമാണ്",
+    "land.status.coming": "ഉടൻ",
+    "land.cta.start": "Google ഉപയോഗിച്ച് സൗജന്യമായി ആരംഭിക്കുക →",
+    "loop.title": "എങ്ങനെ പ്രവർത്തിക്കുന്നു — ഒരു ലളിത ലൂപ്പ്",
+    "features.title": "നിങ്ങളുടെ പരീക്ഷ വിജയിക്കാൻ ആവശ്യമായ എല്ലാം",
+    "progress.title": "നിങ്ങളുടെ പുരോഗതി, ഒറ്റ നോട്ടത്തിൽ",
+    "nav.signin": "Google ഉപയോഗിച്ച് സൈൻ ഇൻ ചെയ്യുക",
+    "nav.signin.short": "സൈൻ ഇൻ",
+    "nav.dashboard": "ഡാഷ്ബോർഡ്",
+    "lang.switch": "ഭാഷ",
+  },
+
+  // Punjabi (ਪੰਜਾਬੀ) — ~3.3Cr speakers (Punjab)
+  pa: {
+    "land.title": "ਆਪਣੀ ਪ੍ਰੀਖਿਆ ਲੱਭੋ।",
+    "land.title.accent": "ਮੁਫ਼ਤ ਤਿਆਰੀ ਕਰੋ।",
+    "land.subtitle": "ਭਾਰਤ ਦੀਆਂ ਚੋਟੀ ਦੀਆਂ 20 ਪ੍ਰੀਖਿਆਵਾਂ। AI ਦੁਆਰਾ ਬਣਾਏ ਮੌਕ। ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਤਿਆਰ ਨਹੀਂ ਹੋ ਜਾਂਦੇ — ਇੱਕ ਸਧਾਰਨ ਲੂਪ।",
+    "land.search.placeholder": "ਆਪਣੀ ਪ੍ਰੀਖਿਆ ਖੋਜੋ — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "ਸਾਰੇ",
+    "land.cat.GOVT_JOBS": "ਸਰਕਾਰੀ ਨੌਕਰੀ",
+    "land.cat.BANKING": "ਬੈਂਕਿੰਗ",
+    "land.cat.CIVIL_SERVICES": "ਸਿਵਲ ਸੇਵਾ",
+    "land.cat.MEDICAL": "ਮੈਡੀਕਲ",
+    "land.cat.ENGINEERING": "ਇੰਜੀਨੀਅਰਿੰਗ",
+    "land.cat.TEACHING": "ਅਧਿਆਪਨ",
+    "land.cat.UNIVERSITY": "ਯੂਨੀਵਰਸਿਟੀ",
+    "land.cat.MBA": "MBA",
+    "land.cat.LAW": "ਕਾਨੂੰਨ",
+    "land.cat.DEFENCE": "ਰੱਖਿਆ",
+    "land.status.live": "ਉਪਲਬਧ",
+    "land.status.coming": "ਜਲਦੀ",
+    "land.cta.start": "Google ਨਾਲ ਮੁਫ਼ਤ ਸ਼ੁਰੂ ਕਰੋ →",
+    "loop.title": "ਇਹ ਕਿਵੇਂ ਕੰਮ ਕਰਦਾ ਹੈ — ਇੱਕ ਸਧਾਰਨ ਲੂਪ",
+    "features.title": "ਆਪਣੀ ਪ੍ਰੀਖਿਆ ਪਾਸ ਕਰਨ ਲਈ ਸਭ ਕੁਝ",
+    "progress.title": "ਤੁਹਾਡੀ ਤਰੱਕੀ, ਇੱਕ ਨਜ਼ਰ ਵਿੱਚ",
+    "nav.signin": "Google ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ",
+    "nav.signin.short": "ਸਾਈਨ ਇਨ",
+    "nav.dashboard": "ਡੈਸ਼ਬੋਰਡ",
+    "lang.switch": "ਭਾਸ਼ਾ",
+  },
+
+  // Urdu (اردو) — ~5Cr speakers · RTL script
+  ur: {
+    "land.title": "اپنا امتحان تلاش کریں۔",
+    "land.title.accent": "مفت تیاری کریں۔",
+    "land.subtitle": "بھارت کے سرفہرست 20 امتحانات۔ AI سے بنائے گئے ماک۔ جب تک آپ تیار نہ ہو جائیں — ایک سادہ لوپ۔",
+    "land.search.placeholder": "اپنا امتحان تلاش کریں — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "سب",
+    "land.cat.GOVT_JOBS": "سرکاری ملازمت",
+    "land.cat.BANKING": "بینکنگ",
+    "land.cat.CIVIL_SERVICES": "سول سروس",
+    "land.cat.MEDICAL": "میڈیکل",
+    "land.cat.ENGINEERING": "انجینئرنگ",
+    "land.cat.TEACHING": "تدریس",
+    "land.cat.UNIVERSITY": "یونیورسٹی",
+    "land.cat.MBA": "MBA",
+    "land.cat.LAW": "قانون",
+    "land.cat.DEFENCE": "دفاع",
+    "land.status.live": "دستیاب",
+    "land.status.coming": "جلد",
+    "land.cta.start": "Google سے مفت شروع کریں ←",
+    "loop.title": "یہ کیسے کام کرتا ہے — ایک سادہ لوپ",
+    "features.title": "اپنا امتحان پاس کرنے کے لیے سب کچھ",
+    "progress.title": "آپ کی پیش رفت، ایک نظر میں",
+    "nav.signin": "Google سے سائن ان کریں",
+    "nav.signin.short": "سائن ان",
+    "nav.dashboard": "ڈیش بورڈ",
+    "lang.switch": "زبان",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Less-densely-spoken scheduled languages.
+  // Smaller dictionaries — most keys gracefully fall back to English.
+  // Native speakers can contribute fuller translations as the platform grows.
+  // ─────────────────────────────────────────────────────────────────────
+
+  // Odia (ଓଡ଼ିଆ) — Odisha
+  or: {
+    "land.title": "ଆପଣଙ୍କ ପରୀକ୍ଷା ଖୋଜନ୍ତୁ।",
+    "land.title.accent": "ମାଗଣାରେ ପ୍ରସ୍ତୁତ ହୁଅନ୍ତୁ।",
+    "land.subtitle": "ଭାରତର ଶୀର୍ଷ ୨୦ ପରୀକ୍ଷା। AI ନିର୍ମିତ ମକ୍। ଆପଣ ପ୍ରସ୍ତୁତ ହେବା ପର୍ଯ୍ୟନ୍ତ ଏକ ସରଳ ଲୁପ୍।",
+    "land.search.placeholder": "ଆପଣଙ୍କ ପରୀକ୍ଷା ଖୋଜନ୍ତୁ — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "ସମସ୍ତ",
+    "land.cta.start": "Google ସହିତ ମାଗଣାରେ ଆରମ୍ଭ କରନ୍ତୁ →",
+    "nav.signin.short": "ସାଇନ୍ ଇନ୍",
+    "lang.switch": "ଭାଷା",
+  },
+
+  // Assamese (অসমীয়া) — Assam
+  as: {
+    "land.title": "আপোনাৰ পৰীক্ষা বিচাৰক।",
+    "land.title.accent": "বিনামূলে প্ৰস্তুতি লওক।",
+    "land.subtitle": "ভাৰতৰ শীৰ্ষ ২০ পৰীক্ষা। AI-নিৰ্মিত মক। আপুনি প্ৰস্তুত নোহোৱালৈকে এটা সৰল লুপ।",
+    "land.search.placeholder": "আপোনাৰ পৰীক্ষা বিচাৰক — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "সকলো",
+    "land.cta.start": "Google ৰ সৈতে বিনামূলে আৰম্ভ কৰক →",
+    "nav.signin.short": "ছাইন ইন",
+    "lang.switch": "ভাষা",
+  },
+
+  // Nepali (नेपाली) — Sikkim, Darjeeling region
+  ne: {
+    "land.title": "तपाईंको परीक्षा खोज्नुहोस्।",
+    "land.title.accent": "निःशुल्क तयारी गर्नुहोस्।",
+    "land.subtitle": "भारतका शीर्ष २० परीक्षाहरू। AI द्वारा निर्मित मक। तपाईं तयार नहुन्जेल एउटा सरल लूप।",
+    "land.search.placeholder": "तपाईंको परीक्षा खोज्नुहोस् — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "सबै",
+    "land.cta.start": "Google सँग निःशुल्क सुरु गर्नुहोस् →",
+    "nav.signin.short": "साइन इन",
+    "lang.switch": "भाषा",
+  },
+
+  // Sanskrit (संस्कृतम्) — heritage / classical language
+  sa: {
+    "land.title": "स्वस्य परीक्षां अन्विष्यतु।",
+    "land.title.accent": "निःशुल्कं सज्जीभवतु।",
+    "land.subtitle": "भारतस्य शीर्षाणि विंशतिः परीक्षाः। AI-निर्मिताः अनुकरणपरीक्षाः। यावत् सज्जः न भवसि तावत् सरलं चक्रम्।",
+    "land.search.placeholder": "स्वपरीक्षां अन्विष्यतु — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "सर्वम्",
+    "land.cta.start": "Google द्वारा निःशुल्कम् आरभतु →",
+    "nav.signin.short": "प्रवेशः",
+    "lang.switch": "भाषा",
+  },
+
+  // Konkani (कोंकणी) — Goa, coastal Karnataka
+  kok: {
+    "land.title": "तुमची परीक्षा सोदात.",
+    "land.title.accent": "फुकट तयारी करात.",
+    "land.subtitle": "भारतांतल्यो उच्च 20 परीक्षा. AI-निर्मीत मॉक. तुमी तयार जायसर एक सादो चक्र.",
+    "land.search.placeholder": "तुमची परीक्षा सोदात — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "सगळे",
+    "land.cta.start": "Google वरवीं फुकट सुरू करात →",
+    "nav.signin.short": "साइन इन",
+    "lang.switch": "भास",
+  },
+
+  // Manipuri / Meitei (মৈতৈলোন্) — Manipur (uses Bengali script for general use)
+  mni: {
+    "land.title": "অদোমগী ৱাহং থিদোক্কু।",
+    "land.title.accent": "ফংনা শেমগৎলু।",
+    "land.subtitle": "ভারতকী মতেং অহন্বা ২০ ৱাহংশিং। AI না সেমখিবা মক। অদোম শেম-শা না নাইদ্রিবা ফাওবা অমা সিম্পল লুপ।",
+    "land.search.placeholder": "অদোমগী ৱাহং থিদোক্কু — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "পুম্নমক",
+    "land.cta.start": "Google গা ফংনা হৌরকপীয়ু →",
+    "nav.signin.short": "সাইন ইন",
+    "lang.switch": "লোন্",
+  },
+
+  // Kashmiri (کٲشُر) — Kashmir, RTL
+  ks: {
+    "land.title": "اَپنہٕ اِمتِحان تَلاش کٔریو۔",
+    "land.title.accent": "مُفت تَیّٲری کٔریو۔",
+    "land.subtitle": "ہِندوستٲنُک ٹاپ ۲۰ اِمتِحان۔ AI نَمونہٕ ٹیسٹ۔ تٔمی پؠٹھ تَیّار گٔژھتاوُن یَتھ تام آسان لوپ۔",
+    "land.search.placeholder": "پَنُن اِمتِحان تَلاش کٔریو — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "سٲری",
+    "land.cta.start": "Google سٕتؠ مُفت شُروع کٔریو ←",
+    "nav.signin.short": "سائن اِن",
+    "lang.switch": "زبان",
+  },
+
+  // Sindhi (سنڌي) — Sindhi-speaking community, RTL
+  sd: {
+    "land.title": "پنھنجو امتحان ڳوليو.",
+    "land.title.accent": "مفت تياري ڪريو.",
+    "land.subtitle": "ھندستان جا ٽاپ 20 امتحان. AI ٺاھيل ماڪ. جيستائين توھان تيار نه ٿيو، ھڪ سادو لوپ.",
+    "land.search.placeholder": "پنھنجو امتحان ڳوليو — SSC, NEET, JEE, UPSC, CAT…",
+    "land.cat.all": "سڀ",
+    "land.cta.start": "Google سان مفت شروع ڪريو ←",
+    "nav.signin.short": "سائن ان",
+    "lang.switch": "ٻولي",
   },
 } as const;
 

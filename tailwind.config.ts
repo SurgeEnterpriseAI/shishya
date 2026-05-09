@@ -37,6 +37,28 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
         hindi: ["var(--font-noto-devanagari)", "Noto Sans Devanagari", "system-ui"],
+        // Multi-script stack: browsers do per-codepoint font selection, so
+        // we list one Noto family per Indic script. Modern Android devices
+        // ship Noto fonts pre-installed; on systems that don't, we fall
+        // back to system-ui which has reasonable defaults for these scripts.
+        multi: [
+          "var(--font-inter)",
+          "var(--font-noto-devanagari)",
+          "Noto Sans Devanagari",
+          "Noto Sans Bengali",
+          "Noto Sans Tamil",
+          "Noto Sans Telugu",
+          "Noto Sans Kannada",
+          "Noto Sans Malayalam",
+          "Noto Sans Gujarati",
+          "Noto Sans Gurmukhi",
+          "Noto Sans Oriya",
+          "Noto Sans Meetei Mayek",
+          "Noto Naskh Arabic",
+          "Noto Sans",
+          "system-ui",
+          "sans-serif",
+        ],
       },
       maxWidth: {
         prose: "65ch",
