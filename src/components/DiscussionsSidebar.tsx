@@ -95,7 +95,7 @@ export function DiscussionsSidebar({
 
   const newDiscHref = signedIn
     ? "/discussions/new"
-    : `/api/auth/signin/google?callbackUrl=${encodeURIComponent("/discussions/new")}`;
+    : `/login?callbackUrl=${encodeURIComponent("/discussions/new")}`;
 
   return (
     <>

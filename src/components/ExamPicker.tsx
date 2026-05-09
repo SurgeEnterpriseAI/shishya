@@ -107,7 +107,7 @@ export function ExamPicker({
           {filtered.map((e) => {
             const href = signedIn
               ? `/exams/${e.code}`
-              : `/api/auth/signin/google?callbackUrl=${encodeURIComponent(`/exams/${e.code}`)}`;
+              : `/login?callbackUrl=${encodeURIComponent(`/exams/${e.code}`)}`;
             return (
               <li key={e.code}>
                 <Link

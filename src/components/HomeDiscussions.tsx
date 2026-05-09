@@ -72,7 +72,7 @@ export async function HomeDiscussions({
   const now = new Date();
   const newDiscussionHref = signedIn
     ? "/discussions/new"
-    : `/api/auth/signin/google?callbackUrl=${encodeURIComponent("/discussions/new")}`;
+    : `/login?callbackUrl=${encodeURIComponent("/discussions/new")}`;
 
   return (
     <section id="discussions" className="border-t border-ink-200/50 bg-white py-16 sm:py-20">

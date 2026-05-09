@@ -155,7 +155,7 @@ export default async function HomePage() {
 
         {!signedIn && (
           <div className="mt-10 text-center">
-            <Link href="/api/auth/signin/google?callbackUrl=%2Fdashboard" className="btn-primary">
+            <Link href="/login?callbackUrl=%2Fdashboard" className="btn-primary">
               {t("land.cta.start")}
             </Link>
           </div>
@@ -261,7 +261,7 @@ function SiteHeader({
               {t("nav.dashboard")} →
             </Link>
           ) : (
-            <Link href="/api/auth/signin" className="btn-primary !py-2 !px-4 text-xs sm:text-sm">
+            <Link href="/login" className="btn-primary !py-2 !px-4 text-xs sm:text-sm">
               {t("nav.signin.short")}
             </Link>
           )}

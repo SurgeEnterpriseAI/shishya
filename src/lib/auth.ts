@@ -24,21 +24,6 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: { strategy: "database" },
-  // Verbose debug logging on the server. Lets us see the actual reason for
-  // OAuth failures in Vercel runtime logs (otherwise NextAuth swallows the
-  // detail and only surfaces ?error=google to the client).
-  debug: true,
-  logger: {
-    error(code, ...message) {
-      console.error("[next-auth][error]", code, JSON.stringify(message));
-    },
-    warn(code, ...message) {
-      console.warn("[next-auth][warn]", code, JSON.stringify(message));
-    },
-    debug(code, ...message) {
-      console.log("[next-auth][debug]", code, JSON.stringify(message));
-    },
-  },
   callbacks: {
     async session({ session, user }) {
       if (session.user) session.user.id = user.id;

@@ -9,7 +9,7 @@ import { ComposeForm } from "./ComposeForm";
 
 export default async function NewDiscussionPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/api/auth/signin/google?callbackUrl=%2Fdiscussions%2Fnew");
+  if (!session?.user?.id) redirect("/login?callbackUrl=%2Fdiscussions%2Fnew");
   const { t } = await getT();
 
   const exams = await prisma.exam.findMany({

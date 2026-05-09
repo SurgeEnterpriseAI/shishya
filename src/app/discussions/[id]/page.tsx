@@ -138,7 +138,7 @@ export default async function DiscussionPage({
             />
           ) : (
             <Link
-              href={`/api/auth/signin/google?callbackUrl=${encodeURIComponent(`/discussions/${thread.id}`)}`}
+              href={`/login?callbackUrl=${encodeURIComponent(`/discussions/${thread.id}`)}`}
               className="block rounded-lg border-2 border-dashed border-saffron-300 bg-saffron-50/60 p-5 text-center text-sm font-medium text-saffron-800 hover:bg-saffron-50"
             >
               {t("disc.thread.signinToReply")} →

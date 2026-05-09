@@ -35,7 +35,7 @@ export async function Header({ admin = false }: { admin?: boolean }) {
               </Link>
             </>
           ) : (
-            <Link href="/api/auth/signin" className="btn-primary !py-2 !px-4 text-xs sm:text-sm">
+            <Link href="/login" className="btn-primary !py-2 !px-4 text-xs sm:text-sm">
               {t("nav.signin.short")}
             </Link>
           )}

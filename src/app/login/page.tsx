@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { getT } from "@/lib/i18n-server";
 
 export default async function LoginPage({
@@ -27,12 +28,7 @@ export default async function LoginPage({
         </Link>
         <h1 className="mt-6 text-2xl font-bold text-ink-900">{t("login.h1")}</h1>
         <p className="mt-2 text-sm text-ink-600">{t("login.body")}</p>
-        <a
-          href={`/api/auth/signin/google?callbackUrl=${encodeURIComponent(cb)}`}
-          className="btn-primary mt-6 w-full"
-        >
-          {t("login.continue")}
-        </a>
+        <GoogleSignInButton callbackUrl={cb} label={t("login.continue")} />
         <p className="mt-6 text-xs text-ink-500">{t("login.smallprint")}</p>
       </div>
     </main>

@@ -26,7 +26,7 @@ export default async function DiscussionsList() {
   };
   const newHref = session?.user
     ? "/discussions/new"
-    : `/api/auth/signin/google?callbackUrl=${encodeURIComponent("/discussions/new")}`;
+    : `/login?callbackUrl=${encodeURIComponent("/discussions/new")}`;
 
   return (
     <main className="min-h-screen bg-ink-50/40">
