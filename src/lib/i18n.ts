@@ -148,6 +148,14 @@ export const dict = {
     "disc.sidebar.openAria": "Open community discussions",
     "disc.sidebar.closeAria": "Close discussions",
 
+    // ── Live activity counters
+    "live.preparingNow": "students preparing on Shishya right now",
+    "live.inMockNow": "in a mock test right now",
+    "live.block.title": "Live on Shishya",
+    "live.block.online": "preparing now",
+    "live.block.inMock": "in a mock right now",
+    "live.block.todaysMocks": "mocks taken today",
+
     // ── Exam timeline (news + important dates on /exams/[code])
     "timeline.news.title": "Latest news",
     "timeline.news.empty": "No news yet for this exam.",
@@ -393,6 +401,13 @@ export const dict = {
     "disc.daysAgo": "दिन पहले",
     "disc.sidebar.openAria": "सामुदायिक चर्चाएँ खोलें",
     "disc.sidebar.closeAria": "चर्चाएँ बंद करें",
+
+    "live.preparingNow": "छात्र अभी Shishya पर तैयारी कर रहे हैं",
+    "live.inMockNow": "अभी मॉक टेस्ट दे रहे हैं",
+    "live.block.title": "Shishya पर लाइव",
+    "live.block.online": "अभी तैयारी कर रहे हैं",
+    "live.block.inMock": "अभी मॉक में हैं",
+    "live.block.todaysMocks": "आज मॉक दिए गए",
 
     "timeline.news.title": "ताज़ा ख़बरें",
     "timeline.news.empty": "इस परीक्षा के लिए अभी कोई ख़बर नहीं।",

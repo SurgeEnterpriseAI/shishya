@@ -8,6 +8,7 @@ import { getT } from "@/lib/i18n-server";
 import { LangSwitcher } from "@/components/LangSwitcher";
 import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
 import { DiscussionsSidebar, type ThreadItem } from "@/components/DiscussionsSidebar";
+import { LiveCountersStrip } from "@/components/LiveCounters";
 
 // Top 20 Indian entrance / job exams by approximate annual candidate volume.
 // `live: true` means we have validated questions for this exam in the DB; the
@@ -90,6 +91,15 @@ export default async function HomePage() {
     <main className="min-h-screen bg-saffron-50/30 xl:pr-80">
       <SiteHeader locale={locale} t={t} signedIn={signedIn} />
 
+      {/* Live activity strip — full-width social proof banner */}
+      <LiveCountersStrip
+        labels={{
+          preparingNow:      t("live.preparingNow"),
+          inMockNow:         t("live.inMockNow"),
+          activeDiscussions: t("disc.title"),
+        }}
+      />
+
       {/* Live community discussions — fixed right rail on xl+, FAB+drawer otherwise */}
       <DiscussionsSidebar
         initial={initialThreads}
@@ -108,6 +118,10 @@ export default async function HomePage() {
           daysAgo:    t("disc.daysAgo"),
           openAria:   t("disc.sidebar.openAria"),
           closeAria:  t("disc.sidebar.closeAria"),
+          liveTitle:       t("live.block.title"),
+          liveOnline:      t("live.block.online"),
+          liveInMock:      t("live.block.inMock"),
+          liveTodaysMocks: t("live.block.todaysMocks"),
         }}
       />
 

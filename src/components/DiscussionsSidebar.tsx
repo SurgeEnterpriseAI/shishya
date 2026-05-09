@@ -10,6 +10,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatRelative } from "@/lib/relative-time";
+import { LiveCountersBlock } from "@/components/LiveCounters";
 
 export interface ThreadItem {
   id: string;
@@ -35,6 +36,11 @@ interface Labels {
   daysAgo: string;
   closeAria: string;
   openAria: string;
+  // Live counters block (shown above the thread list)
+  liveTitle: string;
+  liveOnline: string;
+  liveInMock: string;
+  liveTodaysMocks: string;
 }
 
 const POLL_MS = 30_000;
@@ -99,6 +105,14 @@ export function DiscussionsSidebar({
         aria-label={labels.title}
       >
         <PanelHeader labels={labels} newHref={newDiscHref} />
+        <LiveCountersBlock
+          labels={{
+            title:       labels.liveTitle,
+            online:      labels.liveOnline,
+            inMock:      labels.liveInMock,
+            todaysMocks: labels.liveTodaysMocks,
+          }}
+        />
         <ThreadList threads={threads} labels={labels} />
         <PanelFooter labels={labels} />
       </aside>
@@ -148,6 +162,14 @@ export function DiscussionsSidebar({
                 </svg>
               </button>
             </div>
+            <LiveCountersBlock
+              labels={{
+                title:       labels.liveTitle,
+                online:      labels.liveOnline,
+                inMock:      labels.liveInMock,
+                todaysMocks: labels.liveTodaysMocks,
+              }}
+            />
             <ThreadList threads={threads} labels={labels} onItemClick={() => setOpen(false)} />
             <div className="border-t border-ink-200 bg-ink-50/40 px-5 py-3">
               <Link
