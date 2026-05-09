@@ -38,8 +38,10 @@ function useLiveCounts(): LiveCounts {
 export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
   const { online, mocksInProgress } = useLiveCounts();
   return (
-    <div className="border-b border-emerald-200 bg-emerald-50/70">
-      <div className="container-prose flex flex-wrap items-center justify-center gap-x-6 gap-y-1 py-2 text-xs text-emerald-900 sm:text-sm">
+    // Sticky to viewport top — stays visible while scrolling so the social
+    // proof persists as the user moves through the page.
+    <div className="sticky top-0 z-40 border-b border-emerald-200 bg-emerald-50/95 backdrop-blur-sm supports-[backdrop-filter]:bg-emerald-50/80">
+      <div className="container-prose flex flex-wrap items-center justify-center gap-x-4 gap-y-1 py-1.5 text-[11px] text-emerald-900 sm:gap-x-6 sm:py-2 sm:text-sm">
         <span className="inline-flex items-center gap-1.5 font-medium">
           <PingDot />
           <span className="tabular-nums">{formatCount(online)}</span> {labels.preparingNow}

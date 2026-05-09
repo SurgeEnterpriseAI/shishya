@@ -6,28 +6,104 @@
   :root {
     --background: #fffaf3;
     --foreground: #0f172a;
+    /* iOS safe-area bottom — used by floating elements (FAB) so they don't
+       sit underneath the home indicator on phones with no hardware bezel. */
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
   }
 
   html {
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent iOS Safari from auto-resizing text in landscape */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Smooth scroll for anchor links (e.g. #features → How it works) */
+    scroll-behavior: smooth;
+    /* Better touch handling on iOS — removes 300 ms tap delay */
+    touch-action: manipulation;
   }
 
   body {
     background: var(--background);
     color: var(--foreground);
+    /* Stop horizontal-scroll bleed if any nested element accidentally
+       overflows. Applied at body, not html, so position:sticky on children
+       (LiveCountersStrip) still works against the viewport. */
+    overflow-x: hidden;
+    /* Hide ugly grey/blue tap flashes on Android Chrome / iOS Safari.
+       We use focus-visible rings + hover states instead. */
+    -webkit-tap-highlight-color: transparent;
+    /* Long-press on iOS triggers context menus on text/images by default;
+       leave it enabled so accessibility tools work, but disable callout
+       (the iOS link preview) on plain text. */
+    -webkit-touch-callout: none;
+  }
+
+  /* All clickable surfaces feel snappier on touch devices. Buttons inherit
+     this by default; explicit on buttons keeps it consistent. */
+  button,
+  a {
+    touch-action: manipulation;
+  }
+
+  /* iOS Safari zooms the page in when you focus a text input that has a
+     font-size below 16 px. We force every text input/textarea/select to
+     >= 16 px on mobile (sm: and below). At sm+ they can shrink back. */
+  input[type="text"],
+  input[type="email"],
+  input[type="search"],
+  input[type="password"],
+  input[type="url"],
+  input[type="tel"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
+  @media (min-width: 640px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="search"],
+    input[type="password"],
+    input[type="url"],
+    input[type="tel"],
+    textarea,
+    select {
+      font-size: inherit;
+    }
+  }
+
+  /* Cleaner image rendering — Tailwind v3 handles this for img tags by
+     default but explicit doesn't hurt. */
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
   }
 }
 
 @layer components {
   .btn-primary {
     @apply inline-flex items-center justify-center rounded-md bg-saffron-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-saffron-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-saffron-600;
+    /* Min-height ensures comfortable thumb tap targets on mobile */
+    min-height: 44px;
   }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center rounded-md border border-ink-300 bg-white px-5 py-3 text-sm font-semibold text-ink-800 shadow-sm transition-colors hover:bg-ink-50;
+    min-height: 44px;
   }
 
   .container-prose {
     @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Helper for floating elements (FAB) that should sit above the iOS home
+     indicator. Used on the discussion drawer trigger. */
+  .pb-safe {
+    padding-bottom: calc(1rem + var(--safe-bottom));
+  }
+  .bottom-safe {
+    bottom: calc(1rem + var(--safe-bottom));
   }
 }

@@ -88,7 +88,7 @@ export default async function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-saffron-50/30 xl:pr-80">
+    <main className="min-h-screen bg-saffron-50/30">
       <SiteHeader locale={locale} t={t} signedIn={signedIn} />
 
       {/* Live activity strip — full-width social proof banner */}

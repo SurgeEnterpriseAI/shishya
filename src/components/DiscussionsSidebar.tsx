@@ -118,11 +118,14 @@ export function DiscussionsSidebar({
       </aside>
 
       {/* ─── Mobile / tablet: floating action button ───────────────────── */}
+      {/* bottom-safe positions the FAB above iOS home indicator + Android
+          gesture nav. min-h-[44px] on the button ensures it's a comfortable
+          thumb-tap target. */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label={labels.openAria}
-        className="fixed bottom-4 right-4 z-30 inline-flex items-center gap-2 rounded-full bg-saffron-500 px-4 py-3 text-sm font-medium text-white shadow-lg ring-1 ring-saffron-700/20 hover:bg-saffron-600 xl:hidden"
+        className="bottom-safe fixed right-4 z-30 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-saffron-500 px-4 py-3 text-sm font-medium text-white shadow-lg ring-1 ring-saffron-700/20 hover:bg-saffron-600 xl:hidden"
       >
         <span className="relative flex h-2.5 w-2.5" aria-hidden>
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />

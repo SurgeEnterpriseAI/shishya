@@ -1,8 +1,28 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_Devanagari } from "next/font/google";
 import { getLocale } from "@/lib/i18n-server";
 import { isRtl } from "@/lib/i18n";
 import "./globals.css";
+
+// Mobile + cross-browser viewport configuration.
+//   width=device-width      — fit the device naturally
+//   initialScale=1          — no zoom-in on first paint
+//   maximumScale=5          — DO allow pinch zoom (accessibility; never lock)
+//   viewportFit=cover       — let content extend into iOS notch / home-indicator
+//                              areas; we use env(safe-area-inset-*) where it
+//                              matters (FAB, sidebar, footers).
+//   themeColor              — sets the URL bar tint on Chrome Android / Safari
+//                              for a more "app-like" feel.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fff7ed" },
+    { media: "(prefers-color-scheme: dark)",  color: "#fff7ed" },
+  ],
+};
 
 const inter = Inter({
   subsets: ["latin"],
