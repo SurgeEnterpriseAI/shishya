@@ -60,7 +60,7 @@ export function isRtl(locale: Locale): boolean {
 export const dict = {
   en: {
     // ── brand
-    "brand.tagline": "Free, AI-tutored prep for India's top entrance exams.",
+    "brand.tagline": "Free, expert-curated prep for India's top entrance exams. Supported by Shishya AI.",
 
     // ── header / nav
     "nav.signin": "Sign in with Google",
@@ -75,7 +75,7 @@ export const dict = {
     // ── new search-first landing
     "land.title": "What exam do you want to crack today?",
     "land.title.accent": "",
-    "land.subtitle": "Type the exam you're preparing for — SSC, NEET, JEE, UPSC, CAT — and we'll set you up with previous year papers, AI-built mocks, weak-area analysis, and a tutor that knows your syllabus.",
+    "land.subtitle": "Type the exam you're preparing for — SSC, NEET, JEE, UPSC, CAT — and we'll give you previous year papers, expert-curated mocks, weak-area analysis, and Shishya AI as your tutor.",
     "land.search.placeholder": "Type your exam — e.g. SSC CGL, NEET UG, JEE Main…",
     "land.search.label": "What are you preparing for?",
     "land.no.results": "No exams match. Try another keyword or pick a category above.",
@@ -104,19 +104,19 @@ export const dict = {
     "loop.s3.title": "3. AI analyses",
     "loop.s3.body": "Weakness map shows exactly which topics to fix.",
     "loop.s4.title": "4. Chat & improve",
-    "loop.s4.body": "Ask the AI tutor for materials or another mock — it builds it for you.",
+    "loop.s4.body": "Ask Shishya AI for materials or another mock — it picks the right one from our curated bank.",
 
     // ── Feature pillars (the "everything you need" section)
     "features.title": "Everything you need to crack your exam",
-    "features.subtitle": "Real PYQs, fresh mocks every day, AI-driven weak-area detection, and a progress bar that shows what to fix. All free.",
+    "features.subtitle": "Real PYQs, fresh expert-curated mocks every day, weak-area detection with Shishya AI, and a progress bar that shows what to fix. All free.",
     "features.pyq.title": "Previous year papers",
     "features.pyq.body": "Real PYQs for every exam, organised by year and topic. Practice the questions that actually appear.",
     "features.daily.title": "Fresh mocks every day",
-    "features.daily.body": "AI builds new mocks daily. Never run out of practice — and never repeat the same paper twice.",
+    "features.daily.body": "Subject experts curate fresh mocks each day. Shishya AI keeps your prep varied — never the same paper twice.",
     "features.weakness.title": "Weakness map",
     "features.weakness.body": "Per-topic mastery score. See exactly which topics need tomorrow's hour, not a vague overall percentile.",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "Your next mock is built around your weakest topics. The system adapts every time you submit.",
+    "features.adaptive.body": "Expert-curated mocks; Shishya AI picks the right one for you each time. Every next mock targets your weakest topics.",
     "features.progress.title": "Real progress tracker",
     "features.progress.body": "Topic-by-topic progress bars. Watch mastery climb week after week. Honest data — no fake streaks.",
     "features.tutor.title": "24/7 AI tutor",
@@ -169,10 +169,10 @@ export const dict = {
 
     // ── (legacy keys kept below for any pages still referencing them)
     "hero.badge": "Free forever · For every student in India",
-    "hero.h1.line1": "AI-tutored prep for India's",
+    "hero.h1.line1": "Expert-curated prep for India's",
     "hero.h1.line2": "top 10 entrance exams.",
     "hero.body":
-      "Take a diagnostic mock. We map your weak spots. Our AI builds the next mock for you. You improve. Repeat.",
+      "Take a diagnostic mock. We map your weak spots. Subject experts curate every mock; Shishya AI picks the right one for you next. You improve. Repeat.",
     "hero.body.bold": "No fees. No paywalls.",
     "hero.cta.primary": "Start free with Google →",
     "hero.cta.secondary": "See how it works",
@@ -208,7 +208,7 @@ export const dict = {
     // ── exams grid
     "exams.h2": "Top 10 entrance exams. Covered.",
     "exams.body":
-      "We're starting with SSC CGL and rolling out the rest through 2026. Every exam comes with the full syllabus, AI-built mocks, and step-by-step solutions.",
+      "We're starting with SSC CGL and rolling out the rest through 2026. Every exam comes with the full syllabus, expert-curated mocks, and step-by-step solutions.",
     "exams.status.live": "Live",
     "exams.status.coming": "Coming",
 
@@ -314,12 +314,12 @@ export const dict = {
   },
 
   hi: {
-    "brand.tagline": "भारत के शीर्ष प्रवेश परीक्षाओं की मुफ़्त, AI-संचालित तैयारी।",
+    "brand.tagline": "भारत के शीर्ष प्रवेश परीक्षाओं की मुफ़्त, विशेषज्ञों द्वारा तैयार तैयारी। Shishya AI के सहयोग से।",
 
     // ── new search-first landing
     "land.title": "आज आप कौन सी परीक्षा क्रैक करना चाहते हैं?",
     "land.title.accent": "",
-    "land.subtitle": "जिस परीक्षा की तैयारी कर रहे हैं उसका नाम लिखिए — SSC, NEET, JEE, UPSC, CAT — हम पिछले वर्षों के प्रश्न, AI-निर्मित मॉक, कमज़ोर विषयों का विश्लेषण और एक ऐसा ट्यूटर देंगे जो आपका सिलेबस जानता है।",
+    "land.subtitle": "जिस परीक्षा की तैयारी कर रहे हैं उसका नाम लिखिए — SSC, NEET, JEE, UPSC, CAT — हम पिछले वर्षों के प्रश्न, विषय-विशेषज्ञों द्वारा तैयार किए गए मॉक, कमज़ोर विषयों का विश्लेषण और सहायक के रूप में Shishya AI देंगे।",
     "land.search.placeholder": "अपनी परीक्षा लिखिए — जैसे SSC CGL, NEET UG, JEE Main…",
     "land.search.label": "किसकी तैयारी कर रहे हैं?",
     "land.no.results": "कोई परीक्षा नहीं मिली। दूसरा कीवर्ड आज़माइए या ऊपर से श्रेणी चुनें।",
@@ -348,19 +348,19 @@ export const dict = {
     "loop.s3.title": "३. AI विश्लेषण",
     "loop.s3.body": "कमज़ोरी का नक़्शा — किन विषयों पर मेहनत चाहिए, साफ़ दिखता है।",
     "loop.s4.title": "४. चैट और सुधार",
-    "loop.s4.body": "AI ट्यूटर से सामग्री या नया मॉक माँगिए — आपके लिए बना देगा।",
+    "loop.s4.body": "Shishya AI से सामग्री या नया मॉक माँगिए — हमारे विशेषज्ञ-तैयार बैंक से सही मॉक चुनकर देगा।",
 
     // ── Feature pillars
     "features.title": "परीक्षा क्रैक करने के लिए सब कुछ — एक ही जगह",
-    "features.subtitle": "असली PYQs, हर दिन नए मॉक, AI से कमज़ोर विषयों की पहचान, और एक प्रोग्रेस बार जो दिखाता है क्या ठीक करना है। सब मुफ़्त।",
+    "features.subtitle": "असली PYQs, विशेषज्ञों द्वारा तैयार किए गए ताज़ा मॉक, Shishya AI से कमज़ोर विषयों की पहचान, और एक प्रोग्रेस बार जो दिखाता है क्या ठीक करना है। सब मुफ़्त।",
     "features.pyq.title": "पिछले वर्षों के प्रश्न",
     "features.pyq.body": "हर परीक्षा के असली PYQs — वर्ष और विषय के अनुसार व्यवस्थित। वही सवाल जो असल में आते हैं।",
     "features.daily.title": "रोज़ नए मॉक",
-    "features.daily.body": "AI हर दिन नए मॉक बनाता है। अभ्यास कभी ख़त्म नहीं — और वही पेपर दोबारा नहीं।",
+    "features.daily.body": "विषय-विशेषज्ञ हर दिन नए मॉक तैयार करते हैं। Shishya AI आपकी तैयारी में विविधता बनाए रखता है — वही पेपर दोबारा नहीं।",
     "features.weakness.title": "कमज़ोरी का नक़्शा",
     "features.weakness.body": "विषयवार मास्टरी स्कोर। ठीक-ठीक देखें कौन से विषय पर कल का घंटा देना है — कोई अस्पष्ट परसेंटाइल नहीं।",
     "features.adaptive.title": "एडैप्टिव मॉक",
-    "features.adaptive.body": "आपका अगला मॉक आपके सबसे कमज़ोर विषयों पर केंद्रित होता है। हर सबमिशन के बाद सिस्टम अपडेट होता है।",
+    "features.adaptive.body": "विशेषज्ञों द्वारा तैयार मॉक; Shishya AI हर बार आपके लिए सही मॉक चुनता है। हर अगला मॉक आपके सबसे कमज़ोर विषयों पर केंद्रित होता है।",
     "features.progress.title": "असली प्रगति ट्रैकर",
     "features.progress.body": "विषयवार प्रोग्रेस बार। हफ़्ते-दर-हफ़्ते मास्टरी बढ़ती देखें। सच्चा डेटा — नक़ली स्ट्रीक नहीं।",
     "features.tutor.title": "24/7 AI ट्यूटर",
@@ -560,7 +560,7 @@ export const dict = {
   bn: {
     "land.title": "আপনার পরীক্ষা খুঁজুন।",
     "land.title.accent": "বিনামূল্যে প্রস্তুতি নিন।",
-    "land.subtitle": "ভারতের শীর্ষ ২০ পরীক্ষা। AI-নির্মিত মক টেস্ট। সহজ লুপ — যতক্ষণ না আপনি প্রস্তুত।",
+    "land.subtitle": "ভারতের শীর্ষ ২০ পরীক্ষা। বিশেষজ্ঞ-সংকলিত মক টেস্ট, Shishya AI-এর সহায়তায়। সহজ লুপ — যতক্ষণ না আপনি প্রস্তুত।",
     "land.search.placeholder": "আপনার পরীক্ষা খুঁজুন — SSC, NEET, JEE, UPSC, CAT…",
     "land.cat.all": "সব",
     "land.cat.GOVT_JOBS": "সরকারি চাকরি",
@@ -589,7 +589,7 @@ export const dict = {
   te: {
     "land.title": "మీ పరీక్షను కనుగొనండి.",
     "land.title.accent": "ఉచితంగా సిద్ధం అవ్వండి.",
-    "land.subtitle": "భారత ఉత్తమ 20 పరీక్షలు. AI-నిర్మిత మాక్ టెస్ట్‌లు. మీరు సిద్ధమయ్యే వరకు సరళమైన లూప్.",
+    "land.subtitle": "భారత ఉత్తమ 20 పరీక్షలు. నిపుణుల-రూపొందించిన మాక్ టెస్ట్‌లు, Shishya AI మద్దతుతో. మీరు సిద్ధమయ్యే వరకు సరళమైన లూప్.",
     "land.search.placeholder": "మీ పరీక్షను శోధించండి — SSC, NEET, JEE, UPSC, CAT…",
     "land.cat.all": "అన్నీ",
     "land.cat.GOVT_JOBS": "ప్రభుత్వ ఉద్యోగాలు",
@@ -618,7 +618,7 @@ export const dict = {
   mr: {
     "land.title": "तुमची परीक्षा शोधा.",
     "land.title.accent": "मोफत तयारी करा.",
-    "land.subtitle": "भारतातील शीर्ष 20 परीक्षा. AI-निर्मित मॉक. तयार होईपर्यंत सोपा चक्र.",
+    "land.subtitle": "भारतातील शीर्ष 20 परीक्षा. तज्ञांनी तयार केलेले मॉक, Shishya AI च्या सहाय्याने. तयार होईपर्यंत सोपा चक्र.",
     "land.search.placeholder": "तुमची परीक्षा शोधा — SSC, NEET, JEE, UPSC, CAT…",
     "land.cat.all": "सर्व",
     "land.cat.GOVT_JOBS": "सरकारी नोकरी",
@@ -647,7 +647,7 @@ export const dict = {
   ta: {
     "land.title": "உங்கள் தேர்வை கண்டறியுங்கள்.",
     "land.title.accent": "இலவசமாக தயாராகுங்கள்.",
-    "land.subtitle": "இந்தியாவின் முதல் 20 தேர்வுகள். AI உருவாக்கிய மாக் டெஸ்ட். நீங்கள் தயாராகும் வரை எளிய சுழற்சி.",
+    "land.subtitle": "இந்தியாவின் முதல் 20 தேர்வுகள். நிபுணர்களால் தயாரிக்கப்பட்ட மாக் டெஸ்ட், Shishya AI ஆதரவுடன். நீங்கள் தயாராகும் வரை எளிய சுழற்சி.",
     "land.search.placeholder": "உங்கள் தேர்வைத் தேடுங்கள் — SSC, NEET, JEE, UPSC, CAT…",
     "land.cat.all": "அனைத்தும்",
     "land.cat.GOVT_JOBS": "அரசு வேலை",
@@ -676,7 +676,7 @@ export const dict = {
   gu: {
     "land.title": "તમારી પરીક્ષા શોધો.",
     "land.title.accent": "મફત તૈયારી કરો.",
-    "land.subtitle": "ભારતની ટોચની 20 પરીક્ષાઓ. AI-નિર્મિત મોક. તમે તૈયાર ન થાવ ત્યાં સુધી સરળ લૂપ.",
+    "land.subtitle": "ભારતની ટોચની 20 પરીક્ષાઓ. નિષ્ણાત-તૈયાર મોક, Shishya AI ના સહયોગથી. તમે તૈયાર ન થાવ ત્યાં સુધી સરળ લૂપ.",
     "land.search.placeholder": "તમારી પરીક્ષા શોધો — SSC, NEET, JEE, UPSC, CAT…",
     "land.cat.all": "બધા",
     "land.cat.GOVT_JOBS": "સરકારી નોકરી",
@@ -705,7 +705,7 @@ export const dict = {
   kn: {
     "land.title": "ನಿಮ್ಮ ಪರೀಕ್ಷೆಯನ್ನು ಹುಡುಕಿ.",
     "land.title.accent": "ಉಚಿತವಾಗಿ ತಯಾರಾಗಿ.",
-    "land.subtitle": "ಭಾರತದ ಅಗ್ರ 20 ಪರೀಕ್ಷೆಗಳು. AI-ನಿರ್ಮಿತ ಮಾಕ್. ನೀವು ಸಿದ್ಧವಾಗುವವರೆಗೆ ಸರಳ ಲೂಪ್.",
+    "land.subtitle": "ಭಾರತದ ಅಗ್ರ 20 ಪರೀಕ್ಷೆಗಳು. ತಜ್ಞ-ರಚಿತ ಮಾಕ್, Shishya AI ಬೆಂಬಲದೊಂದಿಗೆ. ನೀವು ಸಿದ್ಧವಾಗುವವರೆಗೆ ಸರಳ ಲೂಪ್.",
     "land.search.placeholder": "ನಿಮ್ಮ ಪರೀಕ್ಷೆಯನ್ನು ಹುಡುಕಿ — SSC, NEET, JEE, UPSC, CAT…",
     "land.cat.all": "ಎಲ್ಲಾ",
     "land.cat.GOVT_JOBS": "ಸರ್ಕಾರಿ ಉದ್ಯೋಗ",
@@ -734,7 +734,7 @@ export const dict = {
   ml: {
     "land.title": "നിങ്ങളുടെ പരീക്ഷ കണ്ടെത്തൂ.",
     "land.title.accent": "സൗജന്യമായി തയ്യാറാകൂ.",
-    "land.subtitle": "ഇന്ത്യയിലെ മികച്ച 20 പരീക്ഷകൾ. AI നിർമ്മിത മോക്. നിങ്ങൾ തയ്യാറാകുന്നതുവരെ ലളിതമായ ലൂപ്പ്.",
+    "land.subtitle": "ഇന്ത്യയിലെ മികച്ച 20 പരീക്ഷകൾ. വിദഗ്ദ്ധർ തയ്യാറാക്കിയ മോക്, Shishya AI പിന്തുണയോടെ. നിങ്ങൾ തയ്യാറാകുന്നതുവരെ ലളിതമായ ലൂപ്പ്.",
     "land.search.placeholder": "നിങ്ങളുടെ പരീക്ഷ തിരയുക — SSC, NEET, JEE, UPSC, CAT…",
     "land.cat.all": "എല്ലാം",
     "land.cat.GOVT_JOBS": "സർക്കാർ ജോലി",
@@ -763,7 +763,7 @@ export const dict = {
   pa: {
     "land.title": "ਆਪਣੀ ਪ੍ਰੀਖਿਆ ਲੱਭੋ।",
     "land.title.accent": "ਮੁਫ਼ਤ ਤਿਆਰੀ ਕਰੋ।",
-    "land.subtitle": "ਭਾਰਤ ਦੀਆਂ ਚੋਟੀ ਦੀਆਂ 20 ਪ੍ਰੀਖਿਆਵਾਂ। AI ਦੁਆਰਾ ਬਣਾਏ ਮੌਕ। ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਤਿਆਰ ਨਹੀਂ ਹੋ ਜਾਂਦੇ — ਇੱਕ ਸਧਾਰਨ ਲੂਪ।",
+    "land.subtitle": "ਭਾਰਤ ਦੀਆਂ ਚੋਟੀ ਦੀਆਂ 20 ਪ੍ਰੀਖਿਆਵਾਂ। ਮਾਹਰਾਂ ਦੁਆਰਾ ਤਿਆਰ ਮੌਕ, Shishya AI ਦੀ ਮਦਦ ਨਾਲ। ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਤਿਆਰ ਨਹੀਂ ਹੋ ਜਾਂਦੇ — ਇੱਕ ਸਧਾਰਨ ਲੂਪ।",
     "land.search.placeholder": "ਆਪਣੀ ਪ੍ਰੀਖਿਆ ਖੋਜੋ — SSC, NEET, JEE, UPSC, CAT…",
     "land.cat.all": "ਸਾਰੇ",
     "land.cat.GOVT_JOBS": "ਸਰਕਾਰੀ ਨੌਕਰੀ",
@@ -792,7 +792,7 @@ export const dict = {
   ur: {
     "land.title": "اپنا امتحان تلاش کریں۔",
     "land.title.accent": "مفت تیاری کریں۔",
-    "land.subtitle": "بھارت کے سرفہرست 20 امتحانات۔ AI سے بنائے گئے ماک۔ جب تک آپ تیار نہ ہو جائیں — ایک سادہ لوپ۔",
+    "land.subtitle": "بھارت کے سرفہرست 20 امتحانات۔ ماہرین کے تیار کردہ ماک، Shishya AI کی مدد سے۔ جب تک آپ تیار نہ ہو جائیں — ایک سادہ لوپ۔",
     "land.search.placeholder": "اپنا امتحان تلاش کریں — SSC, NEET, JEE, UPSC, CAT…",
     "land.cat.all": "سب",
     "land.cat.GOVT_JOBS": "سرکاری ملازمت",
@@ -863,7 +863,7 @@ export const dict = {
   sa: {
     "land.title": "स्वस्य परीक्षां अन्विष्यतु।",
     "land.title.accent": "निःशुल्कं सज्जीभवतु।",
-    "land.subtitle": "भारतस्य शीर्षाणि विंशतिः परीक्षाः। AI-निर्मिताः अनुकरणपरीक्षाः। यावत् सज्जः न भवसि तावत् सरलं चक्रम्।",
+    "land.subtitle": "भारतस्य शीर्षाणि विंशतिः परीक्षाः। विशेषज्ञैः निर्मिताः अनुकरणपरीक्षाः, Shishya AI सहाय्येन। यावत् सज्जः न भवसि तावत् सरलं चक्रम्।",
     "land.search.placeholder": "स्वपरीक्षां अन्विष्यतु — SSC, NEET, JEE, UPSC, CAT…",
     "land.cat.all": "सर्वम्",
     "land.cta.start": "Google द्वारा निःशुल्कम् आरभतु →",
@@ -875,7 +875,7 @@ export const dict = {
   kok: {
     "land.title": "तुमची परीक्षा सोदात.",
     "land.title.accent": "फुकट तयारी करात.",
-    "land.subtitle": "भारतांतल्यो उच्च 20 परीक्षा. AI-निर्मीत मॉक. तुमी तयार जायसर एक सादो चक्र.",
+    "land.subtitle": "भारतांतल्यो उच्च 20 परीक्षा. तज्ज्ञांनी रचलेले मॉक, Shishya AI च्या आधारान. तुमी तयार जायसर एक सादो चक्र.",
     "land.search.placeholder": "तुमची परीक्षा सोदात — SSC, NEET, JEE, UPSC, CAT…",
     "land.cat.all": "सगळे",
     "land.cta.start": "Google वरवीं फुकट सुरू करात →",
