@@ -3,10 +3,11 @@
 
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { LangSwitcher } from "@/components/LangSwitcher";
 import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
-import { HomeDiscussions } from "@/components/HomeDiscussions";
+import { DiscussionsSidebar, type ThreadItem } from "@/components/DiscussionsSidebar";
 
 // Top 20 Indian entrance / job exams by approximate annual candidate volume.
 // `live: true` means we have validated questions for this exam in the DB; the
@@ -48,6 +49,30 @@ export default async function HomePage() {
     signedIn = false;
   }
 
+  // Initial discussion threads for the right-side sidebar. Resilient: if the
+  // DB isn't reachable yet (env vars missing), the sidebar falls back to an
+  // empty list and the rest of the landing still renders.
+  let initialThreads: ThreadItem[] = [];
+  try {
+    initialThreads = await prisma.discussion.findMany({
+      orderBy: [{ pinned: "desc" }, { lastActivityAt: "desc" }],
+      take: 12,
+      include: { exam: { select: { shortName: true } } },
+    }).then((rows) =>
+      rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        examShort: r.exam?.shortName ?? null,
+        authorName: r.authorName,
+        messageCount: r.messageCount,
+        pinned: r.pinned,
+        lastActivityAt: r.lastActivityAt.toISOString(),
+      }))
+    );
+  } catch {
+    initialThreads = [];
+  }
+
   const catLabels: Record<string, string> = {
     GOVT_JOBS:      t("land.cat.GOVT_JOBS"),
     BANKING:        t("land.cat.BANKING"),
@@ -62,8 +87,29 @@ export default async function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-saffron-50/30">
+    <main className="min-h-screen bg-saffron-50/30 xl:pr-80">
       <SiteHeader locale={locale} t={t} signedIn={signedIn} />
+
+      {/* Live community discussions — fixed right rail on xl+, FAB+drawer otherwise */}
+      <DiscussionsSidebar
+        initial={initialThreads}
+        signedIn={signedIn}
+        labels={{
+          title:      t("disc.title"),
+          subtitle:   t("disc.subtitle"),
+          replies:    t("disc.replies"),
+          reply:      t("disc.reply"),
+          viewAll:    t("disc.viewAll"),
+          startNew:   t("disc.startNew"),
+          empty:      t("disc.empty"),
+          justNow:    t("disc.justNow"),
+          minutesAgo: t("disc.minutesAgo"),
+          hoursAgo:   t("disc.hoursAgo"),
+          daysAgo:    t("disc.daysAgo"),
+          openAria:   t("disc.sidebar.openAria"),
+          closeAria:  t("disc.sidebar.closeAria"),
+        }}
+      />
 
       {/* ── Hero: brand line + search + chips + grid ───────────────── */}
       <section className="container-prose pt-12 pb-16 sm:pt-16 sm:pb-20">
@@ -101,24 +147,6 @@ export default async function HomePage() {
           </div>
         )}
       </section>
-
-      {/* ── Rolling community discussions ────────────────────────── */}
-      <HomeDiscussions
-        signedIn={signedIn}
-        labels={{
-          title:      t("disc.title"),
-          subtitle:   t("disc.subtitle"),
-          replies:    t("disc.replies"),
-          reply:      t("disc.reply"),
-          viewAll:    t("disc.viewAll"),
-          startNew:   t("disc.startNew"),
-          empty:      t("disc.empty"),
-          justNow:    t("disc.justNow"),
-          minutesAgo: t("disc.minutesAgo"),
-          hoursAgo:   t("disc.hoursAgo"),
-          daysAgo:    t("disc.daysAgo"),
-        }}
-      />
 
       {/* ── Feature pillars: everything you need ─────────────────── */}
       <section id="features" className="border-t border-ink-200/50 bg-white py-16 sm:py-24">

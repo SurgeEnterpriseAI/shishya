@@ -145,6 +145,8 @@ export const dict = {
     "disc.minutesAgo": "min ago",
     "disc.hoursAgo": "hr ago",
     "disc.daysAgo": "d ago",
+    "disc.sidebar.openAria": "Open community discussions",
+    "disc.sidebar.closeAria": "Close discussions",
 
     // ── Exam timeline (news + important dates on /exams/[code])
     "timeline.news.title": "Latest news",
@@ -389,6 +391,8 @@ export const dict = {
     "disc.minutesAgo": "मिनट पहले",
     "disc.hoursAgo": "घंटे पहले",
     "disc.daysAgo": "दिन पहले",
+    "disc.sidebar.openAria": "सामुदायिक चर्चाएँ खोलें",
+    "disc.sidebar.closeAria": "चर्चाएँ बंद करें",
 
     "timeline.news.title": "ताज़ा ख़बरें",
     "timeline.news.empty": "इस परीक्षा के लिए अभी कोई ख़बर नहीं।",
