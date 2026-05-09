@@ -59,6 +59,32 @@ export const dict = {
     "loop.s4.title": "4. Chat & improve",
     "loop.s4.body": "Ask the AI tutor for materials or another mock — it builds it for you.",
 
+    // ── Feature pillars (the "everything you need" section)
+    "features.title": "Everything you need to crack your exam",
+    "features.subtitle": "Real PYQs, fresh mocks every day, AI-driven weak-area detection, and a progress bar that shows what to fix. All free.",
+    "features.pyq.title": "Previous year papers",
+    "features.pyq.body": "Real PYQs for every exam, organised by year and topic. Practice the questions that actually appear.",
+    "features.daily.title": "Fresh mocks every day",
+    "features.daily.body": "AI builds new mocks daily. Never run out of practice — and never repeat the same paper twice.",
+    "features.weakness.title": "Weakness map",
+    "features.weakness.body": "Per-topic mastery score. See exactly which topics need tomorrow's hour, not a vague overall percentile.",
+    "features.adaptive.title": "Adaptive mocks",
+    "features.adaptive.body": "Your next mock is built around your weakest topics. The system adapts every time you submit.",
+    "features.progress.title": "Real progress tracker",
+    "features.progress.body": "Topic-by-topic progress bars. Watch mastery climb week after week. Honest data — no fake streaks.",
+    "features.tutor.title": "24/7 AI tutor",
+    "features.tutor.body": "Stuck on a concept? Ask. The tutor knows your syllabus and your weak topics. English or Hindi.",
+
+    // ── Progress demo block (sample dashboard)
+    "progress.title": "Your progress at a glance",
+    "progress.subtitle": "A sample dashboard — every topic climbs as you practice. Real numbers, weekly deltas, no vanity metrics.",
+    "progress.demo.exam": "SSC CGL · Quantitative Aptitude",
+    "progress.demo.thisweek": "This week",
+    "progress.demo.mocks": "mocks taken",
+    "progress.demo.questions": "questions practised",
+    "progress.demo.topicsImproved": "topics improved",
+    "progress.demo.delta": "this week",
+
     // ── (legacy keys kept below for any pages still referencing them)
     "hero.badge": "Free forever · For every student in India",
     "hero.h1.line1": "AI-tutored prep for India's",
@@ -241,6 +267,32 @@ export const dict = {
     "loop.s3.body": "कमज़ोरी का नक़्शा — किन विषयों पर मेहनत चाहिए, साफ़ दिखता है।",
     "loop.s4.title": "४. चैट और सुधार",
     "loop.s4.body": "AI ट्यूटर से सामग्री या नया मॉक माँगिए — आपके लिए बना देगा।",
+
+    // ── Feature pillars
+    "features.title": "परीक्षा क्रैक करने के लिए सब कुछ — एक ही जगह",
+    "features.subtitle": "असली PYQs, हर दिन नए मॉक, AI से कमज़ोर विषयों की पहचान, और एक प्रोग्रेस बार जो दिखाता है क्या ठीक करना है। सब मुफ़्त।",
+    "features.pyq.title": "पिछले वर्षों के प्रश्न",
+    "features.pyq.body": "हर परीक्षा के असली PYQs — वर्ष और विषय के अनुसार व्यवस्थित। वही सवाल जो असल में आते हैं।",
+    "features.daily.title": "रोज़ नए मॉक",
+    "features.daily.body": "AI हर दिन नए मॉक बनाता है। अभ्यास कभी ख़त्म नहीं — और वही पेपर दोबारा नहीं।",
+    "features.weakness.title": "कमज़ोरी का नक़्शा",
+    "features.weakness.body": "विषयवार मास्टरी स्कोर। ठीक-ठीक देखें कौन से विषय पर कल का घंटा देना है — कोई अस्पष्ट परसेंटाइल नहीं।",
+    "features.adaptive.title": "एडैप्टिव मॉक",
+    "features.adaptive.body": "आपका अगला मॉक आपके सबसे कमज़ोर विषयों पर केंद्रित होता है। हर सबमिशन के बाद सिस्टम अपडेट होता है।",
+    "features.progress.title": "असली प्रगति ट्रैकर",
+    "features.progress.body": "विषयवार प्रोग्रेस बार। हफ़्ते-दर-हफ़्ते मास्टरी बढ़ती देखें। सच्चा डेटा — नक़ली स्ट्रीक नहीं।",
+    "features.tutor.title": "24/7 AI ट्यूटर",
+    "features.tutor.body": "किसी कॉन्सेप्ट पर अटक गए? पूछिए। ट्यूटर आपका सिलेबस और कमज़ोर विषय जानता है। हिंदी या English।",
+
+    // ── Progress demo
+    "progress.title": "आपकी प्रगति, एक नज़र में",
+    "progress.subtitle": "एक सैंपल डैशबोर्ड — अभ्यास के साथ हर विषय ऊपर चढ़ता है। असली नंबर, साप्ताहिक डेल्टा, कोई दिखावटी मेट्रिक नहीं।",
+    "progress.demo.exam": "SSC CGL · क्वांटिटेटिव एप्टीट्यूड",
+    "progress.demo.thisweek": "इस हफ़्ते",
+    "progress.demo.mocks": "मॉक दिए",
+    "progress.demo.questions": "सवाल हल किए",
+    "progress.demo.topicsImproved": "विषयों में सुधार",
+    "progress.demo.delta": "इस हफ़्ते",
 
     "nav.signin": "Google से साइन इन करें",
     "nav.signin.short": "साइन इन",
