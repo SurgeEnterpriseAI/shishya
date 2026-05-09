@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { LangSwitcher } from "@/components/LangSwitcher";
 import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
+import { HomeDiscussions } from "@/components/HomeDiscussions";
 
 // Top 20 Indian entrance / job exams by approximate annual candidate volume.
 // `live: true` means we have validated questions for this exam in the DB; the
@@ -67,13 +68,10 @@ export default async function HomePage() {
       {/* ── Hero: brand line + search + chips + grid ───────────────── */}
       <section className="container-prose pt-12 pb-16 sm:pt-16 sm:pb-20">
         <div className="mx-auto max-w-3xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-ink-900 sm:text-6xl">
+          <h1 className="bg-gradient-to-r from-ink-900 via-saffron-700 to-ink-900 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
             {t("land.title")}
-            <span className="ml-2 bg-gradient-to-r from-saffron-600 to-saffron-400 bg-clip-text text-transparent">
-              {t("land.title.accent")}
-            </span>
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-base text-ink-600 sm:text-lg">
+          <p className="mx-auto mt-5 max-w-2xl text-base text-ink-600 sm:text-lg">
             {t("land.subtitle")}
           </p>
         </div>
@@ -103,6 +101,24 @@ export default async function HomePage() {
           </div>
         )}
       </section>
+
+      {/* ── Rolling community discussions ────────────────────────── */}
+      <HomeDiscussions
+        signedIn={signedIn}
+        labels={{
+          title:      t("disc.title"),
+          subtitle:   t("disc.subtitle"),
+          replies:    t("disc.replies"),
+          reply:      t("disc.reply"),
+          viewAll:    t("disc.viewAll"),
+          startNew:   t("disc.startNew"),
+          empty:      t("disc.empty"),
+          justNow:    t("disc.justNow"),
+          minutesAgo: t("disc.minutesAgo"),
+          hoursAgo:   t("disc.hoursAgo"),
+          daysAgo:    t("disc.daysAgo"),
+        }}
+      />
 
       {/* ── Feature pillars: everything you need ─────────────────── */}
       <section id="features" className="border-t border-ink-200/50 bg-white py-16 sm:py-24">

@@ -35,6 +35,8 @@ model User {
   weaknessMaps    WeaknessMap[]
   chatSessions    ChatSession[]
   progressEvents  ProgressEvent[]
+  discussions     Discussion[]        @relation("DiscussionAuthor")
+  discussionMessages DiscussionMessage[] @relation("MessageAuthor")
 
   @@index([email])
 }
@@ -102,6 +104,9 @@ model Exam {
   enrollments Enrollment[]
   weaknessMaps WeaknessMap[]
   chatSessions ChatSession[]
+  discussions  Discussion[]
+  newsItems    ExamNewsItem[]
+  importantDates ExamImportantDate[]
 
   @@index([code])
   @@index([active])
@@ -316,6 +321,85 @@ model ProgressEvent {
 
   @@index([userId, createdAt])
   @@index([type])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// COMMUNITY — discussion threads & messages (visible on home page)
+// ─────────────────────────────────────────────────────────────────────────
+
+model Discussion {
+  id             String       @id @default(cuid())
+  title          String
+  // Optional exam scope. When non-null, the discussion appears on that exam's
+  // page in addition to the global discussions list.
+  examId         String?
+  // Author at thread creation. Display name is denormalised so list views
+  // don't have to JOIN to render.
+  authorId       String?
+  authorName     String?
+  // Denormalised counters / activity timestamp keep the home-page list cheap.
+  lastActivityAt DateTime     @default(now())
+  messageCount   Int          @default(0)
+  locked         Boolean      @default(false)
+  // Sticky / pinned threads bubble to the top of the home list.
+  pinned         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  exam     Exam?               @relation(fields: [examId], references: [id], onDelete: SetNull)
+  author   User?               @relation("DiscussionAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  messages DiscussionMessage[]
+
+  @@index([lastActivityAt])
+  @@index([examId])
+  @@index([pinned, lastActivityAt])
+}
+
+model DiscussionMessage {
+  id           String   @id @default(cuid())
+  threadId     String
+  authorId     String?
+  authorName   String?
+  content      String   @db.Text
+  createdAt    DateTime @default(now())
+
+  thread Discussion @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author User?      @relation("MessageAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([threadId, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// EXAM TIMELINE — news items & important dates per exam
+// ─────────────────────────────────────────────────────────────────────────
+
+model ExamNewsItem {
+  id          String   @id @default(cuid())
+  examId      String
+  title       String
+  body        String   @db.Text
+  source      String?  // optional URL to official notice / news source
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([examId, publishedAt])
+}
+
+model ExamImportantDate {
+  id        String   @id @default(cuid())
+  examId    String
+  label     String           // e.g. "Application opens", "Tier 1 exam date"
+  date      DateTime
+  isExamDay Boolean  @default(false) // highlight in UI
+  source    String?           // optional URL
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([examId, date])
 }
 
 // ─────────────────────────────────────────────────────────────────────────

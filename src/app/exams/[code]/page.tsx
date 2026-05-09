@@ -36,7 +36,7 @@ export default async function ExamPage({
   });
   if (!exam) notFound();
 
-  const [enrollment, weakness, recent, validatedQuestionCount] = await Promise.all([
+  const [enrollment, weakness, recent, validatedQuestionCount, newsItems, importantDates] = await Promise.all([
     prisma.enrollment.findUnique({
       where: { userId_examId: { userId, examId: exam.id } },
     }),
@@ -53,6 +53,16 @@ export default async function ExamPage({
       take: 3,
     }),
     prisma.question.count({ where: { examId: exam.id, validated: true } }),
+    prisma.examNewsItem.findMany({
+      where: { examId: exam.id },
+      orderBy: { publishedAt: "desc" },
+      take: 5,
+    }),
+    prisma.examImportantDate.findMany({
+      where: { examId: exam.id },
+      orderBy: { date: "asc" },
+      take: 10,
+    }),
   ]);
 
   const isEnrolled = !!enrollment;
@@ -105,6 +115,98 @@ export default async function ExamPage({
             </div>
           )}
         </div>
+
+        {/* News + Important Dates */}
+        {(newsItems.length > 0 || importantDates.length > 0) && (
+          <section className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* News */}
+            <div>
+              <h2 className="text-base font-semibold text-ink-800">{t("timeline.news.title")}</h2>
+              {newsItems.length === 0 ? (
+                <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
+                  {t("timeline.news.empty")}
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-2">
+                  {newsItems.map((n) => {
+                    const ageDays = Math.floor((Date.now() - n.publishedAt.getTime()) / (24 * 60 * 60 * 1000));
+                    return (
+                      <li key={n.id} className="rounded-md border border-ink-200 bg-white p-4">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <h3 className="text-sm font-semibold text-ink-900">{n.title}</h3>
+                          <span className="shrink-0 text-xs text-ink-500">
+                            {ageDays === 0 ? t("timeline.dates.today")
+                              : ageDays === 1 ? `1 ${t("disc.daysAgo")}`
+                              : `${ageDays} ${t("disc.daysAgo")}`}
+                          </span>
+                        </div>
+                        <p className="mt-1.5 text-sm text-ink-700">{n.body}</p>
+                        {n.source && (
+                          <a
+                            href={n.source}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
+                          >
+                            Source →
+                          </a>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+
+            {/* Important Dates */}
+            <div>
+              <h2 className="text-base font-semibold text-ink-800">{t("timeline.dates.title")}</h2>
+              {importantDates.length === 0 ? (
+                <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
+                  {t("timeline.dates.empty")}
+                </p>
+              ) : (
+                <ol className="mt-3 space-y-2">
+                  {importantDates.map((d) => {
+                    const days = Math.ceil((d.date.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+                    const passed = days < 0;
+                    let when: string;
+                    if (passed) when = t("timeline.dates.passed");
+                    else if (days === 0) when = t("timeline.dates.today");
+                    else if (days === 1) when = t("timeline.dates.tomorrow");
+                    else when = `${days} ${t("timeline.dates.daysAway")}`;
+                    return (
+                      <li
+                        key={d.id}
+                        className={
+                          d.isExamDay
+                            ? "rounded-md border-2 border-saffron-400 bg-saffron-50 p-4"
+                            : passed
+                            ? "rounded-md border border-ink-200 bg-ink-50/40 p-4 opacity-60"
+                            : "rounded-md border border-ink-200 bg-white p-4"
+                        }
+                      >
+                        <div className="flex items-baseline justify-between gap-2">
+                          <p className="text-sm font-medium text-ink-900">
+                            {d.isExamDay && <span className="mr-1">📌</span>}
+                            {d.label}
+                          </p>
+                          <span className={d.isExamDay ? "shrink-0 text-xs font-semibold text-saffron-800" : "shrink-0 text-xs text-ink-500"}>
+                            {when}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-ink-500">
+                          {d.date.toLocaleDateString("en-IN", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
+                        </p>
+                        {d.notes && <p className="mt-1.5 text-xs text-ink-600">{d.notes}</p>}
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Weakness map */}
         {weakness.length > 0 && (
