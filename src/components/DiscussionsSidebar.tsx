@@ -101,7 +101,7 @@ export function DiscussionsSidebar({
     <>
       {/* ─── Desktop: fixed right-edge panel ───────────────────────────── */}
       <aside
-        className="fixed bottom-0 right-0 top-16 z-20 hidden w-80 flex-col border-l border-ink-200 bg-white shadow-sm xl:flex"
+        className="fixed bottom-0 right-0 top-16 z-20 hidden w-80 flex-col border-l border-ink-200 bg-white shadow-sm 2xl:flex"
         aria-label={labels.title}
       >
         <PanelHeader labels={labels} newHref={newDiscHref} />
@@ -125,7 +125,7 @@ export function DiscussionsSidebar({
         type="button"
         onClick={() => setOpen(true)}
         aria-label={labels.openAria}
-        className="bottom-safe fixed right-4 z-30 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-saffron-500 px-4 py-3 text-sm font-medium text-white shadow-lg ring-1 ring-saffron-700/20 hover:bg-saffron-600 xl:hidden"
+        className="bottom-safe fixed right-4 z-30 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-saffron-500 px-4 py-3 text-sm font-medium text-white shadow-lg ring-1 ring-saffron-700/20 hover:bg-saffron-600 2xl:hidden"
       >
         <span className="relative flex h-2.5 w-2.5" aria-hidden>
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
@@ -142,7 +142,7 @@ export function DiscussionsSidebar({
 
       {/* ─── Mobile drawer ─────────────────────────────────────────────── */}
       {open && (
-        <div className="fixed inset-0 z-40 xl:hidden" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-40 2xl:hidden" role="dialog" aria-modal="true">
           {/* backdrop */}
           <div
             className="absolute inset-0 bg-ink-900/60 backdrop-blur-sm"

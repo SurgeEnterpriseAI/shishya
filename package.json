@@ -15,7 +15,7 @@
     "seed:exams": "tsx seed/exams/index.ts",
     "seed:ssc-cgl": "tsx seed/exams/ssc-cgl-syllabus.ts && tsx seed/questions/ssc-cgl-quant.ts && tsx seed/questions/ssc-cgl-reasoning.ts && tsx seed/questions/ssc-cgl-english.ts",
     "seed:rrb-ntpc": "tsx seed/exams/rrb-ntpc-syllabus.ts",
-    "seed:neet-ug": "tsx seed/exams/neet-ug-syllabus.ts && tsx seed/questions/neet-physics.ts",
+    "seed:neet-ug": "tsx seed/exams/neet-ug-syllabus.ts && tsx seed/questions/neet-physics.ts && tsx seed/questions/neet-chemistry.ts",
     "seed:all": "npm run seed:exams && npm run seed:ssc-cgl && npm run seed:rrb-ntpc && npm run seed:neet-ug",
     "generate:questions": "tsx scripts/generate-questions.ts",
     "smoke-test": "tsx scripts/smoke-test.ts",
