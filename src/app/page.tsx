@@ -35,8 +35,17 @@ const TOP_20_EXAMS: ExamCard[] = [
 ];
 
 export default async function HomePage() {
-  const [{ locale, t }, session] = await Promise.all([getT(), auth()]);
-  const signedIn = Boolean(session?.user);
+  const { locale, t } = await getT();
+  // Resilient session lookup: if env vars (DATABASE_URL / NEXTAUTH_*) are
+  // missing or the DB is unreachable, the landing page must still render.
+  // We just treat the user as logged-out in that case.
+  let signedIn = false;
+  try {
+    const session = await auth();
+    signedIn = Boolean(session?.user);
+  } catch {
+    signedIn = false;
+  }
 
   const catLabels: Record<string, string> = {
     GOVT_JOBS:      t("land.cat.GOVT_JOBS"),
