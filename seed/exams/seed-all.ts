@@ -44,12 +44,16 @@ import { seedSzfIoelSyllabus } from "./szf-ioel-syllabus";
 import { seedNstseSyllabus } from "./nstse-syllabus";
 import { seedZioSyllabus } from "./zio-syllabus";
 import { seedPrilSyllabus } from "./pril-syllabus";
+import { seedStateExams } from "./state-exams";
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log("\n=== Step 1: Exam metadata ===");
   await seedExams();
+
+  console.log("\n=== Step 1b: State-level exam metadata ===");
+  await seedStateExams();
 
   console.log("\n=== Step 2: Syllabi ===");
   const syllabi: Array<[string, () => Promise<void>]> = [

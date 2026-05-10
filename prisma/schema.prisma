@@ -95,6 +95,9 @@ model Exam {
   languages     Language[]          // languages exam is offered in
   active        Boolean  @default(true)
   candidatesPerYear Int?            // approximate annual volume
+  // ISO state code for STATE_LEVEL exams (TN, KA, MH, UP, ...). Null for
+  // national/central exams. Drives the StatePicker grouping.
+  state         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -110,6 +113,7 @@ model Exam {
 
   @@index([code])
   @@index([active])
+  @@index([category, state])
 }
 
 model Subject {
@@ -430,6 +434,7 @@ enum ExamCategory {
   MBA             // CAT
   LAW             // CLAT
   OLYMPIAD        // HBCSE, SOF, Silverzone, NSTSE, ZIO/INOI, PRIL
+  STATE_LEVEL     // State PSC, State TET, State Police, etc.
   OTHER
 }
 

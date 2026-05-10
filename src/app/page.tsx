@@ -6,7 +6,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { LangSwitcher } from "@/components/LangSwitcher";
-import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
+import { ExamPicker, type ExamCard, type StateInfo } from "@/components/ExamPicker";
+import { INDIAN_STATES } from "@/lib/states";
 import { DiscussionsSidebar, type ThreadItem } from "@/components/DiscussionsSidebar";
 import { LiveCountersStrip } from "@/components/LiveCounters";
 
@@ -30,6 +31,7 @@ async function loadExams(): Promise<ExamCard[]> {
         shortName: true,
         category: true,
         candidatesPerYear: true,
+        state: true,
         _count: { select: { questions: { where: { validated: true } } } },
       },
     });
@@ -39,11 +41,31 @@ async function loadExams(): Promise<ExamCard[]> {
       shortName: e.shortName,
       category: e.category,
       candidatesPerYear: e.candidatesPerYear,
+      state: e.state ?? null,
       live: (e._count?.questions ?? 0) > 0,
     }));
   } catch {
     return FALLBACK_EXAMS;
   }
+}
+
+function buildStateInfo(exams: ExamCard[]): StateInfo[] {
+  const byState = new Map<string, number>();
+  for (const e of exams) {
+    if (e.category !== "STATE_LEVEL" || !e.state) continue;
+    byState.set(e.state, (byState.get(e.state) ?? 0) + 1);
+  }
+  return INDIAN_STATES.map((s) => ({
+    code: s.code,
+    name: s.name,
+    type: s.type,
+    native: s.native,
+    examCount: byState.get(s.code) ?? 0,
+  })).sort((a, b) => {
+    // States with content first, then alphabetic.
+    if ((a.examCount > 0) !== (b.examCount > 0)) return b.examCount - a.examCount;
+    return a.name.localeCompare(b.name);
+  });
 }
 
 export default async function HomePage() {
@@ -60,6 +82,7 @@ export default async function HomePage() {
   }
 
   const exams = await loadExams();
+  const stateInfo = buildStateInfo(exams);
 
   // Initial discussion threads for the right-side sidebar. Resilient: if the
   // DB isn't reachable yet (env vars missing), the sidebar falls back to an
@@ -97,6 +120,7 @@ export default async function HomePage() {
     LAW:            t("land.cat.LAW"),
     DEFENCE:        t("land.cat.DEFENCE"),
     OLYMPIAD:       t("land.cat.OLYMPIAD"),
+    STATE_LEVEL:    t("land.cat.STATE_LEVEL"),
   };
 
   return (
@@ -152,6 +176,7 @@ export default async function HomePage() {
         <div className="mt-10">
           <ExamPicker
             exams={exams}
+            states={stateInfo}
             signedIn={signedIn}
             labels={{
               searchPlaceholder: t("land.search.placeholder"),
@@ -162,6 +187,9 @@ export default async function HomePage() {
               statusLive: t("land.status.live"),
               statusComing: t("land.status.coming"),
               candidatesPerYear: t("land.candidates"),
+              pickState: t("land.pickState"),
+              pickStateBack: t("land.pickStateBack"),
+              examsConductedBy: t("land.examsConductedBy"),
             }}
           />
         </div>

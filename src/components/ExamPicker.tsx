@@ -19,6 +19,16 @@ export interface ExamCard {
   candidatesPerYear?: number | null;
   /** True when there's at least 1 validated question for this exam in the DB. */
   live: boolean;
+  /** ISO state code for STATE_LEVEL exams ("TN", "KA", ...); null otherwise. */
+  state?: string | null;
+}
+
+export interface StateInfo {
+  code: string;
+  name: string;
+  type: "state" | "ut";
+  native?: string;
+  examCount: number;
 }
 
 interface Labels {
@@ -31,19 +41,25 @@ interface Labels {
   statusLive: string;
   statusComing: string;
   candidatesPerYear: string;
+  pickState: string;
+  pickStateBack: string;
+  examsConductedBy: string;
 }
 
 export function ExamPicker({
   exams,
+  states,
   labels,
   signedIn,
 }: {
   exams: ExamCard[];
+  states?: StateInfo[];
   labels: Labels;
   signedIn: boolean;
 }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
+  const [pickedState, setPickedState] = useState<string | null>(null);
 
   // Build distinct category list from input data — preserves natural ordering of the source.
   const categories = useMemo(() => {
@@ -58,15 +74,29 @@ export function ExamPicker({
     return out;
   }, [exams]);
 
+  const inStateFlow = cat === "STATE_LEVEL";
+  const showStateGrid = inStateFlow && !pickedState;
+
+  // Reset state pick when leaving the State category
+  if (!inStateFlow && pickedState) setPickedState(null);
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return exams.filter((e) => {
       if (cat && e.category !== cat) return false;
+      if (inStateFlow && pickedState && e.state !== pickedState) return false;
       if (!needle) return true;
-      const hay = `${e.name} ${e.shortName} ${e.code} ${e.category}`.toLowerCase();
+      const hay = `${e.name} ${e.shortName} ${e.code} ${e.category} ${e.state ?? ""}`.toLowerCase();
       return hay.includes(needle);
     });
-  }, [exams, q, cat]);
+  }, [exams, q, cat, inStateFlow, pickedState]);
+
+  const filteredStates = useMemo(() => {
+    if (!states) return [];
+    const needle = q.trim().toLowerCase();
+    if (!needle) return states;
+    return states.filter((s) => `${s.name} ${s.native ?? ""} ${s.code}`.toLowerCase().includes(needle));
+  }, [states, q]);
 
   return (
     <div className="mx-auto w-full max-w-4xl">
@@ -89,18 +119,70 @@ export function ExamPicker({
 
       {/* ── Category chips ──────────────────────────────────────────── */}
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-        <Chip selected={cat === null} onClick={() => setCat(null)}>
+        <Chip selected={cat === null} onClick={() => { setCat(null); setPickedState(null); }}>
           {labels.catAll}
         </Chip>
         {categories.map((c) => (
-          <Chip key={c} selected={cat === c} onClick={() => setCat(cat === c ? null : c)}>
+          <Chip key={c} selected={cat === c} onClick={() => { setCat(cat === c ? null : c); setPickedState(null); }}>
             {labels.catLabels[c] ?? c}
           </Chip>
         ))}
       </div>
 
+      {/* ── State flow: state grid (level 1 of state navigation) ─────── */}
+      {showStateGrid && states && states.length > 0 ? (
+        <>
+          <p className="mt-8 text-center text-sm font-medium text-ink-700">{labels.pickState}</p>
+          {filteredStates.length === 0 ? (
+            <p className="mt-6 text-center text-sm text-ink-500">{labels.noResults}</p>
+          ) : (
+            <ul className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {filteredStates.map((s) => (
+                <li key={s.code}>
+                  <button
+                    type="button"
+                    onClick={() => setPickedState(s.code)}
+                    disabled={s.examCount === 0}
+                    className="group flex w-full items-start justify-between gap-2 rounded-lg border border-ink-200 bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:border-ink-200 disabled:hover:shadow-none"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-ink-900">{s.name}</p>
+                      {s.native && (
+                        <p className="mt-0.5 truncate text-xs text-ink-500">{s.native}</p>
+                      )}
+                    </div>
+                    <span className="shrink-0 rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-medium tabular-nums text-ink-700">
+                      {s.examCount}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      ) : null}
+
+      {/* ── State flow: exam list for picked state (level 2) ─────────── */}
+      {inStateFlow && pickedState ? (
+        <div className="mt-8 mb-3 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setPickedState(null)}
+            className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
+          >
+            ← {labels.pickStateBack}
+          </button>
+          <p className="text-xs text-ink-500">
+            {labels.examsConductedBy}{" "}
+            <span className="font-medium text-ink-800">
+              {states?.find((s) => s.code === pickedState)?.name ?? pickedState}
+            </span>
+          </p>
+        </div>
+      ) : null}
+
       {/* ── Result grid ─────────────────────────────────────────────── */}
-      {filtered.length === 0 ? (
+      {showStateGrid ? null : filtered.length === 0 ? (
         <p className="mt-10 text-center text-sm text-ink-500">{labels.noResults}</p>
       ) : (
         <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
