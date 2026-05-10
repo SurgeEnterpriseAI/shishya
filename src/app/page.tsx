@@ -109,6 +109,7 @@ export default async function HomePage() {
           preparingNow:      t("live.preparingNow"),
           inMockNow:         t("live.inMockNow"),
           activeDiscussions: t("disc.title"),
+          totalEver:         t("live.totalEver"),
         }}
       />
 

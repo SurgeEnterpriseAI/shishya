@@ -24,7 +24,19 @@ export interface LiveCounts {
   mocksToday: number;
   /** Discussion threads with activity in the last hour. */
   activeDiscussions: number;
+  /** Cumulative students who have ever used Shishya. Strictly monotonic. */
+  totalEver: number;
 }
+
+/** Synthetic launch date for the cumulative-users counter. Counter grows
+ *  linearly (~1,300/day) from this anchor so the number is deterministic
+ *  and always increasing — replace with a real users-table count when
+ *  signup volume passes the synthetic floor. */
+const LAUNCH_DAY_EPOCH_INDEX = Math.floor(
+  new Date("2026-03-01T00:00:00Z").getTime() / (24 * 60 * 60 * 1000)
+);
+const TOTAL_BASE = 750_000;
+const TOTAL_PER_DAY = 1_300;
 
 /**
  * Compute live counters for a given timestamp. Deterministic — same input
@@ -68,7 +80,19 @@ export function getLiveCounts(now: Date = new Date()): LiveCounts {
   // Active discussions: small, plausible bound (15–60)
   const activeDiscussions = 18 + Math.floor(pseudoRandom(minute + 41) * 35);
 
-  return { online, mocksInProgress, mocksToday, activeDiscussions };
+  // Cumulative students who have ever used Shishya. Monotonic — never drops.
+  // ≈ 750k at launch, +1.3k per day. Today (≈70 days post-launch) ≈ 840k.
+  const daysSinceLaunch = Math.max(0, dayIndex - LAUNCH_DAY_EPOCH_INDEX);
+  const totalEver = TOTAL_BASE + daysSinceLaunch * TOTAL_PER_DAY;
+
+  return { online, mocksInProgress, mocksToday, activeDiscussions, totalEver };
+}
+
+/** Compact Indian-style format for the cumulative counter.
+ *  840000 → "8.4L", 1_250_000 → "12.5L", 950000 → "9.5L". */
+export function formatLakh(n: number): string {
+  if (n >= 10_000_000) return `${(n / 10_000_000).toFixed(1)}Cr`;
+  return `${(n / 100_000).toFixed(1)}L`;
 }
 
 /** Cheap deterministic 0–1 generator from an integer seed. */

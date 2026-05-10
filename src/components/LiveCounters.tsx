@@ -9,12 +9,13 @@
 //   <LiveCountersBlock />    — boxed widget for the right sidebar
 
 import { useEffect, useState } from "react";
-import { formatCount, getLiveCounts, type LiveCounts } from "@/lib/live-counters";
+import { formatCount, formatLakh, getLiveCounts, type LiveCounts } from "@/lib/live-counters";
 
 interface StripLabels {
   preparingNow: string;
   inMockNow: string;
   activeDiscussions: string;
+  totalEver: string;
 }
 
 const TICK_MS = 12_000;
@@ -36,7 +37,7 @@ function useLiveCounts(): LiveCounts {
  * page header on the landing.
  */
 export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
-  const { online, mocksInProgress } = useLiveCounts();
+  const { online, mocksInProgress, totalEver } = useLiveCounts();
   return (
     // Sticky to viewport top — stays visible while scrolling so the social
     // proof persists as the user moves through the page.
@@ -50,6 +51,11 @@ export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden>📝</span>
           <span className="tabular-nums font-medium">{formatCount(mocksInProgress)}</span> {labels.inMockNow}
+        </span>
+        <span className="hidden text-emerald-300 sm:inline">·</span>
+        <span className="inline-flex items-center gap-1.5">
+          <span aria-hidden>🎓</span>
+          <span className="tabular-nums font-semibold">{formatLakh(totalEver)}</span> {labels.totalEver}
         </span>
       </div>
     </div>
