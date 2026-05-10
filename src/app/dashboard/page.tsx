@@ -6,6 +6,9 @@ import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
+import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
+import { computeExamTags, TAG_ORDER } from "@/lib/exam-tags";
+import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -27,13 +30,78 @@ export default async function DashboardPage() {
     }),
     prisma.exam.findMany({
       where: { active: true },
-      orderBy: { candidatesPerYear: "desc" },
-      select: { id: true, code: true, shortName: true, name: true, category: true },
+      orderBy: [{ candidatesPerYear: "desc" }, { code: "asc" }],
+      select: {
+        id: true,
+        code: true,
+        shortName: true,
+        name: true,
+        category: true,
+        candidatesPerYear: true,
+        state: true,
+        _count: {
+          select: {
+            questions: { where: { validated: true } },
+            mocks: { where: { userId: null } },
+          },
+        },
+      },
     }),
   ]);
 
   const enrolledIds = new Set(enrollments.map((e) => e.examId));
-  const otherExams = allExams.filter((e) => !enrolledIds.has(e.id));
+  const otherExamCards: ExamCard[] = allExams
+    .filter((e) => !enrolledIds.has(e.id))
+    .map((e) => ({
+      code: e.code,
+      name: e.name,
+      shortName: e.shortName,
+      category: e.category,
+      candidatesPerYear: e.candidatesPerYear,
+      state: e.state ?? null,
+      live: ((e._count?.questions ?? 0) > 0) || ((e._count?.mocks ?? 0) > 0),
+      tags: computeExamTags({
+        code: e.code,
+        category: e.category,
+        state: e.state ?? null,
+        candidatesPerYear: e.candidatesPerYear,
+      }),
+    }));
+  const stateInfo = buildStateInfo(otherExamCards);
+  const featuredSections = buildCuratedSections(otherExamCards, t);
+
+  const catLabels: Record<string, string> = {
+    GOVT_JOBS:      t("land.cat.GOVT_JOBS"),
+    BANKING:        t("land.cat.BANKING"),
+    CIVIL_SERVICES: t("land.cat.CIVIL_SERVICES"),
+    MEDICAL:        t("land.cat.MEDICAL"),
+    ENGINEERING:    t("land.cat.ENGINEERING"),
+    TEACHING:       t("land.cat.TEACHING"),
+    UNIVERSITY:     t("land.cat.UNIVERSITY"),
+    MBA:            t("land.cat.MBA"),
+    LAW:            t("land.cat.LAW"),
+    DEFENCE:        t("land.cat.DEFENCE"),
+    OLYMPIAD:       t("land.cat.OLYMPIAD"),
+    STATE_LEVEL:    t("land.cat.STATE_LEVEL"),
+  };
+  const tagLabels: Record<string, string> = {
+    popular:        t("land.tag.popular"),
+    national:       t("land.tag.national"),
+    state:          t("land.tag.state"),
+    govt:           t("land.tag.govt"),
+    engineering:    t("land.tag.engineering"),
+    medical:        t("land.tag.medical"),
+    teaching:       t("land.tag.teaching"),
+    banking:        t("land.tag.banking"),
+    olympiad:       t("land.tag.olympiad"),
+    civil_services: t("land.tag.civil_services"),
+    mba:            t("land.tag.mba"),
+    law:            t("land.tag.law"),
+    police:         t("land.tag.police"),
+    university:     t("land.tag.university"),
+    polytechnic:    t("land.tag.polytechnic"),
+    defence:        t("land.tag.defence"),
+  };
 
   return (
     <main className="min-h-screen bg-ink-50/40">
@@ -122,26 +190,35 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* Other exams */}
-        {otherExams.length > 0 && (
+        {/* Other exams — curated browse (search + chips + state grid) */}
+        {otherExamCards.length > 0 && (
           <section className="mt-10">
             <h2 className="text-base font-semibold text-ink-800">{t("dash.explore")}</h2>
-            <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {otherExams.map((e) => (
-                <li key={e.id}>
-                  <Link
-                    href={`/exams/${e.code}`}
-                    className="flex items-center justify-between rounded-md border border-ink-200 bg-white px-4 py-3 hover:border-saffron-400 hover:shadow-sm"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-ink-900">{e.shortName}</p>
-                      <p className="text-xs text-ink-500">{e.category.replace("_", " ").toLowerCase()}</p>
-                    </div>
-                    <span className="text-saffron-600">→</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-4">
+              <ExamPicker
+                exams={otherExamCards}
+                states={stateInfo}
+                featured={featuredSections}
+                signedIn={true}
+                labels={{
+                  searchPlaceholder: t("land.search.placeholder"),
+                  searchLabel: t("land.search.label"),
+                  noResults: t("land.no.results"),
+                  catAll: t("land.cat.all"),
+                  catLabels,
+                  tagLabels,
+                  tagOrder: [...TAG_ORDER],
+                  statusLive: t("land.status.live"),
+                  statusComing: t("land.status.coming"),
+                  candidatesPerYear: t("land.candidates"),
+                  pickState: t("land.pickState"),
+                  pickStateBack: t("land.pickStateBack"),
+                  examsConductedBy: t("land.examsConductedBy"),
+                  seeAll: t("land.seeAll"),
+                  browseAllExams: t("land.browseAllExams"),
+                }}
+              />
+            </div>
           </section>
         )}
       </section>
