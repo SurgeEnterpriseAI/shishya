@@ -153,8 +153,8 @@ export const dict = {
     "features.adaptive.body": "Expert-curated mocks; Shishya AI picks the right one for you each time. Every next mock targets your weakest topics.",
     "features.progress.title": "Real progress tracker",
     "features.progress.body": "Topic-by-topic progress bars. Watch mastery climb week after week. Honest data — no fake streaks.",
-    "features.tutor.title": "24/7 AI tutor",
-    "features.tutor.body": "Stuck on a concept? Ask. The tutor knows your syllabus and your weak topics. English or Hindi.",
+    "features.tutor.title": "Shishya — your personal smart tutor",
+    "features.tutor.body": "Always-on, knows your syllabus, your weak topics, every mock you've taken. Ask anything in English or Hindi — Shishya teaches the way you learn.",
 
     // ── Discussion panel (rolling chat threads on the home page)
     "disc.title": "What other students are talking about",
@@ -531,8 +531,8 @@ export const dict = {
     "features.adaptive.body": "विशेषज्ञों द्वारा तैयार मॉक; Shishya AI हर बार आपके लिए सही मॉक चुनता है। हर अगला मॉक आपके सबसे कमज़ोर विषयों पर केंद्रित होता है।",
     "features.progress.title": "असली प्रगति ट्रैकर",
     "features.progress.body": "विषयवार प्रोग्रेस बार। हफ़्ते-दर-हफ़्ते मास्टरी बढ़ती देखें। सच्चा डेटा — नक़ली स्ट्रीक नहीं।",
-    "features.tutor.title": "24/7 AI ट्यूटर",
-    "features.tutor.body": "किसी कॉन्सेप्ट पर अटक गए? पूछिए। ट्यूटर आपका सिलेबस और कमज़ोर विषय जानता है। हिंदी या English।",
+    "features.tutor.title": "शिष्या — आपका निजी स्मार्ट ट्यूटर",
+    "features.tutor.body": "हमेशा उपलब्ध, आपका सिलेबस जानता है, आपकी कमज़ोरियाँ जानता है, हर दिए गए मॉक को जानता है। हिंदी या English में कुछ भी पूछिए — शिष्या आपके अंदाज़ में पढ़ाता है।",
 
     // ── Discussions
     "disc.title": "बाक़ी छात्र किस बारे में बात कर रहे हैं",

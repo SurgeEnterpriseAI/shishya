@@ -46,3 +46,6 @@ coverage/
 next-env.d.ts
 
 .vercel
+.cron-secret-tmp
+.env*.local
+
