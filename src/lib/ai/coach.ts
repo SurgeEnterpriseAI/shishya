@@ -15,12 +15,8 @@ export async function generateWeeklyCoach(
 ): Promise<CoachOutput> {
   const { studentState, recentAttempts, windowDays, language, syllabus } = input;
 
-  const systemBlocks = cachedSystem(
-    PLATFORM_PERSONA,
-    SAFETY_RULES,
-    ANSWER_FORMAT_RULES,
-    syllabusBlock(syllabus)
-  );
+  const STATIC_PROMPT = `${PLATFORM_PERSONA}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}`;
+  const systemBlocks = cachedSystem(STATIC_PROMPT, syllabusBlock(syllabus));
 
   const attemptsBlock = recentAttempts
     .map(

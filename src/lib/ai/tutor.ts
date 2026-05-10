@@ -44,13 +44,13 @@ export async function* tutorStream(
 > {
   const { studentState, syllabus, history, userMessage, language, ctx } = input;
 
-  const systemBlocks = cachedSystem(
-    PLATFORM_PERSONA,
-    SAFETY_RULES,
-    ANSWER_FORMAT_RULES,
-    TOOL_USE_GUIDE,
-    syllabusBlock(syllabus)
-  );
+  // Anthropic caps `cache_control` blocks at 4 per request. Combine the 4
+  // small static blocks (persona + safety + format + tools) into one cached
+  // block; keep syllabus as its own cached block. That's 2 blocks, well
+  // under the limit, and the cache key is unchanged for warm-cache hits as
+  // long as the four constants don't change between requests.
+  const STATIC_PROMPT = `${PLATFORM_PERSONA}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${TOOL_USE_GUIDE}`;
+  const systemBlocks = cachedSystem(STATIC_PROMPT, syllabusBlock(syllabus));
 
   const dynamicContext = `${studentStateBlock(studentState)}
 

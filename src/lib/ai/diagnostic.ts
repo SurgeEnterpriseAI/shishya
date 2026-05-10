@@ -19,12 +19,8 @@ export async function runDiagnostic(input: DiagnosticInput): Promise<DiagnosticO
   const topicMastery = computeTopicMastery(attempt);
 
   // ── Step 2: ask Claude for the narrative + recommendations ──────────────
-  const systemBlocks = cachedSystem(
-    PLATFORM_PERSONA,
-    SAFETY_RULES,
-    ANSWER_FORMAT_RULES,
-    syllabusBlock(syllabus)
-  );
+  const STATIC_PROMPT = `${PLATFORM_PERSONA}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}`;
+  const systemBlocks = cachedSystem(STATIC_PROMPT, syllabusBlock(syllabus));
 
   const userPrompt = `A student just completed a diagnostic mock for ${syllabus.examName}.
 
