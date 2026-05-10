@@ -70,7 +70,7 @@ export const dict = {
     "nav.exams": "Exams",
     "nav.howItWorks": "How it works",
     "nav.whyFree": "Why free",
-    "nav.tutor": "Ask the AI tutor →",
+    "nav.tutor": "Ask Shishya AI →",
 
     // ── new search-first landing
     "land.title": "What exam do you want to crack today?",
@@ -494,7 +494,7 @@ export const dict = {
     "nav.exams": "परीक्षाएँ",
     "nav.howItWorks": "कैसे काम करता है",
     "nav.whyFree": "मुफ़्त क्यों",
-    "nav.tutor": "AI ट्यूटर से पूछें →",
+    "nav.tutor": "शिष्या AI से पूछें →",
 
     "hero.badge": "हमेशा मुफ़्त · भारत के हर छात्र के लिए",
     "hero.h1.line1": "भारत की शीर्ष 10 प्रवेश परीक्षाओं के लिए",
