@@ -140,6 +140,12 @@ model Topic {
   name        String
   description String?  @db.Text
   syllabusText String? @db.Text  // detailed syllabus content for AI context
+  // Student-facing study material (markdown). Populated by
+  // scripts/generate-topic-notes.ts. Sectioned: overview, key concepts,
+  // formulas, worked examples, common mistakes, quick reference.
+  notes              String?   @db.Text
+  notesGeneratedAt   DateTime?
+  notesGeneratedBy   String?
   weight      Float    @default(1)
   orderIdx    Int      @default(0)
   createdAt   DateTime @default(now())

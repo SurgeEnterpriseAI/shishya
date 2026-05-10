@@ -504,20 +504,23 @@ export default async function ExamPage({
         {/* Syllabus */}
         <section id="syllabus" className="mt-10 scroll-mt-20">
           <h2 className="text-base font-semibold text-ink-800">{t("exam.syllabus")}</h2>
+          <p className="mt-1 text-xs text-ink-500">{t("exam.syllabus.clickHint")}</p>
           <div className="mt-4 space-y-6">
             {exam.subjects.map((s) => (
               <div key={s.id}>
                 <h3 className="text-sm font-semibold text-ink-900">{s.name}</h3>
                 <ul className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                   {s.topics.map((tp) => (
-                    <li
-                      key={tp.id}
-                      className="rounded-md border border-ink-200 bg-white px-3 py-2 text-sm text-ink-700"
-                    >
-                      <p className="font-medium text-ink-800">{tp.name}</p>
-                      {tp.description && (
-                        <p className="mt-0.5 text-xs text-ink-500 line-clamp-2">{tp.description}</p>
-                      )}
+                    <li key={tp.id}>
+                      <Link
+                        href={`/exams/${exam.code}/topics/${tp.code}`}
+                        className="group block rounded-md border border-ink-200 bg-white px-3 py-2 text-sm text-ink-700 transition-colors hover:border-saffron-400 hover:bg-saffron-50/40"
+                      >
+                        <p className="font-medium text-ink-800 group-hover:text-saffron-800">{tp.name}</p>
+                        {tp.description && (
+                          <p className="mt-0.5 text-xs text-ink-500 line-clamp-2">{tp.description}</p>
+                        )}
+                      </Link>
                     </li>
                   ))}
                 </ul>
