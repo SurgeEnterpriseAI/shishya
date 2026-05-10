@@ -1,24 +1,54 @@
-// AI Tutor (chat)
-// ────────────────
-// Conversational tutor. Knows the syllabus, the student's weakness map,
-// recent attempts. Replies in the student's preferred language. Can suggest
-// follow-up actions (take a topic mock, study a concept, etc.).
+// AI Tutor (chat) — with tool use.
+// ─────────────────────────────────────────────────────────────────────
+// The tutor runs a tool-use loop: Claude can call tools (look up the
+// student's mastery map, recent attempts, fetch practice questions, etc.)
+// before answering. The loop terminates when stop_reason !== "tool_use".
 //
-// Streams over the wire; the route handler should pipe to the client.
+// We stream *text deltas* and *tool events* to the route handler, which
+// forwards them as SSE. Tool-use turns are not delta-streamed (the SDK
+// gives them as units), but interim tool events let the UI show "Looking
+// up your weak topics…" while we work.
 
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropic, MODEL, cachedSystem, TOKEN_LIMITS } from "./client";
-import { PLATFORM_PERSONA, ANSWER_FORMAT_RULES, SAFETY_RULES, syllabusBlock, studentStateBlock } from "./prompts";
+import {
+  PLATFORM_PERSONA,
+  ANSWER_FORMAT_RULES,
+  SAFETY_RULES,
+  syllabusBlock,
+  studentStateBlock,
+} from "./prompts";
 import type { TutorInput, TutorOutput } from "./types";
+import { tutorTools, executeTool, type ToolContext } from "./tools";
 
-/** Non-streaming version — use for tests / one-shot calls. */
-export async function tutorReply(input: TutorInput): Promise<TutorOutput> {
-  const { studentState, syllabus, history, userMessage, language } = input;
+const MAX_TOOL_TURNS = 4;
+
+const TOOL_USE_GUIDE = `Tools available
+───────────────
+You have tools to look up real student data. Use them when relevant — never invent stats.
+
+- get_my_mastery → student's weakest topics (mastery %, attempt count). Call this when asked about weaknesses, what to study, or where to focus.
+- get_recent_attempts → last few mock attempts (score, topic mix, date). Call when student references "my last test" or asks about progress.
+- find_questions_on_topic → real validated practice questions on a topic. Call when student asks "quiz me", "give me a question on X", or you want to anchor an explanation in a real exam-format question.
+- get_attempt_mistakes → questions a student got wrong on a specific attempt. Call when reviewing a past attempt (after get_recent_attempts gave you the attempt_id).
+
+When find_questions_on_topic returns a question, present it WITHOUT the answer first. Let the student attempt; only reveal the solution after they respond.`;
+
+/** Streaming version — yields {delta} for text chunks, {tool} for tool events, {done} when complete. */
+export async function* tutorStream(
+  input: TutorInput & { ctx?: ToolContext }
+): AsyncGenerator<
+  | { delta: string }
+  | { tool: { name: string; args: any; ok: boolean; ms: number } }
+  | { done: TutorOutput }
+> {
+  const { studentState, syllabus, history, userMessage, language, ctx } = input;
 
   const systemBlocks = cachedSystem(
     PLATFORM_PERSONA,
     SAFETY_RULES,
     ANSWER_FORMAT_RULES,
+    TOOL_USE_GUIDE,
     syllabusBlock(syllabus)
   );
 
@@ -26,79 +56,123 @@ export async function tutorReply(input: TutorInput): Promise<TutorOutput> {
 
 Reply language: ${language}.
 
-If you want to suggest follow-up actions to the student, end your reply with a JSON line like:
+If you suggest follow-up actions to the student, append a single line in this format:
 <<ACTIONS>>{"actions":[{"kind":"TAKE_MOCK","topicCode":"quant.percentage","reason":"...","priority":1}]}<<END>>
+Skip if no clear next step.`;
 
-Only include the ACTIONS block if you have a clear, useful next step. Skip otherwise.`;
-
+  // Build the conversation. History first, then the user's new message with the dynamic context block.
   const messages: Anthropic.Messages.MessageParam[] = [
     ...history.map((t) => ({ role: t.role, content: t.content })),
     { role: "user" as const, content: `${dynamicContext}\n\n---\n\nUser: ${userMessage}` },
   ];
 
-  const response = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: TOKEN_LIMITS.tutor,
-    system: systemBlocks,
-    messages,
-  });
+  let finalText = "";
+  let toolTurns = 0;
 
-  const text = response.content
-    .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("\n");
+  while (true) {
+    const start = Date.now();
+    const response = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: TOKEN_LIMITS.tutor,
+      system: systemBlocks,
+      messages,
+      tools: ctx ? tutorTools : undefined,
+    });
 
-  const { reply, suggestedActions, citedTopics } = splitActions(text);
-  return { reply, suggestedActions, citedTopics };
+    // Append the assistant message to the conversation history (full content blocks
+    // — tool_use blocks need to be carried forward so tool_result can reference them).
+    messages.push({ role: "assistant", content: response.content });
+
+    // Capture any text from this turn.
+    for (const block of response.content) {
+      if (block.type === "text") finalText += (finalText ? "\n" : "") + block.text;
+    }
+
+    if (response.stop_reason !== "tool_use" || !ctx) {
+      break;
+    }
+
+    if (toolTurns >= MAX_TOOL_TURNS) {
+      // Soft-cap: tell the model to wrap up.
+      messages.push({
+        role: "user",
+        content: "Tool budget exhausted. Answer the student now using what you already know.",
+      });
+      // One last call without tools to force a text answer.
+      const wrap = await anthropic.messages.create({
+        model: MODEL,
+        max_tokens: TOKEN_LIMITS.tutor,
+        system: systemBlocks,
+        messages,
+      });
+      for (const block of wrap.content) {
+        if (block.type === "text") finalText += (finalText ? "\n" : "") + block.text;
+      }
+      break;
+    }
+
+    // Execute every tool_use block from this response in order.
+    const toolUses = response.content.filter(
+      (b): b is Anthropic.Messages.ToolUseBlock => b.type === "tool_use"
+    );
+    const toolResults: Anthropic.Messages.ToolResultBlockParam[] = [];
+    for (const tu of toolUses) {
+      const tStart = Date.now();
+      const result = await executeTool(ctx, tu.name, tu.input);
+      const ms = Date.now() - tStart;
+      yield {
+        tool: { name: tu.name, args: tu.input, ok: result.ok, ms },
+      };
+      toolResults.push({
+        type: "tool_result",
+        tool_use_id: tu.id,
+        content: JSON.stringify(result.ok ? result.data : { error: result.error }),
+        is_error: !result.ok,
+      });
+    }
+    messages.push({ role: "user", content: toolResults });
+    toolTurns += 1;
+    void start; // (latency telemetry consumer can be added later)
+  }
+
+  // Stream the final text out as ~80-char chunks for SSE feel.
+  const { reply, suggestedActions, citedTopics } = splitActions(finalText);
+  for (const piece of chunkForStream(reply)) {
+    yield { delta: piece };
+  }
+  yield { done: { reply, suggestedActions, citedTopics } };
 }
 
-/** Streaming version — yields text deltas; final chunk includes parsed actions. */
-export async function* tutorStream(
-  input: TutorInput
-): AsyncGenerator<{ delta?: string; done?: TutorOutput }> {
-  const { studentState, syllabus, history, userMessage, language } = input;
-
-  const systemBlocks = cachedSystem(
-    PLATFORM_PERSONA,
-    SAFETY_RULES,
-    ANSWER_FORMAT_RULES,
-    syllabusBlock(syllabus)
-  );
-  const dynamicContext = `${studentStateBlock(studentState)}\n\nReply language: ${language}.`;
-
-  const messages: Anthropic.Messages.MessageParam[] = [
-    ...history.map((t) => ({ role: t.role, content: t.content })),
-    { role: "user" as const, content: `${dynamicContext}\n\n---\n\nUser: ${userMessage}` },
-  ];
-
-  const stream = anthropic.messages.stream({
-    model: MODEL,
-    max_tokens: TOKEN_LIMITS.tutor,
-    system: systemBlocks,
-    messages,
-  });
-
-  let acc = "";
-  for await (const event of stream) {
-    if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-      acc += event.delta.text;
-      yield { delta: event.delta.text };
-    }
+/** Non-streaming version (one-shot). Useful for tests / batch processing. */
+export async function tutorReply(input: TutorInput & { ctx?: ToolContext }): Promise<TutorOutput> {
+  let final: TutorOutput | null = null;
+  for await (const chunk of tutorStream(input)) {
+    if ("done" in chunk) final = chunk.done;
   }
-  const final = await stream.finalMessage();
-  // ensure we use the canonical text in case streaming missed anything
-  const text =
-    final.content
-      .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("\n") || acc;
-  const { reply, suggestedActions, citedTopics } = splitActions(text);
-  yield { done: { reply, suggestedActions, citedTopics } };
+  if (!final) throw new Error("tutorStream completed without done");
+  return final;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────
+
+function* chunkForStream(text: string): Generator<string> {
+  if (!text) return;
+  // Break on word boundaries every ~80 chars so tokens stay coherent.
+  let i = 0;
+  while (i < text.length) {
+    const next = Math.min(text.length, i + 80);
+    let cut = next;
+    if (next < text.length) {
+      const ws = text.lastIndexOf(" ", next);
+      if (ws > i + 20) cut = ws + 1;
+    }
+    yield text.slice(i, cut);
+    i = cut;
+  }
+}
+
 function splitActions(text: string): TutorOutput {
   const re = /<<ACTIONS>>([\s\S]*?)<<END>>/;
   const m = re.exec(text);

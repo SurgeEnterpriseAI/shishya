@@ -21,6 +21,16 @@ interface ChatLabels {
   starters: string[];
 }
 
+function prettyTool(name?: string): string {
+  switch (name) {
+    case "get_my_mastery": return "Looking up your weak topics…";
+    case "get_recent_attempts": return "Fetching your recent attempts…";
+    case "find_questions_on_topic": return "Pulling practice questions…";
+    case "get_attempt_mistakes": return "Reviewing your mistakes…";
+    default: return name ? `Calling ${name}…` : "Thinking…";
+  }
+}
+
 export function ChatInterface({
   examCode,
   labels,
@@ -34,6 +44,7 @@ export function ChatInterface({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actions, setActions] = useState<{ kind: string; topicCode?: string; reason: string }[]>([]);
+  const [toolStatus, setToolStatus] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -49,6 +60,7 @@ export function ChatInterface({
     setBusy(true);
     setError(null);
     setActions([]);
+    setToolStatus(null);
 
     try {
       const res = await fetch("/api/chat", {
@@ -87,6 +99,7 @@ export function ChatInterface({
           } else if (event === "delta") {
             try {
               const parsed = JSON.parse(data);
+              setToolStatus(null);
               setMessages((m) => {
                 const last = m[m.length - 1];
                 if (last?.role !== "assistant") return m;
@@ -94,10 +107,16 @@ export function ChatInterface({
                 return [...m.slice(0, -1), updated];
               });
             } catch {}
+          } else if (event === "tool") {
+            try {
+              const parsed = JSON.parse(data);
+              setToolStatus(prettyTool(parsed?.name));
+            } catch {}
           } else if (event === "done") {
             try {
               const parsed = JSON.parse(data);
               if (Array.isArray(parsed?.actions) && parsed.actions.length) setActions(parsed.actions);
+              setToolStatus(null);
             } catch {}
           } else if (event === "error") {
             try {
@@ -152,7 +171,11 @@ export function ChatInterface({
                   : "max-w-prose rounded-lg bg-ink-100 px-4 py-2 text-sm text-ink-900 whitespace-pre-line"
               }
             >
-              {m.content || (m.role === "assistant" ? <span className="text-ink-500">{labels.thinking}</span> : null)}
+              {m.content || (
+                m.role === "assistant"
+                  ? <span className="text-ink-500">{toolStatus ?? labels.thinking}</span>
+                  : null
+              )}
             </div>
           </div>
         ))}

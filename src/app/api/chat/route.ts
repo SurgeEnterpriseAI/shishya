@@ -92,18 +92,24 @@ export async function POST(req: Request) {
           })),
           userMessage: body.message,
           language: studentState.preferredLang,
+          ctx: { userId: session.user.id, examCode: body.examCode },
         });
 
         let full = "";
         let actions: any = undefined;
+        const toolCalls: any[] = [];
         for await (const chunk of ai) {
-          if (chunk.delta) {
+          if ("delta" in chunk) {
             full += chunk.delta;
             controller.enqueue(
               encoder.encode(`event: delta\ndata: ${JSON.stringify(chunk.delta)}\n\n`)
             );
-          }
-          if (chunk.done) {
+          } else if ("tool" in chunk) {
+            toolCalls.push(chunk.tool);
+            controller.enqueue(
+              encoder.encode(`event: tool\ndata: ${JSON.stringify(chunk.tool)}\n\n`)
+            );
+          } else if ("done" in chunk) {
             actions = chunk.done.suggestedActions;
           }
         }
@@ -113,7 +119,7 @@ export async function POST(req: Request) {
             sessionId: chatSession!.id,
             role: "ASSISTANT",
             content: full,
-            metadata: { actions: actions ?? null },
+            metadata: { actions: actions ?? null, toolCalls },
           },
         });
 
@@ -122,6 +128,7 @@ export async function POST(req: Request) {
             `event: done\ndata: ${JSON.stringify({
               messageId: saved.id,
               actions: actions ?? [],
+              toolCalls,
             })}\n\n`
           )
         );

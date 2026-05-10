@@ -1,0 +1,289 @@
+// Tools that the Shishya tutor can call mid-conversation.
+//
+// Why tools at all?
+//   The tutor has a CACHED system prompt with the full syllabus + a
+//   DYNAMIC block with the student's weakness map. That works for one-shot
+//   questions but breaks down when the student says "what about my last
+//   attempt?" or "give me 3 practice questions on time-and-work" — we'd
+//   need to know in advance to fetch that data. Tools let Claude reach
+//   into the database on demand for exactly the data it needs.
+//
+// All executors are scoped to the calling user — they never accept a
+// userId from the model. The user's identity is bound at executor-build
+// time, so the model can't access another user's data even if confused.
+
+import Anthropic from "@anthropic-ai/sdk";
+import { prisma } from "@/lib/db/prisma";
+
+export interface ToolContext {
+  userId: string;
+  examCode: string;
+}
+
+export const tutorTools: Anthropic.Messages.Tool[] = [
+  {
+    name: "get_my_mastery",
+    description:
+      "Get the current student's mastery scores for each topic in the current exam. Returns the topics with the lowest mastery first (the student's weakest topics). Use this when the student asks about their weaknesses, what to study next, or what they should focus on.",
+    input_schema: {
+      type: "object",
+      properties: {
+        limit: {
+          type: "number",
+          description: "Max number of topics to return. Defaults to 8.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "get_recent_attempts",
+    description:
+      "Get the student's most recent submitted mock attempts for the current exam, including score percentage, topic-wise breakdown, and date. Use this when the student asks about their last attempt, recent scores, progress trend, or which test they took most recently.",
+    input_schema: {
+      type: "object",
+      properties: {
+        limit: {
+          type: "number",
+          description: "Max number of attempts to return. Defaults to 3.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "find_questions_on_topic",
+    description:
+      "Find validated practice questions on a specific topic of the current exam. Use this when you want to give the student a concrete practice question, or when they ask 'quiz me on X'. Each returned question includes the body, options, and correct answer — never recite the answer to the student before they attempt.",
+    input_schema: {
+      type: "object",
+      properties: {
+        topic_code: {
+          type: "string",
+          description: "Topic code as it appears in the syllabus (e.g. 'quant.percentage', 'reason.blood_relations'). Must be one of the topic codes in the exam syllabus block.",
+        },
+        difficulty: {
+          type: "string",
+          enum: ["EASY", "MEDIUM", "HARD"],
+          description: "Optional difficulty filter.",
+        },
+        limit: {
+          type: "number",
+          description: "Max questions to return. Defaults to 3, max 5.",
+        },
+      },
+      required: ["topic_code"],
+    },
+  },
+  {
+    name: "get_attempt_mistakes",
+    description:
+      "Get the questions the student got wrong on a specific attempt. Use this when the student wants to review what they got wrong on a particular mock — for example after the system suggests 'review your last attempt'.",
+    input_schema: {
+      type: "object",
+      properties: {
+        attempt_id: {
+          type: "string",
+          description: "Attempt id, usually obtained from get_recent_attempts.",
+        },
+      },
+      required: ["attempt_id"],
+    },
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────
+// Executors
+// ─────────────────────────────────────────────────────────────────────────
+
+export async function executeTool(
+  ctx: ToolContext,
+  name: string,
+  input: any
+): Promise<{ ok: true; data: any } | { ok: false; error: string }> {
+  try {
+    switch (name) {
+      case "get_my_mastery":
+        return { ok: true, data: await getMyMastery(ctx, input?.limit ?? 8) };
+      case "get_recent_attempts":
+        return { ok: true, data: await getRecentAttempts(ctx, input?.limit ?? 3) };
+      case "find_questions_on_topic":
+        return {
+          ok: true,
+          data: await findQuestionsOnTopic(
+            ctx,
+            String(input?.topic_code ?? ""),
+            input?.difficulty,
+            Math.min(5, Math.max(1, Number(input?.limit ?? 3)))
+          ),
+        };
+      case "get_attempt_mistakes":
+        return { ok: true, data: await getAttemptMistakes(ctx, String(input?.attempt_id ?? "")) };
+      default:
+        return { ok: false, error: `Unknown tool: ${name}` };
+    }
+  } catch (err: any) {
+    return { ok: false, error: String(err?.message ?? err).slice(0, 300) };
+  }
+}
+
+async function getMyMastery(ctx: ToolContext, limit: number) {
+  const exam = await prisma.exam.findUnique({ where: { code: ctx.examCode }, select: { id: true } });
+  if (!exam) return { topics: [] as any[], message: "Exam not found." };
+  const rows = await prisma.weaknessMap.findMany({
+    where: { userId: ctx.userId, examId: exam.id },
+    include: { topic: { select: { code: true, name: true } } },
+    orderBy: { masteryScore: "asc" },
+    take: Math.min(20, Math.max(1, limit)),
+  });
+  if (rows.length === 0) {
+    return {
+      topics: [],
+      message:
+        "No mastery data yet — student hasn't completed any attempts on this exam. Suggest taking a diagnostic mock first.",
+    };
+  }
+  return {
+    topics: rows.map((r) => ({
+      topic_code: r.topic.code,
+      topic_name: r.topic.name,
+      mastery_pct: Math.round(r.masteryScore * 100),
+      attempts: r.attemptsCount,
+      correct: r.correctCount,
+    })),
+  };
+}
+
+async function getRecentAttempts(ctx: ToolContext, limit: number) {
+  const exam = await prisma.exam.findUnique({ where: { code: ctx.examCode }, select: { id: true } });
+  if (!exam) return { attempts: [] as any[] };
+  const rows = await prisma.attempt.findMany({
+    where: {
+      userId: ctx.userId,
+      mock: { examId: exam.id },
+      status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+    },
+    include: { mock: { select: { title: true, type: true } } },
+    orderBy: { startedAt: "desc" },
+    take: Math.min(10, Math.max(1, limit)),
+  });
+  return {
+    attempts: rows.map((a) => ({
+      attempt_id: a.id,
+      mock_title: a.mock.title,
+      mock_type: a.mock.type,
+      started_at: a.startedAt.toISOString(),
+      duration_sec: a.durationSec,
+      score_pct: a.scorePct,
+      score_raw: a.scoreRaw,
+      score_max: a.scoreMax,
+      topic_scores: a.topicScores,
+      rank: a.rank,
+      percentile: a.percentile,
+    })),
+  };
+}
+
+async function findQuestionsOnTopic(
+  ctx: ToolContext,
+  topicCode: string,
+  difficulty: string | undefined,
+  limit: number
+) {
+  const exam = await prisma.exam.findUnique({ where: { code: ctx.examCode }, select: { id: true } });
+  if (!exam) return { questions: [] as any[], message: "Exam not found." };
+
+  const topic = await prisma.topic.findFirst({
+    where: { code: topicCode, subject: { examId: exam.id } },
+    include: { children: { select: { id: true } } },
+  });
+  if (!topic) {
+    return {
+      questions: [],
+      message: `No topic with code '${topicCode}' in this exam. Check the syllabus block for valid codes.`,
+    };
+  }
+  const topicIds = [topic.id, ...topic.children.map((c) => c.id)];
+
+  const where: any = { examId: exam.id, validated: true, topicId: { in: topicIds } };
+  if (difficulty && ["EASY", "MEDIUM", "HARD"].includes(difficulty)) {
+    where.difficulty = difficulty;
+  }
+
+  const qs = await prisma.question.findMany({
+    where,
+    take: limit,
+    orderBy: { id: "asc" },
+    select: {
+      id: true,
+      body: true,
+      options: true,
+      answerKey: true,
+      solution: true,
+      difficulty: true,
+      topic: { select: { code: true, name: true } },
+    },
+  });
+  if (qs.length === 0) {
+    return {
+      questions: [],
+      message: `No validated questions on '${topicCode}' yet. Suggest a different topic, or offer to walk through the concept conceptually.`,
+    };
+  }
+  return {
+    questions: qs.map((q) => ({
+      id: q.id,
+      topic_code: q.topic.code,
+      topic_name: q.topic.name,
+      difficulty: q.difficulty,
+      body: q.body,
+      options: q.options,
+      answer_key: q.answerKey,
+      solution: q.solution,
+    })),
+  };
+}
+
+async function getAttemptMistakes(ctx: ToolContext, attemptId: string) {
+  if (!attemptId) return { mistakes: [] as any[], message: "attempt_id required." };
+  const attempt = await prisma.attempt.findFirst({
+    where: { id: attemptId, userId: ctx.userId },
+    select: { id: true, answers: true, mockId: true },
+  });
+  if (!attempt) return { mistakes: [], message: "Attempt not found or not owned by user." };
+
+  const ans = (attempt.answers as any[]) ?? [];
+  const wrong = ans.filter((a) => a?.correct === false && a?.questionId);
+  if (wrong.length === 0) return { mistakes: [], message: "No wrong answers on this attempt." };
+
+  const qs = await prisma.question.findMany({
+    where: { id: { in: wrong.map((a) => a.questionId) } },
+    select: {
+      id: true,
+      body: true,
+      options: true,
+      answerKey: true,
+      solution: true,
+      topic: { select: { code: true, name: true } },
+    },
+  });
+  const byId = new Map(qs.map((q) => [q.id, q]));
+  return {
+    mistakes: wrong
+      .map((a) => {
+        const q = byId.get(a.questionId);
+        if (!q) return null;
+        return {
+          question_id: q.id,
+          topic_code: q.topic.code,
+          topic_name: q.topic.name,
+          body: q.body,
+          options: q.options,
+          chosen: a.chosen ?? null,
+          correct_answer: q.answerKey,
+          solution: q.solution,
+        };
+      })
+      .filter((x) => x !== null),
+  };
+}
