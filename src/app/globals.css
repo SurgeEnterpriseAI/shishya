@@ -106,4 +106,41 @@
   .bottom-safe {
     bottom: calc(1rem + var(--safe-bottom));
   }
+
+  /* Top progress bar shown during route transitions.
+     Used by every loading.tsx so navigation feels instant — users see a
+     thin saffron stripe slide across the top while server components fetch.
+     Lives at z-50 so it sits above the sticky header. */
+  .nav-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 60;
+    overflow: hidden;
+    background: rgba(15, 23, 42, 0.06);
+  }
+  .nav-progress::before {
+    content: "";
+    display: block;
+    height: 100%;
+    width: 40%;
+    background: linear-gradient(90deg, transparent 0%, #f97316 50%, transparent 100%);
+    animation: nav-progress-slide 1100ms ease-in-out infinite;
+  }
+  @keyframes nav-progress-slide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+  }
+
+  /* Skeleton blocks — neutral pulse used inside loading.tsx pages. */
+  .skel {
+    @apply rounded-md bg-ink-200/60;
+    animation: skel-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes skel-pulse {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 0.95; }
+  }
 }
