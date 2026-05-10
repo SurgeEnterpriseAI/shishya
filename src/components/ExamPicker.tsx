@@ -21,6 +21,8 @@ export interface ExamCard {
   live: boolean;
   /** ISO state code for STATE_LEVEL exams ("TN", "KA", ...); null otherwise. */
   state?: string | null;
+  /** Curated tags driving the homepage chip filter. Computed server-side. */
+  tags: string[];
 }
 
 export interface StateInfo {
@@ -36,7 +38,11 @@ interface Labels {
   searchLabel: string;
   noResults: string;
   catAll: string;
-  /** Map of category enum → translated chip label. Missing keys fall back to enum value. */
+  /** Map of tag id → translated chip label. Missing keys fall back to the id. */
+  tagLabels: Record<string, string>;
+  /** Ordered list of tags to render as chips. */
+  tagOrder: string[];
+  /** Map of category enum → translated label (used for the small subtitle on each card). */
   catLabels: Record<string, string>;
   statusLive: string;
   statusComing: string;
@@ -58,38 +64,34 @@ export function ExamPicker({
   signedIn: boolean;
 }) {
   const [q, setQ] = useState("");
-  const [cat, setCat] = useState<string | null>(null);
+  const [tag, setTag] = useState<string | null>(null);
   const [pickedState, setPickedState] = useState<string | null>(null);
 
-  // Build distinct category list from input data — preserves natural ordering of the source.
-  const categories = useMemo(() => {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const e of exams) {
-      if (!seen.has(e.category)) {
-        seen.add(e.category);
-        out.push(e.category);
-      }
-    }
-    return out;
-  }, [exams]);
+  // Only render chips for tags that actually appear in the data — otherwise
+  // we'd show empty chips like "Polytechnic" on a homepage that has no
+  // polytechnic exams seeded yet.
+  const visibleTags = useMemo(() => {
+    const present = new Set<string>();
+    for (const e of exams) for (const t of e.tags ?? []) present.add(t);
+    return labels.tagOrder.filter((t) => present.has(t));
+  }, [exams, labels.tagOrder]);
 
-  const inStateFlow = cat === "STATE_LEVEL";
+  const inStateFlow = tag === "state";
   const showStateGrid = inStateFlow && !pickedState;
 
-  // Reset state pick when leaving the State category
+  // Reset state pick when leaving the State tag
   if (!inStateFlow && pickedState) setPickedState(null);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return exams.filter((e) => {
-      if (cat && e.category !== cat) return false;
+      if (tag && !(e.tags ?? []).includes(tag)) return false;
       if (inStateFlow && pickedState && e.state !== pickedState) return false;
       if (!needle) return true;
       const hay = `${e.name} ${e.shortName} ${e.code} ${e.category} ${e.state ?? ""}`.toLowerCase();
       return hay.includes(needle);
     });
-  }, [exams, q, cat, inStateFlow, pickedState]);
+  }, [exams, q, tag, inStateFlow, pickedState]);
 
   const filteredStates = useMemo(() => {
     if (!states) return [];
@@ -117,14 +119,14 @@ export function ExamPicker({
         />
       </div>
 
-      {/* ── Category chips ──────────────────────────────────────────── */}
+      {/* ── Tag chips ───────────────────────────────────────────────── */}
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-        <Chip selected={cat === null} onClick={() => { setCat(null); setPickedState(null); }}>
+        <Chip selected={tag === null} onClick={() => { setTag(null); setPickedState(null); }}>
           {labels.catAll}
         </Chip>
-        {categories.map((c) => (
-          <Chip key={c} selected={cat === c} onClick={() => { setCat(cat === c ? null : c); setPickedState(null); }}>
-            {labels.catLabels[c] ?? c}
+        {visibleTags.map((t) => (
+          <Chip key={t} selected={tag === t} onClick={() => { setTag(tag === t ? null : t); setPickedState(null); }}>
+            {labels.tagLabels[t] ?? t}
           </Chip>
         ))}
       </div>

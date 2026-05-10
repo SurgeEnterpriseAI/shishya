@@ -8,16 +8,17 @@ import { getT } from "@/lib/i18n-server";
 import { LangSwitcher } from "@/components/LangSwitcher";
 import { ExamPicker, type ExamCard, type StateInfo } from "@/components/ExamPicker";
 import { INDIAN_STATES } from "@/lib/states";
+import { computeExamTags, TAG_ORDER } from "@/lib/exam-tags";
 import { DiscussionsSidebar, type ThreadItem } from "@/components/DiscussionsSidebar";
 import { LiveCountersStrip } from "@/components/LiveCounters";
 
 // Fallback list — used only when the DB is unreachable so the public landing
 // page still renders something. Real exam list is queried from Prisma below.
 const FALLBACK_EXAMS: ExamCard[] = [
-  { code: "SSC_CGL",      shortName: "SSC CGL",        name: "SSC Combined Graduate Level",       category: "GOVT_JOBS",  candidatesPerYear: 3_000_000, live: true  },
-  { code: "NEET_UG",      shortName: "NEET UG",        name: "National Eligibility cum Entrance", category: "MEDICAL",    candidatesPerYear: 2_400_000, live: false },
-  { code: "JEE_MAIN",     shortName: "JEE Main",       name: "Joint Entrance Examination",        category: "ENGINEERING",candidatesPerYear: 1_400_000, live: false },
-  { code: "UPSC_PRELIMS", shortName: "UPSC Prelims",   name: "UPSC Civil Services Examination",   category: "CIVIL_SERVICES", candidatesPerYear: 1_100_000, live: false },
+  { code: "SSC_CGL",      shortName: "SSC CGL",        name: "SSC Combined Graduate Level",       category: "GOVT_JOBS",  candidatesPerYear: 3_000_000, live: true,  tags: ["popular", "national", "govt"] },
+  { code: "NEET_UG",      shortName: "NEET UG",        name: "National Eligibility cum Entrance", category: "MEDICAL",    candidatesPerYear: 2_400_000, live: false, tags: ["popular", "national", "medical"] },
+  { code: "JEE_MAIN",     shortName: "JEE Main",       name: "Joint Entrance Examination",        category: "ENGINEERING",candidatesPerYear: 1_400_000, live: false, tags: ["popular", "national", "engineering"] },
+  { code: "UPSC_PRELIMS", shortName: "UPSC Prelims",   name: "UPSC Civil Services Examination",   category: "CIVIL_SERVICES", candidatesPerYear: 1_100_000, live: false, tags: ["popular", "national", "govt", "civil_services"] },
 ];
 
 async function loadExams(): Promise<ExamCard[]> {
@@ -43,6 +44,12 @@ async function loadExams(): Promise<ExamCard[]> {
       candidatesPerYear: e.candidatesPerYear,
       state: e.state ?? null,
       live: (e._count?.questions ?? 0) > 0,
+      tags: computeExamTags({
+        code: e.code,
+        category: e.category,
+        state: e.state ?? null,
+        candidatesPerYear: e.candidatesPerYear,
+      }),
     }));
   } catch {
     return FALLBACK_EXAMS;
@@ -123,6 +130,25 @@ export default async function HomePage() {
     STATE_LEVEL:    t("land.cat.STATE_LEVEL"),
   };
 
+  const tagLabels: Record<string, string> = {
+    popular:        t("land.tag.popular"),
+    national:       t("land.tag.national"),
+    state:          t("land.tag.state"),
+    govt:           t("land.tag.govt"),
+    engineering:    t("land.tag.engineering"),
+    medical:        t("land.tag.medical"),
+    teaching:       t("land.tag.teaching"),
+    banking:        t("land.tag.banking"),
+    olympiad:       t("land.tag.olympiad"),
+    civil_services: t("land.tag.civil_services"),
+    mba:            t("land.tag.mba"),
+    law:            t("land.tag.law"),
+    police:         t("land.tag.police"),
+    university:     t("land.tag.university"),
+    polytechnic:    t("land.tag.polytechnic"),
+    defence:        t("land.tag.defence"),
+  };
+
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <SiteHeader locale={locale} t={t} signedIn={signedIn} />
@@ -184,6 +210,8 @@ export default async function HomePage() {
               noResults: t("land.no.results"),
               catAll: t("land.cat.all"),
               catLabels,
+              tagLabels,
+              tagOrder: [...TAG_ORDER],
               statusLive: t("land.status.live"),
               statusComing: t("land.status.coming"),
               candidatesPerYear: t("land.candidates"),
