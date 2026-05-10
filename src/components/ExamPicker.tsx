@@ -215,38 +215,39 @@ export function ExamPicker({
           const active = featured.find((s) => s.id === activeTab) ?? featured[0];
           return (
             <div className="mt-8">
-              {/* Tab bar — first tab default-active; others show titles only,
-                  click switches the panel below. Horizontal scroll on mobile. */}
-              <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-                <div className="inline-flex min-w-full items-center gap-1 border-b border-ink-200">
-                  {featured.map((s) => {
-                    const selected = s.id === active.id;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => setActiveTab(s.id)}
+              {/* Tab bar — wraps to multiple rows on narrow viewports
+                  (no horizontal scrollbar). The thin bottom rule on each
+                  inactive tab + saffron underline on the active one keeps
+                  the "tab strip" feel even when wrapped. */}
+              <div className="flex flex-wrap items-end gap-x-1 gap-y-1">
+                {featured.map((s) => {
+                  const selected = s.id === active.id;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setActiveTab(s.id)}
+                      className={
+                        selected
+                          ? "relative inline-flex items-center whitespace-nowrap rounded-t-md border-b-2 border-saffron-500 bg-saffron-50/60 px-3 py-2 text-sm font-semibold text-ink-900 transition-colors sm:px-4 sm:text-base"
+                          : "inline-flex items-center whitespace-nowrap rounded-md border-b-2 border-transparent px-3 py-2 text-sm text-ink-500 transition-colors hover:bg-ink-100/60 hover:text-ink-800 sm:px-4"
+                      }
+                    >
+                      {s.title}
+                      <span
                         className={
                           selected
-                            ? "relative whitespace-nowrap border-b-2 border-saffron-500 px-3 py-2 text-sm font-semibold text-ink-900 sm:px-4 sm:text-base"
-                            : "whitespace-nowrap border-b-2 border-transparent px-3 py-2 text-sm text-ink-500 hover:text-ink-800 sm:px-4"
+                            ? "ml-2 rounded-full bg-saffron-100 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-saffron-800"
+                            : "ml-2 rounded-full bg-ink-100 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-ink-600"
                         }
                       >
-                        {s.title}
-                        <span
-                          className={
-                            selected
-                              ? "ml-2 rounded-full bg-saffron-100 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-saffron-800"
-                              : "ml-2 rounded-full bg-ink-100 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-ink-600"
-                          }
-                        >
-                          {s.totalCount}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                        {s.totalCount}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+              <div className="-mt-px h-px w-full bg-ink-200" />
 
               {/* Active tab panel */}
               <div className="mt-6">
