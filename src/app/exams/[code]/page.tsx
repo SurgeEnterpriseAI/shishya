@@ -133,7 +133,12 @@ export default async function ExamPage({
         {/* Action panel */}
         <div className="mt-8 rounded-md border border-ink-200 bg-white p-6">
           {!hasContent ? (
-            <p className="text-sm text-ink-600">{t("exam.no.content")}</p>
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-ink-600">{t("exam.no.content")}</p>
+              <Link href={`/chat?examCode=${exam.code}`} className="btn-secondary !py-2 !px-4 text-xs sm:text-sm">
+                {t("nav.tutor")}
+              </Link>
+            </div>
           ) : (
             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -144,16 +149,24 @@ export default async function ExamPage({
                   {isEnrolled ? t("exam.action.continue.body") : t("exam.action.start.body")}
                 </p>
               </div>
-              <StartMockButton
-                examCode={exam.code}
-                hasHistory={isEnrolled && recent.length > 0}
-                labels={{
-                  adaptive: t("exam.cta.adaptive"),
-                  diagnostic: t("exam.cta.diagnostic"),
-                  firstDiagnostic: t("exam.cta.firstDiagnostic"),
-                  building: t("exam.cta.building"),
-                }}
-              />
+              <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                <Link
+                  href={`/chat?examCode=${exam.code}`}
+                  className="btn-secondary !py-2 !px-4 text-xs sm:text-sm"
+                >
+                  {t("nav.tutor")}
+                </Link>
+                <StartMockButton
+                  examCode={exam.code}
+                  hasHistory={isEnrolled && recent.length > 0}
+                  labels={{
+                    adaptive: t("exam.cta.adaptive"),
+                    diagnostic: t("exam.cta.diagnostic"),
+                    firstDiagnostic: t("exam.cta.firstDiagnostic"),
+                    building: t("exam.cta.building"),
+                  }}
+                />
+              </div>
             </div>
           )}
         </div>
