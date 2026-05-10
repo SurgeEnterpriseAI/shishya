@@ -69,7 +69,12 @@ export function ChatInterface({
         body: JSON.stringify({ examCode, sessionId, message: text }),
       });
       if (!res.ok || !res.body) {
-        throw new Error(`Chat failed: ${res.status}`);
+        let detail = "";
+        try {
+          const j = await res.json();
+          detail = j?.error ? ` — ${j.error}` : "";
+        } catch {}
+        throw new Error(`Chat failed (${res.status})${detail}`);
       }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();

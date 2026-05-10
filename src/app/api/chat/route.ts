@@ -13,8 +13,8 @@ import { getStudentState } from "@/lib/db/student-state";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 
 const Body = z.object({
-  examCode: z.string(),
-  sessionId: z.string().optional(),
+  examCode: z.string().min(1),
+  sessionId: z.string().nullish(),
   message: z.string().min(1).max(2000),
 });
 
