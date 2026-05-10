@@ -130,15 +130,15 @@ export const dict = {
     "land.candidates": "candidates / yr",
     // ── 4-step loop (the new "how it works")
     "loop.title": "How it works — a simple loop",
-    "loop.subtitle": "Take a test, see where you stand, ask the AI for help, take another. Until you're ready.",
+    "loop.subtitle": "Take a test, see where you stand, ask Shishya AI for help, take another. Until you're ready.",
     "loop.s1.title": "1. Take a test",
     "loop.s1.body": "Diagnostic, topic drill, or a full mock — pick what you need.",
     "loop.s2.title": "2. Get scored",
     "loop.s2.body": "Per-topic score, not just an overall mark. Honest data.",
-    "loop.s3.title": "3. AI analyses",
-    "loop.s3.body": "Weakness map shows exactly which topics to fix.",
-    "loop.s4.title": "4. Chat & improve",
-    "loop.s4.body": "Ask Shishya AI for materials or another mock — it picks the right one from our curated bank.",
+    "loop.s3.title": "3. Shishya AI analyses",
+    "loop.s3.body": "Weakness map shows exactly which topics to fix — Shishya AI reads your performance and writes the next plan.",
+    "loop.s4.title": "4. Shishya AI chats with you",
+    "loop.s4.body": "Ask anything — concepts, shortcuts, more practice. Shishya AI picks the next mock and teaches the way you learn.",
 
     // ── Feature pillars (the "everything you need" section)
     "features.title": "Everything you need to crack your exam",
@@ -508,15 +508,15 @@ export const dict = {
     "land.candidates": "उम्मीदवार / वर्ष",
     // ── 4-step loop
     "loop.title": "कैसे काम करता है — एक सरल चक्र",
-    "loop.subtitle": "टेस्ट दीजिए, स्थिति देखिए, AI से मदद माँगिए, फिर टेस्ट दीजिए। जब तक तैयार न हों।",
+    "loop.subtitle": "टेस्ट दीजिए, स्थिति देखिए, शिष्या AI से मदद माँगिए, फिर टेस्ट दीजिए। जब तक तैयार न हों।",
     "loop.s1.title": "१. टेस्ट दीजिए",
     "loop.s1.body": "डायग्नोस्टिक, टॉपिक ड्रिल, या पूरा मॉक — जो चाहिए वो चुनिए।",
     "loop.s2.title": "२. स्कोर देखिए",
     "loop.s2.body": "विषयवार स्कोर, सिर्फ़ कुल अंक नहीं। सच्चा डेटा।",
-    "loop.s3.title": "३. AI विश्लेषण",
-    "loop.s3.body": "कमज़ोरी का नक़्शा — किन विषयों पर मेहनत चाहिए, साफ़ दिखता है।",
-    "loop.s4.title": "४. चैट और सुधार",
-    "loop.s4.body": "Shishya AI से सामग्री या नया मॉक माँगिए — हमारे विशेषज्ञ-तैयार बैंक से सही मॉक चुनकर देगा।",
+    "loop.s3.title": "३. शिष्या AI विश्लेषण करता है",
+    "loop.s3.body": "कमज़ोरी का नक़्शा — शिष्या AI आपके प्रदर्शन को पढ़कर अगली योजना बनाता है।",
+    "loop.s4.title": "४. शिष्या AI से बातचीत",
+    "loop.s4.body": "कुछ भी पूछिए — कॉन्सेप्ट, शॉर्टकट, अधिक अभ्यास। शिष्या AI अगला मॉक चुनकर आपके अंदाज़ में पढ़ाता है।",
 
     // ── Feature pillars
     "features.title": "परीक्षा क्रैक करने के लिए सब कुछ — एक ही जगह",
