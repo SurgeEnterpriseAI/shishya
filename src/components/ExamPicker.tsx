@@ -33,6 +33,17 @@ export interface StateInfo {
   examCount: number;
 }
 
+export interface CuratedSection {
+  /** Stable id used for "See all →" — sets a tag filter on click. */
+  id: string;
+  title: string;
+  exams: ExamCard[];
+  /** Tag id to apply when "See all →" is clicked. If "state", triggers state-grid flow. */
+  seeAllTag: string;
+  /** Total count for "See all (N) →" affordance. */
+  totalCount: number;
+}
+
 interface Labels {
   searchPlaceholder: string;
   searchLabel: string;
@@ -50,16 +61,20 @@ interface Labels {
   pickState: string;
   pickStateBack: string;
   examsConductedBy: string;
+  seeAll: string;
+  browseAllExams: string;
 }
 
 export function ExamPicker({
   exams,
   states,
+  featured,
   labels,
   signedIn,
 }: {
   exams: ExamCard[];
   states?: StateInfo[];
+  featured?: CuratedSection[];
   labels: Labels;
   signedIn: boolean;
 }) {
@@ -81,6 +96,12 @@ export function ExamPicker({
 
   // Reset state pick when leaving the State tag
   if (!inStateFlow && pickedState) setPickedState(null);
+
+  // Curated browse mode: shown when nothing is filtered/searched. Gives the
+  // home page a "Netflix rows" feel — instead of dumping 163 cards in one
+  // scroll, we surface 5–7 themed sections each with 4–8 cards + "See all".
+  const showCurated =
+    !!featured && featured.length > 0 && q.trim() === "" && tag === null && !pickedState;
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -183,44 +204,90 @@ export function ExamPicker({
         </div>
       ) : null}
 
-      {/* ── Result grid ─────────────────────────────────────────────── */}
-      {showStateGrid ? null : filtered.length === 0 ? (
+      {/* ── Curated sections (Netflix-style rows) — default browse view ── */}
+      {showCurated && featured ? (
+        <div className="mt-10 space-y-10">
+          {featured.map((section) => (
+            <section key={section.id}>
+              <div className="mb-3 flex items-baseline justify-between">
+                <h2 className="text-base font-semibold text-ink-900 sm:text-lg">
+                  {section.title}
+                </h2>
+                {section.totalCount > section.exams.length && (
+                  <button
+                    type="button"
+                    onClick={() => setTag(section.seeAllTag)}
+                    className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
+                  >
+                    {labels.seeAll} ({section.totalCount}) →
+                  </button>
+                )}
+              </div>
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {section.exams.map((e) => (
+                  <li key={e.code}>
+                    <ExamCardLink exam={e} signedIn={signedIn} labels={labels} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+          <p className="pt-2 text-center text-xs text-ink-500">
+            {labels.browseAllExams} — {exams.length}
+          </p>
+        </div>
+      ) : null}
+
+      {/* ── Filtered result grid (when chip / search / state-picked) ─── */}
+      {showCurated || showStateGrid ? null : filtered.length === 0 ? (
         <p className="mt-10 text-center text-sm text-ink-500">{labels.noResults}</p>
       ) : (
         <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((e) => {
-            const href = signedIn
-              ? `/exams/${e.code}`
-              : `/login?callbackUrl=${encodeURIComponent(`/exams/${e.code}`)}`;
-            return (
-              <li key={e.code}>
-                <Link
-                  href={href}
-                  className="group flex h-full items-start justify-between rounded-lg border border-ink-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-ink-900">{e.shortName}</p>
-                    <p className="mt-0.5 text-xs text-ink-500">
-                      {labels.catLabels[e.category] ?? e.category}
-                      {e.candidatesPerYear ? ` · ${formatVolume(e.candidatesPerYear)} ${labels.candidatesPerYear}` : ""}
-                    </p>
-                  </div>
-                  <span
-                    className={
-                      e.live
-                        ? "shrink-0 rounded-full bg-saffron-100 px-2 py-0.5 text-xs font-medium text-saffron-800"
-                        : "shrink-0 rounded-full bg-ink-100 px-2 py-0.5 text-xs font-medium text-ink-600"
-                    }
-                  >
-                    {e.live ? labels.statusLive : labels.statusComing}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
+          {filtered.map((e) => (
+            <li key={e.code}>
+              <ExamCardLink exam={e} signedIn={signedIn} labels={labels} />
+            </li>
+          ))}
         </ul>
       )}
     </div>
+  );
+}
+
+function ExamCardLink({
+  exam: e,
+  signedIn,
+  labels,
+}: {
+  exam: ExamCard;
+  signedIn: boolean;
+  labels: Labels;
+}) {
+  const href = signedIn
+    ? `/exams/${e.code}`
+    : `/login?callbackUrl=${encodeURIComponent(`/exams/${e.code}`)}`;
+  return (
+    <Link
+      href={href}
+      className="group flex h-full items-start justify-between rounded-lg border border-ink-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md"
+    >
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-ink-900">{e.shortName}</p>
+        <p className="mt-0.5 text-xs text-ink-500">
+          {labels.catLabels[e.category] ?? e.category}
+          {e.candidatesPerYear ? ` · ${formatVolume(e.candidatesPerYear)} ${labels.candidatesPerYear}` : ""}
+        </p>
+      </div>
+      <span
+        className={
+          e.live
+            ? "shrink-0 rounded-full bg-saffron-100 px-2 py-0.5 text-xs font-medium text-saffron-800"
+            : "shrink-0 rounded-full bg-ink-100 px-2 py-0.5 text-xs font-medium text-ink-600"
+        }
+      >
+        {e.live ? labels.statusLive : labels.statusComing}
+      </span>
+    </Link>
   );
 }
 
