@@ -1,18 +1,18 @@
 // POST /api/attempts/:id/submit — finalise the attempt:
 //   1. Score every answer (correct/marks)
 //   2. Update WeaknessMap rows
-//   3. Run AI diagnostic (background-friendly: returns immediately if NO_AI=true)
+//   3. Emit a MOCK_COMPLETED progress event
 //
-// Returns the scored attempt + diagnostic summary.
+// Used to also call runDiagnostic() inline, but the result was thrown
+// away (the /results page does its own queries) and the Claude round-
+// trip added 10–30s of staring at "Submitting…". The diagnostic
+// narrative is now generated on-demand from the results page.
 
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
-import { runDiagnostic } from "@/lib/ai";
-import { getSyllabusContext } from "@/lib/db/syllabus";
 import { ok, notFound, serverError, unauth, forbidden, bad } from "@/lib/http";
 import { scoreAttempt } from "@/lib/scoring";
-import type { AttemptSnapshot } from "@/lib/ai/types";
 
 export async function POST(
   _req: Request,
@@ -116,34 +116,6 @@ export async function POST(
       },
     });
 
-    // ── Diagnostic ──────────────────────────────────────────────────────
-    let diagnostic: any = null;
-    if (process.env.NO_AI !== "true") {
-      try {
-        const syllabus = await getSyllabusContext(exam.code);
-        const snapshot: AttemptSnapshot = {
-          attemptId: id,
-          mockId: attempt.mockId,
-          examCode: exam.code,
-          startedAt: attempt.startedAt.toISOString(),
-          finishedAt: finishedAt.toISOString(),
-          durationSec,
-          answers: scored as any,
-          scoreRaw,
-          scoreMax,
-          scorePct,
-          topicScores: topicScores as any,
-        };
-        diagnostic = await runDiagnostic({
-          attempt: snapshot,
-          syllabus,
-          language: "EN", // TODO: read from user.preferredLang
-        });
-      } catch (err) {
-        console.error("[shishya] diagnostic failed (non-fatal):", err);
-      }
-    }
-
     return ok({
       attemptId: id,
       scoreRaw,
@@ -151,7 +123,6 @@ export async function POST(
       scorePct,
       topicScores,
       durationSec,
-      diagnostic,
     });
   } catch (err) {
     return serverError(err);
