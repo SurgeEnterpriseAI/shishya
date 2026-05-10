@@ -30,7 +30,7 @@ export async function Header({ admin = false }: { admin?: boolean }) {
                 {t("nav.dashboard")}
               </Link>
               <span className="hidden text-ink-500 lg:inline">{session.user.email}</span>
-              <Link href="/api/auth/signout" className="rounded-md border border-ink-300 px-3 py-1.5 text-xs font-medium hover:bg-ink-50">
+              <Link href="/logout" className="rounded-md border border-ink-300 px-3 py-1.5 text-xs font-medium hover:bg-ink-50">
                 {t("nav.signout")}
               </Link>
             </>

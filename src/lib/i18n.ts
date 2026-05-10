@@ -247,6 +247,15 @@ export const dict = {
     "login.smallprint":
       "By continuing, you agree to use this platform responsibly. Your email is the only thing we read from your Google account.",
 
+    // ── logout
+    "logout.h1": "Sign out of Shishya?",
+    "logout.body": "You're signed in as",
+    "logout.confirm": "Sign out",
+    "logout.cancel": "Stay signed in",
+    "logout.signingOut": "Signing out…",
+    "logout.smallprint":
+      "Your progress is saved to your account. Sign back in any time to pick up where you left off.",
+
     // ── dashboard
     "dash.welcome": "Welcome back,",
     "dash.subtitle": "Pick up where you left off, or explore a new exam.",
@@ -548,6 +557,14 @@ export const dict = {
     "login.continue": "Google से जारी रखें",
     "login.smallprint":
       "जारी रखकर, आप इस मंच का ज़िम्मेदारी से उपयोग करने के लिए सहमत हैं। हम आपके Google खाते से केवल आपका ईमेल पढ़ते हैं।",
+
+    "logout.h1": "शिष्या से साइन आउट करें?",
+    "logout.body": "आप साइन-इन हैं",
+    "logout.confirm": "साइन आउट करें",
+    "logout.cancel": "साइन-इन रहें",
+    "logout.signingOut": "साइन आउट हो रहा है…",
+    "logout.smallprint":
+      "आपकी प्रगति आपके खाते में सुरक्षित है। कभी भी वापस आकर वहीं से जारी रखें।",
 
     "dash.welcome": "वापस स्वागत है,",
     "dash.subtitle": "जहाँ छोड़ा था वहीं से जारी रखें, या नई परीक्षा देखें।",
