@@ -86,6 +86,10 @@ export function ExamPicker({
   const [activeTab, setActiveTab] = useState<string | null>(
     featured && featured.length > 0 ? featured[0].id : null
   );
+  // When the user clicks "Or scroll the full list", bypass the curated
+  // tab view and render every exam in a flat grid. Clicking the "All"
+  // chip (or any tag) resets bypass + brings them back to curated.
+  const [bypassCurated, setBypassCurated] = useState(false);
 
   // Only render chips for tags that actually appear in the data — otherwise
   // we'd show empty chips like "Polytechnic" on a homepage that has no
@@ -102,11 +106,11 @@ export function ExamPicker({
   // Reset state pick when leaving the State tag
   if (!inStateFlow && pickedState) setPickedState(null);
 
-  // Curated browse mode: shown when nothing is filtered/searched. Gives the
-  // home page a "Netflix rows" feel — instead of dumping 163 cards in one
-  // scroll, we surface 5–7 themed sections each with 4–8 cards + "See all".
+  // Curated browse mode: shown when nothing is filtered/searched and the
+  // user hasn't asked for the flat full list. Gives the home page a
+  // "Netflix tabs" feel instead of dumping 163 cards in one scroll.
   const showCurated =
-    !!featured && featured.length > 0 && q.trim() === "" && tag === null && !pickedState;
+    !!featured && featured.length > 0 && q.trim() === "" && tag === null && !pickedState && !bypassCurated;
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -147,11 +151,11 @@ export function ExamPicker({
 
       {/* ── Tag chips ───────────────────────────────────────────────── */}
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-        <Chip selected={tag === null} onClick={() => { setTag(null); setPickedState(null); }}>
+        <Chip selected={tag === null && !bypassCurated} onClick={() => { setTag(null); setPickedState(null); setBypassCurated(false); }}>
           {labels.catAll}
         </Chip>
         {visibleTags.map((t) => (
-          <Chip key={t} selected={tag === t} onClick={() => { setTag(tag === t ? null : t); setPickedState(null); }}>
+          <Chip key={t} selected={tag === t} onClick={() => { setTag(tag === t ? null : t); setPickedState(null); setBypassCurated(false); }}>
             {labels.tagLabels[t] ?? t}
           </Chip>
         ))}
@@ -271,9 +275,15 @@ export function ExamPicker({
                 </ul>
               </div>
 
-              <p className="mt-8 text-center text-xs text-ink-500">
-                {labels.browseAllExams} — {exams.length}
-              </p>
+              <div className="mt-8 text-center">
+                <button
+                  type="button"
+                  onClick={() => setBypassCurated(true)}
+                  className="text-xs font-medium text-saffron-700 underline-offset-2 hover:text-saffron-800 hover:underline"
+                >
+                  {labels.browseAllExams} — {exams.length}
+                </button>
+              </div>
             </div>
           );
         })()
