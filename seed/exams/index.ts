@@ -1,4 +1,4 @@
-// Top 10 Indian entrance exams — metadata seed.
+// Top 21 Indian entrance exams — metadata seed.
 // Run: npx tsx seed/exams/index.ts
 //
 // This seeds the Exam table only. Subjects/topics come from per-exam
@@ -160,6 +160,176 @@ export const examsSeed = [
     negativeMark: 1,
     languages: ["EN"] as const,
     candidatesPerYear: 350_000,
+  },
+  // ── SSC family (additions) ──────────────────────────────────────────────
+  {
+    code: "SSC_CHSL",
+    name: "SSC Combined Higher Secondary Level (Tier 1)",
+    shortName: "SSC CHSL",
+    category: "GOVT_JOBS" as const,
+    description:
+      "SSC CHSL Tier 1 — 60-minute objective test with 100 questions (English, Reasoning, Quant, GA) for 12th-pass clerical posts.",
+    durationMin: 60,
+    totalQuestions: 100,
+    totalMarks: 200,
+    marksPerQ: 2,
+    negativeMark: 0.5,
+    languages: ["EN", "HI"] as const,
+    candidatesPerYear: 3_500_000,
+  },
+  {
+    code: "SSC_MTS",
+    name: "SSC Multi Tasking Staff (Paper 1)",
+    shortName: "SSC MTS",
+    category: "GOVT_JOBS" as const,
+    description:
+      "SSC MTS Paper 1 — 90-minute test for Group C non-gazetted posts. Two sessions: Reasoning + Numerical (45 min), GA + English (45 min).",
+    durationMin: 90,
+    totalQuestions: 90,
+    totalMarks: 270,
+    marksPerQ: 3,
+    negativeMark: 1,
+    languages: ["EN", "HI", "TE", "TA", "KN", "ML", "MR", "BN", "GU", "PA"] as const,
+    candidatesPerYear: 5_000_000,
+  },
+  {
+    code: "SSC_GD",
+    name: "SSC General Duty Constable",
+    shortName: "SSC GD",
+    category: "GOVT_JOBS" as const,
+    description:
+      "SSC GD Constable CBT — 60-minute test with 80 questions for CAPF/Assam Rifles/SSF constable posts. Reasoning, GK, Math, English/Hindi.",
+    durationMin: 60,
+    totalQuestions: 80,
+    totalMarks: 160,
+    marksPerQ: 2,
+    negativeMark: 0.5,
+    languages: ["EN", "HI", "TE", "TA", "KN", "ML", "MR", "BN", "GU", "PA"] as const,
+    candidatesPerYear: 5_500_000,
+  },
+  // ── RRB family (additions) ──────────────────────────────────────────────
+  {
+    code: "RRB_GROUP_D",
+    name: "Railway Group D (Level 1)",
+    shortName: "RRB Group D",
+    category: "GOVT_JOBS" as const,
+    description:
+      "RRB Group D CBT — 90-minute test with 100 questions (Math, Reasoning, General Science, GA) for Level 1 posts in Indian Railways.",
+    durationMin: 90,
+    totalQuestions: 100,
+    totalMarks: 100,
+    marksPerQ: 1,
+    negativeMark: 1 / 3,
+    languages: ["EN", "HI", "TE", "TA", "KN", "ML", "MR", "BN", "GU", "PA"] as const,
+    candidatesPerYear: 11_000_000,
+  },
+  {
+    code: "RRB_ALP",
+    name: "Railway Assistant Loco Pilot (CBT-1)",
+    shortName: "RRB ALP",
+    category: "GOVT_JOBS" as const,
+    description:
+      "RRB ALP first-stage CBT — 60-minute screening test with 75 questions (Math, Reasoning, General Science, GA). Qualifying for Stage 2.",
+    durationMin: 60,
+    totalQuestions: 75,
+    totalMarks: 75,
+    marksPerQ: 1,
+    negativeMark: 1 / 3,
+    languages: ["EN", "HI", "TE", "TA", "KN", "ML", "MR", "BN", "GU", "PA"] as const,
+    candidatesPerYear: 2_000_000,
+  },
+  // ── Engineering (additions) ─────────────────────────────────────────────
+  {
+    code: "JEE_ADVANCED",
+    name: "Joint Entrance Examination — Advanced",
+    shortName: "JEE Advanced",
+    category: "ENGINEERING" as const,
+    description:
+      "Two-paper test for IIT admission. Each paper is 3 hours covering Physics, Chemistry, Mathematics with mixed question patterns (single, multiple-correct, integer, matrix-match).",
+    durationMin: 360,
+    totalQuestions: 108,
+    totalMarks: 360,
+    marksPerQ: 3,
+    negativeMark: 1,
+    languages: ["EN", "HI"] as const,
+    candidatesPerYear: 250_000,
+  },
+  // ── Banking (additions) ─────────────────────────────────────────────────
+  {
+    code: "IBPS_CLERK",
+    name: "IBPS Clerk (Prelims)",
+    shortName: "IBPS Clerk",
+    category: "BANKING" as const,
+    description:
+      "IBPS Clerk Prelims — 60-minute test with 100 questions (English, Quant, Reasoning) for clerical posts in public sector banks.",
+    durationMin: 60,
+    totalQuestions: 100,
+    totalMarks: 100,
+    marksPerQ: 1,
+    negativeMark: 0.25,
+    languages: ["EN", "HI"] as const,
+    candidatesPerYear: 1_800_000,
+  },
+  {
+    code: "SBI_PO",
+    name: "SBI Probationary Officer (Prelims)",
+    shortName: "SBI PO",
+    category: "BANKING" as const,
+    description:
+      "SBI PO Prelims — 60-minute test with 100 questions (English, Quant, Reasoning) for officer posts in State Bank of India.",
+    durationMin: 60,
+    totalQuestions: 100,
+    totalMarks: 100,
+    marksPerQ: 1,
+    negativeMark: 0.25,
+    languages: ["EN", "HI"] as const,
+    candidatesPerYear: 2_500_000,
+  },
+  {
+    code: "SBI_CLERK",
+    name: "SBI Clerk (Prelims)",
+    shortName: "SBI Clerk",
+    category: "BANKING" as const,
+    description:
+      "SBI Clerk Prelims — 60-minute test with 100 questions (English, Quant, Reasoning) for Junior Associate (Customer Support) posts in SBI.",
+    durationMin: 60,
+    totalQuestions: 100,
+    totalMarks: 100,
+    marksPerQ: 1,
+    negativeMark: 0.25,
+    languages: ["EN", "HI"] as const,
+    candidatesPerYear: 2_000_000,
+  },
+  // ── Defence (additions) ─────────────────────────────────────────────────
+  {
+    code: "CDS",
+    name: "Combined Defence Services Examination",
+    shortName: "CDS",
+    category: "GOVT_JOBS" as const,
+    description:
+      "UPSC CDS — three papers (English, GK, Elementary Maths) for entry to Indian Military Academy, Naval Academy, Air Force Academy, and Officers Training Academy.",
+    durationMin: 360,
+    totalQuestions: 300,
+    totalMarks: 300,
+    marksPerQ: 1,
+    negativeMark: 1 / 3,
+    languages: ["EN"] as const,
+    candidatesPerYear: 400_000,
+  },
+  {
+    code: "NDA",
+    name: "National Defence Academy & Naval Academy Examination",
+    shortName: "NDA",
+    category: "GOVT_JOBS" as const,
+    description:
+      "UPSC NDA — two papers: Mathematics (300 marks, 2.5 hrs) and General Ability Test (English + GK, 600 marks, 2.5 hrs) for entry to NDA Khadakwasla.",
+    durationMin: 300,
+    totalQuestions: 270,
+    totalMarks: 900,
+    marksPerQ: 4,
+    negativeMark: 1 / 3,
+    languages: ["EN", "HI"] as const,
+    candidatesPerYear: 600_000,
   },
 ];
 

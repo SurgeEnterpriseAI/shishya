@@ -78,6 +78,12 @@ export default async function AdminHome() {
             Review pending AI questions
           </Link>
           <Link
+            href="/admin/coverage"
+            className="btn-secondary !py-2 !px-4 text-sm"
+          >
+            Content coverage
+          </Link>
+          <Link
             href="/admin/sme-stats"
             className="btn-secondary !py-2 !px-4 text-sm"
           >

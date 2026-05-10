@@ -36,7 +36,18 @@ export default async function ExamPage({
   });
   if (!exam) notFound();
 
-  const [enrollment, weakness, recent, validatedQuestionCount, newsItems, importantDates] = await Promise.all([
+  const [
+    enrollment,
+    weakness,
+    recent,
+    validatedQuestionCount,
+    newsItems,
+    importantDates,
+    pyqYears,
+    systemMocks,
+    leaderboard,
+    myBest,
+  ] = await Promise.all([
     prisma.enrollment.findUnique({
       where: { userId_examId: { userId, examId: exam.id } },
     }),
@@ -47,10 +58,10 @@ export default async function ExamPage({
       take: 5,
     }),
     prisma.attempt.findMany({
-      where: { userId, mock: { examId: exam.id } },
+      where: { userId, mock: { examId: exam.id }, status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] } },
       include: { mock: true },
       orderBy: { startedAt: "desc" },
-      take: 3,
+      take: 5,
     }),
     prisma.question.count({ where: { examId: exam.id, validated: true } }),
     prisma.examNewsItem.findMany({
@@ -62,6 +73,35 @@ export default async function ExamPage({
       where: { examId: exam.id },
       orderBy: { date: "asc" },
       take: 10,
+    }),
+    prisma.question.groupBy({
+      by: ["pyqYear"],
+      where: { examId: exam.id, source: "PYQ", pyqYear: { not: null } },
+      _count: true,
+      orderBy: { pyqYear: "desc" },
+    }),
+    prisma.mock.findMany({
+      where: { examId: exam.id, userId: null },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: { id: true, title: true, type: true, questionIds: true, config: true },
+    }),
+    prisma.attempt.findMany({
+      where: { mock: { examId: exam.id }, status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, scorePct: { not: null } },
+      orderBy: { scorePct: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        scorePct: true,
+        userId: true,
+        finishedAt: true,
+        user: { select: { name: true } },
+      },
+    }),
+    prisma.attempt.findFirst({
+      where: { userId, mock: { examId: exam.id }, status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, scorePct: { not: null } },
+      orderBy: { scorePct: "desc" },
+      select: { id: true, scorePct: true, percentile: true, rank: true, finishedAt: true },
     }),
   ]);
 
@@ -115,6 +155,233 @@ export default async function ExamPage({
             </div>
           )}
         </div>
+
+        {/* ── Previous Papers ─────────────────────────────────────────── */}
+        <section id="pyqs" className="mt-10 scroll-mt-20">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-base font-semibold text-ink-800">{t("exam.pyq.title")}</h2>
+            <span className="text-xs text-ink-500">
+              {pyqYears.reduce((a, r) => a + r._count, 0)} {t("exam.pyq.totalQs")}
+            </span>
+          </div>
+          {pyqYears.length === 0 ? (
+            <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
+              {t("exam.pyq.empty")}
+            </p>
+          ) : (
+            <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              {pyqYears.map((y) => (
+                <li key={y.pyqYear ?? 0} className="rounded-md border border-ink-200 bg-white p-3">
+                  <p className="text-lg font-semibold text-ink-900">{y.pyqYear}</p>
+                  <p className="mt-0.5 text-xs text-ink-500">
+                    {y._count} {t("exam.pyq.questions")}
+                  </p>
+                  <Link
+                    href={`/exams/${exam.code}/pyq/${y.pyqYear}`}
+                    className="mt-2 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
+                  >
+                    {t("exam.pyq.take")} →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* ── Mock Tests ──────────────────────────────────────────────── */}
+        <section id="mocks" className="mt-10 scroll-mt-20">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-base font-semibold text-ink-800">{t("exam.mocks.title")}</h2>
+            <Link
+              href={`/exams/${exam.code}/attempts`}
+              className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
+            >
+              {t("exam.mocks.allAttempts")} →
+            </Link>
+          </div>
+          {systemMocks.length === 0 ? (
+            <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
+              {t("exam.mocks.empty")}
+            </p>
+          ) : (
+            <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {systemMocks.map((m) => (
+                <li key={m.id} className="rounded-md border border-ink-200 bg-white p-4">
+                  <div className="flex items-baseline justify-between">
+                    <p className="text-sm font-medium text-ink-900">{m.title}</p>
+                    <span className="rounded-full border border-ink-200 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-ink-600">
+                      {m.type}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-500">
+                    {m.questionIds.length} {t("exam.pyq.questions")}
+                    {(m.config as any)?.durationMin ? ` · ${(m.config as any).durationMin} ${t("exam.minutes")}` : ""}
+                  </p>
+                  <Link
+                    href={`/mocks/${m.id}`}
+                    className="mt-2 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
+                  >
+                    {t("exam.mocks.take")} →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {recent.length > 0 && (
+            <div className="mt-5">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-ink-500">
+                {t("exam.mocks.recent")}
+              </h3>
+              <ul className="mt-2 space-y-1.5">
+                {recent.slice(0, 5).map((a) => (
+                  <li key={a.id} className="flex items-center justify-between rounded-md border border-ink-200 bg-white px-3 py-2 text-sm">
+                    <span className="text-ink-800">{a.mock.title}</span>
+                    <span className="flex items-center gap-3 text-xs text-ink-500">
+                      <span>{a.scorePct?.toFixed(1) ?? "—"}%</span>
+                      <Link href={`/attempts/${a.id}/results`} className="font-medium text-saffron-700 hover:text-saffron-800">
+                        {t("exam.mocks.review")} →
+                      </Link>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+
+        {/* ── Shishya Interaction ─────────────────────────────────────── */}
+        <section id="shishya" className="mt-10 scroll-mt-20">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-base font-semibold text-ink-800">{t("exam.shishya.title")}</h2>
+            <Link href="/chat" className="text-xs font-medium text-saffron-700 hover:text-saffron-800">
+              {t("exam.shishya.openChat")} →
+            </Link>
+          </div>
+          <p className="mt-1 text-sm text-ink-600">{t("exam.shishya.body")}</p>
+          <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {([
+              ["exam.shishya.prompt.weakest", `Quiz me on my weakest ${exam.shortName} topic`],
+              ["exam.shishya.prompt.explain", `Explain the concept I got wrong most in my last ${exam.shortName} mock`],
+              ["exam.shishya.prompt.plan", `Make me a 30-minute study plan for ${exam.shortName} today`],
+              ["exam.shishya.prompt.syllabus", `Walk me through the ${exam.shortName} syllabus and which topics carry highest weight`],
+            ] as const).map(([labelKey, q]) => (
+              <li key={labelKey}>
+                <Link
+                  href={`/chat?examCode=${exam.code}&seed=${encodeURIComponent(q)}`}
+                  className="block rounded-md border border-ink-200 bg-white p-4 text-sm text-ink-800 hover:border-saffron-300 hover:bg-saffron-50/40"
+                >
+                  <span className="block font-medium">{t(labelKey)}</span>
+                  <span className="mt-1 block text-xs text-ink-500">{q}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* ── Rank & Leaderboard ──────────────────────────────────────── */}
+        <section id="rank" className="mt-10 scroll-mt-20">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-base font-semibold text-ink-800">{t("exam.rank.title")}</h2>
+            <span className="text-xs text-ink-500">{t("exam.rank.subtitle")}</span>
+          </div>
+          {!myBest ? (
+            <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
+              {t("exam.rank.empty")}
+            </p>
+          ) : (
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="rounded-md border border-saffron-300 bg-saffron-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-saffron-800">{t("exam.rank.bestScore")}</p>
+                <p className="mt-1 text-3xl font-bold text-ink-900 tabular-nums">{myBest.scorePct?.toFixed(1)}%</p>
+              </div>
+              <div className="rounded-md border border-ink-200 bg-white p-4">
+                <p className="text-xs uppercase tracking-wide text-ink-500">{t("exam.rank.percentile")}</p>
+                <p className="mt-1 text-3xl font-bold text-ink-900 tabular-nums">
+                  {myBest.percentile?.toFixed(1) ?? "—"}
+                </p>
+              </div>
+              <div className="rounded-md border border-ink-200 bg-white p-4">
+                <p className="text-xs uppercase tracking-wide text-ink-500">{t("exam.rank.rank")}</p>
+                <p className="mt-1 text-3xl font-bold text-ink-900 tabular-nums">
+                  {myBest.rank ? `#${myBest.rank}` : "—"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {leaderboard.length > 0 && (
+            <div className="mt-5 overflow-hidden rounded-md border border-ink-200 bg-white">
+              <table className="w-full text-sm">
+                <thead className="border-b border-ink-200 bg-ink-50/60 text-left text-xs uppercase tracking-wide text-ink-500">
+                  <tr>
+                    <th className="w-14 px-4 py-2 font-medium">#</th>
+                    <th className="px-4 py-2 font-medium">{t("exam.rank.student")}</th>
+                    <th className="px-4 py-2 text-right font-medium">{t("exam.rank.score")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboard.map((row, idx) => {
+                    const display = displayName(row.user?.name, row.userId);
+                    const isMe = row.userId === userId;
+                    return (
+                      <tr
+                        key={row.id}
+                        className={`border-b border-ink-100 last:border-b-0 ${isMe ? "bg-saffron-50/40" : ""}`}
+                      >
+                        <td className="px-4 py-2 tabular-nums text-ink-600">{idx + 1}</td>
+                        <td className="px-4 py-2 text-ink-800">
+                          {display}
+                          {isMe && <span className="ml-2 rounded-full bg-saffron-200 px-2 py-0.5 text-[10px] font-medium text-saffron-900">{t("exam.rank.you")}</span>}
+                        </td>
+                        <td className="px-4 py-2 text-right tabular-nums">{row.scorePct?.toFixed(1)}%</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        {/* ── Performance Analysis ────────────────────────────────────── */}
+        {recent.length > 0 && (
+          <section id="analysis" className="mt-10 scroll-mt-20">
+            <h2 className="text-base font-semibold text-ink-800">{t("exam.analysis.title")}</h2>
+            <p className="mt-1 text-sm text-ink-600">{t("exam.analysis.body")}</p>
+
+            {/* Score-over-time mini-chart (text + bars) */}
+            <div className="mt-4 rounded-md border border-ink-200 bg-white p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-500">
+                {t("exam.analysis.lastFive")}
+              </p>
+              <ul className="mt-3 space-y-2">
+                {[...recent].reverse().map((a) => {
+                  const pct = a.scorePct ?? 0;
+                  return (
+                    <li key={a.id} className="flex items-center gap-3">
+                      <span className="w-24 shrink-0 text-xs text-ink-500">
+                        {a.startedAt.toLocaleDateString("en-IN", { month: "short", day: "numeric" })}
+                      </span>
+                      <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-ink-100">
+                        <div
+                          className="h-full bg-saffron-500"
+                          style={{ width: `${Math.max(2, Math.min(100, pct))}%` }}
+                        />
+                      </div>
+                      <span className="w-14 shrink-0 text-right text-sm font-medium tabular-nums text-ink-800">
+                        {pct.toFixed(1)}%
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-3 text-xs text-ink-500">
+                {t("exam.analysis.trend")}:{" "}
+                <span className="font-medium text-ink-700">{describeTrend(recent.map((a) => a.scorePct ?? 0))}</span>
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* News + Important Dates */}
         {(newsItems.length > 0 || importantDates.length > 0) && (
@@ -260,4 +527,21 @@ export default async function ExamPage({
       </section>
     </main>
   );
+}
+
+function displayName(name: string | null | undefined, userId: string): string {
+  if (!name) return `Student #${userId.slice(-4).toUpperCase()}`;
+  const trimmed = name.trim();
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
+function describeTrend(scores: number[]): string {
+  if (scores.length < 2) return "—";
+  const first = scores[scores.length - 1];
+  const last = scores[0];
+  const delta = last - first;
+  if (Math.abs(delta) < 1.5) return "stable";
+  return delta > 0 ? `up ${delta.toFixed(1)}%` : `down ${Math.abs(delta).toFixed(1)}%`;
 }
