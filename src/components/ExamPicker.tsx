@@ -81,6 +81,11 @@ export function ExamPicker({
   const [q, setQ] = useState("");
   const [tag, setTag] = useState<string | null>(null);
   const [pickedState, setPickedState] = useState<string | null>(null);
+  // Curated browse mode renders sections as tabs — first section is the
+  // default active tab; titles for the rest are visible so a click switches.
+  const [activeTab, setActiveTab] = useState<string | null>(
+    featured && featured.length > 0 ? featured[0].id : null
+  );
 
   // Only render chips for tags that actually appear in the data — otherwise
   // we'd show empty chips like "Polytechnic" on a homepage that has no
@@ -206,36 +211,71 @@ export function ExamPicker({
 
       {/* ── Curated sections (Netflix-style rows) — default browse view ── */}
       {showCurated && featured ? (
-        <div className="mt-10 space-y-10">
-          {featured.map((section) => (
-            <section key={section.id}>
-              <div className="mb-3 flex items-baseline justify-between">
-                <h2 className="text-base font-semibold text-ink-900 sm:text-lg">
-                  {section.title}
-                </h2>
-                {section.totalCount > section.exams.length && (
-                  <button
-                    type="button"
-                    onClick={() => setTag(section.seeAllTag)}
-                    className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
-                  >
-                    {labels.seeAll} ({section.totalCount}) →
-                  </button>
-                )}
+        (() => {
+          const active = featured.find((s) => s.id === activeTab) ?? featured[0];
+          return (
+            <div className="mt-8">
+              {/* Tab bar — first tab default-active; others show titles only,
+                  click switches the panel below. Horizontal scroll on mobile. */}
+              <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+                <div className="inline-flex min-w-full items-center gap-1 border-b border-ink-200">
+                  {featured.map((s) => {
+                    const selected = s.id === active.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setActiveTab(s.id)}
+                        className={
+                          selected
+                            ? "relative whitespace-nowrap border-b-2 border-saffron-500 px-3 py-2 text-sm font-semibold text-ink-900 sm:px-4 sm:text-base"
+                            : "whitespace-nowrap border-b-2 border-transparent px-3 py-2 text-sm text-ink-500 hover:text-ink-800 sm:px-4"
+                        }
+                      >
+                        {s.title}
+                        <span
+                          className={
+                            selected
+                              ? "ml-2 rounded-full bg-saffron-100 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-saffron-800"
+                              : "ml-2 rounded-full bg-ink-100 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-ink-600"
+                          }
+                        >
+                          {s.totalCount}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {section.exams.map((e) => (
-                  <li key={e.code}>
-                    <ExamCardLink exam={e} signedIn={signedIn} labels={labels} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-          <p className="pt-2 text-center text-xs text-ink-500">
-            {labels.browseAllExams} — {exams.length}
-          </p>
-        </div>
+
+              {/* Active tab panel */}
+              <div className="mt-6">
+                <div className="mb-3 flex items-baseline justify-end">
+                  {active.totalCount > active.exams.length && (
+                    <button
+                      type="button"
+                      onClick={() => setTag(active.seeAllTag)}
+                      className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
+                    >
+                      {labels.seeAll} ({active.totalCount}) →
+                    </button>
+                  )}
+                </div>
+                <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {active.exams.map((e) => (
+                    <li key={e.code}>
+                      <ExamCardLink exam={e} signedIn={signedIn} labels={labels} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <p className="mt-8 text-center text-xs text-ink-500">
+                {labels.browseAllExams} — {exams.length}
+              </p>
+            </div>
+          );
+        })()
       ) : null}
 
       {/* ── Filtered result grid (when chip / search / state-picked) ─── */}
