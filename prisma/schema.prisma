@@ -37,6 +37,7 @@ model User {
   progressEvents  ProgressEvent[]
   discussions     Discussion[]        @relation("DiscussionAuthor")
   discussionMessages DiscussionMessage[] @relation("MessageAuthor")
+  dailyBriefs     DailyBrief[]
 
   @@index([email])
 }
@@ -234,6 +235,7 @@ model Mock {
   user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   exam     Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
   attempts Attempt[]
+  dailyBriefs DailyBrief[]
 
   @@index([userId, examId])
   @@index([type])
@@ -331,6 +333,36 @@ model ProgressEvent {
 
   @@index([userId, createdAt])
   @@index([type])
+}
+
+// Daily brief generated overnight by /api/cron/daily-brief.
+// One row per (user, exam, calendar day) — uniqueness lets the cron be
+// re-runnable safely. The dashboard's "Today's recommended mock" card
+// reads the most-recent brief for each enrolled exam and shows the
+// reflection + a deep-link to the pre-built adaptive mock.
+model DailyBrief {
+  id          String   @id @default(cuid())
+  userId      String
+  examId      String
+  // Day this brief is for, normalised to 00:00 UTC. Lets us upsert by
+  // (user, exam, day) and ensures one brief per calendar day.
+  briefDate   DateTime @db.Date
+  // 2–3 sentence reflection from Shishya: what the student worked on,
+  // what to focus on today, why. Markdown allowed but kept short.
+  reflection  String   @db.Text
+  // Pointer to the pre-generated adaptive mock for the student to take.
+  // Nullable so reflection-only briefs (e.g. mock-pool too thin) still work.
+  mockId      String?
+  // Snapshot of the inputs used (mastery weakest topics, top asked-about
+  // topics) — handy for debugging cron output.
+  inputs      Json?
+  createdAt   DateTime @default(now())
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mock Mock? @relation(fields: [mockId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, examId, briefDate])
+  @@index([userId, briefDate])
 }
 
 // ─────────────────────────────────────────────────────────────────────────

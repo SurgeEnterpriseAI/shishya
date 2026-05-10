@@ -18,8 +18,13 @@ export default async function DashboardPage() {
   const { t } = await getT();
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  // Today's brief is keyed on UTC midnight — same key the cron uses
+  const todayUtc = (() => {
+    const d = new Date();
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  })();
 
-  const [enrollments, recentAttempts, allExams, weakness, chatRecent] = await Promise.all([
+  const [enrollments, recentAttempts, allExams, weakness, chatRecent, dailyBriefs] = await Promise.all([
     prisma.enrollment.findMany({
       where: { userId, active: true },
       include: { exam: true },
@@ -76,7 +81,19 @@ export default async function DashboardPage() {
       orderBy: { updatedAt: "desc" },
       take: 5,
     }),
+    // Today's daily briefs (one per enrolled exam) — populated overnight by
+    // /api/cron/daily-brief. Falls back gracefully if the cron hasn't run yet.
+    prisma.dailyBrief.findMany({
+      where: { userId, briefDate: todayUtc },
+      include: {
+        mock: { select: { id: true, title: true } },
+      },
+    }),
   ]);
+
+  // Pick today's brief for the recommended-exam slot. Prefer the brief
+  // matching the recommended exam if present; otherwise the first brief.
+  const briefByExamId = new Map(dailyBriefs.map((b) => [b.examId, b]));
 
   // ── Compute Learning-Loop derived data ─────────────────────────────
   // Weakest 3 (lowest mastery) + Strongest 3 (highest mastery) across all
@@ -91,16 +108,21 @@ export default async function DashboardPage() {
   // enrollment if no mastery data yet.
   const recommendedExam = (() => {
     if (enrollments.length === 0) return null;
-    const masteryByExam = new Map<string, { sum: number; n: number; short: string; code: string }>();
+    const masteryByExam = new Map<string, { sum: number; n: number; short: string; code: string; examId: string }>();
     for (const w of stableMastery) {
-      const cur = masteryByExam.get(w.examId) ?? { sum: 0, n: 0, short: w.exam.shortName, code: w.exam.code };
+      const cur = masteryByExam.get(w.examId) ?? { sum: 0, n: 0, short: w.exam.shortName, code: w.exam.code, examId: w.examId };
       cur.sum += w.masteryScore;
       cur.n += 1;
       masteryByExam.set(w.examId, cur);
     }
     const ranked = [...masteryByExam.values()].sort((a, b) => a.sum / a.n - b.sum / b.n);
-    return ranked[0] ?? { code: enrollments[0].exam.code, short: enrollments[0].exam.shortName };
+    if (ranked[0]) return ranked[0];
+    return { code: enrollments[0].exam.code, short: enrollments[0].exam.shortName, examId: enrollments[0].examId };
   })();
+
+  // If today's brief exists for the recommended exam, prefer it (the cron
+  // already wrote a personalised reflection + pre-built adaptive mock).
+  const todaysBrief = recommendedExam ? briefByExamId.get(recommendedExam.examId) ?? null : null;
 
   // "Topics you asked Shishya about" — pull tool_use calls that mention a
   // topic_code (find_questions_on_topic / get_attempt_mistakes traces) +
@@ -251,16 +273,31 @@ export default async function DashboardPage() {
                   <p className="mt-2 text-base font-semibold text-ink-900">
                     {recommendedExam.short}
                   </p>
-                  <p className="mt-1 text-xs text-ink-600">
-                    {weakest3.length > 0
-                      ? t("dash.loop.recommended.body.weak")
-                      : t("dash.loop.recommended.body.fresh")}
-                  </p>
+                  {todaysBrief?.reflection ? (
+                    // Personalised note from Shishya, written overnight by the
+                    // cron. Falls through to the static body if the cron
+                    // hasn't run yet for this user.
+                    <p className="mt-2 text-xs italic leading-relaxed text-ink-700">
+                      &ldquo;{todaysBrief.reflection}&rdquo;
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-xs text-ink-600">
+                      {weakest3.length > 0
+                        ? t("dash.loop.recommended.body.weak")
+                        : t("dash.loop.recommended.body.fresh")}
+                    </p>
+                  )}
                   <Link
-                    href={`/exams/${recommendedExam.code}`}
+                    href={
+                      todaysBrief?.mockId
+                        ? `/mocks/${todaysBrief.mockId}`
+                        : `/exams/${recommendedExam.code}`
+                    }
                     className="btn-primary mt-3 !py-1.5 !px-3 text-xs"
                   >
-                    {t("dash.loop.recommended.cta")}
+                    {todaysBrief?.mockId
+                      ? t("dash.loop.recommended.cta.start")
+                      : t("dash.loop.recommended.cta")}
                   </Link>
                 </div>
               )}
