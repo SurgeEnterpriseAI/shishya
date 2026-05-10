@@ -27,6 +27,7 @@ export async function getSyllabusContext(examCode: string): Promise<SyllabusCont
   return {
     examCode: exam.code,
     examName: exam.name,
+    examShortName: exam.shortName,
     subjects: exam.subjects.map((s) => ({
       code: s.code,
       name: s.name,

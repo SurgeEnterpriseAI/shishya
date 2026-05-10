@@ -9,6 +9,7 @@ import { getT } from "@/lib/i18n-server";
 import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
 import { computeExamTags, TAG_ORDER } from "@/lib/exam-tags";
 import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
+import { formatDisplayScorePct } from "@/lib/scoring";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -177,7 +178,7 @@ export default async function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold text-ink-900">
-                        {a.scorePct?.toFixed(1)}%
+                        {formatDisplayScorePct(a.scorePct)}
                       </p>
                       <p className="text-xs text-ink-500">
                         {a.scoreRaw?.toFixed(0)}/{a.scoreMax?.toFixed(0)}

@@ -4,6 +4,21 @@
 
 import type { Difficulty } from "@prisma/client";
 
+/**
+ * Display-format a stored scorePct.
+ *
+ * Stored scorePct can go negative when negative-marking exceeds correct
+ * marks (e.g. 0/6 right with -1 penalty per wrong = -16.7%). That's
+ * mathematically true but reads harshly to a student. We clamp the
+ * display to 0% — the raw `scoreRaw / scoreMax` fraction below the % is
+ * the truth-teller for anyone who wants the breakdown.
+ */
+export function formatDisplayScorePct(scorePct: number | null | undefined): string {
+  if (scorePct == null) return "—";
+  const clamped = Math.max(0, scorePct);
+  return `${clamped.toFixed(1)}%`;
+}
+
 export interface ScoringInput {
   questionIds: string[];
   questionsById: Map<

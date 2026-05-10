@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { ResultsReview } from "./ResultsReview";
+import { formatDisplayScorePct } from "@/lib/scoring";
 
 export default async function ResultsPage({
   params,
@@ -96,7 +97,7 @@ export default async function ResultsPage({
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-4">
           <ScoreCard
             label={t("results.score")}
-            primary={`${(attempt.scorePct ?? 0).toFixed(1)}%`}
+            primary={formatDisplayScorePct(attempt.scorePct)}
             secondary={`${(attempt.scoreRaw ?? 0).toFixed(1)} / ${(attempt.scoreMax ?? 0).toFixed(0)}`}
             accent="primary"
           />

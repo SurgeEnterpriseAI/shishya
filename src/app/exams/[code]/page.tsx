@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { StartMockButton } from "./StartMockButton";
+import { formatDisplayScorePct } from "@/lib/scoring";
 
 export default async function ExamPage({
   params,
@@ -238,7 +239,7 @@ export default async function ExamPage({
                   <li key={a.id} className="flex items-center justify-between rounded-md border border-ink-200 bg-white px-3 py-2 text-sm">
                     <span className="text-ink-800">{a.mock.title}</span>
                     <span className="flex items-center gap-3 text-xs text-ink-500">
-                      <span>{a.scorePct?.toFixed(1) ?? "—"}%</span>
+                      <span>{formatDisplayScorePct(a.scorePct)}</span>
                       <Link href={`/attempts/${a.id}/results`} className="font-medium text-saffron-700 hover:text-saffron-800">
                         {t("exam.mocks.review")} →
                       </Link>
@@ -293,7 +294,7 @@ export default async function ExamPage({
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="rounded-md border border-saffron-300 bg-saffron-50 p-4">
                 <p className="text-xs uppercase tracking-wide text-saffron-800">{t("exam.rank.bestScore")}</p>
-                <p className="mt-1 text-3xl font-bold text-ink-900 tabular-nums">{myBest.scorePct?.toFixed(1)}%</p>
+                <p className="mt-1 text-3xl font-bold text-ink-900 tabular-nums">{formatDisplayScorePct(myBest.scorePct)}</p>
               </div>
               <div className="rounded-md border border-ink-200 bg-white p-4">
                 <p className="text-xs uppercase tracking-wide text-ink-500">{t("exam.rank.percentile")}</p>
@@ -334,7 +335,7 @@ export default async function ExamPage({
                           {display}
                           {isMe && <span className="ml-2 rounded-full bg-saffron-200 px-2 py-0.5 text-[10px] font-medium text-saffron-900">{t("exam.rank.you")}</span>}
                         </td>
-                        <td className="px-4 py-2 text-right tabular-nums">{row.scorePct?.toFixed(1)}%</td>
+                        <td className="px-4 py-2 text-right tabular-nums">{formatDisplayScorePct(row.scorePct)}</td>
                       </tr>
                     );
                   })}
@@ -357,7 +358,7 @@ export default async function ExamPage({
               </p>
               <ul className="mt-3 space-y-2">
                 {[...recent].reverse().map((a) => {
-                  const pct = a.scorePct ?? 0;
+                  const pct = Math.max(0, a.scorePct ?? 0);
                   return (
                     <li key={a.id} className="flex items-center gap-3">
                       <span className="w-24 shrink-0 text-xs text-ink-500">
@@ -370,7 +371,7 @@ export default async function ExamPage({
                         />
                       </div>
                       <span className="w-14 shrink-0 text-right text-sm font-medium tabular-nums text-ink-800">
-                        {pct.toFixed(1)}%
+                        {formatDisplayScorePct(a.scorePct)}
                       </span>
                     </li>
                   );

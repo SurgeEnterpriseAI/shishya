@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
+import { formatDisplayScorePct } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
 
@@ -56,8 +57,8 @@ export default async function AttemptsPage({
           <>
             <div className="mt-6 grid grid-cols-3 gap-3">
               <Stat label={t("attempts.total")} value={attempts.length.toString()} />
-              <Stat label={t("exam.rank.bestScore")} value={best != null ? `${best.toFixed(1)}%` : "—"} accent="ok" />
-              <Stat label={t("attempts.average")} value={avg != null ? `${avg.toFixed(1)}%` : "—"} />
+              <Stat label={t("exam.rank.bestScore")} value={formatDisplayScorePct(best)} accent="ok" />
+              <Stat label={t("attempts.average")} value={formatDisplayScorePct(avg)} />
             </div>
 
             <div className="mt-6 overflow-x-auto rounded-md border border-ink-200 bg-white">
@@ -83,7 +84,7 @@ export default async function AttemptsPage({
                         <td className="px-4 py-3 text-ink-900">{a.mock.title}</td>
                         <td className="px-4 py-3 text-xs uppercase tracking-wide text-ink-500">{a.mock.type}</td>
                         <td className="px-4 py-3 text-right tabular-nums">
-                          {submitted ? `${a.scorePct?.toFixed(1) ?? "—"}%` : "—"}
+                          {submitted ? formatDisplayScorePct(a.scorePct) : "—"}
                         </td>
                         <td className="px-4 py-3">
                           <StatusPill status={a.status} t={t} />

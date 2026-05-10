@@ -64,7 +64,7 @@ function ruleBasedDiagnostic(input: GenerateMockInput): GenerateMockOutput {
   }
 
   return finalize(picked, {
-    title: `Diagnostic Mock — ${syllabus.examName}`,
+    title: `Diagnostic Mock — ${syllabus.examShortName}`,
     rationale: "A balanced mock to map your current strengths and weaknesses across all subjects.",
     durationMin: estimateDuration(picked.length),
   });
@@ -135,7 +135,7 @@ function ruleBasedFull(input: GenerateMockInput): GenerateMockOutput {
     picked.push(...pickByDifficulty(pool, want, { EASY: 0.25, MEDIUM: 0.5, HARD: 0.25 }));
   }
   return finalize(picked, {
-    title: `Full Mock — ${syllabus.examName}`,
+    title: `Full Mock — ${syllabus.examShortName}`,
     rationale: "Full-length mock with subject distribution mirroring the real exam.",
     durationMin: estimateDuration(picked.length),
   });
@@ -208,7 +208,7 @@ Rules:
 
   const finalRefs = pool.filter((q) => finalIds.includes(q.id));
   return finalize(finalRefs, {
-    title: `Adaptive Mock — ${syllabus.examName}`,
+    title: `Adaptive Mock — ${syllabus.examShortName}`,
     rationale: parsed.rationale ?? "Targeted at your current weak topics.",
     durationMin: request.durationMin ?? estimateDuration(finalIds.length),
   });

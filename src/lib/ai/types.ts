@@ -181,6 +181,7 @@ export interface CoachOutput {
 export interface SyllabusContext {
   examCode: string;
   examName: string;
+  examShortName: string;
   subjects: Array<{
     code: string;
     name: string;

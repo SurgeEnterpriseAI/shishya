@@ -8,6 +8,7 @@ import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
+import { formatDisplayScorePct } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
 
@@ -121,7 +122,7 @@ export default async function PYQYearPage({
               </p>
               <p className="mt-0.5 text-xs text-ink-500">
                 {userAttempt?.scorePct != null
-                  ? `${t("exam.rank.bestScore")}: ${userAttempt.scorePct.toFixed(1)}%`
+                  ? `${t("exam.rank.bestScore")}: ${formatDisplayScorePct(userAttempt.scorePct)}`
                   : t("exam.pyq.startBody")}
               </p>
             </div>
