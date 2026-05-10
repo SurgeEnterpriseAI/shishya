@@ -90,22 +90,59 @@ export default async function TopicPage({
           </div>
         )}
 
-        {/* Notes block */}
-        <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
-          {notes ? (
+        {/* ── Study material (primary content) ──────────────────────── */}
+        {notes ? (
+          <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
             <NotesRenderer markdown={notes} />
-          ) : (
-            <div className="not-prose rounded-md border border-dashed border-ink-300 bg-white px-4 py-6 text-sm text-ink-500">
-              {t("topic.notes.empty")}
-            </div>
-          )}
-        </article>
+          </article>
+        ) : (
+          <div className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-5 py-6">
+            <p className="text-sm font-medium text-ink-800">{t("topic.notes.empty.headline")}</p>
+            <p className="mt-1 text-sm text-ink-600">{t("topic.notes.empty.body")}</p>
+            <Link
+              href={`/chat?examCode=${code}&seed=${encodeURIComponent(`Teach me ${topic.name} for ${exam.shortName} — concepts, formulas, common mistakes, and a few examples.`)}`}
+              className="btn-primary mt-4 !py-2 !px-4 text-xs sm:text-sm"
+            >
+              {t("topic.notes.empty.cta")}
+            </Link>
+          </div>
+        )}
 
-        {/* Practice CTAs */}
+        {/* ── Ask Shishya for more (always shown — the closed loop) ── */}
+        <section className="mt-10 rounded-md border border-saffron-200 bg-saffron-50/60 p-5">
+          <h2 className="text-base font-semibold text-ink-900">{t("topic.shishya.title")}</h2>
+          <p className="mt-1 text-sm text-ink-600">{t("topic.shishya.body")}</p>
+          <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {([
+              ["topic.shishya.prompt.deeper", `Go deeper on ${topic.name} for ${exam.shortName} — examples and edge cases I should know.`],
+              ["topic.shishya.prompt.shortcuts", `Give me 3 fastest shortcuts to solve ${topic.name} questions in the exam.`],
+              ["topic.shishya.prompt.mistakes", `What are the most common mistakes students make on ${topic.name}? How do I avoid them?`],
+              ["topic.shishya.prompt.quiz",   `Quiz me on ${topic.name} — start with one easy question, then go harder based on how I answer.`],
+            ] as const).map(([key, q]) => (
+              <li key={key}>
+                <Link
+                  href={`/chat?examCode=${code}&seed=${encodeURIComponent(q)}`}
+                  className="block rounded-md border border-ink-200 bg-white p-3 text-sm text-ink-800 hover:border-saffron-400 hover:bg-white"
+                >
+                  <span className="block font-medium">{t(key)}</span>
+                  <span className="mt-1 block text-xs text-ink-500">{q}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Link
+            href={`/chat?examCode=${code}&seed=${encodeURIComponent(`I'm studying ${topic.name} for ${exam.shortName}. Be my tutor for this topic.`)}`}
+            className="btn-primary mt-4 !py-2 !px-4 text-sm"
+          >
+            {t("topic.shishya.openChat")}
+          </Link>
+        </section>
+
+        {/* ── Practice questions (secondary, collapsed-feel) ────────── */}
         {practiceQs.length > 0 && (
           <section className="mt-10">
             <div className="flex items-baseline justify-between">
-              <h2 className="text-base font-semibold text-ink-900">{t("topic.practice.title")}</h2>
+              <h2 className="text-sm font-semibold text-ink-700">{t("topic.practice.title")}</h2>
               <Link
                 href={`/exams/${code}#mocks`}
                 className="text-xs font-medium text-saffron-700 hover:text-saffron-800"

@@ -17,7 +17,9 @@ export default async function DashboardPage() {
   const userId = session.user.id;
   const { t } = await getT();
 
-  const [enrollments, recentAttempts, allExams] = await Promise.all([
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const [enrollments, recentAttempts, allExams, weakness, chatRecent] = await Promise.all([
     prisma.enrollment.findMany({
       where: { userId, active: true },
       include: { exam: true },
@@ -48,7 +50,82 @@ export default async function DashboardPage() {
         },
       },
     }),
+    // Mastery snapshot — bottom 3 (weakest) + top 3 (strongest), per exam.
+    prisma.weaknessMap.findMany({
+      where: { userId },
+      include: {
+        topic: { select: { code: true, name: true } },
+        exam: { select: { code: true, shortName: true } },
+      },
+      orderBy: { lastSeenAt: "desc" },
+      take: 30,
+    }),
+    // Chat sessions in the last 30 days (with message-count + last-message
+    // metadata so we can extract "topics asked about").
+    prisma.chatSession.findMany({
+      where: { userId, createdAt: { gte: thirtyDaysAgo } },
+      include: {
+        exam: { select: { code: true, shortName: true } },
+        messages: {
+          where: { role: "ASSISTANT" },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { metadata: true, content: true, createdAt: true },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+    }),
   ]);
+
+  // ── Compute Learning-Loop derived data ─────────────────────────────
+  // Weakest 3 (lowest mastery) + Strongest 3 (highest mastery) across all
+  // enrolled exams. Filtering noise: only include topics with ≥3 attempts.
+  const stableMastery = weakness.filter((w) => w.attemptsCount >= 3);
+  const sortedAsc = [...stableMastery].sort((a, b) => a.masteryScore - b.masteryScore);
+  const weakest3 = sortedAsc.slice(0, 3);
+  const strongest3 = [...stableMastery].sort((a, b) => b.masteryScore - a.masteryScore).slice(0, 3);
+
+  // "Recommended next mock" — the enrolled exam with the lowest avg mastery
+  // is where adaptive practice will help most. Falls back to most recent
+  // enrollment if no mastery data yet.
+  const recommendedExam = (() => {
+    if (enrollments.length === 0) return null;
+    const masteryByExam = new Map<string, { sum: number; n: number; short: string; code: string }>();
+    for (const w of stableMastery) {
+      const cur = masteryByExam.get(w.examId) ?? { sum: 0, n: 0, short: w.exam.shortName, code: w.exam.code };
+      cur.sum += w.masteryScore;
+      cur.n += 1;
+      masteryByExam.set(w.examId, cur);
+    }
+    const ranked = [...masteryByExam.values()].sort((a, b) => a.sum / a.n - b.sum / b.n);
+    return ranked[0] ?? { code: enrollments[0].exam.code, short: enrollments[0].exam.shortName };
+  })();
+
+  // "Topics you asked Shishya about" — pull tool_use calls that mention a
+  // topic_code (find_questions_on_topic / get_attempt_mistakes traces) +
+  // citedTopics extracted by the tutor. Aggregate counts.
+  const topicAskCounts = new Map<string, { name: string; examShort: string; count: number }>();
+  for (const session of chatRecent) {
+    for (const msg of session.messages) {
+      const md = msg.metadata as any;
+      const calls = (md?.toolCalls ?? []) as Array<{ name?: string; args?: any }>;
+      for (const call of calls) {
+        const code = call?.args?.topic_code;
+        if (typeof code === "string") {
+          const cur = topicAskCounts.get(code) ?? {
+            name: code,
+            examShort: session.exam?.shortName ?? "",
+            count: 0,
+          };
+          cur.count += 1;
+          topicAskCounts.set(code, cur);
+        }
+      }
+    }
+  }
+  const topAskedTopics = [...topicAskCounts.values()].sort((a, b) => b.count - a.count).slice(0, 3);
+  const totalChatSessions = chatRecent.length;
 
   const enrolledIds = new Set(enrollments.map((e) => e.examId));
   const otherExamCards: ExamCard[] = allExams
@@ -157,6 +234,126 @@ export default async function DashboardPage() {
             </ul>
           )}
         </section>
+
+        {/* ── Your learning loop ──────────────────────────────────────── */}
+        {enrollments.length > 0 && (weakest3.length > 0 || topAskedTopics.length > 0 || recommendedExam) && (
+          <section className="mt-10">
+            <h2 className="text-base font-semibold text-ink-800">{t("dash.loop.title")}</h2>
+            <p className="mt-1 text-sm text-ink-600">{t("dash.loop.subtitle")}</p>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+              {/* ── Recommended next mock ────────────────────────────────── */}
+              {recommendedExam && (
+                <div className="rounded-md border border-saffron-200 bg-saffron-50/60 p-4 lg:col-span-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-saffron-800">
+                    {t("dash.loop.recommended.title")}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-ink-900">
+                    {recommendedExam.short}
+                  </p>
+                  <p className="mt-1 text-xs text-ink-600">
+                    {weakest3.length > 0
+                      ? t("dash.loop.recommended.body.weak")
+                      : t("dash.loop.recommended.body.fresh")}
+                  </p>
+                  <Link
+                    href={`/exams/${recommendedExam.code}`}
+                    className="btn-primary mt-3 !py-1.5 !px-3 text-xs"
+                  >
+                    {t("dash.loop.recommended.cta")}
+                  </Link>
+                </div>
+              )}
+
+              {/* ── Mastery snapshot ─────────────────────────────────────── */}
+              <div className="rounded-md border border-ink-200 bg-white p-4 lg:col-span-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">
+                  {t("dash.loop.mastery.title")}
+                </p>
+                {weakest3.length === 0 && strongest3.length === 0 ? (
+                  <p className="mt-2 text-xs text-ink-500">{t("dash.loop.mastery.empty")}</p>
+                ) : (
+                  <>
+                    {weakest3.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-rose-700">
+                          {t("dash.loop.mastery.weakest")}
+                        </p>
+                        <ul className="mt-1 space-y-0.5">
+                          {weakest3.map((w) => (
+                            <li key={w.id} className="flex items-baseline justify-between text-xs">
+                              <span className="truncate text-ink-800">{w.topic.name}</span>
+                              <span className="ml-2 shrink-0 tabular-nums text-ink-500">
+                                {Math.round(w.masteryScore * 100)}%
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {strongest3.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-700">
+                          {t("dash.loop.mastery.strongest")}
+                        </p>
+                        <ul className="mt-1 space-y-0.5">
+                          {strongest3.map((w) => (
+                            <li key={w.id} className="flex items-baseline justify-between text-xs">
+                              <span className="truncate text-ink-800">{w.topic.name}</span>
+                              <span className="ml-2 shrink-0 tabular-nums text-ink-500">
+                                {Math.round(w.masteryScore * 100)}%
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* ── Topics asked Shishya about ───────────────────────────── */}
+              <div className="rounded-md border border-ink-200 bg-white p-4 lg:col-span-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">
+                  {t("dash.loop.shishya.title")}
+                </p>
+                {totalChatSessions === 0 ? (
+                  <>
+                    <p className="mt-2 text-xs text-ink-500">{t("dash.loop.shishya.empty")}</p>
+                    <Link
+                      href="/chat"
+                      className="btn-secondary mt-3 !py-1.5 !px-3 text-xs"
+                    >
+                      {t("dash.loop.shishya.cta.start")}
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-1 text-xs text-ink-600">
+                      {totalChatSessions} {totalChatSessions === 1 ? t("dash.loop.shishya.sessions.one") : t("dash.loop.shishya.sessions.many")} · {t("dash.loop.shishya.last30")}
+                    </p>
+                    {topAskedTopics.length > 0 && (
+                      <ul className="mt-2 space-y-0.5">
+                        {topAskedTopics.map((tp) => (
+                          <li key={tp.name} className="flex items-baseline justify-between text-xs">
+                            <span className="truncate text-ink-800">{tp.name}</span>
+                            <span className="ml-2 shrink-0 tabular-nums text-ink-500">×{tp.count}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <Link
+                      href="/chat"
+                      className="mt-3 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
+                    >
+                      {t("dash.loop.shishya.cta.continue")} →
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Recent attempts */}
         {recentAttempts.length > 0 && (
