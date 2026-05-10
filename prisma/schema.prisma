@@ -429,6 +429,7 @@ enum ExamCategory {
   UNIVERSITY      // CUET
   MBA             // CAT
   LAW             // CLAT
+  OLYMPIAD        // HBCSE, SOF, Silverzone, NSTSE, ZIO/INOI, PRIL
   OTHER
 }
 

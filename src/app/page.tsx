@@ -85,6 +85,7 @@ export default async function HomePage() {
     MBA:            t("land.cat.MBA"),
     LAW:            t("land.cat.LAW"),
     DEFENCE:        t("land.cat.DEFENCE"),
+    OLYMPIAD:       t("land.cat.OLYMPIAD"),
   };
 
   return (
