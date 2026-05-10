@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { ChatInterface } from "./ChatInterface";
+import { ExamSwitcher } from "./ExamSwitcher";
 
 export default async function ChatPage({
   searchParams,
@@ -56,19 +57,11 @@ export default async function ChatPage({
             <h1 className="mt-1 text-xl font-semibold text-ink-900">{t("chat.title")}</h1>
           </div>
           {enrollments.length > 1 && (
-            <form className="text-sm" method="get">
-              <label className="text-xs text-ink-500">{t("nav.exams")}:</label>
-              <select
-                name="examCode"
-                defaultValue={examCode}
-                className="ml-2 rounded-md border border-ink-300 bg-white px-2 py-1 text-sm"
-                onChange={(e) => e.currentTarget.form?.submit()}
-              >
-                {enrollments.map((e) => (
-                  <option key={e.exam.code} value={e.exam.code}>{e.exam.shortName}</option>
-                ))}
-              </select>
-            </form>
+            <ExamSwitcher
+              current={examCode}
+              options={enrollments.map((e) => ({ code: e.exam.code, shortName: e.exam.shortName }))}
+              label={`${t("nav.exams")}:`}
+            />
           )}
         </div>
 
