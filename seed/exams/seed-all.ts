@@ -45,6 +45,32 @@ import { seedNstseSyllabus } from "./nstse-syllabus";
 import { seedZioSyllabus } from "./zio-syllabus";
 import { seedPrilSyllabus } from "./pril-syllabus";
 import { seedStateExams } from "./state-exams";
+// State engineering / medical entrance
+import { seedMhtCetSyllabus } from "./mht-cet-syllabus";
+import { seedKcetSyllabus } from "./kcet-syllabus";
+import { seedKeamSyllabus } from "./keam-syllabus";
+import { seedApEamcetSyllabus } from "./ap-eamcet-syllabus";
+import { seedTsEamcetSyllabus } from "./ts-eamcet-syllabus";
+import { seedWbjeeSyllabus } from "./wbjee-syllabus";
+import { seedComedkSyllabus } from "./comedk-syllabus";
+import { seedGujcetSyllabus } from "./gujcet-syllabus";
+import { seedBceceSyllabus } from "./bcece-syllabus";
+import { seedOjeeSyllabus } from "./ojee-syllabus";
+// State PSCs
+import { seedTnpscGroup1Syllabus } from "./tnpsc-group1-syllabus";
+import { seedTnpscGroup2Syllabus } from "./tnpsc-group2-syllabus";
+import { seedMpscRajyasevaSyllabus } from "./mpsc-rajyaseva-syllabus";
+import { seedKpscKasSyllabus } from "./kpsc-kas-syllabus";
+import { seedUppscPcsSyllabus } from "./uppsc-pcs-syllabus";
+import { seedUpssscPetSyllabus } from "./upsssc-pet-syllabus";
+import { seedBpscCceSyllabus } from "./bpsc-cce-syllabus";
+import { seedMppscSseSyllabus } from "./mppsc-sse-syllabus";
+// State TETs
+import { seedUptetSyllabus } from "./uptet-syllabus";
+import { seedReetSyllabus } from "./reet-syllabus";
+import { seedMahatetSyllabus } from "./mahatet-syllabus";
+import { seedWbTetSyllabus } from "./wb-tet-syllabus";
+import { seedKartetSyllabus } from "./kartet-syllabus";
 
 const prisma = new PrismaClient();
 
@@ -97,6 +123,32 @@ async function main() {
     ["NSTSE", seedNstseSyllabus],
     ["ZIO", seedZioSyllabus],
     ["PRIL", seedPrilSyllabus],
+    // ── State engineering / medical entrance ─────────────────────────
+    ["MH_MHTCET", seedMhtCetSyllabus],
+    ["KA_KCET", seedKcetSyllabus],
+    ["KL_KEAM", seedKeamSyllabus],
+    ["AP_EAMCET", seedApEamcetSyllabus],
+    ["TS_EAMCET", seedTsEamcetSyllabus],
+    ["WB_WBJEE", seedWbjeeSyllabus],
+    ["KA_COMEDK", seedComedkSyllabus],
+    ["GJ_GUJCET", seedGujcetSyllabus],
+    ["BR_BCECE", seedBceceSyllabus],
+    ["OD_OJEE", seedOjeeSyllabus],
+    // ── State PSCs ───────────────────────────────────────────────────
+    ["TN_TNPSC_GROUP1", seedTnpscGroup1Syllabus],
+    ["TN_TNPSC_GROUP2", seedTnpscGroup2Syllabus],
+    ["MH_MPSC_RAJYASEVA", seedMpscRajyasevaSyllabus],
+    ["KA_KPSC_KAS", seedKpscKasSyllabus],
+    ["UP_UPPSC_PCS", seedUppscPcsSyllabus],
+    ["UP_UPSSSC_PET", seedUpssscPetSyllabus],
+    ["BR_BPSC_CCE", seedBpscCceSyllabus],
+    ["MP_MPPSC_SSE", seedMppscSseSyllabus],
+    // ── State TETs ───────────────────────────────────────────────────
+    ["UP_UPTET", seedUptetSyllabus],
+    ["RJ_REET", seedReetSyllabus],
+    ["MH_MAHATET", seedMahatetSyllabus],
+    ["WB_TET", seedWbTetSyllabus],
+    ["KA_KARTET", seedKartetSyllabus],
   ];
 
   for (const [code, fn] of syllabi) {
