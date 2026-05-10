@@ -82,8 +82,9 @@ export default async function ExamPage({
     }),
     prisma.mock.findMany({
       where: { examId: exam.id, userId: null },
-      orderBy: { createdAt: "desc" },
-      take: 6,
+      // Newest auto-mocks first if any exist, else fall back to creation order
+      orderBy: [{ createdAt: "asc" }],
+      take: 24,
       select: { id: true, title: true, type: true, questionIds: true, config: true },
     }),
     prisma.attempt.findMany({

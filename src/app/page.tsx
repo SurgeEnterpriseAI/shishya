@@ -23,6 +23,11 @@ const FALLBACK_EXAMS: ExamCard[] = [
 
 async function loadExams(): Promise<ExamCard[]> {
   try {
+    // "Live" means a student can start something on this exam page right now.
+    // Two ways to be live: (a) ≥1 SME-validated question, or (b) ≥1 system
+    // mock (userId=null) — the latter covers exams whose pool is currently
+    // AI-drafted but already assembled into ready-to-take full mocks. Either
+    // path turns the badge from "Coming" to "Live".
     const rows = await prisma.exam.findMany({
       where: { active: true },
       orderBy: [{ candidatesPerYear: "desc" }, { code: "asc" }],
@@ -33,7 +38,12 @@ async function loadExams(): Promise<ExamCard[]> {
         category: true,
         candidatesPerYear: true,
         state: true,
-        _count: { select: { questions: { where: { validated: true } } } },
+        _count: {
+          select: {
+            questions: { where: { validated: true } },
+            mocks: { where: { userId: null } },
+          },
+        },
       },
     });
     return rows.map((e) => ({
@@ -43,7 +53,7 @@ async function loadExams(): Promise<ExamCard[]> {
       category: e.category,
       candidatesPerYear: e.candidatesPerYear,
       state: e.state ?? null,
-      live: (e._count?.questions ?? 0) > 0,
+      live: ((e._count?.questions ?? 0) > 0) || ((e._count?.mocks ?? 0) > 0),
       tags: computeExamTags({
         code: e.code,
         category: e.category,
