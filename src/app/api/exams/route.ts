@@ -5,7 +5,7 @@ import { ok, serverError } from "@/lib/http";
 
 export async function GET() {
   try {
-    const exams = await prisma.exam.findMany({
+    const rows = await prisma.exam.findMany({
       where: { active: true },
       orderBy: { candidatesPerYear: "desc" },
       select: {
@@ -22,8 +22,26 @@ export async function GET() {
         negativeMark: true,
         languages: true,
         candidatesPerYear: true,
+        state: true,
+        _count: {
+          select: {
+            questions: { where: { validated: true } },
+            mocks: { where: { userId: null } },
+          },
+        },
       },
     });
+    // Same Live criterion as the home page's loadExams(): an exam is Live
+    // when it has at least one validated question OR one system mock
+    // (Mock.userId = null). The home page uses this to flip the badge from
+    // "Coming" → "Live"; surfacing it here lets external dashboards and
+    // monitoring scripts read the same source of truth.
+    const exams = rows.map(({ _count, ...e }) => ({
+      ...e,
+      live: ((_count?.questions ?? 0) > 0) || ((_count?.mocks ?? 0) > 0),
+      validatedQuestions: _count?.questions ?? 0,
+      systemMocks: _count?.mocks ?? 0,
+    }));
     return ok({ exams });
   } catch (err) {
     return serverError(err);
