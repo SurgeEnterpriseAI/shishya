@@ -68,37 +68,52 @@ export async function POST(
         where: { id: { in: missIds } },
         select: { id: true, body: true, options: true, solution: true },
       });
+      // Parallelise batches — same reasoning as /api/mocks/[id]/translate.
+      const MAX_PARALLEL_BATCHES = 5;
+      const batches: typeof sources[] = [];
       for (let i = 0; i < sources.length; i += MAX_BATCH_SIZE) {
-        const slice = sources.slice(i, i + MAX_BATCH_SIZE).map((q) => ({
-          id: q.id,
-          body: q.body,
-          options: Array.isArray(q.options) ? (q.options as any) : [],
-          solution: q.solution,
-        }));
-        const { translated } = await translateBatch({ locale, questions: slice });
-        await Promise.all(
-          translated.map(async (t) => {
-            cached.set(t.id, {
-              questionId: t.id,
+        batches.push(sources.slice(i, i + MAX_BATCH_SIZE));
+      }
+      for (let i = 0; i < batches.length; i += MAX_PARALLEL_BATCHES) {
+        const wave = batches.slice(i, i + MAX_PARALLEL_BATCHES);
+        const results = await Promise.all(
+          wave.map((slice) =>
+            translateBatch({
               locale,
-              body: t.body,
-              options: t.options,
-              solution: t.solution,
-            });
-            try {
-              await upsertTranslation({
+              questions: slice.map((q) => ({
+                id: q.id,
+                body: q.body,
+                options: Array.isArray(q.options) ? (q.options as any) : [],
+                solution: q.solution,
+              })),
+            }),
+          ),
+        );
+        for (const { translated } of results) {
+          await Promise.all(
+            translated.map(async (t) => {
+              cached.set(t.id, {
                 questionId: t.id,
                 locale,
                 body: t.body,
                 options: t.options,
                 solution: t.solution,
-                generator: "claude-sonnet-4-5/translator-v1",
               });
-            } catch (err) {
-              console.error("[attempts/translate] upsert failed", t.id, err);
-            }
-          }),
-        );
+              try {
+                await upsertTranslation({
+                  questionId: t.id,
+                  locale,
+                  body: t.body,
+                  options: t.options,
+                  solution: t.solution,
+                  generator: "claude-sonnet-4-5/translator-v1",
+                });
+              } catch (err) {
+                console.error("[attempts/translate] upsert failed", t.id, err);
+              }
+            }),
+          );
+        }
       }
     }
 
