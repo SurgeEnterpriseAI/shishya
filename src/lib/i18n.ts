@@ -75,7 +75,7 @@ export const dict = {
     // ── new search-first landing
     "land.title": "What exam do you want to crack today?",
     "land.title.accent": "",
-    "land.subtitle": "Type the exam you're preparing for — SSC, NEET, JEE, UPSC, CAT — and we'll give you previous year papers, expert-curated mocks, weak-area analysis, and Shishya AI as your tutor.",
+    "land.subtitle": "Every entrance exam across India — national, state-level, olympiads, civil services, banking, teaching, defence. Wherever you are, whatever you're chasing, Shishya AI handholds you to better ranks, better colleges, and a better career.",
     "land.search.placeholder": "Type your exam — e.g. SSC CGL, NEET UG, JEE Main…",
     "land.search.label": "What are you preparing for?",
     "land.no.results": "No exams match. Try another keyword or pick a category above.",
@@ -481,7 +481,7 @@ export const dict = {
     // ── new search-first landing
     "land.title": "आज आप कौन सी परीक्षा क्रैक करना चाहते हैं?",
     "land.title.accent": "",
-    "land.subtitle": "जिस परीक्षा की तैयारी कर रहे हैं उसका नाम लिखिए — SSC, NEET, JEE, UPSC, CAT — हम पिछले वर्षों के प्रश्न, विषय-विशेषज्ञों द्वारा तैयार किए गए मॉक, कमज़ोर विषयों का विश्लेषण और सहायक के रूप में Shishya AI देंगे।",
+    "land.subtitle": "भारत की हर प्रवेश परीक्षा — राष्ट्रीय, राज्य-स्तर, ओलंपियाड, सिविल सेवा, बैंकिंग, शिक्षण, रक्षा। आप कहीं भी हों, किसी भी लक्ष्य की तैयारी कर रहे हों — Shishya AI आपकी रैंक, बेहतर कॉलेज और बेहतर करियर तक हाथ पकड़कर ले जाता है।",
     "land.search.placeholder": "अपनी परीक्षा लिखिए — जैसे SSC CGL, NEET UG, JEE Main…",
     "land.search.label": "किसकी तैयारी कर रहे हैं?",
     "land.no.results": "कोई परीक्षा नहीं मिली। दूसरा कीवर्ड आज़माइए या ऊपर से श्रेणी चुनें।",

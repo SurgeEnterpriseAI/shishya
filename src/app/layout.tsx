@@ -37,14 +37,14 @@ const notoDevanagari = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  title: "Shishya — Free expert-curated mocks for India's top entrance exams",
+  title: "Shishya — Every entrance exam in India, free, with AI tutoring",
   description:
-    "Free expert-curated mock test platform for SSC, RRB, IBPS, NEET, JEE, UPSC, CUET, GATE, CTET, CAT and more — supported by Shishya AI as your personal tutor. In English, Hindi and 17 other Indian languages. Practice. Diagnose. Improve. For every student.",
+    "163 entrance exams across India — national, state-level, olympiads, civil services, banking, teaching, defence — with previous year papers, expert-curated mocks, and Shishya AI as your personal tutor. Free for every student, in English, Hindi and 17 other Indian languages.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in"),
   openGraph: {
-    title: "Shishya — Free expert-curated mocks for India's top 20 exams",
+    title: "Shishya — Every entrance exam in India, free, with AI tutoring",
     description:
-      "Expert-curated mocks for India's top 20 entrance exams, supported by Shishya AI. In all 18 scheduled languages. Free for every student.",
+      "Every entrance exam across India — national, state, olympiads, civil services, banking, teaching, defence. Shishya AI handholds you to better ranks, better colleges, and a better career. Free for every student.",
     url: "https://shishya.in",
     siteName: "Shishya",
     locale: "en_IN",
