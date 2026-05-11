@@ -180,6 +180,9 @@ export default async function ExamPage({
           )}
         </div>
 
+        <div className="mt-2 lg:grid lg:grid-cols-3 lg:gap-8">
+        <div className="lg:col-span-2 min-w-0">
+
         {/* ── Previous Papers ─────────────────────────────────────────── */}
         <section id="pyqs" className="mt-10 scroll-mt-20">
           <div className="flex items-baseline justify-between">
@@ -271,35 +274,6 @@ export default async function ExamPage({
               </ul>
             </div>
           )}
-        </section>
-
-        {/* ── Shishya Interaction ─────────────────────────────────────── */}
-        <section id="shishya" className="mt-10 scroll-mt-20">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-base font-semibold text-ink-800">{t("exam.shishya.title")}</h2>
-            <Link href={`/chat?examCode=${exam.code}`} className="text-xs font-medium text-saffron-700 hover:text-saffron-800">
-              {t("exam.shishya.openChat")} →
-            </Link>
-          </div>
-          <p className="mt-1 text-sm text-ink-600">{t("exam.shishya.body")}</p>
-          <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {([
-              ["exam.shishya.prompt.weakest", `Quiz me on my weakest ${exam.shortName} topic`],
-              ["exam.shishya.prompt.explain", `Explain the concept I got wrong most in my last ${exam.shortName} mock`],
-              ["exam.shishya.prompt.plan", `Make me a 30-minute study plan for ${exam.shortName} today`],
-              ["exam.shishya.prompt.syllabus", `Walk me through the ${exam.shortName} syllabus and which topics carry highest weight`],
-            ] as const).map(([labelKey, q]) => (
-              <li key={labelKey}>
-                <Link
-                  href={`/chat?examCode=${exam.code}&seed=${encodeURIComponent(q)}`}
-                  className="block rounded-md border border-ink-200 bg-white p-4 text-sm text-ink-800 hover:border-saffron-300 hover:bg-saffron-50/40"
-                >
-                  <span className="block font-medium">{t(labelKey)}</span>
-                  <span className="mt-1 block text-xs text-ink-500">{q}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
         </section>
 
         {/* ── Rank & Leaderboard ──────────────────────────────────────── */}
@@ -499,136 +473,6 @@ export default async function ExamPage({
           </section>
         )}
 
-        {/* ── Score Boost summary (same shape as dashboard right rail, but
-            inline + exam-scoped) ────────────────────────────────────────── */}
-        {scoreBoost && scoreBoost.focusTopics.length > 0 && (
-          <section className="mt-10 rounded-md border border-saffron-200 bg-gradient-to-b from-saffron-50 to-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wider text-saffron-800">
-              {t("dash.boost.eyebrow")}
-            </p>
-            <h2 className="mt-1 text-base font-semibold text-ink-900">
-              {t("dash.boost.title.before")} {exam.shortName} {t("dash.boost.title.after")}
-            </h2>
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {scoreBoost.latestScorePct != null && (
-                <div className="rounded-md border border-ink-200 bg-white px-3 py-2">
-                  <p className="text-xs text-ink-500">{t("dash.boost.latest")}</p>
-                  <p className="mt-0.5 text-lg font-bold text-ink-900 tabular-nums">
-                    {formatDisplayScorePct(scoreBoost.latestScorePct)}
-                  </p>
-                  {scoreBoost.currentRank && (
-                    <p className="text-xs text-ink-500">
-                      {t("dash.boost.rank")} #{scoreBoost.currentRank}
-                      {scoreBoost.totalCohort > 1 && <span className="text-ink-400"> / {scoreBoost.totalCohort}</span>}
-                    </p>
-                  )}
-                </div>
-              )}
-              <div className="rounded-md border border-saffron-300 bg-saffron-100 px-3 py-2 sm:col-span-2">
-                <p className="text-xs text-saffron-900">
-                  <strong>{t("dash.boost.combined")}:</strong>{" "}
-                  +{scoreBoost.combinedExtraMarks.toFixed(1)} {t("dash.focus.marks")}{" "}
-                  <span className="text-ink-500">(+{scoreBoost.combinedExtraPct.toFixed(1)}%)</span>
-                </p>
-                {scoreBoost.projectedRank &&
-                  scoreBoost.currentRank &&
-                  scoreBoost.projectedRank < scoreBoost.currentRank && (
-                    <p className="mt-1 text-xs text-emerald-800">
-                      {t("dash.boost.rankUplift")} #{scoreBoost.currentRank} →{" "}
-                      <strong>#{scoreBoost.projectedRank}</strong>
-                    </p>
-                  )}
-                {scoreBoost.projectedScorePct != null && (
-                  <p className="mt-1 text-xs text-ink-700">
-                    {t("dash.boost.projected")}{" "}
-                    <strong className="text-ink-900">{formatDisplayScorePct(scoreBoost.projectedScorePct)}</strong>
-                  </p>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ── Focus topics — same shape as dashboard section, but each card's
-            primary CTA scrolls to the matching topic in the Syllabus below
-            (and a secondary "Ask Shishya" link opens the focused tutor) ─── */}
-        {scoreBoost && scoreBoost.focusTopics.length > 0 && (
-          <section id="focus-topics" className="mt-10 scroll-mt-20">
-            <h2 className="text-base font-semibold text-ink-800">
-              {t("dash.focus.title")} {exam.shortName}
-            </h2>
-            <p className="mt-1 text-sm text-ink-600">
-              {t("dash.focus.subtitle.before")}{" "}
-              <strong className="text-ink-900">+{scoreBoost.combinedExtraPct.toFixed(1)}%</strong>{" "}
-              {t("dash.focus.subtitle.middle")}{" "}
-              <strong className="text-ink-900">
-                +{scoreBoost.combinedExtraMarks.toFixed(1)} {t("dash.focus.marks")}
-              </strong>
-              {scoreBoost.projectedRank &&
-                scoreBoost.currentRank &&
-                scoreBoost.projectedRank < scoreBoost.currentRank && (
-                  <>
-                    {" · "}
-                    {t("dash.focus.rank.from")} <strong>#{scoreBoost.currentRank}</strong>{" "}
-                    {t("dash.focus.rank.to")}{" "}
-                    <strong className="text-emerald-700">#{scoreBoost.projectedRank}</strong>
-                  </>
-                )}
-              .
-            </p>
-            <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {scoreBoost.focusTopics.map((ft) => (
-                <li key={ft.topicId} className="rounded-md border border-ink-200 bg-white p-4">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-sm font-semibold text-ink-900">{ft.topicName}</p>
-                    <p className="shrink-0 text-xs text-ink-500">
-                      {Math.round(ft.currentMastery * 100)}%
-                    </p>
-                  </div>
-                  <p className="mt-0.5 text-xs text-ink-500">{ft.subjectName}</p>
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink-100">
-                    <div
-                      className="h-full bg-saffron-500"
-                      style={{ width: `${Math.round(ft.currentMastery * 100)}%` }}
-                    />
-                  </div>
-                  <p className="mt-2 text-xs text-emerald-700">
-                    {t("dash.focus.uplift.lead")}{" "}
-                    <strong>+{ft.estimatedExtraMarks.toFixed(1)} {t("dash.focus.marks")}</strong>{" "}
-                    <span className="text-ink-500">{t("dash.focus.uplift.atTarget")}</span>
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {/*
-                      Primary CTA: anchor jump to the matching topic in the
-                      Syllabus section just below. The :target pseudo-class
-                      pulses the topic so the student visually lands on the
-                      right item without leaving the exam page.
-                    */}
-                    <a
-                      href={`#syllabus-topic-${encodeURIComponent(ft.topicCode)}`}
-                      className="btn-primary !py-1.5 !px-3 text-xs"
-                    >
-                      {t("exam.focus.gotoSyllabus")} ↓
-                    </a>
-                    <Link
-                      href={`/exams/${exam.code}/topics/${encodeURIComponent(ft.topicCode)}`}
-                      className="btn-secondary !py-1.5 !px-3 text-xs"
-                    >
-                      {t("dash.focus.cta.study")}
-                    </Link>
-                    <Link
-                      href={`/chat?examCode=${exam.code}&topicCode=${encodeURIComponent(ft.topicCode)}&seed=${encodeURIComponent(`I'm weak in ${ft.topicName} for ${exam.shortName}. Tutor me on this topic.`)}`}
-                      className="btn-secondary !py-1.5 !px-3 text-xs"
-                    >
-                      {t("dash.focus.cta.ask")}
-                    </Link>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
         {/* Weakness map */}
         {weakness.length > 0 && (
           <section className="mt-10">
@@ -690,6 +534,149 @@ export default async function ExamPage({
             ))}
           </div>
         </section>
+
+        </div>{/* /lg:col-span-2 */}
+
+        {/* ── Right rail: Shishya helper (sticky on lg+) ─────────────────
+            Replaces the previous inline Score Boost + Focus Topics +
+            Shishya Interaction sections which were tucked far down the
+            page. The rail follows the student as they scroll mocks / news
+            / syllabus, so the quick-prompt CTAs and topic uplift never
+            require a long scroll. */}
+        <aside className="mt-10 lg:col-span-1 lg:mt-0 lg:sticky lg:top-20 lg:self-start space-y-4">
+
+          {scoreBoost && scoreBoost.focusTopics.length > 0 && (
+            <div className="rounded-md border border-saffron-200 bg-gradient-to-b from-saffron-50 to-white p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wider text-saffron-800">
+                {t("dash.boost.eyebrow")}
+              </p>
+              <h3 className="mt-1 text-sm font-semibold text-ink-900">
+                {t("dash.boost.title.before")} {exam.shortName} {t("dash.boost.title.after")}
+              </h3>
+
+              {scoreBoost.latestScorePct != null && (
+                <div className="mt-3 rounded-md border border-ink-200 bg-white px-3 py-2 text-xs">
+                  <p className="text-ink-500">{t("dash.boost.latest")}</p>
+                  <p className="mt-0.5">
+                    <span className="text-base font-bold text-ink-900 tabular-nums">
+                      {formatDisplayScorePct(scoreBoost.latestScorePct)}
+                    </span>
+                    {scoreBoost.currentRank && (
+                      <span className="ml-2 text-ink-500">
+                        · {t("dash.boost.rank")} #{scoreBoost.currentRank}
+                        {scoreBoost.totalCohort > 1 && (
+                          <span className="text-ink-400"> / {scoreBoost.totalCohort}</span>
+                        )}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              )}
+
+              <p className="mt-3 text-xs font-medium uppercase tracking-wider text-ink-500">
+                {t("dash.boost.focusOn")}
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {scoreBoost.focusTopics.map((ft) => (
+                  <li key={ft.topicId}>
+                    <div className="rounded-md border border-ink-200 bg-white p-3">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <p className="truncate text-xs font-medium text-ink-900">{ft.topicName}</p>
+                        <p className="shrink-0 text-[11px] text-ink-500">
+                          {Math.round(ft.currentMastery * 100)}%
+                        </p>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-emerald-700">
+                        +{ft.estimatedExtraMarks.toFixed(1)} {t("dash.focus.marks")}{" "}
+                        <span className="text-ink-500">{t("dash.focus.uplift.atTarget")}</span>
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <a
+                          href={`#syllabus-topic-${encodeURIComponent(ft.topicCode)}`}
+                          className="rounded border border-saffron-300 bg-saffron-100 px-2 py-1 text-[11px] font-medium text-saffron-900 hover:bg-saffron-200"
+                        >
+                          {t("exam.focus.gotoSyllabus")} ↓
+                        </a>
+                        <Link
+                          href={`/exams/${exam.code}/topics/${encodeURIComponent(ft.topicCode)}`}
+                          className="rounded border border-ink-200 bg-white px-2 py-1 text-[11px] font-medium text-ink-700 hover:border-saffron-400"
+                        >
+                          {t("dash.focus.cta.study")}
+                        </Link>
+                        <Link
+                          href={`/chat?examCode=${exam.code}&topicCode=${encodeURIComponent(ft.topicCode)}&seed=${encodeURIComponent(`I'm weak in ${ft.topicName} for ${exam.shortName}. Tutor me on this topic.`)}`}
+                          className="rounded border border-ink-200 bg-white px-2 py-1 text-[11px] font-medium text-ink-700 hover:border-saffron-400"
+                        >
+                          {t("dash.focus.cta.ask")}
+                        </Link>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-3 rounded-md bg-saffron-100 px-3 py-2 text-xs text-ink-800">
+                <p>
+                  <strong>{t("dash.boost.combined")}:</strong>{" "}
+                  +{scoreBoost.combinedExtraMarks.toFixed(1)} {t("dash.focus.marks")}{" "}
+                  <span className="text-ink-500">(+{scoreBoost.combinedExtraPct.toFixed(1)}%)</span>
+                </p>
+                {scoreBoost.projectedRank &&
+                  scoreBoost.currentRank &&
+                  scoreBoost.projectedRank < scoreBoost.currentRank && (
+                    <p className="mt-1 text-emerald-800">
+                      {t("dash.boost.rankUplift")} #{scoreBoost.currentRank} →{" "}
+                      <strong>#{scoreBoost.projectedRank}</strong>
+                    </p>
+                  )}
+                {scoreBoost.projectedScorePct != null && (
+                  <p className="mt-1 text-ink-600">
+                    {t("dash.boost.projected")}{" "}
+                    <strong className="text-ink-900">
+                      {formatDisplayScorePct(scoreBoost.projectedScorePct)}
+                    </strong>
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Shishya quick prompts — always available when there's content */}
+          {hasContent && (
+            <div id="shishya" className="scroll-mt-20 rounded-md border border-ink-200 bg-white p-4 shadow-sm">
+              <div className="flex items-baseline justify-between">
+                <h3 className="text-sm font-semibold text-ink-900">{t("exam.shishya.title")}</h3>
+                <Link
+                  href={`/chat?examCode=${exam.code}`}
+                  className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
+                >
+                  {t("exam.shishya.openChat")} →
+                </Link>
+              </div>
+              <p className="mt-1 text-xs text-ink-600">{t("exam.shishya.body")}</p>
+              <ul className="mt-3 space-y-1.5">
+                {([
+                  ["exam.shishya.prompt.weakest", `Quiz me on my weakest ${exam.shortName} topic`],
+                  ["exam.shishya.prompt.explain", `Explain the concept I got wrong most in my last ${exam.shortName} mock`],
+                  ["exam.shishya.prompt.plan", `Make me a 30-minute study plan for ${exam.shortName} today`],
+                  ["exam.shishya.prompt.syllabus", `Walk me through the ${exam.shortName} syllabus and which topics carry highest weight`],
+                ] as const).map(([labelKey, q]) => (
+                  <li key={labelKey}>
+                    <Link
+                      href={`/chat?examCode=${exam.code}&seed=${encodeURIComponent(q)}`}
+                      className="block rounded-md border border-ink-200 bg-white p-2.5 text-xs text-ink-800 hover:border-saffron-400 hover:bg-saffron-50/40"
+                    >
+                      <span className="block font-medium">{t(labelKey)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+        </aside>
+
+        </div>{/* /lg:grid */}
       </section>
     </main>
   );
