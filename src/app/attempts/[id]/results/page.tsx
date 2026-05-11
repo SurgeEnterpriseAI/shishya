@@ -139,11 +139,12 @@ export default async function ResultsPage({
         {/* ── Rank prediction ───────────────────────────────────────────
             Right under the score cards so the student sees "what does
             this score get me in the real exam" before they dive into
-            per-topic mastery + per-Q review. */}
+            per-topic mastery + per-Q review. attempt.scorePct is
+            already stored as a percentage (0-100), not a fraction. */}
         {rankBands.length > 0 && (
           <div className="mt-6">
             <RankCard
-              scorePct={(attempt.scorePct ?? 0) * 100}
+              scorePct={attempt.scorePct ?? 0}
               examShortName={attempt.mock.exam.shortName}
               bands={rankBands}
               source={rankBands[0]?.source ?? null}
