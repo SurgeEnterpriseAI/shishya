@@ -1,7 +1,15 @@
-// /exams/:code — exam landing page (bilingual).
+// /exams/:code — exam landing page (bilingual, SEO-indexable).
+//
+// PUBLIC: this page renders fully for unauthenticated visitors (Google,
+// Bing, students linked from search) so it gets crawled and ranked for
+// queries like "RRB NTPC syllabus" or "SSC CGL previous year papers".
+// Interactive parts (Start Mock, Ask Shishya, Score Boost rail, Weakness
+// map, Recent attempts) are gated behind a Sign-in CTA so we keep the
+// auth model clean without blocking the crawler.
 
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -10,14 +18,63 @@ import { StartMockButton } from "./StartMockButton";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { computeScoreBoost } from "@/lib/focus-topics";
 
+// Per-exam meta. Lets Google show "Shishya — RRB NTPC syllabus, mocks,
+// previous year papers, Shishya AI tutor" for every one of 163 exams.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}): Promise<Metadata> {
+  const { code } = await params;
+  const exam = await prisma.exam.findUnique({
+    where: { code },
+    select: { code: true, name: true, shortName: true, description: true, category: true },
+  });
+  if (!exam) return { title: "Exam not found — Shishya" };
+  const title = `${exam.shortName} — Syllabus, Mock Tests, Previous Year Papers | Shishya`;
+  const description =
+    `Free ${exam.shortName} (${exam.name}) preparation on Shishya. Full syllabus, ` +
+    `expert-curated mock tests, previous year papers, and Shishya AI as your personal ` +
+    `tutor. ${exam.description ?? ""}`.slice(0, 300);
+  const url = `https://shishya.in/exams/${exam.code}`;
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    keywords: [
+      `${exam.shortName} syllabus`,
+      `${exam.shortName} mock test`,
+      `${exam.shortName} previous year papers`,
+      `${exam.shortName} preparation`,
+      `${exam.shortName} free mocks`,
+      `${exam.name}`,
+      `${exam.shortName} PYQ`,
+      `${exam.shortName} online test`,
+      `Shishya ${exam.shortName}`,
+    ],
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Shishya",
+      locale: "en_IN",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
+
 export default async function ExamPage({
   params,
 }: {
   params: Promise<{ code: string }>;
 }) {
   const session = await auth();
-  if (!session?.user?.id) redirect(`/login?callbackUrl=/exams`);
-  const userId = session.user.id;
+  const userId = session?.user?.id ?? null;
   const { code } = await params;
   const { locale, t } = await getT();
 
@@ -38,89 +95,140 @@ export default async function ExamPage({
   });
   if (!exam) notFound();
 
-  const [
-    enrollment,
-    weakness,
-    recent,
-    validatedQuestionCount,
-    newsItems,
-    importantDates,
-    pyqYears,
-    systemMocks,
-    leaderboard,
-    myBest,
-  ] = await Promise.all([
-    prisma.enrollment.findUnique({
-      where: { userId_examId: { userId, examId: exam.id } },
-    }),
-    prisma.weaknessMap.findMany({
-      where: { userId, examId: exam.id },
-      include: { topic: true },
-      orderBy: { masteryScore: "asc" },
-      take: 5,
-    }),
-    prisma.attempt.findMany({
-      where: { userId, mock: { examId: exam.id }, status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] } },
-      include: { mock: true },
-      orderBy: { startedAt: "desc" },
-      take: 5,
-    }),
-    prisma.question.count({ where: { examId: exam.id, validated: true } }),
-    prisma.examNewsItem.findMany({
-      where: { examId: exam.id },
-      orderBy: { publishedAt: "desc" },
-      take: 5,
-    }),
-    prisma.examImportantDate.findMany({
-      where: { examId: exam.id },
-      orderBy: { date: "asc" },
-      take: 10,
-    }),
-    prisma.question.groupBy({
-      by: ["pyqYear"],
-      where: { examId: exam.id, source: "PYQ", pyqYear: { not: null } },
-      _count: true,
-      orderBy: { pyqYear: "desc" },
-    }),
-    prisma.mock.findMany({
-      where: { examId: exam.id, userId: null },
-      // Newest auto-mocks first if any exist, else fall back to creation order
-      orderBy: [{ createdAt: "asc" }],
-      take: 24,
-      select: { id: true, title: true, type: true, questionIds: true, config: true },
-    }),
-    prisma.attempt.findMany({
-      where: { mock: { examId: exam.id }, status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, scorePct: { not: null } },
-      orderBy: { scorePct: "desc" },
-      take: 10,
-      select: {
-        id: true,
-        scorePct: true,
-        userId: true,
-        finishedAt: true,
-        user: { select: { name: true } },
-      },
-    }),
-    prisma.attempt.findFirst({
-      where: { userId, mock: { examId: exam.id }, status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, scorePct: { not: null } },
-      orderBy: { scorePct: "desc" },
-      select: { id: true, scorePct: true, percentile: true, rank: true, finishedAt: true },
-    }),
-  ]);
+  // Public queries — always run, content visible to crawlers + signed-out
+  // visitors (syllabus is implicit via exam.subjects already loaded above).
+  const [validatedQuestionCount, newsItems, importantDates, pyqYears, systemMocks, leaderboard] =
+    await Promise.all([
+      prisma.question.count({ where: { examId: exam.id, validated: true } }),
+      prisma.examNewsItem.findMany({
+        where: { examId: exam.id },
+        orderBy: { publishedAt: "desc" },
+        take: 5,
+      }),
+      prisma.examImportantDate.findMany({
+        where: { examId: exam.id },
+        orderBy: { date: "asc" },
+        take: 10,
+      }),
+      prisma.question.groupBy({
+        by: ["pyqYear"],
+        where: { examId: exam.id, source: "PYQ", pyqYear: { not: null } },
+        _count: true,
+        orderBy: { pyqYear: "desc" },
+      }),
+      prisma.mock.findMany({
+        where: { examId: exam.id, userId: null },
+        orderBy: [{ createdAt: "asc" }],
+        take: 24,
+        select: { id: true, title: true, type: true, questionIds: true, config: true },
+      }),
+      prisma.attempt.findMany({
+        where: { mock: { examId: exam.id }, status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, scorePct: { not: null } },
+        orderBy: { scorePct: "desc" },
+        take: 10,
+        select: {
+          id: true,
+          scorePct: true,
+          userId: true,
+          finishedAt: true,
+          user: { select: { name: true } },
+        },
+      }),
+    ]);
+
+  // User-specific queries — only run when authenticated. Defaults to empty so
+  // unauth render path stays simple. Crawlers never trigger these.
+  const [enrollment, weakness, recent, myBest] = userId
+    ? await Promise.all([
+        prisma.enrollment.findUnique({
+          where: { userId_examId: { userId, examId: exam.id } },
+        }),
+        prisma.weaknessMap.findMany({
+          where: { userId, examId: exam.id },
+          include: { topic: true },
+          orderBy: { masteryScore: "asc" },
+          take: 5,
+        }),
+        prisma.attempt.findMany({
+          where: {
+            userId,
+            mock: { examId: exam.id },
+            status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+          },
+          include: { mock: true },
+          orderBy: { startedAt: "desc" },
+          take: 5,
+        }),
+        prisma.attempt.findFirst({
+          where: {
+            userId,
+            mock: { examId: exam.id },
+            status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+            scorePct: { not: null },
+          },
+          orderBy: { scorePct: "desc" },
+          select: { id: true, scorePct: true, percentile: true, rank: true, finishedAt: true },
+        }),
+      ])
+    : ([null, [], [], null] as const);
 
   const isEnrolled = !!enrollment;
   const hasContent = validatedQuestionCount > 0;
 
-  // Same score-boost computation used by the dashboard right rail, but
-  // scoped to this single exam. Drives the "Score Boost" + "Focus topics"
-  // sections so the per-exam page surfaces "lift these to gain N marks"
-  // contextually — no need for the student to bounce back to the dashboard.
-  const scoreBoost = isEnrolled
-    ? await computeScoreBoost(userId, exam.id)
-    : null;
+  // Score Boost only when logged in + enrolled — no point computing it for
+  // crawlers or new visitors.
+  const scoreBoost =
+    userId && isEnrolled ? await computeScoreBoost(userId, exam.id) : null;
+
+  // JSON-LD structured data — helps Google show this page as a rich
+  // Course result with breadcrumb. Built from public exam data only.
+  const courseJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: `${exam.shortName} — Free Mock Tests, Syllabus & AI Tutor`,
+    description: exam.description ?? `${exam.name} preparation on Shishya — free expert-curated mocks, previous year papers, and Shishya AI as your personal tutor.`,
+    provider: {
+      "@type": "EducationalOrganization",
+      name: "Shishya",
+      url: "https://shishya.in",
+    },
+    educationalLevel: "Entrance Exam",
+    inLanguage: exam.languages ?? ["en"],
+    url: `https://shishya.in/exams/${exam.code}`,
+    hasCourseInstance: {
+      "@type": "CourseInstance",
+      courseMode: "Online",
+      courseWorkload: `PT${exam.durationMin}M`,
+    },
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "INR",
+      availability: "https://schema.org/InStock",
+      url: `https://shishya.in/exams/${exam.code}`,
+    },
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://shishya.in" },
+      { "@type": "ListItem", position: 2, name: "Exams", item: "https://shishya.in/exams" },
+      { "@type": "ListItem", position: 3, name: exam.shortName, item: `https://shishya.in/exams/${exam.code}` },
+    ],
+  };
 
   return (
     <main className="min-h-screen bg-ink-50/40">
+      {/* JSON-LD for Google rich-result eligibility */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
@@ -138,6 +246,27 @@ export default async function ExamPage({
             {t("exam.negative")}: {exam.negativeMark === 0 ? t("exam.no.negative") : `−${exam.negativeMark}`}
           </span>
         </div>
+
+        {/* Sign-in CTA banner for unauthenticated visitors. Crawlers see
+            this; search-arriving students see exactly what they get for free. */}
+        {!userId && (
+          <div className="mt-6 rounded-md border border-saffron-300 bg-saffron-50 p-5">
+            <p className="text-sm font-semibold text-ink-900">
+              Free {exam.shortName} preparation on Shishya
+            </p>
+            <p className="mt-1 text-sm text-ink-700">
+              Take expert-curated mocks, practise previous year papers, and let{" "}
+              <strong>Shishya AI</strong> tutor you to better ranks — all free, no
+              credit card. Sign in with Google to begin.
+            </p>
+            <Link
+              href={`/login?callbackUrl=/exams/${exam.code}`}
+              className="btn-primary mt-3 inline-block !py-2 !px-4 text-sm"
+            >
+              Sign in to start →
+            </Link>
+          </div>
+        )}
 
         {/* Action panel */}
         <div className="mt-8 rounded-md border border-ink-200 bg-white p-6">

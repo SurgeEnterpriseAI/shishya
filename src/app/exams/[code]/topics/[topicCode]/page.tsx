@@ -1,10 +1,13 @@
 // /exams/:code/topics/:topicCode — study material for one topic.
-// Server-rendered. Pulls notes (if generated) + a few practice questions
-// for the topic. Falls back to a "Notes coming soon" empty state when
-// notes haven't been generated yet.
+//
+// PUBLIC: indexable by search engines so queries like "Number System for
+// RRB NTPC" or "Indian History for UPSC" land directly on rich study
+// notes. Practice questions + Ask Shishya remain interactive — they
+// route through /login if the visitor isn't authenticated.
 
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -12,13 +15,60 @@ import { getT } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ code: string; topicCode: string }>;
+}): Promise<Metadata> {
+  const { code, topicCode } = await params;
+  const [exam, topic] = await Promise.all([
+    prisma.exam.findUnique({
+      where: { code },
+      select: { code: true, shortName: true, name: true },
+    }),
+    prisma.topic.findFirst({
+      where: { code: topicCode, subject: { exam: { code } } },
+      select: { name: true, description: true, code: true },
+    }),
+  ]);
+  if (!exam || !topic) return { title: "Topic not found — Shishya" };
+  const title = `${topic.name} for ${exam.shortName} — Notes, Practice & AI Tutor | Shishya`;
+  const description =
+    `Free ${topic.name} study notes for ${exam.shortName} preparation. ` +
+    `Concepts, formulas, common mistakes, practice questions, and Shishya AI ` +
+    `to tutor you on this topic. ${topic.description ?? ""}`.slice(0, 300);
+  const url = `https://shishya.in/exams/${exam.code}/topics/${topic.code}`;
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    keywords: [
+      `${topic.name} ${exam.shortName}`,
+      `${topic.name} notes`,
+      `${topic.name} formulas`,
+      `${topic.name} practice questions`,
+      `${exam.shortName} ${topic.name} preparation`,
+      `${exam.shortName} ${topic.name} pyq`,
+    ],
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Shishya",
+      locale: "en_IN",
+      type: "article",
+    },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
+
 export default async function TopicPage({
   params,
 }: {
   params: Promise<{ code: string; topicCode: string }>;
 }) {
   const session = await auth();
-  if (!session?.user?.id) redirect(`/login?callbackUrl=/exams`);
+  const userId = session?.user?.id ?? null;
   const { code, topicCode } = await params;
   const { t } = await getT();
 
