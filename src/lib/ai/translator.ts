@@ -69,9 +69,11 @@ export interface TranslateBatchResult {
   latencyMs: number;
 }
 
-// Hard cap so we never send a runaway batch. Each question is typically
-// 200–400 tokens; 30 per batch keeps us well under model output limits.
-export const MAX_BATCH_SIZE = 30;
+// Hard cap so we never send a runaway batch. Indic-script translations can
+// run ~800 output tokens per question (Devanagari/Tamil/Telugu glyphs cost
+// more per token than Latin). Capping at 15 per batch keeps the response
+// under our 16k max_tokens output ceiling with comfortable headroom.
+export const MAX_BATCH_SIZE = 15;
 
 export async function translateBatch(
   input: TranslateBatchInput,
