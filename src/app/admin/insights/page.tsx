@@ -312,6 +312,22 @@ async function renderInsights() {
       }), [] as any[]),
   ]);
 
+  // ── Translation cache stats — same fallback pattern as reports. The
+  // table is newest and we read it via raw SQL because the typed Prisma
+  // client wasn't regenerated when this code first landed.
+  let translationStats: Array<{ locale: string; count: number }> = [];
+  try {
+    const rows = await prisma.$queryRawUnsafe<Array<{ locale: string; count: bigint }>>(
+      `SELECT "locale", COUNT(*)::bigint AS count
+         FROM "QuestionTranslation"
+        GROUP BY "locale"
+        ORDER BY count DESC`,
+    );
+    translationStats = rows.map((r) => ({ locale: r.locale, count: Number(r.count) }));
+  } catch (err) {
+    console.error("[admin/insights] translation stats failed", (err as Error)?.message);
+  }
+
   // ── Derive top topics asked from tool-use metadata ──────────────────
   const topicCounts = new Map<string, number>();
   for (const m of topAskedTopicsRaw) {
@@ -533,6 +549,41 @@ async function renderInsights() {
               </ul>
             </div>
           </div>
+        </section>
+
+        {/* ── Translation cache (per locale) ──────────────────────────── */}
+        <section className="mt-10">
+          <h2 className="text-base font-semibold text-ink-800">
+            Translation cache{" "}
+            <span className="text-xs font-normal text-ink-500">
+              ({translationStats.reduce((s, r) => s + r.count, 0).toLocaleString("en-IN")} cached rows)
+            </span>
+          </h2>
+          <p className="mt-1 text-xs text-ink-500">
+            On-demand translations cached at /api/mocks/[id]/translate and
+            /api/attempts/[id]/translate. Each row = one question, one locale.
+            Higher counts mean the next student in that language pays $0.
+          </p>
+          {translationStats.length === 0 ? (
+            <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
+              No translations cached yet. Run scripts/prewarm-translations.ts
+              for popular exams / locales to seed.
+            </p>
+          ) : (
+            <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              {translationStats.map((r) => (
+                <li
+                  key={r.locale}
+                  className="rounded-md border border-ink-200 bg-white px-3 py-2 text-xs"
+                >
+                  <p className="font-medium uppercase tracking-wider text-ink-500">{r.locale}</p>
+                  <p className="mt-0.5 text-lg font-bold tabular-nums text-ink-900">
+                    {r.count.toLocaleString("en-IN")}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         {/* ── Reported questions (student-flagged bad content) ───────── */}
