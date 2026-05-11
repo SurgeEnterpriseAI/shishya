@@ -20,11 +20,39 @@ export default async function ChatPage({
   const sp = await searchParams;
   const { t } = await getT();
 
-  const enrollments = await prisma.enrollment.findMany({
+  let enrollments = await prisma.enrollment.findMany({
     where: { userId: session.user.id, active: true },
     include: { exam: { select: { code: true, shortName: true } } },
     orderBy: { createdAt: "desc" },
   });
+
+  // If the URL points at a real exam the user isn't enrolled in yet (e.g.
+  // they followed a topic / weakness / mock-results deep link for an exam
+  // they were just browsing), auto-enroll them so the tutor scopes mastery
+  // lookups, mocks, and the exam-switcher dropdown to the exam they came
+  // from rather than silently falling back to enrollments[0]. Without this
+  // a user coming from SSC GD sees "RRB NTPC" in the switcher because their
+  // first enrollment happened to be RRB NTPC.
+  if (sp.examCode && !enrollments.find((e) => e.exam.code === sp.examCode)) {
+    const target = await prisma.exam.findUnique({
+      where: { code: sp.examCode },
+      select: { id: true, code: true, shortName: true, active: true },
+    });
+    if (target && target.active) {
+      await prisma.enrollment.upsert({
+        where: { userId_examId: { userId: session.user.id, examId: target.id } },
+        update: { active: true },
+        create: { userId: session.user.id, examId: target.id },
+      });
+      // Re-read enrollments so the switcher and downstream logic include the
+      // freshly-added one. orderBy createdAt desc puts the new one first.
+      enrollments = await prisma.enrollment.findMany({
+        where: { userId: session.user.id, active: true },
+        include: { exam: { select: { code: true, shortName: true } } },
+        orderBy: { createdAt: "desc" },
+      });
+    }
+  }
 
   if (enrollments.length === 0) {
     return (
