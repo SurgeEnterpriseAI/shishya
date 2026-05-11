@@ -72,8 +72,14 @@ export default async function AdminHome() {
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
-            href="/admin/questions?source=AI_GENERATED&validated=false"
+            href="/admin/insights"
             className="btn-primary !py-2 !px-4 text-sm"
+          >
+            Shishya insights →
+          </Link>
+          <Link
+            href="/admin/questions?source=AI_GENERATED&validated=false"
+            className="btn-secondary !py-2 !px-4 text-sm"
           >
             Review pending AI questions
           </Link>
