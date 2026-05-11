@@ -42,9 +42,9 @@ export const metadata: Metadata = {
     "163 entrance exams across India — national, state-level, olympiads, civil services, banking, teaching, defence — with previous year papers, expert-curated mocks, and Shishya AI as your personal tutor. Free for every student, in English, Hindi and 17 other Indian languages.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in"),
   openGraph: {
-    title: "Shishya — Every entrance exam in India, free, with AI tutoring",
+    title: "Shishya — 163 entrance exams across India, free, with AI tutoring",
     description:
-      "Every entrance exam across India — national, state, olympiads, civil services, banking, teaching, defence. Shishya AI handholds you to better ranks, better colleges, and a better career. Free for every student.",
+      "163 entrance exams across India — national, state-level, olympiads, civil services, banking, teaching, defence. Make Shishya your smart system: it listens to you and handholds you to better ranks, better colleges, and a better career. Free for every student.",
     url: "https://shishya.in",
     siteName: "Shishya",
     locale: "en_IN",
