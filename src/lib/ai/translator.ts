@@ -71,9 +71,10 @@ export interface TranslateBatchResult {
 
 // Hard cap so we never send a runaway batch. Indic-script translations can
 // run ~800 output tokens per question (Devanagari/Tamil/Telugu glyphs cost
-// more per token than Latin). Capping at 15 per batch keeps the response
-// under our 16k max_tokens output ceiling with comfortable headroom.
-export const MAX_BATCH_SIZE = 15;
+// more per token than Latin), and reading-comprehension passages explode
+// further. Batch of 10 keeps the response under our 8k non-streaming cap
+// even for passage-heavy CDP / English-comprehension questions.
+export const MAX_BATCH_SIZE = 10;
 
 export async function translateBatch(
   input: TranslateBatchInput,
@@ -116,15 +117,14 @@ export async function translateBatch(
     2,
   )}`;
 
-  // Indic-script translations run 1.5-2x the English token count, and
-  // reading-comprehension or syllabus-passage questions can run very long
-  // when their full passage is translated. Sonnet 4.5 supports 64k output;
-  // we sit at 32k which gives a 15-Q batch comfortable headroom even when
-  // every question is passage-heavy.
+  // The Anthropic SDK rejects non-streaming requests with max_tokens
+  // above ~8k (response may exceed the 10-min HTTP timeout). 8k is the
+  // hard ceiling for this call; batch size + per-question allowance below
+  // are sized to fit inside it even when every question is passage-heavy.
   const start = Date.now();
   const response = await anthropic.messages.create({
     model: MODEL,
-    max_tokens: Math.min(32000, 1500 * input.questions.length + 2000),
+    max_tokens: Math.min(8000, 700 * input.questions.length + 1500),
     system: [
       { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
     ] as Anthropic.Messages.TextBlockParam[],
