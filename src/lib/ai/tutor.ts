@@ -22,7 +22,12 @@ import {
 import type { TutorInput, TutorOutput } from "./types";
 import { tutorTools, executeTool, type ToolContext } from "./tools";
 
-const MAX_TOOL_TURNS = 4;
+// Tool-use turns were capped at 4 but a typical mock-results follow-up
+// chained 3 sequential tool calls before answering — each ~3-5s
+// round-trip from US Lambda to Anthropic, so first-token latency hit
+// 30-45s. Capping at 2 keeps the loop snappy without losing the most
+// common pattern (one mastery lookup + one practice question lookup).
+const MAX_TOOL_TURNS = 2;
 
 const TOOL_USE_GUIDE = `Tools available
 ───────────────
@@ -32,6 +37,12 @@ You have tools to look up real student data. Use them when relevant — never in
 - get_recent_attempts → last few mock attempts (score, topic mix, date). Call when student references "my last test" or asks about progress.
 - find_questions_on_topic → real validated practice questions on a topic. Call when student asks "quiz me", "give me a question on X", or you want to anchor an explanation in a real exam-format question.
 - get_attempt_mistakes → questions a student got wrong on a specific attempt. Call when reviewing a past attempt (after get_recent_attempts gave you the attempt_id).
+
+IMPORTANT — skip tool calls when the user has already supplied the data in their message. Examples:
+- "I scored 22.2% on my last RRB NTPC mock, weakest was Time Distance Speed 0/1" → do NOT call get_recent_attempts or get_my_mastery; you already have the data. Answer directly.
+- "Explain my mistake on Q4" without an attempt id → ask one short clarifying question rather than spinning up tools.
+- "Quiz me on Profit & Loss" → ONE find_questions_on_topic call is enough; don't chain.
+Each tool call adds ~5 seconds of latency the student is staring at "Thinking…" — every avoidable call hurts.
 
 When find_questions_on_topic returns a question, present it WITHOUT the answer first. Let the student attempt; only reveal the solution after they respond.`;
 
@@ -43,24 +54,34 @@ export async function* tutorStream(
   | { tool: { name: string; args: any; ok: boolean; ms: number } }
   | { done: TutorOutput }
 > {
-  const { studentState, syllabus, history, userMessage, language, topicFocus, journey, ctx } = input;
+  const { studentState, syllabus, history, userMessage, language, topicFocus, journey, generalMode, ctx } = input;
 
   // Anthropic caps `cache_control` blocks at 4 per request. Combine the 4
   // small static blocks (persona + safety + format + tools) into one cached
   // block; keep syllabus as its own cached block. That's 2 blocks, well
   // under the limit, and the cache key is unchanged for warm-cache hits as
   // long as the four constants don't change between requests.
-  const STATIC_PROMPT = `${PLATFORM_PERSONA}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${TOOL_USE_GUIDE}`;
-  const systemBlocks = cachedSystem(STATIC_PROMPT, syllabusBlock(syllabus));
+  // In general mode we skip the tool-use guide (no tools available) and
+  // skip the syllabus block (no exam scope) to keep the prompt tight.
+  const STATIC_PROMPT = generalMode
+    ? `${PLATFORM_PERSONA}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\nThis chat is in GENERAL mode — exam-agnostic. The student wants help with cross-exam questions, career advice, study technique, or choosing an exam. You have no syllabus to reference and no student mastery data. Answer based on general knowledge of Indian entrance exams; ask one short clarifying question if a specific exam would change your answer.`
+    : `${PLATFORM_PERSONA}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${TOOL_USE_GUIDE}`;
+  const systemBlocks = generalMode
+    ? cachedSystem(STATIC_PROMPT)
+    : cachedSystem(STATIC_PROMPT, syllabusBlock(syllabus));
 
   const focusBlock = topicFocus
     ? `CURRENT FOCUS — the student opened this chat from the study-notes page for "${topicFocus.name}" (subject: ${topicFocus.subjectName}). Anchor your reply to this topic: use its terminology, examples, and formulas. Only diverge if the student explicitly asks to switch topics. When citing the topic, use the code \`${topicFocus.code}\`.
 ${topicFocus.notesExcerpt ? `\nReference notes (already shown to the student — do not re-paste verbatim; build on them):\n${topicFocus.notesExcerpt}\n` : ""}`
     : "";
 
-  const journeyText = journey ? journeyBlock(journey) : "";
+  const journeyText = journey && !generalMode ? journeyBlock(journey) : "";
 
-  const dynamicContext = `${studentStateBlock(studentState)}
+  // In general mode we don't show studentStateBlock either — there's no
+  // useful exam-scoped data to reference.
+  const dynamicContext = generalMode
+    ? `Reply language: ${language}.`
+    : `${studentStateBlock(studentState)}
 ${journeyText ? `\n${journeyText}\n` : ""}${focusBlock ? `\n${focusBlock}\n` : ""}
 Reply language: ${language}.
 

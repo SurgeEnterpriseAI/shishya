@@ -20,12 +20,19 @@ import { getStudentJourney } from "@/lib/db/student-journey";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 
-const Body = z.object({
-  examCode: z.string().min(1),
-  sessionId: z.string().nullish(),
-  message: z.string().min(1).max(2000),
-  topicCode: z.string().nullish(),
-});
+const Body = z
+  .object({
+    // examCode is required for the normal exam-scoped chat. Omitted (or
+    // empty) when `general: true` — see chat/page.tsx ?general=1 route.
+    examCode: z.string().min(1).optional(),
+    general: z.boolean().optional(),
+    sessionId: z.string().nullish(),
+    message: z.string().min(1).max(2000),
+    topicCode: z.string().nullish(),
+  })
+  .refine((b) => b.general === true || (typeof b.examCode === "string" && b.examCode.length > 0), {
+    message: "examCode is required when general is not true",
+  });
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -51,26 +58,40 @@ export async function POST(req: Request) {
     });
   }
 
-  // Ensure exam + enrollment + chat session
-  const exam = await prisma.exam.findUnique({ where: { code: body.examCode } });
-  if (!exam) {
+  // ── General mode (no exam scope) ──────────────────────────────────
+  // Reached via the "General Interaction" tile or ?general=1. No exam,
+  // no syllabus, no student-state, no journey injection — just a
+  // direct Q&A with Shishya's persona + safety rules.
+  const isGeneral = body.general === true;
+  const examCodeForChat = isGeneral ? null : body.examCode!;
+
+  const exam = isGeneral
+    ? null
+    : await prisma.exam.findUnique({ where: { code: examCodeForChat! } });
+  if (!isGeneral && !exam) {
     return new Response(JSON.stringify({ error: "exam not found" }), {
       status: 404,
       headers: { "content-type": "application/json" },
     });
   }
-  await prisma.enrollment.upsert({
-    where: { userId_examId: { userId: session.user.id, examId: exam.id } },
-    update: {},
-    create: { userId: session.user.id, examId: exam.id },
-  });
+  if (exam) {
+    await prisma.enrollment.upsert({
+      where: { userId_examId: { userId: session.user.id, examId: exam.id } },
+      update: {},
+      create: { userId: session.user.id, examId: exam.id },
+    });
+  }
 
   let chatSession = body.sessionId
     ? await prisma.chatSession.findUnique({ where: { id: body.sessionId } })
     : null;
   if (!chatSession || chatSession.userId !== session.user.id) {
     chatSession = await prisma.chatSession.create({
-      data: { userId: session.user.id, examId: exam.id },
+      data: {
+        userId: session.user.id,
+        // examId is nullable in the schema — null = general-mode session.
+        examId: exam?.id ?? null,
+      },
     });
   }
 
@@ -85,11 +106,37 @@ export async function POST(req: Request) {
     data: { sessionId: chatSession.id, role: "USER", content: body.message },
   });
 
-  const [studentState, syllabus, journey] = await Promise.all([
-    getStudentState(session.user.id, body.examCode),
-    getSyllabusContext(body.examCode),
-    getStudentJourney(session.user.id, body.examCode),
-  ]);
+  // Exam-scoped context (student state + syllabus + journey) only loads
+  // when we have an exam. General mode skips these and falls back to a
+  // minimal student-state stub built from the User row.
+  const [studentState, syllabus, journey] = exam
+    ? await Promise.all([
+        getStudentState(session.user.id, examCodeForChat!),
+        getSyllabusContext(examCodeForChat!),
+        getStudentJourney(session.user.id, examCodeForChat!),
+      ])
+    : ([null, null, null] as const);
+
+  // For general mode we need a minimal StudentState for the tutor's
+  // prompt-builder (it needs preferredLang at minimum). Build one from
+  // the User row.
+  let generalStudentState = studentState;
+  if (!generalStudentState) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { preferredLang: true },
+    });
+    generalStudentState = {
+      userId: session.user.id,
+      examCode: "",
+      examName: "",
+      preferredLang: (user?.preferredLang ?? "EN") as any,
+      enrolledAt: new Date().toISOString(),
+      weaknesses: [],
+      strengths: [],
+      totalMocksTaken: 0,
+    };
+  }
 
   // If the chat was opened from a study-notes page (topicCode in URL), grab
   // the topic record + a short slice of its notes. The tutor uses this as
@@ -101,7 +148,7 @@ export async function POST(req: Request) {
     subjectName: string;
     notesExcerpt: string | null;
   } | null = null;
-  if (body.topicCode) {
+  if (exam && body.topicCode) {
     const topic = await prisma.topic.findFirst({
       where: { code: body.topicCode, subject: { examId: exam.id } },
       select: {
@@ -133,17 +180,31 @@ export async function POST(req: Request) {
         );
 
         const ai = tutorStream({
-          studentState,
-          syllabus,
+          studentState: generalStudentState,
+          // Use empty syllabus for general mode — tutor.ts skips the
+          // syllabus block when subjects is empty.
+          syllabus: syllabus ?? {
+            examCode: "",
+            examName: "General",
+            examShortName: "General",
+            subjects: [],
+          },
           history: history.map((m) => ({
             role: m.role === "USER" ? "user" : "assistant",
             content: m.content,
           })),
           userMessage: body.message,
-          language: studentState.preferredLang,
+          language: generalStudentState.preferredLang,
           topicFocus: topicFocus ?? undefined,
-          journey,
-          ctx: { userId: session.user.id, examCode: body.examCode },
+          journey: journey ?? undefined,
+          generalMode: isGeneral,
+          // Tool use needs an exam scope to look up the student's
+          // mastery / questions on a topic — in general mode the tools
+          // would have nothing to query, so we pass no ctx and the
+          // tutor goes tools-off.
+          ctx: examCodeForChat
+            ? { userId: session.user.id, examCode: examCodeForChat }
+            : undefined,
         });
 
         let full = "";

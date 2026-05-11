@@ -152,6 +152,10 @@ export interface TutorInput {
     lastMock: { date: string; scorePct: number; mockTitle: string; examShort: string } | null;
     openActions: Array<{ kind: string; topicCode?: string; reason: string }>;
   };
+  /** True when the chat is in exam-agnostic "General Interaction" mode.
+   *  Tutor skips syllabus + journey blocks, doesn't expose tools, and
+   *  uses a generic persona suited to cross-exam Q&A. */
+  generalMode?: boolean;
 }
 
 export interface ChatTurn {
@@ -180,6 +184,12 @@ export interface ExplainOutput {
   whyChosenIsWrong?: string;
   similarConcepts?: string[];
   practiceTopicCode?: string;
+  /** True when the AI thinks the marked answer key doesn't fit the
+   *  question (e.g. broken jumble, insufficient data). UI uses this
+   *  to invite the student to file a report instead of pretending to
+   *  defend a bad answer. */
+  keyDisputed?: boolean;
+  keyDisputeReason?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -13,12 +13,13 @@ import { ExamSwitcher } from "./ExamSwitcher";
 export default async function ChatPage({
   searchParams,
 }: {
-  searchParams: Promise<{ examCode?: string; topicCode?: string; seed?: string }>;
+  searchParams: Promise<{ examCode?: string; topicCode?: string; seed?: string; general?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/chat");
   const sp = await searchParams;
   const { t } = await getT();
+  const generalMode = sp.general === "1";
 
   let enrollments = await prisma.enrollment.findMany({
     where: { userId: session.user.id, active: true },
@@ -54,15 +55,69 @@ export default async function ChatPage({
     }
   }
 
+  // General-mode chat — Shishya without exam context. Reached either by
+  // the "General Interaction" tile on the picker (multi-exam users) or
+  // by passing ?general=1 directly (e.g. a user who hasn't enrolled in
+  // anything yet but wants help picking an exam).
+  if (generalMode) {
+    return (
+      <main className="min-h-screen bg-ink-50/40">
+        <Header />
+        <section className="container-prose flex flex-col py-6 sm:py-8" style={{ minHeight: "calc(100vh - 64px)" }}>
+          <div className="flex items-baseline justify-between">
+            <div>
+              <p className="text-xs text-ink-500">
+                <Link href="/dashboard" className="hover:text-ink-800">{t("nav.dashboard")}</Link> · {t("nav.tutor").replace(" →", "")}
+              </p>
+              <h1 className="mt-1 text-xl font-semibold text-ink-900">{t("chat.general.title")}</h1>
+              <p className="mt-0.5 text-xs text-ink-500">{t("chat.general.subtitle")}</p>
+            </div>
+          </div>
+
+          <ChatInterface
+            examCode={null}
+            topicFocus={null}
+            initialSeed={sp.seed ?? null}
+            labels={{
+              placeholder: t("chat.placeholder"),
+              send: t("chat.send"),
+              thinking: t("chat.thinking"),
+              empty: t("chat.general.empty"),
+              emptyExamPrefix: "",
+              suggested: t("chat.suggested"),
+              starters: [
+                t("chat.general.starter.1"),
+                t("chat.general.starter.2"),
+                t("chat.general.starter.3"),
+                t("chat.general.starter.4"),
+              ],
+              focusLabel: t("chat.focus.label"),
+              focusClear: t("chat.focus.clear"),
+              diagnosticCta: t("chat.diagnostic.cta"),
+              diagnosticBuilding: t("chat.diagnostic.building"),
+              diagnosticHint: t("chat.diagnostic.hint"),
+            }}
+          />
+        </section>
+      </main>
+    );
+  }
+
   if (enrollments.length === 0) {
     return (
       <main className="min-h-screen bg-ink-50/40">
         <Header />
         <section className="container-prose py-16 text-center">
           <h1 className="text-xl font-semibold text-ink-900">{t("dash.no.enrollments")}</h1>
-          <Link href="/dashboard" className="btn-primary mt-6 !py-2 !px-4 text-sm">
-            {t("nav.dashboard")} →
-          </Link>
+          <p className="mt-2 text-sm text-ink-600">{t("chat.pick.subtitle")}</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/exams" className="btn-primary !py-2 !px-4 text-sm">
+              {t("nav.exams")} →
+            </Link>
+            <Link href="/chat?general=1" className="btn-secondary !py-2 !px-4 text-sm">
+              {t("chat.general.cta")}
+            </Link>
+          </div>
         </section>
       </main>
     );
@@ -95,6 +150,19 @@ export default async function ChatPage({
           <h1 className="mt-1 text-2xl font-bold text-ink-900">{t("chat.pick.title")}</h1>
           <p className="mt-1 text-sm text-ink-600">{t("chat.pick.subtitle")}</p>
           <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {/* General-mode tile — exam-agnostic chat for cross-exam
+                questions, career advice, "which exam should I pick",
+                study technique tips, etc. */}
+            <li>
+              <Link
+                href="/chat?general=1"
+                className="block rounded-md border border-ink-200 bg-gradient-to-br from-saffron-50 to-white p-4 hover:border-saffron-400 hover:bg-saffron-50/60"
+              >
+                <p className="text-sm font-semibold text-ink-900">{t("chat.general.tile.title")}</p>
+                <p className="mt-0.5 text-xs text-ink-600">{t("chat.general.tile.body")}</p>
+                <p className="mt-1 text-xs text-saffron-700">{t("chat.general.tile.cta")} →</p>
+              </Link>
+            </li>
             {enrollments.map((e) => (
               <li key={e.id}>
                 <Link

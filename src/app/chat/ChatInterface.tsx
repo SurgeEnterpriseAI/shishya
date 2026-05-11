@@ -50,7 +50,11 @@ export function ChatInterface({
   initialSeed,
   labels,
 }: {
-  examCode: string;
+  /** Null when the chat is in "General" mode — exam-agnostic Q&A. The
+   *  /api/chat call then sends `general: true` instead of an examCode
+   *  and the tutor uses a generic system prompt with no syllabus /
+   *  student-state / journey injection. */
+  examCode: string | null;
   topicFocus?: TopicFocus | null;
   initialSeed?: string | null;
   labels: ChatLabels;
@@ -99,7 +103,8 @@ export function ChatInterface({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          examCode,
+          examCode: examCode ?? undefined,
+          general: examCode == null ? true : undefined,
           sessionId,
           message: text,
           topicCode: topicFocus?.code ?? undefined,
@@ -184,7 +189,9 @@ export function ChatInterface({
   // mock. The before/after delta is implicit in WeaknessMap — the topic
   // score on the next mock shows the lift.
   async function takeTopicDiagnostic() {
-    if (!topicFocus || creatingDiag) return;
+    // Diagnostic mocks only make sense when an exam is in scope; the
+    // button is gated on topicFocus so this guard is belt-and-braces.
+    if (!topicFocus || !examCode || creatingDiag) return;
     setCreatingDiag(true);
     setError(null);
     try {
@@ -245,7 +252,7 @@ export function ChatInterface({
               {creatingDiag ? `${labels.diagnosticBuilding}…` : `${labels.diagnosticCta} →`}
             </button>
             <a
-              href={`/chat?examCode=${encodeURIComponent(examCode)}`}
+              href={examCode ? `/chat?examCode=${encodeURIComponent(examCode)}` : "/chat?general=1"}
               className="text-ink-500 hover:text-ink-800"
             >
               {labels.focusClear} ✕
@@ -259,10 +266,15 @@ export function ChatInterface({
         {messages.length === 0 && (
           <div className="mx-auto max-w-md text-center">
             <p className="text-sm text-ink-600">
-              {labels.empty}{" "}
-              <strong>
-                {labels.emptyExamPrefix} {topicFocus ? topicFocus.name : examCode}
-              </strong>.
+              {labels.empty}
+              {(topicFocus || examCode) && (
+                <>
+                  {" "}
+                  <strong>
+                    {labels.emptyExamPrefix} {topicFocus ? topicFocus.name : examCode}
+                  </strong>.
+                </>
+              )}
             </p>
             <ul className="mt-5 grid grid-cols-1 gap-2">
               {starters.map((s) => (
