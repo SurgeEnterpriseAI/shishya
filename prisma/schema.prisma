@@ -119,6 +119,7 @@ model Exam {
   discussions  Discussion[]
   newsItems    ExamNewsItem[]
   importantDates ExamImportantDate[]
+  rankBands    ExamRankBand[]
 
   @@index([code])
   @@index([active])
@@ -499,6 +500,43 @@ model ExamImportantDate {
   exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
 
   @@index([examId, date])
+}
+
+// Rank prediction. Maps a student's mock-score band → expected real-exam
+// rank band → likely outcome (which college / which posting they're
+// realistically in contention for). Used by the post-attempt "Rank card"
+// on the results page and the exam landing page's "What can I get?" panel.
+//
+// Bands are coarse on purpose: 5-8 tiers per exam is enough resolution for
+// motivation and goal-setting; ultra-precise rank prediction is not the
+// platform's job. AI-seeded for top exams from Claude's knowledge of recent
+// cut-off trends; admin can override per exam.
+model ExamRankBand {
+  id          String   @id @default(cuid())
+  examId      String
+  // The score window (mock percentage) that maps to this band. Inclusive.
+  scorePctMin Float
+  scorePctMax Float
+  // Expected real-exam rank window. May be null for non-rank exams
+  // (e.g. SSC where outcome is "post + cadre" rather than numeric rank).
+  rankMin     Int?
+  rankMax     Int?
+  // Short label, e.g. "Top 1%", "Tier 1 IITs likely", "Group A posts".
+  label       String
+  // Markdown bullet list of outcomes. e.g.:
+  //   - AIIMS Delhi (last year cut-off ~50)
+  //   - JIPMER Puducherry
+  //   - Top state government medical colleges
+  outcomes    String   @db.Text
+  // Order in which to display (lowest scorePctMin first ⇒ orderIdx 0 highest).
+  orderIdx    Int      @default(0)
+  source      String?  // "ai-generated:claude" or curated URL
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([examId, orderIdx])
 }
 
 // ─────────────────────────────────────────────────────────────────────────

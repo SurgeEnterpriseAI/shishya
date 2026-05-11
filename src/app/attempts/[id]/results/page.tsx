@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { ResultsReview } from "./ResultsReview";
+import { RankCard } from "@/components/RankCard";
 import { formatDisplayScorePct } from "@/lib/scoring";
 
 export default async function ResultsPage({
@@ -69,6 +70,21 @@ export default async function ResultsPage({
   const wrongCount = orderedQs.filter((q) => q.chosen != null && !q.correct).length;
   const skipped = orderedQs.length - correctCount - wrongCount;
 
+  // Rank prediction bands for this exam (highest score band first).
+  const rankBands = await prisma.examRankBand.findMany({
+    where: { examId: attempt.mock.examId },
+    orderBy: { orderIdx: "asc" },
+    select: {
+      scorePctMin: true,
+      scorePctMax: true,
+      rankMin: true,
+      rankMax: true,
+      label: true,
+      outcomes: true,
+      source: true,
+    },
+  });
+
   const topicScores = (attempt.topicScores as Record<string, any>) ?? {};
   const topicArr = Object.values(topicScores)
     .map((t: any) => ({
@@ -119,6 +135,21 @@ export default async function ResultsPage({
             secondary=""
           />
         </div>
+
+        {/* ── Rank prediction ───────────────────────────────────────────
+            Right under the score cards so the student sees "what does
+            this score get me in the real exam" before they dive into
+            per-topic mastery + per-Q review. */}
+        {rankBands.length > 0 && (
+          <div className="mt-6">
+            <RankCard
+              scorePct={(attempt.scorePct ?? 0) * 100}
+              examShortName={attempt.mock.exam.shortName}
+              bands={rankBands}
+              source={rankBands[0]?.source ?? null}
+            />
+          </div>
+        )}
 
         <div className="mt-2 lg:grid lg:grid-cols-3 lg:gap-8">
         <div className="lg:col-span-2 min-w-0">

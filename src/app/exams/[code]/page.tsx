@@ -11,6 +11,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { RankLadder } from "@/components/RankCard";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
@@ -97,7 +98,7 @@ export default async function ExamPage({
 
   // Public queries — always run, content visible to crawlers + signed-out
   // visitors (syllabus is implicit via exam.subjects already loaded above).
-  const [validatedQuestionCount, newsItems, importantDates, pyqYears, systemMocks, leaderboard] =
+  const [validatedQuestionCount, newsItems, importantDates, pyqYears, systemMocks, leaderboard, rankBands] =
     await Promise.all([
       prisma.question.count({ where: { examId: exam.id, validated: true } }),
       prisma.examNewsItem.findMany({
@@ -132,6 +133,19 @@ export default async function ExamPage({
           userId: true,
           finishedAt: true,
           user: { select: { name: true } },
+        },
+      }),
+      prisma.examRankBand.findMany({
+        where: { examId: exam.id },
+        orderBy: { orderIdx: "asc" },
+        select: {
+          scorePctMin: true,
+          scorePctMax: true,
+          rankMin: true,
+          rankMax: true,
+          label: true,
+          outcomes: true,
+          source: true,
         },
       }),
     ]);
@@ -508,6 +522,19 @@ export default async function ExamPage({
                 <span className="font-medium text-ink-700">{describeTrend(recent.map((a) => a.scorePct ?? 0))}</span>
               </p>
             </div>
+          </section>
+        )}
+
+        {/* ── Rank ladder — full score→rank→outcome map for this exam.
+            Public so signed-out visitors see what's achievable, which is
+            a big motivator for landing-page conversions. */}
+        {rankBands.length > 0 && (
+          <section className="mt-10">
+            <RankLadder
+              examShortName={exam.shortName}
+              bands={rankBands}
+              source={rankBands[0]?.source ?? null}
+            />
           </section>
         )}
 
