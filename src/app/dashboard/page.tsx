@@ -234,7 +234,7 @@ export default async function DashboardPage() {
           </div>
           {enrollments.length > 0 && (
             <Link
-              href={`/chat?examCode=${enrollments[0].exam.code}`}
+              href="/chat"
               className="btn-secondary !py-2 !px-4 text-xs sm:text-sm"
             >
               {t("nav.tutor")}

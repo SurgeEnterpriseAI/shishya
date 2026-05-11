@@ -466,6 +466,9 @@ export const dict = {
     "chat.starter.4": "Make me a 10-question mock on Time and Work.",
     "chat.focus.label": "Studying",
     "chat.focus.clear": "Clear topic",
+    "chat.pick.title": "Which exam should I tutor you on?",
+    "chat.pick.subtitle": "Pick one to focus this chat on. You can switch anytime.",
+    "chat.pick.cta": "Tutor me",
 
     // ── lang switcher
     "lang.switch": "Language",
@@ -861,6 +864,9 @@ export const dict = {
     "chat.starter.4": "Time and Work पर 10 सवालों का मॉक बनाइए।",
     "chat.focus.label": "अध्ययनरत",
     "chat.focus.clear": "विषय हटाएँ",
+    "chat.pick.title": "मैं किस परीक्षा के लिए आपकी सहायता करूँ?",
+    "chat.pick.subtitle": "एक चुनिए। बाद में कभी भी बदल सकते हैं।",
+    "chat.pick.cta": "इस पर सहायता करें",
 
     "lang.switch": "भाषा",
   },

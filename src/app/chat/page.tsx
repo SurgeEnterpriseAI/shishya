@@ -68,10 +68,51 @@ export default async function ChatPage({
     );
   }
 
-  const examCode =
+  // Picker mode: when the student lands on /chat from a generic surface
+  // (e.g. the dashboard's top-bar "Ask Shishya AI" button) we must NOT
+  // silently scope the tutor to their most-recent enrollment — that was
+  // confusing students who'd just been browsing one exam and got auto-
+  // dropped into a different one. If they have multiple enrollments and
+  // didn't pass an explicit examCode + topicCode + seed, show a tile
+  // picker so they choose. Single-enrollment users skip the picker (no
+  // choice to make).
+  const explicitExamCode =
     sp.examCode && enrollments.find((e) => e.exam.code === sp.examCode)
       ? sp.examCode
-      : enrollments[0].exam.code;
+      : null;
+  const needsPicker =
+    !explicitExamCode && !sp.seed && !sp.topicCode && enrollments.length > 1;
+
+  if (needsPicker) {
+    return (
+      <main className="min-h-screen bg-ink-50/40">
+        <Header />
+        <section className="container-prose py-10">
+          <p className="text-xs text-ink-500">
+            <Link href="/dashboard" className="hover:text-ink-800">{t("nav.dashboard")}</Link>{" "}
+            · {t("nav.tutor").replace(" →", "")}
+          </p>
+          <h1 className="mt-1 text-2xl font-bold text-ink-900">{t("chat.pick.title")}</h1>
+          <p className="mt-1 text-sm text-ink-600">{t("chat.pick.subtitle")}</p>
+          <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {enrollments.map((e) => (
+              <li key={e.id}>
+                <Link
+                  href={`/chat?examCode=${e.exam.code}`}
+                  className="block rounded-md border border-ink-200 bg-white p-4 hover:border-saffron-400 hover:bg-saffron-50/30"
+                >
+                  <p className="text-sm font-semibold text-ink-900">{e.exam.shortName}</p>
+                  <p className="mt-1 text-xs text-saffron-700">{t("chat.pick.cta")} →</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </main>
+    );
+  }
+
+  const examCode = explicitExamCode ?? enrollments[0].exam.code;
 
   // If a topic was passed (e.g. user clicked "Open Shishya tutor" from a
   // study-notes page), look it up so the tutor can anchor on it and the UI
