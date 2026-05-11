@@ -80,12 +80,28 @@ export function RankCard({
           Likely outcomes
         </p>
         <ul className="mt-2 space-y-1 text-sm text-ink-800">
-          {lines.map((l, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="text-saffron-600">•</span>
-              <span>{l.replace(/^[-*]\s*/, "")}</span>
-            </li>
-          ))}
+          {lines.map((l, i) => {
+            const text = l.replace(/^[-*]\s*/, "");
+            // Extract the institution / post name before any " — " or "("
+            // separator and use it as the Google search query so a student
+            // can deep-dive on any line.
+            const name = text.split(/—| - | \(/)[0].trim();
+            const q = encodeURIComponent(`${name} ${examShortName}`);
+            return (
+              <li key={i} className="flex gap-2">
+                <span className="text-saffron-600">•</span>
+                <a
+                  href={`https://www.google.com/search?q=${q}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-ink-800 hover:text-saffron-700 hover:underline"
+                  title={`Search for "${name}"`}
+                >
+                  {text}
+                </a>
+              </li>
+            );
+          })}
         </ul>
       </div>
       {source === "ai-generated:claude" && (
@@ -138,12 +154,25 @@ export function RankLadder({
                 .split(/\r?\n/)
                 .map((l) => l.trim())
                 .filter(Boolean)
-                .map((l, j) => (
-                  <li key={j} className="flex gap-2">
-                    <span className="text-saffron-600">•</span>
-                    <span>{l.replace(/^[-*]\s*/, "")}</span>
-                  </li>
-                ))}
+                .map((l, j) => {
+                  const text = l.replace(/^[-*]\s*/, "");
+                  const name = text.split(/—| - | \(/)[0].trim();
+                  const q = encodeURIComponent(`${name} ${examShortName}`);
+                  return (
+                    <li key={j} className="flex gap-2">
+                      <span className="text-saffron-600">•</span>
+                      <a
+                        href={`https://www.google.com/search?q=${q}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-ink-700 hover:text-saffron-700 hover:underline"
+                        title={`Search for "${name}"`}
+                      >
+                        {text}
+                      </a>
+                    </li>
+                  );
+                })}
             </ul>
           </li>
         ))}
