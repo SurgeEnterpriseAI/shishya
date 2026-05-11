@@ -2,6 +2,7 @@
 // Server Component; the picker (search + chips + filter) is a client island.
 
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
@@ -21,7 +22,12 @@ const FALLBACK_EXAMS: ExamCard[] = [
   { code: "UPSC_PRELIMS", shortName: "UPSC Prelims",   name: "UPSC Civil Services Examination",   category: "CIVIL_SERVICES", candidatesPerYear: 1_100_000, live: false, tags: ["popular", "national", "govt", "civil_services"] },
 ];
 
-async function loadExams(): Promise<ExamCard[]> {
+// Loads the 163-exam list. Wrapped in unstable_cache (60s TTL) so the
+// language switcher's router.refresh() doesn't re-pay the US→Asia DB
+// round-trip + 163-row read every time — the user-visible "6 seconds
+// to switch language" was almost entirely this query. The exam list
+// barely changes minute-to-minute; 60s of staleness is fine.
+async function loadExamsRaw(): Promise<ExamCard[]> {
   try {
     // "Live" means a student can start something on this exam page right now.
     // Two ways to be live: (a) ≥1 SME-validated question, or (b) ≥1 system
@@ -65,6 +71,11 @@ async function loadExams(): Promise<ExamCard[]> {
     return FALLBACK_EXAMS;
   }
 }
+
+const loadExams = unstable_cache(loadExamsRaw, ["home-exams-v1"], {
+  revalidate: 60,
+  tags: ["exams"],
+});
 
 export default async function HomePage() {
   const { locale, t } = await getT();
