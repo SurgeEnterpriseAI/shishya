@@ -1,11 +1,16 @@
 // POST /api/explain — generate a step-by-step explanation for a question.
 // Body: { questionId, studentChosen?, detailLevel? }
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { explainSolution } from "@/lib/ai";
 import { bad, notFound, ok, serverError, unauth, parseBody } from "@/lib/http";
+import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 
 const Body = z.object({
   questionId: z.string(),
@@ -17,6 +22,8 @@ export async function POST(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) return unauth();
+    const rl = await checkRateLimit("explain", session.user.id);
+    if (!rl.ok) return rateLimited(rl);
     const body = await parseBody(req, Body);
 
     const q = await prisma.question.findUnique({ where: { id: body.questionId } });

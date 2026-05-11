@@ -1,10 +1,16 @@
 // Builds the SyllabusContext object that AI services consume.
-// Cached at the request level — syllabus rarely changes; safe to memoise.
+//
+// Syllabus barely changes between deploys, but it's fetched on every tutor
+// call (POST /api/chat) — at 10k concurrent students that would be ~5k+
+// DB hits per second pulling the same rows. We wrap it in unstable_cache
+// so each (examCode) reads from the in-memory Next data cache for up to 5
+// minutes between revalidations.
 
+import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
 import type { SyllabusContext } from "../ai/types";
 
-export async function getSyllabusContext(examCode: string): Promise<SyllabusContext> {
+async function buildSyllabusContext(examCode: string): Promise<SyllabusContext> {
   const exam = await prisma.exam.findUnique({
     where: { code: examCode },
     include: {
@@ -45,3 +51,9 @@ export async function getSyllabusContext(examCode: string): Promise<SyllabusCont
     })),
   };
 }
+
+export const getSyllabusContext = unstable_cache(
+  buildSyllabusContext,
+  ["syllabus-v1"],
+  { revalidate: 300, tags: ["syllabus"] }, // 5 min TTL
+);

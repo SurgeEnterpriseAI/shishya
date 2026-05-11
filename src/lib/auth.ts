@@ -16,6 +16,10 @@ declare module "next-auth" {
 }
 
 export const authOptions: NextAuthOptions = {
+  // Adapter is kept so OAuth User + Account rows are still written to Postgres
+  // on first sign-in (we use the User row everywhere as the canonical identity).
+  // Sessions themselves move to JWT below — at 10k concurrent students, doing
+  // an extra Session SELECT on every API request would dominate DB load.
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
   providers: [
     GoogleProvider({
@@ -23,10 +27,18 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     }),
   ],
-  session: { strategy: "database" },
+  // JWT sessions — stateless, no per-request DB hit. The adapter still writes
+  // the User on first sign-in; the JWT carries that user.id forward.
+  session: { strategy: "jwt" },
   callbacks: {
-    async session({ session, user }) {
-      if (session.user) session.user.id = user.id;
+    async jwt({ token, user }) {
+      // On initial sign-in, NextAuth passes the freshly-created User. Stash
+      // its id on the JWT so subsequent requests don't need to look it up.
+      if (user) token.id = (user as { id: string }).id;
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token?.id) session.user.id = token.id as string;
       return session;
     },
   },

@@ -9,8 +9,15 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Runtime traffic uses the pooled (pgBouncer) Neon endpoint so a single
+  // serverless function holds at most one Postgres connection. Without this,
+  // 10k concurrent serverless invocations would each open direct sockets
+  // and exhaust Neon's pool.
+  url       = env("DATABASE_URL")
+  // Prisma needs a direct (non-pooled) URL for `prisma migrate` / `db push`
+  // because pgBouncer rejects the prepared-statement workflow they use.
+  directUrl = env("DIRECT_URL")
 }
 
 // ─────────────────────────────────────────────────────────────────────────

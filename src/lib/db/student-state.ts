@@ -24,12 +24,26 @@ export async function getStudentState(
   const enrollment = user.enrollments[0];
   if (!enrollment) throw new Error(`User not enrolled in ${examCode}`);
 
-  // Pull weakness map for this exam
-  const weaknessRows = await prisma.weaknessMap.findMany({
-    where: { userId, examId: enrollment.examId },
-    include: { topic: true },
-    orderBy: { masteryScore: "asc" },
-  });
+  // Weakness map + recent attempts are independent — issue them in parallel
+  // so the tutor's per-call DB time is bounded by max(query1, query2) rather
+  // than the sum. Material at 10k concurrent.
+  const [weaknessRows, recent] = await Promise.all([
+    prisma.weaknessMap.findMany({
+      where: { userId, examId: enrollment.examId },
+      include: { topic: true },
+      orderBy: { masteryScore: "asc" },
+    }),
+    prisma.attempt.findMany({
+      where: {
+        userId,
+        mock: { examId: enrollment.examId },
+        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+      },
+      orderBy: { startedAt: "desc" },
+      take: RECENT_LIMIT,
+      select: { scorePct: true, startedAt: true },
+    }),
+  ]);
 
   const masteries: TopicMastery[] = weaknessRows.map((w) => ({
     topicId: w.topicId,
@@ -46,18 +60,6 @@ export async function getStudentState(
     .filter((m) => m.attemptsCount > 0)
     .sort((a, b) => b.masteryScore - a.masteryScore)
     .slice(0, 4);
-
-  // Recent attempts on any mock for this exam
-  const recent = await prisma.attempt.findMany({
-    where: {
-      userId,
-      mock: { examId: enrollment.examId },
-      status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
-    },
-    orderBy: { startedAt: "desc" },
-    take: RECENT_LIMIT,
-    select: { scorePct: true, startedAt: true },
-  });
 
   const totalMocksTaken = recent.length;
   const lastMockScorePct = recent[0]?.scorePct ?? undefined;

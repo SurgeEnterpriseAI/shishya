@@ -11,6 +11,12 @@
 // Idempotent per-day: re-running on the same calendar day refreshes the
 // existing brief (upserts on (userId, examId, briefDate)).
 
+// Cron job that walks every enrollment + calls Claude per user-exam. On
+// Vercel Pro this can take a few minutes for a busy cohort.
+export const runtime = "nodejs";
+export const maxDuration = 800;
+export const dynamic = "force-dynamic";
+
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
 import { generateMock } from "@/lib/ai";

@@ -1,4 +1,11 @@
 // GET /api/exams — list all active exams (public, no auth needed)
+//
+// This endpoint is hit by the home page, the dashboard's "Explore other exams"
+// section, and external monitoring. The underlying rows change at most a few
+// times a day (when new exams go Live). We let Next serve a cached copy and
+// revalidate every 60s — at 10k concurrent students this trims thousands of
+// duplicate queries per minute from Neon.
+export const revalidate = 60;
 
 import { prisma } from "@/lib/db/prisma";
 import { ok, serverError } from "@/lib/http";

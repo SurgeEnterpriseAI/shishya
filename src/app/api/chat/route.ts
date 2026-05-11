@@ -5,6 +5,12 @@
 //   event: delta\ndata: <text chunk>\n\n
 //   event: done\ndata: {"messageId":"...","actions":[...]}\n\n
 
+// Tool-use loops + long Anthropic streams need more than the default 10s. We
+// keep this on Node runtime (not edge) because Prisma engines need it.
+export const runtime = "nodejs";
+export const maxDuration = 300;
+export const dynamic = "force-dynamic";
+
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -12,6 +18,7 @@ import { tutorStream } from "@/lib/ai";
 import { getStudentState } from "@/lib/db/student-state";
 import { getStudentJourney } from "@/lib/db/student-journey";
 import { getSyllabusContext } from "@/lib/db/syllabus";
+import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 
 const Body = z.object({
   examCode: z.string().min(1),
@@ -28,6 +35,11 @@ export async function POST(req: Request) {
       headers: { "content-type": "application/json" },
     });
   }
+
+  // Rate limit before doing any DB work. Catches retry-storms early and keeps
+  // a misbehaving client from burning Anthropic credits or Postgres CPU.
+  const rl = await checkRateLimit("chat", session.user.id);
+  if (!rl.ok) return rateLimited(rl);
 
   let body;
   try {
