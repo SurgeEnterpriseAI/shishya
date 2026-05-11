@@ -52,4 +52,5 @@ next-env.d.ts
 # Local tooling (Claude Code launch config, ad-hoc analysis dumps)
 .claude/
 UsersADMINDesktop_*.json
+.vercel-*-url.tmp
 

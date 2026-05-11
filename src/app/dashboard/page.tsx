@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
+import { isCurrentUserAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
@@ -36,6 +37,14 @@ export default async function DashboardPage() {
 async function renderDashboard() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/dashboard");
+
+  // Admin accounts (anyone in ADMIN_EMAILS) land on /dashboard by default
+  // after Google sign-in, but the student dashboard isn't useful to them.
+  // Bounce them straight to the operator insights view. Students see no
+  // change; admins effectively get insights as their post-login home.
+  const { isAdmin } = await isCurrentUserAdmin();
+  if (isAdmin) redirect("/admin/insights");
+
   const userId = session.user.id;
   const { t } = await getT();
 
