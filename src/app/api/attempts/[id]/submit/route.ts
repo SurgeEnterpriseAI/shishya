@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
-import { ok, notFound, serverError, unauth, forbidden, bad } from "@/lib/http";
+import { ok, notFound, serverError, unauth, forbidden } from "@/lib/http";
 import { scoreAttempt } from "@/lib/scoring";
 
 export async function POST(
@@ -38,7 +38,26 @@ export async function POST(
     });
     if (!attempt) return notFound("attempt");
     if (attempt.userId !== session.user.id) return forbidden();
-    if (attempt.status !== "IN_PROGRESS") return bad("Attempt already submitted");
+
+    // ── Idempotent resubmit ───────────────────────────────────────────────
+    // If the attempt is already SUBMITTED, return the persisted score
+    // instead of an error. This unblocks students who hit a transient
+    // error on first submit: the attempt was actually scored + status was
+    // flipped, but a side-effect (weakness upsert / progress event)
+    // returned a 500. They retry and previously got "Attempt already
+    // submitted" — now they get success and the client navigates to
+    // results.
+    if (attempt.status !== "IN_PROGRESS") {
+      return ok({
+        attemptId: id,
+        scoreRaw: attempt.scoreRaw,
+        scoreMax: attempt.scoreMax,
+        scorePct: attempt.scorePct,
+        topicScores: attempt.topicScores,
+        durationSec: attempt.durationSec,
+        alreadySubmitted: true,
+      });
+    }
 
     // ── Score ────────────────────────────────────────────────────────────
     const questions = await prisma.question.findMany({
@@ -106,31 +125,56 @@ export async function POST(
       })
     );
 
-    await Promise.all([
-      prisma.attempt.update({
-        where: { id },
-        data: {
-          status: "SUBMITTED",
-          finishedAt,
-          durationSec,
-          answers: scored as unknown as Prisma.InputJsonValue,
-          scoreRaw,
-          scoreMax,
-          scorePct,
-          topicScores: topicScores as unknown as Prisma.InputJsonValue,
-        },
-      }),
-      ...weaknessUpserts,
-      prisma.progressEvent.create({
-        data: {
-          userId,
-          examId,
-          type: "MOCK_COMPLETED",
-          delta: scorePct,
-          metadata: { mockId: attempt.mockId, attemptId: id },
-        },
-      }),
-    ]);
+    // ── CRITICAL write — must succeed or student is told to retry ────────
+    // This single write transitions the attempt to SUBMITTED and persists
+    // every piece of data the results page needs (score, topicScores,
+    // answers). If this throws, we return 500 and the student can retry
+    // safely. Once it succeeds, the student is "submitted" — everything
+    // after this point is best-effort.
+    await prisma.attempt.update({
+      where: { id },
+      data: {
+        status: "SUBMITTED",
+        finishedAt,
+        durationSec,
+        answers: scored as unknown as Prisma.InputJsonValue,
+        scoreRaw,
+        scoreMax,
+        scorePct,
+        topicScores: topicScores as unknown as Prisma.InputJsonValue,
+      },
+    });
+
+    // ── BEST-EFFORT side-effects ─────────────────────────────────────────
+    // WeaknessMap rolling counts + the MOCK_COMPLETED progress event are
+    // useful but non-essential. A foreign-key glitch on a stale topicId
+    // or a transient Neon hiccup on one upsert used to fail the whole
+    // submit response (Promise.all rejection), leaving the student
+    // stuck on the modal with INTERNAL_ERROR even though the score was
+    // already saved. Now we run them in parallel, swallow failures, and
+    // log so the operator can see partial-failure patterns.
+    try {
+      await Promise.all([
+        ...weaknessUpserts,
+        prisma.progressEvent.create({
+          data: {
+            userId,
+            examId,
+            type: "MOCK_COMPLETED",
+            delta: scorePct,
+            metadata: { mockId: attempt.mockId, attemptId: id },
+          },
+        }),
+      ]);
+    } catch (err) {
+      console.error("[submit] best-effort side-effects failed", {
+        attemptId: id,
+        userId,
+        examId,
+        message: (err as Error)?.message,
+      });
+      // intentionally fall through to ok() — student is already SUBMITTED
+    }
 
     return ok({
       attemptId: id,
@@ -141,6 +185,13 @@ export async function POST(
       durationSec,
     });
   } catch (err) {
+    // Log the actual cause so we can debug from Vercel runtime logs next
+    // time. Without this the response was just "INTERNAL_ERROR" with no
+    // way to track down which write threw.
+    console.error("[submit] critical write failed", {
+      message: (err as Error)?.message,
+      stack: (err as Error)?.stack,
+    });
     return serverError(err);
   }
 }
