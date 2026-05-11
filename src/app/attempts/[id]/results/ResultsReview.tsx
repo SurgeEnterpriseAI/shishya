@@ -86,7 +86,12 @@ function ReviewBody({
   examCode: string;
   examShortName: string;
 }) {
-  const [explain, setExplain] = useState<{ stepByStep: string[]; whyChosenIsWrong?: string } | null>(null);
+  const [explain, setExplain] = useState<{
+    stepByStep: string[];
+    whyChosenIsWrong?: string;
+    keyDisputed?: boolean;
+    keyDisputeReason?: string;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
@@ -266,7 +271,45 @@ function ReviewBody({
 
         {err && <p className="mt-2 text-xs text-rose-700">{err}</p>}
 
-        {explain && (
+        {explain && explain.keyDisputed && (
+          // The AI examined the question and decided the marked answer key
+          // doesn't actually fit (broken jumble, missing word, insufficient
+          // data, etc.). Instead of pretending to defend a bad answer with
+          // chain-of-thought hedging, surface the dispute and invite a
+          // one-click report so the operator can fix the question.
+          <div className="mt-2 rounded-md border border-amber-300 bg-amber-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-amber-800">
+              The answer key may be wrong
+            </p>
+            <p className="mt-1 text-sm text-ink-800">
+              Looking at this question, the marked answer doesn&apos;t cleanly
+              follow from what&apos;s stated.{" "}
+              {explain.keyDisputeReason && (
+                <span className="text-ink-700">{explain.keyDisputeReason}</span>
+              )}
+            </p>
+            <p className="mt-2 text-xs text-ink-600">
+              If you agree, please report it so we can fix it.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setReportOpen(true);
+                if (!reportReason) {
+                  setReportReason(
+                    explain.keyDisputeReason
+                      ? `AI Explain flagged: ${explain.keyDisputeReason}`
+                      : "AI Explain flagged this question as having an inconsistent answer key.",
+                  );
+                }
+              }}
+              className="mt-2 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700"
+            >
+              Report this question
+            </button>
+          </div>
+        )}
+        {explain && !explain.keyDisputed && explain.stepByStep.length > 0 && (
           <div className="mt-2 rounded-md border border-saffron-200 bg-saffron-50/60 p-3">
             <p className="text-xs font-medium uppercase tracking-wider text-saffron-800">AI explanation</p>
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-ink-800">
@@ -280,6 +323,12 @@ function ReviewBody({
                 {explain.whyChosenIsWrong}
               </p>
             )}
+          </div>
+        )}
+        {explain && !explain.keyDisputed && explain.stepByStep.length === 0 && (
+          <div className="mt-2 rounded-md border border-ink-200 bg-white p-3 text-sm text-ink-600">
+            Couldn&apos;t generate a clean explanation for this one. Try the deep
+            explanation, or report it if it looks broken.
           </div>
         )}
       </div>

@@ -55,46 +55,59 @@ async function renderInsights() {
   const day1 = since(1);
   const day7 = since(7);
   const day30 = since(30);
-  const day90 = since(90);
   const startOfDayUtc = (d: Date) =>
     new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   const today = startOfDayUtc(now);
 
+  // Every query is wrapped so a single failure (e.g. a model the prod DB
+  // hasn't migrated yet, or a transient Neon hiccup) no longer kills the
+  // entire page. The failing section just falls back to its default and
+  // the operator sees the rest. Each failure is logged with the query
+  // label so we can pinpoint problems from Vercel logs.
+  const safe = async <T,>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> => {
+    try {
+      return await fn();
+    } catch (err) {
+      console.error(`[admin/insights] query "${label}" failed`, {
+        message: (err as Error)?.message,
+        code: (err as { code?: string })?.code,
+      });
+      return fallback;
+    }
+  };
+
+  const groupCountUsers = (where: any) =>
+    prisma.attempt.groupBy({ by: ["userId"], where }).then((r) => r.length);
+
   const [
-    // ─── Hero strip (today) ───────────────────────────────────────────
     signupsToday,
-    activeUsersToday,        // distinct attempt.userId today
+    activeUsersToday,
     mocksSubmittedToday,
     chatMsgsToday,
 
-    // ─── Growth (cumulative + windowed) ───────────────────────────────
     totalUsers,
     usersLast7d,
     usersLast30d,
-    signupTimeline,          // 30 daily buckets (day, count)
+    signupTimeline,
 
-    // ─── Engagement ───────────────────────────────────────────────────
     attempts7d,
     attempts30d,
     chatMsgs7d,
     chatMsgs30d,
-    dauArr,                  // distinct active userIds today
-    wauArr,                  // distinct active userIds last 7d
-    mauArr,                  // distinct active userIds last 30d
-    attemptTimeline,         // last 30 days
+    dauArr,
+    wauArr,
+    mauArr,
+    attemptTimeline,
 
-    // ─── Funnel (lifetime) ────────────────────────────────────────────
     usersWithEnrollment,
     usersWithMockSubmit,
     usersWithTwoMocks,
     usersWithChat,
 
-    // ─── Top exams (by enrollment + activity) ─────────────────────────
     topExamsByEnrollment,
     topExamsByAttempts,
     topExamsByChat,
 
-    // ─── Content health ───────────────────────────────────────────────
     totalExams,
     activeExams,
     totalQuestions,
@@ -104,188 +117,199 @@ async function renderInsights() {
     topicsTotal,
     topicsWithNotes,
 
-    // ─── AI usage ─────────────────────────────────────────────────────
     assistantMsgsToday,
     assistantMsgs7d,
     assistantMsgs30d,
     topAskedTopicsRaw,
 
-    // ─── Recent feeds ─────────────────────────────────────────────────
     recentMocks,
     recentSignups,
     recentChats,
+
+    openReports,
+    recentReports,
   ] = await Promise.all([
-    prisma.user.count({ where: { createdAt: { gte: day1 } } }),
-    prisma.attempt
-      .groupBy({ by: ["userId"], where: { startedAt: { gte: day1 } } })
-      .then((rows) => rows.length),
-    prisma.attempt.count({
-      where: { status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, finishedAt: { gte: day1 } },
-    }),
-    prisma.chatMessage.count({ where: { createdAt: { gte: day1 } } }),
+    safe("signupsToday", () => prisma.user.count({ where: { createdAt: { gte: day1 } } }), 0),
+    safe("activeUsersToday", () => groupCountUsers({ startedAt: { gte: day1 } }), 0),
+    safe("mocksSubmittedToday", () =>
+      prisma.attempt.count({
+        where: { status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, finishedAt: { gte: day1 } },
+      }), 0),
+    safe("chatMsgsToday", () => prisma.chatMessage.count({ where: { createdAt: { gte: day1 } } }), 0),
 
-    prisma.user.count(),
-    prisma.user.count({ where: { createdAt: { gte: day7 } } }),
-    prisma.user.count({ where: { createdAt: { gte: day30 } } }),
-    prisma.$queryRawUnsafe<Array<{ day: Date; count: bigint }>>(
-      `SELECT date_trunc('day', "createdAt") AS day, COUNT(*)::bigint AS count
-         FROM "User"
-        WHERE "createdAt" >= $1
-        GROUP BY 1
-        ORDER BY 1 ASC`,
-      day30
-    ),
+    safe("totalUsers", () => prisma.user.count(), 0),
+    safe("usersLast7d", () => prisma.user.count({ where: { createdAt: { gte: day7 } } }), 0),
+    safe("usersLast30d", () => prisma.user.count({ where: { createdAt: { gte: day30 } } }), 0),
+    safe("signupTimeline", () =>
+      prisma.$queryRawUnsafe<Array<{ day: Date; count: bigint }>>(
+        `SELECT date_trunc('day', "createdAt") AS day, COUNT(*)::bigint AS count
+           FROM "User"
+          WHERE "createdAt" >= $1
+          GROUP BY 1
+          ORDER BY 1 ASC`,
+        day30
+      ), [] as Array<{ day: Date; count: bigint }>),
 
-    prisma.attempt.count({
-      where: { status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, finishedAt: { gte: day7 } },
-    }),
-    prisma.attempt.count({
-      where: { status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, finishedAt: { gte: day30 } },
-    }),
-    prisma.chatMessage.count({ where: { createdAt: { gte: day7 } } }),
-    prisma.chatMessage.count({ where: { createdAt: { gte: day30 } } }),
-    prisma.attempt
-      .groupBy({ by: ["userId"], where: { startedAt: { gte: day1 } } })
-      .then((rows) => rows.length),
-    prisma.attempt
-      .groupBy({ by: ["userId"], where: { startedAt: { gte: day7 } } })
-      .then((rows) => rows.length),
-    prisma.attempt
-      .groupBy({ by: ["userId"], where: { startedAt: { gte: day30 } } })
-      .then((rows) => rows.length),
-    prisma.$queryRawUnsafe<Array<{ day: Date; count: bigint }>>(
-      `SELECT date_trunc('day', "finishedAt") AS day, COUNT(*)::bigint AS count
-         FROM "Attempt"
-        WHERE "finishedAt" >= $1 AND "status" IN ('SUBMITTED','AUTO_SUBMITTED')
-        GROUP BY 1
-        ORDER BY 1 ASC`,
-      day30
-    ),
+    safe("attempts7d", () =>
+      prisma.attempt.count({
+        where: { status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, finishedAt: { gte: day7 } },
+      }), 0),
+    safe("attempts30d", () =>
+      prisma.attempt.count({
+        where: { status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, finishedAt: { gte: day30 } },
+      }), 0),
+    safe("chatMsgs7d", () => prisma.chatMessage.count({ where: { createdAt: { gte: day7 } } }), 0),
+    safe("chatMsgs30d", () => prisma.chatMessage.count({ where: { createdAt: { gte: day30 } } }), 0),
+    safe("dau", () => groupCountUsers({ startedAt: { gte: day1 } }), 0),
+    safe("wau", () => groupCountUsers({ startedAt: { gte: day7 } }), 0),
+    safe("mau", () => groupCountUsers({ startedAt: { gte: day30 } }), 0),
+    safe("attemptTimeline", () =>
+      prisma.$queryRawUnsafe<Array<{ day: Date; count: bigint }>>(
+        `SELECT date_trunc('day', "finishedAt") AS day, COUNT(*)::bigint AS count
+           FROM "Attempt"
+          WHERE "finishedAt" >= $1 AND "status" IN ('SUBMITTED','AUTO_SUBMITTED')
+          GROUP BY 1
+          ORDER BY 1 ASC`,
+        day30
+      ), [] as Array<{ day: Date; count: bigint }>),
 
-    prisma.enrollment.groupBy({ by: ["userId"] }).then((r) => r.length),
-    prisma.attempt
-      .groupBy({
-        by: ["userId"],
+    safe("usersWithEnrollment",
+      () => prisma.enrollment.groupBy({ by: ["userId"] }).then((r) => r.length), 0),
+    safe("usersWithMockSubmit",
+      () => prisma.attempt
+        .groupBy({ by: ["userId"], where: { status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] } } })
+        .then((r) => r.length), 0),
+    safe("usersWithTwoMocks", () =>
+      prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
+        `SELECT COUNT(*)::bigint AS count FROM (
+           SELECT "userId" FROM "Attempt"
+            WHERE "status" IN ('SUBMITTED','AUTO_SUBMITTED')
+            GROUP BY "userId"
+           HAVING COUNT(*) >= 2
+         ) t`
+      ).then((r) => Number(r[0]?.count ?? 0)), 0),
+    safe("usersWithChat",
+      () => prisma.chatSession.groupBy({ by: ["userId"] }).then((r) => r.length), 0),
+
+    safe("topExamsByEnrollment", () =>
+      prisma.enrollment
+        .groupBy({ by: ["examId"], _count: { userId: true } })
+        .then(async (rows) => {
+          const examIds = rows.map((r) => r.examId);
+          const exams = await prisma.exam.findMany({
+            where: { id: { in: examIds } },
+            select: { id: true, code: true, shortName: true },
+          });
+          const byId = new Map(exams.map((e) => [e.id, e]));
+          return rows
+            .map((r) => ({ ...byId.get(r.examId), count: r._count.userId }))
+            .filter((r) => !!r.code)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 10);
+        }), [] as Array<{ code?: string; shortName?: string; count: number }>),
+    safe("topExamsByAttempts", () =>
+      prisma.$queryRawUnsafe<Array<{ examId: string; count: bigint }>>(
+        `SELECT m."examId" AS "examId", COUNT(*)::bigint AS count
+           FROM "Attempt" a
+           JOIN "Mock" m ON m.id = a."mockId"
+          WHERE a."status" IN ('SUBMITTED','AUTO_SUBMITTED')
+          GROUP BY m."examId"
+          ORDER BY count DESC
+          LIMIT 10`
+      ).then(async (rows) => {
+        const exams = await prisma.exam.findMany({
+          where: { id: { in: rows.map((r) => r.examId) } },
+          select: { id: true, code: true, shortName: true },
+        });
+        const byId = new Map(exams.map((e) => [e.id, e]));
+        return rows.map((r) => ({ ...byId.get(r.examId)!, count: Number(r.count) }));
+      }), [] as Array<{ code?: string; shortName?: string; count: number }>),
+    safe("topExamsByChat", () =>
+      prisma.chatSession
+        .groupBy({ by: ["examId"], _count: { id: true } })
+        .then(async (rows) => {
+          const examIds = rows
+            .map((r) => r.examId)
+            .filter((id): id is string => typeof id === "string");
+          const exams = await prisma.exam.findMany({
+            where: { id: { in: examIds } },
+            select: { id: true, code: true, shortName: true },
+          });
+          const byId = new Map(exams.map((e) => [e.id, e]));
+          return rows
+            .filter((r): r is typeof r & { examId: string } => typeof r.examId === "string")
+            .map((r) => ({ ...byId.get(r.examId), count: r._count.id }))
+            .filter((r) => !!r.code)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 10);
+        }), [] as Array<{ code?: string; shortName?: string; count: number }>),
+
+    safe("totalExams", () => prisma.exam.count(), 0),
+    safe("activeExams", () => prisma.exam.count({ where: { active: true } }), 0),
+    safe("totalQuestions", () => prisma.question.count(), 0),
+    safe("validatedQuestions", () => prisma.question.count({ where: { validated: true } }), 0),
+    safe("pendingAiQuestions",
+      () => prisma.question.count({ where: { source: "AI_GENERATED", validated: false } }), 0),
+    safe("totalSystemMocks", () => prisma.mock.count({ where: { userId: null } }), 0),
+    safe("topicsTotal", () => prisma.topic.count(), 0),
+    safe("topicsWithNotes", () => prisma.topic.count({ where: { notes: { not: null } } }), 0),
+
+    safe("assistantMsgsToday",
+      () => prisma.chatMessage.count({ where: { role: "ASSISTANT", createdAt: { gte: day1 } } }), 0),
+    safe("assistantMsgs7d",
+      () => prisma.chatMessage.count({ where: { role: "ASSISTANT", createdAt: { gte: day7 } } }), 0),
+    safe("assistantMsgs30d",
+      () => prisma.chatMessage.count({ where: { role: "ASSISTANT", createdAt: { gte: day30 } } }), 0),
+    safe("topAskedTopicsRaw", () =>
+      prisma.chatMessage.findMany({
+        where: { role: "ASSISTANT", createdAt: { gte: day30 } },
+        select: { metadata: true },
+        take: 2000,
+      }), [] as Array<{ metadata: unknown }>),
+
+    safe("recentMocks", () =>
+      prisma.attempt.findMany({
         where: { status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] } },
-      })
-      .then((r) => r.length),
-    prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
-      `SELECT COUNT(*)::bigint AS count FROM (
-         SELECT "userId" FROM "Attempt"
-          WHERE "status" IN ('SUBMITTED','AUTO_SUBMITTED')
-          GROUP BY "userId"
-         HAVING COUNT(*) >= 2
-       ) t`
-    ).then((r) => Number(r[0]?.count ?? 0)),
-    prisma.chatSession.groupBy({ by: ["userId"] }).then((r) => r.length),
-
-    prisma.enrollment
-      .groupBy({ by: ["examId"], _count: { userId: true } })
-      .then(async (rows) => {
-        const examIds = rows.map((r) => r.examId);
-        const exams = await prisma.exam.findMany({
-          where: { id: { in: examIds } },
-          select: { id: true, code: true, shortName: true },
-        });
-        const byId = new Map(exams.map((e) => [e.id, e]));
-        return rows
-          .map((r) => ({ ...byId.get(r.examId), count: r._count.userId }))
-          .filter((r) => !!r.code)
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 10);
-      }),
-    prisma.$queryRawUnsafe<Array<{ examId: string; count: bigint }>>(
-      `SELECT m."examId" AS "examId", COUNT(*)::bigint AS count
-         FROM "Attempt" a
-         JOIN "Mock" m ON m.id = a."mockId"
-        WHERE a."status" IN ('SUBMITTED','AUTO_SUBMITTED')
-        GROUP BY m."examId"
-        ORDER BY count DESC
-        LIMIT 10`
-    ).then(async (rows) => {
-      const exams = await prisma.exam.findMany({
-        where: { id: { in: rows.map((r) => r.examId) } },
-        select: { id: true, code: true, shortName: true },
-      });
-      const byId = new Map(exams.map((e) => [e.id, e]));
-      return rows.map((r) => ({ ...byId.get(r.examId)!, count: Number(r.count) }));
-    }),
-    prisma.chatSession
-      .groupBy({ by: ["examId"], _count: { id: true } })
-      .then(async (rows) => {
-        const examIds = rows
-          .map((r) => r.examId)
-          .filter((id): id is string => typeof id === "string");
-        const exams = await prisma.exam.findMany({
-          where: { id: { in: examIds } },
-          select: { id: true, code: true, shortName: true },
-        });
-        const byId = new Map(exams.map((e) => [e.id, e]));
-        return rows
-          .filter((r): r is typeof r & { examId: string } => typeof r.examId === "string")
-          .map((r) => ({ ...byId.get(r.examId), count: r._count.id }))
-          .filter((r) => !!r.code)
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 10);
-      }),
-
-    prisma.exam.count(),
-    prisma.exam.count({ where: { active: true } }),
-    prisma.question.count(),
-    prisma.question.count({ where: { validated: true } }),
-    prisma.question.count({ where: { source: "AI_GENERATED", validated: false } }),
-    prisma.mock.count({ where: { userId: null } }),
-    prisma.topic.count(),
-    prisma.topic.count({ where: { notes: { not: null } } }),
-
-    prisma.chatMessage.count({ where: { role: "ASSISTANT", createdAt: { gte: day1 } } }),
-    prisma.chatMessage.count({ where: { role: "ASSISTANT", createdAt: { gte: day7 } } }),
-    prisma.chatMessage.count({ where: { role: "ASSISTANT", createdAt: { gte: day30 } } }),
-    prisma.chatMessage.findMany({
-      where: { role: "ASSISTANT", createdAt: { gte: day30 } },
-      select: { metadata: true },
-      take: 2000,
-    }),
-
-    prisma.attempt.findMany({
-      where: { status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] } },
-      orderBy: { finishedAt: "desc" },
-      take: 20,
-      include: {
-        user: { select: { email: true, name: true } },
-        mock: {
-          select: { title: true, exam: { select: { shortName: true, code: true } } },
+        orderBy: { finishedAt: "desc" },
+        take: 20,
+        include: {
+          user: { select: { email: true, name: true } },
+          mock: {
+            select: { title: true, exam: { select: { shortName: true, code: true } } },
+          },
         },
-      },
-    }),
-    prisma.user.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 10,
-      select: { email: true, name: true, createdAt: true },
-    }),
-    prisma.chatSession.findMany({
-      orderBy: { updatedAt: "desc" },
-      take: 10,
-      include: {
-        user: { select: { email: true } },
-        exam: { select: { shortName: true, code: true } },
-        _count: { select: { messages: true } },
-      },
-    }),
-  ]);
+      }), [] as any[]),
+    safe("recentSignups", () =>
+      prisma.user.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: { email: true, name: true, createdAt: true },
+      }), [] as Array<{ email: string | null; name: string | null; createdAt: Date }>),
+    safe("recentChats", () =>
+      prisma.chatSession.findMany({
+        orderBy: { updatedAt: "desc" },
+        take: 10,
+        include: {
+          user: { select: { email: true } },
+          exam: { select: { shortName: true, code: true } },
+          _count: { select: { messages: true } },
+        },
+      }), [] as any[]),
 
-  // ── Student-reported bad questions (separate query — added later) ───
-  const [openReports, recentReports] = await Promise.all([
-    prisma.questionReport.count({ where: { resolved: false } }),
-    prisma.questionReport.findMany({
-      where: { resolved: false },
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      include: {
-        question: { select: { id: true, body: true, examId: true } },
-        user: { select: { email: true } },
-      },
-    }),
+    // Reported questions — separated because the QuestionReport table is
+    // newer; if it isn't migrated yet in prod the safe() wrapper keeps
+    // the rest of the page working.
+    safe("openReports", () => prisma.questionReport.count({ where: { resolved: false } }), 0),
+    safe("recentReports", () =>
+      prisma.questionReport.findMany({
+        where: { resolved: false },
+        orderBy: { createdAt: "desc" },
+        take: 8,
+        include: {
+          question: { select: { id: true, body: true, examId: true } },
+          user: { select: { email: true } },
+        },
+      }), [] as any[]),
   ]);
 
   // ── Derive top topics asked from tool-use metadata ──────────────────
