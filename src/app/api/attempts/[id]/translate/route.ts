@@ -76,7 +76,7 @@ export async function POST(
       }
       for (let i = 0; i < batches.length; i += MAX_PARALLEL_BATCHES) {
         const wave = batches.slice(i, i + MAX_PARALLEL_BATCHES);
-        const results = await Promise.all(
+        const results = await Promise.allSettled(
           wave.map((slice) =>
             translateBatch({
               locale,
@@ -89,7 +89,13 @@ export async function POST(
             }),
           ),
         );
-        for (const { translated } of results) {
+        const ok = results
+          .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof translateBatch>>> => r.status === "fulfilled")
+          .map((r) => r.value);
+        for (const f of results.filter((r) => r.status === "rejected")) {
+          console.error("[attempts/translate] batch failed", (f as PromiseRejectedResult).reason);
+        }
+        for (const { translated } of ok) {
           await Promise.all(
             translated.map(async (t) => {
               cached.set(t.id, {
