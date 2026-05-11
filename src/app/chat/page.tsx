@@ -113,6 +113,31 @@ export default async function ChatPage({
   }
 
   const examCode = explicitExamCode ?? enrollments[0].exam.code;
+  const currentEnrollment = enrollments.find((e) => e.exam.code === examCode);
+  const examShort = currentEnrollment?.exam.shortName ?? examCode;
+
+  // Build exam-aware starter prompts. The default i18n list ("Profit & Loss",
+  // "Compound Interest", "Time and Work") is SSC-Math-flavoured — wrong for
+  // NEET, JEE, UPSC, and even narrow for an SSC CGL student. We pull the
+  // student's weakest topic for this exam (cheap single-row lookup) so the
+  // first prompt can name a real weakness; the other three reference the
+  // exam by name.
+  const weakest = currentEnrollment
+    ? await prisma.weaknessMap.findFirst({
+        where: { userId: session.user.id, examId: currentEnrollment.examId },
+        orderBy: { masteryScore: "asc" },
+        select: { topic: { select: { name: true, code: true } }, attemptsCount: true },
+      })
+    : null;
+
+  const examStarters: string[] = [
+    weakest && weakest.attemptsCount > 0
+      ? `Tutor me on ${weakest.topic.name} — that's my weakest area in ${examShort}.`
+      : `Quiz me on my weakest ${examShort} topic — start easy and adapt.`,
+    `Explain the concept I got wrong most in my last ${examShort} mock.`,
+    `Make me a focused 30-minute study plan for ${examShort} today.`,
+    `Walk me through the ${examShort} syllabus and which topics carry highest weight.`,
+  ];
 
   // If a topic was passed (e.g. user clicked "Open Shishya tutor" from a
   // study-notes page), look it up so the tutor can anchor on it and the UI
@@ -174,7 +199,7 @@ export default async function ChatPage({
             empty: t("chat.empty.body"),
             emptyExamPrefix: t("chat.empty.examPrefix"),
             suggested: t("chat.suggested"),
-            starters: [t("chat.starter.1"), t("chat.starter.2"), t("chat.starter.3"), t("chat.starter.4")],
+            starters: examStarters,
             focusLabel: t("chat.focus.label"),
             focusClear: t("chat.focus.clear"),
           }}
