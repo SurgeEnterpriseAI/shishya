@@ -470,6 +470,9 @@ export const dict = {
     "chat.pick.title": "Which exam should I tutor you on?",
     "chat.pick.subtitle": "Pick one to focus this chat on. You can switch anytime.",
     "chat.pick.cta": "Tutor me",
+    "chat.diagnostic.cta": "Test my improvement",
+    "chat.diagnostic.building": "Building diagnostic",
+    "chat.diagnostic.hint": "10-question topic diagnostic — see if today's tutoring stuck before you take another full mock.",
 
     // ── lang switcher
     "lang.switch": "Language",
@@ -869,6 +872,9 @@ export const dict = {
     "chat.pick.title": "मैं किस परीक्षा के लिए आपकी सहायता करूँ?",
     "chat.pick.subtitle": "एक चुनिए। बाद में कभी भी बदल सकते हैं।",
     "chat.pick.cta": "इस पर सहायता करें",
+    "chat.diagnostic.cta": "अपनी प्रगति जाँचिए",
+    "chat.diagnostic.building": "डायग्नॉस्टिक तैयार हो रहा है",
+    "chat.diagnostic.hint": "10-सवालों का टॉपिक डायग्नॉस्टिक — पूरा मॉक देने से पहले देखिए कि आज की कोचिंग कितनी असर हुई।",
 
     "lang.switch": "भाषा",
   },

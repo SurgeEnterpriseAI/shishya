@@ -4,6 +4,7 @@
 // Maintains a simple in-memory message log; persistence is handled server-side.
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Message {
   id: string;
@@ -21,6 +22,9 @@ interface ChatLabels {
   starters: string[];
   focusLabel: string;
   focusClear: string;
+  diagnosticCta: string;
+  diagnosticBuilding: string;
+  diagnosticHint: string;
 }
 
 interface TopicFocus {
@@ -51,6 +55,7 @@ export function ChatInterface({
   initialSeed?: string | null;
   labels: ChatLabels;
 }) {
+  const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -58,6 +63,7 @@ export function ChatInterface({
   const [error, setError] = useState<string | null>(null);
   const [actions, setActions] = useState<{ kind: string; topicCode?: string; reason: string }[]>([]);
   const [toolStatus, setToolStatus] = useState<string | null>(null);
+  const [creatingDiag, setCreatingDiag] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -171,6 +177,43 @@ export function ChatInterface({
     }
   }
 
+  // "Test my improvement" — when the student is tutoring on a topic and
+  // wants to verify their understanding, spin up a 10-Q topic diagnostic
+  // and navigate to it. The smart-learning loop the student described:
+  // tutor → topic-targeted diagnostic → if score improved, take a full
+  // mock. The before/after delta is implicit in WeaknessMap — the topic
+  // score on the next mock shows the lift.
+  async function takeTopicDiagnostic() {
+    if (!topicFocus || creatingDiag) return;
+    setCreatingDiag(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/mocks", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          examCode,
+          request: {
+            type: "TOPIC",
+            topicCode: topicFocus.code,
+            questionCount: 10,
+          },
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        throw new Error(j?.error ?? `Mock creation failed (${res.status})`);
+      }
+      const data = await res.json();
+      const mockId = data?.mock?.id;
+      if (!mockId) throw new Error("No mock id returned");
+      router.push(`/mocks/${mockId}`);
+    } catch (e: any) {
+      setError(e.message ?? "Could not create the diagnostic");
+      setCreatingDiag(false);
+    }
+  }
+
   // Topic-tailored starters override the generic ones when focused.
   const starters: string[] = topicFocus
     ? [
@@ -185,18 +228,29 @@ export function ChatInterface({
     <div className="mt-4 flex flex-1 flex-col rounded-md border border-ink-200 bg-white">
       {/* Topic-focus chip */}
       {topicFocus && (
-        <div className="flex items-center justify-between gap-3 border-b border-saffron-200 bg-saffron-50/60 px-4 py-2 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-saffron-200 bg-saffron-50/60 px-4 py-2 text-xs">
           <p className="text-ink-700">
             <span className="font-medium text-saffron-800">{labels.focusLabel}:</span>{" "}
             {topicFocus.name}
             <span className="text-ink-500"> · {topicFocus.subjectName} · {topicFocus.examShortName}</span>
           </p>
-          <a
-            href={`/chat?examCode=${encodeURIComponent(examCode)}`}
-            className="text-ink-500 hover:text-ink-800"
-          >
-            {labels.focusClear} ✕
-          </a>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={takeTopicDiagnostic}
+              disabled={creatingDiag}
+              className="rounded-md border border-saffron-400 bg-white px-3 py-1 text-xs font-medium text-saffron-800 hover:bg-saffron-100 disabled:opacity-60"
+              title={labels.diagnosticHint}
+            >
+              {creatingDiag ? `${labels.diagnosticBuilding}…` : `${labels.diagnosticCta} →`}
+            </button>
+            <a
+              href={`/chat?examCode=${encodeURIComponent(examCode)}`}
+              className="text-ink-500 hover:text-ink-800"
+            >
+              {labels.focusClear} ✕
+            </a>
+          </div>
         </div>
       )}
 

@@ -202,6 +202,9 @@ export default async function ChatPage({
             starters: examStarters,
             focusLabel: t("chat.focus.label"),
             focusClear: t("chat.focus.clear"),
+            diagnosticCta: t("chat.diagnostic.cta"),
+            diagnosticBuilding: t("chat.diagnostic.building"),
+            diagnosticHint: t("chat.diagnostic.hint"),
           }}
         />
       </section>
