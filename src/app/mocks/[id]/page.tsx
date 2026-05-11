@@ -90,6 +90,7 @@ export default async function MockPlayerPage({
         confirmKeep: t("player.confirm.keep"),
         confirmSubmit: t("player.confirm.submit"),
         confirmSubmitting: t("player.confirm.submitting"),
+        submittingHint: t("player.submitting.hint"),
         marksPerQ: t("exam.marks"),
         negativeNone: t("exam.no.negative"),
       }}

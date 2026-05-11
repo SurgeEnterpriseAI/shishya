@@ -8,6 +8,15 @@
 // trip added 10–30s of staring at "Submitting…". The diagnostic
 // narrative is now generated on-demand from the results page.
 
+// A 100-Q mock spans 10-20 topics; each WeaknessMap upsert is a
+// round-trip from the US Lambda to the Asia Neon DB. Even at 30s the
+// sequential loop was breaching Vercel's default 10s timeout for some
+// users. We now parallelise the upserts, but keep a generous ceiling
+// here so a cold Neon connection doesn't kill the submit.
+export const runtime = "nodejs";
+export const maxDuration = 30;
+export const dynamic = "force-dynamic";
+
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -66,55 +75,62 @@ export async function POST(
       Math.round((finishedAt.getTime() - attempt.startedAt.getTime()) / 1000)
     );
 
-    await prisma.attempt.update({
-      where: { id },
-      data: {
-        status: "SUBMITTED",
-        finishedAt,
-        durationSec,
-        answers: scored as unknown as Prisma.InputJsonValue,
-        scoreRaw,
-        scoreMax,
-        scorePct,
-        topicScores: topicScores as unknown as Prisma.InputJsonValue,
-      },
-    });
-
-    // ── Update WeaknessMap (rolling counts) ─────────────────────────────
-    for (const [topicId, t] of topicAgg) {
-      await prisma.weaknessMap.upsert({
+    // Fan out: the attempt update, every weakness upsert, and the progress
+    // event are all independent writes. Issuing them in parallel collapses
+    // ~20 round-trips into one wall-clock window (Asia DB latency stays
+    // ~700ms either way, but we wait once instead of 20 times). On a 100-Q
+    // mock spanning ~15 topics this drops submit from ~14s to ~1s.
+    const userId = session.user.id;
+    const examId = exam.id;
+    const weaknessUpserts = [...topicAgg.entries()].map(([topicId, t]) =>
+      prisma.weaknessMap.upsert({
         where: {
-          userId_examId_topicId: { userId: session.user.id, examId: exam.id, topicId },
+          userId_examId_topicId: { userId, examId, topicId },
         },
         update: {
           attemptsCount: { increment: t.total },
           correctCount: { increment: t.correct },
           masteryScore: t.score,
           avgTimeSec: t.total === 0 ? null : t.timeSum / t.total,
-          lastSeenAt: new Date(),
+          lastSeenAt: finishedAt,
         },
         create: {
-          userId: session.user.id,
-          examId: exam.id,
+          userId,
+          examId,
           topicId,
           attemptsCount: t.total,
           correctCount: t.correct,
           masteryScore: t.score,
           avgTimeSec: t.total === 0 ? null : t.timeSum / t.total,
         },
-      });
-    }
+      })
+    );
 
-    // Progress event
-    await prisma.progressEvent.create({
-      data: {
-        userId: session.user.id,
-        examId: exam.id,
-        type: "MOCK_COMPLETED",
-        delta: scorePct,
-        metadata: { mockId: attempt.mockId, attemptId: id },
-      },
-    });
+    await Promise.all([
+      prisma.attempt.update({
+        where: { id },
+        data: {
+          status: "SUBMITTED",
+          finishedAt,
+          durationSec,
+          answers: scored as unknown as Prisma.InputJsonValue,
+          scoreRaw,
+          scoreMax,
+          scorePct,
+          topicScores: topicScores as unknown as Prisma.InputJsonValue,
+        },
+      }),
+      ...weaknessUpserts,
+      prisma.progressEvent.create({
+        data: {
+          userId,
+          examId,
+          type: "MOCK_COMPLETED",
+          delta: scorePct,
+          metadata: { mockId: attempt.mockId, attemptId: id },
+        },
+      }),
+    ]);
 
     return ok({
       attemptId: id,

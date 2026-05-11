@@ -438,6 +438,7 @@ export const dict = {
     "player.confirm.keep": "Keep practising",
     "player.confirm.submit": "Submit now",
     "player.confirm.submitting": "Submitting…",
+    "player.submitting.hint": "Scoring your answers and updating your mastery map. This takes a couple of seconds — please don't close the tab.",
 
     // ── results
     "results.title.results": "Results",
@@ -842,6 +843,7 @@ export const dict = {
     "player.confirm.keep": "अभ्यास जारी रखें",
     "player.confirm.submit": "अभी जमा करें",
     "player.confirm.submitting": "जमा हो रहा है…",
+    "player.submitting.hint": "आपके उत्तर जाँचे जा रहे हैं और मास्टरी मैप अपडेट हो रहा है। कुछ ही सेकंड लगेंगे — टैब बंद न करें।",
 
     "results.title.results": "परिणाम",
     "results.score": "स्कोर",

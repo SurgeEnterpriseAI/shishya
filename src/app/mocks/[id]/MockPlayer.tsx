@@ -53,6 +53,7 @@ interface PlayerLabels {
   confirmKeep: string;
   confirmSubmit: string;
   confirmSubmitting: string;
+  submittingHint: string;
   marksPerQ: string;
   negativeNone: string;
 }
@@ -226,6 +227,26 @@ export function MockPlayer({
 
   return (
     <main className="min-h-screen bg-ink-50/60">
+      {/* Full-screen submit overlay — without this the screen looked frozen
+          for the ~1-2s the server takes to score, update WeaknessMap, and
+          create the progress event. The button label change alone wasn't
+          enough of a signal that something was happening. */}
+      {submitting && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-sm"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-saffron-200 border-t-saffron-500" />
+          <p className="text-base font-semibold text-ink-900">
+            {labels.confirmSubmitting}
+          </p>
+          <p className="max-w-xs text-center text-xs text-ink-500">
+            {labels.submittingHint}
+          </p>
+        </div>
+      )}
+
       {/* Top bar */}
       <header className="sticky top-0 z-10 border-b border-ink-200 bg-white">
         <div className="container-prose flex h-14 items-center justify-between gap-3">
