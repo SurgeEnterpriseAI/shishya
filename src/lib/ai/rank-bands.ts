@@ -43,10 +43,17 @@ OUTPUT RULES:
    - scorePctMin / scorePctMax (% of mock test score; 0-100)
    - rankMin / rankMax (expected real-exam rank window; lower number = better rank; null if the exam isn't rank-based, e.g. SSC where you get a post not a rank)
    - label: a short tier name in 2-6 words ("Top 1% — IIT contenders", "All-India top 1000", "Group B posts", "Tier 2 NIT range")
-   - outcomes: a markdown bullet list (3-6 bullets) of REAL, NAMED outcomes — colleges, branches, posts, cadres — that a student in this band typically gets. Use widely-known exam-specific names. Be conservative; if you don't have confident detail, prefer shorter, more general bullets ("Top 5 state engineering colleges") rather than fabricated specifics.
+   - outcomes: a markdown bullet list (3-6 bullets) of REAL, NAMED outcomes. Each bullet should be:
+     • a specific institution name (e.g. "IIT Bombay — CSE", "AIIMS Delhi MBBS", "JNU MA Economics") OR
+     • a specific post + cadre (e.g. "ITI Inspector (CBI cadre)", "Assistant Section Officer (CSS)", "Sub-Inspector (Delhi Police, executive cadre)")
+     Where you're confident, also append a one-line context after a "—" with one of: location, typical fee/stipend, accepted branches/specialisations, last year's approximate cut-off. Examples:
+     - "IIT Madras — Mechanical Engineering (cut-off ~2400 OBC, ~1800 General)"
+     - "AIIMS Bhopal MBBS — last year's General category cut-off ~95 percentile"
+     - "Income Tax Inspector (CBDT cadre) — Group B Non-Gazetted, pay level 7"
 3. Lower scorePctMin must always also mean worse (numerically higher) rankMin. Don't invert.
-4. For SSC / RRB / state-PSC / police-constable type exams where outcome is a POST and not a rank, set rankMin=rankMax=null and put post names in outcomes.
+4. For SSC / RRB / state-PSC / police-constable type exams where outcome is a POST and not a rank, set rankMin=rankMax=null and put post names + cadre in outcomes.
 5. For JEE, NEET, GATE, CAT, CLAT and other rank-based exams, fill rankMin / rankMax.
+6. Be conservative on numbers you're not sure about — say "approximately" or omit specific cut-offs rather than fabricating exact figures.
 
 OUTPUT: STRICT JSON only, no markdown fences, no preamble:
 
