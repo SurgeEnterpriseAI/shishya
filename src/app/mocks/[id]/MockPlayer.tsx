@@ -13,6 +13,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiPost } from "@/lib/api";
+import { QuestionLangSwitcher } from "@/components/QuestionLangSwitcher";
+import type { Locale } from "@/lib/i18n";
 
 interface QuestionVm {
   id: string;
@@ -72,6 +74,7 @@ export function MockPlayer({
   questions,
   existingAnswers,
   labels,
+  initialLocale = "en",
 }: {
   mock: MockMeta;
   attemptId: string;
@@ -79,12 +82,66 @@ export function MockPlayer({
   questions: QuestionVm[];
   existingAnswers: AnswerLocal[];
   labels: PlayerLabels;
+  initialLocale?: Locale;
 }) {
   const router = useRouter();
   const [idx, setIdx] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // ── On-demand question translation ────────────────────────────────────
+  // The questions prop holds the source (usually English). When the
+  // student picks another language, we ask the server for a translated
+  // copy and overlay the body/options. Cached on the server per
+  // (questionId, locale), so a different student picking the same
+  // language a second time gets it instantly.
+  const [locale, setLocale] = useState<Locale>(initialLocale);
+  const [translations, setTranslations] = useState<Map<string, { body: string; options: { key: string; text: string }[] }>>(new Map());
+  const [translating, setTranslating] = useState(false);
+  const [translateErr, setTranslateErr] = useState<string | null>(null);
+
+  async function fetchTranslations(target: Locale) {
+    if (target === "en") {
+      setTranslations(new Map());
+      return;
+    }
+    setTranslating(true);
+    setTranslateErr(null);
+    try {
+      const res = await apiPost<{
+        locale: Locale;
+        questions: { id: string; body: string; options: { key: string; text: string }[]; solution: string }[];
+      }>(`/api/mocks/${mock.id}/translate`, { locale: target });
+      const next_map = new Map<string, { body: string; options: { key: string; text: string }[] }>();
+      for (const t of res.questions) {
+        next_map.set(t.id, { body: t.body, options: t.options });
+      }
+      setTranslations(next_map);
+    } catch (e: any) {
+      setTranslateErr(e?.message ?? "Translation failed; showing original.");
+    } finally {
+      setTranslating(false);
+    }
+  }
+
+  async function changeLocale(next: Locale) {
+    if (next === locale) return;
+    setLocale(next);
+    await fetchTranslations(next);
+  }
+
+  // Auto-translate on first mount when the user's preferred locale is
+  // non-English. We don't want the student to have to toggle for every
+  // mock — if they picked Telugu in the header once, every mock comes up
+  // in Telugu automatically.
+  const didInitRef = useRef(false);
+  useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+    if (locale !== "en") fetchTranslations(locale);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── State for answers, keyed by questionId
   const seedMap = useMemo(() => {
@@ -225,6 +282,13 @@ export function MockPlayer({
   const answeredCount = [...answers.values()].filter((a) => a.chosen != null).length;
   const markedCount = [...answers.values()].filter((a) => a.marked).length;
 
+  // Resolve display text — translation if we have one, otherwise source.
+  const tr = translations.get(q.id);
+  const displayBody = tr?.body ?? q.body;
+  const displayOptions = tr && tr.options.length === q.options.length
+    ? tr.options
+    : q.options;
+
   return (
     <main className="min-h-screen bg-ink-50/60">
       {/* Full-screen submit overlay — without this the screen looked frozen
@@ -257,8 +321,18 @@ export function MockPlayer({
             <span className="hidden font-semibold text-ink-900 sm:inline">{mock.examShort}</span>
           </Link>
           <p className="hidden truncate text-sm font-medium text-ink-700 md:block">{mock.title}</p>
-          <Timer remainingSec={remainingSec} totalSec={totalSec} />
+          <div className="flex items-center gap-3">
+            <QuestionLangSwitcher
+              current={locale}
+              onChange={changeLocale}
+              pending={translating}
+            />
+            <Timer remainingSec={remainingSec} totalSec={totalSec} />
+          </div>
         </div>
+        {translateErr && (
+          <p className="container-prose pb-1 text-[11px] text-rose-700">{translateErr}</p>
+        )}
       </header>
 
       <div className="container-prose grid grid-cols-1 gap-6 py-6 lg:grid-cols-[1fr_280px]">
@@ -280,10 +354,10 @@ export function MockPlayer({
             </button>
           </div>
 
-          <p className="mt-4 whitespace-pre-line text-base leading-relaxed text-ink-900">{q.body}</p>
+          <p className="mt-4 whitespace-pre-line text-base leading-relaxed text-ink-900">{displayBody}</p>
 
           <ul className="mt-6 space-y-2">
-            {q.options.map((opt) => {
+            {displayOptions.map((opt) => {
               const selected = localAnswer?.chosen === opt.key;
               return (
                 <li key={opt.key}>

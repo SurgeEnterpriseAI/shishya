@@ -5,8 +5,10 @@
 // the existing solution from the DB, and a button to ask Claude for a deeper
 // step-by-step (POST /api/explain).
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiPost } from "@/lib/api";
+import { QuestionLangSwitcher } from "@/components/QuestionLangSwitcher";
+import type { Locale } from "@/lib/i18n";
 
 interface ReviewQ {
   id: string;
@@ -22,16 +24,71 @@ interface ReviewQ {
   marked: boolean;
 }
 
+interface Translation {
+  body: string;
+  options: { key: string; text: string }[];
+  solution: string;
+}
+
 export function ResultsReview({
   questions,
+  attemptId,
   examCode,
   examShortName,
+  initialLocale = "en",
 }: {
   questions: ReviewQ[];
+  attemptId: string;
   examCode: string;
   examShortName: string;
+  initialLocale?: Locale;
 }) {
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+
+  // ── On-demand translation. Same pattern as MockPlayer: server holds
+  // a (questionId, locale) cache, we only pay Anthropic on cold misses.
+  const [locale, setLocale] = useState<Locale>(initialLocale);
+  const [translations, setTranslations] = useState<Map<string, Translation>>(new Map());
+  const [translating, setTranslating] = useState(false);
+  const [translateErr, setTranslateErr] = useState<string | null>(null);
+
+  async function fetchTranslations(target: Locale) {
+    if (target === "en") {
+      setTranslations(new Map());
+      return;
+    }
+    setTranslating(true);
+    setTranslateErr(null);
+    try {
+      const res = await apiPost<{
+        locale: Locale;
+        questions: { id: string; body: string; options: { key: string; text: string }[]; solution: string }[];
+      }>(`/api/attempts/${attemptId}/translate`, { locale: target });
+      const map = new Map<string, Translation>();
+      for (const t of res.questions) {
+        map.set(t.id, { body: t.body, options: t.options, solution: t.solution });
+      }
+      setTranslations(map);
+    } catch (e: any) {
+      setTranslateErr(e?.message ?? "Translation failed; showing original.");
+    } finally {
+      setTranslating(false);
+    }
+  }
+
+  async function changeLocale(next: Locale) {
+    if (next === locale) return;
+    setLocale(next);
+    await fetchTranslations(next);
+  }
+
+  const didInitRef = useRef(false);
+  useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+    if (locale !== "en") fetchTranslations(locale);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function toggle(id: string) {
     setOpenIds((prev) => {
@@ -43,35 +100,49 @@ export function ResultsReview({
   }
 
   return (
-    <ul className="mt-4 space-y-2">
-      {questions.map((q, i) => (
-        <li key={q.id} className="overflow-hidden rounded-md border border-ink-200 bg-white">
-          <button
-            onClick={() => toggle(q.id)}
-            className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-ink-50/60"
-          >
-            <Status correct={q.correct} chosen={q.chosen} />
-            <div className="min-w-0 flex-1">
-              <p className="line-clamp-2 text-sm text-ink-800">
-                <span className="text-ink-500">Q{i + 1}.</span> {q.body}
-              </p>
-              <p className="mt-0.5 text-xs text-ink-500">
-                {q.topic.name} · {q.difficulty} ·{" "}
-                {q.chosen
-                  ? `You chose ${q.chosen}, correct ${q.answerKey}`
-                  : `Skipped · correct ${q.answerKey}`}{" "}
-                · {q.timeSec}s
-              </p>
-            </div>
-            <span className="text-ink-400 shrink-0">{openIds.has(q.id) ? "▾" : "▸"}</span>
-          </button>
+    <>
+      <div className="mt-3 flex items-center justify-end gap-2">
+        <QuestionLangSwitcher current={locale} onChange={changeLocale} pending={translating} />
+      </div>
+      {translateErr && (
+        <p className="mt-2 text-xs text-rose-700">{translateErr}</p>
+      )}
+      <ul className="mt-4 space-y-2">
+        {questions.map((q, i) => {
+          const tr = translations.get(q.id);
+          const displayQ: ReviewQ = tr && tr.options.length === q.options.length
+            ? { ...q, body: tr.body, options: tr.options, solution: tr.solution }
+            : q;
+          return (
+            <li key={q.id} className="overflow-hidden rounded-md border border-ink-200 bg-white">
+              <button
+                onClick={() => toggle(q.id)}
+                className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-ink-50/60"
+              >
+                <Status correct={q.correct} chosen={q.chosen} />
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-2 text-sm text-ink-800">
+                    <span className="text-ink-500">Q{i + 1}.</span> {displayQ.body}
+                  </p>
+                  <p className="mt-0.5 text-xs text-ink-500">
+                    {q.topic.name} · {q.difficulty} ·{" "}
+                    {q.chosen
+                      ? `You chose ${q.chosen}, correct ${q.answerKey}`
+                      : `Skipped · correct ${q.answerKey}`}{" "}
+                    · {q.timeSec}s
+                  </p>
+                </div>
+                <span className="text-ink-400 shrink-0">{openIds.has(q.id) ? "▾" : "▸"}</span>
+              </button>
 
-          {openIds.has(q.id) && (
-            <ReviewBody q={q} index={i} examCode={examCode} examShortName={examShortName} />
-          )}
-        </li>
-      ))}
-    </ul>
+              {openIds.has(q.id) && (
+                <ReviewBody q={displayQ} index={i} examCode={examCode} examShortName={examShortName} />
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }
 

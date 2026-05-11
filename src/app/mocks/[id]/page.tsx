@@ -70,7 +70,7 @@ export default async function MockPlayerPage({
 
   const durationMin = ((mock.config as any)?.durationMin as number | undefined) ?? 30;
   const config = mock.config as any;
-  const { t } = await getT();
+  const { t, locale } = await getT();
 
   return (
     <MockPlayer
@@ -88,6 +88,7 @@ export default async function MockPlayerPage({
       startedAt={attempt.startedAt.toISOString()}
       questions={orderedQs}
       existingAnswers={(attempt.answers as any[]) ?? []}
+      initialLocale={locale}
       labels={{
         qOf: t("player.q.of"),
         mark: t("player.mark"),

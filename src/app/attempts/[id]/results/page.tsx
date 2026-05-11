@@ -19,7 +19,7 @@ export default async function ResultsPage({
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   const { id } = await params;
-  const { t } = await getT();
+  const { t, locale } = await getT();
 
   const attempt = await prisma.attempt.findUnique({
     where: { id },
@@ -165,8 +165,10 @@ export default async function ResultsPage({
           <p className="mt-1 text-xs text-ink-500">{t("results.review.subtitle")}</p>
           <ResultsReview
             questions={orderedQs}
+            attemptId={attempt.id}
             examCode={attempt.mock.exam.code}
             examShortName={attempt.mock.exam.shortName}
+            initialLocale={locale}
           />
         </section>
 

@@ -195,9 +195,10 @@ model Question {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  exam     Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
-  topic    Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  reports  QuestionReport[]
+  exam         Exam                  @relation(fields: [examId], references: [id], onDelete: Cascade)
+  topic        Topic                 @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  reports      QuestionReport[]
+  translations QuestionTranslation[]
 
   @@index([examId, topicId])
   @@index([difficulty])
@@ -225,6 +226,31 @@ model QuestionReport {
   @@index([questionId])
   @@index([resolved])
   @@index([createdAt])
+}
+
+// Question translations. A question authored in EN (or any base language)
+// gets translated on-demand into the student's chosen locale and the result
+// is cached here so the next student to pick the same language gets it
+// instantly. Locale is a string (not the Language enum) so we can support
+// every locale our i18n UI dictionary supports — including Sanskrit,
+// Konkani, Manipuri, etc. that the user-facing Language enum doesn't list.
+model QuestionTranslation {
+  id          String   @id @default(cuid())
+  questionId  String
+  locale      String   // matches i18n.ts locale codes: "hi", "te", "ta", "bn", ...
+  body        String   @db.Text
+  options     Json     // [{ key: "A", text: "<translated>" }, ...]
+  solution    String   @db.Text
+  hints       Json?
+  // The model + prompt version that produced this translation. Lets us
+  // re-translate if we change either later.
+  generator   String?
+  createdAt   DateTime @default(now())
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, locale])
+  @@index([locale])
 }
 
 // ─────────────────────────────────────────────────────────────────────────
