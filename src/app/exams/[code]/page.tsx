@@ -355,6 +355,7 @@ export default async function ExamPage({
               {t("exam.mocks.allAttempts")} →
             </Link>
           </div>
+          <p className="mt-1 text-xs text-ink-500">{t("exam.mocks.langHint")}</p>
           {systemMocks.length === 0 ? (
             <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
               {t("exam.mocks.empty")}
