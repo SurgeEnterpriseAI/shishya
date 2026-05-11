@@ -268,7 +268,7 @@ export default async function ExamPage({
         <section id="shishya" className="mt-10 scroll-mt-20">
           <div className="flex items-baseline justify-between">
             <h2 className="text-base font-semibold text-ink-800">{t("exam.shishya.title")}</h2>
-            <Link href="/chat" className="text-xs font-medium text-saffron-700 hover:text-saffron-800">
+            <Link href={`/chat?examCode=${exam.code}`} className="text-xs font-medium text-saffron-700 hover:text-saffron-800">
               {t("exam.shishya.openChat")} →
             </Link>
           </div>

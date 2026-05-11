@@ -215,7 +215,10 @@ export default async function DashboardPage() {
             <p className="mt-1 text-sm text-ink-600">{t("dash.subtitle")}</p>
           </div>
           {enrollments.length > 0 && (
-            <Link href="/chat" className="btn-secondary !py-2 !px-4 text-xs sm:text-sm">
+            <Link
+              href={`/chat?examCode=${enrollments[0].exam.code}`}
+              className="btn-secondary !py-2 !px-4 text-xs sm:text-sm"
+            >
               {t("nav.tutor")}
             </Link>
           )}
@@ -319,7 +322,12 @@ export default async function DashboardPage() {
                         <ul className="mt-1 space-y-0.5">
                           {weakest3.map((w) => (
                             <li key={w.id} className="flex items-baseline justify-between text-xs">
-                              <span className="truncate text-ink-800">{w.topic.name}</span>
+                              <Link
+                                href={`/chat?examCode=${w.exam.code}&topicCode=${encodeURIComponent(w.topic.code)}&seed=${encodeURIComponent(`I'm weak in ${w.topic.name} for ${w.exam.shortName}. Tutor me on this topic.`)}`}
+                                className="truncate text-ink-800 hover:text-saffron-700 hover:underline"
+                              >
+                                {w.topic.name}
+                              </Link>
                               <span className="ml-2 shrink-0 tabular-nums text-ink-500">
                                 {Math.round(w.masteryScore * 100)}%
                               </span>
@@ -358,7 +366,7 @@ export default async function DashboardPage() {
                   <>
                     <p className="mt-2 text-xs text-ink-500">{t("dash.loop.shishya.empty")}</p>
                     <Link
-                      href="/chat"
+                      href={`/chat?examCode=${enrollments[0].exam.code}`}
                       className="btn-secondary mt-3 !py-1.5 !px-3 text-xs"
                     >
                       {t("dash.loop.shishya.cta.start")}
@@ -380,7 +388,7 @@ export default async function DashboardPage() {
                       </ul>
                     )}
                     <Link
-                      href="/chat"
+                      href={`/chat?examCode=${enrollments[0].exam.code}`}
                       className="mt-3 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
                     >
                       {t("dash.loop.shishya.cta.continue")} →
