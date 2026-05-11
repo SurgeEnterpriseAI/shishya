@@ -4,7 +4,7 @@
 // on /admin/questions. Used after spot-checking a topic — flips the rest to
 // validated without 50 individual clicks.
 //
-// Hard caps:
+// Guard rails:
 //   - Caller must explicitly opt in by sending `confirmCount` matching the
 //     server's count for the same filter. Prevents the accidental "validate
 //     everything" footgun.
@@ -23,17 +23,17 @@ import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { bad, forbidden, ok, parseBody, serverError } from "@/lib/http";
 
-const Body = z.object({
-  filter: z.object({
-    examCode: z.string().optional(),
-    topicCode: z.string().optional(),
-    source: z.enum(["AI_GENERATED", "AI_VALIDATED", "SME", "PYQ", "COMMUNITY"]).optional(),
-    q: z.string().optional(),
-  }),
-  confirmCount: z.number().int().nonnegative(),
-});
+// Allow validating large bulks (e.g. the ~13k AI-generated UPSSSC PET
+// comprehension passages). The hard ceiling stays in place purely as a
+// runaway-query guard.
+const HARD_CAP = 50_000;
 
-const HARD_CAP = 1000;
+// Server-side batch size for the updateMany loop. Keeps each statement
+// well below pgbouncer's transaction window even when running ~13k+ rows.
+const BATCH_SIZE = 1_000;
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
@@ -64,34 +64,64 @@ export async function POST(req: Request) {
       );
     }
 
-    // Two-step update so we only flip source on AI_GENERATED rows. SME-authored
-    // questions keep their source; their `validated` flag is what matters.
-    const [aiPromoted, others] = await prisma.$transaction([
-      prisma.question.updateMany({
+    // Batched, two-step update. We do the AI-promotion pass first (which
+    // also flips source → AI_VALIDATED) and then mop up any remaining
+    // non-AI sources. updateMany with `take` isn't supported in Prisma,
+    // so each batch selects ids first, then updates by id list. Loop
+    // exits when nothing matches the unvalidated filter anymore.
+    let aiPromoted = 0;
+    let otherValidated = 0;
+    const validatedAt = new Date();
+
+    // ─ Pass 1: AI_GENERATED → AI_VALIDATED
+    while (true) {
+      const batch = await prisma.question.findMany({
         where: { ...where, source: "AI_GENERATED" },
+        select: { id: true },
+        take: BATCH_SIZE,
+      });
+      if (batch.length === 0) break;
+      const ids = batch.map((b) => b.id);
+      const res = await prisma.question.updateMany({
+        where: { id: { in: ids } },
         data: {
           validated: true,
           validatedBy: admin.email,
-          validatedAt: new Date(),
+          validatedAt,
           source: "AI_VALIDATED",
         },
-      }),
-      prisma.question.updateMany({
+      });
+      aiPromoted += res.count;
+      if (batch.length < BATCH_SIZE) break;
+    }
+
+    // ─ Pass 2: everything else still unvalidated (SME, PYQ, COMMUNITY, …)
+    while (true) {
+      const batch = await prisma.question.findMany({
         where: { ...where, source: { not: "AI_GENERATED" } },
+        select: { id: true },
+        take: BATCH_SIZE,
+      });
+      if (batch.length === 0) break;
+      const ids = batch.map((b) => b.id);
+      const res = await prisma.question.updateMany({
+        where: { id: { in: ids } },
         data: {
           validated: true,
           validatedBy: admin.email,
-          validatedAt: new Date(),
+          validatedAt,
         },
-      }),
-    ]);
+      });
+      otherValidated += res.count;
+      if (batch.length < BATCH_SIZE) break;
+    }
 
-    const total = aiPromoted.count + others.count;
+    const total = aiPromoted + otherValidated;
     return ok({
       validated: total,
-      aiPromoted: aiPromoted.count,
-      otherValidated: others.count,
-      message: `Marked ${total} questions as validated (${aiPromoted.count} AI promoted to AI_VALIDATED).`,
+      aiPromoted,
+      otherValidated,
+      message: `Marked ${total} questions as validated (${aiPromoted} AI promoted to AI_VALIDATED).`,
     });
   } catch (err: any) {
     if (err?.status === 403) return forbidden();
@@ -99,3 +129,13 @@ export async function POST(req: Request) {
     return serverError(err);
   }
 }
+
+const Body = z.object({
+  filter: z.object({
+    examCode: z.string().optional(),
+    topicCode: z.string().optional(),
+    source: z.enum(["AI_GENERATED", "AI_VALIDATED", "SME", "PYQ", "COMMUNITY"]).optional(),
+    q: z.string().optional(),
+  }),
+  confirmCount: z.number().int().nonnegative(),
+});
