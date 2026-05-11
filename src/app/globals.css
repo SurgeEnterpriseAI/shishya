@@ -107,6 +107,21 @@
     bottom: calc(1rem + var(--safe-bottom));
   }
 
+  /* Saffron pulse for a deep-linked syllabus topic.
+     Used when a student clicks "Study this topic ↓" on a focus card and
+     gets anchor-scrolled to the matching item in the syllabus — the
+     :target pseudo-class fires a brief background highlight so it's
+     obvious which item they landed on. */
+  .syllabus-target:target {
+    animation: syllabus-pulse 1.6s ease-out 1;
+    border-radius: 0.5rem;
+  }
+  @keyframes syllabus-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.55); }
+    40%  { box-shadow: 0 0 0 10px rgba(234, 88, 12, 0.18); }
+    100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
+  }
+
   /* Top progress bar shown during route transitions.
      Used by every loading.tsx so navigation feels instant — users see a
      thin saffron stripe slide across the top while server components fetch.
