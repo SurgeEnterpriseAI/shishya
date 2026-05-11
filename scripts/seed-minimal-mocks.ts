@@ -120,9 +120,11 @@ ${topicSummary}
 
 Spread questions across all listed topics roughly evenly. Return STRICT JSON per the system schema.`;
 
+  // 20 questions × ~250 tokens each + JSON wrapping easily hits 5000+.
+  // Cap at 8000 to give plenty of headroom so JSON never truncates.
   const response = await client.messages.create({
     model: MODEL,
-    max_tokens: 4500,
+    max_tokens: 8000,
     system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: userPrompt }],
   });
