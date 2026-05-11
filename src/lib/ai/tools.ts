@@ -90,6 +90,21 @@ export const tutorTools: Anthropic.Messages.Tool[] = [
       required: ["attempt_id"],
     },
   },
+  {
+    name: "predict_rank",
+    description:
+      "Predict what real-exam rank + likely outcome (colleges / posts) a student would get if they scored a given percentage. Call this when the student asks 'what rank can I get with X%', 'will this score get me into [college]', 'is my current score enough', or any question about outcomes / colleges / cut-offs. Returns the band that matches the score and the full ladder of bands so you can also tell the student how many more marks they need to climb to the next tier.",
+    input_schema: {
+      type: "object",
+      properties: {
+        score_pct: {
+          type: "number",
+          description: "The percentage score (0-100) to predict for. Use the student's most recent mock score if not specified.",
+        },
+      },
+      required: ["score_pct"],
+    },
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -119,6 +134,8 @@ export async function executeTool(
         };
       case "get_attempt_mistakes":
         return { ok: true, data: await getAttemptMistakes(ctx, String(input?.attempt_id ?? "")) };
+      case "predict_rank":
+        return { ok: true, data: await predictRank(ctx, Number(input?.score_pct ?? 0)) };
       default:
         return { ok: false, error: `Unknown tool: ${name}` };
     }
@@ -285,5 +302,66 @@ async function getAttemptMistakes(ctx: ToolContext, attemptId: string) {
         };
       })
       .filter((x) => x !== null),
+  };
+}
+
+async function predictRank(ctx: ToolContext, scorePct: number) {
+  const exam = await prisma.exam.findUnique({
+    where: { code: ctx.examCode },
+    select: { id: true, shortName: true },
+  });
+  if (!exam) return { message: "Exam not found." };
+
+  const bands = await prisma.examRankBand.findMany({
+    where: { examId: exam.id },
+    orderBy: { orderIdx: "asc" },
+    select: {
+      scorePctMin: true,
+      scorePctMax: true,
+      rankMin: true,
+      rankMax: true,
+      label: true,
+      outcomes: true,
+    },
+  });
+  if (bands.length === 0) {
+    return {
+      message:
+        "Rank prediction data hasn't been seeded for this exam yet. The daily refresh cron will populate it within a few days.",
+    };
+  }
+
+  const clamped = Math.max(0, Math.min(100, scorePct));
+  let match = bands.find((b) => clamped >= b.scorePctMin - 1e-9 && clamped <= b.scorePctMax + 1e-9);
+  if (!match) {
+    match = bands
+      .slice()
+      .sort((a, b) => {
+        const da = Math.min(Math.abs(clamped - a.scorePctMin), Math.abs(clamped - a.scorePctMax));
+        const db = Math.min(Math.abs(clamped - b.scorePctMin), Math.abs(clamped - b.scorePctMax));
+        return da - db;
+      })[0];
+  }
+
+  return {
+    exam: exam.shortName,
+    queried_score_pct: clamped,
+    matched_band: {
+      label: match!.label,
+      score_pct_min: match!.scorePctMin,
+      score_pct_max: match!.scorePctMax,
+      rank_min: match!.rankMin,
+      rank_max: match!.rankMax,
+      outcomes: match!.outcomes,
+    },
+    all_bands: bands.map((b) => ({
+      label: b.label,
+      score_pct_min: b.scorePctMin,
+      score_pct_max: b.scorePctMax,
+      rank_min: b.rankMin,
+      rank_max: b.rankMax,
+    })),
+    note:
+      "Use this data to tell the student where their score lands AND what they'd need to climb. AI-curated; mention that as a caveat.",
   };
 }
