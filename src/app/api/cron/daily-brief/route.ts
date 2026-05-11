@@ -11,10 +11,12 @@
 // Idempotent per-day: re-running on the same calendar day refreshes the
 // existing brief (upserts on (userId, examId, briefDate)).
 
-// Cron job that walks every enrollment + calls Claude per user-exam. On
-// Vercel Pro this can take a few minutes for a busy cohort.
+// Cron job that walks every enrollment + calls Claude per user-exam. We
+// stay at 300s (Vercel Pro plan ceiling); the cron itself processes users
+// in batches and is idempotent per (user, exam, day), so a timeout on a
+// busy cohort just means the next invocation picks up the remainder.
 export const runtime = "nodejs";
-export const maxDuration = 800;
+export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import Anthropic from "@anthropic-ai/sdk";
