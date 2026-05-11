@@ -35,20 +35,22 @@ interface Args {
   refresh: boolean;
   budget: number;
   dryRun: boolean;
+  webSearch: boolean;
 }
 
 function parseArgs(): Args {
-  const a: any = { refresh: false, budget: 20, dryRun: false };
+  const a: any = { refresh: false, budget: 20, dryRun: false, webSearch: false };
   const argv = process.argv;
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
     const next = () => argv[++i];
     switch (arg) {
-      case "--exams":   a.exams = next().split(",").map((s: string) => s.trim()); break;
-      case "--top":     a.top = parseInt(next(), 10); break;
-      case "--refresh": a.refresh = true; break;
-      case "--budget":  a.budget = parseFloat(next()); break;
-      case "--dry-run": a.dryRun = true; break;
+      case "--exams":      a.exams = next().split(",").map((s: string) => s.trim()); break;
+      case "--top":        a.top = parseInt(next(), 10); break;
+      case "--refresh":    a.refresh = true; break;
+      case "--budget":     a.budget = parseFloat(next()); break;
+      case "--dry-run":    a.dryRun = true; break;
+      case "--web-search": a.webSearch = true; break;
     }
   }
   return a as Args;
@@ -145,12 +147,15 @@ async function main() {
     }
 
     try {
-      const info = await generateExamInfo({
-        examCode: exam.code,
-        examName: exam.name,
-        examShortName: exam.shortName,
-        category: String(exam.category),
-      });
+      const info = await generateExamInfo(
+        {
+          examCode: exam.code,
+          examName: exam.name,
+          examShortName: exam.shortName,
+          category: String(exam.category),
+        },
+        { useWebSearch: args.webSearch },
+      );
       const now = new Date();
 
       // Replace previous AI-generated rows (preserve human-curated ones).

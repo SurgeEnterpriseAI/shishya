@@ -65,7 +65,10 @@ RULES:
 daysAgo: positive integer = how many days ago a news bullet would have been published. 1-30.
 daysFromNow: integer; can be negative (recent) or positive (upcoming). −30 to 365.`;
 
-export async function generateExamInfo(input: ExamInfoInput): Promise<ExamInfoResult> {
+export async function generateExamInfo(
+  input: ExamInfoInput,
+  opts: { useWebSearch?: boolean } = {},
+): Promise<ExamInfoResult> {
   const userPrompt = `Generate news + important dates for this Indian entrance exam.
 
 Exam code:   ${input.examCode}
@@ -75,16 +78,24 @@ Category:    ${input.category}
 
 Today's date: ${new Date().toISOString().slice(0, 10)}.
 
-Return 3-5 news items and 5-8 important dates as STRICT JSON per the schema in the system prompt.`;
+${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST notifications, application windows, and exam-day announcements for this exam from the official board's website (e.g. ssc.gov.in, jeemain.nta.nic.in, ibps.in, etc.). Search recent (last 30 days) news only. Cite real sources in the "source" field when found.\n\n` : ""}Return 3-5 news items and 5-8 important dates as STRICT JSON per the schema in the system prompt.`;
 
-  const start = Date.now();
+  // The web_search server-side tool lets Claude fetch live pages during
+  // generation so news items reference real, recent notifications rather
+  // than training-knowledge approximations. Falls back gracefully on
+  // older SDK versions or when the tool fails — the underlying call still
+  // returns text and our JSON parser handles either path.
+  const tools: any[] | undefined = opts.useWebSearch
+    ? [{ type: "web_search_20250305", name: "web_search", max_uses: 4 }]
+    : undefined;
+
   const response = await anthropic.messages.create({
     model: MODEL,
     max_tokens: 2500,
     system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: userPrompt }],
-  });
-  void start;
+    ...(tools ? { tools } : {}),
+  } as any);
 
   const text = response.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")

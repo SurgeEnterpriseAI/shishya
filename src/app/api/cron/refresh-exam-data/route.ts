@@ -70,12 +70,18 @@ export async function GET(req: Request) {
       continue;
     }
     try {
-      const info = await generateExamInfo({
-        examCode: exam.code,
-        examName: exam.name,
-        examShortName: exam.shortName,
-        category: String(exam.category),
-      });
+      // Web search is enabled in the daily cron so refresh runs always
+      // surface the freshest official notifications. Each search bumps
+      // cost by ~$0.02 per exam but gives genuine "internet data".
+      const info = await generateExamInfo(
+        {
+          examCode: exam.code,
+          examName: exam.name,
+          examShortName: exam.shortName,
+          category: String(exam.category),
+        },
+        { useWebSearch: true },
+      );
       const now = new Date();
       await prisma.examNewsItem.deleteMany({
         where: { examId: exam.id, source: GEN_SOURCE },
