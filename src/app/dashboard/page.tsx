@@ -10,7 +10,6 @@ import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
 import { computeExamTags, TAG_ORDER } from "@/lib/exam-tags";
 import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
 import { formatDisplayScorePct } from "@/lib/scoring";
-import { computeScoreBoost } from "@/lib/focus-topics";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -125,20 +124,10 @@ export default async function DashboardPage() {
   // already wrote a personalised reflection + pre-built adaptive mock).
   const todaysBrief = recommendedExam ? briefByExamId.get(recommendedExam.examId) ?? null : null;
 
-  // Right-rail "Score Boost" panel scope: the exam the student just took a
-  // mock for. Falls back to the recommended exam, then to their first
-  // enrollment. The panel is hidden when there's nothing useful to show.
-  const boostExamId = (() => {
-    const recent = recentAttempts[0];
-    if (recent) {
-      const enrolled = enrollments.find((e) => e.exam.code === recent.mock.exam.code);
-      if (enrolled) return enrolled.examId;
-    }
-    if (recommendedExam) return recommendedExam.examId;
-    if (enrollments[0]) return enrollments[0].examId;
-    return null;
-  })();
-  const scoreBoost = boostExamId ? await computeScoreBoost(userId, boostExamId) : null;
+  // Score Boost is exam-scoped, so it now lives only on /exams/[code] where
+  // the student is already focused on a specific exam. The dashboard stays
+  // exam-agnostic — multi-exam home, no auto-scope to whichever exam the
+  // student last touched.
 
   // "Topics you asked Shishya about" — pull tool_use calls that mention a
   // topic_code (find_questions_on_topic / get_attempt_mistakes traces) +
@@ -242,11 +231,8 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        <div className="mt-8 lg:grid lg:grid-cols-3 lg:gap-8">
-        <div className="lg:col-span-2 min-w-0">
-
         {/* Enrolled exams */}
-        <section className="">
+        <section className="mt-8">
           <h2 className="text-base font-semibold text-ink-800">{t("dash.your.exams")}</h2>
           {enrollments.length === 0 ? (
             <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-6 text-sm text-ink-500">
@@ -430,64 +416,6 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* ── Focus topics for the active boost exam ──────────────────── */}
-        {scoreBoost && scoreBoost.focusTopics.length > 0 && (
-          <section id="focus-topics" className="mt-10 scroll-mt-20">
-            <h2 className="text-base font-semibold text-ink-800">
-              {t("dash.focus.title")} {scoreBoost.exam.shortName}
-            </h2>
-            <p className="mt-1 text-sm text-ink-600">
-              {t("dash.focus.subtitle.before")}{" "}
-              <strong className="text-ink-900">+{scoreBoost.combinedExtraPct.toFixed(1)}%</strong>{" "}
-              {t("dash.focus.subtitle.middle")}{" "}
-              <strong className="text-ink-900">+{scoreBoost.combinedExtraMarks.toFixed(1)} {t("dash.focus.marks")}</strong>
-              {scoreBoost.projectedRank && scoreBoost.currentRank && scoreBoost.projectedRank < scoreBoost.currentRank ? (
-                <>
-                  {" · "}
-                  {t("dash.focus.rank.from")} <strong>#{scoreBoost.currentRank}</strong>{" "}
-                  {t("dash.focus.rank.to")} <strong className="text-emerald-700">#{scoreBoost.projectedRank}</strong>
-                </>
-              ) : null}
-              .
-            </p>
-            <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {scoreBoost.focusTopics.map((ft) => (
-                <li key={ft.topicId} className="rounded-md border border-ink-200 bg-white p-4">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-sm font-semibold text-ink-900">{ft.topicName}</p>
-                    <p className="shrink-0 text-xs text-ink-500">{Math.round(ft.currentMastery * 100)}%</p>
-                  </div>
-                  <p className="mt-0.5 text-xs text-ink-500">{ft.subjectName}</p>
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink-100">
-                    <div
-                      className="h-full bg-saffron-500"
-                      style={{ width: `${Math.round(ft.currentMastery * 100)}%` }}
-                    />
-                  </div>
-                  <p className="mt-2 text-xs text-emerald-700">
-                    {t("dash.focus.uplift.lead")} <strong>+{ft.estimatedExtraMarks.toFixed(1)} {t("dash.focus.marks")}</strong>{" "}
-                    <span className="text-ink-500">{t("dash.focus.uplift.atTarget")}</span>
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Link
-                      href={`/exams/${scoreBoost.exam.code}/topics/${encodeURIComponent(ft.topicCode)}`}
-                      className="btn-primary !py-1.5 !px-3 text-xs"
-                    >
-                      {t("dash.focus.cta.study")}
-                    </Link>
-                    <Link
-                      href={`/chat?examCode=${scoreBoost.exam.code}&topicCode=${encodeURIComponent(ft.topicCode)}&seed=${encodeURIComponent(`I'm weak in ${ft.topicName} for ${scoreBoost.exam.shortName}. Tutor me on this topic.`)}`}
-                      className="btn-secondary !py-1.5 !px-3 text-xs"
-                    >
-                      {t("dash.focus.cta.ask")}
-                    </Link>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
         {/* Recent attempts */}
         {recentAttempts.length > 0 && (
           <section className="mt-10">
@@ -520,96 +448,6 @@ export default async function DashboardPage() {
             </ul>
           </section>
         )}
-
-        </div>{/* /lg:col-span-2 */}
-
-        {/* ── Right rail: Score Boost summary ────────────────────────── */}
-        {scoreBoost && scoreBoost.focusTopics.length > 0 && (
-          <aside className="mt-10 lg:col-span-1 lg:mt-0 lg:sticky lg:top-20 lg:self-start">
-            <div className="rounded-md border border-saffron-200 bg-gradient-to-b from-saffron-50 to-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wider text-saffron-800">
-                {t("dash.boost.eyebrow")}
-              </p>
-              <h3 className="mt-1 text-base font-semibold text-ink-900">
-                {t("dash.boost.title.before")} {scoreBoost.exam.shortName} {t("dash.boost.title.after")}
-              </h3>
-
-              {scoreBoost.latestScorePct != null && (
-                <div className="mt-3 rounded-md border border-ink-200 bg-white px-3 py-2 text-xs">
-                  <p className="text-ink-500">{t("dash.boost.latest")}</p>
-                  <p className="mt-0.5">
-                    <span className="text-lg font-bold text-ink-900 tabular-nums">
-                      {formatDisplayScorePct(scoreBoost.latestScorePct)}
-                    </span>
-                    {scoreBoost.currentRank && (
-                      <span className="ml-2 text-ink-500">
-                        · {t("dash.boost.rank")} #{scoreBoost.currentRank}
-                        {scoreBoost.totalCohort > 1 && (
-                          <span className="text-ink-400"> / {scoreBoost.totalCohort}</span>
-                        )}
-                      </span>
-                    )}
-                  </p>
-                </div>
-              )}
-
-              <p className="mt-3 text-xs font-medium uppercase tracking-wider text-ink-500">
-                {t("dash.boost.focusOn")}
-              </p>
-              <ul className="mt-2 space-y-1.5">
-                {scoreBoost.focusTopics.map((ft) => (
-                  <li key={ft.topicId}>
-                    <a
-                      href="#focus-topics"
-                      className="block rounded-md border border-ink-200 bg-white px-3 py-2 hover:border-saffron-400 hover:bg-saffron-50/40"
-                    >
-                      <p className="truncate text-xs font-medium text-ink-900">{ft.topicName}</p>
-                      <p className="mt-0.5 text-[11px] text-ink-500">
-                        {Math.round(ft.currentMastery * 100)}% →{" "}
-                        <span className="font-medium text-emerald-700">
-                          +{ft.estimatedExtraMarks.toFixed(1)} {t("dash.focus.marks")}
-                        </span>
-                      </p>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-3 rounded-md bg-saffron-100 px-3 py-2 text-xs text-ink-800">
-                <p>
-                  <strong>{t("dash.boost.combined")}:</strong>{" "}
-                  +{scoreBoost.combinedExtraMarks.toFixed(1)} {t("dash.focus.marks")}{" "}
-                  <span className="text-ink-500">(+{scoreBoost.combinedExtraPct.toFixed(1)}%)</span>
-                </p>
-                {scoreBoost.projectedRank &&
-                  scoreBoost.currentRank &&
-                  scoreBoost.projectedRank < scoreBoost.currentRank && (
-                    <p className="mt-1 text-emerald-800">
-                      {t("dash.boost.rankUplift")} #{scoreBoost.currentRank} →{" "}
-                      <strong>#{scoreBoost.projectedRank}</strong>
-                    </p>
-                  )}
-                {scoreBoost.projectedScorePct != null && (
-                  <p className="mt-1 text-ink-600">
-                    {t("dash.boost.projected")}{" "}
-                    <strong className="text-ink-900">
-                      {formatDisplayScorePct(scoreBoost.projectedScorePct)}
-                    </strong>
-                  </p>
-                )}
-              </div>
-
-              <a
-                href="#focus-topics"
-                className="mt-4 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
-              >
-                {t("dash.boost.cta")} ↓
-              </a>
-            </div>
-          </aside>
-        )}
-
-        </div>{/* /lg:grid */}
 
         {/* Other exams — curated browse (search + chips + state grid) */}
         {otherExamCards.length > 0 && (
