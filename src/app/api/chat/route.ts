@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { tutorStream } from "@/lib/ai";
 import { getStudentState } from "@/lib/db/student-state";
+import { getStudentJourney } from "@/lib/db/student-journey";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 
 const Body = z.object({
@@ -72,8 +73,11 @@ export async function POST(req: Request) {
     data: { sessionId: chatSession.id, role: "USER", content: body.message },
   });
 
-  const studentState = await getStudentState(session.user.id, body.examCode);
-  const syllabus = await getSyllabusContext(body.examCode);
+  const [studentState, syllabus, journey] = await Promise.all([
+    getStudentState(session.user.id, body.examCode),
+    getSyllabusContext(body.examCode),
+    getStudentJourney(session.user.id, body.examCode),
+  ]);
 
   // If the chat was opened from a study-notes page (topicCode in URL), grab
   // the topic record + a short slice of its notes. The tutor uses this as
@@ -126,6 +130,7 @@ export async function POST(req: Request) {
           userMessage: body.message,
           language: studentState.preferredLang,
           topicFocus: topicFocus ?? undefined,
+          journey,
           ctx: { userId: session.user.id, examCode: body.examCode },
         });
 

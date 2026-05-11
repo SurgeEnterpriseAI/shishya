@@ -136,6 +136,22 @@ export interface TutorInput {
     subjectName: string;
     notesExcerpt: string | null;
   };
+  /** Cross-session memory — past chats, today's brief, last mock, open
+   *  recommended actions. Lets the tutor feel continuous instead of
+   *  starting from scratch each session. */
+  journey?: {
+    examCode: string;
+    threads: Array<{
+      startedAt: string;
+      examShort: string;
+      openingMessage: string;
+      topicCodes: string[];
+    }>;
+    topAskedTopics: Array<{ topicCode: string; count: number }>;
+    todayBrief: { reflection: string; mockTitle: string | null } | null;
+    lastMock: { date: string; scorePct: number; mockTitle: string; examShort: string } | null;
+    openActions: Array<{ kind: string; topicCode?: string; reason: string }>;
+  };
 }
 
 export interface ChatTurn {

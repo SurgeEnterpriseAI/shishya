@@ -64,6 +64,96 @@ export function syllabusBlock(args: {
 }
 
 /**
+ * Cross-session "recent journey" block — the tutor's persistent memory.
+ *
+ * Without this, every new chat session is a blank slate. With it, the tutor
+ * knows: what we talked about across the last N sessions, today's brief, the
+ * last mock score, and any recommended actions left dangling from prior
+ * replies. Renders compactly to keep dynamic-prompt cost bounded.
+ */
+export function journeyBlock(journey: {
+  examCode: string;
+  threads: Array<{
+    startedAt: string;
+    examShort: string;
+    openingMessage: string;
+    topicCodes: string[];
+  }>;
+  topAskedTopics: Array<{ topicCode: string; count: number }>;
+  todayBrief: { reflection: string; mockTitle: string | null } | null;
+  lastMock: { date: string; scorePct: number; mockTitle: string; examShort: string } | null;
+  openActions: Array<{ kind: string; topicCode?: string; reason: string }>;
+}): string {
+  const empty =
+    journey.threads.length === 0 &&
+    !journey.todayBrief &&
+    !journey.lastMock &&
+    journey.openActions.length === 0;
+  if (empty) return "";
+
+  const lines: string[] = [];
+  lines.push(`# Recent journey (cross-session memory — use this to feel continuous)`);
+
+  if (journey.todayBrief) {
+    lines.push(`\n## Today's brief (overnight reflection by you)`);
+    lines.push(journey.todayBrief.reflection.trim());
+    if (journey.todayBrief.mockTitle) {
+      lines.push(`(Recommended mock for today: "${journey.todayBrief.mockTitle}")`);
+    }
+  }
+
+  if (journey.lastMock) {
+    const when = formatDateAgo(journey.lastMock.date);
+    lines.push(
+      `\n## Last mock\n${when}: ${(journey.lastMock.scorePct).toFixed(1)}% on "${journey.lastMock.mockTitle}" (${journey.lastMock.examShort})`,
+    );
+  }
+
+  if (journey.threads.length > 0) {
+    lines.push(`\n## Past chats (most recent first — refer back if relevant)`);
+    for (const t of journey.threads) {
+      const when = formatDateAgo(t.startedAt);
+      const topics = t.topicCodes.length ? ` · topics: ${t.topicCodes.map((c) => `\`${c}\``).join(", ")}` : "";
+      lines.push(`- ${when} (${t.examShort}): "${t.openingMessage}"${topics}`);
+    }
+  }
+
+  if (journey.topAskedTopics.length > 0) {
+    lines.push(
+      `\n## Topics asked most lately\n` +
+        journey.topAskedTopics
+          .map((t) => `\`${t.topicCode}\` (×${t.count})`)
+          .join(", "),
+    );
+  }
+
+  if (journey.openActions.length > 0) {
+    lines.push(`\n## Open recommended actions (from prior replies — pick up where we left off if relevant)`);
+    for (const a of journey.openActions) {
+      const target = a.topicCode ? ` [\`${a.topicCode}\`]` : "";
+      lines.push(`- ${a.kind}${target}: ${a.reason}`);
+    }
+  }
+
+  lines.push(
+    `\nUse this memory implicitly — reference it naturally when relevant ("last week we discussed X", "your earlier mock showed Y"). Don't list it back at the student verbatim.`,
+  );
+
+  return lines.join("\n");
+}
+
+function formatDateAgo(iso: string): string {
+  const then = new Date(iso).getTime();
+  const now = Date.now();
+  const days = Math.floor((now - then) / (24 * 60 * 60 * 1000));
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 7) return `${days} days ago`;
+  if (days < 14) return `1 week ago`;
+  return `${Math.floor(days / 7)} weeks ago`;
+}
+
+/**
  * Compact student-state summary used in dynamic (non-cached) prompt blocks.
  * Keep it short — every token counts on the dynamic side.
  */

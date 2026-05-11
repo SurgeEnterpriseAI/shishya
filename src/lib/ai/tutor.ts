@@ -17,6 +17,7 @@ import {
   SAFETY_RULES,
   syllabusBlock,
   studentStateBlock,
+  journeyBlock,
 } from "./prompts";
 import type { TutorInput, TutorOutput } from "./types";
 import { tutorTools, executeTool, type ToolContext } from "./tools";
@@ -42,7 +43,7 @@ export async function* tutorStream(
   | { tool: { name: string; args: any; ok: boolean; ms: number } }
   | { done: TutorOutput }
 > {
-  const { studentState, syllabus, history, userMessage, language, topicFocus, ctx } = input;
+  const { studentState, syllabus, history, userMessage, language, topicFocus, journey, ctx } = input;
 
   // Anthropic caps `cache_control` blocks at 4 per request. Combine the 4
   // small static blocks (persona + safety + format + tools) into one cached
@@ -57,8 +58,10 @@ export async function* tutorStream(
 ${topicFocus.notesExcerpt ? `\nReference notes (already shown to the student — do not re-paste verbatim; build on them):\n${topicFocus.notesExcerpt}\n` : ""}`
     : "";
 
+  const journeyText = journey ? journeyBlock(journey) : "";
+
   const dynamicContext = `${studentStateBlock(studentState)}
-${focusBlock ? `\n${focusBlock}\n` : ""}
+${journeyText ? `\n${journeyText}\n` : ""}${focusBlock ? `\n${focusBlock}\n` : ""}
 Reply language: ${language}.
 
 If you suggest follow-up actions to the student, append a single line in this format:
