@@ -38,7 +38,9 @@ yarn-error.log*
 .vercel/
 
 # Test artifacts
-coverage/
+# Anchored to repo root — without the leading slash, this would also
+# ignore src/app/admin/coverage/ which is a real route.
+/coverage/
 .vitest/
 
 # Misc
