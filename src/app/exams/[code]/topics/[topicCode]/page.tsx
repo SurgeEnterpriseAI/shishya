@@ -12,6 +12,7 @@ import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
+import { findTranslations } from "@/lib/db/questionTranslations";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,19 @@ export default async function TopicPage({
     orderBy: { id: "asc" },
     select: { id: true, body: true, difficulty: true, topic: { select: { name: true } } },
   });
+
+  // Server-side translation lookup: if the visitor is on a non-English
+  // locale AND we already have cached translations for these previews,
+  // surface them. We never trigger a fresh Anthropic call here — that's
+  // reserved for the actual mock-taking flow where the wait is acceptable.
+  const { locale } = await getT();
+  let translatedPreview = new Map<string, { body: string }>();
+  if (locale !== "en" && practiceQs.length > 0) {
+    const cached = await findTranslations(practiceQs.map((q) => q.id), locale);
+    translatedPreview = new Map(
+      [...cached.entries()].map(([qid, t]) => [qid, { body: t.body }]),
+    );
+  }
 
   const notes = (topic as any).notes as string | null;
   const notesAt = (topic as any).notesGeneratedAt as Date | null;
@@ -201,14 +215,17 @@ export default async function TopicPage({
               </Link>
             </div>
             <ul className="mt-3 space-y-2">
-              {practiceQs.map((q, i) => (
-                <li key={q.id} className="rounded-md border border-ink-200 bg-white p-3">
-                  <p className="text-xs uppercase tracking-wide text-ink-500">
-                    Q{i + 1} · {q.topic.name} · {q.difficulty}
-                  </p>
-                  <p className="mt-1 text-sm text-ink-800 line-clamp-3">{q.body}</p>
-                </li>
-              ))}
+              {practiceQs.map((q, i) => {
+                const body = translatedPreview.get(q.id)?.body ?? q.body;
+                return (
+                  <li key={q.id} className="rounded-md border border-ink-200 bg-white p-3">
+                    <p className="text-xs uppercase tracking-wide text-ink-500">
+                      Q{i + 1} · {q.topic.name} · {q.difficulty}
+                    </p>
+                    <p className="mt-1 text-sm text-ink-800 line-clamp-3">{body}</p>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         )}
