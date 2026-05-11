@@ -328,6 +328,26 @@ async function renderInsights() {
     console.error("[admin/insights] translation stats failed", (err as Error)?.message);
   }
 
+  // ── Exam-intel coverage (news, dates, rank bands) — how many of the
+  // 163 active exams now have generated context content. Drives the
+  // operator's view of how far the daily refresh cron has propagated.
+  let intelCoverage = { exams: totalExams, news: 0, dates: 0, bands: 0 };
+  try {
+    const [newsRows, dateRows, bandRows] = await Promise.all([
+      prisma.examNewsItem.groupBy({ by: ["examId"] }),
+      prisma.examImportantDate.groupBy({ by: ["examId"] }),
+      prisma.examRankBand.groupBy({ by: ["examId"] }),
+    ]);
+    intelCoverage = {
+      exams: totalExams,
+      news: newsRows.length,
+      dates: dateRows.length,
+      bands: bandRows.length,
+    };
+  } catch (err) {
+    console.error("[admin/insights] intel coverage failed", (err as Error)?.message);
+  }
+
   // ── Derive top topics asked from tool-use metadata ──────────────────
   const topicCounts = new Map<string, number>();
   for (const m of topAskedTopicsRaw) {
@@ -548,6 +568,50 @@ async function renderInsights() {
                 {recentChats.length === 0 && <li className="text-xs text-ink-500">No chats yet.</li>}
               </ul>
             </div>
+          </div>
+        </section>
+
+        {/* ── Exam intel coverage (news / dates / rank bands) ─────────── */}
+        <section className="mt-10">
+          <h2 className="text-base font-semibold text-ink-800">Exam intel coverage</h2>
+          <p className="mt-1 text-xs text-ink-500">
+            Active exams with at least one row of each generated context.
+            Daily refresh cron (
+            <code className="rounded bg-ink-100 px-1 text-[11px]">/api/cron/refresh-exam-data</code>
+            ) covers ~23 exams per day on a 7-day rotation, so every exam
+            stays fresh automatically.
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <Hero
+              label="News items"
+              value={intelCoverage.news}
+              secondary={`/ ${intelCoverage.exams} exams (${
+                intelCoverage.exams > 0
+                  ? Math.round((intelCoverage.news / intelCoverage.exams) * 100)
+                  : 0
+              }%)`}
+              accent={intelCoverage.news > 0 ? "ok" : "muted"}
+            />
+            <Hero
+              label="Important dates"
+              value={intelCoverage.dates}
+              secondary={`/ ${intelCoverage.exams} exams (${
+                intelCoverage.exams > 0
+                  ? Math.round((intelCoverage.dates / intelCoverage.exams) * 100)
+                  : 0
+              }%)`}
+              accent={intelCoverage.dates > 0 ? "ok" : "muted"}
+            />
+            <Hero
+              label="Rank bands"
+              value={intelCoverage.bands}
+              secondary={`/ ${intelCoverage.exams} exams (${
+                intelCoverage.exams > 0
+                  ? Math.round((intelCoverage.bands / intelCoverage.exams) * 100)
+                  : 0
+              }%)`}
+              accent={intelCoverage.bands > 0 ? "ok" : "muted"}
+            />
           </div>
         </section>
 
