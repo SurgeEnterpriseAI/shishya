@@ -120,6 +120,9 @@ export default async function ResultsPage({
           />
         </div>
 
+        <div className="mt-2 lg:grid lg:grid-cols-3 lg:gap-8">
+        <div className="lg:col-span-2 min-w-0">
+
         {/* Topic mastery */}
         {topicArr.length > 0 && (
           <section className="mt-10">
@@ -167,11 +170,37 @@ export default async function ResultsPage({
           />
         </section>
 
-        {/* CTAs */}
-        <div className="mt-10 flex flex-wrap gap-3">
-          <Link href={`/exams/${attempt.mock.exam.code}`} className="btn-primary !py-2 !px-4 text-sm">
+        </div>{/* /lg:col-span-2 */}
+
+        {/* ── Right rail: review actions, sticky on lg+ ───────────────────
+            150-question reviews can be a long scroll. Sticking the three
+            CTAs on the right means students don't have to scroll all the
+            way down to take another mock / open Shishya / go home. On
+            mobile the rail stacks under the question list (the CTAs are
+            still reachable, just inline rather than floating). */}
+        <aside className="mt-10 lg:col-span-1 lg:mt-0 lg:sticky lg:top-20 lg:self-start space-y-3">
+
+          {/* Compact score recap — useful context while reviewing because
+              the big score cards at the top of the page have scrolled
+              out of view by the time you're in question 100+. */}
+          <div className="rounded-md border border-saffron-200 bg-saffron-50 p-3 text-xs">
+            <p className="text-ink-500 uppercase tracking-wider">{t("results.score")}</p>
+            <p className="mt-0.5 text-lg font-bold text-ink-900 tabular-nums">
+              {formatDisplayScorePct(attempt.scorePct)}
+            </p>
+            <p className="text-ink-600">
+              {correctCount} {t("results.correct").toLowerCase()} · {wrongCount} {t("results.wrong").toLowerCase()}
+              {skipped > 0 ? ` · ${skipped} ${t("results.skipped")}` : ""}
+            </p>
+          </div>
+
+          <Link
+            href={`/exams/${attempt.mock.exam.code}`}
+            className="btn-primary block w-full !py-2 !px-4 text-center text-sm"
+          >
             {t("results.cta.another")}
           </Link>
+
           <Link
             href={`/chat?examCode=${attempt.mock.exam.code}${
               topicArr.length > 0
@@ -184,14 +213,21 @@ export default async function ResultsPage({
                   : ""
               }Walk me through what I should focus on next.`
             )}`}
-            className="btn-secondary !py-2 !px-4 text-sm"
+            className="btn-secondary block w-full !py-2 !px-4 text-center text-sm"
           >
             {t("results.cta.askShishya")}
           </Link>
-          <Link href="/dashboard" className="btn-secondary !py-2 !px-4 text-sm">
+
+          <Link
+            href="/dashboard"
+            className="btn-secondary block w-full !py-2 !px-4 text-center text-sm"
+          >
             {t("results.cta.back")}
           </Link>
-        </div>
+
+        </aside>
+
+        </div>{/* /lg:grid */}
       </section>
     </main>
   );
