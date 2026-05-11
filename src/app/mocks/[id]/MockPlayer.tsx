@@ -128,6 +128,13 @@ export function MockPlayer({
   async function changeLocale(next: Locale) {
     if (next === locale) return;
     setLocale(next);
+    // Persist the choice site-wide so other pages and the next visit
+    // remember it. The cookie is the same one LangSwitcher in the global
+    // header uses, so picking Hindi during a mock makes the dashboard,
+    // exam pages, results, etc. all default to Hindi too.
+    try {
+      document.cookie = `shishya-lang=${next}; path=/; max-age=${60 * 60 * 24 * 365}`;
+    } catch { /* SSR or blocked cookies — fine */ }
     await fetchTranslations(next);
   }
 

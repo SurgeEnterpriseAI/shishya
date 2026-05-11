@@ -79,6 +79,9 @@ export function ResultsReview({
   async function changeLocale(next: Locale) {
     if (next === locale) return;
     setLocale(next);
+    try {
+      document.cookie = `shishya-lang=${next}; path=/; max-age=${60 * 60 * 24 * 365}`;
+    } catch { /* SSR or blocked cookies — fine */ }
     await fetchTranslations(next);
   }
 
