@@ -19,6 +19,15 @@ interface ChatLabels {
   emptyExamPrefix: string;
   suggested: string;
   starters: string[];
+  focusLabel: string;
+  focusClear: string;
+}
+
+interface TopicFocus {
+  code: string;
+  name: string;
+  subjectName: string;
+  examShortName: string;
 }
 
 function prettyTool(name?: string): string {
@@ -33,9 +42,13 @@ function prettyTool(name?: string): string {
 
 export function ChatInterface({
   examCode,
+  topicFocus,
+  initialSeed,
   labels,
 }: {
   examCode: string;
+  topicFocus?: TopicFocus | null;
+  initialSeed?: string | null;
   labels: ChatLabels;
 }) {
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -50,6 +63,19 @@ export function ChatInterface({
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // When the user lands here from a topic page (e.g. clicked "Open Shishya
+  // tutor" on Number System), auto-fire the seed prompt so the tutor starts
+  // teaching immediately instead of showing a blank chat.
+  const seedFiredRef = useRef(false);
+  useEffect(() => {
+    if (seedFiredRef.current) return;
+    if (initialSeed && initialSeed.trim()) {
+      seedFiredRef.current = true;
+      void send(initialSeed.trim());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSeed]);
 
   async function send(text: string) {
     if (!text.trim() || busy) return;
@@ -66,7 +92,12 @@ export function ChatInterface({
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ examCode, sessionId, message: text }),
+        body: JSON.stringify({
+          examCode,
+          sessionId,
+          message: text,
+          topicCode: topicFocus?.code ?? undefined,
+        }),
       });
       if (!res.ok || !res.body) {
         let detail = "";
@@ -140,17 +171,47 @@ export function ChatInterface({
     }
   }
 
+  // Topic-tailored starters override the generic ones when focused.
+  const starters: string[] = topicFocus
+    ? [
+        `Go deeper on ${topicFocus.name} for ${topicFocus.examShortName} — examples and edge cases I should know.`,
+        `Give me 3 fastest shortcuts to solve ${topicFocus.name} questions in the exam.`,
+        `What are the most common mistakes students make on ${topicFocus.name}? How do I avoid them?`,
+        `Quiz me on ${topicFocus.name} — start with one easy question, then go harder based on how I answer.`,
+      ]
+    : labels.starters;
+
   return (
     <div className="mt-4 flex flex-1 flex-col rounded-md border border-ink-200 bg-white">
+      {/* Topic-focus chip */}
+      {topicFocus && (
+        <div className="flex items-center justify-between gap-3 border-b border-saffron-200 bg-saffron-50/60 px-4 py-2 text-xs">
+          <p className="text-ink-700">
+            <span className="font-medium text-saffron-800">{labels.focusLabel}:</span>{" "}
+            {topicFocus.name}
+            <span className="text-ink-500"> · {topicFocus.subjectName} · {topicFocus.examShortName}</span>
+          </p>
+          <a
+            href={`/chat?examCode=${encodeURIComponent(examCode)}`}
+            className="text-ink-500 hover:text-ink-800"
+          >
+            {labels.focusClear} ✕
+          </a>
+        </div>
+      )}
+
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-6" style={{ maxHeight: "calc(100vh - 280px)" }}>
         {messages.length === 0 && (
           <div className="mx-auto max-w-md text-center">
             <p className="text-sm text-ink-600">
-              {labels.empty} <strong>{labels.emptyExamPrefix} {examCode}</strong>.
+              {labels.empty}{" "}
+              <strong>
+                {labels.emptyExamPrefix} {topicFocus ? topicFocus.name : examCode}
+              </strong>.
             </p>
             <ul className="mt-5 grid grid-cols-1 gap-2">
-              {labels.starters.map((s) => (
+              {starters.map((s) => (
                 <li key={s}>
                   <button
                     onClick={() => send(s)}

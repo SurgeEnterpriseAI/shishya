@@ -13,7 +13,7 @@ import { ExamSwitcher } from "./ExamSwitcher";
 export default async function ChatPage({
   searchParams,
 }: {
-  searchParams: Promise<{ examCode?: string }>;
+  searchParams: Promise<{ examCode?: string; topicCode?: string; seed?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/chat");
@@ -45,6 +45,35 @@ export default async function ChatPage({
       ? sp.examCode
       : enrollments[0].exam.code;
 
+  // If a topic was passed (e.g. user clicked "Open Shishya tutor" from a
+  // study-notes page), look it up so the tutor can anchor on it and the UI
+  // can show a focus chip + topic-tailored starters.
+  let topicFocus: {
+    code: string;
+    name: string;
+    subjectName: string;
+    examShortName: string;
+  } | null = null;
+  if (sp.topicCode) {
+    const exam = enrollments.find((e) => e.exam.code === examCode)?.exam;
+    const topic = await prisma.topic.findFirst({
+      where: { code: sp.topicCode, subject: { exam: { code: examCode } } },
+      select: {
+        code: true,
+        name: true,
+        subject: { select: { name: true } },
+      },
+    });
+    if (topic && exam) {
+      topicFocus = {
+        code: topic.code,
+        name: topic.name,
+        subjectName: topic.subject.name,
+        examShortName: exam.shortName,
+      };
+    }
+  }
+
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
@@ -67,6 +96,8 @@ export default async function ChatPage({
 
         <ChatInterface
           examCode={examCode}
+          topicFocus={topicFocus}
+          initialSeed={sp.seed ?? null}
           labels={{
             placeholder: t("chat.placeholder"),
             send: t("chat.send"),
@@ -75,6 +106,8 @@ export default async function ChatPage({
             emptyExamPrefix: t("chat.empty.examPrefix"),
             suggested: t("chat.suggested"),
             starters: [t("chat.starter.1"), t("chat.starter.2"), t("chat.starter.3"), t("chat.starter.4")],
+            focusLabel: t("chat.focus.label"),
+            focusClear: t("chat.focus.clear"),
           }}
         />
       </section>

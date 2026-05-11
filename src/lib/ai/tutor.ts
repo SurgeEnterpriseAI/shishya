@@ -42,7 +42,7 @@ export async function* tutorStream(
   | { tool: { name: string; args: any; ok: boolean; ms: number } }
   | { done: TutorOutput }
 > {
-  const { studentState, syllabus, history, userMessage, language, ctx } = input;
+  const { studentState, syllabus, history, userMessage, language, topicFocus, ctx } = input;
 
   // Anthropic caps `cache_control` blocks at 4 per request. Combine the 4
   // small static blocks (persona + safety + format + tools) into one cached
@@ -52,8 +52,13 @@ export async function* tutorStream(
   const STATIC_PROMPT = `${PLATFORM_PERSONA}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${TOOL_USE_GUIDE}`;
   const systemBlocks = cachedSystem(STATIC_PROMPT, syllabusBlock(syllabus));
 
-  const dynamicContext = `${studentStateBlock(studentState)}
+  const focusBlock = topicFocus
+    ? `CURRENT FOCUS — the student opened this chat from the study-notes page for "${topicFocus.name}" (subject: ${topicFocus.subjectName}). Anchor your reply to this topic: use its terminology, examples, and formulas. Only diverge if the student explicitly asks to switch topics. When citing the topic, use the code \`${topicFocus.code}\`.
+${topicFocus.notesExcerpt ? `\nReference notes (already shown to the student — do not re-paste verbatim; build on them):\n${topicFocus.notesExcerpt}\n` : ""}`
+    : "";
 
+  const dynamicContext = `${studentStateBlock(studentState)}
+${focusBlock ? `\n${focusBlock}\n` : ""}
 Reply language: ${language}.
 
 If you suggest follow-up actions to the student, append a single line in this format:

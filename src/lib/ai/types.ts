@@ -128,6 +128,14 @@ export interface TutorInput {
   history: ChatTurn[];
   userMessage: string;
   language: Language;
+  /** Topic the student is currently focused on (set when the chat was
+   *  opened from a study-notes page). Anchors the tutor to that topic. */
+  topicFocus?: {
+    code: string;
+    name: string;
+    subjectName: string;
+    notesExcerpt: string | null;
+  };
 }
 
 export interface ChatTurn {

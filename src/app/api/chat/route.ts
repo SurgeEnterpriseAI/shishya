@@ -16,6 +16,7 @@ const Body = z.object({
   examCode: z.string().min(1),
   sessionId: z.string().nullish(),
   message: z.string().min(1).max(2000),
+  topicCode: z.string().nullish(),
 });
 
 export async function POST(req: Request) {
@@ -74,6 +75,38 @@ export async function POST(req: Request) {
   const studentState = await getStudentState(session.user.id, body.examCode);
   const syllabus = await getSyllabusContext(body.examCode);
 
+  // If the chat was opened from a study-notes page (topicCode in URL), grab
+  // the topic record + a short slice of its notes. The tutor uses this as
+  // a focus anchor so it teaches the topic the student is actively reading
+  // rather than reverting to generic exam-level chat.
+  let topicFocus: {
+    code: string;
+    name: string;
+    subjectName: string;
+    notesExcerpt: string | null;
+  } | null = null;
+  if (body.topicCode) {
+    const topic = await prisma.topic.findFirst({
+      where: { code: body.topicCode, subject: { examId: exam.id } },
+      select: {
+        code: true,
+        name: true,
+        notes: true,
+        subject: { select: { name: true } },
+      },
+    });
+    if (topic) {
+      const notes = (topic as any).notes as string | null;
+      topicFocus = {
+        code: topic.code,
+        name: topic.name,
+        subjectName: topic.subject.name,
+        // Cap notes excerpt at ~1.5k chars so we stay well under prompt budget.
+        notesExcerpt: notes ? notes.slice(0, 1500) : null,
+      };
+    }
+  }
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -92,6 +125,7 @@ export async function POST(req: Request) {
           })),
           userMessage: body.message,
           language: studentState.preferredLang,
+          topicFocus: topicFocus ?? undefined,
           ctx: { userId: session.user.id, examCode: body.examCode },
         });
 

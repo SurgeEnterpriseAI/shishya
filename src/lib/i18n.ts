@@ -442,6 +442,8 @@ export const dict = {
     "chat.starter.2": "Explain Compound Interest with one example.",
     "chat.starter.3": "What's the easiest topic in Quant to score on?",
     "chat.starter.4": "Make me a 10-question mock on Time and Work.",
+    "chat.focus.label": "Studying",
+    "chat.focus.clear": "Clear topic",
 
     // ── lang switcher
     "lang.switch": "Language",
@@ -814,6 +816,8 @@ export const dict = {
     "chat.starter.2": "Compound Interest एक उदाहरण से समझाइए।",
     "chat.starter.3": "Quant में सबसे आसान विषय कौन सा है?",
     "chat.starter.4": "Time and Work पर 10 सवालों का मॉक बनाइए।",
+    "chat.focus.label": "अध्ययनरत",
+    "chat.focus.clear": "विषय हटाएँ",
 
     "lang.switch": "भाषा",
   },
