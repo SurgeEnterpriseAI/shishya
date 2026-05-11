@@ -15,6 +15,14 @@ import { isCurrentUserAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/db/prisma";
 import { formatDisplayScorePct } from "@/lib/scoring";
 
+// The page fires ~30 read queries to build the operator dashboard. With
+// the pooled Neon URL (connection_limit=1 per Lambda) and the Asia DB
+// being ~700ms round-trip from the US region Vercel runs in, the
+// queries serialise through one Prisma connection and the total wall
+// clock can hit ~15-20s. Default Vercel function timeout is 10s — that
+// was what was producing the generic "Application error" for the admin.
+export const runtime = "nodejs";
+export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 // Rough per-chat-message Anthropic cost estimate. Sonnet 4.5 input is
@@ -24,6 +32,20 @@ export const dynamic = "force-dynamic";
 const COST_PER_ASSISTANT_MSG = 0.025;
 
 export default async function AdminInsightsPage() {
+  try {
+    return await renderInsights();
+  } catch (err) {
+    const msg = (err as Error)?.message;
+    if (msg === "NEXT_REDIRECT" || msg === "NEXT_NOT_FOUND") throw err;
+    console.error("[admin/insights] render threw", {
+      message: msg,
+      stack: (err as Error)?.stack,
+    });
+    throw err;
+  }
+}
+
+async function renderInsights() {
   const { isAdmin } = await isCurrentUserAdmin();
   if (!isAdmin) redirect("/");
 
