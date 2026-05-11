@@ -12,6 +12,28 @@ import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
 import { formatDisplayScorePct } from "@/lib/scoring";
 
 export default async function DashboardPage() {
+  try {
+    return await renderDashboard();
+  } catch (err) {
+    // NEXT_REDIRECT + NEXT_NOT_FOUND are how Next.js implements redirect()
+    // and notFound() — they throw special signals that the framework
+    // catches. We must NOT swallow or log those, just re-throw.
+    const msg = (err as Error)?.message;
+    if (msg === "NEXT_REDIRECT" || msg === "NEXT_NOT_FOUND") {
+      throw err;
+    }
+    // Real error — surface to Vercel logs so the actual cause is visible
+    // (the production page otherwise just shows the generic "Application
+    // error … digest: <hash>" with no useful info).
+    console.error("[dashboard] render threw", {
+      message: msg,
+      stack: (err as Error)?.stack,
+    });
+    throw err;
+  }
+}
+
+async function renderDashboard() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/dashboard");
   const userId = session.user.id;
@@ -373,7 +395,7 @@ export default async function DashboardPage() {
                   <>
                     <p className="mt-2 text-xs text-ink-500">{t("dash.loop.shishya.empty")}</p>
                     <Link
-                      href={`/chat?examCode=${enrollments[0].exam.code}`}
+                      href={enrollments[0] ? `/chat?examCode=${enrollments[0].exam.code}` : "/chat"}
                       className="btn-secondary mt-3 !py-1.5 !px-3 text-xs"
                     >
                       {t("dash.loop.shishya.cta.start")}
@@ -404,7 +426,7 @@ export default async function DashboardPage() {
                       </ul>
                     )}
                     <Link
-                      href={`/chat?examCode=${enrollments[0].exam.code}`}
+                      href={enrollments[0] ? `/chat?examCode=${enrollments[0].exam.code}` : "/chat"}
                       className="mt-3 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
                     >
                       {t("dash.loop.shishya.cta.continue")} →
