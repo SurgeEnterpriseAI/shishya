@@ -44,6 +44,7 @@ model User {
   progressEvents  ProgressEvent[]
   discussions     Discussion[]        @relation("DiscussionAuthor")
   discussionMessages DiscussionMessage[] @relation("MessageAuthor")
+  questionReports QuestionReport[]
   dailyBriefs     DailyBrief[]
 
   @@index([email])
@@ -196,11 +197,34 @@ model Question {
 
   exam     Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   topic    Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  reports  QuestionReport[]
 
   @@index([examId, topicId])
   @@index([difficulty])
   @@index([validated])
   @@index([language])
+}
+
+// Student-flagged questions. The student notices the answer key, the
+// solution, the question body, or the options look wrong; they click
+// "Report" on the per-question review and we capture their reason here.
+// Admin reviews under /admin and fixes / removes the question.
+model QuestionReport {
+  id          String   @id @default(cuid())
+  questionId  String
+  userId      String?  // null when reported by a signed-out flow
+  reason      String   @db.Text
+  resolved    Boolean  @default(false)
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([questionId])
+  @@index([resolved])
+  @@index([createdAt])
 }
 
 // ─────────────────────────────────────────────────────────────────────────

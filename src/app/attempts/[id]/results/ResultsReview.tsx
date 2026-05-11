@@ -89,6 +89,29 @@ function ReviewBody({
   const [explain, setExplain] = useState<{ stepByStep: string[]; whyChosenIsWrong?: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportStatus, setReportStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  async function submitReport() {
+    const reason = reportReason.trim();
+    if (reason.length < 3) {
+      setReportStatus("error");
+      return;
+    }
+    setReportStatus("sending");
+    try {
+      const res = await fetch(`/api/questions/${q.id}/report`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      if (!res.ok) throw new Error("send failed");
+      setReportStatus("sent");
+    } catch {
+      setReportStatus("error");
+    }
+  }
 
   async function fetchExplanation(detailLevel: "STANDARD" | "DEEP") {
     setBusy(true);
@@ -180,7 +203,65 @@ function ReviewBody({
             >
               Ask Shishya about this Q
             </a>
+            {/* Report bad question. Students were hitting AI-generated
+                questions with wrong answer keys or missing words in the
+                jumble. This routes their flag straight into QuestionReport
+                so the operator can sweep + fix in /admin. */}
+            <button
+              type="button"
+              onClick={() => setReportOpen((v) => !v)}
+              className="rounded-md border border-rose-200 bg-white px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
+            >
+              Report this question
+            </button>
           </div>
+        )}
+
+        {reportOpen && reportStatus !== "sent" && (
+          <div className="mt-3 rounded-md border border-rose-200 bg-rose-50/60 p-3">
+            <p className="text-xs font-medium text-rose-800">
+              What looks wrong with this question?
+            </p>
+            <textarea
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder="e.g. The jumbled words don't include 'went' but the solution treats it as a word."
+              rows={3}
+              maxLength={1000}
+              className="mt-2 w-full rounded-md border border-ink-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+            />
+            {reportStatus === "error" && (
+              <p className="mt-1 text-xs text-rose-700">
+                Couldn&apos;t send — please add at least 3 characters and try again.
+              </p>
+            )}
+            <div className="mt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={submitReport}
+                disabled={reportStatus === "sending"}
+                className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+              >
+                {reportStatus === "sending" ? "Sending…" : "Submit report"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setReportOpen(false);
+                  setReportReason("");
+                  setReportStatus("idle");
+                }}
+                className="rounded-md border border-ink-300 px-3 py-1.5 text-xs text-ink-700 hover:bg-ink-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+        {reportStatus === "sent" && (
+          <p className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+            Thanks — we&apos;ve flagged this question for review. It will be checked and corrected shortly.
+          </p>
         )}
 
         {err && <p className="mt-2 text-xs text-rose-700">{err}</p>}

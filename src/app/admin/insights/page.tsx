@@ -252,6 +252,20 @@ export default async function AdminInsightsPage() {
     }),
   ]);
 
+  // ── Student-reported bad questions (separate query — added later) ───
+  const [openReports, recentReports] = await Promise.all([
+    prisma.questionReport.count({ where: { resolved: false } }),
+    prisma.questionReport.findMany({
+      where: { resolved: false },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      include: {
+        question: { select: { id: true, body: true, examId: true } },
+        user: { select: { email: true } },
+      },
+    }),
+  ]);
+
   // ── Derive top topics asked from tool-use metadata ──────────────────
   const topicCounts = new Map<string, number>();
   for (const m of topAskedTopicsRaw) {
@@ -473,6 +487,51 @@ export default async function AdminInsightsPage() {
               </ul>
             </div>
           </div>
+        </section>
+
+        {/* ── Reported questions (student-flagged bad content) ───────── */}
+        <section className="mt-10">
+          <h2 className="text-base font-semibold text-ink-800">
+            Reported questions{" "}
+            <span className="text-xs font-normal text-ink-500">
+              ({openReports} open)
+            </span>
+          </h2>
+          <p className="mt-1 text-xs text-ink-500">
+            Students flag a question they believe is wrong (bad answer key,
+            broken jumble, missing word). Fix or remove via
+            {" "}
+            <Link href="/admin/questions" className="text-saffron-700 hover:underline">
+              /admin/questions
+            </Link>.
+          </p>
+          {recentReports.length === 0 ? (
+            <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
+              No open reports.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {recentReports.map((r) => (
+                <li key={r.id} className="rounded-md border border-rose-200 bg-rose-50/40 p-3">
+                  <p className="line-clamp-2 text-xs text-ink-900">
+                    Q: {r.question.body}
+                  </p>
+                  <p className="mt-1 text-xs text-rose-800">
+                    Reason: {r.reason}
+                  </p>
+                  <p className="mt-1 text-[11px] text-ink-500">
+                    {r.user?.email ?? "anon"} · {fmtRelative(r.createdAt)} ·{" "}
+                    <Link
+                      href={`/admin/questions/${r.question.id}`}
+                      className="text-saffron-700 hover:underline"
+                    >
+                      Open question →
+                    </Link>
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         {/* ── Quick links ────────────────────────────────────────────── */}

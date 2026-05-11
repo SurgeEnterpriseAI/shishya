@@ -42,11 +42,27 @@ export default async function MockPlayerPage({
       language: q.language,
     }));
 
-  // Find or create the in-progress attempt for this mock + user
+  // Find the in-progress attempt for this mock + user. If they don't
+  // have one but DO have a recently-submitted one, ship them straight
+  // to the results page — this catches the "I submitted but got
+  // INTERNAL_ERROR and now I can't find my results" path that left
+  // students stranded. Without this redirect, a refresh of /mocks/<id>
+  // after a submit error would silently start a fresh attempt and
+  // their previous score would feel lost.
   let attempt = await prisma.attempt.findFirst({
     where: { mockId: mock.id, userId, status: "IN_PROGRESS" },
   });
   if (!attempt) {
+    const submitted = await prisma.attempt.findFirst({
+      where: {
+        mockId: mock.id,
+        userId,
+        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+      },
+      orderBy: { finishedAt: "desc" },
+      select: { id: true },
+    });
+    if (submitted) redirect(`/attempts/${submitted.id}/results`);
     attempt = await prisma.attempt.create({
       data: { mockId: mock.id, userId, status: "IN_PROGRESS", answers: [] },
     });
