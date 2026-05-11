@@ -125,26 +125,31 @@ export default async function ResultsPage({
           <section className="mt-10">
             <h2 className="text-base font-semibold text-ink-800">{t("results.topicHeader")}</h2>
             <ul className="mt-3 space-y-2">
-              {topicArr.map((t: any) => (
-                <li key={t.code} className="rounded-md border border-ink-200 bg-white p-3">
-                  <div className="flex items-baseline justify-between">
-                    <p className="text-sm font-medium text-ink-900">{t.name}</p>
-                    <p className="text-xs text-ink-500">
-                      {t.correct}/{t.total} · {Math.round(t.score * 100)}%
-                    </p>
-                  </div>
-                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-ink-100">
-                    <div
-                      className={
-                        t.score >= 0.7
-                          ? "h-full bg-emerald-500"
-                          : t.score >= 0.4
-                          ? "h-full bg-amber-500"
-                          : "h-full bg-rose-500"
-                      }
-                      style={{ width: `${Math.round(t.score * 100)}%` }}
-                    />
-                  </div>
+              {topicArr.map((tp: any) => (
+                <li key={tp.code}>
+                  <Link
+                    href={`/chat?examCode=${attempt.mock.exam.code}&topicCode=${encodeURIComponent(tp.code)}&seed=${encodeURIComponent(`On my last ${attempt.mock.exam.shortName} mock I got ${tp.correct}/${tp.total} on ${tp.name}. Help me improve on this topic.`)}`}
+                    className="block rounded-md border border-ink-200 bg-white p-3 hover:border-saffron-400 hover:bg-saffron-50/30"
+                  >
+                    <div className="flex items-baseline justify-between">
+                      <p className="text-sm font-medium text-ink-900">{tp.name}</p>
+                      <p className="text-xs text-ink-500">
+                        {tp.correct}/{tp.total} · {Math.round(tp.score * 100)}%
+                      </p>
+                    </div>
+                    <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-ink-100">
+                      <div
+                        className={
+                          tp.score >= 0.7
+                            ? "h-full bg-emerald-500"
+                            : tp.score >= 0.4
+                            ? "h-full bg-amber-500"
+                            : "h-full bg-rose-500"
+                        }
+                        style={{ width: `${Math.round(tp.score * 100)}%` }}
+                      />
+                    </div>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -155,13 +160,33 @@ export default async function ResultsPage({
         <section className="mt-10">
           <h2 className="text-base font-semibold text-ink-800">{t("results.review.title")}</h2>
           <p className="mt-1 text-xs text-ink-500">{t("results.review.subtitle")}</p>
-          <ResultsReview questions={orderedQs} />
+          <ResultsReview
+            questions={orderedQs}
+            examCode={attempt.mock.exam.code}
+            examShortName={attempt.mock.exam.shortName}
+          />
         </section>
 
         {/* CTAs */}
         <div className="mt-10 flex flex-wrap gap-3">
           <Link href={`/exams/${attempt.mock.exam.code}`} className="btn-primary !py-2 !px-4 text-sm">
             {t("results.cta.another")}
+          </Link>
+          <Link
+            href={`/chat?examCode=${attempt.mock.exam.code}${
+              topicArr.length > 0
+                ? `&topicCode=${encodeURIComponent(topicArr[0].code)}`
+                : ""
+            }&seed=${encodeURIComponent(
+              `I just finished a ${attempt.mock.exam.shortName} mock and scored ${formatDisplayScorePct(attempt.scorePct)} (${correctCount} correct, ${wrongCount} wrong, ${skipped} skipped). ${
+                topicArr.length > 0
+                  ? `My weakest topic was ${topicArr[0].name} (${topicArr[0].correct}/${topicArr[0].total}). `
+                  : ""
+              }Walk me through what I should focus on next.`
+            )}`}
+            className="btn-secondary !py-2 !px-4 text-sm"
+          >
+            {t("results.cta.askShishya")}
           </Link>
           <Link href="/dashboard" className="btn-secondary !py-2 !px-4 text-sm">
             {t("results.cta.back")}

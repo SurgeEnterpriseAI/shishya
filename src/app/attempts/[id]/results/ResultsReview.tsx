@@ -22,7 +22,15 @@ interface ReviewQ {
   marked: boolean;
 }
 
-export function ResultsReview({ questions }: { questions: ReviewQ[] }) {
+export function ResultsReview({
+  questions,
+  examCode,
+  examShortName,
+}: {
+  questions: ReviewQ[];
+  examCode: string;
+  examShortName: string;
+}) {
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
 
   function toggle(id: string) {
@@ -58,14 +66,26 @@ export function ResultsReview({ questions }: { questions: ReviewQ[] }) {
             <span className="text-ink-400 shrink-0">{openIds.has(q.id) ? "▾" : "▸"}</span>
           </button>
 
-          {openIds.has(q.id) && <ReviewBody q={q} index={i} />}
+          {openIds.has(q.id) && (
+            <ReviewBody q={q} index={i} examCode={examCode} examShortName={examShortName} />
+          )}
         </li>
       ))}
     </ul>
   );
 }
 
-function ReviewBody({ q, index }: { q: ReviewQ; index: number }) {
+function ReviewBody({
+  q,
+  index,
+  examCode,
+  examShortName,
+}: {
+  q: ReviewQ;
+  index: number;
+  examCode: string;
+  examShortName: string;
+}) {
   const [explain, setExplain] = useState<{ stepByStep: string[]; whyChosenIsWrong?: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -148,6 +168,18 @@ function ReviewBody({ q, index }: { q: ReviewQ; index: number }) {
             >
               Deep explanation
             </button>
+            <a
+              href={`/chat?examCode=${examCode}&topicCode=${encodeURIComponent(q.topic.code)}&seed=${encodeURIComponent(
+                `On Q${index + 1} of my ${examShortName} mock (topic: ${q.topic.name}), ${
+                  q.chosen
+                    ? `I picked ${q.chosen} but the answer was ${q.answerKey}.`
+                    : `I skipped it; the answer was ${q.answerKey}.`
+                } The question was: "${q.body.length > 200 ? q.body.slice(0, 200) + "…" : q.body}" — walk me through it.`
+              )}`}
+              className="btn-secondary !py-1.5 !px-3 text-xs"
+            >
+              Ask Shishya about this Q
+            </a>
           </div>
         )}
 

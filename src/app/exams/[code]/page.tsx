@@ -496,19 +496,24 @@ export default async function ExamPage({
             <h2 className="text-base font-semibold text-ink-800">{t("exam.weakest")}</h2>
             <ul className="mt-3 space-y-2">
               {weakness.map((w) => (
-                <li key={w.id} className="rounded-md border border-ink-200 bg-white p-3">
-                  <div className="flex items-baseline justify-between">
-                    <p className="text-sm font-medium text-ink-900">{w.topic.name}</p>
-                    <p className="text-xs text-ink-500">
-                      {w.correctCount}/{w.attemptsCount}
-                    </p>
-                  </div>
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink-100">
-                    <div
-                      className="h-full bg-saffron-500"
-                      style={{ width: `${Math.round(w.masteryScore * 100)}%` }}
-                    />
-                  </div>
+                <li key={w.id}>
+                  <Link
+                    href={`/chat?examCode=${exam.code}&topicCode=${encodeURIComponent(w.topic.code)}&seed=${encodeURIComponent(`I'm weak in ${w.topic.name} for ${exam.shortName}. Tutor me on this topic.`)}`}
+                    className="block rounded-md border border-ink-200 bg-white p-3 hover:border-saffron-400 hover:bg-saffron-50/30"
+                  >
+                    <div className="flex items-baseline justify-between">
+                      <p className="text-sm font-medium text-ink-900">{w.topic.name}</p>
+                      <p className="text-xs text-ink-500">
+                        {w.correctCount}/{w.attemptsCount}
+                      </p>
+                    </div>
+                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink-100">
+                      <div
+                        className="h-full bg-saffron-500"
+                        style={{ width: `${Math.round(w.masteryScore * 100)}%` }}
+                      />
+                    </div>
+                  </Link>
                 </li>
               ))}
             </ul>

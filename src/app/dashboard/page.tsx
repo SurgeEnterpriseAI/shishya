@@ -127,7 +127,7 @@ export default async function DashboardPage() {
   // "Topics you asked Shishya about" — pull tool_use calls that mention a
   // topic_code (find_questions_on_topic / get_attempt_mistakes traces) +
   // citedTopics extracted by the tutor. Aggregate counts.
-  const topicAskCounts = new Map<string, { name: string; examShort: string; count: number }>();
+  const topicAskCounts = new Map<string, { code: string; name: string; examCode: string; examShort: string; count: number }>();
   for (const session of chatRecent) {
     for (const msg of session.messages) {
       const md = msg.metadata as any;
@@ -136,7 +136,9 @@ export default async function DashboardPage() {
         const code = call?.args?.topic_code;
         if (typeof code === "string") {
           const cur = topicAskCounts.get(code) ?? {
+            code,
             name: code,
+            examCode: session.exam?.code ?? "",
             examShort: session.exam?.shortName ?? "",
             count: 0,
           };
@@ -380,8 +382,17 @@ export default async function DashboardPage() {
                     {topAskedTopics.length > 0 && (
                       <ul className="mt-2 space-y-0.5">
                         {topAskedTopics.map((tp) => (
-                          <li key={tp.name} className="flex items-baseline justify-between text-xs">
-                            <span className="truncate text-ink-800">{tp.name}</span>
+                          <li key={tp.code} className="flex items-baseline justify-between text-xs">
+                            {tp.examCode ? (
+                              <Link
+                                href={`/chat?examCode=${tp.examCode}&topicCode=${encodeURIComponent(tp.code)}&seed=${encodeURIComponent(`Pick up where we left off on ${tp.name}${tp.examShort ? ` for ${tp.examShort}` : ""}.`)}`}
+                                className="truncate text-ink-800 hover:text-saffron-700 hover:underline"
+                              >
+                                {tp.name}
+                              </Link>
+                            ) : (
+                              <span className="truncate text-ink-800">{tp.name}</span>
+                            )}
                             <span className="ml-2 shrink-0 tabular-nums text-ink-500">×{tp.count}</span>
                           </li>
                         ))}

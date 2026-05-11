@@ -428,6 +428,7 @@ export const dict = {
     "results.review.title": "Review each question",
     "results.review.subtitle": "Tap any question to see the correct answer and ask the AI to explain it.",
     "results.cta.another": "Take another mock →",
+    "results.cta.askShishya": "Ask Shishya about this mock",
     "results.cta.back": "Back to dashboard",
 
     // ── chat
@@ -803,6 +804,7 @@ export const dict = {
     "results.review.title": "हर सवाल की समीक्षा करें",
     "results.review.subtitle": "किसी भी सवाल पर टैप करें — सही उत्तर देखें और AI से व्याख्या माँगें।",
     "results.cta.another": "एक और मॉक दीजिए →",
+    "results.cta.askShishya": "इस मॉक पर Shishya से पूछें",
     "results.cta.back": "डैशबोर्ड पर वापस",
 
     "chat.title": "कुछ भी पूछिए",
