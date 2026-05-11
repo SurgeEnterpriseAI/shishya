@@ -116,13 +116,15 @@ export async function translateBatch(
     2,
   )}`;
 
-  // Indic-script translations run 1.5-2x the English token count, so a
-  // 30-question batch can easily need 12-15k output tokens. Generous cap
-  // here prevents JSON truncation that the seeder previously hit.
+  // Indic-script translations run 1.5-2x the English token count, and
+  // reading-comprehension or syllabus-passage questions can run very long
+  // when their full passage is translated. Sonnet 4.5 supports 64k output;
+  // we sit at 32k which gives a 15-Q batch comfortable headroom even when
+  // every question is passage-heavy.
   const start = Date.now();
   const response = await anthropic.messages.create({
     model: MODEL,
-    max_tokens: Math.min(16000, 700 * input.questions.length + 1000),
+    max_tokens: Math.min(32000, 1500 * input.questions.length + 2000),
     system: [
       { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
     ] as Anthropic.Messages.TextBlockParam[],
