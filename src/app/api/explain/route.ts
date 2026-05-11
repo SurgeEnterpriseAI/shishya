@@ -11,6 +11,7 @@ import { prisma } from "@/lib/db/prisma";
 import { explainSolution } from "@/lib/ai";
 import { bad, notFound, ok, serverError, unauth, parseBody } from "@/lib/http";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
+import { getLocale } from "@/lib/i18n-server";
 
 const Body = z.object({
   questionId: z.string(),
@@ -29,8 +30,19 @@ export async function POST(req: Request) {
     const q = await prisma.question.findUnique({ where: { id: body.questionId } });
     if (!q) return notFound("question");
 
-    const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-    const language = (user?.preferredLang ?? "EN") as any;
+    // Cookie-first locale (set by the per-question LangSwitcher); fall
+    // back to the user's stored preferredLang for older sessions. The
+    // explainer treats `language` as a free-form locale code so all 19
+    // i18n locales (incl. Konkani, Assamese, Sanskrit, etc.) work —
+    // Claude will produce an answer in that language regardless of
+    // whether the Prisma Language enum has it.
+    const cookieLocale = await getLocale();
+    const user = cookieLocale === "en"
+      ? await prisma.user.findUnique({ where: { id: session.user.id } })
+      : null;
+    const language = (cookieLocale && cookieLocale !== "en"
+      ? cookieLocale
+      : (user?.preferredLang ?? "EN")) as any;
 
     const explanation = await explainSolution({
       question: {
