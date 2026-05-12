@@ -14,6 +14,7 @@ import { Header } from "@/components/Header";
 import { RankLadder } from "@/components/RankCard";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { getExamShared } from "@/lib/db/exam-cache";
 import { getT } from "@/lib/i18n-server";
 import { StartMockButton } from "./StartMockButton";
 import { formatDisplayScorePct } from "@/lib/scoring";
@@ -79,76 +80,22 @@ export default async function ExamPage({
   const { code } = await params;
   const { locale, t } = await getT();
 
-  const exam = await prisma.exam.findUnique({
-    where: { code },
-    include: {
-      subjects: {
-        orderBy: { orderIdx: "asc" },
-        include: {
-          topics: {
-            where: { parentId: null },
-            orderBy: { orderIdx: "asc" },
-            include: { children: true },
-          },
-        },
-      },
-    },
-  });
-  if (!exam) notFound();
-
-  // Public queries — always run, content visible to crawlers + signed-out
-  // visitors (syllabus is implicit via exam.subjects already loaded above).
-  const [validatedQuestionCount, newsItems, importantDates, pyqYears, systemMocks, leaderboard, rankBands] =
-    await Promise.all([
-      prisma.question.count({ where: { examId: exam.id, validated: true } }),
-      prisma.examNewsItem.findMany({
-        where: { examId: exam.id },
-        orderBy: { publishedAt: "desc" },
-        take: 5,
-      }),
-      prisma.examImportantDate.findMany({
-        where: { examId: exam.id },
-        orderBy: { date: "asc" },
-        take: 10,
-      }),
-      prisma.question.groupBy({
-        by: ["pyqYear"],
-        where: { examId: exam.id, source: "PYQ", pyqYear: { not: null } },
-        _count: true,
-        orderBy: { pyqYear: "desc" },
-      }),
-      prisma.mock.findMany({
-        where: { examId: exam.id, userId: null },
-        orderBy: [{ createdAt: "asc" }],
-        take: 24,
-        select: { id: true, title: true, type: true, questionIds: true, config: true },
-      }),
-      prisma.attempt.findMany({
-        where: { mock: { examId: exam.id }, status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, scorePct: { not: null } },
-        orderBy: { scorePct: "desc" },
-        take: 10,
-        select: {
-          id: true,
-          scorePct: true,
-          userId: true,
-          finishedAt: true,
-          user: { select: { name: true } },
-        },
-      }),
-      prisma.examRankBand.findMany({
-        where: { examId: exam.id },
-        orderBy: { orderIdx: "asc" },
-        select: {
-          scorePctMin: true,
-          scorePctMax: true,
-          rankMin: true,
-          rankMax: true,
-          label: true,
-          outcomes: true,
-          source: true,
-        },
-      }),
-    ]);
+  // Shared payload — cached by unstable_cache for EXAM_CACHE_TTL seconds.
+  // First request after a content change pays the DB cost; everyone else
+  // gets it from Next's data cache. Drops a hot /exams/[code] TTFB from
+  // ~2-3s to ~50-200ms.
+  const shared = await getExamShared(code);
+  if (!shared) notFound();
+  const {
+    exam,
+    validatedQuestionCount,
+    newsItems,
+    importantDates,
+    pyqYears,
+    systemMocks,
+    leaderboard,
+    rankBands,
+  } = shared;
 
   // User-specific queries — only run when authenticated. Defaults to empty so
   // unauth render path stays simple. Crawlers never trigger these.

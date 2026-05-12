@@ -10,7 +10,8 @@ import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { formatDisplayScorePct } from "@/lib/scoring";
 
-export const dynamic = "force-dynamic";
+// Public SEO landing page — previous-year question sets rarely change.
+export const revalidate = 600;
 
 export default async function PYQYearPage({
   params,

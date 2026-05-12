@@ -14,7 +14,11 @@ import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { findTranslations } from "@/lib/db/questionTranslations";
 
-export const dynamic = "force-dynamic";
+// Public SEO page; data barely changes (notes regen weekly via cron).
+// Revalidate every 10 min so a content update propagates without
+// rebuilding, while still letting the CDN/data-cache serve the bulk of
+// requests instantly.
+export const revalidate = 600;
 
 export async function generateMetadata({
   params,
