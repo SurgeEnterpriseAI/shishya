@@ -109,18 +109,28 @@ export default async function ResultsPage({
         </p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900">{attempt.mock.title}</h1>
 
-        {/* Score summary */}
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-4">
+        {/* Score summary
+            ──────────────
+            Two distinct percentages so the negative-marking math is
+            obvious. "Marks" is the official-exam-equivalent (3×+4 − 7×−1
+            = 5/48 = 10.4%), "Accuracy" is the demoralisation-free hit
+            rate (3 right out of 12). Showing both side-by-side avoids
+            the "but I got 3 right, why does it say 10%?" confusion. */}
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <ScoreCard
-            label={t("results.score")}
-            primary={formatDisplayScorePct(attempt.scorePct)}
-            secondary={`${(attempt.scoreRaw ?? 0).toFixed(1)} / ${(attempt.scoreMax ?? 0).toFixed(0)}`}
+            label={`${t("results.score")} (marks)`}
+            primary={`${(attempt.scoreRaw ?? 0).toFixed(0)} / ${(attempt.scoreMax ?? 0).toFixed(0)}`}
+            secondary={`${formatDisplayScorePct(attempt.scorePct)} · with negative marking`}
             accent="primary"
           />
           <ScoreCard
-            label={t("results.correct")}
-            primary={String(correctCount)}
-            secondary={`/ ${orderedQs.length}`}
+            label="Accuracy"
+            primary={
+              orderedQs.length > 0
+                ? `${Math.round((correctCount / orderedQs.length) * 100)}%`
+                : "—"
+            }
+            secondary={`${correctCount} / ${orderedQs.length} ${t("results.correct").toLowerCase()}`}
             accent="ok"
           />
           <ScoreCard
