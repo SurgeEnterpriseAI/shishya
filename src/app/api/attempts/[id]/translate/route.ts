@@ -17,7 +17,11 @@ export const maxDuration = 60;
 
 const Body = z.object({
   locale: z.enum(locales as unknown as [string, ...string[]]),
+  questionIds: z.array(z.string()).max(20).optional(),
 });
+
+// Hard cap on per-request uncached translations, see mocks/translate route.
+const PER_REQUEST_MISS_CAP = 20;
 
 export async function POST(
   req: Request,
@@ -41,7 +45,10 @@ export async function POST(
     });
     if (!attempt) return notFound("attempt");
 
-    const qIds = attempt.mock.questionIds ?? [];
+    const allQids = attempt.mock.questionIds ?? [];
+    const qIds = body.questionIds
+      ? body.questionIds.filter((qid) => allQids.includes(qid))
+      : allQids;
     if (qIds.length === 0) return ok({ locale, questions: [] });
 
     if (locale === "en") {
@@ -62,7 +69,7 @@ export async function POST(
     }
 
     const cached = await findTranslations(qIds, locale);
-    const missIds = qIds.filter((qid) => !cached.has(qid));
+    const missIds = qIds.filter((qid) => !cached.has(qid)).slice(0, PER_REQUEST_MISS_CAP);
     if (missIds.length > 0) {
       const sources = await prisma.question.findMany({
         where: { id: { in: missIds } },

@@ -21,7 +21,18 @@ export const maxDuration = 60;
 
 const Body = z.object({
   locale: z.enum(locales as unknown as [string, ...string[]]),
+  // Optional subset — translate only these question IDs (must belong to
+  // the mock). Used by the client to lazy-translate a window around the
+  // student's current question instead of the whole mock upfront, which
+  // for a 100-question mock would blow Vercel's 60-second runtime limit.
+  questionIds: z.array(z.string()).max(20).optional(),
 });
+
+// Server-side hard cap on uncached questions translated per request.
+// Anthropic batches at MAX_BATCH_SIZE (10), parallelised 5-at-a-time. So
+// 20 misses = at most 2 waves × ~8s = ~16s — well under the 60s Vercel
+// runtime. The client requests more chunks as the student navigates.
+const PER_REQUEST_MISS_CAP = 20;
 
 export async function POST(
   req: Request,
@@ -44,7 +55,12 @@ export async function POST(
     });
     if (!mock) return notFound("mock");
 
-    const qIds = mock.questionIds;
+    // If the client supplied a narrowed list, intersect with the mock's
+    // question set so callers can't sneak unrelated question IDs in.
+    const allQids = mock.questionIds;
+    const qIds = body.questionIds
+      ? body.questionIds.filter((qid) => allQids.includes(qid))
+      : allQids;
     if (qIds.length === 0) {
       return ok({ locale, questions: [] });
     }
@@ -70,8 +86,10 @@ export async function POST(
     // 1) Cache lookup.
     const cached = await findTranslations(qIds, locale);
 
-    // 2) Fetch source for misses.
-    const missIds = qIds.filter((qid) => !cached.has(qid));
+    // 2) Fetch source for misses — capped at PER_REQUEST_MISS_CAP so we
+    // never bust the 60s Vercel runtime. The client polls again with a
+    // narrower `questionIds` payload as the student navigates.
+    const missIds = qIds.filter((qid) => !cached.has(qid)).slice(0, PER_REQUEST_MISS_CAP);
     if (missIds.length > 0) {
       const sources = await prisma.question.findMany({
         where: { id: { in: missIds } },

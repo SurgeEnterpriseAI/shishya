@@ -101,6 +101,29 @@ export function MockPlayer({
   const [translating, setTranslating] = useState(false);
   const [translateErr, setTranslateErr] = useState<string | null>(null);
 
+  // Translate a specific batch of question IDs. We send at most 20 IDs
+  // per call so the route comfortably finishes within the 60s Vercel
+  // runtime even when all 20 are cache misses. Cached IDs come back
+  // free; uncached ones get translated and cached server-side.
+  async function fetchTranslationBatch(target: Locale, ids: string[]) {
+    if (target === "en" || ids.length === 0) return;
+    const res = await apiPost<{
+      locale: Locale;
+      questions: { id: string; body: string; options: { key: string; text: string }[]; solution: string }[];
+    }>(`/api/mocks/${mock.id}/translate`, { locale: target, questionIds: ids });
+    setTranslations((prev) => {
+      const next = new Map(prev);
+      for (const t of res.questions) {
+        next.set(t.id, { body: t.body, options: t.options });
+      }
+      return next;
+    });
+  }
+
+  // Initial translation entry point: fetch a window around the student's
+  // current question (current + next 19) so the first thing they see is
+  // translated almost instantly even on a 100-question mock. Subsequent
+  // navigations top up via ensureTranslationsAround().
   async function fetchTranslations(target: Locale) {
     if (target === "en") {
       setTranslations(new Map());
@@ -109,17 +132,29 @@ export function MockPlayer({
     setTranslating(true);
     setTranslateErr(null);
     try {
-      const res = await apiPost<{
-        locale: Locale;
-        questions: { id: string; body: string; options: { key: string; text: string }[]; solution: string }[];
-      }>(`/api/mocks/${mock.id}/translate`, { locale: target });
-      const next_map = new Map<string, { body: string; options: { key: string; text: string }[] }>();
-      for (const t of res.questions) {
-        next_map.set(t.id, { body: t.body, options: t.options });
-      }
-      setTranslations(next_map);
+      const ids = questions.slice(idx, idx + 20).map((q) => q.id);
+      await fetchTranslationBatch(target, ids);
     } catch (e: any) {
       setTranslateErr(e?.message ?? "Translation failed; showing original.");
+    } finally {
+      setTranslating(false);
+    }
+  }
+
+  // Top-up: ensure questions around `centerIdx` are translated. Called
+  // when the student navigates. No-op if already cached client-side.
+  async function ensureTranslationsAround(target: Locale, centerIdx: number) {
+    if (target === "en") return;
+    const window = questions.slice(centerIdx, centerIdx + 20);
+    const missing = window
+      .filter((q) => !translations.has(q.id))
+      .map((q) => q.id);
+    if (missing.length === 0) return;
+    setTranslating(true);
+    try {
+      await fetchTranslationBatch(target, missing);
+    } catch {
+      /* keep going; the next nav will retry */
     } finally {
       setTranslating(false);
     }
@@ -238,6 +273,12 @@ export function MockPlayer({
     if (newIdx < 0 || newIdx >= questions.length || newIdx === idx) return;
     trackTimeOnSwitch(idx);
     setIdx(newIdx);
+    // Lazy-translate a window around the new index so the next 20
+    // questions are pre-warmed by the time the student gets to them.
+    // No-op when the cache already has those IDs, so this is cheap.
+    if (locale !== "en") {
+      void ensureTranslationsAround(locale, newIdx);
+    }
   }
 
   function chooseOption(key: string) {
