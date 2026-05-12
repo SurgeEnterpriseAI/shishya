@@ -51,10 +51,15 @@ async function renderInsights() {
 
   const now = new Date();
   const dayMs = 24 * 60 * 60 * 1000;
+  const minMs = 60 * 1000;
   const since = (days: number) => new Date(now.getTime() - days * dayMs);
+  const sinceMin = (mins: number) => new Date(now.getTime() - mins * minMs);
   const day1 = since(1);
   const day7 = since(7);
   const day30 = since(30);
+  const min5 = sinceMin(5);
+  const min15 = sinceMin(15);
+  const min60 = sinceMin(60);
   const startOfDayUtc = (d: Date) =>
     new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   const today = startOfDayUtc(now);
@@ -312,6 +317,110 @@ async function renderInsights() {
       }), [] as any[]),
   ]);
 
+  // ── Currently active students. We don't store a persistent
+  // last-seen timestamp on User (JWT sessions are stateless), so we
+  // approximate "online right now" by collecting userIds that produced
+  // any activity in the recent windows: chat messages, attempt
+  // start/update, answer saves (attempt.updatedAt). 5-min window =
+  // "active in the last few minutes" — anything beyond that is "recently".
+  let activeUsers = { now5: 0, last15: 0, last60: 0 };
+  let activeList: Array<{ email: string | null; name: string | null; lastActivity: Date; activity: string }> = [];
+  try {
+    const [chat5, attempt5, chat15, attempt15, chat60, attempt60] = await Promise.all([
+      prisma.chatMessage.findMany({
+        where: { createdAt: { gte: min5 } },
+        select: { session: { select: { userId: true } } },
+      }),
+      prisma.attempt.findMany({
+        where: { updatedAt: { gte: min5 } },
+        select: { userId: true },
+      }),
+      prisma.chatMessage.findMany({
+        where: { createdAt: { gte: min15 } },
+        select: { session: { select: { userId: true } } },
+      }),
+      prisma.attempt.findMany({
+        where: { updatedAt: { gte: min15 } },
+        select: { userId: true },
+      }),
+      prisma.chatMessage.findMany({
+        where: { createdAt: { gte: min60 } },
+        select: { session: { select: { userId: true } } },
+      }),
+      prisma.attempt.findMany({
+        where: { updatedAt: { gte: min60 } },
+        select: { userId: true },
+      }),
+    ]);
+    const set5 = new Set([
+      ...chat5.map((m) => m.session?.userId).filter((id): id is string => Boolean(id)),
+      ...attempt5.map((a) => a.userId),
+    ]);
+    const set15 = new Set([
+      ...chat15.map((m) => m.session?.userId).filter((id): id is string => Boolean(id)),
+      ...attempt15.map((a) => a.userId),
+    ]);
+    const set60 = new Set([
+      ...chat60.map((m) => m.session?.userId).filter((id): id is string => Boolean(id)),
+      ...attempt60.map((a) => a.userId),
+    ]);
+    activeUsers = { now5: set5.size, last15: set15.size, last60: set60.size };
+
+    // Pull names/emails for the broader 60-min set, with the most
+    // recent activity timestamp per user.
+    const ids = [...set60];
+    if (ids.length > 0) {
+      const users = await prisma.user.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, email: true, name: true },
+      });
+      const byId = new Map(users.map((u) => [u.id, u]));
+      // Build "latest activity" per userId by merging the timestamp streams.
+      const latest = new Map<string, { ts: Date; act: string }>();
+      const stamp = (id: string | null | undefined, ts: Date, act: string) => {
+        if (!id) return;
+        const cur = latest.get(id);
+        if (!cur || cur.ts < ts) latest.set(id, { ts, act });
+      };
+      const [chatRows, attemptRows] = await Promise.all([
+        prisma.chatMessage.findMany({
+          where: { createdAt: { gte: min60 } },
+          select: { createdAt: true, session: { select: { userId: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 200,
+        }),
+        prisma.attempt.findMany({
+          where: { updatedAt: { gte: min60 } },
+          select: { updatedAt: true, userId: true, status: true },
+          orderBy: { updatedAt: "desc" },
+          take: 200,
+        }),
+      ]);
+      for (const r of chatRows) stamp(r.session?.userId, r.createdAt, "chat");
+      for (const r of attemptRows) {
+        const act = r.status === "IN_PROGRESS" ? "taking a mock" : "reviewing a mock";
+        stamp(r.userId, r.updatedAt, act);
+      }
+      activeList = ids
+        .map((id) => {
+          const u = byId.get(id);
+          const last = latest.get(id);
+          if (!u || !last) return null;
+          return {
+            email: u.email,
+            name: u.name,
+            lastActivity: last.ts,
+            activity: last.act,
+          };
+        })
+        .filter((x): x is NonNullable<typeof x> => Boolean(x))
+        .sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime())
+        .slice(0, 20);
+    }
+  } catch (err) {
+    console.error("[admin/insights] active users failed", (err as Error)?.message);
+  }
+
   // ── Translation cache stats — same fallback pattern as reports. The
   // table is newest and we read it via raw SQL because the typed Prisma
   // client wasn't regenerated when this code first landed.
@@ -392,6 +501,45 @@ async function renderInsights() {
         <p className="mt-1 text-sm text-ink-600">
           Live monitoring — growth, engagement, AI usage, content health. Refresh anytime; everything queries Postgres directly.
         </p>
+
+        {/* ── Currently active students ─────────────────────────────── */}
+        <section className="mt-8">
+          <h2 className="text-base font-semibold text-ink-800">Currently active</h2>
+          <p className="mt-1 text-xs text-ink-500">
+            JWT sessions are stateless, so this is a heuristic based on
+            recent chat messages + mock activity. Refresh the page to
+            re-poll.
+          </p>
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            <Hero label="Active · last 5 min" value={activeUsers.now5} accent={activeUsers.now5 > 0 ? "ok" : "muted"} />
+            <Hero label="Active · last 15 min" value={activeUsers.last15} accent={activeUsers.last15 > 0 ? "primary" : "muted"} />
+            <Hero label="Active · last hour" value={activeUsers.last60} />
+          </div>
+          {activeList.length === 0 ? (
+            <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
+              No active students in the last hour.
+            </p>
+          ) : (
+            <div className="mt-3 rounded-md border border-ink-200 bg-white p-4">
+              <p className="text-xs font-medium uppercase tracking-wider text-ink-500">
+                Latest activity (top 20)
+              </p>
+              <ul className="mt-2 space-y-1">
+                {activeList.map((u, i) => (
+                  <li key={i} className="flex items-baseline justify-between gap-3 text-xs">
+                    <span className="truncate text-ink-800">
+                      <span className="font-medium">{u.name ?? u.email?.split("@")[0] ?? "anon"}</span>
+                      <span className="text-ink-500"> · {u.activity}</span>
+                    </span>
+                    <span className="shrink-0 tabular-nums text-ink-500">
+                      {fmtRelative(u.lastActivity)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
 
         {/* ── Today at a glance ─────────────────────────────────────── */}
         <section className="mt-8">
