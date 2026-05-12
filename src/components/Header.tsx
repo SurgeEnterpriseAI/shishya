@@ -5,23 +5,29 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { LangSwitcher } from "./LangSwitcher";
+import { BackLink } from "./BackLink";
 
 export async function Header({ admin = false }: { admin?: boolean }) {
   const [session, { locale, t }] = await Promise.all([auth(), getT()]);
   return (
     <header className="border-b border-ink-200/50 bg-white/80 backdrop-blur">
       <div className="container-prose flex h-16 items-center justify-between gap-3">
-        <Link href={session?.user ? "/dashboard" : "/"} className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-saffron-500 text-lg font-bold text-white">
-            शि
-          </span>
-          <span className="text-lg font-semibold tracking-tight text-ink-900">Shishya</span>
-          {admin && (
-            <span className="ml-2 rounded-md bg-ink-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
-              Admin
+        <div className="flex items-center gap-3">
+          <Link href={session?.user ? "/dashboard" : "/"} className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-saffron-500 text-lg font-bold text-white">
+              शि
             </span>
-          )}
-        </Link>
+            <span className="text-lg font-semibold tracking-tight text-ink-900">Shishya</span>
+            {admin && (
+              <span className="ml-2 rounded-md bg-ink-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
+                Admin
+              </span>
+            )}
+          </Link>
+          {/* Back button — hidden on landing; tries history first, then a
+              path-derived parent for direct/SEO-landed visitors. */}
+          <BackLink />
+        </div>
         <nav className="flex items-center gap-3 text-sm text-ink-700">
           {!admin && <LangSwitcher current={locale} />}
           {session?.user ? (
