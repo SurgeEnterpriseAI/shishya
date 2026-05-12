@@ -109,13 +109,17 @@ export async function POST(req: Request) {
   // Exam-scoped context (student state + syllabus + journey) only loads
   // when we have an exam. General mode skips these and falls back to a
   // minimal student-state stub built from the User row.
-  const [studentState, syllabus, journey] = exam
-    ? await Promise.all([
-        getStudentState(session.user.id, examCodeForChat!),
-        getSyllabusContext(examCodeForChat!),
-        getStudentJourney(session.user.id, examCodeForChat!),
-      ])
-    : ([null, null, null] as const);
+  //
+  // We SERIALIZE these three calls rather than running them in parallel.
+  // Each function itself fans out into 2-5 internal Prisma queries, and
+  // the pooled Neon URL uses connection_limit=1 per serverless
+  // function. Firing 3 wrappers in parallel produces ~10 concurrent
+  // Prisma calls queued behind a single connection, which exhausts the
+  // default 10s connection-pool timeout and dumps a P2024 to the
+  // student. Sequential is slower wall-clock (~+200ms) but reliable.
+  const studentState = exam ? await getStudentState(session.user.id, examCodeForChat!) : null;
+  const syllabus = exam ? await getSyllabusContext(examCodeForChat!) : null;
+  const journey = exam ? await getStudentJourney(session.user.id, examCodeForChat!) : null;
 
   // For general mode we need a minimal StudentState for the tutor's
   // prompt-builder (it needs preferredLang at minimum). Build one from
