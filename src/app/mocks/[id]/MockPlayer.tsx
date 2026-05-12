@@ -179,9 +179,23 @@ export function MockPlayer({
     lastSwitchRef.current = Date.now();
   }, [idx]);
 
-  // ── Save current answer to backend (debounced via dirty flag)
+  // ── Save current answer to backend (debounced via dirty flag).
+  //
+  // BUG FIX (May 2026): we used to read `answers` directly inside
+  // flushSaves. React state updates are async + batched, so the closure
+  // captured by setTimeout pointed to the answers map from BEFORE the
+  // click. The save then sent the pre-click value (chosen: null), and
+  // submit later scored that question as skipped — even though the UI
+  // showed it as answered. Students saw "I clicked all options but it
+  // says 5 skipped". The fix is to read via a ref that we keep in sync
+  // with state on every render, so flushSaves always sees the latest map.
   const dirtyRef = useRef<Set<string>>(new Set());
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const answersRef = useRef(answers);
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
   function scheduleSave(qid: string) {
     dirtyRef.current.add(qid);
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -191,7 +205,7 @@ export function MockPlayer({
     const ids = [...dirtyRef.current];
     dirtyRef.current.clear();
     for (const qid of ids) {
-      const a = answers.get(qid);
+      const a = answersRef.current.get(qid);
       if (!a) continue;
       try {
         await apiPost(`/api/attempts/${attemptId}/answer`, {
