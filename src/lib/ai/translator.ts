@@ -69,12 +69,10 @@ export interface TranslateBatchResult {
   latencyMs: number;
 }
 
-// Hard cap so we never send a runaway batch. Indic-script translations can
-// run ~800 output tokens per question (Devanagari/Tamil/Telugu glyphs cost
-// more per token than Latin), and reading-comprehension passages explode
-// further. Batch of 10 keeps the response under our 8k non-streaming cap
-// even for passage-heavy CDP / English-comprehension questions.
-export const MAX_BATCH_SIZE = 10;
+// Hard cap so we never send a runaway batch. With streaming we have plenty
+// of headroom (32k output cap), so we can comfortably batch 15 questions at
+// a time. Anything larger risks the model losing track of the question list.
+export const MAX_BATCH_SIZE = 15;
 
 export async function translateBatch(
   input: TranslateBatchInput,
@@ -117,22 +115,23 @@ export async function translateBatch(
     2,
   )}`;
 
-  // The Anthropic SDK rejects non-streaming requests with max_tokens
-  // above ~8k (response may exceed the 10-min HTTP timeout). 8k is the
-  // hard ceiling for this call; batch size + per-question allowance below
-  // are sized to fit inside it even when every question is passage-heavy.
+  // Use streaming. Non-streaming caps max_tokens at ~8k (10-min HTTP
+  // timeout safeguard); streaming has no such ceiling and lets us safely
+  // allow up to 32k output for passage-heavy reading-comprehension
+  // batches. Server-side we just collect the chunks and parse at the end.
   const start = Date.now();
-  const response = await anthropic.messages.create({
+  const stream = anthropic.messages.stream({
     model: MODEL,
-    max_tokens: Math.min(8000, 700 * input.questions.length + 1500),
+    max_tokens: Math.min(32000, 1500 * input.questions.length + 2000),
     system: [
       { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
     ] as Anthropic.Messages.TextBlockParam[],
     messages: [{ role: "user", content: userBlock }],
   });
+  const finalMessage = await stream.finalMessage();
   const latencyMs = Date.now() - start;
 
-  const text = response.content
+  const text = finalMessage.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
     .map((b) => b.text)
     .join("\n")
@@ -173,8 +172,8 @@ export async function translateBatch(
 
   return {
     translated,
-    inputTokens: response.usage.input_tokens,
-    outputTokens: response.usage.output_tokens,
+    inputTokens: finalMessage.usage.input_tokens,
+    outputTokens: finalMessage.usage.output_tokens,
     latencyMs,
   };
 }
