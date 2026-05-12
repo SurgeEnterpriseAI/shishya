@@ -268,7 +268,46 @@ export function MockPlayer({
     setSubmitting(true);
     setError(null);
     trackTimeOnSwitch(idx);
+
+    // Belt-and-suspenders: even with the answersRef closure fix above,
+    // students were occasionally seeing N/15 questions marked "skipped"
+    // when they swore they answered all of them. Race conditions
+    // between the debounced timer, the trackTimeOnSwitch setAnswers,
+    // and an immediate submit click can still drop a save. Cheapest
+    // reliable fix is to force-resave EVERY non-empty answer here
+    // before posting submit. ~N small writes, all parallel, ~100ms
+    // for a 100-question mock. The submit handler is already
+    // idempotent so a duplicate save is harmless.
+    //
+    // We pull from the LIVE setAnswers callback rather than the ref so
+    // any state update queued moments ago (e.g. trackTimeOnSwitch's
+    // setAnswers from this same tick) is captured before we send.
+    const latestAnswers: AnswerLocal[] = await new Promise((resolve) => {
+      setAnswers((current) => {
+        resolve([...current.values()]);
+        return current;
+      });
+    });
+    const dirtyOrAnswered = latestAnswers.filter(
+      (a) => a.chosen != null || a.marked || a.timeSec > 0,
+    );
+    await Promise.all(
+      dirtyOrAnswered.map((a) =>
+        apiPost(`/api/attempts/${attemptId}/answer`, {
+          questionId: a.questionId,
+          chosen: a.chosen,
+          timeSec: a.timeSec,
+          marked: a.marked,
+        }).catch(() => {
+          /* keep going; the submit will still proceed with whatever
+             reached the server. */
+        }),
+      ),
+    );
+    // Belt #2 — also run the standard flushSaves so the dirty set is
+    // drained (harmless if everything was already saved above).
     await flushSaves();
+
     try {
       await apiPost(`/api/attempts/${attemptId}/submit`);
       router.replace(`/attempts/${attemptId}/results`);
