@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChatMarkdown } from "@/components/ChatMarkdown";
 
 interface Message {
   id: string;
@@ -299,11 +300,15 @@ export function ChatInterface({
             <div
               className={
                 m.role === "user"
-                  ? "max-w-prose rounded-lg bg-saffron-500 px-4 py-2 text-sm text-white"
-                  : "max-w-prose rounded-lg bg-ink-100 px-4 py-2 text-sm text-ink-900 whitespace-pre-line"
+                  ? "max-w-prose rounded-lg bg-saffron-500 px-4 py-2 text-sm text-white whitespace-pre-line"
+                  : "max-w-prose rounded-lg bg-ink-100 px-4 py-3 text-sm text-ink-900"
               }
             >
-              {m.content || (
+              {m.content ? (
+                m.role === "assistant"
+                  ? <ChatMarkdown text={m.content} />
+                  : m.content
+              ) : (
                 m.role === "assistant"
                   ? <span className="text-ink-500">{toolStatus ?? labels.thinking}</span>
                   : null
