@@ -96,7 +96,15 @@ export function MockPlayer({
   // copy and overlay the body/options. Cached on the server per
   // (questionId, locale), so a different student picking the same
   // language a second time gets it instantly.
-  const [locale, setLocale] = useState<Locale>(initialLocale);
+  //
+  // We ALWAYS start at English regardless of the site UI cookie
+  // (initialLocale). The per-question picker is intentionally
+  // decoupled from the global header LangSwitcher — students often
+  // want the SITE in Hindi but the question in English (or vice
+  // versa) for practice in their target language. They opt in to
+  // question translation via this picker explicitly per mock.
+  void initialLocale;
+  const [locale, setLocale] = useState<Locale>("en");
   const [translations, setTranslations] = useState<Map<string, { body: string; options: { key: string; text: string }[] }>>(new Map());
   const [translating, setTranslating] = useState(false);
   const [translateErr, setTranslateErr] = useState<string | null>(null);
@@ -163,27 +171,17 @@ export function MockPlayer({
   async function changeLocale(next: Locale) {
     if (next === locale) return;
     setLocale(next);
-    // Persist the choice site-wide so other pages and the next visit
-    // remember it. The cookie is the same one LangSwitcher in the global
-    // header uses, so picking Hindi during a mock makes the dashboard,
-    // exam pages, results, etc. all default to Hindi too.
-    try {
-      document.cookie = `shishya-lang=${next}; path=/; max-age=${60 * 60 * 24 * 365}`;
-    } catch { /* SSR or blocked cookies — fine */ }
+    // Per-question translation is intentionally NOT persisted to the
+    // shishya-lang cookie. That cookie controls the SITE UI language
+    // (top-right LangSwitcher on the dashboard / exam pages). The
+    // mock's question picker only affects the current mock's question
+    // bodies / options / solution — students can take a mock in Hindi
+    // while keeping the dashboard in English.
     await fetchTranslations(next);
   }
 
-  // Auto-translate on first mount when the user's preferred locale is
-  // non-English. We don't want the student to have to toggle for every
-  // mock — if they picked Telugu in the header once, every mock comes up
-  // in Telugu automatically.
-  const didInitRef = useRef(false);
-  useEffect(() => {
-    if (didInitRef.current) return;
-    didInitRef.current = true;
-    if (locale !== "en") fetchTranslations(locale);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // No auto-translate on mount — locale always starts at "en" and the
+  // student opts in explicitly via the per-question picker.
 
   // ── State for answers, keyed by questionId
   const seedMap = useMemo(() => {

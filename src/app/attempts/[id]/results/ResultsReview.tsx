@@ -47,7 +47,10 @@ export function ResultsReview({
 
   // ── On-demand translation. Same pattern as MockPlayer: server holds
   // a (questionId, locale) cache, we only pay Anthropic on cold misses.
-  const [locale, setLocale] = useState<Locale>(initialLocale);
+  // We always start at English regardless of the site UI cookie
+  // (initialLocale) — the per-question picker is opt-in per page.
+  void initialLocale;
+  const [locale, setLocale] = useState<Locale>("en");
   const [translations, setTranslations] = useState<Map<string, Translation>>(new Map());
   const [translating, setTranslating] = useState(false);
   const [translateErr, setTranslateErr] = useState<string | null>(null);
@@ -79,19 +82,13 @@ export function ResultsReview({
   async function changeLocale(next: Locale) {
     if (next === locale) return;
     setLocale(next);
-    try {
-      document.cookie = `shishya-lang=${next}; path=/; max-age=${60 * 60 * 24 * 365}`;
-    } catch { /* SSR or blocked cookies — fine */ }
+    // Per-question translation is local to this review page only —
+    // does NOT persist to the shishya-lang cookie (the site UI
+    // language is independent and controlled from the header).
     await fetchTranslations(next);
   }
 
-  const didInitRef = useRef(false);
-  useEffect(() => {
-    if (didInitRef.current) return;
-    didInitRef.current = true;
-    if (locale !== "en") fetchTranslations(locale);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // No auto-translate on mount — student opts in via the per-question picker.
 
   function toggle(id: string) {
     setOpenIds((prev) => {
