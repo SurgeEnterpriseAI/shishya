@@ -422,14 +422,7 @@ export function MockPlayer({
             <span className="hidden font-semibold text-ink-900 sm:inline">{mock.examShort}</span>
           </Link>
           <p className="hidden truncate text-sm font-medium text-ink-700 md:block">{mock.title}</p>
-          <div className="flex items-center gap-3">
-            <QuestionLangSwitcher
-              current={locale}
-              onChange={changeLocale}
-              pending={translating}
-            />
-            <Timer remainingSec={remainingSec} totalSec={totalSec} />
-          </div>
+          <Timer remainingSec={remainingSec} totalSec={totalSec} />
         </div>
         {translateErr && (
           <p className="container-prose pb-1 text-[11px] text-rose-700">{translateErr}</p>
@@ -439,20 +432,32 @@ export function MockPlayer({
       <div className="container-prose grid grid-cols-1 gap-6 py-6 lg:grid-cols-[1fr_280px]">
         {/* Question */}
         <article className="rounded-md border border-ink-200 bg-white p-6">
-          <div className="flex items-baseline justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-medium uppercase tracking-wider text-ink-500">
               Q {idx + 1} {labels.qOf} {questions.length} · {q.topic.name} · {q.difficulty}
             </p>
-            <button
-              onClick={toggleMark}
-              className={
-                localAnswer?.marked
-                  ? "rounded-md bg-amber-500 px-2.5 py-1 text-xs font-medium text-white"
-                  : "rounded-md border border-ink-300 px-2.5 py-1 text-xs font-medium text-ink-700 hover:bg-ink-50"
-              }
-            >
-              {localAnswer?.marked ? labels.marked : labels.mark}
-            </button>
+            {/* Per-question controls — language picker right next to
+                "Mark for review" so the student sees both options
+                exactly where they're reading. Top-bar language picker
+                was too disconnected from the question. */}
+            <div className="flex items-center gap-2">
+              <QuestionLangSwitcher
+                current={locale}
+                onChange={changeLocale}
+                pending={translating}
+                label="Translate this question"
+              />
+              <button
+                onClick={toggleMark}
+                className={
+                  localAnswer?.marked
+                    ? "rounded-md bg-amber-500 px-2.5 py-1 text-xs font-medium text-white"
+                    : "rounded-md border border-ink-300 px-2.5 py-1 text-xs font-medium text-ink-700 hover:bg-ink-50"
+                }
+              >
+                {localAnswer?.marked ? labels.marked : labels.mark}
+              </button>
+            </div>
           </div>
 
           <p className="mt-4 whitespace-pre-line text-base leading-relaxed text-ink-900">{displayBody}</p>
