@@ -119,16 +119,31 @@ export async function translateBatch(
   // timeout safeguard); streaming has no such ceiling and lets us safely
   // allow up to 32k output for passage-heavy reading-comprehension
   // batches. Server-side we just collect the chunks and parse at the end.
+  //
+  // Hard 25-second AbortController so a stuck stream (Anthropic rate
+  // limit, network hang, etc.) doesn't blow the 60-second Vercel
+  // runtime. The caller's Promise.allSettled treats aborted batches as
+  // failures, the rest of the mock still translates.
   const start = Date.now();
-  const stream = anthropic.messages.stream({
-    model: MODEL,
-    max_tokens: Math.min(32000, 1500 * input.questions.length + 2000),
-    system: [
-      { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
-    ] as Anthropic.Messages.TextBlockParam[],
-    messages: [{ role: "user", content: userBlock }],
-  });
-  const finalMessage = await stream.finalMessage();
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(() => abortController.abort(), 25_000);
+  let finalMessage: Awaited<ReturnType<typeof anthropic.messages.create>>;
+  try {
+    const stream = anthropic.messages.stream(
+      {
+        model: MODEL,
+        max_tokens: Math.min(32000, 1500 * input.questions.length + 2000),
+        system: [
+          { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+        ] as Anthropic.Messages.TextBlockParam[],
+        messages: [{ role: "user", content: userBlock }],
+      },
+      { signal: abortController.signal },
+    );
+    finalMessage = await stream.finalMessage();
+  } finally {
+    clearTimeout(timeoutId);
+  }
   const latencyMs = Date.now() - start;
 
   const text = finalMessage.content

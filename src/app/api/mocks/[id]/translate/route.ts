@@ -29,10 +29,11 @@ const Body = z.object({
 });
 
 // Server-side hard cap on uncached questions translated per request.
-// Anthropic batches at MAX_BATCH_SIZE (10), parallelised 5-at-a-time. So
-// 20 misses = at most 2 waves × ~8s = ~16s — well under the 60s Vercel
-// runtime. The client requests more chunks as the student navigates.
-const PER_REQUEST_MISS_CAP = 20;
+// We sit at 10 (exactly one batch at MAX_BATCH_SIZE) so a single 25s
+// Anthropic abort timeout in the translator can't cascade into 60s of
+// wall-clock. The client requests more chunks via the questionIds
+// param as the student navigates.
+const PER_REQUEST_MISS_CAP = 10;
 
 export async function POST(
   req: Request,
