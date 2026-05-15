@@ -17,17 +17,55 @@ export default async function MockPlayerPage({
   const userId = session.user.id;
   const { id } = await params;
 
-  const mock = await prisma.mock.findUnique({
-    where: { id },
-    include: { exam: { select: { code: true, shortName: true, marksPerQ: true, negativeMark: true } } },
-  });
+  // Lookup mock + attempt state IN PARALLEL. Critically, we DO NOT
+  // fetch the 100 questions yet — for a re-visit where the user already
+  // submitted, we redirect to /results and the 100-question fetch is
+  // pure waste (was costing ~6s before this change). Questions only
+  // load if we actually need to render the player.
+  const [mock, existingInProgress, existingSubmitted] = await Promise.all([
+    prisma.mock.findUnique({
+      where: { id },
+      include: { exam: { select: { code: true, shortName: true, marksPerQ: true, negativeMark: true } } },
+    }),
+    prisma.attempt.findFirst({
+      where: { mockId: id, userId, status: "IN_PROGRESS" },
+    }),
+    prisma.attempt.findFirst({
+      where: {
+        mockId: id,
+        userId,
+        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+      },
+      orderBy: { finishedAt: "desc" },
+      select: { id: true },
+    }),
+  ]);
   if (!mock) notFound();
   if (mock.userId && mock.userId !== userId) redirect("/dashboard");
 
-  const questions = await prisma.question.findMany({
-    where: { id: { in: mock.questionIds } },
-    include: { topic: { select: { code: true, name: true } } },
-  });
+  // If they already submitted (and have no in-progress reattempt),
+  // bounce to results IMMEDIATELY — no question fetch, no JIT prep.
+  if (!existingInProgress && existingSubmitted) {
+    redirect(`/attempts/${existingSubmitted.id}/results`);
+  }
+
+  let attempt = existingInProgress;
+  if (!attempt) {
+    attempt = await prisma.attempt.create({
+      data: { mockId: mock.id, userId, status: "IN_PROGRESS", answers: [] },
+    });
+  }
+
+  // Now we KNOW we're rendering the player, so we need the questions.
+  // Run the questions fetch in parallel with getT() — both are
+  // independent and getT may do a User.preferredLang lookup.
+  const [questions, tt] = await Promise.all([
+    prisma.question.findMany({
+      where: { id: { in: mock.questionIds } },
+      include: { topic: { select: { code: true, name: true } } },
+    }),
+    getT(),
+  ]);
   const byId = new Map(questions.map((q) => [q.id, q]));
   const orderedQs = mock.questionIds
     .map((qid) => byId.get(qid))
@@ -42,35 +80,9 @@ export default async function MockPlayerPage({
       language: q.language,
     }));
 
-  // Find the in-progress attempt for this mock + user. If they don't
-  // have one but DO have a recently-submitted one, ship them straight
-  // to the results page — this catches the "I submitted but got
-  // INTERNAL_ERROR and now I can't find my results" path that left
-  // students stranded. Without this redirect, a refresh of /mocks/<id>
-  // after a submit error would silently start a fresh attempt and
-  // their previous score would feel lost.
-  let attempt = await prisma.attempt.findFirst({
-    where: { mockId: mock.id, userId, status: "IN_PROGRESS" },
-  });
-  if (!attempt) {
-    const submitted = await prisma.attempt.findFirst({
-      where: {
-        mockId: mock.id,
-        userId,
-        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
-      },
-      orderBy: { finishedAt: "desc" },
-      select: { id: true },
-    });
-    if (submitted) redirect(`/attempts/${submitted.id}/results`);
-    attempt = await prisma.attempt.create({
-      data: { mockId: mock.id, userId, status: "IN_PROGRESS", answers: [] },
-    });
-  }
-
   const durationMin = ((mock.config as any)?.durationMin as number | undefined) ?? 30;
   const config = mock.config as any;
-  const { t, locale } = await getT();
+  const { t, locale } = tt;
 
   return (
     <MockPlayer

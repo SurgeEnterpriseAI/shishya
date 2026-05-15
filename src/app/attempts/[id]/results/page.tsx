@@ -20,8 +20,10 @@ export default async function ResultsPage({
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   const { id } = await params;
-  const { t, locale } = await getT();
 
+  // Fetch attempt first (cheap, 1 row). Once we know it's submitted +
+  // belongs to this user, fan out the heavy reads (100 questions, rank
+  // bands, locale) in parallel.
   const attempt = await prisma.attempt.findUnique({
     where: { id },
     include: {
@@ -38,10 +40,27 @@ export default async function ResultsPage({
   const submitted = attempt.status === "SUBMITTED" || attempt.status === "AUTO_SUBMITTED";
   if (!submitted) redirect(`/mocks/${attempt.mockId}`);
 
-  const questions = await prisma.question.findMany({
-    where: { id: { in: attempt.mock.questionIds } },
-    include: { topic: { select: { code: true, name: true } } },
-  });
+  const [questions, rankBands, tt] = await Promise.all([
+    prisma.question.findMany({
+      where: { id: { in: attempt.mock.questionIds } },
+      include: { topic: { select: { code: true, name: true } } },
+    }),
+    prisma.examRankBand.findMany({
+      where: { examId: attempt.mock.examId },
+      orderBy: { orderIdx: "asc" },
+      select: {
+        scorePctMin: true,
+        scorePctMax: true,
+        rankMin: true,
+        rankMax: true,
+        label: true,
+        outcomes: true,
+        source: true,
+      },
+    }),
+    getT(),
+  ]);
+  const { t, locale } = tt;
   const qById = new Map(questions.map((q) => [q.id, q]));
 
   const answers = (attempt.answers as any[]) ?? [];
@@ -69,21 +88,7 @@ export default async function ResultsPage({
   const correctCount = orderedQs.filter((q) => q.correct).length;
   const wrongCount = orderedQs.filter((q) => q.chosen != null && !q.correct).length;
   const skipped = orderedQs.length - correctCount - wrongCount;
-
-  // Rank prediction bands for this exam (highest score band first).
-  const rankBands = await prisma.examRankBand.findMany({
-    where: { examId: attempt.mock.examId },
-    orderBy: { orderIdx: "asc" },
-    select: {
-      scorePctMin: true,
-      scorePctMax: true,
-      rankMin: true,
-      rankMax: true,
-      label: true,
-      outcomes: true,
-      source: true,
-    },
-  });
+  // rankBands fetched above in the parallel Promise.all.
 
   const topicScores = (attempt.topicScores as Record<string, any>) ?? {};
   const topicArr = Object.values(topicScores)
