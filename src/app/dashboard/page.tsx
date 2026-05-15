@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { isCurrentUserAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/db/prisma";
+import { getDashboardExams } from "@/lib/db/exam-cache";
 import { getT } from "@/lib/i18n-server";
 import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
 import { computeExamTags, TAG_ORDER } from "@/lib/exam-tags";
@@ -55,72 +56,58 @@ async function renderDashboard() {
     return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   })();
 
-  const [enrollments, recentAttempts, allExams, weakness, chatRecent, dailyBriefs] = await Promise.all([
-    prisma.enrollment.findMany({
-      where: { userId, active: true },
-      include: { exam: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.attempt.findMany({
-      where: { userId, status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] } },
-      include: { mock: { include: { exam: { select: { code: true, shortName: true } } } } },
-      orderBy: { startedAt: "desc" },
-      take: 5,
-    }),
-    prisma.exam.findMany({
-      where: { active: true },
-      orderBy: [{ candidatesPerYear: "desc" }, { code: "asc" }],
-      select: {
-        id: true,
-        code: true,
-        shortName: true,
-        name: true,
-        category: true,
-        candidatesPerYear: true,
-        state: true,
-        _count: {
-          select: {
-            questions: { where: { validated: true } },
-            mocks: { where: { userId: null } },
-          },
-        },
+  // The dashboard fans out into 6 expensive queries. With pgbouncer
+  // connection_limit=1 they queue behind a single Postgres connection
+  // and the 10-second pool timeout fires when one of them stalls — the
+  // student sees "DASHBOARD COULDN'T LOAD" (P2024 in prod logs).
+  //
+  // Fixes:
+  //   1. allExams is the same for every user → unstable_cache eliminates
+  //      the DB hit entirely for warm caches.
+  //   2. The remaining 5 user-specific queries are issued serially so we
+  //      never have more than 1 query waiting on the pool.
+  const allExams = await getDashboardExams();
+
+  const enrollments = await prisma.enrollment.findMany({
+    where: { userId, active: true },
+    include: { exam: true },
+    orderBy: { createdAt: "desc" },
+  });
+  const recentAttempts = await prisma.attempt.findMany({
+    where: { userId, status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] } },
+    include: { mock: { include: { exam: { select: { code: true, shortName: true } } } } },
+    orderBy: { startedAt: "desc" },
+    take: 5,
+  });
+  const weakness = await prisma.weaknessMap.findMany({
+    where: { userId },
+    include: {
+      topic: { select: { code: true, name: true } },
+      exam: { select: { code: true, shortName: true } },
+    },
+    orderBy: { lastSeenAt: "desc" },
+    take: 30,
+  });
+  const chatRecent = await prisma.chatSession.findMany({
+    where: { userId, createdAt: { gte: thirtyDaysAgo } },
+    include: {
+      exam: { select: { code: true, shortName: true } },
+      messages: {
+        where: { role: "ASSISTANT" },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { metadata: true, content: true, createdAt: true },
       },
-    }),
-    // Mastery snapshot — bottom 3 (weakest) + top 3 (strongest), per exam.
-    prisma.weaknessMap.findMany({
-      where: { userId },
-      include: {
-        topic: { select: { code: true, name: true } },
-        exam: { select: { code: true, shortName: true } },
-      },
-      orderBy: { lastSeenAt: "desc" },
-      take: 30,
-    }),
-    // Chat sessions in the last 30 days (with message-count + last-message
-    // metadata so we can extract "topics asked about").
-    prisma.chatSession.findMany({
-      where: { userId, createdAt: { gte: thirtyDaysAgo } },
-      include: {
-        exam: { select: { code: true, shortName: true } },
-        messages: {
-          where: { role: "ASSISTANT" },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-          select: { metadata: true, content: true, createdAt: true },
-        },
-      },
-      orderBy: { updatedAt: "desc" },
-      take: 5,
-    }),
-    // Today's daily briefs (one per enrolled exam) — populated overnight by
-    // /api/cron/daily-brief. Falls back gracefully if the cron hasn't run yet.
-    prisma.dailyBrief.findMany({
-      where: { userId, briefDate: todayUtc },
-      include: {
-        mock: { select: { id: true, title: true } },
-      },
-    }),
-  ]);
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 5,
+  });
+  const dailyBriefs = await prisma.dailyBrief.findMany({
+    where: { userId, briefDate: todayUtc },
+    include: {
+      mock: { select: { id: true, title: true } },
+    },
+  });
 
   // Pick today's brief for the recommended-exam slot. Prefer the brief
   // matching the recommended exam if present; otherwise the first brief.

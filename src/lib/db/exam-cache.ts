@@ -106,6 +106,34 @@ export const getExamShared = unstable_cache(
   { revalidate: EXAM_CACHE_TTL, tags: ["exam-shared"] },
 );
 
+/** Shape of the dashboard's exam-recommendations list. Shared across all
+ *  users and cheap to cache. */
+export const getDashboardExams = unstable_cache(
+  async () => {
+    return prisma.exam.findMany({
+      where: { active: true },
+      orderBy: [{ candidatesPerYear: "desc" }, { code: "asc" }],
+      select: {
+        id: true,
+        code: true,
+        shortName: true,
+        name: true,
+        category: true,
+        candidatesPerYear: true,
+        state: true,
+        _count: {
+          select: {
+            questions: { where: { validated: true } },
+            mocks: { where: { userId: null } },
+          },
+        },
+      },
+    });
+  },
+  ["dashboard-exams-v1"],
+  { revalidate: EXAM_CACHE_TTL, tags: ["exam-catalog"] },
+);
+
 /** Cache the full exams catalog listing for /exams. */
 export const getExamCatalog = unstable_cache(
   async () => {
