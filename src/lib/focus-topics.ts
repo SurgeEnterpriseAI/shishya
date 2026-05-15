@@ -47,31 +47,61 @@ export async function computeScoreBoost(
   userId: string,
   examId: string,
 ): Promise<ScoreBoost | null> {
-  const exam = await prisma.exam.findUnique({
-    where: { id: examId },
-    select: { id: true, code: true, shortName: true, totalMarks: true },
-  });
-  if (!exam) return null;
-
-  // Pull every topic + its subject weight so we can compute each topic's
-  // share of the exam total. Subject.weight × Topic.weight is the natural
-  // dual axis — subjects carry overall exam weight, topics within a subject
-  // get further sub-weighted.
-  const subjects = await prisma.subject.findMany({
-    where: { examId },
-    select: {
-      weight: true,
-      topics: {
-        select: {
-          id: true,
-          code: true,
-          name: true,
-          weight: true,
+  // All 5 queries below are independent (they don't use each other's
+  // results, only the examId/userId parameters), so fire them in
+  // parallel. With connection_limit=5 on the pooled DATABASE_URL this
+  // collapses the wall clock from sum(~5×800ms) ≈ 4-5s to one
+  // max-latency round trip (~1s) — the biggest single fix for the
+  // /exams/[code] cold render time.
+  const [exam, subjects, weak, myBest, bestPerUser] = await Promise.all([
+    prisma.exam.findUnique({
+      where: { id: examId },
+      select: { id: true, code: true, shortName: true, totalMarks: true },
+    }),
+    prisma.subject.findMany({
+      where: { examId },
+      select: {
+        weight: true,
+        topics: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            weight: true,
+          },
         },
+        name: true,
       },
-      name: true,
-    },
-  });
+    }),
+    prisma.weaknessMap.findMany({
+      where: { userId, examId },
+      select: {
+        topicId: true,
+        masteryScore: true,
+        attemptsCount: true,
+      },
+    }),
+    prisma.attempt.findFirst({
+      where: {
+        userId,
+        mock: { examId },
+        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+        scorePct: { not: null },
+      },
+      orderBy: { scorePct: "desc" },
+      select: { scorePct: true, rank: true },
+    }),
+    prisma.attempt.groupBy({
+      by: ["userId"],
+      where: {
+        mock: { examId },
+        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+        scorePct: { not: null },
+      },
+      _max: { scorePct: true },
+    }),
+  ]);
+  if (!exam) return null;
 
   let weightSum = 0;
   const topicMeta = new Map<
@@ -92,17 +122,7 @@ export async function computeScoreBoost(
   }
   if (weightSum === 0 || topicMeta.size === 0) return null;
 
-  // Pull the student's mastery for this exam and pick topics with the most
-  // estimated extra marks. Negative or zero headroom topics are skipped.
-  const weak = await prisma.weaknessMap.findMany({
-    where: { userId, examId },
-    select: {
-      topicId: true,
-      masteryScore: true,
-      attemptsCount: true,
-    },
-  });
-
+  // `weak` is already fetched in the Promise.all above.
   const focus: FocusTopic[] = [];
   for (const w of weak) {
     if (w.attemptsCount < MIN_ATTEMPTS) continue;
@@ -128,32 +148,7 @@ export async function computeScoreBoost(
   const top = focus.slice(0, MAX_TOPICS);
   if (top.length === 0) return null;
 
-  // Look up the student's best score on this exam and the cohort
-  // distribution, so we can estimate rank uplift.
-  const myBest = await prisma.attempt.findFirst({
-    where: {
-      userId,
-      mock: { examId },
-      status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
-      scorePct: { not: null },
-    },
-    orderBy: { scorePct: "desc" },
-    select: { scorePct: true, rank: true },
-  });
-
-  // Best-per-user scores for the cohort. We do this in SQL via
-  // groupBy so it scales with usage; for now this exam may have small
-  // counts, so we explicitly suppress rank-based copy when the cohort
-  // is too thin to be meaningful.
-  const bestPerUser = await prisma.attempt.groupBy({
-    by: ["userId"],
-    where: {
-      mock: { examId },
-      status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
-      scorePct: { not: null },
-    },
-    _max: { scorePct: true },
-  });
+  // `myBest` and `bestPerUser` already fetched in the Promise.all above.
   const cohort: number[] = bestPerUser
     .map((b) => b._max.scorePct)
     .filter((v): v is number => typeof v === "number")

@@ -106,11 +106,14 @@ export default async function ExamPage({
   // visible dashboard card), the queue overflows the 10s pool timeout
   // and pages take 20+ seconds. Sequential is +200-400ms in isolation
   // but avoids pile-up entirely.
-  // With connection_limit=5 on the pooled DATABASE_URL, the per-user
-  // queries here can safely run in parallel — they share 4-5 real
-  // connections through the pool and complete in max(query_times)
-  // wall-clock instead of sum().
-  const [enrollment, weakness, recent, myBest] = userId
+  // Fire EVERY user-specific query in parallel — including
+  // computeScoreBoost which itself fans out into 5 more parallel
+  // queries. Connection_limit=5 on the pool means these all complete
+  // in ~max(query_time) instead of the old sum() wall clock. We
+  // speculate on scoreBoost for any signed-in user; if they turn out
+  // to be unenrolled we just discard the result (1 wasted query, not
+  // worth gating sequentially).
+  const [enrollment, weakness, recent, myBest, speculativeScoreBoost] = userId
     ? await Promise.all([
         prisma.enrollment.findUnique({
           where: { userId_examId: { userId, examId: exam.id } },
@@ -141,16 +144,14 @@ export default async function ExamPage({
           orderBy: { scorePct: "desc" },
           select: { id: true, scorePct: true, percentile: true, rank: true, finishedAt: true },
         }),
+        computeScoreBoost(userId, exam.id).catch(() => null),
       ])
-    : ([null, [], [], null] as const);
+    : ([null, [], [], null, null] as const);
 
   const isEnrolled = !!enrollment;
   const hasContent = validatedQuestionCount > 0;
-
-  // Score Boost only when logged in + enrolled — no point computing it for
-  // crawlers or new visitors.
-  const scoreBoost =
-    userId && isEnrolled ? await computeScoreBoost(userId, exam.id) : null;
+  // Discard speculative score boost when user isn't enrolled — no UI uses it.
+  const scoreBoost = isEnrolled ? speculativeScoreBoost : null;
 
   // JSON-LD structured data — helps Google show this page as a rich
   // Course result with breadcrumb. Built from public exam data only.
