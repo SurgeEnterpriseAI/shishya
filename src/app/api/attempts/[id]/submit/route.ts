@@ -126,31 +126,30 @@ export async function POST(
     );
 
     // ── CRITICAL write — must succeed or student is told to retry ────────
-    // The attempt update + weakness upserts + progress event all run in
-    // ONE Prisma $transaction, which bundles them into a single DB
-    // round-trip. Previously the attempt update was awaited, then a
-    // separate Promise.all wave of ~15+ upserts followed — that wave
-    // alone was 2-3s on a 50-Q SOF mock. Bundling drops total submit
-    // wall clock by another ~50%.
-    //
-    // If anything in the transaction throws, the whole thing rolls back
-    // and the student sees a retryable error — they're still IN_PROGRESS
-    // and can submit again.
+    // Note: we deliberately do NOT use prisma.$transaction([...]) here.
+    // Prisma's array transaction executes queries SEQUENTIALLY within
+    // one connection, so 15+ weakness upserts on a long mock would
+    // take ~15 × Asia-DB-RTT (≈ 12s) instead of parallelising. With
+    // connection_limit=5 on the pool, splitting the critical write
+    // from a Promise.all of best-effort writes lets the upserts run
+    // 5-at-a-time → ~3 waves × 800ms ≈ 2.4s.
+    await prisma.attempt.update({
+      where: { id },
+      data: {
+        status: "SUBMITTED",
+        finishedAt,
+        durationSec,
+        answers: scored as unknown as Prisma.InputJsonValue,
+        scoreRaw,
+        scoreMax,
+        scorePct,
+        topicScores: topicScores as unknown as Prisma.InputJsonValue,
+      },
+    });
+
+    // ── BEST-EFFORT side-effects, parallelised through the pool ─────────
     try {
-      await prisma.$transaction([
-        prisma.attempt.update({
-          where: { id },
-          data: {
-            status: "SUBMITTED",
-            finishedAt,
-            durationSec,
-            answers: scored as unknown as Prisma.InputJsonValue,
-            scoreRaw,
-            scoreMax,
-            scorePct,
-            topicScores: topicScores as unknown as Prisma.InputJsonValue,
-          },
-        }),
+      await Promise.all([
         ...weaknessUpserts,
         prisma.progressEvent.create({
           data: {
@@ -163,13 +162,13 @@ export async function POST(
         }),
       ]);
     } catch (err) {
-      console.error("[submit] transaction failed", {
+      console.error("[submit] best-effort side-effects failed", {
         attemptId: id,
         userId,
         examId,
         message: (err as Error)?.message,
       });
-      return serverError(err);
+      // intentionally fall through to ok() — student is already SUBMITTED
     }
 
     return ok({
