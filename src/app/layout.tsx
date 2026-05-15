@@ -41,6 +41,19 @@ export const metadata: Metadata = {
   description:
     "163 entrance exams across India — national, state-level, olympiads, civil services, banking, teaching, defence — with previous year papers, expert-curated mocks, and Shishya AI as your personal tutor. Free for every student, in English, Hindi and 17 other Indian languages.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in"),
+  // Belt-and-suspenders: even though Next App Router auto-detects
+  // app/icon.svg + app/apple-icon.svg, declaring them in metadata
+  // guarantees the <link> tags are present in the rendered HTML
+  // (some crawlers and older browsers ignore the auto-injection).
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/apple-icon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: ["/icon.svg"],
+  },
   openGraph: {
     title: "Shishya — 163 entrance exams across India, free, with AI tutoring",
     description:
