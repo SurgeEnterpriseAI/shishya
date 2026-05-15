@@ -106,18 +106,22 @@ export default async function ExamPage({
   // visible dashboard card), the queue overflows the 10s pool timeout
   // and pages take 20+ seconds. Sequential is +200-400ms in isolation
   // but avoids pile-up entirely.
-  const userQueries = userId
-    ? await (async () => {
-        const enr = await prisma.enrollment.findUnique({
+  // With connection_limit=5 on the pooled DATABASE_URL, the per-user
+  // queries here can safely run in parallel — they share 4-5 real
+  // connections through the pool and complete in max(query_times)
+  // wall-clock instead of sum().
+  const [enrollment, weakness, recent, myBest] = userId
+    ? await Promise.all([
+        prisma.enrollment.findUnique({
           where: { userId_examId: { userId, examId: exam.id } },
-        });
-        const wk = await prisma.weaknessMap.findMany({
+        }),
+        prisma.weaknessMap.findMany({
           where: { userId, examId: exam.id },
           include: { topic: true },
           orderBy: { masteryScore: "asc" },
           take: 5,
-        });
-        const rc = await prisma.attempt.findMany({
+        }),
+        prisma.attempt.findMany({
           where: {
             userId,
             mock: { examId: exam.id },
@@ -126,8 +130,8 @@ export default async function ExamPage({
           include: { mock: true },
           orderBy: { startedAt: "desc" },
           take: 5,
-        });
-        const mb = await prisma.attempt.findFirst({
+        }),
+        prisma.attempt.findFirst({
           where: {
             userId,
             mock: { examId: exam.id },
@@ -136,11 +140,9 @@ export default async function ExamPage({
           },
           orderBy: { scorePct: "desc" },
           select: { id: true, scorePct: true, percentile: true, rank: true, finishedAt: true },
-        });
-        return [enr, wk, rc, mb] as const;
-      })()
+        }),
+      ])
     : ([null, [], [], null] as const);
-  const [enrollment, weakness, recent, myBest] = userQueries;
 
   const isEnrolled = !!enrollment;
   const hasContent = validatedQuestionCount > 0;
