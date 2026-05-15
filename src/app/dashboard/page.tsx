@@ -266,12 +266,14 @@ async function renderDashboard() {
                   <div className="mt-4 flex gap-2">
                     <Link
                       href={`/exams/${e.exam.code}`}
+                      prefetch={false}
                       className="btn-primary !py-1.5 !px-3 text-xs"
                     >
                       {t("dash.continue")}
                     </Link>
                     <Link
                       href={`/exams/${e.exam.code}#syllabus`}
+                      prefetch={false}
                       className="btn-secondary !py-1.5 !px-3 text-xs"
                     >
                       {t("dash.syllabus")}
@@ -319,6 +321,7 @@ async function renderDashboard() {
                         ? `/mocks/${todaysBrief.mockId}`
                         : `/exams/${recommendedExam.code}`
                     }
+                    prefetch={false}
                     className="btn-primary mt-3 !py-1.5 !px-3 text-xs"
                   >
                     {todaysBrief?.mockId
