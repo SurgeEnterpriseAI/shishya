@@ -45,6 +45,8 @@ model User {
   discussions     Discussion[]        @relation("DiscussionAuthor")
   discussionMessages DiscussionMessage[] @relation("MessageAuthor")
   questionReports QuestionReport[]
+  featureRequests FeatureRequest[]       @relation("FeatureRequestAuthor")
+  featureUpvotes  FeatureRequestUpvote[] @relation("FeatureRequestVoter")
   dailyBriefs     DailyBrief[]
 
   @@index([email])
@@ -227,6 +229,55 @@ model QuestionReport {
   @@index([questionId])
   @@index([resolved])
   @@index([createdAt])
+}
+
+// In-product feature requests. Students click a tiny floating pill on
+// any page and tell us what feature they want; the request is auto-
+// tagged with the route they were on and the area (Mock tests / Tutor /
+// Translations / Results / UI / Other) so we can slice volume by where
+// the friction lives. Public /ideas board lets others upvote.
+model FeatureRequest {
+  id          String   @id @default(cuid())
+  // First-sentence derivation server-side; full text goes in body.
+  title       String   @db.Text
+  body        String   @db.Text
+  // Auto-tagged page context
+  routePath   String   // e.g. /exams/SSC_CGL/topics/quant.percentage
+  area        String   // "Mock tests" | "AI Tutor" | "Translations" | "Results & Rank" | "UI / Navigation" | "Other"
+  examCode    String?  // populated when the route is exam-scoped
+  // Author — null when signed-out flow (we still capture impulse ideas)
+  authorId    String?
+  authorName  String?
+  authorEmail String?
+  // Triage by admin
+  status      FeatureRequestStatus @default(OPEN)
+  adminNote   String?  @db.Text
+  // Social proof — denormalised count, source of truth is FeatureRequestUpvote
+  upvoteCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author  User?                  @relation("FeatureRequestAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  upvotes FeatureRequestUpvote[]
+
+  @@index([status, upvoteCount])
+  @@index([area, createdAt])
+  @@index([createdAt])
+}
+
+// One upvote per (requestId, userId). Anonymous upvoting isn't allowed
+// because we want one-person-one-vote to prevent gaming the ideas board.
+model FeatureRequestUpvote {
+  id        String   @id @default(cuid())
+  requestId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  request FeatureRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  user    User           @relation("FeatureRequestVoter", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, userId])
+  @@index([userId])
 }
 
 // Question translations. A question authored in EN (or any base language)
@@ -542,6 +593,14 @@ model ExamRankBand {
 // ─────────────────────────────────────────────────────────────────────────
 // ENUMS
 // ─────────────────────────────────────────────────────────────────────────
+
+enum FeatureRequestStatus {
+  OPEN
+  UNDER_REVIEW
+  PLANNED
+  SHIPPED
+  DECLINED
+}
 
 enum Language {
   EN

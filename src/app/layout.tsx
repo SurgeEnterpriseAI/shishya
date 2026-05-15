@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_Devanagari } from "next/font/google";
 import { getLocale } from "@/lib/i18n-server";
 import { isRtl } from "@/lib/i18n";
+import { auth } from "@/lib/auth";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 import "./globals.css";
 
 // Mobile + cross-browser viewport configuration.
@@ -72,13 +74,21 @@ export default async function RootLayout({
 }) {
   const locale = await getLocale();
   const dir = isRtl(locale) ? "rtl" : "ltr";
+  // Cheap auth check — the FeedbackWidget itself short-circuits on
+  // signed-out users, but doing the check here lets us avoid sending
+  // any of the widget's client JS to anonymous visitors at all.
+  const session = await auth();
+  const signedIn = !!session?.user?.id;
   return (
     <html
       lang={locale}
       dir={dir}
       className={`${inter.variable} ${notoDevanagari.variable}`}
     >
-      <body className="font-multi">{children}</body>
+      <body className="font-multi">
+        {children}
+        {signedIn && <FeedbackWidget signedIn />}
+      </body>
     </html>
   );
 }
