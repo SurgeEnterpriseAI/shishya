@@ -444,6 +444,7 @@ async function renderDashboard() {
                 <li key={a.id}>
                   <Link
                     href={`/attempts/${a.id}/results`}
+                    prefetch={false}
                     className="flex items-center justify-between px-4 py-3 hover:bg-ink-50/60"
                   >
                     <div>

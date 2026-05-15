@@ -127,7 +127,7 @@ export default async function PYQYearPage({
                   : t("exam.pyq.startBody")}
               </p>
             </div>
-            <Link href={`/mocks/${mock.id}`} className="btn-primary">
+            <Link href={`/mocks/${mock.id}`} prefetch={false} className="btn-primary">
               {userAttempt?.status === "IN_PROGRESS" ? t("exam.pyq.resumeBtn") : t("exam.pyq.startBtn")}
             </Link>
           </div>
@@ -136,6 +136,7 @@ export default async function PYQYearPage({
             <div className="mt-4 border-t border-ink-100 pt-3">
               <Link
                 href={`/attempts/${userAttempt.id}/results`}
+                prefetch={false}
                 className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
               >
                 {t("exam.mocks.review")} →

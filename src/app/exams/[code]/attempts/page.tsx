@@ -93,6 +93,7 @@ export default async function AttemptsPage({
                           {submitted ? (
                             <Link
                               href={`/attempts/${a.id}/results`}
+                              prefetch={false}
                               className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
                             >
                               {t("exam.mocks.review")} →
@@ -100,6 +101,7 @@ export default async function AttemptsPage({
                           ) : a.status === "IN_PROGRESS" ? (
                             <Link
                               href={`/mocks/${a.mockId}`}
+                              prefetch={false}
                               className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
                             >
                               {t("exam.pyq.resumeBtn")} →

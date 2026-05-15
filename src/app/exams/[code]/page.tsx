@@ -349,6 +349,7 @@ export default async function ExamPage({
                   </p>
                   <Link
                     href={`/mocks/${m.id}`}
+                    prefetch={false}
                     className="mt-2 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
                   >
                     {t("exam.mocks.take")} →
@@ -368,7 +369,7 @@ export default async function ExamPage({
                     <span className="text-ink-800">{a.mock.title}</span>
                     <span className="flex items-center gap-3 text-xs text-ink-500">
                       <span>{formatDisplayScorePct(a.scorePct)}</span>
-                      <Link href={`/attempts/${a.id}/results`} className="font-medium text-saffron-700 hover:text-saffron-800">
+                      <Link href={`/attempts/${a.id}/results`} prefetch={false} className="font-medium text-saffron-700 hover:text-saffron-800">
                         {t("exam.mocks.review")} →
                       </Link>
                     </span>
