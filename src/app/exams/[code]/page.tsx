@@ -99,18 +99,25 @@ export default async function ExamPage({
 
   // User-specific queries — only run when authenticated. Defaults to empty so
   // unauth render path stays simple. Crawlers never trigger these.
-  const [enrollment, weakness, recent, myBest] = userId
-    ? await Promise.all([
-        prisma.enrollment.findUnique({
+  //
+  // We SERIALIZE these 4 queries rather than Promise.all-ing them: the
+  // pooled pgbouncer connection_limit=1 makes concurrent queries queue,
+  // and when /exams/[code] is prefetched 10+ times in parallel (one per
+  // visible dashboard card), the queue overflows the 10s pool timeout
+  // and pages take 20+ seconds. Sequential is +200-400ms in isolation
+  // but avoids pile-up entirely.
+  const userQueries = userId
+    ? await (async () => {
+        const enr = await prisma.enrollment.findUnique({
           where: { userId_examId: { userId, examId: exam.id } },
-        }),
-        prisma.weaknessMap.findMany({
+        });
+        const wk = await prisma.weaknessMap.findMany({
           where: { userId, examId: exam.id },
           include: { topic: true },
           orderBy: { masteryScore: "asc" },
           take: 5,
-        }),
-        prisma.attempt.findMany({
+        });
+        const rc = await prisma.attempt.findMany({
           where: {
             userId,
             mock: { examId: exam.id },
@@ -119,8 +126,8 @@ export default async function ExamPage({
           include: { mock: true },
           orderBy: { startedAt: "desc" },
           take: 5,
-        }),
-        prisma.attempt.findFirst({
+        });
+        const mb = await prisma.attempt.findFirst({
           where: {
             userId,
             mock: { examId: exam.id },
@@ -129,9 +136,11 @@ export default async function ExamPage({
           },
           orderBy: { scorePct: "desc" },
           select: { id: true, scorePct: true, percentile: true, rank: true, finishedAt: true },
-        }),
-      ])
+        });
+        return [enr, wk, rc, mb] as const;
+      })()
     : ([null, [], [], null] as const);
+  const [enrollment, weakness, recent, myBest] = userQueries;
 
   const isEnrolled = !!enrollment;
   const hasContent = validatedQuestionCount > 0;

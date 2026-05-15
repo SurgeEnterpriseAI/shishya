@@ -318,8 +318,16 @@ function ExamCardLink({
     ? `/exams/${e.code}`
     : `/login?callbackUrl=${encodeURIComponent(`/exams/${e.code}`)}`;
   return (
+    // prefetch={false}: Next.js auto-prefetches every visible <Link>
+    // when it enters the viewport. The dashboard shows 13+ exam cards,
+    // each of which would fire a full server render (?_rsc=...) for
+    // /exams/[code]. Those concurrent renders all hit the same
+    // pgbouncer connection_limit=1 pool and queue, blowing the actual
+    // click latency out to 20-30s. Switching to prefetch-on-hover
+    // (false) cuts that to ~1 prefetch per intent.
     <Link
       href={href}
+      prefetch={false}
       className="group flex h-full items-start justify-between rounded-lg border border-ink-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md"
     >
       <div className="min-w-0">
