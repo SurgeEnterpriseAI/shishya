@@ -511,7 +511,10 @@ export default async function ExamPage({
               ) : (
                 <ul className="mt-3 space-y-2">
                   {newsItems.map((n) => {
-                    const ageDays = Math.floor((Date.now() - n.publishedAt.getTime()) / (24 * 60 * 60 * 1000));
+                    // unstable_cache serialises Date objects to ISO
+                    // strings on cache hits, so we always coerce.
+                    const publishedAt = new Date(n.publishedAt as unknown as string | Date);
+                    const ageDays = Math.floor((Date.now() - publishedAt.getTime()) / (24 * 60 * 60 * 1000));
                     return (
                       <li key={n.id} className="rounded-md border border-ink-200 bg-white p-4">
                         <div className="flex items-baseline justify-between gap-2">
@@ -550,7 +553,9 @@ export default async function ExamPage({
               ) : (
                 <ol className="mt-3 space-y-2">
                   {importantDates.map((d) => {
-                    const days = Math.ceil((d.date.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+                    // Same Date deserialisation guard as newsItems above.
+                    const dateObj = new Date(d.date as unknown as string | Date);
+                    const days = Math.ceil((dateObj.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
                     const passed = days < 0;
                     let when: string;
                     if (passed) when = t("timeline.dates.passed");
@@ -578,7 +583,7 @@ export default async function ExamPage({
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-ink-500">
-                          {d.date.toLocaleDateString("en-IN", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
+                          {dateObj.toLocaleDateString("en-IN", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
                         </p>
                         {d.notes && <p className="mt-1.5 text-xs text-ink-600">{d.notes}</p>}
                       </li>
