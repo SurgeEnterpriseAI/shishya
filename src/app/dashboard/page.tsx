@@ -13,16 +13,10 @@ import { computeExamTags, TAG_ORDER } from "@/lib/exam-tags";
 import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { OnboardingTour } from "@/components/OnboardingTour";
-import { FirstTimeDashboard } from "./FirstTimeDashboard";
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ explore?: string }>;
-}) {
-  const { explore } = await searchParams;
+export default async function DashboardPage() {
   try {
-    return await renderDashboard({ forceFull: explore === "1" });
+    return await renderDashboard();
   } catch (err) {
     // NEXT_REDIRECT + NEXT_NOT_FOUND are how Next.js implements redirect()
     // and notFound() — they throw special signals that the framework
@@ -42,7 +36,7 @@ export default async function DashboardPage({
   }
 }
 
-async function renderDashboard({ forceFull }: { forceFull: boolean }) {
+async function renderDashboard() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/dashboard");
 
@@ -55,37 +49,6 @@ async function renderDashboard({ forceFull }: { forceFull: boolean }) {
 
   const userId = session.user.id;
   const { t } = await getT();
-
-  // FAST PATH — first-time dashboard for fresh signups.
-  // 68% of signups previously bounced from the regular dashboard because it
-  // looks like a directory, not a coach. Show them a conversational
-  // "pick your exam" card instead and route them straight into the AI
-  // tutor for a 10-Q warmup. The `?explore=1` query lets users escape to
-  // the full dashboard. Anyone with ≥1 enrollment or attempt gets the
-  // regular dashboard automatically going forward.
-  if (!forceFull) {
-    const freshness = await prisma.$queryRaw<Array<{ attempts: bigint; enrollments: bigint }>>`
-      SELECT
-        (SELECT COUNT(*) FROM "Attempt" WHERE "userId" = ${userId})::bigint AS attempts,
-        (SELECT COUNT(*) FROM "Enrollment" WHERE "userId" = ${userId} AND "active" = true)::bigint AS enrollments
-    `;
-    const isFresh =
-      freshness[0]?.attempts === 0n && freshness[0]?.enrollments === 0n;
-    if (isFresh) {
-      // The onboarding tour still mounts for users who haven't dismissed it
-      // (User.onboardedAt = null).
-      const onboardedRows = (await prisma.$queryRaw<{ onboardedAt: Date | null }[]>`
-        SELECT "onboardedAt" FROM "User" WHERE "id" = ${userId} LIMIT 1
-      `) ?? [];
-      const showOnboarding = !onboardedRows[0]?.onboardedAt;
-      return (
-        <FirstTimeDashboard
-          userName={session.user.name?.split(" ")[0] ?? "there"}
-          showOnboardingTour={showOnboarding}
-        />
-      );
-    }
-  }
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   // Today's brief is keyed on UTC midnight — same key the cron uses
@@ -106,36 +69,6 @@ async function renderDashboard({ forceFull }: { forceFull: boolean }) {
     SELECT "onboardedAt" FROM "User" WHERE "id" = ${userId} LIMIT 1
   `) ?? [];
   const showOnboarding = !onboardedRows[0]?.onboardedAt;
-
-  // Mock-submission streak (consecutive calendar days in Asia/Kolkata).
-  // Cheap raw query — we just need the set of recent submission days and
-  // walk backwards from today to count consecutives.
-  const submissionDayRows = await prisma.$queryRaw<Array<{ day: Date }>>`
-    SELECT DISTINCT DATE_TRUNC('day', "finishedAt" AT TIME ZONE 'Asia/Kolkata')::date AS day
-    FROM "Attempt"
-    WHERE "userId" = ${userId}
-      AND "status" IN ('SUBMITTED', 'AUTO_SUBMITTED')
-      AND "finishedAt" >= NOW() - INTERVAL '14 days'
-    ORDER BY day DESC
-  `;
-  const submissionDays = new Set(
-    submissionDayRows.map((r) => new Date(r.day).toISOString().slice(0, 10)),
-  );
-  // Walk backwards from today / yesterday and count consecutive days.
-  // We allow today to be skipped — a 3-day streak as of yesterday still
-  // counts as "3-day streak, take one today to extend".
-  const streak = (() => {
-    const istNow = new Date(Date.now() + 5.5 * 3600_000);
-    let cursor = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate()));
-    let tookToday = submissionDays.has(cursor.toISOString().slice(0, 10));
-    if (!tookToday) cursor.setUTCDate(cursor.getUTCDate() - 1); // skip today; start from yesterday
-    let n = 0;
-    while (submissionDays.has(cursor.toISOString().slice(0, 10))) {
-      n += 1;
-      cursor.setUTCDate(cursor.getUTCDate() - 1);
-    }
-    return { days: n, tookToday };
-  })();
 
   const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs] =
     await Promise.all([
@@ -339,30 +272,6 @@ async function renderDashboard({ forceFull }: { forceFull: boolean }) {
             </Link>
           )}
         </div>
-
-        {/* Streak banner — celebrates the consecutive-day mock submission
-            habit and nudges the user to take one today to keep it alive.
-            Only shows for ≥1 day streak; hidden for everyone else to avoid
-            adding noise to a fresh dashboard. */}
-        {streak.days >= 1 && (
-          <section className="mt-6 rounded-md border border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-4 shadow-sm">
-            <div className="flex items-start gap-3">
-              <span aria-hidden className="text-2xl">🔥</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-ink-900">
-                  {streak.days} day streak
-                </p>
-                <p className="mt-0.5 text-xs text-ink-700">
-                  {streak.tookToday
-                    ? `Nice — you've already taken a mock today. Keep showing up tomorrow.`
-                    : streak.days === 1
-                    ? `You took a mock yesterday. Take one today to start a streak.`
-                    : `You've taken a mock ${streak.days} days in a row. Take one today to keep it going.`}
-                </p>
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* Stalled-mock recovery banner. Shows when the student has
             IN_PROGRESS attempts from a prior session. Without this they
