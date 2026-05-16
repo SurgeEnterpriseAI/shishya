@@ -233,6 +233,8 @@ async function fetchTopicPool(examId: string, topicCode: string): Promise<Questi
   return qs.map(toRef);
 }
 
+// Kept for future use when we re-enable the full-mock generation path.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function fetchAdaptivePool(
   examId: string,
   weakTopicIds: string[],
