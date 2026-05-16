@@ -14,6 +14,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
+import { createAdaptiveQuiz } from "./adaptive-quiz";
 
 export interface ToolContext {
   userId: string;
@@ -54,7 +55,7 @@ export const tutorTools: Anthropic.Messages.Tool[] = [
   {
     name: "find_questions_on_topic",
     description:
-      "Find validated practice questions on a specific topic of the current exam. Use this when you want to give the student a concrete practice question, or when they ask 'quiz me on X'. Each returned question includes the body, options, and correct answer — never recite the answer to the student before they attempt.",
+      "Find 1-3 validated practice questions to walk through IN THE CHAT for teaching purposes — e.g. 'show me an example of a percentage word problem' or 'illustrate this concept with a question'. Returned questions include body, options, and correct answer, which you discuss conversationally. Do NOT call this when the student wants to actually take a timed mock — for that, use start_adaptive_quiz instead. Never recite the answer to the student before they attempt.",
     input_schema: {
       type: "object",
       properties: {
@@ -88,6 +89,21 @@ export const tutorTools: Anthropic.Messages.Tool[] = [
         },
       },
       required: ["attempt_id"],
+    },
+  },
+  {
+    name: "start_adaptive_quiz",
+    description:
+      "Generate an instant adaptive quiz the student can take RIGHT NOW. Call this whenever the student says any of: 'quiz me', 'test me', 'take a mock now', 'practice me', 'give me questions to solve', 'I want to take a mock', 'let me try some questions'. Creates two mocks back-to-back: (1) a 10-question warmup on their weakest topic that they start immediately, (2) a full-length exam-pattern adaptive mock targeted at their weak areas that's ready by the time they finish the warmup. Both are saved to their results history. Do not call this if the student is mid-conversation about a specific concept and just wants explanation — only call when they actively want to be tested.",
+    input_schema: {
+      type: "object",
+      properties: {
+        topic_hint: {
+          type: "string",
+          description: "Optional: the topic code the student wants focused on (e.g. 'quant.percentage'). Omit to let the system pick their weakest topic automatically.",
+        },
+      },
+      required: [],
     },
   },
   {
@@ -136,6 +152,15 @@ export async function executeTool(
         return { ok: true, data: await getAttemptMistakes(ctx, String(input?.attempt_id ?? "")) };
       case "predict_rank":
         return { ok: true, data: await predictRank(ctx, Number(input?.score_pct ?? 0)) };
+      case "start_adaptive_quiz":
+        return {
+          ok: true,
+          data: await createAdaptiveQuiz(
+            ctx.userId,
+            ctx.examCode,
+            typeof input?.topic_hint === "string" ? input.topic_hint : undefined,
+          ),
+        };
       default:
         return { ok: false, error: `Unknown tool: ${name}` };
     }

@@ -41,6 +41,8 @@ function prettyTool(name?: string): string {
     case "get_recent_attempts": return "Fetching your recent attempts…";
     case "find_questions_on_topic": return "Pulling practice questions…";
     case "get_attempt_mistakes": return "Reviewing your mistakes…";
+    case "predict_rank": return "Estimating your rank band…";
+    case "start_adaptive_quiz": return "Building your quiz (warmup + full mock)…";
     default: return name ? `Calling ${name}…` : "Thinking…";
   }
 }

@@ -169,8 +169,9 @@ function tokeniseInline(src: string): InlineToken[] {
       if (close > -1 && end > -1) {
         const t = src.slice(i + 1, close);
         const href = src.slice(close + 2, end);
-        // Only allow http(s) hrefs.
-        if (/^https?:\/\//i.test(href)) {
+        // Allow http(s) absolute and same-site relative paths.
+        // Explicitly block dangerous schemes like javascript:/data:/file:.
+        if (/^https?:\/\//i.test(href) || /^\/(?!\/)/.test(href)) {
           flush();
           tokens.push({ type: "link", text: t, href });
           i = end + 1;
@@ -233,18 +234,21 @@ function renderInline(src: string): React.ReactNode {
             {t.text}
           </code>
         );
-      case "link":
+      case "link": {
+        // Same-site (relative or shishya.in) → open in same tab so the
+        // student doesn't lose the chat context. External → new tab.
+        const isInternal = t.href?.startsWith("/") || /^https?:\/\/(www\.)?shishya\.in/i.test(t.href ?? "");
         return (
           <a
             key={i}
             href={t.href}
-            target="_blank"
-            rel="noopener noreferrer"
+            {...(isInternal ? {} : { target: "_blank", rel: "noopener noreferrer" })}
             className="text-saffron-700 underline hover:text-saffron-800"
           >
             {t.text}
           </a>
         );
+      }
       case "text":
       default:
         return <span key={i}>{t.text}</span>;
