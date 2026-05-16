@@ -40,7 +40,10 @@ interface Args {
 function parseArgs(): Args {
   // Default budget set high so the script runs the full popularity
   // sweep without manual intervention. Use --budget to cap.
-  const a: any = { target: DEFAULT_TARGET, budget: 1000, parallel: 3, dryRun: false, refresh: false };
+  // Parallel=2 leaves headroom on the 21-connection direct pool even
+  // when both exams are simultaneously doing their 15-question insert
+  // burst. parallel=3 hit P2024 timeouts in prod.
+  const a: any = { target: DEFAULT_TARGET, budget: 1000, parallel: 2, dryRun: false, refresh: false };
   const argv = process.argv;
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
@@ -197,29 +200,32 @@ async function main() {
           break;
         }
 
-        await Promise.all(
-          questions.map((q) =>
-            p.question.create({
-              data: {
-                examId: exam.id,
-                topicId: q.topicId,
-                type: "MCQ",
-                difficulty: q.difficulty,
-                body: q.body,
-                options: q.options,
-                answerKey: q.answerKey,
-                solution: q.solution,
-                source: "PYQ",
-                pyqYear: q.pyqYear,
-                validated: true,
-                validatedBy: "system:pyq-pattern",
-                validatedAt: new Date(),
-                language: "EN",
-                metadata: { sources: [...allSources].slice(0, 5) },
-              },
-            }),
-          ),
-        );
+        // Serialize the per-batch inserts to keep concurrent pool
+        // usage bounded. With parallel=2 exams × 15 parallel writes
+        // we'd peak at 30 simultaneous, which exceeds the 21-conn
+        // direct pool. Per-batch serial inserts cap at 2 concurrent
+        // (one per exam wave member). Cost: +~2s per batch wall-clock.
+        for (const q of questions) {
+          await p.question.create({
+            data: {
+              examId: exam.id,
+              topicId: q.topicId,
+              type: "MCQ",
+              difficulty: q.difficulty,
+              body: q.body,
+              options: q.options,
+              answerKey: q.answerKey,
+              solution: q.solution,
+              source: "PYQ",
+              pyqYear: q.pyqYear,
+              validated: true,
+              validatedBy: "system:pyq-pattern",
+              validatedAt: new Date(),
+              language: "EN",
+              metadata: { sources: [...allSources].slice(0, 5) },
+            },
+          });
+        }
 
         createdHere += questions.length;
         needed -= questions.length;

@@ -57,7 +57,11 @@ WORKFLOW (use the web_search tool actively):
 4. Spread questions evenly across the topics + years provided.
 5. Mix difficulties roughly 40% EASY, 40% MEDIUM, 20% HARD unless the exam is known to be harder (e.g. JEE Advanced, GATE) in which case skew to MEDIUM/HARD.
 
-OUTPUT FORMAT (strict JSON, no markdown fences, no prose around it):
+OUTPUT FORMAT — CRITICAL:
+- Return ONLY the JSON object, starting with { as the very first character.
+- NO preamble. NO "Based on my research…". NO "Here are the questions:". NO markdown fences. The entire response must be valid JSON.
+- After web_search use, do NOT narrate — silently go straight to producing the JSON.
+- Shape:
 {
   "questions": [
     {
@@ -113,18 +117,36 @@ Use the web_search tool to find: actual exam pattern, year-wise topic distributi
 
 Return STRICT JSON per the schema in the system prompt.`;
 
-  const stream = anthropic.messages.stream(
-    {
-      model: MODEL,
-      max_tokens: 8000,
-      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 6 }] as any,
-      system: [
-        { type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } },
-      ] as Anthropic.Messages.TextBlockParam[],
-      messages: [{ role: "user", content: userBlock }],
-    } as any,
-  );
-  const finalMessage = await stream.finalMessage();
+  // Wrap in retry — ECONNRESET on the streaming socket is common on
+  // long-running web_search calls. Retry once before giving up.
+  let finalMessage: Anthropic.Messages.Message;
+  let attempt = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    attempt += 1;
+    try {
+      const stream = anthropic.messages.stream(
+        {
+          model: MODEL,
+          max_tokens: 8000,
+          tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 6 }] as any,
+          system: [
+            { type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } },
+          ] as Anthropic.Messages.TextBlockParam[],
+          messages: [{ role: "user", content: userBlock }],
+        } as any,
+      );
+      finalMessage = await stream.finalMessage();
+      break;
+    } catch (err: any) {
+      const msg = String(err?.message ?? err);
+      if (attempt < 2 && /ECONNRESET|ETIMEDOUT|socket hang up|fetch failed/i.test(msg)) {
+        await new Promise((r) => setTimeout(r, 1500));
+        continue;
+      }
+      throw err;
+    }
+  }
 
   const text = finalMessage.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
@@ -184,10 +206,36 @@ Return STRICT JSON per the schema in the system prompt.`;
 
 function extractJson(text: string): any | null {
   let body = text.trim();
+  // Strip a leading markdown fence if present.
   if (body.startsWith("```")) body = body.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
   try { return JSON.parse(body); } catch {}
+  // Common failure: Claude prefixes the JSON with narrative
+  // ("I'll search... Based on my research, here's the JSON: { ... }").
+  // Pull the first balanced JSON object out of the text.
   const first = body.indexOf("{");
   const last = body.lastIndexOf("}");
   if (first === -1 || last === -1 || last <= first) return null;
-  try { return JSON.parse(body.slice(first, last + 1)); } catch { return null; }
+  // Try the largest candidate first.
+  try { return JSON.parse(body.slice(first, last + 1)); } catch {}
+  // Fallback: scan for the largest balanced { ... } substring.
+  let depth = 0;
+  let start = -1;
+  let best: { from: number; to: number } | null = null;
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (ch === "{") {
+      if (depth === 0) start = i;
+      depth += 1;
+    } else if (ch === "}") {
+      depth -= 1;
+      if (depth === 0 && start !== -1) {
+        if (!best || i - start > best.to - best.from) best = { from: start, to: i };
+        start = -1;
+      }
+    }
+  }
+  if (best) {
+    try { return JSON.parse(body.slice(best.from, best.to + 1)); } catch {}
+  }
+  return null;
 }
