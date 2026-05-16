@@ -298,12 +298,19 @@ export default async function HomePage() {
             <p className="mt-3 text-base text-ink-600">{t("loop.subtitle")}</p>
           </div>
 
-          <ol className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <LoopStep icon="📝" title={t("loop.s1.title")} body={t("loop.s1.body")} />
-            <LoopStep icon="📊" title={t("loop.s2.title")} body={t("loop.s2.body")} />
-            <LoopStep icon="🤖" title={t("loop.s3.title")} body={t("loop.s3.body")} />
-            <LoopStep icon="💬" title={t("loop.s4.title")} body={t("loop.s4.body")} />
-          </ol>
+          {(() => {
+            // Same CTA target as the feature cards above — every visible card on
+            // the landing should route an interested visitor into the funnel.
+            const loopHref = signedIn ? "/dashboard" : "/login?callbackUrl=%2Fdashboard";
+            return (
+              <ol className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <LoopStep href={loopHref} icon="📝" title={t("loop.s1.title")} body={t("loop.s1.body")} />
+                <LoopStep href={loopHref} icon="📊" title={t("loop.s2.title")} body={t("loop.s2.body")} />
+                <LoopStep href={loopHref} icon="🤖" title={t("loop.s3.title")} body={t("loop.s3.body")} />
+                <LoopStep href={loopHref} icon="💬" title={t("loop.s4.title")} body={t("loop.s4.body")} />
+              </ol>
+            );
+          })()}
 
           <p className="mt-10 text-center text-xs text-ink-500">
             <span className="font-medium text-ink-800">हर छात्र, एक ही मंच पर ·</span>{" "}
@@ -355,14 +362,32 @@ function SiteHeader({
   );
 }
 
-function LoopStep({ icon, title, body }: { icon: string; title: string; body: string }) {
+function LoopStep({
+  icon,
+  title,
+  body,
+  href,
+}: {
+  icon: string;
+  title: string;
+  body: string;
+  href: string;
+}) {
+  // Same routing as FeatureCard — clicking any "how it works" step pulls
+  // the visitor into the signup/dashboard funnel rather than dead-ending.
   return (
-    <li className="rounded-lg border border-ink-200 bg-white p-5 shadow-sm">
-      <div className="text-3xl" aria-hidden>
-        {icon}
-      </div>
-      <h3 className="mt-3 text-base font-semibold text-ink-900">{title}</h3>
-      <p className="mt-1 text-sm leading-relaxed text-ink-600">{body}</p>
+    <li>
+      <Link
+        href={href}
+        prefetch={false}
+        className="group block h-full rounded-lg border border-ink-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-saffron-300"
+      >
+        <div className="text-3xl" aria-hidden>
+          {icon}
+        </div>
+        <h3 className="mt-3 text-base font-semibold text-ink-900">{title}</h3>
+        <p className="mt-1 text-sm leading-relaxed text-ink-600">{body}</p>
+      </Link>
     </li>
   );
 }
