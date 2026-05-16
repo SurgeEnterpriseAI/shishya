@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { formatDisplayScorePct } from "@/lib/scoring";
+import { StartFullMockButton } from "./StartFullMockButton";
 
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
@@ -99,6 +100,17 @@ export default async function PYQYearPage({
     select: { id: true, status: true, scorePct: true, finishedAt: true },
   });
 
+  // Has the user already submitted ANY mock on this exam? Drives whether
+  // the StartFullMockButton shows the warmup-vs-full-mock dialog.
+  const submittedHistoryCount = await prisma.attempt.count({
+    where: {
+      userId: session.user.id,
+      status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+      mock: { examId: exam.id },
+    },
+  });
+  const hasSubmittedHistory = submittedHistoryCount > 0;
+
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
@@ -127,32 +139,24 @@ export default async function PYQYearPage({
                   : t("exam.pyq.startBody")}
               </p>
             </div>
-            <Link href={`/mocks/${mock.id}`} prefetch={false} className="btn-primary">
-              {userAttempt?.status === "IN_PROGRESS" ? t("exam.pyq.resumeBtn") : t("exam.pyq.startBtn")}
-            </Link>
+            {userAttempt?.status === "IN_PROGRESS" ? (
+              // Already in progress — go straight to the player. No
+              // warmup-vs-full prompt; they've already chosen.
+              <Link href={`/mocks/${mock.id}`} prefetch={false} className="btn-primary">
+                {t("exam.pyq.resumeBtn")}
+              </Link>
+            ) : (
+              <StartFullMockButton
+                mockId={mock.id}
+                examCode={code}
+                examShortName={exam.shortName}
+                totalQuestions={questions.length}
+                durationMin={exam.durationMin}
+                hasSubmittedHistory={hasSubmittedHistory}
+                label={t("exam.pyq.startBtn")}
+              />
+            )}
           </div>
-
-          {/* First-time advisory: students who've never taken a mock on
-              this exam often bounce off a 90Q/60min test on day 1.
-              Offer the AI-tutor warmup as a gentler on-ramp. */}
-          {!userAttempt && (
-            <div className="mt-4 flex flex-wrap items-start gap-2 rounded-md border border-saffron-200 bg-saffron-50/50 p-3 text-xs">
-              <span aria-hidden className="text-base leading-none">⏱️</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-ink-800">
-                  <span className="font-semibold">{questions.length} questions, {exam.durationMin} minutes timed.</span>{" "}
-                  First time on {exam.shortName}? Ask Shishya AI to quiz you with a
-                  quick 10-question warmup first — it picks your topic and adapts.
-                </p>
-                <Link
-                  href={`/chat?examCode=${code}&seed=${encodeURIComponent(`Quiz me on ${exam.shortName} — start with 10 easy questions, then build a full mock around my weak topics.`)}`}
-                  className="mt-1 inline-block font-medium text-saffron-700 hover:text-saffron-800"
-                >
-                  Start a warmup quiz with Shishya →
-                </Link>
-              </div>
-            </div>
-          )}
 
           {userAttempt && (userAttempt.status === "SUBMITTED" || userAttempt.status === "AUTO_SUBMITTED") && (
             <div className="mt-4 border-t border-ink-100 pt-3">
