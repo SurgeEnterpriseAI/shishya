@@ -13,6 +13,7 @@ import { computeExamTags, TAG_ORDER } from "@/lib/exam-tags";
 import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { TwoPathsCard } from "./TwoPathsCard";
 
 export default async function DashboardPage() {
   try {
@@ -272,6 +273,11 @@ async function renderDashboard() {
             </Link>
           )}
         </div>
+
+        {/* Two-paths explainer. Shown after the welcome heading until
+            the user clicks "Got it ×" once. Sets expectations about
+            how the platform is meant to be used. */}
+        <TwoPathsCard />
 
         {/* Stalled-mock recovery banner. Shows when the student has
             IN_PROGRESS attempts from a prior session. Without this they
