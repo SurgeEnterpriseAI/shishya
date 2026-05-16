@@ -151,6 +151,60 @@ export default async function ResultsPage({
           />
         </div>
 
+        {/* ── Score-shock recovery ──────────────────────────────────────
+            First-time test takers routinely score 10-30% cold on a full
+            mock. Without context, that score reads as "I'm hopeless" and
+            they bounce. Show an empathetic banner that (a) normalises a
+            low score, (b) surfaces the 3 weakest topics from THIS attempt
+            with deep-links to a tutor-led drill on each. Threshold 40% =
+            comfortably below the "good first mock" line; users above 40%
+            don't need the framing. */}
+        {(attempt.scorePct ?? 100) < 40 && topicArr.length > 0 && (() => {
+          const weakTopics = topicArr
+            .filter((t) => t.total > 0 && t.code)
+            .slice(0, 3);
+          if (weakTopics.length === 0) return null;
+          const seedFor = (topicName: string) =>
+            encodeURIComponent(
+              `I just scored ${formatDisplayScorePct(attempt.scorePct)} on ${attempt.mock.exam.shortName} and ${topicName} was one of my weakest topics. Tutor me on this topic and quiz me with 10 questions.`,
+            );
+          return (
+            <section className="mt-6 rounded-md border border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <span aria-hidden className="text-2xl">💪</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-ink-900">
+                    Don&apos;t worry about the score — most students start here.
+                  </p>
+                  <p className="mt-1 text-sm text-ink-700">
+                    First cold mocks are diagnostic, not a verdict. What matters now is
+                    the 3 topics costing you the most marks. Fix one, retake, watch the
+                    score climb. Shishya AI will walk you through each:
+                  </p>
+                  <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {weakTopics.map((tp) => (
+                      <li key={tp.code}>
+                        <Link
+                          href={`/chat?examCode=${attempt.mock.exam.code}&topicCode=${encodeURIComponent(tp.code)}&seed=${seedFor(tp.name)}`}
+                          className="block rounded-md border border-saffron-300 bg-white px-3 py-2 hover:border-saffron-500 hover:bg-saffron-50"
+                        >
+                          <p className="text-xs font-semibold text-ink-900">{tp.name}</p>
+                          <p className="mt-0.5 text-[11px] text-ink-600">
+                            {tp.correct} / {tp.total} · {Math.round(tp.score * 100)}% accuracy
+                          </p>
+                          <p className="mt-1.5 text-[11px] font-medium text-saffron-700">
+                            Tutor me + 10-Q drill →
+                          </p>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </section>
+          );
+        })()}
+
         {/* ── Rank prediction ───────────────────────────────────────────
             Right under the score cards so the student sees "what does
             this score get me in the real exam" before they dive into
