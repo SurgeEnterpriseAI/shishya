@@ -274,6 +274,78 @@ export default async function HomePage() {
         )}
       </section>
 
+      {/* ── Mobile-only inline rails ─────────────────────────────────
+          On lg+ the upcoming-exams and live-discussions panels mount
+          as fixed side rails. Below lg those rails are hidden — so on
+          phones / small tablets we surface the same content as two
+          horizontal-scroll cards right below the hero, BEFORE the
+          feature pillars. Hidden at lg+ to avoid duplication. */}
+      <section className="container-prose mt-2 mb-12 space-y-6 lg:hidden">
+        {upcomingEvents.length > 0 && (
+          <div className="rounded-lg border border-ink-200 bg-white p-4 shadow-sm">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">
+                🟡 Upcoming exam dates
+              </p>
+              <Link href="/exams" className="text-xs font-medium text-saffron-700 hover:text-saffron-800">
+                All exams →
+              </Link>
+            </div>
+            <ul className="mt-3 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+              {upcomingEvents.slice(0, 12).map((e) => (
+                <li key={e.id} className="shrink-0">
+                  <Link
+                    href={`/exams/${e.examCode}`}
+                    prefetch={false}
+                    className={`block w-44 rounded-md border px-3 py-2 hover:border-saffron-400 ${
+                      e.isExamDay
+                        ? "border-saffron-300 bg-saffron-50/60"
+                        : "border-ink-200 bg-white"
+                    }`}
+                  >
+                    <p className="truncate text-sm font-semibold text-ink-900">{e.examShort}</p>
+                    <p className={`mt-0.5 text-[11px] font-medium tabular-nums ${e.isExamDay ? "text-saffron-800" : "text-ink-600"}`}>
+                      {new Date(e.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      {e.isExamDay && <span className="ml-1.5 rounded bg-saffron-200 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-saffron-900">Exam</span>}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-[11px] text-ink-600">{e.label}</p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {initialThreads.length > 0 && (
+          <div className="rounded-lg border border-ink-200 bg-white p-4 shadow-sm">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
+                🟢 What students are talking about
+              </p>
+              <Link href="/discussions" className="text-xs font-medium text-saffron-700 hover:text-saffron-800">
+                All discussions →
+              </Link>
+            </div>
+            <ul className="mt-3 divide-y divide-ink-100">
+              {initialThreads.slice(0, 5).map((th) => (
+                <li key={th.id}>
+                  <Link href={`/discussions/${th.id}`} className="block py-2.5 hover:bg-saffron-50/50">
+                    <p className="line-clamp-2 text-sm font-medium leading-snug text-ink-900">{th.title}</p>
+                    <p className="mt-0.5 truncate text-[11px] text-ink-500">
+                      {th.examShort && (
+                        <span className="mr-1.5 rounded bg-ink-100 px-1 py-0.5 text-[10px] font-medium text-ink-600">
+                          {th.examShort}
+                        </span>
+                      )}
+                      <span className="font-medium text-ink-700">{th.messageCount} {th.messageCount === 1 ? t("disc.reply") : t("disc.replies")}</span>
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+
       {/* ── Feature pillars: everything you need ─────────────────── */}
       <section id="features" className="border-t border-ink-200/50 bg-white py-16 sm:py-24">
         <div className="container-prose">
