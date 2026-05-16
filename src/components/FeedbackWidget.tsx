@@ -94,11 +94,17 @@ export function FeedbackWidget({ signedIn }: { signedIn: boolean }) {
     if (open) textareaRef.current?.focus();
   }, [open]);
 
-  if (hidden) return null;
-  if (snoozedUntil && Date.now() < snoozedUntil) return null;
-
+  // IMPORTANT: this useMemo MUST live above the early returns below.
+  // Rules of hooks — hook count must be identical on every render. When
+  // we placed it after `if (hidden) return null`, navigating between a
+  // hidden route (e.g. /logout) and a visible one made React see a
+  // changing hook count and crash the whole page with "Rendered fewer
+  // hooks than expected".
   const ctx = useMemo(() => contextLabel(pathname), [pathname]);
   const examCode = pathname.startsWith("/exams/") ? pathname.split("/")[2] : null;
+
+  if (hidden) return null;
+  if (snoozedUntil && Date.now() < snoozedUntil) return null;
 
   function dismiss() {
     setOpen(false);
