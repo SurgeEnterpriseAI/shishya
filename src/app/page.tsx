@@ -12,6 +12,7 @@ import { computeExamTags, TAG_ORDER } from "@/lib/exam-tags";
 import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
 import { DiscussionsSidebar, type ThreadItem } from "@/components/DiscussionsSidebar";
 import { LiveCountersStrip } from "@/components/LiveCounters";
+import { UpcomingExamsSidebar, type UpcomingEvent } from "@/components/UpcomingExamsSidebar";
 
 // Fallback list — used only when the DB is unreachable so the public landing
 // page still renders something. Real exam list is queried from Prisma below.
@@ -118,6 +119,30 @@ export default async function HomePage() {
     initialThreads = [];
   }
 
+  // Upcoming exam events for the left-side calendar rail. Resilient: if
+  // the DB hiccups the rail just renders empty + the rest of the page
+  // still works.
+  let upcomingEvents: UpcomingEvent[] = [];
+  try {
+    upcomingEvents = await prisma.examImportantDate.findMany({
+      where: { date: { gte: new Date() }, exam: { active: true } },
+      orderBy: { date: "asc" },
+      take: 30,
+      include: { exam: { select: { code: true, shortName: true } } },
+    }).then((rows) =>
+      rows.map((r) => ({
+        id: r.id,
+        examCode: r.exam.code,
+        examShort: r.exam.shortName,
+        date: r.date.toISOString(),
+        label: r.label,
+        isExamDay: r.isExamDay,
+      }))
+    );
+  } catch {
+    upcomingEvents = [];
+  }
+
   const catLabels: Record<string, string> = {
     GOVT_JOBS:      t("land.cat.GOVT_JOBS"),
     BANKING:        t("land.cat.BANKING"),
@@ -170,6 +195,9 @@ export default async function HomePage() {
         }}
       />
 
+      {/* Upcoming exam dates — fixed left rail on lg+, hidden below */}
+      <UpcomingExamsSidebar events={upcomingEvents} />
+
       {/* Live community discussions — fixed right rail on lg+, FAB+drawer otherwise */}
       <DiscussionsSidebar
         initial={initialThreads}
@@ -195,9 +223,10 @@ export default async function HomePage() {
         }}
       />
 
-      {/* Body sections — lg:pr-80 clears the 320px discussions panel
-          on the right. Header + live strip above stay full-width. */}
-      <div className="lg:pr-80">
+      {/* Body sections — lg:px-80 (320px each side) clears both rails:
+          upcoming-exams panel on the left, discussions panel on the
+          right. Header + live strip above stay full-width. */}
+      <div className="lg:pl-80 lg:pr-80">
 
       {/* ── Hero: brand line + search + chips + grid ───────────────── */}
       <section className="container-prose pt-12 pb-16 sm:pt-16 sm:pb-20">

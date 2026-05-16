@@ -74,12 +74,11 @@ export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
     // Sticky to viewport top — stays visible while scrolling so the social
     // proof persists as the user moves through the page.
     //
-    // lg:pr-80 + lg:mr-80 — clear the 320px discussions panel on lg+ so
-    // the strip's green background AND its centered content stay LEFT of
-    // the panel. Without this the strip (z-40) overlays the panel
-    // (z-20) and the panel's "What other students are talking about"
-    // header gets covered by the strip's "1,055 students helped" text.
-    <div className="sticky top-0 z-40 border-b border-emerald-200 bg-emerald-50/95 backdrop-blur-sm supports-[backdrop-filter]:bg-emerald-50/80 lg:mr-80">
+    // lg:mx-80 — clear the two 320px side rails on lg+ so the strip's
+    // green background ends exactly where the rails begin. Without
+    // this the strip (z-40) overlays the rails (z-20) and the rail
+    // headers (Upcoming on left, Discussions on right) get covered.
+    <div className="sticky top-0 z-40 border-b border-emerald-200 bg-emerald-50/95 backdrop-blur-sm supports-[backdrop-filter]:bg-emerald-50/80 lg:mx-80">
       <div className="container-prose flex flex-wrap items-center justify-center gap-x-4 gap-y-1 py-1.5 text-[11px] text-emerald-900 sm:gap-x-6 sm:py-2 sm:text-sm">
         <span className="inline-flex items-center gap-1.5 font-medium">
           <PingDot />
