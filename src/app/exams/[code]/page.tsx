@@ -764,17 +764,8 @@ export default async function ExamPage({
             </div>
           )}
 
-          {/* Scholarships for this exam — surfaced on every exam page so
-              students who can't afford coaching see they qualify for funded
-              schemes. Always rendered (no auth gate, no DB hit). */}
-          <ScholarshipsForExamSection
-            examCode={exam.code}
-            examShortName={exam.shortName}
-            examCategory={String(exam.category)}
-            examState={null}
-          />
-
-          {/* Shishya quick prompts — always available when there's content */}
+          {/* Shishya quick prompts — primary engagement surface, so it
+              sits above the scholarships list. */}
           {hasContent && (
             <div id="shishya" className="scroll-mt-20 rounded-md border border-ink-200 bg-white p-4 shadow-sm">
               <div className="flex items-baseline justify-between">
@@ -806,6 +797,16 @@ export default async function ExamPage({
               </ul>
             </div>
           )}
+
+          {/* Scholarships for this exam — surfaced on every exam page so
+              students who can't afford coaching see they qualify for funded
+              schemes. Always rendered (no auth gate, no DB hit). */}
+          <ScholarshipsForExamSection
+            examCode={exam.code}
+            examShortName={exam.shortName}
+            examCategory={String(exam.category)}
+            examState={null}
+          />
 
         </aside>
 
