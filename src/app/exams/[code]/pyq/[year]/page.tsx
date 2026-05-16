@@ -132,6 +132,28 @@ export default async function PYQYearPage({
             </Link>
           </div>
 
+          {/* First-time advisory: students who've never taken a mock on
+              this exam often bounce off a 90Q/60min test on day 1.
+              Offer the AI-tutor warmup as a gentler on-ramp. */}
+          {!userAttempt && (
+            <div className="mt-4 flex flex-wrap items-start gap-2 rounded-md border border-saffron-200 bg-saffron-50/50 p-3 text-xs">
+              <span aria-hidden className="text-base leading-none">⏱️</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-ink-800">
+                  <span className="font-semibold">{questions.length} questions, {exam.durationMin} minutes timed.</span>{" "}
+                  First time on {exam.shortName}? Ask Shishya AI to quiz you with a
+                  quick 10-question warmup first — it picks your topic and adapts.
+                </p>
+                <Link
+                  href={`/chat?examCode=${code}&seed=${encodeURIComponent(`Quiz me on ${exam.shortName} — start with 10 easy questions, then build a full mock around my weak topics.`)}`}
+                  className="mt-1 inline-block font-medium text-saffron-700 hover:text-saffron-800"
+                >
+                  Start a warmup quiz with Shishya →
+                </Link>
+              </div>
+            </div>
+          )}
+
           {userAttempt && (userAttempt.status === "SUBMITTED" || userAttempt.status === "AUTO_SUBMITTED") && (
             <div className="mt-4 border-t border-ink-100 pt-3">
               <Link

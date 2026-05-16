@@ -70,7 +70,7 @@ async function renderDashboard() {
   `) ?? [];
   const showOnboarding = !onboardedRows[0]?.onboardedAt;
 
-  const [allExams, enrollments, recentAttempts, weakness, chatRecent, dailyBriefs] =
+  const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs] =
     await Promise.all([
       getDashboardExams(),
       prisma.enrollment.findMany({
@@ -83,6 +83,20 @@ async function renderDashboard() {
         include: { mock: { include: { exam: { select: { code: true, shortName: true } } } } },
         orderBy: { startedAt: "desc" },
         take: 5,
+      }),
+      // Stalled / abandoned IN_PROGRESS mocks. We surface these in a
+      // recovery banner so students who bounced mid-mock have a
+      // one-click way back (Sachin pattern — signed up, started 3
+      // mocks, never finished).
+      prisma.attempt.findMany({
+        where: {
+          userId,
+          status: "IN_PROGRESS",
+          startedAt: { lt: new Date(Date.now() - 30 * 60 * 1000) }, // >30 min old
+        },
+        include: { mock: { include: { exam: { select: { code: true, shortName: true } } } } },
+        orderBy: { startedAt: "desc" },
+        take: 3,
       }),
       prisma.weaknessMap.findMany({
         where: { userId },
@@ -258,6 +272,55 @@ async function renderDashboard() {
             </Link>
           )}
         </div>
+
+        {/* Stalled-mock recovery banner. Shows when the student has
+            IN_PROGRESS attempts from a prior session. Without this they
+            often forget the mock is sitting half-done. */}
+        {stalledAttempts.length > 0 && (
+          <section className="mt-6 rounded-md border border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <span aria-hidden className="text-2xl">⏸️</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-ink-900">
+                  Pick up where you left off
+                </p>
+                <p className="mt-0.5 text-xs text-ink-700">
+                  You have {stalledAttempts.length === 1 ? "a mock" : `${stalledAttempts.length} mocks`} still in progress. Resume any of them in one click — your answers so far are saved.
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {stalledAttempts.map((a) => {
+                    const ans = (a.answers as any[]) ?? [];
+                    const answered = ans.filter((x) => x?.chosen).length;
+                    const total = Array.isArray(a.mock?.questionIds) ? a.mock.questionIds.length : ans.length;
+                    const startedMin = Math.round((Date.now() - new Date(a.startedAt).getTime()) / 60000);
+                    const startedAgo =
+                      startedMin < 60 ? `${startedMin}m ago` :
+                      startedMin < 1440 ? `${Math.round(startedMin / 60)}h ago` :
+                      `${Math.round(startedMin / 1440)}d ago`;
+                    return (
+                      <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-saffron-200 bg-white px-3 py-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-ink-900">{a.mock.title}</p>
+                          <p className="text-[11px] text-ink-500">
+                            {a.mock.exam.shortName} · started {startedAgo}
+                            {total > 0 && ` · ${answered}/${total} answered`}
+                          </p>
+                        </div>
+                        <Link
+                          href={`/mocks/${a.mock.id}?attempt=${a.id}`}
+                          prefetch={false}
+                          className="btn-primary !py-1.5 !px-3 text-xs"
+                        >
+                          Continue →
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Enrolled exams */}
         <section className="mt-8">
