@@ -89,7 +89,10 @@ Each question MUST:
 - Be answerable from the listed topic without external context
 - Be conceptually self-contained (no diagrams referenced)`;
 
-export const MAX_QUESTIONS_PER_CALL = 15;
+// Lowered from 15 → 10 after observing truncated JSON on multi-batch
+// runs. 10 questions × ~250 output tokens + web_search reasoning fits
+// comfortably under max_tokens=16000 with margin.
+export const MAX_QUESTIONS_PER_CALL = 10;
 
 export async function generatePYQPatternBatch(
   input: PYQGenerationInput,
@@ -128,7 +131,7 @@ Return STRICT JSON per the schema in the system prompt.`;
       const stream = anthropic.messages.stream(
         {
           model: MODEL,
-          max_tokens: 8000,
+          max_tokens: 16000,
           tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 6 }] as any,
           system: [
             { type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } },
@@ -166,7 +169,14 @@ Return STRICT JSON per the schema in the system prompt.`;
 
   const parsed = extractJson(text);
   if (!parsed || !Array.isArray(parsed.questions)) {
-    throw new Error(`PYQ-gen returned malformed JSON: ${text.slice(0, 300)}`);
+    // Show head + tail so we can tell truncation (tail mid-token) from
+    // genuine parse failures (tail looks clean but extra prose).
+    const head = text.slice(0, 200).replace(/\s+/g, " ");
+    const tail = text.slice(-200).replace(/\s+/g, " ");
+    const stopReason = (finalMessage as any).stop_reason ?? "?";
+    throw new Error(
+      `PYQ-gen returned malformed JSON (len=${text.length}, stop=${stopReason})\n  head: ${head}\n  tail: ${tail}`,
+    );
   }
 
   const topicByCode = new Map(input.topics.map((t) => [t.code, t.id]));
@@ -214,28 +224,58 @@ function extractJson(text: string): any | null {
   // Pull the first balanced JSON object out of the text.
   const first = body.indexOf("{");
   const last = body.lastIndexOf("}");
-  if (first === -1 || last === -1 || last <= first) return null;
-  // Try the largest candidate first.
-  try { return JSON.parse(body.slice(first, last + 1)); } catch {}
-  // Fallback: scan for the largest balanced { ... } substring.
-  let depth = 0;
-  let start = -1;
-  let best: { from: number; to: number } | null = null;
-  for (let i = 0; i < body.length; i++) {
-    const ch = body[i];
-    if (ch === "{") {
-      if (depth === 0) start = i;
-      depth += 1;
-    } else if (ch === "}") {
-      depth -= 1;
-      if (depth === 0 && start !== -1) {
-        if (!best || i - start > best.to - best.from) best = { from: start, to: i };
-        start = -1;
+  if (first !== -1 && last !== -1 && last > first) {
+    // Try the largest candidate first.
+    try { return JSON.parse(body.slice(first, last + 1)); } catch {}
+    // Fallback: scan for the largest balanced { ... } substring.
+    let depth = 0;
+    let start = -1;
+    let best: { from: number; to: number } | null = null;
+    for (let i = 0; i < body.length; i++) {
+      const ch = body[i];
+      if (ch === "{") {
+        if (depth === 0) start = i;
+        depth += 1;
+      } else if (ch === "}") {
+        depth -= 1;
+        if (depth === 0 && start !== -1) {
+          if (!best || i - start > best.to - best.from) best = { from: start, to: i };
+          start = -1;
+        }
       }
     }
+    if (best) {
+      try { return JSON.parse(body.slice(best.from, best.to + 1)); } catch {}
+    }
   }
-  if (best) {
-    try { return JSON.parse(body.slice(best.from, best.to + 1)); } catch {}
+  // Truncation salvage: when the model hit max_tokens mid-output,
+  // the top-level JSON won't close. But we can still recover the
+  // complete `{ ... }` question objects inside the `"questions": [`
+  // array up to the point the stream cut off.
+  const qKey = body.indexOf('"questions"');
+  if (qKey !== -1) {
+    const arrStart = body.indexOf("[", qKey);
+    if (arrStart !== -1) {
+      const objs: any[] = [];
+      let i = arrStart + 1;
+      while (i < body.length) {
+        while (i < body.length && /[\s,]/.test(body[i])) i++;
+        if (body[i] !== "{") break;
+        let depth = 0;
+        const objStart = i;
+        let closed = false;
+        for (; i < body.length; i++) {
+          if (body[i] === "{") depth += 1;
+          else if (body[i] === "}") {
+            depth -= 1;
+            if (depth === 0) { i += 1; closed = true; break; }
+          }
+        }
+        if (!closed) break;
+        try { objs.push(JSON.parse(body.slice(objStart, i))); } catch { break; }
+      }
+      if (objs.length > 0) return { questions: objs };
+    }
   }
   return null;
 }
