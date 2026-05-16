@@ -85,35 +85,47 @@ export function OnboardingTour() {
     if (sessionStorage.getItem(SKIPPED_KEY) === "1") setOpen(false);
   }, []);
 
-  // Measure the anchor every time the step changes (and on resize).
+  // Measure the anchor when the step changes (and on resize). We do NOT
+  // listen to scroll here — scrollIntoView + a scroll-event remeasure
+  // creates a self-triggering loop that hangs the tab (smooth scroll
+  // fires scroll events → measure → scrollIntoView → repeat). Step 1
+  // scrolls the anchor in once; the user's own scroll after that just
+  // shifts the spotlight off-screen, which is fine.
   useEffect(() => {
     if (!open) return;
     if (!("anchor" in step) || !step.anchor) {
       setAnchorRect(null);
       return;
     }
-    const measure = () => {
-      const el = document.querySelector<HTMLElement>(`[data-onboard="${step.anchor}"]`);
+    const anchor = step.anchor;
+    let cancelled = false;
+
+    const remeasure = () => {
+      if (cancelled) return;
+      const el = document.querySelector<HTMLElement>(`[data-onboard="${anchor}"]`);
       if (!el) {
         setAnchorRect(null);
         return;
       }
-      // Scroll the anchor into view so the spotlight is on-screen.
-      el.scrollIntoView({ block: "center", behavior: "smooth" });
-      // Defer measure until after the smooth scroll settles roughly.
-      requestAnimationFrame(() => {
-        const r = el.getBoundingClientRect();
-        setAnchorRect(r);
-      });
+      const r = el.getBoundingClientRect();
+      setAnchorRect(r);
     };
-    measure();
-    window.addEventListener("resize", measure);
-    window.addEventListener("scroll", measure, { passive: true });
-    const id = setInterval(measure, 400); // catch layout shifts during scroll
+
+    // One-time: bring the anchor into view for this step.
+    const el = document.querySelector<HTMLElement>(`[data-onboard="${anchor}"]`);
+    if (el) {
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+    // Measure shortly after the scroll has had time to settle.
+    const t1 = window.setTimeout(remeasure, 350);
+    const t2 = window.setTimeout(remeasure, 800);
+
+    window.addEventListener("resize", remeasure);
     return () => {
-      window.removeEventListener("resize", measure);
-      window.removeEventListener("scroll", measure);
-      clearInterval(id);
+      cancelled = true;
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.removeEventListener("resize", remeasure);
     };
   }, [idx, open, step]);
 
