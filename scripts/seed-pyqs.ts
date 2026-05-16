@@ -23,31 +23,36 @@ import { PrismaClient } from "@prisma/client";
 import { generatePYQPatternBatch, MAX_QUESTIONS_PER_CALL } from "../src/lib/ai/pyq-generator";
 
 const COST_PER_BATCH = 0.15;
-const DEFAULT_TARGET = 25;
+const DEFAULT_TARGET = 100;
 const YEARS_BACK = 5;
+const MAX_BATCHES_PER_EXAM = 10; // 10 × 15 = 150 questions max per exam
 
 interface Args {
   exams?: string[];
   top?: number;
   target: number;
   budget: number;
+  parallel: number;
   dryRun: boolean;
   refresh: boolean;
 }
 
 function parseArgs(): Args {
-  const a: any = { target: DEFAULT_TARGET, budget: 30, dryRun: false, refresh: false };
+  // Default budget set high so the script runs the full popularity
+  // sweep without manual intervention. Use --budget to cap.
+  const a: any = { target: DEFAULT_TARGET, budget: 1000, parallel: 3, dryRun: false, refresh: false };
   const argv = process.argv;
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
     const next = () => argv[++i];
     switch (arg) {
-      case "--exams":   a.exams = next().split(",").map((s: string) => s.trim()); break;
-      case "--top":     a.top = parseInt(next(), 10); break;
-      case "--target":  a.target = parseInt(next(), 10); break;
-      case "--budget":  a.budget = parseFloat(next()); break;
-      case "--refresh": a.refresh = true; break;
-      case "--dry-run": a.dryRun = true; break;
+      case "--exams":    a.exams = next().split(",").map((s: string) => s.trim()); break;
+      case "--top":      a.top = parseInt(next(), 10); break;
+      case "--target":   a.target = parseInt(next(), 10); break;
+      case "--budget":   a.budget = parseFloat(next()); break;
+      case "--parallel": a.parallel = parseInt(next(), 10); break;
+      case "--refresh":  a.refresh = true; break;
+      case "--dry-run":  a.dryRun = true; break;
     }
   }
   return a as Args;
@@ -113,18 +118,21 @@ async function main() {
   // Skip the current year — papers usually publish post-conduct.
   const years = Array.from({ length: YEARS_BACK }, (_, i) => currentYear - 1 - i);
 
-  let processed = 0;
-  let skipped = 0;
-  let failed = 0;
-  let noTopics = 0;
-  let spentUSD = 0;
-  let totalCreated = 0;
+  // Shared counters protected by serial-ish access (we await each exam
+  // result before moving on; JS is single-threaded inside the script
+  // itself, the parallelism happens in the I/O wait).
+  const counters = {
+    processed: 0,
+    skipped: 0,
+    failed: 0,
+    noTopics: 0,
+    spentUSD: 0,
+    totalCreated: 0,
+  };
+  let budgetExceeded = false;
 
-  for (const exam of exams) {
-    if (spentUSD >= args.budget) {
-      console.log(`\n[budget] stopping at $${spentUSD.toFixed(2)}`);
-      break;
-    }
+  async function runExam(exam: typeof exams[number]): Promise<void> {
+    if (budgetExceeded) return;
 
     // Idempotence: if exam already has the target PYQs and --refresh
     // isn't set, skip.
@@ -133,15 +141,15 @@ async function main() {
     });
     if (existingPYQs >= args.target && !args.refresh) {
       console.log(`  (skip) ${exam.code.padEnd(22)} ${existingPYQs} PYQs already`);
-      skipped += 1;
-      continue;
+      counters.skipped += 1;
+      return;
     }
 
     const topics = await pickTopics(exam.id);
     if (topics.length === 0) {
       console.log(`  (gap)  ${exam.code.padEnd(22)} no topics seeded — run seed-syllabus-ai first`);
-      noTopics += 1;
-      continue;
+      counters.noTopics += 1;
+      return;
     }
 
     const popLabel = exam.candidatesPerYear
@@ -149,10 +157,10 @@ async function main() {
       : "cps=n/a";
     console.log(`  → ${exam.code.padEnd(22)} ${exam.shortName.padEnd(28)} ${popLabel}  topics=${topics.length}  have=${existingPYQs}`);
     if (args.dryRun) {
-      processed += 1;
+      counters.processed += 1;
       const batches = Math.ceil((args.target - existingPYQs) / MAX_QUESTIONS_PER_CALL);
-      spentUSD += batches * COST_PER_BATCH;
-      continue;
+      counters.spentUSD += batches * COST_PER_BATCH;
+      return;
     }
 
     let createdHere = 0;
@@ -160,7 +168,7 @@ async function main() {
     let batchIdx = 0;
     const allSources = new Set<string>();
 
-    while (needed > 0 && spentUSD < args.budget) {
+    while (needed > 0 && !budgetExceeded) {
       batchIdx += 1;
       // Rotate topic windows across batches so we cover the breadth
       // rather than hammering the same 8 topics each call.
@@ -168,7 +176,8 @@ async function main() {
         .slice((batchIdx - 1) * 8, (batchIdx - 1) * 8 + 8);
       const useTopics = topicsForBatch.length > 0
         ? topicsForBatch
-        : topics.slice(0, Math.min(8, topics.length));
+        : topics.slice(((batchIdx - 1) * 8) % Math.max(1, topics.length), ((batchIdx - 1) * 8) % Math.max(1, topics.length) + 8);
+      const fallbackTopics = useTopics.length > 0 ? useTopics : topics.slice(0, Math.min(8, topics.length));
 
       try {
         const { questions, sources } = await generatePYQPatternBatch({
@@ -176,19 +185,18 @@ async function main() {
           examName: exam.name,
           examShortName: exam.shortName,
           category: String(exam.category),
-          topics: useTopics,
+          topics: fallbackTopics,
           years,
           targetCount: Math.min(needed, MAX_QUESTIONS_PER_CALL),
         });
         for (const s of sources) allSources.add(s);
 
         if (questions.length === 0) {
-          console.log(`     ✗ batch ${batchIdx} returned 0 usable questions`);
-          spentUSD += COST_PER_BATCH;
-          break; // don't keep retrying empty batches
+          console.log(`     ✗ ${exam.code} batch ${batchIdx} returned 0 usable questions`);
+          counters.spentUSD += COST_PER_BATCH;
+          break;
         }
 
-        // Persist in parallel.
         await Promise.all(
           questions.map((q) =>
             p.question.create({
@@ -215,24 +223,40 @@ async function main() {
 
         createdHere += questions.length;
         needed -= questions.length;
-        spentUSD += COST_PER_BATCH;
-        console.log(`     ✓ batch ${batchIdx}: +${questions.length}  (total here ${createdHere}, sources cited ${allSources.size})`);
+        counters.spentUSD += COST_PER_BATCH;
+        console.log(`     ✓ ${exam.code} batch ${batchIdx}: +${questions.length}  (have ${existingPYQs + createdHere}, spent $${counters.spentUSD.toFixed(2)})`);
 
-        // Safety: don't loop more than 5 batches per exam.
-        if (batchIdx >= 5) break;
+        if (counters.spentUSD >= args.budget) {
+          budgetExceeded = true;
+          break;
+        }
+        if (batchIdx >= MAX_BATCHES_PER_EXAM) break;
       } catch (err) {
-        console.error(`     ✗ batch ${batchIdx} failed:`, (err as Error).message);
-        spentUSD += COST_PER_BATCH * 0.5;
-        failed += 1;
+        console.error(`     ✗ ${exam.code} batch ${batchIdx} failed:`, (err as Error).message);
+        counters.spentUSD += COST_PER_BATCH * 0.5;
+        counters.failed += 1;
         break;
       }
     }
 
     if (createdHere > 0) {
-      processed += 1;
-      totalCreated += createdHere;
+      counters.processed += 1;
+      counters.totalCreated += createdHere;
     }
   }
+
+  // Run exams in parallel waves of `args.parallel`. Each wave waits
+  // for all members to finish before kicking off the next so we
+  // don't pile too many concurrent Anthropic + DB sessions.
+  for (let i = 0; i < exams.length; i += args.parallel) {
+    if (budgetExceeded) {
+      console.log(`\n[budget] stopping at $${counters.spentUSD.toFixed(2)}`);
+      break;
+    }
+    const wave = exams.slice(i, i + args.parallel);
+    await Promise.all(wave.map(runExam));
+  }
+  const { processed, skipped, failed, noTopics, spentUSD, totalCreated } = counters;
 
   console.log(`\n=== summary ===`);
   console.log(`Exams processed:    ${processed}`);
