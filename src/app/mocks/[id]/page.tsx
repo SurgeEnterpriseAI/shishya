@@ -51,6 +51,18 @@ export default async function MockPlayerPage({
 
   let attempt = existingInProgress;
   if (!attempt) {
+    // Auto-enrol the student on the exam before creating the attempt.
+    // Mirrors POST /api/attempts (Sachin-pattern fix). This page is the
+    // OTHER entry point that creates an Attempt server-side — without
+    // this upsert, users who land here directly (e.g. via a PYQ link)
+    // get an attempt but no enrollment, breaking their WeaknessMap +
+    // dashboard recommendations. Caught when Abhishek (signup 17:10,
+    // SSC_GD attempt 17:11) had no enrollment.
+    await prisma.enrollment.upsert({
+      where: { userId_examId: { userId, examId: mock.examId } },
+      update: {},
+      create: { userId, examId: mock.examId },
+    });
     attempt = await prisma.attempt.create({
       data: { mockId: mock.id, userId, status: "IN_PROGRESS", answers: [] },
     });
