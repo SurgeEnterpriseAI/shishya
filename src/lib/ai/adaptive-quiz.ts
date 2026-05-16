@@ -25,6 +25,10 @@ export interface AdaptiveQuizResult {
   warmupUrl: string;
   warmupQuestionCount: number;
   warmupDurationMin: number;
+  /** Ready-to-send Markdown the AI tutor relays verbatim. */
+  message_to_user: string;
+  /** Hint to the AI on how to handle the response. Not for the user. */
+  next_action: string;
   fullMockId: string | null;
   fullMockTitle: string | null;
   fullMockUrl: string | null;
@@ -33,8 +37,6 @@ export interface AdaptiveQuizResult {
   topicTargeted: string;
   topicTargetedCode: string;
   isColdStart: boolean;
-  /** Hint for the AI on how to phrase the response. Not user-facing. */
-  next_action: string;
 }
 
 /**
@@ -175,10 +177,7 @@ export async function createAdaptiveQuiz(
   //
   // Behaviour now: return the warmup mock immediately. The full
   // adaptive mock can be generated lazily later (e.g. when the
-  // student finishes the warmup) via a separate call. Cost: a
-  // student wanting both has to ask twice; benefit: tool runs in
-  // well under a second.
-  const fullMock: { id: string; title: string; questionCount: number; durationMin: number } | null = null;
+  // student finishes the warmup) via a separate call.
 
   // Pre-formatted Markdown the AI is instructed to send verbatim.
   // Avoids the AI hallucinating extra structure (it was making up a
@@ -200,11 +199,13 @@ export async function createAdaptiveQuiz(
     warmupUrl: `/mocks/${warmupMock.id}`,
     warmupQuestionCount: warmupResult.questionIds.length,
     warmupDurationMin: warmupResult.durationMin,
-    fullMockId: fullMock?.id ?? null,
-    fullMockTitle: fullMock?.title ?? null,
-    fullMockUrl: fullMock ? `/mocks/${fullMock.id}` : null,
-    fullMockQuestionCount: fullMock?.questionCount ?? null,
-    fullMockDurationMin: fullMock?.durationMin ?? null,
+    // Full mock generation is deferred; keep these in the response for
+    // backwards-compatibility with any caller that still reads them.
+    fullMockId: null as string | null,
+    fullMockTitle: null as string | null,
+    fullMockUrl: null as string | null,
+    fullMockQuestionCount: null as number | null,
+    fullMockDurationMin: null as number | null,
     topicTargeted: targetTopicName ?? targetTopicCode!,
     topicTargetedCode: targetTopicCode!,
     isColdStart,
