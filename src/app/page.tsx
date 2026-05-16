@@ -522,7 +522,9 @@ function Footer() {
     <footer className="border-t border-ink-200 bg-white py-10">
       <div className="container-prose flex flex-col items-center justify-between gap-3 text-xs text-ink-500 sm:flex-row">
         <p>© {new Date().getFullYear()} Shishya · Built by Surge Software Solutions</p>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <Link href="/scholarships" className="hover:text-ink-800">Scholarships</Link>
+          <Link href="/ideas" className="hover:text-ink-800">Ideas board</Link>
           <a href="https://github.com/SurgeEnterpriseAI/shishya" className="hover:text-ink-800">GitHub</a>
           <a href="mailto:venumuvva@surgesoftware.co.in" className="hover:text-ink-800">Contact</a>
           <a href="https://surgesoftware.co.in" className="hover:text-ink-800">Surge</a>

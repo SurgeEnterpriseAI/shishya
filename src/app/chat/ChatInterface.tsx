@@ -43,6 +43,7 @@ function prettyTool(name?: string): string {
     case "get_attempt_mistakes": return "Reviewing your mistakes…";
     case "predict_rank": return "Estimating your rank band…";
     case "start_adaptive_quiz": return "Building your quiz (warmup + full mock)…";
+    case "find_scholarships": return "Finding scholarships you qualify for…";
     default: return name ? `Calling ${name}…` : "Thinking…";
   }
 }

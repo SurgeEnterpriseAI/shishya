@@ -15,6 +15,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
 import { createAdaptiveQuiz } from "./adaptive-quiz";
+import { SCHOLARSHIPS, scholarshipsForExam, type Scholarship } from "@/data/scholarships";
 
 export interface ToolContext {
   userId: string;
@@ -107,6 +108,40 @@ export const tutorTools: Anthropic.Messages.Tool[] = [
     },
   },
   {
+    name: "find_scholarships",
+    description:
+      "Find Indian scholarships the student can apply for. Call this when the student asks about scholarships, financial aid, fee waivers, or 'how can I afford college'. Returns matching central/state/private scholarships with eligibility, amount, and apply link. Filter by category (SC/ST/OBC/EWS/MIN/GEN), gender, state, or level if mentioned. Always tell the student that the application is FREE on the official portal — never imply they need to pay anyone.",
+    input_schema: {
+      type: "object",
+      properties: {
+        category: {
+          type: "string",
+          enum: ["GEN", "OBC", "SC", "ST", "EWS", "MIN"],
+          description: "Student's social category if mentioned. Omit if not specified.",
+        },
+        gender: {
+          type: "string",
+          enum: ["F", "M"],
+          description: "F to surface girls-only scholarships. Omit otherwise.",
+        },
+        state: {
+          type: "string",
+          description: "Two-letter Indian state code (e.g. 'MH', 'TN', 'KA') if the student mentioned their home state.",
+        },
+        level: {
+          type: "string",
+          enum: ["CLASS_9_10", "CLASS_11_12", "DIPLOMA", "UG", "PG", "PHD"],
+          description: "Student's current education level.",
+        },
+        max_results: {
+          type: "number",
+          description: "Max scholarships to return. Defaults to 6.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
     name: "predict_rank",
     description:
       "Predict what real-exam rank + likely outcome (colleges / posts) a student would get if they scored a given percentage. Call this when the student asks 'what rank can I get with X%', 'will this score get me into [college]', 'is my current score enough', or any question about outcomes / colleges / cut-offs. Returns the band that matches the score and the full ladder of bands so you can also tell the student how many more marks they need to climb to the next tier.",
@@ -161,6 +196,8 @@ export async function executeTool(
             typeof input?.topic_hint === "string" ? input.topic_hint : undefined,
           ),
         };
+      case "find_scholarships":
+        return { ok: true, data: findScholarships(ctx, input) };
       default:
         return { ok: false, error: `Unknown tool: ${name}` };
     }
@@ -327,6 +364,75 @@ async function getAttemptMistakes(ctx: ToolContext, attemptId: string) {
         };
       })
       .filter((x) => x !== null),
+  };
+}
+
+/**
+ * Filter the static scholarships catalogue for the tutor. Combines:
+ *   - exam-specific matches (using scholarshipsForExam helper)
+ *   - explicit filter args from the AI (category, gender, state, level)
+ * The tutor uses the result to nudge the student toward schemes they
+ * actually qualify for. Never falls through to "no results" — we always
+ * return at least the broadest umbrella schemes (NSP / Reliance / etc).
+ */
+function findScholarships(ctx: ToolContext, input: any) {
+  const wantCategory = input?.category as string | undefined;
+  const wantGender = input?.gender as string | undefined;
+  const wantState = input?.state as string | undefined;
+  const wantLevel = input?.level as string | undefined;
+  const maxResults = Math.min(12, Math.max(3, Number(input?.max_results ?? 6)));
+
+  // Exam-aware base list. Falls back to all scholarships if examCode
+  // doesn't map to one (e.g. tutor running in general mode).
+  let pool: Scholarship[] = ctx.examCode
+    ? scholarshipsForExam(ctx.examCode, "")
+    : [];
+  if (pool.length === 0) pool = [...SCHOLARSHIPS];
+
+  // Apply filters. A scholarship with no restriction in a dimension
+  // is considered "open to anyone" in that dimension — passes the filter.
+  let filtered = pool.filter((s) => {
+    if (wantState && s.state !== null && s.state !== wantState) return false;
+    if (wantLevel && !s.levels.includes(wantLevel as any)) return false;
+    if (wantCategory && s.eligibility.categories && !s.eligibility.categories.includes(wantCategory as any)) {
+      return false;
+    }
+    if (wantGender && s.eligibility.gender && s.eligibility.gender !== wantGender) return false;
+    return true;
+  });
+
+  // If filters were too aggressive, broaden to the full set + tag that
+  // we relaxed so the tutor can explain it.
+  let relaxed = false;
+  if (filtered.length === 0) {
+    relaxed = true;
+    filtered = [...SCHOLARSHIPS].filter((s) => {
+      if (wantGender && s.eligibility.gender && s.eligibility.gender !== wantGender) return false;
+      if (wantCategory && s.eligibility.categories && !s.eligibility.categories.includes(wantCategory as any)) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  const top = filtered.slice(0, maxResults);
+  return {
+    scholarships: top.map((s) => ({
+      id: s.id,
+      name: s.name,
+      awarding_body: s.awardingBody,
+      type: s.type,
+      amount: s.amount,
+      eligibility: s.eligibility,
+      apply_url: s.applyUrl,
+      deadline: s.deadline,
+      levels: s.levels,
+      description: s.description,
+    })),
+    note: relaxed
+      ? "Filters were too narrow — relaxed to show the broadest set of options the student qualifies for. Tell the student to also check /scholarships for the full catalogue and filter by state."
+      : "These are pre-filtered to the student's exam + filters. Tell the student application is FREE on the official portal. For more options, point them to /scholarships.",
+    catalogue_url: "/scholarships",
   };
 }
 

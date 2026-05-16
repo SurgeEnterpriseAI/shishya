@@ -19,6 +19,7 @@ import { getT } from "@/lib/i18n-server";
 import { StartMockButton } from "./StartMockButton";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { computeScoreBoost } from "@/lib/focus-topics";
+import { ScholarshipsForExamSection } from "@/components/ScholarshipsForExamSection";
 
 // Per-exam meta. Lets Google show "Shishya — RRB NTPC syllabus, mocks,
 // previous year papers, Shishya AI tutor" for every one of 163 exams.
@@ -762,6 +763,16 @@ export default async function ExamPage({
               </div>
             </div>
           )}
+
+          {/* Scholarships for this exam — surfaced on every exam page so
+              students who can't afford coaching see they qualify for funded
+              schemes. Always rendered (no auth gate, no DB hit). */}
+          <ScholarshipsForExamSection
+            examCode={exam.code}
+            examShortName={exam.shortName}
+            examCategory={String(exam.category)}
+            examState={null}
+          />
 
           {/* Shishya quick prompts — always available when there's content */}
           {hasContent && (
