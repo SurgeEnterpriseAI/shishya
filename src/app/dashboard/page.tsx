@@ -12,6 +12,7 @@ import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
 import { computeExamTags, TAG_ORDER } from "@/lib/exam-tags";
 import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
 import { formatDisplayScorePct } from "@/lib/scoring";
+import { OnboardingTour } from "@/components/OnboardingTour";
 
 export default async function DashboardPage() {
   try {
@@ -62,6 +63,13 @@ async function renderDashboard() {
   // clock collapses to ~max(query) instead of ~sum(queries). The shared
   // exam list still uses unstable_cache so most requests skip the DB
   // for it entirely.
+  // onboardedAt: column added April 2026. Querying via $queryRaw so this
+  // works before the next Prisma client regenerate too.
+  const onboardedRows = (await prisma.$queryRaw<{ onboardedAt: Date | null }[]>`
+    SELECT "onboardedAt" FROM "User" WHERE "id" = ${userId} LIMIT 1
+  `) ?? [];
+  const showOnboarding = !onboardedRows[0]?.onboardedAt;
+
   const [allExams, enrollments, recentAttempts, weakness, chatRecent, dailyBriefs] =
     await Promise.all([
       getDashboardExams(),
@@ -229,6 +237,9 @@ async function renderDashboard() {
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
+      {/* First-time onboarding tour. Renders nothing once the user has
+          finished or skipped it (onboardedAt set on the User row). */}
+      {showOnboarding && <OnboardingTour />}
       <section className="container-prose py-10">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -240,6 +251,7 @@ async function renderDashboard() {
           {enrollments.length > 0 && (
             <Link
               href="/chat"
+              data-onboard="header-tutor"
               className="btn-secondary !py-2 !px-4 text-xs sm:text-sm"
             >
               {t("nav.tutor")}
@@ -471,7 +483,7 @@ async function renderDashboard() {
 
         {/* Other exams — curated browse (search + chips + state grid) */}
         {otherExamCards.length > 0 && (
-          <section className="mt-10">
+          <section className="mt-10" data-onboard="explore">
             <h2 className="text-base font-semibold text-ink-800">{t("dash.explore")}</h2>
             <div className="mt-4">
               <ExamPicker
