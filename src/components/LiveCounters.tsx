@@ -1,8 +1,14 @@
 "use client";
 
-// Auto-refreshing live activity counters. Re-computes every 12 s using the
-// pure `getLiveCounts(now)` function so we don't need a network call —
-// numbers drift believably on a per-minute basis.
+// Auto-refreshing live activity counters.
+//
+// Numbers come from /api/live-counts which queries the real DB and adds
+// a +1,000 synthetic floor to "online" + "totalEver" so day-1 visitors
+// don't see "3 students helped till now". Real numbers replace the
+// floor's importance as the platform grows.
+//
+// Polls every 30s (API caches for 30s on the edge → roughly one real DB
+// hit per 30s regardless of concurrent visitors).
 //
 // Two render variants:
 //   <LiveCountersStrip />    — slim full-width banner above the hero
@@ -18,16 +24,42 @@ interface StripLabels {
   totalEver: string;
 }
 
-const TICK_MS = 12_000;
+const TICK_MS = 30_000;
 
 function useLiveCounts(): LiveCounts {
+  // Seed with the synthetic-floor-only fallback so the first paint shows
+  // believable numbers even before the fetch resolves. The fetch then
+  // overlays the real DB-backed counts within ~200ms.
   const [counts, setCounts] = useState<LiveCounts>(() => getLiveCounts(new Date()));
+
   useEffect(() => {
+    let cancelled = false;
+    async function tick() {
+      try {
+        const res = await fetch("/api/live-counts", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as Partial<LiveCounts>;
+        if (cancelled) return;
+        setCounts((prev) => ({
+          online: data.online ?? prev.online,
+          mocksInProgress: data.mocksInProgress ?? prev.mocksInProgress,
+          mocksToday: data.mocksToday ?? prev.mocksToday,
+          activeDiscussions: data.activeDiscussions ?? prev.activeDiscussions,
+          totalEver: data.totalEver ?? prev.totalEver,
+        }));
+      } catch {
+        /* network blip — keep whatever we last had */
+      }
+    }
+    tick();
     const id = window.setInterval(() => {
       if (document.hidden) return;
-      setCounts(getLiveCounts(new Date()));
+      void tick();
     }, TICK_MS);
-    return () => window.clearInterval(id);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
   }, []);
   return counts;
 }
