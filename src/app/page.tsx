@@ -153,7 +153,10 @@ export default async function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-saffron-50/30">
+    // pr-0 lg:pr-80 — make room for the fixed-width (320px) right-side
+    // discussions panel that mounts on lg+ viewports. Below lg the
+    // panel collapses to a FAB so no right padding is needed.
+    <main className="min-h-screen bg-saffron-50/30 lg:pr-80">
       <SiteHeader locale={locale} t={t} signedIn={signedIn} />
 
       {/* Live activity strip — full-width social proof banner */}
