@@ -183,9 +183,9 @@ export const dict = {
     "disc.sidebar.closeAria": "Close discussions",
 
     // ── Live activity counters
-    "live.preparingNow": "students preparing on Shishya right now",
-    "live.inMockNow": "in a mock test right now",
-    "live.totalEver": "students helped till now",
+    "live.preparingNow": "preparing now",
+    "live.inMockNow": "in a mock",
+    "live.totalEver": "helped till now",
     "live.block.title": "Live on Shishya",
     "live.block.online": "preparing now",
     "live.block.inMock": "in a mock right now",
@@ -604,9 +604,9 @@ export const dict = {
     "disc.sidebar.openAria": "सामुदायिक चर्चाएँ खोलें",
     "disc.sidebar.closeAria": "चर्चाएँ बंद करें",
 
-    "live.preparingNow": "छात्र अभी Shishya पर तैयारी कर रहे हैं",
-    "live.inMockNow": "अभी मॉक टेस्ट दे रहे हैं",
-    "live.totalEver": "छात्रों की मदद अब तक",
+    "live.preparingNow": "अभी तैयारी कर रहे हैं",
+    "live.inMockNow": "मॉक में",
+    "live.totalEver": "मदद की अब तक",
     "live.block.title": "Shishya पर लाइव",
     "live.block.online": "अभी तैयारी कर रहे हैं",
     "live.block.inMock": "अभी मॉक में हैं",
