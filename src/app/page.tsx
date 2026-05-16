@@ -153,10 +153,11 @@ export default async function HomePage() {
   };
 
   return (
-    // pr-0 lg:pr-80 — make room for the fixed-width (320px) right-side
-    // discussions panel that mounts on lg+ viewports. Below lg the
-    // panel collapses to a FAB so no right padding is needed.
-    <main className="min-h-screen bg-saffron-50/30 lg:pr-80">
+    <main className="min-h-screen bg-saffron-50/30">
+      {/* Header + live-counters strip stay full-width so the Sign-in /
+          language picker / social-proof banner reach the viewport's
+          right edge instead of being squeezed by the discussions panel.
+          Everything BELOW the strip gets lg:pr-80 to clear the panel. */}
       <SiteHeader locale={locale} t={t} signedIn={signedIn} />
 
       {/* Live activity strip — full-width social proof banner */}
@@ -169,7 +170,7 @@ export default async function HomePage() {
         }}
       />
 
-      {/* Live community discussions — fixed right rail on xl+, FAB+drawer otherwise */}
+      {/* Live community discussions — fixed right rail on lg+, FAB+drawer otherwise */}
       <DiscussionsSidebar
         initial={initialThreads}
         signedIn={signedIn}
@@ -193,6 +194,10 @@ export default async function HomePage() {
           liveTodaysMocks: t("live.block.todaysMocks"),
         }}
       />
+
+      {/* Body sections — lg:pr-80 clears the 320px discussions panel
+          on the right. Header + live strip above stay full-width. */}
+      <div className="lg:pr-80">
 
       {/* ── Hero: brand line + search + chips + grid ───────────────── */}
       <section className="container-prose pt-12 pb-16 sm:pt-16 sm:pb-20">
@@ -323,6 +328,7 @@ export default async function HomePage() {
       </section>
 
       <Footer />
+      </div>{/* /lg:pr-80 body wrapper */}
     </main>
   );
 }
