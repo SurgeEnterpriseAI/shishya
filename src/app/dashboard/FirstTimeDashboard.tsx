@@ -82,32 +82,42 @@ export function FirstTimeDashboard({
             </div>
           </div>
 
-          {/* Exam picker — popular 8 */}
+          {/* Exam picker — popular 8.
+              Primary action is /quiz-now (no LLM call → ~1s to mock
+              player). Each tile also has a smaller "Or chat with
+              Shishya AI →" link for students who want the tutor
+              experience instead of jumping straight into a quiz. */}
           <p className="mt-8 text-xs font-semibold uppercase tracking-wider text-ink-500">
-            Pick your exam
+            Pick your exam — quiz starts in seconds
           </p>
           <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {POPULAR_EXAMS.map((e) => (
               <li key={e.code}>
-                <Link
-                  href={`/chat?examCode=${e.code}&seed=${encodeURIComponent(QUIZ_SEED(e.short))}`}
-                  className="group flex items-start gap-3 rounded-xl border border-ink-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md"
-                  prefetch={false}
-                >
-                  <span aria-hidden className="text-2xl">
-                    {e.emoji}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-ink-900">{e.short}</p>
-                    <p className="mt-0.5 text-xs text-ink-600">{e.blurb}</p>
-                  </div>
-                  <span
-                    aria-hidden
-                    className="self-center text-ink-300 transition-colors group-hover:text-saffron-500"
+                <div className="group rounded-xl border border-ink-200 bg-white p-4 transition-all hover:border-saffron-400 hover:shadow-md">
+                  <Link
+                    href={`/quiz-now?examCode=${e.code}`}
+                    className="flex items-start gap-3"
+                    prefetch={false}
                   >
-                    →
-                  </span>
-                </Link>
+                    <span aria-hidden className="text-2xl">
+                      {e.emoji}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-ink-900">{e.short}</p>
+                      <p className="mt-0.5 text-xs text-ink-600">{e.blurb}</p>
+                      <p className="mt-2 text-[11px] font-medium text-saffron-700">
+                        Start 10-Q quiz →
+                      </p>
+                    </div>
+                  </Link>
+                  <Link
+                    href={`/chat?examCode=${e.code}&seed=${encodeURIComponent(QUIZ_SEED(e.short))}`}
+                    prefetch={false}
+                    className="mt-2 inline-block text-[11px] text-ink-500 hover:text-saffron-700"
+                  >
+                    Or chat with Shishya AI first →
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>

@@ -164,58 +164,21 @@ export async function createAdaptiveQuiz(
     },
   });
 
-  // 4. FULL adaptive mock sized to the real exam.
-  //    Sized = exam.totalQuestions (cap 100 to keep gen time sane).
-  //    For the pool we pull the broad weakness-friendly set.
-  const fullPool = await fetchAdaptivePool(exam.id, studentState.weaknesses?.map((w) => w.topicId) ?? []);
-  let fullMock: { id: string; title: string; questionCount: number; durationMin: number } | null = null;
-
-  if (fullPool.length >= 20) {
-    // We have enough seeded content to assemble a meaningful full mock.
-    const desiredFull = Math.min(
-      exam.totalQuestions || 100,
-      100, // hard cap so the LLM has a reasonable token budget
-      fullPool.length,
-    );
-    try {
-      const fullResult = await generateMock({
-        studentState,
-        request: { type: "ADAPTIVE", questionCount: desiredFull, durationMin: exam.durationMin || undefined },
-        availableQuestions: fullPool,
-        syllabus,
-      });
-      const m = await prisma.mock.create({
-        data: {
-          userId,
-          examId: exam.id,
-          type: "ADAPTIVE",
-          title: `Adaptive Mock · ${exam.shortName} (${fullResult.questionIds.length}Q)`,
-          config: {
-            rationale: fullResult.rationale,
-            topicMix: fullResult.topicMix,
-            difficultyMix: fullResult.difficultyMix,
-            durationMin: fullResult.durationMin,
-            requestType: "ADAPTIVE",
-            adaptiveTutor: { phase: "full", isColdStart, pairWith: warmupMock.id },
-          },
-          questionIds: fullResult.questionIds,
-          generatedBy: "adaptive-tutor:full",
-          generationContext: { studentSnapshot: studentState as any },
-        },
-      });
-      fullMock = {
-        id: m.id,
-        title: m.title,
-        questionCount: fullResult.questionIds.length,
-        durationMin: fullResult.durationMin,
-      };
-    } catch (err) {
-      // Don't fail the warmup if the full mock generation errors —
-      // the student still gets their warmup, and we surface "full mock
-      // not ready yet" in the response.
-      console.error("[adaptive-quiz] full mock generation failed", err);
-    }
-  }
+  // 4. FULL adaptive mock — DEFERRED.
+  //
+  // Originally this also generated a 100-Q ADAPTIVE mock synchronously
+  // via llmAdaptive (one Claude call to pick from a pool of 200). That
+  // added 5-8s to every tool call, taking the visible "Thinking..." in
+  // the chat past 15s when combined with the tutor's own response
+  // generation. That's too slow for the moment a brand-new student
+  // first asks "quiz me" — measured drop-offs at 20-30s.
+  //
+  // Behaviour now: return the warmup mock immediately. The full
+  // adaptive mock can be generated lazily later (e.g. when the
+  // student finishes the warmup) via a separate call. Cost: a
+  // student wanting both has to ask twice; benefit: tool runs in
+  // well under a second.
+  const fullMock: { id: string; title: string; questionCount: number; durationMin: number } | null = null;
 
   return {
     warmupMockId: warmupMock.id,
@@ -231,9 +194,7 @@ export async function createAdaptiveQuiz(
     topicTargeted: targetTopicName ?? targetTopicCode!,
     topicTargetedCode: targetTopicCode!,
     isColdStart,
-    next_action: fullMock
-      ? `Tell the student: warmup of ${warmupResult.questionIds.length}Q on ${targetTopicName ?? targetTopicCode} is ready right now (link 1). The full ${fullMock.questionCount}Q adaptive mock is also ready — take it after the warmup (link 2). Both are tracked in their results history.`
-      : `Tell the student: warmup of ${warmupResult.questionIds.length}Q on ${targetTopicName ?? targetTopicCode} is ready (link 1). The full adaptive mock couldn't be assembled (not enough seeded content for this exam yet) — they should start with the warmup and the system will generate the full one once they have a result to anchor on.`,
+    next_action: `Tell the student: their ${warmupResult.questionIds.length}-question warmup on ${targetTopicName ?? targetTopicCode} is ready right now — give them a markdown link to ${`/mocks/${warmupMock.id}`} and tell them it'll take ~${warmupResult.durationMin} minutes. After they submit it they can come back and ask 'build me a full mock' — that's a separate request which we'll handle then. Keep your message SHORT: one line of context + the link + one line of encouragement. Do not list multiple options.`,
   };
 }
 
