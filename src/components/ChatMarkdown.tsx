@@ -162,20 +162,33 @@ function tokeniseInline(src: string): InlineToken[] {
   while (i < src.length) {
     const ch = src[i];
 
-    // [text](url)
+    // [text](url) — tolerate the AI's frequent mistake of putting one
+    // or two spaces between `]` and `(`, and a `./` prefix on relative
+    // URLs (we've seen all of: `] (url)`, `](./url)`, `](.//url)`).
     if (ch === "[") {
-      const close = src.indexOf("](", i + 1);
-      const end = close > -1 ? src.indexOf(")", close + 2) : -1;
-      if (close > -1 && end > -1) {
-        const t = src.slice(i + 1, close);
-        const href = src.slice(close + 2, end);
-        // Allow http(s) absolute and same-site relative paths.
-        // Explicitly block dangerous schemes like javascript:/data:/file:.
-        if (/^https?:\/\//i.test(href) || /^\/(?!\/)/.test(href)) {
-          flush();
-          tokens.push({ type: "link", text: t, href });
-          i = end + 1;
-          continue;
+      const close = src.indexOf("]", i + 1);
+      if (close > -1) {
+        // Skip up to 2 whitespace chars between `]` and `(`.
+        let p = close + 1;
+        while (p < src.length && p - close <= 3 && /\s/.test(src[p])) p++;
+        if (src[p] === "(") {
+          const end = src.indexOf(")", p + 1);
+          if (end > -1) {
+            const t = src.slice(i + 1, close);
+            let href = src.slice(p + 1, end).trim();
+            // Normalise `./url` / `.//url` / `/./url` to `/url` for
+            // same-site relative paths. Keep http(s) as-is.
+            if (/^\.{1,2}\/\/?/.test(href)) href = href.replace(/^\.{1,2}\/\/?/, "/");
+            if (/^\/\.\//.test(href)) href = href.replace(/^\/\.\//, "/");
+            // Allow http(s) absolute and same-site relative paths only.
+            // Explicitly block dangerous schemes (javascript:/data:/file:).
+            if (/^https?:\/\//i.test(href) || /^\/(?!\/)/.test(href)) {
+              flush();
+              tokens.push({ type: "link", text: t, href });
+              i = end + 1;
+              continue;
+            }
+          }
         }
       }
     }

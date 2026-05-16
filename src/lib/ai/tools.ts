@@ -95,7 +95,7 @@ export const tutorTools: Anthropic.Messages.Tool[] = [
   {
     name: "start_adaptive_quiz",
     description:
-      "Generate an instant adaptive quiz the student can take RIGHT NOW. Call this whenever the student says any of: 'quiz me', 'test me', 'take a mock now', 'practice me', 'give me questions to solve', 'I want to take a mock', 'let me try some questions'. Creates two mocks back-to-back: (1) a 10-question warmup on their weakest topic that they start immediately, (2) a full-length exam-pattern adaptive mock targeted at their weak areas that's ready by the time they finish the warmup. Both are saved to their results history. Do not call this if the student is mid-conversation about a specific concept and just wants explanation — only call when they actively want to be tested.",
+      "Generate an instant 10-question warmup quiz on the student's weakest topic. Call this whenever the student says any of: 'quiz me', 'test me', 'take a mock now', 'practice me', 'give me questions to solve', 'I want to take a mock', 'let me try some questions'. Creates ONE mock (a 10-question warmup) and saves it to their results history. (A full-length adaptive mock is NOT created here — if the student asks for one after the warmup, call the tool again or guide them to /exams/[code].) Do not call this if the student is mid-conversation about a specific concept and just wants explanation. CRITICAL: When this tool returns, output ONLY the `message_to_user` field verbatim as your entire response — do not add a preface, do not list extra options, do not invent claims about additional mocks. The message_to_user already contains the correct link and framing.",
     input_schema: {
       type: "object",
       properties: {

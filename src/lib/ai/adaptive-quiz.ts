@@ -180,6 +180,20 @@ export async function createAdaptiveQuiz(
   // well under a second.
   const fullMock: { id: string; title: string; questionCount: number; durationMin: number } | null = null;
 
+  // Pre-formatted Markdown the AI is instructed to send verbatim.
+  // Avoids the AI hallucinating extra structure (it was making up a
+  // "full-length adaptive mock that'll be ready..." that no longer
+  // exists after the latency fix) and malforming the link syntax.
+  const message_to_user = [
+    `Your **${warmupResult.questionIds.length}-question warmup on ${targetTopicName ?? targetTopicCode}** is ready.`,
+    ``,
+    `[Take it now (~${warmupResult.durationMin} min)](/mocks/${warmupMock.id})`,
+    ``,
+    isColdStart
+      ? `You haven't taken a mock here yet, so I picked the heaviest-weighted topic to start. After you submit, I'll know your real weak spots and we can drill those.`
+      : `I picked **${targetTopicName ?? targetTopicCode}** because it's currently your weakest topic. Fix this, retake, watch your score climb.`,
+  ].join("\n");
+
   return {
     warmupMockId: warmupMock.id,
     warmupTitle: warmupMock.title,
@@ -194,7 +208,8 @@ export async function createAdaptiveQuiz(
     topicTargeted: targetTopicName ?? targetTopicCode!,
     topicTargetedCode: targetTopicCode!,
     isColdStart,
-    next_action: `Tell the student: their ${warmupResult.questionIds.length}-question warmup on ${targetTopicName ?? targetTopicCode} is ready right now — give them a markdown link to ${`/mocks/${warmupMock.id}`} and tell them it'll take ~${warmupResult.durationMin} minutes. After they submit it they can come back and ask 'build me a full mock' — that's a separate request which we'll handle then. Keep your message SHORT: one line of context + the link + one line of encouragement. Do not list multiple options.`,
+    message_to_user,
+    next_action: `IMPORTANT: Send the message_to_user field VERBATIM as your entire next message. Do not paraphrase. Do not add a preface like "Perfect!" or "I'm starting...". Do not list other options. Do not promise a full mock — that no longer comes from this tool. Do not add bullet lists or "what happens next" sections. Output ONLY the exact message_to_user string, nothing else.`,
   };
 }
 
