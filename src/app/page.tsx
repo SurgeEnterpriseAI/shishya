@@ -247,14 +247,23 @@ export default async function HomePage() {
             <p className="mt-3 text-base text-ink-600">{t("features.subtitle")}</p>
           </div>
 
-          <ul className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <FeatureCard icon="📚" title={t("features.pyq.title")} body={t("features.pyq.body")} />
-            <FeatureCard icon="📅" title={t("features.daily.title")} body={t("features.daily.body")} />
-            <FeatureCard icon="🎯" title={t("features.weakness.title")} body={t("features.weakness.body")} />
-            <FeatureCard icon="🤖" title={t("features.adaptive.title")} body={t("features.adaptive.body")} />
-            <FeatureCard icon="📈" title={t("features.progress.title")} body={t("features.progress.body")} />
-            <FeatureCard icon="💬" title={t("features.tutor.title")} body={t("features.tutor.body")} />
-          </ul>
+          {(() => {
+            // Each feature card is a CTA: signed-in users go straight to
+            // /dashboard, signed-out users go through /login which bounces
+            // back to /dashboard after auth. Keeps the landing focused on
+            // converting visitors.
+            const featureHref = signedIn ? "/dashboard" : "/login?callbackUrl=%2Fdashboard";
+            return (
+              <ul className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <FeatureCard href={featureHref} icon="📚" title={t("features.pyq.title")} body={t("features.pyq.body")} />
+                <FeatureCard href={featureHref} icon="📅" title={t("features.daily.title")} body={t("features.daily.body")} />
+                <FeatureCard href={featureHref} icon="🎯" title={t("features.weakness.title")} body={t("features.weakness.body")} />
+                <FeatureCard href={featureHref} icon="🤖" title={t("features.adaptive.title")} body={t("features.adaptive.body")} />
+                <FeatureCard href={featureHref} icon="📈" title={t("features.progress.title")} body={t("features.progress.body")} />
+                <FeatureCard href={featureHref} icon="💬" title={t("features.tutor.title")} body={t("features.tutor.body")} />
+              </ul>
+            );
+          })()}
         </div>
       </section>
 
@@ -358,17 +367,36 @@ function LoopStep({ icon, title, body }: { icon: string; title: string; body: st
   );
 }
 
-function FeatureCard({ icon, title, body }: { icon: string; title: string; body: string }) {
+function FeatureCard({
+  icon,
+  title,
+  body,
+  href,
+}: {
+  icon: string;
+  title: string;
+  body: string;
+  href: string;
+}) {
+  // Whole card is a Link → /dashboard (signed-in) or /login?callbackUrl=/dashboard.
+  // Auto-prefetch is disabled — landing page has 6 of these + the ExamPicker grid,
+  // so we don't want them all firing prefetches on first paint.
   return (
-    <li className="group rounded-xl border border-ink-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md">
-      <div
-        className="flex h-11 w-11 items-center justify-center rounded-lg bg-saffron-100 text-2xl transition-colors group-hover:bg-saffron-200"
-        aria-hidden
+    <li>
+      <Link
+        href={href}
+        prefetch={false}
+        className="group block h-full rounded-xl border border-ink-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-saffron-300"
       >
-        {icon}
-      </div>
-      <h3 className="mt-4 text-base font-semibold text-ink-900">{title}</h3>
-      <p className="mt-1.5 text-sm leading-relaxed text-ink-600">{body}</p>
+        <div
+          className="flex h-11 w-11 items-center justify-center rounded-lg bg-saffron-100 text-2xl transition-colors group-hover:bg-saffron-200"
+          aria-hidden
+        >
+          {icon}
+        </div>
+        <h3 className="mt-4 text-base font-semibold text-ink-900">{title}</h3>
+        <p className="mt-1.5 text-sm leading-relaxed text-ink-600">{body}</p>
+      </Link>
     </li>
   );
 }
