@@ -69,10 +69,11 @@ export interface TranslateBatchResult {
   latencyMs: number;
 }
 
-// Hard cap so we never send a runaway batch. With streaming we have plenty
-// of headroom (32k output cap), so we can comfortably batch 15 questions at
-// a time. Anything larger risks the model losing track of the question list.
-export const MAX_BATCH_SIZE = 15;
+// Hard cap so we never send a runaway batch. Lowered from 15 to 8 after
+// switching from streaming to non-streaming (max_tokens ceiling is now
+// 8192). 8 questions × ~500 output tokens = 4000 tokens — safe headroom
+// inside the 8192 cap, leaves room for difficult passages.
+export const MAX_BATCH_SIZE = 8;
 
 export async function translateBatch(
   input: TranslateBatchInput,
@@ -115,35 +116,22 @@ export async function translateBatch(
     2,
   )}`;
 
-  // Use streaming. Non-streaming caps max_tokens at ~8k (10-min HTTP
-  // timeout safeguard); streaming has no such ceiling and lets us safely
-  // allow up to 32k output for passage-heavy reading-comprehension
-  // batches. Server-side we just collect the chunks and parse at the end.
-  //
-  // Hard 25-second AbortController so a stuck stream (Anthropic rate
-  // limit, network hang, etc.) doesn't blow the 60-second Vercel
-  // runtime. The caller's Promise.allSettled treats aborted batches as
-  // failures, the rest of the mock still translates.
+  // Non-streaming call. Switched from streaming after observing in
+  // production that anthropic.messages.stream + AbortController hangs
+  // on Vercel's serverless runtime (no error, no completion, just
+  // 25s timeout + empty result). Non-streaming is simpler, fits well
+  // under the 8192 max_tokens cap with our 8-question batches, and
+  // returns a clear error code if Anthropic itself rejects the
+  // request (credit cap, rate limit, etc.) which the route logs.
   const start = Date.now();
-  const abortController = new AbortController();
-  const timeoutId = setTimeout(() => abortController.abort(), 25_000);
-  let finalMessage: Awaited<ReturnType<typeof anthropic.messages.create>>;
-  try {
-    const stream = anthropic.messages.stream(
-      {
-        model: MODEL,
-        max_tokens: Math.min(32000, 1500 * input.questions.length + 2000),
-        system: [
-          { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
-        ] as Anthropic.Messages.TextBlockParam[],
-        messages: [{ role: "user", content: userBlock }],
-      },
-      { signal: abortController.signal },
-    );
-    finalMessage = await stream.finalMessage();
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  const finalMessage = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: Math.min(8192, 500 * input.questions.length + 2000),
+    system: [
+      { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+    ] as Anthropic.Messages.TextBlockParam[],
+    messages: [{ role: "user", content: userBlock }],
+  });
   const latencyMs = Date.now() - start;
 
   const text = finalMessage.content

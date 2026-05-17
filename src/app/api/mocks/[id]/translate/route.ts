@@ -84,6 +84,11 @@ export async function POST(
       return ok({ locale, questions: out });
     }
 
+    // Track the first Anthropic error we hit so we can surface it
+    // to the client when EVERY batch fails (otherwise the user sees
+    // a generic "translation unavailable" with no way to debug).
+    let firstBatchError: any = null;
+
     // 1) Cache lookup.
     const cached = await findTranslations(qIds, locale);
 
@@ -130,7 +135,16 @@ export async function POST(
           .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof translateBatch>>> => r.status === "fulfilled")
           .map((r) => r.value);
         for (const f of results.filter((r) => r.status === "rejected")) {
-          console.error("[mocks/translate] batch failed", (f as PromiseRejectedResult).reason);
+          const reason = (f as PromiseRejectedResult).reason;
+          // Log enough to debug — Anthropic SDK errors carry useful
+          // detail in .message / .status / .error fields.
+          console.error("[mocks/translate] batch failed", {
+            message: reason?.message,
+            status: reason?.status,
+            type: reason?.error?.type,
+            error: reason?.error?.error,
+          });
+          firstBatchError = firstBatchError ?? reason;
         }
         for (const { translated } of ok) {
           await Promise.all(
@@ -174,16 +188,17 @@ export async function POST(
     // Silent-failure guard: if the caller asked us to translate some
     // questions and we couldn't translate ANY of them (every batch
     // failed — Anthropic outage, credit exhaustion, malformed JSON),
-    // tell the client instead of returning {questions: []} which the
-    // UI would render as "no error but no Hindi either". The earlier
-    // mock-player bug showed Hindi picker spinning for 30s then
-    // silently showing English with no message.
+    // surface the actual Anthropic error message to the client so
+    // venumuvva can see what's actually wrong on Vercel. Without the
+    // pass-through the user sees "translation unavailable" with zero
+    // debug info, exactly the silent-fail mode we just fixed.
     const requestedMissCount = qIds.filter((qid) => !cached.has(qid)).length;
     if (requestedMissCount === qIds.length && qIds.length > 0) {
-      return bad(
-        "Translation temporarily unavailable. Try again in a moment, or pick a different language.",
-        503,
-      );
+      const detail =
+        firstBatchError?.message ??
+        firstBatchError?.error?.error?.message ??
+        "Translation engine returned no usable output.";
+      return bad(`Translation failed: ${detail}`, 503);
     }
 
     return ok({ locale, questions });
