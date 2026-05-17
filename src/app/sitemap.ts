@@ -63,6 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const sectionLandings: MetadataRoute.Sitemap = [
     "/schooling",
     "/colleges",
+    "/scholarships",
     "/exams",
     "/exams/browse",
     "/post-graduation",

@@ -247,18 +247,37 @@ export default async function CollegesLanding({
           </ul>
         )}
 
-        {/* Phase-2 status: explain what's coming and what's already live */}
-        <div className="mt-12 rounded-lg border border-ink-200 bg-white p-5 text-sm text-ink-700">
+        {/* Scholarships — sibling discovery */}
+        <div className="mt-12 rounded-lg border border-saffron-200 bg-saffron-50/40 p-5 text-sm text-ink-700">
           <h3 className="text-base font-semibold text-ink-900">
-            What's coming to this section
+            Funding your education
           </h3>
           <p className="mt-2">
-            Per-college pages with cutoff trends by exam × category × branch,
-            fee structures linked to official college fee pages, placement
-            statistics (only from official college reports — never third-party
-            claims), and AI counselling (&quot;I scored X in JEE Main, what
-            colleges should I consider?&quot;). Plus the full UG scholarship
-            database, filterable by every eligibility dimension.
+            Shishya maintains a curated database of scholarships every Indian
+            student can apply for — central government, state portals, private
+            foundations, and international fellowships. All free to apply,
+            with the official link on every entry.
+          </p>
+          <Link
+            href="/scholarships"
+            className="mt-3 inline-flex rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-saffron-600"
+          >
+            Browse scholarships →
+          </Link>
+        </div>
+
+        {/* Phase-2 status: explain what's coming and what's already live */}
+        <div className="mt-6 rounded-lg border border-ink-200 bg-white p-5 text-sm text-ink-700">
+          <h3 className="text-base font-semibold text-ink-900">
+            What's still coming to this section
+          </h3>
+          <p className="mt-2">
+            Cutoff trends per college × exam × category × branch, fee
+            structures linked to official college fee pages, placement
+            statistics from official reports only, and AI counselling
+            (&quot;I scored X in JEE Main, what colleges should I
+            consider?&quot;) that pulls from cutoff data + your category +
+            state preference.
           </p>
           <p className="mt-2 text-[11px] text-ink-500">
             Phase 2 of the roadmap. Cross-link to the existing{" "}
