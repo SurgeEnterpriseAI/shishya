@@ -140,6 +140,17 @@ export async function POST(
         solution: q.solution,
       }));
 
+    // Silent-failure guard — see /api/mocks/[id]/translate for the
+    // full rationale. If every batch failed, surface a 503 instead of
+    // {questions: []} so the UI shows an actionable error.
+    const requestedMissCount = qIds.filter((qid) => !cached.has(qid)).length;
+    if (requestedMissCount === qIds.length && qIds.length > 0) {
+      return bad(
+        "Translation temporarily unavailable. Try again in a moment, or pick a different language.",
+        503,
+      );
+    }
+
     return ok({ locale, questions });
   } catch (err: any) {
     if (err?.status === 400) return bad(err.message);

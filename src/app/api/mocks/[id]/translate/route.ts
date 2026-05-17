@@ -171,6 +171,21 @@ export async function POST(
         solution: q.solution,
       }));
 
+    // Silent-failure guard: if the caller asked us to translate some
+    // questions and we couldn't translate ANY of them (every batch
+    // failed — Anthropic outage, credit exhaustion, malformed JSON),
+    // tell the client instead of returning {questions: []} which the
+    // UI would render as "no error but no Hindi either". The earlier
+    // mock-player bug showed Hindi picker spinning for 30s then
+    // silently showing English with no message.
+    const requestedMissCount = qIds.filter((qid) => !cached.has(qid)).length;
+    if (requestedMissCount === qIds.length && qIds.length > 0) {
+      return bad(
+        "Translation temporarily unavailable. Try again in a moment, or pick a different language.",
+        503,
+      );
+    }
+
     return ok({ locale, questions });
   } catch (err: any) {
     if (err?.status === 400) return bad(err.message);
