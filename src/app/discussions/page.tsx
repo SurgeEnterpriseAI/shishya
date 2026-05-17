@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { formatRelative } from "@/lib/relative-time";
+import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
 
 export const revalidate = 30;
 
@@ -16,6 +17,21 @@ export default async function DiscussionsList() {
     take: 50,
     include: { exam: { select: { code: true, shortName: true } } },
   });
+
+  // Batch-fetch badge levels for every thread author. One query for
+  // all authors keeps the list page snappy as the thread count grows.
+  // Raw SQL because the typed Prisma client may not include badgeLevel
+  // locally yet (Windows file lock on regen — see facts.ts).
+  const authorIds = Array.from(new Set(threads.map((t) => t.authorId).filter(Boolean) as string[]));
+  const badgeRows = authorIds.length > 0
+    ? await prisma.$queryRaw<Array<{ id: string; badgeLevel: string }>>`
+        SELECT "id", "badgeLevel"::text AS "badgeLevel"
+        FROM "User" WHERE "id" = ANY(${authorIds}::text[])
+      `
+    : [];
+  const badgeByAuthor = new Map<string, UserBadgeLevel>(
+    badgeRows.map((r) => [r.id, r.badgeLevel as UserBadgeLevel]),
+  );
 
   const now = new Date();
   const relLabels = {
@@ -79,14 +95,17 @@ export default async function DiscussionsList() {
                       )}
                       <h2 className="truncate text-sm font-semibold text-ink-900 sm:text-base">{th.title}</h2>
                     </div>
-                    <p className="mt-1 text-xs text-ink-500">
-                      {th.authorName ?? "Anonymous"}
-                      <span className="mx-1.5 text-ink-300">·</span>
+                    <p className="mt-1 flex flex-wrap items-baseline gap-1.5 text-xs text-ink-500">
+                      <span>{th.authorName ?? "Anonymous"}</span>
+                      {th.authorId && (
+                        <UserBadge level={badgeByAuthor.get(th.authorId)} compact />
+                      )}
+                      <span className="text-ink-300">·</span>
                       <span className="font-medium text-ink-700">
                         {th.messageCount} {th.messageCount === 1 ? t("disc.reply") : t("disc.replies")}
                       </span>
-                      <span className="mx-1.5 text-ink-300">·</span>
-                      {formatRelative(th.lastActivityAt, relLabels, now)}
+                      <span className="text-ink-300">·</span>
+                      <span>{formatRelative(th.lastActivityAt, relLabels, now)}</span>
                     </p>
                   </div>
                 </Link>

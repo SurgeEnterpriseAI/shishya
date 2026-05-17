@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { formatRelative } from "@/lib/relative-time";
 import { ReplyForm } from "./ReplyForm";
+import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
 
 export const revalidate = 0; // always fresh on direct page load
 
@@ -27,6 +28,21 @@ export default async function DiscussionPage({
     },
   });
   if (!thread) notFound();
+
+  // Batch-fetch badge levels for all unique authorIds in this thread.
+  const authorIds = Array.from(new Set([
+    thread.authorId,
+    ...thread.messages.map((m) => m.authorId).filter(Boolean) as string[],
+  ].filter(Boolean) as string[]));
+  const badgeRows = authorIds.length > 0
+    ? await prisma.$queryRaw<Array<{ id: string; badgeLevel: string }>>`
+        SELECT "id", "badgeLevel"::text AS "badgeLevel"
+        FROM "User" WHERE "id" = ANY(${authorIds}::text[])
+      `
+    : [];
+  const badgeByAuthor = new Map<string, UserBadgeLevel>(
+    badgeRows.map((r) => [r.id, r.badgeLevel as UserBadgeLevel]),
+  );
 
   const now = new Date();
   const relLabels = {
@@ -78,12 +94,13 @@ export default async function DiscussionPage({
             )}
           </div>
           <h1 className="mt-2 text-2xl font-bold text-ink-900 sm:text-3xl">{thread.title}</h1>
-          <p className="mt-2 text-xs text-ink-500">
+          <p className="mt-2 flex flex-wrap items-baseline gap-1.5 text-xs text-ink-500">
             <span className="font-medium text-ink-700">{thread.authorName ?? "Anonymous"}</span>
-            <span className="mx-1.5 text-ink-300">·</span>
-            {formatRelative(thread.createdAt, relLabels, now)}
-            <span className="mx-1.5 text-ink-300">·</span>
-            {thread.messageCount} {thread.messageCount === 1 ? t("disc.reply") : t("disc.replies")}
+            {thread.authorId && <UserBadge level={badgeByAuthor.get(thread.authorId)} />}
+            <span className="text-ink-300">·</span>
+            <span>{formatRelative(thread.createdAt, relLabels, now)}</span>
+            <span className="text-ink-300">·</span>
+            <span>{thread.messageCount} {thread.messageCount === 1 ? t("disc.reply") : t("disc.replies")}</span>
           </p>
         </div>
 
@@ -104,10 +121,11 @@ export default async function DiscussionPage({
                 }
               >
                 <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-sm font-semibold text-ink-900">
-                    {m.authorName ?? "Anonymous"}
-                    {isYou && <span className="ml-1.5 text-xs font-normal text-emerald-700">({youLabel})</span>}
-                    {isShishya && <span className="ml-1.5 text-xs font-normal text-saffron-700">🤖</span>}
+                  <p className="flex flex-wrap items-baseline gap-1.5 text-sm font-semibold text-ink-900">
+                    <span>{m.authorName ?? "Anonymous"}</span>
+                    {m.authorId && <UserBadge level={badgeByAuthor.get(m.authorId)} compact />}
+                    {isYou && <span className="text-xs font-normal text-emerald-700">({youLabel})</span>}
+                    {isShishya && <span className="text-xs font-normal text-saffron-700">🤖</span>}
                   </p>
                   <p className="text-xs text-ink-500">
                     {i === 0 ? "" : "#" + (i + 1) + " · "}
