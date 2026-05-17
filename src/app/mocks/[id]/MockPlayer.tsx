@@ -109,10 +109,12 @@ export function MockPlayer({
   const [translating, setTranslating] = useState(false);
   const [translateErr, setTranslateErr] = useState<string | null>(null);
 
-  // Translate a specific batch of question IDs. We send at most 20 IDs
-  // per call so the route comfortably finishes within the 60s Vercel
-  // runtime even when all 20 are cache misses. Cached IDs come back
-  // free; uncached ones get translated and cached server-side.
+  // Translate a specific batch of question IDs. The server caps uncached
+  // translations at 8 per request (PER_REQUEST_MISS_CAP), so sending more
+  // IDs just means more of them come back from cache. Initial window is
+  // 8 to match the miss cap — student sees their current screen
+  // translated as fast as possible, then we top-up around them as they
+  // navigate via ensureTranslationsAround().
   async function fetchTranslationBatch(target: Locale, ids: string[]) {
     if (target === "en" || ids.length === 0) return;
     const res = await apiPost<{
@@ -140,7 +142,7 @@ export function MockPlayer({
     setTranslating(true);
     setTranslateErr(null);
     try {
-      const ids = questions.slice(idx, idx + 20).map((q) => q.id);
+      const ids = questions.slice(idx, idx + 8).map((q) => q.id);
       await fetchTranslationBatch(target, ids);
     } catch (e: any) {
       setTranslateErr(e?.message ?? "Translation failed; showing original.");
@@ -153,7 +155,7 @@ export function MockPlayer({
   // when the student navigates. No-op if already cached client-side.
   async function ensureTranslationsAround(target: Locale, centerIdx: number) {
     if (target === "en") return;
-    const window = questions.slice(centerIdx, centerIdx + 20);
+    const window = questions.slice(centerIdx, centerIdx + 8);
     const missing = window
       .filter((q) => !translations.has(q.id))
       .map((q) => q.id);

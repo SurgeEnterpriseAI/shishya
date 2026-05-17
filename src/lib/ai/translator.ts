@@ -11,6 +11,14 @@ import { anthropic, MODEL } from "./client";
 import type { Locale } from "@/lib/i18n";
 import { localeNames } from "@/lib/i18n";
 
+// Translation runs on a FAST model, not the tutor model. Translation is a
+// mechanical task — Haiku is plenty for it, and Sonnet 4.5 was averaging
+// 46s for 5 questions in production (long Hindi output × ~50 tokens/sec),
+// which pushed real student batches past Vercel's 60s timeout. Override
+// with TRANSLATION_MODEL env var if Anthropic releases a faster option.
+const TRANSLATION_MODEL =
+  process.env.TRANSLATION_MODEL ?? "claude-haiku-4-5-20251001";
+
 export interface TranslateInputQuestion {
   id: string;
   body: string;
@@ -69,11 +77,13 @@ export interface TranslateBatchResult {
   latencyMs: number;
 }
 
-// Hard cap so we never send a runaway batch. Lowered from 15 to 8 after
-// switching from streaming to non-streaming (max_tokens ceiling is now
-// 8192). 8 questions × ~500 output tokens = 4000 tokens — safe headroom
-// inside the 8192 cap, leaves room for difficult passages.
-export const MAX_BATCH_SIZE = 8;
+// Hard cap so we never send a runaway batch. 8 → 4 after observing in
+// production that an 8-question Sonnet batch took >60s and tripped the
+// Vercel function timeout (FUNCTION_INVOCATION_TIMEOUT). 4 questions
+// × ~500 tokens = ~2000 output tokens, which Haiku finishes in ~10s
+// even with long Hindi output. Two batches of 4 fit comfortably in
+// parallel under 60s.
+export const MAX_BATCH_SIZE = 4;
 
 export async function translateBatch(
   input: TranslateBatchInput,
@@ -123,10 +133,15 @@ export async function translateBatch(
   // under the 8192 max_tokens cap with our 8-question batches, and
   // returns a clear error code if Anthropic itself rejects the
   // request (credit cap, rate limit, etc.) which the route logs.
+  // Use Haiku, not MODEL (which is Sonnet for tutoring). Translation is
+  // simpler; Haiku is ~3-4× faster and stays well under Vercel's 60s
+  // function timeout. MODEL is kept around as a fallback only — see the
+  // top-of-file TRANSLATION_MODEL constant for the override path.
+  void MODEL;
   const start = Date.now();
   const finalMessage = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: Math.min(8192, 500 * input.questions.length + 2000),
+    model: TRANSLATION_MODEL,
+    max_tokens: Math.min(8192, 500 * input.questions.length + 1500),
     system: [
       { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
     ] as Anthropic.Messages.TextBlockParam[],

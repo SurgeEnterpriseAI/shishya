@@ -21,7 +21,7 @@ const Body = z.object({
 });
 
 // Hard cap on per-request uncached translations, see mocks/translate route.
-const PER_REQUEST_MISS_CAP = 10;
+const PER_REQUEST_MISS_CAP = 8;
 
 export async function POST(
   req: Request,

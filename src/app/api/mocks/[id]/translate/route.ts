@@ -29,11 +29,11 @@ const Body = z.object({
 });
 
 // Server-side hard cap on uncached questions translated per request.
-// We sit at 10 (exactly one batch at MAX_BATCH_SIZE) so a single 25s
-// Anthropic abort timeout in the translator can't cascade into 60s of
-// wall-clock. The client requests more chunks via the questionIds
-// param as the student navigates.
-const PER_REQUEST_MISS_CAP = 10;
+// 8 = 2 parallel batches of 4 (MAX_BATCH_SIZE), each ~10-15s on Haiku,
+// so we sit comfortably under Vercel's 60s function timeout even when
+// every question is a cache miss. The client requests more chunks via
+// the `questionIds` param as the student navigates.
+const PER_REQUEST_MISS_CAP = 8;
 
 export async function POST(
   req: Request,
