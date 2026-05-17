@@ -21,6 +21,7 @@ import { formatDisplayScorePct } from "@/lib/scoring";
 import { computeScoreBoost } from "@/lib/focus-topics";
 import { ScholarshipsForExamSection } from "@/components/ScholarshipsForExamSection";
 import { CollegesForExamSection } from "@/components/CollegesForExamSection";
+import { SectionVerificationSummary } from "@/components/VerificationBadge";
 
 // Per-exam meta. Beefed-up version that bakes in:
 //   1. state name (for "Tamil Nadu PSC" / "तमिलनाडु TET" style searches)
@@ -303,6 +304,16 @@ export default async function ExamPage({
             {t("exam.negative")}: {exam.negativeMark === 0 ? t("exam.no.negative") : `−${exam.negativeMark}`}
           </span>
         </div>
+
+        {/* Single section-level verification badge covers the static
+            exam meta above (pattern, duration, marks). Once per-fact
+            verification rows ship in Phase 2 each chip will get its
+            own badge. */}
+        <SectionVerificationSummary
+          status="ai"
+          source="official exam authority notification"
+          refreshCadence="weekly once the AI verification job is live"
+        />
 
         {/* Sign-in CTA banner for unauthenticated visitors. Crawlers see
             this; search-arriving students see exactly what they get for free. */}

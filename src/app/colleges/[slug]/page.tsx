@@ -19,6 +19,7 @@ import {
   ALL_STREAMS,
 } from "@/lib/colleges-data";
 import { stateInfo } from "@/lib/state-info";
+import { VerificationBadge, SectionVerificationSummary } from "@/components/VerificationBadge";
 
 export async function generateStaticParams() {
   return COLLEGES.map((c) => ({ slug: c.slug }));
@@ -142,12 +143,22 @@ export default async function CollegePage({
           <span className="rounded-full bg-ink-100 px-2 py-0.5 text-xs font-medium text-ink-600">{c.type}</span>
         </div>
         <p className="mt-1 text-sm text-ink-600">{c.name}</p>
-        <p className="mt-1 text-xs text-ink-500">{c.city} · {st?.name ?? c.state} · established {c.established}</p>
+        <p className="mt-1 text-xs text-ink-500">
+          {c.city} · {st?.name ?? c.state} · established {c.established}{" "}
+          <VerificationBadge status="ai" source="official college site" compact />
+        </p>
 
         {ranksCopy && (
           <div className="mt-4 rounded-lg border border-saffron-200 bg-saffron-50/40 p-4">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">NIRF ranking</p>
-            <p className="mt-1 text-sm font-medium text-ink-900">{ranksCopy}</p>
+            <div className="mt-1 flex flex-wrap items-baseline gap-2">
+              <p className="text-sm font-medium text-ink-900">{ranksCopy}</p>
+              <VerificationBadge
+                status="ai"
+                source="NIRF"
+                lastCheckedAt={`${NIRF_SOURCE_YEAR}-08-12`}
+              />
+            </div>
             <p className="mt-1 text-[11px] text-ink-600">
               Source:{" "}
               <a href={NIRF_SOURCE_URL} target="_blank" rel="noopener noreferrer" className="text-saffron-700 underline">
@@ -157,6 +168,14 @@ export default async function CollegePage({
             </p>
           </div>
         )}
+
+        {/* Section-level verification summary — sets the trust tone for
+            the whole page in one glance. */}
+        <SectionVerificationSummary
+          status="ai"
+          source="NIRF + the college's official site"
+          refreshCadence="every 30 days once the AI verification job ships"
+        />
 
         <h2 className="mt-8 text-base font-semibold text-ink-900">About {c.shortName}</h2>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">{c.blurb}</p>
