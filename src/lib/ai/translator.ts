@@ -14,14 +14,16 @@ import { localeNames } from "@/lib/i18n";
 // Translation runs on a FAST model, not the tutor model. Translation is a
 // mechanical task — Haiku is plenty for it, and Sonnet 4.5 was averaging
 // 46s for 5 questions in production (long Hindi output × ~50 tokens/sec),
-// which pushed real student batches past Vercel's 60s timeout. Override
-// with TRANSLATION_MODEL env var if Anthropic releases a faster Haiku.
-// claude-3-5-haiku-20241022 is the known-good fast model in this SDK
-// (the bundled SDK types only list Haiku 3.5 variants — picking a
-// name the SDK doesn't recognize would just return a model_not_found
-// error from Anthropic).
+// which pushed real student batches past Vercel's 60s timeout.
+//
+// Model history on this account:
+//   - claude-3-5-haiku-20241022 → 404 not_found_error (account doesn't
+//     have 3.5 Haiku access, only 4.x models).
+//   - Using the alias "claude-haiku-4-5" so Anthropic resolves the
+//     latest 4.5 Haiku snapshot. Override with TRANSLATION_MODEL env
+//     var to pin a specific snapshot if needed.
 const TRANSLATION_MODEL =
-  process.env.TRANSLATION_MODEL ?? "claude-3-5-haiku-20241022";
+  process.env.TRANSLATION_MODEL ?? "claude-haiku-4-5";
 
 export interface TranslateInputQuestion {
   id: string;
