@@ -16,6 +16,7 @@ export default function robots(): MetadataRoute.Robots {
           "/exams/state/",
           "/exams/browse",
           "/schooling",
+          "/schooling/",
           "/colleges",
           "/colleges/",
           "/scholarships",

@@ -15,6 +15,7 @@ import { prisma } from "@/lib/db/prisma";
 import { unstable_cache } from "next/cache";
 import { COLLEGES } from "@/lib/colleges-data";
 import { SCHOLARSHIPS } from "@/data/scholarships";
+import { BOARDS } from "@/lib/schooling-data";
 
 export const revalidate = 300; // 5 min
 
@@ -70,14 +71,15 @@ export default async function HomeHub() {
   const exams = await examCount();
   const collegeCount = COLLEGES.length;
   const scholarshipCount = SCHOLARSHIPS.length;
+  const boardCount = BOARDS.length;
 
   const tiles: Tile[] = [
     {
       href: "/schooling",
       title: "Schooling",
       blurb: "Class 1–12, every board, every state. Syllabus, practice, free resources.",
-      meta: "CBSE · ICSE · State Boards · NIOS",
-      status: "soon",
+      meta: `${boardCount} boards · CBSE · ICSE · IB · State Boards`,
+      status: "live",
       glyph: "1",
     },
     {
