@@ -20,6 +20,7 @@ import { StartMockButton } from "./StartMockButton";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { computeScoreBoost } from "@/lib/focus-topics";
 import { ScholarshipsForExamSection } from "@/components/ScholarshipsForExamSection";
+import { CollegesForExamSection } from "@/components/CollegesForExamSection";
 
 // Per-exam meta. Beefed-up version that bakes in:
 //   1. state name (for "Tamil Nadu PSC" / "तमिलनाडु TET" style searches)
@@ -888,6 +889,15 @@ export default async function ExamPage({
             examShortName={exam.shortName}
             examCategory={String(exam.category)}
             examState={null}
+          />
+
+          {/* Top NIRF colleges that admit via this exam — drives the
+              "I'm preparing for X, where can I go?" intent into our
+              colleges section. Pure server render, no DB hit. */}
+          <CollegesForExamSection
+            examCode={exam.code}
+            examShortName={exam.shortName}
+            examCategory={String(exam.category)}
           />
 
         </aside>
