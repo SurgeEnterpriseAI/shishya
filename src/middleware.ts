@@ -32,15 +32,32 @@ export function middleware(req: NextRequest): NextResponse {
   const res = NextResponse.next();
   const path = req.nextUrl.pathname;
 
-  // We intercept three classes of request:
-  //   / (homepage) — to grab the UTM trail before the user clicks "Sign in"
-  //   /exams/...   — same reason; marketing links often deep-link to an exam
-  //   /login       — last-mile catch for direct-to-login arrivals
+  // We intercept several classes of request to make sure NO student
+  // reaches sign-in without us first seeing where they came from:
+  //   /                          — UTM trail before they click "Sign in"
+  //   /exams/...                 — marketing links often deep-link here
+  //   /schooling, /colleges,
+  //   /post-graduation, /jobs,
+  //   /worldwide, /insights      — Phase 1 section landings
+  //   /login                     — last-mile catch
+  //   /api/auth/signin/:provider — NextAuth flow if user clicks Google
+  //                                signin directly on / (skips /login)
   // Everything else passes through unchanged.
   const isHome = path === "/";
   const isExamPage = path.startsWith("/exams/");
+  const isSectionLanding =
+    path === "/schooling" ||
+    path === "/colleges" ||
+    path === "/post-graduation" ||
+    path === "/jobs" ||
+    path === "/worldwide" ||
+    path === "/insights" ||
+    path === "/scholarships";
   const isLogin = path === "/login";
-  if (!isHome && !isExamPage && !isLogin) return res;
+  const isOAuthEntry = path.startsWith("/api/auth/signin/");
+  if (!isHome && !isExamPage && !isSectionLanding && !isLogin && !isOAuthEntry) {
+    return res;
+  }
 
   // Don't overwrite a previously-set attribution cookie. The FIRST landing
   // is the real signup source; later page loads inside the same session
@@ -53,11 +70,11 @@ export function middleware(req: NextRequest): NextResponse {
   const utmMedium = sp.get("utm_medium") ?? "";
   const utmCampaign = sp.get("utm_campaign") ?? "";
 
-  // On the homepage/exam pages we ONLY set the cookie if the visitor
-  // actually came in with UTM tags OR a useful (external) Referer.
-  // Random organic pageviews to / shouldn't burn the "first visit wins"
-  // slot — wait for the /login catch in that case.
-  if (!isLogin) {
+  // On the homepage/exam/section pages we ONLY set the cookie if the
+  // visitor actually came in with UTM tags OR a useful (external) Referer.
+  // Random organic pageviews shouldn't burn the "first visit wins" slot
+  // — wait for the /login or OAuth catch in that case.
+  if (!isLogin && !isOAuthEntry) {
     const refererIsExternal =
       referer &&
       !referer.startsWith("https://shishya.in") &&
@@ -94,8 +111,21 @@ export function middleware(req: NextRequest): NextResponse {
   return res;
 }
 
-// Match home, exam pages, and login. Static assets, API routes, and
-// everything else bypass this middleware entirely. Cheap.
+// Match home + every Phase 1 section landing + login + OAuth entry.
+// Static assets, dashboard, mocks, attempts, admin etc. bypass this
+// middleware entirely so it stays cheap.
 export const config = {
-  matcher: ["/", "/login", "/exams/:path*"],
+  matcher: [
+    "/",
+    "/login",
+    "/exams/:path*",
+    "/schooling",
+    "/colleges",
+    "/post-graduation",
+    "/jobs",
+    "/worldwide",
+    "/insights",
+    "/scholarships",
+    "/api/auth/signin/:path*",
+  ],
 };
