@@ -13,6 +13,8 @@ import { Header } from "@/components/Header";
 import { LiveCountersStrip } from "@/components/LiveCounters";
 import { prisma } from "@/lib/db/prisma";
 import { unstable_cache } from "next/cache";
+import { COLLEGES } from "@/lib/colleges-data";
+import { SCHOLARSHIPS } from "@/data/scholarships";
 
 export const revalidate = 300; // 5 min
 
@@ -66,6 +68,8 @@ interface Tile {
 
 export default async function HomeHub() {
   const exams = await examCount();
+  const collegeCount = COLLEGES.length;
+  const scholarshipCount = SCHOLARSHIPS.length;
 
   const tiles: Tile[] = [
     {
@@ -80,8 +84,8 @@ export default async function HomeHub() {
       href: "/colleges",
       title: "Colleges & Graduation",
       blurb: "UG admissions, cutoffs, scholarships, college info. NIRF + state colleges.",
-      meta: "Engineering · Medical · Law · Commerce · Arts",
-      status: "soon",
+      meta: `${collegeCount} NIRF colleges · ${scholarshipCount}+ scholarships`,
+      status: "live",
       glyph: "C",
     },
     {
