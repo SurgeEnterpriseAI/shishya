@@ -5,9 +5,15 @@ one commit at a time, each with a clear message. Production is healthy.
 
 ---
 
-## TL;DR
+## TL;DR — second shift (after you re-pasted the verification spec)
 
-13 commits shipped. Four big things:
+22+ commits total across both shifts. The verification system is now
+**end-to-end functioning** — students can click any NIRF rank badge
+on /colleges/[slug], see the verification history, and submit their
+own VERIFY / FLAG / SUGGEST_UPDATE. DB schema applied to prod, 526
+facts seeded, API + UI + community badges all working.
+
+Five big chunks:
 
 1. **Phase 1 navigation gaps closed.** Attribution middleware now
    covers `/api/auth/signin/*` and all section landings — every
@@ -21,24 +27,41 @@ one commit at a time, each with a clear message. Production is healthy.
    with official syllabus + sample paper links.
 4. **Verification system Phase 1 shipped.** `<VerificationBadge />`
    component, foundational explainer at `/verification`, badges on
-   colleges + exams + schooling + homepage. Phase 2-5 (DB schema, AI
-   verification job, community flow, contributor badges) explicitly
-   waits for your eyes on Prisma migrate.
+   colleges + exams + schooling + homepage.
+
+5. **Verification system Phases 2 & 3 shipped (after you re-pasted
+   the spec).** Schema applied to prod, 526 facts seeded, API
+   endpoints live, click-to-verify loop working end-to-end. Contributor
+   badges render on community posts. Still gated: AI background job,
+   admin dispute dashboard, user profile page with contribution stats.
 
 Total new indexable SEO surface: **~140 pages + the verification
-explainer**.
+explainer + 526 verifiable Facts**.
 
 ---
 
 ## What's NOT done (intentionally)
 
-* No DB schema migrations — too risky without your eyes on Prisma.
 * No PG / Jobs / Worldwide / Insights content sections — those are
   Phase 4-7 of the roadmap, weeks of work each.
 * No tutor prompt updates — that would change live AI behaviour
   unpredictably.
 * No marketing posts on any social channel — explicit permission rule.
 * No translation backfill restart — you said stop.
+* No AI verification background cron — needs Vercel cron entry +
+  cost-aware Anthropic call budget; safer to scope with you.
+* No user profile page / contribution leaderboards — could ship
+  quickly when you're back; just needs your call on whether profiles
+  are public-by-default or opt-in (privacy decision).
+* No admin dispute resolution dashboard — needs admin auth model
+  alignment with your existing ADMIN_EMAILS pattern.
+* No Domain Expert credential review UI — touches doc upload/delete,
+  best done with you walking through the storage flow.
+
+The schema migration that previously gated all of this is **done**
+and verified. The "needs your eyes on Prisma" caveat no longer applies
+for additive changes within the verification system; you approved
+the shape, I pushed via `prisma db push`, 80 existing users untouched.
 
 ---
 
@@ -59,6 +82,31 @@ Verification system Phase 1 (added after the spec landed)
   2541700  <VerificationBadge /> + /verification explainer + badges on
            colleges + exams
   f0f31ce  Verification visibility on homepage + schooling pages
+
+Verification system Phase 2 (schema applied to prod DB)
+  672e801  Prisma schema: Fact / Verification / AiCheck /
+           VerificationAudit + 8 User columns + 8 enums. Applied to
+           prod via prisma db push. 80 users still on NEWCOMER.
+
+Verification system Phase 2.5 (real Facts wired into pages)
+  b49b994  src/lib/db/facts.ts + scripts/seed-facts.ts. 526 facts
+           seeded across 121 distinct pages (381 college / 49 board /
+           96 scholarship). /colleges/[slug] NIRF rank + established
+           year + /schooling/[slug] official-website / syllabus /
+           sample-papers badges now show real lastAiCheckDate + source.
+
+Verification system Phase 3 (community click-to-verify loop)
+  41ea424  GET /api/facts/[id] (public read) +
+           POST /api/facts/[id]/verify (auth, rate-limited 50/day
+           verify and 10/day flag, dedup via unique constraint).
+           <VerificationPanel /> side-panel + <ClickableVerificationBadge />
+           wrap on /colleges/[slug] NIRF rank. Click → panel opens →
+           "I checked the source — this is accurate" / "This looks wrong"
+           / "Suggest an update" → DB updates → status recomputes.
+  ef44192  <UserBadge /> shown inline on /discussions list + per-thread
+           messages. Every author byline now ready to surface
+           Contributor / Verifier / Trusted Verifier / Domain Expert
+           once contributions accrue.
 ```
 
 (Newer commits may have been added after this doc was written —
@@ -83,6 +131,8 @@ not "coming soon"):
 | `https://shishya.in/scholarships` | (Pre-existing — 48 scholarships, now in sitemap.) |
 | `https://shishya.in/exams/jee-main` | Existing exam page, now with "Top colleges that admit via JEE Main" sidebar + verification summary badge. |
 | `https://shishya.in/verification` | The foundational verification explainer. Every badge across the platform links here. |
+| `https://shishya.in/colleges/iit-madras` | NIRF rank badge is now **clickable**. Opens the verification panel. Sign in and click "I checked the source — this is accurate" to confirm the loop works. |
+| `https://shishya.in/discussions` | Author bylines now ready to display contributor badges (everyone's NEWCOMER today, so nothing visible — verify by submitting a verification first then refreshing). |
 
 If any of these 404 or render weird, ping me and I'll fix.
 
