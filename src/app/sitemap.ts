@@ -97,6 +97,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
+  // Per-state college aggregator pages — "top colleges in Tamil Nadu",
+  // "best colleges in UP", etc.
+  const collegeStateUrls: MetadataRoute.Sitemap = Array.from(
+    new Set(COLLEGES.map((c) => c.state)),
+  )
+    .filter((code): code is string => Boolean(code) && code in STATES)
+    .map((code) => ({
+      url: `${base}/colleges/state/${stateSlug(code)}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.85,
+    }));
+
   return [
     {
       url: base,
@@ -109,6 +122,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...examUrls,
     ...topicUrls,
     ...streamUrls,
+    ...collegeStateUrls,
     ...collegeUrls,
   ];
 }
