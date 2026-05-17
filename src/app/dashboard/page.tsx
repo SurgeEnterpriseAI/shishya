@@ -52,12 +52,18 @@ async function renderDashboard() {
   const userId = session.user.id;
   const { t } = await getT();
 
-  // Best-effort attribution capture on first authenticated dashboard
-  // load. Reads the `shishya_attrib` cookie set by /login (Referer +
-  // UTM payload), writes it to User.signupReferrer* if those columns
-  // are still null, and clears the cookie. Fire-and-forget — failures
-  // never block the dashboard render.
-  void captureSignupAttribution(userId).catch(() => {});
+  // Attribution capture on first authenticated dashboard load. Reads
+  // the `shishya_attrib` cookie (Referer + UTM payload set by the edge
+  // middleware on / /exams/* /login), writes it to User.signupReferrer*
+  // if still null, and clears the cookie.
+  //
+  // Was previously `void capture(...).catch(...)` (fire-and-forget) but
+  // Vercel serverless terminates background promises when the response
+  // is sent — every signup ended up with signupReferrerHost = NULL even
+  // when the cookie was set correctly. Awaiting it costs ~30ms and
+  // guarantees the write lands. Errors are still swallowed inside the
+  // helper so a failed UPDATE can't crash the dashboard.
+  await captureSignupAttribution(userId).catch(() => {});
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   // Today's brief is keyed on UTC midnight — same key the cron uses
