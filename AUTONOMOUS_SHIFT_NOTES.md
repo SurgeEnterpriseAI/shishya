@@ -7,7 +7,7 @@ one commit at a time, each with a clear message. Production is healthy.
 
 ## TL;DR
 
-10 commits shipped. Three big things:
+13 commits shipped. Four big things:
 
 1. **Phase 1 navigation gaps closed.** Attribution middleware now
    covers `/api/auth/signin/*` and all section landings — every
@@ -19,10 +19,14 @@ one commit at a time, each with a clear message. Production is healthy.
 3. **Phase 3 Schooling foundation is live.** 21 boards (CBSE, ICSE,
    NIOS, IB, Cambridge, plus 16 major state boards), per-board pages
    with official syllabus + sample paper links.
+4. **Verification system Phase 1 shipped.** `<VerificationBadge />`
+   component, foundational explainer at `/verification`, badges on
+   colleges + exams + schooling + homepage. Phase 2-5 (DB schema, AI
+   verification job, community flow, contributor badges) explicitly
+   waits for your eyes on Prisma migrate.
 
-Total new indexable SEO surface: **~140 pages** beyond Phase 1
-(85 colleges + 8 stream pages + 25 college state pages + 21 board
-pages + ~5 cross-section pages).
+Total new indexable SEO surface: **~140 pages + the verification
+explainer**.
 
 ---
 
@@ -50,6 +54,11 @@ c046ad2  SEO: per-state college aggregator pages
 e0029a5  Colleges dataset: expand from ~50 to 85 NIRF-ranked entries
 182a479  Homepage: surface real college + scholarship counts
 26cbbba  Phase 3: Schooling section — boards live, per-board pages indexable
+
+Verification system Phase 1 (added after the spec landed)
+  2541700  <VerificationBadge /> + /verification explainer + badges on
+           colleges + exams
+  f0f31ce  Verification visibility on homepage + schooling pages
 ```
 
 (Newer commits may have been added after this doc was written —
@@ -72,7 +81,8 @@ not "coming soon"):
 | `https://shishya.in/schooling` | 21 boards filterable by type / class / state. |
 | `https://shishya.in/schooling/cbse` | CBSE page with official links. |
 | `https://shishya.in/scholarships` | (Pre-existing — 48 scholarships, now in sitemap.) |
-| `https://shishya.in/exams/jee-main` | Existing exam page, now with "Top colleges that admit via JEE Main" sidebar. |
+| `https://shishya.in/exams/jee-main` | Existing exam page, now with "Top colleges that admit via JEE Main" sidebar + verification summary badge. |
+| `https://shishya.in/verification` | The foundational verification explainer. Every badge across the platform links here. |
 
 If any of these 404 or render weird, ping me and I'll fix.
 
