@@ -35,6 +35,13 @@ model User {
   // never finished the dashboard tour; <OnboardingTour /> auto-mounts in
   // that case. Set to NOW() on "Done" or "Skip" so it never re-appears.
   onboardedAt   DateTime?
+  // Attribution: captured once on first signed-in page load from a
+  // cookie set on /login. Tells us where this user came from when no
+  // UTM params were on the URL (organic, Reddit, Telegram, etc.)
+  // referrerUrl  = full Referer header (or stored UTM URL fragment)
+  // referrerHost = parsed hostname for cheap GROUP BY queries
+  signupReferrerUrl  String?
+  signupReferrerHost String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

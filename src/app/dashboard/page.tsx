@@ -14,6 +14,7 @@ import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { TwoPathsCard } from "./TwoPathsCard";
+import { captureSignupAttribution } from "@/lib/signup-attribution";
 
 export default async function DashboardPage() {
   try {
@@ -50,6 +51,13 @@ async function renderDashboard() {
 
   const userId = session.user.id;
   const { t } = await getT();
+
+  // Best-effort attribution capture on first authenticated dashboard
+  // load. Reads the `shishya_attrib` cookie set by /login (Referer +
+  // UTM payload), writes it to User.signupReferrer* if those columns
+  // are still null, and clears the cookie. Fire-and-forget — failures
+  // never block the dashboard render.
+  void captureSignupAttribution(userId).catch(() => {});
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   // Today's brief is keyed on UTC midnight — same key the cron uses
