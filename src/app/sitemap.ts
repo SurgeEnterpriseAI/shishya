@@ -4,6 +4,7 @@
 
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db/prisma";
+import { STATES, stateSlug } from "@/lib/state-info";
 
 export const revalidate = 86_400; // 24h
 
@@ -12,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const exams = await prisma.exam.findMany({
     where: { active: true },
-    select: { code: true, updatedAt: true },
+    select: { code: true, state: true, updatedAt: true },
     orderBy: { candidatesPerYear: "desc" },
   });
 
@@ -32,6 +33,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: e.updatedAt,
     changeFrequency: "weekly" as const,
     priority: 0.8,
+  }));
+
+  // One URL per state we actually have exams for. Highest-priority SEO
+  // surface for state-specific queries — these pages should rank for
+  // "Tamil Nadu entrance exams", "Bihar government exams", etc.
+  const statesWithExams = new Set(
+    exams
+      .map((e) => e.state)
+      .filter((s): s is string => Boolean(s) && (s as string) in STATES),
+  );
+  const stateUrls: MetadataRoute.Sitemap = Array.from(statesWithExams).map((code) => ({
+    url: `${base}/exams/state/${stateSlug(code)}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.85,
   }));
 
   const topicUrls: MetadataRoute.Sitemap = topics.map((t) => ({
@@ -54,6 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.9,
     },
+    ...stateUrls,
     ...examUrls,
     ...topicUrls,
   ];

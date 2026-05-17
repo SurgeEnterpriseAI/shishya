@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/exams", "/exams/", "/login"],
+        allow: ["/", "/exams", "/exams/", "/exams/state/", "/login"],
         disallow: [
           "/api/",          // no point indexing JSON endpoints
           "/admin/",        // SME tooling — never index

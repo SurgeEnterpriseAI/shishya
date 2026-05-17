@@ -21,8 +21,15 @@ import { formatDisplayScorePct } from "@/lib/scoring";
 import { computeScoreBoost } from "@/lib/focus-topics";
 import { ScholarshipsForExamSection } from "@/components/ScholarshipsForExamSection";
 
-// Per-exam meta. Lets Google show "Shishya — RRB NTPC syllabus, mocks,
-// previous year papers, Shishya AI tutor" for every one of 163 exams.
+// Per-exam meta. Beefed-up version that bakes in:
+//   1. state name (for "Tamil Nadu PSC" / "तमिलनाडु TET" style searches)
+//   2. native-script + English language coverage (for "TNPSC in Tamil" type
+//      long-tail queries, which is most of the high-intent India traffic)
+//   3. current year (2026 — refreshed annually by the title template)
+//   4. JSON-LD Course schema is added inline in the page body further down
+//
+// Goal: rank for every plausible spelling of every one of 163 exams in
+// every Indian language a student would type in.
 export async function generateMetadata({
   params,
 }: {
@@ -31,33 +38,74 @@ export async function generateMetadata({
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
     where: { code },
-    select: { code: true, name: true, shortName: true, description: true, category: true },
+    select: {
+      code: true, name: true, shortName: true, description: true,
+      category: true, state: true, languages: true,
+    },
   });
   if (!exam) return { title: "Exam not found — Shishya" };
-  const title = `${exam.shortName} — Syllabus, Mock Tests, Previous Year Papers | Shishya`;
+
+  const { stateInfo, languageList, languageName } = await import("@/lib/state-info");
+  const st = stateInfo(exam.state);
+  const langs = exam.languages.length > 0 ? exam.languages : ["EN", "HI"];
+  const year = new Date().getUTCFullYear();
+
+  // Title — prioritises state name for state exams (huge SEO lever for
+  // "Tamil Nadu TET 2026" / "Bihar Police mock test"-style searches).
+  const stateBit = st ? ` (${st.name})` : "";
+  const title = `${exam.shortName}${stateBit} ${year} — Free Mock Tests, PYQ, Syllabus | Shishya`;
+
+  // Description — packs in: exam full name, state name (English + Hindi
+  // + native script), the languages the questions are available in, and
+  // the year. ≤300 chars so Google doesn't truncate.
+  const langCopy = languageList(langs);
+  const stateCopy = st ? `${st.name} (${st.nativeName} / ${st.hindiName}). ` : "";
   const description =
-    `Free ${exam.shortName} (${exam.name}) preparation on Shishya. Full syllabus, ` +
-    `expert-curated mock tests, previous year papers, and Shishya AI as your personal ` +
-    `tutor. ${exam.description ?? ""}`.slice(0, 300);
+    `Free ${exam.shortName} (${exam.name}) ${year} mock tests, previous year papers ` +
+    `and AI tutor. ${stateCopy}Questions available in ${langCopy}. No paywall.`;
+
+  // Keywords — a wide net mixing English, native-script state name, exam
+  // name in native script (transliteration via state's hindi/native name),
+  // and the standard long-tail phrases students actually type.
+  const baseKeywords = [
+    `${exam.shortName} syllabus`,
+    `${exam.shortName} mock test`,
+    `${exam.shortName} mock test ${year}`,
+    `${exam.shortName} previous year papers`,
+    `${exam.shortName} PYQ`,
+    `${exam.shortName} preparation`,
+    `${exam.shortName} free mocks`,
+    `${exam.shortName} online test`,
+    `${exam.shortName} ${year}`,
+    `${exam.name}`,
+    `Shishya ${exam.shortName}`,
+  ];
+  const stateKeywords = st ? [
+    `${st.name} entrance exams`,
+    `${st.name} government exams`,
+    `${st.nativeName} ${exam.shortName}`,
+    `${st.hindiName} ${exam.shortName}`,
+    `${exam.shortName} ${st.name} ${year}`,
+    `${st.name} state exam mock test`,
+  ] : [];
+  const langKeywords = langs.flatMap((l) => {
+    const ln = languageName(l);
+    return [
+      `${exam.shortName} in ${ln.en}`,
+      `${exam.shortName} mock test in ${ln.en}`,
+      `${exam.shortName} ${ln.native}`,
+    ];
+  });
+
   const url = `https://shishya.in/exams/${exam.code}`;
   return {
     title,
-    description,
+    description: description.slice(0, 300),
     alternates: { canonical: url },
-    keywords: [
-      `${exam.shortName} syllabus`,
-      `${exam.shortName} mock test`,
-      `${exam.shortName} previous year papers`,
-      `${exam.shortName} preparation`,
-      `${exam.shortName} free mocks`,
-      `${exam.name}`,
-      `${exam.shortName} PYQ`,
-      `${exam.shortName} online test`,
-      `Shishya ${exam.shortName}`,
-    ],
+    keywords: [...baseKeywords, ...stateKeywords, ...langKeywords],
     openGraph: {
       title,
-      description,
+      description: description.slice(0, 300),
       url,
       siteName: "Shishya",
       locale: "en_IN",
@@ -66,7 +114,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title,
-      description,
+      description: description.slice(0, 200),
     },
   };
 }
@@ -156,10 +204,15 @@ export default async function ExamPage({
 
   // JSON-LD structured data — helps Google show this page as a rich
   // Course result with breadcrumb. Built from public exam data only.
-  const courseJsonLd = {
+  // For state exams we add an `about` field (state name) and a 4-step
+  // breadcrumb that includes the state index page, giving Google a clear
+  // hierarchy: Home → Exams → State → Specific exam.
+  const { stateInfo: lookupState } = await import("@/lib/state-info");
+  const stateInfo2 = lookupState(exam.state);
+  const courseJsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Course",
-    name: `${exam.shortName} — Free Mock Tests, Syllabus & AI Tutor`,
+    name: `${exam.shortName}${stateInfo2 ? ` (${stateInfo2.name})` : ""} — Free Mock Tests, Syllabus & AI Tutor`,
     description: exam.description ?? `${exam.name} preparation on Shishya — free expert-curated mocks, previous year papers, and Shishya AI as your personal tutor.`,
     provider: {
       "@type": "EducationalOrganization",
@@ -182,14 +235,43 @@ export default async function ExamPage({
       url: `https://shishya.in/exams/${exam.code}`,
     },
   };
+  if (stateInfo2) {
+    courseJsonLd.about = {
+      "@type": "AdministrativeArea",
+      name: stateInfo2.name,
+      alternateName: [stateInfo2.nativeName, stateInfo2.hindiName],
+    };
+  }
+  const { stateSlug } = await import("@/lib/state-info");
+  const breadcrumbItems: Array<Record<string, unknown>> = [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://shishya.in" },
+    { "@type": "ListItem", position: 2, name: "Exams", item: "https://shishya.in/exams" },
+  ];
+  if (stateInfo2) {
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 3,
+      name: `${stateInfo2.name} exams`,
+      item: `https://shishya.in/exams/state/${stateSlug(stateInfo2.code)}`,
+    });
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 4,
+      name: exam.shortName,
+      item: `https://shishya.in/exams/${exam.code}`,
+    });
+  } else {
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 3,
+      name: exam.shortName,
+      item: `https://shishya.in/exams/${exam.code}`,
+    });
+  }
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "https://shishya.in" },
-      { "@type": "ListItem", position: 2, name: "Exams", item: "https://shishya.in/exams" },
-      { "@type": "ListItem", position: 3, name: exam.shortName, item: `https://shishya.in/exams/${exam.code}` },
-    ],
+    itemListElement: breadcrumbItems,
   };
 
   return (
