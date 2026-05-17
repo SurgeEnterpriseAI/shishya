@@ -173,12 +173,20 @@ export function MockPlayer({
   async function changeLocale(next: Locale) {
     if (next === locale) return;
     setLocale(next);
+    // Wipe stale translations from the previous locale BEFORE fetching
+    // the new ones. If we didn't, a Hindi → Telugu switch where the
+    // Telugu fetch fails (rate limit, malformed JSON) would silently
+    // leave the user staring at Hindi text under a Telugu dropdown.
+    // Also clear any prior error so the new attempt gets a clean banner.
+    setTranslations(new Map());
+    setTranslateErr(null);
     // Per-question translation is intentionally NOT persisted to the
     // shishya-lang cookie. That cookie controls the SITE UI language
     // (top-right LangSwitcher on the dashboard / exam pages). The
     // mock's question picker only affects the current mock's question
     // bodies / options / solution — students can take a mock in Hindi
     // while keeping the dashboard in English.
+    if (next === "en") return; // English = identity; nothing to fetch.
     await fetchTranslations(next);
   }
 

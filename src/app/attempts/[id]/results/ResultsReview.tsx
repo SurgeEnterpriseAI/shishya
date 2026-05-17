@@ -82,9 +82,16 @@ export function ResultsReview({
   async function changeLocale(next: Locale) {
     if (next === locale) return;
     setLocale(next);
+    // Wipe stale translations from the previous locale BEFORE fetching
+    // the new ones. Otherwise a Hindi → Telugu switch where the Telugu
+    // fetch fails would silently leave Hindi visible under a Telugu
+    // dropdown — confusing as hell to the student.
+    setTranslations(new Map());
+    setTranslateErr(null);
     // Per-question translation is local to this review page only —
     // does NOT persist to the shishya-lang cookie (the site UI
     // language is independent and controlled from the header).
+    if (next === "en") return;
     await fetchTranslations(next);
   }
 

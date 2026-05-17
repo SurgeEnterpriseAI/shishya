@@ -144,10 +144,19 @@ export async function translateBatch(
   // function timeout. MODEL is kept around as a fallback only — see the
   // top-of-file TRANSLATION_MODEL constant for the override path.
   void MODEL;
+  // max_tokens budget. Indic scripts (Devanagari for Hindi/Marathi/Sanskrit,
+  // Telugu, Kannada, Tamil, Malayalam, Bengali, Gujarati, Punjabi, Odia,
+  // Assamese) tokenise at 3-4× the rate of Latin script — a 100-char
+  // Kannada sentence can be 400 tokens. Previous budget of 500/q + 1500
+  // was truncating mid-options on Kannada batches; bumping to 1500/q +
+  // 2000 (capped at the 8192 model limit). The user sees the truncation
+  // as "translator returned malformed JSON: ```json {...".
+  const indicScripts = new Set(["hi", "te", "kn", "ta", "ml", "bn", "gu", "pa", "or", "as", "mr", "sa", "mai", "ne", "kok", "ks", "sd"]);
+  const tokenBudgetPerQ = indicScripts.has(input.locale) ? 1500 : 700;
   const start = Date.now();
   const finalMessage = await anthropic.messages.create({
     model: TRANSLATION_MODEL,
-    max_tokens: Math.min(8192, 500 * input.questions.length + 1500),
+    max_tokens: Math.min(8192, tokenBudgetPerQ * input.questions.length + 2000),
     system: [
       { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
     ] as Anthropic.Messages.TextBlockParam[],
@@ -163,7 +172,23 @@ export async function translateBatch(
 
   const parsed = extractJson(text);
   if (!parsed || !Array.isArray(parsed.translations)) {
-    throw new Error(`translator returned malformed JSON: ${text.slice(0, 300)}`);
+    // Distinguish "output got cut off at max_tokens" (we just need to
+    // ask Anthropic for fewer questions or a higher token budget) from
+    // "model decided to write prose instead of JSON" (prompt issue).
+    // The full raw text goes to the server console for debugging; the
+    // thrown message is short + user-friendly so it doesn't dump raw
+    // JSON garbage into the on-screen error banner.
+    console.error("[translator] malformed JSON", {
+      stop_reason: finalMessage.stop_reason,
+      output_tokens: finalMessage.usage?.output_tokens,
+      preview: text.slice(0, 500),
+    });
+    if (finalMessage.stop_reason === "max_tokens") {
+      throw new Error(
+        `Translation output was cut off (hit ${finalMessage.usage?.output_tokens ?? "?"}-token limit). Try a shorter language or retry.`,
+      );
+    }
+    throw new Error("Translation engine returned a malformed response. Retry in a moment.");
   }
 
   const byId = new Map<string, TranslatedQuestion>();
