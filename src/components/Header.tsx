@@ -1,16 +1,32 @@
-// Reusable header with brand + auth state + language switcher.
+// Reusable header with brand + lifecycle nav + auth state + language switcher.
 // Server Component — reads the session via NextAuth helper.
+//
+// The 7-item lifecycle nav (Schooling → Worldwide) positions Shishya
+// as a multi-stage education platform; collapses to a hamburger drawer
+// below md so phones stay usable.
 
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { LangSwitcher } from "./LangSwitcher";
 import { BackLink } from "./BackLink";
+import { MobileNavToggle } from "./MobileNavToggle";
+
+const PRIMARY_NAV: Array<{ href: string; label: string; short: string }> = [
+  { href: "/schooling",       label: "Schooling",               short: "School" },
+  { href: "/colleges",        label: "Colleges & Graduation",   short: "Colleges" },
+  { href: "/exams",           label: "Entrance & Govt Exams",   short: "Exams" },
+  { href: "/post-graduation", label: "Post-Graduation",          short: "PG" },
+  { href: "/jobs",            label: "Jobs & Careers",           short: "Jobs" },
+  { href: "/worldwide",       label: "Worldwide",                short: "Worldwide" },
+  { href: "/insights",        label: "Insights",                 short: "Insights" },
+];
 
 export async function Header({ admin = false }: { admin?: boolean }) {
   const [session, { locale, t }] = await Promise.all([auth(), getT()]);
   return (
     <header className="border-b border-ink-200/50 bg-white/80 backdrop-blur">
+      {/* Row 1: brand + right-side controls. */}
       <div className="container-prose flex h-16 items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Link href={session?.user ? "/dashboard" : "/"} className="flex items-center gap-2">
@@ -45,8 +61,33 @@ export async function Header({ admin = false }: { admin?: boolean }) {
               {t("nav.signin.short")}
             </Link>
           )}
+          {/* Mobile-only hamburger that opens the section drawer. */}
+          {!admin && <MobileNavToggle items={PRIMARY_NAV} />}
         </nav>
       </div>
+
+      {/* Row 2: lifecycle nav. Hidden on small screens (use hamburger).
+          Admin pages skip this row to keep the operator surface dense. */}
+      {!admin && (
+        <nav
+          className="hidden border-t border-ink-100 bg-white/60 md:block"
+          aria-label="Primary"
+        >
+          <ul className="container-prose flex h-11 items-center gap-1 overflow-x-auto text-xs">
+            {PRIMARY_NAV.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className="inline-flex items-center whitespace-nowrap rounded-md px-3 py-1.5 font-medium text-ink-700 hover:bg-saffron-50/50 hover:text-saffron-800"
+                >
+                  <span className="hidden lg:inline">{item.label}</span>
+                  <span className="lg:hidden">{item.short}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
     </header>
   );
 }

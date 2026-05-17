@@ -57,6 +57,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  // Lifecycle section landings — same depth and priority as /exams so
+  // Google understands the homepage is a hub, not a single-purpose page.
+  const sectionLandings: MetadataRoute.Sitemap = [
+    "/schooling",
+    "/colleges",
+    "/exams",
+    "/exams/browse",
+    "/post-graduation",
+    "/jobs",
+    "/worldwide",
+    "/insights",
+  ].map((path) => ({
+    url: `${base}${path}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.9,
+  }));
+
   return [
     {
       url: base,
@@ -64,12 +82,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily" as const,
       priority: 1.0,
     },
-    {
-      url: `${base}/exams`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.9,
-    },
+    ...sectionLandings,
     ...stateUrls,
     ...examUrls,
     ...topicUrls,
