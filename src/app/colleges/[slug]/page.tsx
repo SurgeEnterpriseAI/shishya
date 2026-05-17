@@ -20,7 +20,9 @@ import {
 } from "@/lib/colleges-data";
 import { stateInfo } from "@/lib/state-info";
 import { VerificationBadge, SectionVerificationSummary } from "@/components/VerificationBadge";
+import { ClickableVerificationBadge } from "@/components/ClickableVerificationBadge";
 import { getFactMap, factToBadgeProps } from "@/lib/db/facts";
+import { auth } from "@/lib/auth";
 
 export async function generateStaticParams() {
   return COLLEGES.map((c) => ({ slug: c.slug }));
@@ -82,8 +84,15 @@ export default async function CollegePage({
   // Real Fact rows for this page — drives the verification badges.
   // Falls back to hardcoded "ai" if the seed hasn't run for this page yet.
   const factMap = await getFactMap(`/colleges/${slug}`).catch(() => ({} as Record<string, any>));
-  const nirfBadge      = factToBadgeProps(factMap["nirf-rank"]);
+  const nirfFact       = factMap["nirf-rank"];
+  const nirfBadge      = factToBadgeProps(nirfFact);
   const foundedBadge   = factToBadgeProps(factMap["established-year"]);
+
+  // Is this visit logged in? Drives whether the verification panel
+  // shows action buttons vs a Sign-in CTA. Resilient: if auth() throws
+  // (env mis-config), we treat the visitor as signed out.
+  const session = await auth().catch(() => null);
+  const signedIn = Boolean(session?.user);
 
   // Cross-link to relevant exams for this college (best-effort by stream).
   // Doesn't fetch from the exams DB — uses well-known mappings so this
@@ -160,7 +169,18 @@ export default async function CollegePage({
             <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">NIRF ranking</p>
             <div className="mt-1 flex flex-wrap items-baseline gap-2">
               <p className="text-sm font-medium text-ink-900">{ranksCopy}</p>
-              <VerificationBadge {...nirfBadge} />
+              {nirfFact ? (
+                <ClickableVerificationBadge
+                  factId={nirfFact.id}
+                  status={nirfBadge.status}
+                  source={nirfBadge.source}
+                  sourceUrl={nirfBadge.sourceUrl}
+                  lastCheckedAt={nirfBadge.lastCheckedAt}
+                  signedIn={signedIn}
+                />
+              ) : (
+                <VerificationBadge {...nirfBadge} />
+              )}
             </div>
             <p className="mt-1 text-[11px] text-ink-600">
               Source:{" "}
