@@ -192,8 +192,27 @@ export default async function HomeHub() {
           ))}
         </ul>
 
+        {/* Trust strip — visible verification commitment on first scroll. */}
+        <div className="mx-auto mt-12 max-w-3xl rounded-xl border border-emerald-200 bg-emerald-50/40 p-5 text-sm text-ink-700">
+          <h3 className="text-base font-semibold text-ink-900">
+            Every fact carries a verification badge
+          </h3>
+          <p className="mt-2">
+            We don't give you confident answers without showing our work.
+            Every exam date, college rank, scholarship eligibility and
+            visa rule on Shishya shows a visible badge telling you
+            exactly how it's been verified — AI-checked against the
+            official source, community-confirmed, or flagged for review.
+            Click any badge anywhere on the site to see the full
+            verification history.{" "}
+            <Link href="/verification" className="text-saffron-700 underline">
+              How verification works →
+            </Link>
+          </p>
+        </div>
+
         {/* Footer / mission */}
-        <div className="mx-auto mt-16 max-w-3xl rounded-xl border border-ink-200 bg-white p-6 text-sm text-ink-700">
+        <div className="mx-auto mt-12 max-w-3xl rounded-xl border border-ink-200 bg-white p-6 text-sm text-ink-700">
           <h3 className="text-base font-semibold text-ink-900">Why Shishya is free</h3>
           <p className="mt-2">
             Coaching costs in India have outpaced what most families can

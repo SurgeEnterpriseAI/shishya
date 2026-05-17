@@ -10,6 +10,7 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { BOARDS, findBoard, CLASS_11_12_STREAMS } from "@/lib/schooling-data";
 import { stateInfo } from "@/lib/state-info";
+import { SectionVerificationSummary } from "@/components/VerificationBadge";
 
 export async function generateStaticParams() {
   return BOARDS.map((b) => ({ slug: b.slug }));
@@ -94,6 +95,12 @@ export default async function BoardPage({
         )}
 
         <p className="mt-4 max-w-3xl text-sm text-ink-700">{b.blurb}</p>
+
+        <SectionVerificationSummary
+          status="ai"
+          source={`${b.shortName} official website`}
+          refreshCadence="every 90 days (board syllabi update annually)"
+        />
 
         {/* Official links */}
         <div className="mt-6 rounded-lg border border-ink-200 bg-white p-5">
