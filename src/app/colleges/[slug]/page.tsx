@@ -20,6 +20,7 @@ import {
 } from "@/lib/colleges-data";
 import { stateInfo } from "@/lib/state-info";
 import { VerificationBadge, SectionVerificationSummary } from "@/components/VerificationBadge";
+import { getFactMap, factToBadgeProps } from "@/lib/db/facts";
 
 export async function generateStaticParams() {
   return COLLEGES.map((c) => ({ slug: c.slug }));
@@ -77,6 +78,12 @@ export default async function CollegePage({
   if (!c) notFound();
   const st = stateInfo(c.state);
   const ranksCopy = formatNirfRanks(c.nirf);
+
+  // Real Fact rows for this page — drives the verification badges.
+  // Falls back to hardcoded "ai" if the seed hasn't run for this page yet.
+  const factMap = await getFactMap(`/colleges/${slug}`).catch(() => ({} as Record<string, any>));
+  const nirfBadge      = factToBadgeProps(factMap["nirf-rank"]);
+  const foundedBadge   = factToBadgeProps(factMap["established-year"]);
 
   // Cross-link to relevant exams for this college (best-effort by stream).
   // Doesn't fetch from the exams DB — uses well-known mappings so this
@@ -145,7 +152,7 @@ export default async function CollegePage({
         <p className="mt-1 text-sm text-ink-600">{c.name}</p>
         <p className="mt-1 text-xs text-ink-500">
           {c.city} · {st?.name ?? c.state} · established {c.established}{" "}
-          <VerificationBadge status="ai" source="official college site" compact />
+          <VerificationBadge {...foundedBadge} compact />
         </p>
 
         {ranksCopy && (
@@ -153,11 +160,7 @@ export default async function CollegePage({
             <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">NIRF ranking</p>
             <div className="mt-1 flex flex-wrap items-baseline gap-2">
               <p className="text-sm font-medium text-ink-900">{ranksCopy}</p>
-              <VerificationBadge
-                status="ai"
-                source="NIRF"
-                lastCheckedAt={`${NIRF_SOURCE_YEAR}-08-12`}
-              />
+              <VerificationBadge {...nirfBadge} />
             </div>
             <p className="mt-1 text-[11px] text-ink-600">
               Source:{" "}

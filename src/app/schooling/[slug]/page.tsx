@@ -10,7 +10,8 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { BOARDS, findBoard, CLASS_11_12_STREAMS } from "@/lib/schooling-data";
 import { stateInfo } from "@/lib/state-info";
-import { SectionVerificationSummary } from "@/components/VerificationBadge";
+import { SectionVerificationSummary, VerificationBadge } from "@/components/VerificationBadge";
+import { getFactMap, factToBadgeProps } from "@/lib/db/facts";
 
 export async function generateStaticParams() {
   return BOARDS.map((b) => ({ slug: b.slug }));
@@ -67,6 +68,11 @@ export default async function BoardPage({
   const st = b.state ? stateInfo(b.state) : null;
   const year = new Date().getUTCFullYear();
 
+  const factMap = await getFactMap(`/schooling/${slug}`).catch(() => ({} as Record<string, any>));
+  const websiteBadge  = factToBadgeProps(factMap["official-website"]);
+  const syllabusBadge = factToBadgeProps(factMap["syllabus-url"]);
+  const samplesBadge  = factToBadgeProps(factMap["sample-paper-url"]);
+
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -111,33 +117,42 @@ export default async function BoardPage({
             doesn't cache them as static facts.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <a
-              href={b.websiteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-saffron-600"
-            >
-              Board website ↗
-            </a>
-            {b.syllabusUrl && (
+            <span className="inline-flex items-center gap-1">
               <a
-                href={b.syllabusUrl}
+                href={b.websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-md border border-ink-300 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-50"
+                className="inline-flex items-center gap-1 rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-saffron-600"
               >
-                Syllabus / Curriculum ↗
+                Board website ↗
               </a>
+              <VerificationBadge {...websiteBadge} compact />
+            </span>
+            {b.syllabusUrl && (
+              <span className="inline-flex items-center gap-1">
+                <a
+                  href={b.syllabusUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md border border-ink-300 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-50"
+                >
+                  Syllabus / Curriculum ↗
+                </a>
+                <VerificationBadge {...syllabusBadge} compact />
+              </span>
             )}
             {b.samplePaperUrl && (
-              <a
-                href={b.samplePaperUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-md border border-ink-300 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-50"
-              >
-                Sample papers ↗
-              </a>
+              <span className="inline-flex items-center gap-1">
+                <a
+                  href={b.samplePaperUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md border border-ink-300 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-50"
+                >
+                  Sample papers ↗
+                </a>
+                <VerificationBadge {...samplesBadge} compact />
+              </span>
             )}
           </div>
         </div>
