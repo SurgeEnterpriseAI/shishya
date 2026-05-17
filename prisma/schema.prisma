@@ -42,6 +42,20 @@ model User {
   // referrerHost = parsed hostname for cheap GROUP BY queries
   signupReferrerUrl  String?
   signupReferrerHost String?
+  // Verification-system contribution tracking. All default to 0 so the
+  // migration is non-breaking — existing users land as NEWCOMER with
+  // zero counts. Counts are incremented by the verification flow,
+  // resetting only on admin override (e.g., when a flag is invalidated
+  // we DECREMENT flagValidatedCount).
+  contributionScore       Int        @default(0)
+  verificationCount       Int        @default(0)
+  flagCount               Int        @default(0)
+  flagValidatedCount      Int        @default(0)
+  suggestionAcceptedCount Int        @default(0)
+  badgeLevel              BadgeLevel @default(NEWCOMER)
+  badgeEarnedAt           DateTime?
+  // [{ type: "exam_cleared" | "currently_at" | "working_at", domain: "UPSC", verifiedAt: ISO, source: "linkedin" | "doc" | "vouching" | "email" }]
+  domainExpertCredentials Json?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -59,8 +73,11 @@ model User {
   featureRequests FeatureRequest[]       @relation("FeatureRequestAuthor")
   featureUpvotes  FeatureRequestUpvote[] @relation("FeatureRequestVoter")
   dailyBriefs     DailyBrief[]
+  verifications   Verification[]      @relation("UserVerifications")
+  adminAudits     VerificationAudit[] @relation("AdminAudits")
 
   @@index([email])
+  @@index([badgeLevel])
 }
 
 model Account {
@@ -696,4 +713,165 @@ enum ProgressType {
   WEAKNESS_IMPROVED
   GOAL_REACHED
   RANK_CHANGE
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Verification system (Phase 2 of the trust-differentiator)
+//
+// One Fact row per verifiable claim across the platform. pageId is a
+// polymorphic URL path ("/exams/jee-main", "/colleges/iit-madras") with
+// a FactSection discriminator instead of 6 optional FKs. We trade
+// referential integrity (a deleted Exam doesn't cascade-clean its Facts)
+// for a single uniform Facts table — the spec treats facts as platform-
+// wide objects, not per-entity rows.
+// ─────────────────────────────────────────────────────────────────────────
+
+model Fact {
+  id                          String   @id @default(cuid())
+  pageId                      String                        // canonical URL path, e.g. "/exams/jee-main"
+  section                     FactSection                   // discriminator for the host page
+  claimText                   String   @db.Text             // human-readable: "NIRF Engineering rank"
+  claimValue                  String   @db.Text             // the actual value: "#1"
+  sourceUrl                   String                        // official source URL
+  sourceName                  String                        // "NIRF 2024", "CBSE", "NTA"
+  originalIngestionDate       DateTime @default(now())
+  lastAiCheckDate             DateTime?
+  lastAiCheckResult           AICheckResult?
+  aiCheckCount                Int      @default(0)
+  communityVerificationsCount Int      @default(0)
+  trustedVerifierCount        Int      @default(0)
+  domainExpertCount           Int      @default(0)
+  flagCount                   Int      @default(0)
+  status                      FactStatus @default(NONE)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  verifications Verification[]
+  audits        VerificationAudit[]
+  aiChecks      AiCheck[]
+
+  @@index([pageId])
+  @@index([section, status])
+  @@index([lastAiCheckDate])     // drives the AI re-verification priority queue
+  @@index([status])
+}
+
+model Verification {
+  id                String                  @id @default(cuid())
+  factId            String
+  userId            String
+  actionType        VerificationActionType
+  notes             String?                 @db.Text         // required for FLAG + SUGGEST_UPDATE
+  proposedValue     String?                 @db.Text         // for SUGGEST_UPDATE
+  proposedSourceUrl String?                                  // for SUGGEST_UPDATE
+  resolutionStatus  VerificationResolution  @default(PENDING)
+  resolvedAt        DateTime?
+  resolvedBy        String?                                  // admin User.id
+  createdAt         DateTime                @default(now())
+
+  fact   Fact                @relation(fields: [factId], references: [id], onDelete: Cascade)
+  user   User                @relation("UserVerifications", fields: [userId], references: [id], onDelete: Cascade)
+  audits VerificationAudit[]
+
+  @@unique([factId, userId, actionType])
+  @@index([factId])
+  @@index([userId])
+  @@index([resolutionStatus])
+}
+
+// Full AI verification history. Fact.lastAiCheckDate is the hot cache;
+// this table is the audit trail.
+model AiCheck {
+  id              String         @id @default(cuid())
+  factId          String
+  checkResult     AICheckResult
+  extractedValue  String?        @db.Text    // what the AI read from the source
+  displayedValue  String         @db.Text    // what Shishya showed at check time
+  matchType       AiMatchType    @default(EXACT)
+  notes           String?        @db.Text
+  latencyMs       Int?
+  modelUsed       String?                    // "claude-haiku-4-5"
+  createdAt       DateTime       @default(now())
+
+  fact Fact @relation(fields: [factId], references: [id], onDelete: Cascade)
+
+  @@index([factId, createdAt])
+}
+
+// Admin audit log — random 5% sampling + dispute resolution decisions.
+model VerificationAudit {
+  id              String        @id @default(cuid())
+  factId          String
+  verificationId  String?
+  adminUserId     String
+  auditResult     AuditResult
+  notes           String?       @db.Text
+  createdAt       DateTime      @default(now())
+
+  fact         Fact          @relation(fields: [factId], references: [id], onDelete: Cascade)
+  verification Verification? @relation(fields: [verificationId], references: [id])
+  admin        User          @relation("AdminAudits", fields: [adminUserId], references: [id])
+
+  @@index([factId])
+  @@index([adminUserId])
+}
+
+enum FactSection {
+  EXAM
+  COLLEGE
+  SCHOLARSHIP
+  BOARD
+  UNIVERSITY       // for the Worldwide section
+  VISA             // for the Worldwide section
+  CAREER
+  GENERAL
+}
+
+enum AICheckResult {
+  VERIFIED
+  NEEDS_REVIEW
+  SOURCE_UNREACHABLE
+  SOURCE_CHANGED
+}
+
+enum AiMatchType {
+  EXACT
+  CLOSE            // e.g. date format difference
+  PARTIAL
+  MISMATCH
+}
+
+enum FactStatus {
+  NONE             // grey badge — no verification yet
+  AI               // blue — AI-verified, no human yet
+  VERIFIED         // green single-check
+  FULLY            // green double-check
+  NEEDS_REVIEW     // amber
+  DISPUTED         // red
+}
+
+enum VerificationActionType {
+  VERIFY
+  FLAG
+  SUGGEST_UPDATE
+}
+
+enum VerificationResolution {
+  PENDING
+  VALIDATED        // flag was correct / suggestion accepted
+  DISMISSED        // flag was wrong
+}
+
+enum AuditResult {
+  APPROVED
+  REJECTED
+  CORRECTED
+}
+
+enum BadgeLevel {
+  NEWCOMER
+  CONTRIBUTOR
+  VERIFIER
+  TRUSTED_VERIFIER
+  DOMAIN_EXPERT
 }
