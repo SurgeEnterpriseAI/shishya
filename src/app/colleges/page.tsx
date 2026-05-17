@@ -160,6 +160,15 @@ export default async function CollegesLanding({
               );
             })}
           </div>
+          {stream && (
+            <p className="mt-2 text-[11px] text-ink-500">
+              Tip:{" "}
+              <Link href={`/colleges/stream/${stream}`} className="text-saffron-700 underline">
+                jump to the dedicated {ALL_STREAMS.find((s) => s.value === stream)?.label} page
+              </Link>{" "}
+              for a NIRF-ranked ordered list.
+            </p>
+          )}
         </div>
 
         {/* Type filter */}

@@ -5,7 +5,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db/prisma";
 import { STATES, stateSlug } from "@/lib/state-info";
-import { COLLEGES } from "@/lib/colleges-data";
+import { COLLEGES, ALL_STREAMS } from "@/lib/colleges-data";
 
 export const revalidate = 86_400; // 24h
 
@@ -87,6 +87,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  // Per-stream college aggregator pages — head SEO targets:
+  // "top engineering colleges India", "best medical colleges India NIRF",
+  // "top NLU India law" etc.
+  const streamUrls: MetadataRoute.Sitemap = ALL_STREAMS.map((s) => ({
+    url: `${base}/colleges/stream/${s.value}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.85,
+  }));
+
   return [
     {
       url: base,
@@ -98,6 +108,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...stateUrls,
     ...examUrls,
     ...topicUrls,
+    ...streamUrls,
     ...collegeUrls,
   ];
 }
