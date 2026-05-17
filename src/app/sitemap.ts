@@ -5,6 +5,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db/prisma";
 import { STATES, stateSlug } from "@/lib/state-info";
+import { COLLEGES } from "@/lib/colleges-data";
 
 export const revalidate = 86_400; // 24h
 
@@ -75,6 +76,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
+  // Per-college URLs (Phase 2). Each NIRF-ranked college is a separate
+  // indexable page targeting long-tail queries like "IIT Madras admission",
+  // "NIRF rank AIIMS Delhi", etc.
+  const collegeUrls: MetadataRoute.Sitemap = COLLEGES.map((c) => ({
+    url: `${base}/colleges/${c.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
   return [
     {
       url: base,
@@ -86,5 +97,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...stateUrls,
     ...examUrls,
     ...topicUrls,
+    ...collegeUrls,
   ];
 }
