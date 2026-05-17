@@ -19,6 +19,11 @@ interface AttribPayload {
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
+  // direct=true means middleware fired but the visitor had no Referer
+  // and no UTM (typed URL / bookmark / messenger paste). We still record
+  // them as `signupReferrerHost = "direct"` so DB NULL unambiguously
+  // means "middleware didn't fire" rather than "unattributable user".
+  direct?: boolean;
 }
 
 export async function captureSignupAttribution(userId: string): Promise<void> {
@@ -47,23 +52,29 @@ export async function captureSignupAttribution(userId: string): Promise<void> {
   if (parsed.utm_campaign) utmParts.push(`utm_campaign=${parsed.utm_campaign}`);
   const utmJoined = utmParts.join("&");
 
-  const referrerUrl = utmJoined || parsed.ref || "";
-  if (!referrerUrl) {
+  // Direct visit: middleware fired, but visitor had no Referer + no UTM.
+  // Record as "direct" so the column isn't NULL — a NULL value should
+  // signal "capture pipeline broken", not "we have a typed-URL user".
+  let referrerUrl = utmJoined || parsed.ref || "";
+  let referrerHost = "";
+  if (!referrerUrl && parsed.direct) {
+    referrerUrl = "direct";
+    referrerHost = "direct";
+  } else if (!referrerUrl) {
     jar.set(COOKIE, "", { path: "/", maxAge: 0 });
     return;
-  }
-
-  let referrerHost = "";
-  try {
-    if (utmJoined) {
-      // UTM-tagged → host is the utm_source value (treated as the
-      // friendly source name: "reddit", "telegram", "whatsapp")
-      referrerHost = parsed.utm_source ?? "utm";
-    } else if (parsed.ref) {
-      referrerHost = new URL(parsed.ref).hostname.replace(/^www\./, "");
+  } else {
+    try {
+      if (utmJoined) {
+        // UTM-tagged → host is the utm_source value (treated as the
+        // friendly source name: "reddit", "telegram", "whatsapp")
+        referrerHost = parsed.utm_source ?? "utm";
+      } else if (parsed.ref) {
+        referrerHost = new URL(parsed.ref).hostname.replace(/^www\./, "");
+      }
+    } catch {
+      referrerHost = "";
     }
-  } catch {
-    referrerHost = "";
   }
 
   try {

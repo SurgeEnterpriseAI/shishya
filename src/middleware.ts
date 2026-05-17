@@ -12,11 +12,16 @@
 // the response's cookies. So this is the right home for the capture.
 //
 // Behavior:
-//  - Only intercepts /login (and only when no attribution cookie is
-//    already present — first /login visit wins so we record the
-//    original source, not a later same-tab refresh).
-//  - Reads Referer header + utm_* query params.
-//  - Writes `shishya_attrib` cookie (httpOnly, sameSite=lax, 30 min).
+//  - Intercepts /login (only when no attribution cookie is already
+//    present — first /login visit wins so we record the original
+//    source, not a later same-tab refresh).
+//  - ALWAYS writes the `shishya_attrib` cookie, even on direct-typed
+//    visits (no Referer, no UTM). The cookie carries `direct: true`
+//    in that case so the dashboard can record `signupReferrerHost =
+//    "direct"`. Without this, `ref=NULL` in the DB is ambiguous —
+//    could mean "direct typed" OR "middleware didn't fire". We need
+//    the difference to know whether marketing attribution is working
+//    end-to-end.
 //  - Lets the request through unchanged otherwise.
 
 import { NextResponse, type NextRequest } from "next/server";
@@ -40,20 +45,19 @@ export function middleware(req: NextRequest): NextResponse {
   const utmMedium = sp.get("utm_medium") ?? "";
   const utmCampaign = sp.get("utm_campaign") ?? "";
 
-  // Treat same-origin referers as "no referrer" — those are just internal
-  // navigation (homepage → login). We still want them because that's how
-  // we'll distinguish "direct typed" from "clicked sign in on /". The
-  // referrer in that case is `https://shishya.in/` which IS useful — it
-  // tells us they came via the homepage and not a deep link.
-  const haveSomething =
-    Boolean(referer) || Boolean(utmSource) || Boolean(utmMedium) || Boolean(utmCampaign);
-  if (!haveSomething) return res;
+  // "Direct" = no Referer header AND no UTM params. Typed URL, bookmark,
+  // pasted from a place that strips referers (most messenger apps, iOS).
+  // We mark these explicitly so signupReferrerHost ends up as "direct"
+  // instead of NULL — the latter would mean middleware silently failed.
+  const isDirect =
+    !referer && !utmSource && !utmMedium && !utmCampaign;
 
   const payload = JSON.stringify({
     ref: referer,
     utm_source: utmSource,
     utm_medium: utmMedium,
     utm_campaign: utmCampaign,
+    direct: isDirect,
   });
 
   res.cookies.set({
