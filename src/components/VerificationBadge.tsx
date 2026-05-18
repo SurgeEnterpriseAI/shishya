@@ -50,6 +50,63 @@ interface Props {
    *     so the parent's onClick fires instead of the link swallowing it.
    */
   as?: "link" | "span";
+  /**
+   * Verification counts. When present, the badge shows an inline
+   * "1/3 confirmed" progress indicator and the hover tooltip explains
+   * exactly how many more confirmations would flip the status to the
+   * next level. Makes the badge feel actively in-progress instead
+   * of static.
+   */
+  communityCount?: number;
+  trustedVerifierCount?: number;
+  domainExpertCount?: number;
+  flagCount?: number;
+}
+
+// Threshold table — mirrors src/lib/db/facts.ts computeFactStatus.
+// Kept here as a local constant so the tooltip copy can compute
+// progression without an extra import.
+const THRESHOLD_VERIFIED = 3;     // community confirmations needed to flip AI → Verified
+const THRESHOLD_FULLY    = 5;     // community confirmations needed for Fully (with AI ≤30d)
+
+function progressionText(
+  status: VerificationStatus,
+  c: number,
+  tv: number,
+  de: number,
+  flags: number,
+): string {
+  if (status === "ai") {
+    if (tv >= 1 || de >= 1) return "Trusted reviewer just confirmed — flipping to Verified";
+    const need = THRESHOLD_VERIFIED - c;
+    if (need <= 0) return "Threshold reached — flipping to Verified";
+    if (c === 0) return `Needs ${need} community confirmations to become Verified`;
+    return `${c}/${THRESHOLD_VERIFIED} community confirmations · needs ${need} more for Verified`;
+  }
+  if (status === "verified") {
+    const need = THRESHOLD_FULLY - c;
+    if (need <= 0) return "Threshold reached — flipping to Fully verified";
+    return `Verified · ${c}/${THRESHOLD_FULLY} confirmations toward Fully verified`;
+  }
+  if (status === "fully") {
+    return `Fully verified · ${c} community confirmations + AI checked recently`;
+  }
+  if (status === "needs") {
+    return "AI re-verification overdue — your confirmation helps refresh it";
+  }
+  if (status === "disputed") {
+    return `${flags} flag${flags === 1 ? "" : "s"} under admin review`;
+  }
+  return "Not yet verified — be the first to confirm";
+}
+
+function progressionShort(status: VerificationStatus, c: number): string | null {
+  // The inline "1/3" suffix that goes on the badge itself.
+  // Only show for AI and Verified — Fully / Needs / Disputed have
+  // other visual signals so suppressing the count keeps the badge tidy.
+  if (status === "ai") return `${c}/${THRESHOLD_VERIFIED}`;
+  if (status === "verified") return `${c}/${THRESHOLD_FULLY}`;
+  return null;
 }
 
 const STATUS_LABELS: Record<VerificationStatus, string> = {
@@ -118,35 +175,60 @@ export function VerificationBadge({
   lastCheckedAt,
   compact = false,
   as = "link",
+  communityCount,
+  trustedVerifierCount = 0,
+  domainExpertCount = 0,
+  flagCount = 0,
 }: Props) {
   void sourceUrl;
+  const c = communityCount ?? 0;
   // Compose the tooltip text. We use `title` because it works in every
   // browser without JS — accessibility win + cheaper than a popover for
   // the high-frequency badge-everywhere pattern.
+  //
+  // Tooltip format:
+  //   "AI-verified against NIRF (2026-05-17)
+  //    1/3 community confirmations · needs 2 more for Verified
+  //    Click to confirm or flag"
+  // The progression line makes the badge feel actively in-progress
+  // instead of static, addressing "thinks its under verification process".
   const dateBit = lastCheckedAt
     ? new Date(lastCheckedAt).toISOString().slice(0, 10)
     : null;
-  const tooltip = [
+  const headLine = [
     STATUS_LABELS[status],
     source ? `against ${source}` : null,
     dateBit ? `(${dateBit})` : null,
-    "— click to learn how verification works",
   ]
     .filter(Boolean)
     .join(" ");
+  const progress = (communityCount !== undefined)
+    ? progressionText(status, c, trustedVerifierCount, domainExpertCount, flagCount)
+    : null;
+  const cta = as === "link"
+    ? "Click to learn how verification works"
+    : "Click to confirm, flag, or suggest an update";
+  const tooltip = [headLine, progress, cta].filter(Boolean).join(" · ");
 
   // Cursor pointer + hover affordance so users understand "click me".
   // The exact wrapper element depends on `as` — Link for navigation-mode,
   // span when nested inside a clickable parent so the parent's onClick
   // actually fires (an inner <a> would swallow the click and navigate).
   const className = `inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium align-middle leading-none cursor-pointer transition-colors hover:brightness-95 ${STATUS_CLASS[status]}`;
+  // Inline "1/3" progress — only on AI + Verified states where the
+  // student can move the number by acting. Suppressed on terminal
+  // states (Fully / Disputed) and on bare AI badges without count data.
+  const progShort = (communityCount !== undefined)
+    ? progressionShort(status, c)
+    : null;
   const inner = (
     <>
       <Icon status={status} />
       {!compact && (
-        <span className="truncate max-w-[120px]">
+        <span className="truncate max-w-[160px]">
           {STATUS_LABELS[status]}
           {source ? ` · ${source}` : ""}
+          {progShort ? ` · ${progShort}` : ""}
         </span>
       )}
     </>

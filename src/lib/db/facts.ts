@@ -99,12 +99,20 @@ export async function getFactMap(pageId: string): Promise<Record<string, Fact>> 
  * Translate a Fact row into the props the VerificationBadge component
  * expects. Use this in server components for badge rendering with
  * real verification data instead of the hardcoded "ai" fallback.
+ *
+ * Also surfaces the verification counts so the badge can render an
+ * inline "1/3" progress indicator + a tooltip explaining how many
+ * more community confirmations are needed to flip to the next status.
  */
 export function factToBadgeProps(fact: Fact | null | undefined): {
   status: "fully" | "verified" | "ai" | "needs" | "none" | "disputed";
   lastCheckedAt?: string;
   source?: string;
   sourceUrl?: string;
+  communityCount?: number;
+  trustedVerifierCount?: number;
+  domainExpertCount?: number;
+  flagCount?: number;
 } {
   if (!fact) {
     return { status: "ai" };
@@ -122,5 +130,9 @@ export function factToBadgeProps(fact: Fact | null | undefined): {
     lastCheckedAt: fact.lastAiCheckDate?.toISOString(),
     source: fact.sourceName,
     sourceUrl: fact.sourceUrl,
+    communityCount: fact.communityVerificationsCount,
+    trustedVerifierCount: fact.trustedVerifierCount,
+    domainExpertCount: fact.domainExpertCount,
+    flagCount: fact.flagCount,
   };
 }

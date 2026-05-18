@@ -339,6 +339,10 @@ function FactBadge({
       lastCheckedAt={props.lastCheckedAt}
       signedIn={signedIn}
       compact={compact}
+      communityCount={props.communityCount}
+      trustedVerifierCount={props.trustedVerifierCount}
+      domainExpertCount={props.domainExpertCount}
+      flagCount={props.flagCount}
     />
   );
 }

@@ -33,6 +33,11 @@ interface Props {
   compact?: boolean;
   /** Whether the visitor is signed in — drives whether action buttons render. */
   signedIn: boolean;
+  /** Verification counts so the badge can show in-progress state. */
+  communityCount?: number;
+  trustedVerifierCount?: number;
+  domainExpertCount?: number;
+  flagCount?: number;
 }
 
 export function ClickableVerificationBadge({
@@ -43,6 +48,10 @@ export function ClickableVerificationBadge({
   lastCheckedAt,
   compact,
   signedIn,
+  communityCount,
+  trustedVerifierCount,
+  domainExpertCount,
+  flagCount,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [fact, setFact] = useState<FactDisplay | null>(null);
@@ -84,6 +93,10 @@ export function ClickableVerificationBadge({
           lastCheckedAt={lastCheckedAt}
           compact={compact}
           as="span"
+          communityCount={communityCount}
+          trustedVerifierCount={trustedVerifierCount}
+          domainExpertCount={domainExpertCount}
+          flagCount={flagCount}
         />
       </button>
       {open && (
