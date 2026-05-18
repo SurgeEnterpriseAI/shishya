@@ -863,6 +863,9 @@ async function renderInsights() {
           <Link href="/admin/verification-promotions" className="rounded-md border border-emerald-300 bg-emerald-50/50 px-3 py-1.5 text-emerald-800 hover:bg-emerald-100">
             Trusted Verifier promotions
           </Link>
+          <Link href="/admin/credential-grants" className="rounded-md border border-emerald-300 bg-emerald-50/50 px-3 py-1.5 text-emerald-800 hover:bg-emerald-100">
+            Domain Expert credential grants
+          </Link>
         </section>
       </section>
     </main>

@@ -75,6 +75,8 @@ model User {
   dailyBriefs     DailyBrief[]
   verifications   Verification[]      @relation("UserVerifications")
   adminAudits     VerificationAudit[] @relation("AdminAudits")
+  credentials     UserCredential[]    @relation("UserCredentials")
+  vouches         CredentialVouch[]   @relation("UserVouches")
 
   @@index([email])
   @@index([badgeLevel])
@@ -874,4 +876,92 @@ enum BadgeLevel {
   VERIFIER
   TRUSTED_VERIFIER
   DOMAIN_EXPERT
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Phase 1.2 — Domain Expert credentials
+//
+// Users claim affiliation with a recognized institution (IIT, AIIMS,
+// UPSC etc.). Verification paths:
+//   1. Institutional email (blocked — needs email infra; flow stubbed)
+//   2. Community vouching (3 vouches by existing Domain Experts in the
+//      same credential domain → auto-promote)
+//   3. Admin manual grant (bootstrap path until the first DEs exist)
+//
+// On verification, the credential gets stamped + the user's badgeLevel
+// promotes to DOMAIN_EXPERT (idempotent: if already DOMAIN_EXPERT we
+// just append the credential).
+//
+// User.domainExpertCredentials Json column is the cached read-side
+// view. The UserCredential table is the source of truth.
+// ─────────────────────────────────────────────────────────────────────────
+
+model UserCredential {
+  id            String                  @id @default(cuid())
+  userId        String
+  // What credential domain this proves (matches CredentialDomain in
+  // src/lib/institutional-domains.ts — kept as a free string here so
+  // adding a domain in code doesn't require a schema migration).
+  domain        String
+  // "alumnus", "current_student", "currently_at", "working_at",
+  // "exam_cleared" — free text, validated by the form.
+  claimType     String
+  // Institution display name, e.g., "IIT Madras", "UPSC".
+  institution   String
+  // Verification status of THIS credential row.
+  status        CredentialStatus        @default(PENDING)
+  // How it was verified once status flips to VERIFIED.
+  verifiedVia   CredentialVerifiedVia?
+  // The email used (if verifiedVia = INSTITUTIONAL_EMAIL); blanked
+  // post-verification per privacy rule.
+  verifiedEmail String?
+  verifiedAt    DateTime?
+  // Admin who manually granted (if verifiedVia = ADMIN_GRANT) or
+  // approved the credential (if applicable). NULL otherwise.
+  approvedBy    String?
+  // Optional context from the user when claiming (year of graduation,
+  // department, etc.) — stays even after verification.
+  notes         String?                 @db.Text
+
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  user          User                    @relation("UserCredentials", fields: [userId], references: [id], onDelete: Cascade)
+  vouches       CredentialVouch[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([domain, status])
+}
+
+model CredentialVouch {
+  id            String   @id @default(cuid())
+  credentialId  String
+  // Voucher must themselves be a verified DOMAIN_EXPERT in the same
+  // domain (enforced in application code; not in schema constraint
+  // because the check requires cross-table logic).
+  voucherUserId String
+  comment       String?  @db.Text
+  createdAt     DateTime @default(now())
+
+  credential    UserCredential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+  voucher       User           @relation("UserVouches", fields: [voucherUserId], references: [id], onDelete: Cascade)
+
+  @@unique([credentialId, voucherUserId])
+  @@index([credentialId])
+  @@index([voucherUserId])
+}
+
+enum CredentialStatus {
+  PENDING     // claim submitted, awaiting verification path completion
+  VERIFIED    // verification path completed — user is now DOMAIN_EXPERT
+  REJECTED    // admin rejected the claim
+  REVOKED     // previously verified but later revoked (e.g., fraud)
+}
+
+enum CredentialVerifiedVia {
+  INSTITUTIONAL_EMAIL    // one-time link sent to verified email domain
+  COMMUNITY_VOUCHING     // 3+ existing DEs in the same domain vouched
+  ADMIN_GRANT            // admin granted manually (bootstrap path)
+  DOCUMENT_REVIEW        // admin reviewed an uploaded doc (Phase 1.2.x)
 }

@@ -140,6 +140,11 @@ export default async function MeProfilePage() {
         <p className="mt-1 text-xs text-ink-500">
           {user.email} · {daysOnPlatform} day{daysOnPlatform === 1 ? "" : "s"} on Shishya
         </p>
+        <p className="mt-2 text-xs">
+          <Link href="/me/credentials" className="text-saffron-700 underline">
+            Manage your Domain Expert credentials →
+          </Link>
+        </p>
 
         {/* Stats grid */}
         <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
