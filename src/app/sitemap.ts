@@ -129,6 +129,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
+  // Public user profiles — only users who opted in via /me/settings.
+  // Raw SQL avoids the typed client (Windows file-lock workaround for
+  // newly-added User.handle / User.profilePublic fields).
+  const publicProfiles = await prisma.$queryRaw<{ handle: string; updatedAt: Date }[]>`
+    SELECT "handle", "updatedAt"
+    FROM "User"
+    WHERE "profilePublic" = TRUE AND "handle" IS NOT NULL
+    LIMIT 5000
+  `.catch(() => [] as { handle: string; updatedAt: Date }[]);
+  const userProfileUrls: MetadataRoute.Sitemap = publicProfiles.map((u) => ({
+    url: `${base}/u/${u.handle}`,
+    lastModified: u.updatedAt,
+    changeFrequency: "weekly" as const,
+    priority: 0.4,
+  }));
+
   // Per-state college aggregator pages — "top colleges in Tamil Nadu",
   // "best colleges in UP", etc.
   const collegeStateUrls: MetadataRoute.Sitemap = Array.from(
@@ -159,5 +175,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...boardUrls,
     ...classUrls,
     ...subjectUrls,
+    ...userProfileUrls,
   ];
 }

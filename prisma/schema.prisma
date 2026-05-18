@@ -56,6 +56,14 @@ model User {
   badgeEarnedAt           DateTime?
   // [{ type: "exam_cleared" | "currently_at" | "working_at", domain: "UPSC", verifiedAt: ISO, source: "linkedin" | "doc" | "vouching" | "email" }]
   domainExpertCredentials Json?
+  // Public-profile opt-in. When TRUE + `handle` is non-null, the user's
+  // contribution profile is exposed at /u/[handle] for SEO + recognition.
+  // Default FALSE — users must opt in explicitly (no dark pattern of
+  // public-by-default).
+  profilePublic           Boolean    @default(false)
+  // URL handle for /u/[handle]. Unique across the platform. Null until
+  // the user picks one in /me/settings. Validated to ^[a-z0-9_-]{3,30}$.
+  handle                  String?    @unique
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
