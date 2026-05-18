@@ -225,11 +225,22 @@ export function VerificationBadge({
     <>
       <Icon status={status} />
       {!compact && (
-        <span className="truncate max-w-[160px]">
-          {STATUS_LABELS[status]}
-          {source ? ` · ${source}` : ""}
-          {progShort ? ` · ${progShort}` : ""}
-        </span>
+        <>
+          {/* Label + source: truncated so a long source name doesn't
+              break the badge layout. */}
+          <span className="truncate max-w-[140px]">
+            {STATUS_LABELS[status]}
+            {source ? ` · ${source}` : ""}
+          </span>
+          {/* Progress indicator stays OUTSIDE the truncated span so
+              it never gets clipped — it's the most important signal
+              on the badge ("this is in process, your click moves it"). */}
+          {progShort && (
+            <span className="ml-1 rounded bg-white/50 px-1 py-[1px] text-[9px] font-semibold tabular-nums">
+              {progShort}
+            </span>
+          )}
+        </>
       )}
     </>
   );
