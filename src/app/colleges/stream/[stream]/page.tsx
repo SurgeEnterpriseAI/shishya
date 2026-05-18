@@ -153,16 +153,30 @@ export default async function CollegeStreamPage({
         </p>
 
         <ol className="mt-8 space-y-3">
-          {filtered.map((c, idx) => {
+          {filtered.map((c) => {
             const streamRank = c.nirf[info.nirfKey];
+            const fallbackOverall = streamRank === undefined ? c.nirf.overall : undefined;
             return (
               <li key={c.slug}>
                 <Link
                   href={`/colleges/${c.slug}`}
                   className="flex items-start gap-4 rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400 hover:bg-saffron-50/30"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-saffron-100 text-sm font-bold text-saffron-800">
-                    {streamRank !== undefined ? `#${streamRank}` : idx + 1}
+                  {/* Rank circle: stream-specific rank when present; "—"
+                      otherwise (NOT a positional index — that would suggest
+                      "this is the Nth college in the stream", which is
+                      misleading for entries ranked only by overall NIRF). */}
+                  <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-md bg-saffron-100 font-bold text-saffron-800">
+                    {streamRank !== undefined ? (
+                      <span className="text-sm">#{streamRank}</span>
+                    ) : fallbackOverall !== undefined ? (
+                      <>
+                        <span className="text-[9px] font-medium leading-none">Overall</span>
+                        <span className="mt-0.5 text-sm leading-none">#{fallbackOverall}</span>
+                      </>
+                    ) : (
+                      <span className="text-sm">—</span>
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
