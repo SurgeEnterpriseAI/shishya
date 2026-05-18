@@ -8,6 +8,7 @@ import { STATES, stateSlug } from "@/lib/state-info";
 import { COLLEGES, ALL_STREAMS } from "@/lib/colleges-data";
 import { BOARDS } from "@/lib/schooling-data";
 import { CLASS_SYLLABUS } from "@/lib/schooling-subjects";
+import { SCHOLARSHIPS } from "@/data/scholarships";
 
 export const revalidate = 86_400; // 24h
 
@@ -74,6 +75,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/insights",
     "/verification",
     "/recognition",
+    "/scholarships/match",
   ].map((path) => ({
     url: `${base}${path}`,
     lastModified: new Date(),
@@ -130,6 +132,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
+  // Per-scholarship pages — long-tail SEO ("Reliance Foundation UG
+  // scholarship 2026", "AICTE Pragati eligibility", etc.)
+  const scholarshipUrls: MetadataRoute.Sitemap = SCHOLARSHIPS.map((s) => ({
+    url: `${base}/scholarships/${s.id}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.65,
+  }));
+
   // Public user profiles — only users who opted in via /me/settings.
   // Raw SQL avoids the typed client (Windows file-lock workaround for
   // newly-added User.handle / User.profilePublic fields).
@@ -176,6 +187,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...boardUrls,
     ...classUrls,
     ...subjectUrls,
+    ...scholarshipUrls,
     ...userProfileUrls,
   ];
 }

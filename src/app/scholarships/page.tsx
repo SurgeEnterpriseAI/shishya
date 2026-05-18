@@ -5,6 +5,7 @@
 // Future: gate "Match me" personalised view behind sign-in once we
 // collect home-state, category, income-band, etc. on a profile page.
 
+import Link from "next/link";
 import { Header } from "@/components/Header";
 import { SCHOLARSHIPS } from "@/data/scholarships";
 import { ScholarshipBrowser } from "./ScholarshipBrowser";
@@ -32,6 +33,30 @@ export default function ScholarshipsPage() {
           We link to the awarding body&apos;s official portal. Shishya does not collect any payment
           or charge a finder&apos;s fee — the link is direct.
         </p>
+
+        <div className="mt-6 rounded-lg border border-saffron-300 bg-saffron-50/50 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-2xl">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-800">
+                Don&apos;t know where to start?
+              </p>
+              <h2 className="mt-1 text-lg font-semibold text-ink-900">
+                Match Wizard — 5 questions, ranked results
+              </h2>
+              <p className="mt-1 text-xs text-ink-700">
+                Tell us your state, level, category, gender, income band, and
+                we&apos;ll surface only the schemes you actually qualify for.
+                Nothing is stored — answers stay in your browser.
+              </p>
+            </div>
+            <Link
+              href="/scholarships/match"
+              className="rounded-md bg-saffron-500 px-4 py-2 text-sm font-semibold text-white hover:bg-saffron-600"
+            >
+              Open Match Wizard →
+            </Link>
+          </div>
+        </div>
 
         <ScholarshipBrowser scholarships={SCHOLARSHIPS} />
       </section>

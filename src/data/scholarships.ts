@@ -538,6 +538,498 @@ export const SCHOLARSHIPS: Scholarship[] = [
     deadline: "Each underlying scholarship has its own deadline",
     tags: ["aggregator", "buddy4study", "discovery"],
   },
+
+  // ─── PHASE 2 BATCH: state schemes, girls-only, minority, defence,
+  //     PwD, EWS, more private foundations.
+
+  {
+    id: "kanyashree-prakalpa-wb",
+    name: "Kanyashree Prakalpa K1 + K2",
+    awardingBody: "Government of West Bengal, Department of Women & Child Development",
+    type: "STATE",
+    state: "WB",
+    levels: ["CLASS_11_12", "DIPLOMA", "UG"],
+    eligibility: {
+      gender: "F",
+      incomeMaxLakhs: 1.2,
+      note: "Unmarried girls aged 13-19 (K1) or 18-19 (K2). Studying in Classes 8-12 (K1) or pursuing UG/voc course (K2). UN award-winning conditional cash transfer.",
+    },
+    amount: "K1: ₹1,000 annual; K2: ₹25,000 one-time on turning 18.",
+    applyUrl: "https://wbkanyashree.gov.in/",
+    officialSite: "https://wbkanyashree.gov.in/",
+    description:
+      "Conditional cash transfer for girls to delay marriage and stay in school. UN Public Service Award 2017. State-funded and runs entirely via schools.",
+    deadline: "Apply through school — rolling enrolment",
+    tags: ["girls", "west bengal", "marriage delay", "wb"],
+  },
+
+  {
+    id: "ladli-laxmi-mp",
+    name: "Mukhyamantri Ladli Laxmi Yojana",
+    awardingBody: "Madhya Pradesh Department of Women & Child Development",
+    type: "STATE",
+    state: "MP",
+    levels: ["CLASS_11_12", "UG"],
+    eligibility: {
+      gender: "F",
+      note: "Girls born in MP after Jan 2006. Parents must be Indian citizen residents of MP. Family with 2 or fewer children. Cumulative payouts at multiple milestones — Class 6, 9, 11, 12 + after Class 12.",
+    },
+    amount: "₹1,18,000 cumulative across Class 6 → Class 12 → after Class 12 milestones, plus ₹25k on marriage after 21.",
+    applyUrl: "https://ladlilaxmi.mp.gov.in/",
+    description:
+      "Long-running MP state scheme to improve girl-child education + delay marriage. Payouts staged across Classes 6, 9, 11, 12 + post-Class 12 to disincentivise dropout.",
+    deadline: "Apply at birth or in early childhood",
+    tags: ["girls", "madhya pradesh", "mp"],
+  },
+
+  {
+    id: "kalpana-chawla-hr",
+    name: "Kalpana Chawla Scholarship for Girls (Haryana)",
+    awardingBody: "Government of Haryana, Department of Higher Education",
+    type: "STATE",
+    state: "HR",
+    levels: ["UG", "PG"],
+    eligibility: {
+      gender: "F",
+      categories: ["GEN", "EWS", "OBC", "SC", "ST", "MIN"],
+      note: "Domicile of Haryana. Girl student pursuing PG (MA / MSc / MTech / MBA). 60%+ in Class 12 + UG. Family income within prescribed slab.",
+    },
+    amount: "₹31,000 (one-time per year of PG course)",
+    applyUrl: "https://highereduhry.ac.in/scholarship/",
+    description:
+      "Named after India's first woman in space. Annual grant for Haryana-domicile girls pursuing PG. Auto-renewed each year subject to academic progress.",
+    deadline: "Usually Aug-Nov each academic year",
+    tags: ["girls", "haryana", "pg", "kalpana chawla"],
+  },
+
+  {
+    id: "ed-cell-up",
+    name: "UP Scholarship (Sashakta Abhibhavak Yojna + Post-Matric)",
+    awardingBody: "Government of Uttar Pradesh, Social Welfare Department",
+    type: "STATE",
+    state: "UP",
+    levels: ["CLASS_11_12", "DIPLOMA", "UG", "PG"],
+    eligibility: {
+      categories: ["SC", "ST", "OBC", "MIN", "GEN"],
+      incomeMaxLakhs: 2,
+      note: "UP domicile. Income slab varies by category. Multiple sub-schemes through scholarship.up.gov.in.",
+    },
+    amount: "Tuition fees + maintenance ₹2,500-₹13,500 per year",
+    applyUrl: "https://scholarship.up.gov.in/",
+    description:
+      "UP state portal aggregating pre-matric and post-matric scholarships for all categories. Largest state-level disbursement network in India.",
+    deadline: "Usually Sep-Dec each year",
+    tags: ["uttar pradesh", "up", "post matric"],
+  },
+
+  {
+    id: "biju-saksham-od",
+    name: "Biju Krushak Kalyan Yojana (Scholarship Component)",
+    awardingBody: "Government of Odisha, Department of Cooperation",
+    type: "STATE",
+    state: "OD",
+    levels: ["UG", "PG"],
+    eligibility: {
+      incomeMaxLakhs: 1.5,
+      note: "Children of small/marginal farmers in Odisha. Pursuing professional UG/PG (engineering, medicine, agriculture, fisheries).",
+    },
+    amount: "₹10,000-₹50,000 per year",
+    applyUrl: "https://scholarship.odisha.gov.in/",
+    description:
+      "Odisha state scheme for children of small/marginal farmers entering professional higher ed. Targets engineering, medical, agriculture, fisheries.",
+    deadline: "Apply through state portal yearly",
+    tags: ["odisha", "od", "farmer family", "agriculture"],
+  },
+
+  {
+    id: "kerala-mathrubhumi-merit",
+    name: "Kerala State Scholarships (e-Grantz)",
+    awardingBody: "Government of Kerala, Department of Higher Education",
+    type: "STATE",
+    state: "KL",
+    levels: ["CLASS_11_12", "UG", "PG"],
+    eligibility: {
+      categories: ["SC", "ST", "OBC"],
+      incomeMaxLakhs: 1,
+      note: "Kerala domicile. Multiple sub-schemes through e-Grantz: post-matric, central-sector-merit-cum-means, top-class. Detailed eligibility per sub-scheme.",
+    },
+    amount: "Tuition + maintenance varies by sub-scheme",
+    applyUrl: "https://egrantz.kerala.gov.in/",
+    description:
+      "Kerala's unified scholarship portal. Covers central + state sub-schemes for SC/ST/OBC students at all levels post-matric. Strict income gating.",
+    deadline: "Aug-Oct each academic cycle",
+    tags: ["kerala", "kl", "e-grantz"],
+  },
+
+  {
+    id: "maulana-azad-fellowship",
+    name: "Maulana Azad National Fellowship",
+    awardingBody: "Ministry of Minority Affairs",
+    type: "RESEARCH",
+    state: null,
+    levels: ["PHD"],
+    eligibility: {
+      categories: ["MIN"],
+      incomeMaxLakhs: 6,
+      note: "5-year MPhil/PhD fellowship for minority students. Cleared NET-JRF or equivalent. Indian citizen of notified minority community.",
+    },
+    amount: "₹31,000-₹35,000/month + HRA + contingency.",
+    applyUrl: "https://maef.nic.in/",
+    description:
+      "5-year doctoral fellowship for students from notified religious minorities. Stipend matches UGC-NET-JRF rates. Awarded by Ministry of Minority Affairs.",
+    deadline: "Usually called via UGC/MAEF — check portal",
+    tags: ["minority", "phd", "research", "fellowship", "maulana azad"],
+  },
+
+  {
+    id: "ugc-net-jrf",
+    name: "UGC NET Junior Research Fellowship",
+    awardingBody: "University Grants Commission",
+    type: "RESEARCH",
+    state: null,
+    levels: ["PG", "PHD"],
+    eligibility: {
+      requiresExam: ["UGC_NET"],
+      note: "Cleared UGC NET-JRF in current/recent attempt. PG degree in qualifying subject with 55% (50% reserved). Indian citizen. Age limit varies.",
+    },
+    amount: "₹37,000/month for 2 years + ₹42,000/month for next 3 years + HRA + contingency.",
+    applyUrl: "https://ugcnet.nta.ac.in/",
+    description:
+      "The single most-tested PhD funding gateway in India. JRF for 2 years then auto-converts to SRF for 3 more. Stipend has been revised upward periodically.",
+    deadline: "NET held twice yearly (Jun + Dec)",
+    tags: ["phd", "research", "ugc", "net jrf"],
+    relevantExamCodes: ["UGC_NET"],
+  },
+
+  {
+    id: "icmr-jrf-srf",
+    name: "ICMR Junior Research Fellowship",
+    awardingBody: "Indian Council of Medical Research",
+    type: "RESEARCH",
+    state: null,
+    levels: ["PG", "PHD"],
+    eligibility: {
+      note: "MSc / MTech / MVSc / MPharm / MD in biomedical/life sciences with 55%. Cleared ICMR JRF entrance. Below 28 years (relaxations apply).",
+    },
+    amount: "₹37,000/month + HRA + contingency for first 2 years; ₹42,000/month + HRA for next 3.",
+    applyUrl: "https://icmr.nic.in/career/jrf",
+    description:
+      "ICMR's parallel to CSIR-NET-JRF for biomedical research. Cleared candidates can pursue PhD at any ICMR institute or recognised university.",
+    deadline: "Annual exam — usually July",
+    tags: ["icmr", "phd", "biomedical", "research"],
+  },
+
+  {
+    id: "lpu-nest-scholarship",
+    name: "LPU NEST Scholarship",
+    awardingBody: "Lovely Professional University",
+    type: "EXAM_SPECIFIC",
+    state: null,
+    levels: ["UG", "PG"],
+    eligibility: {
+      requiresExam: ["LPUNEST"],
+      note: "Cleared LPUNEST + admission to LPU. Scholarship slab depends on LPUNEST score, Class 12 board %, JEE Main rank, or NEET rank.",
+    },
+    amount: "10%-100% tuition waiver based on score slab",
+    applyUrl: "https://nest.lpu.in/",
+    description:
+      "LPU's entrance-tied scholarship: better LPUNEST/JEE/NEET score → larger tuition waiver. Applied at admission time; renewable subject to CGPA.",
+    deadline: "Around admission cycles, Apr-Jul",
+    tags: ["lpu", "private university", "merit"],
+  },
+
+  {
+    id: "amity-merit-50",
+    name: "Amity University Merit Scholarship",
+    awardingBody: "Amity University",
+    type: "PRIVATE",
+    state: null,
+    levels: ["UG", "PG"],
+    eligibility: {
+      minMarksPct: 60,
+      note: "Admission to Amity + Class 12 board % above threshold. Slabs based on board %, JEE/NEET rank, or Amity JEE rank.",
+    },
+    amount: "25%-100% tuition waiver",
+    applyUrl: "https://www.amity.edu/scholarship",
+    description:
+      "Amity's published-rate merit scholarship across all campuses. Bands tied to board %, entrance ranks. Renewal subject to maintaining CGPA.",
+    deadline: "At admission, May-Aug",
+    tags: ["amity", "private university", "merit"],
+  },
+
+  {
+    id: "kerala-merit-csss-state",
+    name: "Central Sector Scheme of Scholarship (Kerala State Allocation)",
+    awardingBody: "Government of Kerala (administered via DCE)",
+    type: "MERIT",
+    state: "KL",
+    levels: ["UG"],
+    eligibility: {
+      categories: ["GEN", "OBC", "MIN", "EWS"],
+      incomeMaxLakhs: 8,
+      minMarksPct: 80,
+      note: "Top 80th percentile in Class 12 Kerala State Board. Pursuing UG in recognised college. State allocation under the Central CSSS scheme.",
+    },
+    amount: "₹12,000-₹20,000 per year",
+    applyUrl: "https://www.dcescholarship.kerala.gov.in/",
+    description:
+      "Kerala's allocation under the central CSSS. Better-targeted than NSP for high-scoring state-board students. Renewed yearly subject to UG performance.",
+    deadline: "Sep-Nov each year",
+    tags: ["kerala", "kl", "csss", "merit"],
+  },
+
+  {
+    id: "pwd-trust-scholarship",
+    name: "Scholarship for Students with Disabilities",
+    awardingBody: "Department of Empowerment of Persons with Disabilities, MoSJE",
+    type: "CENTRAL",
+    state: null,
+    levels: ["CLASS_11_12", "DIPLOMA", "UG", "PG"],
+    eligibility: {
+      incomeMaxLakhs: 2.5,
+      note: "Indian citizen with 40%+ disability (PwD certificate). Pursuing post-matric / professional / technical course. Income ceiling ₹2.5L/year.",
+    },
+    amount: "Tuition + maintenance ₹500-₹2,500/month + escort/reader allowance",
+    applyUrl: "https://scholarships.gov.in/",
+    description:
+      "Central scheme via NSP for PwD students. Covers tuition + monthly maintenance + reader/escort allowance for students with severe disabilities.",
+    deadline: "Aligned with NSP cycle (Oct-Dec)",
+    tags: ["disability", "pwd", "nsp", "depwd"],
+  },
+
+  {
+    id: "df-jawan-scholarship",
+    name: "Prime Minister's Scholarship for Wards of Defence Personnel",
+    awardingBody: "Kendriya Sainik Board, Ministry of Defence",
+    type: "CENTRAL",
+    state: null,
+    levels: ["UG"],
+    eligibility: {
+      minMarksPct: 60,
+      note: "Wards/widows of armed forces personnel killed/disabled in action, ex-servicemen + their wards. Pursuing professional UG (engineering, medicine, MBA, law) recognised by AICTE/UGC/MCI.",
+    },
+    amount: "₹30,000/year for boys + ₹36,000/year for girls (up to 5 years)",
+    applyUrl: "https://ksb.gov.in/",
+    description:
+      "PM Scholarship for wards of jawans / officers / ex-servicemen. Pays through the duration of professional UG. Administered by Kendriya Sainik Board.",
+    deadline: "Usually Sep-Nov each year",
+    tags: ["defence", "armed forces", "jawan", "ksb"],
+  },
+
+  {
+    id: "rajasthan-medhavi-rj",
+    name: "Devnarayan Scholarship for Girls + Medhavi Chhatra",
+    awardingBody: "Government of Rajasthan, Social Justice & Empowerment Department",
+    type: "STATE",
+    state: "RJ",
+    levels: ["CLASS_11_12", "UG", "PG"],
+    eligibility: {
+      gender: "F",
+      categories: ["OBC", "GEN"],
+      note: "Rajasthan domicile. Specific OBC sub-communities (Gurjar/Banjara/Gadia Lohar/Raika-Rebari) plus high-scoring girls from any community in Class 10/12 boards.",
+    },
+    amount: "Scooty + ₹50,000 + tuition reimbursement for top-bracket",
+    applyUrl: "https://sso.rajasthan.gov.in/",
+    description:
+      "Rajasthan's flagship girls' scholarship — pays high-scoring girls a scooty + cash + reimburses tuition. Class 10/12 board topper variant + community-specific variant.",
+    deadline: "Usually Aug-Nov each year",
+    tags: ["rajasthan", "rj", "girls", "obc", "medhavi"],
+  },
+
+  {
+    id: "punjab-aashirwad-pb",
+    name: "Ashirwad Scheme (Punjab)",
+    awardingBody: "Department of Welfare of SCs and BCs, Government of Punjab",
+    type: "STATE",
+    state: "PB",
+    levels: ["CLASS_11_12", "UG"],
+    eligibility: {
+      categories: ["SC", "OBC"],
+      incomeMaxLakhs: 2.5,
+      note: "Punjab domicile. SC/BC students in classes 9-12 + UG. Family income ceiling ₹2.5L/year.",
+    },
+    amount: "₹3,000-₹6,000 + tuition fee waiver at govt colleges",
+    applyUrl: "https://welfarepunjab.gov.in/",
+    description:
+      "Punjab state scheme for SC/BC students from low-income families. Tuition + cash component. Easier income gating than NSP.",
+    deadline: "Aug-Nov each year",
+    tags: ["punjab", "pb", "sc", "obc"],
+  },
+
+  {
+    id: "swami-vivekananda-wb",
+    name: "Swami Vivekananda Merit-cum-Means Scholarship",
+    awardingBody: "Government of West Bengal, Higher Education Department",
+    type: "STATE",
+    state: "WB",
+    levels: ["CLASS_11_12", "UG", "PG"],
+    eligibility: {
+      categories: ["GEN", "OBC"],
+      incomeMaxLakhs: 2.5,
+      minMarksPct: 60,
+      note: "West Bengal domicile. Non-SC/ST students. 60%+ in last board exam. Family income ceiling ₹2.5L/year.",
+    },
+    amount: "₹1,000-₹5,000/month + book grant",
+    applyUrl: "https://svmcm.wbhed.gov.in/",
+    description:
+      "West Bengal's largest merit-cum-means scheme for general + OBC categories (SC/ST get other schemes). Renewed annually subject to performance.",
+    deadline: "Usually Jul-Oct each year",
+    tags: ["west bengal", "wb", "merit cum means", "svmcm"],
+  },
+
+  {
+    id: "telangana-overseas-min",
+    name: "Telangana Overseas Scholarship (Minorities + SC/ST/BC)",
+    awardingBody: "Telangana Minorities Welfare Department",
+    type: "STATE",
+    state: "TS",
+    levels: ["PG", "PHD"],
+    eligibility: {
+      categories: ["SC", "ST", "OBC", "MIN"],
+      incomeMaxLakhs: 5,
+      note: "Telangana domicile. Admitted to a recognised overseas university for PG/PhD. Family income ceiling ₹5L/year. Below 35 years.",
+    },
+    amount: "Up to ₹20 lakh (one-time) for overseas studies",
+    applyUrl: "https://telanganaepass.cgg.gov.in/",
+    description:
+      "Telangana's flagship overseas scholarship — pays up to ₹20L for SC/ST/OBC/Minority students admitted to ranked overseas universities for PG/PhD.",
+    deadline: "Apply after overseas admission, twice yearly",
+    tags: ["telangana", "ts", "overseas", "minority", "abroad"],
+  },
+
+  {
+    id: "ap-jagannanna-vidya-deevena",
+    name: "Jagananna Vidya Deevena (Fee Reimbursement)",
+    awardingBody: "Government of Andhra Pradesh",
+    type: "STATE",
+    state: "AP",
+    levels: ["UG", "PG"],
+    eligibility: {
+      categories: ["SC", "ST", "OBC", "MIN", "EWS"],
+      incomeMaxLakhs: 1,
+      note: "AP domicile. Family income ceiling ₹1L. Recognised UG/PG course. White ration card.",
+    },
+    amount: "100% tuition fee reimbursement (varies by course)",
+    applyUrl: "https://jaganannavidyadeevena.ap.gov.in/",
+    description:
+      "AP's full tuition reimbursement scheme — replaces tuition fees for low-income SC/ST/OBC/Minority/EWS students at recognised UG/PG institutions in AP.",
+    deadline: "Each academic semester",
+    tags: ["andhra pradesh", "ap", "fee reimbursement", "jagananna"],
+  },
+
+  {
+    id: "google-india-scholarship",
+    name: "Generation Google Scholarship for Women in CS",
+    awardingBody: "Google + EdCast (admin)",
+    type: "PRIVATE",
+    state: null,
+    levels: ["UG"],
+    eligibility: {
+      gender: "F",
+      note: "Female student pursuing a CS-related UG in India. Demonstrated leadership + academic strength. Must be enrolled in an accredited Indian institution.",
+    },
+    amount: "$1,000 (~₹85,000) one-time",
+    applyUrl: "https://buildyourfuture.withgoogle.com/scholarships/generation-google-scholarship",
+    description:
+      "Google's APAC scholarship program for women in computer science. Year-cycle application; selected awardees also get invited to Google APAC dev events.",
+    deadline: "Usually Dec-Feb",
+    tags: ["google", "women", "cs", "engineering", "stem"],
+  },
+
+  {
+    id: "kc-mahindra-india-edu",
+    name: "K.C. Mahindra Scholarship for Post-Graduate Studies Abroad",
+    awardingBody: "K.C. Mahindra Education Trust",
+    type: "PRIVATE",
+    state: null,
+    levels: ["PG"],
+    eligibility: {
+      note: "Indian citizen accepted to a recognised overseas PG program. First-class UG. Below 38 years. Demonstrated need + merit.",
+    },
+    amount: "Up to ₹10 lakh (interest-free loan / grant)",
+    applyUrl: "https://www.kcmet.org/",
+    description:
+      "K.C. Mahindra Trust's overseas PG scholarship — partly grant, partly interest-free loan repayable after employment. Highly selective, ~50 awardees/year.",
+    deadline: "Usually Mar-Apr",
+    tags: ["mahindra", "abroad", "pg", "overseas", "loan"],
+  },
+
+  {
+    id: "lila-poonawalla-girls",
+    name: "Lila Poonawalla Foundation Scholarship",
+    awardingBody: "Lila Poonawalla Foundation",
+    type: "PRIVATE",
+    state: null,
+    levels: ["UG", "PG"],
+    eligibility: {
+      gender: "F",
+      categories: ["GEN", "OBC", "SC", "ST", "EWS", "MIN"],
+      incomeMaxLakhs: 6,
+      note: "Girls pursuing engineering, science, IT, or biotech UG/PG. Pune/Maharashtra preferred but national admissions accepted.",
+    },
+    amount: "Tuition fees + ₹15,000-₹30,000/year stipend",
+    applyUrl: "https://lilapoonawallafoundation.com/",
+    description:
+      "Pune-based Lila Poonawalla Foundation pays tuition + a yearly stipend for girls in STEM UG/PG. Selection by interview + academic record.",
+    deadline: "Mar-Jul each year",
+    tags: ["girls", "stem", "engineering", "private foundation", "poonawalla"],
+  },
+
+  {
+    id: "narotam-sekhsaria-pg",
+    name: "Narotam Sekhsaria Foundation Loan Scholarship",
+    awardingBody: "Narotam Sekhsaria Foundation",
+    type: "PRIVATE",
+    state: null,
+    levels: ["PG"],
+    eligibility: {
+      note: "Indian citizen accepted to a recognised PG program in India or abroad. Below 30 years. First class in UG.",
+    },
+    amount: "Interest-free loan up to ₹20 lakh",
+    applyUrl: "https://www.nsfoundation.co.in/",
+    description:
+      "Interest-free loan (not grant) for high-merit Indian students pursuing PG in or out of India. Repayment after employment. Cement-industry-funded.",
+    deadline: "Annual cycle, Apr-May",
+    tags: ["narotam sekhsaria", "loan", "pg", "abroad", "private foundation"],
+  },
+
+  {
+    id: "ts-cm-overseas",
+    name: "Telangana CM Overseas Scholarship (BC)",
+    awardingBody: "Telangana BC Welfare Department",
+    type: "STATE",
+    state: "TS",
+    levels: ["PG"],
+    eligibility: {
+      categories: ["OBC"],
+      incomeMaxLakhs: 5,
+      note: "Telangana domicile + OBC (BC) category. Admitted to ranked overseas PG program. Below 35 years.",
+    },
+    amount: "Up to ₹20 lakh (one-time)",
+    applyUrl: "https://www.bcwelfare.telangana.gov.in/",
+    description:
+      "Telangana BC Welfare's overseas scheme — counterpart of the MWD overseas scheme but for OBC/BC students. Highly competitive shortlist.",
+    deadline: "Twice yearly",
+    tags: ["telangana", "ts", "overseas", "obc", "abroad"],
+  },
+
+  {
+    id: "infosys-foundation-rural",
+    name: "Infosys Foundation Aarohan Social Innovation Scholarship",
+    awardingBody: "Infosys Foundation",
+    type: "PRIVATE",
+    state: null,
+    levels: ["UG", "PG"],
+    eligibility: {
+      note: "Indian individual / NGO / student team building a social-impact tech solution. Application via competitive submission of project.",
+    },
+    amount: "₹50 lakh grants distributed across selected projects",
+    applyUrl: "https://www.infosys.com/infosys-foundation/initiatives/aarohan.html",
+    description:
+      "Infosys Foundation's social-innovation grant program. Not a traditional academic scholarship — funds students/teams building tech-for-good solutions.",
+    deadline: "Annual cycle",
+    tags: ["infosys", "innovation", "grant", "social impact"],
+  },
 ];
 
 /**
