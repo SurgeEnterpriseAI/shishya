@@ -11,7 +11,9 @@ import { Header } from "@/components/Header";
 import { BOARDS, findBoard, CLASS_11_12_STREAMS } from "@/lib/schooling-data";
 import { stateInfo } from "@/lib/state-info";
 import { SectionVerificationSummary, VerificationBadge } from "@/components/VerificationBadge";
+import { ClickableVerificationBadge } from "@/components/ClickableVerificationBadge";
 import { getFactMap, factToBadgeProps } from "@/lib/db/facts";
+import { auth } from "@/lib/auth";
 
 export async function generateStaticParams() {
   return BOARDS.map((b) => ({ slug: b.slug }));
@@ -69,9 +71,12 @@ export default async function BoardPage({
   const year = new Date().getUTCFullYear();
 
   const factMap = await getFactMap(`/schooling/${slug}`).catch(() => ({} as Record<string, any>));
-  const websiteBadge  = factToBadgeProps(factMap["official-website"]);
-  const syllabusBadge = factToBadgeProps(factMap["syllabus-url"]);
-  const samplesBadge  = factToBadgeProps(factMap["sample-paper-url"]);
+  const websiteFact  = factMap["official-website"];
+  const syllabusFact = factMap["syllabus-url"];
+  const samplesFact  = factMap["sample-paper-url"];
+
+  const session = await auth().catch(() => null);
+  const signedIn = Boolean(session?.user);
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -126,7 +131,7 @@ export default async function BoardPage({
               >
                 Board website ↗
               </a>
-              <VerificationBadge {...websiteBadge} compact />
+              <FactBadge fact={websiteFact} signedIn={signedIn} compact />
             </span>
             {b.syllabusUrl && (
               <span className="inline-flex items-center gap-1">
@@ -138,7 +143,7 @@ export default async function BoardPage({
                 >
                   Syllabus / Curriculum ↗
                 </a>
-                <VerificationBadge {...syllabusBadge} compact />
+                <FactBadge fact={syllabusFact} signedIn={signedIn} compact />
               </span>
             )}
             {b.samplePaperUrl && (
@@ -151,7 +156,7 @@ export default async function BoardPage({
                 >
                   Sample papers ↗
                 </a>
-                <VerificationBadge {...samplesBadge} compact />
+                <FactBadge fact={samplesFact} signedIn={signedIn} compact />
               </span>
             )}
           </div>
@@ -241,5 +246,31 @@ export default async function BoardPage({
         </div>
       </section>
     </main>
+  );
+}
+
+function FactBadge({
+  fact,
+  signedIn,
+  compact,
+}: {
+  fact: any | null | undefined;
+  signedIn: boolean;
+  compact?: boolean;
+}) {
+  const props = factToBadgeProps(fact);
+  if (!fact) {
+    return <VerificationBadge {...props} compact={compact} />;
+  }
+  return (
+    <ClickableVerificationBadge
+      factId={fact.id}
+      status={props.status}
+      source={props.source}
+      sourceUrl={props.sourceUrl}
+      lastCheckedAt={props.lastCheckedAt}
+      signedIn={signedIn}
+      compact={compact}
+    />
   );
 }

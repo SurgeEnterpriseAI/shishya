@@ -41,6 +41,15 @@ interface Props {
   lastCheckedAt?: string;
   /** Optional compact mode — uses just the icon, no label. */
   compact?: boolean;
+  /**
+   * How to render the badge wrapper:
+   *   "link" (default) — renders as a <Link href="/verification"> so a
+   *     bare badge on a page navigates to the explainer.
+   *   "span" — renders as an inert <span>. Use this when the badge is
+   *     nested inside a clickable parent (e.g., ClickableVerificationBadge)
+   *     so the parent's onClick fires instead of the link swallowing it.
+   */
+  as?: "link" | "span";
 }
 
 const STATUS_LABELS: Record<VerificationStatus, string> = {
@@ -108,7 +117,9 @@ export function VerificationBadge({
   sourceUrl,
   lastCheckedAt,
   compact = false,
+  as = "link",
 }: Props) {
+  void sourceUrl;
   // Compose the tooltip text. We use `title` because it works in every
   // browser without JS — accessibility win + cheaper than a popover for
   // the high-frequency badge-everywhere pattern.
@@ -124,16 +135,13 @@ export function VerificationBadge({
     .filter(Boolean)
     .join(" ");
 
-  // The badge is a Link to /verification (the foundational explainer
-  // page). Once the per-fact verification panel ships, this becomes
-  // a popover-on-click instead of a navigation.
-  return (
-    <Link
-      href="/verification"
-      title={tooltip}
-      className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium align-middle leading-none ${STATUS_CLASS[status]}`}
-      aria-label={tooltip}
-    >
+  // Cursor pointer + hover affordance so users understand "click me".
+  // The exact wrapper element depends on `as` — Link for navigation-mode,
+  // span when nested inside a clickable parent so the parent's onClick
+  // actually fires (an inner <a> would swallow the click and navigate).
+  const className = `inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium align-middle leading-none cursor-pointer transition-colors hover:brightness-95 ${STATUS_CLASS[status]}`;
+  const inner = (
+    <>
       <Icon status={status} />
       {!compact && (
         <span className="truncate max-w-[120px]">
@@ -141,6 +149,19 @@ export function VerificationBadge({
           {source ? ` · ${source}` : ""}
         </span>
       )}
+    </>
+  );
+
+  if (as === "span") {
+    return (
+      <span title={tooltip} className={className} aria-label={tooltip}>
+        {inner}
+      </span>
+    );
+  }
+  return (
+    <Link href="/verification" title={tooltip} className={className} aria-label={tooltip}>
+      {inner}
     </Link>
   );
 }

@@ -84,9 +84,11 @@ export default async function CollegePage({
   // Real Fact rows for this page — drives the verification badges.
   // Falls back to hardcoded "ai" if the seed hasn't run for this page yet.
   const factMap = await getFactMap(`/colleges/${slug}`).catch(() => ({} as Record<string, any>));
-  const nirfFact       = factMap["nirf-rank"];
-  const nirfBadge      = factToBadgeProps(nirfFact);
-  const foundedBadge   = factToBadgeProps(factMap["established-year"]);
+  const nirfFact      = factMap["nirf-rank"];
+  const foundedFact   = factMap["established-year"];
+  const locationFact  = factMap["location"];
+  const typeFact      = factMap["institution-type"];
+  const websiteFact   = factMap["official-website"];
 
   // Is this visit logged in? Drives whether the verification panel
   // shows action buttons vs a Sign-in CTA. Resilient: if auth() throws
@@ -159,9 +161,14 @@ export default async function CollegePage({
           <span className="rounded-full bg-ink-100 px-2 py-0.5 text-xs font-medium text-ink-600">{c.type}</span>
         </div>
         <p className="mt-1 text-sm text-ink-600">{c.name}</p>
-        <p className="mt-1 text-xs text-ink-500">
-          {c.city} · {st?.name ?? c.state} · established {c.established}{" "}
-          <VerificationBadge {...foundedBadge} compact />
+        <p className="mt-1 flex flex-wrap items-baseline gap-1.5 text-xs text-ink-500">
+          <span>{c.city}</span>
+          <FactBadge fact={locationFact} signedIn={signedIn} compact />
+          <span>· {st?.name ?? c.state}</span>
+          <span>· established {c.established}</span>
+          <FactBadge fact={foundedFact} signedIn={signedIn} compact />
+          <span className="ml-1 text-ink-400">· {c.type}</span>
+          <FactBadge fact={typeFact} signedIn={signedIn} compact />
         </p>
 
         {ranksCopy && (
@@ -169,18 +176,7 @@ export default async function CollegePage({
             <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">NIRF ranking</p>
             <div className="mt-1 flex flex-wrap items-baseline gap-2">
               <p className="text-sm font-medium text-ink-900">{ranksCopy}</p>
-              {nirfFact ? (
-                <ClickableVerificationBadge
-                  factId={nirfFact.id}
-                  status={nirfBadge.status}
-                  source={nirfBadge.source}
-                  sourceUrl={nirfBadge.sourceUrl}
-                  lastCheckedAt={nirfBadge.lastCheckedAt}
-                  signedIn={signedIn}
-                />
-              ) : (
-                <VerificationBadge {...nirfBadge} />
-              )}
+              <FactBadge fact={nirfFact} signedIn={signedIn} />
             </div>
             <p className="mt-1 text-[11px] text-ink-600">
               Source:{" "}
@@ -256,7 +252,7 @@ export default async function CollegePage({
             those numbers change every cycle and Shishya intentionally doesn't
             republish them as if they're static facts.
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <a
               href={c.website}
               target="_blank"
@@ -265,6 +261,7 @@ export default async function CollegePage({
             >
               {c.website.replace(/^https?:\/\/(www\.)?/, "")} ↗
             </a>
+            <FactBadge fact={websiteFact} signedIn={signedIn} />
             <a
               href={NIRF_SOURCE_URL}
               target="_blank"
@@ -313,5 +310,35 @@ export default async function CollegePage({
         )}
       </section>
     </main>
+  );
+}
+
+// Small helper so each fact gets the right badge variant:
+//   - If we have a real Fact row → clickable badge (opens verification panel)
+//   - Otherwise → fall back to the simple link-to-/verification badge
+// Keeps the per-call site clean.
+function FactBadge({
+  fact,
+  signedIn,
+  compact,
+}: {
+  fact: any | null | undefined;
+  signedIn: boolean;
+  compact?: boolean;
+}) {
+  const props = factToBadgeProps(fact);
+  if (!fact) {
+    return <VerificationBadge {...props} compact={compact} />;
+  }
+  return (
+    <ClickableVerificationBadge
+      factId={fact.id}
+      status={props.status}
+      source={props.source}
+      sourceUrl={props.sourceUrl}
+      lastCheckedAt={props.lastCheckedAt}
+      signedIn={signedIn}
+      compact={compact}
+    />
   );
 }

@@ -83,6 +83,7 @@ export function ClickableVerificationBadge({
           sourceUrl={sourceUrl}
           lastCheckedAt={lastCheckedAt}
           compact={compact}
+          as="span"
         />
       </button>
       {open && (
