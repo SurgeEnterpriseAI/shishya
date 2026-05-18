@@ -240,6 +240,10 @@ export default async function MeProfilePage() {
             Manage credentials →
           </Link>
           {" · "}
+          <Link href="/me/notifications" className="text-saffron-700 underline">
+            Notifications →
+          </Link>
+          {" · "}
           <Link href="/me/settings" className="text-saffron-700 underline">
             Profile settings →
           </Link>

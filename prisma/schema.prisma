@@ -85,6 +85,7 @@ model User {
   adminAudits     VerificationAudit[] @relation("AdminAudits")
   credentials     UserCredential[]    @relation("UserCredentials")
   vouches         CredentialVouch[]   @relation("UserVouches")
+  notifications   Notification[]      @relation("UserNotifications")
 
   @@index([email])
   @@index([badgeLevel])
@@ -979,4 +980,60 @@ enum CredentialVerifiedVia {
   COMMUNITY_VOUCHING     // 3+ existing DEs in the same domain vouched
   ADMIN_GRANT            // admin granted manually (bootstrap path)
   DOCUMENT_REVIEW        // admin reviewed an uploaded doc (Phase 1.2.x)
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Notification — in-app + email-digest delivery for events that
+// concern a specific user. Created by application code (no DB
+// triggers) so we control timing + dedup precisely.
+//
+// Email digest is OFF at platform-level (no email infra yet). The
+// `emailedAt` field exists so when Resend/SendGrid lands we can scan
+// the table for un-emailed unread rows and batch-send.
+// ─────────────────────────────────────────────────────────────────────
+model Notification {
+  id          String                @id @default(cuid())
+  userId      String
+  type        NotificationType
+  // Headline shown in the bell dropdown + on /me/notifications.
+  title       String
+  // Optional one-line context (e.g., "JEE Main 2026 application dates").
+  body        String?               @db.Text
+  // Where clicking the notification takes the user. Relative path.
+  link        String?
+  // Dedup key — application code passes a stable string so the same
+  // event can't create two notifications. Optional.
+  dedupKey    String?
+  readAt      DateTime?
+  emailedAt   DateTime?
+  createdAt   DateTime              @default(now())
+
+  user        User                  @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dedupKey])
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@index([emailedAt])
+}
+
+enum NotificationType {
+  // Verification events
+  VERIFICATION_APPROVED      // your verification got APPROVED in audit
+  VERIFICATION_REJECTED      // your verification got REJECTED in audit
+  VERIFICATION_CORRECTED     // admin corrected your verification
+
+  // Credential events
+  CREDENTIAL_VOUCHED         // someone vouched for your credential
+  CREDENTIAL_VERIFIED        // your credential got verified (you're now DE!)
+  CREDENTIAL_REJECTED        // admin rejected your credential claim
+
+  // Badge / promotion events
+  BADGE_PROMOTED             // you got promoted to next badge level
+
+  // Flag follow-up
+  FLAG_VALIDATED             // a flag you raised was validated
+  SUGGESTION_ACCEPTED        // an update suggestion you submitted was accepted
+
+  // Misc
+  ADMIN_MESSAGE              // free-form admin-issued notification
 }

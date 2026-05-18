@@ -13,6 +13,7 @@
 
 import { prisma } from "./prisma";
 import { CREDENTIAL_DOMAIN_LABELS, type CredentialDomain } from "../institutional-domains";
+import { createNotification } from "./notifications";
 
 export const VOUCHING_THRESHOLD = 3;
 
@@ -132,6 +133,18 @@ export async function addVouch(args: {
     WHERE "credentialId" = ${args.credentialId}
   `;
   const n = Number(vouchCount[0]?.n ?? 0n);
+
+  // Notify credential owner about the new vouch (always, even if it
+  // also triggered promotion — separate signal).
+  await createNotification({
+    userId: c.userId,
+    type: "CREDENTIAL_VOUCHED",
+    title: `New vouch on your ${credentialDomainLabel(c.domain)} credential`,
+    body: `${n} of ${VOUCHING_THRESHOLD} required vouches.${args.comment ? ` Comment: "${truncate(args.comment, 100)}"` : ""}`,
+    link: "/me/credentials",
+    dedupKey: `vouch:${args.credentialId}:${args.voucherUserId}`,
+  });
+
   if (n >= VOUCHING_THRESHOLD) {
     await markCredentialVerified({
       credentialId: args.credentialId,
@@ -188,6 +201,33 @@ export async function markCredentialVerified(args: {
         AND "badgeLevel"::text != 'DOMAIN_EXPERT'
     `;
   });
+
+  // Look up the credential's display details for the notification body.
+  const credRows = await prisma.$queryRaw<{
+    domain: string;
+    institution: string;
+    claimType: string;
+  }[]>`
+    SELECT "domain", "institution", "claimType"
+    FROM "UserCredential" WHERE "id" = ${args.credentialId} LIMIT 1
+  `;
+  const cred = credRows[0];
+
+  await createNotification({
+    userId: args.userId,
+    type: "CREDENTIAL_VERIFIED",
+    title: cred
+      ? `Verified: ${cred.institution} (${credentialDomainLabel(cred.domain)})`
+      : "Your credential was verified",
+    body:
+      args.via === "COMMUNITY_VOUCHING"
+        ? "Three Domain Experts in your domain vouched — you're now a Domain Expert too."
+        : args.via === "ADMIN_GRANT"
+        ? "An admin granted your credential after review. You're now a Domain Expert."
+        : "Your credential is now verified. You're now a Domain Expert.",
+    link: "/me/credentials",
+    dedupKey: `credential-verified:${args.credentialId}`,
+  });
 }
 
 /** Reject a pending credential — admin action. */
@@ -196,6 +236,13 @@ export async function rejectCredential(args: {
   adminUserId: string;
   reason: string;
 }): Promise<void> {
+  // Snapshot owner + domain BEFORE the update so we can notify.
+  const ownerRows = await prisma.$queryRaw<{ userId: string; domain: string; institution: string }[]>`
+    SELECT "userId", "domain", "institution"
+    FROM "UserCredential" WHERE "id" = ${args.credentialId} LIMIT 1
+  `;
+  const owner = ownerRows[0];
+
   await prisma.$executeRaw`
     UPDATE "UserCredential"
     SET "status" = 'REJECTED'::"CredentialStatus",
@@ -204,6 +251,22 @@ export async function rejectCredential(args: {
         "updatedAt" = NOW()
     WHERE "id" = ${args.credentialId}
   `;
+
+  if (owner) {
+    await createNotification({
+      userId: owner.userId,
+      type: "CREDENTIAL_REJECTED",
+      title: `Credential rejected: ${owner.institution}`,
+      body: truncate(args.reason, 200),
+      link: "/me/credentials",
+      dedupKey: `credential-rejected:${args.credentialId}`,
+    });
+  }
+}
+
+function truncate(s: string, n: number): string {
+  if (s.length <= n) return s;
+  return s.slice(0, n - 1) + "…";
 }
 
 /** All credentials awaiting vouches — surfaced in the vouching UI. */

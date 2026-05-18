@@ -15,6 +15,7 @@
 // client fresh on every Vercel deploy.
 
 import { prisma } from "./prisma";
+import { createNotification } from "./notifications";
 
 export const TRUSTED_VERIFIER = {
   MIN_VERIFICATIONS: 200,
@@ -266,6 +267,37 @@ export async function recordAudit(args: {
       WHERE "id" = ${args.verificationId}
     `;
   }
+
+  // Notify the verifier about the audit outcome. We need the verifier's
+  // userId + a snippet of the claim text for the notification body.
+  const ctxRows = await prisma.$queryRaw<{
+    userId: string;
+    claimText: string;
+    pageId: string;
+  }[]>`
+    SELECT v."userId", f."claimText", f."pageId"
+    FROM "Verification" v
+    JOIN "Fact" f ON f."id" = v."factId"
+    WHERE v."id" = ${args.verificationId}
+    LIMIT 1
+  `;
+  const ctx = ctxRows[0];
+  if (!ctx) return;
+
+  const typeMap = {
+    APPROVED: { type: "VERIFICATION_APPROVED" as const, title: "Your verification was approved" },
+    REJECTED: { type: "VERIFICATION_REJECTED" as const, title: "Your verification was rejected" },
+    CORRECTED: { type: "VERIFICATION_CORRECTED" as const, title: "Your verification was corrected" },
+  };
+  const meta = typeMap[args.auditResult];
+  await createNotification({
+    userId: ctx.userId,
+    type: meta.type,
+    title: meta.title,
+    body: `"${truncate(ctx.claimText, 100)}"${args.notes ? ` — ${truncate(args.notes, 80)}` : ""}`,
+    link: ctx.pageId,
+    dedupKey: `audit:${args.verificationId}`,
+  });
 }
 
 // ── Promotion decision helpers ───────────────────────────────────────
@@ -287,16 +319,29 @@ export async function applyPromotionDecision(args: {
           "badgeEarnedAt" = NOW()
       WHERE "id" = ${args.userId}
     `;
+    await createNotification({
+      userId: args.userId,
+      type: "BADGE_PROMOTED",
+      title: "You're now a Trusted Verifier",
+      body:
+        "Your verification work was sampled, audited, and met the 80% quality bar. " +
+        "Your verifications now carry extra weight in the trust chain.",
+      link: "/me",
+      dedupKey: `promote:TRUSTED_VERIFIER:${args.userId}`,
+    });
   }
   // DENY / DEFER don't mutate the User row directly — they're audit-
-  // log only. We piggy-back on VerificationAudit with a sentinel
-  // factId/verificationId pair? No, that table is for fact-level
-  // audits. Easier: log via console.error for now; full audit trail
-  // is Phase 1.4 (notifications) + an admin_actions table.
+  // log only. Logged for the operator console; the user isn't notified
+  // for deferred decisions (a denial without context would be jarring).
   console.info("[promotion]", JSON.stringify({
     userId: args.userId,
     adminUserId: args.adminUserId,
     decision: args.decision,
     at: new Date().toISOString(),
   }));
+}
+
+function truncate(s: string, n: number): string {
+  if (s.length <= n) return s;
+  return s.slice(0, n - 1) + "…";
 }

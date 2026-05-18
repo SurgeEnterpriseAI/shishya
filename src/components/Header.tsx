@@ -11,6 +11,7 @@ import { getT } from "@/lib/i18n-server";
 import { LangSwitcher } from "./LangSwitcher";
 import { BackLink } from "./BackLink";
 import { MobileNavToggle } from "./MobileNavToggle";
+import { NotificationBell } from "./NotificationBell";
 
 const PRIMARY_NAV: Array<{ href: string; label: string; short: string }> = [
   { href: "/schooling",       label: "Schooling",               short: "School" },
@@ -54,6 +55,7 @@ export async function Header({ admin = false }: { admin?: boolean }) {
               <Link href="/me" className="hidden hover:text-ink-900 sm:inline" title="Your contributions">
                 Profile
               </Link>
+              <NotificationBell />
               <Link href="/logout" className="rounded-md border border-ink-300 px-3 py-1.5 text-xs font-medium hover:bg-ink-50">
                 {t("nav.signout")}
               </Link>
