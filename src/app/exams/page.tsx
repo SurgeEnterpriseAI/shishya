@@ -67,7 +67,10 @@ async function loadExamsRaw(): Promise<ExamCard[]> {
     // AI-drafted but already assembled into ready-to-take full mocks. Either
     // path turns the badge from "Coming" to "Live".
     const rows = await prisma.exam.findMany({
-      where: { active: true },
+      // SCHOOL_BOARD entries are containers for school-level Subject + Topic
+      // data; they're surfaced under /schooling/[board]/class-[n], not in
+      // the entrance-exam catalogue.
+      where: { active: true, category: { not: "SCHOOL_BOARD" } },
       orderBy: [{ candidatesPerYear: "desc" }, { code: "asc" }],
       select: {
         code: true,

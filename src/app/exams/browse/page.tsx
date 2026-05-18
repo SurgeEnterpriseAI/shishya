@@ -106,7 +106,8 @@ export default async function ExamsCatalogPage({
 
   // Build Prisma where clause from the URL params. ANDed together, so
   // /exams?state=TN&lang=TA narrows to "Tamil Nadu exams offered in Tamil".
-  const where: Prisma.ExamWhereInput = { active: true };
+  // SCHOOL_BOARD entries belong to /schooling, not the entrance-exam browse.
+  const where: Prisma.ExamWhereInput = { active: true, category: { not: "SCHOOL_BOARD" } };
   if (q) {
     where.OR = [
       { shortName: { contains: q, mode: "insensitive" } },
@@ -147,7 +148,7 @@ export default async function ExamsCatalogPage({
   // Counts per facet — drives the "number of exams" pill beside each
   // filter chip. Computed off the SAME `where` (minus the facet we're
   // counting) so the counts feel correct as filters compose.
-  const totalActive = await prisma.exam.count({ where: { active: true } });
+  const totalActive = await prisma.exam.count({ where: { active: true, category: { not: "SCHOOL_BOARD" } } });
 
   // Facet counts: state, category, lang (each computed without their own
   // current filter applied so a chip's count reflects what the user would

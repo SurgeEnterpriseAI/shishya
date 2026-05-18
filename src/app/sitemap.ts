@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db/prisma";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { COLLEGES, ALL_STREAMS } from "@/lib/colleges-data";
 import { BOARDS } from "@/lib/schooling-data";
+import { CLASS_SYLLABUS } from "@/lib/schooling-subjects";
 
 export const revalidate = 86_400; // 24h
 
@@ -107,6 +108,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // Per-class schooling pages — one URL per (board, class) we've populated.
+  // SEO targets: "CBSE Class 10 syllabus", "ICSE Class 12 subjects", etc.
+  const classUrls: MetadataRoute.Sitemap = CLASS_SYLLABUS.map((c) => ({
+    url: `${base}/schooling/${c.boardSlug}/class-${c.classNum}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.75,
+  }));
+
+  // Per-subject schooling pages — one URL per (board, class, subject).
+  // Long-tail SEO: "CBSE Class 12 Physics chapters", "ICSE Class 10
+  // Mathematics NCERT", etc.
+  const subjectUrls: MetadataRoute.Sitemap = CLASS_SYLLABUS.flatMap((c) =>
+    c.subjects.map((s) => ({
+      url: `${base}/schooling/${c.boardSlug}/class-${c.classNum}/${s.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.65,
+    })),
+  );
+
   // Per-state college aggregator pages — "top colleges in Tamil Nadu",
   // "best colleges in UP", etc.
   const collegeStateUrls: MetadataRoute.Sitemap = Array.from(
@@ -135,5 +157,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...collegeStateUrls,
     ...collegeUrls,
     ...boardUrls,
+    ...classUrls,
+    ...subjectUrls,
   ];
 }

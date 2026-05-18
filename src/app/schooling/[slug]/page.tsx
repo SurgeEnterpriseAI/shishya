@@ -166,12 +166,13 @@ export default async function BoardPage({
         <h2 className="mt-8 text-base font-semibold text-ink-900">Classes covered</h2>
         <div className="mt-2 flex flex-wrap gap-2">
           {b.classes.map((c) => (
-            <span
+            <Link
               key={c}
-              className="rounded-full border border-ink-200 bg-white px-3 py-1 text-xs text-ink-700"
+              href={`/schooling/${b.slug}/class-${c}`}
+              className="rounded-full border border-ink-200 bg-white px-3 py-1 text-xs text-ink-700 transition-colors hover:border-saffron-400 hover:bg-saffron-50/40"
             >
-              Class {c}
-            </span>
+              Class {c} →
+            </Link>
           ))}
         </div>
 

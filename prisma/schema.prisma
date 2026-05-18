@@ -657,6 +657,13 @@ enum ExamCategory {
   LAW             // CLAT
   OLYMPIAD        // HBCSE, SOF, Silverzone, NSTSE, ZIO/INOI, PRIL
   STATE_LEVEL     // State PSC, State TET, State Police, etc.
+  // SCHOOL_BOARD entries are (Board, Class) units used as containers
+  // for school-level Subject + Topic data — NOT real entrance exams.
+  // The /exams catalog filters these out; they're surfaced under
+  // /schooling/[board]/class-[n] instead. Lets us reuse the existing
+  // Subject/Topic/Question/Mock pipeline for school content without
+  // duplicating the schema.
+  SCHOOL_BOARD
   OTHER
 }
 
