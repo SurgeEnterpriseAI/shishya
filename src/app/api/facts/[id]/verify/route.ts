@@ -28,6 +28,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { bad, ok, parseBody, serverError, unauth } from "@/lib/http";
+import { recordEvent } from "@/lib/analytics";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -202,6 +203,18 @@ export async function POST(
     if (nextStatus !== f.status) {
       await prisma.$executeRaw`UPDATE "Fact" SET "status" = ${nextStatus}::"FactStatus" WHERE "id" = ${factId}`;
     }
+
+    // Analytics — fire-and-forget. Captures the action type + the
+    // resulting fact status so we can see "verify → FULLY" funnel.
+    void recordEvent({
+      kind: "VERIFICATION_SUBMITTED",
+      userId,
+      props: {
+        actionType: body.actionType,
+        factId,
+        resultingStatus: nextStatus,
+      },
+    });
 
     return ok({
       ok: true,

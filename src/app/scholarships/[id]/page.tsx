@@ -8,6 +8,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SaveScholarshipButton } from "@/components/SaveScholarshipButton";
 import { SCHOLARSHIPS, type Scholarship } from "@/data/scholarships";
 
 interface PageParams { id: string }
@@ -127,6 +128,7 @@ export default async function ScholarshipDetailPage({
           <span className="rounded bg-saffron-100 px-2 py-0.5 text-[10px] font-medium text-saffron-800">
             {s.type.replace(/_/g, " ")}
           </span>
+          <SaveScholarshipButton scholarshipId={s.id} scholarshipName={s.name} />
         </div>
         <p className="mt-1 text-sm text-ink-500">{s.awardingBody}</p>
         <p className="mt-4 max-w-3xl text-sm text-ink-700">{s.description}</p>

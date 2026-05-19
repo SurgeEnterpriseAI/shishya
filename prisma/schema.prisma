@@ -64,6 +64,14 @@ model User {
   // URL handle for /u/[handle]. Unique across the platform. Null until
   // the user picks one in /me/settings. Validated to ^[a-z0-9_-]{3,30}$.
   handle                  String?    @unique
+  // Onboarding-wizard answers — captured the first time a user signs in
+  // and answers the 3-question profile form. Drives the personalised
+  // homepage (their stage's content + state's scholarships + prep targets).
+  // Null until completed; the wizard at /onboarding sets all three.
+  onbStage      String?   // "CLASS_9_10" | "CLASS_11_12" | "UG" | "PG" | "WORKING"
+  onbState      String?   // ISO 2-letter Indian state code, e.g., "MH", "TN"
+  onbPrepCodes  String[]  @default([])  // exam codes the user is targeting
+  onbCompletedAt DateTime?  // set when wizard is submitted (different from onboardedAt which is the dashboard tour)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -980,6 +988,60 @@ enum CredentialVerifiedVia {
   COMMUNITY_VOUCHING     // 3+ existing DEs in the same domain vouched
   ADMIN_GRANT            // admin granted manually (bootstrap path)
   DOCUMENT_REVIEW        // admin reviewed an uploaded doc (Phase 1.2.x)
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// AnalyticsEvent — first-party event log for product decisions.
+//
+// We don't ship a 3rd-party tracker (no Plausible/Umami) because the
+// only signals worth tracking can live in the same Postgres that
+// already powers the rest of the platform. Privacy-first: no PII
+// stored beyond userId (when signed in); anonymous users get a UUID
+// in an httpOnly cookie that resets every 30 days.
+//
+// EventKind covers the 7 product-decision-critical actions on the
+// platform. Additional `props` (Json) lets each event carry tiny
+// payload — exam code, scholarship id, etc. — without needing
+// schema changes for new variants.
+// ─────────────────────────────────────────────────────────────────────
+model AnalyticsEvent {
+  id          String      @id @default(cuid())
+  kind        EventKind
+  // Authenticated user id when signed in; NULL for anonymous.
+  userId      String?
+  // Stable cookie-based anonymous id. Set to NULL when userId is set
+  // (we don't double-count). 30-day rotating cookie.
+  anonId      String?
+  // Pathname the event fired on. Useful for PAGE_VIEW + for joining
+  // an event to its source page.
+  path        String?
+  // Free-form event payload (max 1 KB enforced at write-time):
+  //   { examCode, factId, scholarshipId, score, total, ... }
+  props       Json?
+  // First-party UTM capture — only set when the event has them on the URL.
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  // Truncated referrer hostname (e.g., "google.com"), not full URL.
+  refHost     String?
+  createdAt   DateTime    @default(now())
+
+  @@index([kind, createdAt])
+  @@index([userId, createdAt])
+  @@index([anonId, createdAt])
+  @@index([path])
+  @@index([createdAt])
+}
+
+enum EventKind {
+  PAGE_VIEW
+  SIGNUP                  // fires on the user's very first auth callback
+  VERIFICATION_SUBMITTED  // user clicked Verify / Flag / Suggest on a Fact
+  QUIZ_ATTEMPTED          // user submitted a chapter quiz (regardless of score)
+  CHAPTER_COMPLETED       // user scored >=80% on a chapter quiz
+  SCHOLARSHIP_SAVED       // user clicked "Save scholarship" — local + event
+  CHAT_OPENED             // user opened /chat (the AI tutor)
+  CTA_CLICKED             // generic — for ad-hoc button instrumentation
 }
 
 // ─────────────────────────────────────────────────────────────────────

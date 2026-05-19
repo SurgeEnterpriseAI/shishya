@@ -4,6 +4,8 @@ import { getLocale } from "@/lib/i18n-server";
 import { isRtl } from "@/lib/i18n";
 import { auth } from "@/lib/auth";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
+import { AnalyticsTracker } from "@/components/AnalyticsTracker";
+import { Suspense } from "react";
 import "./globals.css";
 
 // Mobile + cross-browser viewport configuration.
@@ -88,6 +90,12 @@ export default async function RootLayout({
       <body className="font-multi">
         {children}
         {signedIn && <FeedbackWidget signedIn />}
+        {/* First-party analytics tracker (no 3rd-party network calls).
+            Wrapped in Suspense because useSearchParams() must be inside
+            a Suspense boundary in App Router. */}
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
+        </Suspense>
       </body>
     </html>
   );

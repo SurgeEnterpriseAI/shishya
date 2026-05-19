@@ -46,6 +46,25 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
     signOut: "/logout",
   },
+  // NextAuth events — createUser fires exactly once per real signup
+  // (first OAuth callback for an email we've never seen). Perfect
+  // hook for the SIGNUP analytics event.
+  events: {
+    async createUser({ user }) {
+      try {
+        // Inline import avoids a circular dep (analytics → prisma → auth).
+        const { recordEvent } = await import("./analytics");
+        await recordEvent({
+          kind: "SIGNUP",
+          userId: user.id,
+          path: "/login",
+          props: { provider: "google" },
+        });
+      } catch (err) {
+        console.error("[auth] SIGNUP event record failed (non-fatal):", err);
+      }
+    },
+  },
 };
 
 export const auth = () => getServerSession(authOptions);

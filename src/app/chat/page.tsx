@@ -9,6 +9,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { ChatInterface } from "./ChatInterface";
 import { ExamSwitcher } from "./ExamSwitcher";
+import { recordEvent } from "@/lib/analytics";
 
 export default async function ChatPage({
   searchParams,
@@ -20,6 +21,19 @@ export default async function ChatPage({
   const sp = await searchParams;
   const { t } = await getT();
   const generalMode = sp.general === "1";
+
+  // Analytics — server-side CHAT_OPENED so we don't double-fire with
+  // PAGE_VIEW. Captures the exam scope as a prop.
+  void recordEvent({
+    kind: "CHAT_OPENED",
+    userId: session.user.id,
+    path: "/chat",
+    props: {
+      examCode: sp.examCode ?? null,
+      topicCode: sp.topicCode ?? null,
+      general: generalMode,
+    },
+  });
 
   let enrollments = await prisma.enrollment.findMany({
     where: { userId: session.user.id, active: true },

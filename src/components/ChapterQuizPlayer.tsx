@@ -72,6 +72,22 @@ export function ChapterQuizPlayer({ quizKey, questions }: Props) {
       }
       setBest(candidate);
     }
+
+    // Analytics: every submission fires QUIZ_ATTEMPTED; submissions
+    // scoring >=80% additionally fire CHAPTER_COMPLETED. Chapter
+    // completion is the high-signal event we use for retention.
+    window.shishyaTrack?.("QUIZ_ATTEMPTED", {
+      quizKey,
+      correct: candidate.correct,
+      total: candidate.total,
+    });
+    if (candidate.correct / candidate.total >= 0.8) {
+      window.shishyaTrack?.("CHAPTER_COMPLETED", {
+        quizKey,
+        correct: candidate.correct,
+        total: candidate.total,
+      });
+    }
   }
 
   function retry() {
