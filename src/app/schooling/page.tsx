@@ -130,6 +130,31 @@ export default async function SchoolingLanding({
           you always get the current version straight from the board.
         </p>
 
+        {/* Stream selection CTA — the most consequential Class 10 decision */}
+        <div className="mt-6 rounded-lg border border-saffron-300 bg-saffron-50/50 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-2xl">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-800">
+                Class 10 student? Read this first
+              </p>
+              <h2 className="mt-1 text-lg font-semibold text-ink-900">
+                Stream Selection — Science vs Commerce vs Humanities
+              </h2>
+              <p className="mt-1 text-xs text-ink-700">
+                The single most consequential decision in your school years.
+                Honest guide to what each stream opens + closes, who should
+                pick it, and the myths to ignore.
+              </p>
+            </div>
+            <Link
+              href="/schooling/streams"
+              className="rounded-md bg-saffron-500 px-4 py-2 text-sm font-semibold text-white hover:bg-saffron-600"
+            >
+              Stream selection guide →
+            </Link>
+          </div>
+        </div>
+
         {/* Type filter */}
         <div className="mt-6">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">By board type</p>
