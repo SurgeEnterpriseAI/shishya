@@ -67,6 +67,63 @@ export const metadata: Metadata = {
     locale: "en_IN",
     type: "website",
   },
+  // Default Twitter card for every page that doesn't override.
+  // summary_large_image makes the auto-fetched og:image render at
+  // 1200x630 in Twitter/X timeline previews.
+  twitter: {
+    card: "summary_large_image",
+    title: "Shishya — Every entrance exam in India, free, with AI tutoring",
+    description:
+      "163 exams · adaptive mocks · syllabus · previous year papers · AI tutor. Free, in your language.",
+    site: "@shishyaedu",
+    creator: "@shishyaedu",
+  },
+  // Search engine verification meta tags — set via env so we can
+  // paste the GSC/Bing/Yandex tokens once and they appear in <head>
+  // on every page. Empty strings get filtered out by Next.
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION ?? undefined,
+    other: {
+      ...(process.env.BING_SITE_VERIFICATION
+        ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION }
+        : {}),
+    },
+  },
+};
+
+// Global JSON-LD: WebSite (with SearchAction so Google can render a
+// sitelinks search box) + Organization. Rendered in the root layout's
+// <body> so every page emits it. Per-page schemas (Course / Article /
+// CollegeOrUniversity / FAQPage / BreadcrumbList) stack on top of these.
+const SITE_BASE = process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in";
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Shishya",
+  alternateName: "शिष्य",
+  url: SITE_BASE,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${SITE_BASE}/exams/browse?q={search_term_string}`,
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "EducationalOrganization",
+  name: "Shishya",
+  url: SITE_BASE,
+  logo: `${SITE_BASE}/icon.svg`,
+  description:
+    "Free AI-tutored education platform for Indian students — covering schooling, entrance exams, colleges, scholarships, and study-abroad pathways.",
+  sameAs: [
+    "https://github.com/SurgeEnterpriseAI/shishya",
+  ],
 };
 
 export default async function RootLayout({
@@ -88,6 +145,16 @@ export default async function RootLayout({
       className={`${inter.variable} ${notoDevanagari.variable}`}
     >
       <body className="font-multi">
+        {/* Global JSON-LD — WebSite with SearchAction + EducationalOrganization.
+            Per-page Course / Article / CollegeOrUniversity schemas stack on top. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         {children}
         {signedIn && <FeedbackWidget signedIn />}
         {/* First-party analytics tracker (no 3rd-party network calls).

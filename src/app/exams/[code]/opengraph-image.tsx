@@ -1,0 +1,126 @@
+// Dynamic OpenGraph image for /exams/[code] — per-exam social card.
+//
+// 1200x630 PNG generated at the edge. Shown when an exam URL is
+// shared on WhatsApp / Twitter / LinkedIn / Slack / iMessage.
+//
+// Cached by Next at the edge for the same TTL as the page. Fall
+// back to the root opengraph-image if the exam lookup fails.
+
+import { ImageResponse } from "next/og";
+import { prisma } from "@/lib/db/prisma";
+
+export const runtime = "nodejs";
+export const alt = "Shishya — exam preparation";
+export const size = { width: 1200, height: 630 };
+export const contentType = "image/png";
+
+export default async function Image({ params }: { params: { code: string } }) {
+  const exam = await prisma.exam.findUnique({
+    where: { code: params.code },
+    select: { shortName: true, name: true, category: true, state: true },
+  }).catch(() => null);
+
+  // Fallback to a generic Shishya card if the exam isn't found.
+  const shortName = exam?.shortName ?? "Shishya";
+  const fullName = exam?.name ?? "India's free AI-tutored entrance exam platform";
+  const category = exam?.category?.replace(/_/g, " ") ?? "";
+  const year = new Date().getUTCFullYear();
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          padding: "70px 100px",
+          background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
+          fontFamily: "sans-serif",
+        }}
+      >
+        {/* Top: logo + wordmark */}
+        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          <div
+            style={{
+              width: "80px",
+              height: "80px",
+              background: "#f97316",
+              borderRadius: "16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              fontSize: "56px",
+              fontWeight: 700,
+            }}
+          >
+            शि
+          </div>
+          <div style={{ fontSize: "44px", fontWeight: 800, color: "#1c1917" }}>
+            Shishya
+          </div>
+          {category && (
+            <div
+              style={{
+                marginLeft: "auto",
+                padding: "8px 18px",
+                background: "#fff",
+                border: "2px solid #f97316",
+                borderRadius: "999px",
+                color: "#9a3412",
+                fontSize: "22px",
+                fontWeight: 600,
+              }}
+            >
+              {category}
+            </div>
+          )}
+        </div>
+
+        {/* Middle: exam name */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div
+            style={{
+              fontSize: "96px",
+              fontWeight: 800,
+              color: "#1c1917",
+              letterSpacing: "-0.03em",
+              lineHeight: 1,
+            }}
+          >
+            {shortName}
+          </div>
+          <div
+            style={{
+              fontSize: "32px",
+              color: "#57534e",
+              fontWeight: 500,
+              lineHeight: 1.2,
+              maxWidth: "1000px",
+            }}
+          >
+            {fullName}
+          </div>
+        </div>
+
+        {/* Bottom: tagline */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            color: "#57534e",
+            fontSize: "26px",
+            fontWeight: 500,
+          }}
+        >
+          <div>Free mocks · syllabus · PYQ · AI tutor</div>
+          <div style={{ color: "#c2410c", fontWeight: 700 }}>{year}</div>
+        </div>
+      </div>
+    ),
+    { ...size },
+  );
+}

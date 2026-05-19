@@ -211,8 +211,29 @@ export default async function HomePage() {
     defence:        t("land.tag.defence"),
   };
 
+  // ItemList JSON-LD — surfaces the exam catalogue as a structured
+  // list so Google can show rich sitelinks for "shishya entrance exams".
+  // Limit to the top 20 by candidates to keep the JSON-LD payload small;
+  // the full sitemap covers SEO discovery of the rest.
+  const itemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Indian entrance and government exams covered by Shishya",
+    numberOfItems: exams.length,
+    itemListElement: exams.slice(0, 20).map((e, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: e.shortName,
+      url: `https://shishya.in/exams/${e.code}`,
+    })),
+  };
+
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+      />
       {/* Header + live-counters strip stay full-width so the Sign-in /
           language picker / social-proof banner reach the viewport's
           right edge instead of being squeezed by the discussions panel.
