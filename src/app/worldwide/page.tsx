@@ -62,12 +62,12 @@ export default function WorldwideLanding() {
 
         {/* Countries grid */}
         <h2 className="mt-10 text-base font-semibold text-ink-900">
-          5 destination countries
+          {WORLDWIDE_COUNTRIES.length} destination countries
         </h2>
         <p className="mt-1 text-xs text-ink-500">
-          Covers ~80% of Indian students studying abroad. More countries
-          (NZ, Ireland, Singapore, France, Netherlands, Japan, UAE) ship in
-          later phases.
+          Covers ~95% of Indian students studying abroad. Use the{" "}
+          <Link href="/worldwide/compare" className="text-saffron-700 underline">comparison tool</Link>{" "}
+          to weigh cost vs PSW vs PR difficulty side-by-side.
         </p>
         <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {WORLDWIDE_COUNTRIES.map((c) => (

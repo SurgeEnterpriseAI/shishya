@@ -89,6 +89,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/colleges/cutoffs",
     "/colleges/placements",
     "/colleges/iti-diploma",
+    "/worldwide/compare",
   ].map((path) => ({
     url: `${base}${path}`,
     lastModified: new Date(),

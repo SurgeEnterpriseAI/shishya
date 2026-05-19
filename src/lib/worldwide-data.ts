@@ -909,7 +909,193 @@ const DE: WorldwideCountry = {
   ],
 };
 
-export const WORLDWIDE_COUNTRIES: WorldwideCountry[] = [US, UK, CA, AU, DE];
+// ═════════════════════════════════════════════════════════════════════
+// PHASE 4.2 EXPANSION — 5 more countries
+// Ireland, Singapore, New Zealand, France, Netherlands
+// ═════════════════════════════════════════════════════════════════════
+
+const IE: WorldwideCountry = {
+  slug: "ie",
+  name: "Ireland",
+  emojiFlag: "🇮🇪",
+  indianStudentCount: "~10,000-15,000 (HEA Ireland; growing fast post-Brexit)",
+  costSummary:
+    "Tuition €10k–€30k/year for international students. Living €10k–€15k/year (Dublin top of range). Total Master's (1-2 yr) ~€25k-50k.",
+  applicationTimeline:
+    "September intake: apply Nov-Apr (rolling). Postgrad direct via university portals.",
+  postStudyWork:
+    "Graduate Programme — Stamp 1G: 1 year for Level 8 (Honours Bachelor's), 2 years for Level 9+ (Master's/PhD). Highly attainable.",
+  prPathway:
+    "Critical Skills Employment Permit (jobs paying €38k+) → 2-year work permit → eligible for citizenship after 5 years. Faster than UK/US for tech professionals.",
+  visaType: "Stamp 2 Student Visa (Ireland)",
+  visaUrl: "https://www.irishimmigration.ie/coming-to-study-in-ireland/",
+  englishTest: ["IELTS Academic", "TOEFL iBT", "PTE Academic"],
+  pros: [
+    "EU member with English-medium education",
+    "Strong tech industry presence (Google, Meta, Microsoft, LinkedIn EU HQ in Dublin)",
+    "1-2 year post-study work stamp is straightforward",
+    "Direct path to EU residency",
+  ],
+  cons: [
+    "Dublin housing crisis acute — finding rental is hard",
+    "Cost of living rising fast",
+    "Smaller universities than UK / US — programme depth varies",
+  ],
+  universities: [
+    { slug: "trinity-college-dublin", name: "Trinity College Dublin", location: "Dublin", qsRank: 81, timesRank: 134, tuitionRange: "€20k–€35k/year", indianStudents: "~600", strongPrograms: ["CS", "Engineering", "Medicine", "Business"], admissionsUrl: "https://www.tcd.ie/study/", officialSite: "https://www.tcd.ie/", blurb: "Ireland's oldest university (1592). Strong CS + humanities programs; central Dublin." },
+    { slug: "ucd-dublin", name: "University College Dublin (UCD)", location: "Dublin", qsRank: 126, timesRank: 198, tuitionRange: "€19k–€30k/year", indianStudents: "~800", strongPrograms: ["CS", "Business (Smurfit School)", "Engineering", "Veterinary"], admissionsUrl: "https://www.ucd.ie/global/", officialSite: "https://www.ucd.ie/", blurb: "Largest Irish university; broad programme portfolio; strong international intake." },
+    { slug: "ucc-cork", name: "University College Cork (UCC)", location: "Cork", qsRank: 273, timesRank: 351, tuitionRange: "€16k–€26k/year", indianStudents: "~400", strongPrograms: ["Pharmacy", "Food Science", "Business", "Engineering"], admissionsUrl: "https://www.ucc.ie/en/intoffice/", officialSite: "https://www.ucc.ie/", blurb: "Strong food science + pharma research; Cork is cheaper than Dublin." },
+    { slug: "nuig-galway", name: "University of Galway (NUIG)", location: "Galway", qsRank: 273, timesRank: 350, tuitionRange: "€15k–€26k/year", indianStudents: "~400", strongPrograms: ["Medicine", "Engineering", "Marine Sciences"], admissionsUrl: "https://www.universityofgalway.ie/intl/", officialSite: "https://www.universityofgalway.ie/", blurb: "West-coast research university; strong medical + engineering; lowest cost of living among Irish universities." },
+    { slug: "dcu-dublin", name: "Dublin City University (DCU)", location: "Dublin", qsRank: 421, timesRank: 401, tuitionRange: "€15k–€25k/year", indianStudents: "~500", strongPrograms: ["Computing", "Business", "Engineering", "Communications"], admissionsUrl: "https://www.dcu.ie/registry/international/", officialSite: "https://www.dcu.ie/", blurb: "Industry-linked university with strong placements + co-op programmes." },
+  ],
+};
+
+const SG: WorldwideCountry = {
+  slug: "sg",
+  name: "Singapore",
+  emojiFlag: "🇸🇬",
+  indianStudentCount: "~7,000-10,000 (NUS+NTU+SMU+SUTD plus business schools)",
+  costSummary:
+    "Tuition SGD 30k–60k/year for international UG (after MOE subsidy you can apply for, ~50% reduction). PG SGD 35k–80k. Living SGD 12k–18k/year.",
+  applicationTimeline:
+    "August intake: apply Sep-Mar. Direct application via individual university portals.",
+  postStudyWork:
+    "Long-Term Visit Pass (LTVP) for 1 year. Employment Pass for skilled workers earning SGD 5k+/month (S$60k+/year).",
+  prPathway:
+    "PR after working 2-6 years on EP. Citizenship after PR + 2 years. Singapore is selective but not impossible for STEM/finance professionals.",
+  visaType: "Student Pass (issued by ICA)",
+  visaUrl: "https://www.ica.gov.sg/enter-transit-depart/student-pass",
+  englishTest: ["IELTS Academic", "TOEFL iBT", "C1 Advanced (Cambridge)"],
+  pros: [
+    "World's top global research universities (NUS, NTU consistently top-20 globally)",
+    "Direct path to high-paying finance/tech jobs in Asia hub",
+    "MOE Tuition Grant subsidises tuition ~50% if you accept 3-year work bond in SG/SG-firm",
+    "Tax-efficient (low income tax ~15-22% effective)",
+  ],
+  cons: [
+    "Highest cost of living among major destinations after Switzerland",
+    "Tight selection — admit rate ~5-15% for top programmes",
+    "Tuition grant comes with 3-year work bond (may not match your goals)",
+    "Distance from family — Indian flights expensive seasonally",
+  ],
+  universities: [
+    { slug: "nus", name: "National University of Singapore (NUS)", location: "Singapore", qsRank: 8, timesRank: 19, tuitionRange: "SGD 38k/year (after MOE subsidy ~SGD 18k)", indianStudents: "~1,500", strongPrograms: ["CS", "Engineering", "Medicine", "Business (NUS BBA)"], admissionsUrl: "https://www.nus.edu.sg/oam/", officialSite: "https://www.nus.edu.sg/", blurb: "Asia's #1 university by QS. Strong everywhere; world-class research; massive Indian alumni network." },
+    { slug: "ntu", name: "Nanyang Technological University (NTU)", location: "Singapore", qsRank: 15, timesRank: 32, tuitionRange: "SGD 35k/year (after subsidy ~SGD 17k)", indianStudents: "~1,200", strongPrograms: ["Engineering", "CS", "Business (Nanyang)", "Media + Communications"], admissionsUrl: "https://www.ntu.edu.sg/admissions", officialSite: "https://www.ntu.edu.sg/", blurb: "Engineering powerhouse; Top 3 in Asia. Strong industry partnerships (SG industry hubs)." },
+    { slug: "smu", name: "Singapore Management University (SMU)", location: "Singapore", qsRank: 545, timesRank: 401, tuitionRange: "SGD 42k/year", indianStudents: "~500", strongPrograms: ["Business + Finance", "Law", "CS"], admissionsUrl: "https://admissions.smu.edu.sg/", officialSite: "https://www.smu.edu.sg/", blurb: "Specialist business + economics university. Strong placements in finance + consulting." },
+    { slug: "sutd", name: "Singapore University of Technology and Design (SUTD)", location: "Singapore", qsRank: 451, timesRank: 251, tuitionRange: "SGD 36k/year", indianStudents: "~300", strongPrograms: ["Design + Architecture", "Engineering Product Dev", "Information Systems"], admissionsUrl: "https://www.sutd.edu.sg/admissions/", officialSite: "https://www.sutd.edu.sg/", blurb: "Established with MIT collaboration. Design-led engineering + interdisciplinary programmes." },
+  ],
+};
+
+const NZ: WorldwideCountry = {
+  slug: "nz",
+  name: "New Zealand",
+  emojiFlag: "🇳🇿",
+  indianStudentCount: "~25,000-30,000 (Education New Zealand; second-largest international student source after China)",
+  costSummary:
+    "Tuition NZD 30k–55k/year for international UG. Living NZD 15k–22k/year. Cheaper than Australia by ~15-25%.",
+  applicationTimeline:
+    "Two intakes: February + July. Apply 3-4 months in advance via university portals.",
+  postStudyWork:
+    "Post-Study Work Visa: 1-3 years depending on degree level + region.",
+  prPathway:
+    "Skilled Migrant Category Resident Visa — point-based, 160+ points. Skill Shortage List makes selected occupations easier.",
+  visaType: "Student Visa",
+  visaUrl: "https://www.immigration.govt.nz/new-zealand-visas/options/study",
+  englishTest: ["IELTS Academic", "PTE Academic", "TOEFL iBT"],
+  pros: [
+    "Substantially cheaper than Australia + UK",
+    "Quality-of-life consistently top-3 globally",
+    "Stable + welcoming immigration policy compared to Australia (recently tightening)",
+    "Top universities (Auckland) globally ranked",
+  ],
+  cons: [
+    "Remote — flight to India 16-22 hours via Singapore/HK",
+    "Job market smaller than Australia",
+    "Universities outside top 3-4 don't have global brand recognition",
+  ],
+  universities: [
+    { slug: "auckland", name: "University of Auckland", location: "Auckland", qsRank: 65, timesRank: 150, tuitionRange: "NZD 45k/year", indianStudents: "~600", strongPrograms: ["Medicine", "Engineering", "Business", "Computer Science"], admissionsUrl: "https://www.auckland.ac.nz/en/study.html", officialSite: "https://www.auckland.ac.nz/", blurb: "NZ's top university; strong research; international student community vibrant." },
+    { slug: "otago", name: "University of Otago", location: "Dunedin", qsRank: 206, timesRank: 251, tuitionRange: "NZD 33k/year", indianStudents: "~250", strongPrograms: ["Medicine", "Dentistry", "Pharmacy", "Sciences"], admissionsUrl: "https://www.otago.ac.nz/study/international/", officialSite: "https://www.otago.ac.nz/", blurb: "NZ's oldest university; strong health sciences; campus-town atmosphere." },
+    { slug: "canterbury", name: "University of Canterbury", location: "Christchurch", qsRank: 256, timesRank: 401, tuitionRange: "NZD 30k/year", indianStudents: "~200", strongPrograms: ["Engineering", "Computer Science", "Forestry"], admissionsUrl: "https://www.canterbury.ac.nz/study/", officialSite: "https://www.canterbury.ac.nz/", blurb: "Engineering-strong; rebuild post-2011 earthquake; lower cost of living." },
+    { slug: "victoria-wellington", name: "Victoria University of Wellington", location: "Wellington", qsRank: 241, timesRank: 401, tuitionRange: "NZD 33k/year", indianStudents: "~300", strongPrograms: ["Public Policy", "Law", "Business", "Architecture"], admissionsUrl: "https://www.wgtn.ac.nz/study", officialSite: "https://www.wgtn.ac.nz/", blurb: "Capital city, strong public policy + law programmes; government internship pipeline." },
+    { slug: "massey", name: "Massey University", location: "Palmerston North / Auckland / Wellington", qsRank: 239, timesRank: 401, tuitionRange: "NZD 30k/year", indianStudents: "~600", strongPrograms: ["Agriculture + Veterinary", "Aviation", "Business"], admissionsUrl: "https://www.massey.ac.nz/", officialSite: "https://www.massey.ac.nz/", blurb: "Multi-campus; only NZ university with full aviation degree; agri-tech strong." },
+  ],
+};
+
+const FR: WorldwideCountry = {
+  slug: "fr",
+  name: "France",
+  emojiFlag: "🇫🇷",
+  indianStudentCount: "~7,000-10,000 (Campus France growing rapidly post-pandemic)",
+  costSummary:
+    "Public universities: €170-380/year (registration fee only, ~₹15k-32k!). Grandes Écoles (top engineering/business): €12k-25k/year. Living €10k-14k/year (Paris top of range).",
+  applicationTimeline:
+    "September intake: apply Oct-Mar (rolling). Campus France certification required.",
+  postStudyWork:
+    "Carte de séjour 'recherche d'emploi' — 1 year to find a job after Master's. Eligible for skilled migration after.",
+  prPathway:
+    "Talent Passport (4-year renewable work permit) → EU Blue Card → permanent residency after 5 years (3 years if French language proficient).",
+  visaType: "Long-stay student visa (VLS-TS)",
+  visaUrl: "https://france-visas.gouv.fr/web/france-visas/student-visa",
+  englishTest: ["English programmes: IELTS / TOEFL", "French programmes: DELF / DALF / TCF"],
+  pros: [
+    "Public universities effectively free (€170/year)",
+    "Grandes Écoles offer world-class engineering + business (Polytechnique, HEC, ESSEC, Centrale)",
+    "EU residency pathway",
+    "Strong tech + aerospace + luxury industry presence",
+  ],
+  cons: [
+    "French language is materially helpful (essential for non-tech roles)",
+    "Bureaucracy real — visa + housing + bank account take weeks each",
+    "Strikes affect public transport regularly",
+    "Job market for non-French-speakers narrower",
+  ],
+  universities: [
+    { slug: "psl-paris", name: "PSL University", location: "Paris", qsRank: 24, timesRank: 41, tuitionRange: "€170/year public + €13-19k for select programmes", indianStudents: "~300", strongPrograms: ["Mathematics", "CS", "Economics", "Sciences"], admissionsUrl: "https://psl.eu/en", officialSite: "https://psl.eu/en", blurb: "Federation of Paris's top grandes écoles (ENS, Mines, Dauphine). Strong math + econ tradition." },
+    { slug: "polytechnique", name: "École Polytechnique (X)", location: "Palaiseau", qsRank: 38, timesRank: 95, tuitionRange: "€16k-19k/year", indianStudents: "~150", strongPrograms: ["Engineering", "Math", "CS", "Physics"], admissionsUrl: "https://www.polytechnique.edu/en", officialSite: "https://www.polytechnique.edu/", blurb: "France's premier engineering school. Bachelor's, Master's + Engineer programmes. Defence + research pipeline." },
+    { slug: "sorbonne", name: "Sorbonne University", location: "Paris", qsRank: 59, timesRank: 91, tuitionRange: "€170-380/year public", indianStudents: "~400", strongPrograms: ["Math", "Physics", "Medicine", "Humanities"], admissionsUrl: "https://www.sorbonne-universite.fr/en/admissions", officialSite: "https://www.sorbonne-universite.fr/", blurb: "Historic university (1257). Three faculties: Letters, Medicine, Sciences. Very low tuition." },
+    { slug: "hec-paris", name: "HEC Paris", location: "Jouy-en-Josas", qsRank: 56, timesRank: 401, tuitionRange: "€30k+ for Master's, €70k+ for MBA", indianStudents: "~150 in MBA + Master's", strongPrograms: ["MBA", "MIM (Master in Management)", "MSc Finance"], admissionsUrl: "https://www.hec.edu/en", officialSite: "https://www.hec.edu/", blurb: "France's top business school; consistently top-3 European MBAs. Strong consulting + finance pipeline." },
+    { slug: "centrale-supelec", name: "CentraleSupélec", location: "Gif-sur-Yvette", qsRank: 187, timesRank: 201, tuitionRange: "€14k-16k/year", indianStudents: "~200", strongPrograms: ["Engineering", "CS", "Energy Systems"], admissionsUrl: "https://www.centralesupelec.fr/en/admissions", officialSite: "https://www.centralesupelec.fr/", blurb: "Top French engineering school. Engineer programme + Master's; corporate partnerships strong." },
+  ],
+};
+
+const NL: WorldwideCountry = {
+  slug: "nl",
+  name: "Netherlands",
+  emojiFlag: "🇳🇱",
+  indianStudentCount: "~3,000-5,000 (Nuffic — growing for STEM + business)",
+  costSummary:
+    "Public universities: €15k-22k/year for non-EU (much lower for EU/EEA). Living €10k-14k/year (Amsterdam top of range). Most programmes 1-2 years.",
+  applicationTimeline:
+    "September intake: apply Oct-Jan (Studielink). February intake: apply Sep-Nov (limited programmes).",
+  postStudyWork:
+    "Orientation Year (zoekjaar) — 1 year after graduation to find skilled work. Highly skilled migrant permit thereafter.",
+  prPathway:
+    "Highly Skilled Migrant Visa (salary thresholds €38-52k depending on age) → 5 years → permanent residency. Faster than UK/US.",
+  visaType: "MVV + Residence Permit",
+  visaUrl: "https://ind.nl/en/study",
+  englishTest: ["IELTS Academic", "TOEFL iBT", "Cambridge"],
+  pros: [
+    "World's #1 country for English-taught Master's outside English-speaking countries (~2000 programmes)",
+    "Strong tech + business + engineering programmes",
+    "Excellent post-study work + EU residency pathway",
+    "Quality of life consistently top-5 globally",
+  ],
+  cons: [
+    "Housing scarcity in major student cities (Amsterdam, Utrecht, Delft)",
+    "Tuition higher than Germany (which is free)",
+    "Dutch language matters for non-tech roles",
+  ],
+  universities: [
+    { slug: "tu-delft", name: "Delft University of Technology (TU Delft)", location: "Delft", qsRank: 47, timesRank: 78, tuitionRange: "€19k/year", indianStudents: "~500", strongPrograms: ["Engineering", "CS", "Aerospace", "Industrial Design"], admissionsUrl: "https://www.tudelft.nl/en/", officialSite: "https://www.tudelft.nl/", blurb: "Netherlands' top technical university; aerospace + civil eng world-class. Industry-linked." },
+    { slug: "utrecht", name: "Utrecht University", location: "Utrecht", qsRank: 107, timesRank: 80, tuitionRange: "€18k/year", indianStudents: "~300", strongPrograms: ["Life Sciences", "Veterinary", "Earth Sciences", "Geosciences"], admissionsUrl: "https://www.uu.nl/en/education", officialSite: "https://www.uu.nl/", blurb: "Oldest Dutch university; strong life sciences + humanities; broad research portfolio." },
+    { slug: "amsterdam", name: "University of Amsterdam (UvA)", location: "Amsterdam", qsRank: 60, timesRank: 60, tuitionRange: "€16k/year", indianStudents: "~600", strongPrograms: ["CS", "Economics", "Communication Sciences", "Linguistics"], admissionsUrl: "https://www.uva.nl/en/education", officialSite: "https://www.uva.nl/en", blurb: "Largest Dutch university; Amsterdam location; strong CS + econ + humanities." },
+    { slug: "tu-eindhoven", name: "Eindhoven University of Technology (TU/e)", location: "Eindhoven", qsRank: 124, timesRank: 226, tuitionRange: "€18k/year", indianStudents: "~250", strongPrograms: ["Electrical Engineering", "Industrial Design", "Computer Science"], admissionsUrl: "https://www.tue.nl/en/", officialSite: "https://www.tue.nl/en/", blurb: "Strong electronics + design; Philips + ASML + DAF Trucks corporate links." },
+    { slug: "leiden", name: "Leiden University", location: "Leiden", qsRank: 119, timesRank: 77, tuitionRange: "€17k/year", indianStudents: "~200", strongPrograms: ["Law", "Medicine", "International Relations", "Liberal Arts"], admissionsUrl: "https://www.universiteitleiden.nl/en/education", officialSite: "https://www.universiteitleiden.nl/", blurb: "Oldest Dutch university (1575). Strong humanities + law + medicine; close to The Hague." },
+  ],
+};
+
+export const WORLDWIDE_COUNTRIES: WorldwideCountry[] = [US, UK, CA, AU, DE, IE, SG, NZ, FR, NL];
 
 export function findCountry(slug: string): WorldwideCountry | undefined {
   return WORLDWIDE_COUNTRIES.find((c) => c.slug === slug);
