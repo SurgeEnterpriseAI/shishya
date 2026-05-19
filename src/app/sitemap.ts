@@ -90,6 +90,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/colleges/placements",
     "/colleges/iti-diploma",
     "/worldwide/compare",
+    "/distance-learning",
+    "/alumni-stories",
+    "/soft-skills",
   ].map((path) => ({
     url: `${base}${path}`,
     lastModified: new Date(),
