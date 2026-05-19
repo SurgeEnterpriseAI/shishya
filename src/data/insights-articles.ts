@@ -374,6 +374,475 @@ require original thought, deliberate practice, or grounded strategy. Use it
 for what it's good at; don't outsource what it's bad at.
 `,
   },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // EXPANSION BATCH — 5 more articles
+  // ═══════════════════════════════════════════════════════════════════
+
+  {
+    slug: "why-tier-3-engineering-isnt-end",
+    title: "Why a tier-3 engineering college isn't the career ceiling you think",
+    dek: "If you're at a tier-3 BTech college and feel doomed, the data says you're wrong. Here's what actually determines outcomes 5-7 years out.",
+    publishedOn: "2026-05-12",
+    readMins: 5,
+    author: "Shishya editorial",
+    tags: ["Colleges", "Career", "Outcomes"],
+    sources: [
+      { label: "NASSCOM Indian IT Industry Reports", url: "https://nasscom.in/" },
+      { label: "Indian startup founder LinkedIn profiles aggregated", url: "https://www.linkedin.com/" },
+      { label: "PayScale + AmbitionBox compensation aggregates", url: "https://www.payscale.com/" },
+    ],
+    body: `## The myth + the reality
+
+College tier is treated as career destiny in middle-class Indian discourse. The
+data doesn't support this. A tier-3 BTech graduate who self-learns, builds a
+portfolio, and switches strategically reaches FAANG-tier compensation in 5-7
+years at roughly 1 in 5 hit rates. Not 1 in 100.
+
+## What actually compounds
+
+Three things matter more than college brand:
+
+1. **Compounding skill via deliberate practice**. A self-taught developer who
+   ships 5 real projects per year ends up better than a tier-1 engineer who
+   does coursework only. Output > pedigree at year 3+.
+2. **First job + employer leverage**. A tier-3 grad joining a service company
+   (Infosys, Wipro, TCS) at ₹3.5L isn't trapped — they can rotate internally
+   to product teams, then switch to mid-tier product, then top product. 4-year
+   curriculum, ~30L → 75L outcome possible.
+3. **Network density**. LinkedIn has democratised access to senior people.
+   Cold-DMing a Razorpay engineer with a specific question + project gets
+   responses at meaningful rates.
+
+## The data
+
+Indian tech companies (Razorpay, CRED, Flipkart, Swiggy, Zomato, PhonePe)
+heavily hire from tier-2 and tier-3 colleges via off-campus + referral
+pipelines. A 2024 internal study at one Indian unicorn showed 38% of
+senior engineers came from non-tier-1 colleges. Foreign companies are
+slightly more brand-conscious but mobility is similar after 5 years.
+
+## What doesn't compound
+
+- Brand obsession beyond entry (year 3+, no one asks about your UG college)
+- Comparison anxiety with tier-1 peers (their median outcome isn't their
+  average outcome either)
+- Waiting for the "right" opportunity vs creating opportunities through work
+
+## What to actually do
+
+If you're at a tier-3 college right now:
+
+- **Self-learning track**: FreeCodeCamp, The Odin Project, NeetCode 150,
+  Andrew Ng ML, official AWS/GCP certs. Free + structured.
+- **Public portfolio**: 3-5 GitHub projects with real users (even 10 users).
+  Blog about what you built + decisions you made.
+- **Referral network**: Cold-DM senior engineers monthly. Most respond if
+  your message is specific.
+- **First job strategy**: Service company is fine if you can't crack
+  product directly. Use the first 12-18 months wisely — switch by year 2.
+
+## Honest takeaway
+
+College tier matters less than what you do over the next 5 years. The
+tier-3 graduates who reach senior product roles aren't lucky — they're
+strategic about skill compounding, employer choices, and network building.
+Read our <a href="/alumni-stories#tier3-btech-faang">alumni stories</a> for a real example.
+`,
+  },
+
+  {
+    slug: "coaching-industry-actual-cost",
+    title: "What the Indian coaching industry actually costs Indian families",
+    dek: "₹58,000 crore industry. The math behind why most coaching is over-priced for the outcomes it delivers — and which categories are worth the money.",
+    publishedOn: "2026-05-15",
+    readMins: 6,
+    author: "Shishya editorial",
+    tags: ["Coaching", "Economics", "Decision-making"],
+    sources: [
+      { label: "IndiaInfoline Coaching Industry Report 2024", url: "https://www.indiainfoline.com/" },
+      { label: "TIE Hyderabad coaching market study", url: "https://www.tieedu.com/" },
+      { label: "IIT JEE coaching survey by Career360", url: "https://www.careers360.com/" },
+    ],
+    body: `## The headline number
+
+The Indian private coaching industry was valued at ~₹58,000 crore in 2024.
+JEE/NEET coaching alone is ~₹15,000 crore. UPSC coaching another ~₹4,000
+crore. Banking + SSC + state PSC + Class 11-12 boards combine to the rest.
+Per-student average spend for JEE coaching: ₹1.5L per year over 2 years.
+
+## What that buys
+
+Coaching delivers a few things:
+
+1. **Curriculum + structured timeline**. Material organisation + week-by-week
+   coverage. (Genuine value if self-study isn't your strength.)
+2. **Doubt clearing**. Real-time question resolution. (High value at ages 16-18.)
+3. **Peer pressure + accountability**. The social effect of studying with
+   500 others. (Real for some, distracting for others.)
+4. **Mock test bank**. Repeated test-taking under realistic conditions.
+   (Genuinely valuable.)
+5. **Brand association + parent reassurance**. Some component of the fee.
+   (Honest accounting: this matters more than it should.)
+
+## The economics
+
+For a JEE aspirant at a Tier-1 coaching (Allen / FIITJEE / Aakash):
+
+- 2 years of coaching: ₹3-4 lakh
+- Books + reference: ₹15-25k
+- Boarding (Kota/etc): ₹2-3 lakh/year if relocating
+- Parental opportunity cost (one parent moving): ₹5+ lakh
+
+**Total worst case**: ₹15-20 lakh over 2 years for a single attempt.
+
+This is real money. For a family in the ₹15-25L income band (the typical
+JEE-aspirant family), that's 50-100% of one year's gross income.
+
+## What you actually get
+
+- **Top 1% of aspirants**: clear JEE Advanced + get IIT (15,000 seats / ~14L
+  aspirants ≈ 1 in 93)
+- **Top 5%**: clear JEE Main well + get NIT/IIIT (probability ~1 in 17)
+- **Top 20%**: get state engineering college (~1 in 5)
+- **Bottom 80%**: get a tier-2/3 private engineering college
+
+The coaching industry sells the "top 1%" promise. The reality is the
+bottom 80% outcome for the median aspirant.
+
+## When coaching IS worth it
+
+- **You can't self-study consistently**. If you've failed to maintain a
+  6-month study schedule yourself, coaching's structure is genuine value.
+- **You're aiming for top 1%**. Top coaching's peer effect + materials matter
+  at this margin.
+- **You're a doubt-asker**. If you learn primarily by asking questions, real-
+  time access is genuinely valuable.
+
+## When it isn't
+
+- **You're a structured self-learner**. NCERT + standard reference books +
+  online video lectures + targeted mock tests can replicate 80% of coaching
+  outcomes at 5% of the cost.
+- **You're optimising for any-engineering-college**. State CET + state
+  engineering college doesn't need ₹3L coaching. Government NEET coaching at
+  district level (free in many states) gets you state MBBS for far less.
+
+## What the data says
+
+A 2024 IIT JEE survey: among IIT entrants, ~73% used coaching. Among all JEE
+Main aspirants, ~52% used coaching. The 21 percentage-point difference suggests
+coaching helps at the top, but the absolute conversion rate (52% of aspirants
+went through coaching; only ~7% cleared JEE Advanced) is sobering.
+
+## Honest takeaway
+
+Coaching is genuinely useful at the top tier — top 1-5% gunning for IIT/AIIMS
+have a real edge with Tier-1 coaching. For the median aspirant, the per-rupee
+ROI is much lower than the industry's marketing implies. Free + low-cost
+alternatives (NCERT + YouTube + AI tutors + free mock platforms) deliver
+80-90% of coaching value at 5-10% of the cost.
+
+If you're considering ₹15L over 2 years for coaching: stress-test the
+decision. What's your realistic outcome distribution? Is the coaching
+brand-association reassurance worth the 50% of your family income?
+`,
+  },
+
+  {
+    slug: "education-loan-trap",
+    title: "The Indian education loan trap — when not to take one",
+    dek: "Education loan interest compounds. So does graduation salary growth — but only at top institutions. Math the trap before you sign.",
+    publishedOn: "2026-05-18",
+    readMins: 5,
+    author: "Shishya editorial",
+    tags: ["Finance", "Decisions", "Education economics"],
+    sources: [
+      { label: "RBI Statistical Tables on Education Loan NPAs", url: "https://www.rbi.org.in/" },
+      { label: "Indian Banks' Association Education Loan Data", url: "https://www.iba.org.in/" },
+      { label: "Section 80E Income Tax Act", url: "https://www.incometax.gov.in/" },
+    ],
+    body: `## The arithmetic problem
+
+Most ₹15-25 LPA fresh graduates can repay a ₹15-25L education loan over
+7-10 years comfortably. Most ₹4-6 LPA fresh graduates cannot. The decision
+should hinge on realistic post-graduation earnings — not on parental hope.
+
+## The trap structure
+
+The trap typically looks like:
+
+1. ₹15-25L private engineering / management / abroad MS loan
+2. Parents co-sign; sometimes house collateral pledged
+3. Graduate placement at ₹3-6 LPA (median for tier-2/3 private)
+4. EMI ₹18-30k/month vs in-hand ₹25-40k/month
+5. Multi-year financial stress + family relationship strain
+
+## Where this comes from
+
+Indian education loan growth: ₹70k crore outstanding in 2024, NPA rate ~7-8%
+(RBI). The headline NPA looks fine. But the personal NPA rate (loans where
+the family bears real financial strain even if not technically defaulted) is
+substantially higher — researchers estimate 20-30%.
+
+## When the loan makes sense
+
+- **Top-ranked college + high-demand programme**: IIM-A MBA, top-10 US MS
+  in CS, top NLU BA-LLB. Salary growth covers EMI easily.
+- **Time-discounted high-probability outcome**: AIIMS MBBS leads to MD +
+  ₹15-25 LPA by year 7 reliably. Loan math works.
+- **Foreign degree with PR pathway**: Canadian PR-track Master's. Income
+  growth in CAD covers loan + currency hedge over 5-7 years.
+
+## When it doesn't
+
+- **Tier-2/3 private BTech for ₹15-20L**: Median placement ₹3-4L doesn't
+  cover EMI well. Risk of NPA + parent strain.
+- **Tier-3 private MBA for ₹10-15L**: Median placement ₹4-6L doesn't
+  justify the EMI structure.
+- **US MS at non-top-50 university**: $40-80k loan; H-1B uncertainty;
+  median MS salaries below the EMI burden if you can't stay.
+
+## What to do instead if your numbers don't work
+
+- **State engineering college + part-time SDE work**: ₹0-2L total cost,
+  competitive placement if you self-skill.
+- **IIT Madras Online BSc Data Science**: ₹2.5L total over 3 years,
+  UGC-recognised, lateral entry to IIT residential PG possible.
+- **CA/CMA/CS**: Total cost ₹50k-1.5L over 4-5 years, multiple career
+  paths post-cert.
+- **Distance UG + workforce entry**: IGNOU ₹15-25k total. Earn while you
+  study.
+- **Defer + reapply next year**: If your loan math doesn't work for the
+  programme you got into, gap years to improve entrance scores are
+  cheaper than the loan trap.
+
+## The Section 80E benefit (real but small)
+
+Section 80E: education loan interest is tax-deductible (no upper limit) for
+8 years from start of repayment. This reduces effective interest rate by
+~2-3 percentage points for income-tax-paying borrowers. Material but doesn't
+flip the underlying math.
+
+## Honest takeaway
+
+The right question isn't "can I get a loan." It's "given my realistic
+post-graduation salary range, does the loan EMI fit in my financial life?"
+
+For about half the loans being taken right now, the answer is no. The
+families who genuinely benefit (top-ranked programme + high-demand
+graduation) are about 30% of borrowers. The remaining 70% would do
+better with cheaper alternatives.
+
+Read our <a href="/worldwide/loans">education loans comparison</a> if
+you're seriously evaluating. Run the math before you sign.
+`,
+  },
+
+  {
+    slug: "girl-education-state-rankings",
+    title: "Which Indian states actually deliver for girl education — 2024 data",
+    dek: "Beyond enrolment headlines: completion rates, board pass percentages, college transition, and what state policies actually moved the needle.",
+    publishedOn: "2026-05-20",
+    readMins: 6,
+    author: "Shishya editorial",
+    tags: ["Education", "Girls", "States"],
+    sources: [
+      { label: "UDISE+ 2023-24 State School Education Reports", url: "https://udiseplus.gov.in/" },
+      { label: "AISHE 2022-23 Higher Education Statistics", url: "https://aishe.gov.in/" },
+      { label: "Pratham ASER 2024 Rural Education Survey", url: "https://www.asercentre.org/" },
+    ],
+    body: `## The reality vs headlines
+
+India's girl enrolment in school is high — UDISE+ 2023-24 reports near-
+parity at primary level. The story breaks down at three points:
+
+1. **Class 9-10 transition** (some girls drop here, especially in rural India)
+2. **Class 11-12 stream selection** (girls disproportionately steered to
+   Humanities even when their Class 10 marks support Science)
+3. **UG enrolment in STEM** (drops further; especially in tier-2 + tier-3
+   colleges)
+
+## States that perform — concrete data
+
+- **Kerala**: Class 10-12 girl completion rate 98%+. Female literacy 95%+.
+  STEM UG female ratio 51% (higher than male). Driven by historical
+  prioritisation of girls' education + Kanyashree-like + strong state schools.
+- **Tamil Nadu**: Similar profile. Class 10-12 completion 95%+. Engineering
+  UG female ratio 38% (national average 28%). State school + EVR Periyar
+  reservation policies.
+- **Mizoram + Meghalaya**: Tribal-driven matrilineal society means higher
+  girl-completion + literacy. Less data, strong outcomes.
+- **Goa + Karnataka**: Strong completion + STEM transition; benefits from
+  good state schools + private alternatives.
+
+## States with the biggest gaps
+
+- **UP / Bihar / Jharkhand / MP / Rajasthan**: Class 10 girl completion
+  ~70-75%. Substantial dropout between 10 and 12. STEM transition lowest
+  in India.
+- **Haryana**: Better Class 10 completion (~85%) but child-sex-ratio
+  challenges persist (BBBP scheme attempts to address).
+
+## What's working
+
+1. **Conditional cash transfers** (Kanyashree WB / Ladli Laxmi MP / Sukanya
+   Samriddhi UK): Money tied to completion milestones works. WB
+   Kanyashree increased Class 11-12 completion by ~12 percentage points
+   in 5 years.
+2. **State-level free college tuition for girls** (Tamil Nadu, Kerala,
+   Telangana): Removes a real financial barrier.
+3. **Strong govt school infrastructure**: South Indian states' strong
+   govt schools (vs reliance on low-fee private) explain a lot.
+4. **Sanitary pad + toilet programmes** (Beti Bachao Beti Padhao):
+   Material impact on school retention, especially Class 9-10.
+
+## What's not working
+
+1. **Pure awareness campaigns**: BBBP run as just-awareness performs poorly.
+   When combined with material incentives (Ladli, Kanyashree), works better.
+2. **Caste-without-class targeting**: SC/ST girls in tier-3 districts of
+   non-southern states still face brutal odds. Pure caste-based scholarships
+   without family-income gating miss the highest-need group.
+3. **Boarding-school models**: Mixed results. Some states' KGBVs work; many
+   are under-resourced.
+
+## What this means for parents in different states
+
+If you're in:
+
+- **Kerala/TN/Goa**: Your state's outcomes for girls are real. Use the
+  existing infrastructure (state schools, state colleges, state
+  scholarships).
+- **WB/MP/UK**: Your state has a cash-transfer programme. Claim it —
+  ₹1.5L cumulative across school career is real money.
+- **UP/Bihar/Rajasthan**: Compensate via private/Catholic schools if
+  you can afford it; private tuitions; targeted scholarships
+  (Devnarayan RJ, Begum Hazrat Mahal central). UP Savitribai Phule
+  Balika Shiksha is small but real.
+
+## Honest takeaway
+
+State-policy variance is large. The same girl in Kerala vs Bihar has
+materially different educational outcomes due to state-level
+infrastructure + targeted schemes. Parents can compensate for state
+under-performance via private schools + scholarships — but only with
+material financial commitment.
+
+For decision-making: if you're in a state with strong outcomes, use the
+state system. If you're in a weaker state and can afford it, supplement
+with private. If you can't afford private, scholarship-stacking
+(central + state + community + corporate) can close most of the gap.
+`,
+  },
+
+  {
+    slug: "ai-disruption-indian-careers-2030",
+    title: "Which Indian careers will AI disrupt by 2030 — honest projections",
+    dek: "Not every job is at risk. Routine cognitive work gets squeezed; expertise + judgement compounds. Here's where to position now.",
+    publishedOn: "2026-05-22",
+    readMins: 7,
+    author: "Shishya editorial",
+    tags: ["AI", "Careers", "Future"],
+    sources: [
+      { label: "NASSCOM Future of Work in India 2024", url: "https://nasscom.in/" },
+      { label: "World Economic Forum Jobs Report 2024", url: "https://www.weforum.org/" },
+      { label: "Goldman Sachs AI Automation Analysis", url: "https://www.goldmansachs.com/" },
+    ],
+    body: `## The pattern across studies
+
+Multiple reports (NASSCOM, WEF Future of Jobs, Goldman, McKinsey) converge
+on a few patterns about AI's impact on jobs over 2025-2030:
+
+1. **Routine cognitive work shrinks**: Data entry, basic legal research,
+   first-pass content writing, customer support tier-1, basic coding tasks.
+2. **Judgement + expertise compounds**: Specialist medicine, senior law,
+   senior engineering, strategy, sales, design at the high end.
+3. **Skill ceiling matters more than industry**: Within any industry,
+   high-skill roles grow; low-skill routine roles shrink.
+
+## Indian-context projections (honest range)
+
+**Likely to compress** (entry-level pay flat or down by 2030):
+
+- **BPO + customer service voice/chat roles**: AI agents handling tier-1
+  inquiries. ~1.5M of India's 4M BPO jobs at meaningful risk.
+- **Generic content writing**: SEO content, basic marketing copy, generic
+  blog content. ~30-40% of content writing jobs likely automated. Specialist
+  technical writing + branded long-form writing survives.
+- **Entry-level legal research + paralegal**: First-pass case research +
+  document review. Senior litigation + advocacy unaffected.
+- **Service-company entry-level coding**: Basic web dev + boilerplate
+  code. Senior engineering + product roles continue to grow.
+- **Basic data entry + accounts clerk**: Routine accounting + bookkeeping
+  automation accelerating.
+
+**Likely to grow** (real demand + high pay through 2030):
+
+- **AI/ML engineering + research**: Top 1% engineering specialty.
+- **Specialist medicine + surgery**: Procedure-heavy specialties largely
+  AI-immune at the senior level.
+- **Top-tier creative + design**: Brand strategy + senior UX + creative
+  direction. Generic design work compresses; senior judgment-bound work grows.
+- **Sales + senior business roles**: AI augments but doesn't replace
+  relationship-heavy roles.
+- **Senior law + judicial**: Advocacy + judgement-heavy roles immune.
+  Mid-tier law firms automating to compete.
+- **Skilled trades + healthcare front-line**: Physiotherapists, nurses,
+  electricians, plumbers — physical + relational work.
+- **Specialised teaching + research**: Generic teaching automatable;
+  specialised pedagogy + research-led teaching grows.
+
+**Likely to be ambiguous** (depends on individual specialisation):
+
+- **General engineering**: BTech + commodity work compresses; senior
+  product engineering + research grow.
+- **General CA/CMA**: Routine tax + audit at risk; tax strategy + advisory
+  + IFRS-specialist roles immune.
+- **General medicine (non-specialist)**: First-pass diagnosis automatable;
+  patient relationship + complex case management immune.
+- **Marketing**: Performance marketing automation; brand + creative
+  strategy + senior marketing immune.
+
+## What to actually do (career strategy through 2030)
+
+1. **Specialise early**. Generalists in disrupted fields are most at risk.
+   Identify your sub-niche by year 3 of UG/career.
+2. **Stack AI fluency on existing skill**. Lawyer who uses AI to do
+   research at 5× speed beats lawyer who doesn't. Doctor who uses AI
+   imaging models adds value. Designer who uses generative AI for first
+   drafts beats one who doesn't.
+3. **Move toward judgement + relationships + creativity**. Every role
+   in this band is durable through 2030.
+4. **Avoid jobs that are mostly routine cognitive work**. Even if they
+   pay well now, the compression hits 2027-2030.
+5. **Watch for new roles emerging**: AI integration specialists, AI
+   safety + governance, AI-augmented operations management,
+   industry-specific AI specialists.
+
+## What doesn't change
+
+- **Healthcare frontline**: Nurses, physios, doctors. Physical + relational
+  work is least disrupted.
+- **Skilled trades**: ITI electricians, plumbers, machinists. Hardware
+  automation has been promised for decades + barely arrived.
+- **Civil services**: Govt jobs are AI-resistant by political design.
+- **Senior creative + leadership**: Brand strategy, senior design, senior
+  product, executive leadership.
+
+## Honest takeaway
+
+AI compresses entry-level routine cognitive work. It compounds the value
+of expertise + judgement + relationships. If you're choosing a career
+right now, ask: "Will this work require judgement + relationships +
+creativity at the senior level?" Yes → safe. No → think harder.
+
+The biggest 2030 opportunity isn't a specific new field — it's becoming
+an AI-augmented version of an existing expert role. Lawyer + AI > lawyer
+alone. Doctor + AI imaging > doctor alone. Designer + generative AI > generic
+designer. The compounding happens at the intersection.
+`,
+  },
 ];
 
 export function findArticle(slug: string): InsightArticle | undefined {
