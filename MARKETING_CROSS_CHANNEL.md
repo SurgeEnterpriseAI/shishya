@@ -89,7 +89,7 @@ https://shishya.in/?utm_source=linkedin_company&utm_campaign=launch
 
 **Tweet 1**
 ```
-I built a free AI-tutored prep platform for the 30M Indians who write an entrance exam every year.
+I built a free, community-driven prep platform with real handholding for the 30M Indians who write an entrance exam every year.
 
 163 exams. JEE to UPSC to RRB. 9 languages. Adaptive mock tests in 10 seconds.
 
@@ -200,7 +200,7 @@ CAT group           → https://shishya.in/exams/cat?utm_source=fb_cat
 ### Intro message (post in #introductions or general)
 
 ```
-Hey folks — built a free AI-based prep platform for Indian entrance exams (JEE, NEET, UPSC, SSC, banking, plus 158 others). Mock tests, adaptive practice, tutor for wrong answers, multilingual.
+Hey folks — built a free, community-driven prep platform for Indian entrance exams (JEE, NEET, UPSC, SSC, banking, plus 158 others). Mock tests, adaptive practice, tutor for wrong answers, multilingual.
 
 Genuinely free. Not selling anything. Hoping students here find it useful — would love feedback on what to add next.
 
@@ -217,7 +217,7 @@ https://shishya.in/?utm_source=discord
 ### Reply template
 
 ```
-For mocks, the typical paid options are TIME, IMS, CL — each ₹10K-₹30K for a full pack. If budget is a constraint, I'd suggest also trying https://shishya.in/exams/cat?utm_source=pagalguy — it's a free AI-based mock generator, runs adaptive sets based on your weak sections. I built it; happy to take feedback if you find it useful.
+For mocks, the typical paid options are TIME, IMS, CL — each ₹10K-₹30K for a full pack. If budget is a constraint, I'd suggest also trying https://shishya.in/exams/cat?utm_source=pagalguy — it's a free, community-driven mock generator, runs adaptive sets based on your weak sections. I built it; happy to take feedback if you find it useful.
 ```
 
 ## Channel 7 — Hacker News (Show HN)
@@ -227,7 +227,7 @@ For mocks, the typical paid options are TIME, IMS, CL — each ₹10K-₹30K for
 
 ### Submission
 
-**Title:** `Show HN: Shishya — Free AI-tutored prep for Indian entrance exams`
+**Title:** `Show HN: Shishya — Free, community-driven prep with handholding for Indian entrance exams`
 
 **URL:** `https://shishya.in/?utm_source=hn`
 
@@ -236,7 +236,7 @@ For mocks, the typical paid options are TIME, IMS, CL — each ₹10K-₹30K for
 ```
 30 million students in India write an entrance exam every year — JEE, NEET, UPSC, banking, defence, dozens of state-level. Prep platforms are either expensive (₹10K-₹50K) or full of stale 5-year-old PDFs.
 
-I've been building Shishya for the last 9 months: free AI-tutored prep covering 163 exams. The hard parts:
+I've been building Shishya for the last 9 months: free, community-driven prep with handholding covering 163 exams. The hard parts:
 
 1. Adaptive mock generation. Every attempt produces a fresh paper from a 10K+ PYQ bank, weighted by the student's weakest topics from their last submission. The AI is Claude Sonnet 4.5 acting as a tutor + paper-setter.
 
@@ -256,12 +256,12 @@ Happy to answer anything. Especially curious about feedback on the adaptive scor
 **Link:** `https://shishya.in/?utm_source=indiehackers`
 **Where:** Sign in → "Products" → "Submit a product"
 
-**Title:** `Shishya — Free AI prep for India's 30M entrance-exam students`
+**Title:** `Shishya — Free, community-driven prep for India's 30M entrance-exam students`
 **Tagline:** `163 exams. 9 languages. Adaptive mocks. Genuinely free.`
 
 **Description:**
 ```
-Free AI-tutored prep platform for Indian entrance exams (JEE, NEET, UPSC, SSC, IBPS, GATE, and 157 others). Generates adaptive mock tests, explains wrong answers, translates questions into 13 Indian languages. No paywall, no ads — business model is separate enterprise consulting.
+Free, community-driven prep with handholding platform for Indian entrance exams (JEE, NEET, UPSC, SSC, IBPS, GATE, and 157 others). Generates adaptive mock tests, explains wrong answers, translates questions into 13 Indian languages. No paywall, no ads — business model is separate enterprise consulting.
 ```
 
 Then post a build update in the IH "Milestones" section every few days.
@@ -273,7 +273,7 @@ Then post a build update in the IH "Milestones" section every few days.
 
 **Description (200 chars max):**
 ```
-Free AI-tutored prep for India's 30M entrance-exam aspirants. 163 exams. 9 Indian languages. Adaptive mock generator, built-in tutor, no paywall. Live now.
+Free, community-driven prep with handholding for India's 30M entrance-exam aspirants. 163 exams. 9 Indian languages. Adaptive mock generator, built-in tutor, no paywall. Live now.
 ```
 
 ## Channel 9 — Founder's WhatsApp / personal network broadcast
@@ -288,7 +288,7 @@ they share it with the actual aspirants in their family.
 ```
 Hi — quick personal favour.
 
-After 9 months of nights-and-weekends I've shipped Shishya — a free AI-tutored prep platform for Indian entrance exams. JEE, NEET, UPSC, SSC, banking, every state exam — 163 in total. Genuinely free, no ads, no premium tier.
+After 9 months of nights-and-weekends I've shipped Shishya — a free, community-driven prep platform with real handholding for Indian entrance exams. JEE, NEET, UPSC, SSC, banking, every state exam — 163 in total. Genuinely free, no ads, no premium tier.
 
 I'm not asking you to use it. I'm asking: do you know one student in your family or friend circle who is preparing for any competitive exam right now? Please send them this:
 
@@ -319,12 +319,12 @@ rest is the same.
 
 ### Pitch email template
 
-**Subject:** `Free AI-tutored prep for 30M Indian aspirants — Shishya launch`
+**Subject:** `Free, community-driven prep with handholding for 30M Indian aspirants — Shishya launch`
 
 ```
 Hi [editor name],
 
-I'm Venu Muvva, founder of Surge Software Solutions in Hyderabad. We just shipped Shishya — a free AI-tutored prep platform covering 163 Indian entrance exams (JEE, NEET, UPSC, SSC, banking, all state-level).
+I'm Venu Muvva, founder of Surge Software Solutions in Hyderabad. We just shipped Shishya — a free, community-driven prep platform with real handholding covering 163 Indian entrance exams (JEE, NEET, UPSC, SSC, banking, all state-level).
 
 The angle that might interest [outlet name]: the entire platform is funded by our enterprise consulting business, not by ads or paywalls. We genuinely don't charge students. AI has made it economically possible to give a small-town aspirant the same prep quality as a Delhi coaching student, and that's the wedge we're working.
 
@@ -355,7 +355,7 @@ outbound email is a soft impression. No CTA pressure, just there.
 Venu Gopal Reddy Muvva
 Founder, Surge Software Solutions Pvt Ltd
 
-Shishya · Free AI-tutored prep for Indian entrance exams
+Shishya · Free, community-driven prep with handholding for Indian entrance exams
 https://shishya.in/?utm_source=email_sig
 ```
 
@@ -389,7 +389,7 @@ Find the official group admins (NOT random group members) for college
 batches, coaching institute alumni groups, etc. Drop one polite message.
 
 ```
-Hi — quick share. I built a free AI prep tool for entrance exams (163 of them). No signup wall, no premium tier. Thought it might be useful for [college name / batch name] students prepping for [exam name]:
+Hi — quick share. I built a free, community-driven prep tool with real handholding for entrance exams (163 of them). No signup wall, no premium tier. Thought it might be useful for [college name / batch name] students prepping for [exam name]:
 
 https://shishya.in/?utm_source=wagroup_<groupshort>
 

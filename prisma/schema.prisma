@@ -1,5 +1,5 @@
-// Shishya — AI-tutored mock test platform
-// Database schema for users, exams, syllabus, questions, mocks, attempts, AI tutoring.
+// Shishya — Free, community-driven Indian education platform
+// Database schema for users, exams, syllabus, questions, mocks, attempts, community verifications, AI assistance.
 
 generator client {
   provider      = "prisma-client-js"

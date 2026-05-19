@@ -92,7 +92,7 @@ export async function generateMetadata({
   const title = `${displayName} on Shishya — ${user.verificationCount} verifications, ${titleCase(user.badgeLevel)}`;
   const description =
     `${displayName} has contributed ${user.verificationCount} verifications on Shishya, ` +
-    `India's free AI-tutored education platform. Badge: ${titleCase(user.badgeLevel)}.`;
+    `India's free, community-driven education platform. Badge: ${titleCase(user.badgeLevel)}.`;
   return {
     title,
     description,
@@ -245,9 +245,9 @@ export default async function PublicProfile({
         <div className="mt-10 rounded-lg border border-saffron-200 bg-saffron-50/40 p-5 text-sm text-ink-700">
           <h3 className="text-base font-semibold text-ink-900">How verification on Shishya works</h3>
           <p className="mt-2">
-            Shishya is India's free AI-tutored education platform. Facts on
-            exam, college, and scholarship pages are verified by AI plus a
-            community of trusted verifiers and domain experts. Read the{" "}
+            Shishya is India's free, community-driven education platform. Facts
+            on exam, college, and scholarship pages are verified by a community
+            of trusted verifiers and domain experts, with AI assistance. Read the{" "}
             <Link href="/verification" className="text-saffron-700 underline">
               verification policy
             </Link>.

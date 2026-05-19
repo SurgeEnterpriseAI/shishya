@@ -7,7 +7,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Shishya — Every entrance exam in India, free, with AI tutoring";
+export const alt = "Shishya — Free, community-driven guidance for every stage of Indian education";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -71,8 +71,8 @@ export default async function Image() {
             maxWidth: "1000px",
           }}
         >
-          Every entrance exam in India,{" "}
-          <span style={{ color: "#c2410c" }}>free</span>, with AI tutoring.
+          Every stage of Indian education,{" "}
+          <span style={{ color: "#c2410c" }}>free</span>, with real handholding.
         </div>
         <div
           style={{
@@ -82,7 +82,7 @@ export default async function Image() {
             fontWeight: 500,
           }}
         >
-          163 exams · mocks · syllabus · previous years · Shishya AI
+          School · college · exams · scholarships · jobs · study abroad
         </div>
       </div>
     ),

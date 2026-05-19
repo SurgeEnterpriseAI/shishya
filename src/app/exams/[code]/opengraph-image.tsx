@@ -22,7 +22,7 @@ export default async function Image({ params }: { params: { code: string } }) {
 
   // Fallback to a generic Shishya card if the exam isn't found.
   const shortName = exam?.shortName ?? "Shishya";
-  const fullName = exam?.name ?? "India's free AI-tutored entrance exam platform";
+  const fullName = exam?.name ?? "India's free, community-driven entrance exam platform";
   const category = exam?.category?.replace(/_/g, " ") ?? "";
   const year = new Date().getUTCFullYear();
 

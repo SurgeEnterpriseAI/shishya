@@ -2,7 +2,7 @@
   "name": "shishya",
   "version": "0.1.0",
   "private": true,
-  "description": "AI-tutored mock test platform for India's top entrance exams. Free for every student.",
+  "description": "Free, community-driven education companion for Indian students — schooling, entrance exams, colleges, scholarships, jobs and study abroad, with extensive info and real handholding.",
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev",

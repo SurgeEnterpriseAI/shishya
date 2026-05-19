@@ -41,9 +41,9 @@ const notoDevanagari = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  title: "Shishya — Every entrance exam in India, free, with AI tutoring",
+  title: "Shishya — Free, community-driven guidance for Indian students",
   description:
-    "163 entrance exams across India — national, state-level, olympiads, civil services, banking, teaching, defence — with previous year papers, expert-curated mocks, and Shishya AI as your personal tutor. Free for every student, in English, Hindi and 17 other Indian languages.",
+    "A community-driven companion for Indian students at every stage — schooling, entrance exams, colleges, scholarships, jobs, study abroad. 163 exams covered with previous year papers, mocks, and honest handholding from a service-oriented team. Free for every student, in English, Hindi and 17 other Indian languages.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in"),
   // Belt-and-suspenders: even though Next App Router auto-detects
   // app/icon.svg + app/apple-icon.svg, declaring them in metadata
@@ -59,9 +59,9 @@ export const metadata: Metadata = {
     shortcut: ["/icon.svg"],
   },
   openGraph: {
-    title: "Shishya — 163 entrance exams across India, free, with AI tutoring",
+    title: "Shishya — Free, community-driven guidance for Indian students",
     description:
-      "163 entrance exams across India — national, state-level, olympiads, civil services, banking, teaching, defence. Make Shishya your smart system: it listens to you and handholds you to better ranks, better colleges, and a better career. Free for every student.",
+      "Every stage of Indian education in one place — schooling, entrance exams, colleges, scholarships, jobs, study abroad. A community-driven, service-oriented platform that handholds you to better ranks, better colleges, and a better career. Free for every student.",
     url: "https://shishya.in",
     siteName: "Shishya",
     locale: "en_IN",
@@ -72,9 +72,9 @@ export const metadata: Metadata = {
   // 1200x630 in Twitter/X timeline previews.
   twitter: {
     card: "summary_large_image",
-    title: "Shishya — Every entrance exam in India, free, with AI tutoring",
+    title: "Shishya — Free, community-driven guidance for Indian students",
     description:
-      "163 exams · adaptive mocks · syllabus · previous year papers · AI tutor. Free, in your language.",
+      "Every stage of Indian education · community-driven · extensive info · real handholding · free, in your language.",
     site: "@shishyaedu",
     creator: "@shishyaedu",
   },
@@ -120,7 +120,7 @@ const organizationJsonLd = {
   url: SITE_BASE,
   logo: `${SITE_BASE}/icon.svg`,
   description:
-    "Free AI-tutored education platform for Indian students — covering schooling, entrance exams, colleges, scholarships, and study-abroad pathways.",
+    "Free, community-driven education platform for Indian students — covering schooling, entrance exams, colleges, scholarships, jobs and study-abroad pathways with extensive information and real handholding.",
   sameAs: [
     "https://github.com/SurgeEnterpriseAI/shishya",
   ],

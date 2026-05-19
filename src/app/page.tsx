@@ -30,14 +30,14 @@ export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Shishya — Free AI prep for every stage of Indian education",
+  title: "Shishya — Free guidance for every stage of Indian education",
   description:
-    "From school to college to entrance exams to jobs to study abroad — Shishya helps Indian students at every stage. 163 entrance exams covered today, more sections shipping monthly. Free, AI-tutored, in your language.",
+    "A community-driven companion for Indian students — schooling, entrance exams, colleges, scholarships, jobs and study abroad. Extensive information, honest answers, and real handholding at every step. Free, in your language.",
   alternates: { canonical: "https://shishya.in" },
   keywords: [
-    "indian education platform",
-    "school college entrance exam preparation",
-    "free AI tutor India",
+    "indian education guidance",
+    "school college entrance exam help",
+    "community education platform India",
     "study abroad India",
     "indian student career guidance",
     "government job preparation",
@@ -45,8 +45,9 @@ export const metadata: Metadata = {
     "Shishya",
   ],
   openGraph: {
-    title: "Shishya — Free AI prep for every stage of Indian education",
-    description: "School, college, exams, jobs, abroad — one free platform.",
+    title: "Shishya — Free guidance for every stage of Indian education",
+    description:
+      "School, college, exams, jobs, abroad — one community-driven platform. Free, with real handholding, in your language.",
     url: "https://shishya.in",
     siteName: "Shishya",
     locale: "en_IN",
@@ -234,11 +235,13 @@ export default async function HomeHub() {
         {!personalised && (
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="bg-gradient-to-r from-ink-900 via-saffron-700 to-ink-900 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
-              Free AI prep for every stage of Indian education
+              Free guidance for every stage of Indian education
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base text-ink-600 sm:text-lg">
-              Shishya helps Indian students at every stage — school, college,
-              entrance exams, jobs and beyond. Free, AI-tutored, in your language.
+              A community-driven companion for Indian students — school, college,
+              entrance exams, jobs and beyond. Extensive information, honest
+              answers, and real handholding when you need it. Free, in your
+              language.
             </p>
           </div>
         )}

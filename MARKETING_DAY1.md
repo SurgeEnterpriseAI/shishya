@@ -78,7 +78,7 @@
 ### Template A — "I built this" (for r/IndianStartups, r/SideProject, r/india)
 
 ```
-I built Shishya — a free AI-tutored mock test platform for every Indian
+I built Shishya — a free, community-driven mock test platform with handholding for every Indian
 entrance exam. Looking for honest feedback.
 
 Backstory: my younger cousin was prepping for SSC CGL and paying ₹3,000
@@ -273,7 +273,7 @@ Hope it helps. Feedback welcome — DM me here if anything breaks.
 **Template T2 — for general study groups**
 ```
 For anyone prepping for govt/state/banking/engineering entrance exams
-— I built shishya.in, free AI-tutored mock test platform with 163
+— I built shishya.in, free, community-driven mock test platform with handholding with 163
 exams covered. Reply with which exam you're prepping for and I'll
 share the direct link.
 ```
@@ -361,7 +361,7 @@ weakness map clicks for you.
 ### Tweet templates
 
 ```
-Built shishya.in — free AI-tutored mock test platform for 163 Indian
+Built shishya.in — free, community-driven mock test platform with handholding for 163 Indian
 entrance exams (SSC, UPSC, JEE, NEET, banking, state PSCs, olympiads).
 
 No ads. No paywall. Forever free.

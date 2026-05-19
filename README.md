@@ -1,7 +1,7 @@
 # Shishya — `shishya.in`
 
-> **Free, AI-tutored mock test platform for India's top entrance exams.**
-> Built by [Surge](https://surgesoftware.co.in). For every student.
+> **Free, community-driven education companion for every stage of Indian education.**
+> Schooling, entrance exams, colleges, scholarships, jobs, study abroad — extensive info, honest answers, and real handholding. Built by [Surge](https://surgesoftware.co.in). For every student.
 
 Shishya means *student / disciple*. The product treats every student as worthy of the best
 preparation — regardless of geography, language, or ability to pay coaching fees.

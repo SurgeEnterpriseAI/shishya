@@ -90,7 +90,7 @@ async function translateBatch(
   const targetName = NAMES[targetLocale] ?? targetLocale;
   const payload = Object.fromEntries(batch);
   const system =
-    `You translate UI strings for Shishya — a free AI-tutored mock-test platform for Indian entrance exams.\n\n` +
+    `You translate UI strings for Shishya — a free, community-driven Indian education platform covering schooling, entrance exams, colleges, scholarships, jobs and study abroad.\n\n` +
     `Rules:\n` +
     `- Translate the VALUES into ${targetName}. Keep KEYS exactly as given.\n` +
     `- Preserve placeholders and substitutions exactly (e.g. "{count}", "%s", "→", numbers, exam names like "SSC CGL", "NEET UG", "JEE Main").\n` +
