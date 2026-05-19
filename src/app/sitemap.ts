@@ -7,7 +7,7 @@ import { prisma } from "@/lib/db/prisma";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { COLLEGES, ALL_STREAMS } from "@/lib/colleges-data";
 import { BOARDS } from "@/lib/schooling-data";
-import { CLASS_SYLLABUS } from "@/lib/schooling-subjects";
+import { CLASS_SYLLABUS, allChapterPaths } from "@/lib/schooling-subjects";
 import { SCHOLARSHIPS } from "@/data/scholarships";
 
 export const revalidate = 86_400; // 24h
@@ -132,6 +132,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
+  // Per-chapter schooling pages — only emitted for subjects that have
+  // an authored chapter list. Highest-density long-tail SEO.
+  const chapterUrls: MetadataRoute.Sitemap = allChapterPaths().map((p) => ({
+    url: `${base}/schooling/${p.boardSlug}/class-${p.classNum}/${p.subjectSlug}/${p.chapterSlug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.55,
+  }));
+
   // Per-scholarship pages — long-tail SEO ("Reliance Foundation UG
   // scholarship 2026", "AICTE Pragati eligibility", etc.)
   const scholarshipUrls: MetadataRoute.Sitemap = SCHOLARSHIPS.map((s) => ({
@@ -187,6 +196,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...boardUrls,
     ...classUrls,
     ...subjectUrls,
+    ...chapterUrls,
     ...scholarshipUrls,
     ...userProfileUrls,
   ];

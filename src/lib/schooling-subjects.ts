@@ -13,6 +13,19 @@
 // where applicable, so even before our chapter pages exist, students
 // see the authoritative source.
 
+export interface SchoolChapter {
+  // URL slug for /schooling/[board]/class-[n]/[subject]/[chapter-slug]
+  slug: string;
+  // Display name as it appears in the NCERT textbook
+  name: string;
+  // Chapter number in the official textbook
+  number: number;
+  // 1-sentence summary shown on the chapter tile
+  blurb?: string;
+  // Direct NCERT PDF URL for this specific chapter, when known
+  pdfUrl?: string;
+}
+
 export interface SchoolSubject {
   // URL slug for /schooling/[board]/class-[n]/[subject-slug]
   slug: string;
@@ -28,6 +41,9 @@ export interface SchoolSubject {
   // entrance exam — drives the cross-link surface on the subject page
   // (e.g., "This subject is foundational for JEE Main").
   feedsExams?: string[];
+  // Full chapter list. Populated for high-priority subjects first;
+  // others fall back to officialChapterIndex.
+  chapters?: SchoolChapter[];
 }
 
 export interface ClassSyllabus {
@@ -50,6 +66,22 @@ const CBSE_CLASS_10_SUBJECTS: SchoolSubject[] = [
     chapterCount: 15,
     officialChapterIndex: "https://ncert.nic.in/textbook.php?jemh1=0-15",
     feedsExams: ["JEE_MAIN"],
+    chapters: [
+      { slug: "real-numbers",                       number: 1,  name: "Real Numbers",                              blurb: "Euclid's division lemma, fundamental theorem of arithmetic, irrationality proofs." },
+      { slug: "polynomials",                        number: 2,  name: "Polynomials",                               blurb: "Geometric meaning of zeroes, division algorithm, relationships between coefficients and zeroes." },
+      { slug: "pair-of-linear-equations",           number: 3,  name: "Pair of Linear Equations in Two Variables", blurb: "Graphical + algebraic methods (substitution, elimination, cross-multiplication)." },
+      { slug: "quadratic-equations",                number: 4,  name: "Quadratic Equations",                       blurb: "Factorisation, quadratic formula, nature of roots via discriminant." },
+      { slug: "arithmetic-progressions",            number: 5,  name: "Arithmetic Progressions",                   blurb: "nth term, sum of n terms, applications." },
+      { slug: "triangles",                          number: 6,  name: "Triangles",                                 blurb: "Similarity, criteria for similarity, areas of similar triangles, Pythagoras theorem." },
+      { slug: "coordinate-geometry",                number: 7,  name: "Coordinate Geometry",                       blurb: "Distance, section formula, area of a triangle." },
+      { slug: "introduction-to-trigonometry",       number: 8,  name: "Introduction to Trigonometry",              blurb: "Trigonometric ratios, identities, complementary-angle relationships." },
+      { slug: "applications-of-trigonometry",       number: 9,  name: "Some Applications of Trigonometry",         blurb: "Heights + distances using angles of elevation and depression." },
+      { slug: "circles",                            number: 10, name: "Circles",                                   blurb: "Tangents to circles, theorems on tangent length from an external point." },
+      { slug: "areas-related-to-circles",           number: 11, name: "Areas Related to Circles",                  blurb: "Sector + segment areas, composite figures." },
+      { slug: "surface-areas-and-volumes",          number: 12, name: "Surface Areas and Volumes",                 blurb: "Combinations of solids, frustum of a cone." },
+      { slug: "statistics",                         number: 13, name: "Statistics",                                blurb: "Mean / median / mode for grouped data, cumulative frequency curves." },
+      { slug: "probability",                        number: 14, name: "Probability",                               blurb: "Theoretical (classical) probability of an event." },
+    ],
   },
   {
     slug: "science",
@@ -58,6 +90,21 @@ const CBSE_CLASS_10_SUBJECTS: SchoolSubject[] = [
     chapterCount: 13,
     officialChapterIndex: "https://ncert.nic.in/textbook.php?jesc1=0-13",
     feedsExams: ["JEE_MAIN", "NEET_UG"],
+    chapters: [
+      { slug: "chemical-reactions-and-equations", number: 1,  name: "Chemical Reactions and Equations",     blurb: "Balancing, types (combination, decomposition, redox), corrosion, rancidity." },
+      { slug: "acids-bases-and-salts",            number: 2,  name: "Acids, Bases and Salts",                blurb: "Indicators, neutralisation, pH scale, salt nomenclature." },
+      { slug: "metals-and-non-metals",            number: 3,  name: "Metals and Non-Metals",                 blurb: "Reactivity series, extraction, properties, ionic + covalent bonds." },
+      { slug: "carbon-and-its-compounds",         number: 4,  name: "Carbon and Its Compounds",              blurb: "Catenation, functional groups, homologous series, soaps and detergents." },
+      { slug: "life-processes",                   number: 5,  name: "Life Processes",                        blurb: "Nutrition, respiration, transportation, excretion in plants and animals." },
+      { slug: "control-and-coordination",         number: 6,  name: "Control and Coordination",              blurb: "Nervous system, hormones in plants and animals." },
+      { slug: "how-do-organisms-reproduce",       number: 7,  name: "How Do Organisms Reproduce?",           blurb: "Asexual + sexual reproduction, reproductive health." },
+      { slug: "heredity",                          number: 8,  name: "Heredity",                              blurb: "Mendel's laws, sex determination, evolution basics." },
+      { slug: "light-reflection-and-refraction",  number: 9,  name: "Light – Reflection and Refraction",     blurb: "Spherical mirrors, lenses, lens formula, magnification, refractive index." },
+      { slug: "human-eye-and-colourful-world",    number: 10, name: "The Human Eye and the Colourful World", blurb: "Accommodation, defects of vision, prisms, dispersion, atmospheric refraction." },
+      { slug: "electricity",                       number: 11, name: "Electricity",                           blurb: "Ohm's law, resistance, series + parallel circuits, heating effect, power." },
+      { slug: "magnetic-effects-of-current",      number: 12, name: "Magnetic Effects of Electric Current",  blurb: "Magnetic fields, force on a conductor, electromagnetic induction, AC + DC." },
+      { slug: "our-environment",                  number: 13, name: "Our Environment",                       blurb: "Ecosystems, food chains, ozone depletion, waste management." },
+    ],
   },
   {
     slug: "social-science",
@@ -109,6 +156,22 @@ const CBSE_CLASS_12_SUBJECTS: SchoolSubject[] = [
     chapterCount: 15,
     officialChapterIndex: "https://ncert.nic.in/textbook.php?leph1=0-8",
     feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"],
+    chapters: [
+      { slug: "electric-charges-and-fields",         number: 1,  name: "Electric Charges and Fields",          blurb: "Coulomb's law, electric field, dipole, Gauss's law." },
+      { slug: "electrostatic-potential-capacitance", number: 2,  name: "Electrostatic Potential and Capacitance", blurb: "Potential due to charges, capacitor combinations, energy stored." },
+      { slug: "current-electricity",                 number: 3,  name: "Current Electricity",                  blurb: "Ohm's law, drift velocity, Kirchhoff's laws, Wheatstone bridge, potentiometer." },
+      { slug: "moving-charges-and-magnetism",        number: 4,  name: "Moving Charges and Magnetism",         blurb: "Biot-Savart, Ampere's law, force on current, cyclotron, galvanometer." },
+      { slug: "magnetism-and-matter",                number: 5,  name: "Magnetism and Matter",                 blurb: "Bar magnet, earth's magnetism, dia/para/ferromagnetism, Curie's law." },
+      { slug: "electromagnetic-induction",           number: 6,  name: "Electromagnetic Induction",            blurb: "Faraday's laws, Lenz's law, self + mutual inductance, motional EMF." },
+      { slug: "alternating-current",                 number: 7,  name: "Alternating Current",                  blurb: "RMS values, LCR series, resonance, power factor, transformer." },
+      { slug: "electromagnetic-waves",               number: 8,  name: "Electromagnetic Waves",                blurb: "Displacement current, EM spectrum, properties of EM waves." },
+      { slug: "ray-optics-and-optical-instruments",  number: 9,  name: "Ray Optics and Optical Instruments",   blurb: "Mirrors, refraction, lens formula, prism, microscope, telescope." },
+      { slug: "wave-optics",                          number: 10, name: "Wave Optics",                         blurb: "Huygens principle, interference, diffraction, polarisation." },
+      { slug: "dual-nature-of-radiation-and-matter", number: 11, name: "Dual Nature of Radiation and Matter",  blurb: "Photoelectric effect, de Broglie hypothesis, Davisson-Germer experiment." },
+      { slug: "atoms",                                number: 12, name: "Atoms",                                blurb: "Rutherford + Bohr models, hydrogen spectrum, energy levels." },
+      { slug: "nuclei",                               number: 13, name: "Nuclei",                               blurb: "Mass defect, binding energy, radioactivity, fission, fusion." },
+      { slug: "semiconductor-electronics",           number: 14, name: "Semiconductor Electronics",            blurb: "p-n junction, diode, BJT, logic gates." },
+    ],
   },
   {
     slug: "chemistry",
@@ -117,6 +180,18 @@ const CBSE_CLASS_12_SUBJECTS: SchoolSubject[] = [
     chapterCount: 16,
     officialChapterIndex: "https://ncert.nic.in/textbook.php?lech1=0-9",
     feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"],
+    chapters: [
+      { slug: "solutions",                         number: 1,  name: "Solutions",                            blurb: "Types, concentration, Raoult's law, colligative properties, abnormal molar mass." },
+      { slug: "electrochemistry",                  number: 2,  name: "Electrochemistry",                     blurb: "Galvanic cells, Nernst equation, conductivity, electrolysis, batteries." },
+      { slug: "chemical-kinetics",                 number: 3,  name: "Chemical Kinetics",                    blurb: "Rate, order, molecularity, integrated rate equations, Arrhenius, collision theory." },
+      { slug: "the-d-and-f-block-elements",        number: 4,  name: "The d- and f-Block Elements",          blurb: "Transition metals, lanthanides, actinides, oxidation states, complex formation." },
+      { slug: "coordination-compounds",            number: 5,  name: "Coordination Compounds",               blurb: "Ligands, nomenclature, isomerism, bonding theories (VBT, CFT)." },
+      { slug: "haloalkanes-and-haloarenes",        number: 6,  name: "Haloalkanes and Haloarenes",           blurb: "Preparation, properties, SN1/SN2, E1/E2 mechanisms." },
+      { slug: "alcohols-phenols-and-ethers",       number: 7,  name: "Alcohols, Phenols and Ethers",         blurb: "Preparation, properties, acidity of phenols, Reimer-Tiemann, Williamson." },
+      { slug: "aldehydes-ketones-carboxylic-acids", number: 8, name: "Aldehydes, Ketones and Carboxylic Acids", blurb: "Nucleophilic addition, oxidation, Aldol, Cannizzaro, ester formation." },
+      { slug: "amines",                            number: 9,  name: "Amines",                                blurb: "Preparation, basicity, Hofmann, Carbylamine, diazonium salts." },
+      { slug: "biomolecules",                      number: 10, name: "Biomolecules",                          blurb: "Carbohydrates, proteins, enzymes, nucleic acids, vitamins." },
+    ],
   },
   {
     slug: "mathematics",
@@ -125,6 +200,21 @@ const CBSE_CLASS_12_SUBJECTS: SchoolSubject[] = [
     chapterCount: 13,
     officialChapterIndex: "https://ncert.nic.in/textbook.php?lemh1=0-13",
     feedsExams: ["JEE_MAIN", "JEE_ADVANCED"],
+    chapters: [
+      { slug: "relations-and-functions",        number: 1,  name: "Relations and Functions",          blurb: "Types of relations, types of functions, composition, inverse." },
+      { slug: "inverse-trigonometric-functions", number: 2, name: "Inverse Trigonometric Functions",   blurb: "Principal value branches, properties, identities." },
+      { slug: "matrices",                       number: 3,  name: "Matrices",                          blurb: "Types, operations, transpose, symmetric/skew-symmetric, invertibility." },
+      { slug: "determinants",                   number: 4,  name: "Determinants",                      blurb: "Properties, area of triangle, adjoint, inverse, system of equations." },
+      { slug: "continuity-and-differentiability", number: 5, name: "Continuity and Differentiability", blurb: "Continuity, derivative, chain rule, logarithmic + parametric differentiation." },
+      { slug: "applications-of-derivatives",    number: 6,  name: "Application of Derivatives",        blurb: "Rate of change, tangents + normals, maxima + minima, monotonicity." },
+      { slug: "integrals",                      number: 7,  name: "Integrals",                         blurb: "Indefinite + definite, methods of integration, fundamental theorem of calculus." },
+      { slug: "applications-of-integrals",      number: 8,  name: "Application of Integrals",          blurb: "Area under curves, between curves." },
+      { slug: "differential-equations",         number: 9,  name: "Differential Equations",            blurb: "Order, degree, formation, solution of variables-separable + linear equations." },
+      { slug: "vector-algebra",                 number: 10, name: "Vector Algebra",                    blurb: "Types, dot + cross product, applications to geometry." },
+      { slug: "three-dimensional-geometry",     number: 11, name: "Three Dimensional Geometry",        blurb: "Direction cosines, equations of lines + planes, distance formulas." },
+      { slug: "linear-programming",             number: 12, name: "Linear Programming",                blurb: "Graphical method for solving LPP, feasible region." },
+      { slug: "probability",                    number: 13, name: "Probability",                       blurb: "Conditional probability, Bayes' theorem, binomial distribution." },
+    ],
   },
   {
     slug: "biology",
@@ -133,6 +223,21 @@ const CBSE_CLASS_12_SUBJECTS: SchoolSubject[] = [
     chapterCount: 13,
     officialChapterIndex: "https://ncert.nic.in/textbook.php?lebo1=0-16",
     feedsExams: ["NEET_UG"],
+    chapters: [
+      { slug: "sexual-reproduction-flowering-plants", number: 1, name: "Sexual Reproduction in Flowering Plants", blurb: "Flower structure, micro/megasporogenesis, double fertilisation, apomixis." },
+      { slug: "human-reproduction",                  number: 2,  name: "Human Reproduction",                       blurb: "Male + female reproductive systems, gametogenesis, menstrual cycle, parturition." },
+      { slug: "reproductive-health",                 number: 3,  name: "Reproductive Health",                      blurb: "STIs, contraception, infertility, MTP, amniocentesis." },
+      { slug: "principles-of-inheritance",           number: 4,  name: "Principles of Inheritance and Variation",  blurb: "Mendel's laws, linkage, sex determination, mutations, pedigree." },
+      { slug: "molecular-basis-of-inheritance",      number: 5,  name: "Molecular Basis of Inheritance",           blurb: "DNA, transcription, translation, regulation, Human Genome Project." },
+      { slug: "evolution",                            number: 6,  name: "Evolution",                                 blurb: "Theories, evidences, Hardy-Weinberg, human evolution." },
+      { slug: "human-health-and-disease",            number: 7,  name: "Human Health and Disease",                 blurb: "Pathogens, immunity, AIDS, cancer, drug + alcohol abuse." },
+      { slug: "microbes-in-human-welfare",           number: 8,  name: "Microbes in Human Welfare",                blurb: "Fermentation, sewage treatment, biofertilisers, biocontrol agents." },
+      { slug: "biotechnology-principles-and-processes", number: 9, name: "Biotechnology: Principles and Processes", blurb: "Restriction enzymes, vectors, recombinant DNA, PCR, bioreactor." },
+      { slug: "biotechnology-and-its-applications",  number: 10, name: "Biotechnology and Its Applications",       blurb: "Transgenic organisms, gene therapy, RNAi, GM crops, biosafety." },
+      { slug: "organisms-and-populations",           number: 11, name: "Organisms and Populations",                blurb: "Ecological factors, population attributes, growth curves, interactions." },
+      { slug: "ecosystem",                            number: 12, name: "Ecosystem",                                blurb: "Structure, energy flow, food chains, biogeochemical cycles." },
+      { slug: "biodiversity-and-conservation",       number: 13, name: "Biodiversity and Conservation",            blurb: "Patterns, threats, conservation strategies, biodiversity hotspots." },
+    ],
   },
   // Commerce stream
   {
@@ -240,6 +345,37 @@ export function findClassSyllabus(boardSlug: string, classNum: number): ClassSyl
 
 export function findSubject(boardSlug: string, classNum: number, subjectSlug: string): SchoolSubject | undefined {
   return findClassSyllabus(boardSlug, classNum)?.subjects.find((s) => s.slug === subjectSlug);
+}
+
+export function findChapter(boardSlug: string, classNum: number, subjectSlug: string, chapterSlug: string): SchoolChapter | undefined {
+  return findSubject(boardSlug, classNum, subjectSlug)?.chapters?.find((c) => c.slug === chapterSlug);
+}
+
+/**
+ * Walk every (board, class, subject) tuple that has a chapter list,
+ * yielding one entry per chapter. Used by sitemap + generateStaticParams.
+ */
+export function allChapterPaths(): Array<{
+  boardSlug: string;
+  classNum: number;
+  subjectSlug: string;
+  chapterSlug: string;
+}> {
+  const out: Array<{ boardSlug: string; classNum: number; subjectSlug: string; chapterSlug: string }> = [];
+  for (const cls of CLASS_SYLLABUS) {
+    for (const subject of cls.subjects) {
+      if (!subject.chapters) continue;
+      for (const ch of subject.chapters) {
+        out.push({
+          boardSlug: cls.boardSlug,
+          classNum: cls.classNum,
+          subjectSlug: subject.slug,
+          chapterSlug: ch.slug,
+        });
+      }
+    }
+  }
+  return out;
 }
 
 /** Class-level NCERT URL for the "official syllabus" link on a class page. */

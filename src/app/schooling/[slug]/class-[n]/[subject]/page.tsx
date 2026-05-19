@@ -140,29 +140,60 @@ export default async function SubjectPage({
           </div>
         )}
 
-        {/* Chapter-level content stub. This is where the per-chapter pages
-            will eventually surface once topic.notes have been generated
-            for this subject. Brutal honesty so users know what's planned. */}
+        {/* Chapter-level surface. If chapters were authored for this
+            subject (Class 10 Math + Science, Class 12 Physics/Chem/Math/
+            Biology), render a clickable tile grid. Otherwise fall back
+            to the honest "being built" stub pointing students to the
+            NCERT chapter index. */}
         <h2 className="mt-10 text-base font-semibold text-ink-900">Chapters</h2>
-        <div className="mt-3 rounded-lg border border-dashed border-ink-300 bg-white p-6">
-          <p className="text-sm font-semibold text-ink-900">
-            Per-chapter learning pages — being built
-          </p>
-          <p className="mt-2 text-xs text-ink-600">
-            Each chapter will get its own page with: concept summary
-            (Overview · Key Concepts · Formulas · Worked Examples · Common
-            Mistakes · Quick Reference), 10-20 practice questions, a mastery
-            quiz with adaptive difficulty, and an AI tutor scoped to that
-            chapter. Until each chapter is fully built, we keep this honest
-            instead of showing placeholder buttons that don't work.
-          </p>
-          <p className="mt-3 text-[11px] text-ink-500">
-            For the chapter list and reference content right now, use the
-            official NCERT link above. The NCERT textbook PDFs are free and
-            authoritative — they're the source we'll ground our generated
-            content against.
-          </p>
-        </div>
+        {s.chapters && s.chapters.length > 0 ? (
+          <>
+            <p className="mt-2 text-xs text-ink-600">
+              {s.chapters.length} chapters in the NCERT syllabus. Each
+              chapter has its own page with the chapter overview, what
+              to read (NCERT section refs), and a mastery quiz. AI-
+              generated concept notes are being authored progressively.
+            </p>
+            <ol className="mt-3 grid gap-2 sm:grid-cols-2">
+              {s.chapters.map((c) => (
+                <li key={c.slug}>
+                  <Link
+                    href={`/schooling/${slug}/class-${classNum}/${subject}/${c.slug}`}
+                    className="flex h-full items-start gap-3 rounded-lg border border-ink-200 bg-white p-3 transition-colors hover:border-saffron-400 hover:bg-saffron-50/30"
+                  >
+                    <span className="mt-0.5 inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-saffron-100 text-xs font-bold text-saffron-800 tabular-nums">
+                      {c.number}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-ink-900">{c.name}</span>
+                      {c.blurb && <span className="mt-0.5 block text-[11px] text-ink-600 line-clamp-2">{c.blurb}</span>}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </>
+        ) : (
+          <div className="mt-3 rounded-lg border border-dashed border-ink-300 bg-white p-6">
+            <p className="text-sm font-semibold text-ink-900">
+              Per-chapter learning pages — being built
+            </p>
+            <p className="mt-2 text-xs text-ink-600">
+              Each chapter will get its own page with: concept summary
+              (Overview · Key Concepts · Formulas · Worked Examples · Common
+              Mistakes · Quick Reference), 10-20 practice questions, a mastery
+              quiz with adaptive difficulty, and an AI tutor scoped to that
+              chapter. Until each chapter is fully built, we keep this honest
+              instead of showing placeholder buttons that don't work.
+            </p>
+            <p className="mt-3 text-[11px] text-ink-500">
+              For the chapter list and reference content right now, use the
+              official NCERT link above. The NCERT textbook PDFs are free and
+              authoritative — they're the source we'll ground our generated
+              content against.
+            </p>
+          </div>
+        )}
 
         {/* Sibling subjects in this class — quick jump */}
         <h2 className="mt-10 text-base font-semibold text-ink-900">Other subjects in Class {classNum}</h2>
