@@ -23,6 +23,7 @@ import { VerificationBadge, SectionVerificationSummary } from "@/components/Veri
 import { ClickableVerificationBadge } from "@/components/ClickableVerificationBadge";
 import { getFactMap, factToBadgeProps } from "@/lib/db/facts";
 import { auth } from "@/lib/auth";
+import { findCollegeDetail } from "@/data/college-details";
 
 export async function generateStaticParams() {
   return COLLEGES.map((c) => ({ slug: c.slug }));
@@ -198,6 +199,54 @@ export default async function CollegePage({
 
         <h2 className="mt-8 text-base font-semibold text-ink-900">About {c.shortName}</h2>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">{c.blurb}</p>
+
+        {/* Branch-level placement + cutoff data, when authored */}
+        {(() => {
+          const detail = findCollegeDetail(c.slug);
+          if (!detail || detail.branches.length === 0) return null;
+          return (
+            <>
+              <h2 className="mt-8 text-base font-semibold text-ink-900">
+                Branches — placement + cutoff details
+              </h2>
+              <p className="mt-1 text-xs text-ink-500">
+                Honest median CTC + JoSAA/MCC closing ranks per branch. Click for full trend tables.
+              </p>
+              <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+                {detail.branches.map((b) => {
+                  const lp = b.placements.length > 0 ? b.placements[0] : null;
+                  const lc = b.cutoffs.find((x) => x.category === "GEN" && !x.gender);
+                  return (
+                    <li key={b.slug}>
+                      <Link
+                        href={`/colleges/${c.slug}/${b.slug}`}
+                        className="block h-full rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400 hover:bg-saffron-50/30"
+                      >
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                          <p className="text-sm font-semibold text-ink-900">{b.name}</p>
+                          <span className="text-[10px] text-ink-500">{b.degree}</span>
+                        </div>
+                        <p className="mt-2 text-xs text-ink-600 line-clamp-2">{b.blurb}</p>
+                        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                          {lp && (
+                            <span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-800">
+                              Median ₹{lp.medianLpa}L ({lp.year})
+                            </span>
+                          )}
+                          {lc && (
+                            <span className="rounded bg-saffron-50 px-2 py-0.5 text-saffron-800">
+                              JoSAA {lc.year} Gen #{lc.closingRank.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          );
+        })()}
 
         <h2 className="mt-8 text-base font-semibold text-ink-900">Streams &amp; faculty</h2>
         <div className="mt-2 flex flex-wrap gap-2">

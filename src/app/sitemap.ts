@@ -12,6 +12,7 @@ import { SCHOLARSHIPS } from "@/data/scholarships";
 import { WORLDWIDE_COUNTRIES, TEST_PREP } from "@/lib/worldwide-data";
 import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
 import { CAREERS } from "@/data/careers";
+import { allBranchPaths } from "@/data/college-details";
 
 export const revalidate = 86_400; // 24h
 
@@ -206,6 +207,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.75,
   }));
 
+  // Per-branch college pages — long-tail SEO for "[college] [branch]
+  // cutoff/placement/salary" queries.
+  const branchUrls: MetadataRoute.Sitemap = allBranchPaths().map((p) => ({
+    url: `${base}/colleges/${p.collegeSlug}/${p.branchSlug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
   // Public user profiles — only users who opted in via /me/settings.
   // Raw SQL avoids the typed client (Windows file-lock workaround for
   // newly-added User.handle / User.profilePublic fields).
@@ -259,6 +269,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...testPrepUrls,
     ...insightUrls,
     ...careerUrls,
+    ...branchUrls,
     ...userProfileUrls,
   ];
 }
