@@ -286,6 +286,30 @@ export default async function HomeHub() {
           ))}
         </ul>
 
+        {/* Career Map CTA — strong navigation entrance for unsure visitors */}
+        <div className="mx-auto mt-10 max-w-3xl rounded-xl border border-saffron-300 bg-saffron-50/50 p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <div className="max-w-2xl">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-800">
+                New here? Start with this
+              </p>
+              <h3 className="mt-1 text-lg font-semibold text-ink-900">
+                Career Map — Class 9 to mid-career in one rail
+              </h3>
+              <p className="mt-1 text-xs text-ink-700">
+                Pick your stage (Class 10 / Class 12 / UG / working) — see what
+                comes next + which Shishya section helps with each step.
+              </p>
+            </div>
+            <Link
+              href="/career-map"
+              className="rounded-md bg-saffron-500 px-4 py-2 text-sm font-semibold text-white hover:bg-saffron-600"
+            >
+              Open Career Map →
+            </Link>
+          </div>
+        </div>
+
         {/* Trust strip — visible verification commitment on first scroll. */}
         <div className="mx-auto mt-12 max-w-3xl rounded-xl border border-emerald-200 bg-emerald-50/40 p-5 text-sm text-ink-700">
           <h3 className="text-base font-semibold text-ink-900">
