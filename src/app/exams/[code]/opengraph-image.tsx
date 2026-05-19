@@ -116,7 +116,7 @@ export default async function Image({ params }: { params: { code: string } }) {
             fontWeight: 500,
           }}
         >
-          <div>Free mocks · syllabus · PYQ · AI tutor</div>
+          <div>Free mocks · syllabus · PYQ · verified by students</div>
           <div style={{ color: "#c2410c", fontWeight: 700 }}>{year}</div>
         </div>
       </div>

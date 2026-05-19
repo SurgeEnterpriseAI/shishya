@@ -54,13 +54,15 @@ export default function JobsLanding() {
           <Link href="/" className="hover:text-ink-800">Home</Link> · Jobs & Careers
         </p>
         <h1 className="mt-2 text-3xl font-bold text-ink-900 sm:text-4xl">
-          Jobs & Careers
+          From your last exam to your first job — and beyond
         </h1>
         <p className="mt-2 max-w-3xl text-base text-ink-700">
-          Shishya is not a job board — we don't list openings or take recruiter
-          fees. We help you understand career pathways: what's possible after
-          your education, what each role actually involves, and where to find
-          official applications.
+          Government job notifications, career paths, salary benchmarks,
+          interview prep. Sourced from official portals and real professionals.
+          Shishya is not a job board — we don&apos;t list openings or take
+          recruiter fees. We help you understand career pathways: what&apos;s
+          possible after your education, what each role actually involves, and
+          where to find official applications.
         </p>
 
         {/* Four primary surfaces */}

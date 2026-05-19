@@ -7,7 +7,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Shishya — Free, community-driven guidance for every stage of Indian education";
+export const alt = "Shishya — Every stage of your education. People who've been there.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -71,8 +71,8 @@ export default async function Image() {
             maxWidth: "1000px",
           }}
         >
-          Every stage of Indian education,{" "}
-          <span style={{ color: "#c2410c" }}>free</span>, with real handholding.
+          Every stage of your education.{" "}
+          <span style={{ color: "#c2410c" }}>People who&apos;ve been there.</span>
         </div>
         <div
           style={{
@@ -82,7 +82,17 @@ export default async function Image() {
             fontWeight: 500,
           }}
         >
-          School · college · exams · scholarships · jobs · study abroad
+          school · college · exams · scholarships · careers · study abroad
+        </div>
+        <div
+          style={{
+            marginTop: "20px",
+            fontSize: "26px",
+            color: "#78716c",
+            fontWeight: 500,
+          }}
+        >
+          free · verified · in your language
         </div>
       </div>
     ),

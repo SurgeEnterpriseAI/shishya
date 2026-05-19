@@ -53,9 +53,9 @@ const STEPS: Step[] = [
     key: "shishya-ai",
     anchor: "header-tutor",
     placement: "bottom",
-    title: "3 · Ask Shishya AI anytime",
+    title: "3 · Ask Shishya anytime",
     body:
-      "Stuck on a concept? Click the tutor icon up here. Shishya knows your weak topics and adapts to you in English or Hindi. All free.",
+      "Stuck on a concept? Click the help icon up here. Answers grounded in verified Shishya content, with sources you can check — in English, Hindi, or your language. All free.",
   },
   {
     key: "done",

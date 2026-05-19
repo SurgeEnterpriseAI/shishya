@@ -194,7 +194,7 @@ export default async function CollegePage({
         <SectionVerificationSummary
           status="ai"
           source="NIRF + the college's official site"
-          refreshCadence="every 30 days once the AI verification job ships"
+          refreshCadence="every 30 days"
         />
 
         <h2 className="mt-8 text-base font-semibold text-ink-900">About {c.shortName}</h2>

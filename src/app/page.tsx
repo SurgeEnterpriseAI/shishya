@@ -30,13 +30,13 @@ export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Shishya — Free guidance for every stage of Indian education",
+  title: "Shishya — Education guidance verified by students who've been there | Free, all of India",
   description:
-    "A community-driven companion for Indian students — schooling, entrance exams, colleges, scholarships, jobs and study abroad. Extensive information, honest answers, and real handholding at every step. Free, in your language.",
+    "Free education platform for Indian students at every stage — school, college, entrance exams, scholarships, careers, study abroad. Information verified by students and experts who have cleared the same path. Available in your language.",
   alternates: { canonical: "https://shishya.in" },
   keywords: [
     "indian education guidance",
-    "school college entrance exam help",
+    "verified by students India",
     "community education platform India",
     "study abroad India",
     "indian student career guidance",
@@ -45,9 +45,9 @@ export const metadata: Metadata = {
     "Shishya",
   ],
   openGraph: {
-    title: "Shishya — Free guidance for every stage of Indian education",
+    title: "Shishya — Verified guidance for every stage of Indian education",
     description:
-      "School, college, exams, jobs, abroad — one community-driven platform. Free, with real handholding, in your language.",
+      "From school to your first job — syllabi, exams, colleges, scholarships, careers. Verified by real students and experts who have been there. Free, in your language.",
     url: "https://shishya.in",
     siteName: "Shishya",
     locale: "en_IN",
@@ -156,7 +156,7 @@ export default async function HomeHub() {
     {
       href: "/exams",
       title: "Entrance & Government Exams",
-      blurb: "Adaptive mock tests, previous year papers, AI tutor. Free, every state covered.",
+      blurb: "Adaptive mock tests, previous year papers, study help. Free, every state covered.",
       meta: `${exams} exams covered today`,
       status: "live",
       glyph: "E",
@@ -235,13 +235,12 @@ export default async function HomeHub() {
         {!personalised && (
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="bg-gradient-to-r from-ink-900 via-saffron-700 to-ink-900 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
-              Free guidance for every stage of Indian education
+              Every step of your education, with people who&apos;ve been there.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base text-ink-600 sm:text-lg">
-              A community-driven companion for Indian students — school, college,
-              entrance exams, jobs and beyond. Extensive information, honest
-              answers, and real handholding when you need it. Free, in your
-              language.
+              From Class 6 to your first job abroad — syllabus, exams, colleges,
+              scholarships, careers. Verified by students who cleared the same
+              path. Real handholding when you need it. Free, in your language.
             </p>
           </div>
         )}

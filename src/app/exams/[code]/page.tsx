@@ -64,7 +64,7 @@ export async function generateMetadata({
   const stateCopy = st ? `${st.name} (${st.nativeName} / ${st.hindiName}). ` : "";
   const description =
     `Free ${exam.shortName} (${exam.name}) ${year} mock tests, previous year papers ` +
-    `and AI tutor. ${stateCopy}Questions available in ${langCopy}. No paywall.`;
+    `and study help — verified by students who cleared it. ${stateCopy}Questions available in ${langCopy}. No paywall.`;
 
   // Keywords — a wide net mixing English, native-script state name, exam
   // name in native script (transliteration via state's hindi/native name),
@@ -214,8 +214,8 @@ export default async function ExamPage({
   const courseJsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Course",
-    name: `${exam.shortName}${stateInfo2 ? ` (${stateInfo2.name})` : ""} — Free Mock Tests, Syllabus & AI Tutor`,
-    description: exam.description ?? `${exam.name} preparation on Shishya — free expert-curated mocks, previous year papers, and Shishya AI as your personal tutor.`,
+    name: `${exam.shortName}${stateInfo2 ? ` (${stateInfo2.name})` : ""} — Free Mock Tests, Syllabus & Study Help`,
+    description: exam.description ?? `${exam.name} preparation on Shishya — free expert-curated mocks, previous year papers, and study help verified by students who cleared the same path.`,
     provider: {
       "@type": "EducationalOrganization",
       name: "Shishya",
@@ -312,7 +312,7 @@ export default async function ExamPage({
         <SectionVerificationSummary
           status="ai"
           source="official exam authority notification"
-          refreshCadence="weekly once the AI verification job is live"
+          refreshCadence="weekly"
         />
 
         {/* Sign-in CTA banner for unauthenticated visitors. Crawlers see
@@ -323,9 +323,10 @@ export default async function ExamPage({
               Free {exam.shortName} preparation on Shishya
             </p>
             <p className="mt-1 text-sm text-ink-700">
-              Take expert-curated mocks, practise previous year papers, and let{" "}
-              <strong>Shishya AI</strong> tutor you to better ranks — all free, no
-              credit card. Sign in with Google to begin.
+              Take expert-curated mocks, practise previous year papers, and Ask{" "}
+              <strong>Shishya</strong> when you&apos;re stuck — verified by
+              students who cleared the same path. All free, no credit card.
+              Sign in with Google to begin.
             </p>
             <Link
               href={`/login?callbackUrl=/exams/${exam.code}`}

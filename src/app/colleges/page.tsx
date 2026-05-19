@@ -126,14 +126,15 @@ export default async function CollegesLanding({
           <Link href="/" className="hover:text-ink-800">Home</Link> · Colleges &amp; Graduation
         </p>
         <h1 className="mt-1 text-3xl font-bold text-ink-900">
-          Top NIRF {NIRF_SOURCE_YEAR} colleges in India
+          Find the right college, with people who actually got in
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-ink-700">
-          {COLLEGES.length} colleges curated from the official NIRF {NIRF_SOURCE_YEAR}{" "}
-          rankings — engineering, medical, management, law, universities and
-          pharmacy. Every rank below is from NIRF directly; click any college
-          for an indexable page with the official website, NIRF citation and
-          our writeup. No invented rankings, no paid placements.
+          NIRF rankings, real fee structures, honest cutoffs, scholarships you
+          may have missed. Verified by students currently studying there.{" "}
+          {COLLEGES.length} colleges curated from the official NIRF{" "}
+          {NIRF_SOURCE_YEAR} rankings — engineering, medical, management, law,
+          universities and pharmacy. Every rank cites NIRF directly. No invented
+          rankings, no paid placements.
         </p>
         <p className="mt-2 text-[11px] text-ink-500">
           Source: <a href={NIRF_SOURCE_URL} target="_blank" rel="noopener noreferrer" className="text-saffron-700 underline">National Institutional Ranking Framework</a>, Ministry of Education, Government of India ({NIRF_SOURCE_YEAR}).

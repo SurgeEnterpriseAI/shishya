@@ -1,4 +1,4 @@
-// /chat?examCode=SSC_CGL — full-page AI tutor chat.
+// /chat?examCode=SSC_CGL — full-page "Ask Shishya" chat.
 // Server component picks the exam (default first enrolled) and hands off to client.
 
 import Link from "next/link";
@@ -138,7 +138,7 @@ export default async function ChatPage({
   }
 
   // Picker mode: when the student lands on /chat from a generic surface
-  // (e.g. the dashboard's top-bar "Ask Shishya AI" button) we must NOT
+  // (e.g. the dashboard's top-bar "Ask Shishya" button) we must NOT
   // silently scope the tutor to their most-recent enrollment — that was
   // confusing students who'd just been browsing one exam and got auto-
   // dropped into a different one. If they have multiple enrollments and
@@ -221,8 +221,8 @@ export default async function ChatPage({
     `Walk me through the ${examShort} syllabus and which topics carry highest weight.`,
   ];
 
-  // If a topic was passed (e.g. user clicked "Open Shishya tutor" from a
-  // study-notes page), look it up so the tutor can anchor on it and the UI
+  // If a topic was passed (e.g. user clicked "Ask Shishya" from a
+  // study-notes page), look it up so the chat can anchor on it and the UI
   // can show a focus chip + topic-tailored starters.
   let topicFocus: {
     code: string;

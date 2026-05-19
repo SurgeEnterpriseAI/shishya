@@ -219,7 +219,7 @@ export default async function BoardPage({
               Entrance &amp; Government Exams
             </Link>{" "}
             section covers JEE, NEET, CUET, all state CETs, plus 160+ other
-            entrance and government exams. Free adaptive mock tests + AI tutor.
+            entrance and government exams. Free adaptive mock tests + study help.
             Scholarships tied to {b.shortName} students are aggregated in our{" "}
             <Link href="/scholarships" className="text-saffron-700 underline">
               Scholarships

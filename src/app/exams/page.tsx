@@ -22,22 +22,22 @@ import { LiveCountersStrip } from "@/components/LiveCounters";
 import { UpcomingExamsSidebar, type UpcomingEvent } from "@/components/UpcomingExamsSidebar";
 
 export const metadata: Metadata = {
-  title: "Entrance & Government Exams — Free Mocks, PYQ, AI Tutor | Shishya",
+  title: "Entrance & Government Exams — Free Mocks, PYQ, Study Help | Shishya",
   description:
-    "163 entrance and government exams in India — JEE, NEET, UPSC, SSC, IBPS, RRB, GATE, CAT, all state PSCs, all TETs, all Police exams. Free adaptive mock tests, previous year papers and a built-in AI tutor. In every Indian language.",
+    "163 entrance and government exams in India — JEE, NEET, UPSC, SSC, IBPS, RRB, GATE, CAT, all state PSCs, all TETs, all Police exams. Free adaptive mock tests, previous year papers and study help — verified by students who cleared the same path. In every Indian language.",
   alternates: { canonical: "https://shishya.in/exams" },
   keywords: [
     "entrance exams india",
     "government job exams",
     "free mock test india",
     "previous year papers",
-    "AI tutor india",
+    "study help india",
     "state level exams",
     "SSC UPSC IBPS RRB NEET JEE",
   ],
   openGraph: {
     title: "Entrance & Government Exams — Shishya",
-    description: "163 exams. Free mocks, PYQ, AI tutor. Every Indian language.",
+    description: "163 exams. Free mocks, PYQ, study help — verified by students. Every Indian language.",
     url: "https://shishya.in/exams",
     siteName: "Shishya",
     locale: "en_IN",
@@ -685,14 +685,20 @@ function Stat({ value, label }: { value: string; label: string }) {
 function Footer() {
   return (
     <footer className="border-t border-ink-200 bg-white py-10">
-      <div className="container-prose flex flex-col items-center justify-between gap-3 text-xs text-ink-500 sm:flex-row">
-        <p>© {new Date().getFullYear()} Shishya · Built by Surge Software Solutions</p>
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <Link href="/scholarships" className="hover:text-ink-800">Scholarships</Link>
-          <Link href="/ideas" className="hover:text-ink-800">Ideas board</Link>
-          <a href="https://github.com/SurgeEnterpriseAI/shishya" className="hover:text-ink-800">GitHub</a>
-          <a href="mailto:venumuvva@surgesoftware.co.in" className="hover:text-ink-800">Contact</a>
-          <a href="https://surgesoftware.co.in" className="hover:text-ink-800">Surge</a>
+      <div className="container-prose space-y-4">
+        <p className="max-w-3xl text-center text-xs text-ink-600 sm:text-left">
+          Shishya is a free, community-verified education platform for Indian
+          students. No ads. No agents. No affiliates. Education is a right.
+        </p>
+        <div className="flex flex-col items-center justify-between gap-3 text-xs text-ink-500 sm:flex-row">
+          <p>© {new Date().getFullYear()} Shishya · Built by Surge Software Solutions</p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link href="/scholarships" className="hover:text-ink-800">Scholarships</Link>
+            <Link href="/ideas" className="hover:text-ink-800">Ideas board</Link>
+            <a href="https://github.com/SurgeEnterpriseAI/shishya" className="hover:text-ink-800">GitHub</a>
+            <a href="mailto:venumuvva@surgesoftware.co.in" className="hover:text-ink-800">Contact</a>
+            <a href="https://surgesoftware.co.in" className="hover:text-ink-800">Surge</a>
+          </div>
         </div>
       </div>
     </footer>

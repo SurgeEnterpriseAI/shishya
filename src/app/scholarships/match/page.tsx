@@ -40,12 +40,12 @@ export default function MatchWizardPage() {
           <Link href="/scholarships" className="hover:text-ink-800">Scholarships</Link> · Match Wizard
         </p>
         <h1 className="mt-2 text-3xl font-bold text-ink-900 sm:text-4xl">
-          Match me to scholarships
+          Match yourself to scholarships in 5 questions
         </h1>
         <p className="mt-2 max-w-2xl text-base text-ink-700">
-          Answer 5 quick questions. Nothing is stored — your responses live
-          only in your browser. We don't take your name, email, phone, or
-          family-income details to a server.
+          We check eligibility for you. Answer 5 quick questions — nothing is
+          stored, your responses live only in your browser. We don&apos;t take
+          your name, email, phone, or family-income details to a server.
         </p>
 
         <MatchWizard scholarships={SCHOLARSHIPS} />

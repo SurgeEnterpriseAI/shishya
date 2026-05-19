@@ -70,8 +70,8 @@ export function SectionComingSoon({ title, subtitle, intro, bullets, eta, breadc
           </h3>
           <p className="mt-2">
             Our Entrance & Government Exams section is live now — 163 exams
-            covered with adaptive mock tests, previous year papers and a
-            built-in AI tutor that explains every wrong answer. All free.
+            covered with adaptive mock tests, previous year papers and Ask
+            Shishya to explain every wrong answer. All free.
           </p>
           <Link
             href="/exams"
@@ -82,7 +82,7 @@ export function SectionComingSoon({ title, subtitle, intro, bullets, eta, breadc
         </div>
 
         <p className="mt-8 text-xs text-ink-500">
-          Want this section sooner? Sign in and tell our AI tutor what you're
+          Want this section sooner? Sign in and tell us what you&apos;re
           preparing for — that signal directly drives our roadmap priority.
         </p>
       </section>

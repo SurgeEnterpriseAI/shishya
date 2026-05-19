@@ -211,7 +211,7 @@ export default async function CollegesByStatePage({
           <p className="mt-2">
             Shishya covers all of {st.name}'s state-level entrance exams —
             TET, PSC, Police, CET, Polytechnic and more — with free adaptive
-            mock tests, previous year papers and a built-in AI tutor.
+            mock tests, previous year papers and study help.
           </p>
           <Link
             href={`/exams/state/${slug}`}

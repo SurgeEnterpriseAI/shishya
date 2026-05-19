@@ -40,7 +40,7 @@ export async function generateMetadata({
   const title = `${st.name} Entrance Exams ${year} — Free Mock Tests, PYQ in ${languageList(st.languages)} | Shishya`;
   const description =
     `All ${examCount} ${st.name} entrance exams in one place — TET, PSC, Police, ` +
-    `Polytechnic, CET and more. Free mock tests, previous year papers and AI tutor. ` +
+    `Polytechnic, CET and more. Free mock tests, previous year papers and study help. ` +
     `Available in ${languageList(st.languages)}.`;
   const url = `https://shishya.in/exams/state/${slug}`;
 
@@ -141,8 +141,9 @@ export default async function StateIndexPage({
         <p className="mt-4 max-w-3xl text-sm text-ink-700">
           Free preparation for all {exams.length} entrance exams in {st.name} — PSC,
           TET, Police, Polytechnic, CET and more. Generate adaptive mock tests in
-          {" "}{languageList(st.languages)}, practice previous year papers, and use
-          Shishya AI as your personal tutor. No payment, no premium tier.
+          {" "}{languageList(st.languages)}, practice previous year papers, and Ask
+          Shishya when you need study help — verified by students who cleared
+          the same path. No payment, no premium tier.
         </p>
 
         <ul className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -173,7 +174,7 @@ export default async function StateIndexPage({
             covered on Shishya — from state PSC and teacher eligibility tests to
             police recruitment, polytechnic admissions and university entrances.
             Every question on this page is available in {languageList(st.languages)},
-            and our AI tutor explains every answer the moment you submit a mock.
+            and Shishya explains every answer the moment you submit a mock.
           </p>
           <p className="mt-2">
             All preparation is free. We don't charge students; the platform is

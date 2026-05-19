@@ -48,13 +48,14 @@ export default function WorldwideLanding() {
           <Link href="/" className="hover:text-ink-800">Home</Link> · Worldwide
         </p>
         <h1 className="mt-2 text-3xl font-bold text-ink-900 sm:text-4xl">
-          Study Abroad from India — neutrally
+          Study or work abroad — honestly, without an agent
         </h1>
         <p className="mt-2 max-w-3xl text-base text-ink-700">
-          The unfiltered version of every "study abroad consultant" website.
-          Tuition costs, visa processes, post-study work permits, PR pathways,
-          and university lists — sourced from official embassies, universities,
-          and government portals.{" "}
+          Country information, university comparisons, visa processes, loans,
+          scholarships. Verified by Indian students who&apos;ve actually made
+          it. Tuition costs, visa processes, post-study work permits, PR
+          pathways, and university lists — sourced from official embassies,
+          universities, and government portals.{" "}
           <strong className="text-ink-900">
             No agent partnerships. No affiliate links. No loan referrals.
           </strong>

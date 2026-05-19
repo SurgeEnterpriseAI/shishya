@@ -28,7 +28,7 @@ export async function generateMetadata({
   const title = `${board.shortName} Class ${classNum} ${s.name} — Syllabus & Free Practice | Shishya`;
   return {
     title,
-    description: `${s.blurb} Free syllabus, NCERT chapter links, AI tutor for Class ${classNum} ${s.name} (${board.shortName}, ${year}).`,
+    description: `${s.blurb} Free syllabus, NCERT chapter links, study help for Class ${classNum} ${s.name} (${board.shortName}, ${year}).`,
     alternates: { canonical: `https://shishya.in/schooling/${slug}/class-${classNum}/${subject}` },
     keywords: [
       `${board.shortName} Class ${classNum} ${s.name}`,
@@ -182,7 +182,7 @@ export default async function SubjectPage({
               Each chapter will get its own page with: concept summary
               (Overview · Key Concepts · Formulas · Worked Examples · Common
               Mistakes · Quick Reference), 10-20 practice questions, a mastery
-              quiz with adaptive difficulty, and an AI tutor scoped to that
+              quiz with adaptive difficulty, and Ask Shishya scoped to that
               chapter. Until each chapter is fully built, we keep this honest
               instead of showing placeholder buttons that don't work.
             </p>

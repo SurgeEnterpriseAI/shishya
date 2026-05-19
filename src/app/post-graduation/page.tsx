@@ -120,12 +120,13 @@ export default async function PostGraduationLanding() {
           <Link href="/" className="hover:text-ink-800">Home</Link> · Post-Graduation
         </p>
         <h1 className="mt-2 text-3xl font-bold text-ink-900 sm:text-4xl">
-          After UG — what next?
+          After graduation — your next step, mapped out
         </h1>
         <p className="mt-2 max-w-3xl text-base text-ink-700">
-          Five honest paths. Pick on YOUR priorities — opportunity cost, earning
-          curve, risk tolerance, family situation — not on what your peer group
-          is doing.
+          PG entrances, research paths, fellowships, careers. Real outcomes
+          from students who took each path. Verified, free. Pick on YOUR
+          priorities — opportunity cost, earning curve, risk tolerance, family
+          situation — not on what your peer group is doing.
         </p>
 
         {/* Five pathways grid */}

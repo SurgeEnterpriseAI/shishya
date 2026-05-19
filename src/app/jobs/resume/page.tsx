@@ -169,8 +169,8 @@ export default function ResumePrep() {
           <p className="font-semibold text-ink-800">Roadmap</p>
           <p className="mt-2">
             Coming next: downloadable resume templates per career (CS, finance, govt-services,
-            design, content). AI-customised version that tailors a base template to your background
-            using the existing AI tutor infrastructure.
+            design, content). Personalised version that tailors a base template to your background
+            using the existing Ask Shishya infrastructure.
           </p>
         </div>
       </section>
