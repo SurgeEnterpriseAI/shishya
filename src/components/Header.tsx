@@ -17,6 +17,7 @@ const PRIMARY_NAV: Array<{ href: string; label: string; short: string }> = [
   { href: "/schooling",       label: "Schooling",               short: "School" },
   { href: "/colleges",        label: "Colleges & Graduation",   short: "Colleges" },
   { href: "/exams",           label: "Entrance & Govt Exams",   short: "Exams" },
+  { href: "/careers",         label: "Careers",                  short: "Careers" },
   { href: "/post-graduation", label: "Post-Graduation",          short: "PG" },
   { href: "/jobs",            label: "Jobs & Careers",           short: "Jobs" },
   { href: "/worldwide",       label: "Worldwide",                short: "Worldwide" },

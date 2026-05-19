@@ -21,6 +21,8 @@ import { unstable_cache } from "next/cache";
 import { COLLEGES } from "@/lib/colleges-data";
 import { SCHOLARSHIPS } from "@/data/scholarships";
 import { BOARDS } from "@/lib/schooling-data";
+import { WORLDWIDE_COUNTRIES } from "@/lib/worldwide-data";
+import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
 import { auth } from "@/lib/auth";
 
 // Cannot cache statically — homepage now branches on auth + user profile.
@@ -129,12 +131,15 @@ export default async function HomeHub() {
   const collegeCount = COLLEGES.length;
   const scholarshipCount = SCHOLARSHIPS.length;
   const boardCount = BOARDS.length;
+  const countryCount = WORLDWIDE_COUNTRIES.length;
+  const uniCount = WORLDWIDE_COUNTRIES.reduce((s, c) => s + c.universities.length, 0);
+  const insightsCount = INSIGHTS_ARTICLES.length;
 
   const tiles: Tile[] = [
     {
       href: "/schooling",
       title: "Schooling",
-      blurb: "Class 1–12, every board, every state. Syllabus, practice, free resources.",
+      blurb: "Class 1–12, every board, every state. Syllabus, chapter notes, mastery quizzes.",
       meta: `${boardCount} boards · CBSE · ICSE · IB · State Boards`,
       status: "live",
       glyph: "1",
@@ -156,35 +161,43 @@ export default async function HomeHub() {
       glyph: "E",
     },
     {
+      href: "/careers",
+      title: "Careers & Career Paths",
+      blurb: "What does each career actually pay? Path, qualifications, salary band, growth.",
+      meta: "Doctor · Engineer · IAS · CA · Designer · 40+ careers",
+      status: "live",
+      glyph: "K",
+    },
+    {
       href: "/post-graduation",
       title: "Post-Graduation",
-      blurb: "GATE, CAT, NEET-PG, UGC-NET, fellowships, research pathways.",
+      blurb: "GATE, CAT, NEET-PG, UGC-NET, fellowships, research pathways. PG vs Job vs Abroad.",
       meta: "PG entrances · Research · Fellowships",
-      status: "soon",
+      status: "live",
       glyph: "P",
     },
     {
       href: "/jobs",
       title: "Jobs & Careers",
-      blurb: "Government job tracking, career paths, fresher guidance, resume help.",
-      meta: "Govt jobs · Private · Internships · Career switches",
-      status: "soon",
+      blurb: "Government job tracking, internships, resume + interview prep, skill-based careers.",
+      meta: "Govt jobs · Private · Internships · Skill paths",
+      status: "live",
       glyph: "J",
     },
     {
       href: "/worldwide",
       title: "Worldwide",
-      blurb: "Study abroad, work visas, global careers. US, UK, Canada, AU, Germany and more.",
-      meta: "14 countries · Test prep · Visas · Loans",
-      status: "soon",
+      blurb: "Study abroad neutrally. Tuition, visa, post-study work, PR pathways, education loans.",
+      meta: `${countryCount} countries · ${uniCount} universities · IELTS/TOEFL/GRE/GMAT · Loans`,
+      status: "live",
       glyph: "W",
     },
     {
       href: "/insights",
       title: "Insights",
-      blurb: "Aggregated, anonymised platform data. Exam trends, college interest, career flows.",
-      meta: "Public-good research · Annual reports",
-      status: "soon",
+      blurb: "Honest essays on Indian education decisions. Sourced from NIRF, NTA, MEA, official data.",
+      meta: `${insightsCount} articles · annual report (Nov)`,
+      status: "live",
       glyph: "I",
     },
   ];

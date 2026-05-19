@@ -11,6 +11,7 @@ import { CLASS_SYLLABUS, allChapterPaths } from "@/lib/schooling-subjects";
 import { SCHOLARSHIPS } from "@/data/scholarships";
 import { WORLDWIDE_COUNTRIES, TEST_PREP } from "@/lib/worldwide-data";
 import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
+import { CAREERS } from "@/data/careers";
 
 export const revalidate = 86_400; // 24h
 
@@ -79,6 +80,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/recognition",
     "/scholarships/match",
     "/worldwide/loans",
+    "/careers",
   ].map((path) => ({
     url: `${base}${path}`,
     lastModified: new Date(),
@@ -183,6 +185,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  // Career path pages — high-volume long-tail SEO ("software engineer
+  // salary india", "how to become IAS", etc.)
+  const careerUrls: MetadataRoute.Sitemap = CAREERS.map((c) => ({
+    url: `${base}/careers/${c.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.75,
+  }));
+
   // Public user profiles — only users who opted in via /me/settings.
   // Raw SQL avoids the typed client (Windows file-lock workaround for
   // newly-added User.handle / User.profilePublic fields).
@@ -235,6 +246,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...universityUrls,
     ...testPrepUrls,
     ...insightUrls,
+    ...careerUrls,
     ...userProfileUrls,
   ];
 }
