@@ -139,6 +139,40 @@ export default async function CollegesLanding({
           Source: <a href={NIRF_SOURCE_URL} target="_blank" rel="noopener noreferrer" className="text-saffron-700 underline">National Institutional Ranking Framework</a>, Ministry of Education, Government of India ({NIRF_SOURCE_YEAR}).
         </p>
 
+        {/* Decision-support entries */}
+        <ul className="mt-6 grid gap-3 sm:grid-cols-3">
+          <li>
+            <Link
+              href="/colleges/cutoffs"
+              className="block h-full rounded-lg border border-saffron-200 bg-saffron-50/30 p-4 transition-colors hover:border-saffron-400"
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-800">Cutoffs</p>
+              <p className="mt-1 text-sm font-semibold text-ink-900">Reading cutoffs honestly</p>
+              <p className="mt-0.5 text-[11px] text-ink-600">JoSAA/MCC/NLU sources, 5-step method, rank predictor caveats.</p>
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/colleges/placements"
+              className="block h-full rounded-lg border border-saffron-200 bg-saffron-50/30 p-4 transition-colors hover:border-saffron-400"
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-800">Placements</p>
+              <p className="mt-1 text-sm font-semibold text-ink-900">Reading placement data honestly</p>
+              <p className="mt-0.5 text-[11px] text-ink-600">Median vs Highest CTC, opt-out math, foreign-offer skew.</p>
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/colleges/iti-diploma"
+              className="block h-full rounded-lg border border-saffron-200 bg-saffron-50/30 p-4 transition-colors hover:border-saffron-400"
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-800">ITI · Diploma</p>
+              <p className="mt-1 text-sm font-semibold text-ink-900">The parallel education path</p>
+              <p className="mt-0.5 text-[11px] text-ink-600">ITI trades + Polytechnic diplomas. 6.5M students; often better ROI than tier-3 BTech.</p>
+            </Link>
+          </li>
+        </ul>
+
         {/* Stream filter */}
         <div className="mt-6">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">By stream</p>
