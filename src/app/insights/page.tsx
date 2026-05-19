@@ -1,46 +1,125 @@
+// /insights — public-good editorial + future anonymised platform data.
+//
+// Phase 5 launch: 5 hand-authored grounded essays sourced against
+// official data. As Shishya's user base grows, anonymised platform
+// aggregates ship as a separate article type below.
+
+import Link from "next/link";
 import type { Metadata } from "next";
-import { SectionComingSoon } from "@/components/SectionComingSoon";
+import { Header } from "@/components/Header";
+import { INSIGHTS_ARTICLES, allTags } from "@/data/insights-articles";
 
 export const metadata: Metadata = {
-  title: "Insights — Public-good data on Indian education decisions | Shishya",
+  title: "Insights — Honest Essays on Indian Education Decisions | Shishya",
   description:
-    "Anonymised, aggregated platform data on how Indian students prepare, where they apply, which careers they pick, and what they struggle with. Free annual State of Indian Education Decisions report.",
+    "Public-good editorial on Indian education: JEE vs NEET by the numbers, NIRF rank vs employment, scholarship discovery gap, study abroad shifts, AI in tutoring. Hand-authored, sourced.",
   alternates: { canonical: "https://shishya.in/insights" },
   keywords: [
-    "indian education data",
-    "exam preparation trends india",
-    "college interest trends",
-    "scholarship trends india",
-    "career path data india",
-    "study abroad trends",
-    "education research india",
-    "anonymised student data",
+    "Indian education insights",
+    "JEE NEET comparison",
+    "NIRF rank meaning",
+    "study abroad India 2024",
+    "scholarship India guide",
+    "AI tutoring India",
   ],
   openGraph: {
     title: "Insights on Shishya",
-    description: "Public-good research on Indian education decisions. Anonymised, free.",
+    description: "Public-good editorial on Indian education. Hand-authored, sourced, free.",
     url: "https://shishya.in/insights",
     siteName: "Shishya",
     type: "website",
   },
 };
 
+export const revalidate = 86_400;
+
 export default function InsightsLanding() {
+  const tags = allTags();
   return (
-    <SectionComingSoon
-      title="Insights"
-      subtitle="Anonymised, aggregated, public-good"
-      intro="As Shishya grows, the aggregate signal of how Indian students prepare becomes a public good. This section will publish anonymised dashboards and an annual report — no individual user data, no resale, no advertising integrations. Just the kind of evidence-base Indian education policy has lacked."
-      eta="Phase 7 — activates as user data permits"
-      breadcrumb="Insights"
-      bullets={[
-        { title: "Exam preparation trends", body: "Year-on-year growth per exam, state-wise interest shifts, language preference signals. Helps coaching policy and government workforce planning." },
-        { title: "Topic-wise weakness aggregates", body: "Across all UPSC aspirants, which topic do students struggle with most this cycle? Across all SSC CGL aspirants, which subject decides cutoff outcomes? Answers from real attempt data." },
-        { title: "College interest trends", body: "Most-searched colleges this admission cycle, by state, by stream. Useful signal for colleges trying to understand their own demand." },
-        { title: "Scholarship discovery rates", body: "Which scholarships are aspirants finding and applying to? Which deserving ones are under-discovered? Helps philanthropies and government schemes target outreach." },
-        { title: "Study abroad shifts", body: "Rising destinations, declining destinations, by Indian state of origin. Visa policy impact signals before they hit headlines." },
-        { title: "Annual report", body: "The State of Indian Education Decisions — published free every March. Plain English, full methodology, raw aggregate data downloadable." },
-      ]}
-    />
+    <main className="min-h-screen bg-saffron-50/30">
+      <Header />
+      <section className="container-prose py-10">
+        <p className="text-xs text-ink-500">
+          <Link href="/" className="hover:text-ink-800">Home</Link> · Insights
+        </p>
+        <h1 className="mt-2 text-3xl font-bold text-ink-900 sm:text-4xl">
+          Insights
+        </h1>
+        <p className="mt-2 max-w-3xl text-base text-ink-700">
+          Honest essays on Indian education decisions. Every article cites the
+          official sources at the bottom — no hot takes, no marketing tone.
+          Anonymised platform aggregates will ship here as Shishya's user base
+          grows large enough to publish them responsibly.
+        </p>
+
+        {/* Tag chips */}
+        {tags.length > 0 && (
+          <div className="mt-6 flex flex-wrap gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">
+              Topics:
+            </span>
+            {tags.map((t) => (
+              <span
+                key={t}
+                className="rounded-full border border-ink-200 bg-white px-2 py-0.5 text-[10px] font-medium text-ink-700"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Article list */}
+        <ul className="mt-8 space-y-4">
+          {INSIGHTS_ARTICLES.map((a) => (
+            <li key={a.slug} className="rounded-lg border border-ink-200 bg-white p-5">
+              <div className="flex flex-wrap items-baseline gap-2">
+                <span className="rounded bg-saffron-100 px-2 py-0.5 text-[10px] font-medium text-saffron-800">
+                  {a.tags[0]}
+                </span>
+                <span className="text-[11px] text-ink-500">
+                  {a.publishedOn} · {a.readMins} min read · {a.author}
+                </span>
+              </div>
+              <h2 className="mt-2 text-lg font-semibold text-ink-900">
+                <Link href={`/insights/${a.slug}`} className="hover:text-saffron-800">
+                  {a.title}
+                </Link>
+              </h2>
+              <p className="mt-2 text-sm text-ink-700">{a.dek}</p>
+              <Link
+                href={`/insights/${a.slug}`}
+                className="mt-3 inline-flex text-xs text-saffron-700 underline"
+              >
+                Read more →
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        {/* Roadmap */}
+        <div className="mt-10 rounded-lg border border-ink-200 bg-white p-5 text-xs text-ink-700">
+          <p className="font-semibold text-ink-800">What's coming</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>Annual "State of Indian Education Decisions" report — published every March, free, with downloadable aggregate data</li>
+            <li>Topic-wise weakness aggregates across exam categories (anonymised attempt data, only when sample size is statistically responsible)</li>
+            <li>Year-on-year admission cycle deep-dives</li>
+            <li>Scholarship discovery + utilisation analytics</li>
+          </ul>
+        </div>
+
+        {/* Editorial policy */}
+        <div className="mt-6 rounded-lg border border-saffron-200 bg-saffron-50/30 p-5 text-xs text-ink-700">
+          <p className="font-semibold text-ink-800">Editorial policy</p>
+          <p className="mt-2">
+            Every article cites the sources it draws on. We don't invent stats.
+            We don't push affiliate products. We don't accept paid placements.
+            If you spot something factually wrong, the verification badge on
+            each claim lets you flag it — same trust mechanism we use across
+            the platform.
+          </p>
+        </div>
+      </section>
+    </main>
   );
 }

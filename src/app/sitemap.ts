@@ -10,6 +10,7 @@ import { BOARDS } from "@/lib/schooling-data";
 import { CLASS_SYLLABUS, allChapterPaths } from "@/lib/schooling-subjects";
 import { SCHOLARSHIPS } from "@/data/scholarships";
 import { WORLDWIDE_COUNTRIES, TEST_PREP } from "@/lib/worldwide-data";
+import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
 
 export const revalidate = 86_400; // 24h
 
@@ -174,6 +175,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.65,
   }));
 
+  // Insights editorial articles.
+  const insightUrls: MetadataRoute.Sitemap = INSIGHTS_ARTICLES.map((a) => ({
+    url: `${base}/insights/${a.slug}`,
+    lastModified: new Date(a.publishedOn),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
   // Public user profiles — only users who opted in via /me/settings.
   // Raw SQL avoids the typed client (Windows file-lock workaround for
   // newly-added User.handle / User.profilePublic fields).
@@ -225,6 +234,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...countryUrls,
     ...universityUrls,
     ...testPrepUrls,
+    ...insightUrls,
     ...userProfileUrls,
   ];
 }
