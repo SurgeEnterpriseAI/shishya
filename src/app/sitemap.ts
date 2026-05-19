@@ -82,6 +82,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/worldwide/loans",
     "/careers",
     "/schooling/streams",
+    "/jobs/govt-jobs",
+    "/jobs/internships",
+    "/jobs/resume",
+    "/jobs/skill-careers",
   ].map((path) => ({
     url: `${base}${path}`,
     lastModified: new Date(),
