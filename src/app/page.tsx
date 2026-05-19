@@ -1,23 +1,31 @@
-// / — the new Shishya hub. Replaces the previous exam-only landing
-// (that content moved to /exams). Positions Shishya as a lifecycle
-// platform for every Indian student: school → college → exams → PG →
-// jobs → study abroad → insights.
+// / — the Shishya hub.
 //
-// Deliberately light page: no auth wall, no DB-heavy reads beyond the
-// public exam count. Live counters fetch client-side via /api/live-counts.
-// The seven tiles are the only thing this page exists for.
+// Two render modes:
+//   * Anonymous or signed-out: hero + 7 lifecycle tiles (the generic
+//     marketing landing).
+//   * Signed-in + onboarding complete: PersonalisedHub at the top
+//     (Your prep · Your state · Your stage), then the 7 tiles below
+//     as a "browse everything" rail.
+//   * Signed-in + onboarding NOT complete: redirect to /onboarding.
+//
+// Live counters fetch client-side via /api/live-counts.
 
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { LiveCountersStrip } from "@/components/LiveCounters";
+import { PersonalisedHub } from "@/components/PersonalisedHub";
 import { prisma } from "@/lib/db/prisma";
 import { unstable_cache } from "next/cache";
 import { COLLEGES } from "@/lib/colleges-data";
 import { SCHOLARSHIPS } from "@/data/scholarships";
 import { BOARDS } from "@/lib/schooling-data";
+import { auth } from "@/lib/auth";
 
-export const revalidate = 300; // 5 min
+// Cannot cache statically — homepage now branches on auth + user profile.
+export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Shishya — Free AI prep for every stage of Indian education",
@@ -67,7 +75,56 @@ interface Tile {
   glyph: string; // single character or short symbol for the tile badge
 }
 
+interface UserProfileRow {
+  name: string | null;
+  onbStage: string | null;
+  onbState: string | null;
+  onbPrepCodes: string[];
+  onbCompletedAt: Date | null;
+}
+
+interface PrepExamRow {
+  code: string;
+  shortName: string;
+  name: string;
+  category: string;
+}
+
 export default async function HomeHub() {
+  // Auth-aware branching. Signed-out + non-onboarded users see the
+  // generic marketing landing; onboarded users see PersonalisedHub above
+  // the same tile rail.
+  const session = await auth().catch(() => null);
+  let personalised: {
+    profile: UserProfileRow;
+    prepExams: PrepExamRow[];
+  } | null = null;
+
+  if (session?.user?.id) {
+    const rows = await prisma.$queryRaw<UserProfileRow[]>`
+      SELECT "name", "onbStage", "onbState", "onbPrepCodes", "onbCompletedAt"
+      FROM "User" WHERE "id" = ${session.user.id} LIMIT 1
+    `.catch(() => [] as UserProfileRow[]);
+    const profile = rows[0];
+
+    // Signed-in but never finished onboarding → wizard.
+    if (profile && !profile.onbCompletedAt) {
+      redirect("/onboarding");
+    }
+
+    if (profile) {
+      const prepExams = profile.onbPrepCodes.length > 0
+        ? await prisma.$queryRaw<PrepExamRow[]>`
+            SELECT "code", "shortName", "name", "category"::text AS category
+            FROM "Exam"
+            WHERE "code" = ANY(${profile.onbPrepCodes}::text[]) AND "active" = TRUE
+            ORDER BY "candidatesPerYear" DESC NULLS LAST
+          `.catch(() => [] as PrepExamRow[])
+        : [];
+      personalised = { profile, prepExams };
+    }
+  }
+
   const exams = await examCount();
   const collegeCount = COLLEGES.length;
   const scholarshipCount = SCHOLARSHIPS.length;
@@ -147,17 +204,41 @@ export default async function HomeHub() {
         }}
       />
 
-      <section className="container-prose pt-12 pb-16 sm:pt-16 sm:pb-20">
-        {/* Hero */}
-        <div className="mx-auto max-w-3xl text-center">
-          <h1 className="bg-gradient-to-r from-ink-900 via-saffron-700 to-ink-900 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
-            Free AI prep for every stage of Indian education
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-ink-600 sm:text-lg">
-            Shishya helps Indian students at every stage — school, college,
-            entrance exams, jobs and beyond. Free, AI-tutored, in your language.
-          </p>
-        </div>
+      {/* Personalised hub renders ABOVE the marketing tiles for onboarded
+          users. Generic hero stays for everyone else. */}
+      {personalised ? (
+        <PersonalisedHub
+          stage={personalised.profile.onbStage}
+          state={personalised.profile.onbState}
+          prepCodes={personalised.profile.onbPrepCodes}
+          prepExams={personalised.prepExams}
+          displayName={personalised.profile.name}
+        />
+      ) : null}
+
+      <section id="all-sections" className="container-prose pt-12 pb-16 sm:pt-16 sm:pb-20">
+        {/* Hero — only when NOT showing PersonalisedHub */}
+        {!personalised && (
+          <div className="mx-auto max-w-3xl text-center">
+            <h1 className="bg-gradient-to-r from-ink-900 via-saffron-700 to-ink-900 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
+              Free AI prep for every stage of Indian education
+            </h1>
+            <p className="mx-auto mt-5 max-w-2xl text-base text-ink-600 sm:text-lg">
+              Shishya helps Indian students at every stage — school, college,
+              entrance exams, jobs and beyond. Free, AI-tutored, in your language.
+            </p>
+          </div>
+        )}
+
+        {/* Section heading when shown below PersonalisedHub */}
+        {personalised && (
+          <div className="mx-auto max-w-3xl">
+            <h2 className="text-base font-semibold text-ink-900">Browse everything</h2>
+            <p className="mt-1 text-xs text-ink-500">
+              All 7 Shishya sections. Use these when you want to explore beyond your pinned prep.
+            </p>
+          </div>
+        )}
 
         {/* Seven tiles */}
         <ul className="mx-auto mt-10 grid max-w-5xl gap-3 sm:grid-cols-2 lg:grid-cols-3">

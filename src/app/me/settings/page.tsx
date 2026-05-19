@@ -62,6 +62,24 @@ export default async function SettingsPage() {
           initialHandle={user.handle ?? ""}
         />
 
+        {/* Re-run onboarding — same 3-question wizard. Useful when the
+            user's stage changes (Class 12 → UG, UG → working, etc.) */}
+        <div className="mt-6 rounded-lg border border-ink-200 bg-white p-5">
+          <h2 className="text-base font-semibold text-ink-900">
+            Personalisation profile
+          </h2>
+          <p className="mt-1 text-xs text-ink-600">
+            Re-run the 3-question wizard if your stage, state, or prep
+            targets have changed. Powers the personalised homepage rails.
+          </p>
+          <Link
+            href="/onboarding?rerun=1"
+            className="mt-3 inline-flex rounded-md border border-saffron-500 px-3 py-1.5 text-xs font-semibold text-saffron-700 hover:bg-saffron-50"
+          >
+            Re-run onboarding wizard →
+          </Link>
+        </div>
+
         <div className="mt-10 rounded-lg border border-ink-200 bg-white p-5 text-sm text-ink-700">
           <h2 className="text-base font-semibold text-ink-900">
             What goes on the public page
