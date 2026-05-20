@@ -1,9 +1,15 @@
 // Reusable header with brand + lifecycle nav + auth state + language switcher.
 // Server Component — reads the session via NextAuth helper.
 //
-// The 7-item lifecycle nav (Schooling → Worldwide) positions Shishya
-// as a multi-stage education platform; collapses to a hamburger drawer
+// The lifecycle nav follows the actual student journey from school to
+// post-graduation to jobs to abroad; collapses to a hamburger drawer
 // below md so phones stay usable.
+//
+// Nav-item `group` is consumed by the mobile drawer to render section
+// dividers (LEARNING / NEXT STEPS / DISCOVER). `priority` controls
+// responsive collapse on the inline desktop nav — items with lower
+// priority disappear first as screen width shrinks. Core lifecycle
+// items (Schooling, Exams, Colleges, Scholarships) always stay visible.
 
 import Link from "next/link";
 import { auth } from "@/lib/auth";
@@ -13,16 +19,43 @@ import { BackLink } from "./BackLink";
 import { MobileNavToggle } from "./MobileNavToggle";
 import { NotificationBell } from "./NotificationBell";
 
-const PRIMARY_NAV: Array<{ href: string; label: string; short: string }> = [
-  { href: "/schooling",       label: "Schooling",               short: "School" },
-  { href: "/colleges",        label: "Colleges & Graduation",   short: "Colleges" },
-  { href: "/exams",           label: "Entrance & Govt Exams",   short: "Exams" },
-  { href: "/careers",         label: "Careers",                  short: "Careers" },
-  { href: "/post-graduation", label: "Post-Graduation",          short: "PG" },
-  { href: "/jobs",            label: "Jobs & Careers",           short: "Jobs" },
-  { href: "/worldwide",       label: "Worldwide",                short: "Worldwide" },
-  { href: "/insights",        label: "Insights",                 short: "Insights" },
+export type NavGroup = "learning" | "next-steps" | "discover";
+
+export interface NavItem {
+  href: string;
+  label: string;
+  short: string;
+  group: NavGroup;
+  /**
+   * Tailwind class controlling at which breakpoint the item BECOMES
+   * visible on the inline desktop nav. Lower priority = higher
+   * breakpoint = collapses to hamburger sooner.
+   *   "core"     — always visible at md+ (md:inline-flex)
+   *   "primary"  — visible at lg+
+   *   "extra"    — visible at xl+
+   */
+  visibility: "core" | "primary" | "extra";
+}
+
+const PRIMARY_NAV: NavItem[] = [
+  // Core lifecycle — visible from md+ always
+  { href: "/schooling",       label: "Schooling",             short: "School",     group: "learning",   visibility: "core" },
+  { href: "/exams",           label: "Entrance & Govt Exams", short: "Exams",      group: "learning",   visibility: "core" },
+  { href: "/colleges",        label: "Colleges",              short: "Colleges",   group: "learning",   visibility: "core" },
+  { href: "/scholarships",    label: "Scholarships",          short: "Scholarships", group: "learning", visibility: "core" },
+  // Next steps — visible from lg+
+  { href: "/post-graduation", label: "Post-Graduation",       short: "PG",         group: "next-steps", visibility: "primary" },
+  { href: "/jobs",            label: "Jobs & Careers",        short: "Jobs",       group: "next-steps", visibility: "primary" },
+  { href: "/worldwide",       label: "Worldwide",             short: "Worldwide",  group: "next-steps", visibility: "extra" },
+  // Discover — visible from xl+
+  { href: "/insights",        label: "Insights",              short: "Insights",   group: "discover",   visibility: "extra" },
 ];
+
+const VISIBILITY_CLASS: Record<NavItem["visibility"], string> = {
+  core:    "inline-flex",
+  primary: "hidden lg:inline-flex",
+  extra:   "hidden xl:inline-flex",
+};
 
 export async function Header({ admin = false }: { admin?: boolean }) {
   const [session, { locale, t }] = await Promise.all([auth(), getT()]);
@@ -54,7 +87,10 @@ export async function Header({ admin = false }: { admin?: boolean }) {
 
         {/* Middle: lifecycle nav. Hidden on small screens (the hamburger
             in the right cluster handles those). Admin pages hide the nav
-            entirely to keep the operator surface dense. */}
+            entirely to keep the operator surface dense. Items hide
+            progressively as width shrinks per their `visibility` flag —
+            core items (Schooling, Exams, Colleges, Scholarships) stay
+            visible from md+; secondary items show at lg+ and xl+. */}
         {!admin && (
           <nav
             className="hidden flex-1 justify-center md:flex"
@@ -62,7 +98,7 @@ export async function Header({ admin = false }: { admin?: boolean }) {
           >
             <ul className="flex items-center gap-0.5 overflow-x-auto text-xs">
               {PRIMARY_NAV.map((item) => (
-                <li key={item.href}>
+                <li key={item.href} className={VISIBILITY_CLASS[item.visibility]}>
                   <Link
                     href={item.href}
                     className="inline-flex items-center whitespace-nowrap rounded-md px-2.5 py-1.5 font-medium text-ink-700 hover:bg-saffron-50/50 hover:text-saffron-800"

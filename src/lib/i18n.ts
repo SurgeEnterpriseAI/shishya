@@ -276,7 +276,7 @@ export const dict = {
 
     // ── login
     "login.h1": "Sign in to start",
-    "login.body": "We use Google sign-in only. No passwords. No spam.",
+    "login.body": "Free guidance for every step of your journey — school to first job abroad. Google sign-in only. No passwords. No spam.",
     "login.continue": "Continue with Google",
     "login.smallprint":
       "By continuing, you agree to use this platform responsibly. Your email is the only thing we read from your Google account.",

@@ -7,7 +7,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Shishya — Every stage of your education. People who've been there.";
+export const alt = "Shishya — Every step of your journey, with people who've been there.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -71,8 +71,8 @@ export default async function Image() {
             maxWidth: "1000px",
           }}
         >
-          Every stage of your education.{" "}
-          <span style={{ color: "#c2410c" }}>People who&apos;ve been there.</span>
+          Every step of{" "}
+          <span style={{ color: "#c2410c" }}>your journey</span>
         </div>
         <div
           style={{
@@ -82,7 +82,7 @@ export default async function Image() {
             fontWeight: 500,
           }}
         >
-          school · college · exams · scholarships · careers · study abroad
+          school · exams · colleges · scholarships · jobs · study abroad
         </div>
         <div
           style={{
@@ -92,7 +92,7 @@ export default async function Image() {
             fontWeight: 500,
           }}
         >
-          free · verified · in your language
+          verified by people who&apos;ve been there · free · in your language
         </div>
       </div>
     ),

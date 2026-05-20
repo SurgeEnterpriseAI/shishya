@@ -2,15 +2,21 @@
 
 // Hamburger + slide-in drawer for the primary nav on small screens.
 // Hidden on md+ where the inline section row is visible.
+//
+// Renders nav items grouped by lifecycle stage with visible section
+// dividers (LEARNING / NEXT STEPS / DISCOVER) so mobile users can
+// mentally chunk the platform's scope at a glance.
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import type { NavGroup, NavItem } from "./Header";
 
-interface NavItem {
-  href: string;
-  label: string;
-  short: string;
-}
+const GROUP_ORDER: NavGroup[] = ["learning", "next-steps", "discover"];
+const GROUP_LABEL: Record<NavGroup, string> = {
+  "learning":   "LEARNING",
+  "next-steps": "NEXT STEPS",
+  "discover":   "DISCOVER",
+};
 
 export function MobileNavToggle({ items }: { items: NavItem[] }) {
   const [open, setOpen] = useState(false);
@@ -66,17 +72,30 @@ export function MobileNavToggle({ items }: { items: NavItem[] }) {
               </button>
             </div>
             <ul className="flex-1 overflow-y-auto p-2 text-sm">
-              {items.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={handleNavigate}
-                    className="block rounded-md px-3 py-3 text-ink-800 hover:bg-saffron-50/50 hover:text-saffron-800"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+              {GROUP_ORDER.map((group) => {
+                const groupItems = items.filter((i) => i.group === group);
+                if (groupItems.length === 0) return null;
+                return (
+                  <li key={group} className="mb-2">
+                    <p className="px-3 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider text-ink-500">
+                      {GROUP_LABEL[group]}
+                    </p>
+                    <ul>
+                      {groupItems.map((item) => (
+                        <li key={item.href}>
+                          <Link
+                            href={item.href}
+                            onClick={handleNavigate}
+                            className="block rounded-md px-3 py-2.5 text-ink-800 hover:bg-saffron-50/50 hover:text-saffron-800"
+                          >
+                            {item.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>

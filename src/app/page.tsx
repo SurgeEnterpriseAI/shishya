@@ -30,9 +30,9 @@ export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Shishya — Education guidance verified by students who've been there | Free, all of India",
+  title: "Shishya — Every step of your journey, with people who've been there | Free, all of India",
   description:
-    "Free education platform for Indian students at every stage — school, college, entrance exams, scholarships, careers, study abroad. Information verified by students and experts who have cleared the same path. Available in your language.",
+    "Free platform for Indian students — school, entrance exams, colleges, scholarships, government jobs, careers, study abroad. Information verified by students and experts who've cleared the same path. Available in your language.",
   alternates: { canonical: "https://shishya.in" },
   keywords: [
     "indian education guidance",
@@ -45,9 +45,9 @@ export const metadata: Metadata = {
     "Shishya",
   ],
   openGraph: {
-    title: "Shishya — Verified guidance for every stage of Indian education",
+    title: "Shishya — Every step of your journey, with people who've been there",
     description:
-      "From school to your first job — syllabi, exams, colleges, scholarships, careers. Verified by real students and experts who have been there. Free, in your language.",
+      "School, exams, colleges, scholarships, jobs, study abroad. Verified by students and experts who've cleared the same path. Free, in your language.",
     url: "https://shishya.in",
     siteName: "Shishya",
     locale: "en_IN",
@@ -235,12 +235,13 @@ export default async function HomeHub() {
         {!personalised && (
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="bg-gradient-to-r from-ink-900 via-saffron-700 to-ink-900 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
-              Every step of your education, with people who&apos;ve been there.
+              Every step of your journey — from your first class to your first job abroad.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base text-ink-600 sm:text-lg">
-              From Class 6 to your first job abroad — syllabus, exams, colleges,
-              scholarships, careers. Verified by students who cleared the same
-              path. Real handholding when you need it. Free, in your language.
+              Syllabus, exams, colleges, scholarships, government jobs, careers,
+              study abroad — verified by students and experts who&apos;ve cleared
+              the same path. Real handholding when you need it. Free, in your
+              language.
             </p>
           </div>
         )}
