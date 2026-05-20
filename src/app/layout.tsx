@@ -41,9 +41,9 @@ const notoDevanagari = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  title: "Shishya — Education guidance verified by students who've been there | Free, all of India",
+  title: "Shishya — Education, exams, jobs, overseas. Every step of your journey | Free, all of India",
   description:
-    "Free education platform for Indian students at every stage — school, college, entrance exams, scholarships, careers, study abroad. Information verified by students and experts who have cleared the same path. Available in your language.",
+    "Free platform for Indian students — education, exams, jobs, study or work abroad, and everything in between. Information verified by students and experts who've cleared the same path. Available in your language.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in"),
   // Belt-and-suspenders: even though Next App Router auto-detects
   // app/icon.svg + app/apple-icon.svg, declaring them in metadata
@@ -59,9 +59,9 @@ export const metadata: Metadata = {
     shortcut: ["/icon.svg"],
   },
   openGraph: {
-    title: "Shishya — Verified guidance for every stage of Indian education",
+    title: "Shishya — Education, exams, jobs, overseas. Every step of your journey",
     description:
-      "From school to your first job — syllabi, exams, colleges, scholarships, careers. Verified by real students and experts who have been there. Free, in your language.",
+      "Education, exams, jobs, overseas — everything Indian students need. Verified by students and experts who've cleared the same path. Free, in your language.",
     url: "https://shishya.in",
     siteName: "Shishya",
     locale: "en_IN",
@@ -72,9 +72,9 @@ export const metadata: Metadata = {
   // 1200x630 in Twitter/X timeline previews.
   twitter: {
     card: "summary_large_image",
-    title: "Shishya — Verified guidance for every stage of Indian education",
+    title: "Shishya — Education, exams, jobs, overseas. Every step of your journey",
     description:
-      "From school to your first job — syllabi, exams, colleges, scholarships, careers. Verified by real students and experts who have been there. Free, in your language.",
+      "Education, exams, jobs, overseas — everything Indian students need. Verified by students and experts who've cleared the same path. Free, in your language.",
     site: "@shishyaedu",
     creator: "@shishyaedu",
   },
@@ -120,7 +120,7 @@ const organizationJsonLd = {
   url: SITE_BASE,
   logo: `${SITE_BASE}/icon.svg`,
   description:
-    "Shishya is a free education guidance platform for Indian students at every stage — school, college, entrance exams, scholarships, careers, and study abroad. Information is verified by a community of students and domain experts who have cleared the same paths. Available in multiple Indian languages with no ads, no affiliate links, and no agent referrals.",
+    "Shishya is a free platform for Indian students covering education, entrance and government exams, colleges, scholarships, careers, jobs, and study or work abroad — every step of the journey. Information is verified by a community of students and domain experts who have cleared the same paths. Available in multiple Indian languages with no ads, no affiliate links, and no agent referrals.",
   sameAs: [
     "https://github.com/SurgeEnterpriseAI/shishya",
   ],
