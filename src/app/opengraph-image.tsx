@@ -7,7 +7,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Shishya — Education, exams, jobs, overseas. Every step of your journey.";
+export const alt = "Shishya — Free preparation for every Indian entrance exam. 163 exams covered.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -71,8 +71,8 @@ export default async function Image() {
             maxWidth: "1000px",
           }}
         >
-          Education, exams, jobs,{" "}
-          <span style={{ color: "#c2410c" }}>overseas.</span>
+          Every Indian entrance exam,{" "}
+          <span style={{ color: "#c2410c" }}>free.</span>
         </div>
         <div
           style={{
@@ -82,7 +82,7 @@ export default async function Image() {
             fontWeight: 500,
           }}
         >
-          Every step of your journey — with people who&apos;ve been there.
+          163 exams · mocks · previous year papers · study help
         </div>
         <div
           style={{
@@ -92,7 +92,7 @@ export default async function Image() {
             fontWeight: 500,
           }}
         >
-          verified · free · in your language
+          verified by students who cleared the same exam · in your language
         </div>
       </div>
     ),

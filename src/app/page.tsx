@@ -1,11 +1,15 @@
-// / — the Shishya hub.
+// / — the Shishya homepage.
+//
+// Exam-first surface (current strategy until 100k users). The lifecycle
+// section tiles (Schooling, Colleges, Scholarships, etc.) used to live
+// here but are intentionally removed — those routes stay live for SEO
+// but the homepage is dedicated to driving exam discovery + signup.
 //
 // Two render modes:
-//   * Anonymous or signed-out: hero + 7 lifecycle tiles (the generic
-//     marketing landing).
+//   * Anonymous or signed-out: hero + search + popular exams strip.
 //   * Signed-in + onboarding complete: PersonalisedHub at the top
-//     (Your prep · Your state · Your stage), then the 7 tiles below
-//     as a "browse everything" rail.
+//     (Your prep · Your state · Your stage), then the same exam
+//     discovery surface below for cross-exam browsing.
 //   * Signed-in + onboarding NOT complete: redirect to /onboarding.
 //
 // Live counters fetch client-side via /api/live-counts.
@@ -16,13 +20,9 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { LiveCountersStrip } from "@/components/LiveCounters";
 import { PersonalisedHub } from "@/components/PersonalisedHub";
+import { ExamSearchBox } from "@/app/exams/browse/ExamSearchBox";
 import { prisma } from "@/lib/db/prisma";
 import { unstable_cache } from "next/cache";
-import { COLLEGES } from "@/lib/colleges-data";
-import { SCHOLARSHIPS } from "@/data/scholarships";
-import { BOARDS } from "@/lib/schooling-data";
-import { WORLDWIDE_COUNTRIES } from "@/lib/worldwide-data";
-import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
 import { auth } from "@/lib/auth";
 
 // Cannot cache statically — homepage now branches on auth + user profile.
@@ -30,24 +30,24 @@ export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Shishya — Education, exams, jobs, overseas. Every step of your journey | Free, all of India",
+  title: "Shishya — Free preparation for every Indian entrance exam | 163 exams, in your language",
   description:
-    "Free platform for Indian students — education, exams, jobs, study or work abroad, and everything in between. Information verified by students and experts who've cleared the same path. Available in your language.",
+    "Free mock tests, previous year papers, adaptive practice and study help for 163 Indian entrance and government exams — JEE, NEET, UPSC, SSC, IBPS, RRB, GATE, CAT, all state PSCs, all TETs. Verified by students who cleared the same exam. In English, Hindi and 17 other Indian languages.",
   alternates: { canonical: "https://shishya.in" },
   keywords: [
-    "indian education guidance",
-    "verified by students India",
-    "community education platform India",
-    "study abroad India",
-    "indian student career guidance",
+    "free mock test India",
+    "entrance exams India",
     "government job preparation",
-    "scholarships India",
+    "SSC UPSC JEE NEET IBPS RRB",
+    "previous year papers",
+    "exam preparation in Hindi",
+    "Indian entrance exam prep",
     "Shishya",
   ],
   openGraph: {
-    title: "Shishya — Education, exams, jobs, overseas. Every step of your journey",
+    title: "Shishya — Free preparation for every Indian entrance exam",
     description:
-      "Education, exams, jobs, overseas — everything Indian students need. Verified by students and experts who've cleared the same path. Free, in your language.",
+      "163 exams. Adaptive mocks, previous year papers, study help. Verified by students who cleared the same exam. Free, in your language.",
     url: "https://shishya.in",
     siteName: "Shishya",
     locale: "en_IN",
@@ -55,8 +55,8 @@ export const metadata: Metadata = {
   },
 };
 
-// Real exam count drives one of the tiles. Cached 5 min so this page
-// stays static-fast under load.
+// Live count of active exams — drives the "X exams covered" copy.
+// Cached 5 min so this page stays static-fast under load.
 const examCount = unstable_cache(
   async () => {
     try {
@@ -69,14 +69,40 @@ const examCount = unstable_cache(
   { revalidate: 300, tags: ["exams"] },
 );
 
-interface Tile {
-  href: string;
-  title: string;
-  blurb: string;
-  meta: string;
-  status: "live" | "soon";
-  glyph: string; // single character or short symbol for the tile badge
+interface PopularExamRow {
+  code: string;
+  shortName: string;
+  name: string;
+  category: string;
+  candidatesPerYear: number | null;
 }
+
+// Top-N most-written exams. Drives the "Popular exams" strip on the
+// homepage so anonymous visitors get a one-click path to the biggest
+// exams without typing anything. Cached because the underlying ranking
+// barely changes day to day.
+const popularExams = unstable_cache(
+  async (): Promise<PopularExamRow[]> => {
+    try {
+      return await prisma.exam.findMany({
+        where: { active: true, candidatesPerYear: { not: null } },
+        orderBy: { candidatesPerYear: "desc" },
+        take: 8,
+        select: {
+          code: true,
+          shortName: true,
+          name: true,
+          category: true,
+          candidatesPerYear: true,
+        },
+      }) as unknown as PopularExamRow[];
+    } catch {
+      return [];
+    }
+  },
+  ["hub-popular-exams-v1"],
+  { revalidate: 600, tags: ["exams"] },
+);
 
 interface UserProfileRow {
   name: string | null;
@@ -94,9 +120,9 @@ interface PrepExamRow {
 }
 
 export default async function HomeHub() {
-  // Auth-aware branching. Signed-out + non-onboarded users see the
-  // generic marketing landing; onboarded users see PersonalisedHub above
-  // the same tile rail.
+  // Auth-aware branching. Signed-out users see hero + search + popular
+  // exams. Onboarded users see PersonalisedHub above the same exam
+  // discovery surface for cross-exam browsing.
   const session = await auth().catch(() => null);
   let personalised: {
     profile: UserProfileRow;
@@ -128,80 +154,15 @@ export default async function HomeHub() {
     }
   }
 
-  const exams = await examCount();
-  const collegeCount = COLLEGES.length;
-  const scholarshipCount = SCHOLARSHIPS.length;
-  const boardCount = BOARDS.length;
-  const countryCount = WORLDWIDE_COUNTRIES.length;
-  const uniCount = WORLDWIDE_COUNTRIES.reduce((s, c) => s + c.universities.length, 0);
-  const insightsCount = INSIGHTS_ARTICLES.length;
+  const [exams, popular] = await Promise.all([examCount(), popularExams()]);
 
-  const tiles: Tile[] = [
-    {
-      href: "/schooling",
-      title: "Schooling",
-      blurb: "Class 1–12, every board, every state. Syllabus, chapter notes, mastery quizzes.",
-      meta: `${boardCount} boards · CBSE · ICSE · IB · State Boards`,
-      status: "live",
-      glyph: "1",
-    },
-    {
-      href: "/colleges",
-      title: "Colleges & Graduation",
-      blurb: "UG admissions, cutoffs, scholarships, college info. NIRF + state colleges.",
-      meta: `${collegeCount} NIRF colleges · ${scholarshipCount}+ scholarships`,
-      status: "live",
-      glyph: "C",
-    },
-    {
-      href: "/exams",
-      title: "Entrance & Government Exams",
-      blurb: "Adaptive mock tests, previous year papers, study help. Free, every state covered.",
-      meta: `${exams} exams covered today`,
-      status: "live",
-      glyph: "E",
-    },
-    {
-      href: "/careers",
-      title: "Careers & Career Paths",
-      blurb: "What does each career actually pay? Path, qualifications, salary band, growth.",
-      meta: "Doctor · Engineer · IAS · CA · Designer · 40+ careers",
-      status: "live",
-      glyph: "K",
-    },
-    {
-      href: "/post-graduation",
-      title: "Post-Graduation",
-      blurb: "GATE, CAT, NEET-PG, UGC-NET, fellowships, research pathways. PG vs Job vs Abroad.",
-      meta: "PG entrances · Research · Fellowships",
-      status: "live",
-      glyph: "P",
-    },
-    {
-      href: "/jobs",
-      title: "Jobs & Careers",
-      blurb: "Government job tracking, internships, resume + interview prep, skill-based careers.",
-      meta: "Govt jobs · Private · Internships · Skill paths",
-      status: "live",
-      glyph: "J",
-    },
-    {
-      href: "/worldwide",
-      title: "Worldwide",
-      blurb: "Study abroad neutrally. Tuition, visa, post-study work, PR pathways, education loans.",
-      meta: `${countryCount} countries · ${uniCount} universities · IELTS/TOEFL/GRE/GMAT · Loans`,
-      status: "live",
-      glyph: "W",
-    },
-    {
-      href: "/insights",
-      title: "Insights",
-      blurb: "Honest essays on Indian education decisions. Sourced from NIRF, NTA, MEA, official data.",
-      meta: `${insightsCount} articles · annual report (Nov)`,
-      status: "live",
-      glyph: "I",
-    },
-  ];
+  function formatCandidates(n: number | null): string {
+    if (!n || n <= 0) return "";
+    if (n >= 10_000_000) return `${(n / 10_000_000).toFixed(1)} crore writers/yr`;
+    if (n >= 100_000) return `${(n / 100_000).toFixed(1)} lakh writers/yr`;
+    if (n >= 1000) return `${Math.round(n / 1000)}K writers/yr`;
+    return `${n} writers/yr`;
+  }
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
@@ -218,7 +179,7 @@ export default async function HomeHub() {
         }}
       />
 
-      {/* Personalised hub renders ABOVE the marketing tiles for onboarded
+      {/* Personalised hub renders ABOVE the marketing hero for onboarded
           users. Generic hero stays for everyone else. */}
       {personalised ? (
         <PersonalisedHub
@@ -230,18 +191,17 @@ export default async function HomeHub() {
         />
       ) : null}
 
-      <section id="all-sections" className="container-prose pt-12 pb-16 sm:pt-16 sm:pb-20">
+      <section id="exam-discovery" className="container-prose pt-12 pb-16 sm:pt-16 sm:pb-20">
         {/* Hero — only when NOT showing PersonalisedHub */}
         {!personalised && (
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="bg-gradient-to-r from-ink-900 via-saffron-700 to-ink-900 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
-              Education, exams, jobs, overseas — every step of your journey.
+              Free preparation for every Indian entrance exam.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base text-ink-600 sm:text-lg">
-              School syllabus, entrance exams, colleges, scholarships, government
-              jobs, careers, study or work abroad — verified by students and
-              experts who&apos;ve cleared the same path. Real handholding when
-              you need it. Free, in your language.
+              {exams} exams covered — adaptive mocks, previous year papers,
+              study help, syllabus. Verified by students who cleared the same
+              exam. In your language.
             </p>
           </div>
         )}
@@ -249,83 +209,78 @@ export default async function HomeHub() {
         {/* Section heading when shown below PersonalisedHub */}
         {personalised && (
           <div className="mx-auto max-w-3xl">
-            <h2 className="text-base font-semibold text-ink-900">Browse everything</h2>
+            <h2 className="text-base font-semibold text-ink-900">Browse all exams</h2>
             <p className="mt-1 text-xs text-ink-500">
-              All 7 Shishya sections. Use these when you want to explore beyond your pinned prep.
+              Search across all {exams} exams or jump into one of the most-written
+              below.
             </p>
           </div>
         )}
 
-        {/* Seven tiles */}
-        <ul className="mx-auto mt-10 grid max-w-5xl gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {tiles.map((tile) => (
-            <li key={tile.href}>
-              <Link
-                href={tile.href}
-                className="group relative block h-full rounded-xl border border-ink-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-lg"
-              >
-                {/* Status pill */}
-                <span
-                  className={
-                    tile.status === "live"
-                      ? "absolute right-4 top-4 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-800"
-                      : "absolute right-4 top-4 rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-medium text-ink-600"
-                  }
-                >
-                  {tile.status === "live" ? "Live" : "Coming soon"}
-                </span>
-                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-saffron-500 text-base font-bold text-white">
-                  {tile.glyph}
-                </div>
-                <h2 className="mt-3 text-base font-semibold text-ink-900">
-                  {tile.title}
-                </h2>
-                <p className="mt-1 text-sm text-ink-700">{tile.blurb}</p>
-                <p className="mt-3 text-[11px] uppercase tracking-wider text-ink-500">
-                  {tile.meta}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        {/* Career Map CTA — strong navigation entrance for unsure visitors */}
-        <div className="mx-auto mt-10 max-w-3xl rounded-xl border border-saffron-300 bg-saffron-50/50 p-5">
-          <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <div className="max-w-2xl">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-800">
-                New here? Start with this
-              </p>
-              <h3 className="mt-1 text-lg font-semibold text-ink-900">
-                Career Map — Class 9 to mid-career in one rail
-              </h3>
-              <p className="mt-1 text-xs text-ink-700">
-                Pick your stage (Class 10 / Class 12 / UG / working) — see what
-                comes next + which Shishya section helps with each step.
-              </p>
-            </div>
-            <Link
-              href="/career-map"
-              className="rounded-md bg-saffron-500 px-4 py-2 text-sm font-semibold text-white hover:bg-saffron-600"
-            >
-              Open Career Map →
+        {/* Big search box — straight into /exams with the query
+            pre-applied. Works without JS via the form's GET fallback. */}
+        <div className="mx-auto mt-8 max-w-2xl">
+          <ExamSearchBox placeholder="Search any exam — SSC CGL, NEET, UPSC, TNPSC, JEE…" />
+          <p className="mt-2 text-center text-[11px] text-ink-500">
+            Or{" "}
+            <Link href="/exams" className="text-saffron-700 underline hover:text-saffron-800">
+              browse all {exams} exams →
             </Link>
-          </div>
+          </p>
         </div>
 
+        {/* Popular exams — top 8 by candidates/yr, one-click into any of
+            them. Drives the biggest funnel: SSC CGL, NEET, JEE, UPSC… */}
+        {popular.length > 0 && (
+          <>
+            <h2 className="mx-auto mt-14 max-w-5xl text-base font-semibold text-ink-900">
+              Most-written exams in India
+            </h2>
+            <p className="mx-auto mt-1 max-w-5xl text-xs text-ink-500">
+              One click into the exams Indian students write the most. Free
+              mocks + previous year papers ready inside.
+            </p>
+            <ul className="mx-auto mt-5 grid max-w-5xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {popular.map((e) => (
+                <li key={e.code}>
+                  <Link
+                    href={`/exams/${e.code}`}
+                    className="group block h-full rounded-xl border border-ink-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-lg"
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">
+                      {e.category.replace(/_/g, " ")}
+                    </p>
+                    <h3 className="mt-1 text-base font-semibold text-ink-900">{e.shortName}</h3>
+                    <p className="mt-1 line-clamp-2 text-xs text-ink-600">{e.name}</p>
+                    {e.candidatesPerYear && (
+                      <p className="mt-3 text-[11px] uppercase tracking-wider text-ink-500">
+                        {formatCandidates(e.candidatesPerYear)}
+                      </p>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="mx-auto mt-6 max-w-5xl text-right">
+              <Link href="/exams" className="text-sm font-medium text-saffron-700 hover:text-saffron-800">
+                See all {exams} exams →
+              </Link>
+            </div>
+          </>
+        )}
+
         {/* Trust strip — visible verification commitment on first scroll. */}
-        <div className="mx-auto mt-12 max-w-3xl rounded-xl border border-emerald-200 bg-emerald-50/40 p-5 text-sm text-ink-700">
+        <div className="mx-auto mt-14 max-w-3xl rounded-xl border border-emerald-200 bg-emerald-50/40 p-5 text-sm text-ink-700">
           <h3 className="text-base font-semibold text-ink-900">
             Every fact carries a verification badge
           </h3>
           <p className="mt-2">
-            We don't give you confident answers without showing our work.
-            Every exam date, college rank, scholarship eligibility and
-            visa rule on Shishya shows a visible badge telling you
-            exactly how it's been verified — AI-checked against the
-            official source, community-confirmed, or flagged for review.
-            Click any badge anywhere on the site to see the full
-            verification history.{" "}
+            We don&apos;t give you confident answers without showing our work.
+            Every exam date, syllabus item, eligibility rule and cut-off on
+            Shishya shows a visible badge telling you how it&apos;s been
+            verified — auto-checked against the official source, then
+            confirmed by students who cleared the same exam. Click any badge
+            to see the full verification history.{" "}
             <Link href="/verification" className="text-saffron-700 underline">
               How verification works →
             </Link>
@@ -336,17 +291,17 @@ export default async function HomeHub() {
         <div className="mx-auto mt-12 max-w-3xl rounded-xl border border-ink-200 bg-white p-6 text-sm text-ink-700">
           <h3 className="text-base font-semibold text-ink-900">Why Shishya is free</h3>
           <p className="mt-2">
-            Coaching costs in India have outpaced what most families can
-            afford. AI finally makes high-quality, personalised prep
-            economically possible for everyone. Shishya is funded by Surge
-            Enterprise AI's separate consulting business, not by ads, not by
-            paywalls and not by selling student data. Every section is
-            free, with sources cited on every factual claim.
+            Coaching for India&apos;s entrance and government exams costs
+            ₹50k–₹3 lakh — what most families can&apos;t afford. Shishya is
+            funded by Surge Enterprise AI&apos;s separate consulting business,
+            not by ads, not by paywalls and not by selling student data. Every
+            exam, every mock, every previous year paper is free, with the
+            official source cited on every factual claim.
           </p>
           <p className="mt-3 text-[12px] text-ink-500">
-            No affiliate links. No referral fees. No invented rankings —
-            only NIRF, QS, THE and similar established systems, fully
-            attributed.
+            No affiliate links. No referral fees. No coaching upsells. Just
+            mocks, practice and study help — verified by students who cleared
+            the same exam.
           </p>
         </div>
       </section>

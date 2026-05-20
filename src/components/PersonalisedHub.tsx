@@ -1,16 +1,19 @@
 // PersonalisedHub — the homepage rail rendered for signed-in users
 // who have completed the 3-question onboarding wizard.
 //
-// Surfaces three lanes, in this order:
+// Exam-focused while we drive the platform to 100k users. Two lanes:
 //   1. Your prep exams — direct links to /exams/[code] for each
-//      onbPrepCode + a quick "open AI tutor" CTA.
-//   2. Your state — state-specific exam aggregator + scholarship match
-//      (deep link to /scholarships/match with state pre-filled).
-//   3. Your stage — schooling/college/PG/jobs primary surface based
-//      on onbStage.
+//      onbPrepCode + an "Ask Shishya" CTA.
+//   2. Your state — one card linking to the state-specific entrance
+//      exam aggregator.
 //
-// Pure server component. Reads from the User row + Exam/Scholarship
-// catalogues already loaded by the parent. No client JS needed.
+// Lifecycle lanes (stage-based schooling/colleges/PG/jobs) and the
+// "all sections" footer used to live here but have been hidden along
+// with the homepage section tiles. Those routes still work — just not
+// surfaced from the primary nav.
+//
+// Pure server component. Reads from the User row + Exam catalogue
+// already loaded by the parent. No client JS needed.
 
 import Link from "next/link";
 import { STATES } from "@/lib/state-info";
@@ -171,80 +174,45 @@ export function PersonalisedHub({
         </div>
       )}
 
-      {/* Lane 2 — Your state */}
+      {/* Lane 2 — Your state's exams. Single card because the rest of
+          the per-state surfaces (colleges, scholarships) are part of
+          the lifecycle sections we're not promoting right now. */}
       {stateInfo && (
         <div className="mt-12">
           <h2 className="text-base font-semibold text-ink-900">
             Pinned for {stateInfo.name}
           </h2>
           <p className="mt-1 text-xs text-ink-500">
-            State-specific exams, board info, and scholarships you can apply to.
+            State-specific entrance and government exams for {stateInfo.name}.
           </p>
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <li>
-              <Link
-                href={`/exams/state/${stateInfo.code.toLowerCase()}`}
-                className="block h-full rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400"
-              >
-                <p className="text-sm font-semibold text-ink-900">{stateInfo.name} entrance exams</p>
-                <p className="mt-1 text-xs text-ink-600">
-                  State CETs, government recruitment, and other {stateInfo.name}-specific exams.
-                </p>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={`/colleges/state/${stateInfo.code.toLowerCase()}`}
-                className="block h-full rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400"
-              >
-                <p className="text-sm font-semibold text-ink-900">{stateInfo.name} colleges</p>
-                <p className="mt-1 text-xs text-ink-600">
-                  Top colleges in {stateInfo.name} — NIRF-ranked + state directory.
-                </p>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/scholarships/match"
-                className="block h-full rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400"
-              >
-                <p className="text-sm font-semibold text-ink-900">Find matching scholarships</p>
-                <p className="mt-1 text-xs text-ink-600">
-                  5-question wizard — surfaces only what you actually qualify for.
-                </p>
-              </Link>
-            </li>
-          </ul>
+          <div className="mt-4 max-w-lg">
+            <Link
+              href={`/exams/state/${stateInfo.code.toLowerCase()}`}
+              className="block rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400"
+            >
+              <p className="text-sm font-semibold text-ink-900">{stateInfo.name} entrance exams</p>
+              <p className="mt-1 text-xs text-ink-600">
+                State CETs, PSC, TET, Police, Polytechnic and other{" "}
+                {stateInfo.name}-specific exams.
+              </p>
+            </Link>
+          </div>
         </div>
       )}
 
-      {/* Lane 3 — Your stage */}
-      <div className="mt-12">
-        <h2 className="text-base font-semibold text-ink-900">{stageInfo.title}</h2>
-        <p className="mt-1 text-xs text-ink-500">{stageInfo.blurb}</p>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Link
-            href={stageInfo.primaryHref}
-            className="rounded-md bg-saffron-500 px-4 py-2 text-sm font-semibold text-white hover:bg-saffron-600"
-          >
-            {stageInfo.primaryLabel}
-          </Link>
-          {stageInfo.secondary.map((s) => (
-            <Link
-              key={s.href}
-              href={s.href}
-              className="rounded-md border border-ink-300 bg-white px-3 py-2 text-xs text-ink-700 hover:border-saffron-400"
-            >
-              {s.label}
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* "Show me everything" — never hide the generic 7-tile rail */}
-      <div className="mt-12 text-center text-xs text-ink-500">
-        Looking for something else? <Link href="#all-sections" className="text-saffron-700 underline">See all sections</Link>
-      </div>
+      {/* Stage hint — kept as a single subtle line so we don't bury
+          the user's exam focus, but stage context is still surfaced.
+          Acknowledges the stage without sending them to non-exam
+          sections we've deprioritised. */}
+      <p className="mt-12 text-center text-xs text-ink-500">
+        {stageInfo.title} · {stageInfo.blurb}
+      </p>
+      <p className="mt-2 text-center text-xs text-ink-500">
+        Want to browse all exams?{" "}
+        <Link href="/exams" className="text-saffron-700 underline">
+          See all exams →
+        </Link>
+      </p>
     </section>
   );
 }
