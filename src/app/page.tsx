@@ -1,33 +1,34 @@
 // / — the Shishya homepage.
 //
-// Exam-first surface (current strategy until 100k users). The lifecycle
-// section tiles (Schooling, Colleges, Scholarships, etc.) used to live
-// here but are intentionally removed — those routes stay live for SEO
-// but the homepage is dedicated to driving exam discovery + signup.
+// Exam-first surface (current strategy until 100k users). Pure marketing
+// landing — anonymous content for everyone. No auth check, no per-user
+// branching here. Signed-in users get their personalised view at
+// /dashboard (which the header CTAs link to).
 //
-// Two render modes:
-//   * Anonymous or signed-out: hero + search + popular exams strip.
-//   * Signed-in + onboarding complete: PersonalisedHub at the top
-//     (Your prep · Your state · Your stage), then the same exam
-//     discovery surface below for cross-exam browsing.
-//   * Signed-in + onboarding NOT complete: redirect to /onboarding.
+// Why static instead of dynamic: every homepage request used to hit a
+// Vercel serverless function (~400ms TTFB) because we awaited auth()
+// inline, which Next.js treats as a dynamic-rendering signal. With the
+// auth check removed the page can be rendered once and served by
+// Vercel's edge CDN for every subsequent visit (~50ms TTFB), with a
+// 60-second background revalidation to pick up new exam counts and
+// popular-exam ordering.
 //
-// Live counters fetch client-side via /api/live-counts.
+// Live counters fetch client-side via /api/live-counts so they remain
+// fresh even though the surrounding HTML is cached.
 
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { LiveCountersStrip } from "@/components/LiveCounters";
-import { PersonalisedHub } from "@/components/PersonalisedHub";
 import { ExamSearchBox } from "@/app/exams/browse/ExamSearchBox";
 import { prisma } from "@/lib/db/prisma";
 import { unstable_cache } from "next/cache";
-import { auth } from "@/lib/auth";
 
-// Cannot cache statically — homepage now branches on auth + user profile.
-export const revalidate = 0;
-export const dynamic = "force-dynamic";
+// Re-generate the homepage HTML at most once per minute. Between
+// regenerations Vercel serves cached HTML from its edge CDN, so the
+// vast majority of visits never invoke a serverless function — TTFB
+// drops from ~400ms (function execution) to ~50ms (edge cache hit).
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Shishya — Free preparation for every Indian entrance exam | 163 exams, in your language",
@@ -104,74 +105,24 @@ const popularExams = unstable_cache(
   { revalidate: 600, tags: ["exams"] },
 );
 
-interface UserProfileRow {
-  name: string | null;
-  onbStage: string | null;
-  onbState: string | null;
-  onbPrepCodes: string[];
-  onbCompletedAt: Date | null;
-}
-
-interface PrepExamRow {
-  code: string;
-  shortName: string;
-  name: string;
-  category: string;
+function formatCandidates(n: number | null): string {
+  if (!n || n <= 0) return "";
+  if (n >= 10_000_000) return `${(n / 10_000_000).toFixed(1)} crore writers/yr`;
+  if (n >= 100_000) return `${(n / 100_000).toFixed(1)} lakh writers/yr`;
+  if (n >= 1000) return `${Math.round(n / 1000)}K writers/yr`;
+  return `${n} writers/yr`;
 }
 
 export default async function HomeHub() {
-  // Auth-aware branching. Signed-out users see hero + search + popular
-  // exams. Onboarded users see PersonalisedHub above the same exam
-  // discovery surface for cross-exam browsing.
+  // No auth check, no user profile lookup — this keeps the page in the
+  // static branch so Vercel can serve it from the edge CDN. Signed-in
+  // users see the same marketing landing; their personalised view lives
+  // at /dashboard, which the header CTAs link to.
   //
-  // Fire auth() in parallel with the two cached count/popular queries
-  // so cold-cache loads aren't penalised by sequential round-trips.
-  // The user-profile + prep-exams chain stays sequential for signed-in
-  // users (each step depends on the previous) but runs concurrently
-  // with examCount + popularExams, which are completely independent.
-  const [session, exams, popular] = await Promise.all([
-    auth().catch(() => null),
-    examCount(),
-    popularExams(),
-  ]);
-
-  let personalised: {
-    profile: UserProfileRow;
-    prepExams: PrepExamRow[];
-  } | null = null;
-
-  if (session?.user?.id) {
-    const rows = await prisma.$queryRaw<UserProfileRow[]>`
-      SELECT "name", "onbStage", "onbState", "onbPrepCodes", "onbCompletedAt"
-      FROM "User" WHERE "id" = ${session.user.id} LIMIT 1
-    `.catch(() => [] as UserProfileRow[]);
-    const profile = rows[0];
-
-    // Signed-in but never finished onboarding → wizard.
-    if (profile && !profile.onbCompletedAt) {
-      redirect("/onboarding");
-    }
-
-    if (profile) {
-      const prepExams = profile.onbPrepCodes.length > 0
-        ? await prisma.$queryRaw<PrepExamRow[]>`
-            SELECT "code", "shortName", "name", "category"::text AS category
-            FROM "Exam"
-            WHERE "code" = ANY(${profile.onbPrepCodes}::text[]) AND "active" = TRUE
-            ORDER BY "candidatesPerYear" DESC NULLS LAST
-          `.catch(() => [] as PrepExamRow[])
-        : [];
-      personalised = { profile, prepExams };
-    }
-  }
-
-  function formatCandidates(n: number | null): string {
-    if (!n || n <= 0) return "";
-    if (n >= 10_000_000) return `${(n / 10_000_000).toFixed(1)} crore writers/yr`;
-    if (n >= 100_000) return `${(n / 100_000).toFixed(1)} lakh writers/yr`;
-    if (n >= 1000) return `${Math.round(n / 1000)}K writers/yr`;
-    return `${n} writers/yr`;
-  }
+  // Both data fetches below are wrapped in unstable_cache so background
+  // ISR regeneration (every 60s) reuses the cached query results when
+  // they're still fresh.
+  const [exams, popular] = await Promise.all([examCount(), popularExams()]);
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
@@ -188,43 +139,19 @@ export default async function HomeHub() {
         }}
       />
 
-      {/* Personalised hub renders ABOVE the marketing hero for onboarded
-          users. Generic hero stays for everyone else. */}
-      {personalised ? (
-        <PersonalisedHub
-          stage={personalised.profile.onbStage}
-          state={personalised.profile.onbState}
-          prepCodes={personalised.profile.onbPrepCodes}
-          prepExams={personalised.prepExams}
-          displayName={personalised.profile.name}
-        />
-      ) : null}
-
       <section id="exam-discovery" className="container-prose pt-12 pb-16 sm:pt-16 sm:pb-20">
-        {/* Hero — only when NOT showing PersonalisedHub */}
-        {!personalised && (
-          <div className="mx-auto max-w-3xl text-center">
-            <h1 className="bg-gradient-to-r from-ink-900 via-saffron-700 to-ink-900 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
-              Free preparation for every Indian entrance exam.
-            </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-base text-ink-600 sm:text-lg">
-              {exams} exams covered — adaptive mocks, previous year papers,
-              study help, syllabus. Verified by students who cleared the same
-              exam. In your language.
-            </p>
-          </div>
-        )}
-
-        {/* Section heading when shown below PersonalisedHub */}
-        {personalised && (
-          <div className="mx-auto max-w-3xl">
-            <h2 className="text-base font-semibold text-ink-900">Browse all exams</h2>
-            <p className="mt-1 text-xs text-ink-500">
-              Search across all {exams} exams or jump into one of the most-written
-              below.
-            </p>
-          </div>
-        )}
+        {/* Hero — same content for everyone. Signed-in users get their
+            personalised view at /dashboard via the header. */}
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 className="bg-gradient-to-r from-ink-900 via-saffron-700 to-ink-900 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
+            Free preparation for every Indian entrance exam.
+          </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-base text-ink-600 sm:text-lg">
+            {exams} exams covered — adaptive mocks, previous year papers,
+            study help, syllabus. Verified by students who cleared the same
+            exam. In your language.
+          </p>
+        </div>
 
         {/* Big search box — straight into /exams with the query
             pre-applied. Works without JS via the form's GET fallback. */}

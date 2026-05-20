@@ -1,8 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_Devanagari } from "next/font/google";
-import { getLocale } from "@/lib/i18n-server";
-import { isRtl } from "@/lib/i18n";
-import { auth } from "@/lib/auth";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 import { Suspense } from "react";
@@ -126,22 +123,25 @@ const organizationJsonLd = {
   ],
 };
 
-export default async function RootLayout({
+// Root layout is intentionally synchronous and free of cookies()/auth()
+// calls so individual pages can opt into static rendering (and edge
+// caching) when they don't have their own dynamic dependencies. The
+// `<html lang>` defaults to "en" — the LangSwitcher client component
+// updates the rendered locale post-hydration based on the saved cookie.
+//
+// FeedbackWidget is always rendered; it has its own internal auth-aware
+// gate that hides the widget for anonymous visitors. Slight cost (a few
+// KB of client JS for anonymous visitors) is more than paid back by
+// making every page edge-cacheable.
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const locale = await getLocale();
-  const dir = isRtl(locale) ? "rtl" : "ltr";
-  // Cheap auth check — the FeedbackWidget itself short-circuits on
-  // signed-out users, but doing the check here lets us avoid sending
-  // any of the widget's client JS to anonymous visitors at all.
-  const session = await auth();
-  const signedIn = !!session?.user?.id;
   return (
     <html
-      lang={locale}
-      dir={dir}
+      lang="en"
+      dir="ltr"
       className={`${inter.variable} ${notoDevanagari.variable}`}
     >
       <body className="font-multi">
@@ -156,7 +156,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
         {children}
-        {signedIn && <FeedbackWidget signedIn />}
+        <FeedbackWidget />
         {/* First-party analytics tracker (no 3rd-party network calls).
             Wrapped in Suspense because useSearchParams() must be inside
             a Suspense boundary in App Router. */}

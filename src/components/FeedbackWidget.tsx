@@ -57,13 +57,35 @@ function contextLabel(path: string): string {
   return path;
 }
 
-export function FeedbackWidget({ signedIn }: { signedIn: boolean }) {
+export function FeedbackWidget({ signedIn: signedInProp }: { signedIn?: boolean } = {}) {
   const pathname = usePathname() ?? "/";
+
+  // Session resolution: when the layout renders us without a prop (the
+  // new edge-cacheable layout path) we fetch the session client-side
+  // here so the widget can self-gate. Pages that still resolve the
+  // session server-side can pass `signedIn` as a prop to skip the
+  // client fetch.
+  const [resolvedSignedIn, setResolvedSignedIn] = useState<boolean>(
+    signedInProp ?? false,
+  );
+  useEffect(() => {
+    if (typeof signedInProp === "boolean") return; // caller resolved it
+    let alive = true;
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (alive) setResolvedSignedIn(Boolean(data?.user?.id));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [signedInProp]);
 
   // Route-based hide rules. Inside an in-progress mock we never want
   // to distract; admin routes belong to operators not students.
   const hidden =
-    !signedIn ||
+    !resolvedSignedIn ||
     pathname === "/" ||
     pathname === "/login" ||
     pathname === "/logout" ||
