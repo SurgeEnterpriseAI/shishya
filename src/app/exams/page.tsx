@@ -687,10 +687,9 @@ function Footer() {
     <footer className="border-t border-ink-200 bg-white py-10">
       <div className="container-prose space-y-4">
         <p className="max-w-3xl text-center text-xs text-ink-600 sm:text-left">
-          Shishya is a free, community-verified platform for Indian students at
-          every step of their journey — school, exams, colleges, scholarships,
-          jobs, study abroad. No ads. No agents. No affiliates. Education is a
-          right.
+          Shishya is a free, community-verified platform for Indian students —
+          education, exams, jobs, overseas, and everything in between. No ads.
+          No agents. No affiliates. Education is a right.
         </p>
         <div className="flex flex-col items-center justify-between gap-3 text-xs text-ink-500 sm:flex-row">
           <p>© {new Date().getFullYear()} Shishya · Built by Surge Software Solutions</p>
