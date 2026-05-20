@@ -23,12 +23,19 @@ import {
 import { findQuiz } from "@/lib/schooling-quizzes";
 import { ChapterQuizPlayer } from "@/components/ChapterQuizPlayer";
 
-interface PageParams { slug: string; n: string; subject: string; chapter: string }
+interface PageParams { slug: string; classSlug: string; subject: string; chapter: string }
+
+// See sibling page.tsx for why the class number is parsed from `class-N`
+// instead of being a separate dynamic segment.
+function parseClassSlug(classSlug: string): number {
+  if (!classSlug.startsWith("class-")) return NaN;
+  return parseInt(classSlug.slice("class-".length), 10);
+}
 
 export async function generateStaticParams() {
   return allChapterPaths().map((p) => ({
     slug: p.boardSlug,
-    n: String(p.classNum),
+    classSlug: `class-${p.classNum}`,
     subject: p.subjectSlug,
     chapter: p.chapterSlug,
   }));
@@ -37,8 +44,8 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: { params: Promise<PageParams> }): Promise<Metadata> {
-  const { slug, n, subject, chapter } = await params;
-  const classNum = parseInt(n, 10);
+  const { slug, classSlug, subject, chapter } = await params;
+  const classNum = parseClassSlug(classSlug);
   const board = findBoard(slug);
   const s = findSubject(slug, classNum, subject);
   const ch = findChapter(slug, classNum, subject, chapter);
@@ -75,8 +82,8 @@ export async function generateMetadata({
 export default async function ChapterPage({
   params,
 }: { params: Promise<PageParams> }) {
-  const { slug, n, subject, chapter } = await params;
-  const classNum = parseInt(n, 10);
+  const { slug, classSlug, subject, chapter } = await params;
+  const classNum = parseClassSlug(classSlug);
   const board = findBoard(slug);
   const syllabus = findClassSyllabus(slug, classNum);
   const s = findSubject(slug, classNum, subject);

@@ -17,7 +17,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
-import { findBoard, BOARDS } from "@/lib/schooling-data";
+import { findBoard } from "@/lib/schooling-data";
 import {
   findClassSyllabus,
   ncertClassUrl,
@@ -25,14 +25,24 @@ import {
 } from "@/lib/schooling-subjects";
 import { stateInfo } from "@/lib/state-info";
 
+// Parse the "class-N" segment into a number. The folder used to be
+// `class-[n]` which Next.js App Router accepts as a literal-match folder
+// name but does NOT extract `n` as a param — so every class page 404'd.
+// We use `[classSlug]` now and split the prefix here. URLs stay the same
+// (/schooling/cbse/class-10) — only the routing wiring changed.
+function parseClassSlug(classSlug: string): number {
+  if (!classSlug.startsWith("class-")) return NaN;
+  return parseInt(classSlug.slice("class-".length), 10);
+}
+
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string; n: string }>;
+  params: Promise<{ slug: string; classSlug: string }>;
 }): Promise<Metadata> {
-  const { slug, n } = await params;
+  const { slug, classSlug } = await params;
   const board = findBoard(slug);
-  const classNum = parseInt(n, 10);
+  const classNum = parseClassSlug(classSlug);
   if (!board || Number.isNaN(classNum) || !board.classes.includes(classNum)) {
     return { title: "Not found — Shishya" };
   }
@@ -69,11 +79,11 @@ export async function generateMetadata({
 export default async function ClassPage({
   params,
 }: {
-  params: Promise<{ slug: string; n: string }>;
+  params: Promise<{ slug: string; classSlug: string }>;
 }) {
-  const { slug, n } = await params;
+  const { slug, classSlug } = await params;
   const board = findBoard(slug);
-  const classNum = parseInt(n, 10);
+  const classNum = parseClassSlug(classSlug);
   if (!board || Number.isNaN(classNum) || !board.classes.includes(classNum)) {
     notFound();
   }

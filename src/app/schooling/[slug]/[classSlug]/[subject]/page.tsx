@@ -14,14 +14,21 @@ import { Header } from "@/components/Header";
 import { findBoard } from "@/lib/schooling-data";
 import { findSubject, findClassSyllabus } from "@/lib/schooling-subjects";
 
-interface PageParams { slug: string; n: string; subject: string }
+interface PageParams { slug: string; classSlug: string; subject: string }
+
+// See sibling page.tsx for why we parse the class number from the slug
+// instead of taking it as a separate dynamic segment.
+function parseClassSlug(classSlug: string): number {
+  if (!classSlug.startsWith("class-")) return NaN;
+  return parseInt(classSlug.slice("class-".length), 10);
+}
 
 export async function generateMetadata({
   params,
 }: { params: Promise<PageParams> }): Promise<Metadata> {
-  const { slug, n, subject } = await params;
+  const { slug, classSlug, subject } = await params;
   const board = findBoard(slug);
-  const classNum = parseInt(n, 10);
+  const classNum = parseClassSlug(classSlug);
   const s = findSubject(slug, classNum, subject);
   if (!board || !s) return { title: "Not found — Shishya" };
   const year = new Date().getUTCFullYear();
@@ -43,9 +50,9 @@ export async function generateMetadata({
 export default async function SubjectPage({
   params,
 }: { params: Promise<PageParams> }) {
-  const { slug, n, subject } = await params;
+  const { slug, classSlug, subject } = await params;
   const board = findBoard(slug);
-  const classNum = parseInt(n, 10);
+  const classNum = parseClassSlug(classSlug);
   const syllabus = findClassSyllabus(slug, classNum);
   const s = findSubject(slug, classNum, subject);
   if (!board || !syllabus || !s) notFound();
