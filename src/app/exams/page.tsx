@@ -112,70 +112,83 @@ const loadExams = unstable_cache(loadExamsRaw, ["home-exams-v1"], {
   tags: ["exams"],
 });
 
-export default async function HomePage() {
-  const { locale, t } = await getT();
-  // Resilient session lookup: if env vars (DATABASE_URL / NEXTAUTH_*) are
-  // missing or the DB is unreachable, the landing page must still render.
-  // We just treat the user as logged-out in that case.
-  let signedIn = false;
+// Initial discussion threads for the right-side sidebar. Cached for 60s
+// so visitor traffic doesn't pound the DB on every landing — the
+// thread feed is also live-refreshed client-side so 60s of staleness
+// is invisible to users.
+async function loadInitialThreadsRaw(): Promise<ThreadItem[]> {
   try {
-    const session = await auth();
-    signedIn = Boolean(session?.user);
-  } catch {
-    signedIn = false;
-  }
-
-  const exams = await loadExams();
-  const stateInfo = buildStateInfo(exams);
-  const featuredSections = buildCuratedSections(exams, t);
-
-  // Initial discussion threads for the right-side sidebar. Resilient: if the
-  // DB isn't reachable yet (env vars missing), the sidebar falls back to an
-  // empty list and the rest of the landing still renders.
-  let initialThreads: ThreadItem[] = [];
-  try {
-    initialThreads = await prisma.discussion.findMany({
+    const rows = await prisma.discussion.findMany({
       orderBy: [{ pinned: "desc" }, { lastActivityAt: "desc" }],
       take: 12,
       include: { exam: { select: { shortName: true } } },
-    }).then((rows) =>
-      rows.map((r) => ({
-        id: r.id,
-        title: r.title,
-        examShort: r.exam?.shortName ?? null,
-        authorName: r.authorName,
-        messageCount: r.messageCount,
-        pinned: r.pinned,
-        lastActivityAt: r.lastActivityAt.toISOString(),
-      }))
-    );
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      examShort: r.exam?.shortName ?? null,
+      authorName: r.authorName,
+      messageCount: r.messageCount,
+      pinned: r.pinned,
+      lastActivityAt: r.lastActivityAt.toISOString(),
+    }));
   } catch {
-    initialThreads = [];
+    return [];
   }
+}
+const loadInitialThreads = unstable_cache(
+  loadInitialThreadsRaw,
+  ["home-discussions-v1"],
+  { revalidate: 60, tags: ["discussions"] },
+);
 
-  // Upcoming exam events for the left-side calendar rail. Resilient: if
-  // the DB hiccups the rail just renders empty + the rest of the page
-  // still works.
-  let upcomingEvents: UpcomingEvent[] = [];
+// Upcoming exam events for the left-side calendar rail. Cached for 5
+// min — exam-date entries are admin-edited rarely, much less often
+// than 5min. Date filter is computed lazily inside the cached function
+// so we don't bust the cache on every render due to `new Date()`.
+async function loadUpcomingEventsRaw(): Promise<UpcomingEvent[]> {
   try {
-    upcomingEvents = await prisma.examImportantDate.findMany({
+    const rows = await prisma.examImportantDate.findMany({
       where: { date: { gte: new Date() }, exam: { active: true } },
       orderBy: { date: "asc" },
       take: 30,
       include: { exam: { select: { code: true, shortName: true } } },
-    }).then((rows) =>
-      rows.map((r) => ({
-        id: r.id,
-        examCode: r.exam.code,
-        examShort: r.exam.shortName,
-        date: r.date.toISOString(),
-        label: r.label,
-        isExamDay: r.isExamDay,
-      }))
-    );
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      examCode: r.exam.code,
+      examShort: r.exam.shortName,
+      date: r.date.toISOString(),
+      label: r.label,
+      isExamDay: r.isExamDay,
+    }));
   } catch {
-    upcomingEvents = [];
+    return [];
   }
+}
+const loadUpcomingEvents = unstable_cache(
+  loadUpcomingEventsRaw,
+  ["home-upcoming-v1"],
+  { revalidate: 300, tags: ["exam-dates"] },
+);
+
+export default async function HomePage() {
+  const { locale, t } = await getT();
+
+  // Everything below runs in parallel — previously these 4 awaits were
+  // sequential which added ~3s on cold-cache loads (Neon serverless
+  // round-trip × 4). Now they're a single Promise.all so the page
+  // returns in roughly max-of-the-four instead of sum-of-the-four.
+  // Each one is wrapped so a single failure doesn't tank the others.
+  const [signedIn, exams, initialThreads, upcomingEvents] = await Promise.all([
+    auth().then((s) => Boolean(s?.user)).catch(() => false),
+    loadExams(),
+    loadInitialThreads(),
+    loadUpcomingEvents(),
+  ]);
+
+  const stateInfo = buildStateInfo(exams);
+  const featuredSections = buildCuratedSections(exams, t);
 
   const catLabels: Record<string, string> = {
     GOVT_JOBS:      t("land.cat.GOVT_JOBS"),

@@ -123,7 +123,18 @@ export default async function HomeHub() {
   // Auth-aware branching. Signed-out users see hero + search + popular
   // exams. Onboarded users see PersonalisedHub above the same exam
   // discovery surface for cross-exam browsing.
-  const session = await auth().catch(() => null);
+  //
+  // Fire auth() in parallel with the two cached count/popular queries
+  // so cold-cache loads aren't penalised by sequential round-trips.
+  // The user-profile + prep-exams chain stays sequential for signed-in
+  // users (each step depends on the previous) but runs concurrently
+  // with examCount + popularExams, which are completely independent.
+  const [session, exams, popular] = await Promise.all([
+    auth().catch(() => null),
+    examCount(),
+    popularExams(),
+  ]);
+
   let personalised: {
     profile: UserProfileRow;
     prepExams: PrepExamRow[];
@@ -153,8 +164,6 @@ export default async function HomeHub() {
       personalised = { profile, prepExams };
     }
   }
-
-  const [exams, popular] = await Promise.all([examCount(), popularExams()]);
 
   function formatCandidates(n: number | null): string {
     if (!n || n <= 0) return "";
