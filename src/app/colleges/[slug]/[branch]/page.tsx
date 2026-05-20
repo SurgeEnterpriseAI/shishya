@@ -238,7 +238,7 @@ export default async function BranchPage({
               <Link href={`/exams/${detail.entryExamCode}`} className="text-saffron-700 underline">
                 {detail.entryExamCode.replace(/_/g, " ")}
               </Link>{" "}
-              — open the exam page for syllabus, PYQ, mocks, and the AI tutor.
+              — open the exam page for syllabus, PYQ, mocks, and study help.
             </p>
           </div>
         )}

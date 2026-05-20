@@ -91,7 +91,7 @@ export function StartFullMockButton({
             </p>
             <p className="mt-2 text-sm text-ink-700">
               If you&apos;ve never taken a {examShortName} mock here before, try a quick
-              10-question warmup first — Shishya AI picks your weakest topic,
+              10-question warmup first — Shishya picks your weakest topic,
               adapts to you, and gets you ready for the full mock.
             </p>
 

@@ -57,7 +57,7 @@ export function TwoPathsCard() {
         <li>
           <span className="font-medium text-ink-900">2.</span>{" "}
           New to an exam? Take a diagnostic mock to see where you stand
-          versus the rankers&apos; cut-offs. Then ask Shishya AI to help
+          versus the rankers&apos; cut-offs. Then Ask Shishya to help
           you close the gap.
         </li>
       </ol>

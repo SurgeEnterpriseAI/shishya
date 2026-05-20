@@ -280,8 +280,7 @@ export function SectionVerificationSummary({
       <div>
         <p className="font-medium">{STATUS_LABELS[status]}</p>
         <p className="mt-0.5 opacity-80">
-          {source ? `Sourced from ${source}. ` : ""}
-          {refreshCadence ? `Re-verified ${refreshCadence}. ` : ""}
+          {source ? `Auto-verified against ${source}${refreshCadence ? ` ${refreshCadence}` : ""}, then confirmed by students and experts who've checked the source themselves. ` : ""}
           <Link href="/verification" className="underline">How this works →</Link>
         </p>
       </div>

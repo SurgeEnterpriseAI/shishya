@@ -40,7 +40,7 @@ export async function generateMetadata({
   const title = `${board.shortName} Class ${classNum} — Syllabus, Subjects, Free Practice ${year} | Shishya`;
   const description =
     `${board.shortName} Class ${classNum} students — every subject from the official ` +
-    `syllabus in one place. Free practice, AI tutor, chapter notes sourced from ` +
+    `syllabus in one place. Free practice, study help, chapter notes sourced from ` +
     `NCERT / board materials. No paywall.`;
   return {
     title,
@@ -257,9 +257,9 @@ function ClassWithSubjects({
         <p className="mt-3 font-semibold text-ink-800">What's still being built per chapter</p>
         <ul className="mt-2 list-disc space-y-0.5 pl-5">
           <li>Concept summary (Overview / Key Concepts / Formulas / Worked Examples / Common Mistakes / Quick Reference)</li>
-          <li>10-20 AI-generated practice questions per chapter</li>
+          <li>10-20 practice questions per chapter, drawn from official sources</li>
           <li>Mastery quiz with adaptive difficulty</li>
-          <li>AI tutor scoped to the chapter for doubts</li>
+          <li>Ask Shishya scoped to the chapter for doubts</li>
           <li>Per-user progress tracking + weak-area diagnostic</li>
         </ul>
         <p className="mt-3 text-[11px] text-ink-500">
@@ -328,8 +328,9 @@ function ClassStub({
         <li className="rounded-lg border border-ink-200 bg-white p-4">
           <p className="text-sm font-semibold text-ink-900">Concept summaries per chapter</p>
           <p className="mt-1 text-xs text-ink-600">
-            AI-generated, NCERT-aligned: Overview · Key Concepts · Formulas ·
-            Worked Examples · Common Mistakes · Quick Reference.
+            Notes prepared from official sources, NCERT-aligned: Overview · Key
+            Concepts · Formulas · Worked Examples · Common Mistakes · Quick
+            Reference.
           </p>
         </li>
         <li className="rounded-lg border border-ink-200 bg-white p-4">

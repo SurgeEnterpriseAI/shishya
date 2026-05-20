@@ -108,7 +108,11 @@ export default async function DiscussionPage({
         <ol className="mt-6 space-y-3">
           {thread.messages.map((m, i) => {
             const isYou = myUserId && m.authorId === myUserId;
-            const isShishya = m.authorName === "Shishya AI";
+            // Backwards-compat: handle both the legacy "Shishya AI" author
+            // name (still in older DB rows) and the new "Shishya" — render
+            // both as the simple "Shishya" brand.
+            const isShishya = m.authorName === "Shishya AI" || m.authorName === "Shishya";
+            const displayName = isShishya ? "Shishya" : (m.authorName ?? "Anonymous");
             return (
               <li
                 key={m.id}
@@ -122,7 +126,7 @@ export default async function DiscussionPage({
               >
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="flex flex-wrap items-baseline gap-1.5 text-sm font-semibold text-ink-900">
-                    <span>{m.authorName ?? "Anonymous"}</span>
+                    <span>{displayName}</span>
                     {m.authorId && <UserBadge level={badgeByAuthor.get(m.authorId)} compact />}
                     {isYou && <span className="text-xs font-normal text-emerald-700">({youLabel})</span>}
                     {isShishya && <span className="text-xs font-normal text-saffron-700">🤖</span>}

@@ -136,7 +136,7 @@ export function PersonalisedHub({
         <div className="mt-12">
           <h2 className="text-base font-semibold text-ink-900">Your prep exams</h2>
           <p className="mt-1 text-xs text-ink-500">
-            Pinned from your onboarding profile. Each opens to topics + mocks + AI tutor.
+            Pinned from your onboarding profile. Each opens to topics, mocks, and Ask Shishya.
           </p>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {prepExams.map((e) => (
@@ -159,7 +159,7 @@ export function PersonalisedHub({
               href={`/chat${prepExams.length > 0 ? `?examCode=${prepExams[0].code}` : ""}`}
               className="rounded-md bg-saffron-500 px-3 py-1.5 font-semibold text-white hover:bg-saffron-600"
             >
-              Open AI tutor →
+              Ask Shishya →
             </Link>
             <Link
               href="/dashboard"

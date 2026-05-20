@@ -12,7 +12,7 @@ import { INSIGHTS_ARTICLES, allTags } from "@/data/insights-articles";
 export const metadata: Metadata = {
   title: "Insights — Honest Essays on Indian Education Decisions | Shishya",
   description:
-    "Public-good editorial on Indian education: JEE vs NEET by the numbers, NIRF rank vs employment, scholarship discovery gap, study abroad shifts, AI in tutoring. Hand-authored, sourced.",
+    "Public-good editorial on Indian education: JEE vs NEET by the numbers, NIRF rank vs employment, scholarship discovery gap, study abroad shifts, tier-3 college outcomes. Hand-authored, sourced.",
   alternates: { canonical: "https://shishya.in/insights" },
   keywords: [
     "Indian education insights",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     "NIRF rank meaning",
     "study abroad India 2024",
     "scholarship India guide",
-    "AI tutoring India",
+    "education research India",
   ],
   openGraph: {
     title: "Insights on Shishya",
@@ -43,13 +43,14 @@ export default function InsightsLanding() {
           <Link href="/" className="hover:text-ink-800">Home</Link> · Insights
         </p>
         <h1 className="mt-2 text-3xl font-bold text-ink-900 sm:text-4xl">
-          Insights
+          Real data on Indian education decisions
         </h1>
         <p className="mt-2 max-w-3xl text-base text-ink-700">
-          Honest essays on Indian education decisions. Every article cites the
-          official sources at the bottom — no hot takes, no marketing tone.
-          Anonymised platform aggregates will ship here as Shishya's user base
-          grows large enough to publish them responsibly.
+          What students actually do, where they actually go, what actually
+          works. Honest analysis, no spin. Every article cites official sources
+          at the bottom — no hot takes, no marketing tone. Anonymised platform
+          aggregates will ship here as Shishya&apos;s user base grows large
+          enough to publish them responsibly.
         </p>
 
         {/* Tag chips */}

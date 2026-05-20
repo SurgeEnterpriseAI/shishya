@@ -37,11 +37,11 @@ export async function generateMetadata({
     }),
   ]);
   if (!exam || !topic) return { title: "Topic not found — Shishya" };
-  const title = `${topic.name} for ${exam.shortName} — Notes, Practice & AI Tutor | Shishya`;
+  const title = `${topic.name} for ${exam.shortName} — Notes, Practice & Study Help | Shishya`;
   const description =
     `Free ${topic.name} study notes for ${exam.shortName} preparation. ` +
-    `Concepts, formulas, common mistakes, practice questions, and Shishya AI ` +
-    `to tutor you on this topic. ${topic.description ?? ""}`.slice(0, 300);
+    `Concepts, formulas, common mistakes, practice questions, and Ask Shishya ` +
+    `when you need help on this topic. ${topic.description ?? ""}`.slice(0, 300);
   const url = `https://shishya.in/exams/${exam.code}/topics/${topic.code}`;
   return {
     title,

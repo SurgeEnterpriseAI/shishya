@@ -24,7 +24,7 @@ export const revalidate = 300; // 5 min — the underlying list barely changes
 export const metadata: Metadata = {
   title: "All Entrance Exams in India — Search by State, Exam, Language | Shishya",
   description:
-    "Search and filter 163 entrance exams across India by state, exam name, language, or category. Free mock tests, previous year papers, AI tutor. SSC, UPSC, IBPS, RRB, NEET, JEE, GATE, CAT, all state PSCs, all TETs, all Police exams.",
+    "Search and filter 163 entrance exams across India by state, exam name, language, or category. Free mock tests, previous year papers, study help — verified by students who cleared the same path. SSC, UPSC, IBPS, RRB, NEET, JEE, GATE, CAT, all state PSCs, all TETs, all Police exams.",
   alternates: { canonical: "https://shishya.in/exams/browse" },
   keywords: [
     "entrance exams india",
@@ -37,13 +37,13 @@ export const metadata: Metadata = {
     "SSC RRB NEET JEE UPSC preparation",
     "state level exams india",
     "olympiad mock tests",
-    "Shishya AI tutor",
+    "Shishya verified prep",
     "government job exam list",
     "banking exam list",
     "teaching exam list",
   ],
   openGraph: {
-    title: "Search All Entrance Exams in India — Free Mocks & AI Tutor",
+    title: "Search All Entrance Exams in India — Free Mocks & Study Help",
     description: "163 entrance exams. Filter by state, language, or category. Free.",
     url: "https://shishya.in/exams/browse",
     siteName: "Shishya",
@@ -260,7 +260,7 @@ export default async function ExamsCatalogPage({
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
           {totalActive} entrance exams. Filter by state, exam name, language or
           category. Every exam is free with adaptive mock tests, previous year
-          papers and Shishya AI as your personal tutor.
+          papers and Ask Shishya for study help when you need it.
         </p>
 
         {/* Search box */}

@@ -120,14 +120,15 @@ export default async function SchoolingLanding({
           <Link href="/" className="hover:text-ink-800">Home</Link> · Schooling
         </p>
         <h1 className="mt-1 text-3xl font-bold text-ink-900">
-          Indian school boards — Class 1 to 12
+          Every class, every board, in your language
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-ink-700">
-          {BOARDS.length} school boards covered — national (CBSE, ICSE, NIOS),
-          major state boards from Maharashtra to Tamil Nadu, plus
-          international (IB, Cambridge). Every entry links to the board's
-          own syllabus and sample-paper pages. We don't republish PDFs —
-          you always get the current version straight from the board.
+          Syllabi, chapters, practice, and study help — verified against
+          official board sources. For students and parents. {BOARDS.length}{" "}
+          school boards covered — national (CBSE, ICSE, NIOS), major state
+          boards from Maharashtra to Tamil Nadu, plus international (IB,
+          Cambridge). Every entry links to the board&apos;s own syllabus and
+          sample-paper pages — current version, straight from the board.
         </p>
 
         {/* Stream selection CTA — the most consequential Class 10 decision */}
