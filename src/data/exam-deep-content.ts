@@ -1532,6 +1532,573 @@ export const EXAM_DEEP_CONTENT: ExamDeepContent[] = [
       },
     ],
   },
+
+  // ════════════════════════════════════════════════════════════════
+  // BATCH 3 — State Public Service Commissions
+  // ════════════════════════════════════════════════════════════════
+
+  // ─── MPSC Rajyaseva — Maharashtra State Service Exam ────────────
+  {
+    examCode: "MH_MPSC_RAJYASEVA",
+    oneLiner:
+      "Maharashtra PSC State Service Examination — gateway to Deputy Collector (DyC), Deputy Superintendent of Police (DySP), Tahsildar, BDO and 25+ other Class A/B posts in the Maharashtra government.",
+    eligibility: {
+      ageMin: 19,
+      ageMax: 38,
+      ageNotes:
+        "19-38 for General. Upper age relaxed: OBC +3, SC/ST/NT/SBC +5, PwBD +10, ex-servicemen 3 yrs after service deduction. Reference date is 1 April of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university. Final-year graduating students can apply for Prelims but must produce the degree before Mains.",
+      attempts:
+        "General: 6 attempts. OBC: 9 attempts. SC/ST/PwBD: unlimited within upper age.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Marathi-language proficiency is required for certain interview-stage posts. Hindi knowledge is also assessed for some posts.",
+        "Domicile of Maharashtra preferred for reservation benefits; open-merit posts are open to all Indians.",
+      ],
+      source: "https://mpsc.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "400 marks (Paper 1 + Paper 2 combined; Paper 2 / CSAT is qualifying at 33%)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~218 – 224 (open merit, post-wise)" },
+          { year: 2023, category: "OBC", cutoff: "~210 – 218" },
+          { year: 2023, category: "EWS", cutoff: "~206 – 215" },
+          { year: 2023, category: "SC", cutoff: "~196 – 206" },
+          { year: 2023, category: "ST", cutoff: "~188 – 200" },
+          { year: 2022, category: "General", cutoff: "~225 – 232" },
+          { year: 2022, category: "OBC", cutoff: "~218 – 226" },
+        ],
+        notes:
+          "MPSC publishes post-wise cutoffs (DyC, DySP, Tahsildar each different). Range shown spans those posts.",
+        source: "https://mpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Deputy Collector / DySP / DCT (Class I — entry)",
+        payLevel: "Pay Level S-20 (Maharashtra)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹93,000 – ₹1,05,000 (X-class city, after probation)",
+        perks: [
+          "Government accommodation (entitled type)",
+          "Official vehicle for DyC/DySP posts",
+          "Medical for self + family",
+          "Maharashtra State NPS",
+          "LTC",
+        ],
+        source: "https://mpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Tahsildar / Block Development Officer / Class II posts",
+        payLevel: "Pay Level S-17 (Maharashtra)",
+        basicPay: "₹47,600",
+        grossPayApprox: "₹74,000 – ₹85,000",
+        source: "https://mpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── TNPSC Group 1 — Tamil Nadu top-tier ────────────────────────
+  {
+    examCode: "TN_TNPSC_GROUP1",
+    oneLiner:
+      "Tamil Nadu PSC Group 1 services — Deputy Collector, Deputy Superintendent of Police (DySP), Assistant Commissioner (Commercial Taxes) and 30+ other state services posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 32,
+      ageNotes:
+        "21-32 for General (no upper limit for SC/ST/SCA/MBC/BC). Reference date is 1 July of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      educationDetails: [
+        "Knowledge of Tamil is mandatory — verified via the Tamil Eligibility Test, the qualifying paper.",
+        "Final-year graduating students can apply.",
+      ],
+      attempts:
+        "Unlimited attempts (within upper age cap for General; no upper age for SC/ST/SCA/MBC/BC).",
+      nationality: "Indian citizen.",
+      source: "https://www.tnpsc.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "300 marks (Paper 1 — GS)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~195 – 205" },
+          { year: 2023, category: "BC", cutoff: "~185 – 195" },
+          { year: 2023, category: "MBC / DC", cutoff: "~175 – 188" },
+          { year: 2023, category: "SC", cutoff: "~160 – 175" },
+          { year: 2023, category: "ST", cutoff: "~140 – 160" },
+        ],
+        notes:
+          "TNPSC publishes minimum qualifying marks rather than precise cutoffs in some cycles; ranges here are inferred from notifications + topper interviews.",
+        source: "https://www.tnpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Deputy Collector (TN State Service)",
+        payLevel: "Pay Level 22 (Tamil Nadu)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹93,000 – ₹1,05,000 (Chennai, after probation)",
+        perks: ["Government quarters", "Vehicle", "Medical", "TN State NPS", "LTC"],
+        source: "https://www.tnpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── TNPSC Group 2 — Tamil Nadu mid-tier ────────────────────────
+  {
+    examCode: "TN_TNPSC_GROUP2",
+    oneLiner:
+      "Tamil Nadu PSC Group 2 services — Assistant Section Officer, Sub-Registrar, Inspector (various departments), Assistant Inspector of Labour and other Class II/III posts.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 32,
+      ageNotes:
+        "18-32 for General (no upper limit for SC/ST/SCA/MBC/BC). 21-32 for posts requiring graduation. Reference date is 1 July of the exam year.",
+      education:
+        "Bachelor's degree for Group 2 (interview-mandatory posts). Class 12 / equivalent for Group 2A (non-interview posts) in some recruitment cycles.",
+      attempts: "Unlimited attempts (within upper age cap for General; unlimited for reserved categories).",
+      nationality: "Indian citizen.",
+      source: "https://www.tnpsc.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains, Group 2 interview post)",
+        outOf: "300 marks",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~180 – 195" },
+          { year: 2023, category: "BC", cutoff: "~170 – 185" },
+          { year: 2023, category: "MBC", cutoff: "~160 – 175" },
+          { year: 2023, category: "SC", cutoff: "~145 – 160" },
+          { year: 2023, category: "ST", cutoff: "~125 – 145" },
+        ],
+        source: "https://www.tnpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Assistant Section Officer / Sub-Registrar / Inspector (Group 2)",
+        payLevel: "Pay Level 16 – 19 (Tamil Nadu)",
+        basicPay: "₹36,400 – ₹47,600",
+        grossPayApprox: "₹55,000 – ₹75,000 (Chennai)",
+        source: "https://www.tnpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── UPPSC PCS — UP Provincial Civil Services ───────────────────
+  {
+    examCode: "UP_UPPSC_PCS",
+    oneLiner:
+      "Uttar Pradesh PCS — Combined State Civil Services Examination for Deputy Collector (SDM), DySP, Block Development Officer, Treasury Officer and 30+ other state-cadre posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 40,
+      ageNotes:
+        "21-40 for General (raised from 35 to 40 in 2022). OBC: 21-43. SC/ST: 21-45. PwBD: +15 years. Reference date is 1 July of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university. Final-year graduating students can apply for Prelims.",
+      attempts: "No formal attempt limit — limited only by upper age cap.",
+      nationality: "Indian citizen.",
+      source: "https://uppsc.up.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims GS Paper 1 cutoff (qualifying for Mains)",
+        outOf: "200 marks (Paper 1 — Paper 2 / CSAT is qualifying at 33%)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "118.5" },
+          { year: 2023, category: "OBC", cutoff: "117.5" },
+          { year: 2023, category: "EWS", cutoff: "115.5" },
+          { year: 2023, category: "SC", cutoff: "108.5" },
+          { year: 2023, category: "ST", cutoff: "95.5" },
+          { year: 2022, category: "General", cutoff: "127.5" },
+          { year: 2022, category: "OBC", cutoff: "125.5" },
+          { year: 2022, category: "SC", cutoff: "115.5" },
+          { year: 2022, category: "ST", cutoff: "98.0" },
+        ],
+        source: "https://uppsc.up.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Deputy Collector / SDM (UP PCS)",
+        payLevel: "Pay Level 10 (UP)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000 (Lucknow/metro, after probation)",
+        perks: ["Government accommodation (entitled)", "Official vehicle", "Medical", "UP State NPS", "LTC"],
+        source: "https://uppsc.up.nic.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Block Development Officer / Treasury Officer (PCS)",
+        payLevel: "Pay Level 9",
+        basicPay: "₹53,100",
+        grossPayApprox: "₹78,000 – ₹88,000",
+        source: "https://uppsc.up.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── BPSC CCE — Bihar PSC Combined Competitive Exam ─────────────
+  {
+    examCode: "BR_BPSC_CCE",
+    oneLiner:
+      "Bihar PSC Combined Competitive Examination — recruitment to SDM, DySP, BDO, Revenue Officer and other Class A/B services across Bihar.",
+    eligibility: {
+      ageMin: 22,
+      ageMax: 37,
+      ageNotes:
+        "22-37 for General Male (upper limit relaxed to 40 for General Female / BC / EWS, 42 for BC/EBC Female, 42 for SC/ST). Reference date varies — see latest notification.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Domicile of Bihar required for state-specific posts (most posts).",
+        "Hindi knowledge tested at the interview stage for certain posts.",
+      ],
+      source: "https://www.bpsc.bih.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "150 marks",
+        rows: [
+          { year: 2024, category: "General — 70th BPSC", cutoff: "~85 – 92" },
+          { year: 2024, category: "BC", cutoff: "~80 – 88" },
+          { year: 2024, category: "EBC", cutoff: "~78 – 85" },
+          { year: 2024, category: "SC", cutoff: "~65 – 75" },
+          { year: 2024, category: "ST", cutoff: "~60 – 70" },
+          { year: 2023, category: "General — 68th/69th BPSC", cutoff: "~95 – 100" },
+          { year: 2023, category: "BC", cutoff: "~88 – 95" },
+        ],
+        source: "https://www.bpsc.bih.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "SDM / DCLR / Senior Class A officer",
+        payLevel: "Pay Level 9 (Bihar)",
+        basicPay: "₹53,100",
+        grossPayApprox: "₹78,000 – ₹90,000 (Patna, after probation)",
+        source: "https://www.bpsc.bih.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── RPSC RAS — Rajasthan Administrative Service ────────────────
+  {
+    examCode: "RJ_RPSC_RAS",
+    oneLiner:
+      "Rajasthan PSC Combined State + Subordinate Services Examination — RAS (Rajasthan Administrative Service), RPS (Police Service), RFS (Forest Service) and 25+ other state-cadre posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 40,
+      ageNotes:
+        "21-40 for General. Age relaxation: OBC/SC/ST/Women — varies (max 45 for state govt employees, women, SC/ST). Reference date is 1 January of the year next to exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: ["Devnagri (Hindi) proficiency required at the Mains stage."],
+      source: "https://rpsc.rajasthan.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2023, category: "General", cutoff: "78 – 82" },
+          { year: 2023, category: "OBC", cutoff: "76 – 80" },
+          { year: 2023, category: "EWS", cutoff: "74 – 78" },
+          { year: 2023, category: "SC", cutoff: "68 – 72" },
+          { year: 2023, category: "ST", cutoff: "62 – 68" },
+          { year: 2021, category: "General", cutoff: "87.8" },
+          { year: 2021, category: "OBC", cutoff: "85.3" },
+        ],
+        source: "https://rpsc.rajasthan.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "RAS — Sub-Divisional Officer (Revenue) / Tehsildar (entry)",
+        payLevel: "Pay Level L-14 (Rajasthan)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000 (Jaipur, after probation)",
+        source: "https://rpsc.rajasthan.gov.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "RPS (Rajasthan Police Service) / DySP",
+        payLevel: "Pay Level L-14",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000",
+        source: "https://rpsc.rajasthan.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── WBCS — West Bengal Civil Service ───────────────────────────
+  {
+    examCode: "WB_WBCS",
+    oneLiner:
+      "West Bengal Civil Service (Executive) and allied services — gateway to WBCS (Exe), WBPS (West Bengal Police Service), Joint BDO, Sub-Registrar and other Class A/B posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 36,
+      ageNotes:
+        "21-36 for Group A & B (General). 21-39 for Group C and D (lower-level). Upper age relaxed: OBC +3, SC/ST +5, PwBD +8, Ex-servicemen 3 years after service deduction.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      educationDetails: [
+        "Bengali language paper (compulsory Bengali) at Mains stage. Candidates who studied Bengali up to Class 8 or beyond are eligible.",
+        "Candidates not having Bengali as a language paper at school can apply but must qualify the Bengali Mains paper.",
+      ],
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      source: "https://wbpsc.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains, Group A & B)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~143 – 150" },
+          { year: 2023, category: "OBC-A", cutoff: "~135 – 142" },
+          { year: 2023, category: "OBC-B", cutoff: "~132 – 140" },
+          { year: 2023, category: "SC", cutoff: "~115 – 125" },
+          { year: 2023, category: "ST", cutoff: "~105 – 115" },
+        ],
+        source: "https://wbpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "WBCS Group A — Deputy Magistrate / SDO (entry)",
+        payLevel: "Pay Level 16 (West Bengal ROPA 2019)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000 (Kolkata, after probation)",
+        source: "https://wbpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "WBCS Group B — Deputy Superintendent of Police (WBPS)",
+        payLevel: "Pay Level 16",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000",
+        source: "https://wbpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── KPSC KAS — Karnataka Administrative Service ────────────────
+  {
+    examCode: "KA_KPSC_KAS",
+    oneLiner:
+      "Karnataka PSC Gazetted Probationers (KAS) — Group A and B services across Karnataka government: Asst Commissioner, Tahsildar, Asst Director, Treasury Officer.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 35,
+      ageNotes:
+        "21-35 for General. OBC: +3, SC/ST/Category-1: +5. Reference date varies.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Kannada knowledge is mandatory — verified via a qualifying Kannada language paper at Mains.",
+      ],
+      source: "https://kpsc.kar.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains, KAS Group A)",
+        outOf: "400 marks (Paper 1 + Paper 2 combined; Paper 2 / CSAT qualifying at 33%)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~225 – 240" },
+          { year: 2023, category: "OBC (II A / II B / III A / III B)", cutoff: "~215 – 232" },
+          { year: 2023, category: "SC", cutoff: "~205 – 220" },
+          { year: 2023, category: "ST", cutoff: "~190 – 205" },
+        ],
+        notes:
+          "KPSC KAS uses a complex category-wise reservation matrix. The ranges above are based on the most recent published cycle.",
+        source: "https://kpsc.kar.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Assistant Commissioner / KAS Group A Probationer (entry)",
+        payLevel: "Pay Level 23 (Karnataka)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000 (Bangalore, after probation)",
+        source: "https://kpsc.kar.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── MPPSC SSE — Madhya Pradesh State Service Exam ──────────────
+  {
+    examCode: "MP_MPPSC_SSE",
+    oneLiner:
+      "Madhya Pradesh PSC State Service Examination — Deputy Collector, DySP, Naib Tahsildar, Assistant Registrar, Block Development Officer and other state-cadre posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 40,
+      ageNotes:
+        "21-40 for General. MP-domicile candidates and reserved categories often get 45. Reference date is 1 January of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Hindi proficiency tested at Mains. Domicile required for state-specific reserved posts.",
+      ],
+      source: "https://www.mppsc.mp.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "200 marks (Paper 1; Paper 2 / CSAT qualifying)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~115 – 122" },
+          { year: 2023, category: "OBC", cutoff: "~108 – 115" },
+          { year: 2023, category: "EWS", cutoff: "~104 – 112" },
+          { year: 2023, category: "SC", cutoff: "~95 – 105" },
+          { year: 2023, category: "ST", cutoff: "~85 – 95" },
+        ],
+        source: "https://www.mppsc.mp.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Deputy Collector / DySP (MPPSC SSE)",
+        payLevel: "Pay Level 12 (MP)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹82,000 – ₹93,000 (Bhopal/Indore, after probation)",
+        source: "https://www.mppsc.mp.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── APPSC Group 1 — Andhra Pradesh top-tier ────────────────────
+  {
+    examCode: "AP_APPSC_GROUP1",
+    oneLiner:
+      "Andhra Pradesh PSC Group 1 services — Deputy Collector, DySP, District Tribal Welfare Officer, Commercial Tax Officer, District Registrar and other top state-cadre posts.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 42,
+      ageNotes:
+        "18-42 for General (upper limit relaxed by the AP government from earlier 34). Reference date is 1 July of the exam year. OBC/SC/ST/PwBD: further relaxations per AP rules.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Telugu language proficiency required for some posts at Mains/Interview stage.",
+        "Domicile of Andhra Pradesh preferred but not strictly required for all posts.",
+      ],
+      source: "https://psc.ap.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Screening Test cutoff (Prelims — qualifying for Mains)",
+        outOf: "240 marks (Paper 1 + Paper 2)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~150 – 165" },
+          { year: 2023, category: "BC", cutoff: "~140 – 158" },
+          { year: 2023, category: "SC", cutoff: "~120 – 138" },
+          { year: 2023, category: "ST", cutoff: "~110 – 128" },
+        ],
+        notes:
+          "APPSC Group 1 cutoffs vary by post and year; this is a representative range from the most recent published cycle.",
+        source: "https://psc.ap.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Deputy Collector / Commercial Tax Officer / DySP (Group 1)",
+        payLevel: "Pay Level 26 (AP)",
+        basicPay: "₹56,870",
+        grossPayApprox: "₹88,000 – ₹1,00,000 (Vijayawada/Vizag, after probation)",
+        source: "https://psc.ap.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── APSC CCE — Assam PSC Combined Competitive Exam ─────────────
+  {
+    examCode: "AS_APSC_CCE",
+    oneLiner:
+      "Assam PSC Combined Competitive Examination — Assam Civil Service (Junior Grade), Assam Police Service, and other Group A/B state-cadre posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 38,
+      ageNotes:
+        "21-38 for General. Age relaxation: OBC/MOBC +3, SC/ST(P)/ST(H) +5, PwBD +10. Reference date is 1 January of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Assamese / Bengali / Bodo language proficiency required for certain posts.",
+        "Assam domicile preferred for state-specific reservation benefits.",
+      ],
+      source: "https://apsc.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "200 marks (Paper 1; Paper 2 / CSAT qualifying)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~120 – 130" },
+          { year: 2023, category: "OBC / MOBC", cutoff: "~112 – 122" },
+          { year: 2023, category: "SC", cutoff: "~100 – 112" },
+          { year: 2023, category: "ST(P) / ST(H)", cutoff: "~92 – 105" },
+        ],
+        source: "https://apsc.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Assam Civil Service (Junior Grade) — entry post",
+        payLevel: "Pay Level 17 (Assam ROP 2017)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹82,000 – ₹92,000 (Guwahati, after probation)",
+        source: "https://apsc.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
 ];
 
 export function findDeepContent(examCode: string): ExamDeepContent | undefined {
