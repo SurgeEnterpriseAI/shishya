@@ -885,6 +885,653 @@ export const EXAM_DEEP_CONTENT: ExamDeepContent[] = [
       },
     ],
   },
+
+  // ════════════════════════════════════════════════════════════════
+  // BATCH 2 — Banking, Teaching, remaining SSC
+  // ════════════════════════════════════════════════════════════════
+
+  // ─── SBI PO — State Bank of India Probationary Officer ──────────
+  {
+    examCode: "SBI_PO",
+    oneLiner:
+      "Recruitment to Probationary Officer in State Bank of India — the largest public-sector bank in India by branch network and assets.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 30,
+      ageNotes: "Reference date is 1 April of the exam year. Relaxation: OBC +3, SC/ST +5, PwBD +10.",
+      education: "Bachelor's degree in any discipline from a recognised university.",
+      educationDetails: [
+        "Final-year students CAN appear, but must submit proof of graduation before the date specified in the call letter.",
+        "Integrated dual-degree (5-year) candidates are eligible as long as they meet the cut-off date.",
+      ],
+      attempts:
+        "General: 4 attempts. OBC: 7 attempts. SC/ST/PwBD: no limit (within upper age).",
+      nationality:
+        "Indian citizen (or specified categories — Nepal/Bhutan subjects, Tibetan refugees pre-1962, PIOs with eligibility certificate).",
+      source: "https://sbi.co.in/web/careers/current-openings",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff — overall (qualifying for Mains)",
+        outOf: "100 marks",
+        rows: [
+          { year: 2024, category: "General", cutoff: "55.0 – 58.5" },
+          { year: 2024, category: "OBC", cutoff: "52.5 – 55.75" },
+          { year: 2024, category: "EWS", cutoff: "54.75 – 57.5" },
+          { year: 2024, category: "SC", cutoff: "46.0 – 50.25" },
+          { year: 2024, category: "ST", cutoff: "39.5 – 47.0" },
+        ],
+        notes:
+          "SBI doesn't publish sectional cutoffs the way IBPS does — only an overall cutoff. Range shown is regional variation.",
+        source: "https://sbi.co.in/web/careers",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "Prelims paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 100,
+      topics: [
+        { subject: "English Language", topic: "Reading Comprehension (2 passages)", recentMarksAvg: 12, recentMarksMax: 14 },
+        { subject: "English Language", topic: "Cloze Test + Error Spotting + Para Jumble", recentMarksAvg: 11, recentMarksMax: 14 },
+        { subject: "English Language", topic: "Vocabulary + Sentence Improvement", recentMarksAvg: 7, recentMarksMax: 10 },
+        { subject: "Quantitative Aptitude", topic: "Data Interpretation (2-3 sets)", recentMarksAvg: 14, recentMarksMax: 20 },
+        { subject: "Quantitative Aptitude", topic: "Arithmetic word problems", recentMarksAvg: 10, recentMarksMax: 14 },
+        { subject: "Quantitative Aptitude", topic: "Simplification + Approximation + Number Series", recentMarksAvg: 11, recentMarksMax: 15 },
+        { subject: "Reasoning Ability", topic: "Puzzles + Seating Arrangements", recentMarksAvg: 15, recentMarksMax: 20 },
+        { subject: "Reasoning Ability", topic: "Inequality + Syllogism + Coding-Decoding", recentMarksAvg: 10, recentMarksMax: 14 },
+        { subject: "Reasoning Ability", topic: "Blood Relations + Direction + Order", recentMarksAvg: 6, recentMarksMax: 10 },
+      ],
+      takeaways: [
+        "SBI Prelims is typically harder than IBPS — expect 1-2 difficulty levels above IBPS PO in the same year.",
+        "Puzzles + DI together carry ~30% of the paper. Most rank improvement happens here.",
+        "Speed reading is non-negotiable for the English RC passages — practise 2-3 RCs daily.",
+      ],
+      source: "https://sbi.co.in/web/careers",
+      verifiedAt: "2026-05",
+    },
+    salaryBands: [
+      {
+        postName: "Probationary Officer (Junior Management Grade Scale 1)",
+        basicPay: "₹48,480",
+        grossPayApprox: "₹65,000 – ₹73,000 (metro, after probation, including DA + HRA + special allowance)",
+        perks: [
+          "DA (revised quarterly)",
+          "HRA / leased accommodation in metro",
+          "Medical reimbursement for self + family",
+          "Pension under NPS",
+          "Concessional rate housing loan + car loan + personal loan",
+          "Newspaper, mobile, briefcase allowances",
+        ],
+        source: "https://www.iba.org.in/iba/news/16659.html",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── SBI Clerk — Junior Associate (Customer Support & Sales) ────
+  {
+    examCode: "SBI_CLERK",
+    oneLiner:
+      "Recruitment to Junior Associate (Customer Support & Sales) — clerical cadre at State Bank of India branches across India.",
+    eligibility: {
+      ageMin: 20,
+      ageMax: 28,
+      ageNotes: "Reference date is 1 April of the exam year. OBC +3, SC/ST +5, PwBD +10.",
+      education: "Bachelor's degree in any discipline from a recognised university.",
+      educationDetails: [
+        "Candidates appearing in the final year/semester can also apply but must produce proof of passing before joining.",
+        "Knowledge of the local language of the state applied for is mandatory (tested separately if not part of the qualifying degree).",
+      ],
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality:
+        "Indian citizen (or specified categories — Nepal/Bhutan subjects, Tibetan refugees pre-1962, PIOs).",
+      source: "https://sbi.co.in/web/careers/current-openings",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff — overall (state-wise variation)",
+        outOf: "100 marks",
+        rows: [
+          { year: 2024, category: "General (typical range)", cutoff: "70 – 87" },
+          { year: 2024, category: "OBC", cutoff: "65 – 82" },
+          { year: 2024, category: "EWS", cutoff: "68 – 84" },
+          { year: 2024, category: "SC", cutoff: "55 – 75" },
+          { year: 2024, category: "ST", cutoff: "45 – 70" },
+        ],
+        notes:
+          "SBI Clerk cutoffs vary heavily by state. The lower end is typical for less-populated states; the upper end for Maharashtra, UP, TN, Delhi.",
+        source: "https://sbi.co.in/web/careers",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Junior Associate (Clerk)",
+        basicPay: "₹26,730 (revised under 12th BPS w.e.f. 2022)",
+        grossPayApprox: "₹36,000 – ₹46,000 (metro, including DA + HRA + transport + special allowance)",
+        perks: [
+          "DA revised quarterly",
+          "HRA / quarters",
+          "Medical reimbursement",
+          "Pension under NPS",
+          "Travel concession every 2 years",
+        ],
+        source: "https://www.iba.org.in/iba/news/16659.html",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── IBPS Clerk — CRP Clerk ─────────────────────────────────────
+  {
+    examCode: "IBPS_CLERK",
+    oneLiner:
+      "Common Recruitment Process for Clerical Cadre at 11 participating public-sector banks under IBPS (excluding SBI).",
+    eligibility: {
+      ageMin: 20,
+      ageMax: 28,
+      ageNotes: "Reference date is 1 August of the exam year. OBC +3, SC/ST +5, PwBD +10.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      educationDetails: [
+        "Computer literacy is essential — Class X with computer as a subject, or a certificate/diploma in computer applications.",
+        "Knowledge of the local language of the state opted for is required; verified through a separate language test if not part of the qualifying degree.",
+      ],
+      attempts: "No attempt limit other than the upper age cap.",
+      nationality:
+        "Indian citizen, Nepal/Bhutan subject, Tibetan refugee (pre-1962), or PIO with eligibility certificate.",
+      source: "https://www.ibps.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff — overall (qualifying for Mains)",
+        outOf: "100 marks",
+        rows: [
+          { year: 2024, category: "General (state-wise range)", cutoff: "70 – 79" },
+          { year: 2024, category: "OBC", cutoff: "65 – 76" },
+          { year: 2024, category: "EWS", cutoff: "68 – 78" },
+          { year: 2024, category: "SC", cutoff: "55 – 70" },
+          { year: 2024, category: "ST", cutoff: "45 – 65" },
+        ],
+        notes:
+          "Different states have different cutoffs — high-population states (UP, Maharashtra, Bihar) have the highest cutoffs because of competition density.",
+        source: "https://www.ibps.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Clerk (Single Window Operator)",
+        basicPay: "₹26,730 (12th BPS w.e.f. 2022)",
+        grossPayApprox: "₹32,000 – ₹40,000 (metro, including DA + HRA + transport)",
+        perks: ["DA", "HRA", "Medical", "Pension under NPS", "LFC every 2 years"],
+        source: "https://www.iba.org.in/iba/news/16659.html",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── IBPS RRB — Regional Rural Banks ────────────────────────────
+  // Note: this exam isn't seeded in the Exam DB table yet. The deep
+  // content sits here ready; once the exam is added to the catalogue
+  // the /exams/IBPS_RRB page will automatically pick it up.
+  {
+    examCode: "IBPS_RRB",
+    oneLiner:
+      "Common Recruitment Process for Officer Scale I / II / III and Office Assistant posts at 43 Regional Rural Banks across India.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 40,
+      ageNotes:
+        "Office Assistant + Officer Scale I: 18-30 (Scale I has min age 20). Officer Scale II: 21-32. Officer Scale III: 21-40.",
+      education:
+        "Office Assistant: Bachelor's, any discipline. Officer Scale I: Bachelor's. Officer Scale II/III: Bachelor's + experience in banking / finance / agriculture.",
+      educationDetails: [
+        "Proficiency in the local language of the state opted for is mandatory.",
+        "Officer Scale II Specialist Officer cadre needs the specific professional qualification (CA, MBA, etc.) for the role.",
+      ],
+      attempts: "No attempt limit other than the upper age cap.",
+      nationality: "Indian citizen (or specified categories per IBPS rules).",
+      source: "https://www.ibps.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Officer Scale I — Prelims cutoff (state-wise range, 2024)",
+        outOf: "80 marks",
+        rows: [
+          { year: 2024, category: "General", cutoff: "52 – 67" },
+          { year: 2024, category: "OBC", cutoff: "48 – 64" },
+          { year: 2024, category: "SC", cutoff: "42 – 56" },
+          { year: 2024, category: "ST", cutoff: "32 – 50" },
+        ],
+        notes:
+          "RRB cutoffs vary widely by state — Kerala, TN and Maharashtra usually see the highest cutoffs; J&K, North-East states the lowest.",
+        source: "https://www.ibps.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Officer Scale I",
+        basicPay: "₹36,000 – ₹38,500 (typical starting basic under 12th BPS)",
+        grossPayApprox: "₹45,000 – ₹55,000 (metro, including DA + HRA + special allowance)",
+        perks: ["DA", "HRA / quarters", "Medical", "Pension under NPS", "Two-wheeler / four-wheeler allowance in some RRBs"],
+        source: "https://www.iba.org.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Office Assistant (Multipurpose)",
+        basicPay: "₹17,900 – ₹19,700 (typical starting basic)",
+        grossPayApprox: "₹25,000 – ₹32,000",
+        source: "https://www.iba.org.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── RBI Grade B — Reserve Bank of India Officer ────────────────
+  // Note: this exam isn't seeded in the Exam DB table yet. The deep
+  // content sits here ready; once the exam is added to the catalogue
+  // the /exams/RBI_GRADE_B page will automatically pick it up.
+  {
+    examCode: "RBI_GRADE_B",
+    oneLiner:
+      "Recruitment to Officer in Grade B (DR) — General + DEPR + DSIM streams — at the Reserve Bank of India, India's central bank.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 30,
+      ageNotes:
+        "Reference date is 1 July of the exam year. M.Phil holders: +2 years; Ph.D: +4 years; experience in central / state govt or PSB: +3 to 5 years.",
+      education:
+        "General stream: Bachelor's with 60% (50% for SC/ST/PwBD), OR Master's with 55% (50% reserved). DEPR / DSIM streams need specific Economics / Statistics master's qualifications.",
+      educationDetails: [
+        "DEPR: Master's in Economics / Econometrics / Quantitative Economics / Math Economics / Integrated Economics with 55%.",
+        "DSIM: Master's in Statistics / Math Statistics / Math Economics / Econometrics / Statistics + a quantitative discipline.",
+      ],
+      attempts: "General: 6 attempts. SC/ST/PwBD: unlimited within upper age.",
+      nationality: "Indian citizen (or specified categories).",
+      source: "https://opportunities.rbi.org.in/Scripts/bs_viewcontent.aspx?Id=4519",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Phase 1 cutoff (qualifying for Phase 2)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2024, category: "General", cutoff: "~110 – 118" },
+          { year: 2024, category: "OBC", cutoff: "~105 – 113" },
+          { year: 2024, category: "EWS", cutoff: "~107 – 115" },
+          { year: 2024, category: "SC", cutoff: "~95 – 105" },
+          { year: 2024, category: "ST", cutoff: "~88 – 100" },
+        ],
+        notes:
+          "RBI publishes cutoffs after each cycle. Sectional cutoffs apply (GA, English, Quant, Reasoning) — typically 40% each section, 50% aggregate.",
+        source: "https://opportunities.rbi.org.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "Phase 1 paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 200,
+      topics: [
+        { subject: "General Awareness", topic: "Banking + Financial Awareness (RBI functions, monetary policy)", recentMarksAvg: 40, recentMarksMax: 50 },
+        { subject: "General Awareness", topic: "Current Affairs (national + international, 12 months)", recentMarksAvg: 30, recentMarksMax: 40 },
+        { subject: "General Awareness", topic: "Static GK + Indian Polity + Economic Survey", recentMarksAvg: 10, recentMarksMax: 16 },
+        { subject: "Quantitative Aptitude", topic: "Data Interpretation + Arithmetic", recentMarksAvg: 22, recentMarksMax: 28 },
+        { subject: "Quantitative Aptitude", topic: "Number Series + Simplification + Algebra basics", recentMarksAvg: 8, recentMarksMax: 12 },
+        { subject: "English Language", topic: "Reading Comprehension + Cloze Test + Error Spotting", recentMarksAvg: 20, recentMarksMax: 26 },
+        { subject: "English Language", topic: "Para Jumble + Sentence Improvement + Vocabulary", recentMarksAvg: 10, recentMarksMax: 14 },
+        { subject: "Reasoning Ability", topic: "Puzzles + Seating Arrangements", recentMarksAvg: 35, recentMarksMax: 45 },
+        { subject: "Reasoning Ability", topic: "Critical Reasoning + Input-Output + Coding", recentMarksAvg: 25, recentMarksMax: 35 },
+      ],
+      takeaways: [
+        "General Awareness — with strong focus on Banking & Finance — is the section that decides who clears RBI Phase 1. The static + dynamic split here is wider than any other banking exam.",
+        "Phase 2 (descriptive Economic & Social Issues + Finance & Management) is the actual differentiator — Phase 1 is a high cut-off filter.",
+        "RBI Grade B reading list (Economic Survey, RBI Annual Report, PIB Finance) is non-negotiable. Most clearers report 4-6 months of dedicated current-affairs reading.",
+      ],
+      source: "https://opportunities.rbi.org.in/",
+      verifiedAt: "2026-05",
+    },
+    salaryBands: [
+      {
+        postName: "Officer in Grade B (DR) — entry",
+        basicPay: "₹55,200",
+        grossPayApprox: "₹1,16,000 – ₹1,25,000 (metro, including DA + HRA + transport + grade allowance + special allowance)",
+        perks: [
+          "DA (revised quarterly)",
+          "HRA / Bank quarters",
+          "Medical for self + family + dependent parents",
+          "Education allowance",
+          "Pension under NPS",
+          "Concessional housing + car + personal loans",
+          "Group savings linked insurance",
+        ],
+        source: "https://opportunities.rbi.org.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── SSC CHSL — Combined Higher Secondary Level ─────────────────
+  {
+    examCode: "SSC_CHSL",
+    oneLiner:
+      "12th-pass-level recruitment to Lower Division Clerk, Junior Secretariat Assistant, Postal Assistant and Data Entry Operator posts across central government departments.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 27,
+      ageNotes: "Reference date is 1 January of the exam year. OBC +3, SC/ST +5, PwBD +10.",
+      education: "Class 12 (10+2) pass or equivalent from a recognised board.",
+      educationDetails: [
+        "For DEO post in O/o C&AG: 12th must include Mathematics + Science as core subjects.",
+        "Typing speed of 35 wpm English / 30 wpm Hindi is required for DEO + LDC posts — tested at Tier 2.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen (or specified categories per SSC rules).",
+      source: "https://ssc.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Tier 1 cutoff (final qualification post Tier 2 + skill test)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2024, category: "General — LDC/JSA", cutoff: "151 – 158" },
+          { year: 2024, category: "General — Postal Assistant", cutoff: "152 – 160" },
+          { year: 2024, category: "General — DEO", cutoff: "165 – 172" },
+          { year: 2024, category: "OBC", cutoff: "143 – 152" },
+          { year: 2024, category: "EWS", cutoff: "140 – 150" },
+          { year: 2024, category: "SC", cutoff: "130 – 140" },
+          { year: 2024, category: "ST", cutoff: "120 – 132" },
+        ],
+        notes:
+          "CHSL cutoffs vary by post — DEO consistently has the highest cutoff because of fewer vacancies + typing speed requirement.",
+        source: "https://ssc.nic.in/Portal/Notices",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Data Entry Operator (DEO) Grade C — C&AG",
+        payLevel: "Pay Level 4 / 5",
+        basicPay: "₹25,500 – ₹29,200",
+        grossPayApprox: "₹37,000 – ₹46,000 (X-class city, including DA + HRA + TA)",
+        source: "https://doe.gov.in/order-circular/order-implementation-recommendations-7th-cpc-pay",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Lower Division Clerk (LDC) / Junior Secretariat Assistant",
+        payLevel: "Pay Level 2",
+        basicPay: "₹19,900",
+        grossPayApprox: "₹29,000 – ₹36,000 (X-class city)",
+        source: "https://doe.gov.in/order-circular/order-implementation-recommendations-7th-cpc-pay",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Postal Assistant / Sorting Assistant",
+        payLevel: "Pay Level 4",
+        basicPay: "₹25,500",
+        grossPayApprox: "₹37,000 – ₹45,000 (X-class city)",
+        source: "https://doe.gov.in/order-circular/order-implementation-recommendations-7th-cpc-pay",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── SSC MTS — Multi-Tasking Staff ──────────────────────────────
+  {
+    examCode: "SSC_MTS",
+    oneLiner:
+      "10th-pass-level recruitment to Multi-Tasking (Non-Technical) Staff and Havaldar (in CBIC + CBN) posts across central departments.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 25,
+      ageNotes:
+        "MTS: 18-25 (some posts up to 27). Havaldar in CBIC/CBN: 18-27. OBC +3, SC/ST +5, PwBD +10.",
+      education: "Class 10 (Matriculation) pass from a recognised board.",
+      educationDetails: [
+        "Havaldar posts have physical standards (height, chest, walking, cycling tests) over and above the written exam.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen (or specified categories).",
+      source: "https://ssc.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Tier 1 cutoff (qualifying for Tier 2 / PET)",
+        outOf: "270 marks",
+        rows: [
+          { year: 2024, category: "General — MTS", cutoff: "150 – 175 (region-wise)" },
+          { year: 2024, category: "General — Havaldar", cutoff: "175 – 200" },
+          { year: 2024, category: "OBC — MTS", cutoff: "140 – 165" },
+          { year: 2024, category: "SC — MTS", cutoff: "125 – 150" },
+          { year: 2024, category: "ST — MTS", cutoff: "115 – 145" },
+        ],
+        notes:
+          "MTS is region-specific; cutoffs vary by zone. Havaldar uses the same paper but has an additional Physical Efficiency Test (PET).",
+        source: "https://ssc.nic.in/Portal/Notices",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Multi-Tasking Staff (Non-Technical)",
+        payLevel: "Pay Level 1",
+        basicPay: "₹18,000",
+        grossPayApprox: "₹25,000 – ₹32,000 (X-class city)",
+        perks: ["DA, HRA, TA", "Medical (CGHS)", "Pension under NPS"],
+        source: "https://doe.gov.in/order-circular/order-implementation-recommendations-7th-cpc-pay",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Havaldar (CBIC / CBN)",
+        payLevel: "Pay Level 1",
+        basicPay: "₹18,000",
+        grossPayApprox: "₹28,000 – ₹35,000 (X-class city, includes departmental allowance)",
+        source: "https://www.cbic.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── SSC GD — General Duty Constable ────────────────────────────
+  {
+    examCode: "SSC_GD",
+    oneLiner:
+      "Constable (General Duty) recruitment to BSF, CISF, CRPF, ITBP, SSB, AR (Assam Rifles) and SSF — paramilitary and border forces.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 23,
+      ageNotes: "Reference date is 1 January of the exam year. OBC +3, SC/ST +5.",
+      education: "Class 10 (Matriculation) pass from a recognised board.",
+      educationDetails: [
+        "Physical Standards: minimum height 170 cm (males general, with relaxations for hill / North-East / specific tribes), 157 cm (females general).",
+        "Physical Efficiency Test (PET): 5 km run in 24 min (males) / 1.6 km run in 8.5 min (females).",
+        "Medical examination follows PET — all standard CAPF medical norms apply.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      source: "https://ssc.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "CBE cutoff (qualifying for PET/PST/Medical)",
+        outOf: "160 marks",
+        rows: [
+          { year: 2024, category: "General — BSF Male", cutoff: "102 – 110" },
+          { year: 2024, category: "General — CRPF Male", cutoff: "100 – 108" },
+          { year: 2024, category: "General — CISF Male", cutoff: "95 – 104" },
+          { year: 2024, category: "General — Female (all forces avg)", cutoff: "92 – 100" },
+          { year: 2024, category: "OBC", cutoff: "92 – 102" },
+          { year: 2024, category: "SC", cutoff: "82 – 95" },
+          { year: 2024, category: "ST", cutoff: "75 – 90" },
+        ],
+        notes:
+          "Cutoffs vary by force AND state — high-altitude / border postings often have separate quotas.",
+        source: "https://ssc.nic.in/Portal/Notices",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Constable (General Duty) — BSF / CISF / CRPF / ITBP / SSB",
+        payLevel: "Pay Level 3",
+        basicPay: "₹21,700",
+        grossPayApprox: "₹33,000 – ₹42,000 (depending on posting — field area gets additional allowances)",
+        perks: [
+          "Free rations + uniform",
+          "Free accommodation in barracks / family quarters",
+          "Risk + Hardship allowance for field postings",
+          "Medical for self + family",
+          "Pension under NPS",
+          "LTC every 2 years",
+          "Group insurance",
+        ],
+        source: "https://www.bsf.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── CTET — Central Teacher Eligibility Test ────────────────────
+  {
+    examCode: "CTET",
+    oneLiner:
+      "Mandatory eligibility certification under the Right to Education Act for teaching Class 1-8 in central government schools (KVS, NVS, EMRS) and Delhi NCT schools.",
+    eligibility: {
+      ageNotes:
+        "No upper or lower age limit — CTET is a qualifying exam, not a recruitment exam. Age requirements apply only when applying for specific teaching jobs.",
+      education:
+        "Paper 1 (Class 1-5): 12th pass (50%) + D.El.Ed. OR Bachelor's + D.El.Ed. OR Bachelor's + B.Ed. (special). Paper 2 (Class 6-8): Bachelor's + B.Ed. OR specific equivalents.",
+      educationDetails: [
+        "D.El.Ed. = Diploma in Elementary Education (2 years).",
+        "B.Ed. = Bachelor of Education (2 years post-graduation).",
+        "Final-year B.Ed. / D.El.Ed. students may appear for CTET.",
+        "Different concessions for SC/ST/OBC/PwBD — typically 5% relaxation in qualifying degree marks.",
+      ],
+      attempts: "Unlimited.",
+      nationality: "Indian citizen.",
+      source: "https://ctet.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Qualifying marks (CTET certificate validity)",
+        outOf: "150 marks per paper",
+        rows: [
+          { year: 2024, category: "General — Paper 1 (Class 1-5)", cutoff: "90/150 (60%)" },
+          { year: 2024, category: "General — Paper 2 (Class 6-8)", cutoff: "90/150 (60%)" },
+          { year: 2024, category: "SC / ST / OBC / PwBD", cutoff: "82-83/150 (55%)" },
+        ],
+        notes:
+          "CTET certificate is valid for life (per 2021 NCTE notification — earlier 7-year validity has been removed).",
+        source: "https://ctet.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "CTET Paper 1 (Class 1-5) — section weightage",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 150,
+      topics: [
+        { subject: "Child Development & Pedagogy", topic: "Concept of development + learning + theories (Piaget, Vygotsky, etc.)", recentMarksAvg: 16, recentMarksMax: 18 },
+        { subject: "Child Development & Pedagogy", topic: "Inclusive education + special needs", recentMarksAvg: 8, recentMarksMax: 12 },
+        { subject: "Child Development & Pedagogy", topic: "Pedagogy + Assessment", recentMarksAvg: 6, recentMarksMax: 10 },
+        { subject: "Language I", topic: "Comprehension + Pedagogy of language development", recentMarksAvg: 30, recentMarksMax: 30 },
+        { subject: "Language II", topic: "Comprehension + Pedagogy of language development", recentMarksAvg: 30, recentMarksMax: 30 },
+        { subject: "Mathematics", topic: "Number system + Geometry + Measurement + Data handling", recentMarksAvg: 20, recentMarksMax: 24 },
+        { subject: "Mathematics", topic: "Pedagogical issues in teaching maths to Class 1-5", recentMarksAvg: 10, recentMarksMax: 12 },
+        { subject: "Environmental Studies", topic: "Family + Friends, Food, Shelter, Water, Travel, Things we make", recentMarksAvg: 20, recentMarksMax: 24 },
+        { subject: "Environmental Studies", topic: "EVS pedagogy", recentMarksAvg: 10, recentMarksMax: 12 },
+      ],
+      takeaways: [
+        "Child Development & Pedagogy is the highest-leverage section — strong CDP can offset a weaker subject paper.",
+        "Both Language papers are independent — pick one as Language I (must score in pedagogy + comprehension) and a different one as Language II.",
+        "EVS questions at the primary level draw heavily from NCERT Class 3-5 Looking Around / Aas-Paas books — direct reading pays off.",
+      ],
+      source: "https://ctet.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    salaryBands: [
+      {
+        postName: "PRT (Primary Teacher) in KVS / NVS / Delhi schools (post recruitment)",
+        payLevel: "Pay Level 6",
+        basicPay: "₹35,400",
+        grossPayApprox: "₹52,000 – ₹61,000 (X-class city, including DA + HRA + TA)",
+        perks: ["DA", "HRA", "Education concession for own children", "Medical (CGHS)", "Pension under NPS"],
+        source: "https://kvsangathan.nic.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "TGT (Trained Graduate Teacher) — for Paper 2 qualifiers + degree",
+        payLevel: "Pay Level 7",
+        basicPay: "₹44,900",
+        grossPayApprox: "₹62,000 – ₹74,000 (X-class city)",
+        source: "https://kvsangathan.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── UPTET — UP Teacher Eligibility Test ────────────────────────
+  // Note: DB exam code is UP_UPTET (the state-prefixed convention used
+  // throughout the catalogue). We match that here.
+  {
+    examCode: "UP_UPTET",
+    oneLiner:
+      "Teacher Eligibility Test conducted by UPBEB for primary (Class 1-5) and upper-primary (Class 6-8) teacher recruitment in Uttar Pradesh government and aided schools.",
+    eligibility: {
+      ageNotes: "No upper age limit for UPTET itself (qualifying exam). Recruitment exams have separate age limits.",
+      education:
+        "Paper 1 (Class 1-5): 12th 50% + D.El.Ed. (BTC) OR Bachelor's + 2-year D.El.Ed. Paper 2 (Class 6-8): Bachelor's + B.Ed. OR equivalent.",
+      educationDetails: [
+        "Candidates must have Hindi as a compulsory subject for both papers.",
+        "Final-year B.Ed./D.El.Ed. candidates may appear.",
+      ],
+      attempts: "Unlimited.",
+      nationality: "Indian citizen; UP-domicile preferred for subsequent recruitment but UPTET itself open to all.",
+      source: "https://updeled.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Qualifying marks (UPTET certificate)",
+        outOf: "150 marks per paper",
+        rows: [
+          { year: 2024, category: "General", cutoff: "90/150 (60%)" },
+          { year: 2024, category: "OBC / SC / ST / PwBD", cutoff: "82-83/150 (55%)" },
+        ],
+        notes:
+          "Validity of UPTET certificate is lifelong (aligned with the 2021 NCTE change for CTET).",
+        source: "https://updeled.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Assistant Teacher — Primary (Class 1-5) in UP Basic Education",
+        basicPay: "₹35,400 (entry, Pay Level 6 equivalent under UP pay matrix)",
+        grossPayApprox: "₹45,000 – ₹52,000 (depending on posting)",
+        perks: ["DA as per UP govt", "HRA", "Medical reimbursement", "Pension under UP State NPS"],
+        source: "https://updeled.gov.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Assistant Teacher — Upper Primary (Class 6-8)",
+        basicPay: "₹44,900 (entry, Pay Level 7 equivalent)",
+        grossPayApprox: "₹56,000 – ₹65,000",
+        source: "https://updeled.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
 ];
 
 export function findDeepContent(examCode: string): ExamDeepContent | undefined {
