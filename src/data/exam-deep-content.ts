@@ -885,6 +885,1760 @@ export const EXAM_DEEP_CONTENT: ExamDeepContent[] = [
       },
     ],
   },
+
+  // ════════════════════════════════════════════════════════════════
+  // BATCH 2 — Banking, Teaching, remaining SSC
+  // ════════════════════════════════════════════════════════════════
+
+  // ─── SBI PO — State Bank of India Probationary Officer ──────────
+  {
+    examCode: "SBI_PO",
+    oneLiner:
+      "Recruitment to Probationary Officer in State Bank of India — the largest public-sector bank in India by branch network and assets.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 30,
+      ageNotes: "Reference date is 1 April of the exam year. Relaxation: OBC +3, SC/ST +5, PwBD +10.",
+      education: "Bachelor's degree in any discipline from a recognised university.",
+      educationDetails: [
+        "Final-year students CAN appear, but must submit proof of graduation before the date specified in the call letter.",
+        "Integrated dual-degree (5-year) candidates are eligible as long as they meet the cut-off date.",
+      ],
+      attempts:
+        "General: 4 attempts. OBC: 7 attempts. SC/ST/PwBD: no limit (within upper age).",
+      nationality:
+        "Indian citizen (or specified categories — Nepal/Bhutan subjects, Tibetan refugees pre-1962, PIOs with eligibility certificate).",
+      source: "https://sbi.co.in/web/careers/current-openings",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff — overall (qualifying for Mains)",
+        outOf: "100 marks",
+        rows: [
+          { year: 2024, category: "General", cutoff: "55.0 – 58.5" },
+          { year: 2024, category: "OBC", cutoff: "52.5 – 55.75" },
+          { year: 2024, category: "EWS", cutoff: "54.75 – 57.5" },
+          { year: 2024, category: "SC", cutoff: "46.0 – 50.25" },
+          { year: 2024, category: "ST", cutoff: "39.5 – 47.0" },
+        ],
+        notes:
+          "SBI doesn't publish sectional cutoffs the way IBPS does — only an overall cutoff. Range shown is regional variation.",
+        source: "https://sbi.co.in/web/careers",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "Prelims paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 100,
+      topics: [
+        { subject: "English Language", topic: "Reading Comprehension (2 passages)", recentMarksAvg: 12, recentMarksMax: 14 },
+        { subject: "English Language", topic: "Cloze Test + Error Spotting + Para Jumble", recentMarksAvg: 11, recentMarksMax: 14 },
+        { subject: "English Language", topic: "Vocabulary + Sentence Improvement", recentMarksAvg: 7, recentMarksMax: 10 },
+        { subject: "Quantitative Aptitude", topic: "Data Interpretation (2-3 sets)", recentMarksAvg: 14, recentMarksMax: 20 },
+        { subject: "Quantitative Aptitude", topic: "Arithmetic word problems", recentMarksAvg: 10, recentMarksMax: 14 },
+        { subject: "Quantitative Aptitude", topic: "Simplification + Approximation + Number Series", recentMarksAvg: 11, recentMarksMax: 15 },
+        { subject: "Reasoning Ability", topic: "Puzzles + Seating Arrangements", recentMarksAvg: 15, recentMarksMax: 20 },
+        { subject: "Reasoning Ability", topic: "Inequality + Syllogism + Coding-Decoding", recentMarksAvg: 10, recentMarksMax: 14 },
+        { subject: "Reasoning Ability", topic: "Blood Relations + Direction + Order", recentMarksAvg: 6, recentMarksMax: 10 },
+      ],
+      takeaways: [
+        "SBI Prelims is typically harder than IBPS — expect 1-2 difficulty levels above IBPS PO in the same year.",
+        "Puzzles + DI together carry ~30% of the paper. Most rank improvement happens here.",
+        "Speed reading is non-negotiable for the English RC passages — practise 2-3 RCs daily.",
+      ],
+      source: "https://sbi.co.in/web/careers",
+      verifiedAt: "2026-05",
+    },
+    salaryBands: [
+      {
+        postName: "Probationary Officer (Junior Management Grade Scale 1)",
+        basicPay: "₹48,480",
+        grossPayApprox: "₹65,000 – ₹73,000 (metro, after probation, including DA + HRA + special allowance)",
+        perks: [
+          "DA (revised quarterly)",
+          "HRA / leased accommodation in metro",
+          "Medical reimbursement for self + family",
+          "Pension under NPS",
+          "Concessional rate housing loan + car loan + personal loan",
+          "Newspaper, mobile, briefcase allowances",
+        ],
+        source: "https://www.iba.org.in/iba/news/16659.html",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── SBI Clerk — Junior Associate (Customer Support & Sales) ────
+  {
+    examCode: "SBI_CLERK",
+    oneLiner:
+      "Recruitment to Junior Associate (Customer Support & Sales) — clerical cadre at State Bank of India branches across India.",
+    eligibility: {
+      ageMin: 20,
+      ageMax: 28,
+      ageNotes: "Reference date is 1 April of the exam year. OBC +3, SC/ST +5, PwBD +10.",
+      education: "Bachelor's degree in any discipline from a recognised university.",
+      educationDetails: [
+        "Candidates appearing in the final year/semester can also apply but must produce proof of passing before joining.",
+        "Knowledge of the local language of the state applied for is mandatory (tested separately if not part of the qualifying degree).",
+      ],
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality:
+        "Indian citizen (or specified categories — Nepal/Bhutan subjects, Tibetan refugees pre-1962, PIOs).",
+      source: "https://sbi.co.in/web/careers/current-openings",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff — overall (state-wise variation)",
+        outOf: "100 marks",
+        rows: [
+          { year: 2024, category: "General (typical range)", cutoff: "70 – 87" },
+          { year: 2024, category: "OBC", cutoff: "65 – 82" },
+          { year: 2024, category: "EWS", cutoff: "68 – 84" },
+          { year: 2024, category: "SC", cutoff: "55 – 75" },
+          { year: 2024, category: "ST", cutoff: "45 – 70" },
+        ],
+        notes:
+          "SBI Clerk cutoffs vary heavily by state. The lower end is typical for less-populated states; the upper end for Maharashtra, UP, TN, Delhi.",
+        source: "https://sbi.co.in/web/careers",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Junior Associate (Clerk)",
+        basicPay: "₹26,730 (revised under 12th BPS w.e.f. 2022)",
+        grossPayApprox: "₹36,000 – ₹46,000 (metro, including DA + HRA + transport + special allowance)",
+        perks: [
+          "DA revised quarterly",
+          "HRA / quarters",
+          "Medical reimbursement",
+          "Pension under NPS",
+          "Travel concession every 2 years",
+        ],
+        source: "https://www.iba.org.in/iba/news/16659.html",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── IBPS Clerk — CRP Clerk ─────────────────────────────────────
+  {
+    examCode: "IBPS_CLERK",
+    oneLiner:
+      "Common Recruitment Process for Clerical Cadre at 11 participating public-sector banks under IBPS (excluding SBI).",
+    eligibility: {
+      ageMin: 20,
+      ageMax: 28,
+      ageNotes: "Reference date is 1 August of the exam year. OBC +3, SC/ST +5, PwBD +10.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      educationDetails: [
+        "Computer literacy is essential — Class X with computer as a subject, or a certificate/diploma in computer applications.",
+        "Knowledge of the local language of the state opted for is required; verified through a separate language test if not part of the qualifying degree.",
+      ],
+      attempts: "No attempt limit other than the upper age cap.",
+      nationality:
+        "Indian citizen, Nepal/Bhutan subject, Tibetan refugee (pre-1962), or PIO with eligibility certificate.",
+      source: "https://www.ibps.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff — overall (qualifying for Mains)",
+        outOf: "100 marks",
+        rows: [
+          { year: 2024, category: "General (state-wise range)", cutoff: "70 – 79" },
+          { year: 2024, category: "OBC", cutoff: "65 – 76" },
+          { year: 2024, category: "EWS", cutoff: "68 – 78" },
+          { year: 2024, category: "SC", cutoff: "55 – 70" },
+          { year: 2024, category: "ST", cutoff: "45 – 65" },
+        ],
+        notes:
+          "Different states have different cutoffs — high-population states (UP, Maharashtra, Bihar) have the highest cutoffs because of competition density.",
+        source: "https://www.ibps.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Clerk (Single Window Operator)",
+        basicPay: "₹26,730 (12th BPS w.e.f. 2022)",
+        grossPayApprox: "₹32,000 – ₹40,000 (metro, including DA + HRA + transport)",
+        perks: ["DA", "HRA", "Medical", "Pension under NPS", "LFC every 2 years"],
+        source: "https://www.iba.org.in/iba/news/16659.html",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── IBPS RRB — Regional Rural Banks ────────────────────────────
+  // Note: this exam isn't seeded in the Exam DB table yet. The deep
+  // content sits here ready; once the exam is added to the catalogue
+  // the /exams/IBPS_RRB page will automatically pick it up.
+  {
+    examCode: "IBPS_RRB",
+    oneLiner:
+      "Common Recruitment Process for Officer Scale I / II / III and Office Assistant posts at 43 Regional Rural Banks across India.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 40,
+      ageNotes:
+        "Office Assistant + Officer Scale I: 18-30 (Scale I has min age 20). Officer Scale II: 21-32. Officer Scale III: 21-40.",
+      education:
+        "Office Assistant: Bachelor's, any discipline. Officer Scale I: Bachelor's. Officer Scale II/III: Bachelor's + experience in banking / finance / agriculture.",
+      educationDetails: [
+        "Proficiency in the local language of the state opted for is mandatory.",
+        "Officer Scale II Specialist Officer cadre needs the specific professional qualification (CA, MBA, etc.) for the role.",
+      ],
+      attempts: "No attempt limit other than the upper age cap.",
+      nationality: "Indian citizen (or specified categories per IBPS rules).",
+      source: "https://www.ibps.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Officer Scale I — Prelims cutoff (state-wise range, 2024)",
+        outOf: "80 marks",
+        rows: [
+          { year: 2024, category: "General", cutoff: "52 – 67" },
+          { year: 2024, category: "OBC", cutoff: "48 – 64" },
+          { year: 2024, category: "SC", cutoff: "42 – 56" },
+          { year: 2024, category: "ST", cutoff: "32 – 50" },
+        ],
+        notes:
+          "RRB cutoffs vary widely by state — Kerala, TN and Maharashtra usually see the highest cutoffs; J&K, North-East states the lowest.",
+        source: "https://www.ibps.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Officer Scale I",
+        basicPay: "₹36,000 – ₹38,500 (typical starting basic under 12th BPS)",
+        grossPayApprox: "₹45,000 – ₹55,000 (metro, including DA + HRA + special allowance)",
+        perks: ["DA", "HRA / quarters", "Medical", "Pension under NPS", "Two-wheeler / four-wheeler allowance in some RRBs"],
+        source: "https://www.iba.org.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Office Assistant (Multipurpose)",
+        basicPay: "₹17,900 – ₹19,700 (typical starting basic)",
+        grossPayApprox: "₹25,000 – ₹32,000",
+        source: "https://www.iba.org.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── RBI Grade B — Reserve Bank of India Officer ────────────────
+  // Note: this exam isn't seeded in the Exam DB table yet. The deep
+  // content sits here ready; once the exam is added to the catalogue
+  // the /exams/RBI_GRADE_B page will automatically pick it up.
+  {
+    examCode: "RBI_GRADE_B",
+    oneLiner:
+      "Recruitment to Officer in Grade B (DR) — General + DEPR + DSIM streams — at the Reserve Bank of India, India's central bank.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 30,
+      ageNotes:
+        "Reference date is 1 July of the exam year. M.Phil holders: +2 years; Ph.D: +4 years; experience in central / state govt or PSB: +3 to 5 years.",
+      education:
+        "General stream: Bachelor's with 60% (50% for SC/ST/PwBD), OR Master's with 55% (50% reserved). DEPR / DSIM streams need specific Economics / Statistics master's qualifications.",
+      educationDetails: [
+        "DEPR: Master's in Economics / Econometrics / Quantitative Economics / Math Economics / Integrated Economics with 55%.",
+        "DSIM: Master's in Statistics / Math Statistics / Math Economics / Econometrics / Statistics + a quantitative discipline.",
+      ],
+      attempts: "General: 6 attempts. SC/ST/PwBD: unlimited within upper age.",
+      nationality: "Indian citizen (or specified categories).",
+      source: "https://opportunities.rbi.org.in/Scripts/bs_viewcontent.aspx?Id=4519",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Phase 1 cutoff (qualifying for Phase 2)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2024, category: "General", cutoff: "~110 – 118" },
+          { year: 2024, category: "OBC", cutoff: "~105 – 113" },
+          { year: 2024, category: "EWS", cutoff: "~107 – 115" },
+          { year: 2024, category: "SC", cutoff: "~95 – 105" },
+          { year: 2024, category: "ST", cutoff: "~88 – 100" },
+        ],
+        notes:
+          "RBI publishes cutoffs after each cycle. Sectional cutoffs apply (GA, English, Quant, Reasoning) — typically 40% each section, 50% aggregate.",
+        source: "https://opportunities.rbi.org.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "Phase 1 paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 200,
+      topics: [
+        { subject: "General Awareness", topic: "Banking + Financial Awareness (RBI functions, monetary policy)", recentMarksAvg: 40, recentMarksMax: 50 },
+        { subject: "General Awareness", topic: "Current Affairs (national + international, 12 months)", recentMarksAvg: 30, recentMarksMax: 40 },
+        { subject: "General Awareness", topic: "Static GK + Indian Polity + Economic Survey", recentMarksAvg: 10, recentMarksMax: 16 },
+        { subject: "Quantitative Aptitude", topic: "Data Interpretation + Arithmetic", recentMarksAvg: 22, recentMarksMax: 28 },
+        { subject: "Quantitative Aptitude", topic: "Number Series + Simplification + Algebra basics", recentMarksAvg: 8, recentMarksMax: 12 },
+        { subject: "English Language", topic: "Reading Comprehension + Cloze Test + Error Spotting", recentMarksAvg: 20, recentMarksMax: 26 },
+        { subject: "English Language", topic: "Para Jumble + Sentence Improvement + Vocabulary", recentMarksAvg: 10, recentMarksMax: 14 },
+        { subject: "Reasoning Ability", topic: "Puzzles + Seating Arrangements", recentMarksAvg: 35, recentMarksMax: 45 },
+        { subject: "Reasoning Ability", topic: "Critical Reasoning + Input-Output + Coding", recentMarksAvg: 25, recentMarksMax: 35 },
+      ],
+      takeaways: [
+        "General Awareness — with strong focus on Banking & Finance — is the section that decides who clears RBI Phase 1. The static + dynamic split here is wider than any other banking exam.",
+        "Phase 2 (descriptive Economic & Social Issues + Finance & Management) is the actual differentiator — Phase 1 is a high cut-off filter.",
+        "RBI Grade B reading list (Economic Survey, RBI Annual Report, PIB Finance) is non-negotiable. Most clearers report 4-6 months of dedicated current-affairs reading.",
+      ],
+      source: "https://opportunities.rbi.org.in/",
+      verifiedAt: "2026-05",
+    },
+    salaryBands: [
+      {
+        postName: "Officer in Grade B (DR) — entry",
+        basicPay: "₹55,200",
+        grossPayApprox: "₹1,16,000 – ₹1,25,000 (metro, including DA + HRA + transport + grade allowance + special allowance)",
+        perks: [
+          "DA (revised quarterly)",
+          "HRA / Bank quarters",
+          "Medical for self + family + dependent parents",
+          "Education allowance",
+          "Pension under NPS",
+          "Concessional housing + car + personal loans",
+          "Group savings linked insurance",
+        ],
+        source: "https://opportunities.rbi.org.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── SSC CHSL — Combined Higher Secondary Level ─────────────────
+  {
+    examCode: "SSC_CHSL",
+    oneLiner:
+      "12th-pass-level recruitment to Lower Division Clerk, Junior Secretariat Assistant, Postal Assistant and Data Entry Operator posts across central government departments.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 27,
+      ageNotes: "Reference date is 1 January of the exam year. OBC +3, SC/ST +5, PwBD +10.",
+      education: "Class 12 (10+2) pass or equivalent from a recognised board.",
+      educationDetails: [
+        "For DEO post in O/o C&AG: 12th must include Mathematics + Science as core subjects.",
+        "Typing speed of 35 wpm English / 30 wpm Hindi is required for DEO + LDC posts — tested at Tier 2.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen (or specified categories per SSC rules).",
+      source: "https://ssc.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Tier 1 cutoff (final qualification post Tier 2 + skill test)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2024, category: "General — LDC/JSA", cutoff: "151 – 158" },
+          { year: 2024, category: "General — Postal Assistant", cutoff: "152 – 160" },
+          { year: 2024, category: "General — DEO", cutoff: "165 – 172" },
+          { year: 2024, category: "OBC", cutoff: "143 – 152" },
+          { year: 2024, category: "EWS", cutoff: "140 – 150" },
+          { year: 2024, category: "SC", cutoff: "130 – 140" },
+          { year: 2024, category: "ST", cutoff: "120 – 132" },
+        ],
+        notes:
+          "CHSL cutoffs vary by post — DEO consistently has the highest cutoff because of fewer vacancies + typing speed requirement.",
+        source: "https://ssc.nic.in/Portal/Notices",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Data Entry Operator (DEO) Grade C — C&AG",
+        payLevel: "Pay Level 4 / 5",
+        basicPay: "₹25,500 – ₹29,200",
+        grossPayApprox: "₹37,000 – ₹46,000 (X-class city, including DA + HRA + TA)",
+        source: "https://doe.gov.in/order-circular/order-implementation-recommendations-7th-cpc-pay",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Lower Division Clerk (LDC) / Junior Secretariat Assistant",
+        payLevel: "Pay Level 2",
+        basicPay: "₹19,900",
+        grossPayApprox: "₹29,000 – ₹36,000 (X-class city)",
+        source: "https://doe.gov.in/order-circular/order-implementation-recommendations-7th-cpc-pay",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Postal Assistant / Sorting Assistant",
+        payLevel: "Pay Level 4",
+        basicPay: "₹25,500",
+        grossPayApprox: "₹37,000 – ₹45,000 (X-class city)",
+        source: "https://doe.gov.in/order-circular/order-implementation-recommendations-7th-cpc-pay",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── SSC MTS — Multi-Tasking Staff ──────────────────────────────
+  {
+    examCode: "SSC_MTS",
+    oneLiner:
+      "10th-pass-level recruitment to Multi-Tasking (Non-Technical) Staff and Havaldar (in CBIC + CBN) posts across central departments.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 25,
+      ageNotes:
+        "MTS: 18-25 (some posts up to 27). Havaldar in CBIC/CBN: 18-27. OBC +3, SC/ST +5, PwBD +10.",
+      education: "Class 10 (Matriculation) pass from a recognised board.",
+      educationDetails: [
+        "Havaldar posts have physical standards (height, chest, walking, cycling tests) over and above the written exam.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen (or specified categories).",
+      source: "https://ssc.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Tier 1 cutoff (qualifying for Tier 2 / PET)",
+        outOf: "270 marks",
+        rows: [
+          { year: 2024, category: "General — MTS", cutoff: "150 – 175 (region-wise)" },
+          { year: 2024, category: "General — Havaldar", cutoff: "175 – 200" },
+          { year: 2024, category: "OBC — MTS", cutoff: "140 – 165" },
+          { year: 2024, category: "SC — MTS", cutoff: "125 – 150" },
+          { year: 2024, category: "ST — MTS", cutoff: "115 – 145" },
+        ],
+        notes:
+          "MTS is region-specific; cutoffs vary by zone. Havaldar uses the same paper but has an additional Physical Efficiency Test (PET).",
+        source: "https://ssc.nic.in/Portal/Notices",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Multi-Tasking Staff (Non-Technical)",
+        payLevel: "Pay Level 1",
+        basicPay: "₹18,000",
+        grossPayApprox: "₹25,000 – ₹32,000 (X-class city)",
+        perks: ["DA, HRA, TA", "Medical (CGHS)", "Pension under NPS"],
+        source: "https://doe.gov.in/order-circular/order-implementation-recommendations-7th-cpc-pay",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Havaldar (CBIC / CBN)",
+        payLevel: "Pay Level 1",
+        basicPay: "₹18,000",
+        grossPayApprox: "₹28,000 – ₹35,000 (X-class city, includes departmental allowance)",
+        source: "https://www.cbic.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── SSC GD — General Duty Constable ────────────────────────────
+  {
+    examCode: "SSC_GD",
+    oneLiner:
+      "Constable (General Duty) recruitment to BSF, CISF, CRPF, ITBP, SSB, AR (Assam Rifles) and SSF — paramilitary and border forces.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 23,
+      ageNotes: "Reference date is 1 January of the exam year. OBC +3, SC/ST +5.",
+      education: "Class 10 (Matriculation) pass from a recognised board.",
+      educationDetails: [
+        "Physical Standards: minimum height 170 cm (males general, with relaxations for hill / North-East / specific tribes), 157 cm (females general).",
+        "Physical Efficiency Test (PET): 5 km run in 24 min (males) / 1.6 km run in 8.5 min (females).",
+        "Medical examination follows PET — all standard CAPF medical norms apply.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      source: "https://ssc.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "CBE cutoff (qualifying for PET/PST/Medical)",
+        outOf: "160 marks",
+        rows: [
+          { year: 2024, category: "General — BSF Male", cutoff: "102 – 110" },
+          { year: 2024, category: "General — CRPF Male", cutoff: "100 – 108" },
+          { year: 2024, category: "General — CISF Male", cutoff: "95 – 104" },
+          { year: 2024, category: "General — Female (all forces avg)", cutoff: "92 – 100" },
+          { year: 2024, category: "OBC", cutoff: "92 – 102" },
+          { year: 2024, category: "SC", cutoff: "82 – 95" },
+          { year: 2024, category: "ST", cutoff: "75 – 90" },
+        ],
+        notes:
+          "Cutoffs vary by force AND state — high-altitude / border postings often have separate quotas.",
+        source: "https://ssc.nic.in/Portal/Notices",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Constable (General Duty) — BSF / CISF / CRPF / ITBP / SSB",
+        payLevel: "Pay Level 3",
+        basicPay: "₹21,700",
+        grossPayApprox: "₹33,000 – ₹42,000 (depending on posting — field area gets additional allowances)",
+        perks: [
+          "Free rations + uniform",
+          "Free accommodation in barracks / family quarters",
+          "Risk + Hardship allowance for field postings",
+          "Medical for self + family",
+          "Pension under NPS",
+          "LTC every 2 years",
+          "Group insurance",
+        ],
+        source: "https://www.bsf.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── CTET — Central Teacher Eligibility Test ────────────────────
+  {
+    examCode: "CTET",
+    oneLiner:
+      "Mandatory eligibility certification under the Right to Education Act for teaching Class 1-8 in central government schools (KVS, NVS, EMRS) and Delhi NCT schools.",
+    eligibility: {
+      ageNotes:
+        "No upper or lower age limit — CTET is a qualifying exam, not a recruitment exam. Age requirements apply only when applying for specific teaching jobs.",
+      education:
+        "Paper 1 (Class 1-5): 12th pass (50%) + D.El.Ed. OR Bachelor's + D.El.Ed. OR Bachelor's + B.Ed. (special). Paper 2 (Class 6-8): Bachelor's + B.Ed. OR specific equivalents.",
+      educationDetails: [
+        "D.El.Ed. = Diploma in Elementary Education (2 years).",
+        "B.Ed. = Bachelor of Education (2 years post-graduation).",
+        "Final-year B.Ed. / D.El.Ed. students may appear for CTET.",
+        "Different concessions for SC/ST/OBC/PwBD — typically 5% relaxation in qualifying degree marks.",
+      ],
+      attempts: "Unlimited.",
+      nationality: "Indian citizen.",
+      source: "https://ctet.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Qualifying marks (CTET certificate validity)",
+        outOf: "150 marks per paper",
+        rows: [
+          { year: 2024, category: "General — Paper 1 (Class 1-5)", cutoff: "90/150 (60%)" },
+          { year: 2024, category: "General — Paper 2 (Class 6-8)", cutoff: "90/150 (60%)" },
+          { year: 2024, category: "SC / ST / OBC / PwBD", cutoff: "82-83/150 (55%)" },
+        ],
+        notes:
+          "CTET certificate is valid for life (per 2021 NCTE notification — earlier 7-year validity has been removed).",
+        source: "https://ctet.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "CTET Paper 1 (Class 1-5) — section weightage",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 150,
+      topics: [
+        { subject: "Child Development & Pedagogy", topic: "Concept of development + learning + theories (Piaget, Vygotsky, etc.)", recentMarksAvg: 16, recentMarksMax: 18 },
+        { subject: "Child Development & Pedagogy", topic: "Inclusive education + special needs", recentMarksAvg: 8, recentMarksMax: 12 },
+        { subject: "Child Development & Pedagogy", topic: "Pedagogy + Assessment", recentMarksAvg: 6, recentMarksMax: 10 },
+        { subject: "Language I", topic: "Comprehension + Pedagogy of language development", recentMarksAvg: 30, recentMarksMax: 30 },
+        { subject: "Language II", topic: "Comprehension + Pedagogy of language development", recentMarksAvg: 30, recentMarksMax: 30 },
+        { subject: "Mathematics", topic: "Number system + Geometry + Measurement + Data handling", recentMarksAvg: 20, recentMarksMax: 24 },
+        { subject: "Mathematics", topic: "Pedagogical issues in teaching maths to Class 1-5", recentMarksAvg: 10, recentMarksMax: 12 },
+        { subject: "Environmental Studies", topic: "Family + Friends, Food, Shelter, Water, Travel, Things we make", recentMarksAvg: 20, recentMarksMax: 24 },
+        { subject: "Environmental Studies", topic: "EVS pedagogy", recentMarksAvg: 10, recentMarksMax: 12 },
+      ],
+      takeaways: [
+        "Child Development & Pedagogy is the highest-leverage section — strong CDP can offset a weaker subject paper.",
+        "Both Language papers are independent — pick one as Language I (must score in pedagogy + comprehension) and a different one as Language II.",
+        "EVS questions at the primary level draw heavily from NCERT Class 3-5 Looking Around / Aas-Paas books — direct reading pays off.",
+      ],
+      source: "https://ctet.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    salaryBands: [
+      {
+        postName: "PRT (Primary Teacher) in KVS / NVS / Delhi schools (post recruitment)",
+        payLevel: "Pay Level 6",
+        basicPay: "₹35,400",
+        grossPayApprox: "₹52,000 – ₹61,000 (X-class city, including DA + HRA + TA)",
+        perks: ["DA", "HRA", "Education concession for own children", "Medical (CGHS)", "Pension under NPS"],
+        source: "https://kvsangathan.nic.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "TGT (Trained Graduate Teacher) — for Paper 2 qualifiers + degree",
+        payLevel: "Pay Level 7",
+        basicPay: "₹44,900",
+        grossPayApprox: "₹62,000 – ₹74,000 (X-class city)",
+        source: "https://kvsangathan.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── UPTET — UP Teacher Eligibility Test ────────────────────────
+  // Note: DB exam code is UP_UPTET (the state-prefixed convention used
+  // throughout the catalogue). We match that here.
+  {
+    examCode: "UP_UPTET",
+    oneLiner:
+      "Teacher Eligibility Test conducted by UPBEB for primary (Class 1-5) and upper-primary (Class 6-8) teacher recruitment in Uttar Pradesh government and aided schools.",
+    eligibility: {
+      ageNotes: "No upper age limit for UPTET itself (qualifying exam). Recruitment exams have separate age limits.",
+      education:
+        "Paper 1 (Class 1-5): 12th 50% + D.El.Ed. (BTC) OR Bachelor's + 2-year D.El.Ed. Paper 2 (Class 6-8): Bachelor's + B.Ed. OR equivalent.",
+      educationDetails: [
+        "Candidates must have Hindi as a compulsory subject for both papers.",
+        "Final-year B.Ed./D.El.Ed. candidates may appear.",
+      ],
+      attempts: "Unlimited.",
+      nationality: "Indian citizen; UP-domicile preferred for subsequent recruitment but UPTET itself open to all.",
+      source: "https://updeled.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Qualifying marks (UPTET certificate)",
+        outOf: "150 marks per paper",
+        rows: [
+          { year: 2024, category: "General", cutoff: "90/150 (60%)" },
+          { year: 2024, category: "OBC / SC / ST / PwBD", cutoff: "82-83/150 (55%)" },
+        ],
+        notes:
+          "Validity of UPTET certificate is lifelong (aligned with the 2021 NCTE change for CTET).",
+        source: "https://updeled.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Assistant Teacher — Primary (Class 1-5) in UP Basic Education",
+        basicPay: "₹35,400 (entry, Pay Level 6 equivalent under UP pay matrix)",
+        grossPayApprox: "₹45,000 – ₹52,000 (depending on posting)",
+        perks: ["DA as per UP govt", "HRA", "Medical reimbursement", "Pension under UP State NPS"],
+        source: "https://updeled.gov.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Assistant Teacher — Upper Primary (Class 6-8)",
+        basicPay: "₹44,900 (entry, Pay Level 7 equivalent)",
+        grossPayApprox: "₹56,000 – ₹65,000",
+        source: "https://updeled.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ════════════════════════════════════════════════════════════════
+  // BATCH 3 — State Public Service Commissions
+  // ════════════════════════════════════════════════════════════════
+
+  // ─── MPSC Rajyaseva — Maharashtra State Service Exam ────────────
+  {
+    examCode: "MH_MPSC_RAJYASEVA",
+    oneLiner:
+      "Maharashtra PSC State Service Examination — gateway to Deputy Collector (DyC), Deputy Superintendent of Police (DySP), Tahsildar, BDO and 25+ other Class A/B posts in the Maharashtra government.",
+    eligibility: {
+      ageMin: 19,
+      ageMax: 38,
+      ageNotes:
+        "19-38 for General. Upper age relaxed: OBC +3, SC/ST/NT/SBC +5, PwBD +10, ex-servicemen 3 yrs after service deduction. Reference date is 1 April of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university. Final-year graduating students can apply for Prelims but must produce the degree before Mains.",
+      attempts:
+        "General: 6 attempts. OBC: 9 attempts. SC/ST/PwBD: unlimited within upper age.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Marathi-language proficiency is required for certain interview-stage posts. Hindi knowledge is also assessed for some posts.",
+        "Domicile of Maharashtra preferred for reservation benefits; open-merit posts are open to all Indians.",
+      ],
+      source: "https://mpsc.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "400 marks (Paper 1 + Paper 2 combined; Paper 2 / CSAT is qualifying at 33%)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~218 – 224 (open merit, post-wise)" },
+          { year: 2023, category: "OBC", cutoff: "~210 – 218" },
+          { year: 2023, category: "EWS", cutoff: "~206 – 215" },
+          { year: 2023, category: "SC", cutoff: "~196 – 206" },
+          { year: 2023, category: "ST", cutoff: "~188 – 200" },
+          { year: 2022, category: "General", cutoff: "~225 – 232" },
+          { year: 2022, category: "OBC", cutoff: "~218 – 226" },
+        ],
+        notes:
+          "MPSC publishes post-wise cutoffs (DyC, DySP, Tahsildar each different). Range shown spans those posts.",
+        source: "https://mpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Deputy Collector / DySP / DCT (Class I — entry)",
+        payLevel: "Pay Level S-20 (Maharashtra)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹93,000 – ₹1,05,000 (X-class city, after probation)",
+        perks: [
+          "Government accommodation (entitled type)",
+          "Official vehicle for DyC/DySP posts",
+          "Medical for self + family",
+          "Maharashtra State NPS",
+          "LTC",
+        ],
+        source: "https://mpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Tahsildar / Block Development Officer / Class II posts",
+        payLevel: "Pay Level S-17 (Maharashtra)",
+        basicPay: "₹47,600",
+        grossPayApprox: "₹74,000 – ₹85,000",
+        source: "https://mpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── TNPSC Group 1 — Tamil Nadu top-tier ────────────────────────
+  {
+    examCode: "TN_TNPSC_GROUP1",
+    oneLiner:
+      "Tamil Nadu PSC Group 1 services — Deputy Collector, Deputy Superintendent of Police (DySP), Assistant Commissioner (Commercial Taxes) and 30+ other state services posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 32,
+      ageNotes:
+        "21-32 for General (no upper limit for SC/ST/SCA/MBC/BC). Reference date is 1 July of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      educationDetails: [
+        "Knowledge of Tamil is mandatory — verified via the Tamil Eligibility Test, the qualifying paper.",
+        "Final-year graduating students can apply.",
+      ],
+      attempts:
+        "Unlimited attempts (within upper age cap for General; no upper age for SC/ST/SCA/MBC/BC).",
+      nationality: "Indian citizen.",
+      source: "https://www.tnpsc.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "300 marks (Paper 1 — GS)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~195 – 205" },
+          { year: 2023, category: "BC", cutoff: "~185 – 195" },
+          { year: 2023, category: "MBC / DC", cutoff: "~175 – 188" },
+          { year: 2023, category: "SC", cutoff: "~160 – 175" },
+          { year: 2023, category: "ST", cutoff: "~140 – 160" },
+        ],
+        notes:
+          "TNPSC publishes minimum qualifying marks rather than precise cutoffs in some cycles; ranges here are inferred from notifications + topper interviews.",
+        source: "https://www.tnpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Deputy Collector (TN State Service)",
+        payLevel: "Pay Level 22 (Tamil Nadu)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹93,000 – ₹1,05,000 (Chennai, after probation)",
+        perks: ["Government quarters", "Vehicle", "Medical", "TN State NPS", "LTC"],
+        source: "https://www.tnpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── TNPSC Group 2 — Tamil Nadu mid-tier ────────────────────────
+  {
+    examCode: "TN_TNPSC_GROUP2",
+    oneLiner:
+      "Tamil Nadu PSC Group 2 services — Assistant Section Officer, Sub-Registrar, Inspector (various departments), Assistant Inspector of Labour and other Class II/III posts.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 32,
+      ageNotes:
+        "18-32 for General (no upper limit for SC/ST/SCA/MBC/BC). 21-32 for posts requiring graduation. Reference date is 1 July of the exam year.",
+      education:
+        "Bachelor's degree for Group 2 (interview-mandatory posts). Class 12 / equivalent for Group 2A (non-interview posts) in some recruitment cycles.",
+      attempts: "Unlimited attempts (within upper age cap for General; unlimited for reserved categories).",
+      nationality: "Indian citizen.",
+      source: "https://www.tnpsc.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains, Group 2 interview post)",
+        outOf: "300 marks",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~180 – 195" },
+          { year: 2023, category: "BC", cutoff: "~170 – 185" },
+          { year: 2023, category: "MBC", cutoff: "~160 – 175" },
+          { year: 2023, category: "SC", cutoff: "~145 – 160" },
+          { year: 2023, category: "ST", cutoff: "~125 – 145" },
+        ],
+        source: "https://www.tnpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Assistant Section Officer / Sub-Registrar / Inspector (Group 2)",
+        payLevel: "Pay Level 16 – 19 (Tamil Nadu)",
+        basicPay: "₹36,400 – ₹47,600",
+        grossPayApprox: "₹55,000 – ₹75,000 (Chennai)",
+        source: "https://www.tnpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── UPPSC PCS — UP Provincial Civil Services ───────────────────
+  {
+    examCode: "UP_UPPSC_PCS",
+    oneLiner:
+      "Uttar Pradesh PCS — Combined State Civil Services Examination for Deputy Collector (SDM), DySP, Block Development Officer, Treasury Officer and 30+ other state-cadre posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 40,
+      ageNotes:
+        "21-40 for General (raised from 35 to 40 in 2022). OBC: 21-43. SC/ST: 21-45. PwBD: +15 years. Reference date is 1 July of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university. Final-year graduating students can apply for Prelims.",
+      attempts: "No formal attempt limit — limited only by upper age cap.",
+      nationality: "Indian citizen.",
+      source: "https://uppsc.up.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims GS Paper 1 cutoff (qualifying for Mains)",
+        outOf: "200 marks (Paper 1 — Paper 2 / CSAT is qualifying at 33%)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "118.5" },
+          { year: 2023, category: "OBC", cutoff: "117.5" },
+          { year: 2023, category: "EWS", cutoff: "115.5" },
+          { year: 2023, category: "SC", cutoff: "108.5" },
+          { year: 2023, category: "ST", cutoff: "95.5" },
+          { year: 2022, category: "General", cutoff: "127.5" },
+          { year: 2022, category: "OBC", cutoff: "125.5" },
+          { year: 2022, category: "SC", cutoff: "115.5" },
+          { year: 2022, category: "ST", cutoff: "98.0" },
+        ],
+        source: "https://uppsc.up.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Deputy Collector / SDM (UP PCS)",
+        payLevel: "Pay Level 10 (UP)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000 (Lucknow/metro, after probation)",
+        perks: ["Government accommodation (entitled)", "Official vehicle", "Medical", "UP State NPS", "LTC"],
+        source: "https://uppsc.up.nic.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "Block Development Officer / Treasury Officer (PCS)",
+        payLevel: "Pay Level 9",
+        basicPay: "₹53,100",
+        grossPayApprox: "₹78,000 – ₹88,000",
+        source: "https://uppsc.up.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── BPSC CCE — Bihar PSC Combined Competitive Exam ─────────────
+  {
+    examCode: "BR_BPSC_CCE",
+    oneLiner:
+      "Bihar PSC Combined Competitive Examination — recruitment to SDM, DySP, BDO, Revenue Officer and other Class A/B services across Bihar.",
+    eligibility: {
+      ageMin: 22,
+      ageMax: 37,
+      ageNotes:
+        "22-37 for General Male (upper limit relaxed to 40 for General Female / BC / EWS, 42 for BC/EBC Female, 42 for SC/ST). Reference date varies — see latest notification.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Domicile of Bihar required for state-specific posts (most posts).",
+        "Hindi knowledge tested at the interview stage for certain posts.",
+      ],
+      source: "https://www.bpsc.bih.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "150 marks",
+        rows: [
+          { year: 2024, category: "General — 70th BPSC", cutoff: "~85 – 92" },
+          { year: 2024, category: "BC", cutoff: "~80 – 88" },
+          { year: 2024, category: "EBC", cutoff: "~78 – 85" },
+          { year: 2024, category: "SC", cutoff: "~65 – 75" },
+          { year: 2024, category: "ST", cutoff: "~60 – 70" },
+          { year: 2023, category: "General — 68th/69th BPSC", cutoff: "~95 – 100" },
+          { year: 2023, category: "BC", cutoff: "~88 – 95" },
+        ],
+        source: "https://www.bpsc.bih.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "SDM / DCLR / Senior Class A officer",
+        payLevel: "Pay Level 9 (Bihar)",
+        basicPay: "₹53,100",
+        grossPayApprox: "₹78,000 – ₹90,000 (Patna, after probation)",
+        source: "https://www.bpsc.bih.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── RPSC RAS — Rajasthan Administrative Service ────────────────
+  {
+    examCode: "RJ_RPSC_RAS",
+    oneLiner:
+      "Rajasthan PSC Combined State + Subordinate Services Examination — RAS (Rajasthan Administrative Service), RPS (Police Service), RFS (Forest Service) and 25+ other state-cadre posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 40,
+      ageNotes:
+        "21-40 for General. Age relaxation: OBC/SC/ST/Women — varies (max 45 for state govt employees, women, SC/ST). Reference date is 1 January of the year next to exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: ["Devnagri (Hindi) proficiency required at the Mains stage."],
+      source: "https://rpsc.rajasthan.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2023, category: "General", cutoff: "78 – 82" },
+          { year: 2023, category: "OBC", cutoff: "76 – 80" },
+          { year: 2023, category: "EWS", cutoff: "74 – 78" },
+          { year: 2023, category: "SC", cutoff: "68 – 72" },
+          { year: 2023, category: "ST", cutoff: "62 – 68" },
+          { year: 2021, category: "General", cutoff: "87.8" },
+          { year: 2021, category: "OBC", cutoff: "85.3" },
+        ],
+        source: "https://rpsc.rajasthan.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "RAS — Sub-Divisional Officer (Revenue) / Tehsildar (entry)",
+        payLevel: "Pay Level L-14 (Rajasthan)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000 (Jaipur, after probation)",
+        source: "https://rpsc.rajasthan.gov.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "RPS (Rajasthan Police Service) / DySP",
+        payLevel: "Pay Level L-14",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000",
+        source: "https://rpsc.rajasthan.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── WBCS — West Bengal Civil Service ───────────────────────────
+  {
+    examCode: "WB_WBCS",
+    oneLiner:
+      "West Bengal Civil Service (Executive) and allied services — gateway to WBCS (Exe), WBPS (West Bengal Police Service), Joint BDO, Sub-Registrar and other Class A/B posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 36,
+      ageNotes:
+        "21-36 for Group A & B (General). 21-39 for Group C and D (lower-level). Upper age relaxed: OBC +3, SC/ST +5, PwBD +8, Ex-servicemen 3 years after service deduction.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      educationDetails: [
+        "Bengali language paper (compulsory Bengali) at Mains stage. Candidates who studied Bengali up to Class 8 or beyond are eligible.",
+        "Candidates not having Bengali as a language paper at school can apply but must qualify the Bengali Mains paper.",
+      ],
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      source: "https://wbpsc.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains, Group A & B)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~143 – 150" },
+          { year: 2023, category: "OBC-A", cutoff: "~135 – 142" },
+          { year: 2023, category: "OBC-B", cutoff: "~132 – 140" },
+          { year: 2023, category: "SC", cutoff: "~115 – 125" },
+          { year: 2023, category: "ST", cutoff: "~105 – 115" },
+        ],
+        source: "https://wbpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "WBCS Group A — Deputy Magistrate / SDO (entry)",
+        payLevel: "Pay Level 16 (West Bengal ROPA 2019)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000 (Kolkata, after probation)",
+        source: "https://wbpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        postName: "WBCS Group B — Deputy Superintendent of Police (WBPS)",
+        payLevel: "Pay Level 16",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000",
+        source: "https://wbpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── KPSC KAS — Karnataka Administrative Service ────────────────
+  {
+    examCode: "KA_KPSC_KAS",
+    oneLiner:
+      "Karnataka PSC Gazetted Probationers (KAS) — Group A and B services across Karnataka government: Asst Commissioner, Tahsildar, Asst Director, Treasury Officer.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 35,
+      ageNotes:
+        "21-35 for General. OBC: +3, SC/ST/Category-1: +5. Reference date varies.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Kannada knowledge is mandatory — verified via a qualifying Kannada language paper at Mains.",
+      ],
+      source: "https://kpsc.kar.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains, KAS Group A)",
+        outOf: "400 marks (Paper 1 + Paper 2 combined; Paper 2 / CSAT qualifying at 33%)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~225 – 240" },
+          { year: 2023, category: "OBC (II A / II B / III A / III B)", cutoff: "~215 – 232" },
+          { year: 2023, category: "SC", cutoff: "~205 – 220" },
+          { year: 2023, category: "ST", cutoff: "~190 – 205" },
+        ],
+        notes:
+          "KPSC KAS uses a complex category-wise reservation matrix. The ranges above are based on the most recent published cycle.",
+        source: "https://kpsc.kar.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Assistant Commissioner / KAS Group A Probationer (entry)",
+        payLevel: "Pay Level 23 (Karnataka)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000 (Bangalore, after probation)",
+        source: "https://kpsc.kar.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── MPPSC SSE — Madhya Pradesh State Service Exam ──────────────
+  {
+    examCode: "MP_MPPSC_SSE",
+    oneLiner:
+      "Madhya Pradesh PSC State Service Examination — Deputy Collector, DySP, Naib Tahsildar, Assistant Registrar, Block Development Officer and other state-cadre posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 40,
+      ageNotes:
+        "21-40 for General. MP-domicile candidates and reserved categories often get 45. Reference date is 1 January of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Hindi proficiency tested at Mains. Domicile required for state-specific reserved posts.",
+      ],
+      source: "https://www.mppsc.mp.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "200 marks (Paper 1; Paper 2 / CSAT qualifying)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~115 – 122" },
+          { year: 2023, category: "OBC", cutoff: "~108 – 115" },
+          { year: 2023, category: "EWS", cutoff: "~104 – 112" },
+          { year: 2023, category: "SC", cutoff: "~95 – 105" },
+          { year: 2023, category: "ST", cutoff: "~85 – 95" },
+        ],
+        source: "https://www.mppsc.mp.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Deputy Collector / DySP (MPPSC SSE)",
+        payLevel: "Pay Level 12 (MP)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹82,000 – ₹93,000 (Bhopal/Indore, after probation)",
+        source: "https://www.mppsc.mp.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── APPSC Group 1 — Andhra Pradesh top-tier ────────────────────
+  {
+    examCode: "AP_APPSC_GROUP1",
+    oneLiner:
+      "Andhra Pradesh PSC Group 1 services — Deputy Collector, DySP, District Tribal Welfare Officer, Commercial Tax Officer, District Registrar and other top state-cadre posts.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 42,
+      ageNotes:
+        "18-42 for General (upper limit relaxed by the AP government from earlier 34). Reference date is 1 July of the exam year. OBC/SC/ST/PwBD: further relaxations per AP rules.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Telugu language proficiency required for some posts at Mains/Interview stage.",
+        "Domicile of Andhra Pradesh preferred but not strictly required for all posts.",
+      ],
+      source: "https://psc.ap.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Screening Test cutoff (Prelims — qualifying for Mains)",
+        outOf: "240 marks (Paper 1 + Paper 2)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~150 – 165" },
+          { year: 2023, category: "BC", cutoff: "~140 – 158" },
+          { year: 2023, category: "SC", cutoff: "~120 – 138" },
+          { year: 2023, category: "ST", cutoff: "~110 – 128" },
+        ],
+        notes:
+          "APPSC Group 1 cutoffs vary by post and year; this is a representative range from the most recent published cycle.",
+        source: "https://psc.ap.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Deputy Collector / Commercial Tax Officer / DySP (Group 1)",
+        payLevel: "Pay Level 26 (AP)",
+        basicPay: "₹56,870",
+        grossPayApprox: "₹88,000 – ₹1,00,000 (Vijayawada/Vizag, after probation)",
+        source: "https://psc.ap.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ════════════════════════════════════════════════════════════════
+  // BATCH 4 — Engineering state entrances + CUET UG
+  // ════════════════════════════════════════════════════════════════
+
+  // ─── JEE Advanced — Joint Entrance Examination (Advanced) ───────
+  {
+    examCode: "JEE_ADVANCED",
+    oneLiner:
+      "Gateway to admissions across all 23 IITs — Bachelor's, Integrated Master's and Dual Degree programmes in Engineering, Science, Architecture and select interdisciplinary programmes.",
+    eligibility: {
+      ageNotes:
+        "Born on or after 1 October 2000 (with 5-year relaxation for SC/ST/PwD). Reference date varies — see latest IIT brochure.",
+      education:
+        "Must have appeared in Class 12 (or equivalent) for the first time in the previous year OR the current year. Top 2,50,000 successful JEE Main candidates qualify.",
+      educationDetails: [
+        "Class 12 PCM mandatory.",
+        "Maximum 2 attempts in consecutive years.",
+        "Candidates who have accepted an IIT seat in any previous year (and not subsequently surrendered before the start of joining formalities) are NOT eligible.",
+      ],
+      attempts: "Maximum 2 attempts in consecutive years.",
+      nationality: "Open to Indian and foreign nationals (limited seats for foreign nationals).",
+      source: "https://jeeadv.ac.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "JoSAA closing ranks — CSE at top IITs (Round 6, Open, 2024)",
+        rows: [
+          { year: 2024, category: "IIT Bombay CSE (4-yr)", cutoff: "Rank ~60 – 67" },
+          { year: 2024, category: "IIT Delhi CSE (4-yr)", cutoff: "Rank ~110 – 117" },
+          { year: 2024, category: "IIT Madras CSE (4-yr)", cutoff: "Rank ~158 – 168" },
+          { year: 2024, category: "IIT Kanpur CSE (4-yr)", cutoff: "Rank ~218 – 235" },
+          { year: 2024, category: "IIT Kharagpur CSE (4-yr)", cutoff: "Rank ~245 – 262" },
+          { year: 2024, category: "IIT Roorkee CSE (4-yr)", cutoff: "Rank ~280 – 305" },
+          { year: 2024, category: "IIT Hyderabad CSE (4-yr)", cutoff: "Rank ~280 – 310" },
+          { year: 2024, category: "IIT BHU CSE", cutoff: "Rank ~350 – 410" },
+          { year: 2024, category: "IIT Guwahati CSE", cutoff: "Rank ~400 – 460" },
+        ],
+        notes:
+          "Closing ranks shown are for Open category, home state quota where applicable. Female-only, OBC, SC/ST closing ranks are much higher (i.e., more accessible).",
+        source: "https://josaa.nic.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        title: "Qualifying cutoffs — JEE Advanced rank list (Open category)",
+        rows: [
+          { year: 2024, category: "Subject-wise (each subject)", cutoff: "≥ 10% / 360" },
+          { year: 2024, category: "Aggregate", cutoff: "≥ 35% / 360" },
+          { year: 2023, category: "Subject-wise", cutoff: "≥ 10% / 360" },
+          { year: 2023, category: "Aggregate", cutoff: "≥ 35.4% / 360" },
+        ],
+        notes:
+          "Open candidates need subject-wise AND aggregate minimums. SC/ST/PwD: 5% subject-wise and 17.5% aggregate.",
+        source: "https://jeeadv.ac.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "JEE Advanced paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 360,
+      topics: [
+        { subject: "Mathematics (120 marks across Paper 1 + 2)", topic: "Calculus (Limits, Continuity, Differentiation, Integration, ODE)", recentMarksAvg: 38, recentMarksMax: 44 },
+        { subject: "Mathematics (120 marks across Paper 1 + 2)", topic: "Coordinate Geometry + Vectors + 3D", recentMarksAvg: 28, recentMarksMax: 34 },
+        { subject: "Mathematics (120 marks across Paper 1 + 2)", topic: "Algebra (Quadratic, Complex Numbers, Matrices, P&C, Probability)", recentMarksAvg: 36, recentMarksMax: 42 },
+        { subject: "Mathematics (120 marks across Paper 1 + 2)", topic: "Trigonometry + Sequences", recentMarksAvg: 18, recentMarksMax: 24 },
+        { subject: "Physics (120 marks across Paper 1 + 2)", topic: "Mechanics + Rotation + SHM + Waves", recentMarksAvg: 38, recentMarksMax: 46 },
+        { subject: "Physics (120 marks across Paper 1 + 2)", topic: "Electrodynamics + EM Waves", recentMarksAvg: 38, recentMarksMax: 44 },
+        { subject: "Physics (120 marks across Paper 1 + 2)", topic: "Optics + Modern Physics + Thermodynamics", recentMarksAvg: 44, recentMarksMax: 52 },
+        { subject: "Chemistry (120 marks across Paper 1 + 2)", topic: "Physical Chemistry (Thermo, Equilibria, Electrochem, Kinetics, Solutions)", recentMarksAvg: 42, recentMarksMax: 50 },
+        { subject: "Chemistry (120 marks across Paper 1 + 2)", topic: "Organic Chemistry (Reaction Mech, GOC, Stereochemistry, Named Reactions)", recentMarksAvg: 42, recentMarksMax: 50 },
+        { subject: "Chemistry (120 marks across Paper 1 + 2)", topic: "Inorganic Chemistry (Periodic Properties, Coordination, p-block, Qualitative Analysis)", recentMarksAvg: 36, recentMarksMax: 42 },
+      ],
+      takeaways: [
+        "JEE Advanced rewards depth of understanding over breadth — every subject's syllabus is finite but problems are multi-concept.",
+        "Most rank movement at the top happens through Chemistry — Math and Physics top scorers are common; Chemistry full-marks scorers are rare.",
+        "Inorganic Chemistry — particularly the qualitative analysis and coordination chapters — produces predictable marks for candidates who memorise the standard salt + colour + reaction tables.",
+      ],
+      source: "https://jeeadv.ac.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── AP EAMCET — Andhra Pradesh Engineering/Agriculture ─────────
+  {
+    examCode: "AP_EAMCET",
+    oneLiner:
+      "Andhra Pradesh Engineering, Agriculture & Medical Common Entrance Test (now AP EAPCET) — gate to engineering, agriculture and pharmacy UG seats in Andhra Pradesh universities and affiliated colleges.",
+    eligibility: {
+      ageMin: 16,
+      ageNotes:
+        "Minimum 16 years as of 31 December of the exam year. No upper age limit for engineering stream; 22 years for agriculture/pharmacy (relaxed for reserved categories).",
+      education:
+        "Class 12 with Physics + Mathematics + (Chemistry / Biology / Biotechnology) for Engineering stream. Class 12 with Physics + Chemistry + Biology for Agriculture / Pharmacy stream.",
+      educationDetails: [
+        "Class 12 aggregate: 45% in PCM/PCB (40% for SC/ST/OBC).",
+        "Candidates appearing in Class 12 in the current year can apply.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen. AP / Telangana state quota applies as per local rules.",
+      specialConstraints: [
+        "AP domicile required for 85% state-quota seats. 15% remain in convener quota (open to non-locals).",
+      ],
+      source: "https://cets.apsche.ap.gov.in/EAPCET/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Engineering stream closing ranks (top colleges, Open category, 2024)",
+        rows: [
+          { year: 2024, category: "JNTU Anantapur CSE", cutoff: "Rank ~3,500" },
+          { year: 2024, category: "JNTU Kakinada CSE", cutoff: "Rank ~5,200" },
+          { year: 2024, category: "Andhra University CSE", cutoff: "Rank ~6,800" },
+          { year: 2024, category: "Sri Venkateswara University Tirupati CSE", cutoff: "Rank ~7,500" },
+          { year: 2024, category: "RGUKT Nuzvid (IIIT) CSE", cutoff: "Rank ~3,800" },
+        ],
+        notes:
+          "Top private colleges (CBIT, GITAM, VRSEC, KL Univ) close even higher up; counselling cutoffs vary by year and quota.",
+        source: "https://cets.apsche.ap.gov.in/EAPCET/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "AP EAMCET (Engineering) paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 160,
+      topics: [
+        { subject: "Mathematics (80 marks)", topic: "Calculus + Coordinate Geometry + Vectors + 3D", recentMarksAvg: 32, recentMarksMax: 38 },
+        { subject: "Mathematics (80 marks)", topic: "Algebra + Trigonometry", recentMarksAvg: 22, recentMarksMax: 28 },
+        { subject: "Mathematics (80 marks)", topic: "Probability + Statistics", recentMarksAvg: 8, recentMarksMax: 12 },
+        { subject: "Physics (40 marks)", topic: "Mechanics + Waves + Thermodynamics", recentMarksAvg: 16, recentMarksMax: 22 },
+        { subject: "Physics (40 marks)", topic: "Electrodynamics + Optics + Modern Physics", recentMarksAvg: 18, recentMarksMax: 24 },
+        { subject: "Chemistry (40 marks)", topic: "Physical Chemistry", recentMarksAvg: 14, recentMarksMax: 20 },
+        { subject: "Chemistry (40 marks)", topic: "Organic + Inorganic Chemistry", recentMarksAvg: 14, recentMarksMax: 20 },
+      ],
+      takeaways: [
+        "Mathematics carries 50% of total marks — strong Math alone can secure a state-quota seat in a tier-2 college.",
+        "AP EAMCET is faster-paced than JEE Main: 160 questions in 180 min = ~67 sec per question. Speed matters.",
+        "Intermediate (AP) textbooks cover ~95% of the paper. NCERT supplementary practice helps but isn't strictly necessary.",
+      ],
+      source: "https://cets.apsche.ap.gov.in/EAPCET/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── TS EAMCET — Telangana Engineering/Agriculture ──────────────
+  {
+    examCode: "TS_EAMCET",
+    oneLiner:
+      "Telangana State Engineering, Agriculture & Medical Common Entrance Test (now TS EAPCET) — gate to engineering, agriculture and pharmacy UG seats in Telangana.",
+    eligibility: {
+      ageMin: 16,
+      ageNotes: "Minimum 16 years on 31 December of the exam year. No upper age limit for engineering.",
+      education:
+        "Class 12 with PCM (engineering) or PCB (agriculture). 45% aggregate (40% for reserved categories).",
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Telangana domicile required for 85% state-quota seats.",
+        "Local-area reservation (OU / KU area) applies within Telangana convener quota.",
+      ],
+      source: "https://eapcet.tsche.ac.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Engineering stream closing ranks (top colleges, Open Convener, 2024)",
+        rows: [
+          { year: 2024, category: "JNTU Hyderabad CSE", cutoff: "Rank ~2,200" },
+          { year: 2024, category: "Osmania University CSE", cutoff: "Rank ~2,800" },
+          { year: 2024, category: "CBIT Hyderabad CSE", cutoff: "Rank ~3,500" },
+          { year: 2024, category: "Vasavi College of Engineering CSE", cutoff: "Rank ~4,500" },
+          { year: 2024, category: "VNR VJIET CSE", cutoff: "Rank ~5,500" },
+        ],
+        source: "https://tgeapcet.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "TS EAMCET (Engineering) paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 160,
+      topics: [
+        { subject: "Mathematics (80 marks)", topic: "Calculus + Coordinate Geometry + Vectors", recentMarksAvg: 30, recentMarksMax: 38 },
+        { subject: "Mathematics (80 marks)", topic: "Algebra + Trigonometry", recentMarksAvg: 24, recentMarksMax: 30 },
+        { subject: "Mathematics (80 marks)", topic: "Probability + Statistics + Matrices", recentMarksAvg: 8, recentMarksMax: 12 },
+        { subject: "Physics (40 marks)", topic: "Mechanics + Waves + Thermodynamics", recentMarksAvg: 16, recentMarksMax: 22 },
+        { subject: "Physics (40 marks)", topic: "Electrodynamics + Optics + Modern Physics", recentMarksAvg: 18, recentMarksMax: 24 },
+        { subject: "Chemistry (40 marks)", topic: "Physical + Organic + Inorganic", recentMarksAvg: 28, recentMarksMax: 38 },
+      ],
+      takeaways: [
+        "TS EAMCET is closely aligned with the Telangana State Intermediate (TSBIE) syllabus — direct textbook practice is the highest-yield prep.",
+        "Top Telangana ranks come from heavy mock practice — past TS EAMCET papers are the best resource.",
+        "Math is the biggest differentiator at the top — Mech engineering, Aero, EEE cut-offs are decided here.",
+      ],
+      source: "https://eapcet.tsche.ac.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── KCET — Karnataka Common Entrance Test ──────────────────────
+  {
+    examCode: "KA_KCET",
+    oneLiner:
+      "Karnataka Common Entrance Test — gate to government, aided and select private engineering, pharmacy, agricultural, veterinary and naturopathy programmes in Karnataka.",
+    eligibility: {
+      ageNotes:
+        "No upper age limit. Minimum age — must have passed / be appearing in Class 12.",
+      education:
+        "Class 12 with PCM (engineering) or PCB (medical / agri streams). 45% aggregate in PCM (40% for SC/ST/Cat I).",
+      educationDetails: [
+        "Engineering applicants need PCM + at least one of: Biology / Computer Science / Electronics.",
+        "Class 12 must be from a Karnataka-recognised board OR a board recognised by CBSE/ICSE — outside-Karnataka candidates need a Karnataka-domicile certificate.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Karnataka domicile (10-year clause) required for the state's Article 371-J Hyderabad-Karnataka reservation and certain state-quota seats.",
+        "Class 12 marks contribute 50% to the final composite rank (the other 50% being KCET score) — Class 12 performance still matters.",
+      ],
+      source: "https://cetonline.karnataka.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Closing ranks — CSE at top Karnataka colleges (General Merit, 2024)",
+        rows: [
+          { year: 2024, category: "UVCE Bangalore CSE", cutoff: "Rank ~250 – 450" },
+          { year: 2024, category: "RV College of Engineering CSE", cutoff: "Rank ~600 – 800" },
+          { year: 2024, category: "BMS College of Engineering CSE", cutoff: "Rank ~1,200 – 1,500" },
+          { year: 2024, category: "PES University EC Campus CSE", cutoff: "Rank ~1,800 – 2,400" },
+          { year: 2024, category: "Sir MV College of Engineering CSE", cutoff: "Rank ~3,500 – 4,500" },
+        ],
+        source: "https://cetonline.karnataka.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "KCET paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 180,
+      topics: [
+        { subject: "Mathematics (60 Qs / 60 marks)", topic: "Calculus + Algebra + Probability", recentMarksAvg: 35, recentMarksMax: 42 },
+        { subject: "Mathematics", topic: "Coordinate Geometry + Vectors + 3D + Trigonometry", recentMarksAvg: 25, recentMarksMax: 32 },
+        { subject: "Physics (60 Qs / 60 marks)", topic: "Mechanics + Waves + Thermo", recentMarksAvg: 22, recentMarksMax: 28 },
+        { subject: "Physics", topic: "Electrodynamics + Optics + Modern Physics", recentMarksAvg: 38, recentMarksMax: 46 },
+        { subject: "Chemistry (60 Qs / 60 marks)", topic: "Physical + Organic + Inorganic", recentMarksAvg: 58, recentMarksMax: 60 },
+      ],
+      takeaways: [
+        "KCET is easier than JEE Main but rewards careful question-reading — typos and ambiguous options have historically caused complaints.",
+        "Karnataka 2nd PUC textbooks cover ~98% of the paper. NCERT alone is INSUFFICIENT for KCET — use the PUC textbooks.",
+        "Composite ranking with 50% Class-12 weightage means consistent Class 12 board prep + KCET-specific practice are both required.",
+      ],
+      source: "https://cetonline.karnataka.gov.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── COMEDK UGET — Karnataka private engineering ────────────────
+  {
+    examCode: "KA_COMEDK",
+    oneLiner:
+      "Consortium of Medical, Engineering & Dental Colleges of Karnataka — single entrance for engineering and architecture admissions to ~190 private engineering colleges in Karnataka.",
+    eligibility: {
+      ageNotes: "No upper age limit. Minimum: must have passed Class 12 (or be appearing).",
+      education: "Class 12 with PCM. 45% aggregate (40% for SC/ST/OBC).",
+      educationDetails: [
+        "B.Arch additionally requires Class 12 Mathematics + NATA / JEE Paper 2 score.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, NRI, OCI, PIO. Foreign nationals — separate quota.",
+      specialConstraints: [
+        "COMEDK is for private/deemed Karnataka colleges only — government seats use KCET.",
+        "No domicile restriction; open to candidates from any state.",
+      ],
+      source: "https://www.comedk.org/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Closing ranks — CSE at top COMEDK colleges (Open category, 2024)",
+        rows: [
+          { year: 2024, category: "MS Ramaiah Institute of Technology CSE", cutoff: "Rank ~450 – 700" },
+          { year: 2024, category: "Dayananda Sagar College of Engineering CSE", cutoff: "Rank ~1,200 – 1,800" },
+          { year: 2024, category: "BMS Institute of Tech CSE", cutoff: "Rank ~1,800 – 2,500" },
+          { year: 2024, category: "RNS Institute of Technology CSE", cutoff: "Rank ~2,500 – 3,500" },
+        ],
+        notes: "COMEDK fees are significantly higher than KCET government colleges — usually ₹2-5 lakh per year.",
+        source: "https://www.comedk.org/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "COMEDK UGET paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 180,
+      topics: [
+        { subject: "Mathematics (60 marks)", topic: "Calculus + Algebra + Coordinate Geometry + Vectors", recentMarksAvg: 42, recentMarksMax: 50 },
+        { subject: "Mathematics", topic: "Probability + Statistics + Trigonometry", recentMarksAvg: 18, recentMarksMax: 24 },
+        { subject: "Physics (60 marks)", topic: "Mechanics + Waves + Thermo + Properties of Matter", recentMarksAvg: 22, recentMarksMax: 28 },
+        { subject: "Physics", topic: "Electrodynamics + Optics + Modern Physics", recentMarksAvg: 38, recentMarksMax: 44 },
+        { subject: "Chemistry (60 marks)", topic: "Physical + Organic + Inorganic", recentMarksAvg: 58, recentMarksMax: 60 },
+      ],
+      takeaways: [
+        "COMEDK papers are typically 1-2 difficulty levels easier than JEE Main but rely on careful problem-reading.",
+        "180 questions in 180 minutes means time management is the biggest skill — many students lose marks not to difficulty but to leaving questions blank.",
+        "CBSE Class 12 NCERT covers ~85% of the paper. Adding state-level PCM practice is helpful but not essential.",
+      ],
+      source: "https://www.comedk.org/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── MHT CET — Maharashtra Common Entrance Test ─────────────────
+  {
+    examCode: "MH_MHTCET",
+    oneLiner:
+      "Maharashtra Common Entrance Test — engineering, pharmacy and agriculture UG admissions across Maharashtra government, aided and private colleges.",
+    eligibility: {
+      ageNotes: "No upper age limit. Minimum age — must be eligible for Class 12.",
+      education:
+        "Class 12 with PCM (engineering / pharmacy / agriculture) — minimum 50% aggregate (45% for reserved categories).",
+      educationDetails: [
+        "For B.Pharm: PCM + Biology (45% reserved).",
+        "Candidates from Maharashtra board enjoy easier domicile-based reservation; out-of-state candidates compete in the 15% All-India quota.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Maharashtra domicile required for 85% state-quota seats.",
+        "Score is percentile-normalised across 3 shifts — equating differences in shift difficulty.",
+      ],
+      source: "https://cetcell.mahacet.org/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Closing percentiles — CSE at top Maharashtra colleges (Home State, Open, 2024)",
+        rows: [
+          { year: 2024, category: "COEP Pune CSE", cutoff: "99.7+ percentile" },
+          { year: 2024, category: "VJTI Mumbai CSE", cutoff: "99.5+ percentile" },
+          { year: 2024, category: "ICT Mumbai CSE", cutoff: "99.6+ percentile" },
+          { year: 2024, category: "PICT Pune CSE", cutoff: "99+ percentile" },
+          { year: 2024, category: "VIT Pune CSE", cutoff: "98.5+ percentile" },
+          { year: 2024, category: "MIT WPU CSE", cutoff: "97+ percentile" },
+        ],
+        notes:
+          "MHT CET uses percentile (not raw marks) for ranking. Closing percentile slightly varies between counselling rounds.",
+        source: "https://fe2024.mahacet.org/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [],
+  },
+
+  // ─── WBJEE — West Bengal Joint Entrance Examination ─────────────
+  {
+    examCode: "WB_WBJEE",
+    oneLiner:
+      "West Bengal Joint Entrance Examination — engineering, technology, pharmacy and architecture admissions to government and government-aided colleges in West Bengal.",
+    eligibility: {
+      ageMin: 17,
+      ageNotes:
+        "Minimum 17 years as of 31 December of the exam year. No upper age limit for engineering (5-year cap for marine engineering posts).",
+      education:
+        "Class 12 with PCM (engineering / pharmacy). 45% in PCM (40% for SC/ST/OBC-A/OBC-B/PwD). English at qualifying level.",
+      educationDetails: [
+        "Candidates from outside West Bengal can apply — but state-quota seats favour WB domiciles.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, NRI, OCI, PIO.",
+      source: "https://wbjeeb.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Closing ranks — CSE at top WB colleges (Home State, Open, 2024)",
+        rows: [
+          { year: 2024, category: "IIEST Shibpur CSE", cutoff: "Rank ~600 – 800" },
+          { year: 2024, category: "Jadavpur University CSE", cutoff: "Rank ~120 – 200" },
+          { year: 2024, category: "Kalyani Govt Engg College CSE", cutoff: "Rank ~3,000 – 4,500" },
+          { year: 2024, category: "Govt College of Engg & Ceramic Tech CSE", cutoff: "Rank ~4,000 – 5,500" },
+          { year: 2024, category: "Haldia Institute of Tech CSE (Private)", cutoff: "Rank ~8,000 – 15,000" },
+        ],
+        notes: "Jadavpur is the standout — closing rank lower than most NITs.",
+        source: "https://wbjeeb.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "WBJEE paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 200,
+      topics: [
+        { subject: "Mathematics (100 marks)", topic: "Calculus + Coordinate Geometry + Vectors + 3D", recentMarksAvg: 40, recentMarksMax: 48 },
+        { subject: "Mathematics", topic: "Algebra + Trigonometry + Probability + Statistics", recentMarksAvg: 35, recentMarksMax: 42 },
+        { subject: "Mathematics", topic: "Multi-correct + Matrix-match questions (negative marking heavier)", recentMarksAvg: 25, recentMarksMax: 30 },
+        { subject: "Physics (50 marks)", topic: "Mechanics + Waves + Thermodynamics + Properties of Matter", recentMarksAvg: 22, recentMarksMax: 28 },
+        { subject: "Physics", topic: "Electrodynamics + Optics + Modern Physics", recentMarksAvg: 25, recentMarksMax: 30 },
+        { subject: "Chemistry (50 marks)", topic: "Physical + Organic + Inorganic", recentMarksAvg: 48, recentMarksMax: 50 },
+      ],
+      takeaways: [
+        "WBJEE has Maths weighted at 100/200 — twice the marks of either Physics or Chemistry. Math-strong candidates have a real edge.",
+        "Multi-correct and matrix-match questions carry double the marks but also double the negative penalty — selective attempting is critical.",
+        "WB HS Council textbooks cover the paper directly — that's the highest-yield source.",
+      ],
+      source: "https://wbjeeb.nic.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── KEAM — Kerala Engineering Architecture Medical ─────────────
+  {
+    examCode: "KL_KEAM",
+    oneLiner:
+      "Kerala Engineering Architecture Medical entrance — engineering, pharmacy, architecture and (formerly) medical admissions in Kerala colleges.",
+    eligibility: {
+      ageMin: 17,
+      ageNotes:
+        "Minimum 17 years on 31 December of the exam year. No upper age limit for engineering.",
+      education: "Class 12 with PCM (engineering / pharmacy). 50% aggregate in PCM (45% for SC/ST/OEC).",
+      educationDetails: [
+        "Architecture: NATA or JEE Paper 2 score required in addition to KEAM Paper 1 (Math).",
+        "Pharmacy: Class 12 PCM OR PCB (with 50%).",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Kerala domicile required for state merit seats (85%). 15% are All-India seats.",
+        "KEAM has two papers: Paper 1 (Physics + Chemistry) and Paper 2 (Mathematics). Engineering rank uses both.",
+      ],
+      source: "https://www.cee.kerala.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Closing ranks — CSE at top Kerala colleges (State Merit, Open, 2024)",
+        rows: [
+          { year: 2024, category: "Govt Engg College Thrissur CSE", cutoff: "Rank ~300 – 500" },
+          { year: 2024, category: "CET Trivandrum CSE", cutoff: "Rank ~100 – 200" },
+          { year: 2024, category: "Govt Engg College Barton Hill (Trivandrum) CSE", cutoff: "Rank ~700 – 1,100" },
+          { year: 2024, category: "Model Engg College Thrikkakara CSE", cutoff: "Rank ~250 – 450" },
+          { year: 2024, category: "TKM College of Engg Kollam CSE", cutoff: "Rank ~500 – 850" },
+        ],
+        notes: "Closing ranks shown for Kerala home-state quota, General category, round 6 / final round.",
+        source: "https://www.cee.kerala.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [],
+  },
+
+  // ─── UP UPCET — UP Combined Entrance Test ───────────────────────
+  {
+    examCode: "UP_UPCET",
+    oneLiner:
+      "UP Combined Entrance Test — admissions to UG engineering, agriculture, pharmacy and management programmes at AKTU-affiliated colleges in UP.",
+    eligibility: {
+      ageNotes: "No upper age limit (varies by programme).",
+      education:
+        "Class 12 with PCM (engineering / pharmacy). 45% aggregate (40% for reserved categories).",
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "UP domicile required for state-quota seats. NTA conducts the exam; AKTU handles counselling.",
+      ],
+      source: "https://upcet.nta.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Closing ranks — CSE at top AKTU colleges (Home State, Open, 2024)",
+        rows: [
+          { year: 2024, category: "HBTU Kanpur CSE", cutoff: "Rank ~500 – 800" },
+          { year: 2024, category: "MMMUT Gorakhpur CSE", cutoff: "Rank ~900 – 1,400" },
+          { year: 2024, category: "IET Lucknow CSE", cutoff: "Rank ~400 – 700" },
+          { year: 2024, category: "JSS Noida CSE", cutoff: "Rank ~2,500 – 4,000" },
+        ],
+        source: "https://upcet.nta.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [],
+  },
+
+  // ─── CUET UG — Common University Entrance Test (UG) ─────────────
+  {
+    examCode: "CUET_UG",
+    oneLiner:
+      "Common Universities Entrance Test (UG) — single entrance for undergraduate admissions to 45+ central universities (DU, JNU, BHU, etc.) and 100+ state and private universities.",
+    eligibility: {
+      ageNotes: "No upper age limit.",
+      education:
+        "Class 12 pass from a recognised board. Each university sets its own subject-specific eligibility (e.g., DU BA Hons Economics needs Maths).",
+      educationDetails: [
+        "Candidates can choose up to 6 subjects (changed in some cycles).",
+        "Domain subjects (33 to choose from), General Test, and up to 13 languages.",
+        "Each university then sets its own subject-combination + cut-off using CUET percentile.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, OCI, PIO. Foreign nationals — supernumerary seats at participating universities.",
+      source: "https://cuet.nta.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "DU College closing percentiles — popular UG programmes (Open category, 2024)",
+        rows: [
+          { year: 2024, category: "St Stephen's BA Hons Economics", cutoff: "99.5+ percentile composite" },
+          { year: 2024, category: "Hindu College BA Hons Economics", cutoff: "99+ percentile" },
+          { year: 2024, category: "SRCC B.Com Hons", cutoff: "99+ percentile" },
+          { year: 2024, category: "LSR BA Hons Psychology", cutoff: "98+ percentile" },
+          { year: 2024, category: "Hansraj BSc Hons Computer Science", cutoff: "98.5+ percentile" },
+          { year: 2024, category: "Miranda House BA Hons English", cutoff: "97.5+ percentile" },
+        ],
+        notes:
+          "DU uses the CUET UG composite score (sum of the relevant domain subjects + general test or languages). Each college + course combination has its own closing cut-off.",
+        source: "https://www.du.ac.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "CUET UG paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 250,
+      topics: [
+        { subject: "Section 1A (Languages)", topic: "Comprehension + Vocabulary + Grammar (13 languages to choose)", recentMarksAvg: 50, recentMarksMax: 50, notes: "40 of 50 questions to be answered." },
+        { subject: "Section 2 (Domain Subject)", topic: "Class 12 NCERT-based domain test (Math / Phy / Chem / Bio / Eco / Polity / History / Psychology / etc.)", recentMarksAvg: 50, recentMarksMax: 50, notes: "Each domain is 50 marks. Students choose 2-6 domains based on target college." },
+        { subject: "Section 3 (General Test)", topic: "GK + Current Affairs + Mental Ability + Quant + Logical Reasoning", recentMarksAvg: 60, recentMarksMax: 60, notes: "Not all universities require it. DU requires it for some courses." },
+      ],
+      takeaways: [
+        "CUET is fundamentally a Class 12 NCERT-mastery test — every domain question is from the Class 12 syllabus of that subject.",
+        "The 'composite percentile' DU uses sums up domain + language + general test percentile-equated scores. A high single-domain score doesn't help if other selected subjects underperform.",
+        "Choosing 2-3 strong subjects + 1 backup is more rank-effective than spreading across 5-6 subjects with mediocre prep.",
+      ],
+      source: "https://cuet.nta.nic.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── APSC CCE — Assam PSC Combined Competitive Exam ─────────────
+  {
+    examCode: "AS_APSC_CCE",
+    oneLiner:
+      "Assam PSC Combined Competitive Examination — Assam Civil Service (Junior Grade), Assam Police Service, and other Group A/B state-cadre posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 38,
+      ageNotes:
+        "21-38 for General. Age relaxation: OBC/MOBC +3, SC/ST(P)/ST(H) +5, PwBD +10. Reference date is 1 January of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Assamese / Bengali / Bodo language proficiency required for certain posts.",
+        "Assam domicile preferred for state-specific reservation benefits.",
+      ],
+      source: "https://apsc.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "200 marks (Paper 1; Paper 2 / CSAT qualifying)",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~120 – 130" },
+          { year: 2023, category: "OBC / MOBC", cutoff: "~112 – 122" },
+          { year: 2023, category: "SC", cutoff: "~100 – 112" },
+          { year: 2023, category: "ST(P) / ST(H)", cutoff: "~92 – 105" },
+        ],
+        source: "https://apsc.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Assam Civil Service (Junior Grade) — entry post",
+        payLevel: "Pay Level 17 (Assam ROP 2017)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹82,000 – ₹92,000 (Guwahati, after probation)",
+        source: "https://apsc.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
 ];
 
 export function findDeepContent(examCode: string): ExamDeepContent | undefined {
