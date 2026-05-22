@@ -2054,6 +2054,546 @@ export const EXAM_DEEP_CONTENT: ExamDeepContent[] = [
     ],
   },
 
+  // ════════════════════════════════════════════════════════════════
+  // BATCH 4 — Engineering state entrances + CUET UG
+  // ════════════════════════════════════════════════════════════════
+
+  // ─── JEE Advanced — Joint Entrance Examination (Advanced) ───────
+  {
+    examCode: "JEE_ADVANCED",
+    oneLiner:
+      "Gateway to admissions across all 23 IITs — Bachelor's, Integrated Master's and Dual Degree programmes in Engineering, Science, Architecture and select interdisciplinary programmes.",
+    eligibility: {
+      ageNotes:
+        "Born on or after 1 October 2000 (with 5-year relaxation for SC/ST/PwD). Reference date varies — see latest IIT brochure.",
+      education:
+        "Must have appeared in Class 12 (or equivalent) for the first time in the previous year OR the current year. Top 2,50,000 successful JEE Main candidates qualify.",
+      educationDetails: [
+        "Class 12 PCM mandatory.",
+        "Maximum 2 attempts in consecutive years.",
+        "Candidates who have accepted an IIT seat in any previous year (and not subsequently surrendered before the start of joining formalities) are NOT eligible.",
+      ],
+      attempts: "Maximum 2 attempts in consecutive years.",
+      nationality: "Open to Indian and foreign nationals (limited seats for foreign nationals).",
+      source: "https://jeeadv.ac.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "JoSAA closing ranks — CSE at top IITs (Round 6, Open, 2024)",
+        rows: [
+          { year: 2024, category: "IIT Bombay CSE (4-yr)", cutoff: "Rank ~60 – 67" },
+          { year: 2024, category: "IIT Delhi CSE (4-yr)", cutoff: "Rank ~110 – 117" },
+          { year: 2024, category: "IIT Madras CSE (4-yr)", cutoff: "Rank ~158 – 168" },
+          { year: 2024, category: "IIT Kanpur CSE (4-yr)", cutoff: "Rank ~218 – 235" },
+          { year: 2024, category: "IIT Kharagpur CSE (4-yr)", cutoff: "Rank ~245 – 262" },
+          { year: 2024, category: "IIT Roorkee CSE (4-yr)", cutoff: "Rank ~280 – 305" },
+          { year: 2024, category: "IIT Hyderabad CSE (4-yr)", cutoff: "Rank ~280 – 310" },
+          { year: 2024, category: "IIT BHU CSE", cutoff: "Rank ~350 – 410" },
+          { year: 2024, category: "IIT Guwahati CSE", cutoff: "Rank ~400 – 460" },
+        ],
+        notes:
+          "Closing ranks shown are for Open category, home state quota where applicable. Female-only, OBC, SC/ST closing ranks are much higher (i.e., more accessible).",
+        source: "https://josaa.nic.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        title: "Qualifying cutoffs — JEE Advanced rank list (Open category)",
+        rows: [
+          { year: 2024, category: "Subject-wise (each subject)", cutoff: "≥ 10% / 360" },
+          { year: 2024, category: "Aggregate", cutoff: "≥ 35% / 360" },
+          { year: 2023, category: "Subject-wise", cutoff: "≥ 10% / 360" },
+          { year: 2023, category: "Aggregate", cutoff: "≥ 35.4% / 360" },
+        ],
+        notes:
+          "Open candidates need subject-wise AND aggregate minimums. SC/ST/PwD: 5% subject-wise and 17.5% aggregate.",
+        source: "https://jeeadv.ac.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "JEE Advanced paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 360,
+      topics: [
+        { subject: "Mathematics (120 marks across Paper 1 + 2)", topic: "Calculus (Limits, Continuity, Differentiation, Integration, ODE)", recentMarksAvg: 38, recentMarksMax: 44 },
+        { subject: "Mathematics (120 marks across Paper 1 + 2)", topic: "Coordinate Geometry + Vectors + 3D", recentMarksAvg: 28, recentMarksMax: 34 },
+        { subject: "Mathematics (120 marks across Paper 1 + 2)", topic: "Algebra (Quadratic, Complex Numbers, Matrices, P&C, Probability)", recentMarksAvg: 36, recentMarksMax: 42 },
+        { subject: "Mathematics (120 marks across Paper 1 + 2)", topic: "Trigonometry + Sequences", recentMarksAvg: 18, recentMarksMax: 24 },
+        { subject: "Physics (120 marks across Paper 1 + 2)", topic: "Mechanics + Rotation + SHM + Waves", recentMarksAvg: 38, recentMarksMax: 46 },
+        { subject: "Physics (120 marks across Paper 1 + 2)", topic: "Electrodynamics + EM Waves", recentMarksAvg: 38, recentMarksMax: 44 },
+        { subject: "Physics (120 marks across Paper 1 + 2)", topic: "Optics + Modern Physics + Thermodynamics", recentMarksAvg: 44, recentMarksMax: 52 },
+        { subject: "Chemistry (120 marks across Paper 1 + 2)", topic: "Physical Chemistry (Thermo, Equilibria, Electrochem, Kinetics, Solutions)", recentMarksAvg: 42, recentMarksMax: 50 },
+        { subject: "Chemistry (120 marks across Paper 1 + 2)", topic: "Organic Chemistry (Reaction Mech, GOC, Stereochemistry, Named Reactions)", recentMarksAvg: 42, recentMarksMax: 50 },
+        { subject: "Chemistry (120 marks across Paper 1 + 2)", topic: "Inorganic Chemistry (Periodic Properties, Coordination, p-block, Qualitative Analysis)", recentMarksAvg: 36, recentMarksMax: 42 },
+      ],
+      takeaways: [
+        "JEE Advanced rewards depth of understanding over breadth — every subject's syllabus is finite but problems are multi-concept.",
+        "Most rank movement at the top happens through Chemistry — Math and Physics top scorers are common; Chemistry full-marks scorers are rare.",
+        "Inorganic Chemistry — particularly the qualitative analysis and coordination chapters — produces predictable marks for candidates who memorise the standard salt + colour + reaction tables.",
+      ],
+      source: "https://jeeadv.ac.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── AP EAMCET — Andhra Pradesh Engineering/Agriculture ─────────
+  {
+    examCode: "AP_EAMCET",
+    oneLiner:
+      "Andhra Pradesh Engineering, Agriculture & Medical Common Entrance Test (now AP EAPCET) — gate to engineering, agriculture and pharmacy UG seats in Andhra Pradesh universities and affiliated colleges.",
+    eligibility: {
+      ageMin: 16,
+      ageNotes:
+        "Minimum 16 years as of 31 December of the exam year. No upper age limit for engineering stream; 22 years for agriculture/pharmacy (relaxed for reserved categories).",
+      education:
+        "Class 12 with Physics + Mathematics + (Chemistry / Biology / Biotechnology) for Engineering stream. Class 12 with Physics + Chemistry + Biology for Agriculture / Pharmacy stream.",
+      educationDetails: [
+        "Class 12 aggregate: 45% in PCM/PCB (40% for SC/ST/OBC).",
+        "Candidates appearing in Class 12 in the current year can apply.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen. AP / Telangana state quota applies as per local rules.",
+      specialConstraints: [
+        "AP domicile required for 85% state-quota seats. 15% remain in convener quota (open to non-locals).",
+      ],
+      source: "https://cets.apsche.ap.gov.in/EAPCET/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Engineering stream closing ranks (top colleges, Open category, 2024)",
+        rows: [
+          { year: 2024, category: "JNTU Anantapur CSE", cutoff: "Rank ~3,500" },
+          { year: 2024, category: "JNTU Kakinada CSE", cutoff: "Rank ~5,200" },
+          { year: 2024, category: "Andhra University CSE", cutoff: "Rank ~6,800" },
+          { year: 2024, category: "Sri Venkateswara University Tirupati CSE", cutoff: "Rank ~7,500" },
+          { year: 2024, category: "RGUKT Nuzvid (IIIT) CSE", cutoff: "Rank ~3,800" },
+        ],
+        notes:
+          "Top private colleges (CBIT, GITAM, VRSEC, KL Univ) close even higher up; counselling cutoffs vary by year and quota.",
+        source: "https://cets.apsche.ap.gov.in/EAPCET/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "AP EAMCET (Engineering) paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 160,
+      topics: [
+        { subject: "Mathematics (80 marks)", topic: "Calculus + Coordinate Geometry + Vectors + 3D", recentMarksAvg: 32, recentMarksMax: 38 },
+        { subject: "Mathematics (80 marks)", topic: "Algebra + Trigonometry", recentMarksAvg: 22, recentMarksMax: 28 },
+        { subject: "Mathematics (80 marks)", topic: "Probability + Statistics", recentMarksAvg: 8, recentMarksMax: 12 },
+        { subject: "Physics (40 marks)", topic: "Mechanics + Waves + Thermodynamics", recentMarksAvg: 16, recentMarksMax: 22 },
+        { subject: "Physics (40 marks)", topic: "Electrodynamics + Optics + Modern Physics", recentMarksAvg: 18, recentMarksMax: 24 },
+        { subject: "Chemistry (40 marks)", topic: "Physical Chemistry", recentMarksAvg: 14, recentMarksMax: 20 },
+        { subject: "Chemistry (40 marks)", topic: "Organic + Inorganic Chemistry", recentMarksAvg: 14, recentMarksMax: 20 },
+      ],
+      takeaways: [
+        "Mathematics carries 50% of total marks — strong Math alone can secure a state-quota seat in a tier-2 college.",
+        "AP EAMCET is faster-paced than JEE Main: 160 questions in 180 min = ~67 sec per question. Speed matters.",
+        "Intermediate (AP) textbooks cover ~95% of the paper. NCERT supplementary practice helps but isn't strictly necessary.",
+      ],
+      source: "https://cets.apsche.ap.gov.in/EAPCET/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── TS EAMCET — Telangana Engineering/Agriculture ──────────────
+  {
+    examCode: "TS_EAMCET",
+    oneLiner:
+      "Telangana State Engineering, Agriculture & Medical Common Entrance Test (now TS EAPCET) — gate to engineering, agriculture and pharmacy UG seats in Telangana.",
+    eligibility: {
+      ageMin: 16,
+      ageNotes: "Minimum 16 years on 31 December of the exam year. No upper age limit for engineering.",
+      education:
+        "Class 12 with PCM (engineering) or PCB (agriculture). 45% aggregate (40% for reserved categories).",
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Telangana domicile required for 85% state-quota seats.",
+        "Local-area reservation (OU / KU area) applies within Telangana convener quota.",
+      ],
+      source: "https://eapcet.tsche.ac.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Engineering stream closing ranks (top colleges, Open Convener, 2024)",
+        rows: [
+          { year: 2024, category: "JNTU Hyderabad CSE", cutoff: "Rank ~2,200" },
+          { year: 2024, category: "Osmania University CSE", cutoff: "Rank ~2,800" },
+          { year: 2024, category: "CBIT Hyderabad CSE", cutoff: "Rank ~3,500" },
+          { year: 2024, category: "Vasavi College of Engineering CSE", cutoff: "Rank ~4,500" },
+          { year: 2024, category: "VNR VJIET CSE", cutoff: "Rank ~5,500" },
+        ],
+        source: "https://tgeapcet.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "TS EAMCET (Engineering) paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 160,
+      topics: [
+        { subject: "Mathematics (80 marks)", topic: "Calculus + Coordinate Geometry + Vectors", recentMarksAvg: 30, recentMarksMax: 38 },
+        { subject: "Mathematics (80 marks)", topic: "Algebra + Trigonometry", recentMarksAvg: 24, recentMarksMax: 30 },
+        { subject: "Mathematics (80 marks)", topic: "Probability + Statistics + Matrices", recentMarksAvg: 8, recentMarksMax: 12 },
+        { subject: "Physics (40 marks)", topic: "Mechanics + Waves + Thermodynamics", recentMarksAvg: 16, recentMarksMax: 22 },
+        { subject: "Physics (40 marks)", topic: "Electrodynamics + Optics + Modern Physics", recentMarksAvg: 18, recentMarksMax: 24 },
+        { subject: "Chemistry (40 marks)", topic: "Physical + Organic + Inorganic", recentMarksAvg: 28, recentMarksMax: 38 },
+      ],
+      takeaways: [
+        "TS EAMCET is closely aligned with the Telangana State Intermediate (TSBIE) syllabus — direct textbook practice is the highest-yield prep.",
+        "Top Telangana ranks come from heavy mock practice — past TS EAMCET papers are the best resource.",
+        "Math is the biggest differentiator at the top — Mech engineering, Aero, EEE cut-offs are decided here.",
+      ],
+      source: "https://eapcet.tsche.ac.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── KCET — Karnataka Common Entrance Test ──────────────────────
+  {
+    examCode: "KA_KCET",
+    oneLiner:
+      "Karnataka Common Entrance Test — gate to government, aided and select private engineering, pharmacy, agricultural, veterinary and naturopathy programmes in Karnataka.",
+    eligibility: {
+      ageNotes:
+        "No upper age limit. Minimum age — must have passed / be appearing in Class 12.",
+      education:
+        "Class 12 with PCM (engineering) or PCB (medical / agri streams). 45% aggregate in PCM (40% for SC/ST/Cat I).",
+      educationDetails: [
+        "Engineering applicants need PCM + at least one of: Biology / Computer Science / Electronics.",
+        "Class 12 must be from a Karnataka-recognised board OR a board recognised by CBSE/ICSE — outside-Karnataka candidates need a Karnataka-domicile certificate.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Karnataka domicile (10-year clause) required for the state's Article 371-J Hyderabad-Karnataka reservation and certain state-quota seats.",
+        "Class 12 marks contribute 50% to the final composite rank (the other 50% being KCET score) — Class 12 performance still matters.",
+      ],
+      source: "https://cetonline.karnataka.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Closing ranks — CSE at top Karnataka colleges (General Merit, 2024)",
+        rows: [
+          { year: 2024, category: "UVCE Bangalore CSE", cutoff: "Rank ~250 – 450" },
+          { year: 2024, category: "RV College of Engineering CSE", cutoff: "Rank ~600 – 800" },
+          { year: 2024, category: "BMS College of Engineering CSE", cutoff: "Rank ~1,200 – 1,500" },
+          { year: 2024, category: "PES University EC Campus CSE", cutoff: "Rank ~1,800 – 2,400" },
+          { year: 2024, category: "Sir MV College of Engineering CSE", cutoff: "Rank ~3,500 – 4,500" },
+        ],
+        source: "https://cetonline.karnataka.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "KCET paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 180,
+      topics: [
+        { subject: "Mathematics (60 Qs / 60 marks)", topic: "Calculus + Algebra + Probability", recentMarksAvg: 35, recentMarksMax: 42 },
+        { subject: "Mathematics", topic: "Coordinate Geometry + Vectors + 3D + Trigonometry", recentMarksAvg: 25, recentMarksMax: 32 },
+        { subject: "Physics (60 Qs / 60 marks)", topic: "Mechanics + Waves + Thermo", recentMarksAvg: 22, recentMarksMax: 28 },
+        { subject: "Physics", topic: "Electrodynamics + Optics + Modern Physics", recentMarksAvg: 38, recentMarksMax: 46 },
+        { subject: "Chemistry (60 Qs / 60 marks)", topic: "Physical + Organic + Inorganic", recentMarksAvg: 58, recentMarksMax: 60 },
+      ],
+      takeaways: [
+        "KCET is easier than JEE Main but rewards careful question-reading — typos and ambiguous options have historically caused complaints.",
+        "Karnataka 2nd PUC textbooks cover ~98% of the paper. NCERT alone is INSUFFICIENT for KCET — use the PUC textbooks.",
+        "Composite ranking with 50% Class-12 weightage means consistent Class 12 board prep + KCET-specific practice are both required.",
+      ],
+      source: "https://cetonline.karnataka.gov.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── COMEDK UGET — Karnataka private engineering ────────────────
+  {
+    examCode: "KA_COMEDK",
+    oneLiner:
+      "Consortium of Medical, Engineering & Dental Colleges of Karnataka — single entrance for engineering and architecture admissions to ~190 private engineering colleges in Karnataka.",
+    eligibility: {
+      ageNotes: "No upper age limit. Minimum: must have passed Class 12 (or be appearing).",
+      education: "Class 12 with PCM. 45% aggregate (40% for SC/ST/OBC).",
+      educationDetails: [
+        "B.Arch additionally requires Class 12 Mathematics + NATA / JEE Paper 2 score.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, NRI, OCI, PIO. Foreign nationals — separate quota.",
+      specialConstraints: [
+        "COMEDK is for private/deemed Karnataka colleges only — government seats use KCET.",
+        "No domicile restriction; open to candidates from any state.",
+      ],
+      source: "https://www.comedk.org/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Closing ranks — CSE at top COMEDK colleges (Open category, 2024)",
+        rows: [
+          { year: 2024, category: "MS Ramaiah Institute of Technology CSE", cutoff: "Rank ~450 – 700" },
+          { year: 2024, category: "Dayananda Sagar College of Engineering CSE", cutoff: "Rank ~1,200 – 1,800" },
+          { year: 2024, category: "BMS Institute of Tech CSE", cutoff: "Rank ~1,800 – 2,500" },
+          { year: 2024, category: "RNS Institute of Technology CSE", cutoff: "Rank ~2,500 – 3,500" },
+        ],
+        notes: "COMEDK fees are significantly higher than KCET government colleges — usually ₹2-5 lakh per year.",
+        source: "https://www.comedk.org/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "COMEDK UGET paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 180,
+      topics: [
+        { subject: "Mathematics (60 marks)", topic: "Calculus + Algebra + Coordinate Geometry + Vectors", recentMarksAvg: 42, recentMarksMax: 50 },
+        { subject: "Mathematics", topic: "Probability + Statistics + Trigonometry", recentMarksAvg: 18, recentMarksMax: 24 },
+        { subject: "Physics (60 marks)", topic: "Mechanics + Waves + Thermo + Properties of Matter", recentMarksAvg: 22, recentMarksMax: 28 },
+        { subject: "Physics", topic: "Electrodynamics + Optics + Modern Physics", recentMarksAvg: 38, recentMarksMax: 44 },
+        { subject: "Chemistry (60 marks)", topic: "Physical + Organic + Inorganic", recentMarksAvg: 58, recentMarksMax: 60 },
+      ],
+      takeaways: [
+        "COMEDK papers are typically 1-2 difficulty levels easier than JEE Main but rely on careful problem-reading.",
+        "180 questions in 180 minutes means time management is the biggest skill — many students lose marks not to difficulty but to leaving questions blank.",
+        "CBSE Class 12 NCERT covers ~85% of the paper. Adding state-level PCM practice is helpful but not essential.",
+      ],
+      source: "https://www.comedk.org/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── MHT CET — Maharashtra Common Entrance Test ─────────────────
+  {
+    examCode: "MH_MHTCET",
+    oneLiner:
+      "Maharashtra Common Entrance Test — engineering, pharmacy and agriculture UG admissions across Maharashtra government, aided and private colleges.",
+    eligibility: {
+      ageNotes: "No upper age limit. Minimum age — must be eligible for Class 12.",
+      education:
+        "Class 12 with PCM (engineering / pharmacy / agriculture) — minimum 50% aggregate (45% for reserved categories).",
+      educationDetails: [
+        "For B.Pharm: PCM + Biology (45% reserved).",
+        "Candidates from Maharashtra board enjoy easier domicile-based reservation; out-of-state candidates compete in the 15% All-India quota.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Maharashtra domicile required for 85% state-quota seats.",
+        "Score is percentile-normalised across 3 shifts — equating differences in shift difficulty.",
+      ],
+      source: "https://cetcell.mahacet.org/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Closing percentiles — CSE at top Maharashtra colleges (Home State, Open, 2024)",
+        rows: [
+          { year: 2024, category: "COEP Pune CSE", cutoff: "99.7+ percentile" },
+          { year: 2024, category: "VJTI Mumbai CSE", cutoff: "99.5+ percentile" },
+          { year: 2024, category: "ICT Mumbai CSE", cutoff: "99.6+ percentile" },
+          { year: 2024, category: "PICT Pune CSE", cutoff: "99+ percentile" },
+          { year: 2024, category: "VIT Pune CSE", cutoff: "98.5+ percentile" },
+          { year: 2024, category: "MIT WPU CSE", cutoff: "97+ percentile" },
+        ],
+        notes:
+          "MHT CET uses percentile (not raw marks) for ranking. Closing percentile slightly varies between counselling rounds.",
+        source: "https://fe2024.mahacet.org/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [],
+  },
+
+  // ─── WBJEE — West Bengal Joint Entrance Examination ─────────────
+  {
+    examCode: "WB_WBJEE",
+    oneLiner:
+      "West Bengal Joint Entrance Examination — engineering, technology, pharmacy and architecture admissions to government and government-aided colleges in West Bengal.",
+    eligibility: {
+      ageMin: 17,
+      ageNotes:
+        "Minimum 17 years as of 31 December of the exam year. No upper age limit for engineering (5-year cap for marine engineering posts).",
+      education:
+        "Class 12 with PCM (engineering / pharmacy). 45% in PCM (40% for SC/ST/OBC-A/OBC-B/PwD). English at qualifying level.",
+      educationDetails: [
+        "Candidates from outside West Bengal can apply — but state-quota seats favour WB domiciles.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, NRI, OCI, PIO.",
+      source: "https://wbjeeb.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Closing ranks — CSE at top WB colleges (Home State, Open, 2024)",
+        rows: [
+          { year: 2024, category: "IIEST Shibpur CSE", cutoff: "Rank ~600 – 800" },
+          { year: 2024, category: "Jadavpur University CSE", cutoff: "Rank ~120 – 200" },
+          { year: 2024, category: "Kalyani Govt Engg College CSE", cutoff: "Rank ~3,000 – 4,500" },
+          { year: 2024, category: "Govt College of Engg & Ceramic Tech CSE", cutoff: "Rank ~4,000 – 5,500" },
+          { year: 2024, category: "Haldia Institute of Tech CSE (Private)", cutoff: "Rank ~8,000 – 15,000" },
+        ],
+        notes: "Jadavpur is the standout — closing rank lower than most NITs.",
+        source: "https://wbjeeb.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "WBJEE paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 200,
+      topics: [
+        { subject: "Mathematics (100 marks)", topic: "Calculus + Coordinate Geometry + Vectors + 3D", recentMarksAvg: 40, recentMarksMax: 48 },
+        { subject: "Mathematics", topic: "Algebra + Trigonometry + Probability + Statistics", recentMarksAvg: 35, recentMarksMax: 42 },
+        { subject: "Mathematics", topic: "Multi-correct + Matrix-match questions (negative marking heavier)", recentMarksAvg: 25, recentMarksMax: 30 },
+        { subject: "Physics (50 marks)", topic: "Mechanics + Waves + Thermodynamics + Properties of Matter", recentMarksAvg: 22, recentMarksMax: 28 },
+        { subject: "Physics", topic: "Electrodynamics + Optics + Modern Physics", recentMarksAvg: 25, recentMarksMax: 30 },
+        { subject: "Chemistry (50 marks)", topic: "Physical + Organic + Inorganic", recentMarksAvg: 48, recentMarksMax: 50 },
+      ],
+      takeaways: [
+        "WBJEE has Maths weighted at 100/200 — twice the marks of either Physics or Chemistry. Math-strong candidates have a real edge.",
+        "Multi-correct and matrix-match questions carry double the marks but also double the negative penalty — selective attempting is critical.",
+        "WB HS Council textbooks cover the paper directly — that's the highest-yield source.",
+      ],
+      source: "https://wbjeeb.nic.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── KEAM — Kerala Engineering Architecture Medical ─────────────
+  {
+    examCode: "KL_KEAM",
+    oneLiner:
+      "Kerala Engineering Architecture Medical entrance — engineering, pharmacy, architecture and (formerly) medical admissions in Kerala colleges.",
+    eligibility: {
+      ageMin: 17,
+      ageNotes:
+        "Minimum 17 years on 31 December of the exam year. No upper age limit for engineering.",
+      education: "Class 12 with PCM (engineering / pharmacy). 50% aggregate in PCM (45% for SC/ST/OEC).",
+      educationDetails: [
+        "Architecture: NATA or JEE Paper 2 score required in addition to KEAM Paper 1 (Math).",
+        "Pharmacy: Class 12 PCM OR PCB (with 50%).",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Kerala domicile required for state merit seats (85%). 15% are All-India seats.",
+        "KEAM has two papers: Paper 1 (Physics + Chemistry) and Paper 2 (Mathematics). Engineering rank uses both.",
+      ],
+      source: "https://www.cee.kerala.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Closing ranks — CSE at top Kerala colleges (State Merit, Open, 2024)",
+        rows: [
+          { year: 2024, category: "Govt Engg College Thrissur CSE", cutoff: "Rank ~300 – 500" },
+          { year: 2024, category: "CET Trivandrum CSE", cutoff: "Rank ~100 – 200" },
+          { year: 2024, category: "Govt Engg College Barton Hill (Trivandrum) CSE", cutoff: "Rank ~700 – 1,100" },
+          { year: 2024, category: "Model Engg College Thrikkakara CSE", cutoff: "Rank ~250 – 450" },
+          { year: 2024, category: "TKM College of Engg Kollam CSE", cutoff: "Rank ~500 – 850" },
+        ],
+        notes: "Closing ranks shown for Kerala home-state quota, General category, round 6 / final round.",
+        source: "https://www.cee.kerala.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [],
+  },
+
+  // ─── UP UPCET — UP Combined Entrance Test ───────────────────────
+  {
+    examCode: "UP_UPCET",
+    oneLiner:
+      "UP Combined Entrance Test — admissions to UG engineering, agriculture, pharmacy and management programmes at AKTU-affiliated colleges in UP.",
+    eligibility: {
+      ageNotes: "No upper age limit (varies by programme).",
+      education:
+        "Class 12 with PCM (engineering / pharmacy). 45% aggregate (40% for reserved categories).",
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "UP domicile required for state-quota seats. NTA conducts the exam; AKTU handles counselling.",
+      ],
+      source: "https://upcet.nta.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Closing ranks — CSE at top AKTU colleges (Home State, Open, 2024)",
+        rows: [
+          { year: 2024, category: "HBTU Kanpur CSE", cutoff: "Rank ~500 – 800" },
+          { year: 2024, category: "MMMUT Gorakhpur CSE", cutoff: "Rank ~900 – 1,400" },
+          { year: 2024, category: "IET Lucknow CSE", cutoff: "Rank ~400 – 700" },
+          { year: 2024, category: "JSS Noida CSE", cutoff: "Rank ~2,500 – 4,000" },
+        ],
+        source: "https://upcet.nta.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [],
+  },
+
+  // ─── CUET UG — Common University Entrance Test (UG) ─────────────
+  {
+    examCode: "CUET_UG",
+    oneLiner:
+      "Common Universities Entrance Test (UG) — single entrance for undergraduate admissions to 45+ central universities (DU, JNU, BHU, etc.) and 100+ state and private universities.",
+    eligibility: {
+      ageNotes: "No upper age limit.",
+      education:
+        "Class 12 pass from a recognised board. Each university sets its own subject-specific eligibility (e.g., DU BA Hons Economics needs Maths).",
+      educationDetails: [
+        "Candidates can choose up to 6 subjects (changed in some cycles).",
+        "Domain subjects (33 to choose from), General Test, and up to 13 languages.",
+        "Each university then sets its own subject-combination + cut-off using CUET percentile.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, OCI, PIO. Foreign nationals — supernumerary seats at participating universities.",
+      source: "https://cuet.nta.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "DU College closing percentiles — popular UG programmes (Open category, 2024)",
+        rows: [
+          { year: 2024, category: "St Stephen's BA Hons Economics", cutoff: "99.5+ percentile composite" },
+          { year: 2024, category: "Hindu College BA Hons Economics", cutoff: "99+ percentile" },
+          { year: 2024, category: "SRCC B.Com Hons", cutoff: "99+ percentile" },
+          { year: 2024, category: "LSR BA Hons Psychology", cutoff: "98+ percentile" },
+          { year: 2024, category: "Hansraj BSc Hons Computer Science", cutoff: "98.5+ percentile" },
+          { year: 2024, category: "Miranda House BA Hons English", cutoff: "97.5+ percentile" },
+        ],
+        notes:
+          "DU uses the CUET UG composite score (sum of the relevant domain subjects + general test or languages). Each college + course combination has its own closing cut-off.",
+        source: "https://www.du.ac.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "CUET UG paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 250,
+      topics: [
+        { subject: "Section 1A (Languages)", topic: "Comprehension + Vocabulary + Grammar (13 languages to choose)", recentMarksAvg: 50, recentMarksMax: 50, notes: "40 of 50 questions to be answered." },
+        { subject: "Section 2 (Domain Subject)", topic: "Class 12 NCERT-based domain test (Math / Phy / Chem / Bio / Eco / Polity / History / Psychology / etc.)", recentMarksAvg: 50, recentMarksMax: 50, notes: "Each domain is 50 marks. Students choose 2-6 domains based on target college." },
+        { subject: "Section 3 (General Test)", topic: "GK + Current Affairs + Mental Ability + Quant + Logical Reasoning", recentMarksAvg: 60, recentMarksMax: 60, notes: "Not all universities require it. DU requires it for some courses." },
+      ],
+      takeaways: [
+        "CUET is fundamentally a Class 12 NCERT-mastery test — every domain question is from the Class 12 syllabus of that subject.",
+        "The 'composite percentile' DU uses sums up domain + language + general test percentile-equated scores. A high single-domain score doesn't help if other selected subjects underperform.",
+        "Choosing 2-3 strong subjects + 1 backup is more rank-effective than spreading across 5-6 subjects with mediocre prep.",
+      ],
+      source: "https://cuet.nta.nic.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
   // ─── APSC CCE — Assam PSC Combined Competitive Exam ─────────────
   {
     examCode: "AS_APSC_CCE",
