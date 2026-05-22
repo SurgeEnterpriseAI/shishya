@@ -22,6 +22,8 @@ import { computeScoreBoost } from "@/lib/focus-topics";
 import { ScholarshipsForExamSection } from "@/components/ScholarshipsForExamSection";
 import { CollegesForExamSection } from "@/components/CollegesForExamSection";
 import { SectionVerificationSummary } from "@/components/VerificationBadge";
+import { ExamDeepContentBlock } from "@/components/ExamDeepContentBlock";
+import { findDeepContent, hasDeepContent } from "@/data/exam-deep-content";
 
 // Per-exam meta. Beefed-up version that bakes in:
 //   1. state name (for "Tamil Nadu PSC" / "तमिलनाडु TET" style searches)
@@ -377,6 +379,18 @@ export default async function ExamPage({
             </div>
           )}
         </div>
+
+        {/* ── Deep content (eligibility / cutoffs / paper analysis / salary)
+            ───────────────────────────────────────────────────────────
+            Per-exam high-intent SEO content. Renders only when authored
+            for this exam (see src/data/exam-deep-content.ts). Sits ABOVE
+            the interactive PYQ/Mocks panel so organic-search arrivals
+            see the answer to their query before the CTA wall. */}
+        {(() => {
+          const deep = findDeepContent(exam.code);
+          if (!deep || !hasDeepContent(deep)) return null;
+          return <ExamDeepContentBlock content={deep} examShortName={exam.shortName} />;
+        })()}
 
         <div className="mt-2 lg:grid lg:grid-cols-3 lg:gap-8">
         <div className="lg:col-span-2 min-w-0">
