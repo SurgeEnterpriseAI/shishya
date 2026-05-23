@@ -2639,6 +2639,618 @@ export const EXAM_DEEP_CONTENT: ExamDeepContent[] = [
       },
     ],
   },
+
+  // ════════════════════════════════════════════════════════════════
+  // BATCH 5 — Defence officer entry + state police constable / SI
+  // ════════════════════════════════════════════════════════════════
+
+  // ─── CDS — Combined Defence Services Examination ────────────────
+  {
+    examCode: "CDS",
+    oneLiner:
+      "UPSC Combined Defence Services Examination — officer-cadre entry to IMA (Army), INA (Navy), AFA (Air Force) and OTA (Short Service Commission, both genders) after graduation.",
+    eligibility: {
+      ageMin: 19,
+      ageMax: 25,
+      ageNotes:
+        "Range varies by academy: IMA 19-24, INA 19-24, AFA 20-24, OTA 19-25. Date of birth bounds revised every cycle — see latest notification.",
+      education:
+        "IMA / OTA: Bachelor's (any discipline). INA: Bachelor's in Engineering. AFA: Bachelor's with Physics + Maths at 10+2 OR Bachelor's in Engineering.",
+      educationDetails: [
+        "Final-year graduates can appear if results are out before the academy commencement date.",
+        "Engineering degree mandatory for the Naval Academy.",
+      ],
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen (or Nepal/Bhutan subject for IMA & OTA; specific certificate norms apply).",
+      specialConstraints: [
+        "Unmarried male candidates for IMA / INA / AFA. OTA admits both unmarried males and females (and married males in special quotas).",
+        "Physical + medical standards as per Service Selection Board (SSB) — vision, height, chest, BMI, etc.",
+        "All shortlisted candidates undergo a 5-day SSB interview after the written exam.",
+      ],
+      reservations: ["No reservation in the CDS written exam itself; representation goes through different academy intakes."],
+      source: "https://www.upsc.gov.in/examinations/Combined%20Defence%20Services%20Examination",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Written cutoff (qualifying for SSB interview)",
+        outOf: "300 marks (IMA/INA/AFA — 3 papers) · 200 marks (OTA — 2 papers)",
+        rows: [
+          { year: 2023, category: "IMA — written cutoff", cutoff: "112 (written) · 297 (final, with SSB out of 600)" },
+          { year: 2023, category: "INA — written", cutoff: "108 · 308 final" },
+          { year: 2023, category: "AFA — written", cutoff: "126 · 309 final" },
+          { year: 2023, category: "OTA (men) — written", cutoff: "97 · 257 final" },
+          { year: 2023, category: "OTA (women) — written", cutoff: "97 · 257 final" },
+          { year: 2022, category: "IMA", cutoff: "137 · 318 final" },
+          { year: 2022, category: "INA", cutoff: "131 · 314 final" },
+          { year: 2022, category: "AFA", cutoff: "144 · 327 final" },
+          { year: 2022, category: "OTA (men)", cutoff: "112 · 264 final" },
+        ],
+        source: "https://www.upsc.gov.in/examinations/Combined%20Defence%20Services%20Examination",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "CDS (IMA/INA/AFA) paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 300,
+      topics: [
+        { subject: "English (100 marks)", topic: "Reading Comprehension + Cloze Test", recentMarksAvg: 30, recentMarksMax: 36 },
+        { subject: "English (100 marks)", topic: "Grammar + Sentence Improvement + Synonyms/Antonyms", recentMarksAvg: 40, recentMarksMax: 48 },
+        { subject: "English (100 marks)", topic: "Para Jumble + Sentence Completion + Spotting Errors", recentMarksAvg: 30, recentMarksMax: 36 },
+        { subject: "General Knowledge (100 marks)", topic: "Indian Polity + History + Geography", recentMarksAvg: 40, recentMarksMax: 50 },
+        { subject: "General Knowledge (100 marks)", topic: "Current Affairs + Defence + Sci-Tech", recentMarksAvg: 30, recentMarksMax: 40 },
+        { subject: "General Knowledge (100 marks)", topic: "Economy + Environment + Sports + Culture", recentMarksAvg: 30, recentMarksMax: 38 },
+        { subject: "Elementary Mathematics (100 marks, IMA/INA/AFA only)", topic: "Arithmetic + Algebra", recentMarksAvg: 35, recentMarksMax: 45 },
+        { subject: "Elementary Mathematics", topic: "Geometry + Mensuration + Trigonometry", recentMarksAvg: 35, recentMarksMax: 45 },
+        { subject: "Elementary Mathematics", topic: "Statistics + Probability", recentMarksAvg: 12, recentMarksMax: 18 },
+      ],
+      takeaways: [
+        "OTA candidates skip Maths — only English + GK count. That makes OTA the lowest-bar academy in terms of written cutoff.",
+        "GK is the highest-variance section; static GK + current affairs of the 6 months before the paper carry the bulk.",
+        "Most candidates clear the written but fail SSB — focus on personality + group tasks at least as hard as the written prep.",
+      ],
+      source: "https://www.upsc.gov.in/examinations/Combined%20Defence%20Services%20Examination",
+      verifiedAt: "2026-05",
+    },
+    salaryBands: [
+      {
+        postName: "Lieutenant on commissioning (IMA / OTA) / equivalent in Navy & Air Force",
+        payLevel: "Pay Level 10",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹1,00,000+ (after commission, including MSP ₹15,500 + Kit + Transport allowance)",
+        perks: [
+          "Free accommodation in officer quarters",
+          "Free ration + uniform allowance",
+          "Free medical for self + dependants (lifelong)",
+          "Concessional travel (railway / air)",
+          "Pension under NPS + service pension",
+          "AGIF / CSD canteen access",
+        ],
+        source: "https://www.joinindianarmy.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── UP Police Constable ────────────────────────────────────────
+  {
+    examCode: "UP_POLICE_CONSTABLE",
+    oneLiner:
+      "UP Police Constable (Civil Police + PAC) — entry-level Constable recruitment in Uttar Pradesh Police, the largest state police force in India.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 22,
+      ageNotes:
+        "18-22 for male General (women 18-25). UP-domicile reserved categories get further age relaxations (OBC +3, SC/ST +5, ex-servicemen 3 yrs after service).",
+      education: "Intermediate (Class 12) pass from a recognised board, OR equivalent qualification.",
+      educationDetails: [
+        "Candidates must be physically fit and meet UP Police's standards for height, chest, and weight.",
+        "Married candidates allowed; no marital status bar.",
+      ],
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen with UP domicile preferred (open vacancies have minor non-domicile allocation).",
+      specialConstraints: [
+        "Physical Standards: Male — height 168 cm general (160 cm SC/ST), chest 79-84 cm. Female — height 152 cm (147 cm SC/ST).",
+        "Physical Efficiency Test (PET): 4.8 km run in 25 min (male), 2.4 km run in 14 min (female).",
+        "Document verification + medical follow PET.",
+      ],
+      source: "https://uppbpb.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Written cutoff (qualifying for PET/PST/Document Verification)",
+        outOf: "300 marks",
+        rows: [
+          { year: 2024, category: "General Male", cutoff: "~175 – 195" },
+          { year: 2024, category: "General Female", cutoff: "~160 – 180" },
+          { year: 2024, category: "OBC", cutoff: "~165 – 185" },
+          { year: 2024, category: "SC", cutoff: "~140 – 165" },
+          { year: 2024, category: "ST", cutoff: "~120 – 145" },
+        ],
+        notes:
+          "Range shown reflects variation across zones / categories. Final selection is based on written + PET + document verification.",
+        source: "https://uppbpb.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Constable (Civil Police / Provincial Armed Constabulary)",
+        payLevel: "Pay Level 3 (UP State Pay Matrix)",
+        basicPay: "₹21,700",
+        grossPayApprox: "₹32,000 – ₹40,000 (including DA + HRA + uniform + transport allowance)",
+        perks: [
+          "Free uniform + ration in barracks",
+          "Government accommodation / quarters",
+          "Medical for self + family",
+          "Risk + Hardship allowance for field posts",
+          "Pension under UP State NPS",
+          "Concessional LTC every 2 years",
+        ],
+        source: "https://uppolice.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── UP Police SI (Sub-Inspector) ───────────────────────────────
+  {
+    examCode: "UP_POLICE_SI",
+    oneLiner:
+      "UP Police Sub-Inspector (Civil Police) + Platoon Commander (PAC) + Fire Officer — officer-cadre recruitment in UP Police.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 28,
+      ageNotes:
+        "21-28 for General. OBC +3, SC/ST +5, ex-servicemen 3 yrs after service. Reference date is 1 July of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      educationDetails: [
+        "Computer Operator certification or equivalent computer knowledge typically required.",
+        "Physical and medical standards align with UP Police norms — same height/chest/weight criteria as Constable, slightly stricter.",
+      ],
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen with UP domicile preferred for reserved-category benefits.",
+      specialConstraints: [
+        "Physical Standards: Male — height 168 cm general (160 cm SC/ST), chest 79-84 cm. Female — height 152 cm (147 cm SC/ST).",
+        "PET: 4.8 km run in 25 min (male), 2.4 km run in 14 min (female). Document verification + medical thereafter.",
+      ],
+      source: "https://uppbpb.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Written cutoff (qualifying for PET/Document Verification)",
+        outOf: "400 marks",
+        rows: [
+          { year: 2024, category: "General Male", cutoff: "~244 – 264" },
+          { year: 2024, category: "OBC", cutoff: "~230 – 252" },
+          { year: 2024, category: "SC", cutoff: "~205 – 228" },
+          { year: 2024, category: "ST", cutoff: "~175 – 200" },
+        ],
+        source: "https://uppbpb.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Sub-Inspector (Civil Police) / Platoon Commander (PAC)",
+        payLevel: "Pay Level 6 (UP State Pay Matrix)",
+        basicPay: "₹35,400",
+        grossPayApprox: "₹52,000 – ₹64,000 (including DA + HRA + uniform + special allowance)",
+        perks: [
+          "Free uniform + accommodation entitlement (officer quarters)",
+          "Medical for self + family",
+          "Risk + Field-area allowance",
+          "Pension under UP State NPS",
+          "Career progression to Inspector → Deputy SP",
+        ],
+        source: "https://uppolice.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── Maharashtra Police Bharti ──────────────────────────────────
+  {
+    examCode: "MH_POLICE_BHARTI",
+    oneLiner:
+      "Maharashtra Police Constable + Driver-Constable recruitment (Bharti) — direct state-level recruitment, conducted by the Maharashtra Home Department.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 28,
+      ageNotes:
+        "18-28 for General. Age relaxation: OBC/SBC +3, SC/ST +5, ex-servicemen 3 yrs after service.",
+      education: "Class 12 (HSC) pass from a recognised board.",
+      educationDetails: [
+        "Driver-Constable additionally needs a valid commercial driving licence (LMV + HMV) with 3+ years of experience.",
+        "Marathi reading-writing-speaking mandatory.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, Maharashtra domicile.",
+      specialConstraints: [
+        "Physical Standards: Male — height 165 cm, chest 79-84 cm. Female — height 155 cm. Weight as per standard tables.",
+        "PET: 1.6 km run in 6 min 30 sec (male); 800 m run in 4 min (female); long jump, shot put events.",
+        "Marathi language test at recruitment stage.",
+      ],
+      source: "https://mahapolice.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Written cutoff (final selection score, district-wise variation)",
+        outOf: "100 marks (written) + 50 marks (PET)",
+        rows: [
+          { year: 2024, category: "General — Mumbai/Pune (high demand)", cutoff: "Final score ~135 – 145 / 150" },
+          { year: 2024, category: "General — rural districts", cutoff: "Final score ~115 – 130" },
+          { year: 2024, category: "OBC", cutoff: "Final score ~110 – 138 (district-wise)" },
+          { year: 2024, category: "SC", cutoff: "Final score ~95 – 122" },
+          { year: 2024, category: "ST", cutoff: "Final score ~80 – 110" },
+        ],
+        notes: "Maharashtra Police Bharti is district-specific — cutoff varies sharply by recruitment district.",
+        source: "https://mahapolice.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Constable (Maharashtra Police)",
+        payLevel: "S-8 (Maharashtra State Pay Matrix)",
+        basicPay: "₹21,700",
+        grossPayApprox: "₹33,000 – ₹40,000 (including DA + HRA + uniform allowance)",
+        perks: [
+          "Free uniform + accommodation in barracks",
+          "Medical for self + family",
+          "Risk + Field-area allowance",
+          "Pension under Maharashtra State NPS",
+        ],
+        source: "https://mahapolice.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── Delhi Police Constable ─────────────────────────────────────
+  {
+    examCode: "DL_POLICE_PC",
+    oneLiner:
+      "Delhi Police Constable (Executive) recruitment — conducted by SSC on behalf of the Delhi Police (a centrally-administered force).",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 25,
+      ageNotes:
+        "18-25 for General. OBC +3, SC/ST +5, ex-servicemen 3 yrs after service. Reference date is 1 July of the exam year.",
+      education: "Class 12 (Senior Secondary) pass from a recognised board.",
+      educationDetails: [
+        "Driving licence for LMV (Light Motor Vehicle) is mandatory at the document-verification stage — candidates must obtain it before applying.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Physical Standards: Male — height 170 cm general (165 cm Garhwali/Kumaoni/Dogra/Marathas), chest 81-85 cm. Female — height 157 cm (155 cm for the same hill/martial categories).",
+        "PET: 1.6 km race in 6 min (male) / 18-yr olds; varies by age. 800 m race in 4 min (female).",
+        "PMT (Physical Measurement Test) precedes PET.",
+      ],
+      source: "https://ssc.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Computer-Based Exam cutoff (qualifying for PET/PMT)",
+        outOf: "100 marks",
+        rows: [
+          { year: 2023, category: "General Male", cutoff: "67 – 72" },
+          { year: 2023, category: "General Female", cutoff: "63 – 68" },
+          { year: 2023, category: "OBC", cutoff: "62 – 68" },
+          { year: 2023, category: "EWS", cutoff: "60 – 66" },
+          { year: 2023, category: "SC", cutoff: "52 – 58" },
+          { year: 2023, category: "ST", cutoff: "45 – 52" },
+        ],
+        notes:
+          "Delhi Police Constable runs through SSC; final selection requires clearing PMT + PET + medical + driving test.",
+        source: "https://ssc.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Constable (Executive) — Delhi Police",
+        payLevel: "Pay Level 3",
+        basicPay: "₹21,700",
+        grossPayApprox: "₹35,000 – ₹42,000 (X-class city Delhi, including DA + HRA + transport + special allowance)",
+        perks: [
+          "Free uniform + accommodation",
+          "Risk + Hardship allowance for special duties",
+          "Medical (CGHS)",
+          "Pension under NPS",
+          "LTC every 2 years",
+        ],
+        source: "https://www.delhipolice.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── Rajasthan Police Constable ─────────────────────────────────
+  {
+    examCode: "RJ_POLICE_PC",
+    oneLiner:
+      "Rajasthan Police Constable (Civil + Mounted + Telecom + Band) recruitment — conducted by the Rajasthan Police Recruitment Board.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 23,
+      ageNotes:
+        "18-23 for General. Relaxation: OBC +3, SC/ST +5 (women extra +5 across categories).",
+      education: "Class 10 / 12 depending on post (Class 12 for Telecom post; Class 10 for Civil/Band).",
+      educationDetails: [
+        "Telecom and IT-aware posts may need additional computer / Hindi-typing qualification.",
+        "Rajasthan-language (Hindi) proficiency essential.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, Rajasthan domicile preferred.",
+      specialConstraints: [
+        "Physical Standards: Male — height 168 cm general (160 cm tribal/SC/ST), chest 81-86 cm. Female — height 152 cm.",
+        "PET: 5 km run in 25 min (male); 5 km run in 35 min (female).",
+        "Document verification + medical follow PET.",
+      ],
+      source: "https://police.rajasthan.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Written cutoff (district-wise selection score)",
+        outOf: "150 marks (written) + 30 marks (PET) + 20 marks (special qualifications)",
+        rows: [
+          { year: 2024, category: "General Male — Jaipur/Jodhpur (high demand)", cutoff: "~138 – 148" },
+          { year: 2024, category: "General Male — rural districts", cutoff: "~115 – 130" },
+          { year: 2024, category: "Female (avg)", cutoff: "~105 – 130" },
+          { year: 2024, category: "OBC", cutoff: "~110 – 132" },
+          { year: 2024, category: "SC / ST", cutoff: "~95 – 115" },
+        ],
+        notes: "Rajasthan Police is district-specific. Cutoffs published per-district per-category.",
+        source: "https://police.rajasthan.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Constable (Rajasthan Police)",
+        payLevel: "Pay Level L-5 (Rajasthan State Pay Matrix)",
+        basicPay: "₹20,800",
+        grossPayApprox: "₹30,000 – ₹37,000 (including DA + HRA + uniform allowance)",
+        perks: [
+          "Free uniform + accommodation in barracks",
+          "Medical for self + family",
+          "Risk + Field allowance",
+          "Pension under Rajasthan State NPS",
+        ],
+        source: "https://police.rajasthan.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── Bihar Police Constable ─────────────────────────────────────
+  {
+    examCode: "BR_POLICE_PC",
+    oneLiner:
+      "Bihar Police Constable + Driver-Constable recruitment — conducted by the Central Selection Board of Constable (CSBC), Bihar Police.",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 25,
+      ageNotes:
+        "18-25 for General Male, 18-28 for General Female. EBC +2 (male) +3 (female); OBC +3; SC/ST +5.",
+      education: "Class 12 pass (Senior Secondary) from a recognised board.",
+      educationDetails: [
+        "Driver-Constable additionally needs LMV/HMV driving licence with 1+ years of experience.",
+        "Knowledge of Hindi mandatory.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, Bihar domicile.",
+      specialConstraints: [
+        "Physical Standards: Male — height 165 cm general (160 cm EBC/SC/ST), chest 81-86 cm. Female — height 155 cm (150 cm for EBC/SC/ST).",
+        "PET: 1.6 km run in 6 min (male); 1 km run in 5 min (female).",
+        "Document verification + medical follow PET.",
+      ],
+      source: "https://csbc.bihar.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Written cutoff (qualifying for PET)",
+        outOf: "100 marks",
+        rows: [
+          { year: 2024, category: "General Male", cutoff: "~50 – 60" },
+          { year: 2024, category: "OBC / EBC", cutoff: "~48 – 55" },
+          { year: 2024, category: "SC", cutoff: "~40 – 48" },
+          { year: 2024, category: "ST", cutoff: "~35 – 42" },
+        ],
+        notes:
+          "Written is qualifying (>30/100) — final merit comes from PET marks (100) alone. So PET performance is the actual selector.",
+        source: "https://csbc.bihar.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Constable (Bihar Police)",
+        payLevel: "Pay Level 3 (Bihar)",
+        basicPay: "₹21,700",
+        grossPayApprox: "₹29,000 – ₹35,000 (including DA + HRA + uniform allowance)",
+        perks: ["Free uniform + ration in barracks", "Quarters in district HQ", "Medical for self + family", "Pension under Bihar State NPS"],
+        source: "https://www.biharpolice.bih.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── Bihar Police SI ────────────────────────────────────────────
+  {
+    examCode: "BR_POLICE_SI",
+    oneLiner:
+      "Bihar Police Sub-Inspector (Daroga) recruitment — direct officer-cadre entry via the Bihar Police Subordinate Services Commission (BPSSC).",
+    eligibility: {
+      ageMin: 20,
+      ageMax: 25,
+      ageNotes:
+        "20-25 for General Male, 20-28 for General Female. EBC +2 (male) +3 (female); OBC +3 (male) +5 (female); SC/ST +5 (male) +7 (female).",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, Bihar domicile.",
+      specialConstraints: [
+        "Physical Standards: Male — height 165 cm general (160 cm EBC/SC/ST), chest 81-86 cm. Female — height 155 cm.",
+        "PET: 1 mile run in 6 min 30 sec (male); 1 km run in 6 min (female). Long jump + shot-put events.",
+      ],
+      source: "https://bpssc.bih.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims + Mains cutoff (qualifying for PET)",
+        outOf: "200 marks (Prelims qualifying); 200 marks (Mains final-merit)",
+        rows: [
+          { year: 2023, category: "General Male — Prelims", cutoff: "~150 – 165" },
+          { year: 2023, category: "OBC / EBC — Prelims", cutoff: "~140 – 158" },
+          { year: 2023, category: "SC — Prelims", cutoff: "~120 – 140" },
+          { year: 2023, category: "ST — Prelims", cutoff: "~110 – 130" },
+        ],
+        notes: "Mains marks (out of 200) + PET (out of 100) form the final merit list.",
+        source: "https://bpssc.bih.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Sub-Inspector (Daroga) — Bihar Police",
+        payLevel: "Pay Level 6 (Bihar)",
+        basicPay: "₹35,400",
+        grossPayApprox: "₹50,000 – ₹62,000 (including DA + HRA + uniform + special allowance)",
+        perks: [
+          "Officer quarters / lodging",
+          "Free uniform + accommodation entitlement",
+          "Medical for self + family",
+          "Risk + Field-area allowance",
+          "Career progression to Inspector → DySP",
+          "Pension under Bihar State NPS",
+        ],
+        source: "https://bpssc.bih.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── Karnataka Police Constable ─────────────────────────────────
+  {
+    examCode: "KA_POLICE_PC",
+    oneLiner:
+      "Karnataka State Police Constable + Armed Reserve Constable recruitment — conducted by the Karnataka State Police Recruitment Board.",
+    eligibility: {
+      ageMin: 19,
+      ageMax: 25,
+      ageNotes:
+        "19-25 for General. Relaxation: OBC +2-5 (category-wise: II A/II B/III A/III B); SC/ST +5; ex-servicemen 3 yrs after service.",
+      education: "Class 12 (PUC II) pass from a Karnataka-recognised board or equivalent.",
+      educationDetails: [
+        "Kannada knowledge mandatory — verified via a separate qualifying language test.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, Karnataka domicile.",
+      specialConstraints: [
+        "Physical Standards: Male — height 168 cm general (160 cm Cat I/SC/ST), chest 86-91 cm. Female — height 157 cm (150 cm reserved).",
+        "Endurance Test: 1.6 km run in 6 min 25 sec (male); 400 m run in 2 min (female). Long jump + shot-put events.",
+      ],
+      source: "https://ksp.karnataka.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Written cutoff (qualifying for ET + PMT + medical)",
+        outOf: "100 marks",
+        rows: [
+          { year: 2024, category: "General — Civil Constable", cutoff: "~63 – 72" },
+          { year: 2024, category: "OBC II A / II B", cutoff: "~58 – 68" },
+          { year: 2024, category: "SC", cutoff: "~50 – 60" },
+          { year: 2024, category: "ST", cutoff: "~45 – 55" },
+        ],
+        notes: "Final selection score combines written + ET + PMT marks. Cutoff varies by district / battalion.",
+        source: "https://ksp.karnataka.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Police Constable (Karnataka Police)",
+        payLevel: "Pay Level 4 (Karnataka)",
+        basicPay: "₹23,500",
+        grossPayApprox: "₹33,000 – ₹40,000 (including DA + HRA + uniform allowance)",
+        perks: [
+          "Free uniform + ration",
+          "Medical for self + family",
+          "Risk + Field-area allowance",
+          "Pension under Karnataka State NPS",
+        ],
+        source: "https://ksp.karnataka.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── Tamil Nadu Police Constable ────────────────────────────────
+  {
+    examCode: "TN_POLICE_PC",
+    oneLiner:
+      "Tamil Nadu Police Constable (Grade II — Police, Jail, Fire) recruitment — conducted by the Tamil Nadu Uniformed Services Recruitment Board (TNUSRB).",
+    eligibility: {
+      ageMin: 18,
+      ageMax: 24,
+      ageNotes:
+        "18-24 for General. Relaxation: BC/MBC +3, SC/ST/SCA +5 (and no upper limit for SC/ST/SCA/MBC/BC in some recent cycles).",
+      education: "Class 12 (Higher Secondary, +2) pass from a recognised board.",
+      educationDetails: [
+        "Tamil reading-writing-speaking mandatory — verified via a separate qualifying language test.",
+      ],
+      attempts: "No formal attempt limit (within upper age cap).",
+      nationality: "Indian citizen, Tamil Nadu domicile.",
+      specialConstraints: [
+        "Physical Standards: Male — height 170 cm general (167 cm reserved), chest 81-86 cm. Female — height 159 cm (157 cm reserved).",
+        "Endurance Test (ET): 1500 m run in 7 min (male); 400 m run in 2 min 20 sec (female). Long jump + shot-put + high jump events.",
+      ],
+      source: "https://tnusrbonline.org/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Final selection score cutoff (Written + Physical + Endurance)",
+        outOf: "100 marks (Written) + 15 marks (Physical) + 10 marks (Special qualifications)",
+        rows: [
+          { year: 2024, category: "General Male", cutoff: "Final score ~70 – 80 / 125" },
+          { year: 2024, category: "BC", cutoff: "Final score ~65 – 75" },
+          { year: 2024, category: "MBC / DC", cutoff: "Final score ~60 – 72" },
+          { year: 2024, category: "SC / SCA", cutoff: "Final score ~55 – 67" },
+          { year: 2024, category: "ST", cutoff: "Final score ~50 – 62" },
+        ],
+        source: "https://tnusrbonline.org/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Grade II Police Constable (Tamil Nadu Police)",
+        payLevel: "Pay Level 8 (Tamil Nadu State)",
+        basicPay: "₹20,600",
+        grossPayApprox: "₹32,000 – ₹38,000 (including DA + HRA + uniform allowance)",
+        perks: [
+          "Free uniform + accommodation in barracks",
+          "Medical for self + family",
+          "Risk + Hardship allowance for field/border posts",
+          "Pension under TN State NPS",
+        ],
+        source: "https://tnusrbonline.org/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
 ];
 
 export function findDeepContent(examCode: string): ExamDeepContent | undefined {
