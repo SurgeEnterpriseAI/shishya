@@ -1140,6 +1140,904 @@ PCS is not "settling". For 99.9% of aspirants, IT IS the civil service career th
 If you're a UP-domicile UPSC aspirant, NOT writing UPPSC PCS in parallel is leaving high-EV optionality on the table. The marginal effort is small; the conversion improvement is large. The historical pattern: aspirants who CLEAR UPSC CSE often cleared their state PSC the year before. Treat the state PSC as the floor, not the ceiling.
 `,
   },
+
+  // ════════════════════════════════════════════════════════════════
+  // BATCH 7 COMPARISON ARTICLES — second wave of "X vs Y" pieces
+  // ════════════════════════════════════════════════════════════════
+
+  {
+    slug: "ctet-vs-uptet-which-to-target",
+    title: "CTET vs UPTET: which teacher eligibility test to target, and when to do both",
+    dek:
+      "Central vs state pathways for school-teacher recruitment in India. We compare reach, salary outcomes, validity, and the strategy of doing both — because the prep overlap is ~85% and the second test costs almost no incremental study.",
+    publishedOn: "2026-05-22",
+    readMins: 6,
+    author: "Shishya editorial",
+    tags: ["CTET", "UPTET", "Teaching", "Comparison"],
+    sources: [
+      { label: "CTET official site", url: "https://ctet.nic.in/" },
+      { label: "UPBEB UPTET official site", url: "https://updeled.gov.in/" },
+      { label: "Deep content on /exams/CTET and /exams/UP_UPTET", url: "https://shishya.in/exams/CTET" },
+    ],
+    body: `## What each test actually opens
+
+**CTET** is the qualifying eligibility test for primary (Class 1-5) and upper-primary (Class 6-8) teacher posts in CENTRAL government schools — KVS (Kendriya Vidyalaya), NVS (Navodaya Vidyalaya), EMRS (Eklavya Model Residential Schools), and Delhi NCT schools. Pass once → certificate valid for life.
+
+**UPTET** is the state version. Qualifying for it makes you eligible for primary + upper-primary teacher posts in UP government and aided schools (the Basic Education Department vacancies). Pass once → certificate valid for life (aligned with the 2021 NCTE notification).
+
+So CTET and UPTET serve different recruiters. CTET → central schools. UPTET → UP government schools.
+
+## Salary comparison after recruitment
+
+CTET → KVS / NVS Primary Teacher (PRT):
+- Pay Level 6 · Basic ₹35,400 · Gross ₹52,000 – ₹61,000 (X-class city)
+- Plus: Central govt pension under NPS, CGHS medical, education concession for own children
+
+UPTET → UP Assistant Teacher (Primary):
+- Pay Level 6 equivalent · Basic ₹35,400 · Gross ₹45,000 – ₹52,000 (UP postings)
+- UP state pension under NPS, state medical reimbursement
+
+**CTET-route teaching pays ~₹7,000-9,000 more per month at metro postings, plus CGHS + central perks.** Over a 30-year career, the CTET-route salary lead compounds to ~₹50-70 lakh in additional earnings.
+
+## Why most aspirants should write BOTH
+
+The prep overlap is ~85%. CTET and UPTET both test:
+- Child Development & Pedagogy (Paper 1 + Paper 2)
+- Language I + Language II
+- Mathematics + EVS (for primary stage)
+- Subject papers (for upper primary)
+
+What differs:
+- CTET is in English + Hindi; UPTET is in Hindi only.
+- UPTET has slight UP-specific content (Hindi grammar from UP Board textbooks, regional EVS topics).
+- CTET is conducted by CBSE; UPTET by UPBEB.
+
+For a UP-resident aspirant: writing CTET costs you ~10 extra hours of prep on top of UPTET. The salary differential makes that the highest-ROI 10 hours of your career.
+
+## The non-obvious problem
+
+Many UP aspirants write UPTET first (because it's perceived as easier), clear it, and then struggle in their CTET attempt because CTET has slightly more analytical pedagogy questions. The reverse order works better: prep for CTET (more rigorous), then UPTET becomes a layup.
+
+## When to skip CTET
+
+If you live outside UP and have no intention of relocating, UPTET alone is sufficient for your state's recruitment. But check your home state's TET — some states (TN, MH, KA) have their own TET that's the relevant one for you. CTET is still useful as a backup for KV / NVS posts anywhere in India.
+
+## Bottom line
+
+CTET and UPTET aren't substitutes — they're complementary. For UP-resident aspirants: write both. CTET-route central school posting pays significantly more and unlocks central perks that aren't available in state-cadre teaching jobs.
+`,
+  },
+
+  {
+    slug: "sbi-po-vs-ibps-po-salary-prestige-effort",
+    title: "SBI PO vs IBPS PO: salary, prestige, and effort — which one is actually worth chasing",
+    dek:
+      "Banking aspirants almost always assume SBI PO is harder and more prestigious. The salary numbers say SBI does pay more, but the cutoff and effort difference is smaller than the reputation suggests. We break down the honest math.",
+    publishedOn: "2026-05-22",
+    readMins: 6,
+    author: "Shishya editorial",
+    tags: ["SBI PO", "IBPS PO", "Banking", "Comparison"],
+    sources: [
+      { label: "IBA bipartite settlement — 12th BPS wage structure", url: "https://www.iba.org.in/iba/news/16659.html" },
+      { label: "SBI careers portal", url: "https://sbi.co.in/web/careers/current-openings" },
+      { label: "IBPS PO official site", url: "https://www.ibps.in/" },
+      { label: "Deep content on /exams/SBI_PO and /exams/IBPS_PO", url: "https://shishya.in/exams/SBI_PO" },
+    ],
+    body: `## The cutoff difference
+
+SBI Prelims is typically 1-2 difficulty levels harder than IBPS Prelims in the same year. The cutoffs reflect this — but not as starkly as the reputation suggests.
+
+| Metric | SBI PO 2024 | IBPS PO 2024 |
+| --- | --- | --- |
+| Prelims cutoff (General overall) | 55.0 – 58.5 / 100 | 59.50 – 63.25 / 100 |
+| Mains cutoff (General) | ~95-100 / 200 | ~85-92 / 200 |
+| Final selection conversion | ~0.4% | ~0.8% |
+
+SBI's Prelims cutoff is actually LOWER than IBPS's — because the SBI paper is harder per question. The Mains cutoff is higher because SBI's Mains is shorter + tougher.
+
+The conversion gap (0.4% vs 0.8%) is the real signal: SBI accepts FEWER candidates from its applicant pool relative to IBPS PO across 11 PSU banks. SBI is structurally tighter.
+
+## Salary at entry
+
+SBI PO (after probation):
+- Basic ₹48,480 (post-12th BPS revision, 2022)
+- Gross ₹65,000 – ₹73,000 at metro postings (Mumbai, Delhi, Bangalore, Chennai)
+- Plus: concessional rate housing loan, car loan, performance bonus
+
+IBPS PO at any participating PSU (after probation):
+- Basic ₹48,480 (same — IBA bipartite agreement applies to all)
+- Gross ₹57,000 – ₹65,000 at metro postings
+- Plus: similar loans + bonuses (varies by bank)
+
+**SBI pays ~₹8,000 – ₹10,000 more per month at metro postings**, primarily through performance allowances and the SBI-specific special allowance.
+
+## Career velocity
+
+SBI: Two-year probation → Officer JMGS-I confirmed → MMGS-II in 3 years → MMGS-III in 8 years.
+
+IBPS (any PSU): Similar two-year probation → JMGS-I → MMGS-II in 4-5 years (faster at smaller banks) → MMGS-III in 9-11 years.
+
+SBI tends to demand higher mobility (frequent transfers across India) but offers slightly faster promotion. IBPS PSUs vary — Canara Bank, Bank of Baroda are similar to SBI; some smaller PSUs are slower.
+
+## When to chase SBI specifically
+
+- If you specifically want to work at SBI (the brand, the size, the urban posting probability).
+- If you're a top-quartile aspirant — you'll clear both, so go for the better-paying one.
+- If you can stomach frequent transfers and the SBI culture (more demanding hours, more diverse responsibilities).
+
+## When IBPS PO is the smarter target
+
+- If you want predictable career stability with less frequent transfers.
+- If you live in a tier-2/tier-3 city — IBPS placements often stay closer to home.
+- If your prep timeline is shorter — IBPS Prelims is more achievable in a 6-month window.
+- If you'd rather optimise for clearing PO this year (any bank) than risk missing both.
+
+## The strategy 80% of aspirants should run
+
+Write both. The schedules don't clash (SBI Prelims usually September-November; IBPS PO Prelims October-November). The prep is ~95% the same. The cost of writing both is the exam fee (~₹750 each) — the upside is two shots at the goal.
+
+If you clear both: pick SBI. If you clear only IBPS: take it.
+
+## Bottom line
+
+SBI PO pays modestly more and is somewhat harder to crack. The reputational gap ("SBI is the best, IBPS is a fallback") is bigger than the actual gap in salary, prestige, or career outcomes. For most aspirants, treat both as parallel attempts; don't sacrifice IBPS to "save energy" for SBI.
+`,
+  },
+
+  {
+    slug: "mbbs-abroad-vs-indian-honest-comparison",
+    title: "MBBS abroad vs Indian MBBS: the honest comparison after the 2023 FMG rule changes",
+    dek:
+      "Russia, Ukraine, Philippines, Bangladesh, China — Indian students go abroad for MBBS when home seats are out of reach. We compare total cost, FMGE pass rates, government recognition risks, and the realistic career outcomes 5-7 years after graduating.",
+    publishedOn: "2026-05-22",
+    readMins: 8,
+    author: "Shishya editorial",
+    tags: ["MBBS", "Study Abroad", "Medical career", "FMGE", "Comparison"],
+    sources: [
+      { label: "NMC (National Medical Commission) — Foreign Medical Graduate Licentiate Regulations 2021", url: "https://www.nmc.org.in/" },
+      { label: "NBE FMGE result archives", url: "https://nbe.edu.in/" },
+      { label: "MEA travel + study abroad advisories", url: "https://www.mea.gov.in/" },
+    ],
+    body: `## Why the question keeps coming up
+
+NEET UG 2024 had ~24 lakh candidates competing for ~1.1 lakh MBBS seats. ~22 lakh students did NOT get an MBBS seat in India.
+
+A significant fraction of these — estimated 25,000 – 30,000 per year — go abroad for MBBS. Russia, Ukraine (pre-2022), Kazakhstan, Uzbekistan, Bangladesh, Nepal, China, Philippines, and Caribbean countries are the common destinations.
+
+The question every family asks: is this a real medical degree, or a gamble that ends with no career?
+
+## Total cost comparison
+
+| Country | Total tuition (5-6 yr course) | Hostel + Living | Total |
+| --- | --- | --- | --- |
+| India — Govt Medical College | ₹50,000 – ₹3 lakh | ₹3 – ₹5 lakh | **₹4 – ₹8 lakh** |
+| India — Private Medical College | ₹50 lakh – ₹1.2 crore | ₹5 – ₹8 lakh | **₹55 lakh – ₹1.3 crore** |
+| Russia (e.g., Kazan, Bashkir) | ₹16 – ₹25 lakh | ₹10 – ₹15 lakh | **₹26 – ₹40 lakh** |
+| Ukraine (pre-2022) | ₹15 – ₹22 lakh | ₹8 – ₹12 lakh | **₹23 – ₹34 lakh** |
+| Philippines | ₹18 – ₹28 lakh | ₹10 – ₹14 lakh | **₹28 – ₹42 lakh** |
+| Bangladesh | ₹20 – ₹30 lakh | ₹4 – ₹6 lakh | **₹24 – ₹36 lakh** |
+| China | ₹20 – ₹35 lakh | ₹8 – ₹12 lakh | **₹28 – ₹47 lakh** |
+| Kazakhstan / Uzbekistan / Kyrgyzstan | ₹15 – ₹25 lakh | ₹8 – ₹12 lakh | **₹23 – ₹37 lakh** |
+
+So MBBS abroad is roughly 5-8x more expensive than a govt Indian seat but 3-5x cheaper than a private Indian seat. The decision often boils down to: "I can't get a govt seat and can't afford a private one — what's left?"
+
+## The licentiate exam (FMGE) — the rate-limiter
+
+Indian medical graduation alone doesn't make you a doctor in India. You need an MBBS degree FROM India OR you need to:
+1. Get a foreign MBBS,
+2. Clear the FMGE (Foreign Medical Graduate Examination) — 50% qualifying score,
+3. Complete a 12-month internship in India,
+4. Register with the State Medical Council.
+
+Then you can practice.
+
+**FMGE pass rates have historically been brutal:**
+
+| Year | FMGE Pass Rate |
+| --- | --- |
+| 2018 | 13% |
+| 2019 | 12% |
+| 2020 | 16% |
+| 2021 | 24% |
+| 2022 | 21% |
+| 2023 | 17% |
+| 2024 | 20% (interim) |
+
+So about 80% of foreign MBBS graduates FAIL FMGE on the first attempt. Many take 3-4 attempts. Some never clear it and effectively wasted 5-6 years + ₹30-40 lakh.
+
+**Compare:** the NEET PG pass rate (for Indian graduates moving to PG) is structurally different — but Indian graduates don't need a licentiate to practise. They're licensed automatically post-internship.
+
+## The 2023 NMC rule change (NMC FMG Regulations)
+
+NMC tightened rules in 2021-2023:
+- Foreign MBBS must be ≥54 months of curriculum.
+- 12 months of internship at the same university (no return-home internship).
+- The university must be on the WHO Directory + NMC-recognised.
+- 10-year limit from joining to FMGE clearance.
+
+These rules eliminated several "shortcut" countries that offered 4-year MBBS or remote-internship options. Many Ukraine-grad students caught in the 2022 war crisis got rule relaxations; future students don't.
+
+## When MBBS abroad actually makes sense
+
+- **You can finance it without debt that breaks the family.** ₹30-40 lakh is a lot but manageable for upper-middle-class families. Debt-funded MBBS abroad is risky given FMGE odds.
+- **You're prepared to study hard during AND after the foreign MBBS.** Foreign MBBS curricula are often less rigorous than Indian; FMGE prep needs to start in year 3-4 of the foreign course, not after returning.
+- **You're choosing an NMC-recognised university with a strong FMGE track record.** Some Kazan, Philippines, Bangladesh universities have 50-60% FMGE pass rates among their grads — much better than the national average. Research per university.
+
+## When MBBS abroad is a trap
+
+- You're chasing it because "Russia is cheaper" but can't fund ₹35 lakh without a heavy loan.
+- You're picking a university based on agent recommendations only (the agent gets a commission, not a guarantee).
+- You haven't budgeted ₹3-5 lakh + 1-2 years for FMGE coaching post-graduation.
+- You're considering it as a "shortcut to PG" — there's no shortcut; FMGE → NEET PG is the longer path, not shorter.
+
+## What 80% of capable aspirants should do instead
+
+If your NEET UG score puts you between AIR 15,000 – 50,000 (General):
+- Take a BDS / BAMS / BHMS in India this year.
+- Re-attempt NEET as a drop-year next year.
+- Indian government / semi-government medical / dental career is reachable without leaving the country.
+
+If your NEET UG score is >AIR 50,000 (General):
+- Consider non-MBBS allied medical (BPT Physiotherapy, BSc Nursing, BSc Optometry, BSc MLT). These are legitimate medical careers with their own ceilings.
+- MBBS abroad is the high-cost / high-risk option compared to these alternatives.
+
+## Bottom line
+
+MBBS abroad is a legitimate path for some — but the FMGE pass rate of ~20% means 4 out of 5 foreign graduates don't clear the licentiate on first attempt. The financial + emotional cost of that risk is what most agent-recommendations omit. Go in with full information, choose universities with proven FMGE track records, and budget for years 7-9 (FMGE prep + internship) before counting on income.
+`,
+  },
+
+  {
+    slug: "gate-for-iit-mtech-vs-psu-recruitment",
+    title: "GATE for IIT M.Tech vs PSU recruitment: same exam, two very different optimisations",
+    dek:
+      "GATE is the gate to both IIT M.Tech and PSU recruitment (BHEL / IOCL / GAIL / NTPC / ONGC). But the cut-off, the choice rationale, and the post-clearing path differ sharply. Pick your target before you start preparing.",
+    publishedOn: "2026-05-22",
+    readMins: 7,
+    author: "Shishya editorial",
+    tags: ["GATE", "IIT M.Tech", "PSU", "Career", "Comparison"],
+    sources: [
+      { label: "IIT M.Tech COAP counselling", url: "https://coap.iitg.ac.in/" },
+      { label: "PSU recruitment notifications via GATE", url: "https://gate2026.iitg.ac.in/" },
+      { label: "Deep content on /exams/GATE_CSE", url: "https://shishya.in/exams/GATE_CSE" },
+    ],
+    body: `## Two destinations, one ticket
+
+GATE was originally designed for M.Tech / MS / PhD admissions to IITs / IISc / NITs / IIITs. Around 2010, leading PSUs started using GATE scores for recruitment — most notably BHEL, IOCL, GAIL, NTPC, ONGC, HPCL, BPCL, Power Grid, NHPC, NLC, SAIL, NMDC, ECIL.
+
+So one GATE score opens TWO career pathways:
+1. M.Tech at a top engineering institute → 2 years study → corporate placement / further research.
+2. Direct PSU Executive Trainee → 1 year training → permanent officer-cadre government job.
+
+These are not the same job. The optimisation differs.
+
+## The score targets differ
+
+**For IIT M.Tech CSE (Open category, 2024):**
+- IIT Bombay closing GATE score: ~890-920 / 1000
+- IIT Delhi: ~870-900
+- IIT Madras: ~850-890
+- IIT Hyderabad: ~810-850
+
+These translate to ~AIR 50-300 in GATE CSE.
+
+**For PSU recruitment (most popular: IOCL, BHEL, NTPC, 2024):**
+- Typical closing GATE score for shortlisting: **620-750** depending on PSU + branch + category
+- Translates to ~AIR 200-1,500 in GATE CSE (lower bar than top-IIT M.Tech)
+
+PSU shortlisting is a lower bar but then you have GD + interview rounds. IIT M.Tech is harder to get into but no interview after counselling (just COAP selection).
+
+## Starting compensation
+
+**IIT M.Tech CSE → corporate placement (Year 2):**
+- Top placement (Microsoft, Adobe, Goldman Sachs, etc.): ₹40-60 lakh CTC
+- Median IIT-B M.Tech CSE placement: ₹25-35 lakh CTC
+- After 2 years of opportunity cost (no salary during M.Tech)
+
+**PSU Executive Trainee (immediate joining):**
+- Basic ₹50,000 – ₹60,000
+- Gross ₹85,000 – ₹1,20,000 (depending on PSU + city)
+- 1 year of probation, then permanent Officer-grade
+- Lifetime job security, defined benefit pension
+
+## The 5-year comparison
+
+| Path | Year 1 | Year 2 | Year 3 | Year 4 | Year 5 | Cumulative |
+| --- | --- | --- | --- | --- | --- | --- |
+| IIT M.Tech CSE → IT corporate | ₹0 (studying) | ₹0 (studying) | ₹30L | ₹35L | ₹42L | ₹107 lakh |
+| PSU ET (IOCL, BHEL etc.) | ₹12L | ₹15L | ₹17L | ₹19L | ₹22L | ₹85 lakh |
+
+IIT M.Tech-route wins on cumulative earnings BY YEAR 5, but only if the corporate placement is strong (top quartile of IIT M.Tech batch). For the median IIT M.Tech graduate, the gap is much smaller (~₹10-15 lakh) and only emerges around year 6-7.
+
+Beyond year 7: corporate IT earnings continue to grow faster than PSU (job-hopping + stock options). PSU plateau is real — pay revisions only happen at 5-yearly bipartite negotiations.
+
+## When IIT M.Tech CSE is the right pick
+
+- You want a research-heavy career path (PhD, academia, R&D labs at top companies).
+- You're willing to defer earning for 2 years for higher long-term ceiling.
+- You're confident your placement will be top-quartile — strong UG GPA + competitive coding background.
+
+## When PSU is the right pick
+
+- You value job security over income ceiling. PSU pension + defined benefits are still rare in 2026.
+- You prefer a structured Government-sector career with predictable transfers + responsibilities.
+- You can't (or don't want to) compete in the high-pressure corporate IT environment.
+- You're from a tier-2/tier-3 background and the PSU posting will likely keep you closer to home.
+
+## The two-track strategy
+
+For aspirants who clear GATE with a strong score (top 1,000 AIR):
+
+1. Apply for IIT M.Tech via COAP.
+2. Simultaneously apply to PSU recruitment cycles (each PSU has its own application window post-GATE result).
+3. Wait for both outcomes.
+4. Choose based on actual offers, not pre-decided preference.
+
+The risk of pre-committing to one path is the IIT-rejection scenario where you've also missed the PSU application windows.
+
+## The single biggest mistake
+
+Most aspirants assume "if I get GATE rank 200, IIT M.Tech is automatic." It isn't. M.Tech admission depends on COAP counselling — branch + institute combinations are limited, and many candidates with AIR 200 don't get IIT-B / IIT-D / IIT-M. Always apply for PSU recruitment as a hedge, even if your dream is IIT M.Tech.
+
+## Bottom line
+
+GATE for IIT M.Tech and GATE for PSU are different optimisation problems with overlapping prep. IIT M.Tech rewards research aptitude + long-term-ceiling thinking. PSU rewards stability + immediate earning. Most aspirants in the AIR 200-2000 band should hedge by writing both PSU + COAP applications. Decide based on actual offers, not preconceived prestige.
+`,
+  },
+
+  // ════════════════════════════════════════════════════════════════
+  // STATE-SPECIFIC LONG-TAIL ARTICLES
+  // High-volume "state + topic" search queries — each ranks for its
+  // own state government job ecosystem.
+  // ════════════════════════════════════════════════════════════════
+
+  {
+    slug: "tamil-nadu-government-jobs-2026",
+    title: "Tamil Nadu government jobs 2026 — the complete picture by department + salary",
+    dek:
+      "TNPSC, TNUSRB, TRB, TET — Tamil Nadu has ~12 different recruitment boards across departments. We map every major recruitment exam, salary by pay level, and the realistic timeline from notification to joining.",
+    publishedOn: "2026-05-22",
+    readMins: 9,
+    author: "Shishya editorial",
+    tags: ["Tamil Nadu", "Government Jobs", "State Recruitment", "Salary"],
+    sources: [
+      { label: "TNPSC official notifications", url: "https://www.tnpsc.gov.in/" },
+      { label: "TNUSRB recruitment", url: "https://tnusrbonline.org/" },
+      { label: "Tamil Nadu Teachers Recruitment Board (TRB)", url: "https://trb.tn.gov.in/" },
+      { label: "Deep content on /exams/TN_TNPSC_GROUP1, GROUP2, TN_POLICE_PC", url: "https://shishya.in/exams/TN_TNPSC_GROUP1" },
+    ],
+    body: `## The TN government recruitment landscape
+
+Tamil Nadu has 5-6 main recruitment boards, each handling different post families:
+
+1. **TNPSC (Tamil Nadu Public Service Commission)** — civil services + most state department posts
+2. **TNUSRB (Tamil Nadu Uniformed Services Recruitment Board)** — police, jail warder, fire
+3. **TRB (Teachers Recruitment Board)** — government school teacher posts
+4. **Medical Services Recruitment Board** — government doctor posts
+5. **Tamil Nadu Health Services** — paramedical + nurse posts
+6. **Special boards** — Forest, Co-operative, Electricity Board, etc.
+
+## TNPSC groups — what each opens
+
+| Group | Posts | Education | Salary (Pay Level) |
+| --- | --- | --- | --- |
+| Group 1 | Deputy Collector, DySP, Asst Commissioner | Bachelor's | Pay Level 22 · ₹56,100 basic · ₹93k+ gross |
+| Group 2 (interview) | Asst Section Officer, Sub-Registrar, Inspector | Bachelor's | Pay Level 16-19 · ₹36k-47k basic |
+| Group 2A (non-interview) | Asst, Junior Inspector, etc. | Bachelor's | Pay Level 11-14 · ₹26k-35k basic |
+| Group 4 | VAO, Junior Assistant, Bill Collector | Class 12 | Pay Level 7-11 · ₹19k-27k basic |
+| Group 7 | Field Surveyor, Junior Inspector | Diploma | Pay Level 11-14 · ₹26k-35k basic |
+| Group 8 | Stenographer, Typist | Class 12 + Typing | Pay Level 8-11 · ₹20k-27k basic |
+
+Most aspirants target Group 1, Group 2, or Group 4 — these are the highest-volume posts.
+
+## Tamil Nadu Police — the parallel pathway
+
+TNUSRB conducts separate recruitment:
+
+- **Grade II Police Constable** (Class 12 entry, Pay Level 8) — most-recruited post family
+- **Sub-Inspector (SI)** (Bachelor's entry, Pay Level 16) — officer-cadre
+- **Special Sub-Inspector / Jail Warder** — niche but available
+
+Salary at Grade II Police Constable: ~₹32,000 – ₹38,000 gross at Chennai posting.
+
+## Teaching recruitment via TRB
+
+Tamil Nadu has its own TET (Tamil Nadu Teacher Eligibility Test):
+
+- **Paper I** (Class 1-5): D.El.Ed + 12th 50%
+- **Paper II** (Class 6-8): Bachelor's + B.Ed
+
+After TET → TRB conducts the actual recruitment cycle (separate exam). Salary at entry: ~₹35,000 – ₹40,000 gross for a Primary Teacher.
+
+## Timeline from notification to joining
+
+The realistic timeline for any TN government job:
+
+| Stage | Typical duration |
+| --- | --- |
+| Notification → Application deadline | 1 month |
+| Application deadline → Prelims/CBE | 3-4 months |
+| Prelims → Mains | 4-6 months |
+| Mains → Interview | 2-3 months |
+| Interview → Final selection | 1-2 months |
+| Selection → Document verification | 2 months |
+| Verification → Joining | 4-6 months |
+| **Total** | **18 – 24 months** |
+
+Plan for 1.5-2 years from the day you start preparing to the day you actually join. The longest gaps are usually between notifications (TN can sometimes have 2-3 years between cycles for the same exam).
+
+## Salary by stage of career
+
+For a Group 1 selectee (Deputy Collector, entry to Pay Level 22):
+
+| Year | Basic | Gross (Chennai) | Notes |
+| --- | --- | --- | --- |
+| Year 0 (probation) | ₹56,100 | ₹85,000 | Training stipend at TN Admin Training Institute |
+| Year 1-2 | ₹56,100 | ₹93,000 – ₹1,05,000 | Confirmed post |
+| Year 5 (Spl Dy Collector) | ₹61,800 | ₹1,12,000 – ₹1,25,000 | Promotion via Annual Increment |
+| Year 10 (Sub-Collector) | ₹76,500 | ₹1,40,000 – ₹1,58,000 | Pay Level 25 |
+| Year 15+ (Collector eligible) | ₹1,00,000+ | ₹1,85,000 – ₹2,10,000 | District Collector posting (rare from PCS route) |
+
+## The Tamil-language requirement everyone underestimates
+
+Every TN government recruitment requires Tamil proficiency. TNPSC has a separate Tamil Eligibility Test as part of all major recruitments. For non-Tamil-speaking aspirants, this is the single biggest hurdle — and you can't take it last-minute.
+
+Time investment: 4-6 months of structured Tamil learning if you're starting from zero. Most coaching centres in Chennai now offer Tamil-for-TNPSC modules.
+
+## Bottom line
+
+Tamil Nadu has 8-10 distinct government job paths across TNPSC, TNUSRB, TRB and others. The realistic time from notification to joining is 18-24 months. Tamil proficiency is non-negotiable. For high-volume + high-salary, target TNPSC Group 1; for fastest path to a stable job, target Group 4 or TNUSRB Police Constable.
+`,
+  },
+
+  {
+    slug: "bihar-police-salary-chart-2026",
+    title: "Bihar police salary chart 2026 — Constable to Senior SP, complete pay matrix",
+    dek:
+      "Bihar Police's pay structure, post by post — Constable, Sub-Inspector (Daroga), Inspector, DySP, SP. We include the 6th Pay Commission (state) implementation status, field/risk allowance, and the realistic career trajectory.",
+    publishedOn: "2026-05-22",
+    readMins: 7,
+    author: "Shishya editorial",
+    tags: ["Bihar", "Police", "Government Jobs", "Salary Chart"],
+    sources: [
+      { label: "Central Selection Board of Constable (CSBC), Bihar", url: "https://csbc.bih.nic.in/" },
+      { label: "Bihar Police Subordinate Services Commission (BPSSC)", url: "https://bpssc.bih.nic.in/" },
+      { label: "Bihar Police official site", url: "https://www.biharpolice.bih.nic.in/" },
+      { label: "Deep content on /exams/BR_POLICE_PC and BR_POLICE_SI", url: "https://shishya.in/exams/BR_POLICE_PC" },
+    ],
+    body: `## Bihar Police pay structure — complete chart
+
+Bihar follows the central 7th CPC framework adapted to state pay matrix.
+
+| Rank | Pay Level | Basic | Gross (Patna) | Recruitment Body |
+| --- | --- | --- | --- | --- |
+| Constable | Pay Level 3 | ₹21,700 | ₹29,000 – ₹35,000 | CSBC |
+| Head Constable | Pay Level 4 | ₹25,500 | ₹34,000 – ₹40,000 | Promotion from Constable |
+| Asst Sub-Inspector (ASI) | Pay Level 5 | ₹29,200 | ₹39,000 – ₹46,000 | Promotion from HC |
+| Sub-Inspector (Daroga) | Pay Level 6 | ₹35,400 | ₹50,000 – ₹62,000 | BPSSC (direct) |
+| Inspector | Pay Level 7 | ₹44,900 | ₹62,000 – ₹74,000 | Promotion from SI |
+| Deputy SP (DySP) | Pay Level 9 | ₹53,100 | ₹78,000 – ₹90,000 | BPSC CCE |
+| Additional SP | Pay Level 10 | ₹56,100 | ₹85,000 – ₹95,000 | Promotion |
+| SP (Superintendent of Police) | Pay Level 11 | ₹67,700 | ₹1,00,000 – ₹1,15,000 | Promotion / IPS allotment |
+| Senior SP | Pay Level 12 | ₹78,800 | ₹1,15,000 – ₹1,30,000 | Senior level |
+
+## What "gross" actually includes
+
+For a Bihar Constable at Patna posting (Pay Level 3):
+
+- Basic: ₹21,700
+- DA (currently ~46% of basic): ~₹10,000
+- HRA (24% of basic, X-class): ₹5,200
+- Uniform Allowance: ₹500
+- Field/Hardship Allowance (if border/rural): ₹500-2,000
+- Total Gross: ~₹37,000-₹40,000
+
+For Sub-Inspector (Daroga) at Patna:
+
+- Basic: ₹35,400
+- DA: ~₹16,300
+- HRA: ₹8,500
+- Special Duty Allowance: ₹2,000-3,500
+- Total Gross: ~₹62,000-₹65,000
+
+## Career progression timeline
+
+For a Constable joining at age 22:
+
+- Year 0-7: Constable → Head Constable (Pay Level 3 → 4)
+- Year 7-12: Head Constable → ASI (Pay Level 5)
+- Year 12-18: ASI → SI by promotion (or via internal exam) (Pay Level 6)
+- Year 18-25: SI → Inspector (Pay Level 7)
+- Year 25+: Inspector → DySP via departmental selection (Pay Level 9)
+
+Many constables retire as Inspector (Pay Level 7) — ~₹62k-74k gross. Promotion to DySP from cadre is rare; most DySPs are direct BPSC entries.
+
+For a direct Daroga (SI) entrant at age 24:
+
+- Year 0-5: SI confirmed → Inspector (Pay Level 6 → 7)
+- Year 5-12: Inspector → ASP/Inspector senior (Pay Level 7-9)
+- Year 12-20: DySP → Addl SP (Pay Level 9-10)
+- Year 20+: SP (Pay Level 11)
+
+Direct SI route reaches Inspector in 5 years; Constable route takes 18+ years.
+
+## Special allowances + perks
+
+- **Free uniform** + annual replacement allowance
+- **Free accommodation in barracks** (Constable) or quarters (SI+)
+- **Free medical treatment** for self + family at any Bihar Govt hospital
+- **Risk + Field allowance** for posting in difficult areas (Naxal-affected, border)
+- **LTC every 2 years** (Leave Travel Concession)
+- **NPS** (National Pension System) — 10% basic contribution, matched by state
+- **Group Insurance** — central + state schemes
+
+## Promotion exams within the force
+
+Bihar Police runs internal Limited Departmental Competitive Exams (LDCE):
+
+- Constable → Head Constable: LDCE for shortlisting
+- Head Constable → ASI: LDCE
+- ASI → SI: LDCE (more rigorous)
+- SI → Inspector: Departmental seniority + LDCE
+- Inspector → DySP: Promotion list (very limited slots)
+
+For Constables aiming faster career growth: clear the SI LDCE within 7-10 years of joining. Without LDCE, promotion is glacial.
+
+## The honest reality
+
+Bihar Police's biggest career challenge isn't pay — it's posting and political environment. Postings in Naxal-affected districts come with risk allowances but also genuine danger. Frequent transfers (every 2-3 years) make settling family roots difficult. Political interference in postings (especially for SI/Inspector levels) is a known challenge.
+
+The pay is decent for a state government job; the working conditions vary widely by posting.
+
+## Bottom line
+
+Bihar Police pay matches central CPC standards, with state-specific allowances. Constable starts at ~₹35,000 gross; SI starts at ~₹62,000; SP at ~₹1,00,000. Career progression for Constables is slow (15-20 years to ASI); direct SI entrants reach DySP in 12 years. Posting + political conditions are the bigger career variables than pay.
+`,
+  },
+
+  {
+    slug: "maharashtra-government-job-salary-structure",
+    title: "Maharashtra government job salary structure 2026 — by Pay Level + department",
+    dek:
+      "MPSC, MH Police, Maharashtra Educational Services — the state's recruitment + pay landscape. We break down 7th CPC Maharashtra pay matrix (Levels 1-30), the post families, and what each Pay Level translates to at Mumbai vs Pune vs rural postings.",
+    publishedOn: "2026-05-22",
+    readMins: 7,
+    author: "Shishya editorial",
+    tags: ["Maharashtra", "Government Jobs", "Salary", "MPSC"],
+    sources: [
+      { label: "MPSC official notifications", url: "https://mpsc.gov.in/" },
+      { label: "Maharashtra Police", url: "https://mahapolice.gov.in/" },
+      { label: "Maharashtra 7th CPC pay rules", url: "https://gad.maharashtra.gov.in/" },
+      { label: "Deep content on /exams/MH_MPSC_RAJYASEVA, MH_POLICE_BHARTI", url: "https://shishya.in/exams/MH_MPSC_RAJYASEVA" },
+    ],
+    body: `## Maharashtra pay matrix overview
+
+Maharashtra adopted the 7th CPC framework via the state Government Resolution dated 30 January 2019, retrospectively from 1 January 2016. The state pay matrix uses S-1 through S-30 levels.
+
+| S-Level | Basic | Equivalent central 7th CPC | Typical post |
+| --- | --- | --- | --- |
+| S-7 | ₹19,900 | Pay Level 2 | LDC, Clerk |
+| S-8 | ₹21,700 | Pay Level 3 | Constable (MH Police) |
+| S-11 | ₹29,200 | Pay Level 5 | Senior Clerk |
+| S-15 | ₹37,400 | Pay Level 6 | Asst Section Officer |
+| S-17 | ₹47,600 | Pay Level 7-8 | Tahsildar / BDO |
+| S-20 | ₹56,100 | Pay Level 10 | Deputy Collector / DySP |
+| S-22 | ₹67,700 | Pay Level 11 | Asst Director (Class I) |
+| S-25 | ₹78,800 | Pay Level 12 | Joint Director |
+| S-28 | ₹1,18,500 | Pay Level 13A | Director / Senior Joint Secretary |
+| S-30 | ₹2,05,400 | Pay Level 15+ | Principal Secretary |
+
+## What "gross" pay actually looks like by post
+
+Mumbai (X-class city — highest HRA, best perks):
+
+| Post | Basic (S-Level) | DA (current ~46%) | HRA (24%) | Gross |
+| --- | --- | --- | --- | --- |
+| Constable (MH Police) | ₹21,700 (S-8) | ₹10,000 | ₹5,200 | ~₹38,000 |
+| Asst Section Officer (Group 2) | ₹37,400 (S-15) | ₹17,200 | ₹9,000 | ~₹65,000 |
+| Tahsildar / BDO (Group 2 / 3) | ₹47,600 (S-17) | ₹21,900 | ₹11,400 | ~₹83,000 |
+| Deputy Collector / DySP (Group 1) | ₹56,100 (S-20) | ₹25,800 | ₹13,500 | ~₹98,000 |
+
+Pune (Y-class — HRA at 16%):
+
+Subtract ~₹3,000-5,000 from Mumbai gross for each post.
+
+Rural postings (Z-class — HRA at 8%):
+
+Subtract ~₹6,000-9,000 from Mumbai gross. But these often get hardship allowances that offset some of the HRA gap.
+
+## Major MPSC post families + their salary anchor
+
+**Group A (Class I) — entry through MPSC Rajyaseva:**
+- Deputy Collector: S-20 (~₹98,000 Mumbai gross)
+- Deputy Superintendent of Police: S-20 (~₹98,000)
+- Asst Commissioner of State Tax: S-20 (~₹98,000)
+- Asst Director Industries / Education: S-22 (~₹1,15,000)
+
+**Group B (Class II) — Rajyaseva or separate cycles:**
+- Tahsildar: S-17 (~₹83,000)
+- Block Development Officer: S-17 (~₹83,000)
+- Naib Tahsildar: S-15 (~₹65,000)
+- Police Inspector (PI): S-17 (~₹83,000)
+
+**Group C (Class III) — separate clerical/secretariat cycles:**
+- Senior Clerk / Asst Section Officer: S-11 to S-15
+- Talathi (Village-level revenue officer): S-9 (~₹42,000)
+
+**Group D (Class IV) — entry via MH Police, separate clerical:**
+- Constable: S-8 (~₹38,000)
+- Multi-Tasking Staff: S-7 (~₹35,000)
+
+## Career trajectory examples
+
+For an MPSC Rajyaseva Deputy Collector (entry S-20):
+
+- Year 0-3: S-20 (₹56,100 basic, ~₹98,000 Mumbai gross)
+- Year 3-7: S-21 (₹64,100 basic) after first promotion
+- Year 7-12: S-22 (₹67,700 basic) — Special Deputy Collector
+- Year 12-18: S-25 (₹78,800 basic) — Sub-Divisional Officer
+- Year 18-25: S-27 (₹1,00,000+) — Senior level (district Collector eligible from MPSC route via Annual Increment + promotion list)
+- Year 25+: S-29 / S-30 (Senior Joint Secretary equivalent) — possible but not guaranteed
+
+For an MH Police Constable (entry S-8):
+
+- Year 0-7: S-8 (₹21,700) Constable
+- Year 7-12: S-9-10 Head Constable
+- Year 12-18: S-11-12 ASI / API
+- Year 18-25: S-13-15 PSI (Police Sub-Inspector) — possible via departmental promotion
+- Year 25+: S-15-17 Police Inspector
+
+## Maharashtra-specific perks
+
+- **State pension under MEPS** — defined-contribution NPS aligned with central NPS
+- **Education concession** for own children (Class 1 to PG) at Government-aided institutions
+- **Medical reimbursement** for self + family + dependent parents at any State Govt hospital
+- **Concessional MSRTC + railway travel** for officers
+- **State housing concession loans** at sub-market interest rates
+- **LFC every 2 years** (Leave Fare Concession)
+
+## Marathi language — the universal requirement
+
+Every Maharashtra government recruitment requires Marathi proficiency. MPSC has a Marathi paper (compulsory, descriptive) at Mains. Police recruitment has a Marathi language test at the selection stage.
+
+For non-Marathi-speaking aspirants: expect 6-12 months of focused Marathi learning before being competitive.
+
+## Bottom line
+
+Maharashtra government jobs offer competitive pay (S-8 ₹21,700 basic for Constable → S-30 ₹2,05,400 for Principal Secretary) with strong perks (education concession, medical, pension). Mumbai gross is highest; rural postings get hardship allowances that partially offset lower HRA. The Marathi-language requirement is the single biggest practical hurdle for non-Marathi aspirants.
+`,
+  },
+
+  {
+    slug: "up-government-jobs-after-class-12",
+    title: "UP government jobs after Class 12 — every path that doesn't need a Bachelor's degree",
+    dek:
+      "UP Police Constable, UPSSSC Lower Subordinate, RRB Group D, SSC MTS, UP Forest Guard, UP Excise Constable — the complete list of UP government jobs reachable straight after Class 12, with salary + exam timelines.",
+    publishedOn: "2026-05-22",
+    readMins: 7,
+    author: "Shishya editorial",
+    tags: ["Uttar Pradesh", "Government Jobs", "Class 12", "Without Graduation"],
+    sources: [
+      { label: "UPSSSC official notifications", url: "https://upsssc.gov.in/" },
+      { label: "UP Police Recruitment + Promotion Board", url: "https://uppbpb.gov.in/" },
+      { label: "Deep content on /exams/UP_POLICE_CONSTABLE, UP_UPSSSC_PET", url: "https://shishya.in/exams/UP_POLICE_CONSTABLE" },
+    ],
+    body: `## Why Class 12 is enough for a real career
+
+UP has the highest population of government employees in India after the central government (~9 lakh state employees). Many of these jobs DO NOT require a Bachelor's degree.
+
+The myth "you need graduation for a government job" is wrong for UP. Class 12 opens at least 8-10 substantial post families.
+
+## The post families reachable with just Class 12
+
+| Recruitment | Post | Salary (Pay Level + Basic) | Education needed |
+| --- | --- | --- | --- |
+| UP Police Constable | Civil Police / PAC Constable | Pay Level 3 · ₹21,700 (gross ~₹35-42k) | Class 12 (Intermediate) |
+| UPSSSC Lower Subordinate | Junior Asst, Stenographer | Pay Level 2-4 · ₹19,900 – ₹25,500 | Class 12 |
+| UPSSSC PET (gateway) | Lower-cadre clerks, drivers | Pay Level 1-4 | Class 12 |
+| UP Forest Guard | Forest Beat Officer | Pay Level 3 · ₹21,700 | Class 12 (Math/Sci preferred) |
+| UP Excise Constable | Excise Department Constable | Pay Level 3 · ₹21,700 | Class 12 |
+| UP Jal Nigam | Junior Engineer (Diploma route — diploma post-Class 12) | Pay Level 6 · ₹35,400 | Diploma post-Class 12 |
+| Railways via RRB Group D | Pointsman, Trackman, Helper | Pay Level 1 · ₹18,000 | Class 12 / ITI |
+| SSC MTS | Multi-Tasking Staff (any central dept) | Pay Level 1 · ₹18,000 | Class 10 (but Class 12 still helps) |
+
+## UP Police Constable — the most-targeted Class-12-level UP job
+
+Volume: ~3-4 lakh applications per cycle. Cycles every 2-3 years.
+
+Selection: Written CBT (300 marks) → PET (1.6 km run) → Document verification → Medical.
+
+Salary: Pay Level 3 (₹21,700 basic) · Gross ~₹35,000-42,000 at Lucknow / Noida postings.
+
+Career path: Constable (Year 0-10) → Head Constable → ASI (LDCE) → SI (LDCE within force OR direct via UP Police SI).
+
+## UPSSSC PET — the under-known gateway
+
+PET (Preliminary Eligibility Test) is a single qualifying exam that opens dozens of UPSSSC posts. Pass PET once, and you become eligible to apply for all subsequent UPSSSC notifications without re-writing PET. Valid for 3 years.
+
+What you can do after passing PET:
+- Lekhpal (Patwari / Junior Revenue Officer) — Pay Level 4
+- Forest Guard — Pay Level 3
+- Excise Constable — Pay Level 3
+- Junior Assistant (any UP government department) — Pay Level 2
+- ANM / GNM Nurse (with additional qualification) — Pay Level 4
+- Cane Inspector — Pay Level 4
+- Mandi Inspector — Pay Level 4
+
+So PET is the most-leveraged exam in UP — one written test, multiple post family options.
+
+## UP Forest Guard — niche but stable
+
+Forest Guard recruitment is irregular (every 5-8 years for major cycles). Pay: Pay Level 3 (₹21,700). Posting: forest beat huts, often remote. Physical fitness required (long-distance walking patrol). Risk allowance for wildlife-area postings.
+
+For aspirants who want outdoor work + government job security, Forest Guard is an undervalued path.
+
+## Railways (RRB Group D) — central + relocation-heavy
+
+Indian Railways recruits Group D (Track Maintainer, Helper, Pointsman, Hospital Assistant) via RRB. Class 12 pass is sufficient (Class 10 with ITI for some posts).
+
+Salary: Pay Level 1 (₹18,000) · Gross ~₹26,000-32,000.
+
+Big perk: free railway pass for self + family + parents (multiple times per year), plus subsidised railway hospital + housing.
+
+Catch: Group D postings can be anywhere across the Indian Railways zones. If you want to stay in UP, RRB allows zone preference but doesn't guarantee.
+
+## SSC MTS — central government Class 10 route
+
+SSC Multi-Tasking Staff is open to Class 10 candidates (Class 12 is a plus but not mandatory). Pay Level 1 (₹18,000). Posting: any central government department across India.
+
+For UP candidates: SSC MTS gives you a central government job (better pension + perks than state-cadre) but with all-India transfer liability.
+
+## The realistic earning trajectory
+
+A Class 12-pass candidate joining as UP Police Constable at age 19:
+
+- Year 0-7: Constable (Pay Level 3, ~₹35-42k gross)
+- Year 7-12: Head Constable (Pay Level 4, ~₹40-50k gross)
+- Year 12-18: Assistant Sub-Inspector (Pay Level 5, ~₹50-60k gross)
+- Year 18-25: Sub-Inspector via LDCE (Pay Level 6, ~₹62-75k gross)
+- Year 25+: Inspector (Pay Level 7, ~₹78-92k gross)
+
+A Class 12-pass candidate joining as UPSSSC Lekhpal at age 20:
+
+- Year 0-7: Lekhpal (Pay Level 4, ~₹40-50k gross)
+- Year 7-12: Senior Lekhpal / Naib Tahsildar (Pay Level 6, ~₹60-70k gross)
+- Year 12-18: Tahsildar via promotion (Pay Level 7, ~₹78-92k gross)
+- Year 18+: SDM eligible from cadre (rare, but possible)
+
+Over a 30-year career, both paths lead to ₹70-90k gross — comparable to many graduate-entry jobs at the same career stage.
+
+## What to do while waiting
+
+Most UP government job cycles take 1-2 years from notification to joining. Use the wait productively:
+
+1. Complete your graduation in parallel (Open Universities, IGNOU, distance UG). It opens graduate-only posts (SDM via UPPSC, UP Police SI, Inspector posts).
+2. Learn Hindi typing (30-35 wpm) — mandatory for many UPSSSC posts.
+3. Build basic computer skills (CCC certificate or equivalent) — required for most government recruitments.
+4. Stay physically fit — most UP government jobs have a PET round.
+
+## Bottom line
+
+UP Police Constable, UPSSSC posts (especially via PET), Forest Guard, Excise Constable, and Railways Group D are real Class-12-level pathways to a stable government career. Salaries start at ₹18-22k basic but reach Pay Level 6-7 (₹60-90k gross) by mid-career through promotions. Don't wait for graduation if you can join via Class 12 now — graduation can happen in parallel.
+`,
+  },
+
+  {
+    slug: "karnataka-government-recruitment-by-department",
+    title: "Karnataka government recruitment 2026 — by department, exam body, and Pay Level",
+    dek:
+      "Karnataka has ~13 different recruitment bodies — KPSC, KSP, KEA, KTET, Karnataka Forest Department and others. We map every major exam, the post families it opens, and the realistic salary by Pay Level.",
+    publishedOn: "2026-05-22",
+    readMins: 7,
+    author: "Shishya editorial",
+    tags: ["Karnataka", "Government Jobs", "KPSC", "Recruitment"],
+    sources: [
+      { label: "Karnataka Public Service Commission (KPSC)", url: "https://kpsc.kar.nic.in/" },
+      { label: "Karnataka State Police", url: "https://ksp.karnataka.gov.in/" },
+      { label: "Karnataka Examinations Authority (KEA)", url: "https://cetonline.karnataka.gov.in/" },
+      { label: "Deep content on /exams/KA_KPSC_KAS, KA_POLICE_PC", url: "https://shishya.in/exams/KA_KPSC_KAS" },
+    ],
+    body: `## Karnataka's recruitment landscape
+
+Karnataka uses ~6 main recruitment bodies + a number of department-specific ones:
+
+1. **KPSC (Karnataka Public Service Commission)** — KAS (Gazetted Probationers), other Class A/B services
+2. **KSP (Karnataka State Police)** — Constable, ASI, SI recruitment
+3. **KEA (Karnataka Examinations Authority)** — KCET, COMEDK admin, college-level Lecturer recruitment
+4. **Karnataka Forest Department** — Forest Guard, RFO
+5. **Karnataka Health Services** — paramedical + nursing
+6. **Karnataka Industries Department** — staff recruitment
+
+## KPSC — the main civil services gateway
+
+| Exam | Posts | Pay Level | Salary (Bangalore gross) |
+| --- | --- | --- | --- |
+| KPSC KAS (Gazetted) | Asst Commissioner, Tahsildar, Asst Director | Pay Level 23 (~₹56k basic) | ₹85,000 – ₹95,000 |
+| KPSC Group A non-Gazetted | Various Class A non-promotional posts | Pay Level 18-22 | ₹65,000 – ₹82,000 |
+| KPSC Group B | Junior Engineer, Asst Statistical Officer | Pay Level 12-15 | ₹40,000 – ₹52,000 |
+| KPSC Group C | Senior Clerk, Stenographer | Pay Level 6-9 | ₹28,000 – ₹37,000 |
+| KPSC Group D / Lower Subordinate | Junior Asst, Office Asst | Pay Level 3-5 | ₹22,000 – ₹30,000 |
+
+## Karnataka State Police — the parallel pathway
+
+| Post | Pay Level | Basic | Gross (Bangalore) |
+| --- | --- | --- | --- |
+| Constable (Civil / AR) | Pay Level 4 | ₹23,500 | ₹33,000 – ₹40,000 |
+| Head Constable | Pay Level 5 | ₹27,800 | ₹38,000 – ₹46,000 |
+| ASI | Pay Level 7 | ₹35,400 | ₹50,000 – ₹60,000 |
+| Sub-Inspector (Civil / AR) | Pay Level 12 | ₹47,600 | ₹68,000 – ₹78,000 |
+| Inspector | Pay Level 14 | ₹56,100 | ₹82,000 – ₹95,000 |
+| DySP (via promotion + KAS allotment) | Pay Level 18 | ₹67,700 | ₹98,000 – ₹1,12,000 |
+
+## Department-specific recruitments
+
+**Karnataka Forest Department:**
+- Forest Guard: Class 12 entry, Pay Level 4 (~₹35-42k gross)
+- Range Forest Officer (RFO): Bachelor's + Forestry eligibility, Pay Level 14 (~₹80-95k gross)
+
+**Karnataka Health Services:**
+- Staff Nurse (BSc Nursing): Pay Level 9 (~₹38-46k gross)
+- Auxiliary Nurse Midwife (ANM): Pay Level 5 (~₹28-34k gross)
+- Lab Technician: Pay Level 6 (~₹32-40k gross)
+
+**Karnataka Education Department (via KTET + KEA):**
+- Primary Teacher (PRT, KTET Paper 1): Pay Level 6 (~₹52-60k gross)
+- Senior Teacher (TGT, KTET Paper 2): Pay Level 7 (~₹62-70k gross)
+- Lecturer (BEd + PG + KEA Lecturer exam): Pay Level 10-12 (~₹80-95k gross)
+
+## Karnataka-specific perks
+
+- **Kannada Eligibility Bonus** — speed of advancement for native Kannada speakers in state-specific posts
+- **Hyderabad-Karnataka (now Kalyana-Karnataka) reservation** — Article 371-J reservation for candidates from this region
+- **Karnataka State NPS** — defined-contribution pension aligned with central NPS
+- **Free education concession** for own children at Karnataka Govt institutions
+- **Medical reimbursement** at Government hospitals + concessional rates at empanelled private hospitals
+
+## The Kannada-language requirement
+
+Every Karnataka government recruitment requires Kannada proficiency. KPSC has a separate Kannada language paper at Mains (qualifying). KSP has a Kannada language test at the selection stage.
+
+For non-Kannada-speaking aspirants: 4-8 months of focused Kannada learning is typically required to be competitive.
+
+## Career trajectory examples
+
+For a KPSC KAS Gazetted Probationer (entry Pay Level 23, ~₹56k basic, ~₹85k Bangalore gross):
+
+- Year 0-3: KAS Probationer / Asst Commissioner
+- Year 3-7: Senior Asst Commissioner (Pay Level 24, ~₹64k basic)
+- Year 7-12: Special Deputy Commissioner (Pay Level 25, ~₹78k basic)
+- Year 12-18: Sub-Divisional Officer (Pay Level 26, ~₹88k basic)
+- Year 18-25: Joint Director / Senior Officer (Pay Level 27-28)
+- Year 25+: Director / Senior Special Officer (rare, Pay Level 29+)
+
+For a KSP Constable (entry Pay Level 4, ~₹23k basic, ~₹35k Bangalore gross):
+
+- Year 0-7: Constable
+- Year 7-12: Head Constable
+- Year 12-18: ASI
+- Year 18-25: Sub-Inspector (via LDCE within force or direct KSP SI)
+- Year 25+: Inspector
+
+## Timeline from notification to joining
+
+KPSC KAS:
+- Notification → Application deadline: 1 month
+- Prelims: 3-4 months after deadline
+- Mains: 4-6 months after Prelims
+- Interview: 3-4 months after Mains
+- Document verification + Joining: 4-6 months
+- **Total: 18-24 months**
+
+KSP Constable:
+- Notification → Written: 2-3 months
+- Written → PET → Medical → Joining: 8-12 months
+- **Total: 10-15 months**
+
+## Bottom line
+
+Karnataka government recruitment is well-structured across 6+ bodies. KPSC KAS (top-tier admin) + KSP (police family) + KTET (education) cover most aspirants. Kannada proficiency is non-negotiable for state-specific posts. Average time from notification to joining is 12-24 months depending on exam.
+`,
+  },
 ];
 
 export function findArticle(slug: string): InsightArticle | undefined {

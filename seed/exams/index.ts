@@ -774,6 +774,38 @@ export const examsSeed = [
     languages: ["EN"] as const,
     candidatesPerYear: 200_000,
   },
+
+  // ── BATCH 7 SEED — Statistical / Math institutes ──
+  {
+    code: "ISI_BSTAT",
+    name: "ISI Admission Test (B.Stat / B.Math)",
+    shortName: "ISI B.Stat / B.Math",
+    category: "UNIVERSITY" as const,
+    description:
+      "Indian Statistical Institute admission test for the 3-year B.Stat (Hons) at ISI Kolkata and B.Math (Hons) at ISI Bangalore. Single objective + subjective math paper; one of the most rigorous undergraduate math entrances in India.",
+    durationMin: 240,
+    totalQuestions: 38,
+    totalMarks: 188,
+    marksPerQ: 4,
+    negativeMark: 0,
+    languages: ["EN"] as const,
+    candidatesPerYear: 12_000,
+  },
+  {
+    code: "CMI_ADMISSION",
+    name: "CMI Admission Test (B.Sc / M.Sc)",
+    shortName: "CMI Admission",
+    category: "UNIVERSITY" as const,
+    description:
+      "Chennai Mathematical Institute entrance for B.Sc (Hons) in Mathematics + CS, Physics, and Data Science. JEE Advanced rank holders can apply via JEE route; the CMI Admission Test is the alternative direct entry.",
+    durationMin: 180,
+    totalQuestions: 35,
+    totalMarks: 140,
+    marksPerQ: 4,
+    negativeMark: 0,
+    languages: ["EN"] as const,
+    candidatesPerYear: 8_000,
+  },
 ];
 
 export async function seedExams() {
