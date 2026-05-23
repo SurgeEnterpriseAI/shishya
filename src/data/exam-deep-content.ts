@@ -3251,6 +3251,500 @@ export const EXAM_DEEP_CONTENT: ExamDeepContent[] = [
       },
     ],
   },
+
+  // ════════════════════════════════════════════════════════════════
+  // BATCH 6 — Niche entrances: design / law / commerce / medical PG
+  // ════════════════════════════════════════════════════════════════
+
+  // ─── NATA — National Aptitude Test in Architecture ──────────────
+  {
+    examCode: "NATA",
+    oneLiner:
+      "Council of Architecture's qualifying test for B.Arch admission across India — covers aesthetic sensitivity, drawing aptitude, PCM and general aptitude.",
+    eligibility: {
+      ageNotes: "No upper age limit.",
+      education:
+        "Class 12 with Physics + Chemistry + Mathematics as core subjects, minimum 50% aggregate (45% for SC/ST/OBC). Diploma holders (10+3 with Maths) also eligible.",
+      educationDetails: [
+        "Mathematics MUST be a core subject in Class 12 — not optional.",
+        "Diploma-in-Engineering route: 10+3 with Maths as a compulsory subject.",
+        "B.Arch admission additionally requires the candidate to clear the institutional eligibility (Class 12 minimum + NATA score).",
+      ],
+      attempts: "Three sessions in a year; best of three scores is considered. Valid for 2 years.",
+      nationality: "Indian citizen, NRI, OCI, PIO and foreign nationals.",
+      source: "https://www.nata.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Qualifying cutoff (CoA — for B.Arch admission eligibility)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2024, category: "All categories — minimum qualifying", cutoff: "≥ 70 (35%)" },
+          { year: 2024, category: "Top NIT/SPA closing score", cutoff: "150+ (75%+)" },
+          { year: 2024, category: "Government college closing", cutoff: "120 – 140 typically" },
+          { year: 2024, category: "Private college closing", cutoff: "90 – 120 typically" },
+        ],
+        notes:
+          "NATA gives a qualifying score; college-level cutoffs depend on Class-12 + NATA composite scoring at each institution.",
+        source: "https://www.nata.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "NATA paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 200,
+      topics: [
+        { subject: "Part A — Aesthetic Sensitivity + Drawing (125 marks)", topic: "Aesthetic sensitivity (composition, colour, perspective)", recentMarksAvg: 50, recentMarksMax: 50 },
+        { subject: "Part A", topic: "Drawing aptitude (free-hand, 3D visualisation, urban landscape)", recentMarksAvg: 75, recentMarksMax: 75 },
+        { subject: "Part B — Aptitude Test (75 marks)", topic: "Physics + Chemistry + Mathematics (Class 12 level)", recentMarksAvg: 40, recentMarksMax: 50 },
+        { subject: "Part B", topic: "General aptitude + logical reasoning + spatial visualisation", recentMarksAvg: 35, recentMarksMax: 40 },
+      ],
+      takeaways: [
+        "Drawing alone carries ~37.5% of total marks. Daily sketching practice (perspectives, urban scenes, still life) is the highest-yield prep.",
+        "Aesthetic sensitivity questions test design literacy, not artistic skill — knowledge of architectural movements, famous buildings, design principles wins marks.",
+        "PCM in Part B is at Class 12 level — JEE Main aspirants find this section straightforward; pure-Humanities candidates need 2-3 months of catch-up.",
+      ],
+      source: "https://www.nata.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── NID DAT ────────────────────────────────────────────────────
+  {
+    examCode: "NID_DAT",
+    oneLiner:
+      "NID Design Aptitude Test — two-stage gate (Prelims + Mains) for B.Des / M.Des admissions at the 6 NIDs (Ahmedabad, Gandhinagar, Kurukshetra, Bhopal, Jorhat, Amaravati).",
+    eligibility: {
+      ageNotes: "B.Des — 20 years on 30 June of admission year. M.Des — no upper age limit.",
+      education:
+        "B.Des: Class 12 (any stream) from a recognised board, OR a 3-year Diploma. M.Des: Bachelor's degree (4-year B.Des or other Bachelor's).",
+      educationDetails: [
+        "B.Des age cap (20 yrs) is a UNIQUE constraint — most candidates apply right after Class 12.",
+        "Candidates appearing in Class 12 can apply for B.Des.",
+      ],
+      attempts: "No formal attempt limit (within B.Des age cap).",
+      nationality: "Indian citizen + supernumerary seats for OCI/Foreign nationals.",
+      source: "https://admissions.nid.edu/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "DAT Prelims qualifying cutoff (top % shortlisted for Mains)",
+        rows: [
+          { year: 2024, category: "B.Des General — shortlist", cutoff: "~Top 7-8% of test takers" },
+          { year: 2024, category: "M.Des General — shortlist", cutoff: "~Top 10-12% per stream" },
+        ],
+        notes:
+          "NID does not publish exact cutoff scores. Composite final selection weights: Prelims 30% + Mains studio 50% + interview 20%.",
+        source: "https://admissions.nid.edu/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "NID DAT Prelims paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 100,
+      topics: [
+        { subject: "Objective section (~70%)", topic: "Visual perception + visual analogies + observation", recentMarksAvg: 25, recentMarksMax: 30 },
+        { subject: "Objective section", topic: "Design awareness + general knowledge (history of design, famous designers, design movements)", recentMarksAvg: 20, recentMarksMax: 25 },
+        { subject: "Objective section", topic: "Numerical aptitude + logical reasoning", recentMarksAvg: 15, recentMarksMax: 20 },
+        { subject: "Subjective section (~30%)", topic: "Drawing / sketching / spatial reasoning / scenario response", recentMarksAvg: 30, recentMarksMax: 35 },
+      ],
+      takeaways: [
+        "Design awareness is the most-overlooked section. Building familiarity with Bauhaus, Indian designers (Charles Correa, Satyajit Ray as a typographer), and global design movements pays off disproportionately.",
+        "Subjective section needs daily 30-min sketching habit. Don't try to perfect technique in 1 week.",
+        "Mains studio test is where 70% of final selection happens — Prelims is a filter, Mains is a competition.",
+      ],
+      source: "https://admissions.nid.edu/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── NIFT ───────────────────────────────────────────────────────
+  {
+    examCode: "NIFT",
+    oneLiner:
+      "NIFT entrance — Creative Ability Test (CAT) + General Ability Test (GAT) followed by Situation Test (B.Des) or GD + PI (B.FTech). 18 NIFT campuses across India.",
+    eligibility: {
+      ageMin: 16,
+      ageMax: 24,
+      ageNotes: "B.Des / B.FTech: 24 years on 1 August of admission year. No upper age for M.Des / M.FTech / M.FM.",
+      education:
+        "B.Des / B.FTech: Class 12 (any stream) with minimum 50% aggregate. M.Des / M.FTech: Bachelor's degree in the relevant field.",
+      attempts: "No formal attempt limit (within age cap for UG).",
+      nationality: "Indian citizen + OCI / foreign nationals (supernumerary seats).",
+      source: "https://www.nift.ac.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "B.Des composite score (CAT + GAT + Situation Test) — top NIFTs (Open category, 2024)",
+        rows: [
+          { year: 2024, category: "NIFT Delhi B.Des — closing AIR", cutoff: "Rank ~250 – 400" },
+          { year: 2024, category: "NIFT Mumbai B.Des — closing AIR", cutoff: "Rank ~400 – 600" },
+          { year: 2024, category: "NIFT Bangalore B.Des — closing AIR", cutoff: "Rank ~600 – 850" },
+          { year: 2024, category: "NIFT Chennai B.Des — closing AIR", cutoff: "Rank ~700 – 1,000" },
+          { year: 2024, category: "NIFT Hyderabad B.Des — closing AIR", cutoff: "Rank ~750 – 1,100" },
+        ],
+        notes: "Bachelor of Design (B.Des) ranks are tighter than B.FTech because UG seats are fewer (~250 per metro campus).",
+        source: "https://www.nift.ac.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "NIFT B.Des paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 250,
+      topics: [
+        { subject: "GAT (General Ability Test — 100 marks objective)", topic: "Quantitative ability", recentMarksAvg: 20, recentMarksMax: 25 },
+        { subject: "GAT", topic: "Communication ability + English comprehension", recentMarksAvg: 25, recentMarksMax: 30 },
+        { subject: "GAT", topic: "Analytical ability + logical reasoning", recentMarksAvg: 25, recentMarksMax: 30 },
+        { subject: "GAT", topic: "General knowledge + current affairs + case study", recentMarksAvg: 30, recentMarksMax: 35 },
+        { subject: "CAT (Creative Ability Test — 150 marks subjective)", topic: "Concept visualisation + sketching + colour use", recentMarksAvg: 90, recentMarksMax: 110 },
+        { subject: "CAT", topic: "Idea generation + composition + creative problem solving", recentMarksAvg: 60, recentMarksMax: 80 },
+      ],
+      takeaways: [
+        "CAT (Creative Ability Test) carries 60% of the written weight. Most rejection happens here — daily 1-2 hr sketching + colour practice for 6+ months is the standard prep timeline.",
+        "GAT is JEE-Main lite — most JEE/CAT aspirants find it manageable; pure-Humanities candidates need focused quant + reasoning prep.",
+        "Situation Test (post-shortlist) is a 3D model-making round with given materials. Practice with everyday materials (cardboard, foam board, fabric scraps).",
+      ],
+      source: "https://www.nift.ac.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── UCEED ──────────────────────────────────────────────────────
+  {
+    examCode: "UCEED",
+    oneLiner:
+      "UCEED — joint design entrance conducted by IIT Bombay. Gates entry to B.Des at IIT Bombay, IIT Guwahati, IIT Hyderabad, IIIT-DM Jabalpur and IIT Roorkee.",
+    eligibility: {
+      ageNotes: "Born on or after 1 October 2003 (relaxed by 5 years for SC/ST/PwD). Refers to 2025 cycle — adjusts yearly.",
+      education:
+        "Class 12 pass (any stream) for the first time in the current or previous year. Candidates appearing in Class 12 can also apply.",
+      educationDetails: [
+        "No subject restriction — Humanities / Commerce / Science students are all eligible (unlike most design entrances).",
+      ],
+      attempts: "Maximum 2 attempts in consecutive years.",
+      nationality: "Open to Indian and foreign nationals.",
+      source: "https://www.uceed.iitb.ac.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "UCEED closing ranks — B.Des (Open category, 2024)",
+        rows: [
+          { year: 2024, category: "IIT Bombay B.Des — Open", cutoff: "Rank ~60 – 80" },
+          { year: 2024, category: "IIT Guwahati B.Des — Open", cutoff: "Rank ~150 – 200" },
+          { year: 2024, category: "IIT Hyderabad B.Des — Open", cutoff: "Rank ~180 – 230" },
+          { year: 2024, category: "IIIT-DM Jabalpur B.Des — Open", cutoff: "Rank ~280 – 360" },
+          { year: 2024, category: "IIT Roorkee B.Des — Open (newer)", cutoff: "Rank ~300 – 420" },
+        ],
+        source: "https://www.uceed.iitb.ac.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "UCEED paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 240,
+      topics: [
+        { subject: "Part A — Objective (240 marks)", topic: "Visualisation + spatial ability", recentMarksAvg: 40, recentMarksMax: 50 },
+        { subject: "Part A", topic: "Observation + design sensitivity (analyse images, identify materials)", recentMarksAvg: 50, recentMarksMax: 60 },
+        { subject: "Part A", topic: "Environmental + social awareness (sustainability, urban planning)", recentMarksAvg: 30, recentMarksMax: 40 },
+        { subject: "Part A", topic: "Analytical + logical reasoning", recentMarksAvg: 35, recentMarksMax: 45 },
+        { subject: "Part A", topic: "Language + creativity (creative use of language, lateral thinking)", recentMarksAvg: 30, recentMarksMax: 40 },
+        { subject: "Part A", topic: "Design thinking + problem solving", recentMarksAvg: 35, recentMarksMax: 45 },
+        { subject: "Part B — Drawing (60 marks within total)", topic: "Free-hand drawing to a brief", recentMarksAvg: 30, recentMarksMax: 60 },
+      ],
+      takeaways: [
+        "UCEED is more analytical than NID/NIFT — visualisation + reasoning carry the bulk. Strong aptitude in JEE-Main-style spatial + logical problems translates directly.",
+        "Drawing is qualifying (Part B) but not heavily weighted vs Part A. Focus on Part A objective practice first.",
+        "Past UCEED papers are openly available on the IIT Bombay site — solving the last 5 years' papers is the highest-yield prep.",
+      ],
+      source: "https://www.uceed.iitb.ac.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── AILET ──────────────────────────────────────────────────────
+  {
+    examCode: "AILET",
+    oneLiner:
+      "All India Law Entrance Test — separate entrance for NLU Delhi (does not accept CLAT). ~120 BA LLB UG seats; one of the most competitive law admissions in India.",
+    eligibility: {
+      ageNotes: "No upper age limit (Bar Council of India / SC ruling).",
+      education: "Class 12 with minimum 45% aggregate (40% for SC/ST). Class 12 in current year applicants also eligible.",
+      attempts: "Unlimited attempts.",
+      nationality: "Indian citizen + foreign nationals (separate quotas).",
+      source: "https://nationallawuniversitydelhi.in/admissions/ailet/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "AILET BA LLB UG closing ranks at NLU Delhi (Open category)",
+        outOf: "150 marks",
+        rows: [
+          { year: 2024, category: "Open / General — closing rank", cutoff: "Rank ~110 – 130 (score ~94+)" },
+          { year: 2024, category: "OBC", cutoff: "Rank ~250 – 320" },
+          { year: 2024, category: "SC", cutoff: "Rank ~700 – 1,100" },
+          { year: 2024, category: "ST", cutoff: "Rank ~1,500 – 2,800" },
+          { year: 2024, category: "EWS", cutoff: "Rank ~200 – 260" },
+        ],
+        notes:
+          "AILET is INCREDIBLY tight — only ~120 BA LLB seats. Ranks above are for the final intake list before withdrawal cascades.",
+        source: "https://nationallawuniversitydelhi.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "AILET BA LLB paper structure (2023+ pattern)",
+      yearsAnalyzed: "2023-2024",
+      totalMarks: 150,
+      topics: [
+        { subject: "English Language (50 marks)", topic: "Reading comprehension + vocabulary + grammar", recentMarksAvg: 50, recentMarksMax: 50 },
+        { subject: "Current Affairs + General Knowledge (30 marks)", topic: "Last 12 months current affairs + static GK", recentMarksAvg: 30, recentMarksMax: 30 },
+        { subject: "Logical Reasoning (70 marks)", topic: "Critical reasoning + assumptions + inferences", recentMarksAvg: 40, recentMarksMax: 50 },
+        { subject: "Logical Reasoning", topic: "Analytical reasoning + puzzles", recentMarksAvg: 30, recentMarksMax: 40 },
+      ],
+      takeaways: [
+        "AILET dropped Legal Aptitude in 2023 — now pure comprehension + reasoning, easier than CLAT in some respects but harder due to the tighter cutoff.",
+        "Reading speed is the single biggest determinant — 150 questions in 90 minutes = 36 sec/question average.",
+        "Logical Reasoning carries 47% of marks — daily critical-reasoning practice (LSAT-style passages) pays off most.",
+      ],
+      source: "https://nationallawuniversitydelhi.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── LSAT India ─────────────────────────────────────────────────
+  {
+    examCode: "LSAT_INDIA",
+    oneLiner:
+      "Pearson-conducted LSAT India — admission to Jindal Global Law School (JGLS) and ~80 affiliated law colleges. 4 sections, no negative marking, scaled-score-based.",
+    eligibility: {
+      ageNotes: "No upper age limit.",
+      education: "UG: Class 12 (any stream). PG: Bachelor's in any discipline (LLB candidates) for the PG-LL.M test.",
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, OCI, PIO, foreign national.",
+      source: "https://lsatindia.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "JGLS BBA-LLB / BA-LLB closing percentile (Open, 2024)",
+        rows: [
+          { year: 2024, category: "JGLS BA LLB / BBA LLB", cutoff: "~Top 5-10 percentile (scaled score ~85+ percentile)" },
+          { year: 2024, category: "Other partner colleges", cutoff: "~70-90 percentile (varies by college)" },
+        ],
+        notes:
+          "LSAT India uses a scaled / percentile score. Each partner college sets its own bar — JGLS is the tightest.",
+        source: "https://lsatindia.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "LSAT India paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 92,
+      topics: [
+        { subject: "Analytical Reasoning (23 Qs)", topic: "Logic puzzles + grouping + sequencing", recentMarksAvg: 23, recentMarksMax: 23 },
+        { subject: "Logical Reasoning I (23 Qs)", topic: "Argument analysis + critical thinking", recentMarksAvg: 23, recentMarksMax: 23 },
+        { subject: "Logical Reasoning II (23 Qs)", topic: "Additional critical reasoning passages", recentMarksAvg: 23, recentMarksMax: 23 },
+        { subject: "Reading Comprehension (23 Qs)", topic: "Long passages, inferences, author tone", recentMarksAvg: 23, recentMarksMax: 23 },
+      ],
+      takeaways: [
+        "LSAT India is the most analytical / least content-heavy law entrance in India. No GK, no current affairs, no legal aptitude — pure reasoning + reading.",
+        "Logic puzzles (Analytical Reasoning) make or break the score. Daily 1-2 hrs of grid-puzzle practice (LSAT US prep books work) is the standard.",
+        "No negative marking means every question should be attempted — even guesses help.",
+      ],
+      source: "https://lsatindia.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── CA Foundation ──────────────────────────────────────────────
+  {
+    examCode: "CA_FOUNDATION",
+    oneLiner:
+      "ICAI CA Foundation — entry-level examination for the Chartered Accountancy course. Cleared in 2-7 years on average; opens the CA Intermediate + CA Final path.",
+    eligibility: {
+      ageNotes: "No upper age limit. Minimum: must have passed (or be appearing in) Class 12.",
+      education:
+        "Class 12 pass (any stream) from a recognised board. Candidates appearing in Class 12 can register but must clear the board before attempting CA Foundation.",
+      educationDetails: [
+        "Registration with ICAI is mandatory; valid for 4 years (extendable).",
+        "ICAI accepts CBSE, ICSE, all state boards, and equivalent international qualifications.",
+      ],
+      attempts:
+        "Unlimited attempts within the 4-year registration validity period (extendable by paying revalidation fee).",
+      nationality: "Indian citizen + foreign nationals (foreign candidates write the same paper).",
+      source: "https://www.icai.org/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Passing criteria (ICAI rule — all candidates same)",
+        outOf: "400 marks (4 papers × 100 each)",
+        rows: [
+          { year: 2024, category: "Per paper minimum", cutoff: "≥ 40%" },
+          { year: 2024, category: "Aggregate minimum", cutoff: "≥ 50%" },
+          { year: 2024, category: "Pass rate — May 2024", cutoff: "~22-25% (typical)" },
+          { year: 2024, category: "Pass rate — Nov 2024", cutoff: "~20-23% (typical)" },
+        ],
+        notes:
+          "CA Foundation has a flat qualifying bar — no relative ranking, no cutoff curve.",
+        source: "https://www.icai.org/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "CA Foundation paper structure (4 papers, 100 marks each)",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 400,
+      topics: [
+        { subject: "Paper 1 — Accounting", topic: "Accounting Standards + Theoretical Framework + Capital + Revenue", recentMarksAvg: 40, recentMarksMax: 50 },
+        { subject: "Paper 1 — Accounting", topic: "Partnership + Company Accounts + Subsidiary Books", recentMarksAvg: 60, recentMarksMax: 70 },
+        { subject: "Paper 2 — Business Laws + BCR", topic: "Indian Contract Act + Sales of Goods + Partnership Act + Companies Act", recentMarksAvg: 60, recentMarksMax: 70 },
+        { subject: "Paper 2 — Business Laws + BCR", topic: "Business Correspondence & Reporting (Communication)", recentMarksAvg: 40, recentMarksMax: 40 },
+        { subject: "Paper 3 — Quantitative Aptitude", topic: "Business Mathematics + Statistics", recentMarksAvg: 60, recentMarksMax: 70 },
+        { subject: "Paper 3 — Quantitative Aptitude", topic: "Logical Reasoning", recentMarksAvg: 40, recentMarksMax: 40 },
+        { subject: "Paper 4 — Business Economics + BCK", topic: "Micro + Macro Economics", recentMarksAvg: 60, recentMarksMax: 70 },
+        { subject: "Paper 4 — Business Economics + BCK", topic: "Business + Commercial Knowledge", recentMarksAvg: 40, recentMarksMax: 40 },
+      ],
+      takeaways: [
+        "Accounting + Business Laws are the high-stakes papers — Accounting is the highest-yield prep return (concepts apply directly to Inter + Final).",
+        "ICAI's own study material is sufficient — coaching adds revision discipline, not new content.",
+        "Pass rate ~20-25% sounds harsh, but those who FAIL repeatedly typically fail just one paper. Targeted re-attempt on that paper is the standard recovery.",
+      ],
+      source: "https://www.icai.org/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── CS Foundation / CSEET ──────────────────────────────────────
+  {
+    examCode: "CS_FOUNDATION",
+    oneLiner:
+      "ICSI Company Secretary Executive Entrance Test (CSEET) — entry to the CS Executive programme. Replaces the older CS Foundation course since 2020.",
+    eligibility: {
+      ageNotes: "No upper age limit. Minimum: must have passed (or be appearing in) Class 12.",
+      education:
+        "Class 12 pass from a recognised board. CA / CMA Foundation pass + select graduates can also apply directly to CS Executive (skipping CSEET).",
+      attempts: "Unlimited attempts (held 4 times yearly — January, May, July, November).",
+      nationality: "Indian citizen + foreign nationals.",
+      source: "https://www.icsi.edu/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Passing criteria (ICSI rule)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2024, category: "Per paper minimum", cutoff: "≥ 40%" },
+          { year: 2024, category: "Aggregate minimum", cutoff: "≥ 50%" },
+          { year: 2024, category: "Pass rate — recent cycles", cutoff: "~50-60% (much higher than CA Foundation)" },
+        ],
+        source: "https://www.icsi.edu/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "CSEET paper structure (4 papers)",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 200,
+      topics: [
+        { subject: "Paper 1 — Business Communication (50 marks)", topic: "English grammar + comprehension + business writing", recentMarksAvg: 50, recentMarksMax: 50 },
+        { subject: "Paper 2 — Legal Aptitude + Logical Reasoning (50 marks)", topic: "Legal aptitude + critical reasoning", recentMarksAvg: 50, recentMarksMax: 50 },
+        { subject: "Paper 3 — Economic & Business Environment (50 marks)", topic: "Indian economy + business environment + entrepreneurship", recentMarksAvg: 50, recentMarksMax: 50 },
+        { subject: "Paper 4 — Current Affairs + Presentation + Communication (50 marks)", topic: "Current affairs + psychometric + viva voce", recentMarksAvg: 50, recentMarksMax: 50 },
+      ],
+      takeaways: [
+        "CSEET is structurally easier than CA Foundation — pass rate is 2-3x higher.",
+        "Current affairs + business knowledge are the unexpected challenge — most candidates underestimate the breadth.",
+        "ICSI's own e-learning + practice tests are sufficient; private coaching is rarely needed.",
+      ],
+      source: "https://www.icsi.edu/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── NEET PG ────────────────────────────────────────────────────
+  {
+    examCode: "NEET_PG",
+    oneLiner:
+      "National Eligibility cum Entrance Test (PG) — sole gate to MD / MS / DNB / Diploma admissions across all government and private medical colleges in India.",
+    eligibility: {
+      ageNotes: "No upper age limit (Supreme Court ruling).",
+      education:
+        "MBBS degree from an MCI/NMC-recognised college + completion of 1-year compulsory rotating internship by the cut-off date.",
+      educationDetails: [
+        "Candidates with Provisional Registration from State Medical Council can apply.",
+        "Foreign Medical Graduates (FMGs) need a valid FMGE pass + provisional registration.",
+      ],
+      attempts: "Unlimited attempts.",
+      nationality: "Indian citizen + OCI / PIO with valid Indian medical registration.",
+      source: "https://nbe.edu.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Qualifying percentile (50th / 40th / 45th rule)",
+        outOf: "800 marks",
+        rows: [
+          { year: 2024, category: "General / EWS — qualifying %ile", cutoff: "50th percentile" },
+          { year: 2024, category: "OBC / SC / ST — qualifying %ile", cutoff: "40th percentile" },
+          { year: 2024, category: "PwBD General — qualifying %ile", cutoff: "45th percentile" },
+        ],
+        notes: "Counselling cutoffs (MCC / state quotas) are MUCH tighter — covered in the next table.",
+        source: "https://mcc.nic.in/",
+        verifiedAt: "2026-05",
+      },
+      {
+        title: "MCC AIQ Round 1 closing scores — popular MD/MS specialities (2024, Open)",
+        outOf: "800 marks",
+        rows: [
+          { year: 2024, category: "MD Radio-Diagnosis (top govt)", cutoff: "Score ~700+ · Rank ~50-150" },
+          { year: 2024, category: "MD Dermatology (top govt)", cutoff: "Score ~690+ · Rank ~100-250" },
+          { year: 2024, category: "MS Orthopaedics (top govt)", cutoff: "Score ~640+ · Rank ~1,800-3,500" },
+          { year: 2024, category: "MD General Medicine", cutoff: "Score ~640+ · Rank ~2,000-5,000" },
+          { year: 2024, category: "MS General Surgery", cutoff: "Score ~580+ · Rank ~5,000-9,000" },
+          { year: 2024, category: "MD Anaesthesia", cutoff: "Score ~520+ · Rank ~12,000-18,000" },
+        ],
+        notes:
+          "Closing ranks are for the AIIMS-cluster and AIQ (15%) — state quota cutoffs vary heavily.",
+        source: "https://mcc.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "NEET PG paper analysis",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 800,
+      topics: [
+        { subject: "Pre-Clinical (Anatomy + Physiology + Biochemistry)", topic: "Anatomy", recentMarksAvg: 56, recentMarksMax: 64 },
+        { subject: "Pre-Clinical", topic: "Physiology", recentMarksAvg: 60, recentMarksMax: 68 },
+        { subject: "Pre-Clinical", topic: "Biochemistry", recentMarksAvg: 52, recentMarksMax: 60 },
+        { subject: "Para-Clinical (Pharmacology + Pathology + Microbiology + Forensic + PSM)", topic: "Pharmacology", recentMarksAvg: 60, recentMarksMax: 68 },
+        { subject: "Para-Clinical", topic: "Pathology", recentMarksAvg: 60, recentMarksMax: 68 },
+        { subject: "Para-Clinical", topic: "Microbiology", recentMarksAvg: 48, recentMarksMax: 56 },
+        { subject: "Para-Clinical", topic: "Forensic Medicine + PSM (Community Med)", recentMarksAvg: 72, recentMarksMax: 80 },
+        { subject: "Clinical (Medicine + Surgery + Obg + Paeds + ENT + Ortho + Eye + Skin)", topic: "Medicine", recentMarksAvg: 80, recentMarksMax: 96 },
+        { subject: "Clinical", topic: "Surgery + Ortho", recentMarksAvg: 80, recentMarksMax: 96 },
+        { subject: "Clinical", topic: "Obg + Paeds", recentMarksAvg: 80, recentMarksMax: 96 },
+        { subject: "Clinical", topic: "ENT + Eye + Skin + Anaesthesia + Radiology + Psychiatry", recentMarksAvg: 104, recentMarksMax: 120 },
+      ],
+      takeaways: [
+        "Clinical subjects + PSM together carry ~55-60% of marks. Daily revision via Marrow / PrepLadder + question banks is the standard prep model.",
+        "Recent trend: more application-based questions, fewer pure-recall. Mock-test heavy candidates outperform book-only readers.",
+        "Speciality choice + state quota selection in counselling is as important as the score — many candidates with score 600+ end up regretting their counselling strategy.",
+      ],
+      source: "https://nbe.edu.in/",
+      verifiedAt: "2026-05",
+    },
+  },
 ];
 
 export function findDeepContent(examCode: string): ExamDeepContent | undefined {
