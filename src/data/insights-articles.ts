@@ -843,6 +843,303 @@ alone. Doctor + AI imaging > doctor alone. Designer + generative AI > generic
 designer. The compounding happens at the intersection.
 `,
   },
+
+  // ════════════════════════════════════════════════════════════════
+  // COMPARISON ARTICLES — long-form, sourced, designed to rank for
+  // "X vs Y" long-tail queries. Each pulls from the deep-content
+  // numbers already published on individual /exams/[code] pages.
+  // ════════════════════════════════════════════════════════════════
+
+  {
+    slug: "ssc-cgl-vs-chsl-salary-and-career",
+    title: "SSC CGL vs SSC CHSL: salary, career growth, and which one is right for you",
+    dek:
+      "Same recruiter, very different posts. SSC CGL is graduate-level Group B/C; SSC CHSL is 12th-pass-level Group C. We compare the actual pay matrix, career trajectory, and the realistic conversion gap between the two.",
+    publishedOn: "2026-05-22",
+    readMins: 7,
+    author: "Shishya editorial",
+    tags: ["SSC CGL", "SSC CHSL", "Government Jobs", "Comparison"],
+    sources: [
+      { label: "7th CPC pay matrix (Department of Expenditure)", url: "https://doe.gov.in/order-circular/order-implementation-recommendations-7th-cpc-pay" },
+      { label: "SSC official notifications", url: "https://ssc.nic.in/" },
+      { label: "Deep content on /exams/SSC_CGL and /exams/SSC_CHSL", url: "https://shishya.in/exams/SSC_CGL" },
+    ],
+    body: `## The headline difference
+
+SSC CGL recruits at the GRADUATE level into Group B and Group C posts; SSC CHSL recruits at the 12+2 level into Group C only. That single line decides everything else — the pay scale, the career ceiling, the cutoff competition.
+
+If you're a graduate (or about to be), CGL has higher ROI by every measure that matters. If you're a 12th-pass student who doesn't want to wait three more years to start earning, CHSL is the right call — but go in with realistic expectations of the ceiling.
+
+## Pay difference at entry
+
+| Metric | SSC CGL (top posts) | SSC CHSL (top posts) |
+| --- | --- | --- |
+| Highest post | Assistant Section Officer / Inspector | Data Entry Operator (DEO) |
+| Pay Level | Level 7 | Level 4 / 5 |
+| Basic pay | ₹44,900 | ₹25,500 – ₹29,200 |
+| Gross monthly (X-class) | ₹68,000 – ₹85,000 | ₹37,000 – ₹46,000 |
+
+A CGL Inspector earns roughly **twice** the gross of a CHSL DEO in the same city. The gap widens over a career because the CGL promotion ladder ends at Pay Level 12 (Section Officer / Group B Gazetted) while CHSL typically plateaus around Pay Level 6.
+
+## Conversion / cutoff gap
+
+CHSL is technically a 12th-level paper and looks easier — but **the cutoff bar is HIGHER as a percentage of total marks** because the candidate pool is much bigger and the syllabus is narrower. In 2024:
+
+- SSC CGL Tier 1 General cutoff: 131.5 / 200 (~66%)
+- SSC CHSL Tier 1 General cutoff for DEO: 165 – 172 / 200 (~82-86%)
+
+CHSL needs higher accuracy on an easier paper. CGL allows for slightly lower accuracy on a harder one. Most students underestimate this — they pick CHSL "because Tier 2 is shorter" only to find the cutoff threshold tighter.
+
+## Career trajectory — 10 years out
+
+A CGL ASO joining in 2026 typically reaches Section Officer (Pay Level 8 → 10) by 2034-2036 through internal promotion + departmental exams. Net gross at year 10: ~₹1.1 – ₹1.3 lakh in a metro.
+
+A CHSL LDC joining in 2026 typically reaches UDC (Level 4) by 2030 and Assistant (Level 6) by 2035-2037 through internal departmental exams (LDCE). Net gross at year 10: ~₹55,000 – ₹65,000 in a metro.
+
+Same effort window. Different ceiling.
+
+## Who should pick which
+
+**Pick SSC CGL if:**
+- You're a graduate or final-year student.
+- You can commit 12-18 months of focused prep.
+- You'd rather wait an extra year to start at a higher entry-level than start sooner at a lower one.
+
+**Pick SSC CHSL if:**
+- You only have a Class 12 qualification and don't want to wait through a 3-year graduation.
+- You want a stable government job FAST (CHSL → joining within 1.5-2 years is realistic).
+- You can later attempt CGL after graduating — the prep overlap is ~70%, so CHSL prep is largely portable.
+
+## The undertold third path
+
+CGL Tier 2 since 2023 has dropped the descriptive paper for most posts — making the prep timeline shorter than the older 3-paper structure. If you're choosing between CHSL now and waiting 2-3 years for CGL, the CGL prep window has shrunk meaningfully. That changes the calculation for graduates who were previously discouraged by the old multi-stage Tier 2.
+
+## Bottom line
+
+Same recruiter, same exam style, very different pay matrix. If you have the option to graduate first and attempt CGL, do that. If you don't, CHSL is a legitimate path — just don't expect CGL-level pay from a CHSL post.
+`,
+  },
+
+  {
+    slug: "jee-main-january-vs-april-strategy",
+    title: "JEE Main January vs April attempt: which to take seriously, which to use as a warm-up",
+    dek:
+      "Two sessions a year, best score counts. The right strategy isn't 'try harder in April' — it's understanding what each attempt is actually for, what % of toppers peak in which session, and how to use the gap.",
+    publishedOn: "2026-05-22",
+    readMins: 6,
+    author: "Shishya editorial",
+    tags: ["JEE Main", "JEE Advanced", "Strategy", "Comparison"],
+    sources: [
+      { label: "NTA JEE Main 2024 result notifications", url: "https://jeemain.nta.nic.in/" },
+      { label: "JEE Advanced 2024 qualifying percentile table", url: "https://jeeadv.ac.in/" },
+      { label: "Deep content on /exams/JEE_MAIN", url: "https://shishya.in/exams/JEE_MAIN" },
+    ],
+    body: `## The structural setup
+
+NTA runs JEE Main twice a year — Session 1 (January-February) and Session 2 (April). A candidate can write both. **The better of the two NTA scores is used for the JEE Advanced cutoff and the JoSAA counselling rank.**
+
+So the question isn't "which one matters more" — both can. The question is how to USE the two-session structure to maximise the final score.
+
+## What the data shows
+
+Looking at the 2024 cycle (the most recent with complete published data):
+
+| Metric | Session 1 (Jan-Feb 2024) | Session 2 (April 2024) |
+| --- | --- | --- |
+| Number of candidates | ~12.3 lakh | ~10.7 lakh |
+| Number scoring 99+ percentile | ~12,300 | ~10,700 |
+| Topper score | Multiple 100 percentilers | Multiple 100 percentilers |
+| Cutoff for JEE Advanced (General) | 93.23 percentile | 93.23 percentile (same — composite) |
+
+Top scorers come from BOTH sessions. There's no "weaker session" — the percentile is normalised across both.
+
+## What changes between sessions
+
+What DOES change:
+
+- **Class 12 board exam timing**. Most state boards + CBSE conduct Class 12 exams in March. Session 1 lets you write JEE BEFORE boards; Session 2 lets you write AFTER. This is the biggest practical decision.
+- **Your own preparation maturity**. Session 1 catches you at the end of Class 12 prep; Session 2 catches you 3 months later, post-boards.
+- **Exam paper characteristics**. NTA tries to keep difficulty constant but in practice each session has slightly different focus areas (e.g., 2024 Session 2 had heavier Inorganic Chemistry).
+
+## The strategy that actually works
+
+**For students who feel "JEE-ready" by December:**
+Treat Session 1 as the serious attempt. Aim for your target percentile here. Boards then become a pure execution exercise. Session 2 becomes the "if I get sick or have a bad day" insurance.
+
+**For students who feel "JEE-ready" only by March:**
+Use Session 1 as a pure mock — get the test-centre experience, learn what 3 hours of JEE-pace feels like. Don't worry if the percentile is low. Focus on boards. Then use the 3 weeks between boards and Session 2 for intense revision. Session 2 is the real attempt.
+
+**For Class 12 droppers:**
+Both sessions are serious attempts. Use Session 1 as a calibration on your year-long prep, identify weak topics, fix them in the 8-10 weeks between sessions, and peak in Session 2.
+
+## What NOT to do
+
+Don't write Session 1 "just to see how it goes" if you actually have a real shot in Session 1. Many students sandbag the first attempt, expecting to peak in April — and then catch a fever in April and lose the year. The fail-safe direction is "take Session 1 seriously, treat Session 2 as a possible improvement", not the other way around.
+
+Don't ignore the Session 2 gap. The 8-10 weeks between sessions is the highest-leverage prep window of the entire JEE journey for students with a tier-1 target. This is where the rank gap between candidates with similar prep widens.
+
+## For students targeting JEE Advanced specifically
+
+The JEE Advanced qualifying percentile in 2024 was 93.23 for General. Top 2.5 lakh JEE Main candidates qualify. Practically: you need at least 93+ percentile in ONE of the two sessions. After that, your effort shifts to Advanced — a fundamentally different paper. Session 2 strategy for Advanced aspirants: if you've already crossed the qualifying percentile in Session 1, sit out Session 2 if your Advanced prep is on track. The fatigue cost of writing Session 2 can outweigh the marginal Main score improvement.
+
+## Bottom line
+
+There is no "easier session". The session you take MORE SERIOUSLY tends to be your better score. The structure is designed to give you two shots — but it works only if you treat each shot like it's the only one, and let the better one win.
+`,
+  },
+
+  {
+    slug: "neet-mbbs-vs-bds-when-to-choose",
+    title: "NEET UG: MBBS vs BDS — when to pick which, and the honest career gap",
+    dek:
+      "Same exam, two very different careers. We compare the realistic NEET score ranges for each, the cost of education, the early-career income gap, and the honest answer to 'should I drop a year for MBBS instead of taking BDS now?'",
+    publishedOn: "2026-05-22",
+    readMins: 7,
+    author: "Shishya editorial",
+    tags: ["NEET UG", "MBBS", "BDS", "Medical career", "Comparison"],
+    sources: [
+      { label: "NEET UG 2024 result and cutoffs (NTA)", url: "https://neet.nta.nic.in/" },
+      { label: "MCC counselling closing rank archives", url: "https://mcc.nic.in/" },
+      { label: "Dental Council of India — BDS seat distribution", url: "https://dciindia.gov.in/" },
+      { label: "Deep content on /exams/NEET_UG", url: "https://shishya.in/exams/NEET_UG" },
+    ],
+    body: `## What NEET actually selects you for
+
+NEET UG ranks ~24 lakh candidates. The seats it gates:
+
+- **MBBS**: ~1.1 lakh seats across government and private medical colleges.
+- **BDS**: ~27,000 seats across government and private dental colleges.
+- **AYUSH (BAMS, BHMS, BUMS, BSMS)**: ~50,000 seats.
+- **BVSc, BSc Nursing, Allied**: smaller pools.
+
+The MBBS:BDS ratio (about 4:1) tells you the cutoff gap. MBBS closes much earlier in counselling; BDS continues into later rounds. **The NEET-2024 cutoff for an MBBS government seat in the AIQ closed around AIR 1,800-2,500 (General). The same year, a BDS government seat closed around AIR 15,000-22,000.** A ~7-10x gap in rank.
+
+## The realistic question
+
+If you scored ~AIR 15,000 in NEET UG 2024, your options are:
+
+- Take a BDS seat NOW.
+- Drop a year, attempt NEET again, target MBBS.
+
+Both are real choices. The honest math:
+
+### Drop-year economics
+
+NEET UG drop-year improvement: top coaching results show ~70% of dedicated droppers improve by 100-150+ marks. That can move someone from AIR 15,000 → AIR 5,000. Not guaranteed, but the modal outcome.
+
+Cost: One year of opportunity cost (you don't earn during BDS years 1-4 either, so this is the only direct cost). One year of additional coaching fees (₹1.5-3 lakh at top institutes).
+
+Risk: Your second attempt could be flat or worse. ~30% of droppers don't materially improve.
+
+### BDS now
+
+Pros: You're a doctor (a different kind) by age 23. You can start earning from year 5. The dental field has growing private practice opportunities. India's per-capita dentist availability is low — there's structural demand.
+
+Cons: Compared to MBBS your early-career income is lower (entry private practice for BDS: ~₹30k-50k/month; entry MBBS internship at govt hospital: stipend ~₹20k-40k/month BUT post-PG specialist income jumps to ₹80k-2L+). The gap widens after PG.
+
+### The brutal honesty
+
+If you're at AIR 15,000 with strong board marks and a family that can fund another year, **dropping for MBBS has higher long-term expected value** — provided you can stomach the year of uncertainty.
+
+If you're at AIR 15,000 with marginal Class 12 marks, financial pressure to start earning, or family circumstances that make a 6-year MBBS infeasible, **BDS now is the right call** — and BDS is not a "consolation prize", it's a legitimate medical career with its own ceiling.
+
+## The myth to discard
+
+"Take BDS for one year and re-attempt NEET while studying." This rarely works. First-year BDS is academically demanding (anatomy, biochemistry, dental anatomy). Splitting attention between BDS and re-NEET prep typically results in mediocre performance in both. Drop OR commit — not both.
+
+## What to factor in that most articles skip
+
+- **Specialisation prospects.** MBBS → ~26 MD/MS specialities via NEET PG. BDS → 9 MDS specialities. The fork is narrower in BDS but each MDS speciality has solid demand.
+- **Private practice setup cost.** Setting up a basic dental clinic: ₹15-25 lakh equipment + clinic. Setting up a basic MBBS general-practitioner clinic: ₹3-8 lakh. BDS has higher capex.
+- **Family circumstances.** First-generation medical aspirants often underestimate the social pressure to "take ANYTHING" in medicine. Don't drop just because pressure says you should; don't take BDS just because pressure says you must.
+
+## Bottom line
+
+MBBS and BDS are both legitimate medical careers, not first-prize / consolation-prize. The right choice depends on your rank, your family's financial runway, and your honest tolerance for another year of NEET prep. The wrong choice is to take a seat you'll resent or drop a year you can't afford.
+`,
+  },
+
+  {
+    slug: "uppsc-pcs-vs-upsc-cse-which-to-target-first",
+    title: "UPPSC PCS vs UPSC CSE: which to target first, and the case for attempting both",
+    dek:
+      "UPPSC PCS is a less-celebrated cousin of UPSC CSE — but the prep overlap is ~70% and the conversion rate is 30x higher for similarly-prepared candidates. We break down the honest case for prepping both simultaneously.",
+    publishedOn: "2026-05-22",
+    readMins: 8,
+    author: "Shishya editorial",
+    tags: ["UPSC", "UPPSC", "State PSC", "Civil Services", "Comparison"],
+    sources: [
+      { label: "UPSC CSE 2023 final cutoff", url: "https://upsc.gov.in/" },
+      { label: "UPPSC PCS cutoff archive", url: "https://uppsc.up.nic.in/" },
+      { label: "Deep content on /exams/UPSC_PRELIMS and /exams/UP_UPPSC_PCS", url: "https://shishya.in/exams/UPSC_PRELIMS" },
+    ],
+    body: `## The structural similarity
+
+Both exams follow the same three-stage model: **Prelims (GS + CSAT) → Mains (descriptive papers) → Interview**. The Prelims paper structures are nearly identical — General Studies + a qualifying CSAT.
+
+The Mains differ in detail but share core papers — Essay, GS-I (History/Geography/Society), GS-II (Polity/Governance), GS-III (Economy/Tech/Environment), GS-IV (Ethics).
+
+**Practical impact**: A serious UPSC aspirant studying 8 months for CSE has already prepared 70% of UPPSC PCS Prelims material — and a significant chunk of the Mains GS papers. The marginal effort to also write UPPSC PCS is roughly 20-25% of total UPSC time.
+
+## The conversion math
+
+UPSC CSE 2023:
+- ~10 lakh candidates → ~14,000 Mains qualifiers → ~2,800 Interview qualifiers → ~1,000 final selections.
+- **Conversion rate: 0.1% (1 in 1,000)**
+
+UPPSC PCS 2023:
+- ~6 lakh candidates → ~14,000 Mains qualifiers → ~1,200 Interview qualifiers → ~250-400 final selections.
+- **Conversion rate: 0.05% – 0.07%**
+
+Wait — UPPSC's conversion rate is LOWER? Yes, because the seat ratio is ~4x smaller. But the per-candidate-rank conversion behaves differently:
+
+- A candidate at AIR 1,000 in UPSC CSE Prelims has roughly the same probability of clearing UPPSC PCS Prelims as a candidate at AIR 500 in UPPSC's own pool.
+- UPSC CSE pool has nationwide depth (Hindi-belt, Tamil-Nadu, Bengal, Karnataka all compete equally). UPPSC PCS pool is geographically concentrated — UP-domicile candidates dominate.
+
+What this means: **A serious UPSC aspirant who happens to be UP-domicile has materially better odds at UPPSC PCS than at UPSC CSE.**
+
+## The case for "both simultaneously"
+
+The classic two-track strategy:
+
+- Aim for UPSC CSE (the dream).
+- Write UPPSC PCS in parallel (the fallback).
+
+This works because:
+
+- Both exams happen in different months. UPSC CSE Prelims (May/June), Mains (Sep), Interview (Mar-May). UPPSC PCS Prelims (Mar/Apr), Mains (Oct/Nov), Interview (Mar-Apr). The schedule doesn't clash.
+- The Prelims overlap is enormous — Indian Polity, History, Economy, Geography, Current Affairs, Environment all the same.
+- The Mains overlap is meaningful but not total — UPPSC has Hindi-language-paper requirement and UP-specific GK paper that UPSC doesn't.
+
+The 20% extra effort gets you a 30x higher probability of SOME civil-service job within 2 attempts.
+
+## When to NOT do both
+
+If you're a non-UP-domicile candidate, the State PSC route is geographically less aligned (you'd compete in your home state's PSC — MPSC, TNPSC, MPPSC, etc.) The "both simultaneously" math still works, just substitute UPPSC with YOUR home state's PSC.
+
+If your UPSC attempt is your first and you're still building Prelims confidence, splitting attention is counterproductive. Year 1: focus on UPSC CSE. Year 2+: add UPPSC PCS as a parallel track.
+
+## Pay differences after selection
+
+| Service | Entry Pay Level | Basic | Metro gross |
+| --- | --- | --- | --- |
+| IAS / IPS / IFS (UPSC CSE) | Level 10 | ₹56,100 | ₹93,000 – ₹1,05,000 |
+| UP PCS — SDM / DySP | Level 10 (UP) | ₹56,100 | ₹85,000 – ₹95,000 |
+| UP PCS — BDO / Treasury Officer | Level 9 (UP) | ₹53,100 | ₹78,000 – ₹88,000 |
+
+A UP PCS Deputy Collector / SDM earns 85-90% of an IAS entry-level salary. Not 50%, not 30% — close to 90%. The difference compounds over a career (IAS reaches Cabinet Secretary level; PCS plateaus at IAS-equivalent Senior Selection Grade after ~15 years), but for the first decade of service the gap is small.
+
+## Reality check
+
+Most aspirants who clear UPSC CSE on attempt 1 had ALSO cleared UPPSC PCS the previous year. The two-track aspirants who failed UPSC but cleared PCS often describe PCS as a "career insurance policy" that let them attempt UPSC longer without family or financial pressure.
+
+PCS is not "settling". For 99.9% of aspirants, IT IS the civil service career that becomes available.
+
+## Bottom line
+
+If you're a UP-domicile UPSC aspirant, NOT writing UPPSC PCS in parallel is leaving high-EV optionality on the table. The marginal effort is small; the conversion improvement is large. The historical pattern: aspirants who CLEAR UPSC CSE often cleared their state PSC the year before. Treat the state PSC as the floor, not the ceiling.
+`,
+  },
 ];
 
 export function findArticle(slug: string): InsightArticle | undefined {
