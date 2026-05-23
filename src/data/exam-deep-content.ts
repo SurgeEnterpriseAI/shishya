@@ -3745,6 +3745,656 @@ export const EXAM_DEEP_CONTENT: ExamDeepContent[] = [
       verifiedAt: "2026-05",
     },
   },
+
+  // ════════════════════════════════════════════════════════════════
+  // BATCH 7 — Olympiads + Statistical institutes + remaining state PSCs
+  // ════════════════════════════════════════════════════════════════
+
+  // ─── IOQM — Indian Olympiad Qualifier in Mathematics ────────────
+  {
+    examCode: "IOQM",
+    oneLiner:
+      "HBCSE Stage-1 Math olympiad — first step in the path to the International Mathematical Olympiad (IMO). Top scorers progress to RMO → INMO → IMO selection camp.",
+    eligibility: {
+      ageNotes:
+        "Class 8-12 students born on or after a notification-specified date. No age cap; school class is the gate.",
+      education: "Currently studying in Class 8-12 in a recognised Indian school.",
+      attempts: "One attempt per academic year (per cycle).",
+      nationality: "Indian citizen, OCI, or studying in Indian schools.",
+      source: "https://olympiads.hbcse.tifr.res.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "IOQM cutoff (qualifying for RMO)",
+        outOf: "100 marks",
+        rows: [
+          { year: 2024, category: "Class 12 students (Top ~1,200)", cutoff: "~50 – 55" },
+          { year: 2024, category: "Class 11", cutoff: "~45 – 50" },
+          { year: 2024, category: "Class 9-10", cutoff: "~35 – 45" },
+          { year: 2024, category: "Class 8", cutoff: "~25 – 35" },
+        ],
+        notes:
+          "HBCSE picks ~25 students per region per class for RMO. Cutoffs vary by region and year — figures here are representative of metropolitan regions.",
+        source: "https://olympiads.hbcse.tifr.res.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "IOQM paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 100,
+      topics: [
+        { subject: "Number Theory", topic: "Divisibility + modular arithmetic + Diophantine equations", recentMarksAvg: 25, recentMarksMax: 32 },
+        { subject: "Algebra", topic: "Polynomials + functional equations + inequalities (AM-GM, Cauchy-Schwarz)", recentMarksAvg: 22, recentMarksMax: 28 },
+        { subject: "Combinatorics", topic: "Counting + pigeonhole + graph theory basics", recentMarksAvg: 24, recentMarksMax: 30 },
+        { subject: "Geometry", topic: "Euclidean geometry (triangles, circles, similarity, power of a point)", recentMarksAvg: 22, recentMarksMax: 28 },
+        { subject: "Other", topic: "Estimation, integer answer (TITA) format", recentMarksAvg: 7, recentMarksMax: 12 },
+      ],
+      takeaways: [
+        "IOQM is integer-answer (TITA) format — no negative marking, no partial credit. Either you solve, or you don't.",
+        "Number theory and combinatorics are the two highest-yield areas — they cover ~50% of marks but only ~30% of standard JEE Math prep.",
+        "Standard NCERT/CBSE Math does NOT prepare you for IOQM. Use Pranesachar's Challenges + Mathematics Olympiad books + AoPS resources.",
+      ],
+      source: "https://olympiads.hbcse.tifr.res.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── NSEP — National Standard Examination in Physics ────────────
+  {
+    examCode: "NSEP",
+    oneLiner:
+      "HBCSE Stage-1 Physics olympiad — path to International Physics Olympiad (IPhO). Stage 2 is INPhO, Stage 3 is OCSC (selection camp).",
+    eligibility: {
+      ageNotes: "Class 12 or below (born on or after notification-specified date). No upper age cap; school class is the gate.",
+      education: "Currently studying in Class 11 or Class 12 in a recognised Indian school.",
+      attempts: "One attempt per cycle.",
+      nationality: "Indian citizen, OCI, or studying in Indian schools.",
+      source: "https://olympiads.hbcse.tifr.res.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "NSEP cutoff (qualifying for INPhO)",
+        outOf: "240 marks (Part A objective + Part B subjective combined)",
+        rows: [
+          { year: 2024, category: "All India MAS (Minimum Admissible Score)", cutoff: "40% of average of top 10 scores" },
+          { year: 2024, category: "Indicative qualifying score (top ~300)", cutoff: "~120 – 150" },
+        ],
+        notes:
+          "HBCSE picks top ~300 candidates nationally for INPhO. Exact cutoffs vary by year and by Part A vs Part B performance balance.",
+        source: "https://olympiads.hbcse.tifr.res.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "NSEP paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 216,
+      topics: [
+        { subject: "Mechanics", topic: "Kinematics + Newton's laws + rotation + gravitation", recentMarksAvg: 50, recentMarksMax: 60 },
+        { subject: "Thermodynamics", topic: "Laws of thermodynamics + kinetic theory + heat engines", recentMarksAvg: 25, recentMarksMax: 35 },
+        { subject: "Electromagnetism", topic: "Electrostatics + magnetism + EM induction + circuits", recentMarksAvg: 55, recentMarksMax: 65 },
+        { subject: "Optics + Waves", topic: "Geometrical + wave optics + waves + sound", recentMarksAvg: 30, recentMarksMax: 40 },
+        { subject: "Modern Physics", topic: "Quantum + atomic + nuclear + relativity basics", recentMarksAvg: 35, recentMarksMax: 45 },
+        { subject: "Other", topic: "Experimental physics + error analysis", recentMarksAvg: 21, recentMarksMax: 30 },
+      ],
+      takeaways: [
+        "NSEP problems are 2-3 levels deeper than JEE Advanced. Standard JEE prep covers ~50% of NSEP depth at best.",
+        "Use Irodov + Krotov + Pathfinder for problem practice — JEE-only resources are insufficient.",
+        "Part B (subjective) is where the candidates differentiate — Part A (objective) is qualifying but doesn't separate the top.",
+      ],
+      source: "https://olympiads.hbcse.tifr.res.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── NSEC — National Standard Examination in Chemistry ──────────
+  {
+    examCode: "NSEC",
+    oneLiner:
+      "HBCSE Stage-1 Chemistry olympiad — leads to INChO and Indian team selection for the International Chemistry Olympiad (IChO).",
+    eligibility: {
+      ageNotes: "Class 12 or below (born on or after a notification-specified date).",
+      education: "Currently studying in Class 11 or Class 12 in a recognised Indian school.",
+      attempts: "One attempt per cycle.",
+      nationality: "Indian citizen, OCI, or studying in Indian schools.",
+      source: "https://olympiads.hbcse.tifr.res.in/",
+      verifiedAt: "2026-05",
+    },
+    paperAnalysis: {
+      title: "NSEC paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 240,
+      topics: [
+        { subject: "Physical Chemistry", topic: "Thermo + equilibrium + kinetics + electrochem + atomic structure", recentMarksAvg: 80, recentMarksMax: 96 },
+        { subject: "Organic Chemistry", topic: "Reaction mechanisms + stereochemistry + biomolecules + named reactions", recentMarksAvg: 80, recentMarksMax: 96 },
+        { subject: "Inorganic Chemistry", topic: "Coordination + p-block + d-block + metallurgy + qualitative analysis", recentMarksAvg: 80, recentMarksMax: 96 },
+      ],
+      takeaways: [
+        "NSEC is harder than JEE Advanced Chemistry. Coverage extends to undergrad-level material (e.g., MO theory, advanced organic mechanisms).",
+        "Use 'University Chemistry' textbooks (Atkins, Clayden, Morrison & Boyd) alongside JEE-level books.",
+        "INChO Stage 2 is descriptive — develops problem-solving stamina, not just knowledge breadth.",
+      ],
+      source: "https://olympiads.hbcse.tifr.res.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── NSEB — National Standard Examination in Biology ────────────
+  {
+    examCode: "NSEB",
+    oneLiner:
+      "HBCSE Stage-1 Biology olympiad — Stage 2 is INBO, leading to IBO (International Biology Olympiad) team selection.",
+    eligibility: {
+      ageNotes: "Class 12 or below (born on or after a notification-specified date).",
+      education: "Currently studying in Class 11 or Class 12 in a recognised Indian school.",
+      attempts: "One attempt per cycle.",
+      nationality: "Indian citizen, OCI, or studying in Indian schools.",
+      source: "https://olympiads.hbcse.tifr.res.in/",
+      verifiedAt: "2026-05",
+    },
+    paperAnalysis: {
+      title: "NSEB paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 240,
+      topics: [
+        { subject: "Cell + Molecular Biology", topic: "Cell structure + biomolecules + genetics + biotech", recentMarksAvg: 50, recentMarksMax: 60 },
+        { subject: "Plant Biology", topic: "Anatomy + physiology + ecology + evolution", recentMarksAvg: 50, recentMarksMax: 60 },
+        { subject: "Animal Biology", topic: "Anatomy + physiology + human systems + reproduction", recentMarksAvg: 60, recentMarksMax: 70 },
+        { subject: "Ecology + Behaviour + Evolution", topic: "Population + community + behaviour + Darwinian evolution", recentMarksAvg: 40, recentMarksMax: 50 },
+        { subject: "Biosystematics + Practicals", topic: "Taxonomy + classification + applied biology", recentMarksAvg: 40, recentMarksMax: 50 },
+      ],
+      takeaways: [
+        "NSEB material extends far beyond NCERT — Campbell Biology + Vander's Physiology + Plant Physiology by Taiz & Zeiger are the standard references.",
+        "Olympiad biology rewards depth, not just NEET-style breadth. Specifically prepare experimental + analytical questions.",
+        "The IBO international round includes practical exams — Stage 3+ candidates should practise dissections and lab techniques.",
+      ],
+      source: "https://olympiads.hbcse.tifr.res.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── NSEA — National Standard Examination in Astronomy ──────────
+  {
+    examCode: "NSEA",
+    oneLiner:
+      "HBCSE Stage-1 Astronomy olympiad — Stage 2 is InAO (Junior + Senior), Stage 3 is OCSC, leading to IOAA / IAO / IESO Indian team selection.",
+    eligibility: {
+      ageNotes: "Class 12 or below for senior; Class 10 or below for junior.",
+      education: "Currently studying in Class 8-12 in a recognised Indian school.",
+      attempts: "One attempt per cycle.",
+      nationality: "Indian citizen, OCI, or studying in Indian schools.",
+      source: "https://olympiads.hbcse.tifr.res.in/",
+      verifiedAt: "2026-05",
+    },
+    paperAnalysis: {
+      title: "NSEA paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 216,
+      topics: [
+        { subject: "Mechanics", topic: "Kinematics + dynamics + rotation + gravitation", recentMarksAvg: 50, recentMarksMax: 60 },
+        { subject: "Astronomy basics", topic: "Celestial coordinate systems + Kepler's laws + astrometry", recentMarksAvg: 60, recentMarksMax: 72 },
+        { subject: "Electromagnetism + Modern Physics", topic: "Stellar physics + spectra + cosmology basics", recentMarksAvg: 50, recentMarksMax: 60 },
+        { subject: "Mathematical Methods", topic: "Trigonometry + vectors + calculus applications", recentMarksAvg: 30, recentMarksMax: 40 },
+        { subject: "Other", topic: "Observational astronomy + spherical trigonometry", recentMarksAvg: 26, recentMarksMax: 36 },
+      ],
+      takeaways: [
+        "NSEA is uniquely Indian — most candidates have never studied astronomy formally. Self-study via 'Astronomy: Principles and Practice' is the standard route.",
+        "Physics olympiad-level skills carry over; astronomy-specific knowledge (coordinate systems, ephemerides) needs separate prep.",
+        "HBCSE astronomy camp graduates often go on to ISRO / TIFR research careers.",
+      ],
+      source: "https://olympiads.hbcse.tifr.res.in/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── ISI Admission Test (B.Stat / B.Math) ───────────────────────
+  {
+    examCode: "ISI_BSTAT",
+    oneLiner:
+      "Indian Statistical Institute admission test for B.Stat (Hons) at Kolkata and B.Math (Hons) at Bangalore — among the most rigorous undergraduate math entrances in India.",
+    eligibility: {
+      ageNotes: "No formal upper age limit. Class 12 students at the time of admission.",
+      education: "Class 12 with Mathematics + English as core subjects.",
+      educationDetails: [
+        "Candidates appearing in Class 12 in the same year can apply.",
+        "Final selection considers BOTH the written test (Multiple Choice + Subjective) AND an interview round.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, NRI, foreign nationals (limited seats).",
+      source: "https://www.isical.ac.in/~admission/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Selection — approximate (final round of B.Stat / B.Math, 2024)",
+        rows: [
+          { year: 2024, category: "B.Stat Kolkata", cutoff: "~40-50 students admitted from ~12,000 applicants" },
+          { year: 2024, category: "B.Math Bangalore", cutoff: "~30-40 students admitted from ~8,000 applicants" },
+        ],
+        notes:
+          "ISI does NOT publish numerical cutoffs. Selection is based on holistic evaluation of the written + interview. Conversion rate ~0.4% (1 in 250).",
+        source: "https://www.isical.ac.in/~admission/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "ISI B.Stat / B.Math paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 188,
+      topics: [
+        { subject: "Objective MCQ (30 Qs / 120 marks)", topic: "Class 12 calculus + algebra + geometry — JEE Adv level", recentMarksAvg: 80, recentMarksMax: 96 },
+        { subject: "Objective MCQ", topic: "Number theory + combinatorics + abstract reasoning", recentMarksAvg: 40, recentMarksMax: 48 },
+        { subject: "Subjective (8 Qs / 68 marks)", topic: "Calculus proofs + algebra + number theory + combinatorics + olympiad-style problem solving", recentMarksAvg: 50, recentMarksMax: 68 },
+      ],
+      takeaways: [
+        "ISI is the closest UG math entrance to the IMO style — proof-heavy, deeply conceptual, no shortcut formulas.",
+        "Standard JEE prep covers ~30% of ISI depth. Add olympiad-style problem solving (Pranesachar, Engel) and Spivak's Calculus.",
+        "Interview is conducted by ISI faculty — they probe foundational understanding, not memorised theorems.",
+      ],
+      source: "https://www.isical.ac.in/~admission/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── CMI Admission Test ─────────────────────────────────────────
+  {
+    examCode: "CMI_ADMISSION",
+    oneLiner:
+      "Chennai Mathematical Institute entrance for B.Sc (Hons) in Mathematics + CS, Physics, and Data Science. JEE Advanced top rankers can also apply via JEE route.",
+    eligibility: {
+      ageNotes: "No upper age limit.",
+      education: "Class 12 with Mathematics + Science as core subjects.",
+      educationDetails: [
+        "B.Sc in Mathematics + CS: Class 12 with Math.",
+        "B.Sc Physics: Class 12 PCM.",
+        "JEE Advanced top 1,000 rankers (CSE branches) can apply directly without writing the CMI test.",
+      ],
+      attempts: "No formal attempt limit.",
+      nationality: "Indian citizen, OCI, foreign nationals.",
+      source: "https://www.cmi.ac.in/admissions/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "B.Sc admission (2024)",
+        rows: [
+          { year: 2024, category: "B.Sc Math + CS", cutoff: "~50-60 admitted from ~3,500 applicants" },
+          { year: 2024, category: "B.Sc Physics", cutoff: "~20-30 admitted" },
+          { year: 2024, category: "B.Sc Data Science", cutoff: "~30-40 admitted" },
+        ],
+        notes: "CMI doesn't publish numeric cutoffs. Selection ~1.5% conversion rate.",
+        source: "https://www.cmi.ac.in/admissions/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    paperAnalysis: {
+      title: "CMI Admission Test paper structure",
+      yearsAnalyzed: "2022-2024",
+      totalMarks: 140,
+      topics: [
+        { subject: "Part A (Objective, 5 MCQ × 4 = 20 marks)", topic: "Multiple-correct logic / math riddles", recentMarksAvg: 16, recentMarksMax: 20 },
+        { subject: "Part B (Short answer, 10 Qs × 4 = 40 marks)", topic: "Calculus + Algebra + Discrete Math + Combinatorics", recentMarksAvg: 30, recentMarksMax: 40 },
+        { subject: "Part C (Long answer, 5 Qs × 16 = 80 marks)", topic: "Proof-style problems, multi-step solutions", recentMarksAvg: 50, recentMarksMax: 80 },
+      ],
+      takeaways: [
+        "CMI is proof-heavy like ISI but with a different flavour — more emphasis on combinatorial / discrete reasoning, less on continuous math.",
+        "Past papers (last 10 years available on cmi.ac.in) are the single best prep resource.",
+        "JEE Advanced top-1000 path is a back-door for math + CS — but the direct CMI route is open to non-JEE-Advanced candidates with strong Math.",
+      ],
+      source: "https://www.cmi.ac.in/admissions/",
+      verifiedAt: "2026-05",
+    },
+  },
+
+  // ─── HP HPAS — Himachal Pradesh Administrative Service ──────────
+  {
+    examCode: "HP_HPAS",
+    oneLiner:
+      "Himachal Pradesh Public Service Commission Combined Competitive Examination — HPAS (state administrative), HPPS (police), HPFS (forest) and 15+ Class A/B posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 35,
+      ageNotes: "21-35 for General. OBC +3, SC/ST +5, PwBD +10. Reference date is 1 January of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Hindi proficiency required for state-specific posts.",
+        "HP-domicile preferred for reservation benefits; open-merit posts open to all.",
+      ],
+      source: "https://www.hppsc.hp.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~125 – 135" },
+          { year: 2023, category: "OBC", cutoff: "~118 – 128" },
+          { year: 2023, category: "SC", cutoff: "~105 – 115" },
+          { year: 2023, category: "ST", cutoff: "~95 – 108" },
+        ],
+        source: "https://www.hppsc.hp.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "HPAS (entry — SDM / SDM-equivalent)",
+        payLevel: "Pay Level 10 (HP)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000 (Shimla, after probation)",
+        source: "https://www.hppsc.hp.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── JPSC CCE — Jharkhand PSC ───────────────────────────────────
+  {
+    examCode: "JH_JPSC_CCE",
+    oneLiner:
+      "Jharkhand PSC Combined Competitive Examination — Deputy Collector, DySP, BDO and other Class A/B services in Jharkhand.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 35,
+      ageNotes:
+        "21-35 for General. OBC +3, SC/ST +5, PwBD +10. Women candidates often get extended relaxation (varies by cycle).",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: [
+        "Hindi proficiency for Mains; Jharkhand-domicile preferred for state-specific quotas.",
+      ],
+      source: "https://jpsc.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~115 – 125" },
+          { year: 2023, category: "OBC", cutoff: "~108 – 118" },
+          { year: 2023, category: "SC", cutoff: "~95 – 108" },
+          { year: 2023, category: "ST", cutoff: "~85 – 100" },
+        ],
+        source: "https://jpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Deputy Collector / DySP (JPSC)",
+        payLevel: "Pay Level 9 (Jharkhand)",
+        basicPay: "₹53,100",
+        grossPayApprox: "₹78,000 – ₹90,000 (Ranchi, after probation)",
+        source: "https://jpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── JKPSC KAS — Jammu & Kashmir Administrative Service ─────────
+  {
+    examCode: "JK_JKPSC_KAS",
+    oneLiner:
+      "J&K PSC Combined Competitive Services Examination (KAS) — entry to J&K Civil Services and other Class A/B posts in the union territory.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 35,
+      ageNotes:
+        "21-35 for General. RBA/ALC/OSC: +3, SC/ST/JK-Pahari: +5. Reference date is 1 January of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen, J&K-domicile preferred.",
+      specialConstraints: [
+        "Urdu language paper compulsory at Mains (qualifying).",
+      ],
+      source: "https://jkpsc.nic.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2023, category: "General (Open Merit)", cutoff: "~120 – 130" },
+          { year: 2023, category: "RBA / ALC / OSC", cutoff: "~108 – 118" },
+          { year: 2023, category: "SC", cutoff: "~98 – 108" },
+          { year: 2023, category: "ST", cutoff: "~85 – 95" },
+        ],
+        source: "https://jkpsc.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "KAS Probationer / Deputy Magistrate (entry)",
+        payLevel: "Pay Level 10 (J&K)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹95,000 (Srinagar/Jammu, after probation)",
+        source: "https://jkpsc.nic.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── OPSC OAS — Odisha PSC Civil Services ───────────────────────
+  {
+    examCode: "OD_OPSC_OAS",
+    oneLiner:
+      "Odisha PSC Civil Services Examination — Odisha Administrative Service (OAS), Odisha Police Service (OPS), Odisha Finance Service and other state-cadre posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 38,
+      ageNotes: "21-38 for General. OBC/SC/ST/SEBC +5, PwBD +10. Reference date is 1 January of the exam year.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: ["Odia language paper compulsory at Mains (qualifying)."],
+      source: "https://opsc.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "400 marks (Paper 1 + Paper 2)",
+        rows: [
+          { year: 2023, category: "General (UR)", cutoff: "~210 – 225" },
+          { year: 2023, category: "SEBC / OBC", cutoff: "~200 – 218" },
+          { year: 2023, category: "SC", cutoff: "~185 – 200" },
+          { year: 2023, category: "ST", cutoff: "~170 – 188" },
+        ],
+        source: "https://opsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "OAS Deputy Collector / OPS DySP (entry)",
+        payLevel: "Pay Level 10 (Odisha ORSP 2017)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹82,000 – ₹92,000 (Bhubaneswar, after probation)",
+        source: "https://opsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── UKPSC PCS — Uttarakhand PCS ────────────────────────────────
+  {
+    examCode: "UK_UKPSC_PCS",
+    oneLiner:
+      "Uttarakhand PSC Combined State Civil / Upper Subordinate Services Examination — UKPSC Deputy Collector, DySP, Treasury Officer and other Class A/B posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 42,
+      ageNotes: "21-42 for General (notably higher upper bound). OBC +3, SC/ST +5, PwBD +15.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: ["Hindi proficiency required for Mains."],
+      source: "https://psc.uk.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "300 marks",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~165 – 180" },
+          { year: 2023, category: "OBC", cutoff: "~158 – 172" },
+          { year: 2023, category: "SC", cutoff: "~145 – 160" },
+          { year: 2023, category: "ST", cutoff: "~135 – 150" },
+        ],
+        source: "https://psc.uk.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "UKPCS Deputy Collector / DySP (entry)",
+        payLevel: "Pay Level 10 (Uttarakhand)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹82,000 – ₹92,000 (Dehradun, after probation)",
+        source: "https://psc.uk.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── HCS — Haryana Civil Services ───────────────────────────────
+  {
+    examCode: "HR_HCS",
+    oneLiner:
+      "Haryana Civil Services Combined Competitive Examination — Haryana Civil Service (Executive), Haryana Police Service (HPS) and 15+ allied Class I/II posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 42,
+      ageNotes:
+        "21-42 for General. OBC: +3, SC/ST/BC-A/BC-B: +5, Ex-servicemen Haryana: as per state rules.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: ["Hindi + Sanskrit/Punjabi proficiency required at Mains for specific posts."],
+      source: "https://hpsc.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "100 marks",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~60 – 68" },
+          { year: 2023, category: "BC-A / BC-B / OBC", cutoff: "~55 – 64" },
+          { year: 2023, category: "SC", cutoff: "~48 – 56" },
+          { year: 2023, category: "ST", cutoff: "~40 – 48" },
+        ],
+        source: "https://hpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "HCS — Deputy Collector / DySP / SDM (entry)",
+        payLevel: "Pay Level 11 (Haryana)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹85,000 – ₹98,000 (Chandigarh, after probation)",
+        source: "https://hpsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── CGPSC SSE — Chhattisgarh State Service Exam ────────────────
+  {
+    examCode: "CG_CGPSC_SSE",
+    oneLiner:
+      "Chhattisgarh PSC State Service Examination — Deputy Collector, DySP, Naib Tahsildar, Block Development Officer and 25+ state Class A/B posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 40,
+      ageNotes:
+        "21-40 for General (Chhattisgarh domicile: +5 for state-specific posts). OBC +3, SC/ST/PwBD as per CG rules.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: ["Hindi proficiency required for Mains; CG-domicile preferred for state-specific posts."],
+      source: "https://psc.cg.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "400 marks (Paper 1 + Paper 2)",
+        rows: [
+          { year: 2023, category: "General (UR)", cutoff: "~210 – 225" },
+          { year: 2023, category: "OBC", cutoff: "~200 – 215" },
+          { year: 2023, category: "SC", cutoff: "~185 – 200" },
+          { year: 2023, category: "ST", cutoff: "~170 – 188" },
+        ],
+        source: "https://psc.cg.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "Deputy Collector / DySP (CGPSC SSE)",
+        payLevel: "Pay Level 12 (Chhattisgarh)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹82,000 – ₹92,000 (Raipur, after probation)",
+        source: "https://psc.cg.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
+
+  // ─── Punjab PCS ─────────────────────────────────────────────────
+  {
+    examCode: "PB_PCS",
+    oneLiner:
+      "Punjab PSC Combined Competitive Examination — Punjab Civil Service (Executive), Punjab Police Service (DySP), Punjab Treasury Service and other Class A/B posts.",
+    eligibility: {
+      ageMin: 21,
+      ageMax: 37,
+      ageNotes: "21-37 for General. SC/BC/ST: +5, PwBD: +10, Ex-servicemen Punjab: as per state rules.",
+      education: "Bachelor's degree (any discipline) from a recognised university.",
+      attempts: "No formal attempt limit other than the upper age cap.",
+      nationality: "Indian citizen.",
+      specialConstraints: ["Punjabi (in Gurmukhi script) compulsory at Mains for posts in Punjab government departments."],
+      source: "https://ppsc.gov.in/",
+      verifiedAt: "2026-05",
+    },
+    cutoffs: [
+      {
+        title: "Prelims cutoff (qualifying for Mains)",
+        outOf: "200 marks",
+        rows: [
+          { year: 2023, category: "General", cutoff: "~118 – 128" },
+          { year: 2023, category: "BC / OBC", cutoff: "~112 – 122" },
+          { year: 2023, category: "SC", cutoff: "~100 – 110" },
+          { year: 2023, category: "ST", cutoff: "~88 – 100" },
+        ],
+        source: "https://ppsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+    salaryBands: [
+      {
+        postName: "PCS (Exe) — SDM / DySP / Naib Tahsildar (entry)",
+        payLevel: "Pay Level 9 (Punjab)",
+        basicPay: "₹56,100",
+        grossPayApprox: "₹82,000 – ₹95,000 (Chandigarh/SAS Nagar, after probation)",
+        source: "https://ppsc.gov.in/",
+        verifiedAt: "2026-05",
+      },
+    ],
+  },
 ];
 
 export function findDeepContent(examCode: string): ExamDeepContent | undefined {
