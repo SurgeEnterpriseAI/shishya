@@ -20,6 +20,7 @@ import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { OnboardingWizard } from "./OnboardingWizard";
+import { findPersona } from "@/data/personas";
 
 export const metadata: Metadata = {
   title: "Welcome to Shishya — 30-second setup",
@@ -31,12 +32,16 @@ interface UserRow { onbCompletedAt: Date | null }
 
 export default async function OnboardingPage({
   searchParams,
-}: { searchParams: Promise<{ rerun?: string }> }) {
+}: { searchParams: Promise<{ rerun?: string; p?: string }> }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/onboarding");
 
   const sp = await searchParams;
   const rerun = sp.rerun === "1";
+  // ?p=<persona-slug> arrives when the user clicked a persona tile on
+  // the homepage or a /for/[persona] CTA. Lets us pre-fill the wizard
+  // and offer a 1-click confirm path.
+  const persona = sp.p ? findPersona(sp.p) : undefined;
 
   // If already completed AND this isn't an explicit rerun, send them
   // home. Re-running is opt-in via /me/settings.
@@ -56,6 +61,16 @@ export default async function OnboardingPage({
     LIMIT 100
   `;
 
+  const prefill = persona
+    ? {
+        slug: persona.slug,
+        label: persona.label,
+        pageTitle: persona.pageTitle,
+        stage: persona.stage,
+        prepCodes: persona.examCodes,
+      }
+    : null;
+
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <Header />
@@ -66,13 +81,25 @@ export default async function OnboardingPage({
         <h1 className="mt-2 text-3xl font-bold text-ink-900">
           Welcome to Shishya 👋
         </h1>
-        <p className="mt-2 max-w-2xl text-sm text-ink-700">
-          Three quick questions so we can show you the right content. Takes
-          about 30 seconds. You can skip and pick later from{" "}
-          <Link href="/me/settings" className="text-saffron-700 underline">profile settings</Link>.
-        </p>
+        {prefill ? (
+          <p className="mt-2 max-w-2xl text-sm text-ink-700">
+            Looks like you came in as a{" "}
+            <strong>{prefill.label.replace(/^I'm\s+/, "")}</strong>. We&apos;ve
+            pre-pinned the exams that matter for you — review and confirm
+            below (takes 5 seconds), or customise anything you want.
+          </p>
+        ) : (
+          <p className="mt-2 max-w-2xl text-sm text-ink-700">
+            Three quick questions so we can show you the right content. Takes
+            about 30 seconds. You can skip and pick later from{" "}
+            <Link href="/me/settings" className="text-saffron-700 underline">
+              profile settings
+            </Link>
+            .
+          </p>
+        )}
 
-        <OnboardingWizard exams={exams} />
+        <OnboardingWizard exams={exams} prefill={prefill} />
       </section>
     </main>
   );

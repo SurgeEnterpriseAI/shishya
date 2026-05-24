@@ -21,6 +21,7 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { LiveCountersStrip } from "@/components/LiveCounters";
 import { ExamSearchBox } from "@/app/exams/browse/ExamSearchBox";
+import { PersonaGridTracker } from "./PersonaGridTracker";
 import { prisma } from "@/lib/db/prisma";
 import { unstable_cache } from "next/cache";
 import { PERSONAS } from "@/data/personas";
@@ -110,7 +111,12 @@ export default async function HomeHub() {
 
         {/* Persona picker — the primary navigation surface. Replaces
             the older "top 8 most-written exams" tile rail because that
-            still dumped a wall of unrelated exams on every visitor. */}
+            still dumped a wall of unrelated exams on every visitor.
+            PersonaGridTracker is an invisible client-side analytics
+            beacon that fires a persona_tile_click event before the
+            navigation; lets us measure tile CTR per persona without
+            converting the server-rendered grid into a client component. */}
+        <PersonaGridTracker />
         <ul className="mx-auto mt-10 grid max-w-5xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {PERSONAS.map((p) => (
             <li key={p.slug}>

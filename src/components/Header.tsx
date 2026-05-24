@@ -56,15 +56,19 @@ export function Header({ admin = false }: { admin?: boolean }) {
           <BackLink />
         </div>
 
-        {/* Middle: single "Browse exams" CTA. Hidden on admin pages. */}
+        {/* Middle: subtle "All exams" text link. The persona-first
+            homepage is the primary discovery surface; /exams is the
+            "I already know what I want" fallback. We deliberately
+            keep this de-emphasised (text + medium weight + no
+            background) so the prominent CTA on the homepage is the
+            persona picker itself, not this header link. */}
         {!admin && (
-          <nav className="ml-2 flex flex-1 justify-center sm:ml-6" aria-label="Primary">
+          <nav className="ml-2 hidden flex-1 justify-center text-sm sm:flex sm:ml-6" aria-label="Primary">
             <Link
               href="/exams"
-              className="inline-flex items-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-semibold text-saffron-800 hover:bg-saffron-50/70"
+              className="inline-flex items-center whitespace-nowrap rounded-md px-2 py-1 font-medium text-ink-600 hover:text-saffron-800"
             >
-              <span className="hidden sm:inline">Browse exams</span>
-              <span className="sm:hidden">Exams</span>
+              All exams
             </Link>
           </nav>
         )}

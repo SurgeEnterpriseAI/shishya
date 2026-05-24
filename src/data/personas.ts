@@ -31,8 +31,13 @@ export interface Persona {
   /** Numeric badge for the homepage card (no emoji — keeps the
    *  visual tight and matches the rest of the site's styling). */
   badge: string;
+  /** Onboarding stage this persona maps to (User.onbStage). Drives the
+   *  1-click onboarding flow when a new user signs up from a persona
+   *  tile — we pre-set this stage instead of asking again. */
+  stage: "CLASS_9_10" | "CLASS_11_12" | "UG" | "PG" | "WORKING" | "OTHER";
   /** Exam codes (must exist in DB) — rendered as rich cards on the
-   *  landing page. Order matters — first is most relevant. */
+   *  landing page. Order matters — first is most relevant. Also
+   *  pre-fills User.onbPrepCodes during persona-aware onboarding. */
   examCodes: string[];
   /** Insight article slugs — rendered below the exam cards. */
   articleSlugs: string[];
@@ -51,6 +56,7 @@ export const PERSONAS: Persona[] = [
     description:
       "Class 10 is the year you'll be told to 'just focus on boards' — and you should, but only as much as you actually need. The bigger decision is what stream you pick for Class 11. Engineering? Medicine? Commerce? Humanities? The stream choice eliminates entire entrance-exam pathways. We make the trade-offs visible.",
     badge: "1",
+    stage: "CLASS_9_10",
     examCodes: ["IOQM", "NSTSE", "SOF_NSO", "SOF_IMO"],
     articleSlugs: [
       "why-tier-3-engineering-isnt-end",
@@ -74,6 +80,7 @@ export const PERSONAS: Persona[] = [
     description:
       "You're prepping for engineering. The realistic ladder is JEE Main → JoSAA counselling for NITs/IIITs/GFTIs, plus JEE Advanced for IITs. State CETs (KCET, MHT CET, WBJEE, KEAM, AP/TS EAMCET) are not 'backups' — they're legitimate parallel paths. Most aspirants over-index on JEE and under-prep state CETs; the marginal effort to write both is small.",
     badge: "2",
+    stage: "CLASS_11_12",
     examCodes: ["JEE_MAIN", "JEE_ADVANCED", "MH_MHTCET", "KA_KCET", "WB_WBJEE"],
     articleSlugs: [
       "jee-main-january-vs-april-strategy",
@@ -98,6 +105,7 @@ export const PERSONAS: Persona[] = [
     description:
       "NEET UG decides ~1.1 lakh MBBS seats and ~30,000 BDS seats from 24+ lakh candidates. The competition is brutal. Strong Biology + average Physics still wins most seats — but most rank movement comes from improving Physics, not refining Bio. State-quota MBBS seats are often more accessible than All-India seats; check your state quota carefully.",
     badge: "3",
+    stage: "CLASS_11_12",
     examCodes: ["NEET_UG", "AILET", "NEET_PG"],
     articleSlugs: [
       "neet-mbbs-vs-bds-when-to-choose",
@@ -122,6 +130,7 @@ export const PERSONAS: Persona[] = [
     description:
       "Commerce and Humanities students after Class 12 have more options than they're usually told. CUET UG opens 45+ central universities (DU, JNU, BHU, Allahabad, etc.). CLAT opens 24 National Law Universities. CA Foundation starts the chartered accountancy path. IPMAT (IIM Indore, Rohtak, Jammu, Bodh Gaya) opens a 5-year integrated MBA without waiting for graduation.",
     badge: "4",
+    stage: "CLASS_11_12",
     examCodes: ["CUET_UG", "CLAT", "AILET", "CA_FOUNDATION", "CS_FOUNDATION"],
     articleSlugs: [
       "coaching-industry-actual-cost",
@@ -146,6 +155,7 @@ export const PERSONAS: Persona[] = [
     description:
       "If you're a graduate (or final-year), SSC CGL is the most impactful government recruitment exam — Inspectors, ASOs, Auditors with Pay Level 7. SSC CHSL is the Class-12-level alternative. RRB NTPC handles railway recruitment. The realistic timeline from notification to joining is 18-24 months, so plan multiple cycles in parallel.",
     badge: "5",
+    stage: "UG",
     examCodes: ["SSC_CGL", "SSC_CHSL", "SSC_MTS", "RRB_NTPC", "SSC_GD"],
     articleSlugs: [
       "ssc-cgl-vs-chsl-salary-and-career",
@@ -170,6 +180,7 @@ export const PERSONAS: Persona[] = [
     description:
       "Banking offers a stable, well-paying government-sector career without the political volatility of state services. SBI PO and IBPS PO are the two main officer-cadre routes; SBI Clerk and IBPS Clerk are clerical-cadre. RBI Grade B is the apex bank role — significantly harder but with the best pay + perks of any banking exam. Most aspirants should write both SBI + IBPS in parallel.",
     badge: "6",
+    stage: "UG",
     examCodes: ["IBPS_PO", "SBI_PO", "IBPS_CLERK", "SBI_CLERK", "RBI_GRADE_B"],
     articleSlugs: [
       "sbi-po-vs-ibps-po-salary-prestige-effort",
@@ -193,6 +204,7 @@ export const PERSONAS: Persona[] = [
     description:
       "UPSC CSE is India's most-celebrated exam — and its hardest (0.1% conversion). State PSCs are not 'consolation prizes' — they offer the same Pay Level 10 entry post (Deputy Collector / DySP) in your home state with 30x higher conversion rates for similarly-prepared candidates. The 'both in parallel' strategy works because the prep overlap is ~70%.",
     badge: "7",
+    stage: "UG",
     examCodes: [
       "UPSC_PRELIMS",
       "UP_UPPSC_PCS",
@@ -222,6 +234,7 @@ export const PERSONAS: Persona[] = [
     description:
       "Post-graduation matters most for fields where the UG degree alone isn't enough for the career you want. CAT → IIM MBA → corporate management. GATE → IIT M.Tech (R&D / academia) OR PSU recruitment (Government Engineer). NEET PG → MD/MS specialisation. CSIR-NET → research lecturer + PhD funding. Your UG stream dictates the realistic next step.",
     badge: "8",
+    stage: "UG",
     examCodes: ["CAT", "GATE_CSE", "NEET_PG", "UGC_NET", "ISI_BSTAT"],
     articleSlugs: [
       "gate-for-iit-mtech-vs-psu-recruitment",

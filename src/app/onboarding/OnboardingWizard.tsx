@@ -9,6 +9,13 @@
 // Each step shows progress at the top, "Back" and "Next" controls at
 // the bottom. The final Submit posts to /api/me/onboarding-profile,
 // then router.push('/') to the personalised homepage.
+//
+// Persona-aware shortcut: when the user lands on /onboarding?p=<slug>
+// (via the homepage persona tiles or a /for/[persona] CTA), the page
+// passes `prefill` with the persona's stage + suggested exam codes.
+// We then render a "These look right — start" 1-click banner at the
+// top of step 1; the user can confirm in one click or fall back to
+// the regular 3-step flow.
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -21,12 +28,29 @@ interface ExamLite {
   category: string;
 }
 
-export function OnboardingWizard({ exams }: { exams: ExamLite[] }) {
+export interface PersonaPrefill {
+  slug: string;
+  label: string;
+  pageTitle: string;
+  stage: string;
+  prepCodes: string[];
+}
+
+export function OnboardingWizard({
+  exams,
+  prefill,
+}: {
+  exams: ExamLite[];
+  prefill?: PersonaPrefill | null;
+}) {
   const router = useRouter();
   const [stepIdx, setStepIdx] = useState(0);
-  const [stage, setStage] = useState<string>("");
+  // Pre-fill stage + prep codes from the persona if provided. State
+  // stays empty so the wizard's Step 2 still asks for it (state is
+  // useful for state-specific exams + scholarships).
+  const [stage, setStage] = useState<string>(prefill?.stage ?? "");
   const [state, setState] = useState<string>("");
-  const [prepCodes, setPrepCodes] = useState<string[]>([]);
+  const [prepCodes, setPrepCodes] = useState<string[]>(prefill?.prepCodes ?? []);
   const [examQuery, setExamQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -116,8 +140,84 @@ export function OnboardingWizard({ exams }: { exams: ExamLite[] }) {
     });
   }
 
+  // 1-click confirm — fires only when a persona prefilled the form.
+  // Writes the persona's stage + prep codes directly and skips the
+  // 3-step flow. Includes a small analytics ping to track which
+  // personas convert here vs in the full wizard. The kind=CTA_CLICKED
+  // is the generic ad-hoc event kind; the actual event subtype lives
+  // in props so we don't need a schema migration to ship persona
+  // analytics.
+  function confirmPersona() {
+    if (!prefill) return;
+    startTransition(async () => {
+      try {
+        await fetch("/api/analytics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            kind: "CTA_CLICKED",
+            path: "/onboarding",
+            props: {
+              event: "persona_onboarding_confirmed",
+              persona: prefill.slug,
+              stage: prefill.stage,
+              prepCodesCount: prefill.prepCodes.length,
+            },
+          }),
+        });
+      } catch {
+        // analytics failures shouldn't block onboarding
+      }
+      const res = await fetch("/api/me/onboarding-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stage: prefill.stage,
+          state: "",
+          prepCodes: prefill.prepCodes,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? `Save failed (${res.status})`);
+        return;
+      }
+      router.push("/dashboard");
+      router.refresh();
+    });
+  }
+
   return (
     <div className="mt-8 rounded-lg border border-ink-200 bg-white p-6 shadow-sm">
+      {/* Persona prefill banner — shown only when /onboarding?p=<slug>
+          delivered a recognised persona. Gives the user a 1-click
+          confirm path so they don't have to walk through the wizard. */}
+      {prefill && (
+        <div className="-mt-2 mb-5 rounded-md border border-saffron-300 bg-saffron-50/60 p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-800">
+            Pre-pinned for {prefill.label.replace(/^I'm\s+/, "")}
+          </p>
+          <p className="mt-1 text-sm text-ink-800">
+            Stage <strong>{stage || prefill.stage}</strong> · {prefill.prepCodes.length}{" "}
+            exams pinned. State picker stays in step 2 so we can show
+            state-specific exams + scholarships.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={confirmPersona}
+              disabled={pending}
+              className="btn-primary !py-2 !px-4 text-xs disabled:opacity-60"
+            >
+              {pending ? "Saving…" : "Looks right — start"}
+            </button>
+            <span className="text-[11px] text-ink-500">
+              or scroll through and customise below
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Progress */}
       <div className="flex items-center gap-2">
         {[0, 1, 2].map((i) => (
