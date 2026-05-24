@@ -4,16 +4,19 @@
 // FAB on smaller screens. Pure server-side data (no polling — exam
 // dates change at most once per day via the refresh-exam-data cron).
 //
-// PHASE CHIPS — for any event within ±3 days of today we surface a
-// small action link under the date row that takes the visitor to the
-// right phase article:
-//   T+1 to T+7   → "📋 Checklist"   (last-minute revision)
-//   T+0          → "🔴 Live"        (exam-day shift-by-shift)
-//   T-1 to T-3   → "📊 Reactions"   (post-exam student verdict)
-// (T counted in days; -3 means 3 days AFTER the exam date i.e. the
-// exam has passed.) Events outside this window get no chip.
+// PHASE CHIPS — for any event close to the exam date we surface a
+// small action link under the date row that takes the visitor to
+// the right phase article (📋 Checklist / 🔴 Live / 📊 Reactions).
+//
+// Phase resolution is delegated to src/lib/exam-phase.ts so the
+// sidebar UI and the refresh-phase-articles cron agree on which
+// window an exam is in. Both use IST-aware calendar-day math —
+// "exam over" flips Live → Reactions at 18:00 IST on exam day,
+// not at midnight UTC.
 
 import Link from "next/link";
+import { resolvePhase, PHASE_SLUG } from "@/lib/exam-phase";
+import type { ExamPhase } from "@prisma/client";
 
 export interface UpcomingEvent {
   id: string;
@@ -24,39 +27,27 @@ export interface UpcomingEvent {
   isExamDay: boolean;
 }
 
-type Phase = "CHECKLIST" | "LIVE" | "REACTIONS";
-
 interface PhaseChip {
-  phase: Phase;
+  phase: ExamPhase;
   slug: "checklist" | "live" | "reactions";
   label: string;
   color: string;
 }
 
-/**
- * Returns a PhaseChip if this event is close enough to the exam date
- * that one of the phase articles is relevant. Returns null otherwise.
- *
- * We only surface the chip on events flagged `isExamDay: true` so we
- * don't double-up on intermediate dates (e.g. "Application opens" 30
- * days before doesn't deserve a "Live" chip just because it's nearby).
- */
-function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
-  if (!event.isExamDay) return null;
-  const now = Date.now();
-  const examDay = new Date(event.date).getTime();
-  const daysFromExam = (examDay - now) / 86_400_000; // negative = past
+const PHASE_CHIP_META: Record<ExamPhase, { label: string; color: string }> = {
+  CHECKLIST: { label: "📋 Checklist", color: "bg-amber-100 text-amber-900" },
+  LIVE:      { label: "🔴 Live",      color: "bg-rose-100 text-rose-900" },
+  REACTIONS: { label: "📊 Reactions", color: "bg-sky-100 text-sky-900" },
+};
 
-  if (daysFromExam >= -0.5 && daysFromExam < 1) {
-    return { phase: "LIVE", slug: "live", label: "🔴 Live", color: "bg-rose-100 text-rose-900" };
-  }
-  if (daysFromExam >= 1 && daysFromExam <= 7) {
-    return { phase: "CHECKLIST", slug: "checklist", label: "📋 Checklist", color: "bg-amber-100 text-amber-900" };
-  }
-  if (daysFromExam < -0.5 && daysFromExam >= -3.5) {
-    return { phase: "REACTIONS", slug: "reactions", label: "📊 Reactions", color: "bg-sky-100 text-sky-900" };
-  }
-  return null;
+function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
+  // Only flag actual exam-day rows. "Application opens" etc. shouldn't
+  // get phase chips even if they fall close to today's date.
+  if (!event.isExamDay) return null;
+  const phase = resolvePhase(new Date(event.date));
+  if (!phase) return null;
+  const meta = PHASE_CHIP_META[phase];
+  return { phase, slug: PHASE_SLUG[phase], label: meta.label, color: meta.color };
 }
 
 export function UpcomingExamsSidebar({ events }: { events: UpcomingEvent[] }) {

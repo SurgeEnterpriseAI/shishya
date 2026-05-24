@@ -15,6 +15,7 @@ import { fetchRss } from "@/lib/scrape/rss";
 import type { ScrapedSnippet } from "@/lib/scrape/types";
 import { getSourcesFor } from "@/data/exam-sources";
 import { summarisePhase } from "@/lib/ai/phase-summariser";
+import { resolvePhase } from "@/lib/exam-phase";
 import type { ExamPhase } from "@prisma/client";
 
 export interface RefreshOptions {
@@ -34,28 +35,19 @@ export interface RefreshReport {
   claudeCalls: number;
 }
 
-/** Map daysFromExam to the right phase, or null if outside any window. */
-function phaseForOffset(daysFromExam: number): ExamPhase | null {
-  // Note: positive daysFromExam = exam still in the future, negative = past.
-  if (daysFromExam >= -0.5 && daysFromExam < 1) return "LIVE";
-  if (daysFromExam >= 1 && daysFromExam <= 7) return "CHECKLIST";
-  if (daysFromExam < -0.5 && daysFromExam >= -3.5) return "REACTIONS";
-  return null;
-}
-
 interface Candidate {
   examId: string;
   examCode: string;
   examShort: string;
   examName: string;
   phase: ExamPhase;
-  daysFromExam: number;
 }
 
 async function findCandidates(examCodeOverride?: string): Promise<Candidate[]> {
   // Pull all upcoming/recent exam-day rows; we filter to ±7 days in
   // SQL to bound the result set on busy weeks (CET season has 30+ a
-  // week). Then narrow to a phase window in JS.
+  // week). Then narrow to a phase window in JS using the shared
+  // IST-aware resolvePhase().
   const now = new Date();
   const from = new Date(now.getTime() - 4 * 86_400_000); // 4 days past
   const to = new Date(now.getTime() + 8 * 86_400_000); // 8 days future
@@ -71,8 +63,7 @@ async function findCandidates(examCodeOverride?: string): Promise<Candidate[]> {
   const seen = new Set<string>(); // dedupe (examId, phase) across multiple shifts
   const out: Candidate[] = [];
   for (const r of rows) {
-    const daysFromExam = (r.date.getTime() - now.getTime()) / 86_400_000;
-    const phase = phaseForOffset(daysFromExam);
+    const phase = resolvePhase(r.date, now);
     if (!phase) continue;
     const key = `${r.exam.id}:${phase}`;
     if (seen.has(key)) continue;
@@ -83,7 +74,6 @@ async function findCandidates(examCodeOverride?: string): Promise<Candidate[]> {
       examShort: r.exam.shortName,
       examName: r.exam.name,
       phase,
-      daysFromExam,
     });
   }
   return out;
