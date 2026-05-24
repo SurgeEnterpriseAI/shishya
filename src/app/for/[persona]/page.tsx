@@ -16,6 +16,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { LiveCountersStrip } from "@/components/LiveCounters";
+import { PersonaViewBeacon } from "./PersonaViewBeacon";
 import { PERSONAS, findPersona } from "@/data/personas";
 import { findArticle } from "@/data/insights-articles";
 import { prisma } from "@/lib/db/prisma";
@@ -138,6 +139,11 @@ export default async function PersonaPage({
         }}
       />
 
+      {/* Persona landing analytics — fires once on mount via fetch
+          to /api/analytics. Client island so the page itself stays
+          statically renderable. */}
+      <PersonaViewBeacon personaSlug={persona.slug} />
+
       <section className="container-prose pt-10 pb-16 sm:pt-14">
         {/* Breadcrumb */}
         <p className="text-xs text-ink-500">
@@ -255,10 +261,10 @@ export default async function PersonaPage({
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="/login?callbackUrl=/onboarding"
+              href={`/login?callbackUrl=${encodeURIComponent(`/onboarding?p=${persona.slug}`)}`}
               className="btn-primary inline-block !py-2 !px-5 text-sm"
             >
-              Sign up to start →
+              Sign up — auto-pin these exams →
             </Link>
             <Link
               href="/exams"

@@ -72,10 +72,10 @@ export const dict = {
     "nav.whyFree": "Why free",
     "nav.tutor": "Ask Shishya →",
 
-    // ── new search-first landing
-    "land.title": "What exam do you want to crack today?",
+    // ── /exams browse / search landing
+    "land.title": "All exams — search or pick a category",
     "land.title.accent": "",
-    "land.subtitle": "163 entrance exams across India are now on Shishya — national, state-level, olympiads, civil services, banking, teaching, defence — ready for you to prepare and crack. Make Shishya your smart system: it listens to you and handholds you to better ranks, better colleges, and a better career.",
+    "land.subtitle": "Browse the full catalogue if you already know what you're preparing for. Not sure? The persona picker on the homepage suggests 3-5 exams curated to your stage in 1 click.",
     "land.search.placeholder": "Type your exam — e.g. SSC CGL, NEET UG, JEE Main…",
     "land.search.label": "What are you preparing for?",
     "land.no.results": "No exams match. Try another keyword or pick a category above.",
