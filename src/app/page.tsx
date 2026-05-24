@@ -41,6 +41,7 @@ import { computeExamTags } from "@/lib/exam-tags";
 import { DiscussionsSidebar, type ThreadItem } from "@/components/DiscussionsSidebar";
 import { LiveCountersStrip } from "@/components/LiveCounters";
 import { UpcomingExamsSidebar, type UpcomingEvent } from "@/components/UpcomingExamsSidebar";
+import { resolvePhase } from "@/lib/exam-phase";
 import { EXAM_GOALS, findGoal, matchesGoal, type ExamGoal } from "@/data/exam-goals";
 import { INDIAN_STATES } from "@/lib/states";
 import type { ExamTag } from "@/lib/exam-tags";
@@ -174,27 +175,67 @@ const loadInitialThreads = unstable_cache(
 
 async function loadUpcomingEventsRaw(): Promise<UpcomingEvent[]> {
   try {
+    // Window: 3 days past → upcoming. The 3-day reach into the past
+    // is necessary so exams currently in REACTIONS phase (e.g. UPSC
+    // Prelims that ran today, JEE Mains that ran yesterday) stay on
+    // the calendar with their "Reactions →" preview chip. Without
+    // it, the moment an exam ends it falls off the rail entirely.
+    const now = new Date();
+    const from = new Date(now.getTime() - 3.5 * 86_400_000);
     const rows = await prisma.examImportantDate.findMany({
-      where: { date: { gte: new Date() }, exam: { active: true } },
+      where: { date: { gte: from }, exam: { active: true } },
       orderBy: { date: "asc" },
       take: 30,
-      include: { exam: { select: { code: true, shortName: true } } },
+      include: { exam: { select: { id: true, code: true, shortName: true } } },
     });
-    return rows.map((r) => ({
-      id: r.id,
-      examCode: r.exam.code,
-      examShort: r.exam.shortName,
-      date: r.date.toISOString(),
-      label: r.label,
-      isExamDay: r.isExamDay,
-    }));
+
+    // For exam-day rows whose date falls in a phase window, attach
+    // the matching ExamPhaseArticle's summarySnippet so the sidebar
+    // can render the AI-written teaser instead of a bare "Live" pill.
+    // Single batched query covers every event at once.
+    const phaseLookups = rows
+      .filter((r) => r.isExamDay)
+      .map((r) => ({ row: r, phase: resolvePhase(r.date, now) }))
+      .filter((x): x is { row: typeof rows[number]; phase: NonNullable<ReturnType<typeof resolvePhase>> } => x.phase !== null);
+    let snippetsByKey = new Map<string, string>();
+    if (phaseLookups.length > 0) {
+      const examIds = [...new Set(phaseLookups.map((x) => x.row.exam.id))];
+      const articles = await prisma.examPhaseArticle.findMany({
+        where: { examId: { in: examIds } },
+        select: { examId: true, phase: true, summarySnippet: true },
+      });
+      snippetsByKey = new Map(
+        articles
+          .filter((a) => a.summarySnippet)
+          .map((a) => [`${a.examId}:${a.phase}`, a.summarySnippet as string]),
+      );
+    }
+    const snippetForRow = (rowId: string, examId: string, phase: ReturnType<typeof resolvePhase>) => {
+      if (!phase) return null;
+      return snippetsByKey.get(`${examId}:${phase}`) ?? null;
+    };
+
+    return rows.map((r) => {
+      const phase = r.isExamDay ? resolvePhase(r.date, now) : null;
+      return {
+        id: r.id,
+        examCode: r.exam.code,
+        examShort: r.exam.shortName,
+        date: r.date.toISOString(),
+        label: r.label,
+        isExamDay: r.isExamDay,
+        phaseSnippet: snippetForRow(r.id, r.exam.id, phase),
+      };
+    });
   } catch {
     return [];
   }
 }
+// v3 — busts the v2 cache so the new phaseSnippet field starts
+// flowing through. (v2 entries had no snippet attached.)
 const loadUpcomingEvents = unstable_cache(
   loadUpcomingEventsRaw,
-  ["home-upcoming-v2"],
+  ["home-upcoming-v3"],
   { revalidate: 300, tags: ["exam-dates"] },
 );
 

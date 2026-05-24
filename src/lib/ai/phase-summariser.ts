@@ -31,6 +31,12 @@ import type { ScrapedSnippet } from "@/lib/scrape/types";
 
 export interface SummaryResult {
   title: string;
+  /**
+   * 1-2 sentence plain-text teaser shown in the homepage sidebar so
+   * students see the article's value-prop before they click.
+   * ≤ 200 chars. No markdown. Conversational.
+   */
+  summarySnippet: string;
   bodyMarkdown: string;
   sourcesUsed: Array<{
     url: string;
@@ -103,6 +109,11 @@ const SUMMARY_TOOL = {
         description:
           "Article title. Should include the exam shortName + phase descriptor + year for SEO. 60-100 chars.",
       },
+      summarySnippet: {
+        type: "string",
+        description:
+          "1-2 sentence PLAIN-TEXT teaser shown in the homepage sidebar — students see this BEFORE clicking through, so it must hook them. ≤ 200 chars. No markdown, no quote marks. Example for UPSC LIVE: 'Aspirants flagging polity-heavy paper; CSAT easier than 2024. Early cutoff prediction: 88-94 (Gen).' Example for JEE CHECKLIST: '24 hours to go. Tonight: revise formula sheet, inorganic exceptions, conics shortcuts. No new topics. Sleep by 22:30.'",
+      },
       bodyMarkdown: {
         type: "string",
         description: "Full article body in markdown. Follow the per-phase requirements in the system prompt.",
@@ -126,7 +137,7 @@ const SUMMARY_TOOL = {
         description: "URLs cited in the article. Should be a subset of the input snippet URLs.",
       },
     },
-    required: ["title", "bodyMarkdown", "sourcesUsed"],
+    required: ["title", "summarySnippet", "bodyMarkdown", "sourcesUsed"],
   },
 } as const;
 
@@ -188,8 +199,16 @@ ${inputBundle}
     const input = toolUse.input as Partial<SummaryResult>;
     if (!input.title || !input.bodyMarkdown || !Array.isArray(input.sourcesUsed)) return null;
 
+    // Snippet is required by the tool schema but if Claude omits it
+    // (e.g. on a retry path) we fall back to the first non-heading
+    // sentence of the body so the sidebar still has something to show.
+    const snippet =
+      input.summarySnippet?.slice(0, 220).trim() ||
+      firstSentenceFromMarkdown(input.bodyMarkdown);
+
     return {
       title: input.title,
+      summarySnippet: snippet,
       bodyMarkdown: input.bodyMarkdown,
       sourcesUsed: input.sourcesUsed.filter((s) => s && s.url && s.type),
     };
@@ -197,4 +216,41 @@ ${inputBundle}
     console.error("[phase-summariser] Claude call failed:", err);
     return null;
   }
+}
+
+/**
+ * Fallback for when Claude forgets to emit a summarySnippet — grabs
+ * the first paragraph-like sentence from the markdown body, stripped
+ * of markdown formatting and capped at ~200 chars.
+ */
+function firstSentenceFromMarkdown(md: string): string {
+  // Skip headings, bullets, table rows — find a real prose paragraph.
+  const lines = md.split(/\r?\n/);
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (line.startsWith("#")) continue;
+    if (line.startsWith("|") || line.startsWith("- ")) continue;
+    if (line.startsWith(">")) {
+      // Block-quote — strip the marker and use the content.
+      const after = line.replace(/^>\s*/, "");
+      if (after) return clip(after);
+      continue;
+    }
+    // Strip inline markdown then clip to first sentence end.
+    return clip(line);
+  }
+  return "";
+}
+
+function clip(s: string): string {
+  const plain = s
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1")
+    .replace(/\[(.+?)\]\((.+?)\)/g, "$1")
+    .replace(/`(.+?)`/g, "$1");
+  // First sentence boundary or 200 chars, whichever comes first.
+  const cap = plain.slice(0, 220);
+  const m = cap.match(/^(.+?[.!?])(\s|$)/);
+  return (m ? m[1] : cap).trim();
 }

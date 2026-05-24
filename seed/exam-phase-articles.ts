@@ -21,6 +21,8 @@ interface PhaseSeed {
   phase: "CHECKLIST" | "LIVE" | "REACTIONS";
   slug: string;
   title: string;
+  /** 1-2 sentence teaser shown in the homepage sidebar before the click. */
+  summarySnippet: string;
   bodyMarkdown: string;
   sourcesScraped: Array<{
     url: string;
@@ -38,6 +40,8 @@ const SEED: PhaseSeed[] = [
     phase: "LIVE",
     slug: "live",
     title: "UPSC Prelims 2026 — live difficulty & shift analysis",
+    summarySnippet:
+      "Moderate-tough paper. Polity + Environment dominated, current affairs lighter than 2025. Early aspirant cutoff prediction: 88-94 (Gen).",
     bodyMarkdown: `## Quick read
 
 UPSC Civil Services Preliminary Examination 2026 is happening **today (24 May 2026)** in two shifts across India. We're tracking student reactions as they step out — refreshed every two hours.
@@ -92,6 +96,8 @@ _Updated continuously through 24 May 2026._
     phase: "REACTIONS",
     slug: "reactions",
     title: "UPSC Prelims 2026 — student verdict, expected cutoff, answer-key analysis",
+    summarySnippet:
+      "1,400+ aspirants polled. Verdict: moderate-tough, polity-heavy. Predicted Gen cutoff 88-94. Vision IAS + ForumIAS answer keys live.",
     bodyMarkdown: `## The verdict
 
 After polling 1,400+ aspirants across Reddit, Telegram, Quora and Twitter in the 18 hours after the exam, the consensus on UPSC Prelims 2026 GS Paper 1 is:
@@ -157,6 +163,8 @@ _Updated every 2 hours. Last refreshed when this page loaded._
     phase: "CHECKLIST",
     slug: "checklist",
     title: "JEE Advanced 2026 — last-minute checklist (24 hours to go)",
+    summarySnippet:
+      "24 hours to go. Tonight: skim formulae, inorganic exceptions, conics. No new topics. Sleep by 22:30. What to carry, exam-day timing inside.",
     bodyMarkdown: `## 24 hours to go — what now
 
 If you're reading this on 24 May 2026, you have **one day** before Paper 1 + Paper 2 (back-to-back) at IIT-affiliated centres across India. Here's the only thing you should do tonight.
@@ -255,6 +263,7 @@ async function seed() {
         data: {
           slug: s.slug,
           title: s.title,
+          summarySnippet: s.summarySnippet,
           bodyMarkdown: s.bodyMarkdown,
           sourcesScraped: s.sourcesScraped,
           lastUpdatedAt: new Date(),
@@ -269,6 +278,7 @@ async function seed() {
           phase: s.phase,
           slug: s.slug,
           title: s.title,
+          summarySnippet: s.summarySnippet,
           bodyMarkdown: s.bodyMarkdown,
           sourcesScraped: s.sourcesScraped,
         },

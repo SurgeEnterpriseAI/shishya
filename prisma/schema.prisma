@@ -634,6 +634,13 @@ model ExamPhaseArticle {
   // SEO without a migration.
   slug            String
   title           String
+  // 1-2 sentence preview shown in the sidebar / sidebar chip / OG
+  // card — the value-prop hook before a student clicks through.
+  // Should be ≤ 200 chars, plain text (no markdown), conversational.
+  // Example for UPSC reactions:
+  //   "Moderate-tough paper. Polity-heavy. Fewer current affairs
+  //    than usual — early cutoff prediction: 88-94 (Gen)."
+  summarySnippet  String?
   // Markdown body. AI-generated + verified — rendered server-side so
   // we can safely interpolate Q&A blocks without exposing raw HTML
   // from the model.

@@ -25,19 +25,49 @@ export interface UpcomingEvent {
   date: string; // ISO
   label: string;
   isExamDay: boolean;
+  /**
+   * 1-2 sentence preview from the matching phase article, server-
+   * resolved alongside the phase. When present, the sidebar renders
+   * this in place of the plain "Live" / "Checklist" / "Reactions"
+   * chip text so the student sees the article's hook before clicking.
+   * Null if the exam isn't in a phase window or the article doesn't
+   * exist yet (cron hasn't generated one).
+   */
+  phaseSnippet?: string | null;
 }
 
 interface PhaseChip {
   phase: ExamPhase;
   slug: "checklist" | "live" | "reactions";
-  label: string;
+  icon: string;
   color: string;
+  /** What to render as the chip's body text — snippet from the article when
+   *  available, otherwise the static fallback teaser. */
+  text: string;
 }
 
-const PHASE_CHIP_META: Record<ExamPhase, { label: string; color: string }> = {
-  CHECKLIST: { label: "📋 Checklist", color: "bg-amber-100 text-amber-900" },
-  LIVE:      { label: "🔴 Live",      color: "bg-rose-100 text-rose-900" },
-  REACTIONS: { label: "📊 Reactions", color: "bg-sky-100 text-sky-900" },
+// Phase metadata used for the inline preview row in the sidebar:
+//   - `icon`      lives left, always visible (phase identifier at a glance)
+//   - `fallback`  is the chip label shown when the article doesn't
+//                 exist yet (cron hasn't generated a summary) — better
+//                 than "🔴 Live →" pointing at an empty page, this
+//                 hints at what they'll see if they click in early.
+const PHASE_CHIP_META: Record<ExamPhase, { icon: string; color: string; fallback: string }> = {
+  CHECKLIST: {
+    icon: "📋",
+    color: "bg-amber-100 text-amber-900",
+    fallback: "Last-minute revision sheet — what to carry, topics to skim, time-table.",
+  },
+  LIVE: {
+    icon: "🔴",
+    color: "bg-rose-100 text-rose-900",
+    fallback: "Live shift-by-shift difficulty + first answer-key trackers as they release.",
+  },
+  REACTIONS: {
+    icon: "📊",
+    color: "bg-sky-100 text-sky-900",
+    fallback: "Student verdict, expected cutoff, answer-key analysis — refreshed every 2 h.",
+  },
 };
 
 function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
@@ -47,7 +77,15 @@ function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
   const phase = resolvePhase(new Date(event.date));
   if (!phase) return null;
   const meta = PHASE_CHIP_META[phase];
-  return { phase, slug: PHASE_SLUG[phase], label: meta.label, color: meta.color };
+  return {
+    phase,
+    slug: PHASE_SLUG[phase],
+    icon: meta.icon,
+    color: meta.color,
+    // Prefer the live AI snippet (set by the 2-hour cron) — falls back
+    // to the static teaser so the chip never reads as a bare label.
+    text: event.phaseSnippet?.trim() || meta.fallback,
+  };
 }
 
 export function UpcomingExamsSidebar({ events }: { events: UpcomingEvent[] }) {
@@ -117,9 +155,11 @@ export function UpcomingExamsSidebar({ events }: { events: UpcomingEvent[] }) {
                 {chip && (
                   <Link
                     href={`/exams/${e.examCode}/${chip.slug}`}
-                    className={`mx-4 my-2 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${chip.color} hover:brightness-95`}
+                    className={`mx-4 my-2 flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px] leading-snug ${chip.color} hover:brightness-95`}
                   >
-                    {chip.label} →
+                    <span aria-hidden className="shrink-0 leading-snug">{chip.icon}</span>
+                    <span className="flex-1 line-clamp-3 font-medium">{chip.text}</span>
+                    <span aria-hidden className="shrink-0 leading-snug">→</span>
                   </Link>
                 )}
                 {!chip && <div className="h-2" />}

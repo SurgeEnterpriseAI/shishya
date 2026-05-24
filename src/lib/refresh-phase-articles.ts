@@ -202,6 +202,7 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
         data: {
           slug: c.phase.toLowerCase(),
           title: summary.title,
+          summarySnippet: summary.summarySnippet,
           bodyMarkdown: summary.bodyMarkdown,
           sourcesScraped: summary.sourcesUsed,
           lastUpdatedAt: new Date(),
@@ -215,6 +216,7 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
           phase: c.phase,
           slug: c.phase.toLowerCase(),
           title: summary.title,
+          summarySnippet: summary.summarySnippet,
           bodyMarkdown: summary.bodyMarkdown,
           sourcesScraped: summary.sourcesUsed,
           lastScrapedAt: new Date(),
