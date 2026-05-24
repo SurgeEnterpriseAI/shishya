@@ -169,6 +169,7 @@ model Exam {
   newsItems    ExamNewsItem[]
   importantDates ExamImportantDate[]
   rankBands    ExamRankBand[]
+  phaseArticles ExamPhaseArticle[]
 
   @@index([code])
   @@index([active])
@@ -598,6 +599,121 @@ model ExamImportantDate {
   exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
 
   @@index([examId, date])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// EXAM PHASE ARTICLES — time-sensitive content that swaps automatically
+// as the exam approaches and passes:
+//
+//   CHECKLIST  (T-7 to T-1)  — last-minute revision, must-know topics,
+//                              what to carry to the exam centre
+//   LIVE       (T-0)         — exam day: difficulty so far, shift-by-
+//                              shift analysis, leaked answer keys
+//   REACTIONS  (T+1 to T+3)  — student verdict, expected cutoff,
+//                              official key analysis, "what did you
+//                              think of Q34?" threads
+//
+// A 2-hour cron (Stage 2) scrapes free public sources — Reddit, RSS
+// feeds, YouTube, public Telegram channels — feeds them through Claude
+// to extract structured signal, and rewrites the article body. The
+// `sourcesScraped` JSON keeps the citation trail so claims stay
+// verifiable.
+//
+// The (examId, phase) tuple is unique: each exam has at most one
+// active article per phase. Re-running the scraper updates the row
+// in-place rather than creating duplicates.
+// ─────────────────────────────────────────────────────────────────────────
+
+model ExamPhaseArticle {
+  id              String         @id @default(cuid())
+  examId          String
+  phase           ExamPhase
+  // Slug suffix used in the public URL: /exams/{CODE}/{slug}. Almost
+  // always matches the phase ("checklist" / "live" / "reactions") —
+  // breaking it out as its own column lets us A/B test alt slugs for
+  // SEO without a migration.
+  slug            String
+  title           String
+  // Markdown body. AI-generated + verified — rendered server-side so
+  // we can safely interpolate Q&A blocks without exposing raw HTML
+  // from the model.
+  bodyMarkdown    String         @db.Text
+  // Where the body's facts came from. JSON array of
+  // { url, type: "reddit"|"rss"|"telegram"|"youtube"|"news"|"manual",
+  //   scrapedAt: ISO, weight: 1-5 } so the article can show "Sources
+  // we read" footers and reviewers can audit.
+  sourcesScraped  Json           @default("[]")
+  // When the cron last rewrote the body. Drives the "Updated X min
+  // ago" badge — critical for student trust on time-sensitive
+  // post-exam content.
+  lastUpdatedAt   DateTime       @default(now())
+  // When the cron last attempted a scrape (may not have changed the
+  // body if nothing new was found). Used by the scheduler to decide
+  // when to re-run.
+  lastScrapedAt   DateTime?
+  viewCount       Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  exam      Exam                   @relation(fields: [examId], references: [id], onDelete: Cascade)
+  reactions ExamArticleReaction[]
+  shares    ExamArticleShare[]
+
+  @@unique([examId, phase])
+  @@index([examId])
+  @@index([lastUpdatedAt])
+}
+
+model ExamArticleReaction {
+  id         String              @id @default(cuid())
+  articleId  String
+  // Identity. Anonymous users vote via the existing 30-day anonId
+  // cookie; signed-in users vote with userId (and we collapse the
+  // anon vote into theirs on next visit).
+  userId     String?
+  anonId     String?
+  reaction   ArticleReaction
+  createdAt  DateTime            @default(now())
+
+  article ExamPhaseArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  // One vote per identity per article. Re-voting upserts.
+  @@unique([articleId, userId])
+  @@unique([articleId, anonId])
+  @@index([articleId])
+}
+
+model ExamArticleShare {
+  id         String              @id @default(cuid())
+  articleId  String
+  channel    ShareChannel
+  anonId     String?
+  userId     String?
+  createdAt  DateTime            @default(now())
+
+  article ExamPhaseArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId, channel])
+}
+
+enum ExamPhase {
+  CHECKLIST
+  LIVE
+  REACTIONS
+}
+
+enum ArticleReaction {
+  LIKE
+  DISLIKE
+}
+
+enum ShareChannel {
+  TWITTER
+  WHATSAPP
+  TELEGRAM
+  LINKEDIN
+  FACEBOOK
+  COPY_LINK
 }
 
 // Rank prediction. Maps a student's mock-score band → expected real-exam
