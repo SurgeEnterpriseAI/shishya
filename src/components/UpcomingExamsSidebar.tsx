@@ -4,6 +4,11 @@
 // FAB on smaller screens. Pure server-side data (no polling — exam
 // dates change at most once per day via the refresh-exam-data cron).
 //
+// Build marker v202605250030 — force Vercel to rebuild from latest
+// source. The CLI deploys today were silently reusing a build cache
+// that predated the IST-phase + inline-snippet commits; this tiny
+// content change invalidates that cache.
+//
 // PHASE CHIPS — for any event close to the exam date we surface a
 // small action link under the date row that takes the visitor to
 // the right phase article (📋 Checklist / 🔴 Live / 📊 Reactions).
