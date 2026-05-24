@@ -11,7 +11,9 @@ import { ImageResponse } from "next/og";
 import { findPersona, PERSONAS } from "@/data/personas";
 import { prisma } from "@/lib/db/prisma";
 
-export const runtime = "edge";
+// Node runtime (not edge) because (a) Next.js 15 forbids edge + generateStaticParams
+// together, and (b) we want Prisma access at build time to fetch real exam
+// short names. Pre-rendered at build via generateStaticParams below.
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
