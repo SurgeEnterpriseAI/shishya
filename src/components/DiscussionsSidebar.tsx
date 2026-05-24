@@ -60,6 +60,10 @@ export function DiscussionsSidebar({
 
   // Periodic refresh so the sidebar feels live. Stops when the tab is hidden
   // to avoid wasted requests on backgrounded tabs.
+  //
+  // Also fires once on mount so a stale SSR `initial` (e.g. unstable_cache
+  // serving an old empty array) gets corrected by the live /api/discussions
+  // response immediately, instead of waiting 30 s for the first poll tick.
   useEffect(() => {
     let cancelled = false;
     let timer: number | null = null;
@@ -75,6 +79,9 @@ export function DiscussionsSidebar({
         // swallow — sidebar stays at last good state
       }
     }
+
+    // Mount-time refresh — corrects stale SSR-cached initial state.
+    refresh();
 
     timer = window.setInterval(refresh, POLL_MS);
     document.addEventListener("visibilitychange", refresh);

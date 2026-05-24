@@ -136,9 +136,13 @@ async function loadInitialThreadsRaw(): Promise<ThreadItem[]> {
     return [];
   }
 }
+// v2 — busts the stale cache that may have been populated with an empty
+// array during an earlier deploy window when the discussion query was
+// failing. Bumping the key forces a fresh read so the right-side rail
+// stops showing "No active discussions yet" while 8 real threads exist.
 const loadInitialThreads = unstable_cache(
   loadInitialThreadsRaw,
-  ["home-discussions-v1"],
+  ["home-discussions-v2"],
   { revalidate: 60, tags: ["discussions"] },
 );
 
@@ -166,9 +170,13 @@ async function loadUpcomingEventsRaw(): Promise<UpcomingEvent[]> {
     return [];
   }
 }
+// v2 — busts the stale cache so the 33 dates just inserted into
+// ExamImportantDate by seed/exam-dates.ts surface immediately instead
+// of after the 5-min revalidate window. Key bump is the simplest way
+// to invalidate at deploy time without wiring a revalidateTag call.
 const loadUpcomingEvents = unstable_cache(
   loadUpcomingEventsRaw,
-  ["home-upcoming-v1"],
+  ["home-upcoming-v2"],
   { revalidate: 300, tags: ["exam-dates"] },
 );
 
