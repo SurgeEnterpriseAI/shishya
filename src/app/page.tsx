@@ -23,6 +23,7 @@ import { LiveCountersStrip } from "@/components/LiveCounters";
 import { ExamSearchBox } from "@/app/exams/browse/ExamSearchBox";
 import { prisma } from "@/lib/db/prisma";
 import { unstable_cache } from "next/cache";
+import { PERSONAS } from "@/data/personas";
 
 // Re-generate the homepage HTML at most once per minute. Between
 // regenerations Vercel serves cached HTML from its edge CDN, so the
@@ -31,24 +32,23 @@ import { unstable_cache } from "next/cache";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Shishya — Free preparation for every Indian entrance exam | 163 exams, in your language",
+  title: "Shishya — Pick your stage, see your curated prep | Free, in your language",
   description:
-    "Free mock tests, previous year papers, adaptive practice and study help for 163 Indian entrance and government exams — JEE, NEET, UPSC, SSC, IBPS, RRB, GATE, CAT, all state PSCs, all TETs. Verified by students who cleared the same exam. In English, Hindi and 17 other Indian languages.",
+    "Tell us what you're preparing for — Class 10/12, engineering, medical, govt jobs, banking, civil services — and we'll show you the 3-5 exams that matter, the articles to read, and what to do this week. Free, with sourced verification on every fact.",
   alternates: { canonical: "https://shishya.in" },
   keywords: [
-    "free mock test India",
-    "entrance exams India",
-    "government job preparation",
+    "free exam prep India",
+    "entrance exams India by stage",
+    "what exam should I prepare for",
     "SSC UPSC JEE NEET IBPS RRB",
-    "previous year papers",
-    "exam preparation in Hindi",
+    "personalised exam prep",
     "Indian entrance exam prep",
     "Shishya",
   ],
   openGraph: {
-    title: "Shishya — Free preparation for every Indian entrance exam",
+    title: "Shishya — Pick your stage, see your curated prep",
     description:
-      "163 exams. Adaptive mocks, previous year papers, study help. Verified by students who cleared the same exam. Free, in your language.",
+      "Don't browse 163 exams. Tell us what you're preparing for — we'll show the 3-5 that matter for you. Free, in your language.",
     url: "https://shishya.in",
     siteName: "Shishya",
     locale: "en_IN",
@@ -70,59 +70,12 @@ const examCount = unstable_cache(
   { revalidate: 300, tags: ["exams"] },
 );
 
-interface PopularExamRow {
-  code: string;
-  shortName: string;
-  name: string;
-  category: string;
-  candidatesPerYear: number | null;
-}
-
-// Top-N most-written exams. Drives the "Popular exams" strip on the
-// homepage so anonymous visitors get a one-click path to the biggest
-// exams without typing anything. Cached because the underlying ranking
-// barely changes day to day.
-const popularExams = unstable_cache(
-  async (): Promise<PopularExamRow[]> => {
-    try {
-      return await prisma.exam.findMany({
-        where: { active: true, candidatesPerYear: { not: null } },
-        orderBy: { candidatesPerYear: "desc" },
-        take: 8,
-        select: {
-          code: true,
-          shortName: true,
-          name: true,
-          category: true,
-          candidatesPerYear: true,
-        },
-      }) as unknown as PopularExamRow[];
-    } catch {
-      return [];
-    }
-  },
-  ["hub-popular-exams-v1"],
-  { revalidate: 600, tags: ["exams"] },
-);
-
-function formatCandidates(n: number | null): string {
-  if (!n || n <= 0) return "";
-  if (n >= 10_000_000) return `${(n / 10_000_000).toFixed(1)} crore writers/yr`;
-  if (n >= 100_000) return `${(n / 100_000).toFixed(1)} lakh writers/yr`;
-  if (n >= 1000) return `${Math.round(n / 1000)}K writers/yr`;
-  return `${n} writers/yr`;
-}
-
 export default async function HomeHub() {
   // No auth check, no user profile lookup — this keeps the page in the
   // static branch so Vercel can serve it from the edge CDN. Signed-in
   // users see the same marketing landing; their personalised view lives
   // at /dashboard, which the header CTAs link to.
-  //
-  // Both data fetches below are wrapped in unstable_cache so background
-  // ISR regeneration (every 60s) reuses the cached query results when
-  // they're still fresh.
-  const [exams, popular] = await Promise.all([examCount(), popularExams()]);
+  const exams = await examCount();
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
@@ -140,23 +93,54 @@ export default async function HomeHub() {
       />
 
       <section id="exam-discovery" className="container-prose pt-12 pb-16 sm:pt-16 sm:pb-20">
-        {/* Hero — same content for everyone. Signed-in users get their
-            personalised view at /dashboard via the header. */}
+        {/* Hero — frames the page as a "tell us what you're preparing
+            for" question rather than dumping the full catalogue. Signed-
+            in users get their personalised view at /dashboard via the
+            header. */}
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="bg-gradient-to-r from-ink-900 via-saffron-700 to-ink-900 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
-            Free preparation for every Indian entrance exam.
+            What are you preparing for?
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base text-ink-600 sm:text-lg">
-            {exams} exams covered — adaptive mocks, previous year papers,
-            study help, syllabus. Verified by students who cleared the same
-            exam. In your language.
+            Pick the stage you&apos;re at. We&apos;ll show you 3-5 relevant exams,
+            the prep articles that actually matter, and what to do this week — not
+            the full catalogue of {exams} exams you don&apos;t need.
           </p>
         </div>
 
-        {/* Big search box — straight into /exams with the query
-            pre-applied. Works without JS via the form's GET fallback. */}
-        <div className="mx-auto mt-8 max-w-2xl">
-          <ExamSearchBox placeholder="Search any exam — SSC CGL, NEET, UPSC, TNPSC, JEE…" />
+        {/* Persona picker — the primary navigation surface. Replaces
+            the older "top 8 most-written exams" tile rail because that
+            still dumped a wall of unrelated exams on every visitor. */}
+        <ul className="mx-auto mt-10 grid max-w-5xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {PERSONAS.map((p) => (
+            <li key={p.slug}>
+              <Link
+                href={`/for/${p.slug}`}
+                className="group block h-full rounded-xl border border-ink-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-lg"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-saffron-500 text-base font-bold text-white">
+                  {p.badge}
+                </div>
+                <h2 className="mt-3 text-base font-semibold text-ink-900">{p.label}</h2>
+                <p className="mt-1 text-xs text-ink-600 line-clamp-3">{p.blurb}</p>
+                <p className="mt-3 text-xs font-medium text-saffron-700">
+                  See my exams + plan →
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        {/* Fallback for visitors who already know their exam. Sits BELOW
+            the persona picker so it doesn't become the first thing
+            visitors reach for. */}
+        <div className="mx-auto mt-12 max-w-2xl border-t border-ink-200 pt-8">
+          <p className="text-center text-xs uppercase tracking-wider text-ink-500">
+            Already know your exam?
+          </p>
+          <div className="mt-3">
+            <ExamSearchBox placeholder="Search by exam name — SSC CGL, NEET, UPSC, TNPSC, JEE…" />
+          </div>
           <p className="mt-2 text-center text-[11px] text-ink-500">
             Or{" "}
             <Link href="/exams" className="text-saffron-700 underline hover:text-saffron-800">
@@ -164,46 +148,6 @@ export default async function HomeHub() {
             </Link>
           </p>
         </div>
-
-        {/* Popular exams — top 8 by candidates/yr, one-click into any of
-            them. Drives the biggest funnel: SSC CGL, NEET, JEE, UPSC… */}
-        {popular.length > 0 && (
-          <>
-            <h2 className="mx-auto mt-14 max-w-5xl text-base font-semibold text-ink-900">
-              Most-written exams in India
-            </h2>
-            <p className="mx-auto mt-1 max-w-5xl text-xs text-ink-500">
-              One click into the exams Indian students write the most. Free
-              mocks + previous year papers ready inside.
-            </p>
-            <ul className="mx-auto mt-5 grid max-w-5xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {popular.map((e) => (
-                <li key={e.code}>
-                  <Link
-                    href={`/exams/${e.code}`}
-                    className="group block h-full rounded-xl border border-ink-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-lg"
-                  >
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">
-                      {e.category.replace(/_/g, " ")}
-                    </p>
-                    <h3 className="mt-1 text-base font-semibold text-ink-900">{e.shortName}</h3>
-                    <p className="mt-1 line-clamp-2 text-xs text-ink-600">{e.name}</p>
-                    {e.candidatesPerYear && (
-                      <p className="mt-3 text-[11px] uppercase tracking-wider text-ink-500">
-                        {formatCandidates(e.candidatesPerYear)}
-                      </p>
-                    )}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <div className="mx-auto mt-6 max-w-5xl text-right">
-              <Link href="/exams" className="text-sm font-medium text-saffron-700 hover:text-saffron-800">
-                See all {exams} exams →
-              </Link>
-            </div>
-          </>
-        )}
 
         {/* Trust strip — visible verification commitment on first scroll. */}
         <div className="mx-auto mt-14 max-w-3xl rounded-xl border border-emerald-200 bg-emerald-50/40 p-5 text-sm text-ink-700">
