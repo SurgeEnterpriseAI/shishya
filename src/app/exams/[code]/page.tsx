@@ -303,7 +303,7 @@ export default async function ExamPage({
           <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.totalMarks} {t("exam.marks")}</span>
           <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.durationMin} {t("exam.minutes")}</span>
           <span className="rounded-full bg-white border border-ink-200 px-3 py-1">
-            {t("exam.negative")}: {exam.negativeMark === 0 ? t("exam.no.negative") : `−${exam.negativeMark}`}
+            {t("exam.negative")}: {exam.negativeMark === 0 ? t("exam.no.negative") : `−${formatNegativeMark(exam.negativeMark)}`}
           </span>
         </div>
 
@@ -949,4 +949,26 @@ function describeTrend(scores: number[]): string {
   const delta = last - first;
   if (Math.abs(delta) < 1.5) return "stable";
   return delta > 0 ? `up ${delta.toFixed(1)}%` : `down ${Math.abs(delta).toFixed(1)}%`;
+}
+
+/**
+ * Format the per-Q negative-mark value for display in the meta chip
+ * row. Several exams store fractions as raw floats (e.g. UPSC = 1/3
+ * → 0.6666666666666666) that read as garbage in the UI. We detect
+ * the most common fraction forms and render them as "1/3", "1/4",
+ * "2/3" etc; everything else rounds to 2 decimals.
+ */
+function formatNegativeMark(n: number): string {
+  // Common UPSC/MPSC pattern: 1/3 per question wrong.
+  if (Math.abs(n - 1 / 3) < 1e-6) return "1/3";
+  if (Math.abs(n - 2 / 3) < 1e-6) return "2/3";
+  // SSC + IBPS pattern: 0.25 / 0.50 / 0.75 — render as fractions for
+  // readability, not as 0.25 marks.
+  if (Math.abs(n - 0.25) < 1e-6) return "1/4";
+  if (Math.abs(n - 0.5) < 1e-6) return "1/2";
+  if (Math.abs(n - 0.75) < 1e-6) return "3/4";
+  // Whole numbers (NEET = 1, JEE Adv = 1 or 2) render bare.
+  if (Number.isInteger(n)) return String(n);
+  // Everything else: 2-decimal display.
+  return n.toFixed(2);
 }

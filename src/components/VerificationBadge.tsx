@@ -112,7 +112,12 @@ function progressionShort(status: VerificationStatus, c: number): string | null 
 const STATUS_LABELS: Record<VerificationStatus, string> = {
   fully:    "Fully verified",
   verified: "Verified",
-  ai:       "AI-verified",
+  // Was "AI-verified" — retired because (a) we moved off the
+  // "AI-first" brand position, and (b) the new phase-article
+  // pipeline openly summarises student chatter rather than
+  // claiming to verify anything. "Sourced" is honest: we cite
+  // the official source and refresh it on a schedule.
+  ai:       "Sourced",
   needs:    "Needs verification",
   none:     "Not yet verified",
   disputed: "Flagged · review pending",
@@ -280,7 +285,13 @@ export function SectionVerificationSummary({
       <div>
         <p className="font-medium">{STATUS_LABELS[status]}</p>
         <p className="mt-0.5 opacity-80">
-          {source ? `Auto-verified against ${source}${refreshCadence ? ` ${refreshCadence}` : ""}, then confirmed by students and experts who've checked the source themselves. ` : ""}
+          {/* Was "Auto-verified … then confirmed by students and
+              experts who've checked the source themselves." Retired
+              because (a) "AI-verified" framing doesn't match the
+              new positioning, and (b) we don't yet have a student-
+              confirmation loop wired up — the claim was aspirational.
+              Replaced with a quieter, honest source citation. */}
+          {source ? `Source: ${source}${refreshCadence ? ` · refreshed ${refreshCadence}` : ""}. ` : ""}
           <Link href="/verification" className="underline">How this works →</Link>
         </p>
       </div>
