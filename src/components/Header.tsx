@@ -56,22 +56,12 @@ export function Header({ admin = false }: { admin?: boolean }) {
           <BackLink />
         </div>
 
-        {/* Middle: subtle "All exams" text link. The persona-first
-            homepage is the primary discovery surface; /exams is the
-            "I already know what I want" fallback. We deliberately
-            keep this de-emphasised (text + medium weight + no
-            background) so the prominent CTA on the homepage is the
-            persona picker itself, not this header link. */}
-        {!admin && (
-          <nav className="ml-2 hidden flex-1 justify-center text-sm sm:flex sm:ml-6" aria-label="Primary">
-            <Link
-              href="/exams"
-              className="inline-flex items-center whitespace-nowrap rounded-md px-2 py-1 font-medium text-ink-600 hover:text-saffron-800"
-            >
-              All exams
-            </Link>
-          </nav>
-        )}
+        {/* No middle nav. The homepage at / IS the exam discovery
+            surface (guided funnel) — every header click should either
+            return home (via the logo) or progress the user into the
+            funnel/dashboard. The schooling / careers / colleges /
+            scholarships routes stay live at their URLs but are not
+            promoted here until Shishya hits its traction milestone. */}
 
         {/* Right: language switcher + auth controls (client component). */}
         <nav className="ml-auto flex shrink-0 items-center gap-3 text-sm text-ink-700">
