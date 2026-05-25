@@ -31,6 +31,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { unstable_cache } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -38,8 +39,23 @@ import { getT } from "@/lib/i18n-server";
 import { Header } from "@/components/Header";
 import type { ExamCard } from "@/components/ExamPicker";
 import { computeExamTags } from "@/lib/exam-tags";
-import { DiscussionsSidebar, type ThreadItem } from "@/components/DiscussionsSidebar";
-import { LiveCountersStrip } from "@/components/LiveCounters";
+import { type ThreadItem } from "@/components/DiscussionsSidebar";
+// DiscussionsSidebar + LiveCountersStrip are dynamically imported with
+// ssr: false. Both render time-sensitive content and got bitten by
+// React 19 hydration mismatches in browsers where extensions (MetaMask
+// SES, MV3 lockdowns, ad-blockers) mutate global objects between SSR
+// and client init. Lazy-loading them skips SSR entirely — there's no
+// server HTML to mismatch against, so extension-injected globals can't
+// break hydration. Trade-off: a ~150 ms "rail flicker" before the
+// sidebar appears; the rest of the page paints unaffected.
+const DiscussionsSidebar = dynamic(
+  () => import("@/components/DiscussionsSidebar").then((m) => m.DiscussionsSidebar),
+  { ssr: false },
+);
+const LiveCountersStrip = dynamic(
+  () => import("@/components/LiveCounters").then((m) => m.LiveCountersStrip),
+  { ssr: false },
+);
 import { UpcomingExamsSidebar, type UpcomingEvent } from "@/components/UpcomingExamsSidebar";
 import { resolvePhase } from "@/lib/exam-phase";
 import { EXAM_GOALS, findGoal, matchesGoal, type ExamGoal } from "@/data/exam-goals";

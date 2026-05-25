@@ -66,14 +66,49 @@ export default function GlobalError({
           </button>
           <button
             type="button"
-            onClick={() => {
+            onClick={async () => {
+              // Aggressive cleanup — clear EVERYTHING the browser may
+              // have cached from older sessions that could conflict
+              // with the current deploy. Common culprits we've seen:
+              //   - localStorage values with shape that's changed
+              //     across releases (e.g. saved onboarding state)
+              //   - Cookies storing a stale auth/lang preference
+              //   - Service workers from older deploys still
+              //     intercepting fetches (we don't ship one today,
+              //     but a previous build may have)
+              //   - Cache API entries with stale chunk responses
+              // Each step is wrapped in its own try/catch so one
+              // failure doesn't abort the rest. Final step does a
+              // cache-busted reload via `?_r=<ts>` to ensure we
+              // sidestep any remaining HTTP cache.
+              try { localStorage.clear(); } catch { /* nothing */ }
+              try { sessionStorage.clear(); } catch { /* nothing */ }
               try {
-                localStorage.clear();
-                sessionStorage.clear();
-              } catch {
-                /* private mode or storage disabled — ignore */
-              }
-              window.location.assign("/");
+                document.cookie.split(";").forEach((c) => {
+                  const eq = c.indexOf("=");
+                  const name = (eq > -1 ? c.slice(0, eq) : c).trim();
+                  if (!name) return;
+                  // Expire on this exact path + the root + the bare domain.
+                  // We can't touch httpOnly cookies from JS — those need a
+                  // server-side clear, which our middleware handles next
+                  // time anyway.
+                  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+                  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
+                });
+              } catch { /* nothing */ }
+              try {
+                if ("serviceWorker" in navigator) {
+                  const regs = await navigator.serviceWorker.getRegistrations();
+                  await Promise.all(regs.map((r) => r.unregister()));
+                }
+              } catch { /* nothing */ }
+              try {
+                if ("caches" in window) {
+                  const names = await caches.keys();
+                  await Promise.all(names.map((n) => caches.delete(n)));
+                }
+              } catch { /* nothing */ }
+              window.location.assign(`/?_r=${Date.now()}`);
             }}
             className="rounded-md border border-ink-300 bg-white px-4 py-2.5 text-sm font-semibold text-ink-800 shadow-sm transition-colors hover:bg-ink-50 focus:outline-none focus:ring-2 focus:ring-saffron-300"
           >
