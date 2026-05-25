@@ -57,6 +57,24 @@ export function DiscussionsSidebar({
 }) {
   const [threads, setThreads] = useState<ThreadItem[]>(initial);
   const [open, setOpen] = useState(false);
+  // `now` stays null through SSR + initial client hydration, then gets
+  // populated in the mount effect below. This is the only reliable way
+  // to render time-relative text ("5 min ago") in a "use client"
+  // component without triggering React 19's hydration-mismatch error
+  // — server's `new Date()` and client's `new Date()` are minutes
+  // (sometimes hours) apart, so any inline `new Date()` during render
+  // poisons hydration. The fix: skip time-text on the SSR + first-paint,
+  // then fade it in once the client clock is known.
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+    // Refresh every minute so "5 min ago" rolls to "6 min ago" without
+    // a full reload. Tab-hidden pause matches the threads polling.
+    const id = window.setInterval(() => {
+      if (!document.hidden) setNow(new Date());
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   // Periodic refresh so the sidebar feels live. Stops when the tab is hidden
   // to avoid wasted requests on backgrounded tabs.
@@ -120,7 +138,7 @@ export function DiscussionsSidebar({
             todaysMocks: labels.liveTodaysMocks,
           }}
         />
-        <ThreadList threads={threads} labels={labels} />
+        <ThreadList threads={threads} labels={labels} now={now} />
         <PanelFooter labels={labels} />
       </aside>
 
@@ -180,7 +198,7 @@ export function DiscussionsSidebar({
                 todaysMocks: labels.liveTodaysMocks,
               }}
             />
-            <ThreadList threads={threads} labels={labels} onItemClick={() => setOpen(false)} />
+            <ThreadList threads={threads} labels={labels} now={now} onItemClick={() => setOpen(false)} />
             <div className="border-t border-ink-200 bg-ink-50/40 px-5 py-3">
               <Link
                 href={newDiscHref}
@@ -239,13 +257,17 @@ function PanelFooter({ labels }: { labels: Labels }) {
 function ThreadList({
   threads,
   labels,
+  now,
   onItemClick,
 }: {
   threads: ThreadItem[];
   labels: Labels;
+  /** Null during SSR + first paint (so server and client agree byte-
+   *  for-byte). Populated by parent's mount effect; once non-null we
+   *  render the relative-time tail + the fresh-vs-stale dot color. */
+  now: Date | null;
   onItemClick?: () => void;
 }) {
-  const now = new Date();
   if (threads.length === 0) {
     return (
       <div className="flex-1 px-4 py-10 text-center">
@@ -256,7 +278,13 @@ function ThreadList({
   return (
     <ul className="flex-1 divide-y divide-ink-100 overflow-y-auto">
       {threads.map((t) => {
-        const fresh = Date.now() - new Date(t.lastActivityAt).getTime() < 60 * 60 * 1000;
+        // `fresh` and the relative-time string are time-dependent, so
+        // we ONLY compute them when `now` has been hydrated client-
+        // side. Before that the dot stays neutral grey and the time
+        // tail is omitted — matches the SSR render exactly.
+        const fresh =
+          now !== null &&
+          now.getTime() - new Date(t.lastActivityAt).getTime() < 60 * 60 * 1000;
         return (
           <li key={t.id}>
             <Link
@@ -286,8 +314,12 @@ function ThreadList({
                 <span className="font-medium text-ink-700">
                   {t.messageCount} {t.messageCount === 1 ? labels.reply : labels.replies}
                 </span>
-                <span className="mx-1 text-ink-300">·</span>
-                {formatRelative(t.lastActivityAt, labels, now)}
+                {now !== null && (
+                  <>
+                    <span className="mx-1 text-ink-300">·</span>
+                    {formatRelative(t.lastActivityAt, labels, now)}
+                  </>
+                )}
               </p>
             </Link>
           </li>

@@ -26,11 +26,25 @@ interface StripLabels {
 
 const TICK_MS = 30_000;
 
+// Stable initial values used for BOTH the server render and the very
+// first client paint. The lazy initializer used to call
+// `getLiveCounts(new Date())` which is time-dependent — server and
+// client almost always landed on different minute buckets and React
+// 19 then rejected the hydration with a "client-side exception"
+// (the exact error students reported when opening shishya.in from
+// WhatsApp shares). Using a fixed seed here makes server + client
+// agree byte-for-byte on the initial paint; useEffect overlays the
+// real /api/live-counts numbers within ~200 ms after mount.
+const SSR_SAFE_INITIAL: LiveCounts = {
+  online: 1_100,
+  mocksInProgress: 5,
+  mocksToday: 0,
+  activeDiscussions: 24,
+  totalEver: 1_000,
+};
+
 function useLiveCounts(): LiveCounts {
-  // Seed with the synthetic-floor-only fallback so the first paint shows
-  // believable numbers even before the fetch resolves. The fetch then
-  // overlays the real DB-backed counts within ~200ms.
-  const [counts, setCounts] = useState<LiveCounts>(() => getLiveCounts(new Date()));
+  const [counts, setCounts] = useState<LiveCounts>(SSR_SAFE_INITIAL);
 
   useEffect(() => {
     let cancelled = false;
