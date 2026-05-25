@@ -38,18 +38,8 @@ import { getT } from "@/lib/i18n-server";
 import { Header } from "@/components/Header";
 import type { ExamCard } from "@/components/ExamPicker";
 import { computeExamTags } from "@/lib/exam-tags";
-import { type ThreadItem } from "@/components/DiscussionsSidebar";
-// DiscussionsSidebar + LiveCountersStrip render time-sensitive content
-// and got bitten by React 19 hydration mismatches in browsers where
-// extensions (MetaMask SES, ad-blockers) mutate global objects between
-// SSR and client init. The HomeClientIslands wrapper lazy-loads them
-// with ssr:false from a client component (Next.js 15 forbids ssr:false
-// in server components, hence the wrapper). Server renders an empty
-// placeholder; client mounts the real components after JS loads.
-import {
-  HomeDiscussionsSidebar,
-  HomeLiveCountersStrip,
-} from "@/components/HomeClientIslands";
+import { DiscussionsSidebar, type ThreadItem } from "@/components/DiscussionsSidebar";
+import { LiveCountersStrip } from "@/components/LiveCounters";
 import { UpcomingExamsSidebar, type UpcomingEvent } from "@/components/UpcomingExamsSidebar";
 import { resolvePhase } from "@/lib/exam-phase";
 import { EXAM_GOALS, findGoal, matchesGoal, type ExamGoal } from "@/data/exam-goals";
@@ -327,7 +317,7 @@ export default async function ExamsPage({
     <main className="min-h-screen bg-saffron-50/30">
       <Header />
 
-      <HomeLiveCountersStrip
+      <LiveCountersStrip
         labels={{
           preparingNow:      t("live.preparingNow"),
           inMockNow:         t("live.inMockNow"),
@@ -338,7 +328,7 @@ export default async function ExamsPage({
 
       <UpcomingExamsSidebar events={upcomingEvents} />
 
-      <HomeDiscussionsSidebar
+      <DiscussionsSidebar
         initial={initialThreads}
         signedIn={signedIn}
         labels={{
