@@ -372,9 +372,120 @@ export default async function ExamsPage({
               </p>
             </div>
           )}
+
+          {/* ── Mobile-only inline rails ──────────────────────────────
+              On lg+ the upcoming-exams panel mounts as a fixed left
+              rail and discussions as a fixed right rail. Below lg
+              both rails are hidden (UpcomingExamsSidebar has no
+              mobile FAB at all; DiscussionsSidebar has one but it's
+              easy to miss). On phones / small tablets we surface the
+              same content inline here as horizontal-scroll + vertical
+              list cards, so visitors see the social-proof + calendar
+              without hunting for a FAB. */}
+          <MobileInlineRails events={upcomingEvents} threads={initialThreads} />
         </section>
       </div>
     </main>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// MobileInlineRails — calendar + discussions surfaced inline on
+// viewports < lg (where the fixed side rails are hidden). Server-
+// rendered; data comes from the same loaders as the desktop rails.
+// ─────────────────────────────────────────────────────────────────────
+function MobileInlineRails({
+  events,
+  threads,
+}: {
+  events: UpcomingEvent[];
+  threads: ThreadItem[];
+}) {
+  if (events.length === 0 && threads.length === 0) return null;
+  return (
+    <section className="mt-14 space-y-5 lg:hidden">
+      {events.length > 0 && (
+        <div className="rounded-lg border border-ink-200 bg-white p-4 shadow-sm">
+          <div className="flex items-baseline justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">
+              <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-saffron-500 align-middle" aria-hidden />
+              Upcoming exam dates
+            </p>
+            <span className="text-[10px] text-ink-400">{events.length} dates</span>
+          </div>
+          <ul className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
+            {events.slice(0, 12).map((e) => (
+              <li key={e.id} className="shrink-0">
+                <Link
+                  href={`/exams/${e.examCode}`}
+                  prefetch={false}
+                  className={`block w-48 rounded-md border px-3 py-2 transition-colors hover:border-saffron-400 ${
+                    e.isExamDay
+                      ? "border-saffron-300 bg-saffron-50/60"
+                      : "border-ink-200 bg-white"
+                  }`}
+                >
+                  <p className="truncate text-sm font-semibold text-ink-900">{e.examShort}</p>
+                  <p className={`mt-0.5 text-[11px] font-medium tabular-nums ${
+                    e.isExamDay ? "text-saffron-800" : "text-ink-600"
+                  }`}>
+                    {new Date(e.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                    {e.isExamDay && (
+                      <span className="ml-1.5 rounded bg-saffron-200 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-saffron-900">
+                        Exam
+                      </span>
+                    )}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-[11px] text-ink-600">{e.label}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {threads.length > 0 && (
+        <div className="rounded-lg border border-ink-200 bg-white p-4 shadow-sm">
+          <div className="flex items-baseline justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
+              <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 align-middle" aria-hidden />
+              What students are talking about
+            </p>
+            <Link
+              href="/discussions"
+              prefetch={false}
+              className="text-[10px] font-medium text-saffron-700 hover:text-saffron-800"
+            >
+              All →
+            </Link>
+          </div>
+          <ul className="mt-2 divide-y divide-ink-100">
+            {threads.slice(0, 6).map((th) => (
+              <li key={th.id}>
+                <Link
+                  href={`/discussions/${th.id}`}
+                  prefetch={false}
+                  className="block py-2.5 hover:bg-saffron-50/40"
+                >
+                  <p className="line-clamp-2 text-sm font-medium leading-snug text-ink-900">
+                    {th.title}
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] text-ink-500">
+                    {th.examShort && (
+                      <span className="mr-1.5 rounded bg-ink-100 px-1 py-0.5 text-[10px] font-medium text-ink-600">
+                        {th.examShort}
+                      </span>
+                    )}
+                    <span className="font-medium text-ink-700">
+                      {th.messageCount} {th.messageCount === 1 ? "reply" : "replies"}
+                    </span>
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   );
 }
 
