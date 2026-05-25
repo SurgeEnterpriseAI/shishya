@@ -93,14 +93,11 @@ export async function generateMetadata({
   };
 }
 
-// Fallback list — used only when the DB is unreachable so the public
-// page still renders something useful. Real exam list is below.
-const FALLBACK_EXAMS: ExamCard[] = [
-  { code: "SSC_CGL",      shortName: "SSC CGL",        name: "SSC Combined Graduate Level",       category: "GOVT_JOBS",  candidatesPerYear: 3_000_000, live: true,  tags: ["popular", "national", "govt"] },
-  { code: "NEET_UG",      shortName: "NEET UG",        name: "National Eligibility cum Entrance", category: "MEDICAL",    candidatesPerYear: 2_400_000, live: false, tags: ["popular", "national", "medical"] },
-  { code: "JEE_MAIN",     shortName: "JEE Main",       name: "Joint Entrance Examination",        category: "ENGINEERING",candidatesPerYear: 1_400_000, live: false, tags: ["popular", "national", "engineering"] },
-  { code: "UPSC_PRELIMS", shortName: "UPSC Prelims",   name: "UPSC Civil Services Examination",   category: "CIVIL_SERVICES", candidatesPerYear: 1_100_000, live: false, tags: ["popular", "national", "govt", "civil_services"] },
-];
+// Fallback list — used when the DB is unreachable so the public
+// page still renders something useful. ~35 exams covering every
+// goal tile so degraded mode never shows "0 exams" anywhere.
+// See src/data/fallback-exams.ts for the rationale.
+import { FALLBACK_EXAMS } from "@/data/fallback-exams";
 
 async function loadExamsRaw(): Promise<ExamCard[]> {
   try {
@@ -137,7 +134,10 @@ async function loadExamsRaw(): Promise<ExamCard[]> {
         candidatesPerYear: e.candidatesPerYear,
       }),
     }));
-  } catch {
+  } catch (err) {
+    // Log loudly so Vercel observability picks it up. Returning the
+    // (now-comprehensive) fallback keeps the funnel visually healthy.
+    console.error("[shishya/loadExams] DB query failed, using fallback:", err);
     return FALLBACK_EXAMS;
   }
 }
@@ -163,7 +163,8 @@ async function loadInitialThreadsRaw(): Promise<ThreadItem[]> {
       pinned: r.pinned,
       lastActivityAt: r.lastActivityAt.toISOString(),
     }));
-  } catch {
+  } catch (err) {
+    console.error("[shishya/loadInitialThreads] DB query failed:", err);
     return [];
   }
 }
@@ -227,7 +228,8 @@ async function loadUpcomingEventsRaw(): Promise<UpcomingEvent[]> {
         phaseSnippet: snippetForRow(r.id, r.exam.id, phase),
       };
     });
-  } catch {
+  } catch (err) {
+    console.error("[shishya/loadUpcomingEvents] DB query failed:", err);
     return [];
   }
 }
