@@ -1,39 +1,29 @@
 "use client";
 
-// Thin client wrapper that lazily loads DiscussionsSidebar and
-// LiveCountersStrip with ssr: false. Next.js 15 forbids `ssr: false`
-// on dynamic imports inside Server Components, so the wrapper sits
-// here in client-land. The parent (src/app/page.tsx) imports
-// HomeClientIslands and passes the server-fetched props through.
+// Client-only wrappers for DiscussionsSidebar and LiveCountersStrip.
+// They use a "mounted" gate (useState false → useEffect set true)
+// instead of next/dynamic-with-ssr:false because the dynamic-import
+// approach was loading the chunks but never actually mounting the
+// inner components on production builds — possibly an interaction
+// with the Next.js 15 app-router code-splitting strategy. The
+// mounted-gate is functionally identical for our purposes:
 //
-// Why we skip SSR for just these two:
-//   - LiveCountersStrip computes a time-bucketed initial state.
-//     Server and client almost always land in different minute
-//     buckets, producing different counts and triggering a React 19
-//     hydration mismatch.
-//   - DiscussionsSidebar renders relative-time strings ("5 min ago")
-//     that drift between server render and client mount.
+//   Server SSR  → wrapper returns null (no HTML for these islands)
+//   Client init → wrapper returns null again (SSR & hydration match)
+//   useEffect   → setMounted(true) → real component renders
 //
-// Both bugs were patched in commit f876c89 (static initial state +
-// `now: null` until mount), but the founder still hit the error in
-// his regular Chrome profile due to extensions (MetaMask SES) that
-// mutate global objects between SSR and client. Skipping SSR
-// entirely removes any HTML for the extension-poisoned globals to
-// disagree with — the only fix that's robust to whatever a visitor's
-// browser does to its runtime.
+// Why we need this isolation at all:
+// LiveCountersStrip + DiscussionsSidebar both render time-sensitive
+// content. In browsers where extensions (MetaMask SES, MV3 lockdowns)
+// mutate global objects between SSR and client init, React 19
+// escalates the resulting hydration mismatch to a fatal "client-side
+// exception" — which is what the founder kept seeing in his regular
+// Chrome profile even after hard refresh. Skipping SSR entirely for
+// these two islands removes the mismatch surface completely.
 
-import dynamic from "next/dynamic";
-import type { ThreadItem } from "./DiscussionsSidebar";
-
-const DiscussionsSidebar = dynamic(
-  () => import("./DiscussionsSidebar").then((m) => m.DiscussionsSidebar),
-  { ssr: false },
-);
-
-const LiveCountersStrip = dynamic(
-  () => import("./LiveCounters").then((m) => m.LiveCountersStrip),
-  { ssr: false },
-);
+import { useEffect, useState } from "react";
+import { DiscussionsSidebar, type ThreadItem } from "./DiscussionsSidebar";
+import { LiveCountersStrip } from "./LiveCounters";
 
 interface StripLabels {
   preparingNow: string;
@@ -62,7 +52,17 @@ interface SidebarLabels {
   liveTodaysMocks: string;
 }
 
+function useMounted(): boolean {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  return mounted;
+}
+
 export function HomeLiveCountersStrip({ labels }: { labels: StripLabels }) {
+  const mounted = useMounted();
+  if (!mounted) return null;
   return <LiveCountersStrip labels={labels} />;
 }
 
@@ -75,5 +75,7 @@ export function HomeDiscussionsSidebar({
   signedIn: boolean;
   labels: SidebarLabels;
 }) {
+  const mounted = useMounted();
+  if (!mounted) return null;
   return <DiscussionsSidebar initial={initial} signedIn={signedIn} labels={labels} />;
 }
