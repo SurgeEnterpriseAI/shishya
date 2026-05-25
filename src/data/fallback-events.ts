@@ -82,7 +82,13 @@ export function getFallbackEvents(): UpcomingEvent[] {
   return RAW
     .filter((r) => {
       const t = new Date(`${r.date}T00:00:00.000Z`).getTime();
-      return t >= back && t <= horizon;
+      if (t > horizon || t < back) return false;
+      // Same rule as the live loader: future events of any kind are
+      // kept; past events only if they're exam-day rows (so we can
+      // surface a 📊 Reactions chip). Past non-exam-day rows like
+      // "Admit card release on May 22" are noise once they're past.
+      if (t >= now) return true;
+      return !!r.isExamDay;
     })
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 30)

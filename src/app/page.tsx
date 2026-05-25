@@ -181,14 +181,28 @@ async function loadUpcomingEventsRaw(): Promise<UpcomingEvent[]> {
     // Prelims that ran today, JEE Mains that ran yesterday) stay on
     // the calendar with their "Reactions →" preview chip. Without
     // it, the moment an exam ends it falls off the rail entirely.
+    //
+    // BUT non-exam-day rows ("Application correction window closes",
+    // "Admit card release") are noise once they're past — they get
+    // filtered out below so the rail only shows: future events of
+    // any kind + past EXAM_DAY events still inside the REACTIONS
+    // window.
     const now = new Date();
     const from = new Date(now.getTime() - 3.5 * 86_400_000);
-    const rows = await prisma.examImportantDate.findMany({
+    const rowsRaw = await prisma.examImportantDate.findMany({
       where: { date: { gte: from }, exam: { active: true } },
       orderBy: { date: "asc" },
-      take: 30,
+      take: 60, // over-fetch — we filter past-non-exam-day rows below
       include: { exam: { select: { id: true, code: true, shortName: true } } },
     });
+    const rows = rowsRaw
+      .filter((r) => {
+        // Future events of any kind: keep
+        if (r.date.getTime() >= now.getTime()) return true;
+        // Past events: keep only if exam-day (so we can show REACTIONS chip)
+        return r.isExamDay;
+      })
+      .slice(0, 30);
 
     // For exam-day rows whose date falls in a phase window, attach
     // the matching ExamPhaseArticle's summarySnippet so the sidebar
@@ -507,11 +521,15 @@ function StepGoals({ exams }: { exams: ExamCard[] }) {
           Step 1 of 2
         </p>
         <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink-900 sm:text-5xl">
-          What are you preparing for?
+          Pick your exam. We do the rest.
         </h1>
         <p className="mt-4 text-base text-ink-600 sm:text-lg">
-          Tap a goal — we&apos;ll show you the national-level options and your
-          state&apos;s options next.
+          Take mocks → Shishya spots your weak areas → serves adaptive
+          practice that targets them. Plus cutoffs, news and last-minute
+          checklists for every exam.{" "}
+          <span className="font-medium text-ink-800">
+            Bet yours is covered.
+          </span>
         </p>
       </div>
 
