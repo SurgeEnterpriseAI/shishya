@@ -229,8 +229,14 @@ async function loadUpcomingEventsRaw(): Promise<UpcomingEvent[]> {
       };
     });
   } catch (err) {
-    console.error("[shishya/loadUpcomingEvents] DB query failed:", err);
-    return [];
+    // Fall back to the static next-6-months list so the left rail
+    // never shows "No upcoming dates announced." just because Vercel
+    // couldn't reach Neon for a few seconds. The static list is
+    // sourced from each exam body's official notification — same
+    // policy as the live data — so it's accurate, just less fresh.
+    console.error("[shishya/loadUpcomingEvents] DB query failed, using fallback:", err);
+    const { getFallbackEvents } = await import("@/data/fallback-events");
+    return getFallbackEvents();
   }
 }
 // v3 — busts the v2 cache so the new phaseSnippet field starts
