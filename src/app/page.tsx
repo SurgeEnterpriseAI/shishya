@@ -578,7 +578,29 @@ function StepGoals({
           the full ~165-exam list passed from the server. */}
       <HomeSearch exams={exams} />
 
-      <p className="mt-10 text-center text-xs font-semibold uppercase tracking-wider text-ink-500">
+      {/* ── Curated category sections (browse by topic) ──────────
+          Visitors who don't know an exact exam but think in
+          categories ("show me popular government jobs", "what are
+          the engineering entrances"). Promoted above the goal-card
+          funnel because top-of-funnel scanning works better than
+          choose-a-goal commitment for most first-time visitors. */}
+      {featuredSections.length > 0 && (
+        <div className="mt-12 space-y-10">
+          <p className="text-center text-xs font-semibold uppercase tracking-wider text-ink-500">
+            Or browse by category
+          </p>
+          {featuredSections.map((section) => (
+            <CategorySection key={section.id} section={section} />
+          ))}
+        </div>
+      )}
+
+      {/* ── Goal-card funnel (commit to a goal → narrow down) ────
+          For visitors who DO want guided narrowing — pick a goal,
+          then national/state, then specific exam. Lives below the
+          search + categories so the page leads with low-commitment
+          scanning and offers the funnel as the deeper path. */}
+      <p className="mt-16 text-center text-xs font-semibold uppercase tracking-wider text-ink-500">
         Or pick a goal
       </p>
 
@@ -612,23 +634,6 @@ function StepGoals({
           );
         })}
       </ul>
-
-      {/* ── Curated category sections ────────────────────────────
-          Third entry-point for visitors who don't know exactly
-          which exam they want but think in categories ("show me
-          popular government jobs", "what are the engineering
-          entrances"). Each section shows top 6 by candidate volume
-          with a "See all →" link to the goal-page if available. */}
-      {featuredSections.length > 0 && (
-        <div className="mt-16 space-y-10">
-          <p className="text-center text-xs font-semibold uppercase tracking-wider text-ink-500">
-            Or browse by category
-          </p>
-          {featuredSections.map((section) => (
-            <CategorySection key={section.id} section={section} />
-          ))}
-        </div>
-      )}
 
       {/* ── 6 feature cards: "what we actually do" ───────────────
           Surfaces the platform's flows in plain language so
