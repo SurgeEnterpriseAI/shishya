@@ -16,6 +16,7 @@
 import Link from "next/link";
 import { BackLink } from "./BackLink";
 import { HeaderAuthControls } from "./HeaderAuthControls";
+import { getDailyQuote } from "@/data/motivational-quotes";
 
 // English labels for the auth-aware right rail. We keep this static so
 // the page including Header can remain statically renderable. The
@@ -37,6 +38,12 @@ const RAIL_LABELS = {
 const DEFAULT_LOCALE = "en";
 
 export function Header({ admin = false }: { admin?: boolean }) {
+  // Daily-rotating motivational quote shown in the empty middle space
+  // of the header. Picked deterministically by IST calendar day so
+  // every visitor sees the same quote within a day, swaps at midnight.
+  // Skip on admin pages — too playful for an admin chrome.
+  const quote = admin ? null : getDailyQuote();
+
   return (
     <header className="border-b border-ink-200/50 bg-white/80 backdrop-blur">
       <div className="container-prose flex h-16 items-center gap-3">
@@ -56,12 +63,23 @@ export function Header({ admin = false }: { admin?: boolean }) {
           <BackLink />
         </div>
 
-        {/* No middle nav. The homepage at / IS the exam discovery
-            surface (guided funnel) — every header click should either
-            return home (via the logo) or progress the user into the
-            funnel/dashboard. The schooling / careers / colleges /
-            scholarships routes stay live at their URLs but are not
-            promoted here until Shishya hits its traction milestone. */}
+        {/* Middle: today's quote. Hidden on small screens (the header
+            shrinks to logo + sign-in on mobile so the quote would
+            squeeze the brand). Visible from md upward.
+            truncate + max-width keep it from pushing the right rail
+            off-screen on medium viewports — full text on lg+. */}
+        {quote && (
+          <p
+            className="ml-4 hidden flex-1 truncate text-center text-xs italic text-ink-500 md:block lg:text-sm"
+            title={quote.author ? `${quote.text} — ${quote.author}` : quote.text}
+          >
+            <span className="mr-1.5 text-saffron-500" aria-hidden>✦</span>
+            <span className="font-medium text-ink-700">{quote.text}</span>
+            {quote.author && (
+              <span className="ml-2 text-ink-400">— {quote.author}</span>
+            )}
+          </p>
+        )}
 
         {/* Right: language switcher + auth controls (client component). */}
         <nav className="ml-auto flex shrink-0 items-center gap-3 text-sm text-ink-700">
