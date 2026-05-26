@@ -41,6 +41,8 @@ import { computeExamTags } from "@/lib/exam-tags";
 import { DiscussionsSidebar, type ThreadItem } from "@/components/DiscussionsSidebar";
 import { LiveCountersStrip } from "@/components/LiveCounters";
 import { HomeSearch } from "@/components/HomeSearch";
+import { HomeFeatureCards } from "@/components/HomeFeatureCards";
+import { HomeChatRouter } from "@/components/HomeChatRouter";
 import { UpcomingExamsSidebar, type UpcomingEvent } from "@/components/UpcomingExamsSidebar";
 import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
 import { resolvePhase } from "@/lib/exam-phase";
@@ -354,11 +356,19 @@ export default async function ExamsPage({
         }}
       />
 
+      {/* Floating chat-router: bottom-left FAB that asks "What are you
+          looking for?" and POSTs the answer to /api/chat-route. Claude
+          interprets intent and the modal navigates to the right page
+          (or surfaces a manual button on low-confidence matches). The
+          right-side bottom corner is already owned by the Discussions
+          FAB, hence we anchor this one left. */}
+      <HomeChatRouter />
+
       <div className="lg:pl-80 lg:pr-80">
         <section className="container-prose pt-10 pb-20 sm:pt-14">
           <Breadcrumbs goal={goal} scope={effectiveScope} stateCode={stateCode} />
 
-          {step === "goals" && <StepGoals exams={exams} t={t} />}
+          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} />}
           {step === "scope" && goal && (
             <StepScope
               goal={goal}
@@ -511,9 +521,11 @@ function MobileInlineRails({
 function StepGoals({
   exams,
   t,
+  signedIn,
 }: {
   exams: ExamCard[];
   t: (key: SectionTitleKey) => string;
+  signedIn: boolean;
 }) {
   // Per-goal exam count for the tile sub-label (e.g. "32 exams").
   // We compute it here rather than in the data file so it stays
@@ -614,6 +626,14 @@ function StepGoals({
           ))}
         </div>
       )}
+
+      {/* ── 6 feature cards: "what we actually do" ───────────────
+          Surfaces the platform's flows in plain language so
+          visitors who scrolled past the funnel see HOW Shishya
+          helps, not just WHAT it asks for. Each card is a Link
+          into the dashboard / signed-out users get bounced
+          through /login first. */}
+      <HomeFeatureCards signedIn={signedIn} />
     </div>
   );
 }
