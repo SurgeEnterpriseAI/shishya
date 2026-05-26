@@ -1,0 +1,62 @@
+# Every 8 hours, ping the cron endpoints that refresh time-sensitive
+# content on shishya.in:
+#   - /api/cron/refresh-phase-articles  (Reddit + RSS → Claude →
+#                                        per-exam phase articles)
+#   - /api/cron/refresh-discussions     (Claude → 6-8 sample threads
+#                                        for the top upcoming exam)
+#
+# Why GitHub Actions instead of Vercel Cron:
+# Vercel's Hobby tier allows ONE daily run per cron. The 8-hour
+# cadence (3x/day) is a Pro-tier feature ($20/mo). GitHub Actions'
+# free tier gives us 2,000 minutes/month of compute; this workflow
+# uses about 1 minute/run × 90 runs/month = 90 min. Negligible.
+#
+# Authentication: each call sends `Authorization: Bearer ${CRON_SECRET}`
+# matching the same secret Vercel uses. Stored as a repository secret
+# in GitHub Settings → Secrets and variables → Actions.
+
+name: Refresh portal (every 8h)
+
+on:
+  schedule:
+    # 01:30, 09:30, 17:30 UTC = 07:00, 15:00, 23:00 IST.
+    # Picked so the first run lands just before the morning
+    # browse-and-prep window; second covers afternoon; third
+    # captures evening / post-exam-day discussion.
+    - cron: "30 1,9,17 * * *"
+  # Manual fire-button on the Actions tab for ad-hoc refreshes.
+  workflow_dispatch:
+
+# Don't let two scheduled runs pile up if a previous one is still
+# in flight — the cron endpoints are idempotent so cancelling the
+# older one is safe.
+concurrency:
+  group: refresh-portal
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Refresh phase articles (Reddit/RSS → Claude → articles)
+        run: |
+          echo "Calling refresh-phase-articles at $(date -u)…"
+          curl --max-time 300 --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "https://shishya.in/api/cron/refresh-phase-articles" \
+            | head -c 4000
+          echo ""
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+
+      - name: Refresh seed discussions (Claude → sample threads)
+        run: |
+          echo "Calling refresh-discussions at $(date -u)…"
+          curl --max-time 90 --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "https://shishya.in/api/cron/refresh-discussions" \
+            | head -c 4000
+          echo ""
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

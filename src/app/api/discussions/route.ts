@@ -42,6 +42,7 @@ export async function GET(req: Request) {
         messageCount: d.messageCount,
         pinned: d.pinned,
         locked: d.locked,
+        isSeed: d.isSeed,
         createdAt: d.createdAt.toISOString(),
         lastActivityAt: d.lastActivityAt.toISOString(),
       })),

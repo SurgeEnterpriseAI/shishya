@@ -20,6 +20,10 @@ export interface ThreadItem {
   messageCount: number;
   pinned: boolean;
   lastActivityAt: string;
+  /** When true, this thread is AI-seeded sample content for the
+   *  top-upcoming exam. Render with a "sample" tag so visitors know
+   *  it's a starter conversation, not a real student post. */
+  isSeed?: boolean;
 }
 
 interface Labels {
@@ -309,6 +313,11 @@ function ThreadList({
                 {t.examShort && (
                   <span className="mr-1.5 rounded bg-ink-100 px-1 py-0.5 text-[10px] font-medium text-ink-600">
                     {t.examShort}
+                  </span>
+                )}
+                {t.isSeed && (
+                  <span className="mr-1.5 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-medium text-amber-800" title="Sample thread to start the conversation — not a real student post yet.">
+                    sample
                   </span>
                 )}
                 <span className="font-medium text-ink-700">

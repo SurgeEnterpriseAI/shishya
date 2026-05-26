@@ -166,15 +166,18 @@ async function loadInitialThreadsRaw(): Promise<ThreadItem[]> {
       messageCount: r.messageCount,
       pinned: r.pinned,
       lastActivityAt: r.lastActivityAt.toISOString(),
+      isSeed: r.isSeed,
     }));
   } catch (err) {
     console.error("[shishya/loadInitialThreads] DB query failed:", err);
     return [];
   }
 }
+// v3 cache key — busts the v2 cache so the new isSeed field flows
+// through to the sidebar immediately on next deploy.
 const loadInitialThreads = unstable_cache(
   loadInitialThreadsRaw,
-  ["home-discussions-v2"],
+  ["home-discussions-v3"],
   { revalidate: 60, tags: ["discussions"] },
 );
 
