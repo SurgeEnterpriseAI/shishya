@@ -29,7 +29,9 @@
     "@anthropic-ai/sdk": "^0.40.0",
     "@auth/prisma-adapter": "^2.7.4",
     "@prisma/client": "^5.22.0",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
+    "jose": "^6.2.3",
     "marked": "^14.1.4",
     "next": "^15.1.6",
     "next-auth": "^4.24.10",
@@ -40,6 +42,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.9.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

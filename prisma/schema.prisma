@@ -94,6 +94,7 @@ model User {
   credentials     UserCredential[]    @relation("UserCredentials")
   vouches         CredentialVouch[]   @relation("UserVouches")
   notifications   Notification[]      @relation("UserNotifications")
+  batchEnrollments BatchEnrollment[]
 
   @@index([email])
   @@index([badgeLevel])
@@ -1228,4 +1229,175 @@ enum NotificationType {
 
   // Misc
   ADMIN_MESSAGE              // free-form admin-issued notification
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// PHASE 2: INSTITUTIONS
+//
+// Coaching centers + training providers who want to list their services
+// on Shishya and manage their own student cohorts. Auth is intentionally
+// separate from the student User table — institutions sign in with email
+// + password (bcrypt-hashed), get a JWT cookie, and operate via /i/*
+// surfaces. Students stay on Google OAuth.
+//
+// Relationship shape:
+//   Institution
+//     ├── InstitutionUser[]       (admins / teachers — email+password)
+//     ├── Course[]
+//     │     └── Batch[]
+//     │           └── BatchEnrollment[] → User (student)
+//     └── InstitutionReview[] (by Users — students)
+// ─────────────────────────────────────────────────────────────────────────
+
+model Institution {
+  id           String   @id @default(cuid())
+  // URL-safe slug for /institutions/<slug>. Auto-generated from name
+  // at creation, immutable after.
+  slug         String   @unique
+  name         String
+  // 1-line marketing pitch shown under the name on the profile.
+  tagline      String?
+  description  String?  @db.Text
+  logoUrl      String?
+  websiteUrl   String?
+  // Primary contact (shown publicly on profile). Used for inbound
+  // student enquiries — not for auth (that lives on InstitutionUser).
+  contactEmail String
+  contactPhone String?
+  // Location for "coaching near me" filters. India-only for v1.
+  city         String?
+  // ISO 2-letter state code matching INDIAN_STATES in src/lib/states.
+  state        String?
+  // ["ONLINE", "OFFLINE", "HYBRID"] — postgres String[] array.
+  modes        String[] @default([])
+  // Exam codes this institution coaches for. Cross-references Exam.code.
+  examCodes    String[] @default([])
+  // Public discoverability. We default to TRUE because the model is
+  // fully self-service + free — institutions list themselves, they want
+  // visibility. Set to false to soft-hide (e.g. spammy listing).
+  active       Boolean  @default(true)
+  // True once Shishya admin manually verifies the institution exists.
+  // Public profile shows a "Pending verification" badge while false,
+  // a green ✓ once true. v1 self-service: defaults to false, admin
+  // promotes later.
+  verified     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  admins   InstitutionUser[]
+  courses  Course[]
+  reviews  InstitutionReview[]
+
+  @@index([slug])
+  @@index([state])
+  @@index([active, verified])
+}
+
+model InstitutionUser {
+  id            String   @id @default(cuid())
+  institutionId String
+  email         String   @unique
+  // bcrypt hash with cost 12. Never exposed in any API response.
+  passwordHash  String
+  name          String
+  role          InstitutionRole @default(ADMIN)
+  // Session-revocation token — bumped on logout-everywhere or password
+  // change. JWT-issued sessions check this matches before granting
+  // access, so a leaked cookie can be invalidated server-side.
+  sessionEpoch  Int      @default(0)
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([institutionId])
+}
+
+enum InstitutionRole {
+  ADMIN     // can edit institution profile + manage all batches
+  TEACHER   // can manage batches assigned to them (v2 — schema-ready)
+}
+
+model Course {
+  id            String   @id @default(cuid())
+  institutionId String
+  // Optional link to an Exam (e.g. SSC_CGL). When set, the course
+  // shows up on the per-exam page's "coaching centers" section.
+  examCode      String?
+  name          String   // e.g. "SSC CGL Foundation 2026"
+  description   String?  @db.Text
+  durationWeeks Int?
+  // Fees in INR rupees. Null = "contact us". Stored as integer to
+  // avoid floating-point pricing bugs.
+  feesInr       Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  batches     Batch[]
+
+  @@index([institutionId])
+  @@index([examCode])
+}
+
+model Batch {
+  id          String    @id @default(cuid())
+  courseId    String
+  name        String    // e.g. "Morning batch — Aug 2026"
+  startDate   DateTime?
+  endDate     DateTime?
+  // "ONLINE" | "OFFLINE" | "HYBRID" — same set as Institution.modes.
+  mode        String    @default("ONLINE")
+  // Shareable invite link suffix. Goes in /join/<inviteCode>. cuid
+  // gives us collision-free unguessable codes without needing crypto.
+  inviteCode  String    @unique @default(cuid())
+  // Optional cap on how many students can enroll. Null = unlimited.
+  capacity    Int?
+  // Soft-archive (so old batches stay queryable for outcomes/results
+  // but don't surface in the active student-add UI).
+  archived    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  course      Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrollments BatchEnrollment[]
+
+  @@index([courseId])
+  @@index([inviteCode])
+}
+
+model BatchEnrollment {
+  id         String   @id @default(cuid())
+  batchId    String
+  userId     String
+  enrolledAt DateTime @default(now())
+  // "ACTIVE" | "LEFT" | "COMPLETED"
+  status     String   @default("ACTIVE")
+
+  batch Batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One enrollment per (batch, user) — re-clicking the invite link
+  // doesn't duplicate; the API just bumps status back to ACTIVE.
+  @@unique([batchId, userId])
+  @@index([userId])
+}
+
+model InstitutionReview {
+  id            String   @id @default(cuid())
+  institutionId String
+  userId        String
+  // 1-5 stars.
+  rating        Int
+  body          String   @db.Text
+  // Moderation: visible publicly only when status = APPROVED.
+  status        String   @default("PENDING")  // PENDING | APPROVED | REJECTED
+  createdAt     DateTime @default(now())
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@unique([institutionId, userId])
+  @@index([institutionId, status])
 }
