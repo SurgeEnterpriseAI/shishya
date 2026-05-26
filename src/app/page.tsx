@@ -40,7 +40,9 @@ import type { ExamCard } from "@/components/ExamPicker";
 import { computeExamTags } from "@/lib/exam-tags";
 import { DiscussionsSidebar, type ThreadItem } from "@/components/DiscussionsSidebar";
 import { LiveCountersStrip } from "@/components/LiveCounters";
+import { HomeSearch } from "@/components/HomeSearch";
 import { UpcomingExamsSidebar, type UpcomingEvent } from "@/components/UpcomingExamsSidebar";
+import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
 import { resolvePhase } from "@/lib/exam-phase";
 import { EXAM_GOALS, findGoal, matchesGoal, type ExamGoal } from "@/data/exam-goals";
 import { INDIAN_STATES } from "@/lib/states";
@@ -356,7 +358,7 @@ export default async function ExamsPage({
         <section className="container-prose pt-10 pb-20 sm:pt-14">
           <Breadcrumbs goal={goal} scope={effectiveScope} stateCode={stateCode} />
 
-          {step === "goals" && <StepGoals exams={exams} />}
+          {step === "goals" && <StepGoals exams={exams} t={t} />}
           {step === "scope" && goal && (
             <StepScope
               goal={goal}
@@ -506,12 +508,34 @@ function MobileInlineRails({
 // ─────────────────────────────────────────────────────────────────────
 // Step 1 — Goal picker (the landing state).
 // ─────────────────────────────────────────────────────────────────────
-function StepGoals({ exams }: { exams: ExamCard[] }) {
+function StepGoals({
+  exams,
+  t,
+}: {
+  exams: ExamCard[];
+  t: (key: SectionTitleKey) => string;
+}) {
   // Per-goal exam count for the tile sub-label (e.g. "32 exams").
   // We compute it here rather than in the data file so it stays
   // accurate as exams are added/removed from the DB.
   const countFor = (goal: ExamGoal) =>
     exams.filter((e) => matchesGoal(e.tags as ExamTag[], goal)).length;
+
+  // Curated category sections rendered under the goal cards. We pull
+  // 4 high-signal sections from the full set buildCuratedSections
+  // would normally return — keeps the page focused while still giving
+  // visitors who think "I want a popular government job" / "show me
+  // banking exams" a one-tap entry that bypasses the goal funnel.
+  const sectionPriority: SectionTitleKey[] = [
+    "land.section.popular",
+    "land.section.govt",
+    "land.section.engineering",
+    "land.section.banking",
+  ];
+  const allSections = buildCuratedSections(exams, t);
+  const featuredSections = sectionPriority
+    .map((key) => allSections.find((s) => t(key) === s.title))
+    .filter((s): s is NonNullable<typeof s> => s !== undefined);
 
   return (
     <div>
@@ -533,7 +557,17 @@ function StepGoals({ exams }: { exams: ExamCard[] }) {
         </p>
       </div>
 
-      <ul className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* ── Search-by-name (highest-intent entry) ─────────────────
+          Visitors who already know "I want SSC CGL" skip the funnel
+          entirely. Search-as-you-type, client-side filter against
+          the full ~165-exam list passed from the server. */}
+      <HomeSearch exams={exams} />
+
+      <p className="mt-10 text-center text-xs font-semibold uppercase tracking-wider text-ink-500">
+        Or pick a goal
+      </p>
+
+      <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {EXAM_GOALS.map((goal) => {
           const count = countFor(goal);
           return (
@@ -564,8 +598,73 @@ function StepGoals({ exams }: { exams: ExamCard[] }) {
         })}
       </ul>
 
+      {/* ── Curated category sections ────────────────────────────
+          Third entry-point for visitors who don't know exactly
+          which exam they want but think in categories ("show me
+          popular government jobs", "what are the engineering
+          entrances"). Each section shows top 6 by candidate volume
+          with a "See all →" link to the goal-page if available. */}
+      {featuredSections.length > 0 && (
+        <div className="mt-16 space-y-10">
+          <p className="text-center text-xs font-semibold uppercase tracking-wider text-ink-500">
+            Or browse by category
+          </p>
+          {featuredSections.map((section) => (
+            <CategorySection key={section.id} section={section} />
+          ))}
+        </div>
+      )}
     </div>
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Single curated category section (e.g. "Popular exams", "Banking").
+// Renders top N exams in a responsive grid of compact cards.
+// ─────────────────────────────────────────────────────────────────────
+function CategorySection({
+  section,
+}: {
+  section: { id: string; title: string; exams: ExamCard[]; totalCount: number };
+}) {
+  return (
+    <section>
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-base font-semibold text-ink-900">{section.title}</h3>
+        {section.totalCount > section.exams.length && (
+          <span className="text-xs text-ink-500">
+            Showing {section.exams.length} of {section.totalCount}
+          </span>
+        )}
+      </div>
+      <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+        {section.exams.map((e) => (
+          <li key={e.code}>
+            <Link
+              href={`/exams/${e.code}`}
+              prefetch={false}
+              className="block rounded-lg border border-ink-200 bg-white px-3 py-2.5 transition-colors hover:border-saffron-400 hover:bg-saffron-50/40"
+            >
+              <p className="truncate text-sm font-semibold text-ink-900">
+                {e.shortName}
+              </p>
+              {e.candidatesPerYear && e.candidatesPerYear > 0 && (
+                <p className="mt-0.5 text-[11px] text-ink-500">
+                  {formatCandidateCount(e.candidatesPerYear)} / year
+                </p>
+              )}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function formatCandidateCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`;
+  if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+  return n.toLocaleString("en-IN");
 }
 
 // ─────────────────────────────────────────────────────────────────────
