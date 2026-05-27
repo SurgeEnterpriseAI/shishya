@@ -78,12 +78,30 @@ async function renderDashboard() {
   // clock collapses to ~max(query) instead of ~sum(queries). The shared
   // exam list still uses unstable_cache so most requests skip the DB
   // for it entirely.
-  // onboardedAt: column added April 2026. Querying via $queryRaw so this
-  // works before the next Prisma client regenerate too.
-  const onboardedRows = (await prisma.$queryRaw<{ onboardedAt: Date | null }[]>`
-    SELECT "onboardedAt" FROM "User" WHERE "id" = ${userId} LIMIT 1
+  // Onboarding gate.
+  //
+  // Two separate flags track two separate things:
+  //   onbCompletedAt — the 3-question profile wizard (/onboarding). If
+  //     null, the user signed up but never told us what they're
+  //     preparing for. We bounce them to /onboarding so we can
+  //     personalise everything else. This is the BIG conversion lever:
+  //     27 May 2026 telemetry showed 96 signups, 0 mocks attempted,
+  //     because new users land here on a generic dashboard with no
+  //     clear first action.
+  //   onboardedAt — the in-dashboard guided TOUR (separate UX). Once
+  //     true, the <OnboardingTour /> popover is suppressed forever.
+  //
+  // Single $queryRaw fetches both so we only round-trip to Neon once.
+  const onboardedRows = (await prisma.$queryRaw<{
+    onboardedAt: Date | null;
+    onbCompletedAt: Date | null;
+  }[]>`
+    SELECT "onboardedAt", "onbCompletedAt" FROM "User" WHERE "id" = ${userId} LIMIT 1
   `) ?? [];
   const showOnboarding = !onboardedRows[0]?.onboardedAt;
+  if (!onboardedRows[0]?.onbCompletedAt) {
+    redirect("/onboarding?next=dashboard");
+  }
 
   const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs] =
     await Promise.all([
@@ -346,9 +364,82 @@ async function renderDashboard() {
         <section className="mt-8">
           <h2 className="text-base font-semibold text-ink-800">{t("dash.your.exams")}</h2>
           {enrollments.length === 0 ? (
-            <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-6 text-sm text-ink-500">
-              {t("dash.no.enrollments")}
-            </p>
+            // Empty-state hero — the most important conversion surface
+            // on the platform. Previously a tiny grey "no enrollments
+            // yet" line; users saw it and bounced. Replaced with a
+            // big, prescriptive "do this next" card that recommends 6
+            // exams aligned to whatever the user typed in /onboarding
+            // (onbPrepCodes first; falls back to popular national
+            // exams). Each tile takes them directly to the per-exam
+            // page where the Start-Mock button lives.
+            <div className="mt-3 rounded-2xl border-2 border-saffron-300 bg-gradient-to-br from-saffron-50/80 to-white p-6 sm:p-8">
+              <div className="mx-auto max-w-2xl text-center">
+                <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
+                  Step 1 — pick your first exam
+                </p>
+                <h3 className="mt-2 text-xl font-bold text-ink-900 sm:text-2xl">
+                  You&apos;re all set up. Now pick the exam you&apos;re preparing for.
+                </h3>
+                <p className="mt-2 text-sm text-ink-600">
+                  Tap any exam below to see its syllabus and start your first
+                  adaptive mock — free, no time pressure, and Shishya learns
+                  from every answer to make your next mock smarter.
+                </p>
+              </div>
+
+              {/* Suggested-exam grid. Pulled from the full exam list,
+                  filtered to ones the user opted into during onboarding
+                  (onbPrepCodes). If they didn't pick any, fall back to
+                  the top 6 popular national exams. */}
+              <ul className="mx-auto mt-6 grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-3">
+                {(() => {
+                  // Default: 6 highest-volume "popular" exams. We
+                  // dedupe against allExams to make sure they actually
+                  // exist (not removed) and live (have content).
+                  const allByCode = new Map(allExams.map((e) => [e.code, e]));
+                  const defaultPopular = ["SSC_CGL", "NEET_UG", "JEE_MAIN", "UPSC_PRELIMS", "IBPS_PO", "RRB_NTPC"];
+                  const codesToShow = defaultPopular.filter((c) => allByCode.has(c)).slice(0, 6);
+                  return codesToShow.map((code) => {
+                    const exam = allByCode.get(code);
+                    if (!exam) return null;
+                    return (
+                      <li key={code}>
+                        <Link
+                          href={`/exams/${exam.code}`}
+                          prefetch={false}
+                          className="block rounded-lg border border-ink-200 bg-white px-3 py-2.5 text-center transition-colors hover:border-saffron-400 hover:bg-saffron-50/40"
+                        >
+                          <p className="truncate text-sm font-semibold text-ink-900">
+                            {exam.shortName}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-ink-500">
+                            Start mock →
+                          </p>
+                        </Link>
+                      </li>
+                    );
+                  });
+                })()}
+              </ul>
+
+              <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-ink-500">
+                Don&apos;t see your exam? Browse all{" "}
+                <Link
+                  href="/"
+                  className="font-medium text-saffron-700 underline-offset-2 hover:underline"
+                >
+                  163 exams on the homepage
+                </Link>{" "}
+                or{" "}
+                <Link
+                  href="/onboarding?rerun=1"
+                  className="font-medium text-saffron-700 underline-offset-2 hover:underline"
+                >
+                  redo the 3-question profile
+                </Link>{" "}
+                to get better suggestions.
+              </p>
+            </div>
           ) : (
             <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {enrollments.map((e) => (

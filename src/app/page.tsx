@@ -530,6 +530,12 @@ function StepGoals({
   t: (key: SectionTitleKey) => string;
   signedIn: boolean;
 }) {
+  // 27 May 2026 funnel telemetry — 96 signups, 0 mock attempts in
+  // last 24h. The page leads visitors into a goal funnel but never
+  // explicitly asks them to sign up + take their first mock. Banner
+  // below the hero fills that gap for signed-out visitors. It sits
+  // BETWEEN hero and search so visitors who don't want to commit
+  // still see search + cards immediately below.
   // Per-goal exam count for the tile sub-label (e.g. "32 exams").
   // We compute it here rather than in the data file so it stays
   // accurate as exams are added/removed from the DB.
@@ -571,6 +577,37 @@ function StepGoals({
           </span>
         </p>
       </div>
+
+      {/* ── Signed-out signup CTA banner ──────────────────────────
+          Visitors who scrolled past the hero see this; one tap →
+          /login → /onboarding → /dashboard with a recommended
+          first mock. Skipped for signed-in users (they don't need
+          a sign-up CTA, they need their dashboard). */}
+      {!signedIn && (
+        <div className="mx-auto mt-8 max-w-2xl rounded-2xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
+                ✦ Free · No credit card · 22 Indian languages
+              </p>
+              <p className="mt-1.5 text-base font-bold text-ink-900 sm:text-lg">
+                Sign up free → take your first adaptive mock
+              </p>
+              <p className="mt-1 text-sm text-ink-600">
+                Personalised practice in 60 seconds. We pick the 3-5 exams
+                that match your stage and serve mocks that target your weak
+                topics.
+              </p>
+            </div>
+            <Link
+              href="/login?callbackUrl=%2Fdashboard"
+              className="shrink-0 rounded-md bg-saffron-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300"
+            >
+              Sign up — start prepping →
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* ── Search-by-name (highest-intent entry) ─────────────────
           Visitors who already know "I want SSC CGL" skip the funnel

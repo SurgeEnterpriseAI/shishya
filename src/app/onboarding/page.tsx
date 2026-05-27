@@ -32,7 +32,7 @@ interface UserRow { onbCompletedAt: Date | null }
 
 export default async function OnboardingPage({
   searchParams,
-}: { searchParams: Promise<{ rerun?: string; p?: string }> }) {
+}: { searchParams: Promise<{ rerun?: string; p?: string; next?: string }> }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/onboarding");
 
@@ -42,14 +42,21 @@ export default async function OnboardingPage({
   // the homepage or a /for/[persona] CTA. Lets us pre-fill the wizard
   // and offer a 1-click confirm path.
   const persona = sp.p ? findPersona(sp.p) : undefined;
+  // ?next=dashboard arrives when the dashboard's onboarding gate
+  // bounced the user here. After finishing the wizard we send them
+  // straight back to /dashboard (where the new "Pick your first
+  // exam" hero is waiting), not to / (which would put them back
+  // through the funnel they already used).
+  const redirectAfter = sp.next === "dashboard" ? "/dashboard" : "/";
 
   // If already completed AND this isn't an explicit rerun, send them
-  // home. Re-running is opt-in via /me/settings.
+  // home (or to the requested next page). Re-running is opt-in via
+  // /me/settings.
   const userRows = await prisma.$queryRaw<UserRow[]>`
     SELECT "onbCompletedAt" FROM "User" WHERE "id" = ${session.user.id} LIMIT 1
   `;
   if (userRows[0]?.onbCompletedAt && !rerun) {
-    redirect("/");
+    redirect(redirectAfter);
   }
 
   // Load the catalogue of active exams so step 3 can search across them.
@@ -99,7 +106,7 @@ export default async function OnboardingPage({
           </p>
         )}
 
-        <OnboardingWizard exams={exams} prefill={prefill} />
+        <OnboardingWizard exams={exams} prefill={prefill} redirectAfter={redirectAfter} />
       </section>
     </main>
   );

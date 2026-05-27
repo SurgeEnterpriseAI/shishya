@@ -39,9 +39,17 @@ export interface PersonaPrefill {
 export function OnboardingWizard({
   exams,
   prefill,
+  redirectAfter = "/",
 }: {
   exams: ExamLite[];
   prefill?: PersonaPrefill | null;
+  /**
+   * Where to send the user once they finish the wizard. Defaults
+   * to "/" (the personalised homepage), but the /dashboard gate
+   * passes "/dashboard" so a fresh signup completes the loop
+   * straight into the "Pick your first exam" hero.
+   */
+  redirectAfter?: string;
 }) {
   const router = useRouter();
   const [stepIdx, setStepIdx] = useState(0);
@@ -121,7 +129,7 @@ export function OnboardingWizard({
         setError(data.error ?? `Save failed (${res.status})`);
         return;
       }
-      router.push("/");
+      router.push(redirectAfter);
       router.refresh();
     });
   }
@@ -135,7 +143,7 @@ export function OnboardingWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stage: "OTHER", state: "", prepCodes: [] }),
       });
-      router.push("/");
+      router.push(redirectAfter);
       router.refresh();
     });
   }
@@ -182,7 +190,7 @@ export function OnboardingWizard({
         setError(data.error ?? `Save failed (${res.status})`);
         return;
       }
-      router.push("/dashboard");
+      router.push(redirectAfter === "/" ? "/dashboard" : redirectAfter);
       router.refresh();
     });
   }
