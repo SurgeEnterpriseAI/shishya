@@ -43,6 +43,7 @@ import { LiveCountersStrip } from "@/components/LiveCounters";
 import { HomeSearch } from "@/components/HomeSearch";
 import { HomeFeatureCards } from "@/components/HomeFeatureCards";
 import { HomeChatRouter } from "@/components/HomeChatRouter";
+import { PageTour } from "@/components/PageTour";
 import { UpcomingExamsSidebar, type UpcomingEvent } from "@/components/UpcomingExamsSidebar";
 import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
 import { resolvePhase } from "@/lib/exam-phase";
@@ -367,6 +368,58 @@ export default async function ExamsPage({
           FAB, hence we anchor this one left. */}
       <HomeChatRouter />
 
+      {/* First-visit coach-mark tour — only Step 1 (goals picker)
+          gets a guided walk. Deeper funnel steps don't need one
+          since the visitor has already committed to a path. */}
+      {step === "goals" && (
+        <PageTour
+          tourId="home-v1"
+          steps={[
+            {
+              key: "welcome",
+              icon: "👋",
+              title: "Welcome to Shishya",
+              body: "30 seconds to find your exam. Let me show you the 3 ways to get there — search, browse, or describe what you want.",
+            },
+            {
+              key: "search",
+              anchor: "home-search",
+              title: "Already know your exam? Just type it",
+              body: "Try 'SSC CGL' or 'NEET' or 'मेरी UPSC' — search-as-you-type, picks straight to the exam.",
+              icon: "🔍",
+            },
+            {
+              key: "categories",
+              anchor: "home-categories",
+              title: "Or browse by category",
+              body: "Most popular this week · Government jobs · Engineering · Banking. Tap any exam to open it.",
+              icon: "📚",
+            },
+            {
+              key: "goals",
+              anchor: "home-goals",
+              title: "Or pick a goal",
+              body: "If you only know broadly — 'I want a banking job', 'I'm prepping medical' — pick a tile and we'll narrow down national vs your state.",
+              icon: "🎯",
+            },
+            {
+              key: "chat",
+              anchor: "home-chat-fab",
+              placement: "top",
+              title: "Or just describe it",
+              body: "Stuck? Tap 'What are you looking for?' bottom-left. Type in any language — Claude reads your intent and takes you to the right page.",
+              icon: "🤖",
+            },
+            {
+              key: "done",
+              icon: "✓",
+              title: "That's it. You're set",
+              body: "Pick any path above. Every action is free. We track your weak areas as you take mocks and serve adaptive practice that targets them.",
+            },
+          ]}
+        />
+      )}
+
       <div className="lg:pl-80 lg:pr-80">
         <section className="container-prose pt-10 pb-20 sm:pt-14">
           <Breadcrumbs goal={goal} scope={effectiveScope} stateCode={stateCode} />
@@ -613,7 +666,9 @@ function StepGoals({
           Visitors who already know "I want SSC CGL" skip the funnel
           entirely. Search-as-you-type, client-side filter against
           the full ~165-exam list passed from the server. */}
-      <HomeSearch exams={exams} />
+      <div data-tour="home-search">
+        <HomeSearch exams={exams} />
+      </div>
 
       {/* ── Curated category sections (browse by topic) ──────────
           Visitors who don't know an exact exam but think in
@@ -622,7 +677,7 @@ function StepGoals({
           funnel because top-of-funnel scanning works better than
           choose-a-goal commitment for most first-time visitors. */}
       {featuredSections.length > 0 && (
-        <div className="mt-12 space-y-10">
+        <div data-tour="home-categories" className="mt-12 space-y-10">
           <p className="text-center text-xs font-semibold uppercase tracking-wider text-ink-500">
             Or browse by category
           </p>
@@ -641,7 +696,7 @@ function StepGoals({
         Or pick a goal
       </p>
 
-      <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul data-tour="home-goals" className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {EXAM_GOALS.map((goal) => {
           const count = countFor(goal);
           return (

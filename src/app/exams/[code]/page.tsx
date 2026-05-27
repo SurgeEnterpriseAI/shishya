@@ -17,6 +17,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getExamShared } from "@/lib/db/exam-cache";
 import { getT } from "@/lib/i18n-server";
 import { StartMockButton } from "./StartMockButton";
+import { PageTour } from "@/components/PageTour";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { computeScoreBoost } from "@/lib/focus-topics";
 import { ScholarshipsForExamSection } from "@/components/ScholarshipsForExamSection";
@@ -361,20 +362,23 @@ export default async function ExamPage({
               <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
                 <Link
                   href={`/chat?examCode=${exam.code}`}
+                  data-tour="exam-ask"
                   className="btn-secondary !py-2 !px-4 text-xs sm:text-sm"
                 >
                   {t("nav.tutor")}
                 </Link>
-                <StartMockButton
-                  examCode={exam.code}
-                  hasHistory={isEnrolled && recent.length > 0}
-                  labels={{
-                    adaptive: t("exam.cta.adaptive"),
-                    diagnostic: t("exam.cta.diagnostic"),
-                    firstDiagnostic: t("exam.cta.firstDiagnostic"),
-                    building: t("exam.cta.building"),
-                  }}
-                />
+                <span data-tour="exam-start-mock">
+                  <StartMockButton
+                    examCode={exam.code}
+                    hasHistory={isEnrolled && recent.length > 0}
+                    labels={{
+                      adaptive: t("exam.cta.adaptive"),
+                      diagnostic: t("exam.cta.diagnostic"),
+                      firstDiagnostic: t("exam.cta.firstDiagnostic"),
+                      building: t("exam.cta.building"),
+                    }}
+                  />
+                </span>
               </div>
             </div>
           )}
@@ -736,7 +740,7 @@ export default async function ExamPage({
         )}
 
         {/* Syllabus */}
-        <section id="syllabus" className="mt-10 scroll-mt-20">
+        <section id="syllabus" data-tour="exam-syllabus" className="mt-10 scroll-mt-20">
           <h2 className="text-base font-semibold text-ink-800">{t("exam.syllabus")}</h2>
           <p className="mt-1 text-xs text-ink-500">{t("exam.syllabus.clickHint")}</p>
           <div className="mt-4 space-y-6">
@@ -930,6 +934,53 @@ export default async function ExamPage({
 
         </div>{/* /lg:grid */}
       </section>
+
+      {/* First-visit coach-mark tour for the per-exam page. tourId is
+          shared across all per-exam pages (`exam-v1`) — once a user
+          has been guided through one exam's layout they don't need it
+          again on another exam (the layout is identical). Steps point
+          at the three primary actions: Start Mock, Ask Shishya, and
+          the syllabus block. */}
+      <PageTour
+        tourId="exam-v1"
+        steps={[
+          {
+            key: "exam-welcome",
+            icon: "👋",
+            title: `You're on ${exam.shortName}`,
+            body: "Three things matter here — start a mock, ask Shishya if you're stuck, or browse the syllabus. Let me show you each.",
+          },
+          {
+            key: "exam-start",
+            anchor: "exam-start-mock",
+            placement: "bottom",
+            icon: "🎯",
+            title: "Start an adaptive mock",
+            body: "Tap this to begin. The first attempt is a diagnostic — Shishya uses it to spot your weak topics. Every next mock targets those.",
+          },
+          {
+            key: "exam-ask",
+            anchor: "exam-ask",
+            placement: "bottom",
+            icon: "💬",
+            title: "Stuck on a topic? Ask Shishya",
+            body: "Free AI tutor that knows this exam's syllabus + your mock history. Answers in English, Hindi, or your language.",
+          },
+          {
+            key: "exam-syllabus",
+            anchor: "exam-syllabus",
+            icon: "📚",
+            title: "Browse the syllabus",
+            body: "Every topic is clickable — see PYQs, practice questions, and your mastery score per topic.",
+          },
+          {
+            key: "exam-done",
+            icon: "✓",
+            title: "Take your first mock now",
+            body: "Scroll back up and tap Start. 30 minutes, free, with full solutions after. Your weak topics get mapped automatically.",
+          },
+        ]}
+      />
     </main>
   );
 }
