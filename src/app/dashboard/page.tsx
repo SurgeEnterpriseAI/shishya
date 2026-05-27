@@ -92,14 +92,27 @@ async function renderDashboard() {
   //     true, the <OnboardingTour /> popover is suppressed forever.
   //
   // Single $queryRaw fetches both so we only round-trip to Neon once.
-  const onboardedRows = (await prisma.$queryRaw<{
-    onboardedAt: Date | null;
-    onbCompletedAt: Date | null;
-  }[]>`
-    SELECT "onboardedAt", "onbCompletedAt" FROM "User" WHERE "id" = ${userId} LIMIT 1
-  `) ?? [];
-  const showOnboarding = !onboardedRows[0]?.onboardedAt;
-  if (!onboardedRows[0]?.onbCompletedAt) {
+  // Wrapped in try/catch so a transient Neon outage doesn't crash the
+  // dashboard render — we default both flags to "completed" on failure,
+  // since blocking everyone behind onboarding when the DB hiccups is
+  // worse than the rare repeat-onboarding nag.
+  let onboardedAt: Date | null = null;
+  let onbCompletedAt: Date | null = null;
+  try {
+    const onboardedRows = await prisma.$queryRaw<{
+      onboardedAt: Date | null;
+      onbCompletedAt: Date | null;
+    }[]>`
+      SELECT "onboardedAt", "onbCompletedAt" FROM "User" WHERE "id" = ${userId} LIMIT 1
+    `;
+    onboardedAt = onboardedRows[0]?.onboardedAt ?? null;
+    onbCompletedAt = onboardedRows[0]?.onbCompletedAt ?? null;
+  } catch (err) {
+    console.error("[dashboard] onboarding-state query failed, treating as completed:", err);
+    onbCompletedAt = new Date();
+  }
+  const showOnboarding = !onboardedAt;
+  if (!onbCompletedAt) {
     redirect("/onboarding?next=dashboard");
   }
 

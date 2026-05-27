@@ -52,21 +52,57 @@ export default async function OnboardingPage({
   // If already completed AND this isn't an explicit rerun, send them
   // home (or to the requested next page). Re-running is opt-in via
   // /me/settings.
-  const userRows = await prisma.$queryRaw<UserRow[]>`
-    SELECT "onbCompletedAt" FROM "User" WHERE "id" = ${session.user.id} LIMIT 1
-  `;
-  if (userRows[0]?.onbCompletedAt && !rerun) {
+  //
+  // Both Prisma queries below are wrapped in try/catch with sensible
+  // fallbacks. Without this, a transient Vercel(iad1) ↔ Neon(Singapore)
+  // hiccup throws inside the page render → error.tsx fires → fresh
+  // signups see "Something didn't load right" instead of the wizard.
+  // The user query failing means we DON'T know if they've completed
+  // before, so we err on the side of showing the wizard again
+  // (mildly annoying for repeat users, but never blocks a signup).
+  let onbCompletedAt: Date | null = null;
+  try {
+    const userRows = await prisma.$queryRaw<UserRow[]>`
+      SELECT "onbCompletedAt" FROM "User" WHERE "id" = ${session.user.id} LIMIT 1
+    `;
+    onbCompletedAt = userRows[0]?.onbCompletedAt ?? null;
+  } catch (err) {
+    console.error("[onboarding] user lookup failed, defaulting to not-completed:", err);
+  }
+  if (onbCompletedAt && !rerun) {
     redirect(redirectAfter);
   }
 
   // Load the catalogue of active exams so step 3 can search across them.
-  const exams = await prisma.$queryRaw<ExamRow[]>`
-    SELECT "code", "shortName", "name", "category"::text AS category
-    FROM "Exam"
-    WHERE "active" = TRUE AND "category"::text != 'SCHOOL_BOARD'
-    ORDER BY "candidatesPerYear" DESC NULLS LAST, "code" ASC
-    LIMIT 100
-  `;
+  // Falls back to a small popular-exams list if the DB hiccups; better
+  // to show 6 exams than crash the whole signup funnel.
+  let exams: ExamRow[] = [];
+  try {
+    exams = await prisma.$queryRaw<ExamRow[]>`
+      SELECT "code", "shortName", "name", "category"::text AS category
+      FROM "Exam"
+      WHERE "active" = TRUE AND "category"::text != 'SCHOOL_BOARD'
+      ORDER BY "candidatesPerYear" DESC NULLS LAST, "code" ASC
+      LIMIT 100
+    `;
+  } catch (err) {
+    console.error("[onboarding] exam list failed, using fallback:", err);
+    exams = [
+      { code: "SSC_CGL",      shortName: "SSC CGL",      name: "SSC Combined Graduate Level",       category: "GOVT_JOBS" },
+      { code: "NEET_UG",      shortName: "NEET UG",      name: "NEET Undergraduate",                category: "MEDICAL" },
+      { code: "JEE_MAIN",     shortName: "JEE Main",     name: "Joint Entrance Examination — Main", category: "ENGINEERING" },
+      { code: "JEE_ADVANCED", shortName: "JEE Advanced", name: "JEE Advanced",                      category: "ENGINEERING" },
+      { code: "UPSC_PRELIMS", shortName: "UPSC Prelims", name: "UPSC Civil Services Preliminary",   category: "CIVIL_SERVICES" },
+      { code: "IBPS_PO",      shortName: "IBPS PO",      name: "IBPS Probationary Officer",         category: "BANKING" },
+      { code: "SBI_PO",       shortName: "SBI PO",       name: "SBI Probationary Officer",          category: "BANKING" },
+      { code: "RRB_NTPC",     shortName: "RRB NTPC",     name: "Railway Recruitment Board NTPC",    category: "GOVT_JOBS" },
+      { code: "CAT",          shortName: "CAT",          name: "Common Admission Test",             category: "MBA" },
+      { code: "GATE_CSE",     shortName: "GATE CSE",     name: "GATE — Computer Science",           category: "ENGINEERING" },
+      { code: "CTET",         shortName: "CTET",         name: "Central Teacher Eligibility Test",  category: "TEACHING" },
+      { code: "CLAT",         shortName: "CLAT",         name: "Common Law Admission Test",         category: "LAW" },
+      { code: "NDA",          shortName: "NDA",          name: "National Defence Academy",          category: "GOVT_JOBS" },
+    ];
+  }
 
   const prefill = persona
     ? {
