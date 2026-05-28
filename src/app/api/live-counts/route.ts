@@ -32,6 +32,8 @@ export async function GET() {
     // bridge any flash.
     return Response.json({
       uniqueVisitors: 0,
+      totalPageViews: 0,
+      pageViewsLast24h: 0,
       mocksAttempted: 0,
       totalSignups: 0,
       signupsLast7Days: 0,

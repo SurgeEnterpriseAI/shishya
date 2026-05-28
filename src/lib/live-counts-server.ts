@@ -28,6 +28,10 @@ export interface LiveCounts {
    *  Counts userId + anonId distinct values — anonymous sessions are
    *  cookie-tracked for 30 days. */
   uniqueVisitors: number;
+  /** Total PAGE_VIEW rows. "All-time pageviews" social-proof number. */
+  totalPageViews: number;
+  /** PAGE_VIEW rows in the last 24 h. Live "fresh traffic" signal. */
+  pageViewsLast24h: number;
   /** Total mock attempts ever started (any status). */
   mocksAttempted: number;
   /** Total signed-up users. */
@@ -51,6 +55,8 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
 
   const [
     uniqueVisitorsRows,
+    totalPageViews,
+    pageViewsLast24h,
     mocksAttempted,
     totalSignups,
     signupsLast7Days,
@@ -64,6 +70,13 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
       FROM "AnalyticsEvent"
       WHERE kind = 'PAGE_VIEW'
     `,
+    // Total PAGE_VIEW rows ever. Reads as "X pageviews so far" social
+    // proof — bigger number than uniqueVisitors so visually impressive.
+    prisma.analyticsEvent.count({ where: { kind: "PAGE_VIEW" } }),
+    // PAGE_VIEW rows in the last 24 h — live freshness signal.
+    prisma.analyticsEvent.count({
+      where: { kind: "PAGE_VIEW", createdAt: { gte: cutoff24h } },
+    }),
     prisma.attempt.count(),
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: cutoff7d } } }),
@@ -90,6 +103,8 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
 
   return {
     uniqueVisitors: Number(uniqueVisitorsRows[0]?.count ?? 0),
+    totalPageViews,
+    pageViewsLast24h,
     mocksAttempted,
     totalSignups,
     signupsLast7Days,

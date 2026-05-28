@@ -41,6 +41,8 @@ const TICK_MS = 30_000;
 // useEffect overlays the real /api/live-counts numbers ~200 ms in.
 const SSR_SAFE_INITIAL: LiveCounts = {
   uniqueVisitors: 370,
+  totalPageViews: 1525,
+  pageViewsLast24h: 81,
   mocksAttempted: 72,
   totalSignups: 98,
   signupsLast7Days: 14,
@@ -61,6 +63,8 @@ function useLiveCounts(): LiveCounts {
         if (cancelled) return;
         setCounts((prev) => ({
           uniqueVisitors: data.uniqueVisitors ?? prev.uniqueVisitors,
+          totalPageViews: data.totalPageViews ?? prev.totalPageViews,
+          pageViewsLast24h: data.pageViewsLast24h ?? prev.pageViewsLast24h,
           mocksAttempted: data.mocksAttempted ?? prev.mocksAttempted,
           totalSignups: data.totalSignups ?? prev.totalSignups,
           signupsLast7Days: data.signupsLast7Days ?? prev.signupsLast7Days,
@@ -94,37 +98,62 @@ function useLiveCounts(): LiveCounts {
  * Strip is sticky so the social proof persists as the visitor scrolls.
  */
 export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
-  const { uniqueVisitors, mocksAttempted, totalSignups, signupsLast7Days } =
-    useLiveCounts();
+  const {
+    uniqueVisitors,
+    totalPageViews,
+    pageViewsLast24h,
+    mocksAttempted,
+    totalSignups,
+    signupsLast7Days,
+  } = useLiveCounts();
+  // Six counters in one slim strip. Wraps cleanly on narrow viewports
+  // (flex-wrap) — desktop gets a single line, mobile gets 2-3 lines.
+  // The "· " separators only render at sm+ so phone wraps stay readable.
+  const items: Array<{ icon: string; value: number; label: string; pill?: string }> = [
+    { icon: "👁️", value: totalPageViews, label: "page views" },
+    { icon: "📈", value: pageViewsLast24h, label: "views in last 24h" },
+    { icon: "🧑", value: uniqueVisitors, label: "unique visitors" },
+    { icon: "📝", value: mocksAttempted, label: labels.inMockNow },
+    {
+      icon: "🎓",
+      value: totalSignups,
+      label: labels.totalEver,
+      pill: signupsLast7Days > 0 ? `+${signupsLast7Days} this week` : undefined,
+    },
+  ];
+
   return (
     <div className="sticky top-0 z-40 border-b border-emerald-200 bg-emerald-50/95 backdrop-blur-sm supports-[backdrop-filter]:bg-emerald-50/80 lg:mx-80">
-      <div className="container-prose flex flex-wrap items-center justify-center gap-x-4 gap-y-1 py-1.5 text-[11px] text-emerald-900 sm:gap-x-6 sm:py-2 sm:text-sm">
+      <div className="container-prose flex flex-wrap items-center justify-center gap-x-3 gap-y-1 py-1.5 text-[11px] text-emerald-900 sm:gap-x-5 sm:py-2 sm:text-sm">
+        {/* Lead with a live pulse so the strip reads as "real-time". */}
         <span className="inline-flex items-center gap-1.5 font-medium">
           <PingDot />
-          <span className="tabular-nums">{formatCount(uniqueVisitors)}</span>{" "}
-          {labels.preparingNow}
+          <span className="hidden text-[10px] uppercase tracking-wider text-emerald-700 sm:inline">
+            Live
+          </span>
         </span>
-        <span className="hidden text-emerald-300 sm:inline">·</span>
-        <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden>📝</span>
-          <span className="tabular-nums font-medium">
-            {formatCount(mocksAttempted)}
-          </span>{" "}
-          {labels.inMockNow}
-        </span>
-        <span className="hidden text-emerald-300 sm:inline">·</span>
-        <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden>🎓</span>
-          <span className="tabular-nums font-semibold">
-            {formatCount(totalSignups)}
-          </span>{" "}
-          {labels.totalEver}
-          {signupsLast7Days > 0 && (
-            <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800">
-              +{signupsLast7Days} this week
-            </span>
-          )}
-        </span>
+        {items.map((it, i) => (
+          <span
+            key={it.label}
+            className="inline-flex items-center gap-1.5"
+          >
+            <span aria-hidden>{it.icon}</span>
+            <span
+              className={`tabular-nums ${i === items.length - 1 ? "font-semibold" : "font-medium"}`}
+            >
+              {formatCount(it.value)}
+            </span>{" "}
+            {it.label}
+            {it.pill && (
+              <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800">
+                {it.pill}
+              </span>
+            )}
+            {i < items.length - 1 && (
+              <span className="hidden pl-1 text-emerald-300 sm:inline">·</span>
+            )}
+          </span>
+        ))}
       </div>
     </div>
   );
