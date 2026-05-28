@@ -29,7 +29,13 @@ export interface ExamTheme {
    *  whole <main> behind the content. This is the BIG differentiator
    *  between categories — when a student moves from /exams/JEE_MAIN
    *  to /exams/NEET_UG the page bg shifts from blue-tinted to
-   *  green-tinted and they feel they're in a different "room". */
+   *  green-tinted and they feel they're in a different "room".
+   *
+   *  Must be FULLY OPAQUE (no /XX alpha). The site body uses a warm
+   *  cream bg (#fffaf3) set in globals.css; a translucent pageBg
+   *  composites cream + theme-colour and washes out cool hues like
+   *  blue / indigo / violet. Stick to solid bg-X-100 (or bg-X-200
+   *  for greys) so the wash reads as the intended colour.            */
   pageBg: string;
   /** Slightly heavier tint used as a subtle accent surface (the soft
    *  band behind the hero meta). Sits visually between pageBg and
@@ -58,7 +64,7 @@ export interface ExamTheme {
 const SAFFRON: ExamTheme = {
   label: "Exam prep",
   icon: "✦",
-  pageBg: "bg-saffron-100/70",
+  pageBg: "bg-saffron-100",
   heroBand: "bg-saffron-200/50",
   ribbon: "bg-gradient-to-r from-saffron-500 via-amber-500 to-saffron-500",
   badge: "bg-saffron-100 text-saffron-800 ring-1 ring-saffron-300",
@@ -77,7 +83,7 @@ export const EXAM_THEMES: Record<ExamCategory, ExamTheme> = {
   ENGINEERING: {
     label: "Engineering",
     icon: "⚙️",
-    pageBg: "bg-blue-100/70",
+    pageBg: "bg-blue-100",
     heroBand: "bg-blue-200/50",
     ribbon: "bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600",
     badge: "bg-blue-100 text-blue-800 ring-1 ring-blue-300",
@@ -91,7 +97,7 @@ export const EXAM_THEMES: Record<ExamCategory, ExamTheme> = {
   MEDICAL: {
     label: "Medical & Allied Health",
     icon: "🩺",
-    pageBg: "bg-emerald-100/70",
+    pageBg: "bg-emerald-100",
     heroBand: "bg-emerald-200/50",
     ribbon: "bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600",
     badge: "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-300",
@@ -105,7 +111,7 @@ export const EXAM_THEMES: Record<ExamCategory, ExamTheme> = {
   CIVIL_SERVICES: {
     label: "Civil Services",
     icon: "🏛️",
-    pageBg: "bg-rose-100/70",
+    pageBg: "bg-rose-100",
     heroBand: "bg-rose-200/50",
     ribbon: "bg-gradient-to-r from-rose-700 via-red-700 to-rose-800",
     badge: "bg-rose-100 text-rose-900 ring-1 ring-rose-300",
@@ -119,7 +125,7 @@ export const EXAM_THEMES: Record<ExamCategory, ExamTheme> = {
   BANKING: {
     label: "Banking & Finance",
     icon: "🏦",
-    pageBg: "bg-indigo-100/70",
+    pageBg: "bg-indigo-100",
     heroBand: "bg-indigo-200/50",
     ribbon: "bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-600",
     badge: "bg-indigo-100 text-indigo-800 ring-1 ring-indigo-300",
@@ -133,7 +139,7 @@ export const EXAM_THEMES: Record<ExamCategory, ExamTheme> = {
   GOVT_JOBS: {
     label: "Government Jobs",
     icon: "🇮🇳",
-    pageBg: "bg-sky-100/70",
+    pageBg: "bg-sky-100",
     heroBand: "bg-sky-200/50",
     ribbon: "bg-gradient-to-r from-sky-600 via-cyan-600 to-sky-700",
     badge: "bg-sky-100 text-sky-900 ring-1 ring-sky-300",
@@ -147,7 +153,7 @@ export const EXAM_THEMES: Record<ExamCategory, ExamTheme> = {
   TEACHING: {
     label: "Teaching",
     icon: "👩‍🏫",
-    pageBg: "bg-amber-100/70",
+    pageBg: "bg-amber-100",
     heroBand: "bg-amber-200/50",
     ribbon: "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600",
     badge: "bg-amber-100 text-amber-900 ring-1 ring-amber-300",
@@ -161,7 +167,7 @@ export const EXAM_THEMES: Record<ExamCategory, ExamTheme> = {
   LAW: {
     label: "Law",
     icon: "⚖️",
-    pageBg: "bg-stone-200/70",
+    pageBg: "bg-stone-200",
     heroBand: "bg-stone-300/50",
     ribbon: "bg-gradient-to-r from-stone-700 via-stone-800 to-stone-900",
     badge: "bg-stone-200 text-stone-900 ring-1 ring-stone-400",
@@ -175,7 +181,7 @@ export const EXAM_THEMES: Record<ExamCategory, ExamTheme> = {
   MBA: {
     label: "MBA",
     icon: "📈",
-    pageBg: "bg-slate-200/70",
+    pageBg: "bg-slate-200",
     heroBand: "bg-slate-300/50",
     ribbon: "bg-gradient-to-r from-slate-700 via-zinc-700 to-slate-800",
     badge: "bg-slate-200 text-slate-900 ring-1 ring-slate-400",
@@ -189,7 +195,7 @@ export const EXAM_THEMES: Record<ExamCategory, ExamTheme> = {
   UNIVERSITY: {
     label: "University Entrance",
     icon: "🎓",
-    pageBg: "bg-fuchsia-100/70",
+    pageBg: "bg-fuchsia-100",
     heroBand: "bg-fuchsia-200/50",
     ribbon: "bg-gradient-to-r from-fuchsia-500 via-pink-500 to-fuchsia-600",
     badge: "bg-fuchsia-100 text-fuchsia-900 ring-1 ring-fuchsia-300",
@@ -203,7 +209,7 @@ export const EXAM_THEMES: Record<ExamCategory, ExamTheme> = {
   OLYMPIAD: {
     label: "Olympiad",
     icon: "🏅",
-    pageBg: "bg-violet-100/70",
+    pageBg: "bg-violet-100",
     heroBand: "bg-violet-200/50",
     ribbon: "bg-gradient-to-r from-violet-500 via-purple-500 to-violet-600",
     badge: "bg-violet-100 text-violet-900 ring-1 ring-violet-300",
