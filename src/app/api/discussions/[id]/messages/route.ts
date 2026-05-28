@@ -28,7 +28,7 @@ const Body = z.object({
 });
 
 const AI_REPLY_COOLDOWN_MS = 5 * 60 * 1000; // 5 min between AI replies in same thread
-const AI_REPLY_MIN_CHARS = 25;               // skip very short posts ("ok", "+1")
+const AI_REPLY_MIN_CHARS = 10;               // skip very short posts ("ok", "+1")
 const AI_REPLY_DELAY_MIN_MS = 8_000;         // 8 s minimum "thinking" delay
 const AI_REPLY_DELAY_MAX_MS = 25_000;        // 25 s maximum
 
