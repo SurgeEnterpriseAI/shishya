@@ -25,6 +25,7 @@ import { CollegesForExamSection } from "@/components/CollegesForExamSection";
 import { SectionVerificationSummary } from "@/components/VerificationBadge";
 import { ExamDeepContentBlock } from "@/components/ExamDeepContentBlock";
 import { findDeepContent, hasDeepContent } from "@/data/exam-deep-content";
+import { getExamTheme } from "@/lib/exam-theme";
 
 // Per-exam meta. Beefed-up version that bakes in:
 //   1. state name (for "Tamil Nadu PSC" / "तमिलनाडु TET" style searches)
@@ -150,6 +151,13 @@ export default async function ExamPage({
     leaderboard,
     rankBands,
   } = shared;
+
+  // Per-category visual theme. The brand saffron stays as the primary
+  // CTA colour everywhere on the page (buttons, score boost rail) —
+  // this theme drives the secondary accent surfaces so an engineering
+  // student walking into JEE feels electric-blue, a medical student
+  // into NEET feels emerald, etc. See src/lib/exam-theme.ts.
+  const theme = getExamTheme(exam.category);
 
   // User-specific queries — only run when authenticated. Defaults to empty so
   // unauth render path stays simple. Crawlers never trigger these.
@@ -291,11 +299,28 @@ export default async function ExamPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <Header />
+      {/* Per-category top ribbon — 6px coloured strip that immediately
+          signals which "track" the visitor is in (engineering blue,
+          medical green, civil-services red, etc). Saffron remains the
+          brand colour beneath the ribbon. */}
+      <div className={`h-1.5 w-full ${theme.ribbon}`} aria-hidden />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
           <Link href="/dashboard" className="hover:text-ink-800">{t("nav.dashboard")}</Link> · {t("nav.exams")} · {exam.shortName}
         </p>
-        <h1 className="mt-1 text-3xl font-bold text-ink-900">{exam.shortName}</h1>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {/* Category badge — pill above the title that mirrors the
+              ribbon's hue. Tells the visitor at a glance which
+              category this exam falls into, without forcing them to
+              scroll/search for it. */}
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${theme.badge}`}
+          >
+            <span aria-hidden>{theme.icon}</span>
+            {theme.label}
+          </span>
+        </div>
+        <h1 className="mt-2 text-3xl font-bold text-ink-900">{exam.shortName}</h1>
         <p className="mt-1 text-sm text-ink-600">{exam.name}</p>
         <p className="mt-4 max-w-3xl text-sm text-ink-700">{exam.description}</p>
 
@@ -319,9 +344,12 @@ export default async function ExamPage({
         />
 
         {/* Sign-in CTA banner for unauthenticated visitors. Crawlers see
-            this; search-arriving students see exactly what they get for free. */}
+            this; search-arriving students see exactly what they get for free.
+            Border + background take their colour from the per-category theme
+            so the CTA feels native to the exam track (blue for engineering,
+            green for medical, etc) rather than a generic saffron pop-out. */}
         {!userId && (
-          <div className="mt-6 rounded-md border border-saffron-300 bg-saffron-50 p-5">
+          <div className={`mt-6 rounded-md border p-5 ${theme.borderAccent} ${theme.heroTint}`}>
             <p className="text-sm font-semibold text-ink-900">
               Free {exam.shortName} preparation on Shishya
             </p>
@@ -687,7 +715,7 @@ export default async function ExamPage({
                         key={d.id}
                         className={
                           d.isExamDay
-                            ? "rounded-md border-2 border-saffron-400 bg-saffron-50 p-4"
+                            ? `rounded-md border-2 p-4 ${theme.borderAccent} ${theme.examDayBg}`
                             : passed
                             ? "rounded-md border border-ink-200 bg-ink-50/40 p-4 opacity-60"
                             : "rounded-md border border-ink-200 bg-white p-4"
@@ -695,10 +723,10 @@ export default async function ExamPage({
                       >
                         <div className="flex items-baseline justify-between gap-2">
                           <p className="text-sm font-medium text-ink-900">
-                            {d.isExamDay && <span className="mr-1">📌</span>}
+                            {d.isExamDay && <span className="mr-1">{theme.icon}</span>}
                             {d.label}
                           </p>
-                          <span className={d.isExamDay ? "shrink-0 text-xs font-semibold text-saffron-800" : "shrink-0 text-xs text-ink-500"}>
+                          <span className={d.isExamDay ? `shrink-0 text-xs font-semibold ${theme.examDayText}` : "shrink-0 text-xs text-ink-500"}>
                             {when}
                           </span>
                         </div>
