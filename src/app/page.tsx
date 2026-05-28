@@ -696,7 +696,14 @@ function StepGoals({
         Or pick a goal
       </p>
 
-      <ul data-tour="home-goals" className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Grid columns: the page has 320px fixed rails on both sides
+          at lg+ (pl-80 pr-80 = 640px total), so the middle column at
+          typical laptop widths (1366-1440px) is only ~730-800px. A
+          3-column grid here would squeeze each card to ~240px, which
+          wrapped the blurb 2-words-per-line. Stay at 2-col through
+          xl and only go 3-wide at 2xl (1536px+) where there's actually
+          breathing room. */}
+      <ul data-tour="home-goals" className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
         {EXAM_GOALS.map((goal) => {
           const count = countFor(goal);
           return (

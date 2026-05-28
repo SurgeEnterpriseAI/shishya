@@ -95,7 +95,10 @@ export function HomeFeatureCards({ signedIn }: { signedIn: boolean }) {
         </p>
       </div>
 
-      <ul className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Same column math as the goal grid above: lg has 640px of
+          fixed rails eating viewport, so 3 columns would squeeze each
+          card too tight. 2-col through xl, 3-col only at 2xl+. */}
+      <ul className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
         {CARDS.map((card) => (
           <li key={card.title}>
             <Link
