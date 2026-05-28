@@ -288,7 +288,12 @@ export default async function ExamPage({
   };
 
   return (
-    <main className="min-h-screen bg-ink-50/40">
+    // Whole-page background tinted to the category theme. This is the
+    // single biggest visual differentiator — walking from NEET (emerald
+    // wash) into JEE (blue wash) into UPSC (rose wash) feels like
+    // moving between different rooms. Saffron CTAs / cards stay on top
+    // of the wash so the brand remains intact.
+    <main className={`min-h-screen ${theme.pageBg}`}>
       {/* JSON-LD for Google rich-result eligibility */}
       <script
         type="application/ld+json"
