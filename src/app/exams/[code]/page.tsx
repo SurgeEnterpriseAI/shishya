@@ -448,7 +448,13 @@ export default async function ExamPage({
               {t("exam.mocks.empty")}
             </p>
           ) : (
-            <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            // Mocks live inside the lg:col-span-2 main column (2/3 of
+            // container-prose, ~830px at common laptop widths). A
+            // 3-col grid here squeezes each tile to ~260px which
+            // wrapped longer mock titles awkwardly. Hold at 2-col
+            // until xl (1280px+) where the main column reaches
+            // ~960px and 3 columns have proper breathing room.
+            <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {systemMocks.map((m) => (
                 <li key={m.id} className="rounded-md border border-ink-200 bg-white p-4">
                   <div className="flex items-baseline justify-between">

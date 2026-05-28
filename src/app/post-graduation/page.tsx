@@ -129,9 +129,12 @@ export default async function PostGraduationLanding() {
           situation — not on what your peer group is doing.
         </p>
 
-        {/* Five pathways grid */}
+        {/* Five pathways grid — each card holds title + blurb + Pros
+            list + Cons list + CTA, so they need real width. 3 columns
+            at lg (~960px container, ~310px/card) squished the lists.
+            2-col at lg, 3-col only at xl+ keeps them readable. */}
         <h2 className="mt-10 text-base font-semibold text-ink-900">Five real paths</h2>
-        <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {PATHWAYS.map((p) => (
             <li key={p.slug} className="rounded-lg border border-ink-200 bg-white p-5">
               <div className="flex items-baseline gap-2">
