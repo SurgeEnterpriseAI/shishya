@@ -182,14 +182,16 @@ export const dict = {
     "disc.sidebar.openAria": "Open community discussions",
     "disc.sidebar.closeAria": "Close discussions",
 
-    // ── Live activity counters
-    "live.preparingNow": "preparing now",
-    "live.inMockNow": "in a mock",
-    "live.totalEver": "helped till now",
-    "live.block.title": "Live on Shishya",
-    "live.block.online": "preparing now",
-    "live.block.inMock": "in a mock right now",
-    "live.block.todaysMocks": "mocks taken today",
+    // ── Real-activity counters (synthetic floor removed 27 May 2026).
+    // Keys kept stable for translation continuity even though English
+    // copy changed meaning: visited / mocks attempted / signed up.
+    "live.preparingNow": "visited",
+    "live.inMockNow": "mocks attempted",
+    "live.totalEver": "signed up",
+    "live.block.title": "Real activity on Shishya",
+    "live.block.online": "students visited",
+    "live.block.inMock": "mocks attempted",
+    "live.block.todaysMocks": "submitted today",
 
     // ── Exam timeline (news + important dates on /exams/[code])
     "timeline.news.title": "Latest news",

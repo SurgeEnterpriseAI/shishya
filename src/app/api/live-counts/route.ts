@@ -1,36 +1,42 @@
-// GET /api/live-counts — DB-backed activity counters for the
-// landing-page strip and the discussion-sidebar block.
+// GET /api/live-counts — REAL activity counters for the landing-page
+// strip and the discussion-sidebar block.
 //
-// Cached for 30 seconds (s-maxage). The strip polls every ~30s, so
-// 1,000 visitors hammering this endpoint at the same time only cost
-// one real DB query per 30s. Stays well under any DB rate ceiling.
+// Cached for 30 s (s-maxage). The strip polls every ~30 s, so 1,000
+// concurrent visitors only cost one real DB query per 30 s.
+//
+// Counters surfaced (all REAL — synthetic floor removed 27 May 2026):
+//   uniqueVisitors    distinct PAGE_VIEW user/anon ids all-time
+//   mocksAttempted    total Attempt rows
+//   totalSignups      total User rows
+//   signupsLast7Days  momentum signal
+//   activeNow         distinct active users in last 30 min
+//   mocksToday        mocks submitted in last 24 h
 
-import { getBlendedLiveCounts } from "@/lib/live-counts-server";
+import { getLiveCounts } from "@/lib/live-counts-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const counts = await getBlendedLiveCounts(new Date());
+    const counts = await getLiveCounts(new Date());
     return Response.json(counts, {
       headers: {
-        // Edge + browser cache for 30s. stale-while-revalidate lets a
-        // stale response serve while a fresh one is being computed.
         "cache-control": "public, s-maxage=30, stale-while-revalidate=60",
       },
     });
   } catch (err) {
     console.error("[live-counts] failed", err);
-    // Graceful fallback so the strip never breaks the home page if the
-    // DB stutters. Returns plausible numbers based on the synthetic
-    // floor alone.
+    // Graceful zero-fallback so the strip never breaks the home page
+    // if Neon stutters. Component has stable first-paint values to
+    // bridge any flash.
     return Response.json({
-      online: 1_050,
-      mocksInProgress: 5,
-      totalEver: 1_050,
+      uniqueVisitors: 0,
+      mocksAttempted: 0,
+      totalSignups: 0,
+      signupsLast7Days: 0,
+      activeNow: 0,
       mocksToday: 0,
-      activeDiscussions: 18,
     });
   }
 }

@@ -1,46 +1,51 @@
 "use client";
 
-// Auto-refreshing live activity counters.
+// Auto-refreshing real-activity counters.
 //
-// Numbers come from /api/live-counts which queries the real DB and adds
-// a +1,000 synthetic floor to "online" + "totalEver" so day-1 visitors
-// don't see "3 students helped till now". Real numbers replace the
-// floor's importance as the platform grows.
+// 27 May 2026: synthetic floor REMOVED. Numbers come from /api/live-counts
+// which queries the DB directly. Real numbers only — no inflation,
+// no jitter, no padding. Trust > optics.
 //
-// Polls every 30s (API caches for 30s on the edge → roughly one real DB
-// hit per 30s regardless of concurrent visitors).
+// Polls every 30 s (API caches 30 s on the edge → roughly one real DB
+// hit per 30 s regardless of concurrent visitors).
 //
 // Two render variants:
-//   <LiveCountersStrip />    — slim full-width banner above the hero
-//   <LiveCountersBlock />    — boxed widget for the right sidebar
+//   <LiveCountersStrip />    slim full-width banner above the hero
+//                            (visited · mocks attempted · signed up)
+//   <LiveCountersBlock />    boxed widget for the right sidebar
+//                            (visited · mocks · signed up · this week
+//                             · active now if non-zero)
 
 import { useEffect, useState } from "react";
-import { formatCount, formatLakh, getLiveCounts, type LiveCounts } from "@/lib/live-counters";
+import {
+  formatCount,
+  getLiveCounts,
+  type LiveCounts,
+} from "@/lib/live-counters";
 
 interface StripLabels {
+  /** "visited" — i18n key live.preparingNow */
   preparingNow: string;
+  /** "mocks attempted" — i18n key live.inMockNow */
   inMockNow: string;
-  activeDiscussions: string;
+  /** "signed up" — i18n key live.totalEver */
   totalEver: string;
+  /** Optional "active discussions" string (kept for callers that still
+   *  pass it — we don't render it in the strip anymore). */
+  activeDiscussions?: string;
 }
 
 const TICK_MS = 30_000;
 
-// Stable initial values used for BOTH the server render and the very
-// first client paint. The lazy initializer used to call
-// `getLiveCounts(new Date())` which is time-dependent — server and
-// client almost always landed on different minute buckets and React
-// 19 then rejected the hydration with a "client-side exception"
-// (the exact error students reported when opening shishya.in from
-// WhatsApp shares). Using a fixed seed here makes server + client
-// agree byte-for-byte on the initial paint; useEffect overlays the
-// real /api/live-counts numbers within ~200 ms after mount.
+// Stable initial values for BOTH SSR and the first client paint.
+// useEffect overlays the real /api/live-counts numbers ~200 ms in.
 const SSR_SAFE_INITIAL: LiveCounts = {
-  online: 1_100,
-  mocksInProgress: 5,
+  uniqueVisitors: 370,
+  mocksAttempted: 72,
+  totalSignups: 98,
+  signupsLast7Days: 14,
+  activeNow: 0,
   mocksToday: 0,
-  activeDiscussions: 24,
-  totalEver: 1_000,
 };
 
 function useLiveCounts(): LiveCounts {
@@ -55,14 +60,15 @@ function useLiveCounts(): LiveCounts {
         const data = (await res.json()) as Partial<LiveCounts>;
         if (cancelled) return;
         setCounts((prev) => ({
-          online: data.online ?? prev.online,
-          mocksInProgress: data.mocksInProgress ?? prev.mocksInProgress,
+          uniqueVisitors: data.uniqueVisitors ?? prev.uniqueVisitors,
+          mocksAttempted: data.mocksAttempted ?? prev.mocksAttempted,
+          totalSignups: data.totalSignups ?? prev.totalSignups,
+          signupsLast7Days: data.signupsLast7Days ?? prev.signupsLast7Days,
+          activeNow: data.activeNow ?? prev.activeNow,
           mocksToday: data.mocksToday ?? prev.mocksToday,
-          activeDiscussions: data.activeDiscussions ?? prev.activeDiscussions,
-          totalEver: data.totalEver ?? prev.totalEver,
         }));
       } catch {
-        /* network blip — keep whatever we last had */
+        /* network blip — keep last-known */
       }
     }
     tick();
@@ -79,34 +85,45 @@ function useLiveCounts(): LiveCounts {
 }
 
 /**
- * Slim, full-width "students preparing now" banner. Use just below the
- * page header on the landing.
+ * Slim, full-width "real platform activity" banner. Sits just below the
+ * page header on the landing page.
+ *
+ * Reads as e.g.
+ *   "370 visited · 72 mocks attempted · 98 signed up · 14 this week"
+ *
+ * Strip is sticky so the social proof persists as the visitor scrolls.
  */
 export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
-  const { online, mocksInProgress, totalEver } = useLiveCounts();
+  const { uniqueVisitors, mocksAttempted, totalSignups, signupsLast7Days } =
+    useLiveCounts();
   return (
-    // Sticky to viewport top — stays visible while scrolling so the social
-    // proof persists as the user moves through the page.
-    //
-    // lg:mx-80 — clear the two 320px side rails on lg+ so the strip's
-    // green background ends exactly where the rails begin. Without
-    // this the strip (z-40) overlays the rails (z-20) and the rail
-    // headers (Upcoming on left, Discussions on right) get covered.
     <div className="sticky top-0 z-40 border-b border-emerald-200 bg-emerald-50/95 backdrop-blur-sm supports-[backdrop-filter]:bg-emerald-50/80 lg:mx-80">
       <div className="container-prose flex flex-wrap items-center justify-center gap-x-4 gap-y-1 py-1.5 text-[11px] text-emerald-900 sm:gap-x-6 sm:py-2 sm:text-sm">
         <span className="inline-flex items-center gap-1.5 font-medium">
           <PingDot />
-          <span className="tabular-nums">{formatCount(online)}</span> {labels.preparingNow}
+          <span className="tabular-nums">{formatCount(uniqueVisitors)}</span>{" "}
+          {labels.preparingNow}
         </span>
         <span className="hidden text-emerald-300 sm:inline">·</span>
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden>📝</span>
-          <span className="tabular-nums font-medium">{formatCount(mocksInProgress)}</span> {labels.inMockNow}
+          <span className="tabular-nums font-medium">
+            {formatCount(mocksAttempted)}
+          </span>{" "}
+          {labels.inMockNow}
         </span>
         <span className="hidden text-emerald-300 sm:inline">·</span>
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden>🎓</span>
-          <span className="tabular-nums font-semibold">{formatLakh(totalEver)}</span> {labels.totalEver}
+          <span className="tabular-nums font-semibold">
+            {formatCount(totalSignups)}
+          </span>{" "}
+          {labels.totalEver}
+          {signupsLast7Days > 0 && (
+            <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800">
+              +{signupsLast7Days} this week
+            </span>
+          )}
         </span>
       </div>
     </div>
@@ -114,18 +131,33 @@ export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
 }
 
 interface BlockLabels {
+  /** "Live on Shishya" title (i18n key live.block.title) */
   title: string;
+  /** "students visited" (i18n key live.block.online) */
   online: string;
+  /** "mocks attempted" (i18n key live.block.inMock) */
   inMock: string;
+  /** "mocks today" (i18n key live.block.todaysMocks) */
   todaysMocks: string;
 }
 
 /**
- * Boxed live-activity widget for the discussion sidebar. Shows three key
- * counters with subtle increment animation between updates.
+ * Sidebar block for the discussion drawer. Shows the same four key
+ * KPIs as the strip plus the live-today numbers.
+ *
+ * Order is intentional: lead with visitor reach, then engagement
+ * (mocks), then signup conversion, with momentum + active-now as
+ * supporting context.
  */
 export function LiveCountersBlock({ labels }: { labels: BlockLabels }) {
-  const { online, mocksInProgress, mocksToday } = useLiveCounts();
+  const {
+    uniqueVisitors,
+    mocksAttempted,
+    totalSignups,
+    signupsLast7Days,
+    activeNow,
+    mocksToday,
+  } = useLiveCounts();
   return (
     <div className="border-b border-ink-200 bg-gradient-to-b from-emerald-50 to-white px-4 py-3">
       <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
@@ -134,9 +166,34 @@ export function LiveCountersBlock({ labels }: { labels: BlockLabels }) {
       </p>
 
       <div className="mt-2.5 space-y-2">
-        <Row icon="👥" value={online}             label={labels.online} />
-        <Row icon="📝" value={mocksInProgress}    label={labels.inMock} />
-        <Row icon="✅" value={mocksToday}         label={labels.todaysMocks} subtle />
+        <Row icon="👥" value={uniqueVisitors} label={labels.online} />
+        <Row icon="📝" value={mocksAttempted} label={labels.inMock} />
+        <Row
+          icon="🎓"
+          value={totalSignups}
+          label={"signed up"}
+          suffix={signupsLast7Days > 0 ? `+${signupsLast7Days} this week` : undefined}
+        />
+        {(mocksToday > 0 || activeNow > 0) && (
+          <div className="mt-1 border-t border-ink-100 pt-2 text-[10px] text-ink-500">
+            {activeNow > 0 && (
+              <span className="mr-2">
+                <span className="tabular-nums font-medium text-emerald-700">
+                  {activeNow}
+                </span>{" "}
+                active now
+              </span>
+            )}
+            {mocksToday > 0 && (
+              <span>
+                <span className="tabular-nums font-medium text-ink-700">
+                  {mocksToday}
+                </span>{" "}
+                {labels.todaysMocks}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -159,15 +216,19 @@ function Row({
   value,
   label,
   subtle,
+  suffix,
 }: {
   icon: string;
   value: number;
   label: string;
   subtle?: boolean;
+  suffix?: string;
 }) {
   return (
     <div className="flex items-baseline gap-2">
-      <span className="text-sm" aria-hidden>{icon}</span>
+      <span className="text-sm" aria-hidden>
+        {icon}
+      </span>
       <span
         className={
           subtle
@@ -178,6 +239,11 @@ function Row({
         {formatCount(value)}
       </span>
       <span className="text-[11px] text-ink-500">{label}</span>
+      {suffix && (
+        <span className="ml-auto rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800">
+          {suffix}
+        </span>
+      )}
     </div>
   );
 }
