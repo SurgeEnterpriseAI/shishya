@@ -119,8 +119,17 @@ export default async function ArchivePage({
                       className="rounded-md border border-ink-200 bg-white p-4 opacity-90"
                     >
                       <div className="flex items-baseline justify-between gap-2">
+                        {/* Linked headline → news permalink. Crawler-
+                            friendly: every archived item is one click
+                            from this aggregator, and from the sitemap. */}
                         <h3 className="text-sm font-semibold text-ink-900">
-                          {n.title}
+                          <Link
+                            href={`/exams/${exam.code}/news/${n.id}`}
+                            prefetch={false}
+                            className="hover:text-saffron-700"
+                          >
+                            {n.title}
+                          </Link>
                         </h3>
                         <span className="shrink-0 text-[10px] text-ink-500">
                           {new Date(n.publishedAt).toLocaleDateString("en-IN", {
@@ -131,16 +140,25 @@ export default async function ArchivePage({
                         </span>
                       </div>
                       <p className="mt-1.5 text-sm text-ink-700">{n.body}</p>
-                      <p className="mt-2 text-[10px] font-medium uppercase tracking-wider text-ink-400">
-                        Archived{" "}
-                        {n.archivedAt
-                          ? new Date(n.archivedAt).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })
-                          : ""}
-                      </p>
+                      <div className="mt-2 flex flex-wrap items-baseline justify-between gap-2">
+                        <Link
+                          href={`/exams/${exam.code}/news/${n.id}`}
+                          prefetch={false}
+                          className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
+                        >
+                          Read full notice →
+                        </Link>
+                        <p className="text-[10px] font-medium uppercase tracking-wider text-ink-400">
+                          Archived{" "}
+                          {n.archivedAt
+                            ? new Date(n.archivedAt).toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : ""}
+                        </p>
+                      </div>
                     </li>
                   ))}
                 </ul>

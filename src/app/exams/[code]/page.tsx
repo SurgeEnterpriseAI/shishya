@@ -686,7 +686,19 @@ export default async function ExamPage({
                     return (
                       <li key={n.id} className="rounded-md border border-ink-200 bg-white p-4">
                         <div className="flex items-baseline justify-between gap-2">
-                          <h3 className="text-sm font-semibold text-ink-900">{n.title}</h3>
+                          {/* Linked headline → news permalink. Each
+                              item gets its own indexable page so the
+                              cron's output accumulates into a long-
+                              tail SEO surface. See /exams/[code]/news/[id]. */}
+                          <h3 className="text-sm font-semibold text-ink-900">
+                            <Link
+                              href={`/exams/${exam.code}/news/${n.id}`}
+                              prefetch={false}
+                              className="hover:text-saffron-700"
+                            >
+                              {n.title}
+                            </Link>
+                          </h3>
                           <span className="shrink-0 text-xs text-ink-500">
                             {ageDays === 0 ? t("timeline.dates.today")
                               : ageDays === 1 ? `1 ${t("disc.daysAgo")}`
@@ -694,16 +706,25 @@ export default async function ExamPage({
                           </span>
                         </div>
                         <p className="mt-1.5 text-sm text-ink-700">{n.body}</p>
-                        {n.source && (
-                          <a
-                            href={n.source}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
+                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                          <Link
+                            href={`/exams/${exam.code}/news/${n.id}`}
+                            prefetch={false}
+                            className="font-medium text-saffron-700 hover:text-saffron-800"
                           >
-                            Source →
-                          </a>
-                        )}
+                            Read full notice →
+                          </Link>
+                          {n.source && (
+                            <a
+                              href={n.source}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-ink-500 hover:text-ink-700"
+                            >
+                              Source ↗
+                            </a>
+                          )}
+                        </div>
                       </li>
                     );
                   })}

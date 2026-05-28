@@ -43,6 +43,70 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // Per-exam archive aggregator. One URL per active exam. Index target:
+  // "[exam] previous year notifications", "[exam] postponement history".
+  // Each archive page links to every per-news permalink below, so Google
+  // discovers the long-tail trail in one crawl.
+  const examArchiveUrls: MetadataRoute.Sitemap = exams.map((e) => ({
+    url: `${base}/exams/${e.code}/archive`,
+    lastModified: new Date(),
+    changeFrequency: "daily" as const,
+    priority: 0.55,
+  }));
+
+  // Per-news permalink. EVERY ExamNewsItem we've ever generated — both
+  // active (archivedAt IS NULL) and archived (archivedAt IS NOT NULL).
+  // Each gets its own NewsArticle JSON-LD page at /exams/[code]/news/[id].
+  // This is the BIG SEO multiplier: every cron tick produces ~5-10 news
+  // items per top-tier exam → the index grows by hundreds of long-tail
+  // keyword pages per week, no manual authoring required.
+  const newsItems = await prisma.examNewsItem.findMany({
+    where: { exam: { active: true } },
+    select: {
+      id: true,
+      publishedAt: true,
+      archivedAt: true,
+      createdAt: true,
+      exam: { select: { code: true } },
+    },
+    orderBy: { publishedAt: "desc" },
+    // Sitemap protocol caps URLs per file at 50k. We over-provision a
+    // limit here so a single exam catastrophe (50k news items somehow)
+    // can't blow past the cap. Realistic ceiling is ~10-20k entries.
+    take: 30_000,
+  });
+  const newsUrls: MetadataRoute.Sitemap = newsItems.map((n) => ({
+    url: `${base}/exams/${n.exam.code}/news/${n.id}`,
+    lastModified: n.archivedAt ?? n.publishedAt ?? n.createdAt,
+    // Active items: weekly. Archived: yearly (content is immutable
+    // after archival, so Google can crawl rarely).
+    changeFrequency: (n.archivedAt ? "yearly" : "weekly") as
+      | "yearly"
+      | "weekly",
+    priority: n.archivedAt ? 0.35 : 0.6,
+  }));
+
+  // Phase articles — the three time-sensitive long-form pieces per exam
+  // (CHECKLIST / LIVE / REACTIONS). Each is a Claude-summarised, source-
+  // cited article that lives at /exams/[code]/{checklist,live,reactions}.
+  // Highest SEO leverage during the T-7 → T+3 window around exam day.
+  const phaseArticles = await prisma.examPhaseArticle.findMany({
+    where: { exam: { active: true } },
+    select: {
+      phase: true,
+      slug: true,
+      updatedAt: true,
+      exam: { select: { code: true } },
+    },
+  });
+  const phaseUrls: MetadataRoute.Sitemap = phaseArticles.map((a) => ({
+    url: `${base}/exams/${a.exam.code}/${a.slug}`,
+    lastModified: a.updatedAt,
+    // CHECKLIST + LIVE refresh frequently during the active window.
+    changeFrequency: "daily" as const,
+    priority: 0.7,
+  }));
+
   // One URL per state we actually have exams for. Highest-priority SEO
   // surface for state-specific queries — these pages should rank for
   // "Tamil Nadu entrance exams", "Bihar government exams", etc.
@@ -256,6 +320,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...sectionLandings,
     ...stateUrls,
     ...examUrls,
+    ...examArchiveUrls,
+    ...phaseUrls,
+    ...newsUrls,
     ...topicUrls,
     ...streamUrls,
     ...collegeStateUrls,
