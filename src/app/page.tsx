@@ -198,7 +198,7 @@ async function loadUpcomingEventsRaw(): Promise<UpcomingEvent[]> {
     const now = new Date();
     const from = new Date(now.getTime() - 3.5 * 86_400_000);
     const rowsRaw = await prisma.examImportantDate.findMany({
-      where: { date: { gte: from }, exam: { active: true } },
+      where: { date: { gte: from }, exam: { active: true }, archivedAt: null },
       orderBy: { date: "asc" },
       take: 60, // over-fetch — we filter past-non-exam-day rows below
       include: { exam: { select: { id: true, code: true, shortName: true } } },

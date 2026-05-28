@@ -46,7 +46,7 @@ export default async function ResultsPage({
       include: { topic: { select: { code: true, name: true } } },
     }),
     prisma.examRankBand.findMany({
-      where: { examId: attempt.mock.examId },
+      where: { examId: attempt.mock.examId, archivedAt: null },
       orderBy: { orderIdx: "asc" },
       select: {
         scorePctMin: true,

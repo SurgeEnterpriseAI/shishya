@@ -55,6 +55,7 @@ async function findCandidates(examCodeOverride?: string): Promise<Candidate[]> {
     where: {
       date: { gte: from, lte: to },
       isExamDay: true,
+      archivedAt: null,
       exam: { active: true, ...(examCodeOverride ? { code: examCodeOverride } : {}) },
     },
     include: { exam: { select: { id: true, code: true, shortName: true, name: true } } },

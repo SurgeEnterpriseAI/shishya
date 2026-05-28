@@ -51,7 +51,12 @@ export async function GET(req: Request) {
   const from = new Date(now.getTime() - 3 * DAY);
   const to = new Date(now.getTime() + 30 * DAY);
   const candidates = await prisma.examImportantDate.findMany({
-    where: { date: { gte: from, lte: to }, isExamDay: true, exam: { active: true } },
+    where: {
+      date: { gte: from, lte: to },
+      isExamDay: true,
+      exam: { active: true },
+      archivedAt: null,
+    },
     include: { exam: { select: { id: true, code: true, shortName: true, name: true } } },
   });
   if (candidates.length === 0) {

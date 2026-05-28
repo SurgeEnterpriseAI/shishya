@@ -653,7 +653,22 @@ export default async function ExamPage({
 
         {/* News + Important Dates */}
         {(newsItems.length > 0 || importantDates.length > 0) && (
-          <section className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <section className="mt-10">
+            {/* "See older updates" link → archive page. Surfacing it
+                here (above the news/dates panel) so students who
+                want last year's postponement notice or prior cutoff
+                trajectories find their way in one click. */}
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="sr-only">News & timeline</h2>
+              <Link
+                href={`/exams/${exam.code}/archive`}
+                prefetch={false}
+                className="ml-auto text-xs font-medium text-saffron-700 hover:text-saffron-800"
+              >
+                See older updates →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* News */}
             <div>
               <h2 className="text-base font-semibold text-ink-800">{t("timeline.news.title")}</h2>
@@ -745,6 +760,7 @@ export default async function ExamPage({
                 </ol>
               )}
             </div>
+            </div>{/* /grid news+dates */}
           </section>
         )}
 

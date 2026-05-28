@@ -38,13 +38,18 @@ export const getExamShared = unstable_cache(
     const [validatedQuestionCount, newsItems, importantDates, pyqYears, systemMocks, leaderboard, rankBands] =
       await Promise.all([
         prisma.question.count({ where: { examId: exam.id, validated: true } }),
+        // archivedAt IS NULL filter keeps the per-exam page showing
+        // only the CURRENT generation of news/dates. Older cycles
+        // (postponements from last year, prior cutoff notifications)
+        // live on in the table but surface only on the archive page
+        // /exams/[code]/archive. See refresh-exam-data cron.
         prisma.examNewsItem.findMany({
-          where: { examId: exam.id },
+          where: { examId: exam.id, archivedAt: null },
           orderBy: { publishedAt: "desc" },
           take: 5,
         }),
         prisma.examImportantDate.findMany({
-          where: { examId: exam.id },
+          where: { examId: exam.id, archivedAt: null },
           orderBy: { date: "asc" },
           take: 10,
         }),
@@ -77,7 +82,7 @@ export const getExamShared = unstable_cache(
           },
         }),
         prisma.examRankBand.findMany({
-          where: { examId: exam.id },
+          where: { examId: exam.id, archivedAt: null },
           orderBy: { orderIdx: "asc" },
           select: {
             scorePctMin: true,

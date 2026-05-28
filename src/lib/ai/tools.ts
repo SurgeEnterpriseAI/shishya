@@ -444,7 +444,7 @@ async function predictRank(ctx: ToolContext, scorePct: number) {
   if (!exam) return { message: "Exam not found." };
 
   const bands = await prisma.examRankBand.findMany({
-    where: { examId: exam.id },
+    where: { examId: exam.id, archivedAt: null },
     orderBy: { orderIdx: "asc" },
     select: {
       scorePctMin: true,

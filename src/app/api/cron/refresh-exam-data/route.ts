@@ -83,11 +83,19 @@ export async function GET(req: Request) {
         { useWebSearch: true },
       );
       const now = new Date();
-      await prisma.examNewsItem.deleteMany({
-        where: { examId: exam.id, source: GEN_SOURCE },
+      // ARCHIVE (don't delete) prior generated rows. Students can
+      // still browse the historical news + dates via the "Show older
+      // updates" toggle on the per-exam page — preserves the
+      // institutional memory of each exam cycle (last year's cutoff
+      // notification, postponement notices, syllabus changes, etc).
+      // Only the active feed (archivedAt IS NULL) is shown by default.
+      await prisma.examNewsItem.updateMany({
+        where: { examId: exam.id, source: GEN_SOURCE, archivedAt: null },
+        data: { archivedAt: now },
       });
-      await prisma.examImportantDate.deleteMany({
-        where: { examId: exam.id, source: GEN_SOURCE },
+      await prisma.examImportantDate.updateMany({
+        where: { examId: exam.id, source: GEN_SOURCE, archivedAt: null },
+        data: { archivedAt: now },
       });
       for (const n of info.news) {
         await prisma.examNewsItem.create({

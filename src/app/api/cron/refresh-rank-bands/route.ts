@@ -67,8 +67,13 @@ export async function GET(req: Request) {
         spent += COST_PER_EXAM_USD;
         continue;
       }
-      await prisma.examRankBand.deleteMany({
-        where: { examId: exam.id, source: GEN_SOURCE },
+      // Archive prior generated bands instead of deleting — students
+      // can compare how the rank/score prediction has shifted over
+      // successive cron cycles. Only archivedAt IS NULL rows are
+      // shown by default (see exam-cache / results page).
+      await prisma.examRankBand.updateMany({
+        where: { examId: exam.id, source: GEN_SOURCE, archivedAt: null },
+        data: { archivedAt: new Date() },
       });
       let idx = 0;
       for (const b of bands.sort((a, b2) => b2.scorePctMin - a.scorePctMin)) {

@@ -588,10 +588,17 @@ model ExamNewsItem {
   source      String?  // optional URL to official notice / news source
   publishedAt DateTime @default(now())
   createdAt   DateTime @default(now())
+  // Soft-delete marker. The refresh-exam-data cron sets this on prior
+  // generated rows instead of deleting them, so students can still
+  // browse the historical news archive per exam. NULL = currently
+  // active and shown on the per-exam page. Non-null = archived but
+  // surfaced behind a "Show older updates" toggle.
+  archivedAt  DateTime?
 
   exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
 
   @@index([examId, publishedAt])
+  @@index([examId, archivedAt])
 }
 
 model ExamImportantDate {
@@ -603,10 +610,15 @@ model ExamImportantDate {
   source    String?           // optional URL
   notes     String?  @db.Text
   createdAt DateTime @default(now())
+  // Soft-delete marker. Same semantics as ExamNewsItem.archivedAt —
+  // refresh-exam-data archives prior generated rows rather than
+  // deleting them, preserving the timeline history for students.
+  archivedAt DateTime?
 
   exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
 
   @@index([examId, date])
+  @@index([examId, archivedAt])
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -762,10 +774,16 @@ model ExamRankBand {
   source      String?  // "ai-generated:claude" or curated URL
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  // Soft-delete marker. refresh-rank-bands archives prior generated
+  // rows instead of deleting them, so students can see how the
+  // band/cutoff prediction has evolved over time. NULL = currently
+  // active. Reads default to archivedAt IS NULL.
+  archivedAt  DateTime?
 
   exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
 
   @@index([examId, orderIdx])
+  @@index([examId, archivedAt])
 }
 
 // ─────────────────────────────────────────────────────────────────────────
