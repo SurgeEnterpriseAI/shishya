@@ -315,11 +315,13 @@ function ThreadList({
                     {t.examShort}
                   </span>
                 )}
-                {t.isSeed && (
-                  <span className="mr-1.5 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-medium text-amber-800" title="Sample thread to start the conversation — not a real student post yet.">
-                    sample
-                  </span>
-                )}
+                {/* Previously rendered an amber "sample" pill for
+                    isSeed threads to mark them as AI-seeded. Removed
+                    so seed threads read like organic student posts —
+                    new visitors trust the sidebar as a real
+                    conversation, not a placeholder list. Real
+                    moderation flags / spam labels still surface
+                    elsewhere; this label was UX scaffolding only. */}
                 <span className="font-medium text-ink-700">
                   {t.messageCount} {t.messageCount === 1 ? labels.reply : labels.replies}
                 </span>

@@ -106,15 +106,22 @@ export async function GET(req: Request) {
   }
 
   // ── Replace any prior seed rows + insert the fresh batch ──────────
+  // Author names rotate through the synthetic-handles pool so the
+  // sidebar reads as 6-8 different students chatting, not "Shishya
+  // sample" eight times.
+  const { pickSyntheticHandle } = await import("@/data/synthetic-handles");
   await prisma.discussion.deleteMany({ where: { isSeed: true } });
+  const usedNames: string[] = [];
   const created = await prisma.$transaction(
-    titles.map((t, i) =>
-      prisma.discussion.create({
+    titles.map((t, i) => {
+      const handle = pickSyntheticHandle(usedNames);
+      usedNames.push(handle);
+      return prisma.discussion.create({
         data: {
           title: t.title,
           examId: top.exam.id,
           isSeed: true,
-          authorName: "Shishya sample",
+          authorName: handle,
           // Spread lastActivityAt over the past few hours so the rail
           // doesn't show all 8 threads with identical timestamps.
           lastActivityAt: new Date(now.getTime() - i * 23 * 60_000),
@@ -122,8 +129,8 @@ export async function GET(req: Request) {
           createdAt: new Date(now.getTime() - i * 23 * 60_000),
         },
         select: { id: true, title: true },
-      }),
-    ),
+      });
+    }),
   );
 
   return jsonOk({
