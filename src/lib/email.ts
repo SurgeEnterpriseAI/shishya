@@ -1,0 +1,233 @@
+// Transactional email via Resend.
+//
+// Stub-safe: if RESEND_API_KEY is absent at runtime (preview deploys,
+// local dev) every send is a no-op that just logs the intended
+// payload. Production needs the env var + a verified sender domain
+// (set in Resend dashboard → Domains).
+//
+// Templates are plain TS objects, not React Email — the volume is
+// tiny right now (welcome + day-3 nudge) and inlining gets us to
+// shipping faster. Migrate to react-email if we ever ship 3+
+// templates that share components.
+//
+// Env vars required for live sending:
+//   RESEND_API_KEY    sk-...  (from resend.com → API Keys)
+//   EMAIL_FROM        e.g. "Shishya <hi@shishya.in>"
+//                     Must use a domain verified in the Resend
+//                     dashboard, or sends will be rejected.
+
+import { Resend } from "resend";
+
+const apiKey = process.env.RESEND_API_KEY;
+const from = process.env.EMAIL_FROM ?? "Shishya <hi@shishya.in>";
+
+// Lazy-init so a missing key at import time doesn't crash the
+// build. We just refuse to send at the call site.
+let _client: Resend | null = null;
+function client(): Resend | null {
+  if (!apiKey) return null;
+  if (!_client) _client = new Resend(apiKey);
+  return _client;
+}
+
+export interface EmailPayload {
+  to: string;
+  subject: string;
+  html: string;
+  /** Optional plain-text fallback for clients that don't render HTML.
+   *  If omitted, Resend strips the HTML automatically. */
+  text?: string;
+  /** Optional tag for analytics — appears in the Resend dashboard. */
+  tag?: string;
+}
+
+/**
+ * Send a transactional email. Returns true on accepted-for-delivery,
+ * false on any failure (logged). Never throws — caller treats email
+ * as best-effort, never as a blocking dependency of a user flow.
+ */
+export async function sendEmail(payload: EmailPayload): Promise<boolean> {
+  const c = client();
+  if (!c) {
+    console.log(
+      `[email] STUB (no RESEND_API_KEY) — would send to ${payload.to}: "${payload.subject}"`,
+    );
+    return false;
+  }
+  try {
+    const res = await c.emails.send({
+      from,
+      to: payload.to,
+      subject: payload.subject,
+      html: payload.html,
+      text: payload.text,
+      tags: payload.tag ? [{ name: "kind", value: payload.tag }] : undefined,
+    });
+    if ("error" in res && res.error) {
+      console.error("[email] send rejected:", res.error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[email] send threw:", err);
+    return false;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Templates. Plain TS — no JSX, no react-email. Each function takes
+// a small typed payload and returns a ready-to-send {subject,html,text}.
+// ─────────────────────────────────────────────────────────────────────
+
+interface CommonProps {
+  /** First name if available, else email-local-part. We address by
+   *  first name because students respond better to "Hi Riya" than
+   *  "Hi riya.kumar2003". */
+  firstName: string;
+}
+
+interface WelcomeProps extends CommonProps {
+  /** URL students should land on after clicking the primary CTA in
+   *  the welcome email. Right now that's /dashboard which auto-stages
+   *  the Diagnostic-5 hero — perfect first-action target. */
+  ctaUrl: string;
+}
+
+export function renderWelcomeEmail(p: WelcomeProps): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = `Welcome to Shishya, ${p.firstName} — your 90-second diagnostic is ready`;
+  const text = `Hi ${p.firstName},
+
+Welcome to Shishya. You're 1 click away from seeing where you stand on the syllabus.
+
+We've staged a 90-second, 5-question diagnostic for you — once you finish, Shishya knows your weak topics and every next mock targets exactly those. No timer pressure. No cost.
+
+Open it: ${p.ctaUrl}
+
+What you'll get inside:
+• Adaptive mocks that get smarter as you answer
+• Real previous-year papers, organised by year + topic
+• Ask Shishya — AI tutor that knows your syllabus + your mistakes
+• Free, in your language
+
+— The Shishya team`;
+
+  // Inline-CSS HTML so most email clients (Gmail, Outlook, mobile)
+  // render it consistently. No <style> tags — many clients strip them.
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:'Inter',system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="display:inline-block;width:48px;height:48px;background:#f97316;border-radius:10px;line-height:48px;color:#fff;font-weight:700;font-size:22px;">शि</div>
+      <div style="font-weight:700;font-size:18px;margin-top:8px;">Shishya</div>
+    </div>
+    <h1 style="font-size:22px;line-height:1.3;margin:0 0 12px;">Welcome, ${p.firstName} 👋</h1>
+    <p style="font-size:15px;line-height:1.55;margin:0 0 16px;color:#334155;">You're 1 click away from seeing where you stand. We've staged a <strong>90-second, 5-question diagnostic</strong> — Shishya uses your answers to spot the topics dragging your score down, then every next mock targets exactly those.</p>
+    <p style="margin:24px 0;text-align:center;">
+      <a href="${p.ctaUrl}" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:8px;">Take my diagnostic →</a>
+    </p>
+    <p style="font-size:13px;line-height:1.55;margin:24px 0 8px;color:#475569;">What you'll get inside:</p>
+    <ul style="font-size:13px;line-height:1.6;margin:0 0 24px;padding-left:20px;color:#475569;">
+      <li>Adaptive mocks that get smarter with every answer</li>
+      <li>Real previous-year papers, organised by year + topic</li>
+      <li>Ask Shishya — AI tutor that knows your syllabus + your mistakes</li>
+      <li>Free, in your language</li>
+    </ul>
+    <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+    <p style="font-size:11px;line-height:1.6;color:#94a3b8;margin:0;text-align:center;">
+      You're getting this because you signed up at <a href="https://shishya.in" style="color:#c2410c;">shishya.in</a>. If this wasn't you, ignore this email.
+    </p>
+  </div>
+</body></html>`;
+  return { subject, html, text };
+}
+
+interface NudgeProps extends CommonProps {
+  ctaUrl: string;
+  /** Days since signup — usually 3. Drives the copy hook. */
+  daysSinceSignup: number;
+}
+
+export function renderDay3NudgeEmail(p: NudgeProps): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = `${p.firstName}, your diagnostic is still waiting — 5 questions, 90 seconds`;
+  const text = `Hi ${p.firstName},
+
+Quick reminder — you signed up ${p.daysSinceSignup} days ago and haven't taken your diagnostic yet.
+
+It's 5 questions. 90 seconds. The moment you finish, Shishya can show you which topics deserve tomorrow's hour and which you can safely skip.
+
+Take it now: ${p.ctaUrl}
+
+If today's not the day, no stress — but the longer you wait, the longer Shishya can't help.
+
+— The Shishya team`;
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:'Inter',system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="display:inline-block;width:48px;height:48px;background:#f97316;border-radius:10px;line-height:48px;color:#fff;font-weight:700;font-size:22px;">शि</div>
+      <div style="font-weight:700;font-size:18px;margin-top:8px;">Shishya</div>
+    </div>
+    <h1 style="font-size:22px;line-height:1.3;margin:0 0 12px;">Your diagnostic is still waiting, ${p.firstName}</h1>
+    <p style="font-size:15px;line-height:1.55;margin:0 0 16px;color:#334155;">You signed up ${p.daysSinceSignup} days ago — and the platform can't help you until it sees how you answer. <strong>5 questions. 90 seconds.</strong> That's the unlock.</p>
+    <p style="margin:24px 0;text-align:center;">
+      <a href="${p.ctaUrl}" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:8px;">Take my 5-question diagnostic →</a>
+    </p>
+    <p style="font-size:13px;line-height:1.55;margin:24px 0;color:#475569;">After the diagnostic, Shishya will tell you the 3 topics dragging your score down + recommend exactly which mock to take next. No more guessing.</p>
+    <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+    <p style="font-size:11px;line-height:1.6;color:#94a3b8;margin:0;text-align:center;">
+      Not interested? Just ignore this email — we won't send again.<br>
+      <a href="https://shishya.in" style="color:#c2410c;">shishya.in</a>
+    </p>
+  </div>
+</body></html>`;
+  return { subject, html, text };
+}
+
+/** Convenience wrappers — caller doesn't have to think about
+ *  templating, just hands us a user. */
+export async function sendWelcomeEmail(user: {
+  email: string;
+  name?: string | null;
+}): Promise<boolean> {
+  const firstName = pickFirstName(user.name, user.email);
+  const { subject, html, text } = renderWelcomeEmail({
+    firstName,
+    ctaUrl: "https://shishya.in/dashboard",
+  });
+  return sendEmail({ to: user.email, subject, html, text, tag: "welcome" });
+}
+
+export async function sendDay3NudgeEmail(user: {
+  email: string;
+  name?: string | null;
+  daysSinceSignup: number;
+}): Promise<boolean> {
+  const firstName = pickFirstName(user.name, user.email);
+  const { subject, html, text } = renderDay3NudgeEmail({
+    firstName,
+    ctaUrl: "https://shishya.in/dashboard",
+    daysSinceSignup: user.daysSinceSignup,
+  });
+  return sendEmail({ to: user.email, subject, html, text, tag: "day3-nudge" });
+}
+
+/** "Aarav Sharma" → "Aarav", "riya.kumar2003@gmail.com" → "Riya".
+ *  Capitalises the first letter so the greeting reads cleanly. */
+function pickFirstName(name: string | null | undefined, email: string): string {
+  const raw = (name?.trim().split(/\s+/)[0] ?? email.split("@")[0].split(/[._-]/)[0])
+    .replace(/[0-9]+/g, "")
+    .trim();
+  if (!raw) return "there";
+  return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+}

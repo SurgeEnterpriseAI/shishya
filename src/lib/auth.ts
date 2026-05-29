@@ -63,6 +63,17 @@ export const authOptions: NextAuthOptions = {
       } catch (err) {
         console.error("[auth] SIGNUP event record failed (non-fatal):", err);
       }
+      // Welcome email — best-effort, never blocks the auth callback.
+      // sendEmail() is stub-safe when RESEND_API_KEY is unset, so this
+      // is a no-op until the env var lands in Vercel.
+      try {
+        if (user.email) {
+          const { sendWelcomeEmail } = await import("./email");
+          await sendWelcomeEmail({ email: user.email, name: user.name });
+        }
+      } catch (err) {
+        console.error("[auth] welcome email failed (non-fatal):", err);
+      }
     },
   },
 };
