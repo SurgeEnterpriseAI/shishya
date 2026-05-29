@@ -14,6 +14,7 @@ import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { TwoPathsCard } from "./TwoPathsCard";
+import { DiagnosticHero } from "./DiagnosticHero";
 import { captureSignupAttribution } from "@/lib/signup-attribution";
 
 export default async function DashboardPage() {
@@ -98,15 +99,22 @@ async function renderDashboard() {
   // worse than the rare repeat-onboarding nag.
   let onboardedAt: Date | null = null;
   let onbCompletedAt: Date | null = null;
+  // Also pull onbPrepCodes so the empty-state Diagnostic-5 hero can
+  // pre-stage the user's onboarding-chosen exam without a second
+  // picker step. See src/app/dashboard/DiagnosticHero.tsx.
+  let onbPrepCodes: string[] = [];
   try {
     const onboardedRows = await prisma.$queryRaw<{
       onboardedAt: Date | null;
       onbCompletedAt: Date | null;
+      onbPrepCodes: string[] | null;
     }[]>`
-      SELECT "onboardedAt", "onbCompletedAt" FROM "User" WHERE "id" = ${userId} LIMIT 1
+      SELECT "onboardedAt", "onbCompletedAt", "onbPrepCodes"
+      FROM "User" WHERE "id" = ${userId} LIMIT 1
     `;
     onboardedAt = onboardedRows[0]?.onboardedAt ?? null;
     onbCompletedAt = onboardedRows[0]?.onbCompletedAt ?? null;
+    onbPrepCodes = onboardedRows[0]?.onbPrepCodes ?? [];
   } catch (err) {
     console.error("[dashboard] onboarding-state query failed, treating as completed:", err);
     onbCompletedAt = new Date();
@@ -377,26 +385,29 @@ async function renderDashboard() {
         <section className="mt-8">
           <h2 className="text-base font-semibold text-ink-800">{t("dash.your.exams")}</h2>
           {enrollments.length === 0 ? (
-            // Empty-state hero — the most important conversion surface
-            // on the platform. Previously a tiny grey "no enrollments
-            // yet" line; users saw it and bounced. Replaced with a
-            // big, prescriptive "do this next" card that recommends 6
-            // exams aligned to whatever the user typed in /onboarding
-            // (onbPrepCodes first; falls back to popular national
-            // exams). Each tile takes them directly to the per-exam
-            // page where the Start-Mock button lives.
-            <div className="mt-3 rounded-2xl border-2 border-saffron-300 bg-gradient-to-br from-saffron-50/80 to-white p-6 sm:p-8">
+            // Empty-state activation surface — most important
+            // conversion lever on the platform. 27 May 2026 prod
+            // data: 100 signups, 2 mock attempts. The previous flow
+            // ('pick an exam to see Start Mock button') leaked here.
+            // PRIMARY CTA: <DiagnosticHero /> auto-stages a
+            // 5-question diagnostic for the user's onboarding-chosen
+            // primary exam. Single big button, friction zero.
+            // FALLBACK PICKER (kept below): for visitors who want
+            // to start with a different exam than the onboarding
+            // pick, the 6 popular tiles still render.
+            <div className="space-y-4">
+              <DashboardEmptyStateCTA allExams={allExams} onbPrepCodes={onbPrepCodes} />
+              <div className="rounded-2xl border-2 border-saffron-300 bg-gradient-to-br from-saffron-50/80 to-white p-6 sm:p-8">
               <div className="mx-auto max-w-2xl text-center">
-                <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
-                  Step 1 — pick your first exam
+                <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">
+                  Or pick a different exam
                 </p>
-                <h3 className="mt-2 text-xl font-bold text-ink-900 sm:text-2xl">
-                  You&apos;re all set up. Now pick the exam you&apos;re preparing for.
+                <h3 className="mt-2 text-base font-semibold text-ink-800">
+                  Start with one of these popular exams instead
                 </h3>
-                <p className="mt-2 text-sm text-ink-600">
-                  Tap any exam below to see its syllabus and start your first
-                  adaptive mock — free, no time pressure, and Shishya learns
-                  from every answer to make your next mock smarter.
+                <p className="mt-1 text-xs text-ink-500">
+                  Tap any tile to open its full prep page — syllabus, PYQ,
+                  mocks, the works.
                 </p>
               </div>
 
@@ -452,6 +463,7 @@ async function renderDashboard() {
                 </Link>{" "}
                 to get better suggestions.
               </p>
+            </div>
             </div>
           ) : (
             <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -701,5 +713,32 @@ async function renderDashboard() {
         )}
       </section>
     </main>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Empty-state primary CTA — Diagnostic-5 hero.
+//
+// Picks the user's primary exam (first onbPrepCode that maps to a
+// live exam, falling back to SSC_CGL = broadest applicability) and
+// renders the <DiagnosticHero /> client component. Extracted here so
+// the dashboard's main JSX stays clean; this isolates the picker
+// logic that previously needed an IIFE inside the ternary branch.
+// ─────────────────────────────────────────────────────────────────────
+function DashboardEmptyStateCTA({
+  allExams,
+  onbPrepCodes,
+}: {
+  allExams: ReadonlyArray<{ code: string; shortName: string }>;
+  onbPrepCodes: string[];
+}) {
+  const allByCode = new Map(allExams.map((e) => [e.code, e]));
+  const primaryCode =
+    onbPrepCodes.find((c) => allByCode.has(c)) ??
+    (allByCode.has("SSC_CGL") ? "SSC_CGL" : null);
+  const primary = primaryCode ? allByCode.get(primaryCode) : null;
+  if (!primary) return null;
+  return (
+    <DiagnosticHero examCode={primary.code} examShortName={primary.shortName} />
   );
 }
