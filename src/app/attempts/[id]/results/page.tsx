@@ -10,6 +10,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { ResultsReview } from "./ResultsReview";
 import { RankCard } from "@/components/RankCard";
+import { ShareScoreButton } from "./ShareScoreButton";
 import { formatDisplayScorePct } from "@/lib/scoring";
 
 export default async function ResultsPage({
@@ -150,6 +151,20 @@ export default async function ResultsPage({
             secondary=""
           />
         </div>
+
+        {/* Share-to-WhatsApp viral loop. Surfaced HIGH on the page
+            (right after score, before rank ladder) so the moment
+            students see their score, the share action is in their
+            face — peak motivation = peak share intent. See
+            ShareScoreButton component for the wa.me + Web Share +
+            Copy fallback chain. */}
+        {attempt.finishedAt && (
+          <ShareScoreButton
+            attemptId={attempt.id}
+            examShortName={attempt.mock.exam.shortName}
+            scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
+          />
+        )}
 
         {/* ── Rank prediction ───────────────────────────────────────────
             Right under the score cards so the student sees "what does
