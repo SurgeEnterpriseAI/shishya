@@ -14,7 +14,7 @@ import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { TwoPathsCard } from "./TwoPathsCard";
-import { DiagnosticHero } from "./DiagnosticHero";
+import { DiagnosticHero } from "@/components/DiagnosticHero";
 import { captureSignupAttribution } from "@/lib/signup-attribution";
 
 export default async function DashboardPage() {

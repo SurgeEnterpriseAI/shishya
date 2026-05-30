@@ -26,6 +26,7 @@ import { SectionVerificationSummary } from "@/components/VerificationBadge";
 import { ExamDeepContentBlock } from "@/components/ExamDeepContentBlock";
 import { findDeepContent, hasDeepContent } from "@/data/exam-deep-content";
 import { getExamTheme } from "@/lib/exam-theme";
+import { DiagnosticHero } from "@/components/DiagnosticHero";
 
 // Per-exam meta. Beefed-up version that bakes in:
 //   1. state name (for "Tamil Nadu PSC" / "तमिलनाडु TET" style searches)
@@ -371,6 +372,22 @@ export default async function ExamPage({
               Sign in to start →
             </Link>
           </div>
+        )}
+
+        {/* Per-exam Diagnostic-5 hero.
+            Surfaces for signed-in users who landed on this exam page
+            from search / direct link / share and have ZERO prior
+            attempts on it. Mirrors the /dashboard hero but scoped
+            to this exam — catches the "high-intent organic arrival"
+            case where the user signed up specifically because of
+            THIS exam and was bouncing because the dashboard hero
+            offered a different exam (or because they never made it
+            to /dashboard at all). */}
+        {userId && hasContent && recent.length === 0 && (
+          <DiagnosticHero
+            examCode={exam.code}
+            examShortName={exam.shortName}
+          />
         )}
 
         {/* Action panel */}

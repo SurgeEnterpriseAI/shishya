@@ -349,7 +349,7 @@ async function main() {
     // Shuffle deterministic-enough (slice + reverse + ...) — order doesn't
     // matter much for mock variety, students see them in different attempts.
     const picked = [...eligible]
-      .sort(() => 0.5 - Math.hash(spec.title)) // stable per-mock
+      .sort(() => 0.5 - (Math as any).hash(spec.title)) // stable per-mock
       .slice(0, spec.questionCount)
       .map((q) => q.id);
     // Fallback: if filtered pool is smaller than asked, take what we have
