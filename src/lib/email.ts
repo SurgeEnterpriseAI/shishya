@@ -12,14 +12,15 @@
 //
 // Env vars required for live sending:
 //   RESEND_API_KEY    sk-...  (from resend.com → API Keys)
-//   EMAIL_FROM        e.g. "Shishya <hi@shishya.in>"
+//   EMAIL_FROM        e.g. "Shishya <tutor@shishya.in>"
 //                     Must use a domain verified in the Resend
 //                     dashboard, or sends will be rejected.
+//                     Defaults to tutor@shishya.in if unset.
 
 import { Resend } from "resend";
 
 const apiKey = process.env.RESEND_API_KEY;
-const from = process.env.EMAIL_FROM ?? "Shishya <hi@shishya.in>";
+const from = process.env.EMAIL_FROM ?? "Shishya <tutor@shishya.in>";
 
 // Lazy-init so a missing key at import time doesn't crash the
 // build. We just refuse to send at the call site.
