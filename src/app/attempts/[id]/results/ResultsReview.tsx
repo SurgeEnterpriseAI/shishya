@@ -97,6 +97,11 @@ export function ResultsReview({
 
   // No auto-translate on mount — student opts in via the per-question picker.
 
+  // Questions the student should "Ask why" on — wrong + skipped. The
+  // one-tap inline button below adds the id here so ReviewBody opens
+  // AND auto-fires the AI explanation on mount (no second tap).
+  const [autoExplainIds, setAutoExplainIds] = useState<Set<string>>(new Set());
+
   function toggle(id: string) {
     setOpenIds((prev) => {
       const next = new Set(prev);
@@ -106,9 +111,33 @@ export function ResultsReview({
     });
   }
 
+  // One-tap "Ask Shishya why" — expand the question AND mark it for
+  // auto-explanation. This is the activation lever: 30 May prod data
+  // showed 0 chat messages even from a user who took 5 mocks. The AI
+  // help was buried two taps deep inside each collapsed row. Now a
+  // student who got Q3 wrong taps one button right where the wrong
+  // answer is summarised, and the step-by-step appears inline.
+  function askWhy(id: string) {
+    setOpenIds((prev) => new Set(prev).add(id));
+    setAutoExplainIds((prev) => new Set(prev).add(id));
+  }
+
+  // Count wrong + skipped so we can headline the review with a nudge.
+  const wrongCount = questions.filter((q) => !q.correct).length;
+
   return (
     <>
-      <div className="mt-3 flex items-center justify-end gap-2">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        {wrongCount > 0 ? (
+          <p className="text-xs text-ink-600">
+            <span className="font-semibold text-rose-700">{wrongCount}</span> to
+            review — tap{" "}
+            <span className="font-medium text-saffron-700">Ask Shishya why</span>{" "}
+            on any to get a step-by-step.
+          </p>
+        ) : (
+          <span />
+        )}
         <QuestionLangSwitcher current={locale} onChange={changeLocale} pending={translating} />
       </div>
       {translateErr && (
@@ -120,30 +149,50 @@ export function ResultsReview({
           const displayQ: ReviewQ = tr && tr.options.length === q.options.length
             ? { ...q, body: tr.body, options: tr.options, solution: tr.solution }
             : q;
+          const needsReview = !q.correct; // wrong or skipped
           return (
             <li key={q.id} className="overflow-hidden rounded-md border border-ink-200 bg-white">
-              <button
-                onClick={() => toggle(q.id)}
-                className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-ink-50/60"
-              >
-                <Status correct={q.correct} chosen={q.chosen} />
-                <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 text-sm text-ink-800">
-                    <span className="text-ink-500">Q{i + 1}.</span> {displayQ.body}
-                  </p>
-                  <p className="mt-0.5 text-xs text-ink-500">
-                    {q.topic.name} · {q.difficulty} ·{" "}
-                    {q.chosen
-                      ? `You chose ${q.chosen}, correct ${q.answerKey}`
-                      : `Skipped · correct ${q.answerKey}`}{" "}
-                    · {q.timeSec}s
-                  </p>
-                </div>
-                <span className="text-ink-400 shrink-0">{openIds.has(q.id) ? "▾" : "▸"}</span>
-              </button>
+              <div className="flex items-stretch">
+                <button
+                  onClick={() => toggle(q.id)}
+                  className="flex flex-1 items-start gap-3 px-4 py-3 text-left hover:bg-ink-50/60"
+                >
+                  <Status correct={q.correct} chosen={q.chosen} />
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-2 text-sm text-ink-800">
+                      <span className="text-ink-500">Q{i + 1}.</span> {displayQ.body}
+                    </p>
+                    <p className="mt-0.5 text-xs text-ink-500">
+                      {q.topic.name} · {q.difficulty} ·{" "}
+                      {q.chosen
+                        ? `You chose ${q.chosen}, correct ${q.answerKey}`
+                        : `Skipped · correct ${q.answerKey}`}{" "}
+                      · {q.timeSec}s
+                    </p>
+                  </div>
+                  <span className="text-ink-400 shrink-0">{openIds.has(q.id) ? "▾" : "▸"}</span>
+                </button>
+                {/* One-tap Ask-why pill — only on wrong/skipped rows, and
+                    only while the explanation hasn't been opened yet.
+                    Sits OUTSIDE the toggle button (can't nest buttons). */}
+                {needsReview && !autoExplainIds.has(q.id) && (
+                  <button
+                    onClick={() => askWhy(q.id)}
+                    className="shrink-0 self-center mr-2 rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-saffron-600"
+                  >
+                    Ask why →
+                  </button>
+                )}
+              </div>
 
               {openIds.has(q.id) && (
-                <ReviewBody q={displayQ} index={i} examCode={examCode} examShortName={examShortName} />
+                <ReviewBody
+                  q={displayQ}
+                  index={i}
+                  examCode={examCode}
+                  examShortName={examShortName}
+                  autoExplain={autoExplainIds.has(q.id)}
+                />
               )}
             </li>
           );
@@ -158,11 +207,16 @@ function ReviewBody({
   index,
   examCode,
   examShortName,
+  autoExplain = false,
 }: {
   q: ReviewQ;
   index: number;
   examCode: string;
   examShortName: string;
+  /** When true (set by the one-tap "Ask why" pill), fire the standard
+   *  AI explanation automatically on first mount so the student lands
+   *  straight on the step-by-step. */
+  autoExplain?: boolean;
 }) {
   const [explain, setExplain] = useState<{
     stepByStep: string[];
@@ -175,6 +229,9 @@ function ReviewBody({
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportStatus, setReportStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  // Guard so the auto-explain fires exactly once even across re-renders
+  // (translation locale change, parent state updates, etc).
+  const autoFiredRef = useRef(false);
 
   async function submitReport() {
     const reason = reportReason.trim();
@@ -212,6 +269,17 @@ function ReviewBody({
       setBusy(false);
     }
   }
+
+  // Auto-fire the standard explanation once when this body was opened
+  // via the one-tap "Ask why" pill. autoFiredRef guards against repeat
+  // fires on re-render (locale switch, parent re-render).
+  useEffect(() => {
+    if (autoExplain && !autoFiredRef.current && !explain && !busy) {
+      autoFiredRef.current = true;
+      void fetchExplanation("STANDARD");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoExplain]);
 
   return (
     <div className="border-t border-ink-200 bg-ink-50/50 px-4 py-4">
