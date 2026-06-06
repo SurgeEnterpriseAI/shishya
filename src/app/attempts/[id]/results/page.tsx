@@ -11,6 +11,7 @@ import { getT } from "@/lib/i18n-server";
 import { ResultsReview } from "./ResultsReview";
 import { RankCard } from "@/components/RankCard";
 import { ShareScoreButton } from "./ShareScoreButton";
+import { FreshQuestionsButton } from "./FreshQuestionsButton";
 import { formatDisplayScorePct } from "@/lib/scoring";
 
 export default async function ResultsPage({
@@ -163,6 +164,19 @@ export default async function ResultsPage({
             attemptId={attempt.id}
             examShortName={attempt.mock.exam.shortName}
             scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
+          />
+        )}
+
+        {/* DEPTH LEVER 3 — on-demand generation. Targets the student's
+            weakest topic (topicArr is sorted ascending by score, so
+            topicArr[0] is weakest). One tap → fresh, level-tuned
+            questions on exactly the topic they struggled with. The
+            infinite-depth escape hatch for users who exhaust the pool. */}
+        {attempt.finishedAt && topicArr.length > 0 && (
+          <FreshQuestionsButton
+            examCode={attempt.mock.exam.code}
+            topicCode={topicArr[0].code}
+            topicName={topicArr[0].name}
           />
         )}
 
