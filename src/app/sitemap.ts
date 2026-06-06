@@ -91,7 +91,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // cited article that lives at /exams/[code]/{checklist,live,reactions}.
   // Highest SEO leverage during the T-7 → T+3 window around exam day.
   const phaseArticles = await prisma.examPhaseArticle.findMany({
-    where: { exam: { active: true } },
+    // archivedAt: null — archived versions share the same /checklist
+    // etc URL as their live successor, so only emit the active one to
+    // avoid duplicate sitemap entries.
+    where: { exam: { active: true }, archivedAt: null },
     select: {
       phase: true,
       slug: true,

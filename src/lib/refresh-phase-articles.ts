@@ -148,8 +148,13 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
     }
 
     // Skip if we just refreshed this article — bounds writes per day.
-    const existing = await prisma.examPhaseArticle.findUnique({
-      where: { examId_phase: { examId: c.examId, phase: c.phase } },
+    // findFirst (not findUnique) because the (examId, phase) unique was
+    // dropped in favour of archived-version history — there can be many
+    // archived rows + one active row per (examId, phase). We want the
+    // current active one.
+    const existing = await prisma.examPhaseArticle.findFirst({
+      where: { examId: c.examId, phase: c.phase, archivedAt: null },
+      orderBy: { lastUpdatedAt: "desc" },
     });
     if (existing?.lastUpdatedAt) {
       const minsAgo = (Date.now() - existing.lastUpdatedAt.getTime()) / 60_000;
@@ -196,34 +201,33 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
       continue;
     }
 
-    // Upsert. The (examId, phase) unique constraint makes this safe.
+    // ARCHIVE-THEN-CREATE (was overwrite-in-place). When fresh content
+    // is generated, stamp the current active version as archived and
+    // insert a new active row. This preserves every prior cycle's
+    // write-up so the phase page can show "previous updates" — students
+    // returning a year later can read what last cycle's LIVE / REACTIONS
+    // article said. Reactions + shares stay attached to the version they
+    // were made on (historical accuracy).
+    const now = new Date();
     if (existing) {
       await prisma.examPhaseArticle.update({
         where: { id: existing.id },
-        data: {
-          slug: c.phase.toLowerCase(),
-          title: summary.title,
-          summarySnippet: summary.summarySnippet,
-          bodyMarkdown: summary.bodyMarkdown,
-          sourcesScraped: summary.sourcesUsed,
-          lastUpdatedAt: new Date(),
-          lastScrapedAt: new Date(),
-        },
-      });
-    } else {
-      await prisma.examPhaseArticle.create({
-        data: {
-          examId: c.examId,
-          phase: c.phase,
-          slug: c.phase.toLowerCase(),
-          title: summary.title,
-          summarySnippet: summary.summarySnippet,
-          bodyMarkdown: summary.bodyMarkdown,
-          sourcesScraped: summary.sourcesUsed,
-          lastScrapedAt: new Date(),
-        },
+        data: { archivedAt: now },
       });
     }
+    await prisma.examPhaseArticle.create({
+      data: {
+        examId: c.examId,
+        phase: c.phase,
+        slug: c.phase.toLowerCase(),
+        title: summary.title,
+        summarySnippet: summary.summarySnippet,
+        bodyMarkdown: summary.bodyMarkdown,
+        sourcesScraped: summary.sourcesUsed,
+        lastUpdatedAt: now,
+        lastScrapedAt: now,
+      },
+    });
     report.refreshed.push({
       examCode: c.examCode,
       phase: c.phase,

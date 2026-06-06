@@ -679,6 +679,18 @@ model ExamPhaseArticle {
   // when to re-run.
   lastScrapedAt   DateTime?
   viewCount       Int            @default(0)
+  // Soft-delete / versioning marker. The refresh-phase-articles cron
+  // used to OVERWRITE the article for a given (examId, phase) in place,
+  // losing every prior cycle's write-up. Now it archives the active
+  // version (sets archivedAt = now) and creates a fresh active row, so
+  // each (CHECKLIST / LIVE / REACTIONS) cycle stays browsable as
+  // "previous updates" on the phase page. NULL = the current/live
+  // version shown by default; non-null = an archived earlier version.
+  //
+  // NOTE the (examId, phase) UNIQUE was dropped — multiple archived
+  // rows + one active row now coexist per (examId, phase). Reads pick
+  // the active one via `archivedAt: null` + most-recent ordering.
+  archivedAt      DateTime?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -686,7 +698,7 @@ model ExamPhaseArticle {
   reactions ExamArticleReaction[]
   shares    ExamArticleShare[]
 
-  @@unique([examId, phase])
+  @@index([examId, phase, archivedAt])
   @@index([examId])
   @@index([lastUpdatedAt])
 }

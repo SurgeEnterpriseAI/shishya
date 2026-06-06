@@ -253,8 +253,11 @@ async function seed() {
       continue;
     }
 
-    const existing = await prisma.examPhaseArticle.findUnique({
-      where: { examId_phase: { examId: exam.id, phase: s.phase } },
+    // findFirst on the active version — the (examId, phase) unique was
+    // replaced by archived-version history.
+    const existing = await prisma.examPhaseArticle.findFirst({
+      where: { examId: exam.id, phase: s.phase, archivedAt: null },
+      orderBy: { lastUpdatedAt: "desc" },
     });
 
     if (existing) {

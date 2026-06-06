@@ -224,7 +224,9 @@ async function loadUpcomingEventsRaw(): Promise<UpcomingEvent[]> {
     if (phaseLookups.length > 0) {
       const examIds = [...new Set(phaseLookups.map((x) => x.row.exam.id))];
       const articles = await prisma.examPhaseArticle.findMany({
-        where: { examId: { in: examIds } },
+        // archivedAt: null → only the live version's snippet feeds the
+        // sidebar chip (phase articles are now versioned).
+        where: { examId: { in: examIds }, archivedAt: null },
         select: { examId: true, phase: true, summarySnippet: true },
       });
       snippetsByKey = new Map(

@@ -91,10 +91,31 @@ export async function PhaseArticleView({
   });
   if (!exam) notFound();
 
-  const article = await prisma.examPhaseArticle.findUnique({
-    where: { examId_phase: { examId: exam.id, phase } },
+  // Active (current) version — archivedAt IS NULL. findFirst because
+  // the (examId, phase) unique was replaced by version history; there
+  // can be many archived rows + one active row.
+  const article = await prisma.examPhaseArticle.findFirst({
+    where: { examId: exam.id, phase, archivedAt: null },
+    orderBy: { lastUpdatedAt: "desc" },
     include: {
       _count: { select: { reactions: true } },
+    },
+  });
+
+  // Previous (archived) versions — earlier cycles' write-ups, newest
+  // first. Shown collapsed under the live article so a student can read
+  // what last cycle's checklist / live / reactions said.
+  const archivedVersions = await prisma.examPhaseArticle.findMany({
+    where: { examId: exam.id, phase, archivedAt: { not: null } },
+    orderBy: { archivedAt: "desc" },
+    take: 12,
+    select: {
+      id: true,
+      title: true,
+      bodyMarkdown: true,
+      summarySnippet: true,
+      lastUpdatedAt: true,
+      archivedAt: true,
     },
   });
 
@@ -213,6 +234,59 @@ export async function PhaseArticleView({
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* Previous updates — archived earlier versions of this phase
+          article. Each is a native <details> so it's collapsible with
+          zero client JS (server-rendered). Preserves the institutional
+          memory of every cron cycle: a student can read what last
+          cycle's checklist / live coverage / reactions said. */}
+      {archivedVersions.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-base font-semibold text-ink-800">
+            Previous updates ({archivedVersions.length})
+          </h2>
+          <p className="mt-1 text-xs text-ink-500">
+            Earlier versions of this {copy.badge.replace(/^[^ ]+\s/, "").toLowerCase()},
+            archived as the page refreshed. Tap to expand.
+          </p>
+          <div className="mt-3 space-y-2">
+            {archivedVersions.map((v) => (
+              <details
+                key={v.id}
+                className="group rounded-lg border border-ink-200 bg-white"
+              >
+                <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-ink-50/60">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium text-ink-800">
+                      {v.title}
+                    </span>
+                    {v.summarySnippet && (
+                      <span className="mt-0.5 block truncate text-xs text-ink-500">
+                        {v.summarySnippet}
+                      </span>
+                    )}
+                  </span>
+                  <span className="shrink-0 text-[11px] text-ink-400">
+                    {v.archivedAt
+                      ? new Date(v.archivedAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : ""}
+                  </span>
+                </summary>
+                <div className="border-t border-ink-100 px-4 py-4">
+                  <div
+                    className="prose prose-ink prose-sm max-w-none opacity-90"
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(v.bodyMarkdown) }}
+                  />
+                </div>
+              </details>
+            ))}
+          </div>
         </section>
       )}
 
