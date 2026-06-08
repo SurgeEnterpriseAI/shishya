@@ -1033,7 +1033,14 @@ export default async function ExamPage({
           has been guided through one exam's layout they don't need it
           again on another exam (the layout is identical). Steps point
           at the three primary actions: Start Mock, Ask Shishya, and
-          the syllabus block. */}
+          the syllabus block.
+
+          Gated to SIGNED-IN users only. A full-page dimming coach-mark
+          over a signed-out SEO landing page interrupts the visitor who
+          came from search to READ content (cutoffs, syllabus, PYQ) —
+          it hurts dwell time + bounce. Signed-in users have committed
+          to the platform and benefit from the orientation. */}
+      {userId && (
       <PageTour
         tourId="exam-v1"
         steps={[
@@ -1074,6 +1081,7 @@ export default async function ExamPage({
           },
         ]}
       />
+      )}
     </main>
   );
 }

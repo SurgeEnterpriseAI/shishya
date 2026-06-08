@@ -110,9 +110,16 @@ export function PageTour({
         return;
       }
       const r = el.getBoundingClientRect();
+      // VIEWPORT coordinates (no scrollY/scrollX). The overlay below is
+      // a `position: fixed` container, so its children must be placed in
+      // viewport space. Adding scrollY here (document space) pushed the
+      // spotlight ring + tooltip `scrollY` px off whenever the page was
+      // scrolled — the ring floated to the wrong spot and the tooltip
+      // landed off-screen. The scroll listener re-measures continuously
+      // so the ring tracks the element as the page moves.
       setAnchorBox({
-        top: r.top + window.scrollY,
-        left: r.left + window.scrollX,
+        top: r.top,
+        left: r.left,
         width: r.width,
         height: r.height,
       });
@@ -169,8 +176,9 @@ export function PageTour({
     if (!anchorBox) return "center";
     const step = steps[idx];
     if (step?.placement) return step.placement;
-    const spaceAbove = anchorBox.top - window.scrollY;
-    const spaceBelow = window.innerHeight - (anchorBox.top - window.scrollY + anchorBox.height);
+    // anchorBox is already in viewport coords.
+    const spaceAbove = anchorBox.top;
+    const spaceBelow = window.innerHeight - (anchorBox.top + anchorBox.height);
     return spaceAbove > spaceBelow ? "top" : "bottom";
   }, [anchorBox, idx, steps]);
 
@@ -183,7 +191,7 @@ export function PageTour({
   const tooltipStyle: React.CSSProperties = anchorBox
     ? placement === "top"
       ? {
-          position: "absolute",
+          position: "fixed",
           top: anchorBox.top - 16,
           left: Math.max(
             16,
@@ -193,7 +201,7 @@ export function PageTour({
           width: 288,
         }
       : {
-          position: "absolute",
+          position: "fixed",
           top: anchorBox.top + anchorBox.height + 16,
           left: Math.max(
             16,
@@ -222,7 +230,7 @@ export function PageTour({
         <div
           aria-hidden
           style={{
-            position: "absolute",
+            position: "fixed",
             top: anchorBox.top - 6,
             left: anchorBox.left - 6,
             width: anchorBox.width + 12,
