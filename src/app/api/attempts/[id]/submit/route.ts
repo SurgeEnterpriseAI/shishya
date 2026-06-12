@@ -22,6 +22,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { ok, notFound, serverError, unauth, forbidden } from "@/lib/http";
 import { scoreAttempt } from "@/lib/scoring";
+import { applyAttemptPsychometrics } from "@/lib/psychometrics";
 
 export async function POST(
   _req: Request,
@@ -62,7 +63,7 @@ export async function POST(
     // ── Score ────────────────────────────────────────────────────────────
     const questions = await prisma.question.findMany({
       where: { id: { in: attempt.mock.questionIds } },
-      include: { topic: { select: { id: true, code: true, name: true } } },
+      include: { topic: { select: { id: true, code: true, name: true, subjectId: true } } },
     });
     const exam = attempt.mock.exam;
     const submittedAnswers = (attempt.answers as any[]) ?? [];
@@ -159,6 +160,24 @@ export async function POST(
             delta: scorePct,
             metadata: { mockId: attempt.mockId, attemptId: id },
           },
+        }),
+        // Student model: online IRT calibration + FSRS review scheduling.
+        // Reads up-front, computes in memory, writes in parallel — adds one
+        // wave of round-trips, and a failure here never blocks the submit.
+        applyAttemptPsychometrics(prisma, {
+          userId,
+          examId,
+          answers: (scored as any[]).map((a) => ({
+            questionId: a.questionId,
+            chosen: a.chosen ?? null,
+            correct: !!a.correct,
+          })),
+          questionMeta: new Map(
+            questions.map((q) => [
+              q.id,
+              { topicId: q.topic.id, subjectId: q.topic.subjectId, difficulty: q.difficulty },
+            ]),
+          ),
         }),
       ]);
     } catch (err) {

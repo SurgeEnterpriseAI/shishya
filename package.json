@@ -18,6 +18,8 @@
     "seed:neet-ug": "tsx seed/exams/neet-ug-syllabus.ts && tsx seed/questions/neet-physics.ts && tsx seed/questions/neet-chemistry.ts",
     "seed:all": "npm run seed:exams && npm run seed:ssc-cgl && npm run seed:rrb-ntpc && npm run seed:neet-ug",
     "generate:questions": "tsx scripts/generate-questions.ts",
+    "kb:setup": "tsx scripts/setup-pgvector.ts",
+    "kb:ingest": "tsx scripts/ingest-knowledge.ts",
     "smoke-test": "tsx scripts/smoke-test.ts",
     "check-env": "tsx scripts/check-env.ts",
     "test": "vitest run",

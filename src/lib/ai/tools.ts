@@ -142,6 +142,29 @@ export const tutorTools: Anthropic.Messages.Tool[] = [
     },
   },
   {
+    name: "search_knowledge",
+    description:
+      "Search Shishya's verified knowledge base — official exam notifications, NCERT/standard-text material, previous-year papers, and curated notes — for the current exam. Call this when the student asks about exam rules, eligibility, dates, pattern, syllabus details beyond the outline, or any factual claim you are not certain of. Each result carries a reliability tier (OFFICIAL > STANDARD_TEXT > PYQ > CURATED > COMMUNITY) and a citation; prefer higher tiers when sources disagree, cite the source title in your reply, and if nothing relevant is returned say you don't have a verified source rather than guessing.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Natural-language search query, e.g. 'SSC CGL tier 1 negative marking rule'.",
+        },
+        topic_code: {
+          type: "string",
+          description: "Optional topic code to narrow the search (e.g. 'quant.percentage').",
+        },
+        limit: {
+          type: "number",
+          description: "Max chunks to return. Defaults to 5, max 8.",
+        },
+      },
+      required: ["query"],
+    },
+  },
+  {
     name: "predict_rank",
     description:
       "Predict what real-exam rank + likely outcome (colleges / posts) a student would get if they scored a given percentage. Call this when the student asks 'what rank can I get with X%', 'will this score get me into [college]', 'is my current score enough', or any question about outcomes / colleges / cut-offs. Returns the band that matches the score and the full ladder of bands so you can also tell the student how many more marks they need to climb to the next tier.",
@@ -198,12 +221,47 @@ export async function executeTool(
         };
       case "find_scholarships":
         return { ok: true, data: findScholarships(ctx, input) };
+      case "search_knowledge":
+        return { ok: true, data: await searchKnowledge(ctx, input) };
       default:
         return { ok: false, error: `Unknown tool: ${name}` };
     }
   } catch (err: any) {
     return { ok: false, error: String(err?.message ?? err).slice(0, 300) };
   }
+}
+
+async function searchKnowledge(ctx: ToolContext, input: any) {
+  const query = String(input?.query ?? "").trim();
+  if (!query) return { results: [], message: "Empty query." };
+  // Lazy import so chat works even before the KB is configured
+  // (missing VOYAGE_API_KEY / pgvector throws a readable error instead).
+  const { retrieve } = await import("./kb");
+  const chunks = await retrieve(prisma as any, query, {
+    examCode: ctx.examCode,
+    topicCode: typeof input?.topic_code === "string" ? input.topic_code : undefined,
+    limit: Math.min(8, Math.max(1, Number(input?.limit ?? 5))),
+  });
+  if (chunks.length === 0) {
+    return {
+      results: [],
+      message:
+        "No verified source found for this query. Tell the student you don't have an official source for this and avoid guessing specifics like dates or cut-offs.",
+    };
+  }
+  return {
+    results: chunks.map((c, i) => ({
+      ref: `S${i + 1}`,
+      source_title: c.source.title,
+      publisher: c.source.publisher,
+      reliability: c.source.tier,
+      url: c.source.url,
+      published: c.source.publishedAt ? c.source.publishedAt.toISOString().slice(0, 10) : null,
+      heading: c.heading,
+      text: c.text.slice(0, 1500),
+      similarity: Math.round(c.similarity * 100) / 100,
+    })),
+  };
 }
 
 async function getMyMastery(ctx: ToolContext, limit: number) {
