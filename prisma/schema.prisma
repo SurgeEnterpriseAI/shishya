@@ -171,6 +171,7 @@ model Exam {
   importantDates ExamImportantDate[]
   rankBands      ExamRankBand[]
   phaseArticles  ExamPhaseArticle[]
+  reviewStates   ReviewState[]
 
   @@index([code])
   @@index([active])
@@ -216,6 +217,7 @@ model Topic {
   children     Topic[]       @relation("TopicTree")
   questions    Question[]
   weaknessMaps WeaknessMap[]
+  reviewStates ReviewState[]
 
   @@unique([subjectId, code])
   @@index([parentId])
@@ -1555,6 +1557,9 @@ model ReviewState {
   lastReview DateTime?
   due        DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+
+  exam  Exam  @relation(fields: [examId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@unique([userId, topicId])
   @@index([userId, examId, due])

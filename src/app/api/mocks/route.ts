@@ -5,6 +5,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { generateMock } from "@/lib/ai";
+import { tryCatAdaptiveMock } from "@/lib/psychometrics";
 import { getStudentState } from "@/lib/db/student-state";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import { bad, notFound, ok, serverError, unauth, parseBody } from "@/lib/http";
@@ -41,12 +42,30 @@ export async function POST(req: Request) {
     const studentState = await getStudentStateOrInit(session.user.id, body.examCode);
     const syllabus = await getSyllabusContext(body.examCode);
 
-    const result = await generateMock({
-      studentState,
-      request: body.request as GenerateMockRequest,
-      availableQuestions: pool,
-      syllabus,
-    });
+    // ADAPTIVE: try the psychometric CAT engine first — measurement-driven,
+    // deterministic, and no Claude call. Returns null until the student has
+    // enough response history; then we fall back to the LLM heuristic.
+    let result =
+      body.request.type === "ADAPTIVE"
+        ? await tryCatAdaptiveMock(prisma, {
+            userId: session.user.id,
+            examId: exam.id,
+            examShortName: syllabus.examShortName,
+            questionCount: body.request.questionCount,
+            durationMin: body.request.durationMin,
+            pool,
+          })
+        : null;
+    const usedCat = result != null;
+
+    if (!result) {
+      result = await generateMock({
+        studentState,
+        request: body.request as GenerateMockRequest,
+        availableQuestions: pool,
+        syllabus,
+      });
+    }
 
     if (result.questionIds.length === 0) {
       return bad("Could not assemble a mock from available questions.");
@@ -66,7 +85,8 @@ export async function POST(req: Request) {
           requestType: body.request.type,
         },
         questionIds: result.questionIds,
-        generatedBy: body.request.type === "DIAGNOSTIC" ? "ai:diagnostic" : "ai",
+        generatedBy:
+          body.request.type === "DIAGNOSTIC" ? "ai:diagnostic" : usedCat ? "cat:irt" : "ai",
         generationContext: { studentSnapshot: studentState as any },
       },
     });

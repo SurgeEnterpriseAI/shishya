@@ -34,3 +34,4 @@ export {
   type ScoredAnswer,
   type QuestionMeta,
 } from "./apply";
+export { tryCatAdaptiveMock, type CatMockArgs } from "./cat-mock";
