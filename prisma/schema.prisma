@@ -25,23 +25,23 @@ datasource db {
 // ─────────────────────────────────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  name          String?
-  image         String?
-  preferredLang Language  @default(EN)
+  id                      String     @id @default(cuid())
+  email                   String     @unique
+  emailVerified           DateTime?
+  name                    String?
+  image                   String?
+  preferredLang           Language   @default(EN)
   // First-time onboarding tour completion timestamp. Null = the user has
   // never finished the dashboard tour; <OnboardingTour /> auto-mounts in
   // that case. Set to NOW() on "Done" or "Skip" so it never re-appears.
-  onboardedAt   DateTime?
+  onboardedAt             DateTime?
   // Attribution: captured once on first signed-in page load from a
   // cookie set on /login. Tells us where this user came from when no
   // UTM params were on the URL (organic, Reddit, Telegram, etc.)
   // referrerUrl  = full Referer header (or stored UTM URL fragment)
   // referrerHost = parsed hostname for cheap GROUP BY queries
-  signupReferrerUrl  String?
-  signupReferrerHost String?
+  signupReferrerUrl       String?
+  signupReferrerHost      String?
   // Verification-system contribution tracking. All default to 0 so the
   // migration is non-breaking — existing users land as NEWCOMER with
   // zero counts. Counts are incremented by the verification flow,
@@ -68,33 +68,33 @@ model User {
   // and answers the 3-question profile form. Drives the personalised
   // homepage (their stage's content + state's scholarships + prep targets).
   // Null until completed; the wizard at /onboarding sets all three.
-  onbStage      String?   // "CLASS_9_10" | "CLASS_11_12" | "UG" | "PG" | "WORKING"
-  onbState      String?   // ISO 2-letter Indian state code, e.g., "MH", "TN"
-  onbPrepCodes  String[]  @default([])  // exam codes the user is targeting
-  onbCompletedAt DateTime?  // set when wizard is submitted (different from onboardedAt which is the dashboard tour)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  onbStage                String? // "CLASS_9_10" | "CLASS_11_12" | "UG" | "PG" | "WORKING"
+  onbState                String? // ISO 2-letter Indian state code, e.g., "MH", "TN"
+  onbPrepCodes            String[]   @default([]) // exam codes the user is targeting
+  onbCompletedAt          DateTime? // set when wizard is submitted (different from onboardedAt which is the dashboard tour)
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
 
-  accounts        Account[]
-  sessions        Session[]
-  enrollments     Enrollment[]
-  mocks           Mock[]
-  attempts        Attempt[]
-  weaknessMaps    WeaknessMap[]
-  chatSessions    ChatSession[]
-  progressEvents  ProgressEvent[]
-  discussions     Discussion[]        @relation("DiscussionAuthor")
-  discussionMessages DiscussionMessage[] @relation("MessageAuthor")
-  questionReports QuestionReport[]
-  featureRequests FeatureRequest[]       @relation("FeatureRequestAuthor")
-  featureUpvotes  FeatureRequestUpvote[] @relation("FeatureRequestVoter")
-  dailyBriefs     DailyBrief[]
-  verifications   Verification[]      @relation("UserVerifications")
-  adminAudits     VerificationAudit[] @relation("AdminAudits")
-  credentials     UserCredential[]    @relation("UserCredentials")
-  vouches         CredentialVouch[]   @relation("UserVouches")
-  notifications   Notification[]      @relation("UserNotifications")
-  batchEnrollments BatchEnrollment[]
+  accounts           Account[]
+  sessions           Session[]
+  enrollments        Enrollment[]
+  mocks              Mock[]
+  attempts           Attempt[]
+  weaknessMaps       WeaknessMap[]
+  chatSessions       ChatSession[]
+  progressEvents     ProgressEvent[]
+  discussions        Discussion[]           @relation("DiscussionAuthor")
+  discussionMessages DiscussionMessage[]    @relation("MessageAuthor")
+  questionReports    QuestionReport[]
+  featureRequests    FeatureRequest[]       @relation("FeatureRequestAuthor")
+  featureUpvotes     FeatureRequestUpvote[] @relation("FeatureRequestVoter")
+  dailyBriefs        DailyBrief[]
+  verifications      Verification[]         @relation("UserVerifications")
+  adminAudits        VerificationAudit[]    @relation("AdminAudits")
+  credentials        UserCredential[]       @relation("UserCredentials")
+  vouches            CredentialVouch[]      @relation("UserVouches")
+  notifications      Notification[]         @relation("UserNotifications")
+  batchEnrollments   BatchEnrollment[]
 
   @@index([email])
   @@index([badgeLevel])
@@ -140,37 +140,38 @@ model VerificationToken {
 // ─────────────────────────────────────────────────────────────────────────
 
 model Exam {
-  id            String   @id @default(cuid())
-  code          String   @unique // e.g. "SSC_CGL", "NEET_UG"
-  name          String              // "SSC CGL Tier 1"
-  shortName     String              // "SSC CGL"
-  category      ExamCategory
-  description   String   @db.Text
-  durationMin   Int                 // exam duration in minutes
-  totalQuestions Int                // total Qs in real exam
-  totalMarks    Float
-  marksPerQ     Float
-  negativeMark  Float    @default(0)
-  languages     Language[]          // languages exam is offered in
-  active        Boolean  @default(true)
-  candidatesPerYear Int?            // approximate annual volume
+  id                String       @id @default(cuid())
+  code              String       @unique // e.g. "SSC_CGL", "NEET_UG"
+  name              String // "SSC CGL Tier 1"
+  shortName         String // "SSC CGL"
+  category          ExamCategory
+  description       String       @db.Text
+  durationMin       Int // exam duration in minutes
+  totalQuestions    Int // total Qs in real exam
+  totalMarks        Float
+  marksPerQ         Float
+  negativeMark      Float        @default(0)
+  languages         Language[] // languages exam is offered in
+  active            Boolean      @default(true)
+  candidatesPerYear Int? // approximate annual volume
   // ISO state code for STATE_LEVEL exams (TN, KA, MH, UP, ...). Null for
   // national/central exams. Drives the StatePicker grouping.
-  state         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  state             String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
-  subjects    Subject[]
-  questions   Question[]
-  mocks       Mock[]
-  enrollments Enrollment[]
-  weaknessMaps WeaknessMap[]
-  chatSessions ChatSession[]
-  discussions  Discussion[]
-  newsItems    ExamNewsItem[]
+  subjects       Subject[]
+  questions      Question[]
+  mocks          Mock[]
+  enrollments    Enrollment[]
+  weaknessMaps   WeaknessMap[]
+  chatSessions   ChatSession[]
+  discussions    Discussion[]
+  newsItems      ExamNewsItem[]
   importantDates ExamImportantDate[]
-  rankBands    ExamRankBand[]
-  phaseArticles ExamPhaseArticle[]
+  rankBands      ExamRankBand[]
+  phaseArticles  ExamPhaseArticle[]
+  reviewStates   ReviewState[]
 
   @@index([code])
   @@index([active])
@@ -180,8 +181,8 @@ model Exam {
 model Subject {
   id        String   @id @default(cuid())
   examId    String
-  code      String   // e.g. "QUANT", "REASONING"
-  name      String   // "Quantitative Aptitude"
+  code      String // e.g. "QUANT", "REASONING"
+  name      String // "Quantitative Aptitude"
   weight    Float    @default(1) // relative weightage
   orderIdx  Int      @default(0)
   createdAt DateTime @default(now())
@@ -194,28 +195,29 @@ model Subject {
 }
 
 model Topic {
-  id          String   @id @default(cuid())
-  subjectId   String
-  parentId    String?  // null for top-level topics; otherwise subtopic
-  code        String   // e.g. "quant.percentage"
-  name        String
-  description String?  @db.Text
-  syllabusText String? @db.Text  // detailed syllabus content for AI context
+  id               String    @id @default(cuid())
+  subjectId        String
+  parentId         String? // null for top-level topics; otherwise subtopic
+  code             String // e.g. "quant.percentage"
+  name             String
+  description      String?   @db.Text
+  syllabusText     String?   @db.Text // detailed syllabus content for AI context
   // Student-facing study material (markdown). Populated by
   // scripts/generate-topic-notes.ts. Sectioned: overview, key concepts,
   // formulas, worked examples, common mistakes, quick reference.
-  notes              String?   @db.Text
-  notesGeneratedAt   DateTime?
-  notesGeneratedBy   String?
-  weight      Float    @default(1)
-  orderIdx    Int      @default(0)
-  createdAt   DateTime @default(now())
+  notes            String?   @db.Text
+  notesGeneratedAt DateTime?
+  notesGeneratedBy String?
+  weight           Float     @default(1)
+  orderIdx         Int       @default(0)
+  createdAt        DateTime  @default(now())
 
-  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  parent    Topic?  @relation("TopicTree", fields: [parentId], references: [id], onDelete: SetNull)
-  children  Topic[] @relation("TopicTree")
-  questions Question[]
+  subject      Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  parent       Topic?        @relation("TopicTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Topic[]       @relation("TopicTree")
+  questions    Question[]
   weaknessMaps WeaknessMap[]
+  reviewStates ReviewState[]
 
   @@unique([subjectId, code])
   @@index([parentId])
@@ -226,26 +228,26 @@ model Topic {
 // ─────────────────────────────────────────────────────────────────────────
 
 model Question {
-  id          String        @id @default(cuid())
+  id          String         @id @default(cuid())
   examId      String
   topicId     String
-  type        QuestionType  @default(MCQ)
-  difficulty  Difficulty    @default(MEDIUM)
-  body        String        @db.Text
-  options     Json          // [{ key: "A", text: "..." }, ...]
-  answerKey   String        // "A" | "B" | "C" | "D" — or comma-separated for multi-select
-  solution    String        @db.Text
-  hints       Json?         // optional array of progressive hints
-  language    Language      @default(EN)
+  type        QuestionType   @default(MCQ)
+  difficulty  Difficulty     @default(MEDIUM)
+  body        String         @db.Text
+  options     Json // [{ key: "A", text: "..." }, ...]
+  answerKey   String // "A" | "B" | "C" | "D" — or comma-separated for multi-select
+  solution    String         @db.Text
+  hints       Json? // optional array of progressive hints
+  language    Language       @default(EN)
   source      QuestionSource @default(SME)
-  validated   Boolean       @default(false)
+  validated   Boolean        @default(false)
   validatedBy String?
   validatedAt DateTime?
-  tags        String[]      @default([])
-  pyqYear     Int?          // previous-year-question year, if applicable
-  metadata    Json?         // freeform: estimated time, similar Qs, etc.
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  tags        String[]       @default([])
+  pyqYear     Int? // previous-year-question year, if applicable
+  metadata    Json? // freeform: estimated time, similar Qs, etc.
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   exam         Exam                  @relation(fields: [examId], references: [id], onDelete: Cascade)
   topic        Topic                 @relation(fields: [topicId], references: [id], onDelete: Cascade)
@@ -263,14 +265,14 @@ model Question {
 // "Report" on the per-question review and we capture their reason here.
 // Admin reviews under /admin and fixes / removes the question.
 model QuestionReport {
-  id          String   @id @default(cuid())
-  questionId  String
-  userId      String?  // null when reported by a signed-out flow
-  reason      String   @db.Text
-  resolved    Boolean  @default(false)
-  resolvedBy  String?
-  resolvedAt  DateTime?
-  createdAt   DateTime @default(now())
+  id         String    @id @default(cuid())
+  questionId String
+  userId     String? // null when reported by a signed-out flow
+  reason     String    @db.Text
+  resolved   Boolean   @default(false)
+  resolvedBy String?
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
 
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -286,25 +288,25 @@ model QuestionReport {
 // Translations / Results / UI / Other) so we can slice volume by where
 // the friction lives. Public /ideas board lets others upvote.
 model FeatureRequest {
-  id          String   @id @default(cuid())
+  id          String               @id @default(cuid())
   // First-sentence derivation server-side; full text goes in body.
-  title       String   @db.Text
-  body        String   @db.Text
+  title       String               @db.Text
+  body        String               @db.Text
   // Auto-tagged page context
-  routePath   String   // e.g. /exams/SSC_CGL/topics/quant.percentage
-  area        String   // "Mock tests" | "AI Tutor" | "Translations" | "Results & Rank" | "UI / Navigation" | "Other"
-  examCode    String?  // populated when the route is exam-scoped
+  routePath   String // e.g. /exams/SSC_CGL/topics/quant.percentage
+  area        String // "Mock tests" | "AI Tutor" | "Translations" | "Results & Rank" | "UI / Navigation" | "Other"
+  examCode    String? // populated when the route is exam-scoped
   // Author — null when signed-out flow (we still capture impulse ideas)
   authorId    String?
   authorName  String?
   authorEmail String?
   // Triage by admin
   status      FeatureRequestStatus @default(OPEN)
-  adminNote   String?  @db.Text
+  adminNote   String?              @db.Text
   // Social proof — denormalised count, source of truth is FeatureRequestUpvote
-  upvoteCount Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  upvoteCount Int                  @default(0)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 
   author  User?                  @relation("FeatureRequestAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   upvotes FeatureRequestUpvote[]
@@ -336,17 +338,17 @@ model FeatureRequestUpvote {
 // every locale our i18n UI dictionary supports — including Sanskrit,
 // Konkani, Manipuri, etc. that the user-facing Language enum doesn't list.
 model QuestionTranslation {
-  id          String   @id @default(cuid())
-  questionId  String
-  locale      String   // matches i18n.ts locale codes: "hi", "te", "ta", "bn", ...
-  body        String   @db.Text
-  options     Json     // [{ key: "A", text: "<translated>" }, ...]
-  solution    String   @db.Text
-  hints       Json?
+  id         String   @id @default(cuid())
+  questionId String
+  locale     String // matches i18n.ts locale codes: "hi", "te", "ta", "bn", ...
+  body       String   @db.Text
+  options    Json // [{ key: "A", text: "<translated>" }, ...]
+  solution   String   @db.Text
+  hints      Json?
   // The model + prompt version that produced this translation. Lets us
   // re-translate if we change either later.
-  generator   String?
-  createdAt   DateTime @default(now())
+  generator  String?
+  createdAt  DateTime @default(now())
 
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
@@ -359,13 +361,13 @@ model QuestionTranslation {
 // ─────────────────────────────────────────────────────────────────────────
 
 model Enrollment {
-  id        String   @id @default(cuid())
-  userId    String
-  examId    String
-  targetDate DateTime?  // when the student plans to take the exam
-  goalScore Float?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id         String    @id @default(cuid())
+  userId     String
+  examId     String
+  targetDate DateTime? // when the student plans to take the exam
+  goalScore  Float?
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
@@ -379,20 +381,20 @@ model Enrollment {
 // ─────────────────────────────────────────────────────────────────────────
 
 model Mock {
-  id          String     @id @default(cuid())
-  userId      String?    // null for system templates available to all users
-  examId      String
-  type        MockType
-  title       String
-  config      Json       // { topics: [...], difficultyMix: {...}, count, durationMin }
-  questionIds String[]   // ordered list of Question.id
-  generatedBy String     @default("system") // "system" | "ai" | "ai:diagnostic" | "user-request"
+  id                String   @id @default(cuid())
+  userId            String? // null for system templates available to all users
+  examId            String
+  type              MockType
+  title             String
+  config            Json // { topics: [...], difficultyMix: {...}, count, durationMin }
+  questionIds       String[] // ordered list of Question.id
+  generatedBy       String   @default("system") // "system" | "ai" | "ai:diagnostic" | "user-request"
   generationContext Json? // snapshot of student state at generation time
-  createdAt   DateTime   @default(now())
+  createdAt         DateTime @default(now())
 
-  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  exam     Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
-  attempts Attempt[]
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam        Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  attempts    Attempt[]
   dailyBriefs DailyBrief[]
 
   @@index([userId, examId])
@@ -407,11 +409,11 @@ model Attempt {
   startedAt   DateTime      @default(now())
   finishedAt  DateTime?
   durationSec Int?
-  answers     Json          // [{ questionId, chosen, correct, timeSec, marked }]
+  answers     Json // [{ questionId, chosen, correct, timeSec, marked }]
   scoreRaw    Float?
   scoreMax    Float?
   scorePct    Float?
-  topicScores Json?         // { topicId: { correct, total, score } }
+  topicScores Json? // { topicId: { correct, total, score } }
   rank        Int?
   percentile  Float?
   createdAt   DateTime      @default(now())
@@ -429,16 +431,16 @@ model Attempt {
 // ─────────────────────────────────────────────────────────────────────────
 
 model WeaknessMap {
-  id          String   @id @default(cuid())
-  userId      String
-  examId      String
-  topicId     String
-  masteryScore Float   @default(0) // 0.0 – 1.0
-  attemptsCount Int    @default(0)
-  correctCount Int     @default(0)
-  avgTimeSec  Float?
-  lastSeenAt  DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  userId        String
+  examId        String
+  topicId       String
+  masteryScore  Float    @default(0) // 0.0 – 1.0
+  attemptsCount Int      @default(0)
+  correctCount  Int      @default(0)
+  avgTimeSec    Float?
+  lastSeenAt    DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   exam  Exam  @relation(fields: [examId], references: [id], onDelete: Cascade)
@@ -449,16 +451,16 @@ model WeaknessMap {
 }
 
 model ChatSession {
-  id        String   @id @default(cuid())
-  userId    String
-  examId    String?
-  title     String?
+  id              String   @id @default(cuid())
+  userId          String
+  examId          String?
+  title           String?
   contextSnapshot Json? // student state at session start
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  exam     Exam?          @relation(fields: [examId], references: [id], onDelete: SetNull)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam     Exam?         @relation(fields: [examId], references: [id], onDelete: SetNull)
   messages ChatMessage[]
 
   @@index([userId])
@@ -469,8 +471,8 @@ model ChatMessage {
   sessionId String
   role      ChatRole
   content   String   @db.Text
-  toolCalls Json?    // tool calls made by Claude in this turn
-  metadata  Json?    // tokens used, cache hits, latency
+  toolCalls Json? // tool calls made by Claude in this turn
+  metadata  Json? // tokens used, cache hits, latency
   createdAt DateTime @default(now())
 
   session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -479,13 +481,13 @@ model ChatMessage {
 }
 
 model ProgressEvent {
-  id        String        @id @default(cuid())
+  id        String       @id @default(cuid())
   userId    String
   examId    String?
   type      ProgressType
-  delta     Float?        // numeric change (score, mastery, etc.)
+  delta     Float? // numeric change (score, mastery, etc.)
   metadata  Json?
-  createdAt DateTime      @default(now())
+  createdAt DateTime     @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -499,22 +501,22 @@ model ProgressEvent {
 // reads the most-recent brief for each enrolled exam and shows the
 // reflection + a deep-link to the pre-built adaptive mock.
 model DailyBrief {
-  id          String   @id @default(cuid())
-  userId      String
-  examId      String
+  id         String   @id @default(cuid())
+  userId     String
+  examId     String
   // Day this brief is for, normalised to 00:00 UTC. Lets us upsert by
   // (user, exam, day) and ensures one brief per calendar day.
-  briefDate   DateTime @db.Date
+  briefDate  DateTime @db.Date
   // 2–3 sentence reflection from Shishya: what the student worked on,
   // what to focus on today, why. Markdown allowed but kept short.
-  reflection  String   @db.Text
+  reflection String   @db.Text
   // Pointer to the pre-generated adaptive mock for the student to take.
   // Nullable so reflection-only briefs (e.g. mock-pool too thin) still work.
-  mockId      String?
+  mockId     String?
   // Snapshot of the inputs used (mastery weakest topics, top asked-about
   // topics) — handy for debugging cron output.
-  inputs      Json?
-  createdAt   DateTime @default(now())
+  inputs     Json?
+  createdAt  DateTime @default(now())
 
   user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   mock Mock? @relation(fields: [mockId], references: [id], onDelete: SetNull)
@@ -528,7 +530,7 @@ model DailyBrief {
 // ─────────────────────────────────────────────────────────────────────────
 
 model Discussion {
-  id             String       @id @default(cuid())
+  id             String   @id @default(cuid())
   title          String
   // Optional exam scope. When non-null, the discussion appears on that exam's
   // page in addition to the global discussions list.
@@ -538,20 +540,20 @@ model Discussion {
   authorId       String?
   authorName     String?
   // Denormalised counters / activity timestamp keep the home-page list cheap.
-  lastActivityAt DateTime     @default(now())
-  messageCount   Int          @default(0)
-  locked         Boolean      @default(false)
+  lastActivityAt DateTime @default(now())
+  messageCount   Int      @default(0)
+  locked         Boolean  @default(false)
   // Sticky / pinned threads bubble to the top of the home list.
-  pinned         Boolean      @default(false)
+  pinned         Boolean  @default(false)
   // True when the row was AI-generated by /api/cron/refresh-discussions
   // to seed the right-rail with plausible activity for a freshly-
   // upcoming exam that has no real threads yet. The UI labels these
   // as "sample" so visitors know they're starter content, not
   // actual student posts. Seed rows are pruned and re-generated on
   // every cron tick; real (user-created) threads are never touched.
-  isSeed         Boolean      @default(false)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  isSeed         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   exam     Exam?               @relation(fields: [examId], references: [id], onDelete: SetNull)
   author   User?               @relation("DiscussionAuthor", fields: [authorId], references: [id], onDelete: SetNull)
@@ -563,12 +565,12 @@ model Discussion {
 }
 
 model DiscussionMessage {
-  id           String   @id @default(cuid())
-  threadId     String
-  authorId     String?
-  authorName   String?
-  content      String   @db.Text
-  createdAt    DateTime @default(now())
+  id         String   @id @default(cuid())
+  threadId   String
+  authorId   String?
+  authorName String?
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
 
   thread Discussion @relation(fields: [threadId], references: [id], onDelete: Cascade)
   author User?      @relation("MessageAuthor", fields: [authorId], references: [id], onDelete: SetNull)
@@ -581,13 +583,13 @@ model DiscussionMessage {
 // ─────────────────────────────────────────────────────────────────────────
 
 model ExamNewsItem {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   examId      String
   title       String
-  body        String   @db.Text
-  source      String?  // optional URL to official notice / news source
-  publishedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
+  body        String    @db.Text
+  source      String? // optional URL to official notice / news source
+  publishedAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
   // Soft-delete marker. The refresh-exam-data cron sets this on prior
   // generated rows instead of deleting them, so students can still
   // browse the historical news archive per exam. NULL = currently
@@ -602,14 +604,14 @@ model ExamNewsItem {
 }
 
 model ExamImportantDate {
-  id        String   @id @default(cuid())
-  examId    String
-  label     String           // e.g. "Application opens", "Tier 1 exam date"
-  date      DateTime
-  isExamDay Boolean  @default(false) // highlight in UI
-  source    String?           // optional URL
-  notes     String?  @db.Text
-  createdAt DateTime @default(now())
+  id         String    @id @default(cuid())
+  examId     String
+  label      String // e.g. "Application opens", "Tier 1 exam date"
+  date       DateTime
+  isExamDay  Boolean   @default(false) // highlight in UI
+  source     String? // optional URL
+  notes      String?   @db.Text
+  createdAt  DateTime  @default(now())
   // Soft-delete marker. Same semantics as ExamNewsItem.archivedAt —
   // refresh-exam-data archives prior generated rows rather than
   // deleting them, preserving the timeline history for students.
@@ -645,40 +647,40 @@ model ExamImportantDate {
 // ─────────────────────────────────────────────────────────────────────────
 
 model ExamPhaseArticle {
-  id              String         @id @default(cuid())
-  examId          String
-  phase           ExamPhase
+  id             String    @id @default(cuid())
+  examId         String
+  phase          ExamPhase
   // Slug suffix used in the public URL: /exams/{CODE}/{slug}. Almost
   // always matches the phase ("checklist" / "live" / "reactions") —
   // breaking it out as its own column lets us A/B test alt slugs for
   // SEO without a migration.
-  slug            String
-  title           String
+  slug           String
+  title          String
   // 1-2 sentence preview shown in the sidebar / sidebar chip / OG
   // card — the value-prop hook before a student clicks through.
   // Should be ≤ 200 chars, plain text (no markdown), conversational.
   // Example for UPSC reactions:
   //   "Moderate-tough paper. Polity-heavy. Fewer current affairs
   //    than usual — early cutoff prediction: 88-94 (Gen)."
-  summarySnippet  String?
+  summarySnippet String?
   // Markdown body. AI-generated + verified — rendered server-side so
   // we can safely interpolate Q&A blocks without exposing raw HTML
   // from the model.
-  bodyMarkdown    String         @db.Text
+  bodyMarkdown   String    @db.Text
   // Where the body's facts came from. JSON array of
   // { url, type: "reddit"|"rss"|"telegram"|"youtube"|"news"|"manual",
   //   scrapedAt: ISO, weight: 1-5 } so the article can show "Sources
   // we read" footers and reviewers can audit.
-  sourcesScraped  Json           @default("[]")
+  sourcesScraped Json      @default("[]")
   // When the cron last rewrote the body. Drives the "Updated X min
   // ago" badge — critical for student trust on time-sensitive
   // post-exam content.
-  lastUpdatedAt   DateTime       @default(now())
+  lastUpdatedAt  DateTime  @default(now())
   // When the cron last attempted a scrape (may not have changed the
   // body if nothing new was found). Used by the scheduler to decide
   // when to re-run.
-  lastScrapedAt   DateTime?
-  viewCount       Int            @default(0)
+  lastScrapedAt  DateTime?
+  viewCount      Int       @default(0)
   // Soft-delete / versioning marker. The refresh-phase-articles cron
   // used to OVERWRITE the article for a given (examId, phase) in place,
   // losing every prior cycle's write-up. Now it archives the active
@@ -690,11 +692,11 @@ model ExamPhaseArticle {
   // NOTE the (examId, phase) UNIQUE was dropped — multiple archived
   // rows + one active row now coexist per (examId, phase). Reads pick
   // the active one via `archivedAt: null` + most-recent ordering.
-  archivedAt      DateTime?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  archivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  exam      Exam                   @relation(fields: [examId], references: [id], onDelete: Cascade)
+  exam      Exam                  @relation(fields: [examId], references: [id], onDelete: Cascade)
   reactions ExamArticleReaction[]
   shares    ExamArticleShare[]
 
@@ -704,15 +706,15 @@ model ExamPhaseArticle {
 }
 
 model ExamArticleReaction {
-  id         String              @id @default(cuid())
-  articleId  String
+  id        String          @id @default(cuid())
+  articleId String
   // Identity. Anonymous users vote via the existing 30-day anonId
   // cookie; signed-in users vote with userId (and we collapse the
   // anon vote into theirs on next visit).
-  userId     String?
-  anonId     String?
-  reaction   ArticleReaction
-  createdAt  DateTime            @default(now())
+  userId    String?
+  anonId    String?
+  reaction  ArticleReaction
+  createdAt DateTime        @default(now())
 
   article ExamPhaseArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
@@ -723,12 +725,12 @@ model ExamArticleReaction {
 }
 
 model ExamArticleShare {
-  id         String              @id @default(cuid())
-  articleId  String
-  channel    ShareChannel
-  anonId     String?
-  userId     String?
-  createdAt  DateTime            @default(now())
+  id        String       @id @default(cuid())
+  articleId String
+  channel   ShareChannel
+  anonId    String?
+  userId    String?
+  createdAt DateTime     @default(now())
 
   article ExamPhaseArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
@@ -765,7 +767,7 @@ enum ShareChannel {
 // platform's job. AI-seeded for top exams from Claude's knowledge of recent
 // cut-off trends; admin can override per exam.
 model ExamRankBand {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   examId      String
   // The score window (mock percentage) that maps to this band. Inclusive.
   scorePctMin Float
@@ -780,12 +782,12 @@ model ExamRankBand {
   //   - AIIMS Delhi (last year cut-off ~50)
   //   - JIPMER Puducherry
   //   - Top state government medical colleges
-  outcomes    String   @db.Text
+  outcomes    String    @db.Text
   // Order in which to display (lowest scorePctMin first ⇒ orderIdx 0 highest).
-  orderIdx    Int      @default(0)
-  source      String?  // "ai-generated:claude" or curated URL
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  orderIdx    Int       @default(0)
+  source      String? // "ai-generated:claude" or curated URL
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   // Soft-delete marker. refresh-rank-bands archives prior generated
   // rows instead of deleting them, so students can see how the
   // band/cutoff prediction has evolved over time. NULL = currently
@@ -824,17 +826,17 @@ enum Language {
 }
 
 enum ExamCategory {
-  GOVT_JOBS       // SSC, RRB
-  BANKING         // IBPS, SBI
-  CIVIL_SERVICES  // UPSC
-  MEDICAL         // NEET
-  ENGINEERING     // JEE, GATE
-  TEACHING        // CTET
-  UNIVERSITY      // CUET
-  MBA             // CAT
-  LAW             // CLAT
-  OLYMPIAD        // HBCSE, SOF, Silverzone, NSTSE, ZIO/INOI, PRIL
-  STATE_LEVEL     // State PSC, State TET, State Police, etc.
+  GOVT_JOBS // SSC, RRB
+  BANKING // IBPS, SBI
+  CIVIL_SERVICES // UPSC
+  MEDICAL // NEET
+  ENGINEERING // JEE, GATE
+  TEACHING // CTET
+  UNIVERSITY // CUET
+  MBA // CAT
+  LAW // CLAT
+  OLYMPIAD // HBCSE, SOF, Silverzone, NSTSE, ZIO/INOI, PRIL
+  STATE_LEVEL // State PSC, State TET, State Police, etc.
   // SCHOOL_BOARD entries are (Board, Class) units used as containers
   // for school-level Subject + Topic data — NOT real entrance exams.
   // The /exams catalog filters these out; they're surfaced under
@@ -846,11 +848,11 @@ enum ExamCategory {
 }
 
 enum QuestionType {
-  MCQ           // single correct
-  MSQ           // multiple correct
-  NUMERIC       // type-the-number
+  MCQ // single correct
+  MSQ // multiple correct
+  NUMERIC // type-the-number
   TRUE_FALSE
-  MATCH         // matching pairs
+  MATCH // matching pairs
   COMPREHENSION // passage-based parent (children are MCQs)
 }
 
@@ -861,22 +863,22 @@ enum Difficulty {
 }
 
 enum QuestionSource {
-  SME           // human subject-matter expert
-  AI_GENERATED  // generated by Claude, awaiting validation
-  AI_VALIDATED  // generated by Claude + reviewed by SME
-  PYQ           // previous year question (legally sourced)
-  COMMUNITY     // contributed by users
+  SME // human subject-matter expert
+  AI_GENERATED // generated by Claude, awaiting validation
+  AI_VALIDATED // generated by Claude + reviewed by SME
+  PYQ // previous year question (legally sourced)
+  COMMUNITY // contributed by users
 }
 
 enum MockType {
-  DIAGNOSTIC      // first mock to map weaknesses
-  FULL            // mirrors real exam structure
-  SUBJECT         // single subject focus
-  TOPIC           // single topic drill
-  ADAPTIVE        // AI-generated based on weakness map
-  REVISION        // mistakes from past attempts
-  CHALLENGE       // harder than current level
-  USER_REQUEST    // user asked for specific config
+  DIAGNOSTIC // first mock to map weaknesses
+  FULL // mirrors real exam structure
+  SUBJECT // single subject focus
+  TOPIC // single topic drill
+  ADAPTIVE // AI-generated based on weakness map
+  REVISION // mistakes from past attempts
+  CHALLENGE // harder than current level
+  USER_REQUEST // user asked for specific config
 }
 
 enum AttemptStatus {
@@ -914,24 +916,24 @@ enum ProgressType {
 // ─────────────────────────────────────────────────────────────────────────
 
 model Fact {
-  id                          String   @id @default(cuid())
-  pageId                      String                        // canonical URL path, e.g. "/exams/jee-main"
-  section                     FactSection                   // discriminator for the host page
-  claimText                   String   @db.Text             // human-readable: "NIRF Engineering rank"
-  claimValue                  String   @db.Text             // the actual value: "#1"
-  sourceUrl                   String                        // official source URL
-  sourceName                  String                        // "NIRF 2024", "CBSE", "NTA"
-  originalIngestionDate       DateTime @default(now())
+  id                          String         @id @default(cuid())
+  pageId                      String // canonical URL path, e.g. "/exams/jee-main"
+  section                     FactSection // discriminator for the host page
+  claimText                   String         @db.Text // human-readable: "NIRF Engineering rank"
+  claimValue                  String         @db.Text // the actual value: "#1"
+  sourceUrl                   String // official source URL
+  sourceName                  String // "NIRF 2024", "CBSE", "NTA"
+  originalIngestionDate       DateTime       @default(now())
   lastAiCheckDate             DateTime?
   lastAiCheckResult           AICheckResult?
-  aiCheckCount                Int      @default(0)
-  communityVerificationsCount Int      @default(0)
-  trustedVerifierCount        Int      @default(0)
-  domainExpertCount           Int      @default(0)
-  flagCount                   Int      @default(0)
-  status                      FactStatus @default(NONE)
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
+  aiCheckCount                Int            @default(0)
+  communityVerificationsCount Int            @default(0)
+  trustedVerifierCount        Int            @default(0)
+  domainExpertCount           Int            @default(0)
+  flagCount                   Int            @default(0)
+  status                      FactStatus     @default(NONE)
+  createdAt                   DateTime       @default(now())
+  updatedAt                   DateTime       @updatedAt
 
   verifications Verification[]
   audits        VerificationAudit[]
@@ -939,22 +941,22 @@ model Fact {
 
   @@index([pageId])
   @@index([section, status])
-  @@index([lastAiCheckDate])     // drives the AI re-verification priority queue
+  @@index([lastAiCheckDate]) // drives the AI re-verification priority queue
   @@index([status])
 }
 
 model Verification {
-  id                String                  @id @default(cuid())
+  id                String                 @id @default(cuid())
   factId            String
   userId            String
   actionType        VerificationActionType
-  notes             String?                 @db.Text         // required for FLAG + SUGGEST_UPDATE
-  proposedValue     String?                 @db.Text         // for SUGGEST_UPDATE
-  proposedSourceUrl String?                                  // for SUGGEST_UPDATE
-  resolutionStatus  VerificationResolution  @default(PENDING)
+  notes             String?                @db.Text // required for FLAG + SUGGEST_UPDATE
+  proposedValue     String?                @db.Text // for SUGGEST_UPDATE
+  proposedSourceUrl String? // for SUGGEST_UPDATE
+  resolutionStatus  VerificationResolution @default(PENDING)
   resolvedAt        DateTime?
-  resolvedBy        String?                                  // admin User.id
-  createdAt         DateTime                @default(now())
+  resolvedBy        String? // admin User.id
+  createdAt         DateTime               @default(now())
 
   fact   Fact                @relation(fields: [factId], references: [id], onDelete: Cascade)
   user   User                @relation("UserVerifications", fields: [userId], references: [id], onDelete: Cascade)
@@ -969,16 +971,16 @@ model Verification {
 // Full AI verification history. Fact.lastAiCheckDate is the hot cache;
 // this table is the audit trail.
 model AiCheck {
-  id              String         @id @default(cuid())
-  factId          String
-  checkResult     AICheckResult
-  extractedValue  String?        @db.Text    // what the AI read from the source
-  displayedValue  String         @db.Text    // what Shishya showed at check time
-  matchType       AiMatchType    @default(EXACT)
-  notes           String?        @db.Text
-  latencyMs       Int?
-  modelUsed       String?                    // "claude-haiku-4-5"
-  createdAt       DateTime       @default(now())
+  id             String        @id @default(cuid())
+  factId         String
+  checkResult    AICheckResult
+  extractedValue String?       @db.Text // what the AI read from the source
+  displayedValue String        @db.Text // what Shishya showed at check time
+  matchType      AiMatchType   @default(EXACT)
+  notes          String?       @db.Text
+  latencyMs      Int?
+  modelUsed      String? // "claude-haiku-4-5"
+  createdAt      DateTime      @default(now())
 
   fact Fact @relation(fields: [factId], references: [id], onDelete: Cascade)
 
@@ -987,13 +989,13 @@ model AiCheck {
 
 // Admin audit log — random 5% sampling + dispute resolution decisions.
 model VerificationAudit {
-  id              String        @id @default(cuid())
-  factId          String
-  verificationId  String?
-  adminUserId     String
-  auditResult     AuditResult
-  notes           String?       @db.Text
-  createdAt       DateTime      @default(now())
+  id             String      @id @default(cuid())
+  factId         String
+  verificationId String?
+  adminUserId    String
+  auditResult    AuditResult
+  notes          String?     @db.Text
+  createdAt      DateTime    @default(now())
 
   fact         Fact          @relation(fields: [factId], references: [id], onDelete: Cascade)
   verification Verification? @relation(fields: [verificationId], references: [id])
@@ -1008,8 +1010,8 @@ enum FactSection {
   COLLEGE
   SCHOLARSHIP
   BOARD
-  UNIVERSITY       // for the Worldwide section
-  VISA             // for the Worldwide section
+  UNIVERSITY // for the Worldwide section
+  VISA // for the Worldwide section
   CAREER
   GENERAL
 }
@@ -1023,18 +1025,18 @@ enum AICheckResult {
 
 enum AiMatchType {
   EXACT
-  CLOSE            // e.g. date format difference
+  CLOSE // e.g. date format difference
   PARTIAL
   MISMATCH
 }
 
 enum FactStatus {
-  NONE             // grey badge — no verification yet
-  AI               // blue — AI-verified, no human yet
-  VERIFIED         // green single-check
-  FULLY            // green double-check
-  NEEDS_REVIEW     // amber
-  DISPUTED         // red
+  NONE // grey badge — no verification yet
+  AI // blue — AI-verified, no human yet
+  VERIFIED // green single-check
+  FULLY // green double-check
+  NEEDS_REVIEW // amber
+  DISPUTED // red
 }
 
 enum VerificationActionType {
@@ -1045,8 +1047,8 @@ enum VerificationActionType {
 
 enum VerificationResolution {
   PENDING
-  VALIDATED        // flag was correct / suggestion accepted
-  DISMISSED        // flag was wrong
+  VALIDATED // flag was correct / suggestion accepted
+  DISMISSED // flag was wrong
 }
 
 enum AuditResult {
@@ -1082,7 +1084,7 @@ enum BadgeLevel {
 // ─────────────────────────────────────────────────────────────────────────
 
 model UserCredential {
-  id            String                  @id @default(cuid())
+  id            String                 @id @default(cuid())
   userId        String
   // What credential domain this proves (matches CredentialDomain in
   // src/lib/institutional-domains.ts — kept as a free string here so
@@ -1094,7 +1096,7 @@ model UserCredential {
   // Institution display name, e.g., "IIT Madras", "UPSC".
   institution   String
   // Verification status of THIS credential row.
-  status        CredentialStatus        @default(PENDING)
+  status        CredentialStatus       @default(PENDING)
   // How it was verified once status flips to VERIFIED.
   verifiedVia   CredentialVerifiedVia?
   // The email used (if verifiedVia = INSTITUTIONAL_EMAIL); blanked
@@ -1106,13 +1108,13 @@ model UserCredential {
   approvedBy    String?
   // Optional context from the user when claiming (year of graduation,
   // department, etc.) — stays even after verification.
-  notes         String?                 @db.Text
+  notes         String?                @db.Text
 
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user          User                    @relation("UserCredentials", fields: [userId], references: [id], onDelete: Cascade)
-  vouches       CredentialVouch[]
+  user    User              @relation("UserCredentials", fields: [userId], references: [id], onDelete: Cascade)
+  vouches CredentialVouch[]
 
   @@index([userId])
   @@index([status])
@@ -1129,8 +1131,8 @@ model CredentialVouch {
   comment       String?  @db.Text
   createdAt     DateTime @default(now())
 
-  credential    UserCredential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
-  voucher       User           @relation("UserVouches", fields: [voucherUserId], references: [id], onDelete: Cascade)
+  credential UserCredential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+  voucher    User           @relation("UserVouches", fields: [voucherUserId], references: [id], onDelete: Cascade)
 
   @@unique([credentialId, voucherUserId])
   @@index([credentialId])
@@ -1138,17 +1140,17 @@ model CredentialVouch {
 }
 
 enum CredentialStatus {
-  PENDING     // claim submitted, awaiting verification path completion
-  VERIFIED    // verification path completed — user is now DOMAIN_EXPERT
-  REJECTED    // admin rejected the claim
-  REVOKED     // previously verified but later revoked (e.g., fraud)
+  PENDING // claim submitted, awaiting verification path completion
+  VERIFIED // verification path completed — user is now DOMAIN_EXPERT
+  REJECTED // admin rejected the claim
+  REVOKED // previously verified but later revoked (e.g., fraud)
 }
 
 enum CredentialVerifiedVia {
-  INSTITUTIONAL_EMAIL    // one-time link sent to verified email domain
-  COMMUNITY_VOUCHING     // 3+ existing DEs in the same domain vouched
-  ADMIN_GRANT            // admin granted manually (bootstrap path)
-  DOCUMENT_REVIEW        // admin reviewed an uploaded doc (Phase 1.2.x)
+  INSTITUTIONAL_EMAIL // one-time link sent to verified email domain
+  COMMUNITY_VOUCHING // 3+ existing DEs in the same domain vouched
+  ADMIN_GRANT // admin granted manually (bootstrap path)
+  DOCUMENT_REVIEW // admin reviewed an uploaded doc (Phase 1.2.x)
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -1166,7 +1168,7 @@ enum CredentialVerifiedVia {
 // schema changes for new variants.
 // ─────────────────────────────────────────────────────────────────────
 model AnalyticsEvent {
-  id          String      @id @default(cuid())
+  id          String    @id @default(cuid())
   kind        EventKind
   // Authenticated user id when signed in; NULL for anonymous.
   userId      String?
@@ -1185,7 +1187,7 @@ model AnalyticsEvent {
   utmCampaign String?
   // Truncated referrer hostname (e.g., "google.com"), not full URL.
   refHost     String?
-  createdAt   DateTime    @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([kind, createdAt])
   @@index([userId, createdAt])
@@ -1196,13 +1198,13 @@ model AnalyticsEvent {
 
 enum EventKind {
   PAGE_VIEW
-  SIGNUP                  // fires on the user's very first auth callback
-  VERIFICATION_SUBMITTED  // user clicked Verify / Flag / Suggest on a Fact
-  QUIZ_ATTEMPTED          // user submitted a chapter quiz (regardless of score)
-  CHAPTER_COMPLETED       // user scored >=80% on a chapter quiz
-  SCHOLARSHIP_SAVED       // user clicked "Save scholarship" — local + event
-  CHAT_OPENED             // user opened /chat (the AI tutor)
-  CTA_CLICKED             // generic — for ad-hoc button instrumentation
+  SIGNUP // fires on the user's very first auth callback
+  VERIFICATION_SUBMITTED // user clicked Verify / Flag / Suggest on a Fact
+  QUIZ_ATTEMPTED // user submitted a chapter quiz (regardless of score)
+  CHAPTER_COMPLETED // user scored >=80% on a chapter quiz
+  SCHOLARSHIP_SAVED // user clicked "Save scholarship" — local + event
+  CHAT_OPENED // user opened /chat (the AI tutor)
+  CTA_CLICKED // generic — for ad-hoc button instrumentation
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -1215,23 +1217,23 @@ enum EventKind {
 // the table for un-emailed unread rows and batch-send.
 // ─────────────────────────────────────────────────────────────────────
 model Notification {
-  id          String                @id @default(cuid())
-  userId      String
-  type        NotificationType
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
   // Headline shown in the bell dropdown + on /me/notifications.
-  title       String
+  title     String
   // Optional one-line context (e.g., "JEE Main 2026 application dates").
-  body        String?               @db.Text
+  body      String?          @db.Text
   // Where clicking the notification takes the user. Relative path.
-  link        String?
+  link      String?
   // Dedup key — application code passes a stable string so the same
   // event can't create two notifications. Optional.
-  dedupKey    String?
-  readAt      DateTime?
-  emailedAt   DateTime?
-  createdAt   DateTime              @default(now())
+  dedupKey  String?
+  readAt    DateTime?
+  emailedAt DateTime?
+  createdAt DateTime         @default(now())
 
-  user        User                  @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, dedupKey])
   @@index([userId, readAt])
@@ -1241,26 +1243,25 @@ model Notification {
 
 enum NotificationType {
   // Verification events
-  VERIFICATION_APPROVED      // your verification got APPROVED in audit
-  VERIFICATION_REJECTED      // your verification got REJECTED in audit
-  VERIFICATION_CORRECTED     // admin corrected your verification
+  VERIFICATION_APPROVED // your verification got APPROVED in audit
+  VERIFICATION_REJECTED // your verification got REJECTED in audit
+  VERIFICATION_CORRECTED // admin corrected your verification
 
   // Credential events
-  CREDENTIAL_VOUCHED         // someone vouched for your credential
-  CREDENTIAL_VERIFIED        // your credential got verified (you're now DE!)
-  CREDENTIAL_REJECTED        // admin rejected your credential claim
+  CREDENTIAL_VOUCHED // someone vouched for your credential
+  CREDENTIAL_VERIFIED // your credential got verified (you're now DE!)
+  CREDENTIAL_REJECTED // admin rejected your credential claim
 
   // Badge / promotion events
-  BADGE_PROMOTED             // you got promoted to next badge level
+  BADGE_PROMOTED // you got promoted to next badge level
 
   // Flag follow-up
-  FLAG_VALIDATED             // a flag you raised was validated
-  SUGGESTION_ACCEPTED        // an update suggestion you submitted was accepted
+  FLAG_VALIDATED // a flag you raised was validated
+  SUGGESTION_ACCEPTED // an update suggestion you submitted was accepted
 
   // Misc
-  ADMIN_MESSAGE              // free-form admin-issued notification
+  ADMIN_MESSAGE // free-form admin-issued notification
 }
-
 
 // ─────────────────────────────────────────────────────────────────────────
 // PHASE 2: INSTITUTIONS
@@ -1315,9 +1316,9 @@ model Institution {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  admins   InstitutionUser[]
-  courses  Course[]
-  reviews  InstitutionReview[]
+  admins  InstitutionUser[]
+  courses Course[]
+  reviews InstitutionReview[]
 
   @@index([slug])
   @@index([state])
@@ -1325,9 +1326,9 @@ model Institution {
 }
 
 model InstitutionUser {
-  id            String   @id @default(cuid())
+  id            String          @id @default(cuid())
   institutionId String
-  email         String   @unique
+  email         String          @unique
   // bcrypt hash with cost 12. Never exposed in any API response.
   passwordHash  String
   name          String
@@ -1335,9 +1336,9 @@ model InstitutionUser {
   // Session-revocation token — bumped on logout-everywhere or password
   // change. JWT-issued sessions check this matches before granting
   // access, so a leaked cookie can be invalidated server-side.
-  sessionEpoch  Int      @default(0)
+  sessionEpoch  Int             @default(0)
   lastLoginAt   DateTime?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime        @default(now())
 
   institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
@@ -1346,8 +1347,8 @@ model InstitutionUser {
 }
 
 enum InstitutionRole {
-  ADMIN     // can edit institution profile + manage all batches
-  TEACHER   // can manage batches assigned to them (v2 — schema-ready)
+  ADMIN // can edit institution profile + manage all batches
+  TEACHER // can manage batches assigned to them (v2 — schema-ready)
 }
 
 model Course {
@@ -1356,7 +1357,7 @@ model Course {
   // Optional link to an Exam (e.g. SSC_CGL). When set, the course
   // shows up on the per-exam page's "coaching centers" section.
   examCode      String?
-  name          String   // e.g. "SSC CGL Foundation 2026"
+  name          String // e.g. "SSC CGL Foundation 2026"
   description   String?  @db.Text
   durationWeeks Int?
   // Fees in INR rupees. Null = "contact us". Stored as integer to
@@ -1373,23 +1374,23 @@ model Course {
 }
 
 model Batch {
-  id          String    @id @default(cuid())
-  courseId    String
-  name        String    // e.g. "Morning batch — Aug 2026"
-  startDate   DateTime?
-  endDate     DateTime?
+  id         String    @id @default(cuid())
+  courseId   String
+  name       String // e.g. "Morning batch — Aug 2026"
+  startDate  DateTime?
+  endDate    DateTime?
   // "ONLINE" | "OFFLINE" | "HYBRID" — same set as Institution.modes.
-  mode        String    @default("ONLINE")
+  mode       String    @default("ONLINE")
   // Shareable invite link suffix. Goes in /join/<inviteCode>. cuid
   // gives us collision-free unguessable codes without needing crypto.
-  inviteCode  String    @unique @default(cuid())
+  inviteCode String    @unique @default(cuid())
   // Optional cap on how many students can enroll. Null = unlimited.
-  capacity    Int?
+  capacity   Int?
   // Soft-archive (so old batches stay queryable for outcomes/results
   // but don't surface in the active student-add UI).
-  archived    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  archived   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   course      Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
   enrollments BatchEnrollment[]
@@ -1423,11 +1424,143 @@ model InstitutionReview {
   rating        Int
   body          String   @db.Text
   // Moderation: visible publicly only when status = APPROVED.
-  status        String   @default("PENDING")  // PENDING | APPROVED | REJECTED
+  status        String   @default("PENDING") // PENDING | APPROVED | REJECTED
   createdAt     DateTime @default(now())
 
   institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
   @@unique([institutionId, userId])
   @@index([institutionId, status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// KNOWLEDGE SPINE — grounded, provenance-tracked source corpus (RAG)
+//
+// Every chunk the AI retrieves traces back to a KnowledgeSource with a
+// reliability tier, so answers can cite *where* a fact came from and the
+// UI can badge official sources differently from community ones.
+//
+// Embeddings live in an Unsupported("vector") column (pgvector on Neon).
+// Run `npm run kb:setup` once per database to CREATE EXTENSION vector.
+// Similarity search goes through raw SQL in src/lib/ai/kb/retrieve.ts —
+// Prisma cannot query vector columns natively.
+// ─────────────────────────────────────────────────────────────────────────
+
+model KnowledgeSource {
+  id          String            @id @default(cuid())
+  title       String
+  // Where the content came from — the provenance anchor.
+  url         String?
+  publisher   String? // e.g. "SSC", "NTA", "NCERT", "Shishya"
+  tier        SourceReliability
+  // Scope: null examId = cross-exam (e.g. NCERT chapters used by many exams)
+  examCode    String?
+  topicCode   String?
+  language    Language          @default(EN)
+  // Content hash of the ingested document — dedupes re-ingestion.
+  contentHash String            @unique
+  // When the underlying source was published / last known-good.
+  publishedAt DateTime?
+  ingestedAt  DateTime          @default(now())
+  // Soft retirement: stale notifications etc. stay for audit, leave retrieval.
+  archivedAt  DateTime?
+
+  chunks KnowledgeChunk[]
+
+  @@index([examCode, topicCode])
+  @@index([tier])
+}
+
+model KnowledgeChunk {
+  id        String                       @id @default(cuid())
+  sourceId  String
+  // Position of this chunk within the source document.
+  seq       Int
+  // Heading breadcrumb for display + retrieval context, e.g.
+  // "Percentage > Successive change".
+  heading   String?
+  text      String                       @db.Text
+  tokenEst  Int                          @default(0)
+  embedding Unsupported("vector(1024)")?
+  createdAt DateTime                     @default(now())
+
+  source KnowledgeSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, seq])
+  @@index([sourceId])
+}
+
+enum SourceReliability {
+  OFFICIAL // govt notification, official exam-body page, gazette
+  STANDARD_TEXT // NCERT / standard reference textbook
+  PYQ // previous-year question paper (with year)
+  CURATED // Shishya-authored, SME-reviewed material
+  COMMUNITY // community-contributed, unverified
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// STUDENT MODEL — psychometric state (IRT ability, item stats, FSRS review)
+//
+// Replaces the flat WeaknessMap.masteryScore as the *engine* (WeaknessMap
+// stays as the UI-facing projection). Pure math lives in
+// src/lib/psychometrics/*; these tables are its persisted state.
+// ─────────────────────────────────────────────────────────────────────────
+
+// Per-question IRT item parameters, calibrated online from real attempts.
+// Seeded from the content-factory verifier's difficulty estimate; refined
+// by every answer (Elo-style update with decaying K).
+model QuestionStat {
+  id            String   @id @default(cuid())
+  questionId    String   @unique
+  // 2PL parameters: difficulty b (logit scale, ~ -3..+3), discrimination a.
+  irtB          Float    @default(0)
+  irtA          Float    @default(1)
+  attemptsCount Int      @default(0)
+  correctCount  Int      @default(0)
+  avgTimeSec    Float?
+  updatedAt     DateTime @updatedAt
+
+  @@index([attemptsCount])
+}
+
+// Per-student, per-subject latent ability θ with a standard error that
+// shrinks as evidence accumulates. Subject-level (not topic) keeps θ
+// estimable from realistic attempt volumes; topic detail comes from FSRS
+// + WeaknessMap.
+model AbilityState {
+  id            String   @id @default(cuid())
+  userId        String
+  examId        String
+  subjectId     String
+  theta         Float    @default(0)
+  // Standard error of θ — drives CAT item selection + K decay.
+  se            Float    @default(1)
+  attemptsCount Int      @default(0)
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, subjectId])
+  @@index([userId, examId])
+}
+
+// FSRS spaced-repetition state per (user, topic). Drives "what to revise
+// today" — retrievability decays over time; reviews reschedule.
+model ReviewState {
+  id         String    @id @default(cuid())
+  userId     String
+  examId     String
+  topicId    String
+  // FSRS core state
+  stability  Float     @default(1) // days until retrievability drops to 90%
+  difficulty Float     @default(5) // FSRS difficulty 1..10
+  reps       Int       @default(0)
+  lapses     Int       @default(0)
+  lastReview DateTime?
+  due        DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  exam  Exam  @relation(fields: [examId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
+  @@index([userId, examId, due])
 }

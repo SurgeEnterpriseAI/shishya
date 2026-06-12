@@ -341,6 +341,12 @@ export const dict = {
     "dash.loop.shishya.sessions.one": "session",
     "dash.loop.shishya.sessions.many": "sessions",
     "dash.loop.shishya.last30": "last 30 days",
+    "dash.revise.title": "Revise today",
+    "dash.revise.subtitle": "Your memory of these topics is fading — a quick revision now locks them in before they slip.",
+    "dash.revise.retained": "retained",
+    "dash.revise.overdue.days": "days overdue",
+    "dash.revise.due.today": "due today",
+    "dash.revise.cta": "Revise →",
 
     // ── exam page
     "exam.totalQs": "Qs",
@@ -760,6 +766,12 @@ export const dict = {
     "dash.loop.shishya.sessions.one": "सत्र",
     "dash.loop.shishya.sessions.many": "सत्र",
     "dash.loop.shishya.last30": "पिछले 30 दिन",
+    "dash.revise.title": "आज दोहराएँ",
+    "dash.revise.subtitle": "इन topics की याद धुंधली पड़ रही है — अभी एक छोटा revision इन्हें पक्का कर देगा।",
+    "dash.revise.retained": "याद है",
+    "dash.revise.overdue.days": "दिन देर से",
+    "dash.revise.due.today": "आज due",
+    "dash.revise.cta": "दोहराएँ →",
 
     "exam.totalQs": "प्रश्न",
     "exam.marks": "अंक",

@@ -1,0 +1,246 @@
+{
+  "description": "Golden set for the content-factory verification firewall. SOUND items must survive with their key intact; BAD_KEY items have a deliberately wrong answerKey the firewall must catch (reject, or correct the key in review); BROKEN items are unanswerable and must never be accepted. Run with: npm run evals",
+  "items": [
+    {
+      "id": "sound-percentage-1",
+      "expect": "SOUND",
+      "candidate": {
+        "body": "What is 25% of 480?",
+        "options": [
+          { "key": "A", "text": "96" },
+          { "key": "B", "text": "110" },
+          { "key": "C", "text": "120" },
+          { "key": "D", "text": "140" }
+        ],
+        "answerKey": "C",
+        "solution": "25% means one quarter. 480 divided by 4 equals 120. So 25% of 480 is 120.",
+        "difficulty": "EASY",
+        "tags": ["percentage"]
+      }
+    },
+    {
+      "id": "sound-speed-1",
+      "expect": "SOUND",
+      "candidate": {
+        "body": "A train travels at a constant speed of 60 km/h. How far does it travel in 2.5 hours?",
+        "options": [
+          { "key": "A", "text": "120 km" },
+          { "key": "B", "text": "140 km" },
+          { "key": "C", "text": "150 km" },
+          { "key": "D", "text": "160 km" }
+        ],
+        "answerKey": "C",
+        "solution": "Distance = speed × time = 60 × 2.5 = 150 km.",
+        "difficulty": "EASY",
+        "tags": ["time-speed-distance"]
+      }
+    },
+    {
+      "id": "sound-discount-1",
+      "expect": "SOUND",
+      "candidate": {
+        "body": "Two successive discounts of 20% and 10% are given on an item. What is the equivalent single discount?",
+        "options": [
+          { "key": "A", "text": "30%" },
+          { "key": "B", "text": "28%" },
+          { "key": "C", "text": "26%" },
+          { "key": "D", "text": "25%" }
+        ],
+        "answerKey": "B",
+        "solution": "After 20% discount the price is 80% of original. After a further 10% discount it is 80% × 90% = 72% of original. Total discount = 100% − 72% = 28%.",
+        "difficulty": "MEDIUM",
+        "tags": ["percentage", "successive-discount"]
+      }
+    },
+    {
+      "id": "sound-hcf-1",
+      "expect": "SOUND",
+      "candidate": {
+        "body": "What is the HCF of 36 and 48?",
+        "options": [
+          { "key": "A", "text": "6" },
+          { "key": "B", "text": "8" },
+          { "key": "C", "text": "12" },
+          { "key": "D", "text": "24" }
+        ],
+        "answerKey": "C",
+        "solution": "36 = 2² × 3², 48 = 2⁴ × 3. HCF takes the lowest powers of common primes: 2² × 3 = 12.",
+        "difficulty": "EASY",
+        "tags": ["hcf-lcm"]
+      }
+    },
+    {
+      "id": "sound-profit-1",
+      "expect": "SOUND",
+      "candidate": {
+        "body": "A trader buys an article for ₹400 and sells it for ₹500. What is the profit percentage?",
+        "options": [
+          { "key": "A", "text": "20%" },
+          { "key": "B", "text": "25%" },
+          { "key": "C", "text": "30%" },
+          { "key": "D", "text": "15%" }
+        ],
+        "answerKey": "B",
+        "solution": "Profit = 500 − 400 = ₹100. Profit % = (100/400) × 100 = 25%.",
+        "difficulty": "EASY",
+        "tags": ["profit-loss"]
+      }
+    },
+    {
+      "id": "sound-algebra-1",
+      "expect": "SOUND",
+      "candidate": {
+        "body": "If x + 1/x = 4, what is the value of x² + 1/x²?",
+        "options": [
+          { "key": "A", "text": "12" },
+          { "key": "B", "text": "14" },
+          { "key": "C", "text": "16" },
+          { "key": "D", "text": "18" }
+        ],
+        "answerKey": "B",
+        "solution": "Squaring both sides: (x + 1/x)² = x² + 2 + 1/x² = 16. So x² + 1/x² = 16 − 2 = 14.",
+        "difficulty": "MEDIUM",
+        "tags": ["algebra", "identities"]
+      }
+    },
+    {
+      "id": "sound-si-1",
+      "expect": "SOUND",
+      "candidate": {
+        "body": "Find the simple interest on ₹5000 at 8% per annum for 3 years.",
+        "options": [
+          { "key": "A", "text": "₹1000" },
+          { "key": "B", "text": "₹1100" },
+          { "key": "C", "text": "₹1200" },
+          { "key": "D", "text": "₹1250" }
+        ],
+        "answerKey": "C",
+        "solution": "SI = P × R × T / 100 = 5000 × 8 × 3 / 100 = ₹1200.",
+        "difficulty": "EASY",
+        "tags": ["simple-interest"]
+      }
+    },
+    {
+      "id": "sound-average-1",
+      "expect": "SOUND",
+      "candidate": {
+        "body": "What is the average of 10, 20, 30, 40 and 50?",
+        "options": [
+          { "key": "A", "text": "25" },
+          { "key": "B", "text": "30" },
+          { "key": "C", "text": "35" },
+          { "key": "D", "text": "40" }
+        ],
+        "answerKey": "B",
+        "solution": "Sum = 150. Average = 150 / 5 = 30.",
+        "difficulty": "EASY",
+        "tags": ["averages"]
+      }
+    },
+    {
+      "id": "badkey-percentage-1",
+      "expect": "BAD_KEY",
+      "correctKey": "B",
+      "candidate": {
+        "body": "What is 15% of 200?",
+        "options": [
+          { "key": "A", "text": "25" },
+          { "key": "B", "text": "30" },
+          { "key": "C", "text": "35" },
+          { "key": "D", "text": "40" }
+        ],
+        "answerKey": "C",
+        "solution": "15% of 200 is 35 because 10% is 20 and 5% is 15, so 20 + 15 = 35.",
+        "difficulty": "EASY",
+        "tags": ["percentage"]
+      }
+    },
+    {
+      "id": "badkey-circle-1",
+      "expect": "BAD_KEY",
+      "correctKey": "A",
+      "candidate": {
+        "body": "What is the area of a circle with radius 7 cm? (Use π = 22/7)",
+        "options": [
+          { "key": "A", "text": "154 cm²" },
+          { "key": "B", "text": "144 cm²" },
+          { "key": "C", "text": "49 cm²" },
+          { "key": "D", "text": "308 cm²" }
+        ],
+        "answerKey": "D",
+        "solution": "Area = πr² = (22/7) × 7 × 7 × 2 = 308 cm².",
+        "difficulty": "EASY",
+        "tags": ["mensuration", "circle"]
+      }
+    },
+    {
+      "id": "badkey-speed-1",
+      "expect": "BAD_KEY",
+      "correctKey": "C",
+      "candidate": {
+        "body": "A car covers 120 km in 1.5 hours. What is its average speed?",
+        "options": [
+          { "key": "A", "text": "70 km/h" },
+          { "key": "B", "text": "75 km/h" },
+          { "key": "C", "text": "80 km/h" },
+          { "key": "D", "text": "90 km/h" }
+        ],
+        "answerKey": "A",
+        "solution": "Speed = distance / time = 120 / 1.5 = 70 km/h.",
+        "difficulty": "EASY",
+        "tags": ["time-speed-distance"]
+      }
+    },
+    {
+      "id": "broken-nocorrect-1",
+      "expect": "BROKEN",
+      "candidate": {
+        "body": "What is the sum of the first 10 natural numbers (1 + 2 + ... + 10)?",
+        "options": [
+          { "key": "A", "text": "50" },
+          { "key": "B", "text": "60" },
+          { "key": "C", "text": "65" },
+          { "key": "D", "text": "70" }
+        ],
+        "answerKey": "A",
+        "solution": "Using n(n+1)/2 = 10 × 11 / 2 = 55, which rounds to 50.",
+        "difficulty": "EASY",
+        "tags": ["number-series"]
+      }
+    },
+    {
+      "id": "broken-ambiguous-1",
+      "expect": "BROKEN",
+      "candidate": {
+        "body": "Which of the following is equal to one half?",
+        "options": [
+          { "key": "A", "text": "2/4" },
+          { "key": "B", "text": "0.5" },
+          { "key": "C", "text": "50%" },
+          { "key": "D", "text": "1/2" }
+        ],
+        "answerKey": "D",
+        "solution": "1/2 is one half, so D is correct.",
+        "difficulty": "EASY",
+        "tags": ["fractions"]
+      }
+    },
+    {
+      "id": "broken-insufficient-1",
+      "expect": "BROKEN",
+      "candidate": {
+        "body": "A shopkeeper sells an article at a profit. If the selling price is ₹240, what was the cost price?",
+        "options": [
+          { "key": "A", "text": "₹180" },
+          { "key": "B", "text": "₹200" },
+          { "key": "C", "text": "₹210" },
+          { "key": "D", "text": "₹220" }
+        ],
+        "answerKey": "B",
+        "solution": "Profit is 20%, so CP = 240 / 1.2 = ₹200.",
+        "difficulty": "MEDIUM",
+        "tags": ["profit-loss"]
+      }
+    }
+  ]
+}

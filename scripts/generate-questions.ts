@@ -27,6 +27,8 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { PrismaClient, Difficulty, QuestionSource, Language } from "@prisma/client";
+import { verifyCandidates } from "../src/lib/ai/factory";
+import type { FactoryQuestion } from "../src/lib/ai/factory";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Types & constants
@@ -43,6 +45,8 @@ interface CliArgs {
   dryRun: boolean;
   noAi: boolean;
   retry: number;
+  verify: boolean;
+  autoValidate: boolean;
 }
 
 interface GeneratedQuestion {
@@ -71,7 +75,7 @@ const PRICE_CACHE_READ_PER_M = 0.3;
 // CLI
 // ─────────────────────────────────────────────────────────────────────────
 function parseArgs(argv: string[]): CliArgs {
-  const args: any = { all: false, count: 20, batchSize: 10, avoidRecent: 50, dryRun: false, noAi: false, retry: 1 };
+  const args: any = { all: false, count: 20, batchSize: 10, avoidRecent: 50, dryRun: false, noAi: false, retry: 1, verify: false, autoValidate: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     const next = () => argv[++i];
@@ -87,6 +91,8 @@ function parseArgs(argv: string[]): CliArgs {
       case "--retry": args.retry = parseInt(next(), 10); break;
       case "--dry-run": args.dryRun = true; break;
       case "--no-ai": args.noAi = true; break;
+      case "--verify": args.verify = true; break;
+      case "--auto-validate": args.autoValidate = true; break;
       case "--help": case "-h": printHelpAndExit();
       default:
         if (a.startsWith("--")) console.warn(`(warn) unknown flag: ${a}`);
@@ -493,7 +499,36 @@ async function main() {
         pending -= batchAccepted;
       }
 
-      // Save (skip in dry-run)
+      // Verification firewall (opt-in via --verify): solve blind + adjudicate
+      // before persisting. Rejected items never reach the DB.
+      if (args.verify && !args.noAi && accepted.length > 0) {
+        console.log(`   running verification firewall over ${accepted.length} candidates…`);
+        const result = await verifyCandidates(
+          accepted.map((q) => ({
+            body: q.body,
+            options: q.options,
+            answerKey: q.answerKey,
+            solution: q.solution,
+            difficulty: q.difficulty,
+            tags: q.tags,
+          })),
+          [`syllabus:${exam.code}`, `topic.syllabusText:${topic.code}`],
+          { autoValidateOnAccept: args.autoValidate },
+        );
+        const v = result.stats.byVerdict;
+        console.log(
+          `   firewall: ${result.stats.accepted} accept · ${result.stats.needsReview} review · ${result.stats.rejected} reject ` +
+            `(verdicts CORRECT:${v.CORRECT} MISMATCH:${v.MISMATCH} AMBIGUOUS:${v.AMBIGUOUS} FLAWED:${v.FLAWED}) ` +
+            `~$${result.stats.costUsd.toFixed(4)}`,
+        );
+        if (!args.dryRun && result.questions.length > 0) {
+          await saveVerifiedQuestions(prisma, exam.id, topic.id, result.questions, args.autoValidate);
+          console.log(`   saved ${result.questions.length} verified questions to DB`);
+        }
+        continue; // skip the legacy save path for this topic
+      }
+
+      // Save (skip in dry-run) — legacy single-pass path.
       if (!args.dryRun && accepted.length > 0) {
         await saveQuestions(prisma, exam.id, topic.id, accepted);
         console.log(`   saved ${accepted.length} questions to DB (validated:false, source:AI_GENERATED)`);
@@ -563,6 +598,42 @@ async function saveQuestions(
         validated: false,
         tags: q.tags,
         metadata: { generator: MODEL, batch: `bulk-${new Date().toISOString().slice(0, 10)}` },
+      },
+    });
+  }
+}
+
+// Save questions that passed the verification firewall, with full provenance.
+// ACCEPT items are auto-validated only when --auto-validate is set; otherwise
+// everything lands in the SME queue (validated:false) — just a much cleaner one.
+async function saveVerifiedQuestions(
+  prisma: PrismaClient,
+  examId: string,
+  topicId: string,
+  qs: FactoryQuestion[],
+  autoValidate: boolean,
+) {
+  for (const fq of qs) {
+    const accepted = fq.provenance.gate.decision === "ACCEPT";
+    const validated = autoValidate && accepted;
+    await prisma.question.create({
+      data: {
+        examId,
+        topicId,
+        type: "MCQ",
+        difficulty: fq.finalDifficulty,
+        body: fq.candidate.body,
+        options: fq.candidate.options,
+        answerKey: fq.finalAnswerKey,
+        solution: fq.candidate.solution,
+        language: "EN" as Language,
+        source: "AI_GENERATED" as QuestionSource,
+        validated,
+        validatedBy: validated ? "factory-v1:auto" : null,
+        validatedAt: validated ? new Date() : null,
+        tags: fq.candidate.tags,
+        // round-trip to a plain JSON object for Prisma's Json input type
+        metadata: JSON.parse(JSON.stringify({ provenance: fq.provenance })),
       },
     });
   }
