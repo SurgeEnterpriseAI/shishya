@@ -32,17 +32,25 @@ export async function solveBlind(
   const model = modelFor("solve");
   const problem = renderProblem(q);
 
+  // Each run gets a different solving directive so the reasoning paths are
+  // genuinely independent rather than the same chain repeated. (Prompt-level
+  // variation, not temperature — newer models deprecate the temperature
+  // param, and varied instructions diversify better anyway.)
+  const RUN_DIRECTIVES = [
+    "Solve it directly and carefully.",
+    "Solve it using a different method than the most obvious one (e.g. work backwards from the options, or use estimation first, then verify exactly).",
+    "Solve it by first eliminating options that are clearly impossible, then verify the remaining candidate(s) precisely.",
+    "Solve it twice with two different approaches and only answer once both agree; if they disagree, reconcile before answering.",
+  ];
+
   const runs: SolveRun[] = [];
   for (let i = 0; i < opts.runs; i++) {
-    // Vary temperature across runs to get genuinely independent reasoning
-    // paths rather than the same chain repeated.
-    const temperature = opts.runs === 1 ? 0 : 0.4 + (i / Math.max(1, opts.runs - 1)) * 0.5;
+    const directive = RUN_DIRECTIVES[i % RUN_DIRECTIVES.length];
     const { response, stats } = await callClaude({
       model,
-      temperature,
       maxTokens: 1200,
       system: [{ type: "text", text: SOLVER_SYSTEM }],
-      messages: [{ role: "user", content: problem }],
+      messages: [{ role: "user", content: `${problem}\n\nApproach for this attempt: ${directive}` }],
     });
     opts.onCost?.(stats);
     void estimateCostUsd; // cost is aggregated by the caller via onCost

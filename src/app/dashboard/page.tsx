@@ -16,6 +16,7 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { TwoPathsCard } from "./TwoPathsCard";
 import { DiagnosticHero } from "@/components/DiagnosticHero";
 import { captureSignupAttribution } from "@/lib/signup-attribution";
+import { getDueRevisions } from "@/lib/db/revision-due";
 
 export default async function DashboardPage() {
   try {
@@ -124,7 +125,7 @@ async function renderDashboard() {
     redirect("/onboarding?next=dashboard");
   }
 
-  const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs] =
+  const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs, dueRevisions] =
     await Promise.all([
       getDashboardExams(),
       prisma.enrollment.findMany({
@@ -181,6 +182,10 @@ async function renderDashboard() {
           mock: { select: { id: true, title: true } },
         },
       }),
+      // FSRS revision schedule — topics whose memory is due for review.
+      // Empty array for students with no review history yet (the card
+      // hides itself), and a failure must never break the dashboard.
+      getDueRevisions(userId, { horizonDays: 1, limit: 5 }).catch(() => []),
     ]);
 
   // Pick today's brief for the recommended-exam slot. Prefer the brief
@@ -495,6 +500,41 @@ async function renderDashboard() {
             </ul>
           )}
         </section>
+
+        {/* ── Revise today (FSRS spaced repetition) ───────────────────── */}
+        {dueRevisions.length > 0 && (
+          <section className="mt-10">
+            <div className="rounded-md border border-violet-200 bg-violet-50/60 p-4">
+              <h2 className="text-base font-semibold text-ink-800">⏰ {t("dash.revise.title")}</h2>
+              <p className="mt-1 text-sm text-ink-600">{t("dash.revise.subtitle")}</p>
+              <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {dueRevisions.map((d) => (
+                  <li
+                    key={d.topicId}
+                    className="flex items-center justify-between gap-2 rounded-md border border-violet-200 bg-white px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-ink-900">{d.topicName}</p>
+                      <p className="text-[11px] text-ink-500">
+                        {d.subjectName} · ~{Math.round(d.retention * 100)}% {t("dash.revise.retained")}
+                        {d.overdueDays > 0
+                          ? ` · ${d.overdueDays} ${t("dash.revise.overdue.days")}`
+                          : ` · ${t("dash.revise.due.today")}`}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/exams/${d.examCode}/topics/${encodeURIComponent(d.topicCode)}`}
+                      prefetch={false}
+                      className="btn-secondary shrink-0 !px-2.5 !py-1 text-xs"
+                    >
+                      {t("dash.revise.cta")}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
 
         {/* ── Your learning loop ──────────────────────────────────────── */}
         {enrollments.length > 0 && (weakest3.length > 0 || topAskedTopics.length > 0 || recommendedExam) && (

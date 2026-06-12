@@ -68,7 +68,6 @@ export async function verify(
   const model = modelFor("verify");
   const { response, stats } = await callClaude({
     model,
-    temperature: 0,
     maxTokens: 1000,
     system: [{ type: "text", text: VERIFIER_SYSTEM }],
     messages: [{ role: "user", content: renderAudit(q, solve) }],

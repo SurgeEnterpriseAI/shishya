@@ -56,7 +56,7 @@ export async function callClaude(opts: {
 }) {
   const model = opts.model ?? MODEL;
   const start = Date.now();
-  const response = await anthropic.messages.create({
+  const params = {
     model,
     max_tokens: opts.maxTokens,
     system: opts.system,
@@ -64,7 +64,21 @@ export async function callClaude(opts: {
     ...(opts.temperature != null && { temperature: opts.temperature }),
     ...(opts.tools && { tools: opts.tools }),
     ...(opts.toolChoice && { tool_choice: opts.toolChoice }),
-  });
+  };
+  let response: Anthropic.Messages.Message;
+  try {
+    response = await anthropic.messages.create(params);
+  } catch (err: any) {
+    // Newer models (Opus 4.8+) reject the temperature param as deprecated.
+    // Strip it and retry once so callers don't need per-model knowledge.
+    const msg = String(err?.message ?? "");
+    if (opts.temperature != null && msg.includes("temperature") && (msg.includes("deprecated") || msg.includes("not supported"))) {
+      const { temperature: _omit, ...rest } = params as any;
+      response = await anthropic.messages.create(rest);
+    } else {
+      throw err;
+    }
+  }
   const latencyMs = Date.now() - start;
 
   return {
