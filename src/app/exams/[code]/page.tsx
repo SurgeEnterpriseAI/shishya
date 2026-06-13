@@ -374,6 +374,26 @@ export default async function ExamPage({
         <p className="mt-4 max-w-3xl text-sm text-ink-700">{exam.description}</p>
 
         <div className="mt-4 flex flex-wrap gap-3 text-xs text-ink-600">
+          {/* Exam-day countdown — the next upcoming isExamDay date from the
+              Important Dates feed, surfaced in the hero so the urgency is
+              visible without scrolling. Hidden when no future exam date is
+              known. */}
+          {(() => {
+            const nextExamDay = importantDates
+              .map((d) => ({ d, t: new Date(d.date as unknown as string | Date).getTime() }))
+              .filter((x) => x.d.isExamDay && x.t > Date.now())
+              .sort((a, b) => a.t - b.t)[0];
+            if (!nextExamDay) return null;
+            const days = Math.ceil((nextExamDay.t - Date.now()) / 86_400_000);
+            return (
+              <span className={`inline-flex items-center gap-1 rounded-full border-2 px-3 py-1 font-semibold ${theme.borderAccent} bg-white text-ink-900`}>
+                <span aria-hidden>🎯</span>
+                {days === 1
+                  ? t("exam.countdown.tomorrow")
+                  : `${days} ${t("exam.countdown.days")}`}
+              </span>
+            );
+          })()}
           <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.totalQuestions} {t("exam.totalQs")}</span>
           <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.totalMarks} {t("exam.marks")}</span>
           <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.durationMin} {t("exam.minutes")}</span>

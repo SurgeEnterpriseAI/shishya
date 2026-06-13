@@ -347,8 +347,14 @@ export const dict = {
     "dash.revise.overdue.days": "days overdue",
     "dash.revise.due.today": "due today",
     "dash.revise.cta": "Revise →",
+    "dash.streak.day": "day study streak",
+    "dash.streak.days": "day study streak",
+    "dash.streak.keep": "study today to keep it alive",
+    "dash.streak.best": "best",
 
     // ── exam page
+    "exam.countdown.days": "days to exam",
+    "exam.countdown.tomorrow": "exam is tomorrow",
     "exam.totalQs": "Qs",
     "exam.marks": "marks",
     "exam.minutes": "min",
@@ -772,7 +778,13 @@ export const dict = {
     "dash.revise.overdue.days": "दिन देर से",
     "dash.revise.due.today": "आज due",
     "dash.revise.cta": "दोहराएँ →",
+    "dash.streak.day": "दिन की study streak",
+    "dash.streak.days": "दिन की study streak",
+    "dash.streak.keep": "streak बचाने के लिए आज पढ़ें",
+    "dash.streak.best": "best",
 
+    "exam.countdown.days": "दिन बाकी exam में",
+    "exam.countdown.tomorrow": "exam कल है",
     "exam.totalQs": "प्रश्न",
     "exam.marks": "अंक",
     "exam.minutes": "मिनट",
