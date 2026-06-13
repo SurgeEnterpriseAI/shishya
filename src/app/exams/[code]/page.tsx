@@ -27,6 +27,7 @@ import { ExamDeepContentBlock } from "@/components/ExamDeepContentBlock";
 import { findDeepContent, hasDeepContent } from "@/data/exam-deep-content";
 import { getExamTheme } from "@/lib/exam-theme";
 import { DiagnosticHero } from "@/components/DiagnosticHero";
+import { TryOneQuestion } from "./TryOneQuestion";
 
 // Per-exam meta. Beefed-up version that bakes in:
 //   1. state name (for "Tamil Nadu PSC" / "तमिलनाडु TET" style searches)
@@ -216,6 +217,48 @@ export default async function ExamPage({
   // Discard speculative score boost when user isn't enrolled — no UI uses it.
   const scoreBoost = isEnrolled ? speculativeScoreBoost : null;
 
+  // ── "Try one question" hook for SIGNED-OUT visitors ───────────────
+  // 91% of unique visitors browse anonymously and leave without signing
+  // in. The exam pages pull strong organic SEO traffic, but the page
+  // gives an anonymous visitor nothing to DO — just a "Sign in to start"
+  // wall. This fetches ONE real validated question so a signed-out
+  // visitor can answer it instantly (no signup), see if they got it
+  // right + the worked solution, then hit a "sign in to keep going"
+  // gate at peak engagement. Convert the taste into a signup.
+  //
+  // Prefer a MEDIUM question (representative, not trivial/brutal) from a
+  // core topic. Cheap single query; only runs for anonymous visitors.
+  let sampleQuestion:
+    | { id: string; body: string; options: { key: string; text: string }[]; answerKey: string; solution: string; topicName: string }
+    | null = null;
+  if (!userId && hasContent) {
+    try {
+      const q =
+        (await prisma.question.findFirst({
+          where: { examId: exam.id, validated: true, difficulty: "MEDIUM" },
+          select: { id: true, body: true, options: true, answerKey: true, solution: true, topic: { select: { name: true } } },
+          orderBy: { createdAt: "asc" },
+        })) ??
+        (await prisma.question.findFirst({
+          where: { examId: exam.id, validated: true },
+          select: { id: true, body: true, options: true, answerKey: true, solution: true, topic: { select: { name: true } } },
+          orderBy: { createdAt: "asc" },
+        }));
+      if (q) {
+        sampleQuestion = {
+          id: q.id,
+          body: q.body,
+          options: (q.options as unknown as { key: string; text: string }[]) ?? [],
+          answerKey: q.answerKey,
+          solution: q.solution,
+          topicName: q.topic?.name ?? "",
+        };
+      }
+    } catch (err) {
+      console.error("[exam] sample question fetch failed (non-fatal):", err);
+    }
+  }
+
   // JSON-LD structured data — helps Google show this page as a rich
   // Course result with breadcrumb. Built from public exam data only.
   // For state exams we add an `about` field (state name) and a 4-step
@@ -372,6 +415,24 @@ export default async function ExamPage({
               Sign in to start →
             </Link>
           </div>
+        )}
+
+        {/* "Try one question" hook — converts anonymous SEO traffic.
+            Shown to signed-out visitors directly below the sign-in CTA:
+            answer one real question free, see the worked solution, then
+            sign in to continue. Only renders when we found a sample. */}
+        {!userId && sampleQuestion && (
+          <TryOneQuestion
+            examCode={exam.code}
+            examShortName={exam.shortName}
+            topicName={sampleQuestion.topicName}
+            question={{
+              body: sampleQuestion.body,
+              options: sampleQuestion.options,
+              answerKey: sampleQuestion.answerKey,
+              solution: sampleQuestion.solution,
+            }}
+          />
         )}
 
         {/* Per-exam Diagnostic-5 hero.
