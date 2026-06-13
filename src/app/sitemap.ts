@@ -13,28 +13,38 @@ import { WORLDWIDE_COUNTRIES, TEST_PREP } from "@/lib/worldwide-data";
 import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
 import { CAREERS } from "@/data/careers";
 import { allBranchPaths } from "@/data/college-details";
+import { PERSONAS } from "@/data/personas";
 
 export const revalidate = 86_400; // 24h
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in";
 
-  const exams = await prisma.exam.findMany({
-    where: { active: true },
-    select: { code: true, state: true, updatedAt: true },
-    orderBy: { candidatesPerYear: "desc" },
-  });
+  // Every DB query below is `.catch(() => [])`-guarded. The sitemap is
+  // served to crawlers; if a transient Neon hiccup threw here the WHOLE
+  // sitemap would 500 and Google would drop pages from its index. Better
+  // to emit a slightly smaller sitemap than none at all — the static
+  // section landings always render regardless.
+  const exams = await prisma.exam
+    .findMany({
+      where: { active: true },
+      select: { code: true, state: true, updatedAt: true },
+      orderBy: { candidatesPerYear: "desc" },
+    })
+    .catch(() => [] as { code: string; state: string | null; updatedAt: Date }[]);
 
-  const topics = await prisma.topic.findMany({
-    where: { notes: { not: null }, subject: { exam: { active: true } } },
-    select: {
-      code: true,
-      createdAt: true,
-      notesGeneratedAt: true,
-      subject: { select: { exam: { select: { code: true } } } },
-    },
-    take: 2000,
-  });
+  const topics = await prisma.topic
+    .findMany({
+      where: { notes: { not: null }, subject: { exam: { active: true } } },
+      select: {
+        code: true,
+        createdAt: true,
+        notesGeneratedAt: true,
+        subject: { select: { exam: { select: { code: true } } } },
+      },
+      take: 2000,
+    })
+    .catch(() => []);
 
   const examUrls: MetadataRoute.Sitemap = exams.map((e) => ({
     url: `${base}/exams/${e.code}`,
@@ -60,21 +70,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // This is the BIG SEO multiplier: every cron tick produces ~5-10 news
   // items per top-tier exam → the index grows by hundreds of long-tail
   // keyword pages per week, no manual authoring required.
-  const newsItems = await prisma.examNewsItem.findMany({
-    where: { exam: { active: true } },
-    select: {
-      id: true,
-      publishedAt: true,
-      archivedAt: true,
-      createdAt: true,
-      exam: { select: { code: true } },
-    },
-    orderBy: { publishedAt: "desc" },
-    // Sitemap protocol caps URLs per file at 50k. We over-provision a
-    // limit here so a single exam catastrophe (50k news items somehow)
-    // can't blow past the cap. Realistic ceiling is ~10-20k entries.
-    take: 30_000,
-  });
+  const newsItems = await prisma.examNewsItem
+    .findMany({
+      where: { exam: { active: true } },
+      select: {
+        id: true,
+        publishedAt: true,
+        archivedAt: true,
+        createdAt: true,
+        exam: { select: { code: true } },
+      },
+      orderBy: { publishedAt: "desc" },
+      // Sitemap protocol caps URLs per file at 50k. We over-provision a
+      // limit here so a single exam catastrophe (50k news items somehow)
+      // can't blow past the cap. Realistic ceiling is ~10-20k entries.
+      take: 30_000,
+    })
+    .catch(() => []);
   const newsUrls: MetadataRoute.Sitemap = newsItems.map((n) => ({
     url: `${base}/exams/${n.exam.code}/news/${n.id}`,
     lastModified: n.archivedAt ?? n.publishedAt ?? n.createdAt,
@@ -90,23 +102,56 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // (CHECKLIST / LIVE / REACTIONS). Each is a Claude-summarised, source-
   // cited article that lives at /exams/[code]/{checklist,live,reactions}.
   // Highest SEO leverage during the T-7 → T+3 window around exam day.
-  const phaseArticles = await prisma.examPhaseArticle.findMany({
-    // archivedAt: null — archived versions share the same /checklist
-    // etc URL as their live successor, so only emit the active one to
-    // avoid duplicate sitemap entries.
-    where: { exam: { active: true }, archivedAt: null },
-    select: {
-      phase: true,
-      slug: true,
-      updatedAt: true,
-      exam: { select: { code: true } },
-    },
-  });
+  const phaseArticles = await prisma.examPhaseArticle
+    .findMany({
+      // archivedAt: null — archived versions share the same /checklist
+      // etc URL as their live successor, so only emit the active one to
+      // avoid duplicate sitemap entries.
+      where: { exam: { active: true }, archivedAt: null },
+      select: {
+        phase: true,
+        slug: true,
+        updatedAt: true,
+        exam: { select: { code: true } },
+      },
+    })
+    .catch(() => []);
   const phaseUrls: MetadataRoute.Sitemap = phaseArticles.map((a) => ({
     url: `${base}/exams/${a.exam.code}/${a.slug}`,
     lastModified: a.updatedAt,
     // CHECKLIST + LIVE refresh frequently during the active window.
     changeFrequency: "daily" as const,
+    priority: 0.7,
+  }));
+
+  // Previous-year-paper landing pages — one URL per (exam, year) for which
+  // we have validated PYQ questions. These are extremely high-value
+  // long-tail SEO targets ("CAT 2023 questions", "JEE Advanced 2024 paper")
+  // and the content is immutable once published, hence changeFrequency
+  // yearly. Distinct query keeps it to one URL per paper, not per question.
+  const pyqSets = await prisma.$queryRaw<{ code: string; year: number }[]>`
+    SELECT DISTINCT e."code" AS code, q."pyqYear" AS year
+    FROM "Question" q
+    JOIN "Exam" e ON e.id = q."examId"
+    WHERE q.source = 'PYQ'
+      AND q."pyqYear" IS NOT NULL
+      AND q.validated = TRUE
+      AND e.active = TRUE
+  `.catch(() => [] as { code: string; year: number }[]);
+  const pyqUrls: MetadataRoute.Sitemap = pyqSets.map((p) => ({
+    url: `${base}/exams/${p.code}/pyq/${Number(p.year)}`,
+    lastModified: new Date(),
+    changeFrequency: "yearly" as const,
+    priority: 0.6,
+  }));
+
+  // Persona landing pages — intent-based hubs ("/for/engineering-aspirant")
+  // that curate exams + articles for a visitor archetype. Strong SEO for
+  // "how to prepare for ..." style queries; statically defined in data.
+  const personaUrls: MetadataRoute.Sitemap = PERSONAS.map((p) => ({
+    url: `${base}/for/${p.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
 
@@ -325,6 +370,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...examUrls,
     ...examArchiveUrls,
     ...phaseUrls,
+    ...pyqUrls,
+    ...personaUrls,
     ...newsUrls,
     ...topicUrls,
     ...streamUrls,

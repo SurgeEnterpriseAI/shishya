@@ -148,8 +148,63 @@ export async function PhaseArticleView({
   const copy = PHASE_COPY[phase];
   const sources = (article?.sourcesScraped as unknown as PhaseSource[]) ?? [];
 
+  // JSON-LD — Article + BreadcrumbList. Mirrors the NewsArticle markup on
+  // the per-news permalink pages so Google treats these phase write-ups as
+  // first-class editorial content (rich-result + Discover eligibility).
+  // Only emitted when a live article exists — empty-state pages have no
+  // content to mark up. Highest leverage during the T-7 → T+3 window when
+  // these pages spike in search ("<exam> checklist", "<exam> cutoff").
+  const phaseUrl = `https://shishya.in/exams/${exam.code}/${PHASE_SLUG[phase]}`;
+  const phaseLabel = copy.badge.replace(/^[^ ]+\s/, "");
+  const articleJsonLd = article
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: article.title,
+        description: article.summarySnippet || undefined,
+        datePublished: article.createdAt.toISOString(),
+        dateModified: article.lastUpdatedAt.toISOString(),
+        inLanguage: "en-IN",
+        isAccessibleForFree: true,
+        author: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
+        publisher: {
+          "@type": "EducationalOrganization",
+          name: "Shishya",
+          url: "https://shishya.in",
+          logo: { "@type": "ImageObject", url: "https://shishya.in/icon.svg" },
+        },
+        about: {
+          "@type": "Course",
+          name: exam.name,
+          url: `https://shishya.in/exams/${exam.code}`,
+        },
+        mainEntityOfPage: phaseUrl,
+      }
+    : null;
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://shishya.in" },
+      { "@type": "ListItem", position: 2, name: "Exams", item: "https://shishya.in/exams" },
+      { "@type": "ListItem", position: 3, name: exam.shortName, item: `https://shishya.in/exams/${exam.code}` },
+      { "@type": "ListItem", position: 4, name: phaseLabel, item: phaseUrl },
+    ],
+  };
+
   return (
     <article className="container-prose py-10">
+      {/* JSON-LD for Google rich-result eligibility */}
+      {articleJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       {/* Breadcrumb */}
       <nav className="mb-6 flex flex-wrap items-center gap-1.5 text-xs text-ink-500" aria-label="Breadcrumb">
         <Link href="/" className="font-medium text-saffron-700 hover:underline">

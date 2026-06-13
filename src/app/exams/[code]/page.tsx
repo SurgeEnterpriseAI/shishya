@@ -24,6 +24,7 @@ import { ScholarshipsForExamSection } from "@/components/ScholarshipsForExamSect
 import { CollegesForExamSection } from "@/components/CollegesForExamSection";
 import { SectionVerificationSummary } from "@/components/VerificationBadge";
 import { ExamDeepContentBlock } from "@/components/ExamDeepContentBlock";
+import { ExamFaq } from "@/components/ExamFaq";
 import { findDeepContent, hasDeepContent } from "@/data/exam-deep-content";
 import { getExamTheme } from "@/lib/exam-theme";
 import { DiagnosticHero } from "@/components/DiagnosticHero";
@@ -526,6 +527,20 @@ export default async function ExamPage({
           if (!deep || !hasDeepContent(deep)) return null;
           return <ExamDeepContentBlock content={deep} examShortName={exam.shortName} />;
         })()}
+
+        {/* FAQ — visible accordion + FAQPage JSON-LD (rich-result eligible).
+            Sits above the interactive panel with the deep content so organic
+            arrivals get answers to "is it free / how many questions / PYQs"
+            before the CTA wall. */}
+        <ExamFaq
+          examShortName={exam.shortName}
+          examName={exam.name}
+          questionCount={validatedQuestionCount}
+          pyqYears={pyqYears
+            .map((y) => y.pyqYear)
+            .filter((n): n is number => typeof n === "number")}
+          durationMin={exam.durationMin}
+        />
 
         <div className="mt-2 lg:grid lg:grid-cols-3 lg:gap-8">
         <div className="lg:col-span-2 min-w-0">
