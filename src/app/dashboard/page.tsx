@@ -17,6 +17,7 @@ import { TwoPathsCard } from "./TwoPathsCard";
 import { DiagnosticHero } from "@/components/DiagnosticHero";
 import { captureSignupAttribution } from "@/lib/signup-attribution";
 import { getDueRevisions } from "@/lib/db/revision-due";
+import { getStudyStreak } from "@/lib/db/streak";
 
 export default async function DashboardPage() {
   try {
@@ -125,7 +126,7 @@ async function renderDashboard() {
     redirect("/onboarding?next=dashboard");
   }
 
-  const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs, dueRevisions] =
+  const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs, dueRevisions, streak] =
     await Promise.all([
       getDashboardExams(),
       prisma.enrollment.findMany({
@@ -186,6 +187,9 @@ async function renderDashboard() {
       // Empty array for students with no review history yet (the card
       // hides itself), and a failure must never break the dashboard.
       getDueRevisions(userId, { horizonDays: 1, limit: 5 }).catch(() => []),
+      // Study streak — habit anchor next to the greeting. Best-effort: a
+      // failure renders no chip, never a broken dashboard.
+      getStudyStreak(userId).catch(() => ({ current: 0, best: 0, activeToday: false })),
     ]);
 
   // Pick today's brief for the recommended-exam slot. Prefer the brief
@@ -320,6 +324,20 @@ async function renderDashboard() {
               {t("dash.welcome")} {session.user.name?.split(" ")[0] ?? "Shishya"}.
             </h1>
             <p className="mt-1 text-sm text-ink-600">{t("dash.subtitle")}</p>
+            {/* Study streak chip — the habit anchor. Hidden until the
+                first active day so new users aren't greeted with a zero. */}
+            {streak.current > 0 && (
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">
+                <span aria-hidden>🔥</span>
+                {streak.current} {streak.current === 1 ? t("dash.streak.day") : t("dash.streak.days")}
+                {!streak.activeToday && (
+                  <span className="font-normal text-amber-700">· {t("dash.streak.keep")}</span>
+                )}
+                {streak.best > streak.current && (
+                  <span className="font-normal text-amber-700">· {t("dash.streak.best")} {streak.best}</span>
+                )}
+              </p>
+            )}
           </div>
           {enrollments.length > 0 && (
             <Link
