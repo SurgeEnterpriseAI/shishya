@@ -14,7 +14,7 @@ import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { TwoPathsCard } from "./TwoPathsCard";
-import { DiagnosticHero } from "@/components/DiagnosticHero";
+import { QuickStartDiagnostic } from "./QuickStartDiagnostic";
 import { captureSignupAttribution } from "@/lib/signup-attribution";
 import { getDueRevisions } from "@/lib/db/revision-due";
 import { getStudyStreak } from "@/lib/db/streak";
@@ -121,10 +121,19 @@ async function renderDashboard() {
     console.error("[dashboard] onboarding-state query failed, treating as completed:", err);
     onbCompletedAt = new Date();
   }
+  // Onboarding is NO LONGER a hard gate. Prod funnel (13 Jun 2026) showed
+  // the forced 3-step wizard was the wall — 74% of signups bounced before
+  // reaching the product. New signups now land straight here; the empty
+  // state (<QuickStartDiagnostic />) lets them pick an exam and start a
+  // diagnostic in one screen, which also auto-enrols them (so we still
+  // capture the prep signal without the form). Onboarding stays available
+  // as an opt-in for personalised suggestions.
+  //
+  // showOnboarding still drives the dashboard guided tour (separate UX);
+  // onbCompletedAt is kept only to suppress the soft "personalise" nudge
+  // for users who already did the wizard.
   const showOnboarding = !onboardedAt;
-  if (!onbCompletedAt) {
-    redirect("/onboarding?next=dashboard");
-  }
+  void onbCompletedAt;
 
   const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs, dueRevisions, streak] =
     await Promise.all([
@@ -195,6 +204,18 @@ async function renderDashboard() {
   // Pick today's brief for the recommended-exam slot. Prefer the brief
   // matching the recommended exam if present; otherwise the first brief.
   const briefByExamId = new Map(dailyBriefs.map((b) => [b.examId, b]));
+
+  // ── Quick-start activation data ────────────────────────────────────
+  // Exams with enough validated content to build a diagnostic, slimmed
+  // for the client picker. Filter >=5 validated Qs so a tapped exam can
+  // never dead-end on "no questions available". Popular set = the
+  // highest-volume national exams that survive that filter.
+  const quickStartExams = allExams
+    .filter((e) => (e._count?.questions ?? 0) >= 5)
+    .map((e) => ({ code: e.code, shortName: e.shortName, name: e.name }));
+  const quickStartPopular = ["SSC_CGL", "NEET_UG", "JEE_MAIN", "UPSC_PRELIMS", "IBPS_PO", "RRB_NTPC"].filter(
+    (c) => quickStartExams.some((e) => e.code === c),
+  );
 
   // ── Compute Learning-Loop derived data ─────────────────────────────
   // Weakest 3 (lowest mastery) + Strongest 3 (highest mastery) across all
@@ -408,85 +429,32 @@ async function renderDashboard() {
         <section className="mt-8">
           <h2 className="text-base font-semibold text-ink-800">{t("dash.your.exams")}</h2>
           {enrollments.length === 0 ? (
-            // Empty-state activation surface — most important
-            // conversion lever on the platform. 27 May 2026 prod
-            // data: 100 signups, 2 mock attempts. The previous flow
-            // ('pick an exam to see Start Mock button') leaked here.
-            // PRIMARY CTA: <DiagnosticHero /> auto-stages a
-            // 5-question diagnostic for the user's onboarding-chosen
-            // primary exam. Single big button, friction zero.
-            // FALLBACK PICKER (kept below): for visitors who want
-            // to start with a different exam than the onboarding
-            // pick, the 6 popular tiles still render.
-            <div className="space-y-4">
-              <DashboardEmptyStateCTA allExams={allExams} onbPrepCodes={onbPrepCodes} />
-              <div className="rounded-2xl border-2 border-saffron-300 bg-gradient-to-br from-saffron-50/80 to-white p-6 sm:p-8">
-              <div className="mx-auto max-w-2xl text-center">
-                <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">
-                  Or pick a different exam
-                </p>
-                <h3 className="mt-2 text-base font-semibold text-ink-800">
-                  Start with one of these popular exams instead
-                </h3>
-                <p className="mt-1 text-xs text-ink-500">
-                  Tap any tile to open its full prep page — syllabus, PYQ,
-                  mocks, the works.
-                </p>
-              </div>
-
-              {/* Suggested-exam grid. Pulled from the full exam list,
-                  filtered to ones the user opted into during onboarding
-                  (onbPrepCodes). If they didn't pick any, fall back to
-                  the top 6 popular national exams. */}
-              <ul className="mx-auto mt-6 grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-3">
-                {(() => {
-                  // Default: 6 highest-volume "popular" exams. We
-                  // dedupe against allExams to make sure they actually
-                  // exist (not removed) and live (have content).
-                  const allByCode = new Map(allExams.map((e) => [e.code, e]));
-                  const defaultPopular = ["SSC_CGL", "NEET_UG", "JEE_MAIN", "UPSC_PRELIMS", "IBPS_PO", "RRB_NTPC"];
-                  const codesToShow = defaultPopular.filter((c) => allByCode.has(c)).slice(0, 6);
-                  return codesToShow.map((code) => {
-                    const exam = allByCode.get(code);
-                    if (!exam) return null;
-                    return (
-                      <li key={code}>
-                        <Link
-                          href={`/exams/${exam.code}`}
-                          prefetch={false}
-                          className="block rounded-lg border border-ink-200 bg-white px-3 py-2.5 text-center transition-colors hover:border-saffron-400 hover:bg-saffron-50/40"
-                        >
-                          <p className="truncate text-sm font-semibold text-ink-900">
-                            {exam.shortName}
-                          </p>
-                          <p className="mt-0.5 text-[11px] text-ink-500">
-                            Start mock →
-                          </p>
-                        </Link>
-                      </li>
-                    );
-                  });
-                })()}
-              </ul>
-
-              <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-ink-500">
-                Don&apos;t see your exam? Browse all{" "}
-                <Link
-                  href="/"
-                  className="font-medium text-saffron-700 underline-offset-2 hover:underline"
-                >
-                  163 exams on the homepage
-                </Link>{" "}
-                or{" "}
-                <Link
-                  href="/onboarding?rerun=1"
-                  className="font-medium text-saffron-700 underline-offset-2 hover:underline"
-                >
-                  redo the 3-question profile
-                </Link>{" "}
-                to get better suggestions.
-              </p>
-            </div>
+            // Empty-state activation surface — the platform's most
+            // important conversion lever. The forced 3-step onboarding
+            // wizard that used to gate this screen was removed (13 Jun
+            // 2026 funnel: 74% of signups bounced at it). This single
+            // screen lets the student pick their exam and start a
+            // 5-question diagnostic in one tap — which auto-enrols them,
+            // so the prep signal is still captured without a form.
+            <div className="mt-3">
+              <QuickStartDiagnostic
+                exams={quickStartExams}
+                popularCodes={quickStartPopular}
+                presetCode={onbPrepCodes.find((c) => quickStartExams.some((e) => e.code === c)) ?? null}
+                labels={{
+                  eyebrow: t("dash.qs.eyebrow"),
+                  headline: t("dash.qs.headline"),
+                  sub: t("dash.qs.sub"),
+                  whichExam: t("dash.qs.whichExam"),
+                  searchPlaceholder: t("dash.qs.search"),
+                  startPrefix: t("dash.qs.startPrefix"),
+                  startSuffix: t("dash.qs.startSuffix"),
+                  building: t("dash.qs.building"),
+                  change: t("dash.qs.change"),
+                  noMatch: t("dash.qs.noMatch"),
+                  personalize: t("dash.qs.personalize"),
+                }}
+              />
             </div>
           ) : (
             <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -771,32 +739,5 @@ async function renderDashboard() {
         )}
       </section>
     </main>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// Empty-state primary CTA — Diagnostic-5 hero.
-//
-// Picks the user's primary exam (first onbPrepCode that maps to a
-// live exam, falling back to SSC_CGL = broadest applicability) and
-// renders the <DiagnosticHero /> client component. Extracted here so
-// the dashboard's main JSX stays clean; this isolates the picker
-// logic that previously needed an IIFE inside the ternary branch.
-// ─────────────────────────────────────────────────────────────────────
-function DashboardEmptyStateCTA({
-  allExams,
-  onbPrepCodes,
-}: {
-  allExams: ReadonlyArray<{ code: string; shortName: string }>;
-  onbPrepCodes: string[];
-}) {
-  const allByCode = new Map(allExams.map((e) => [e.code, e]));
-  const primaryCode =
-    onbPrepCodes.find((c) => allByCode.has(c)) ??
-    (allByCode.has("SSC_CGL") ? "SSC_CGL" : null);
-  const primary = primaryCode ? allByCode.get(primaryCode) : null;
-  if (!primary) return null;
-  return (
-    <DiagnosticHero examCode={primary.code} examShortName={primary.shortName} />
   );
 }
