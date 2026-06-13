@@ -49,6 +49,13 @@ interface PhaseChip {
   /** What to render as the chip's body text — snippet from the article when
    *  available, otherwise the static fallback teaser. */
   text: string;
+  /** Where the chip click goes. Deep-links to the phase article ONLY when
+   *  one actually exists (snippet present); otherwise routes to the exam
+   *  overview page so the click never dead-ends on an empty phase shell. */
+  href: string;
+  /** True when a live phase article backs this chip. Drives the arrow
+   *  (→ to the article vs. nothing for a plain overview link). */
+  hasArticle: boolean;
 }
 
 // Phase metadata used for the inline preview row in the sidebar:
@@ -82,6 +89,8 @@ function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
   const phase = resolvePhase(new Date(event.date));
   if (!phase) return null;
   const meta = PHASE_CHIP_META[phase];
+  const snippet = event.phaseSnippet?.trim();
+  const hasArticle = Boolean(snippet);
   return {
     phase,
     slug: PHASE_SLUG[phase],
@@ -89,7 +98,15 @@ function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
     color: meta.color,
     // Prefer the live AI snippet (set by the 2-hour cron) — falls back
     // to the static teaser so the chip never reads as a bare label.
-    text: event.phaseSnippet?.trim() || meta.fallback,
+    text: snippet || meta.fallback,
+    // Deep-link to the phase article only when one exists; otherwise the
+    // phase page is an empty shell, so send the click to the exam
+    // overview (always has content). This is what stops a tempting chip
+    // from landing the student on a blank page.
+    href: hasArticle
+      ? `/exams/${event.examCode}/${PHASE_SLUG[phase]}`
+      : `/exams/${event.examCode}`,
+    hasArticle,
   };
 }
 
@@ -159,12 +176,14 @@ export function UpcomingExamsSidebar({ events }: { events: UpcomingEvent[] }) {
                 </Link>
                 {chip && (
                   <Link
-                    href={`/exams/${e.examCode}/${chip.slug}`}
+                    href={chip.href}
                     className={`mx-4 my-2 flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px] leading-snug ${chip.color} hover:brightness-95`}
                   >
                     <span aria-hidden className="shrink-0 leading-snug">{chip.icon}</span>
                     <span className="flex-1 line-clamp-3 font-medium">{chip.text}</span>
-                    <span aria-hidden className="shrink-0 leading-snug">→</span>
+                    {chip.hasArticle && (
+                      <span aria-hidden className="shrink-0 leading-snug">→</span>
+                    )}
                   </Link>
                 )}
                 {!chip && <div className="h-2" />}

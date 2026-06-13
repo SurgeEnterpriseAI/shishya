@@ -154,7 +154,16 @@ export async function summarisePhase({
   phase: ExamPhase;
   snippets: ScrapedSnippet[];
 }): Promise<SummaryResult | null> {
-  if (snippets.length === 0) return null;
+  // LIVE and REACTIONS are real-time, source-grounded phases: with no
+  // scraped student discussion there is nothing honest to write, so we
+  // bail and let the page show its empty state. CHECKLIST is the
+  // exception — a last-minute prep guide (revision plan, what to carry,
+  // exam-day timing, common final-24h mistakes) is evergreen exam
+  // knowledge that needs no chatter. So when there are no snippets we
+  // still generate the CHECKLIST from the model's knowledge of the
+  // exam's official pattern, and only bail for LIVE / REACTIONS.
+  const knowledgeOnly = snippets.length === 0;
+  if (knowledgeOnly && phase !== "CHECKLIST") return null;
 
   // Trim + sort by score (high-engagement posts first) then recency.
   const top = snippets
@@ -172,7 +181,21 @@ ${body ? `Body: ${body}` : ""}`;
     })
     .join("\n\n");
 
-  const userPrompt = `Exam: ${examName} (${examShortName}, code: ${examCode})
+  const userPrompt = knowledgeOnly
+    ? `Exam: ${examName} (${examShortName}, code: ${examCode})
+Phase: CHECKLIST
+Today: ${new Date().toISOString().slice(0, 10)}
+
+There is NO scraped student discussion available for this exam right now. Write an evergreen last-minute checklist from your own knowledge of this exam's official pattern and standard Indian exam-day logistics.
+
+Hard rules for this no-sources case:
+- Do NOT invent exam-specific cutoff numbers, expected question counts, or student quotes.
+- For any official detail you are not certain of (reporting time, permitted items, marking scheme), write "verify on the official site / your admit card" instead of stating a number you might be wrong about.
+- The evening revision plan, "what to carry", exam-day timing best-practices, and "don't do this" anti-list are all evergreen — write those confidently and specifically.
+- Pass an empty array for sourcesUsed (there are no scraped sources to cite).
+
+Publish the article via the publish_phase_article tool. Follow the CHECKLIST requirements in the system prompt strictly.`
+    : `Exam: ${examName} (${examShortName}, code: ${examCode})
 Phase: ${phase}
 Today: ${new Date().toISOString().slice(0, 10)}
 
