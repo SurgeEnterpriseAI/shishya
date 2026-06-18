@@ -30,15 +30,18 @@ interface Result {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function AptitudeTest({
-  questions,
   config,
   sectionLabels,
 }: {
-  questions: Question[];
   config: Config;
   sectionLabels: Record<Section, string>;
 }) {
-  const [stage, setStage] = useState<"intro" | "test" | "result">("intro");
+  const [stage, setStage] = useState<"intro" | "loading" | "test" | "result">("intro");
+  // The paper is generated per-candidate by /api/aptitude/start when they
+  // begin, so it's fetched here (with a sealed token for scoring) rather
+  // than passed in — no two candidates get the same questions.
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [token, setToken] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -65,7 +68,7 @@ export function AptitudeTest({
         const res = await fetch("/api/aptitude/submit", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, email, phone: phone || undefined, answers, durationSec }),
+          body: JSON.stringify({ name, email, phone: phone || undefined, token, answers, durationSec }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data?.error ?? `Submit failed (${res.status})`);
@@ -78,7 +81,7 @@ export function AptitudeTest({
         setSubmitting(false);
       }
     },
-    [answers, name, email, phone, secondsLeft, config.durationMinutes]
+    [answers, name, email, phone, token, secondsLeft, config.durationMinutes]
   );
 
   // Countdown — runs only during the test. Auto-submits at 0.
@@ -92,11 +95,31 @@ export function AptitudeTest({
     return () => clearTimeout(t);
   }, [stage, secondsLeft, submit]);
 
-  function startTest() {
+  async function startTest() {
     if (!name.trim()) return setFormError("Please enter your full name.");
     if (!EMAIL_RE.test(email.trim())) return setFormError("Please enter a valid email address.");
     setFormError(null);
-    setStage("test");
+    setStage("loading");
+    try {
+      const res = await fetch("/api/aptitude/start", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{}",
+      });
+      const data = await res.json();
+      if (!res.ok || !Array.isArray(data.questions) || !data.token) {
+        throw new Error(data?.error ?? "Could not start the test.");
+      }
+      setQuestions(data.questions);
+      setToken(data.token);
+      setAnswers({});
+      setCurrent(0);
+      setSecondsLeft((data.durationMinutes ?? config.durationMinutes) * 60);
+      setStage("test");
+    } catch (e: any) {
+      setFormError(e?.message ?? "Could not start the test. Please try again.");
+      setStage("intro");
+    }
   }
 
   // ── INTRO ────────────────────────────────────────────────────────────
@@ -225,8 +248,22 @@ export function AptitudeTest({
     );
   }
 
+  // ── LOADING ──────────────────────────────────────────────────────────
+  if (stage === "loading") {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <div className="rounded-xl border border-ink-200 bg-white p-10 text-center shadow-sm">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-saffron-200 border-t-saffron-500" />
+          <p className="mt-4 text-sm font-medium text-ink-700">Generating your unique question paper…</p>
+          <p className="mt-1 text-xs text-ink-500">Every candidate gets a different set. This takes a moment.</p>
+        </div>
+      </div>
+    );
+  }
+
   // ── TEST ─────────────────────────────────────────────────────────────
   const q = questions[current];
+  if (!q) return null;
   const answeredCount = Object.keys(answers).length;
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const ss = String(secondsLeft % 60).padStart(2, "0");

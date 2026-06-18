@@ -1,22 +1,23 @@
 // POST /api/aptitude/submit — score + record a Surge admission aptitude
 // attempt. Open (no auth) — candidates take it as guests.
 //
-// Body: { name, email, phone?, answers: { [questionId]: choiceIndex }, durationSec? }
-// Scoring happens server-side against the answer keys in src/data/aptitude
-// (never shipped to the browser), so the result can't be forged client-side.
+// Body: { name, email, phone?, token, answers: { [questionId]: choiceIndex }, durationSec? }
+// `token` is the sealed answer key issued by /api/aptitude/start. Scoring
+// happens server-side after decrypting it, so results can't be forged.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
-import { scoreAptitude } from "@/data/aptitude";
+import { openKey, scoreFromKey } from "@/lib/aptitude/seal";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 
 const Body = z.object({
   name: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(160),
   phone: z.string().trim().max(20).optional().nullable(),
+  token: z.string().min(10).max(20000),
   // questionId → chosen option index (0-3)
   answers: z.record(z.string(), z.number().int().min(0).max(3)),
   durationSec: z.number().int().min(0).max(7200).optional(),
@@ -40,7 +41,12 @@ export async function POST(req: Request) {
     return Response.json({ error: e?.message ?? "invalid body" }, { status: 400 });
   }
 
-  const result = scoreAptitude(body.answers);
+  const key = openKey(body.token);
+  if (!key || key.length === 0) {
+    return Response.json({ error: "Invalid or expired test session. Please restart the test." }, { status: 400 });
+  }
+
+  const result = scoreFromKey(body.answers, key);
 
   const attempt = await prisma.surgeAptitudeAttempt.create({
     data: {
