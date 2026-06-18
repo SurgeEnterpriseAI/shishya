@@ -22,6 +22,7 @@ const limits = {
   explain: { limit: 20, windowSec: 60 },         // 20 explain calls per minute per user
   verify:  { limit: 50, windowSec: 86_400 },     // 50 verifications per day per user (spec)
   flag:    { limit: 10, windowSec: 86_400 },     // 10 flags per day per user (spec)
+  aptitude:{ limit: 15, windowSec: 86_400 },     // 15 aptitude submissions per day per IP
 } as const;
 
 export type LimitName = keyof typeof limits;

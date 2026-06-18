@@ -1564,3 +1564,29 @@ model ReviewState {
   @@unique([userId, topicId])
   @@index([userId, examId, due])
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// SurgeAptitudeAttempt — submissions to the 30-minute / 30-MCQ aptitude
+// screening test used for Surge admissions. Standalone: no FK to User
+// (candidates are external applicants who take the test as guests). The
+// founder reviews passers via GET /api/admin/aptitude (Bearer-gated).
+// ─────────────────────────────────────────────────────────────────────
+model SurgeAptitudeAttempt {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  score       Int
+  total       Int
+  percent     Int
+  passed      Boolean
+  sections    Json? // { QUANT: {correct,total}, REASONING:{...}, VERBAL:{...} }
+  durationSec Int?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([email])
+  @@index([passed, createdAt])
+}

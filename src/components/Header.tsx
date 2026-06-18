@@ -81,8 +81,19 @@ export function Header({ admin = false }: { admin?: boolean }) {
           </p>
         )}
 
-        {/* Right: language switcher + auth controls (client component). */}
+        {/* Right: Surge aptitude test entry + language switcher + auth
+            controls. The aptitude link is the admission-screening test —
+            kept top-right so it's easy to point candidates at. */}
         <nav className="ml-auto flex shrink-0 items-center gap-3 text-sm text-ink-700">
+          {!admin && (
+            <Link
+              href="/aptitude"
+              className="hidden rounded-md border border-saffron-300 bg-saffron-50 px-2.5 py-1 text-xs font-semibold text-saffron-800 hover:bg-saffron-100 sm:inline-block"
+              title="Surge admission aptitude test — 30 questions, 30 minutes"
+            >
+              Aptitude Test
+            </Link>
+          )}
           {!admin && (
             <HeaderAuthControls locale={DEFAULT_LOCALE} labels={RAIL_LABELS} />
           )}
