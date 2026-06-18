@@ -2,7 +2,6 @@
 // Server component picks the exam (default first enrolled) and hands off to client.
 
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -17,10 +16,95 @@ export default async function ChatPage({
   searchParams: Promise<{ examCode?: string; topicCode?: string; seed?: string; general?: string }>;
 }) {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login?callbackUrl=/chat");
   const sp = await searchParams;
   const { t } = await getT();
   const generalMode = sp.general === "1";
+
+  // ── Anonymous tutor — UNGATED ────────────────────────────────────────
+  // The AI tutor is open to signed-out visitors. Two anons reached /chat
+  // and bounced at the old login wall every day — they came for the tutor.
+  // Guests get a stateless, tools-off tutor scoped to the exam syllabus
+  // (or general), nothing persisted, with a soft sign-in nudge. The scope
+  // guardrail in the prompt keeps it exam-only for everyone.
+  if (!session?.user?.id) {
+    let anonExamCode: string | null = null;
+    let anonExamShort: string | null = null;
+    if (!generalMode && sp.examCode) {
+      const ex = await prisma.exam.findUnique({
+        where: { code: sp.examCode },
+        select: { code: true, shortName: true, active: true },
+      });
+      if (ex && ex.active) {
+        anonExamCode = ex.code;
+        anonExamShort = ex.shortName;
+      }
+    }
+    void recordEvent({
+      kind: "CHAT_OPENED",
+      path: "/chat",
+      props: { examCode: anonExamCode, general: anonExamCode == null, anon: true },
+    });
+    const anonStarters = anonExamShort
+      ? [
+          `Explain the ${anonExamShort} exam pattern and which topics carry the most marks.`,
+          `Give me a 30-minute plan to start preparing for ${anonExamShort} today.`,
+          `Quiz me with one ${anonExamShort} question — start easy, then go harder.`,
+          `What are the most common mistakes ${anonExamShort} aspirants make?`,
+        ]
+      : [
+          t("chat.general.starter.1"),
+          t("chat.general.starter.2"),
+          t("chat.general.starter.3"),
+          t("chat.general.starter.4"),
+        ];
+    const loginHref = `/login?callbackUrl=${encodeURIComponent(
+      anonExamCode ? `/chat?examCode=${anonExamCode}` : "/chat"
+    )}`;
+    return (
+      <main className="min-h-screen bg-ink-50/40">
+        <Header />
+        <section
+          className="container-prose flex flex-col py-6 sm:py-8"
+          style={{ minHeight: "calc(100vh - 64px)" }}
+        >
+          <div>
+            <p className="text-xs text-ink-500">{t("nav.tutor").replace(" →", "")}</p>
+            <h1 className="mt-1 text-xl font-semibold text-ink-900">
+              {anonExamShort ? `Ask Shishya — ${anonExamShort}` : t("chat.title")}
+            </h1>
+            <p className="mt-2 rounded-md bg-saffron-50 px-3 py-2 text-xs text-ink-600 ring-1 ring-saffron-200">
+              You&apos;re chatting as a guest — ask anything about{" "}
+              {anonExamShort ? `${anonExamShort} or its syllabus` : "your exam prep"}.{" "}
+              <Link href={loginHref} className="font-medium text-saffron-700 hover:underline">
+                Sign in free
+              </Link>{" "}
+              to save your chats and get tutoring tuned to your weak topics.
+            </p>
+          </div>
+
+          <ChatInterface
+            examCode={anonExamCode}
+            topicFocus={null}
+            initialSeed={sp.seed ?? null}
+            labels={{
+              placeholder: t("chat.placeholder"),
+              send: t("chat.send"),
+              thinking: t("chat.thinking"),
+              empty: anonExamShort ? t("chat.empty.body") : t("chat.general.empty"),
+              emptyExamPrefix: anonExamShort ? t("chat.empty.examPrefix") : "",
+              suggested: t("chat.suggested"),
+              starters: anonStarters,
+              focusLabel: t("chat.focus.label"),
+              focusClear: t("chat.focus.clear"),
+              diagnosticCta: t("chat.diagnostic.cta"),
+              diagnosticBuilding: t("chat.diagnostic.building"),
+              diagnosticHint: t("chat.diagnostic.hint"),
+            }}
+          />
+        </section>
+      </main>
+    );
+  }
 
   // Analytics — server-side CHAT_OPENED so we don't double-fire with
   // PAGE_VIEW. Captures the exam scope as a prop.

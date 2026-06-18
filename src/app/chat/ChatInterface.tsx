@@ -93,6 +93,14 @@ export function ChatInterface({
 
   async function send(text: string) {
     if (!text.trim() || busy) return;
+    // Snapshot prior turns BEFORE we append the new message. Sent in the
+    // request body so anonymous (signed-out) chats — which aren't stored
+    // server-side — still get multi-turn context. Signed-in chats ignore
+    // this and use their DB-persisted history.
+    const priorHistory = messages
+      .filter((m) => m.content.trim())
+      .slice(-12)
+      .map((m) => ({ role: m.role, content: m.content }));
     const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: text };
     const placeholder: Message = { id: `a-${Date.now()}`, role: "assistant", content: "" };
     setMessages((m) => [...m, userMsg, placeholder]);
@@ -112,6 +120,7 @@ export function ChatInterface({
           sessionId,
           message: text,
           topicCode: topicFocus?.code ?? undefined,
+          history: priorHistory,
         }),
       });
       if (!res.ok || !res.body) {

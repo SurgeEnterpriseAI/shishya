@@ -29,23 +29,38 @@ const Body = z
     sessionId: z.string().nullish(),
     message: z.string().min(1).max(2000),
     topicCode: z.string().nullish(),
+    // Client-supplied recent history. Used ONLY for anonymous (signed-out)
+    // chats, which aren't persisted server-side, so the client sends its
+    // last few turns to keep the tutor multi-turn. Ignored for signed-in
+    // users (their history comes from the DB ChatSession).
+    history: z
+      .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().min(1).max(8000) }))
+      .max(40)
+      .optional(),
   })
   .refine((b) => b.general === true || (typeof b.examCode === "string" && b.examCode.length > 0), {
     message: "examCode is required when general is not true",
   });
 
+/** Best-effort client IP for anonymous rate-limiting (Vercel sets x-forwarded-for). */
+function clientIp(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) return xff.split(",")[0]!.trim();
+  return req.headers.get("x-real-ip")?.trim() || "unknown";
+}
+
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.id) {
-    return new Response(JSON.stringify({ error: "UNAUTHENTICATED" }), {
-      status: 401,
-      headers: { "content-type": "application/json" },
-    });
-  }
+  // Ungated: the AI tutor is open to signed-out visitors too. `userId` is
+  // null for anonymous callers; every account-dependent step below
+  // (enrollment, persisted session/messages, personalized context, tools)
+  // is branched on it. Anonymous chat is stateless + tools-off + scoped to
+  // the exam syllabus only.
+  const userId = session?.user?.id ?? null;
 
-  // Rate limit before doing any DB work. Catches retry-storms early and keeps
-  // a misbehaving client from burning Anthropic credits or Postgres CPU.
-  const rl = await checkRateLimit("chat", session.user.id);
+  // Rate limit before any DB work. By user when signed in, else by a coarse
+  // IP key so open tutor access can't be abused to burn Anthropic credits.
+  const rl = await checkRateLimit("chat", userId ?? `anon:${clientIp(req)}`);
   if (!rl.ok) return rateLimited(rl);
 
   let body;
@@ -74,62 +89,80 @@ export async function POST(req: Request) {
       headers: { "content-type": "application/json" },
     });
   }
-  if (exam) {
+  // Signed-in only: track enrollment for the exam they're chatting about.
+  if (exam && userId) {
     await prisma.enrollment.upsert({
-      where: { userId_examId: { userId: session.user.id, examId: exam.id } },
+      where: { userId_examId: { userId, examId: exam.id } },
       update: {},
-      create: { userId: session.user.id, examId: exam.id },
+      create: { userId, examId: exam.id },
     });
   }
 
-  let chatSession = body.sessionId
-    ? await prisma.chatSession.findUnique({ where: { id: body.sessionId } })
-    : null;
-  if (!chatSession || chatSession.userId !== session.user.id) {
+  // Persisted chat session — signed-in only. ChatSession.userId is
+  // required, so anonymous chats aren't stored: they get a throwaway
+  // session id and their recent turns ride in the request body instead.
+  let chatSession =
+    userId && body.sessionId
+      ? await prisma.chatSession.findUnique({ where: { id: body.sessionId } })
+      : null;
+  if (userId && (!chatSession || chatSession.userId !== userId)) {
     chatSession = await prisma.chatSession.create({
       data: {
-        userId: session.user.id,
+        userId,
         // examId is nullable in the schema — null = general-mode session.
         examId: exam?.id ?? null,
       },
     });
   }
+  const sessionIdOut = chatSession?.id ?? "anon";
 
-  // Load history
-  const history = await prisma.chatMessage.findMany({
-    where: { sessionId: chatSession.id },
-    orderBy: { createdAt: "asc" },
-    take: 30, // cap context
-  });
+  // History — normalised to {role, content}. From the DB for signed-in
+  // users; from the client body for anonymous ones (their turns aren't
+  // persisted, so the client replays its last few for multi-turn).
+  const history: { role: "user" | "assistant"; content: string }[] =
+    userId && chatSession
+      ? (
+          await prisma.chatMessage.findMany({
+            where: { sessionId: chatSession.id },
+            orderBy: { createdAt: "asc" },
+            take: 30, // cap context
+          })
+        ).map((m) => ({
+          role: m.role === "USER" ? ("user" as const) : ("assistant" as const),
+          content: m.content,
+        }))
+      : (body.history ?? []).slice(-12);
 
-  await prisma.chatMessage.create({
-    data: { sessionId: chatSession.id, role: "USER", content: body.message },
-  });
+  // Persist the user's message (signed-in only).
+  if (userId && chatSession) {
+    await prisma.chatMessage.create({
+      data: { sessionId: chatSession.id, role: "USER", content: body.message },
+    });
+  }
 
-  // Exam-scoped context (student state + syllabus + journey) only loads
-  // when we have an exam. With connection_limit=5 on the pooled DB URL
-  // these can safely fan out in parallel — each wrapper's internal 2-5
-  // queries share the connection pool without overflowing the 10s pool
-  // timeout. Wall clock collapses from ~3 × seq to ~1 × max.
+  // Exam-scoped context. The syllabus loads for EVERYONE with an exam so
+  // even the anonymous tutor stays scoped to the right syllabus; the
+  // personalized state + journey load only for signed-in users (anon has
+  // no account data). With connection_limit=5 on the pooled DB URL these
+  // fan out in parallel without overflowing the 10s pool timeout.
   const [studentState, syllabus, journey] = exam
     ? await Promise.all([
-        getStudentState(session.user.id, examCodeForChat!),
+        userId ? getStudentState(userId, examCodeForChat!) : Promise.resolve(null),
         getSyllabusContext(examCodeForChat!),
-        getStudentJourney(session.user.id, examCodeForChat!),
+        userId ? getStudentJourney(userId, examCodeForChat!) : Promise.resolve(null),
       ])
     : ([null, null, null] as const);
 
-  // For general mode we need a minimal StudentState for the tutor's
-  // prompt-builder (it needs preferredLang at minimum). Build one from
-  // the User row.
+  // For general / anonymous chats we need a minimal StudentState for the
+  // tutor's prompt-builder (it needs preferredLang at minimum). Build one
+  // from the User row when signed in; anon defaults to EN.
   let generalStudentState = studentState;
   if (!generalStudentState) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { preferredLang: true },
-    });
+    const user = userId
+      ? await prisma.user.findUnique({ where: { id: userId }, select: { preferredLang: true } })
+      : null;
     generalStudentState = {
-      userId: session.user.id,
+      userId: userId ?? "anon",
       examCode: "",
       examName: "",
       preferredLang: (user?.preferredLang ?? "EN") as any,
@@ -178,7 +211,7 @@ export async function POST(req: Request) {
       try {
         // Header line so the client knows the session id
         controller.enqueue(
-          encoder.encode(`event: meta\ndata: ${JSON.stringify({ sessionId: chatSession!.id })}\n\n`)
+          encoder.encode(`event: meta\ndata: ${JSON.stringify({ sessionId: sessionIdOut })}\n\n`)
         );
 
         const ai = tutorStream({
@@ -191,22 +224,21 @@ export async function POST(req: Request) {
             examShortName: "General",
             subjects: [],
           },
-          history: history.map((m) => ({
-            role: m.role === "USER" ? "user" : "assistant",
-            content: m.content,
-          })),
+          // history is already normalised to {role, content}.
+          history,
           userMessage: body.message,
           language: generalStudentState.preferredLang,
           topicFocus: topicFocus ?? undefined,
           journey: journey ?? undefined,
           generalMode: isGeneral,
-          // Tool use needs an exam scope to look up the student's
-          // mastery / questions on a topic — in general mode the tools
-          // would have nothing to query, so we pass no ctx and the
-          // tutor goes tools-off.
-          ctx: examCodeForChat
-            ? { userId: session.user.id, examCode: examCodeForChat }
-            : undefined,
+          // Tool use needs an exam scope AND a signed-in user to look up
+          // the student's mastery / attempts. General mode and anonymous
+          // chats pass no ctx, so the tutor goes tools-off and answers
+          // from the syllabus + its own knowledge.
+          ctx:
+            examCodeForChat && userId
+              ? { userId, examCode: examCodeForChat }
+              : undefined,
         });
 
         let full = "";
@@ -228,19 +260,24 @@ export async function POST(req: Request) {
           }
         }
 
-        const saved = await prisma.chatMessage.create({
-          data: {
-            sessionId: chatSession!.id,
-            role: "ASSISTANT",
-            content: full,
-            metadata: { actions: actions ?? null, toolCalls },
-          },
-        });
+        // Persist the assistant turn — signed-in only (anon isn't stored).
+        let messageId = "anon";
+        if (userId && chatSession) {
+          const saved = await prisma.chatMessage.create({
+            data: {
+              sessionId: chatSession.id,
+              role: "ASSISTANT",
+              content: full,
+              metadata: { actions: actions ?? null, toolCalls },
+            },
+          });
+          messageId = saved.id;
+        }
 
         controller.enqueue(
           encoder.encode(
             `event: done\ndata: ${JSON.stringify({
-              messageId: saved.id,
+              messageId,
               actions: actions ?? [],
               toolCalls,
             })}\n\n`
