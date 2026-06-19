@@ -195,6 +195,85 @@ If today's not the day, no stress — but the longer you wait, the longer Shishy
   return { subject, html, text };
 }
 
+// ── Surge admission: aptitude PASS email ───────────────────────────────
+// Sent to a candidate the moment they clear the aptitude cutoff. Tells
+// them they're shortlisted and to contact Nikhil for the next steps.
+const SURGE_CONTACT = {
+  name: "Nikhil",
+  phone: "7624967999",
+  // WhatsApp deep-link (India country code).
+  whatsapp: "https://wa.me/917624967999",
+} as const;
+
+interface AptitudePassProps extends CommonProps {
+  score: number;
+  total: number;
+}
+
+export function renderAptitudePassEmail(p: AptitudePassProps): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = `You've cleared the Surge aptitude round, ${p.firstName} 🎉`;
+  const text = `Hi ${p.firstName},
+
+Congratulations! You scored ${p.score}/${p.total} and cleared the Surge admission aptitude round.
+
+Next step — reach out to ${SURGE_CONTACT.name} for your further steps in the Surge process:
+
+  Call or WhatsApp ${SURGE_CONTACT.name}: ${SURGE_CONTACT.phone}
+  WhatsApp: ${SURGE_CONTACT.whatsapp}
+
+Please mention your name and that you've cleared the aptitude test so ${SURGE_CONTACT.name} can guide you on what comes next.
+
+We're glad to have you in the process.
+
+— Team Surge`;
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:'Inter',system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="display:inline-block;width:48px;height:48px;background:#f97316;border-radius:10px;line-height:48px;color:#fff;font-weight:700;font-size:22px;">शि</div>
+      <div style="font-weight:700;font-size:18px;margin-top:8px;">Shishya · Surge</div>
+    </div>
+    <h1 style="font-size:22px;line-height:1.3;margin:0 0 12px;">Congratulations, ${p.firstName} 🎉</h1>
+    <p style="font-size:15px;line-height:1.55;margin:0 0 16px;color:#334155;">You scored <strong>${p.score}/${p.total}</strong> and <strong>cleared the Surge admission aptitude round.</strong> You're shortlisted for the next stage.</p>
+    <div style="background:#fff;border:1px solid #fed7aa;border-radius:10px;padding:18px 20px;margin:20px 0;">
+      <p style="font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#9a3412;font-weight:700;margin:0 0 6px;">Your next step</p>
+      <p style="font-size:15px;line-height:1.55;margin:0 0 4px;color:#0f172a;">Reach out to <strong>${SURGE_CONTACT.name}</strong> for your further steps:</p>
+      <p style="font-size:20px;font-weight:700;margin:8px 0 4px;color:#0f172a;">📞 ${SURGE_CONTACT.phone}</p>
+      <p style="font-size:13px;color:#475569;margin:0;">Call or WhatsApp. Please mention your name and that you've cleared the aptitude test.</p>
+    </div>
+    <p style="margin:22px 0;text-align:center;">
+      <a href="${SURGE_CONTACT.whatsapp}" style="display:inline-block;background:#22c55e;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:8px;">Message ${SURGE_CONTACT.name} on WhatsApp →</a>
+    </p>
+    <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+    <p style="font-size:11px;line-height:1.6;color:#94a3b8;margin:0;text-align:center;">
+      You're receiving this because you cleared the aptitude test at <a href="https://shishya.in/aptitude" style="color:#c2410c;">shishya.in/aptitude</a>.
+    </p>
+  </div>
+</body></html>`;
+  return { subject, html, text };
+}
+
+export async function sendAptitudePassEmail(candidate: {
+  email: string;
+  name?: string | null;
+  score: number;
+  total: number;
+}): Promise<boolean> {
+  const firstName = pickFirstName(candidate.name, candidate.email);
+  const { subject, html, text } = renderAptitudePassEmail({
+    firstName,
+    score: candidate.score,
+    total: candidate.total,
+  });
+  return sendEmail({ to: candidate.email, subject, html, text, tag: "aptitude-pass" });
+}
+
 /** Convenience wrappers — caller doesn't have to think about
  *  templating, just hands us a user. */
 export async function sendWelcomeEmail(user: {

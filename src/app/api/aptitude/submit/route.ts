@@ -12,6 +12,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import { openKey, scoreFromKey } from "@/lib/aptitude/seal";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
+import { sendAptitudePassEmail } from "@/lib/email";
 
 const Body = z.object({
   name: z.string().trim().min(1).max(120),
@@ -64,6 +65,36 @@ export async function POST(req: Request) {
     },
     select: { id: true },
   });
+
+  // Candidate cleared the cutoff → email them their next step (contact
+  // Nikhil). Best-effort + awaited so the serverless function doesn't get
+  // frozen before the send; a failure here never blocks the result. We
+  // skip if this email was already notified (earlier pass / retake) so no
+  // one gets the "you cleared" mail twice.
+  if (result.passed) {
+    try {
+      const already = await prisma.surgeAptitudeAttempt.findFirst({
+        where: { email: body.email, passEmailedAt: { not: null } },
+        select: { id: true },
+      });
+      if (!already) {
+        const sent = await sendAptitudePassEmail({
+          email: body.email,
+          name: body.name,
+          score: result.score,
+          total: result.total,
+        });
+        if (sent) {
+          await prisma.surgeAptitudeAttempt.update({
+            where: { id: attempt.id },
+            data: { passEmailedAt: new Date() },
+          });
+        }
+      }
+    } catch (err) {
+      console.error("[aptitude] pass email failed:", err);
+    }
+  }
 
   return Response.json({
     ok: true,

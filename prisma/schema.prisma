@@ -1584,6 +1584,9 @@ model SurgeAptitudeAttempt {
   durationSec Int?
   ip          String?
   userAgent   String?
+  // Set when the "you cleared the cutoff — contact Nikhil" email has been
+  // sent, so a candidate is never emailed twice (across retakes/backfills).
+  passEmailedAt DateTime?
   createdAt   DateTime @default(now())
 
   @@index([createdAt])
