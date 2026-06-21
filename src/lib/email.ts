@@ -274,6 +274,61 @@ export async function sendAptitudePassEmail(candidate: {
   return sendEmail({ to: candidate.email, subject, html, text, tag: "aptitude-pass" });
 }
 
+// ── Weekly Gemini growth report (to the founder) ───────────────────────
+export async function sendGrowthReportEmail(p: {
+  to: string;
+  weekLabel: string;
+  metricsLine: string; // one-line headline numbers
+  narrative: string;
+  priorReview: string;
+  suggestions: { title: string; category: string; effort: string; expectedImpact: string }[];
+  analysed: boolean; // false = metrics only (Gemini key not set yet)
+}): Promise<boolean> {
+  const subject = `Shishya growth report — week of ${p.weekLabel}${p.analysed ? "" : " (metrics only)"}`;
+  const sugRows = p.suggestions
+    .map(
+      (s, i) =>
+        `${i + 1}. [${s.category} · ${s.effort}] ${s.title} — ${s.expectedImpact}`
+    )
+    .join("\n");
+  const text = `Shishya growth report — week of ${p.weekLabel}
+
+${p.metricsLine}
+
+${p.analysed ? p.narrative + "\n\nPrior week: " + p.priorReview + "\n\nThis week's build list for Claude:\n" + sugRows : "Gemini analysis was skipped (GEMINI_API_KEY not set). Add the key in Vercel to get suggestions next run."}`;
+
+  const sugHtml = p.suggestions
+    .map(
+      (s, i) => `<li style="margin:0 0 10px;">
+        <span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;text-transform:uppercase;border-radius:4px;padding:1px 6px;">${s.category} · ${s.effort}</span>
+        <div style="font-weight:600;font-size:14px;margin-top:3px;">${i + 1}. ${s.title}</div>
+        <div style="font-size:12px;color:#475569;">→ ${s.expectedImpact}</div>
+      </li>`
+    )
+    .join("");
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:'Inter',system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:600px;margin:0 auto;padding:28px 24px;">
+    <div style="font-weight:700;font-size:16px;margin-bottom:4px;">📈 Shishya growth report</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:16px;">Week of ${p.weekLabel} · Gemini analyst → Claude build list</div>
+    <div style="background:#0f172a;color:#e2e8f0;border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.5;">${p.metricsLine}</div>
+    ${
+      p.analysed
+        ? `<p style="font-size:14px;line-height:1.6;margin:18px 0 8px;color:#1e293b;">${p.narrative}</p>
+    <p style="font-size:12px;line-height:1.55;margin:0 0 18px;color:#64748b;"><strong>Prior week:</strong> ${p.priorReview}</p>
+    <div style="font-size:13px;font-weight:700;margin:0 0 8px;">This week's build list for Claude</div>
+    <ol style="padding-left:18px;margin:0;">${sugHtml}</ol>`
+        : `<p style="font-size:13px;line-height:1.6;margin:18px 0;color:#b45309;">Gemini analysis was skipped — <strong>GEMINI_API_KEY isn't set in Vercel yet.</strong> Add it and the next run (or a manual trigger) will include the suggestion list.</p>`
+    }
+    <hr style="border:none;border-top:1px solid #e2e8f0;margin:22px 0;">
+    <p style="font-size:11px;color:#94a3b8;margin:0;">Automated weekly by the Shishya growth loop · <a href="https://shishya.in" style="color:#c2410c;">shishya.in</a></p>
+  </div>
+</body></html>`;
+  return sendEmail({ to: p.to, subject, html, text, tag: "growth-report" });
+}
+
 /** Convenience wrappers — caller doesn't have to think about
  *  templating, just hands us a user. */
 export async function sendWelcomeEmail(user: {

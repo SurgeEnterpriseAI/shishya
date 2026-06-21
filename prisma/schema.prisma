@@ -1593,3 +1593,25 @@ model SurgeAptitudeAttempt {
   @@index([email])
   @@index([passed, createdAt])
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// GrowthReport — one row per weekly Gemini growth analysis. The cron
+// computes a metrics snapshot, Gemini turns it into prioritized
+// suggestions (each with a concrete brief for Claude to implement), and
+// Claude updates each suggestion's status as it ships them. Closes the
+// loop: analyse → build → re-measure next week.
+// ─────────────────────────────────────────────────────────────────────
+model GrowthReport {
+  id          String   @id @default(cuid())
+  weekStart   DateTime // start of the analysed 7-day window (UTC)
+  metrics     Json     // computed growth metrics snapshot
+  narrative   String?  @db.Text // Gemini's prose read of the week
+  // [{ id, title, category, hypothesis, expectedImpact, effort,
+  //    claudeTask, status: open|done|skipped, commit, note }]
+  suggestions Json?
+  model       String?  // Gemini model that produced it
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([weekStart])
+}
