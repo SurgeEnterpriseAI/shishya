@@ -661,6 +661,20 @@ function StepGoals({
               Sign up — start prepping →
             </Link>
           </div>
+          {/* No-friction on-ramp: the AI tutor is now open to signed-out
+              visitors, but the signup banner never said so. Surfacing it
+              here gives hesitant visitors a zero-commitment way to feel the
+              product (ask a real exam question, no login) — and a softer
+              path to conversion. (Gemini growth suggestion: promote the
+              ungated AI tutor as a signup hook.) */}
+          <div className="mt-3 border-t border-saffron-200/70 pt-3 text-center sm:text-left">
+            <Link
+              href="/chat?general=1"
+              className="text-sm font-medium text-saffron-700 transition-colors hover:text-saffron-900"
+            >
+              Not ready to sign up? Ask Shishya — our free AI tutor, no login needed →
+            </Link>
+          </div>
         </div>
       )}
 
