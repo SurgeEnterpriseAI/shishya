@@ -78,47 +78,62 @@ Return STRICT JSON with this exact shape:
   ]
 }`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.6, responseMimeType: "application/json", maxOutputTokens: 4096 },
-      }),
-    });
-    if (!res.ok) {
-      console.error("[growth] Gemini API error:", res.status, (await res.text()).slice(0, 400));
-      return null;
+  // Try the primary model, then a fallback, each with retries. Gemini's
+  // REST API occasionally returns a transient error or a non-JSON body —
+  // a single failure must NOT blank the whole week's analysis (which is
+  // exactly what happened on the first scheduled run). Only return null if
+  // every model × every retry fails.
+  const modelChain = [...new Set([MODEL, "gemini-2.0-flash"])];
+  const requestBody = JSON.stringify({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.6, responseMimeType: "application/json", maxOutputTokens: 4096 },
+  });
+
+  for (const model of modelChain) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          { method: "POST", headers: { "content-type": "application/json" }, body: requestBody }
+        );
+        if (!res.ok) {
+          console.error(`[growth] Gemini ${model} attempt ${attempt} HTTP ${res.status}:`, (await res.text()).slice(0, 300));
+          continue;
+        }
+        const data = await res.json();
+        const text: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) {
+          console.error(`[growth] Gemini ${model} attempt ${attempt}: no text`, JSON.stringify(data).slice(0, 200));
+          continue;
+        }
+        const parsed = JSON.parse(text);
+        const suggestions: GrowthSuggestion[] = (parsed.suggestions ?? [])
+          .filter((s: any) => s && s.title && s.claudeTask)
+          .map((s: any, i: number) => ({
+            id: String(s.id || `sugg-${i + 1}`),
+            title: String(s.title),
+            category: ["conversion", "distribution", "content", "retention", "performance", "other"].includes(s.category) ? s.category : "other",
+            hypothesis: String(s.hypothesis ?? ""),
+            expectedImpact: String(s.expectedImpact ?? ""),
+            effort: ["S", "M", "L"].includes(s.effort) ? s.effort : "M",
+            claudeTask: String(s.claudeTask),
+            status: "open" as const,
+          }));
+        if (!suggestions.length) {
+          console.error(`[growth] Gemini ${model} attempt ${attempt}: 0 valid suggestions — retrying`);
+          continue;
+        }
+        return {
+          narrative: String(parsed.narrative ?? ""),
+          priorReview: String(parsed.priorReview ?? ""),
+          suggestions,
+          model,
+        };
+      } catch (err) {
+        console.error(`[growth] Gemini ${model} attempt ${attempt} failed:`, err);
+      }
     }
-    const data = await res.json();
-    const text: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      console.error("[growth] Gemini returned no text:", JSON.stringify(data).slice(0, 300));
-      return null;
-    }
-    const parsed = JSON.parse(text);
-    const suggestions: GrowthSuggestion[] = (parsed.suggestions ?? [])
-      .filter((s: any) => s && s.title && s.claudeTask)
-      .map((s: any, i: number) => ({
-        id: String(s.id || `sugg-${i + 1}`),
-        title: String(s.title),
-        category: ["conversion", "distribution", "content", "retention", "performance", "other"].includes(s.category) ? s.category : "other",
-        hypothesis: String(s.hypothesis ?? ""),
-        expectedImpact: String(s.expectedImpact ?? ""),
-        effort: ["S", "M", "L"].includes(s.effort) ? s.effort : "M",
-        claudeTask: String(s.claudeTask),
-        status: "open" as const,
-      }));
-    return {
-      narrative: String(parsed.narrative ?? ""),
-      priorReview: String(parsed.priorReview ?? ""),
-      suggestions,
-      model: MODEL,
-    };
-  } catch (err) {
-    console.error("[growth] Gemini call failed:", err);
-    return null;
   }
+  console.error("[growth] Gemini failed across all models/retries — persisting metrics-only report.");
+  return null;
 }

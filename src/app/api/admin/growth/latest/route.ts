@@ -19,16 +19,27 @@ export async function GET(req: Request) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const report = await prisma.growthReport.findFirst({
+  const onlyOpen = new URL(req.url).searchParams.get("open") === "1";
+  const recent = await prisma.growthReport.findMany({
     orderBy: { createdAt: "desc" },
+    take: 8,
     select: { id: true, weekStart: true, metrics: true, narrative: true, suggestions: true, model: true, createdAt: true },
   });
-  if (!report) return Response.json({ ok: true, report: null, message: "No growth report yet — run /api/cron/growth-analysis." });
-
-  let suggestions = (report.suggestions as any[] | null) ?? [];
-  if (new URL(req.url).searchParams.get("open") === "1") {
-    suggestions = suggestions.filter((s) => s?.status !== "done" && s?.status !== "skipped");
+  if (!recent.length) {
+    return Response.json({ ok: true, report: null, message: "No growth report yet — run /api/cron/growth-analysis." });
   }
 
-  return Response.json({ ok: true, report: { ...report, suggestions } });
+  if (!onlyOpen) {
+    return Response.json({ ok: true, report: recent[0] });
+  }
+
+  // open=1: return the MOST RECENT report that still has open suggestions.
+  // A failed/blank run (Gemini errored → 0 suggestions) must not hide the
+  // prior week's unshipped build list from the developer.
+  const isOpen = (s: any) => s?.status !== "done" && s?.status !== "skipped";
+  for (const r of recent) {
+    const open = ((r.suggestions as any[] | null) ?? []).filter(isOpen);
+    if (open.length) return Response.json({ ok: true, report: { ...r, suggestions: open } });
+  }
+  return Response.json({ ok: true, report: { ...recent[0], suggestions: [] }, message: "No open suggestions across recent reports." });
 }
