@@ -1615,3 +1615,33 @@ model GrowthReport {
   @@index([createdAt])
   @@index([weekStart])
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// CrackPathTask — shared state for the Gemini(architect)↔Claude(builder)
+// design loop that builds the "Crack Path" (the learn → plan → daily-habit
+// layer that takes a fresh aspirant zero-to-crack).
+//
+// Flow per task:  designed → (Claude builds) built → (Gemini reviews)
+//   approved  ✅ done, or  needs_changes → (Claude revises) built → …
+// ─────────────────────────────────────────────────────────────────────
+model CrackPathTask {
+  id                 String   @id @default(cuid())
+  phase              String // "Learn" | "Plan" | "Habit" | ...
+  seq                Int // global build order
+  title              String
+  spec               String   @db.Text // Gemini's design brief — what to build
+  acceptanceCriteria Json? // string[] — how Gemini will judge it done
+  effort             String? // S | M | L
+  // designed | built | needs_changes | approved
+  status             String   @default("designed")
+  buildReport        String?  @db.Text // Claude's feedback: what it built + how it meets the criteria
+  commit             String? // commit sha Claude shipped
+  reviewFeedback     String?  @db.Text // Gemini's verdict on whether the build matches the design
+  approved           Boolean  @default(false)
+  iteration          Int      @default(0) // build/review round-trips
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([status])
+  @@index([seq])
+}
