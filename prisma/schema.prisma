@@ -208,6 +208,10 @@ model Topic {
   notes            String?   @db.Text
   notesGeneratedAt DateTime?
   notesGeneratedBy String?
+  // Human review of AI-generated notes (Crack Path Task 1). validatedAt
+  // set = "validated"; null = "needs_review".
+  notesValidatedAt DateTime?
+  notesValidatedBy String?
   weight           Float     @default(1)
   orderIdx         Int       @default(0)
   createdAt        DateTime  @default(now())
