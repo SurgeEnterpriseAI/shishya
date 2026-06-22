@@ -11,13 +11,40 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 180;
 
 import { prisma } from "@/lib/db/prisma";
-import { reviewBuild } from "@/lib/crackpath/architect";
+import { reviewBuild, designCrackPath } from "@/lib/crackpath/architect";
 
 export async function GET(req: Request) {
   const expected = process.env.CRON_SECRET;
   if (!expected) return Response.json({ error: "CRON_SECRET not configured" }, { status: 500 });
   if ((req.headers.get("authorization") ?? "") !== `Bearer ${expected}`) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  // BOOTSTRAP: if the plan hasn't been designed yet, have Gemini design it
+  // first. This runs under Vercel's auto-injected cron auth, so the whole
+  // loop kicks itself off on the next scheduled tick — no manual trigger
+  // and no secret-handling needed to start it.
+  if ((await prisma.crackPathTask.count()) === 0) {
+    const tasks = await designCrackPath(null);
+    if (tasks && tasks.length) {
+      await prisma.$transaction(
+        tasks.map((t) =>
+          prisma.crackPathTask.create({
+            data: {
+              phase: t.phase,
+              seq: t.seq,
+              title: t.title,
+              spec: t.spec,
+              acceptanceCriteria: t.acceptanceCriteria,
+              effort: t.effort,
+              status: "designed",
+            },
+          })
+        )
+      );
+      return Response.json({ ok: true, bootstrapped: true, designed: tasks.length });
+    }
+    return Response.json({ ok: true, bootstrapped: false, message: "Gemini design empty — will retry next tick." });
   }
 
   const built = await prisma.crackPathTask.findMany({
