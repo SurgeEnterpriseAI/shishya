@@ -15,6 +15,9 @@ export interface GrowthMetrics {
   channels: { refHosts: { host: string; visitors: number }[]; utmSources: { source: string; visitors: number }[] };
   funnel: { visitors: number; engaged: number; hitLoginGate: number; signups: number; engagedRate: number; gateToSignupRate: number };
   aptitude: { attempts: number; passed: number };
+  // Free (signed-out) AI-tutor usage — the ungated tutor is a key
+  // conversion lever, so its engagement feeds the analyst directly.
+  freeTutor: { conversations: number; turns: number; multiTurnPct: number };
   returningUsers: number; // signed-in users active this week who joined >7d ago
   allTime: { users: number; mocks: number; aptitudeAttempts: number };
 }
@@ -122,6 +125,23 @@ export async function computeGrowthMetrics(now = new Date()): Promise<GrowthMetr
     prisma.surgeAptitudeAttempt.count(),
   ]);
 
+  // Free (anon) tutor engagement this week — grouped into conversations by
+  // the pseudonymous anon cookie.
+  const anonTutor = await prisma.anonTutorLog.findMany({
+    where: { createdAt: { gte: thisFrom, lt: now } },
+    select: { anonId: true },
+  });
+  const convCounts = new Map<string, number>();
+  anonTutor.forEach((l, i) => {
+    const k = l.anonId ?? `null:${i}`;
+    convCounts.set(k, (convCounts.get(k) ?? 0) + 1);
+  });
+  const freeTutor = {
+    conversations: convCounts.size,
+    turns: anonTutor.length,
+    multiTurnPct: pct([...convCounts.values()].filter((n) => n > 1).length, convCounts.size),
+  };
+
   const deltas: Record<string, number | null> = {
     uniqueVisitors: wow(thisWeek.uniqueVisitors, lastWeek.uniqueVisitors),
     signups: wow(thisWeek.signups, lastWeek.signups),
@@ -150,6 +170,7 @@ export async function computeGrowthMetrics(now = new Date()): Promise<GrowthMetr
       gateToSignupRate: pct(thisWeek.signups, hitLoginGate),
     },
     aptitude: { attempts: aptAttempts, passed: aptPassed },
+    freeTutor,
     returningUsers,
     allTime: { users: totUsers, mocks: totMocks, aptitudeAttempts: totApt },
   };
