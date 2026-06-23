@@ -1649,3 +1649,23 @@ model CrackPathTask {
   @@index([status])
   @@index([seq])
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// AnonTutorLog — captures anonymous (signed-out) AI-tutor turns so we can
+// analyse the ungated-tutor experience (the biggest, previously-invisible
+// segment). Privacy-first: keyed by the pseudonymous shishya_anon cookie
+// UUID — no name/email/userId (anon users have none). Message text is the
+// student's own exam question, capped, for product analysis only.
+// ─────────────────────────────────────────────────────────────────────
+model AnonTutorLog {
+  id          String   @id @default(cuid())
+  anonId      String? // pseudonymous shishya_anon cookie — groups a conversation
+  examCode    String? // exam scope, null = general mode
+  userMessage String   @db.Text
+  reply       String?  @db.Text
+  replyChars  Int? // length of the full reply (in case `reply` is truncated)
+  createdAt   DateTime @default(now())
+
+  @@index([anonId, createdAt])
+  @@index([createdAt])
+}

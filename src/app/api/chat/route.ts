@@ -57,6 +57,11 @@ export async function POST(req: Request) {
   // is branched on it. Anonymous chat is stateless + tools-off + scoped to
   // the exam syllabus only.
   const userId = session?.user?.id ?? null;
+  // Pseudonymous anon id (shishya_anon cookie UUID) — used only to GROUP an
+  // anonymous tutor conversation for product analysis. Not PII.
+  const anonId = userId
+    ? null
+    : (req.headers.get("cookie") || "").match(/(?:^|;\s*)shishya_anon=([^;]+)/)?.[1] ?? null;
 
   // Rate limit before any DB work. By user when signed in, else by a coarse
   // IP key so open tutor access can't be abused to burn Anthropic credits.
@@ -260,7 +265,7 @@ export async function POST(req: Request) {
           }
         }
 
-        // Persist the assistant turn — signed-in only (anon isn't stored).
+        // Persist the assistant turn — signed-in only (full ChatMessage).
         let messageId = "anon";
         if (userId && chatSession) {
           const saved = await prisma.chatMessage.create({
@@ -272,6 +277,22 @@ export async function POST(req: Request) {
             },
           });
           messageId = saved.id;
+        } else if (!userId) {
+          // Anonymous tutor turn — log it (pseudonymous anonId, capped text)
+          // so the ungated-tutor experience is analysable. Best-effort.
+          try {
+            await prisma.anonTutorLog.create({
+              data: {
+                anonId,
+                examCode: examCodeForChat ?? null,
+                userMessage: body.message.slice(0, 2000),
+                reply: full.slice(0, 1500),
+                replyChars: full.length,
+              },
+            });
+          } catch (err) {
+            console.error("[chat] anon tutor log failed:", err);
+          }
         }
 
         controller.enqueue(
