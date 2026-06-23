@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
+import { isCurrentUserAdmin } from "@/lib/admin";
 
 const Body = z.object({
   action: z.enum(["validate", "needs_review"]),
@@ -16,10 +17,15 @@ const Body = z.object({
 });
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Dual auth: Bearer CRON_SECRET (cron / scripts) OR a signed-in admin
+  // (the /admin/teaching-notes UI consumes this endpoint from the browser).
   const expected = process.env.CRON_SECRET;
-  if (!expected) return Response.json({ error: "CRON_SECRET not configured" }, { status: 500 });
-  if (req.headers.get("authorization") !== `Bearer ${expected}`) {
-    return Response.json({ error: "unauthorized" }, { status: 401 });
+  const viaBearer = Boolean(expected) && req.headers.get("authorization") === `Bearer ${expected}`;
+  let adminEmail: string | undefined;
+  if (!viaBearer) {
+    const { isAdmin, email } = await isCurrentUserAdmin();
+    if (!isAdmin) return Response.json({ error: "unauthorized" }, { status: 401 });
+    adminEmail = email;
   }
   const { id } = await params;
   let body;
@@ -37,7 +43,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     where: { id },
     data:
       body.action === "validate"
-        ? { notesValidatedAt: new Date(), notesValidatedBy: body.validatorId ?? "admin" }
+        ? { notesValidatedAt: new Date(), notesValidatedBy: body.validatorId ?? adminEmail ?? "admin" }
         : { notesValidatedAt: null, notesValidatedBy: null },
     select: { id: true, notesValidatedAt: true },
   });
