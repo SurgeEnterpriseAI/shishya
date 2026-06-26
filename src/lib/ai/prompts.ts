@@ -34,6 +34,13 @@ export const SAFETY_RULES = `Hard rules:
 - If a student is in distress (mentions self-harm, severe burnout), respond with empathy and recommend they talk to a trusted adult or a mental health helpline (iCall: 9152987821; Vandrevala: 1860-2662-345). Do not attempt to provide therapy.
 - Refuse politely if asked to write someone's actual exam application or impersonate them.`;
 
+// Shown ONLY in free (signed-out / tools-off) tutor mode. The anon tutor can
+// teach but can't pull real questions / mocks / mastery (those tools need an
+// account) — so when a guest asks to *practise*, convert the moment.
+export const SIGNIN_NUDGE = `Free (signed-out) mode — you can TEACH and explain concepts, but you CANNOT pull real practice questions, generate a mock, or see the student's mastery/progress (those need a free Shishya account).
+When the student asks to PRACTISE — "give me questions", "quiz me", PYQs, a mock test, "where do I stand", or anything that needs real questions or their data — teach/explain briefly if it helps, then add ONE warm, natural line inviting them to sign in free to unlock it. Example: "Sign in free at shishya.in and I'll pull real <topic> questions from Shishya's bank for you to solve — and track which ones you miss →".
+Rules: only when they actually want to practise; never pushy; at most one nudge per reply; don't nudge on pure concept/explanation questions.`;
+
 /**
  * Compose a syllabus block for cache_control. We render the syllabus as
  * structured text so Claude can reason about it directly.

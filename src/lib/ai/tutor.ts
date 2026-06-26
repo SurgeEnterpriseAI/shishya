@@ -16,6 +16,7 @@ import {
   ANSWER_FORMAT_RULES,
   SAFETY_RULES,
   SCOPE_RULES,
+  SIGNIN_NUDGE,
   syllabusBlock,
   studentStateBlock,
   journeyBlock,
@@ -67,12 +68,15 @@ export async function* tutorStream(
   // student). Anonymous / general chats have no ctx, so drop the
   // tool-use guide rather than advertise tools the model can't call.
   const toolsOn = Boolean(ctx);
+  // Signed-out (tools-off) tutor can't pull real questions/mocks/mastery —
+  // so it gets the sign-in nudge to convert "give me questions" moments.
+  const nudge = toolsOn ? "" : `\n\n${SIGNIN_NUDGE}`;
   // SCOPE_RULES go in EVERY mode — the tutor must stay an exam-prep tutor
   // whether the chat is exam-scoped, general, or anonymous. It is not a
   // general-purpose assistant.
   const STATIC_PROMPT = generalMode
-    ? `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\nThis chat is in GENERAL mode — exam-agnostic. The student wants help with cross-exam questions, career advice, study technique, or choosing an exam. You have no syllabus to reference and no student mastery data. Answer based on general knowledge of Indian entrance exams; ask one short clarifying question if a specific exam would change your answer. Stay within the scope rules above.`
-    : `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}${toolsOn ? `\n\n${TOOL_USE_GUIDE}` : ""}`;
+    ? `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\nThis chat is in GENERAL mode — exam-agnostic. The student wants help with cross-exam questions, career advice, study technique, or choosing an exam. You have no syllabus to reference and no student mastery data. Answer based on general knowledge of Indian entrance exams; ask one short clarifying question if a specific exam would change your answer. Stay within the scope rules above.${nudge}`
+    : `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}${toolsOn ? `\n\n${TOOL_USE_GUIDE}` : nudge}`;
   const systemBlocks = generalMode
     ? cachedSystem(STATIC_PROMPT)
     : cachedSystem(STATIC_PROMPT, syllabusBlock(syllabus));
