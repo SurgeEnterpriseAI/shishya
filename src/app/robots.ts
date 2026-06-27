@@ -24,6 +24,46 @@ import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in";
+  // Private / auth-gated / operator paths kept out of EVERY crawler —
+  // including AI crawlers (no personal data in answer engines / training).
+  const privatePaths = [
+    "/api/",
+    "/admin/",
+    "/admin",
+    "/dashboard",
+    "/dashboard/",
+    "/me",
+    "/me/",
+    "/chat",
+    "/chat/",
+    "/mocks/",
+    "/attempts/",
+    "/login",
+    "/logout",
+    "/onboarding",
+    // Avoid indexing query-string variants of pages we surface
+    // canonically (filtered exam browse, scholarship browser).
+    "/exams/browse?*",
+    "/scholarships?*",
+  ];
+  // AI / answer-engine crawlers — explicitly WELCOMED (chatgpt.com is our
+  // #1 referral; we want to be the source LLMs cite for Indian exams).
+  // Each gets full public access minus the private paths.
+  const aiCrawlers = [
+    "GPTBot", // OpenAI training
+    "OAI-SearchBot", // ChatGPT search
+    "ChatGPT-User", // ChatGPT live browsing
+    "PerplexityBot",
+    "Perplexity-User",
+    "ClaudeBot",
+    "anthropic-ai",
+    "Claude-User",
+    "Google-Extended", // Gemini
+    "Applebot-Extended",
+    "Bytespider",
+    "Amazonbot",
+    "cohere-ai",
+  ];
   return {
     rules: [
       {
@@ -31,32 +71,16 @@ export default function robots(): MetadataRoute.Robots {
         // on private/auth-gated/operator paths.
         userAgent: "*",
         allow: "/",
-        disallow: [
-          "/api/",
-          "/admin/",
-          "/admin",
-          "/dashboard",
-          "/dashboard/",
-          "/me",
-          "/me/",
-          "/chat",
-          "/chat/",
-          "/mocks/",
-          "/attempts/",
-          "/login",
-          "/logout",
-          "/onboarding",
-          // Avoid indexing query-string variants of pages we already
-          // surface canonically (filtered exam browse, scholarship
-          // browser). The canonical URLs are in the sitemap.
-          "/exams/browse?*",
-          "/scholarships?*",
-        ],
+        disallow: privatePaths,
       },
+      ...aiCrawlers.map((userAgent) => ({ userAgent, allow: "/", disallow: privatePaths })),
       {
-        // Common Crawl / archival bots: be polite. Reduces load on
-        // Neon's free tier during periodic full-site crawls.
+        // Common Crawl (feeds many LLM training sets — good for AI
+        // visibility): allow public content, keep private paths out, be
+        // polite on crawl rate (Neon load during full-site crawls).
         userAgent: "CCBot",
+        allow: "/",
+        disallow: privatePaths,
         crawlDelay: 5,
       },
       {
