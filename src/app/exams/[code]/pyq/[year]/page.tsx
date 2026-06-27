@@ -10,6 +10,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { StartFullMockButton } from "./StartFullMockButton";
+import { ShareExamButton } from "@/components/ShareExamButton";
 
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
@@ -122,6 +123,14 @@ export default async function PYQYearPage({
         <p className="mt-1 text-sm text-ink-600">
           {t("exam.pyq.title")} · {questions.length} {t("exam.pyq.questions")} · {exam.durationMin} {t("exam.minutes")}
         </p>
+
+        <div className="mt-4">
+          <ShareExamButton
+            url={`https://shishya.in/exams/${code}/pyq/${yearNum}`}
+            message={`${exam.shortName} ${yearNum} previous year paper — solve it free on Shishya (full mock, instant score):`}
+            surface="pyq"
+          />
+        </div>
 
         <div className="mt-6 rounded-md border border-ink-200 bg-white p-6">
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">

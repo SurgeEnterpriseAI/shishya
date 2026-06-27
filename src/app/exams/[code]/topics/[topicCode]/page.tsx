@@ -13,6 +13,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { findTranslations } from "@/lib/db/questionTranslations";
+import { ShareExamButton } from "@/components/ShareExamButton";
 
 // Public SEO page; data barely changes (notes regen weekly via cron).
 // Revalidate every 10 min so a content update propagates without
@@ -141,6 +142,18 @@ export default async function TopicPage({
         <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{topic.name}</h1>
         {topic.description && (
           <p className="mt-2 max-w-3xl text-sm text-ink-600 sm:text-base">{topic.description}</p>
+        )}
+
+        {/* Share — only when there are real notes worth forwarding to a
+            study group. Skips the empty-state to avoid sharing a stub. */}
+        {notes && (
+          <div className="mt-4">
+            <ShareExamButton
+              url={`https://shishya.in/exams/${code}/topics/${topic.code}`}
+              message={`${topic.name} (${exam.shortName}) — free study notes, formulas & practice on Shishya:`}
+              surface="topic"
+            />
+          </div>
         )}
 
         {/* Sub-topic chips */}

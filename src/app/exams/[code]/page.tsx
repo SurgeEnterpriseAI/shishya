@@ -24,6 +24,7 @@ import { ScholarshipsForExamSection } from "@/components/ScholarshipsForExamSect
 import { CollegesForExamSection } from "@/components/CollegesForExamSection";
 import { SectionVerificationSummary } from "@/components/VerificationBadge";
 import { ExamDeepContentBlock } from "@/components/ExamDeepContentBlock";
+import { ShareExamButton } from "@/components/ShareExamButton";
 import { ExamFaq } from "@/components/ExamFaq";
 import { findDeepContent, hasDeepContent } from "@/data/exam-deep-content";
 import { getExamTheme } from "@/lib/exam-theme";
@@ -401,6 +402,17 @@ export default async function ExamPage({
           <span className="rounded-full bg-white border border-ink-200 px-3 py-1">
             {t("exam.negative")}: {exam.negativeMark === 0 ? t("exam.no.negative") : `−${formatNegativeMark(exam.negativeMark)}`}
           </span>
+        </div>
+
+        {/* WhatsApp-first share — aspirants organise prep in WhatsApp
+            groups; one tap spreads this free PYQ/syllabus hub to a whole
+            batch and seeds a referral the channel report can attribute. */}
+        <div className="mt-5">
+          <ShareExamButton
+            url={`https://shishya.in/exams/${exam.code}`}
+            message={`${exam.shortName} — free mock tests, previous year papers & full syllabus on Shishya (100% free, in your language):`}
+            surface="exam"
+          />
         </div>
 
         {/* Single section-level verification badge covers the static
