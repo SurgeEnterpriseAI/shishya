@@ -29,6 +29,10 @@ const PRICE_OUTPUT_PER_M = 15.0;
 const PRICE_CACHE_WRITE_PER_M = 3.75;
 const PRICE_CACHE_READ_PER_M = 0.3;
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5-20250929";
+// Notes are independent per topic, so we generate several concurrently.
+// Sonnet on a paid tier comfortably handles this; the per-request timeout
+// keeps any one hung call from blocking its worker. Override via env.
+const CONCURRENCY = Math.max(1, Number(process.env.NOTES_CONCURRENCY ?? 6));
 
 interface CliArgs {
   top: number;
@@ -131,8 +135,22 @@ async function main() {
   console.log(`Force re-gen:    ${args.force ? "yes" : "no"}`);
   console.log(`Mode:            ${args.dryRun ? "DRY RUN" : "LIVE"}\n`);
 
-  outer: for (const exam of examsInScope) {
-    const allTopics = exam.subjects.flatMap((s) => s.topics).flatMap((t) => [t, ...t.children]);
+  let stopAll = false;
+  for (const exam of examsInScope) {
+    if (stopAll) break;
+    // NOTE: children come back BOTH as their own top-level `s.topics` rows
+    // AND via each parent's `.children` spread, so the naive flatMap yields
+    // every child twice. Dedupe by id — without this we generate (and pay
+    // for) each sub-topic's notes twice.
+    const seenTopicIds = new Set<string>();
+    const allTopics = exam.subjects
+      .flatMap((s) => s.topics)
+      .flatMap((t) => [t, ...t.children])
+      .filter((t: any) => {
+        if (seenTopicIds.has(t.id)) return false;
+        seenTopicIds.add(t.id);
+        return true;
+      });
     if (allTopics.length === 0) continue;
 
     const cps = exam.candidatesPerYear ? `${(exam.candidatesPerYear / 1_000_000).toFixed(1)}M` : "—";
@@ -142,25 +160,13 @@ async function main() {
     // Cached system block per-exam: persona + syllabus context
     const syllabusBlock = renderSyllabusBlock(exam);
 
-    for (const topic of allTopics) {
-      if (totals.topicsDone + totals.topicsSkipped + totals.topicsFailed >= args.maxTopics) {
-        console.log(`(stop) max-topics reached`);
-        break outer;
-      }
-      if (spendUsd() >= args.budgetUsd) {
-        console.log(`(stop) budget reached: $${spendUsd().toFixed(2)} ≥ $${args.budgetUsd}`);
-        break outer;
-      }
-      if (!args.force && (topic as any).notes) {
-        totals.topicsSkipped += 1;
-        continue;
-      }
+    // Topics that still need notes (idempotent skip up-front).
+    const todo = allTopics.filter((t: any) => args.force || !(t as any).notes);
+    totals.topicsSkipped += allTopics.length - todo.length;
 
-      if (args.dryRun) {
-        console.log(`  [dry] ${topic.code}`);
-        totals.topicsDone += 1;
-        continue;
-      }
+    // Generate one topic's notes. Self-contained — updates shared totals
+    // and persists immediately, so a crash mid-run loses nothing.
+    const genTopic = async (topic: any): Promise<void> => {
 
       const userPrompt = `Generate study notes for this topic.
 
@@ -174,15 +180,22 @@ ${topic.description ? `- Scope: ${topic.description}` : ""}
 Produce the notes per the section structure in the system prompt. Aim for 600–1200 words total. Keep it tight and exam-focused.`;
 
       try {
-        const response = await client!.messages.create({
-          model: MODEL,
-          max_tokens: 4000,
-          system: [
-            { type: "text", text: SYSTEM_PERSONA, cache_control: { type: "ephemeral" } },
-            { type: "text", text: syllabusBlock, cache_control: { type: "ephemeral" } },
-          ],
-          messages: [{ role: "user", content: userPrompt }],
-        });
+        // Per-request timeout + extra retries: without a timeout a single
+        // hung request blocks the whole sequential run indefinitely (we hit
+        // exactly this — 15 notes then a silent stall). 90s is generous for
+        // a ~1k-word note; the SDK auto-retries transient failures.
+        const response = await client!.messages.create(
+          {
+            model: MODEL,
+            max_tokens: 4000,
+            system: [
+              { type: "text", text: SYSTEM_PERSONA, cache_control: { type: "ephemeral" } },
+              { type: "text", text: syllabusBlock, cache_control: { type: "ephemeral" } },
+            ],
+            messages: [{ role: "user", content: userPrompt }],
+          },
+          { timeout: 90_000, maxRetries: 5 },
+        );
         totals.calls += 1;
         totals.in += response.usage.input_tokens;
         totals.out += response.usage.output_tokens;
@@ -196,7 +209,7 @@ Produce the notes per the section structure in the system prompt. Aim for 600–
         if (text.length < 200) {
           console.warn(`  ⚠ ${topic.code} too short (${text.length} chars), skipping`);
           totals.topicsFailed += 1;
-          continue;
+          return;
         }
 
         await prisma.topic.update({
@@ -208,11 +221,45 @@ Produce the notes per the section structure in the system prompt. Aim for 600–
           } as any,
         });
         totals.topicsDone += 1;
+        // Per-topic progress so a long background run is observable
+        // (previously only failures logged, so a stall looked identical
+        // to silent success).
+        console.log(`  ✓ ${topic.code.padEnd(34)} ${text.length} chars  $${spendUsd().toFixed(2)}`);
       } catch (err: any) {
         console.warn(`  ✗ ${topic.code}: ${err.message?.slice(0, 120)}`);
         totals.topicsFailed += 1;
       }
-    }
+    };
+
+    // Concurrency pool over todo[]. Budget / max-topics are checked before
+    // each dispatch; up to CONCURRENCY requests may be in flight when the
+    // cap trips, so spend can overshoot by at most CONCURRENCY notes.
+    let cursor = 0;
+    const worker = async (): Promise<void> => {
+      while (true) {
+        if (stopAll) return;
+        if (totals.topicsDone + totals.topicsSkipped + totals.topicsFailed >= args.maxTopics) {
+          stopAll = true;
+          console.log(`(stop) max-topics reached`);
+          return;
+        }
+        if (spendUsd() >= args.budgetUsd) {
+          stopAll = true;
+          console.log(`(stop) budget reached: $${spendUsd().toFixed(2)} ≥ $${args.budgetUsd}`);
+          return;
+        }
+        const i = cursor++;
+        if (i >= todo.length) return;
+        const topic = todo[i];
+        if (args.dryRun) {
+          console.log(`  [dry] ${topic.code}`);
+          totals.topicsDone += 1;
+          continue;
+        }
+        await genTopic(topic);
+      }
+    };
+    await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
 
     const after = await prisma.topic.count({
       where: { subject: { examId: exam.id }, notes: { not: null } } as any,
