@@ -42,7 +42,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         notesGeneratedAt: true,
         subject: { select: { exam: { select: { code: true } } } },
       },
-      take: 2000,
+      // Cap high enough to include EVERY topic we've authored notes for —
+      // the old take:2000 silently dropped ~1k freshly-generated pages from
+      // the sitemap (wasted generation cost). Total sitemap is well under
+      // the 50k/file protocol cap. Order freshest-first so that if we ever
+      // do exceed the cap, the newest content is the content that ships.
+      orderBy: { notesGeneratedAt: { sort: "desc", nulls: "last" } },
+      take: 20000,
     })
     .catch(() => []);
 

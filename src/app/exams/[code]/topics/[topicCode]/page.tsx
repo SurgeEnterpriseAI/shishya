@@ -120,9 +120,74 @@ export default async function TopicPage({
 
   const notes = (topic as any).notes as string | null;
   const notesAt = (topic as any).notesGeneratedAt as Date | null;
+  const url = `https://shishya.in/exams/${exam.code}/topics/${topic.code}`;
+
+  // Structured data — only when real notes exist, so a stub topic never
+  // claims to be a published article. Article+LearningResource makes the
+  // study notes eligible for Google rich results AND machine-parseable for
+  // answer engines (ChatGPT / Perplexity) that cite Shishya. BreadcrumbList
+  // gives crawlers the exam→topic hierarchy.
+  const articleJsonLd = notes
+    ? {
+        "@context": "https://schema.org",
+        "@type": ["Article", "LearningResource"],
+        headline: `${topic.name} — Study Notes for ${exam.shortName}`,
+        name: topic.name,
+        description:
+          topic.description ??
+          `Free study notes on ${topic.name} for ${exam.shortName} preparation.`,
+        url,
+        inLanguage: "en-IN",
+        isAccessibleForFree: true,
+        learningResourceType: "Study notes",
+        educationalLevel: "Competitive exam preparation",
+        teaches: topic.name,
+        about: [
+          { "@type": "Thing", name: topic.name },
+          { "@type": "Thing", name: exam.name },
+        ],
+        wordCount: notes.split(/\s+/).filter(Boolean).length,
+        ...(notesAt
+          ? { datePublished: notesAt.toISOString(), dateModified: notesAt.toISOString() }
+          : {}),
+        author: { "@type": "Organization", name: "Shishya", url: "https://shishya.in" },
+        publisher: { "@type": "Organization", name: "Shishya", url: "https://shishya.in" },
+        isPartOf: {
+          "@type": "Course",
+          name: `${exam.shortName} preparation`,
+          url: `https://shishya.in/exams/${exam.code}`,
+        },
+      }
+    : null;
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://shishya.in" },
+      { "@type": "ListItem", position: 2, name: "Exams", item: "https://shishya.in/exams" },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: exam.shortName,
+        item: `https://shishya.in/exams/${exam.code}`,
+      },
+      { "@type": "ListItem", position: 4, name: topic.name, item: url },
+    ],
+  };
 
   return (
     <main className="min-h-screen bg-ink-50/40">
+      {articleJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <Header />
       <section className="container-prose py-8 sm:py-10">
         {/* Breadcrumb */}
