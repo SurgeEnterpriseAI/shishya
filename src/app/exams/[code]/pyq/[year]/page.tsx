@@ -180,6 +180,28 @@ export default async function PYQYearPage({
           )}
         </div>
 
+        {/* Ask Shishya — the highest-intent tutor entry: a stuck aspirant
+            looking at a real past paper. prefetch=false so the header-link
+            prefetch inflation we just fixed isn't reintroduced here. */}
+        <div className="mt-6 rounded-md border border-saffron-200 bg-saffron-50/60 p-5">
+          <p className="text-sm font-semibold text-ink-900">
+            Stuck on a question from this paper?
+          </p>
+          <p className="mt-1 text-sm text-ink-600">
+            Ask <strong>Shishya</strong> — your free AI tutor — to explain any {exam.shortName}{" "}
+            {yearNum} question, concept, or shortcut, step by step, in your language.
+          </p>
+          <Link
+            href={`/chat?examCode=${code}&seed=${encodeURIComponent(
+              `I'm solving the ${exam.shortName} ${yearNum} previous year paper. Explain the questions and concepts I'm stuck on, step by step.`,
+            )}`}
+            prefetch={false}
+            className="btn-primary mt-4 !py-2 !px-4 text-sm"
+          >
+            Ask Shishya about this paper →
+          </Link>
+        </div>
+
         {subjectRows.length > 0 && (
           <section className="mt-8">
             <h2 className="text-base font-semibold text-ink-800">{t("exam.pyq.breakdown")}</h2>

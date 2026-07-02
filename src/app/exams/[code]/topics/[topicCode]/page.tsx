@@ -309,6 +309,18 @@ export default async function TopicPage({
                 );
               })}
             </ul>
+            {/* Stuck on a preview question? Send them straight to the tutor
+                scoped to this topic — the highest-intent "explain this" moment.
+                prefetch=false to avoid re-inflating CHAT_OPENED. */}
+            <Link
+              href={`/chat?examCode=${code}&topicCode=${encodeURIComponent(topic.code)}&seed=${encodeURIComponent(
+                `Walk me through these ${topic.name} practice questions for ${exam.shortName} one at a time — let me try first, then explain where I go wrong.`,
+              )}`}
+              prefetch={false}
+              className="mt-3 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
+            >
+              Ask Shishya to explain these →
+            </Link>
           </section>
         )}
 
