@@ -2,6 +2,7 @@
 // Server component picks the exam (default first enrolled) and hands off to client.
 
 import Link from "next/link";
+import { headers } from "next/headers";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -19,6 +20,17 @@ export default async function ChatPage({
   const sp = await searchParams;
   const { t } = await getT();
   const generalMode = sp.general === "1";
+
+  // Prefetch guard: the "Ask Shishya" link lives in the header on every
+  // page, so Next.js <Link> prefetches /chat constantly — each prefetch
+  // SSR-renders this component and would fire a phantom CHAT_OPENED (we saw
+  // ~27 per real visitor). Only count genuine navigations: skip when the
+  // request is a router prefetch.
+  const reqHeaders = await headers();
+  const isPrefetch =
+    reqHeaders.get("next-router-prefetch") === "1" ||
+    reqHeaders.get("purpose") === "prefetch" ||
+    (reqHeaders.get("sec-purpose") ?? "").includes("prefetch");
 
   // ── Anonymous tutor — UNGATED ────────────────────────────────────────
   // The AI tutor is open to signed-out visitors. Two anons reached /chat
@@ -39,11 +51,13 @@ export default async function ChatPage({
         anonExamShort = ex.shortName;
       }
     }
-    void recordEvent({
-      kind: "CHAT_OPENED",
-      path: "/chat",
-      props: { examCode: anonExamCode, general: anonExamCode == null, anon: true },
-    });
+    if (!isPrefetch) {
+      void recordEvent({
+        kind: "CHAT_OPENED",
+        path: "/chat",
+        props: { examCode: anonExamCode, general: anonExamCode == null, anon: true },
+      });
+    }
     const anonStarters = anonExamShort
       ? [
           `Explain the ${anonExamShort} exam pattern and which topics carry the most marks.`,
@@ -107,17 +121,20 @@ export default async function ChatPage({
   }
 
   // Analytics — server-side CHAT_OPENED so we don't double-fire with
-  // PAGE_VIEW. Captures the exam scope as a prop.
-  void recordEvent({
-    kind: "CHAT_OPENED",
-    userId: session.user.id,
-    path: "/chat",
-    props: {
-      examCode: sp.examCode ?? null,
-      topicCode: sp.topicCode ?? null,
-      general: generalMode,
-    },
-  });
+  // PAGE_VIEW. Captures the exam scope as a prop. Skipped on prefetch so
+  // header-link prefetches don't inflate the count (see isPrefetch above).
+  if (!isPrefetch) {
+    void recordEvent({
+      kind: "CHAT_OPENED",
+      userId: session.user.id,
+      path: "/chat",
+      props: {
+        examCode: sp.examCode ?? null,
+        topicCode: sp.topicCode ?? null,
+        general: generalMode,
+      },
+    });
+  }
 
   let enrollments = await prisma.enrollment.findMany({
     where: { userId: session.user.id, active: true },
