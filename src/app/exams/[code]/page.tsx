@@ -441,12 +441,23 @@ export default async function ExamPage({
               students who cleared the same path. All free, no credit card.
               Sign in with Google to begin.
             </p>
-            <Link
-              href={`/login?callbackUrl=/exams/${exam.code}`}
-              className="btn-primary mt-3 inline-block !py-2 !px-4 text-sm"
-            >
-              Sign in to start →
-            </Link>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Link
+                href={`/login?callbackUrl=/exams/${exam.code}`}
+                className="btn-primary inline-block !py-2 !px-4 text-sm"
+              >
+                Sign in to start →
+              </Link>
+              {/* Lever #2 — anonymous 5-question diagnostic. Lets a signed-out
+                  visitor experience the mock loop before the login gate (the
+                  gate was the biggest drop in the journey data). */}
+              <Link
+                href={`/exams/${exam.code}/quiz`}
+                className="text-sm font-semibold text-saffron-700 underline-offset-2 hover:underline"
+              >
+                Or take a free 5-question quiz — no signup →
+              </Link>
+            </div>
           </div>
         )}
 

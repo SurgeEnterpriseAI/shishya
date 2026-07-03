@@ -237,18 +237,37 @@ export default async function TopicPage({
           </div>
         )}
 
-        {/* Growth lever #1 — convert SEO note-readers into the mock loop.
-            Only shown when the topic actually has questions to serve, so the
-            quiz never opens empty. Placed high so skimmers (avg ~20s dwell)
-            see it before they bounce. */}
-        {practiceQs.length >= 1 && (
-          <TopicQuizButton
-            examCode={code}
-            topicCode={topic.code}
-            topicName={topic.name}
-            examShort={exam.shortName}
-          />
-        )}
+        {/* Growth levers #1 + #2 — convert SEO note-readers into the mock
+            loop before they bounce (~20s dwell). Signed-in readers get a real
+            persisted TOPIC mock (one tap); signed-out readers get the
+            anonymous taste quiz (no login) which converts on its results
+            screen. Only shown when the topic actually has questions. */}
+        {practiceQs.length >= 1 &&
+          (userId ? (
+            <TopicQuizButton
+              examCode={code}
+              topicCode={topic.code}
+              topicName={topic.name}
+              examShort={exam.shortName}
+            />
+          ) : (
+            <div className="mt-5 rounded-lg border border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-bold text-ink-900">Test yourself on {topic.name}</p>
+                  <p className="mt-0.5 text-xs text-ink-600">
+                    5 real {exam.shortName} questions with instant answers — no signup, ~3 minutes.
+                  </p>
+                </div>
+                <Link
+                  href={`/exams/${code}/topics/${topic.code}/quiz`}
+                  className="inline-flex shrink-0 items-center justify-center rounded-lg bg-saffron-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300"
+                >
+                  Take the 5-question quiz →
+                </Link>
+              </div>
+            </div>
+          ))}
 
         {/* ── Study material (primary content) ──────────────────────── */}
         {notes ? (
