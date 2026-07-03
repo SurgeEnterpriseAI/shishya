@@ -14,6 +14,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { findTranslations } from "@/lib/db/questionTranslations";
 import { ShareExamButton } from "@/components/ShareExamButton";
+import { TopicQuizButton } from "./TopicQuizButton";
 
 // Public SEO page; data barely changes (notes regen weekly via cron).
 // Revalidate every 10 min so a content update propagates without
@@ -234,6 +235,19 @@ export default async function TopicPage({
               </Link>
             ))}
           </div>
+        )}
+
+        {/* Growth lever #1 — convert SEO note-readers into the mock loop.
+            Only shown when the topic actually has questions to serve, so the
+            quiz never opens empty. Placed high so skimmers (avg ~20s dwell)
+            see it before they bounce. */}
+        {practiceQs.length >= 1 && (
+          <TopicQuizButton
+            examCode={code}
+            topicCode={topic.code}
+            topicName={topic.name}
+            examShort={exam.shortName}
+          />
         )}
 
         {/* ── Study material (primary content) ──────────────────────── */}
