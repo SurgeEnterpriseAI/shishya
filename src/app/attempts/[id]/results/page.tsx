@@ -12,6 +12,7 @@ import { ResultsReview } from "./ResultsReview";
 import { RankCard } from "@/components/RankCard";
 import { ShareScoreButton } from "./ShareScoreButton";
 import { FreshQuestionsButton } from "./FreshQuestionsButton";
+import { NextMockButton } from "./NextMockButton";
 import { formatDisplayScorePct } from "@/lib/scoring";
 
 export default async function ResultsPage({
@@ -103,6 +104,20 @@ export default async function ResultsPage({
     }))
     .sort((a: any, b: any) => a.score - b.score);
 
+  // Lever #3 — the "explain my mistakes" tutor seed. Results is the peak
+  // tutor moment (they just got questions wrong), but the AI tutor is badly
+  // under-discovered (journey data: ~50s avg, 43 min in 14 days). This seeds
+  // a real conversation about the specific wrong topics.
+  const weakTopicNames = topicArr
+    .filter((t: any) => t.score < 1)
+    .slice(0, 3)
+    .map((t: any) => t.name);
+  const mistakeSeed =
+    `I just took a ${attempt.mock.exam.shortName} mock and got ${wrongCount} ` +
+    `question${wrongCount === 1 ? "" : "s"} wrong` +
+    (weakTopicNames.length ? ` — weakest: ${weakTopicNames.join(", ")}` : "") +
+    `. Go through my mistakes one by one: why the right answer is right, and how to get it next time.`;
+
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
@@ -152,6 +167,37 @@ export default async function ResultsPage({
             secondary=""
           />
         </div>
+
+        {/* Lever #3 — "Review your mistakes with Shishya". The highest-intent
+            tutor moment on the whole site: they just saw what they got wrong.
+            Placed right under the score so it's the first thing they can act
+            on. Only when there's something to review. prefetch=false to keep
+            CHAT_OPENED honest. */}
+        {wrongCount > 0 && (
+          <div className="mt-6 rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50/60 p-5 shadow-sm">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
+                  Turn mistakes into marks
+                </p>
+                <p className="mt-1 text-base font-bold text-ink-900">
+                  Review your {wrongCount} wrong {wrongCount === 1 ? "answer" : "answers"} with Shishya
+                </p>
+                <p className="mt-1 text-xs text-ink-600">
+                  Your free AI tutor walks through each mistake — why the right answer is right,
+                  and how to nail it next time.
+                </p>
+              </div>
+              <Link
+                href={`/chat?examCode=${attempt.mock.exam.code}&seed=${encodeURIComponent(mistakeSeed)}`}
+                prefetch={false}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              >
+                Explain my mistakes →
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Share-to-WhatsApp viral loop. Surfaced HIGH on the page
             (right after score, before rank ladder) so the moment
@@ -272,11 +318,17 @@ export default async function ResultsPage({
             </p>
           </div>
 
+          {/* Lever #4 — one-tap next mock (adaptive, weak-topic targeted)
+              instead of routing back to the hub to choose again. */}
+          <NextMockButton
+            examCode={attempt.mock.exam.code}
+            label={t("results.cta.another")}
+          />
           <Link
             href={`/exams/${attempt.mock.exam.code}`}
-            className="btn-primary block w-full !py-2 !px-4 text-center text-sm"
+            className="block w-full text-center text-xs font-medium text-ink-500 hover:text-ink-700"
           >
-            {t("results.cta.another")}
+            or browse all mocks &amp; PYQs →
           </Link>
 
           <Link
