@@ -2,8 +2,8 @@
 // topic (Crack Path "Learn" layer). Public read: the Learn pages render
 // this. Returns the note markdown + generation/validation metadata.
 //
-// Notes live on Topic.notes (the existing teaching-material field the AI
-// content factory populates) — no separate model needed.
+// Content lives in the dedicated `TopicTeachingNote` model (one row per
+// topic), fetched here via the Topic.teachingNote 1:1 relation.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,14 +18,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       id: true,
       code: true,
       name: true,
-      notes: true,
-      notesGeneratedAt: true,
-      notesValidatedAt: true,
+      teachingNote: {
+        select: { content: true, generatedAt: true, validatedAt: true },
+      },
       subject: { select: { name: true, exam: { select: { code: true, shortName: true } } } },
     },
   });
   if (!topic) return Response.json({ error: "topic not found" }, { status: 404 });
 
+  const note = topic.teachingNote;
   return Response.json({
     ok: true,
     topicId: topic.id,
@@ -33,9 +34,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     name: topic.name,
     subject: topic.subject?.name ?? null,
     exam: topic.subject?.exam ? { code: topic.subject.exam.code, shortName: topic.subject.exam.shortName } : null,
-    hasNotes: Boolean(topic.notes),
-    notes: topic.notes ?? null,
-    generatedAt: topic.notesGeneratedAt,
-    status: topic.notesValidatedAt ? "validated" : topic.notes ? "needs_review" : "missing",
+    hasNotes: Boolean(note?.content),
+    notes: note?.content ?? null,
+    generatedAt: note?.generatedAt ?? null,
+    status: note?.validatedAt ? "validated" : note?.content ? "needs_review" : "missing",
   });
 }

@@ -1,7 +1,8 @@
 // POST /api/admin/topics/:id/notes-review — mark a topic's AI-generated
 // teaching note as validated or back to needs-review (Crack Path Task 1
-// human-review mechanism). Bearer ${CRON_SECRET}.
+// human-review mechanism). Bearer ${CRON_SECRET} OR signed-in admin.
 //
+// Operates on the dedicated `TopicTeachingNote` model, keyed by topicId.
 // Body: { action: "validate" | "needs_review", validatorId?: string }
 
 export const runtime = "nodejs";
@@ -21,11 +22,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   // (the /admin/teaching-notes UI consumes this endpoint from the browser).
   const expected = process.env.CRON_SECRET;
   const viaBearer = Boolean(expected) && req.headers.get("authorization") === `Bearer ${expected}`;
-  let adminEmail: string | undefined;
+  let adminUserId: string | undefined;
   if (!viaBearer) {
-    const { isAdmin, email } = await isCurrentUserAdmin();
+    const { isAdmin, userId } = await isCurrentUserAdmin();
     if (!isAdmin) return Response.json({ error: "unauthorized" }, { status: 401 });
-    adminEmail = email;
+    adminUserId = userId;
   }
   const { id } = await params;
   let body;
@@ -35,22 +36,32 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return Response.json({ error: e?.message ?? "invalid body" }, { status: 400 });
   }
 
-  const topic = await prisma.topic.findUnique({ where: { id }, select: { id: true, notes: true } });
-  if (!topic) return Response.json({ error: "topic not found" }, { status: 404 });
-  if (!topic.notes) return Response.json({ error: "topic has no notes to review" }, { status: 400 });
+  // The note is keyed by topicId (:id is the Topic id). Must exist to review.
+  const note = await prisma.topicTeachingNote.findUnique({ where: { topicId: id }, select: { id: true } });
+  if (!note) return Response.json({ error: "topic has no notes to review" }, { status: 400 });
 
-  const updated = await prisma.topic.update({
-    where: { id },
+  // validatorId must be a real User.id (FK → User). Prefer the signed-in
+  // admin's id; fall back to a body-supplied id (cron path). An email or
+  // free-text value isn't a valid FK, so we only set it when it resolves.
+  const candidate = adminUserId ?? body.validatorId;
+  let validatorId: string | null = null;
+  if (body.action === "validate" && candidate) {
+    const u = await prisma.user.findUnique({ where: { id: candidate }, select: { id: true } });
+    validatorId = u?.id ?? null;
+  }
+
+  const updated = await prisma.topicTeachingNote.update({
+    where: { topicId: id },
     data:
       body.action === "validate"
-        ? { notesValidatedAt: new Date(), notesValidatedBy: body.validatorId ?? adminEmail ?? "admin" }
-        : { notesValidatedAt: null, notesValidatedBy: null },
-    select: { id: true, notesValidatedAt: true },
+        ? { validatedAt: new Date(), validatorId }
+        : { validatedAt: null, validatorId: null },
+    select: { validatedAt: true },
   });
 
   return Response.json({
     ok: true,
-    topicId: updated.id,
-    status: updated.notesValidatedAt ? "validated" : "needs_review",
+    topicId: id,
+    status: updated.validatedAt ? "validated" : "needs_review",
   });
 }

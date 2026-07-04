@@ -89,6 +89,7 @@ export default async function TopicPage({
       subject: { select: { code: true, name: true } },
       parent: { select: { code: true, name: true } },
       children: { select: { code: true, name: true, description: true }, orderBy: { orderIdx: "asc" } },
+      teachingNote: { select: { content: true, generatedAt: true } },
     },
   });
   if (!topic) notFound();
@@ -120,8 +121,8 @@ export default async function TopicPage({
     );
   }
 
-  const notes = (topic as any).notes as string | null;
-  const notesAt = (topic as any).notesGeneratedAt as Date | null;
+  const notes = (topic as any).teachingNote?.content as string | null ?? null;
+  const notesAt = (topic as any).teachingNote?.generatedAt as Date | null ?? null;
   const url = `https://shishya.in/exams/${exam.code}/topics/${topic.code}`;
 
   // Structured data — only when real notes exist, so a stub topic never

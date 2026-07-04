@@ -194,12 +194,12 @@ export async function POST(req: Request) {
       select: {
         code: true,
         name: true,
-        notes: true,
+        teachingNote: { select: { content: true } },
         subject: { select: { name: true } },
       },
     });
     if (topic) {
-      const notes = (topic as any).notes as string | null;
+      const notes = topic.teachingNote?.content ?? null;
       topicFocus = {
         code: topic.code,
         name: topic.name,

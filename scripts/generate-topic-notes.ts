@@ -124,7 +124,13 @@ async function main() {
       { code: "asc" },
     ],
     include: {
-      subjects: { include: { topics: { include: { children: true } } } },
+      subjects: {
+        include: {
+          topics: {
+            include: { children: { include: { teachingNote: true } }, teachingNote: true },
+          },
+        },
+      },
     },
   });
   const examsInScope = Number.isFinite(args.top) ? allExams.slice(0, args.top) : allExams;
@@ -154,14 +160,14 @@ async function main() {
     if (allTopics.length === 0) continue;
 
     const cps = exam.candidatesPerYear ? `${(exam.candidatesPerYear / 1_000_000).toFixed(1)}M` : "—";
-    const haveCount = allTopics.filter((t: any) => !!t.notes).length;
+    const haveCount = allTopics.filter((t: any) => !!t.teachingNote).length;
     console.log(`\n→ ${exam.code.padEnd(22)} ${exam.shortName.padEnd(30)} cps=${cps.padStart(6)}  notes=${haveCount}/${allTopics.length}`);
 
     // Cached system block per-exam: persona + syllabus context
     const syllabusBlock = renderSyllabusBlock(exam);
 
     // Topics that still need notes (idempotent skip up-front).
-    const todo = allTopics.filter((t: any) => args.force || !(t as any).notes);
+    const todo = allTopics.filter((t: any) => args.force || !(t as any).teachingNote);
     totals.topicsSkipped += allTopics.length - todo.length;
 
     // Generate one topic's notes. Self-contained — updates shared totals
@@ -212,13 +218,24 @@ Produce the notes per the section structure in the system prompt. Aim for 600–
           return;
         }
 
-        await prisma.topic.update({
-          where: { id: topic.id },
-          data: {
-            notes: text,
-            notesGeneratedAt: new Date(),
-            notesGeneratedBy: `claude:${MODEL}`,
-          } as any,
+        // Persist into the dedicated TopicTeachingNote model (1:1 by topicId).
+        // On re-generation (--force) the content changed, so reset the human
+        // validation state back to needs-review.
+        await prisma.topicTeachingNote.upsert({
+          where: { topicId: topic.id },
+          create: {
+            topicId: topic.id,
+            content: text,
+            generatedAt: new Date(),
+            generatedBy: `claude:${MODEL}`,
+          },
+          update: {
+            content: text,
+            generatedAt: new Date(),
+            generatedBy: `claude:${MODEL}`,
+            validatedAt: null,
+            validatorId: null,
+          },
         });
         totals.topicsDone += 1;
         // Per-topic progress so a long background run is observable
@@ -262,7 +279,7 @@ Produce the notes per the section structure in the system prompt. Aim for 600–
     await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
 
     const after = await prisma.topic.count({
-      where: { subject: { examId: exam.id }, notes: { not: null } } as any,
+      where: { subject: { examId: exam.id }, teachingNote: { isNot: null } } as any,
     });
     console.log(`  ${exam.code} done. notes=${after}/${allTopics.length}  spent=$${spendUsd().toFixed(2)}`);
   }

@@ -95,6 +95,7 @@ model User {
   vouches            CredentialVouch[]      @relation("UserVouches")
   notifications      Notification[]         @relation("UserNotifications")
   batchEnrollments   BatchEnrollment[]
+  validatedNotes     TopicTeachingNote[]    @relation("TeachingNoteValidator")
 
   @@index([email])
   @@index([badgeLevel])
@@ -202,29 +203,62 @@ model Topic {
   name             String
   description      String?   @db.Text
   syllabusText     String?   @db.Text // detailed syllabus content for AI context
-  // Student-facing study material (markdown). Populated by
-  // scripts/generate-topic-notes.ts. Sectioned: overview, key concepts,
-  // formulas, worked examples, common mistakes, quick reference.
+  // DEPRECATED (Crack Path Task 1, revision 3): student-facing study material
+  // now lives in the dedicated `TopicTeachingNote` model (see below) — one row
+  // per topic with a first-class validator link. These columns are retained
+  // (not dropped) so the migration that copied their data into
+  // TopicTeachingNote stays reversible; they are no longer read or written.
   notes            String?   @db.Text
   notesGeneratedAt DateTime?
   notesGeneratedBy String?
-  // Human review of AI-generated notes (Crack Path Task 1). validatedAt
-  // set = "validated"; null = "needs_review".
   notesValidatedAt DateTime?
   notesValidatedBy String?
   weight           Float     @default(1)
   orderIdx         Int       @default(0)
   createdAt        DateTime  @default(now())
 
-  subject      Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  parent       Topic?        @relation("TopicTree", fields: [parentId], references: [id], onDelete: SetNull)
-  children     Topic[]       @relation("TopicTree")
+  subject      Subject            @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  parent       Topic?             @relation("TopicTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Topic[]            @relation("TopicTree")
   questions    Question[]
   weaknessMaps WeaknessMap[]
   reviewStates ReviewState[]
+  teachingNote TopicTeachingNote?
 
   @@unique([subjectId, code])
   @@index([parentId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// TOPIC TEACHING NOTES (Crack Path — "Learn" layer)
+//
+// Dedicated store for the AI content factory's student-facing study notes:
+// one row per Topic (topicId @unique ⇒ 1:1). Split out of the Topic model so
+// note content and its human-review lifecycle live in their own table with a
+// first-class validator link, rather than as loose columns on Topic.
+//
+//   content      — the generated study-notes markdown
+//   generatedAt  — when the factory produced `content`
+//   generatedBy  — provenance, e.g. "claude:claude-sonnet-4-5"
+//   validatedAt  — when an admin marked it validated; NULL = "needs_review"
+//   validatorId  — the admin User.id who validated (nullable FK → User)
+// ─────────────────────────────────────────────────────────────────────────
+model TopicTeachingNote {
+  id          String    @id @default(cuid())
+  topicId     String    @unique
+  content     String    @db.Text
+  generatedAt DateTime  @default(now())
+  generatedBy String?
+  validatedAt DateTime?
+  validatorId String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  topic     Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  validator User? @relation("TeachingNoteValidator", fields: [validatorId], references: [id], onDelete: SetNull)
+
+  @@index([validatedAt])
+  @@index([generatedAt])
 }
 
 // ─────────────────────────────────────────────────────────────────────────

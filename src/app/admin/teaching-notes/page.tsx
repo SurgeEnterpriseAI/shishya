@@ -22,10 +22,16 @@ export default async function TeachingNotesAdminPage({
 
   const sp = await searchParams;
   const status = sp.status === "validated" ? "validated" : sp.status === "all" ? "all" : "needs_review";
+  // Filter on the TopicTeachingNote 1:1 relation. A note row always has
+  // content, so `teachingNote: { isNot: null }` == "has notes".
   const where = {
-    notes: { not: null },
-    ...(status === "needs_review" ? { notesValidatedAt: null } : status === "validated" ? { notesValidatedAt: { not: null } } : {}),
-  };
+    teachingNote:
+      status === "needs_review"
+        ? { validatedAt: null }
+        : status === "validated"
+          ? { validatedAt: { not: null } }
+          : { isNot: null },
+  } as const;
 
   const [topics, needsReview, validated] = await Promise.all([
     prisma.topic.findMany({
@@ -36,13 +42,12 @@ export default async function TeachingNotesAdminPage({
         id: true,
         code: true,
         name: true,
-        notes: true,
-        notesValidatedAt: true,
+        teachingNote: { select: { content: true, validatedAt: true } },
         subject: { select: { name: true, exam: { select: { shortName: true } } } },
       },
     }),
-    prisma.topic.count({ where: { notes: { not: null }, notesValidatedAt: null } }),
-    prisma.topic.count({ where: { notes: { not: null }, notesValidatedAt: { not: null } } }),
+    prisma.topic.count({ where: { teachingNote: { validatedAt: null } } }),
+    prisma.topic.count({ where: { teachingNote: { validatedAt: { not: null } } } }),
   ]);
 
   const items = topics.map((t) => ({
@@ -51,8 +56,8 @@ export default async function TeachingNotesAdminPage({
     code: t.code,
     subject: t.subject?.name ?? "",
     exam: t.subject?.exam?.shortName ?? "",
-    preview: (t.notes ?? "").slice(0, 900),
-    validated: Boolean(t.notesValidatedAt),
+    preview: (t.teachingNote?.content ?? "").slice(0, 900),
+    validated: Boolean(t.teachingNote?.validatedAt),
   }));
 
   return (

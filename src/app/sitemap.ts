@@ -35,11 +35,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const topics = await prisma.topic
     .findMany({
-      where: { notes: { not: null }, subject: { exam: { active: true } } },
+      where: { teachingNote: { isNot: null }, subject: { exam: { active: true } } },
       select: {
         code: true,
         createdAt: true,
-        notesGeneratedAt: true,
+        teachingNote: { select: { generatedAt: true } },
         subject: { select: { exam: { select: { code: true } } } },
       },
       // Cap high enough to include EVERY topic we've authored notes for —
@@ -47,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       // the sitemap (wasted generation cost). Total sitemap is well under
       // the 50k/file protocol cap. Order freshest-first so that if we ever
       // do exceed the cap, the newest content is the content that ships.
-      orderBy: { notesGeneratedAt: { sort: "desc", nulls: "last" } },
+      orderBy: { teachingNote: { generatedAt: "desc" } },
       take: 20000,
     })
     .catch(() => []);
@@ -178,7 +178,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const topicUrls: MetadataRoute.Sitemap = topics.map((t) => ({
     url: `${base}/exams/${t.subject.exam.code}/topics/${t.code}`,
-    lastModified: t.notesGeneratedAt ?? t.createdAt,
+    lastModified: t.teachingNote?.generatedAt ?? t.createdAt,
     changeFrequency: "monthly" as const,
     priority: 0.6,
   }));
