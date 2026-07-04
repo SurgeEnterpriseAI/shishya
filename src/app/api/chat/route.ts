@@ -305,8 +305,19 @@ export async function POST(req: Request) {
           )
         );
       } catch (err: any) {
+        // Never leak upstream internals (API billing/limits errors etc.) to
+        // students — we once streamed a raw "credit balance is too low"
+        // Anthropic error into the chat UI. Log the real thing, say
+        // something human.
+        console.error("[chat] tutor stream failed:", err);
+        const raw = String(err?.message ?? err);
+        const friendly = /credit balance|billing|invalid_request_error/i.test(raw)
+          ? "Shishya's tutor is briefly unavailable — the team has been alerted. Please try again in a little while."
+          : /overloaded|rate.?limit|429|529/i.test(raw)
+            ? "Shishya is helping a lot of students right now — please try again in a minute."
+            : "Something went wrong on our side — please try sending that again.";
         controller.enqueue(
-          encoder.encode(`event: error\ndata: ${JSON.stringify({ error: String(err) })}\n\n`)
+          encoder.encode(`event: error\ndata: ${JSON.stringify({ error: friendly })}\n\n`)
         );
       } finally {
         controller.close();
