@@ -257,7 +257,10 @@ async function renderInsights() {
       () => prisma.question.count({ where: { source: "AI_GENERATED", validated: false } }), 0),
     safe("totalSystemMocks", () => prisma.mock.count({ where: { userId: null } }), 0),
     safe("topicsTotal", () => prisma.topic.count(), 0),
-    safe("topicsWithNotes", () => prisma.topic.count({ where: { notes: { not: null } } }), 0),
+    // Counts the dedicated TopicTeachingNote table (Crack Path Task 1 rev 3) —
+    // the deprecated Topic.notes column is frozen and would misreport as new
+    // notes land only in the new table.
+    safe("topicsWithNotes", () => prisma.topicTeachingNote.count(), 0),
 
     safe("assistantMsgsToday",
       () => prisma.chatMessage.count({ where: { role: "ASSISTANT", createdAt: { gte: day1 } } }), 0),
