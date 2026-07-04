@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
+import { TalkToTeacher } from "@/components/TalkToTeacher";
 
 interface Message {
   id: string;
@@ -328,6 +329,19 @@ export function ChatInterface({
             </div>
           </div>
         ))}
+
+        {/* Human escalation — "still stuck?" appears once the student has
+            had a real exchange with the AI (2+ completed replies) and the
+            tutor isn't mid-answer. The AI absorbs volume; a real teacher is
+            the escape hatch when it isn't landing (human-connection pilot). */}
+        {!busy && messages.filter((m) => m.role === "assistant" && m.content).length >= 2 && (
+          <div className="flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50/60 px-3 py-2">
+            <p className="text-xs text-ink-600">
+              Still stuck after chatting with Shishya?
+            </p>
+            <TalkToTeacher surface="chat" examCode={examCode} variant="link" />
+          </div>
+        )}
 
         {actions.length > 0 && (
           <div className="rounded-md border border-saffron-200 bg-saffron-50/60 p-3">
