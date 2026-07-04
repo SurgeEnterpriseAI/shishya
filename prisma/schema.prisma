@@ -1669,3 +1669,39 @@ model AnonTutorLog {
   @@index([anonId, createdAt])
   @@index([createdAt])
 }
+
+// "Talk to a real teacher" — human-connection layer (pilot / waitlist).
+// Entry points at high-intent moments (results, topic notes, tutor chat)
+// capture a student's request for 1:1 help from a real teacher. During the
+// pilot these are worked MANUALLY by the team (no teacher marketplace yet):
+// each new request emails the team and shows in /admin/teacher-requests.
+// Purpose is to validate demand before investing in scheduling/supply, and
+// to seed the eventual paid human layer.
+enum TeacherRequestStatus {
+  PENDING // just submitted, not yet actioned
+  CONTACTED // team reached out to the student
+  RESOLVED // help delivered
+  CLOSED // dropped / spam / no response
+}
+
+model TeacherRequest {
+  id           String               @id @default(cuid())
+  userId       String? // signed-in student, if any
+  anonId       String? // else the pseudonymous cookie
+  examCode     String? // exam scope of the doubt
+  topicCode    String? // topic scope, if from a topic page
+  attemptId    String? // mock attempt this came from, if from results
+  surface      String // where it originated: results | topic | chat | onboarding | nav
+  message      String               @db.Text // the student's doubt / what they need
+  contactEmail String? // how the team reaches back
+  contactName  String?
+  contactPhone String?
+  status       TeacherRequestStatus @default(PENDING)
+  adminNotes   String?              @db.Text
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId])
+  @@index([createdAt])
+}

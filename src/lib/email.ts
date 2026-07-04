@@ -329,6 +329,56 @@ ${p.analysed ? p.narrative + "\n\nPrior week: " + p.priorReview + "\n\nThis week
   return sendEmail({ to: p.to, subject, html, text, tag: "growth-report" });
 }
 
+/**
+ * Team notification for a new "Talk to a real teacher" request. During the
+ * pilot these are worked manually, so the team needs to see each one fast.
+ */
+export async function sendTeacherRequestEmail(p: {
+  to: string;
+  surface: string;
+  examCode: string | null;
+  topicCode: string | null;
+  studentName: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  message: string;
+  signedIn: boolean;
+}): Promise<boolean> {
+  const subject = `🙋 New teacher request${p.examCode ? ` — ${p.examCode}` : ""} (from ${p.surface})`;
+  const rows = [
+    ["From", `${p.studentName ?? "Student"}${p.signedIn ? " (signed in)" : " (guest)"}`],
+    ["Contact", [p.contactEmail, p.contactPhone].filter(Boolean).join(" · ") || "—"],
+    ["Exam", p.examCode ?? "—"],
+    ["Topic", p.topicCode ?? "—"],
+    ["Came from", p.surface],
+  ];
+  const text = `New "talk to a teacher" request
+
+${rows.map(([k, v]) => `${k}: ${v}`).join("\n")}
+
+Their message:
+${p.message}
+
+Work the queue: https://shishya.in/admin/teacher-requests`;
+  const rowsHtml = rows
+    .map(
+      ([k, v]) =>
+        `<tr><td style="padding:3px 12px 3px 0;color:#64748b;font-size:12px;">${k}</td><td style="padding:3px 0;font-size:13px;font-weight:500;">${v}</td></tr>`
+    )
+    .join("");
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:600px;margin:0 auto;padding:28px 24px;">
+    <div style="font-weight:700;font-size:16px;margin-bottom:12px;">🙋 New teacher request</div>
+    <table style="border-collapse:collapse;margin-bottom:14px;">${rowsHtml}</table>
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.55;white-space:pre-wrap;">${p.message.replace(/</g, "&lt;")}</div>
+    <a href="https://shishya.in/admin/teacher-requests" style="display:inline-block;margin-top:16px;background:#c2410c;color:#fff;text-decoration:none;font-weight:600;font-size:13px;border-radius:8px;padding:9px 16px;">Work the queue →</a>
+  </div>
+</body></html>`;
+  return sendEmail({ to: p.to, subject, html, text, tag: "teacher-request" });
+}
+
 /** Convenience wrappers — caller doesn't have to think about
  *  templating, just hands us a user. */
 export async function sendWelcomeEmail(user: {

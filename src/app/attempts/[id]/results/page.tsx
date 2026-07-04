@@ -13,6 +13,7 @@ import { RankCard } from "@/components/RankCard";
 import { ShareScoreButton } from "./ShareScoreButton";
 import { FreshQuestionsButton } from "./FreshQuestionsButton";
 import { NextMockButton } from "./NextMockButton";
+import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { formatDisplayScorePct } from "@/lib/scoring";
 
 export default async function ResultsPage({
@@ -196,6 +197,24 @@ export default async function ResultsPage({
                 Explain my mistakes →
               </Link>
             </div>
+          </div>
+        )}
+
+        {/* Human-connection pilot — the escalation from AI to a real teacher,
+            placed right after the AI mistake CTA. Results is the peak moment
+            to want a person: they just saw what they got wrong. */}
+        {wrongCount > 0 && (
+          <div className="mt-4">
+            <TalkToTeacher
+              surface="results"
+              examCode={attempt.mock.exam.code}
+              topicCode={topicArr[0]?.code ?? null}
+              attemptId={attempt.id}
+              defaultName={session.user.name ?? null}
+              defaultEmail={session.user.email ?? null}
+              contextLabel={topicArr[0]?.name}
+              variant="card"
+            />
           </div>
         )}
 

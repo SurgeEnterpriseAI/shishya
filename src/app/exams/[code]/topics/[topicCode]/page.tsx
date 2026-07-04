@@ -15,6 +15,7 @@ import { getT } from "@/lib/i18n-server";
 import { findTranslations } from "@/lib/db/questionTranslations";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TopicQuizButton } from "./TopicQuizButton";
+import { TalkToTeacher } from "@/components/TalkToTeacher";
 
 // Public SEO page; data barely changes (notes regen weekly via cron).
 // Revalidate every 10 min so a content update propagates without
@@ -315,6 +316,19 @@ export default async function TopicPage({
           >
             {t("topic.shishya.openChat")}
           </Link>
+          {/* Human escalation — when the notes + AI tutor aren't enough,
+              connect to a real teacher (human-connection pilot). */}
+          <div className="mt-4 border-t border-saffron-200/70 pt-3">
+            <TalkToTeacher
+              surface="topic"
+              examCode={code}
+              topicCode={topic.code}
+              defaultName={session?.user?.name ?? null}
+              defaultEmail={session?.user?.email ?? null}
+              contextLabel={topic.name}
+              variant="link"
+            />
+          </div>
         </section>
 
         {/* ── Practice questions (secondary, collapsed-feel) ────────── */}
