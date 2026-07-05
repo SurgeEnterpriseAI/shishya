@@ -25,11 +25,13 @@ const GEN_SOURCE = "ai-generated:claude";
 const COST_PER_EXAM_USD = 0.04;
 // Safety cap: total per-day cron spend ceiling.
 const PER_DAY_BUDGET_USD = 5.0;
-
-function dayOfYearUtc(now = new Date()): number {
-  const start = Date.UTC(now.getUTCFullYear(), 0, 0);
-  return Math.floor((now.getTime() - start) / (24 * 60 * 60 * 1000));
-}
+// Upper bound on exams attempted per run; the time guard below usually
+// stops the run first (~12-16 exams/run at ~15-25s each).
+const DAILY_EXAM_CAP = 60;
+// Exit the loop cleanly with headroom before Vercel kills the function at
+// maxDuration (300s) — a killed run loses its report and skips the exams
+// it never reached silently.
+const TIME_BUDGET_MS = 240_000;
 
 export async function GET(req: Request) {
   // ── auth ─────────────────────────────────────────────────────────────
@@ -48,23 +50,39 @@ export async function GET(req: Request) {
     });
   }
 
-  // ── pick today's slice ───────────────────────────────────────────────
+  // ── pick today's slice: MOST-STALE-FIRST ────────────────────────────
+  // The old dayOfYear-mod-7 slices were alphabetical, and each run
+  // (sequential Claude + web search, ~15-25s/exam ≈ 6-10 min for ~25
+  // exams) was killed at maxDuration=300s mid-slice — so the same K–Z
+  // exams never refreshed (105 exams found frozen at 54+ days).
+  // Most-stale-first is self-healing: anything missed today is at the
+  // front of the queue tomorrow, so no exam can starve regardless of
+  // timeouts, budget stops, or upstream failures.
+  const staleness = await prisma.examNewsItem.groupBy({
+    by: ["examId"],
+    where: { source: GEN_SOURCE },
+    _max: { createdAt: true },
+  });
+  const lastRefreshed = new Map(
+    staleness.map((s) => [s.examId, s._max.createdAt?.getTime() ?? 0]),
+  );
   const exams = await prisma.exam.findMany({
     where: { active: true },
-    orderBy: { code: "asc" },
     select: { id: true, code: true, name: true, shortName: true, category: true },
   });
-
-  const today = dayOfYearUtc();
-  const ROTATION = 7;
-  const slot = today % ROTATION;
-  const slice = exams.filter((_, idx) => idx % ROTATION === slot);
+  const slice = exams
+    .sort((a, b) => (lastRefreshed.get(a.id) ?? 0) - (lastRefreshed.get(b.id) ?? 0))
+    .slice(0, DAILY_EXAM_CAP);
 
   const started = Date.now();
   const log: Array<{ code: string; ok: boolean; news?: number; dates?: number; err?: string }> = [];
   let spent = 0;
 
   for (const exam of slice) {
+    if (Date.now() - started > TIME_BUDGET_MS) {
+      log.push({ code: exam.code, ok: false, err: "time-budget — resumes next run (most-stale-first)" });
+      break;
+    }
     if (spent >= PER_DAY_BUDGET_USD) {
       log.push({ code: exam.code, ok: false, err: "budget" });
       continue;
@@ -130,9 +148,8 @@ export async function GET(req: Request) {
   return new Response(
     JSON.stringify({
       ok: true,
-      day: today,
-      slot,
-      rotation: ROTATION,
+      strategy: "most-stale-first",
+      queueDepth: slice.length,
       processed: log.length,
       ok_count: log.filter((l) => l.ok).length,
       failed: log.filter((l) => !l.ok).length,
