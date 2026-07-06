@@ -79,6 +79,44 @@ export function ChatInterface({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  // ── Voice input (user-requested "mike button") ─────────────────────────
+  // Web Speech API — Chrome/Edge/Android WebView; feature-detected so the
+  // button simply doesn't render where unsupported (Firefox). Speaking is a
+  // much lower barrier than typing for vernacular users (we see Gujarati /
+  // Hinglish asks in the tutor logs). Recognition language follows the page
+  // locale so Hindi/Telugu/etc. speech is transcribed natively.
+  const [listening, setListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const recogRef = useRef<any>(null);
+  useEffect(() => {
+    const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
+    if (SR) setSpeechSupported(true);
+  }, []);
+  function toggleMic() {
+    if (listening) {
+      recogRef.current?.stop();
+      return;
+    }
+    const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+    const recog = new SR();
+    const pageLang = document.documentElement.lang || "en";
+    recog.lang = pageLang.includes("-") ? pageLang : `${pageLang}-IN`;
+    recog.interimResults = true;
+    recog.continuous = false;
+    const base = input ? input.replace(/\s+$/, "") + " " : "";
+    recog.onresult = (ev: any) => {
+      let transcript = "";
+      for (const res of ev.results) transcript += res[0].transcript;
+      setInput(base + transcript);
+    };
+    recog.onend = () => setListening(false);
+    recog.onerror = () => setListening(false);
+    recogRef.current = recog;
+    setListening(true);
+    recog.start();
+  }
+
   // When the user lands here from a topic page (e.g. clicked "Open Shishya
   // tutor" on Number System), auto-fire the seed prompt so the tutor starts
   // teaching immediately instead of showing a blank chat.
@@ -380,10 +418,26 @@ export function ChatInterface({
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={labels.placeholder}
+          placeholder={listening ? "Listening… speak now" : labels.placeholder}
           disabled={busy}
           className="flex-1 rounded-md border border-ink-300 px-3 py-2 text-sm focus:border-saffron-500 focus:outline-none disabled:bg-ink-50"
         />
+        {speechSupported && (
+          <button
+            type="button"
+            onClick={toggleMic}
+            disabled={busy}
+            aria-label={listening ? "Stop listening" : "Speak your question"}
+            title={listening ? "Stop listening" : "Speak your question"}
+            className={`rounded-md border px-3 py-2 text-sm transition-colors disabled:opacity-50 ${
+              listening
+                ? "animate-pulse border-rose-400 bg-rose-50 text-rose-600"
+                : "border-ink-300 bg-white text-ink-600 hover:border-saffron-400 hover:text-saffron-700"
+            }`}
+          >
+            {listening ? "⏹" : "🎤"}
+          </button>
+        )}
         <button
           type="submit"
           disabled={busy || !input.trim()}

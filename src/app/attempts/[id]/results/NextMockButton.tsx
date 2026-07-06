@@ -16,9 +16,13 @@ import Link from "next/link";
 interface Props {
   examCode: string;
   label: string;
+  /** Soft-landing mode for rough scores (<30%): instead of another full
+   *  adaptive beating, serve a short TOPIC mock on the weakest topic —
+   *  small wins first. */
+  confidenceTopic?: { code: string; name: string } | null;
 }
 
-export function NextMockButton({ examCode, label }: Props) {
+export function NextMockButton({ examCode, label, confidenceTopic }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -31,7 +35,9 @@ export function NextMockButton({ examCode, label }: Props) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           examCode,
-          request: { type: "ADAPTIVE", questionCount: 10 },
+          request: confidenceTopic
+            ? { type: "TOPIC", topicCode: confidenceTopic.code, questionCount: 5, difficulty: "EASY" }
+            : { type: "ADAPTIVE", questionCount: 10 },
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -67,10 +73,16 @@ export function NextMockButton({ examCode, label }: Props) {
         disabled={busy}
         className="btn-primary block w-full !py-2 !px-4 text-center text-sm disabled:cursor-wait disabled:opacity-70"
       >
-        {busy ? "Building your next mock…" : label}
+        {busy
+          ? "Building your next mock…"
+          : confidenceTopic
+            ? `5 easy questions on ${confidenceTopic.name} →`
+            : label}
       </button>
       <p className="mt-1 text-center text-[11px] text-ink-500">
-        Adaptive — targets the topics you just struggled with
+        {confidenceTopic
+          ? "Confidence-builder — small wins on your weakest topic first"
+          : "Adaptive — targets the topics you just struggled with"}
       </p>
     </div>
   );

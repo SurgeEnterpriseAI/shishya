@@ -123,6 +123,14 @@ export function TryOneQuestion({ examCode, examShortName, topicName, question }:
             >
               Sign in & keep practising →
             </Link>
+            {/* Lower-friction path — they just answered ONE question; 5 more
+                with no signup is the natural next step for the hesitant. */}
+            <Link
+              href={`/exams/${examCode}/quiz`}
+              className="mt-2 block text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"
+            >
+              or try 5 more questions — no signup needed →
+            </Link>
           </div>
         </div>
       )}

@@ -449,13 +449,14 @@ export default async function ExamPage({
                 Sign in to start →
               </Link>
               {/* Lever #2 — anonymous 5-question diagnostic. Lets a signed-out
-                  visitor experience the mock loop before the login gate (the
-                  gate was the biggest drop in the journey data). */}
+                  visitor experience the mock loop before the login gate (44%
+                  bail there). Was a text link — got ~zero organic clicks, so
+                  it's a proper button with equal visual weight now. */}
               <Link
                 href={`/exams/${exam.code}/quiz`}
-                className="text-sm font-semibold text-saffron-700 underline-offset-2 hover:underline"
+                className="inline-flex items-center justify-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 transition-colors hover:bg-saffron-50"
               >
-                Or take a free 5-question quiz — no signup →
+                Try a free 5-question quiz — no signup →
               </Link>
             </div>
           </div>

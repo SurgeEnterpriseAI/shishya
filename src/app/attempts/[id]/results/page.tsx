@@ -132,6 +132,36 @@ export default async function ResultsPage({
         </p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900">{attempt.mock.title}</h1>
 
+        {/* Soft landing for rough scores. 42% of submitted mocks land under
+            30% — the silent-churn moment where a student decides the platform
+            "makes them feel dumb". We never hide the honest score (core
+            value), but we LEAD with the path forward: the 1-2 topics that
+            would lift the score most. Framing: every topper's first mock
+            looked like this. */}
+        {(attempt.scorePct ?? 0) < 30 && topicArr.length > 0 && (
+          <div className="mt-6 rounded-xl border border-sky-200 bg-gradient-to-r from-sky-50 to-indigo-50/60 p-5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-sky-700">
+              Rough one — that&apos;s normal for a first attempt
+            </p>
+            <p className="mt-1 text-base font-bold text-ink-900">
+              Most toppers&apos; early mocks looked exactly like this. Here&apos;s the fastest way up:
+            </p>
+            <ul className="mt-2 space-y-1 text-sm text-ink-700">
+              {topicArr.slice(0, 2).map((tp: any) => (
+                <li key={tp.code}>
+                  <span className="font-semibold text-ink-900">{tp.name}</span>{" "}
+                  ({tp.correct}/{tp.total} this time) — a focused 15-minute revision here moves your
+                  score more than anything else.
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-ink-500">
+              Your next mock below is a short confidence-builder on your weakest topic — small wins
+              first, full mocks after.
+            </p>
+          </div>
+        )}
+
         {/* Score summary
             ──────────────
             Two distinct percentages so the negative-marking math is
@@ -338,10 +368,17 @@ export default async function ResultsPage({
           </div>
 
           {/* Lever #4 — one-tap next mock (adaptive, weak-topic targeted)
-              instead of routing back to the hub to choose again. */}
+              instead of routing back to the hub to choose again. Under 30%
+              it becomes a 5-question EASY confidence-builder on the weakest
+              topic (soft landing — see banner at top of page). */}
           <NextMockButton
             examCode={attempt.mock.exam.code}
             label={t("results.cta.another")}
+            confidenceTopic={
+              (attempt.scorePct ?? 0) < 30 && topicArr.length > 0
+                ? { code: topicArr[0].code, name: topicArr[0].name }
+                : null
+            }
           />
           <Link
             href={`/exams/${attempt.mock.exam.code}`}
