@@ -18,6 +18,7 @@ import { QuickStartDiagnostic } from "./QuickStartDiagnostic";
 import { captureSignupAttribution } from "@/lib/signup-attribution";
 import { getDueRevisions } from "@/lib/db/revision-due";
 import { getStudyStreak } from "@/lib/db/streak";
+import { TalkToTeacher } from "@/components/TalkToTeacher";
 
 export default async function DashboardPage() {
   try {
@@ -597,6 +598,21 @@ async function renderDashboard() {
                             </li>
                           ))}
                         </ul>
+                        {/* Human escalation at the weak-areas moment — the
+                            Surge expert desk gives specific guidance (and
+                            routes to nearby coaching where useful). */}
+                        <div className="mt-2">
+                          <TalkToTeacher
+                            surface="weak-areas"
+                            examCode={weakest3[0]?.exam.code ?? null}
+                            topicCode={weakest3[0]?.topic.code ?? null}
+                            contextLabel={weakest3[0]?.topic.name}
+                            defaultName={session.user.name ?? null}
+                            defaultEmail={session.user.email ?? null}
+                            variant="link"
+                            linkLabel="📞 Talk to a subject expert about these →"
+                          />
+                        </div>
                       </div>
                     )}
                     {strongest3.length > 0 && (

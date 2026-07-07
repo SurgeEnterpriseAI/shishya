@@ -159,6 +159,21 @@ export default async function ResultsPage({
               Your next mock below is a short confidence-builder on your weakest topic — small wins
               first, full mocks after.
             </p>
+            {/* Low score is the highest-value expert moment: a human can
+                diagnose what a percentage can't. */}
+            <div className="mt-3">
+              <TalkToTeacher
+                surface="results"
+                examCode={attempt.mock.exam.code}
+                topicCode={topicArr[0]?.code ?? null}
+                attemptId={attempt.id}
+                defaultName={session.user.name ?? null}
+                defaultEmail={session.user.email ?? null}
+                contextLabel={topicArr[0]?.name}
+                variant="link"
+                linkLabel="📞 Talk to a subject expert about your plan →"
+              />
+            </div>
           </div>
         )}
 

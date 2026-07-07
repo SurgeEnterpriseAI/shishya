@@ -18,13 +18,17 @@ const ANON_COOKIE = "shishya_anon";
 
 const Body = z.object({
   message: z.string().trim().min(5).max(2000),
-  surface: z.enum(["results", "topic", "chat", "onboarding", "nav", "exam"]).default("nav"),
+  surface: z
+    .enum(["results", "topic", "chat", "onboarding", "nav", "exam", "review", "weak-areas", "dashboard"])
+    .default("nav"),
   examCode: z.string().max(64).optional(),
   topicCode: z.string().max(128).optional(),
   attemptId: z.string().max(64).optional(),
   contactEmail: z.string().email().max(200).optional(),
   contactName: z.string().max(120).optional(),
   contactPhone: z.string().max(40).optional(),
+  city: z.string().max(120).optional(),
+  wantsCall: z.boolean().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -76,6 +80,8 @@ export async function POST(req: NextRequest) {
         contactEmail,
         contactName,
         contactPhone: body.contactPhone ?? null,
+        city: body.city ?? null,
+        wantsCall: body.wantsCall ?? false,
       },
       select: { id: true },
     })
@@ -105,7 +111,7 @@ export async function POST(req: NextRequest) {
       studentName: contactName,
       contactEmail,
       contactPhone: body.contactPhone ?? null,
-      message: body.message,
+      message: body.message + (body.city ? `\n\nCity: ${body.city}` : "") + (body.wantsCall ? "\n\n⚡ Student tapped CALL NOW — expect/confirm an inbound call." : ""),
       signedIn: Boolean(userId),
     }).catch(() => {});
   }

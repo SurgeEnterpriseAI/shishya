@@ -1730,12 +1730,35 @@ model TeacherRequest {
   contactEmail String? // how the team reaches back
   contactName  String?
   contactPhone String?
+  city         String? // student's city — used to route to a NEARBY coaching
+  // centre / expert (the referral business model: Shishya earns a
+  // commercial on successful routing).
+  wantsCall    Boolean              @default(false) // tapped "call now" vs async callback form
+  referredTo   String? // coaching centre / expert the student was routed to
   status       TeacherRequestStatus @default(PENDING)
   adminNotes   String?              @db.Text
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
 
+  followUps TeacherRequestNote[]
+
   @@index([status, createdAt])
   @@index([userId])
   @@index([createdAt])
+}
+
+// Follow-up trail on a TeacherRequest — every call, answer, and referral is
+// logged so the enquiry loop CLOSES (enquiry → answer → follow-up →
+// referral/commercial). Worked by the Surge office team.
+model TeacherRequestNote {
+  id        String   @id @default(cuid())
+  requestId String
+  kind      String   @default("NOTE") // NOTE | CALL | FOLLOW_UP | REFERRAL
+  note      String   @db.Text
+  byEmail   String? // which team member logged it
+  createdAt DateTime @default(now())
+
+  request TeacherRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId, createdAt])
 }

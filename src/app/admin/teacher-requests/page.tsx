@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { isCurrentUserAdmin } from "@/lib/admin";
+import { RequestActions } from "./RequestActions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Teacher requests — Admin", robots: { index: false } };
@@ -31,6 +32,7 @@ export default async function TeacherRequestsAdminPage({
       where: status === "ALL" ? {} : { status: status as any },
       take: 200,
       orderBy: { createdAt: "desc" },
+      include: { followUps: { orderBy: { createdAt: "asc" } } },
     }),
     prisma.teacherRequest.groupBy({ by: ["status"], _count: true }),
   ]);
@@ -90,10 +92,21 @@ export default async function TeacherRequestsAdminPage({
                   >
                     {r.status}
                   </span>
+                  {r.wantsCall && (
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-800">
+                      📞 called in
+                    </span>
+                  )}
                   <span>{fmt(r.createdAt)}</span>
                   <span>· from {r.surface}</span>
                   {r.examCode && <span>· {r.examCode}</span>}
                   {r.topicCode && <span>· {r.topicCode}</span>}
+                  {r.city && <span className="font-medium text-indigo-700">· 📍 {r.city}</span>}
+                  {r.referredTo && (
+                    <span className="rounded-full bg-violet-100 px-2 py-0.5 font-semibold text-violet-800">
+                      → {r.referredTo}
+                    </span>
+                  )}
                   {!r.userId && <span className="text-amber-700">· guest</span>}
                 </div>
                 <p className="mt-2 whitespace-pre-wrap text-sm text-ink-900">{r.message}</p>
@@ -120,6 +133,21 @@ export default async function TeacherRequestsAdminPage({
                     </a>
                   )}
                 </div>
+
+                {/* Follow-up trail — the closed loop */}
+                {r.followUps.length > 0 && (
+                  <ul className="mt-2 space-y-1 border-l-2 border-indigo-100 pl-3">
+                    {r.followUps.map((n) => (
+                      <li key={n.id} className="text-xs text-ink-600">
+                        <span className="font-semibold text-indigo-700">{n.kind.replace("_", " ")}</span>{" "}
+                        <span className="text-ink-400">{fmt(n.createdAt)}{n.byEmail ? ` · ${n.byEmail.split("@")[0]}` : ""}</span>{" "}
+                        — {n.note}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <RequestActions id={r.id} status={r.status as string} referredTo={r.referredTo} />
               </li>
             ))}
           </ul>

@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiPost } from "@/lib/api";
 import { QuestionLangSwitcher } from "@/components/QuestionLangSwitcher";
+import { TalkToTeacher } from "@/components/TalkToTeacher";
 import type { Locale } from "@/lib/i18n";
 
 interface ReviewQ {
@@ -365,6 +366,18 @@ function ReviewBody({
             >
               Report this question
             </button>
+            {/* Human escalation right where a wrong answer stings — call the
+                Surge expert desk / request a callback (closed-loop enquiry). */}
+            {!q.correct && (
+              <TalkToTeacher
+                surface="review"
+                examCode={examCode}
+                topicCode={q.topic.code}
+                contextLabel={q.topic.name}
+                variant="link"
+                linkLabel="📞 Talk to a subject expert"
+              />
+            )}
           </div>
         )}
 
