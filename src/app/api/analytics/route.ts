@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
     kind?: string;
     path?: string;
     props?: Record<string, unknown>;
+    referrer?: string;
     utmSource?: string;
     utmMedium?: string;
     utmCampaign?: string;
@@ -66,9 +67,12 @@ export async function POST(req: NextRequest) {
   // Once a user is signed in, we still write anonId for the audit trail
   // BUT prefer userId so dashboard joins are clean. Cookie persists either way.
 
-  // Parse referer host (cheap GROUP BY signal).
+  // Parse referrer host (cheap GROUP BY signal). Prefer the CLIENT-sent
+  // document.referrer from the body — the fetch's own Referer header is
+  // always our page URL (same-host → dropped), which silently blinded
+  // channel attribution for weeks. Header kept as fallback.
   let refHost: string | null = null;
-  const referer = req.headers.get("referer");
+  const referer = (typeof body.referrer === "string" && body.referrer) || req.headers.get("referer");
   if (referer) {
     try {
       refHost = new URL(referer).hostname;

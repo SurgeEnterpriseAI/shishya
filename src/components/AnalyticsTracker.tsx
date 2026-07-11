@@ -69,12 +69,18 @@ async function send(
   utm: UtmBlob,
 ): Promise<void> {
   try {
+    // The API can't see the TRUE referrer from its own request headers —
+    // the fetch's Referer is always our own page (same-host, dropped). Send
+    // document.referrer explicitly so channel attribution (google /
+    // chatgpt / whatsapp / …) actually works. Meaningful on the landing
+    // page-view; harmless (same-host, dropped server-side) after that.
+    const referrer = typeof document !== "undefined" ? document.referrer || undefined : undefined;
     await fetch("/api/analytics", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       // keepalive lets the request finish even if the user is navigating away
       keepalive: true,
-      body: JSON.stringify({ kind, path, props, ...utm }),
+      body: JSON.stringify({ kind, path, props, referrer, ...utm }),
     });
   } catch {
     /* analytics failures must never disturb the user */
