@@ -43,6 +43,10 @@
     {
       "path": "/api/cron/crackpath-review",
       "schedule": "0 */3 * * *"
+    },
+    {
+      "path": "/api/cron/sweep-question-reports",
+      "schedule": "15 3 * * 0"
     }
   ]
 }

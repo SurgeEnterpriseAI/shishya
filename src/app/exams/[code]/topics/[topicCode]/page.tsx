@@ -16,6 +16,7 @@ import { findTranslations } from "@/lib/db/questionTranslations";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TopicQuizButton } from "./TopicQuizButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
+import { InlineTopicQuestion } from "./InlineTopicQuestion";
 
 // Public SEO page; data barely changes (notes regen weekly via cron).
 // Revalidate every 10 min so a content update propagates without
@@ -105,7 +106,17 @@ export default async function TopicPage({
     where: { validated: true, topicId: { in: topicIdsForPractice } },
     take: 5,
     orderBy: { id: "asc" },
-    select: { id: true, body: true, difficulty: true, topic: { select: { name: true } } },
+    // options/answerKey/solution feed the INLINE try-one question below the
+    // notes (only q[0] is passed to the client with answers).
+    select: {
+      id: true,
+      body: true,
+      difficulty: true,
+      options: true,
+      answerKey: true,
+      solution: true,
+      topic: { select: { name: true } },
+    },
   });
 
   // Server-side translation lookup: if the visitor is on a non-English
@@ -273,9 +284,28 @@ export default async function TopicPage({
 
         {/* ── Study material (primary content) ──────────────────────── */}
         {notes ? (
-          <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
-            <NotesRenderer markdown={notes} />
-          </article>
+          <>
+            <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
+              <NotesRenderer markdown={notes} />
+            </article>
+            {/* The notes→quiz bridge: one inline MCQ right where reading
+                ends. Readers who reach a quiz finish it 93% of the time —
+                reach is the bottleneck, so the first question comes to
+                them. */}
+            {practiceQs[0] && (
+              <InlineTopicQuestion
+                examCode={code}
+                topicCode={topic.code}
+                topicName={topic.name}
+                question={{
+                  body: translatedPreview.get(practiceQs[0].id)?.body ?? practiceQs[0].body,
+                  options: (practiceQs[0].options as { key: string; text: string }[]) ?? [],
+                  answerKey: practiceQs[0].answerKey,
+                  solution: practiceQs[0].solution,
+                }}
+              />
+            )}
+          </>
         ) : (
           <div className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-5 py-6">
             <p className="text-sm font-medium text-ink-800">{t("topic.notes.empty.headline")}</p>
