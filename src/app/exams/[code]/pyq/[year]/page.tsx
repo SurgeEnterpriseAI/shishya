@@ -1,9 +1,15 @@
 // /exams/:code/pyq/:year — PYQ paper landing page.
-// Find-or-create a system Mock for this exam+year and offer "Start paper" CTA
-// pointing to /mocks/[id]. Idempotent.
+// PUBLIC: these are among the highest-value SEO pages on the site
+// ("[exam] PYQ 2025" queries are top landing content) — they were
+// accidentally redirecting every signed-out visitor AND crawler to /login,
+// which made every sitemap-listed PYQ URL invisible to Google. Anonymous
+// visitors now get the full landing (paper info, subject breakdown) with a
+// sign-in CTA to attempt; the system Mock is only touched for signed-in
+// users so crawler hits never write to the DB.
 
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -15,13 +21,45 @@ import { ShareExamButton } from "@/components/ShareExamButton";
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ code: string; year: string }>;
+}): Promise<Metadata> {
+  const { code, year } = await params;
+  const exam = await prisma.exam.findUnique({
+    where: { code },
+    select: { code: true, shortName: true, name: true },
+  });
+  if (!exam) return { title: "Previous year paper — Shishya" };
+  const title = `${exam.shortName} ${year} Previous Year Paper (PYQ) — Solve Free Online | Shishya`;
+  const description =
+    `Solve the ${exam.shortName} (${exam.name}) ${year} previous year question paper free on Shishya — ` +
+    `real exam questions with instant scoring, solutions, and topic-wise analysis. No coaching fees, in your language.`;
+  const url = `https://shishya.in/exams/${exam.code}/pyq/${year}`;
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    keywords: [
+      `${exam.shortName} ${year} question paper`,
+      `${exam.shortName} PYQ ${year}`,
+      `${exam.shortName} previous year paper`,
+      `${exam.shortName} ${year} paper with solutions`,
+      `${exam.shortName} old papers`,
+    ],
+    openGraph: { title, description, url, siteName: "Shishya", locale: "en_IN", type: "article" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
+
 export default async function PYQYearPage({
   params,
 }: {
   params: Promise<{ code: string; year: string }>;
 }) {
   const session = await auth();
-  if (!session?.user?.id) redirect(`/login?callbackUrl=/exams`);
+  const userId = session?.user?.id ?? null;
   const { code, year } = await params;
   const yearNum = parseInt(year, 10);
   if (!Number.isFinite(yearNum)) notFound();
@@ -53,35 +91,60 @@ export default async function PYQYearPage({
     );
   }
 
-  // Find-or-create a system Mock backed by these question ids.
+  // Signed-in only: find-or-create the system Mock + the user's attempt
+  // state. Anonymous visitors (and crawlers) get a read-only landing — no
+  // DB writes on crawl traffic.
   const generatedBy = `system:pyq:${code}:${yearNum}`;
-  let mock = await prisma.mock.findFirst({
-    where: { examId: exam.id, userId: null, generatedBy },
-  });
+  let mock: { id: string } | null = null;
+  let userAttempt: { id: string; status: string; scorePct: any; finishedAt: Date | null } | null = null;
+  let hasSubmittedHistory = false;
+  if (userId) {
+    let m = await prisma.mock.findFirst({
+      where: { examId: exam.id, userId: null, generatedBy },
+    });
+    if (!m) {
+      m = await prisma.mock.create({
+        data: {
+          examId: exam.id,
+          userId: null,
+          type: "FULL",
+          title: `${exam.shortName} — ${yearNum} (Previous Year)`,
+          questionIds: questions.map((q) => q.id),
+          generatedBy,
+          config: {
+            source: "PYQ",
+            year: yearNum,
+            durationMin: exam.durationMin,
+            count: questions.length,
+          } as any,
+        },
+      });
+    } else if (m.questionIds.length !== questions.length) {
+      // Keep the mock in sync if PYQs were added/removed for this year.
+      m = await prisma.mock.update({
+        where: { id: m.id },
+        data: { questionIds: questions.map((q) => q.id) },
+      });
+    }
+    mock = m;
 
-  if (!mock) {
-    mock = await prisma.mock.create({
-      data: {
-        examId: exam.id,
-        userId: null,
-        type: "FULL",
-        title: `${exam.shortName} — ${yearNum} (Previous Year)`,
-        questionIds: questions.map((q) => q.id),
-        generatedBy,
-        config: {
-          source: "PYQ",
-          year: yearNum,
-          durationMin: exam.durationMin,
-          count: questions.length,
-        } as any,
+    // Has the user already attempted this paper?
+    userAttempt = await prisma.attempt.findFirst({
+      where: { mockId: m.id, userId },
+      orderBy: { startedAt: "desc" },
+      select: { id: true, status: true, scorePct: true, finishedAt: true },
+    });
+
+    // Has the user already submitted ANY mock on this exam? Drives whether
+    // the StartFullMockButton shows the warmup-vs-full-mock dialog.
+    const submittedHistoryCount = await prisma.attempt.count({
+      where: {
+        userId,
+        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+        mock: { examId: exam.id },
       },
     });
-  } else if (mock.questionIds.length !== questions.length) {
-    // Keep the mock in sync if PYQs were added/removed for this year.
-    mock = await prisma.mock.update({
-      where: { id: mock.id },
-      data: { questionIds: questions.map((q) => q.id) },
-    });
+    hasSubmittedHistory = submittedHistoryCount > 0;
   }
 
   // Group preview by subject for the landing card.
@@ -94,26 +157,47 @@ export default async function PYQYearPage({
   }
   const subjectRows = [...bySubject.entries()];
 
-  // Has the user already attempted this paper?
-  const userAttempt = await prisma.attempt.findFirst({
-    where: { mockId: mock.id, userId: session.user.id },
-    orderBy: { startedAt: "desc" },
-    select: { id: true, status: true, scorePct: true, finishedAt: true },
-  });
-
-  // Has the user already submitted ANY mock on this exam? Drives whether
-  // the StartFullMockButton shows the warmup-vs-full-mock dialog.
-  const submittedHistoryCount = await prisma.attempt.count({
-    where: {
-      userId: session.user.id,
-      status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
-      mock: { examId: exam.id },
-    },
-  });
-  const hasSubmittedHistory = submittedHistoryCount > 0;
+  // Structured data: breadcrumbs + the paper as a free LearningResource —
+  // eligible for rich results and machine-citable by answer engines.
+  const pageUrl = `https://shishya.in/exams/${exam.code}/pyq/${yearNum}`;
+  const pyqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": ["Article", "LearningResource"],
+    headline: `${exam.shortName} ${yearNum} Previous Year Question Paper`,
+    name: `${exam.shortName} ${yearNum} PYQ`,
+    description: `Solve the ${exam.name} ${yearNum} previous year paper free — ${questions.length} real questions with instant scoring and solutions.`,
+    url: pageUrl,
+    inLanguage: "en-IN",
+    isAccessibleForFree: true,
+    learningResourceType: "Previous year question paper",
+    educationalLevel: "Competitive exam preparation",
+    about: [
+      { "@type": "Thing", name: exam.name },
+      { "@type": "Thing", name: `${exam.shortName} ${yearNum} question paper` },
+    ],
+    publisher: { "@type": "Organization", name: "Shishya", url: "https://shishya.in" },
+    isPartOf: { "@type": "Course", name: `${exam.shortName} preparation`, url: `https://shishya.in/exams/${exam.code}` },
+  };
+  const pyqBreadcrumbs = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://shishya.in" },
+      { "@type": "ListItem", position: 2, name: exam.shortName, item: `https://shishya.in/exams/${exam.code}` },
+      { "@type": "ListItem", position: 3, name: `PYQ ${yearNum}`, item: pageUrl },
+    ],
+  };
 
   return (
     <main className="min-h-screen bg-ink-50/40">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(pyqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(pyqBreadcrumbs) }}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
@@ -133,6 +217,35 @@ export default async function PYQYearPage({
         </div>
 
         <div className="mt-6 rounded-md border border-ink-200 bg-white p-6">
+          {!userId || !mock ? (
+            // Anonymous (and crawler) view — the paper is fully described
+            // above; attempting needs a free account for scoring + history.
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-ink-900">
+                  Solve this {yearNum} paper as a timed mock — free
+                </p>
+                <p className="mt-0.5 text-xs text-ink-500">
+                  {questions.length} real questions · instant scoring · topic-wise analysis. Sign in
+                  free to attempt and track your progress.
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                <Link
+                  href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}`}
+                  className="btn-primary text-center"
+                >
+                  Sign in free &amp; start →
+                </Link>
+                <Link
+                  href={`/exams/${code}/quiz`}
+                  className="text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"
+                >
+                  or try a 5-question quiz first — no signup
+                </Link>
+              </div>
+            </div>
+          ) : (
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-ink-900">
@@ -166,6 +279,7 @@ export default async function PYQYearPage({
               />
             )}
           </div>
+          )}
 
           {userAttempt && (userAttempt.status === "SUBMITTED" || userAttempt.status === "AUTO_SUBMITTED") && (
             <div className="mt-4 border-t border-ink-100 pt-3">

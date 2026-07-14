@@ -12,6 +12,23 @@ import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
 
 export const revalidate = 0; // always fresh on direct page load
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const thread = await prisma.discussion
+    .findUnique({ where: { id }, select: { title: true } })
+    .catch(() => null);
+  if (!thread) return { title: "Discussion — Shishya" };
+  return {
+    title: `${thread.title} — Shishya Discussions`,
+    description: `Aspirants discussing: ${thread.title}. Read the thread and join the conversation free on Shishya.`,
+    alternates: { canonical: `https://shishya.in/discussions/${id}` },
+  };
+}
+
 export default async function DiscussionPage({
   params,
 }: {

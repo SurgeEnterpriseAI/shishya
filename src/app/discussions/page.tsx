@@ -9,6 +9,13 @@ import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
 
 export const revalidate = 30;
 
+export const metadata = {
+  title: "Exam Discussions — Ask & Help Fellow Aspirants | Shishya",
+  description:
+    "Live discussions among Indian exam aspirants — doubts, strategies, exam-day experiences and cutoff talk across UPSC, SSC, banking, TET and state exams. Free to read and join.",
+  alternates: { canonical: "https://shishya.in/discussions" },
+};
+
 export default async function DiscussionsList() {
   const [{ t }, session] = await Promise.all([getT(), auth().catch(() => null)]);
 
