@@ -230,20 +230,29 @@ export default async function NewsPermalinkPage({
             </p>
           ))}
 
+          {/* Source line. Real URLs link out; internal provenance tags
+              (e.g. "ai-generated:claude") must NEVER leak raw to students —
+              they read as untrustworthy debug output. Instead: an honest,
+              human trust line. */}
           {row.source && (
             <p className="mt-4 border-t border-ink-100 pt-3 text-xs text-ink-500">
-              Source:{" "}
               {row.source.startsWith("http") ? (
-                <a
-                  href={row.source}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-saffron-700 hover:underline"
-                >
-                  {new URL(row.source).hostname.replace(/^www\./, "")}
-                </a>
+                <>
+                  Source:{" "}
+                  <a
+                    href={row.source}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-saffron-700 hover:underline"
+                  >
+                    {new URL(row.source).hostname.replace(/^www\./, "")}
+                  </a>
+                </>
               ) : (
-                <span className="font-medium text-ink-700">{row.source}</span>
+                <>
+                  Compiled by <span className="font-medium text-ink-700">Shishya</span> from
+                  official notifications — always verify dates on the official exam portal.
+                </>
               )}
             </p>
           )}

@@ -851,7 +851,10 @@ export default async function ExamPage({
                           >
                             Read full notice →
                           </Link>
-                          {n.source && (
+                          {/* Only real URLs become links — internal provenance
+                              tags (ai-generated:claude) were rendering as a
+                              broken anchor + trust-killing label. */}
+                          {n.source && n.source.startsWith("http") && (
                             <a
                               href={n.source}
                               target="_blank"
