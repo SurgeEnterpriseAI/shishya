@@ -59,6 +59,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // Per-exam cutoff + syllabus landings — the two highest-volume query
+  // patterns ("[exam] cutoff 2026", "[exam] syllabus 2026") we now own a
+  // dedicated page for. Every active exam has rank bands + a syllabus tree.
+  const cutoffUrls: MetadataRoute.Sitemap = exams.map((e) => ({
+    url: `${base}/exams/${e.code}/cutoff`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.75,
+  }));
+  const syllabusUrls: MetadataRoute.Sitemap = exams.map((e) => ({
+    url: `${base}/exams/${e.code}/syllabus`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.75,
+  }));
+
   // Per-exam archive aggregator. One URL per active exam. Index target:
   // "[exam] previous year notifications", "[exam] postponement history".
   // Each archive page links to every per-news permalink below, so Google
@@ -374,6 +390,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...sectionLandings,
     ...stateUrls,
     ...examUrls,
+    ...cutoffUrls,
+    ...syllabusUrls,
     ...examArchiveUrls,
     ...phaseUrls,
     ...pyqUrls,

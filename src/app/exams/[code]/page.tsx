@@ -402,6 +402,20 @@ export default async function ExamPage({
           <span className="rounded-full bg-white border border-ink-200 px-3 py-1">
             {t("exam.negative")}: {exam.negativeMark === 0 ? t("exam.no.negative") : `−${formatNegativeMark(exam.negativeMark)}`}
           </span>
+          {/* Deep links to the dedicated SEO landings — also internal-link
+              equity for the "[exam] syllabus/cutoff" pages. */}
+          <Link
+            href={`/exams/${exam.code}/syllabus`}
+            className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
+          >
+            📋 Full syllabus
+          </Link>
+          <Link
+            href={`/exams/${exam.code}/cutoff`}
+            className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
+          >
+            🎯 Expected cutoff
+          </Link>
         </div>
 
         {/* WhatsApp-first share — aspirants organise prep in WhatsApp
