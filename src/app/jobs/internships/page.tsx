@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   title: "Internships in India — Where to actually find them | Shishya",
@@ -100,6 +101,16 @@ const RED_FLAGS = [
 export default function InternshipsPage() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Internships in India — Where to actually find them",
+            description: "Honest guide to internships for Indian students. AICTE Internship Portal, PM Internship Scheme, state schemes, Internshala, college TPOs, direct outreach.",
+            path: "/jobs/internships",
+          }),
+          breadcrumbLd([["Jobs","/jobs"],["Internships","/jobs/internships"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

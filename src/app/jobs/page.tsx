@@ -10,6 +10,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { GOVT_JOBS, GOVT_JOB_CATEGORIES, govtJobsByCategory } from "@/data/govt-jobs";
 import { CAREERS } from "@/data/careers";
 
@@ -48,6 +49,17 @@ export default function JobsLanding() {
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Jobs & Careers — Govt jobs, internships, resume + interview prep",
+            description:
+              "Career pathways for Indian students. Government job catalogue (UPSC, SSC, IBPS, RRB, RBI, defence, teaching, judicial), internships, resume + interview prep, skill-based non-degree careers. Information aggregator — not a job board. No recruiter fees.",
+            path: "/jobs",
+          }),
+          breadcrumbLd([["Jobs", "/jobs"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

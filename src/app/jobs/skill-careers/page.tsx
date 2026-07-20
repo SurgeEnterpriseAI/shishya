@@ -6,6 +6,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   title: "Skill-Based Careers in India — Non-degree paths that actually work | Shishya",
@@ -153,6 +154,16 @@ const PATHS = [
 export default function SkillCareersPage() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Skill-Based Careers in India — Non-degree paths that actually work",
+            description: "Honest guide to non-degree careers in India: bootcamps, design portfolios, content, sales, digital marketing, video editing, finance ops.",
+            path: "/jobs/skill-careers",
+          }),
+          breadcrumbLd([["Jobs","/jobs"],["Skill-based careers","/jobs/skill-careers"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

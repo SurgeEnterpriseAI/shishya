@@ -68,8 +68,56 @@ export default async function ArchivePage({
     }),
   ]);
 
+  // AEO: the archive is the long-tail landing for "[exam] previous year
+  // notifications / postponement history" — ItemList of the per-news
+  // permalinks lets answer engines cite individual cycles directly.
+  const archiveUrl = `https://shishya.in/exams/${exam.code}/archive`;
+  const archiveJsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: `${exam.shortName} — notification & news archive`,
+      description: `Every past cycle of official news and important dates captured for ${exam.name}.`,
+      url: archiveUrl,
+      inLanguage: "en-IN",
+      isAccessibleForFree: true,
+      isPartOf: { "@type": "WebSite", name: "Shishya", url: "https://shishya.in" },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: "https://shishya.in" },
+        { "@type": "ListItem", position: 2, name: exam.shortName, item: `https://shishya.in/exams/${exam.code}` },
+        { "@type": "ListItem", position: 3, name: "Archive", item: archiveUrl },
+      ],
+    },
+    ...(news.length > 0
+      ? [
+          {
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            name: `${exam.shortName} archived news`,
+            itemListElement: news.slice(0, 50).map((n, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              name: n.title,
+              url: `https://shishya.in/exams/${exam.code}/news/${n.id}`,
+            })),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <main className={`min-h-screen ${theme.pageBg}`}>
+      {archiveJsonLd.map((d, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(d) }}
+        />
+      ))}
       <div className={`h-1.5 w-full ${theme.ribbon}`} aria-hidden />
       <Header />
       <section className="container-prose py-10">

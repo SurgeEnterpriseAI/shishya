@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   title: "Fresher Resume + Interview Prep — Templates, Questions, Negotiation | Shishya",
@@ -24,6 +25,16 @@ export const revalidate = 86_400;
 export default function ResumePrep() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Fresher Resume + Interview Prep — Templates, Questions, Negotiation",
+            description: "ATS-friendly fresher resume templates by career, interview question banks per role, salary negotiation basics.",
+            path: "/jobs/resume",
+          }),
+          breadcrumbLd([["Jobs","/jobs"],["Resume & interviews","/jobs/resume"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

@@ -6,6 +6,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   title: "Understanding College Placement Data — What the numbers really mean | Shishya",
@@ -65,6 +66,17 @@ const MISLEADING_PATTERNS = [
 export default function PlacementsPage() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Understanding College Placement Data — What the numbers really mean",
+            description:
+              "Honest read of Indian college placement statistics. Median vs Highest CTC, placement % math, foreign vs domestic offers, service vs product split. Read this before picking a college based on placements.",
+            path: "/colleges/placements",
+          }),
+          breadcrumbLd([["Colleges", "/colleges"], ["Placements", "/colleges/placements"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

@@ -9,6 +9,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
 import {
   computeAnnualLeaderboard,
@@ -30,6 +31,16 @@ export default async function RecognitionPage() {
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Annual Recognition — Top contributors of the year",
+            description: "Shishya celebrates the top community contributors each year — Trusted Verifiers, Domain Experts, and most-active verifiers.",
+            path: "/recognition",
+          }),
+          breadcrumbLd([["Recognition","/recognition"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

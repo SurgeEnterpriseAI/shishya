@@ -7,6 +7,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { ITI_TRADES, DIPLOMA_PROGRAMS, POLYTECHNIC_ENTRY_EXAMS } from "@/data/iti-diploma";
 
 export const metadata: Metadata = {
@@ -30,6 +31,17 @@ export const revalidate = 86_400;
 export default function ITIDiplomaPage() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "ITI + Polytechnic + Diploma — Skill-based education pathways in India",
+            description:
+              "ITI trades + Polytechnic diplomas — the parallel education track ~6.5M Indian students take. Electrician, fitter, welder, mechanic + Civil/Mech/Elec/CS diplomas. Realistic salary, lateral-entry to BTech, govt JE roles.",
+            path: "/colleges/iti-diploma",
+          }),
+          breadcrumbLd([["Colleges", "/colleges"], ["ITI & Diploma", "/colleges/iti-diploma"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

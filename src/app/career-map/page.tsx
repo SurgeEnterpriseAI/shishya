@@ -7,6 +7,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   title: "Career Map — From Class 9 to your first job in one rail | Shishya",
@@ -219,6 +220,17 @@ const SHORTCUTS = [
 export default function CareerMapPage() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Career Map — From Class 9 to your first job in one rail",
+            description:
+              "Visual lifecycle map of Indian education + career choices. From Class 9 → stream → Class 11-12 → entrance exam → college → first job → mid-career evolution. All paths visible at once.",
+            path: "/career-map",
+          }),
+          breadcrumbLd([["Career map", "/career-map"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

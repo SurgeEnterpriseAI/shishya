@@ -7,6 +7,7 @@
 
 import Link from "next/link";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { SCHOLARSHIPS } from "@/data/scholarships";
 import { ScholarshipBrowser } from "./ScholarshipBrowser";
 
@@ -21,6 +22,17 @@ export const revalidate = 3600; // refresh static cache every hour
 export default function ScholarshipsPage() {
   return (
     <main className="min-h-screen bg-ink-50/40">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Free scholarships for Indian students",
+            description:
+              "Curated catalogue of central, state and private scholarships every Indian student can apply for — by state, category, level, and exam. Free forever.",
+            path: "/scholarships",
+          }),
+          breadcrumbLd([["Scholarships", "/scholarships"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <h1 className="text-3xl font-bold text-ink-900 sm:text-4xl">Scholarships for Indian students</h1>

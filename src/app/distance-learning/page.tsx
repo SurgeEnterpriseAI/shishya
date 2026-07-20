@@ -8,6 +8,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   title: "Distance + Open Learning in India — IGNOU, NIOS, Open Universities | Shishya",
@@ -134,6 +135,17 @@ const WHY_DISTANCE = [
 export default function DistanceLearningPage() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Distance + Open Learning in India — IGNOU, NIOS, Open Universities",
+            description:
+              "Distance + open learning in India: IGNOU (4M+ students), NIOS (Class 10+12 open school), state Open Universities (BRAOU, KKHSOU, UPRTOU etc.). Realistic for working students, late-start learners, gap-year people. Most-undercovered education path in India.",
+            path: "/distance-learning",
+          }),
+          breadcrumbLd([["Distance learning", "/distance-learning"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

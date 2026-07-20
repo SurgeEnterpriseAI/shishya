@@ -7,6 +7,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { INSIGHTS_ARTICLES, allTags } from "@/data/insights-articles";
 
 export const metadata: Metadata = {
@@ -37,6 +38,17 @@ export default function InsightsLanding() {
   const tags = allTags();
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Insights — Honest Essays on Indian Education Decisions",
+            description:
+              "Public-good editorial on Indian education: JEE vs NEET by the numbers, NIRF rank vs employment, scholarship discovery gap, study abroad shifts, tier-3 college outcomes. Hand-authored, sourced.",
+            path: "/insights",
+          }),
+          breadcrumbLd([["Insights", "/insights"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

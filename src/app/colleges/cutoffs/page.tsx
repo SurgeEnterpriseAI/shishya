@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   title: "College Cutoff Trends — How to read JEE/NEET/CLAT cutoffs honestly | Shishya",
@@ -93,6 +94,17 @@ const HOW_TO_USE = [
 export default function CutoffsPage() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "College Cutoff Trends — How to read JEE/NEET/CLAT cutoffs honestly",
+            description:
+              "Honest guide to college cutoff trends. JEE Advanced / Main, NEET UG, CLAT, CUET, IIM CAT cutoffs by category and branch. Read this before chasing rank predictors.",
+            path: "/colleges/cutoffs",
+          }),
+          breadcrumbLd([["Colleges", "/colleges"], ["Cutoffs", "/colleges/cutoffs"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

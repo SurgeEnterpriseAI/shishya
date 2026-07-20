@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { formatRelative } from "@/lib/relative-time";
 import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 export const revalidate = 30;
 
@@ -53,6 +54,17 @@ export default async function DiscussionsList() {
 
   return (
     <main className="min-h-screen bg-ink-50/40">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Exam Discussions — Ask & Help Fellow Aspirants",
+            description:
+              "Live discussions among Indian exam aspirants — doubts, strategies, exam-day experiences and cutoff talk across UPSC, SSC, banking, TET and state exams.",
+            path: "/discussions",
+          }),
+          breadcrumbLd([["Discussions", "/discussions"]]),
+        ]}
+      />
       <header className="border-b border-ink-200/50 bg-white/80 backdrop-blur">
         <div className="container-prose flex h-16 items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2">

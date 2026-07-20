@@ -71,8 +71,40 @@ export default async function DiscussionPage({
   const myUserId = session?.user?.id ?? null;
   const youLabel = t("disc.thread.you");
 
+  // AEO: DiscussionForumPosting is the schema Google's forum rich
+  // results + answer engines read for community threads. First message
+  // doubles as the posting body; replies are counted, not embedded.
+  const threadUrl = `https://shishya.in/discussions/${thread.id}`;
+  const firstMsg = thread.messages[0];
+  const threadJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "DiscussionForumPosting",
+    headline: thread.title,
+    ...(firstMsg ? { articleBody: firstMsg.content.slice(0, 500) } : {}),
+    datePublished: thread.createdAt.toISOString(),
+    dateModified: thread.lastActivityAt.toISOString(),
+    author: { "@type": "Person", name: thread.authorName || "Shishya aspirant" },
+    url: threadUrl,
+    mainEntityOfPage: threadUrl,
+    inLanguage: "en-IN",
+    isAccessibleForFree: true,
+    ...(thread.exam
+      ? { about: { "@type": "Thing", name: thread.exam.shortName } }
+      : {}),
+    interactionStatistic: {
+      "@type": "InteractionCounter",
+      interactionType: "https://schema.org/CommentAction",
+      userInteractionCount: Math.max(thread.messages.length - 1, 0),
+    },
+    publisher: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
+  };
+
   return (
     <main className="min-h-screen bg-ink-50/40">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(threadJsonLd) }}
+      />
       <header className="border-b border-ink-200/50 bg-white/80 backdrop-blur">
         <div className="container-prose flex h-16 items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2">

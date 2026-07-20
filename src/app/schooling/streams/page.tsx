@@ -7,6 +7,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   title: "Stream Selection After Class 10 — Science vs Commerce vs Humanities | Shishya",
@@ -242,6 +243,17 @@ const STREAMS: Stream[] = [
 export default function StreamsPage() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Stream Selection After Class 10 — Science vs Commerce vs Humanities",
+            description:
+              "Picking your Class 11 stream is the most consequential decision in your school years. Science (PCM/PCB/PCMB), Commerce, Humanities — what each opens up, what each closes, and how to pick honestly. No 'science is best' marketing.",
+            path: "/schooling/streams",
+          }),
+          breadcrumbLd([["Schooling", "/schooling"], ["Streams", "/schooling/streams"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

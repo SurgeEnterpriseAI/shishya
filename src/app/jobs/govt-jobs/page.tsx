@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { GOVT_JOBS, GOVT_JOB_CATEGORIES, govtJobsByCategory } from "@/data/govt-jobs";
 
 export const metadata: Metadata = {
@@ -28,6 +29,16 @@ export const revalidate = 86_400;
 export default function GovtJobsPage() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Government Jobs in India — UPSC, SSC, IBPS, RRB, RBI, Defence",
+            description: `${GOVT_JOBS.length} major recurring govt recruitments. Cadence, eligibility, pattern, official portal. UPSC CSE/ESE, SSC CGL/CHSL/MTS, IBPS PO/Clerk, SBI, RBI Grade B, SEBI, NABARD, NDA/CDS, RRB NTPC/Group D/ALP, KVS/NVS, State PSCs.`,
+            path: "/jobs/govt-jobs",
+          }),
+          breadcrumbLd([["Jobs", "/jobs"], ["Government jobs", "/jobs/govt-jobs"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

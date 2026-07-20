@@ -7,6 +7,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   title: "Soft Skills + Employability — English, communication, professional life | Shishya",
@@ -159,6 +160,17 @@ const SKILLS = [
 export default function SoftSkillsPage() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Soft Skills + Employability — English, communication, professional life",
+            description:
+              "What schools + colleges don't teach but every employer expects. English fluency, professional communication, email writing, presentation skills, time management, financial literacy basics. Free, India-context.",
+            path: "/soft-skills",
+          }),
+          breadcrumbLd([["Soft skills", "/soft-skills"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

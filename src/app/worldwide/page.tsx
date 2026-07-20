@@ -7,6 +7,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { WORLDWIDE_COUNTRIES, TEST_PREP } from "@/lib/worldwide-data";
 
 export const metadata: Metadata = {
@@ -42,6 +43,17 @@ export const revalidate = 86_400;
 export default function WorldwideLanding() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Worldwide — Study abroad from India, neutral comparison",
+            description:
+              "Study abroad from India neutrally. US, UK, Canada, Australia, Germany. ~50 top universities, visa info, IELTS/TOEFL/GRE/GMAT prep, education loans. No agent referrals.",
+            path: "/worldwide",
+          }),
+          breadcrumbLd([["Study abroad", "/worldwide"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

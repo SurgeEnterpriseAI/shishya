@@ -9,6 +9,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { prisma } from "@/lib/db/prisma";
 
 export const metadata: Metadata = {
@@ -41,6 +42,16 @@ export default async function InstitutionsDirectoryPage() {
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Coaching institutes & training centres in India",
+            description: "Free directory of coaching centres for India entrance and government exams — browse by exam, state and format.",
+            path: "/institutions",
+          }),
+          breadcrumbLd([["Institutions","/institutions"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-12">
         <div className="mx-auto max-w-3xl text-center">

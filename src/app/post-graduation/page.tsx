@@ -7,6 +7,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { prisma } from "@/lib/db/prisma";
 
 export const metadata: Metadata = {
@@ -114,6 +115,17 @@ export default async function PostGraduationLanding() {
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Post-Graduation — GATE, CAT, NEET-PG, UGC-NET, fellowships",
+            description:
+              "After UG, what next? PG entrance exams, research pathways, fellowships, civil services or industry — honest comparison. GATE, CAT, NEET-PG, UGC-NET, CSIR-NET, JAM, GPAT, CLAT-PG, IIM admissions.",
+            path: "/post-graduation",
+          }),
+          breadcrumbLd([["Post-graduation", "/post-graduation"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

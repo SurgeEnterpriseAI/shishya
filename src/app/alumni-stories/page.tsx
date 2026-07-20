@@ -7,6 +7,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   title: "Alumni Stories — Real career journeys from Indian students | Shishya",
@@ -171,6 +172,17 @@ const STORIES: Story[] = [
 export default function AlumniStoriesPage() {
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <JsonLd
+        data={[
+          collectionPageLd({
+            name: "Alumni Stories — Real career journeys from Indian students",
+            description:
+              "Honest career journey stories from real Indian students. Tier-3 BTech to FAANG, NIOS Class 10 to entrepreneurship, BA to UPSC, ITI Electrician to PSU. No survivor bias gloss — real timelines + real setbacks.",
+            path: "/alumni-stories",
+          }),
+          breadcrumbLd([["Alumni stories", "/alumni-stories"]]),
+        ]}
+      />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
