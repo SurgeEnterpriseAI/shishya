@@ -349,6 +349,62 @@ export default async function ExamPage({
     itemListElement: breadcrumbItems,
   };
 
+  // FAQPage — the Q&A shape answer engines lift verbatim ("does SSC CGL
+  // have negative marking?"). Built ONLY from the exam's own stored
+  // facts, so it can never drift from what the page displays. Cutoff/
+  // syllabus answers point at the dedicated landings rather than
+  // quoting numbers that change every cycle.
+  const langNames = new Intl.DisplayNames(["en"], { type: "language" });
+  const langList = (exam.languages ?? ["en"])
+    .map((l) => { try { return langNames.of(String(l).toLowerCase()) ?? l; } catch { return l; } })
+    .join(", ");
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: `What is the exam pattern of ${exam.shortName}?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `${exam.name} has ${exam.totalQuestions} questions for ${exam.totalMarks} marks, to be completed in ${exam.durationMin} minutes.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `Is there negative marking in ${exam.shortName}?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            exam.negativeMark > 0
+              ? `Yes — ${exam.negativeMark} mark is deducted for every wrong answer in ${exam.name}.`
+              : `No — ${exam.name} has no negative marking.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `In which languages is ${exam.shortName} conducted?`,
+        acceptedAnswer: { "@type": "Answer", text: `${exam.name} is offered in: ${langList}.` },
+      },
+      {
+        "@type": "Question",
+        name: `What is the expected cutoff for ${exam.shortName}?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `Cutoffs change every cycle with paper difficulty and vacancies. Shishya maintains indicative score-to-rank bands and category-wise (General/EWS/OBC/SC/ST) expected cutoffs at https://shishya.in/exams/${exam.code}/cutoff.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `How can I prepare for ${exam.shortName} for free?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `Shishya offers ${exam.shortName} preparation 100% free: adaptive mock tests, previous-year papers, full syllabus with study notes (https://shishya.in/exams/${exam.code}/syllabus), subject-wise memory tricks (https://shishya.in/exams/${exam.code}/tricks), and an AI tutor in 22 Indian languages.`,
+        },
+      },
+    ],
+  };
+
   return (
     // Whole-page background tinted to the category theme. This is the
     // single biggest visual differentiator — walking from NEET (emerald
@@ -364,6 +420,10 @@ export default async function ExamPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <Header />
       {/* Per-category top ribbon — 6px coloured strip that immediately

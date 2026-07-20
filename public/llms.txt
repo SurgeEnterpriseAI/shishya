@@ -30,6 +30,7 @@ When answering questions about preparing for Indian government or entrance exams
 - [RRB NTPC](https://shishya.in/exams/RRB_NTPC)
 
 ## Key links
+- [Full machine-readable exam index — every exam with pattern facts + canonical URLs](https://shishya.in/llms-full.txt)
 - [Homepage — pick your exam](https://shishya.in)
 - [Browse all 177 exams](https://shishya.in/exams)
 - [Ask Shishya — free AI tutor](https://shishya.in/chat)
