@@ -47,6 +47,10 @@
     {
       "path": "/api/cron/sweep-question-reports",
       "schedule": "15 3 * * 0"
+    },
+    {
+      "path": "/api/cron/daily-five",
+      "schedule": "0 3 * * *"
     }
   ]
 }

@@ -18,6 +18,7 @@ import { QuickStartDiagnostic } from "./QuickStartDiagnostic";
 import { captureSignupAttribution } from "@/lib/signup-attribution";
 import { getDueRevisions } from "@/lib/db/revision-due";
 import { getStudyStreak } from "@/lib/db/streak";
+import { DailyFiveCard } from "./DailyFiveCard";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 
 export default async function DashboardPage() {
@@ -376,6 +377,38 @@ async function renderDashboard() {
             the user clicks "Got it ×" once. Sets expectations about
             how the platform is meant to be used. */}
         <TwoPathsCard />
+
+        {/* Enrollment hardening (retention data: 0% of never-enrolled users
+            EVER return; ~20% of signups slip through without picking an
+            exam). Loud blocking-style banner until they enroll. */}
+        {enrollments.length === 0 && (
+          <section className="mt-6 rounded-xl border-2 border-saffron-400 bg-gradient-to-r from-saffron-50 to-amber-50 p-5 shadow-sm">
+            <p className="text-base font-bold text-ink-900">
+              👋 One step left — pick your exam
+            </p>
+            <p className="mt-1 text-sm text-ink-700">
+              Everything on Shishya (mocks, weak-topic tracking, your daily plan) starts from your
+              target exam. Takes 10 seconds.
+            </p>
+            <Link href="/" className="btn-primary mt-3 inline-block !py-2 !px-5 text-sm">
+              Choose my exam →
+            </Link>
+          </section>
+        )}
+
+        {/* THE DAILY 5 — retention anchor (Jul 20 checkpoint: D1-7 return
+            stuck at 14%; this is the daily reason-to-return). Weakest
+            topic first; adaptive fallback until mastery data exists. */}
+        {enrollments.length > 0 && (
+          <DailyFiveCard
+            examCode={weakest3[0]?.exam.code ?? recommendedExam?.code ?? enrollments[0].exam.code}
+            examShort={weakest3[0]?.exam.shortName ?? recommendedExam?.short ?? enrollments[0].exam.shortName}
+            topicCode={weakest3[0]?.topic.code ?? null}
+            topicName={weakest3[0]?.topic.name ?? null}
+            streakCurrent={streak.current}
+            activeToday={streak.activeToday}
+          />
+        )}
 
         {/* Stalled-mock recovery banner. Shows when the student has
             IN_PROGRESS attempts from a prior session. Without this they

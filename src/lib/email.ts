@@ -379,6 +379,49 @@ Work the queue: https://shishya.in/admin/teacher-requests`;
   return sendEmail({ to: p.to, subject, html, text, tag: "teacher-request" });
 }
 
+/**
+ * The Daily 5 nudge — retention loop. Sent each morning to recently-active
+ * students who haven't visited yet today: "your 5 questions are ready".
+ */
+export async function sendDailyFiveEmail(p: {
+  to: string;
+  name: string | null;
+  examShort: string;
+}): Promise<boolean> {
+  const first = (p.name ?? "").split(" ")[0] || "Aspirant";
+  const subject = `☀️ ${first}, your Daily 5 for ${p.examShort} is ready`;
+  const text = `${first},
+
+Your Daily 5 is ready — 5 quick questions on your weakest ${p.examShort} topic. ~3 minutes, keeps your streak alive.
+
+Start now: https://shishya.in/dashboard
+
+Small daily reps are how toppers are made. See you inside.
+— Shishya
+
+(Reply to this email to stop the daily reminder.)`;
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-weight:700;font-size:18px;">☀️ Your Daily 5 is ready</div>
+    <p style="font-size:14px;line-height:1.6;margin:14px 0;">
+      ${first}, 5 quick questions on your weakest <strong>${p.examShort}</strong> topic are waiting —
+      about 3 minutes, and your streak stays alive. 🔥
+    </p>
+    <a href="https://shishya.in/dashboard"
+       style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">
+      Start today's 5 →
+    </a>
+    <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
+      Small daily reps are how toppers are made. — Shishya
+    </p>
+    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Reply to this email to stop the daily reminder.</p>
+  </div>
+</body></html>`;
+  return sendEmail({ to: p.to, subject, html, text, tag: "daily-five" });
+}
+
 /** Convenience wrappers — caller doesn't have to think about
  *  templating, just hands us a user. */
 export async function sendWelcomeEmail(user: {
