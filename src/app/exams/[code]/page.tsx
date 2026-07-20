@@ -377,7 +377,7 @@ export default async function ExamPage({
           "@type": "Answer",
           text:
             exam.negativeMark > 0
-              ? `Yes — ${exam.negativeMark} mark is deducted for every wrong answer in ${exam.name}.`
+              ? `Yes — ${formatNegativeMark(exam.negativeMark)} mark is deducted for every wrong answer in ${exam.name}.`
               : `No — ${exam.name} has no negative marking.`,
         },
       },

@@ -47,7 +47,10 @@ export async function GET() {
       lines.push(`## ${currentCategory}`);
       lines.push("");
     }
-    const neg = e.negativeMark > 0 ? `negative marking −${e.negativeMark}/wrong` : "no negative marking";
+    const neg =
+      e.negativeMark > 0
+        ? `negative marking −${Number(e.negativeMark.toFixed(2))}/wrong`
+        : "no negative marking";
     const state = e.state ? ` · state: ${e.state}` : "";
     lines.push(`### ${e.shortName} — ${e.name}`);
     lines.push(
