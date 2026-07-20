@@ -224,6 +224,7 @@ model Topic {
   weaknessMaps WeaknessMap[]
   reviewStates ReviewState[]
   teachingNote TopicTeachingNote?
+  noteTranslations TopicNoteTranslation[]
 
   @@unique([subjectId, code])
   @@index([parentId])
@@ -1745,6 +1746,25 @@ model TeacherRequest {
   @@index([status, createdAt])
   @@index([userId])
   @@index([createdAt])
+}
+
+// Translated study notes (gap-fill #3 — "in hindi" is a literal user ask
+// and the Hindi-belt is the biggest cohort; all SEO pages were
+// English-only). One row per (topic, locale); source of truth remains the
+// English TopicTeachingNote. Served at /exams/[code]/topics/[topicCode]/hi
+// with hreflang pairing.
+model TopicNoteTranslation {
+  id          String   @id @default(cuid())
+  topicId     String
+  locale      String // "hi" (more later: te, ta, bn…)
+  content     String   @db.Text
+  generatedAt DateTime @default(now())
+  generatedBy String?
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([topicId, locale])
+  @@index([locale])
 }
 
 // Follow-up trail on a TeacherRequest — every call, answer, and referral is

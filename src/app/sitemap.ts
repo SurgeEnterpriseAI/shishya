@@ -199,6 +199,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  // Hindi twins (gap-fill #3) — one /hi URL per topic with a Hindi
+  // translation, hreflang-paired in page metadata.
+  const hindiTopics = await prisma.topicNoteTranslation
+    .findMany({
+      where: { locale: "hi", topic: { subject: { exam: { active: true } } } },
+      select: {
+        generatedAt: true,
+        topic: { select: { code: true, subject: { select: { exam: { select: { code: true } } } } } },
+      },
+      take: 20000,
+    })
+    .catch(() => []);
+  const hindiTopicUrls: MetadataRoute.Sitemap = hindiTopics.map((t) => ({
+    url: `${base}/exams/${t.topic.subject.exam.code}/topics/${t.topic.code}/hi`,
+    lastModified: t.generatedAt,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
   // Lifecycle section landings — same depth and priority as /exams so
   // Google understands the homepage is a hub, not a single-purpose page.
   const sectionLandings: MetadataRoute.Sitemap = [
@@ -398,6 +417,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...personaUrls,
     ...newsUrls,
     ...topicUrls,
+    ...hindiTopicUrls,
     ...streamUrls,
     ...collegeStateUrls,
     ...collegeUrls,

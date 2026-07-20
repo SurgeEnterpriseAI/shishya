@@ -37,10 +37,16 @@ export async function generateMetadata({
     }),
     prisma.topic.findFirst({
       where: { code: topicCode, subject: { exam: { code } } },
-      select: { name: true, description: true, code: true },
+      select: {
+        name: true,
+        description: true,
+        code: true,
+        noteTranslations: { where: { locale: "hi" }, select: { id: true } },
+      },
     }),
   ]);
   if (!exam || !topic) return { title: "Topic not found — Shishya" };
+  const hasHindi = topic.noteTranslations.length > 0;
   const title = `${topic.name} for ${exam.shortName} — Notes, Practice & Study Help | Shishya`;
   const description =
     `Free ${topic.name} study notes for ${exam.shortName} preparation. ` +
@@ -50,7 +56,13 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      // hreflang pairing with the Hindi twin when it exists (gap-fill #3).
+      ...(hasHindi
+        ? { languages: { "en-IN": url, "hi-IN": `${url}/hi`, "x-default": url } }
+        : {}),
+    },
     keywords: [
       `${topic.name} ${exam.shortName}`,
       `${topic.name} notes`,
@@ -91,9 +103,11 @@ export default async function TopicPage({
       parent: { select: { code: true, name: true } },
       children: { select: { code: true, name: true, description: true }, orderBy: { orderIdx: "asc" } },
       teachingNote: { select: { content: true, generatedAt: true } },
+      noteTranslations: { where: { locale: "hi" }, select: { id: true } },
     },
   });
   if (!topic) notFound();
+  const hasHindi = topic.noteTranslations.length > 0;
 
   // A handful of practice questions on this topic + its sub-topics, so
   // students can try a question right after reading. Validated only.
@@ -218,7 +232,17 @@ export default async function TopicPage({
         </p>
 
         {/* Title + meta */}
-        <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{topic.name}</h1>
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-bold text-ink-900 sm:text-3xl">{topic.name}</h1>
+          {hasHindi && (
+            <Link
+              href={`/exams/${code}/topics/${topic.code}/hi`}
+              className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 text-xs font-semibold text-saffron-800 hover:bg-saffron-100"
+            >
+              हिंदी में पढ़ें →
+            </Link>
+          )}
+        </div>
         {topic.description && (
           <p className="mt-2 max-w-3xl text-sm text-ink-600 sm:text-base">{topic.description}</p>
         )}
