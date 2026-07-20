@@ -44,9 +44,9 @@ import { HomeSearch } from "@/components/HomeSearch";
 import { HomeFeatureCards } from "@/components/HomeFeatureCards";
 import { HomeChatRouter } from "@/components/HomeChatRouter";
 import { PageTour } from "@/components/PageTour";
-import { UpcomingExamsSidebar, type UpcomingEvent } from "@/components/UpcomingExamsSidebar";
+import { UpcomingExamsSidebar, type UpcomingEvent, type CalendarBucket } from "@/components/UpcomingExamsSidebar";
 import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
-import { resolvePhase } from "@/lib/exam-phase";
+import { resolvePhase, istDayNumber } from "@/lib/exam-phase";
 import { EXAM_GOALS, findGoal, matchesGoal, type ExamGoal } from "@/data/exam-goals";
 import { INDIAN_STATES } from "@/lib/states";
 import type { ExamTag } from "@/lib/exam-tags";
@@ -182,44 +182,76 @@ const loadInitialThreads = unstable_cache(
   { revalidate: 60, tags: ["discussions"] },
 );
 
-async function loadUpcomingEventsRaw(): Promise<UpcomingEvent[]> {
+async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defaultTab: CalendarBucket }> {
   try {
-    // Window: 3 days past → upcoming. The 3-day reach into the past
-    // is necessary so exams currently in REACTIONS phase (e.g. UPSC
-    // Prelims that ran today, JEE Mains that ran yesterday) stay on
-    // the calendar with their "Reactions →" preview chip. Without
-    // it, the moment an exam ends it falls off the rail entirely.
-    //
-    // BUT non-exam-day rows ("Application correction window closes",
-    // "Admit card release") are noise once they're past — they get
-    // filtered out below so the rail only shows: future events of
-    // any kind + past EXAM_DAY events still inside the REACTIONS
-    // window.
+    // Window: 60 days past → upcoming, classified into three tabs
+    // with IST calendar-day math:
+    //   concluded — exam days in the last 7 days (incl. today after
+    //               18:00 IST, when resolvePhase flips LIVE→REACTIONS).
+    //               The answer-key / expected-cutoff rush window.
+    //   upcoming  — today (pre-18:00) + all future events of any kind.
+    //   past      — exam days 8-60 days back; their verdict/cutoff
+    //               analyses stay reachable instead of vanishing.
+    // Past NON-exam-day rows ("admit card released") are noise — dropped.
     const now = new Date();
-    const from = new Date(now.getTime() - 3.5 * 86_400_000);
+    const nowDay = istDayNumber(now);
+    const from = new Date(now.getTime() - 60.5 * 86_400_000);
     const rowsRaw = await prisma.examImportantDate.findMany({
       where: { date: { gte: from }, exam: { active: true }, archivedAt: null },
       orderBy: { date: "asc" },
-      take: 60, // over-fetch — we filter past-non-exam-day rows below
+      take: 400, // over-fetch — bucketed + capped below
       include: { exam: { select: { id: true, code: true, shortName: true } } },
     });
-    const rows = rowsRaw
-      .filter((r) => {
-        // Future events of any kind: keep
-        if (r.date.getTime() >= now.getTime()) return true;
-        // Past events: keep only if exam-day (so we can show REACTIONS chip)
-        return r.isExamDay;
-      })
-      .slice(0, 30);
+    type RawRow = (typeof rowsRaw)[number];
+    const classify = (r: RawRow): CalendarBucket | null => {
+      const dDay = istDayNumber(r.date);
+      if (dDay > nowDay) return "upcoming";
+      if (dDay === nowDay) {
+        if (!r.isExamDay) return "upcoming";
+        return resolvePhase(r.date, now) === "REACTIONS" ? "concluded" : "upcoming";
+      }
+      if (!r.isExamDay) return null; // past non-exam-day = noise
+      return nowDay - dDay <= 7 ? "concluded" : "past";
+    };
+    const byBucket: Record<CalendarBucket, RawRow[]> = { concluded: [], upcoming: [], past: [] };
+    for (const r of rowsRaw) {
+      const b = classify(r);
+      if (b) byBucket[b].push(r);
+    }
+    // Upcoming stays soonest-first (query order); the two backward-
+    // looking tabs read newest-first.
+    byBucket.concluded.reverse();
+    byBucket.past.reverse();
+    const buckets: { bucket: CalendarBucket; row: RawRow }[] = [
+      ...byBucket.concluded.slice(0, 15).map((row) => ({ bucket: "concluded" as const, row })),
+      ...byBucket.upcoming.slice(0, 30).map((row) => ({ bucket: "upcoming" as const, row })),
+      ...byBucket.past.slice(0, 20).map((row) => ({ bucket: "past" as const, row })),
+    ];
+    const rows = buckets.map((b) => b.row);
+    const bucketById = new Map(buckets.map((b) => [b.row.id, b.bucket]));
+    // Smart default: land on Concluded only while the answer-key rush
+    // is real (an exam ran within the last ~3 days) — else Upcoming.
+    const defaultTab: CalendarBucket = byBucket.concluded.some(
+      (r) => nowDay - istDayNumber(r.date) <= 3,
+    )
+      ? "concluded"
+      : "upcoming";
 
-    // For exam-day rows whose date falls in a phase window, attach
-    // the matching ExamPhaseArticle's summarySnippet so the sidebar
-    // can render the AI-written teaser instead of a bare "Live" pill.
-    // Single batched query covers every event at once.
+    // For exam-day rows, attach the matching ExamPhaseArticle's
+    // summarySnippet so the sidebar renders the AI-written teaser
+    // instead of a bare "Live" pill. Rows outside the live phase
+    // windows (Concluded day 4-7, the whole Past tab) look up their
+    // REACTIONS article — the verdict/cutoff analysis outlives the
+    // 3-day phase window. Single batched query covers every event.
+    const lookupPhaseFor = (r: RawRow): ReturnType<typeof resolvePhase> => {
+      if (!r.isExamDay) return null;
+      const live = resolvePhase(r.date, now);
+      if (live) return live;
+      return bucketById.get(r.id) !== "upcoming" ? "REACTIONS" : null;
+    };
     const phaseLookups = rows
-      .filter((r) => r.isExamDay)
-      .map((r) => ({ row: r, phase: resolvePhase(r.date, now) }))
-      .filter((x): x is { row: typeof rows[number]; phase: NonNullable<ReturnType<typeof resolvePhase>> } => x.phase !== null);
+      .map((r) => ({ row: r, phase: lookupPhaseFor(r) }))
+      .filter((x): x is { row: RawRow; phase: NonNullable<ReturnType<typeof resolvePhase>> } => x.phase !== null);
     let snippetsByKey = new Map<string, string>();
     if (phaseLookups.length > 0) {
       const examIds = [...new Set(phaseLookups.map((x) => x.row.exam.id))];
@@ -235,13 +267,9 @@ async function loadUpcomingEventsRaw(): Promise<UpcomingEvent[]> {
           .map((a) => [`${a.examId}:${a.phase}`, a.summarySnippet as string]),
       );
     }
-    const snippetForRow = (rowId: string, examId: string, phase: ReturnType<typeof resolvePhase>) => {
-      if (!phase) return null;
-      return snippetsByKey.get(`${examId}:${phase}`) ?? null;
-    };
 
-    return rows.map((r) => {
-      const phase = r.isExamDay ? resolvePhase(r.date, now) : null;
+    const events = rows.map((r) => {
+      const phase = lookupPhaseFor(r);
       return {
         id: r.id,
         examCode: r.exam.code,
@@ -249,9 +277,11 @@ async function loadUpcomingEventsRaw(): Promise<UpcomingEvent[]> {
         date: r.date.toISOString(),
         label: r.label,
         isExamDay: r.isExamDay,
-        phaseSnippet: snippetForRow(r.id, r.exam.id, phase),
+        phaseSnippet: phase ? (snippetsByKey.get(`${r.exam.id}:${phase}`) ?? null) : null,
+        bucket: bucketById.get(r.id) ?? ("upcoming" as CalendarBucket),
       };
     });
+    return { events, defaultTab };
   } catch (err) {
     // Fall back to the static next-6-months list so the left rail
     // never shows "No upcoming dates announced." just because Vercel
@@ -260,14 +290,14 @@ async function loadUpcomingEventsRaw(): Promise<UpcomingEvent[]> {
     // policy as the live data — so it's accurate, just less fresh.
     console.error("[shishya/loadUpcomingEvents] DB query failed, using fallback:", err);
     const { getFallbackEvents } = await import("@/data/fallback-events");
-    return getFallbackEvents();
+    return { events: getFallbackEvents(), defaultTab: "upcoming" as CalendarBucket };
   }
 }
-// v3 — busts the v2 cache so the new phaseSnippet field starts
-// flowing through. (v2 entries had no snippet attached.)
+// v4 — busts the v3 cache: the loader now returns { events, defaultTab }
+// with the three-tab bucket field attached to every event.
 const loadUpcomingEvents = unstable_cache(
   loadUpcomingEventsRaw,
-  ["home-upcoming-v3"],
+  ["home-upcoming-v4"],
   { revalidate: 300, tags: ["exam-dates"] },
 );
 
@@ -279,12 +309,48 @@ export default async function ExamsPage({
   const sp = await searchParams;
   const { t } = await getT();
 
-  const [signedIn, exams, initialThreads, upcomingEvents] = await Promise.all([
+  const [signedIn, exams, initialThreads, calendar] = await Promise.all([
     auth().then((s) => Boolean(s?.user)).catch(() => false),
     loadExams(),
     loadInitialThreads(),
     loadUpcomingEvents(),
   ]);
+  const upcomingEvents = calendar.events;
+
+  // SEO/AEO: schema.org Event markup for the upcoming exam days —
+  // Google event rich-results + a machine-readable date list AI
+  // engines can quote directly ("when is the next SSC CGL exam?").
+  const jsonLdEvents = upcomingEvents
+    .filter((e) => (e.bucket ?? "upcoming") === "upcoming" && e.isExamDay)
+    .slice(0, 15);
+  const examDatesJsonLd =
+    jsonLdEvents.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Upcoming Indian government exam dates",
+          description:
+            "Official exam-day calendar for Indian government and entrance exams, with free mock tests, syllabus and cutoff analysis for each.",
+          itemListElement: jsonLdEvents.map((e, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            item: {
+              "@type": "Event",
+              name: `${e.examShort} — ${e.label}`,
+              startDate: e.date.slice(0, 10),
+              eventStatus: "https://schema.org/EventScheduled",
+              eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+              location: {
+                "@type": "Place",
+                name: "India (multiple centres)",
+                address: { "@type": "PostalAddress", addressCountry: "IN" },
+              },
+              about: { "@type": "Thing", name: e.examShort },
+              url: `https://shishya.in/exams/${e.examCode}`,
+            },
+          })),
+        }
+      : null;
 
   // ── Funnel state from URL ──────────────────────────────────────────
   const goal = findGoal(sp.g);
@@ -336,7 +402,13 @@ export default async function ExamsPage({
         }}
       />
 
-      <UpcomingExamsSidebar events={upcomingEvents} />
+      {examDatesJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(examDatesJsonLd) }}
+        />
+      )}
+      <UpcomingExamsSidebar events={upcomingEvents} defaultTab={calendar.defaultTab} />
 
       <DiscussionsSidebar
         initial={initialThreads}
@@ -485,20 +557,24 @@ function MobileInlineRails({
   events: UpcomingEvent[];
   threads: ThreadItem[];
 }) {
-  if (events.length === 0 && threads.length === 0) return null;
+  // The horizontal strip only carries the fresh windows — just-concluded
+  // (answer-key rush) first, then upcoming. The Past tab is a desktop-
+  // rail affordance; on mobile it would push live dates off-screen.
+  const stripEvents = events.filter((e) => (e.bucket ?? "upcoming") !== "past");
+  if (stripEvents.length === 0 && threads.length === 0) return null;
   return (
     <section className="mt-14 space-y-5 lg:hidden">
-      {events.length > 0 && (
+      {stripEvents.length > 0 && (
         <div className="rounded-lg border border-ink-200 bg-white p-4 shadow-sm">
           <div className="flex items-baseline justify-between">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">
               <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-saffron-500 align-middle" aria-hidden />
-              Upcoming exam dates
+              Exam calendar
             </p>
-            <span className="text-[10px] text-ink-400">{events.length} dates</span>
+            <span className="text-[10px] text-ink-400">{stripEvents.length} dates</span>
           </div>
           <ul className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
-            {events.slice(0, 12).map((e) => (
+            {stripEvents.slice(0, 12).map((e) => (
               <li key={e.id} className="shrink-0">
                 <Link
                   href={`/exams/${e.examCode}`}
@@ -515,8 +591,14 @@ function MobileInlineRails({
                   }`}>
                     {new Date(e.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                     {e.isExamDay && (
-                      <span className="ml-1.5 rounded bg-saffron-200 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-saffron-900">
-                        Exam
+                      <span
+                        className={`ml-1.5 rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
+                          e.bucket === "concluded"
+                            ? "bg-sky-100 text-sky-800"
+                            : "bg-saffron-200 text-saffron-900"
+                        }`}
+                      >
+                        {e.bucket === "concluded" ? "Done" : "Exam"}
                       </span>
                     )}
                   </p>

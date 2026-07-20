@@ -1,27 +1,36 @@
-// Left-side sticky rail showing the next ~30 exam events across all
-// 163 exams, ordered chronologically. Mirrors the right-side
-// DiscussionsSidebar layout: fixed panel on lg+, slide-in drawer with
-// FAB on smaller screens. Pure server-side data (no polling — exam
-// dates change at most once per day via the refresh-exam-data cron).
-//
-// Build marker v202605250030 — force Vercel to rebuild from latest
-// source. The CLI deploys today were silently reusing a build cache
-// that predated the IST-phase + inline-snippet commits; this tiny
-// content change invalidates that cache.
-//
-// PHASE CHIPS — for any event close to the exam date we surface a
-// small action link under the date row that takes the visitor to
-// the right phase article (📋 Checklist / 🔴 Live / 📊 Reactions).
-//
-// Phase resolution is delegated to src/lib/exam-phase.ts so the
-// sidebar UI and the refresh-phase-articles cron agree on which
-// window an exam is in. Both use IST-aware calendar-day math —
-// "exam over" flips Live → Reactions at 18:00 IST on exam day,
-// not at midnight UTC.
+"use client";
 
+// Left-side sticky rail: the exam calendar, split into three tabs.
+//
+//   Concluded  — exam days in the last 7 IST days (incl. today after
+//                18:00 IST). The answer-key / expected-cutoff /
+//                student-verdict window — the hottest content on the
+//                site right after an exam runs.
+//   Upcoming   — today (pre-18:00 IST, 🔴 TODAY badge) + all future
+//                dates, soonest first. Includes non-exam events
+//                (admit card, application windows).
+//   Past       — exam days 8–60 days back, newest first, each linking
+//                to its verdict/cutoff analysis when one exists.
+//
+// SMART DEFAULT: the server passes defaultTab="concluded" only when an
+// exam actually concluded in the last ~3 days — otherwise "upcoming".
+// Nobody ever lands on an empty tab.
+//
+// SEO/AEO: ALL three lists are server-rendered into the HTML; the tab
+// switch only toggles CSS visibility. Crawlers and AI engines index
+// every row regardless of which tab a human sees first.
+//
+// PHASE CHIPS — exam-day rows near their date surface the matching
+// phase article (📋 Checklist / 🔴 Live / 📊 Reactions) via
+// src/lib/exam-phase.ts, shared with the refresh-phase-articles cron.
+// Past-window rows keep a Reactions chip whenever the article exists.
+
+import { useState } from "react";
 import Link from "next/link";
-import { resolvePhase, PHASE_SLUG } from "@/lib/exam-phase";
+import { resolvePhase, PHASE_SLUG, istDayNumber } from "@/lib/exam-phase";
 import type { ExamPhase } from "@prisma/client";
+
+export type CalendarBucket = "concluded" | "upcoming" | "past";
 
 export interface UpcomingEvent {
   id: string;
@@ -35,10 +44,15 @@ export interface UpcomingEvent {
    * resolved alongside the phase. When present, the sidebar renders
    * this in place of the plain "Live" / "Checklist" / "Reactions"
    * chip text so the student sees the article's hook before clicking.
-   * Null if the exam isn't in a phase window or the article doesn't
-   * exist yet (cron hasn't generated one).
+   * Null if no article exists yet (cron hasn't generated one).
    */
   phaseSnippet?: string | null;
+  /**
+   * Which calendar tab this event belongs to, classified server-side
+   * with IST day math. Optional so the static fallback list (which
+   * only carries future dates) keeps working — absent means upcoming.
+   */
+  bucket?: CalendarBucket;
 }
 
 interface PhaseChip {
@@ -46,24 +60,14 @@ interface PhaseChip {
   slug: "checklist" | "live" | "reactions";
   icon: string;
   color: string;
-  /** What to render as the chip's body text — snippet from the article when
-   *  available, otherwise the static fallback teaser. */
+  /** Chip body — article snippet when available, else static teaser. */
   text: string;
-  /** Where the chip click goes. Deep-links to the phase article ONLY when
-   *  one actually exists (snippet present); otherwise routes to the exam
-   *  overview page so the click never dead-ends on an empty phase shell. */
+  /** Deep-link to the phase article ONLY when one exists; otherwise
+   *  the exam overview so the click never dead-ends. */
   href: string;
-  /** True when a live phase article backs this chip. Drives the arrow
-   *  (→ to the article vs. nothing for a plain overview link). */
   hasArticle: boolean;
 }
 
-// Phase metadata used for the inline preview row in the sidebar:
-//   - `icon`      lives left, always visible (phase identifier at a glance)
-//   - `fallback`  is the chip label shown when the article doesn't
-//                 exist yet (cron hasn't generated a summary) — better
-//                 than "🔴 Live →" pointing at an empty page, this
-//                 hints at what they'll see if they click in early.
 const PHASE_CHIP_META: Record<ExamPhase, { icon: string; color: string; fallback: string }> = {
   CHECKLIST: {
     icon: "📋",
@@ -87,111 +91,189 @@ function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
   // get phase chips even if they fall close to today's date.
   if (!event.isExamDay) return null;
   const phase = resolvePhase(new Date(event.date));
-  if (!phase) return null;
-  const meta = PHASE_CHIP_META[phase];
-  const snippet = event.phaseSnippet?.trim();
-  const hasArticle = Boolean(snippet);
-  return {
-    phase,
-    slug: PHASE_SLUG[phase],
-    icon: meta.icon,
-    color: meta.color,
-    // Prefer the live AI snippet (set by the 2-hour cron) — falls back
-    // to the static teaser so the chip never reads as a bare label.
-    text: snippet || meta.fallback,
-    // Deep-link to the phase article only when one exists; otherwise the
-    // phase page is an empty shell, so send the click to the exam
-    // overview (always has content). This is what stops a tempting chip
-    // from landing the student on a blank page.
-    href: hasArticle
-      ? `/exams/${event.examCode}/${PHASE_SLUG[phase]}`
-      : `/exams/${event.examCode}`,
-    hasArticle,
-  };
+  if (phase) {
+    const meta = PHASE_CHIP_META[phase];
+    const snippet = event.phaseSnippet?.trim();
+    const hasArticle = Boolean(snippet);
+    return {
+      phase,
+      slug: PHASE_SLUG[phase],
+      icon: meta.icon,
+      color: meta.color,
+      text: snippet || meta.fallback,
+      href: hasArticle
+        ? `/exams/${event.examCode}/${PHASE_SLUG[phase]}`
+        : `/exams/${event.examCode}`,
+      hasArticle,
+    };
+  }
+  // Outside the live phase windows (concluded day 4-7, or the Past
+  // tab): still surface the Reactions article when one exists — the
+  // verdict/cutoff analysis stays valuable long after the 3-day window.
+  const bucket = event.bucket ?? "upcoming";
+  if (bucket !== "upcoming" && event.phaseSnippet?.trim()) {
+    const meta = PHASE_CHIP_META.REACTIONS;
+    return {
+      phase: "REACTIONS",
+      slug: "reactions",
+      icon: meta.icon,
+      color: meta.color,
+      text: event.phaseSnippet.trim(),
+      href: `/exams/${event.examCode}/reactions`,
+      hasArticle: true,
+    };
+  }
+  return null;
 }
 
-export function UpcomingExamsSidebar({ events }: { events: UpcomingEvent[] }) {
+const TABS: { key: CalendarBucket; label: string; empty: string }[] = [
+  { key: "concluded", label: "Concluded", empty: "No exams concluded in the last 7 days." },
+  { key: "upcoming", label: "Upcoming", empty: "No upcoming dates announced." },
+  { key: "past", label: "Past", empty: "Older exam analyses will appear here." },
+];
+
+export function UpcomingExamsSidebar({
+  events,
+  defaultTab,
+}: {
+  events: UpcomingEvent[];
+  defaultTab?: CalendarBucket;
+}) {
+  const buckets: Record<CalendarBucket, UpcomingEvent[]> = { concluded: [], upcoming: [], past: [] };
+  for (const e of events) buckets[e.bucket ?? "upcoming"].push(e);
+
+  const [tab, setTab] = useState<CalendarBucket>(
+    defaultTab && buckets[defaultTab].length > 0 ? defaultTab : "upcoming",
+  );
+
+  const todayIst = istDayNumber(new Date());
+
   return (
     <aside
       className="fixed bottom-0 left-0 top-16 z-20 hidden w-80 flex-col border-r border-ink-200 bg-white shadow-sm lg:flex"
-      aria-label="Upcoming exam dates"
+      aria-label="Exam calendar"
     >
-      <div className="flex items-start justify-between gap-2 border-b border-ink-200 bg-ink-50/40 px-4 py-3">
-        <div>
-          <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-saffron-700">
+      <div className="border-b border-ink-200 bg-ink-50/40 px-4 pt-3">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-ink-900">
             <span className="inline-block h-2 w-2 rounded-full bg-saffron-500" aria-hidden />
-            Upcoming
-          </p>
-          <h3 className="mt-0.5 truncate text-sm font-semibold text-ink-900">
             Exam calendar
           </h3>
+          <Link
+            href="/exams"
+            className="shrink-0 rounded-md border border-ink-300 bg-white px-2 py-1 text-[11px] font-medium text-ink-700 hover:bg-ink-100"
+          >
+            All
+          </Link>
         </div>
-        <Link
-          href="/exams"
-          className="shrink-0 rounded-md border border-ink-300 bg-white px-2 py-1 text-[11px] font-medium text-ink-700 hover:bg-ink-100"
-        >
-          All
-        </Link>
-      </div>
-
-      {events.length === 0 ? (
-        <div className="flex-1 px-4 py-10 text-center">
-          <p className="text-sm text-ink-500">No upcoming dates announced.</p>
-        </div>
-      ) : (
-        <ul className="flex-1 divide-y divide-ink-100 overflow-y-auto">
-          {events.map((e) => {
-            const chip = phaseChipFor(e);
+        <div role="tablist" aria-label="Exam calendar sections" className="-mb-px mt-2 flex gap-1">
+          {TABS.map((t) => {
+            const active = tab === t.key;
+            const n = buckets[t.key].length;
             return (
-              <li key={e.id} className={e.isExamDay ? "bg-saffron-50/40" : ""}>
-                {/* Outer Link wraps the title + date so the whole row
-                    is clickable like before. Phase chip below is a
-                    separate <Link> so its click doesn't navigate to
-                    the generic exam landing — it goes to the phase
-                    article instead. */}
-                <Link
-                  href={`/exams/${e.examCode}`}
-                  className="block px-4 pt-3 transition-colors hover:bg-saffron-50/50"
-                >
-                  <div className="flex items-baseline justify-between gap-2">
-                    <p className="truncate text-sm font-semibold text-ink-900">
-                      {e.examShort}
-                    </p>
-                    <span
-                      className={`shrink-0 text-[11px] font-medium tabular-nums ${
-                        e.isExamDay ? "text-saffron-800" : "text-ink-600"
-                      }`}
-                    >
-                      {formatDate(e.date)}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 line-clamp-2 text-[11px] text-ink-600">
-                    {e.isExamDay && (
-                      <span className="mr-1.5 rounded bg-saffron-200 px-1 py-0.5 text-[10px] font-medium text-saffron-900">
-                        EXAM DAY
-                      </span>
-                    )}
-                    {e.label}
-                  </p>
-                </Link>
-                {chip && (
-                  <Link
-                    href={chip.href}
-                    className={`mx-4 my-2 flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px] leading-snug ${chip.color} hover:brightness-95`}
+              <button
+                key={t.key}
+                role="tab"
+                id={`cal-tab-${t.key}`}
+                aria-selected={active}
+                aria-controls={`cal-panel-${t.key}`}
+                onClick={() => setTab(t.key)}
+                className={`flex-1 rounded-t-md border border-b-0 px-1 py-1.5 text-[11px] font-semibold transition-colors ${
+                  active
+                    ? "border-ink-200 bg-white text-saffron-800"
+                    : "border-transparent bg-transparent text-ink-500 hover:text-ink-800"
+                }`}
+              >
+                {t.label}
+                {t.key === "concluded" && n > 0 && (
+                  <span
+                    className={`ml-1 rounded-full px-1.5 text-[10px] tabular-nums ${
+                      active ? "bg-saffron-100 text-saffron-800" : "bg-ink-100 text-ink-600"
+                    }`}
                   >
-                    <span aria-hidden className="shrink-0 leading-snug">{chip.icon}</span>
-                    <span className="flex-1 line-clamp-3 font-medium">{chip.text}</span>
-                    {chip.hasArticle && (
-                      <span aria-hidden className="shrink-0 leading-snug">→</span>
-                    )}
-                  </Link>
+                    {n}
+                  </span>
                 )}
-                {!chip && <div className="h-2" />}
-              </li>
+              </button>
             );
           })}
-        </ul>
-      )}
+        </div>
+      </div>
+
+      {TABS.map((t) => {
+        const list = buckets[t.key];
+        const active = tab === t.key;
+        return (
+          <div
+            key={t.key}
+            role="tabpanel"
+            id={`cal-panel-${t.key}`}
+            aria-labelledby={`cal-tab-${t.key}`}
+            className={active ? "flex min-h-0 flex-1 flex-col" : "hidden"}
+          >
+            {list.length === 0 ? (
+              <div className="flex-1 px-4 py-10 text-center">
+                <p className="text-sm text-ink-500">{t.empty}</p>
+              </div>
+            ) : (
+              <ul className="flex-1 divide-y divide-ink-100 overflow-y-auto">
+                {list.map((e) => {
+                  const chip = phaseChipFor(e);
+                  const isToday = e.isExamDay && istDayNumber(new Date(e.date)) === todayIst;
+                  return (
+                    <li key={e.id} className={e.isExamDay ? "bg-saffron-50/40" : ""}>
+                      {/* Whole row clickable; the phase chip below is its
+                          own <Link> to the phase article. */}
+                      <Link
+                        href={`/exams/${e.examCode}`}
+                        className="block px-4 pt-3 transition-colors hover:bg-saffron-50/50"
+                      >
+                        <div className="flex items-baseline justify-between gap-2">
+                          <p className="truncate text-sm font-semibold text-ink-900">
+                            {e.examShort}
+                          </p>
+                          <span
+                            className={`shrink-0 text-[11px] font-medium tabular-nums ${
+                              e.isExamDay ? "text-saffron-800" : "text-ink-600"
+                            }`}
+                          >
+                            {formatDate(e.date)}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 line-clamp-2 text-[11px] text-ink-600">
+                          {isToday && t.key === "upcoming" ? (
+                            <span className="mr-1.5 rounded bg-rose-100 px-1 py-0.5 text-[10px] font-semibold text-rose-800">
+                              🔴 TODAY
+                            </span>
+                          ) : e.isExamDay ? (
+                            <span className="mr-1.5 rounded bg-saffron-200 px-1 py-0.5 text-[10px] font-medium text-saffron-900">
+                              EXAM DAY
+                            </span>
+                          ) : null}
+                          {e.label}
+                        </p>
+                      </Link>
+                      {chip && (
+                        <Link
+                          href={chip.href}
+                          className={`mx-4 my-2 flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px] leading-snug ${chip.color} hover:brightness-95`}
+                        >
+                          <span aria-hidden className="shrink-0 leading-snug">{chip.icon}</span>
+                          <span className="flex-1 line-clamp-3 font-medium">{chip.text}</span>
+                          {chip.hasArticle && (
+                            <span aria-hidden className="shrink-0 leading-snug">→</span>
+                          )}
+                        </Link>
+                      )}
+                      {!chip && <div className="h-2" />}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        );
+      })}
 
       <div className="border-t border-ink-200 bg-white px-4 py-3 text-center">
         <Link
