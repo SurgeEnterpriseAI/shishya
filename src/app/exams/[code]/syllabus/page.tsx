@@ -11,6 +11,7 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { ShareExamButton } from "@/components/ShareExamButton";
+import { TalkToTeacher } from "@/components/TalkToTeacher";
 
 export const revalidate = 3600;
 
@@ -132,6 +133,19 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
             surface="exam"
           />
         </div>
+
+        {/* Syllabus overwhelm ("where do I even start?") is a classic
+            drop-off moment — offer the human option right here. */}
+        <p className="mt-3 text-sm text-ink-600">
+          Syllabus feels overwhelming?{" "}
+          <TalkToTeacher
+            surface="exam"
+            examCode={exam.code}
+            variant="link"
+            contextLabel={`${exam.shortName} syllabus — where should I start?`}
+            linkLabel="Ask our subject expert where to start — free"
+          />
+        </p>
 
         {subjects.map((s) => (
           <section key={s.code} className="mt-8">

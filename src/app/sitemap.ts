@@ -74,6 +74,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "monthly" as const,
     priority: 0.75,
   }));
+  // Tricks & mnemonics landings — only exams that actually have generated
+  // content (the page 404s otherwise, so the sitemap must not lead there).
+  const tricksExams = await prisma
+    .$queryRaw<{ code: string }[]>`
+      SELECT e.code FROM "Exam" e
+      JOIN "ExamTricks" t ON t."examId" = e.id
+      WHERE e.active = TRUE
+    `.catch(() => [] as { code: string }[]);
+  const tricksUrls: MetadataRoute.Sitemap = tricksExams.map((e) => ({
+    url: `${base}/exams/${e.code}/tricks`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
 
   // Per-exam archive aggregator. One URL per active exam. Index target:
   // "[exam] previous year notifications", "[exam] postponement history".
@@ -411,6 +425,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...examUrls,
     ...cutoffUrls,
     ...syllabusUrls,
+    ...tricksUrls,
     ...examArchiveUrls,
     ...phaseUrls,
     ...pyqUrls,

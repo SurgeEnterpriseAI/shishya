@@ -11,6 +11,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { AnonQuiz } from "@/lib/anon-quiz";
+import { TalkToTeacher } from "@/components/TalkToTeacher";
 
 export function AnonQuizPlayer({ quiz }: { quiz: AnonQuiz }) {
   const qs = quiz.questions;
@@ -95,6 +96,21 @@ export function AnonQuizPlayer({ quiz }: { quiz: AnonQuiz }) {
             Ask Shishya to explain these
           </Link>
         </div>
+
+        {/* Low score + anonymous = peak discouragement; a human offer
+            here retains aspirants the signup CTA alone would lose. */}
+        {!good && (
+          <p className="mt-3 text-sm text-ink-600">
+            Feeling stuck?{" "}
+            <TalkToTeacher
+              surface="exam"
+              examCode={quiz.examCode}
+              variant="link"
+              contextLabel={`Scored ${score}/${qs.length} on a ${quiz.examShort} ${quiz.scopeLabel} quiz — need guidance`}
+              linkLabel="Talk to a real subject expert — free"
+            />
+          </p>
+        )}
 
         {/* Per-question recap */}
         <ul className="mt-6 space-y-1.5">

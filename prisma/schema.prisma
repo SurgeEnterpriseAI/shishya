@@ -172,6 +172,7 @@ model Exam {
   importantDates ExamImportantDate[]
   rankBands      ExamRankBand[]
   categoryCutoff ExamCategoryCutoff?
+  tricks         ExamTricks?
   phaseArticles  ExamPhaseArticle[]
   reviewStates   ReviewState[]
 
@@ -1758,6 +1759,21 @@ model ExamCategoryCutoff {
   id          String   @id @default(cuid())
   examId      String   @unique
   content     String   @db.Text // markdown: category table + short guidance
+  generatedAt DateTime @default(now())
+  generatedBy String?
+
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([generatedAt])
+}
+
+// Gap-fill #5: memory tricks & mnemonics per exam — the "shortcut" content
+// aspirants screenshot and share in Telegram groups. One markdown block per
+// exam ("## Subject" sections, bullet tricks), rendered at /exams/[code]/tricks.
+model ExamTricks {
+  id          String   @id @default(cuid())
+  examId      String   @unique
+  content     String   @db.Text // markdown: ## subject sections + bullet tricks
   generatedAt DateTime @default(now())
   generatedBy String?
 

@@ -4,6 +4,14 @@
 
 import React from "react";
 
+// Render **bold** spans inside a line (the only inline construct the
+// generators emit besides plain text).
+function inline(s: string): React.ReactNode {
+  const parts = s.split(/\*\*([^*]+)\*\*/g);
+  if (parts.length === 1) return s;
+  return parts.map((p, i) => (i % 2 === 1 ? <strong key={i}>{p}</strong> : p));
+}
+
 export function NotesMarkdown({ markdown }: { markdown: string }) {
   const lines = markdown.split(/\r?\n/);
   const out: React.ReactNode[] = [];
@@ -12,7 +20,7 @@ export function NotesMarkdown({ markdown }: { markdown: string }) {
   let listBuf: React.ReactNode[] = [];
   const flushPara = () => {
     if (buf.length === 0) return;
-    out.push(<p key={`p-${out.length}`}>{buf.join(" ")}</p>);
+    out.push(<p key={`p-${out.length}`}>{inline(buf.join(" "))}</p>);
     buf = [];
   };
   const flushList = () => {
@@ -47,7 +55,7 @@ export function NotesMarkdown({ markdown }: { markdown: string }) {
     if (/^[-*]\s+/.test(line)) {
       flushPara();
       inList = true;
-      listBuf.push(<li key={`li-${listBuf.length}`}>{line.replace(/^[-*]\s+/, "")}</li>);
+      listBuf.push(<li key={`li-${listBuf.length}`}>{inline(line.replace(/^[-*]\s+/, ""))}</li>);
       continue;
     }
     flushList();
