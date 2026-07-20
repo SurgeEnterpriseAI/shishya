@@ -11,6 +11,7 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
+import { inlineMd } from "@/components/NotesMarkdown";
 
 export const revalidate = 3600;
 
@@ -185,7 +186,7 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
             {catNotes.length > 0 && (
               <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-ink-600">
                 {catNotes.map((n, i) => (
-                  <li key={i}>{n}</li>
+                  <li key={i}>{inlineMd(n)}</li>
                 ))}
               </ul>
             )}
