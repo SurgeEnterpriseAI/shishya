@@ -171,6 +171,7 @@ model Exam {
   newsItems      ExamNewsItem[]
   importantDates ExamImportantDate[]
   rankBands      ExamRankBand[]
+  categoryCutoff ExamCategoryCutoff?
   phaseArticles  ExamPhaseArticle[]
   reviewStates   ReviewState[]
 
@@ -1746,6 +1747,23 @@ model TeacherRequest {
   @@index([status, createdAt])
   @@index([userId])
   @@index([createdAt])
+}
+
+// Category-wise expected cutoffs (gap-fill #4 — aspirants think in
+// categories: "is 95 safe for OBC?" — our rank bands were category-blind).
+// One markdown block per exam (a General/EWS/OBC/SC/ST table + notes),
+// AI-curated from historic patterns, rendered on /exams/[code]/cutoff
+// with the indicative-only disclaimer.
+model ExamCategoryCutoff {
+  id          String   @id @default(cuid())
+  examId      String   @unique
+  content     String   @db.Text // markdown: category table + short guidance
+  generatedAt DateTime @default(now())
+  generatedBy String?
+
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([generatedAt])
 }
 
 // Translated study notes (gap-fill #3 — "in hindi" is a literal user ask

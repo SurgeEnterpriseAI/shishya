@@ -10,6 +10,7 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { ShareExamButton } from "@/components/ShareExamButton";
+import { TalkToTeacher } from "@/components/TalkToTeacher";
 
 export const revalidate = 3600;
 
@@ -99,6 +100,29 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
       .map((l) => l.replace(/^[-*]\s*/, "").trim())
       .filter(Boolean);
 
+  // Category-wise expected cutoffs (gap-fill #4 — "is 95 safe for OBC?"
+  // is how aspirants actually frame the question). Raw SQL keeps this
+  // independent of client typegen; renders when generated.
+  const catRows = await prisma
+    .$queryRaw<{ content: string }[]>`
+      SELECT content FROM "ExamCategoryCutoff" WHERE "examId" = ${exam.id} LIMIT 1
+    `.catch(() => [] as { content: string }[]);
+  const categoryMd = catRows[0]?.content ?? null;
+  // Parse the strict markdown the generator emits: a pipe table + bullets.
+  const catTable: string[][] = [];
+  const catNotes: string[] = [];
+  if (categoryMd) {
+    for (const raw of categoryMd.split("\n")) {
+      const line = raw.trim();
+      if (/^\|/.test(line)) {
+        if (/^\|[\s:-]+\|/.test(line.replace(/-/g, "-"))&& /---/.test(line)) continue; // separator row
+        catTable.push(line.split("|").map((c) => c.trim()).filter(Boolean));
+      } else if (/^[-*•]\s+/.test(line)) {
+        catNotes.push(line.replace(/^[-*•]\s+/, ""));
+      }
+    }
+  }
+
   return (
     <main className="min-h-screen bg-ink-50/40">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -131,7 +155,58 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
           />
         </div>
 
-        <ul className="mt-6 space-y-3">
+        {/* Category-wise table — the way aspirants actually ask the
+            question ("safe for OBC?"). */}
+        {catTable.length > 1 && (
+          <section className="mt-6">
+            <h2 className="text-base font-semibold text-ink-900">
+              Category-wise expected cutoff (indicative)
+            </h2>
+            <div className="mt-3 overflow-x-auto rounded-lg border border-ink-200 bg-white">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-ink-200 bg-ink-50/60 text-left">
+                    {catTable[0].map((h, i) => (
+                      <th key={i} className="px-4 py-2 font-semibold text-ink-800">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {catTable.slice(1).map((row, i) => (
+                    <tr key={i} className="border-b border-ink-100 last:border-0">
+                      {row.map((c, j) => (
+                        <td key={j} className={`px-4 py-2 ${j === 0 ? "font-medium text-ink-900" : "tabular-nums text-ink-700"}`}>{c}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {catNotes.length > 0 && (
+              <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-ink-600">
+                {catNotes.map((n, i) => (
+                  <li key={i}>{n}</li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {/* Cutoff anxiety is the single most expert-worthy moment — surface
+            the human option right where the doubt forms. */}
+        <p className="mt-3 text-sm text-ink-600">
+          Not sure if your score is safe for your category?{" "}
+          <TalkToTeacher
+            surface="exam"
+            examCode={exam.code}
+            variant="link"
+            contextLabel={`${exam.shortName} cutoff — am I safe for my category?`}
+            linkLabel="Ask our subject expert — free"
+          />
+        </p>
+
+        <h2 className="mt-8 text-base font-semibold text-ink-900">Score → rank → outcome bands</h2>
+        <ul className="mt-3 space-y-3">
           {bands.map((b, i) => (
             <li key={i} className="rounded-lg border border-ink-200 bg-white p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
