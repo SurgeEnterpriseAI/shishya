@@ -25,6 +25,7 @@ import { CollegesForExamSection } from "@/components/CollegesForExamSection";
 import { SectionVerificationSummary } from "@/components/VerificationBadge";
 import { ExamDeepContentBlock } from "@/components/ExamDeepContentBlock";
 import { ShareExamButton } from "@/components/ShareExamButton";
+import { SubjectTestButton } from "./SubjectTestButton";
 import { ExamFaq } from "@/components/ExamFaq";
 import { findDeepContent, hasDeepContent } from "@/data/exam-deep-content";
 import { getExamTheme } from "@/lib/exam-theme";
@@ -155,6 +156,21 @@ export default async function ExamPage({
     leaderboard,
     rankBands,
   } = shared;
+
+  // Subject-wise test rows (gap-fill #1 — users asked for "25-question
+  // English/GK/Computer tests" verbatim; the SUBJECT mock API existed but
+  // had no UI). Only subjects with ≥10 validated questions get a button.
+  const subjectTests = await prisma
+    .$queryRaw<{ code: string; name: string; qcount: number }[]>`
+      SELECT s.code, s.name, COUNT(q.id)::int AS qcount
+      FROM "Subject" s
+      JOIN "Topic" t ON t."subjectId" = s.id
+      JOIN "Question" q ON q."topicId" = t.id AND q.validated = TRUE
+      WHERE s."examId" = ${exam.id}
+      GROUP BY s.code, s.name, s."orderIdx"
+      HAVING COUNT(q.id) >= 10
+      ORDER BY s."orderIdx" ASC
+    `.catch(() => [] as { code: string; name: string; qcount: number }[]);
 
   // Per-category visual theme. The brand saffron stays as the primary
   // CTA colour everywhere on the page (buttons, score boost rail) —
@@ -683,6 +699,38 @@ export default async function ExamPage({
             </div>
           )}
         </section>
+
+        {/* ── Practice by subject (gap-fill #1) ─────────────────────────
+            Users asked for longer subject-wise tests verbatim. One tap per
+            subject → 25-Q SUBJECT mock from the validated pool. */}
+        {subjectTests.length > 0 && (
+          <section id="subject-tests" className="mt-10 scroll-mt-20">
+            <h2 className="text-base font-semibold text-ink-800">Practice by subject</h2>
+            <p className="mt-1 text-xs text-ink-500">
+              Full-length subject tests — 25 questions each, real exam format, instant scoring.
+            </p>
+            <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {subjectTests.map((s) => (
+                <li key={s.code} className="rounded-md border border-ink-200 bg-white p-4">
+                  <div className="flex items-baseline justify-between">
+                    <p className="text-sm font-medium text-ink-900">{s.name}</p>
+                    <span className="text-[11px] tabular-nums text-ink-500">
+                      {s.qcount.toLocaleString("en-IN")} Qs
+                    </span>
+                  </div>
+                  <div className="mt-3">
+                    <SubjectTestButton
+                      examCode={exam.code}
+                      subjectCode={s.code}
+                      subjectName={s.name}
+                      available={s.qcount}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* ── Rank & Leaderboard ──────────────────────────────────────── */}
         <section id="rank" className="mt-10 scroll-mt-20">
