@@ -196,17 +196,30 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
     const now = new Date();
     const nowDay = istDayNumber(now);
     const from = new Date(now.getTime() - 60.5 * 86_400_000);
+    // IMPORTANT: past exam-day rows must include ARCHIVED ones. The
+    // refresh-exam-data cron archives dates a few days after they pass,
+    // so an archivedAt:null filter would slowly drain the Concluded/
+    // Past tabs to empty as the cron does its job. Live rows stay the
+    // only source for today/future (archived future rows are replaced
+    // cycles); past buckets take both, deduped below preferring live.
     const rowsRaw = await prisma.examImportantDate.findMany({
-      where: { date: { gte: from }, exam: { active: true }, archivedAt: null },
+      where: {
+        date: { gte: from },
+        exam: { active: true },
+        OR: [{ archivedAt: null }, { isExamDay: true }],
+      },
       orderBy: { date: "asc" },
-      take: 400, // over-fetch — bucketed + capped below
+      take: 800, // over-fetch — bucketed + deduped + capped below
       include: { exam: { select: { id: true, code: true, shortName: true } } },
     });
     type RawRow = (typeof rowsRaw)[number];
     const classify = (r: RawRow): CalendarBucket | null => {
       const dDay = istDayNumber(r.date);
-      if (dDay > nowDay) return "upcoming";
-      if (dDay === nowDay) {
+      if (dDay >= nowDay) {
+        // Today/future: only live rows — an archived future/today row is
+        // a superseded cycle the cron already replaced.
+        if (r.archivedAt) return null;
+        if (dDay > nowDay) return "upcoming";
         if (!r.isExamDay) return "upcoming";
         return resolvePhase(r.date, now) === "REACTIONS" ? "concluded" : "upcoming";
       }
@@ -214,10 +227,26 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
       return nowDay - dDay <= 7 ? "concluded" : "past";
     };
     const byBucket: Record<CalendarBucket, RawRow[]> = { concluded: [], upcoming: [], past: [] };
+    // Dedupe past/concluded on (exam, IST day) — the same exam day can
+    // exist as both a live row and an archived copy; prefer the live one.
+    const seenPast = new Map<string, RawRow>();
     for (const r of rowsRaw) {
       const b = classify(r);
-      if (b) byBucket[b].push(r);
+      if (!b) continue;
+      if (b === "upcoming") {
+        byBucket.upcoming.push(r);
+        continue;
+      }
+      const key = `${b}:${r.examId}:${istDayNumber(r.date)}`;
+      const prev = seenPast.get(key);
+      if (!prev || (prev.archivedAt && !r.archivedAt)) seenPast.set(key, r);
     }
+    for (const r of seenPast.values()) {
+      const b = classify(r);
+      if (b && b !== "upcoming") byBucket[b].push(r);
+    }
+    byBucket.concluded.sort((a, b) => a.date.getTime() - b.date.getTime());
+    byBucket.past.sort((a, b) => a.date.getTime() - b.date.getTime());
     // Upcoming stays soonest-first (query order); the two backward-
     // looking tabs read newest-first.
     byBucket.concluded.reverse();
@@ -297,7 +326,7 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
 // with the three-tab bucket field attached to every event.
 const loadUpcomingEvents = unstable_cache(
   loadUpcomingEventsRaw,
-  ["home-upcoming-v4"],
+  ["home-upcoming-v5"],
   { revalidate: 300, tags: ["exam-dates"] },
 );
 
