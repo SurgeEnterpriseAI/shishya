@@ -38,13 +38,13 @@ import { getT } from "@/lib/i18n-server";
 import { Header } from "@/components/Header";
 import type { ExamCard } from "@/components/ExamPicker";
 import { computeExamTags } from "@/lib/exam-tags";
-import { DiscussionsSidebar, type ThreadItem } from "@/components/DiscussionsSidebar";
+import { type ThreadItem } from "@/components/DiscussionsSidebar";
 import { LiveCountersStrip } from "@/components/LiveCounters";
 import { HomeSearch } from "@/components/HomeSearch";
 import { HomeFeatureCards } from "@/components/HomeFeatureCards";
 import { HomeChatRouter } from "@/components/HomeChatRouter";
 import { PageTour } from "@/components/PageTour";
-import { type UpcomingEvent, type CalendarBucket } from "@/components/UpcomingExamsSidebar";
+import { UpcomingExamsSidebar, type UpcomingEvent, type CalendarBucket } from "@/components/UpcomingExamsSidebar";
 import { VacancyFinderCard } from "@/components/VacancyFinderCard";
 import { VacancyExplorerSidebar, VacancyExplorerPanel } from "@/components/VacancyExplorer";
 import { loadVacancyExplorer, type VacancyExplorer } from "@/lib/vacancy-explorer";
@@ -154,36 +154,6 @@ const loadExams = unstable_cache(loadExamsRaw, ["home-exams-v1"], {
   revalidate: 60,
   tags: ["exams"],
 });
-
-async function loadInitialThreadsRaw(): Promise<ThreadItem[]> {
-  try {
-    const rows = await prisma.discussion.findMany({
-      orderBy: [{ pinned: "desc" }, { lastActivityAt: "desc" }],
-      take: 12,
-      include: { exam: { select: { shortName: true } } },
-    });
-    return rows.map((r) => ({
-      id: r.id,
-      title: r.title,
-      examShort: r.exam?.shortName ?? null,
-      authorName: r.authorName,
-      messageCount: r.messageCount,
-      pinned: r.pinned,
-      lastActivityAt: r.lastActivityAt.toISOString(),
-      isSeed: r.isSeed,
-    }));
-  } catch (err) {
-    console.error("[shishya/loadInitialThreads] DB query failed:", err);
-    return [];
-  }
-}
-// v3 cache key — busts the v2 cache so the new isSeed field flows
-// through to the sidebar immediately on next deploy.
-const loadInitialThreads = unstable_cache(
-  loadInitialThreadsRaw,
-  ["home-discussions-v3"],
-  { revalidate: 60, tags: ["discussions"] },
-);
 
 async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defaultTab: CalendarBucket }> {
   try {
@@ -362,10 +332,9 @@ export default async function ExamsPage({
   const sp = await searchParams;
   const { t } = await getT();
 
-  const [signedIn, exams, initialThreads, calendar, vacancy] = await Promise.all([
+  const [signedIn, exams, calendar, vacancy] = await Promise.all([
     auth().then((s) => Boolean(s?.user)).catch(() => false),
     loadExams(),
-    loadInitialThreads(),
     loadUpcomingEvents(),
     loadVacancyExplorerCached(),
   ]);
@@ -469,29 +438,11 @@ export default async function ExamsPage({
           upcoming / cutoffs) still lives on each exam's page. */}
       <VacancyExplorerSidebar data={vacancy} />
 
-      <DiscussionsSidebar
-        initial={initialThreads}
-        signedIn={signedIn}
-        labels={{
-          title:      t("disc.title"),
-          subtitle:   t("disc.subtitle"),
-          replies:    t("disc.replies"),
-          reply:      t("disc.reply"),
-          viewAll:    t("disc.viewAll"),
-          startNew:   t("disc.startNew"),
-          empty:      t("disc.empty"),
-          justNow:    t("disc.justNow"),
-          minutesAgo: t("disc.minutesAgo"),
-          hoursAgo:   t("disc.hoursAgo"),
-          daysAgo:    t("disc.daysAgo"),
-          openAria:   t("disc.sidebar.openAria"),
-          closeAria:  t("disc.sidebar.closeAria"),
-          liveTitle:       t("live.block.title"),
-          liveOnline:      t("live.block.online"),
-          liveInMock:      t("live.block.inMock"),
-          liveTodaysMocks: t("live.block.todaysMocks"),
-        }}
-      />
+      {/* Right rail: exam calendar (moved here from the left rail, which
+          is now the vacancy explorer). Concluded / Upcoming / Past with
+          verdict-cutoff chips. Discussions moved off the homepage — still
+          at /discussions. */}
+      <UpcomingExamsSidebar events={upcomingEvents} defaultTab={calendar.defaultTab} side="right" />
 
       {/* Floating chat-router: bottom-left FAB that asks "What are you
           looking for?" and POSTs the answer to /api/chat-route. Claude
@@ -612,9 +563,9 @@ export default async function ExamsPage({
               </div>
             </div>
           )}
-          {/* Calendar strip removed on mobile too — the vacancy explorer
-              above replaces it; MobileInlineRails now carries discussions. */}
-          <MobileInlineRails events={[]} threads={initialThreads} />
+          {/* Mobile: vacancy explorer (above) + exam calendar. Discussions
+              moved off the homepage — still at /discussions. */}
+          <MobileInlineRails events={upcomingEvents} threads={[]} />
         </section>
       </div>
     </main>

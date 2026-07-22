@@ -135,9 +135,12 @@ const TABS: { key: CalendarBucket; label: string; empty: string }[] = [
 export function UpcomingExamsSidebar({
   events,
   defaultTab,
+  side = "left",
 }: {
   events: UpcomingEvent[];
   defaultTab?: CalendarBucket;
+  /** Which fixed rail to anchor to. "right" flips the border side. */
+  side?: "left" | "right";
 }) {
   const buckets: Record<CalendarBucket, UpcomingEvent[]> = { concluded: [], upcoming: [], past: [] };
   for (const e of events) buckets[e.bucket ?? "upcoming"].push(e);
@@ -150,7 +153,9 @@ export function UpcomingExamsSidebar({
 
   return (
     <aside
-      className="fixed bottom-0 left-0 top-16 z-20 hidden w-80 flex-col border-r border-ink-200 bg-white shadow-sm lg:flex"
+      className={`fixed bottom-0 top-16 z-20 hidden w-80 flex-col border-ink-200 bg-white shadow-sm lg:flex ${
+        side === "right" ? "right-0 border-l" : "left-0 border-r"
+      }`}
       aria-label="Exam calendar"
     >
       <div className="border-b border-ink-200 bg-ink-50/40 px-4 pt-3">
