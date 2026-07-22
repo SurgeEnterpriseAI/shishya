@@ -43,13 +43,19 @@ function parseFaq(md: string): { q: string; a: string }[] {
 }
 
 async function main() {
+  // Regenerate exams that have NO guide yet OR whose guide truncated
+  // before the FAQ (the old 3000-token cap cut the salary section mid-
+  // sentence). `faq` shorter than 3 items ⇒ the doc didn't complete.
   const exams = await prisma.$queryRawUnsafe<
     { id: string; code: string; name: string; shortName: string; totalMarks: number; durationMin: number; category: string }[]
   >(`
     SELECT e.id, e.code, e.name, e."shortName", e."totalMarks", e."durationMin", e.category::text
     FROM "Exam" e
     WHERE e.active = TRUE
-      AND NOT EXISTS (SELECT 1 FROM "ExamGuide" g WHERE g."examId" = e.id)
+      AND NOT EXISTS (
+        SELECT 1 FROM "ExamGuide" g
+        WHERE g."examId" = e.id AND jsonb_array_length(g.faq) >= 3
+      )
     ORDER BY e."candidatesPerYear" DESC NULLS LAST
   `);
   console.log(`Guide backlog: ${exams.length} exams · budget $${BUDGET}`);
@@ -70,7 +76,7 @@ async function main() {
         const res = await client.messages.create(
           {
             model: MODEL,
-            max_tokens: 3000,
+            max_tokens: 4500,
             system:
               "You write a comprehensive, honest 'how to crack this exam' guide for Indian competitive-exam aspirants — most of whom cannot afford coaching. Output STRICT markdown with EXACTLY these five sections in order, each a '## ' heading:\n" +
               "## How to prepare (with or without coaching)\n" +
@@ -78,7 +84,7 @@ async function main() {
               "## Is it tough? An honest take for an average student\n" +
               "## Salary, job profile & career growth\n" +
               "## Frequently asked questions\n" +
-              "Rules: practical and specific, not generic pep talk. The prep section MUST give a genuine free/self-study path (Shishya's free mocks, PYQs, notes are the backbone). The study plan should be a realistic weekly structure. Be honest about difficulty — encouraging but not misleading. For salary/career, give INDICATIVE pay bands and typical posts/cadres; never state exact figures as official, say 'approximately' and 'varies by cadre/posting'. The FAQ section must contain 5 items, EACH formatted exactly as '**Q.** question' on one line then '**A.** answer' on the next (this exact format is parsed downstream). No preamble, no # title, no closing pep line.",
+              "Rules: practical and specific, not generic pep talk. The prep section MUST give a genuine free/self-study path (Shishya's free mocks, PYQs, notes are the backbone). The study plan should be a realistic weekly structure. Be honest about difficulty — encouraging but not misleading. Keep the salary/career section to ~150 words: INDICATIVE pay bands and typical posts/cadres only; never state exact figures as official, say 'approximately' and 'varies by cadre/posting'. The FAQ section is MANDATORY and must be the last thing you write — do not let earlier sections crowd it out. It must contain exactly 5 items, EACH formatted exactly as '**Q.** question' on one line, a blank line, then '**A.** answer' (this exact format is parsed downstream; keep each answer under 60 words). No preamble, no # title, no closing pep line.",
             messages: [
               {
                 role: "user",
