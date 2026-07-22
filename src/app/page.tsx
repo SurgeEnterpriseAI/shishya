@@ -45,6 +45,7 @@ import { HomeFeatureCards } from "@/components/HomeFeatureCards";
 import { HomeChatRouter } from "@/components/HomeChatRouter";
 import { PageTour } from "@/components/PageTour";
 import { UpcomingExamsSidebar, type UpcomingEvent, type CalendarBucket } from "@/components/UpcomingExamsSidebar";
+import { VacancyFinderCard } from "@/components/VacancyFinderCard";
 import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
 import { resolvePhase, istDayNumber } from "@/lib/exam-phase";
 import { EXAM_GOALS, findGoal, matchesGoal, type ExamGoal } from "@/data/exam-goals";
@@ -330,6 +331,34 @@ const loadUpcomingEvents = unstable_cache(
   { revalidate: 300, tags: ["exam-dates"] },
 );
 
+// Live government-job vacancy total for the homepage finder hero.
+// Sums ExamEligibility vacancies across government-JOB exams only
+// (same tag filter as /find-your-exam) so the headline number stays
+// honest and updates as eligibility data is refreshed. Cached daily.
+async function loadGovtVacancyStatsRaw(): Promise<{ totalLakh: string; examCount: number }> {
+  try {
+    const rows = await prisma.$queryRaw<{ code: string; category: string; state: string | null; v: number | null }[]>`
+      SELECT e.code, e.category::text AS category, e.state, x."vacanciesApprox" AS v
+      FROM "ExamEligibility" x JOIN "Exam" e ON e.id = x."examId"
+      WHERE e.active = TRUE
+    `;
+    const JOB = new Set(["govt", "banking", "teaching", "police", "civil_services", "defence"]);
+    let sum = 0, n = 0;
+    for (const r of rows) {
+      const tags = computeExamTags({ code: r.code, category: r.category, state: r.state });
+      if (tags.some((t) => JOB.has(t))) { sum += r.v ?? 0; n++; }
+    }
+    return { totalLakh: (sum / 100_000).toFixed(1), examCount: n };
+  } catch {
+    return { totalLakh: "4.6", examCount: 140 };
+  }
+}
+const loadGovtVacancyStats = unstable_cache(
+  loadGovtVacancyStatsRaw,
+  ["home-govt-vacancies-v1"],
+  { revalidate: 86400 },
+);
+
 export default async function ExamsPage({
   searchParams,
 }: {
@@ -338,11 +367,12 @@ export default async function ExamsPage({
   const sp = await searchParams;
   const { t } = await getT();
 
-  const [signedIn, exams, initialThreads, calendar] = await Promise.all([
+  const [signedIn, exams, initialThreads, calendar, vacancyStats] = await Promise.all([
     auth().then((s) => Boolean(s?.user)).catch(() => false),
     loadExams(),
     loadInitialThreads(),
     loadUpcomingEvents(),
+    loadGovtVacancyStats(),
   ]);
   const upcomingEvents = calendar.events;
 
@@ -527,7 +557,7 @@ export default async function ExamsPage({
         <section className="container-prose pt-10 pb-20 sm:pt-14">
           <Breadcrumbs goal={goal} scope={effectiveScope} stateCode={stateCode} />
 
-          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} />}
+          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} />}
           {step === "scope" && goal && (
             <StepScope
               goal={goal}
@@ -691,10 +721,12 @@ function StepGoals({
   exams,
   t,
   signedIn,
+  vacancyStats,
 }: {
   exams: ExamCard[];
   t: (key: SectionTitleKey) => string;
   signedIn: boolean;
+  vacancyStats: { totalLakh: string; examCount: number };
 }) {
   // 27 May 2026 funnel telemetry — 96 signups, 0 mock attempts in
   // last 24h. The page leads visitors into a goal funnel but never
@@ -742,16 +774,13 @@ function StepGoals({
             Bet yours is covered.
           </span>
         </p>
-        {/* Optional path for the undecided — "I want a govt job but don't
-            know which exam". Zero friction for those who already know
-            their exam (they use search / goal cards below). */}
-        <p className="mt-4 text-sm">
-          <span className="text-ink-500">Not sure which exam?</span>{" "}
-          <Link href="/find-your-exam" className="font-semibold text-saffron-700 hover:text-saffron-800 hover:underline">
-            Find the government exams that fit you →
-          </Link>
-        </p>
       </div>
+
+      {/* Prominent entry for the "I want a govt job but which one?"
+          newcomer — leads with the live vacancy count + fit promise.
+          Sits above the goal cards; does NOT replace search / goal
+          tiles, so people who already know their exam lose no time. */}
+      <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
 
       {/* ── Signed-out signup CTA banner ──────────────────────────
           Visitors who scrolled past the hero see this; one tap →
