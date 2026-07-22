@@ -742,6 +742,15 @@ function StepGoals({
             Bet yours is covered.
           </span>
         </p>
+        {/* Optional path for the undecided — "I want a govt job but don't
+            know which exam". Zero friction for those who already know
+            their exam (they use search / goal cards below). */}
+        <p className="mt-4 text-sm">
+          <span className="text-ink-500">Not sure which exam?</span>{" "}
+          <Link href="/find-your-exam" className="font-semibold text-saffron-700 hover:text-saffron-800 hover:underline">
+            Find the government exams that fit you →
+          </Link>
+        </p>
       </div>
 
       {/* ── Signed-out signup CTA banner ──────────────────────────

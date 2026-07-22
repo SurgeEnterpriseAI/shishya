@@ -174,6 +174,7 @@ model Exam {
   categoryCutoff ExamCategoryCutoff?
   tricks         ExamTricks?
   guide          ExamGuide?
+  eligibility    ExamEligibility?
   phaseArticles  ExamPhaseArticle[]
   reviewStates   ReviewState[]
 
@@ -1777,6 +1778,39 @@ model ExamTricks {
   content     String   @db.Text // markdown: ## subject sections + bullet tricks
   generatedAt DateTime @default(now())
   generatedBy String?
+
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([generatedAt])
+}
+
+// The "which government exam suits ME?" matcher data. Per-exam
+// eligibility + fit facts so a visitor's answers (age, education,
+// state, strengths) can be matched to the exams they can actually
+// crack. Generated via Claude + web_search; indicative, always
+// deferring to the official notification. Powers /find-your-exam.
+model ExamEligibility {
+  id             String   @id @default(cuid())
+  examId         String   @unique
+  minAge         Int? // general-category minimum age
+  maxAge         Int? // general-category maximum age (pre-relaxation)
+  ageRelaxation  String?  @db.Text // "OBC +3, SC/ST +5, PwD +10 ..."
+  // Education tags an applicant must satisfy AT LEAST ONE of:
+  //   "10TH" "12TH" "DIPLOMA" "GRADUATE" "POSTGRADUATE" "ITI"
+  //   plus stream hints: "ANY_STREAM" "ENGINEERING" "MEDICAL"
+  //   "COMMERCE" "SCIENCE" "ARTS" "LAW" "SPECIFIC_DEGREE"
+  educationTags  String[] @default([])
+  educationNote  String?  @db.Text // human sentence, e.g. "Bachelor's degree in any discipline"
+  // State domicile required? (state exams). National exams = false.
+  domicileState  String? // ISO state code when a domicile is required, else null
+  vacanciesApprox Int? // typical annual vacancies/posts (indicative)
+  vacanciesNote  String?  @db.Text
+  // Skill weighting 0-5 for fit matching against a user's self-rated
+  // strengths: { quant, reasoning, gk, english, technical }
+  skillProfile   Json?
+  eligibilityNote String? @db.Text // catch-all extra eligibility detail
+  generatedAt    DateTime @default(now())
+  generatedBy    String?
 
   exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
 
