@@ -2,14 +2,13 @@
 // Server component picks the exam (default first enrolled) and hands off to client.
 
 import Link from "next/link";
-import { headers } from "next/headers";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { ChatInterface } from "./ChatInterface";
 import { ExamSwitcher } from "./ExamSwitcher";
-import { recordEvent } from "@/lib/analytics";
+import { ChatOpenedBeacon } from "@/components/ChatOpenedBeacon";
 
 export default async function ChatPage({
   searchParams,
@@ -21,16 +20,10 @@ export default async function ChatPage({
   const { t } = await getT();
   const generalMode = sp.general === "1";
 
-  // Prefetch guard: the "Ask Shishya" link lives in the header on every
-  // page, so Next.js <Link> prefetches /chat constantly — each prefetch
-  // SSR-renders this component and would fire a phantom CHAT_OPENED (we saw
-  // ~27 per real visitor). Only count genuine navigations: skip when the
-  // request is a router prefetch.
-  const reqHeaders = await headers();
-  const isPrefetch =
-    reqHeaders.get("next-router-prefetch") === "1" ||
-    reqHeaders.get("purpose") === "prefetch" ||
-    (reqHeaders.get("sec-purpose") ?? "").includes("prefetch");
+  // CHAT_OPENED is now fired client-side by <ChatOpenedBeacon> at the
+  // point ChatInterface mounts, so bot crawls and router prefetches
+  // (neither of which run effects) no longer inflate it. The old
+  // server-side fire + prefetch-header guard is gone.
 
   // ── Anonymous tutor — UNGATED ────────────────────────────────────────
   // The AI tutor is open to signed-out visitors. Two anons reached /chat
@@ -50,13 +43,6 @@ export default async function ChatPage({
         anonExamCode = ex.code;
         anonExamShort = ex.shortName;
       }
-    }
-    if (!isPrefetch) {
-      void recordEvent({
-        kind: "CHAT_OPENED",
-        path: "/chat",
-        props: { examCode: anonExamCode, general: anonExamCode == null, anon: true },
-      });
     }
     const anonStarters = anonExamShort
       ? [
@@ -96,6 +82,9 @@ export default async function ChatPage({
             </p>
           </div>
 
+          <ChatOpenedBeacon
+            props={{ examCode: anonExamCode, general: anonExamCode == null, anon: true }}
+          />
           <ChatInterface
             examCode={anonExamCode}
             topicFocus={null}
@@ -121,20 +110,15 @@ export default async function ChatPage({
   }
 
   // Analytics — server-side CHAT_OPENED so we don't double-fire with
-  // PAGE_VIEW. Captures the exam scope as a prop. Skipped on prefetch so
-  // header-link prefetches don't inflate the count (see isPrefetch above).
-  if (!isPrefetch) {
-    void recordEvent({
-      kind: "CHAT_OPENED",
-      userId: session.user.id,
-      path: "/chat",
-      props: {
-        examCode: sp.examCode ?? null,
-        topicCode: sp.topicCode ?? null,
-        general: generalMode,
-      },
-    });
-  }
+  // PAGE_VIEW. Fired client-side via <ChatOpenedBeacon> in the return
+  // below so bot crawls / prefetches don't inflate it (see the beacon
+  // component and the anon path above).
+  const chatOpenedProps = {
+    examCode: sp.examCode ?? null,
+    topicCode: sp.topicCode ?? null,
+    general: generalMode,
+    anon: false,
+  };
 
   let enrollments = await prisma.enrollment.findMany({
     where: { userId: session.user.id, active: true },
@@ -189,6 +173,7 @@ export default async function ChatPage({
             </div>
           </div>
 
+          <ChatOpenedBeacon props={{ examCode: null, general: true, anon: false }} />
           <ChatInterface
             examCode={null}
             topicFocus={null}
@@ -371,6 +356,7 @@ export default async function ChatPage({
           )}
         </div>
 
+        <ChatOpenedBeacon props={chatOpenedProps} />
         <ChatInterface
           examCode={examCode}
           topicFocus={topicFocus}
