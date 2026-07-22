@@ -12,9 +12,21 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { FindExamQuiz } from "./FindExamQuiz";
+import { computeExamTags } from "@/lib/exam-tags";
 import {
   matchAll, type ExamElig, type MatchInput, type EducationLevel, type Stream, type Category, type Skill,
 } from "@/lib/exam-matcher";
+
+// The finder is about GOVERNMENT JOBS — not college-admission tests.
+// A person wanting a govt job should never be matched to JEE / NEET /
+// EAMCET / CUET / CLAT / CAT. Keep only exams whose canonical tags mark
+// them as a government-job pathway (govt umbrella, banking, teaching/TET,
+// police, civil services, defence); drop pure academic-entrance tags.
+const JOB_TAGS = new Set(["govt", "banking", "teaching", "police", "civil_services", "defence"]);
+function isGovtJobExam(code: string, category: string, state: string | null): boolean {
+  const tags = computeExamTags({ code, category, state });
+  return tags.some((t) => JOB_TAGS.has(t));
+}
 
 export const revalidate = 3600;
 
@@ -67,7 +79,11 @@ export default async function FindYourExamPage({
       WHERE e.active = TRUE
     `.catch(() => [] as Row[]);
 
-  const totalVacancies = rows.reduce((a, r) => a + (r.vacanciesApprox ?? 0), 0);
+  // Government-job exams only — this finder answers "which govt JOB can
+  // I get", so admission/entrance tests are filtered out.
+  const jobRows = rows.filter((r) => isGovtJobExam(r.code, r.category, r.state));
+
+  const totalVacancies = jobRows.reduce((a, r) => a + (r.vacanciesApprox ?? 0), 0);
   const totalLakh = (totalVacancies / 100_000).toFixed(1);
 
   const hasAnswers = Boolean(sp.age && sp.edu);
@@ -84,7 +100,7 @@ export default async function FindYourExamPage({
       category: (sp.cat as Category) ?? "GEN",
       strengths: (sp.str ?? "").split(",").filter(Boolean) as Skill[],
     };
-    const m = matchAll(input, rows);
+    const m = matchAll(input, jobRows);
     eligible = m.eligible;
     // "Qualify soon" = blocked ONLY because they haven't finished the
     // required degree yet — motivational, not a dead end.
