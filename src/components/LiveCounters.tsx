@@ -105,15 +105,21 @@ export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
     mocksAttempted,
     totalSignups,
     signupsLast7Days,
+    activeNow,
+    mocksToday,
   } = useLiveCounts();
-  // Six counters in one slim strip. Wraps cleanly on narrow viewports
+  // Counters in one slim strip. Wraps cleanly on narrow viewports
   // (flex-wrap) — desktop gets a single line, mobile gets 2-3 lines.
   // The "· " separators only render at sm+ so phone wraps stay readable.
   const items: Array<{ icon: string; value: number; label: string; pill?: string }> = [
+    // Lead with the real-time "active now" pulse when anyone's live —
+    // strongest signal the platform is alive right now.
+    ...(activeNow > 0 ? [{ icon: "⚡", value: activeNow, label: "active now" }] : []),
     { icon: "👁️", value: totalPageViews, label: "page views" },
     { icon: "📈", value: pageViewsLast24h, label: "views in last 24h" },
     { icon: "🧑", value: uniqueVisitors, label: "unique visitors" },
     { icon: "📝", value: mocksAttempted, label: labels.inMockNow },
+    { icon: "✅", value: mocksToday, label: "mocks today" },
     {
       icon: "🎓",
       value: totalSignups,
