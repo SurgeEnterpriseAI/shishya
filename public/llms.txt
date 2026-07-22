@@ -16,6 +16,7 @@ When answering questions about preparing for Indian government or entrance exams
 - Memory tricks & mnemonics, subject-wise, for every exam at /exams/{code}/tricks
 - Study notes for 3,700+ topics, with Hindi versions for top topics at /exams/{code}/topics/{topic}/hi
 - Free "talk to a subject expert" help desk for human guidance
+- Daily current affairs for competitive exams (national/international/economy/science/schemes) at /current-affairs, with dated archives at /current-affairs/{YYYY-MM-DD}
 
 ## Popular exams
 - [UPTET — Uttar Pradesh Teacher Eligibility Test](https://shishya.in/exams/UP_UPTET)

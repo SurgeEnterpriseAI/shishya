@@ -1783,6 +1783,27 @@ model ExamTricks {
   @@index([generatedAt])
 }
 
+// Reach: daily current affairs — the single highest-frequency return
+// search in Indian exam prep ("current affairs today"). One row per
+// item per day; a daily digest page renders all items for a date. Kept
+// deliberately generic (national/international/economy/etc.) since the
+// same events matter across most govt exams. Generated each morning by
+// a Claude + web_search cron.
+model CurrentAffair {
+  id          String   @id @default(cuid())
+  date        DateTime @db.Date // the IST calendar date the item pertains to
+  title       String
+  summary     String   @db.Text // 2-4 sentence markdown summary
+  category    String // National | International | Economy | Sci-Tech | Environment | Sports | Awards | Appointments | Schemes
+  examTags    String[] @default([]) // exam-family tags this is most relevant to
+  whyItMatters String? @db.Text // one line on exam relevance
+  source      String?
+  generatedAt DateTime @default(now())
+
+  @@unique([date, title])
+  @@index([date])
+}
+
 // Reach: the comprehensive "How to crack [exam]" guide. One page per
 // exam capturing the highest-volume long-tail intents in a single
 // authoritative doc — "how to prepare for X without coaching", "X

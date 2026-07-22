@@ -101,6 +101,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "monthly" as const,
     priority: 0.75,
   }));
+  // Daily current-affairs pages — every date that has content.
+  const caDates = await prisma
+    .$queryRaw<{ d: Date }[]>`SELECT DISTINCT date AS d FROM "CurrentAffair" ORDER BY date DESC LIMIT 400`
+    .catch(() => [] as { d: Date }[]);
+  const currentAffairsUrls: MetadataRoute.Sitemap = caDates.map((r) => {
+    const iso = r.d.toISOString().slice(0, 10);
+    return {
+      url: `${base}/current-affairs/${iso}`,
+      lastModified: r.d,
+      changeFrequency: "daily" as const,
+      priority: 0.6,
+    };
+  });
 
   // Per-exam archive aggregator. One URL per active exam. Index target:
   // "[exam] previous year notifications", "[exam] postponement history".
@@ -253,6 +266,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/scholarships",
     "/exams",
     "/exams/browse",
+    "/current-affairs",
     "/post-graduation",
     "/jobs",
     "/worldwide",
@@ -440,6 +454,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...syllabusUrls,
     ...tricksUrls,
     ...guideUrls,
+    ...currentAffairsUrls,
     ...examArchiveUrls,
     ...phaseUrls,
     ...pyqUrls,
