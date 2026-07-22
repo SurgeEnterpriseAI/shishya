@@ -8,12 +8,12 @@ const T = 20_000; // arbitrary "today" day-index
 
 describe("computeStreak", () => {
   it("returns zeros with no activity", () => {
-    expect(computeStreak(new Set(), T)).toEqual({ current: 0, best: 0, activeToday: false });
+    expect(computeStreak(new Set(), T)).toMatchObject({ current: 0, best: 0, activeToday: false });
   });
 
   it("counts a single active day today as a 1-day streak", () => {
     const s = computeStreak(new Set([T]), T);
-    expect(s).toEqual({ current: 1, best: 1, activeToday: true });
+    expect(s).toMatchObject({ current: 1, best: 1, activeToday: true });
   });
 
   it("keeps yesterday's streak alive when today is not yet active", () => {
@@ -30,7 +30,7 @@ describe("computeStreak", () => {
 
   it("extends through today when active today and yesterday", () => {
     const s = computeStreak(new Set([T - 1, T]), T);
-    expect(s).toEqual({ current: 2, best: 2, activeToday: true });
+    expect(s).toMatchObject({ current: 2, best: 2, activeToday: true });
   });
 
   it("best streak survives in history even when current is shorter", () => {
@@ -42,6 +42,32 @@ describe("computeStreak", () => {
   it("duplicate activity on the same day counts once", () => {
     const s = computeStreak(new Set([T, T]), T);
     expect(s.current).toBe(1);
+  });
+
+  it("builds last7 oldest-first with today at index 6", () => {
+    const s = computeStreak(new Set([T, T - 6]), T);
+    expect(s.last7).toEqual([true, false, false, false, false, false, true]);
+  });
+
+  it("computes the next milestone and distance to it", () => {
+    const s = computeStreak(new Set([T - 1, T]), T); // current 2
+    expect(s.nextMilestone).toBe(3);
+    expect(s.toNextMilestone).toBe(1);
+  });
+
+  it("flags hitMilestoneToday exactly on a milestone reached today", () => {
+    const three = computeStreak(new Set([T - 2, T - 1, T]), T); // current 3, active today
+    expect(three.hitMilestoneToday).toBe(true);
+    const four = computeStreak(new Set([T - 3, T - 2, T - 1, T]), T); // current 4
+    expect(four.hitMilestoneToday).toBe(false);
+  });
+
+  it("has no next milestone past the top of the ladder", () => {
+    const days = new Set<number>();
+    for (let i = 0; i < 100; i++) days.add(T - i);
+    const s = computeStreak(days, T);
+    expect(s.current).toBe(100);
+    expect(s.nextMilestone).toBeNull();
   });
 });
 

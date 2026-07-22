@@ -17,8 +17,9 @@ import { TwoPathsCard } from "./TwoPathsCard";
 import { QuickStartDiagnostic } from "./QuickStartDiagnostic";
 import { captureSignupAttribution } from "@/lib/signup-attribution";
 import { getDueRevisions } from "@/lib/db/revision-due";
-import { getStudyStreak } from "@/lib/db/streak";
+import { getStudyStreak, type StudyStreak } from "@/lib/db/streak";
 import { DailyFiveCard } from "./DailyFiveCard";
+import { StreakCard } from "./StreakCard";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 
 export default async function DashboardPage() {
@@ -200,7 +201,14 @@ async function renderDashboard() {
       getDueRevisions(userId, { horizonDays: 1, limit: 5 }).catch(() => []),
       // Study streak — habit anchor next to the greeting. Best-effort: a
       // failure renders no chip, never a broken dashboard.
-      getStudyStreak(userId).catch(() => ({ current: 0, best: 0, activeToday: false })),
+      getStudyStreak(userId).catch(
+        () =>
+          ({
+            current: 0, best: 0, activeToday: false,
+            last7: [false, false, false, false, false, false, false],
+            nextMilestone: 3, toNextMilestone: 3, hitMilestoneToday: false,
+          }) satisfies StudyStreak,
+      ),
     ]);
 
   // Pick today's brief for the recommended-exam slot. Prefer the brief
@@ -334,6 +342,9 @@ async function renderDashboard() {
     defence:        t("land.tag.defence"),
   };
 
+  // IST day-of-week (0=Sun) for labelling the streak card's dot calendar.
+  const istTodayDow = new Date(Date.now() + 5.5 * 3600_000).getUTCDay();
+
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
@@ -347,20 +358,6 @@ async function renderDashboard() {
               {t("dash.welcome")} {session.user.name?.split(" ")[0] ?? "Shishya"}.
             </h1>
             <p className="mt-1 text-sm text-ink-600">{t("dash.subtitle")}</p>
-            {/* Study streak chip — the habit anchor. Hidden until the
-                first active day so new users aren't greeted with a zero. */}
-            {streak.current > 0 && (
-              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">
-                <span aria-hidden>🔥</span>
-                {streak.current} {streak.current === 1 ? t("dash.streak.day") : t("dash.streak.days")}
-                {!streak.activeToday && (
-                  <span className="font-normal text-amber-700">· {t("dash.streak.keep")}</span>
-                )}
-                {streak.best > streak.current && (
-                  <span className="font-normal text-amber-700">· {t("dash.streak.best")} {streak.best}</span>
-                )}
-              </p>
-            )}
           </div>
           {enrollments.length > 0 && (
             <Link
@@ -394,6 +391,14 @@ async function renderDashboard() {
               Choose my exam →
             </Link>
           </section>
+        )}
+
+        {/* Streak card — the habit anchor, always visible for enrolled
+            users (even at zero: the zero-state invites day 1). Sits right
+            above the Daily 5 so "don't break your streak" flows straight
+            into the one-tap action that keeps it. */}
+        {enrollments.length > 0 && (
+          <StreakCard streak={streak} todayDow={istTodayDow} />
         )}
 
         {/* THE DAILY 5 — retention anchor (Jul 20 checkpoint: D1-7 return

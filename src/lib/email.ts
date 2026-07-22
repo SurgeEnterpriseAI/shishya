@@ -387,12 +387,28 @@ export async function sendDailyFiveEmail(p: {
   to: string;
   name: string | null;
   examShort: string;
+  /** Current streak (days). When ≥2, the email leads with loss-aversion
+   *  — the single strongest reason-to-return we can put in a subject line. */
+  streakCurrent?: number;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
-  const subject = `☀️ ${first}, your Daily 5 for ${p.examShort} is ready`;
+  const streak = p.streakCurrent ?? 0;
+  const hasStreak = streak >= 2;
+
+  const subject = hasStreak
+    ? `🔥 ${first}, don't break your ${streak}-day streak`
+    : `☀️ ${first}, your Daily 5 for ${p.examShort} is ready`;
+
+  const streakLineText = hasStreak
+    ? `You're on a ${streak}-day streak. 3 minutes today keeps it alive — miss today and it resets to zero.`
+    : `~3 minutes, and it starts building your daily streak.`;
+  const streakLineHtml = hasStreak
+    ? `You're on a <strong>${streak}-day streak</strong> 🔥 — 3 minutes today keeps it alive. Miss today and it resets to zero.`
+    : `About 3 minutes — and it starts building your daily streak. 🔥`;
+
   const text = `${first},
 
-Your Daily 5 is ready — 5 quick questions on your weakest ${p.examShort} topic. ~3 minutes, keeps your streak alive.
+Your Daily 5 is ready — 5 quick questions on your weakest ${p.examShort} topic. ${streakLineText}
 
 Start now: https://shishya.in/dashboard
 
@@ -404,10 +420,10 @@ Small daily reps are how toppers are made. See you inside.
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a;">
   <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
-    <div style="font-weight:700;font-size:18px;">☀️ Your Daily 5 is ready</div>
+    <div style="font-weight:700;font-size:18px;">${hasStreak ? `🔥 Keep your ${streak}-day streak alive` : "☀️ Your Daily 5 is ready"}</div>
     <p style="font-size:14px;line-height:1.6;margin:14px 0;">
-      ${first}, 5 quick questions on your weakest <strong>${p.examShort}</strong> topic are waiting —
-      about 3 minutes, and your streak stays alive. 🔥
+      ${first}, 5 quick questions on your weakest <strong>${p.examShort}</strong> topic are waiting.
+      ${streakLineHtml}
     </p>
     <a href="https://shishya.in/dashboard"
        style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">

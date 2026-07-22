@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { sendDailyFiveEmail } from "@/lib/email";
+import { computeStreak, istDay } from "@/lib/db/streak";
 
 const MAX_SENDS = 200;
 
@@ -80,13 +81,44 @@ export async function GET(req: Request) {
     take: MAX_SENDS,
   });
 
+  // Batch-compute each recipient's streak (two queries total, not two
+  // per user) so the email can lead with loss-aversion when a streak is
+  // actually live. 90-day window matches getStudyStreak.
+  const userIds = users.map((u) => u.id);
+  const since = new Date(now.getTime() - 90 * 86_400_000);
+  const [attempts, chats] = await Promise.all([
+    prisma.attempt.findMany({
+      where: {
+        userId: { in: userIds },
+        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+        finishedAt: { gte: since },
+      },
+      select: { userId: true, finishedAt: true },
+    }),
+    prisma.chatSession.findMany({
+      where: { userId: { in: userIds }, createdAt: { gte: since } },
+      select: { userId: true, createdAt: true },
+    }),
+  ]);
+  const daysByUser = new Map<string, Set<number>>();
+  const add = (uid: string | null, d: Date | null) => {
+    if (!uid || !d) return;
+    if (!daysByUser.has(uid)) daysByUser.set(uid, new Set());
+    daysByUser.get(uid)!.add(istDay(d));
+  };
+  for (const a of attempts) add(a.userId, a.finishedAt);
+  for (const c of chats) add(c.userId, c.createdAt);
+  const todayIdx = istDay(now);
+
   let sent = 0, failed = 0;
   for (const u of users) {
     if (!u.email || !u.enrollments[0]) continue;
+    const streak = computeStreak(daysByUser.get(u.id) ?? new Set(), todayIdx);
     const ok = await sendDailyFiveEmail({
       to: u.email,
       name: u.name,
       examShort: u.enrollments[0].exam.shortName,
+      streakCurrent: streak.current,
     }).catch(() => false);
     if (ok) sent++; else failed++;
   }

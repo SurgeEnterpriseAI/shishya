@@ -12,6 +12,9 @@ import { prisma } from "@/lib/db/prisma";
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 const WINDOW_DAYS = 90; // streaks longer than this cap at 90 — plenty
 
+/** Streak milestones worth celebrating / racing toward. */
+export const STREAK_MILESTONES = [3, 7, 14, 30, 50, 100] as const;
+
 export interface StudyStreak {
   /** Consecutive active days ending today or yesterday. */
   current: number;
@@ -19,6 +22,19 @@ export interface StudyStreak {
   best: number;
   /** True when the student has already studied today (IST). */
   activeToday: boolean;
+  /**
+   * Activity for the last 7 IST days, oldest first. Index 6 = today.
+   * Drives the dot-calendar on the streak card (the visual that makes
+   * streaks addictive — you can SEE the run and the gap you'd leave).
+   */
+  last7: boolean[];
+  /** Next milestone strictly above `current`, or null past the top one. */
+  nextMilestone: number | null;
+  /** Days remaining to hit `nextMilestone` (0 when none). */
+  toNextMilestone: number;
+  /** True when TODAY's activity just landed the streak exactly on a
+   *  milestone — the moment to celebrate. */
+  hitMilestoneToday: boolean;
 }
 
 /** IST calendar-day index for a timestamp (days since epoch, IST). */
@@ -28,7 +44,15 @@ export function istDay(d: Date): number {
 
 /** Pure streak computation over a set of active day-indexes. Exported for tests. */
 export function computeStreak(activeDays: Set<number>, today: number): StudyStreak {
-  if (activeDays.size === 0) return { current: 0, best: 0, activeToday: false };
+  const last7 = Array.from({ length: 7 }, (_, i) => activeDays.has(today - 6 + i));
+
+  if (activeDays.size === 0) {
+    return {
+      current: 0, best: 0, activeToday: false, last7,
+      nextMilestone: STREAK_MILESTONES[0], toNextMilestone: STREAK_MILESTONES[0],
+      hitMilestoneToday: false,
+    };
+  }
 
   const activeToday = activeDays.has(today);
 
@@ -50,7 +74,16 @@ export function computeStreak(activeDays: Set<number>, today: number): StudyStre
     if (run > best) best = run;
   }
 
-  return { current, best: Math.max(best, current), activeToday };
+  const nextMilestone = STREAK_MILESTONES.find((m) => m > current) ?? null;
+  return {
+    current,
+    best: Math.max(best, current),
+    activeToday,
+    last7,
+    nextMilestone,
+    toNextMilestone: nextMilestone ? nextMilestone - current : 0,
+    hitMilestoneToday: activeToday && (STREAK_MILESTONES as readonly number[]).includes(current),
+  };
 }
 
 export async function getStudyStreak(userId: string): Promise<StudyStreak> {
