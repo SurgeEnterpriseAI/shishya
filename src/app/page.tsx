@@ -752,15 +752,15 @@ function StepGoals({
 
   return (
     <div>
-      {/* "At a glance" content-depth band — fills the space above the
-          finder card with the encouraging scale numbers (exams, questions,
-          notes, languages, free) that attract a first-time visitor. */}
-      <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />
-
-      {/* Finder card — the "I want a govt job but which one?" entry leads
-          with the live vacancy count + fit promise, above the pick-your-
-          exam hero + goal tiles (zero friction for those who know it). */}
-      <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
+      {/* Two-column hero: the finder card (main) + the "at a glance"
+          content-depth numbers (side). Stacks on mobile — card first,
+          numbers below. Leads the page above the pick-your-exam picker. */}
+      <div className="grid items-stretch gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
+        </div>
+        <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />
+      </div>
 
       <div className="mx-auto mt-12 max-w-3xl text-center">
         <p className="inline-flex items-center gap-2 rounded-full bg-saffron-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-saffron-800">

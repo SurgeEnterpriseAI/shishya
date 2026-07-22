@@ -18,7 +18,7 @@ export function VacancyFinderCard({
   return (
     <Link
       href="/find-your-exam"
-      className="group mt-8 block overflow-hidden rounded-2xl border-2 border-saffron-300 bg-gradient-to-br from-saffron-50 via-amber-50 to-white p-5 shadow-sm transition-all hover:border-saffron-500 hover:shadow-md sm:p-6"
+      className="group flex h-full flex-col justify-center overflow-hidden rounded-2xl border-2 border-saffron-300 bg-gradient-to-br from-saffron-50 via-amber-50 to-white p-5 shadow-sm transition-all hover:border-saffron-500 hover:shadow-md sm:p-6"
     >
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
