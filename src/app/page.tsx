@@ -726,7 +726,13 @@ function StepGoals({
 
   return (
     <div>
-      <div className="mx-auto max-w-3xl text-center">
+      {/* Finder card FIRST — the "I want a govt job but which one?" entry
+          leads the page with the live vacancy count + fit promise. The
+          pick-your-exam hero + goal tiles follow for people who already
+          know their exam (zero friction for them). */}
+      <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
+
+      <div className="mx-auto mt-12 max-w-3xl text-center">
         <p className="inline-flex items-center gap-2 rounded-full bg-saffron-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-saffron-800">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-saffron-500" aria-hidden />
           Step 1 of 2
@@ -743,12 +749,6 @@ function StepGoals({
           </span>
         </p>
       </div>
-
-      {/* Prominent entry for the "I want a govt job but which one?"
-          newcomer — leads with the live vacancy count + fit promise.
-          Sits above the goal cards; does NOT replace search / goal
-          tiles, so people who already know their exam lose no time. */}
-      <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
 
       {/* ── Signed-out signup CTA banner ──────────────────────────
           Visitors who scrolled past the hero see this; one tap →
