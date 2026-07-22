@@ -1,8 +1,7 @@
-// "Shishya at a glance" — content-depth numbers shown as a compact
-// vertical panel beside the finder card (two-column hero). These are the
-// trust/attraction figures a new visitor needs: how much is here, in how
-// many languages, and that it's free — complementing the LIVE activity
-// strip (which shows real-time traffic).
+// "Shishya at a glance" — content-depth numbers as a full-width band of
+// tiles below the finder card. The trust/attraction figures a new
+// visitor needs (how much is here, how many languages, that it's free),
+// complementing the LIVE activity strip which shows real-time traffic.
 
 interface Stat {
   value: string;
@@ -27,23 +26,22 @@ export function PortalStatsBand({
     { icon: "🆓", value: "₹0", label: "Always free" },
   ];
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-ink-200 bg-white/70 p-4 shadow-sm">
+    <div>
       <p className="text-center text-[11px] font-semibold uppercase tracking-wider text-ink-400">
-        Shishya at a glance
+        Everything you need to crack it — in one free place
       </p>
-      <ul className="mt-3 flex flex-1 flex-col justify-between gap-2.5">
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
         {stats.map((s) => (
-          <li key={s.label} className="flex items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-saffron-50 text-base" aria-hidden>
-              {s.icon}
-            </span>
-            <span className="flex min-w-0 items-baseline gap-1.5">
-              <span className="text-lg font-bold tabular-nums text-saffron-700">{s.value}</span>
-              <span className="truncate text-xs font-medium text-ink-600">{s.label}</span>
-            </span>
-          </li>
+          <div
+            key={s.label}
+            className="flex flex-col items-center rounded-xl border border-ink-200 bg-white/70 px-2 py-3 text-center shadow-sm"
+          >
+            <span className="text-lg" aria-hidden>{s.icon}</span>
+            <span className="mt-0.5 text-xl font-bold tabular-nums text-saffron-700 sm:text-2xl">{s.value}</span>
+            <span className="mt-0.5 text-[11px] font-medium leading-tight text-ink-600">{s.label}</span>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

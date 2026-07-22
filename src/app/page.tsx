@@ -752,13 +752,11 @@ function StepGoals({
 
   return (
     <div>
-      {/* Two-column hero: the finder card (main) + the "at a glance"
-          content-depth numbers (side). Stacks on mobile — card first,
-          numbers below. Leads the page above the pick-your-exam picker. */}
-      <div className="grid items-stretch gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
-        </div>
+      {/* Row 1 — finder card (the "I want a govt job but which one?"
+          entry). Row 2 — "at a glance" content-depth numbers. Both full
+          width, above the pick-your-exam picker. */}
+      <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
+      <div className="mt-6">
         <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />
       </div>
 
