@@ -46,6 +46,7 @@ import { HomeChatRouter } from "@/components/HomeChatRouter";
 import { PageTour } from "@/components/PageTour";
 import { UpcomingExamsSidebar, type UpcomingEvent, type CalendarBucket } from "@/components/UpcomingExamsSidebar";
 import { VacancyFinderCard } from "@/components/VacancyFinderCard";
+import { PortalStatsBand } from "@/components/PortalStatsBand";
 import { VacancyExplorerSidebar, VacancyExplorerPanel } from "@/components/VacancyExplorer";
 import { loadVacancyExplorer, type VacancyExplorer } from "@/lib/vacancy-explorer";
 import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
@@ -324,6 +325,28 @@ const loadVacancyExplorerCached = unstable_cache(
   { revalidate: 86400 },
 );
 
+// "Shishya at a glance" content-depth stats for the homepage band —
+// real counts, rounded DOWN to an honest "+" figure. Cached daily.
+async function loadPortalStatsRaw(): Promise<{ examCount: number; questions: string; notes: string }> {
+  try {
+    const [ex, q, n] = await Promise.all([
+      prisma.exam.count({ where: { active: true, category: { not: "SCHOOL_BOARD" } } }),
+      prisma.question.count(),
+      prisma.$queryRaw<{ c: bigint }[]>`SELECT COUNT(*)::bigint AS c FROM "TopicTeachingNote"`,
+    ]);
+    const notesCount = Number(n[0]?.c ?? 0);
+    const floorTo = (v: number, step: number) => Math.floor(v / step) * step;
+    return {
+      examCount: ex,
+      questions: `${floorTo(q, 1000).toLocaleString("en-IN")}+`,
+      notes: `${floorTo(notesCount, 100).toLocaleString("en-IN")}+`,
+    };
+  } catch {
+    return { examCount: 177, questions: "30,000+", notes: "3,700+" };
+  }
+}
+const loadPortalStats = unstable_cache(loadPortalStatsRaw, ["home-portal-stats-v1"], { revalidate: 86400 });
+
 export default async function ExamsPage({
   searchParams,
 }: {
@@ -332,11 +355,12 @@ export default async function ExamsPage({
   const sp = await searchParams;
   const { t } = await getT();
 
-  const [signedIn, exams, calendar, vacancy] = await Promise.all([
+  const [signedIn, exams, calendar, vacancy, portalStats] = await Promise.all([
     auth().then((s) => Boolean(s?.user)).catch(() => false),
     loadExams(),
     loadUpcomingEvents(),
     loadVacancyExplorerCached(),
+    loadPortalStats(),
   ]);
   const upcomingEvents = calendar.events;
   const vacancyStats = { totalLakh: vacancy.totalLakh, examCount: vacancy.examCount };
@@ -508,7 +532,7 @@ export default async function ExamsPage({
         <section className="container-prose pt-10 pb-20 sm:pt-14">
           <Breadcrumbs goal={goal} scope={effectiveScope} stateCode={stateCode} />
 
-          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} />}
+          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} />}
           {step === "scope" && goal && (
             <StepScope
               goal={goal}
@@ -690,11 +714,13 @@ function StepGoals({
   t,
   signedIn,
   vacancyStats,
+  portalStats,
 }: {
   exams: ExamCard[];
   t: (key: SectionTitleKey) => string;
   signedIn: boolean;
   vacancyStats: { totalLakh: string; examCount: number };
+  portalStats: { examCount: number; questions: string; notes: string };
 }) {
   // 27 May 2026 funnel telemetry — 96 signups, 0 mock attempts in
   // last 24h. The page leads visitors into a goal funnel but never
@@ -726,10 +752,14 @@ function StepGoals({
 
   return (
     <div>
-      {/* Finder card FIRST — the "I want a govt job but which one?" entry
-          leads the page with the live vacancy count + fit promise. The
-          pick-your-exam hero + goal tiles follow for people who already
-          know their exam (zero friction for them). */}
+      {/* "At a glance" content-depth band — fills the space above the
+          finder card with the encouraging scale numbers (exams, questions,
+          notes, languages, free) that attract a first-time visitor. */}
+      <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />
+
+      {/* Finder card — the "I want a govt job but which one?" entry leads
+          with the live vacancy count + fit promise, above the pick-your-
+          exam hero + goal tiles (zero friction for those who know it). */}
       <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
 
       <div className="mx-auto mt-12 max-w-3xl text-center">
