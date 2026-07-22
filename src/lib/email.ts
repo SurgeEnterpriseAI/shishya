@@ -22,6 +22,15 @@ import { Resend } from "resend";
 const apiKey = process.env.RESEND_API_KEY;
 const from = process.env.EMAIL_FROM ?? "Shishya <tutor@shishya.in>";
 
+// Founder oversight: BCC the founder on every outbound email so there's
+// a full record of what candidates receive. Env-overridable (set
+// FOUNDER_BCC="" to turn it off, or to a different / comma-separated
+// list). BCC — never To/Cc — so candidates never see this address.
+const founderBcc = (process.env.FOUNDER_BCC ?? "venumuvva@gmail.com")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 // Lazy-init so a missing key at import time doesn't crash the
 // build. We just refuse to send at the call site.
 let _client: Resend | null = null;
@@ -56,12 +65,16 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
     return false;
   }
   try {
+    // Don't BCC the founder onto an email that IS already addressed to
+    // them (growth report, teacher-request alerts) — avoids a duplicate.
+    const bcc = founderBcc.filter((a) => a.toLowerCase() !== payload.to.toLowerCase());
     const res = await c.emails.send({
       from,
       to: payload.to,
       subject: payload.subject,
       html: payload.html,
       text: payload.text,
+      bcc: bcc.length > 0 ? bcc : undefined,
       tags: payload.tag ? [{ name: "kind", value: payload.tag }] : undefined,
     });
     if ("error" in res && res.error) {
