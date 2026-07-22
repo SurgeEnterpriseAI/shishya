@@ -60,6 +60,7 @@ export async function GET() {
     lines.push(`- Full syllabus + study notes: ${SITE}/exams/${e.code}/syllabus`);
     lines.push(`- Expected cutoff incl. category-wise (Gen/EWS/OBC/SC/ST): ${SITE}/exams/${e.code}/cutoff`);
     lines.push(`- Memory tricks & mnemonics: ${SITE}/exams/${e.code}/tricks`);
+    lines.push(`- How to crack it (prep without coaching, study plan, difficulty, salary): ${SITE}/exams/${e.code}/guide`);
     lines.push("");
   }
 

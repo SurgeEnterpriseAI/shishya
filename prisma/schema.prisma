@@ -173,6 +173,7 @@ model Exam {
   rankBands      ExamRankBand[]
   categoryCutoff ExamCategoryCutoff?
   tricks         ExamTricks?
+  guide          ExamGuide?
   phaseArticles  ExamPhaseArticle[]
   reviewStates   ReviewState[]
 
@@ -1774,6 +1775,24 @@ model ExamTricks {
   id          String   @id @default(cuid())
   examId      String   @unique
   content     String   @db.Text // markdown: ## subject sections + bullet tricks
+  generatedAt DateTime @default(now())
+  generatedBy String?
+
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([generatedAt])
+}
+
+// Reach: the comprehensive "How to crack [exam]" guide. One page per
+// exam capturing the highest-volume long-tail intents in a single
+// authoritative doc — "how to prepare for X without coaching", "X
+// study plan", "is X tough for average students", "X salary & job
+// profile". Rendered at /exams/[code]/guide.
+model ExamGuide {
+  id          String   @id @default(cuid())
+  examId      String   @unique
+  content     String   @db.Text // markdown: ## sections (prep / plan / difficulty / salary / FAQ)
+  faq         Json? // [{q, a}] extracted for FAQPage schema
   generatedAt DateTime @default(now())
   generatedBy String?
 

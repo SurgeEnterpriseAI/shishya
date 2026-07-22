@@ -498,6 +498,12 @@ export default async function ExamPage({
           >
             🧠 Tricks &amp; mnemonics
           </Link>
+          <Link
+            href={`/exams/${exam.code}/guide`}
+            className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
+          >
+            📖 How to crack it
+          </Link>
         </div>
 
         {/* WhatsApp-first share — aspirants organise prep in WhatsApp

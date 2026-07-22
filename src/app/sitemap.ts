@@ -88,6 +88,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
+  // "How to crack [exam]" guides — only exams with generated content.
+  const guideExams = await prisma
+    .$queryRaw<{ code: string }[]>`
+      SELECT e.code FROM "Exam" e
+      JOIN "ExamGuide" g ON g."examId" = e.id
+      WHERE e.active = TRUE
+    `.catch(() => [] as { code: string }[]);
+  const guideUrls: MetadataRoute.Sitemap = guideExams.map((e) => ({
+    url: `${base}/exams/${e.code}/guide`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.75,
+  }));
 
   // Per-exam archive aggregator. One URL per active exam. Index target:
   // "[exam] previous year notifications", "[exam] postponement history".
@@ -426,6 +439,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...cutoffUrls,
     ...syllabusUrls,
     ...tricksUrls,
+    ...guideUrls,
     ...examArchiveUrls,
     ...phaseUrls,
     ...pyqUrls,
