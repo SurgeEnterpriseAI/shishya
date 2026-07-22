@@ -44,8 +44,10 @@ import { HomeSearch } from "@/components/HomeSearch";
 import { HomeFeatureCards } from "@/components/HomeFeatureCards";
 import { HomeChatRouter } from "@/components/HomeChatRouter";
 import { PageTour } from "@/components/PageTour";
-import { UpcomingExamsSidebar, type UpcomingEvent, type CalendarBucket } from "@/components/UpcomingExamsSidebar";
+import { type UpcomingEvent, type CalendarBucket } from "@/components/UpcomingExamsSidebar";
 import { VacancyFinderCard } from "@/components/VacancyFinderCard";
+import { VacancyExplorerSidebar, VacancyExplorerPanel } from "@/components/VacancyExplorer";
+import { loadVacancyExplorer, type VacancyExplorer } from "@/lib/vacancy-explorer";
 import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
 import { resolvePhase, istDayNumber } from "@/lib/exam-phase";
 import { EXAM_GOALS, findGoal, matchesGoal, type ExamGoal } from "@/data/exam-goals";
@@ -331,31 +333,24 @@ const loadUpcomingEvents = unstable_cache(
   { revalidate: 300, tags: ["exam-dates"] },
 );
 
-// Live government-job vacancy total for the homepage finder hero.
-// Sums ExamEligibility vacancies across government-JOB exams only
-// (same tag filter as /find-your-exam) so the headline number stays
-// honest and updates as eligibility data is refreshed. Cached daily.
-async function loadGovtVacancyStatsRaw(): Promise<{ totalLakh: string; examCount: number }> {
+// Live government-vacancy explorer data — powers both the homepage
+// finder hero (total + count) and the left-rail Government Vacancies
+// widget (national / state / category drill-down). Cached daily; a DB
+// blip falls back to an empty-but-safe shape.
+const EMPTY_VACANCY: VacancyExplorer = {
+  grandTotal: 0, totalLakh: "0.0", examCount: 0,
+  national: { total: 0, exams: [] }, states: [], categories: [],
+};
+async function loadVacancyExplorerSafe(): Promise<VacancyExplorer> {
   try {
-    const rows = await prisma.$queryRaw<{ code: string; category: string; state: string | null; v: number | null }[]>`
-      SELECT e.code, e.category::text AS category, e.state, x."vacanciesApprox" AS v
-      FROM "ExamEligibility" x JOIN "Exam" e ON e.id = x."examId"
-      WHERE e.active = TRUE
-    `;
-    const JOB = new Set(["govt", "banking", "teaching", "police", "civil_services", "defence"]);
-    let sum = 0, n = 0;
-    for (const r of rows) {
-      const tags = computeExamTags({ code: r.code, category: r.category, state: r.state });
-      if (tags.some((t) => JOB.has(t))) { sum += r.v ?? 0; n++; }
-    }
-    return { totalLakh: (sum / 100_000).toFixed(1), examCount: n };
+    return await loadVacancyExplorer();
   } catch {
-    return { totalLakh: "4.6", examCount: 140 };
+    return EMPTY_VACANCY;
   }
 }
-const loadGovtVacancyStats = unstable_cache(
-  loadGovtVacancyStatsRaw,
-  ["home-govt-vacancies-v1"],
+const loadVacancyExplorerCached = unstable_cache(
+  loadVacancyExplorerSafe,
+  ["home-vacancy-explorer-v1"],
   { revalidate: 86400 },
 );
 
@@ -367,14 +362,15 @@ export default async function ExamsPage({
   const sp = await searchParams;
   const { t } = await getT();
 
-  const [signedIn, exams, initialThreads, calendar, vacancyStats] = await Promise.all([
+  const [signedIn, exams, initialThreads, calendar, vacancy] = await Promise.all([
     auth().then((s) => Boolean(s?.user)).catch(() => false),
     loadExams(),
     loadInitialThreads(),
     loadUpcomingEvents(),
-    loadGovtVacancyStats(),
+    loadVacancyExplorerCached(),
   ]);
   const upcomingEvents = calendar.events;
+  const vacancyStats = { totalLakh: vacancy.totalLakh, examCount: vacancy.examCount };
 
   // SEO/AEO: schema.org Event markup for the upcoming exam days —
   // Google event rich-results + a machine-readable date list AI
@@ -467,7 +463,11 @@ export default async function ExamsPage({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(examDatesJsonLd) }}
         />
       )}
-      <UpcomingExamsSidebar events={upcomingEvents} defaultTab={calendar.defaultTab} />
+      {/* Left rail: live Government Vacancies explorer (national / state /
+          category drill-down → exam hub → sign up → personalised funnel).
+          Replaced the exam calendar here. Exam-cycle info (concluded /
+          upcoming / cutoffs) still lives on each exam's page. */}
+      <VacancyExplorerSidebar data={vacancy} />
 
       <DiscussionsSidebar
         initial={initialThreads}
@@ -597,7 +597,24 @@ export default async function ExamsPage({
               same content inline here as horizontal-scroll + vertical
               list cards, so visitors see the social-proof + calendar
               without hunting for a FAB. */}
-          <MobileInlineRails events={upcomingEvents} threads={initialThreads} />
+          {/* Mobile: the vacancy explorer sits above discussions, mirroring
+              the desktop left rail. */}
+          {vacancy.grandTotal > 0 && (
+            <div className="mt-14 overflow-hidden rounded-lg border border-ink-200 bg-white shadow-sm lg:hidden">
+              <div className="flex items-center justify-between border-b border-ink-200 bg-ink-50/40 px-4 py-2.5">
+                <h3 className="flex items-center gap-1.5 text-sm font-semibold text-ink-900">
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+                  Government vacancies
+                </h3>
+              </div>
+              <div className="flex h-[26rem] flex-col">
+                <VacancyExplorerPanel data={vacancy} />
+              </div>
+            </div>
+          )}
+          {/* Calendar strip removed on mobile too — the vacancy explorer
+              above replaces it; MobileInlineRails now carries discussions. */}
+          <MobileInlineRails events={[]} threads={initialThreads} />
         </section>
       </div>
     </main>
