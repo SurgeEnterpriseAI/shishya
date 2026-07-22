@@ -26,9 +26,9 @@ export function VacancyFinderCard({
             🎯 Find your government job
           </p>
           <p className="mt-2 text-lg font-bold leading-snug text-ink-900 sm:text-xl">
-            India has{" "}
-            <span className="text-saffron-700">~{totalLakh} lakh government vacancies</span>{" "}
-            a year across {examCount}+ exams.
+            India, as on today, has{" "}
+            <span className="text-saffron-700">~{totalLakh} lakh government job vacancies</span>{" "}
+            across {examCount}+ exams.
             <br className="hidden sm:block" />{" "}
             Which one best fits <span className="underline decoration-saffron-400 decoration-2 underline-offset-2">your strengths</span>?
           </p>

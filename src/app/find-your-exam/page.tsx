@@ -128,7 +128,7 @@ export default async function FindYourExamPage({
       <section className="container-prose py-8 sm:py-10">
         <h1 className="text-2xl font-bold text-ink-900 sm:text-3xl">
           {totalVacancies > 0
-            ? `~${totalLakh} lakh government vacancies a year. Which ones can YOU crack?`
+            ? `India, as on today, has ~${totalLakh} lakh government job vacancies. Which ones can YOU crack?`
             : "Which government exam is right for YOU?"}
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
