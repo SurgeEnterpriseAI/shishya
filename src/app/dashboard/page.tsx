@@ -20,6 +20,7 @@ import { getDueRevisions } from "@/lib/db/revision-due";
 import { getStudyStreak, type StudyStreak } from "@/lib/db/streak";
 import { DailyFiveCard } from "./DailyFiveCard";
 import { StreakCard } from "./StreakCard";
+import { InviteFriendsCard } from "./InviteFriendsCard";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 
 export default async function DashboardPage() {
@@ -790,6 +791,17 @@ async function renderDashboard() {
               />
             </div>
           </section>
+        )}
+
+        {/* Word-of-mouth loop — a gentle invite at the bottom of the
+            dashboard. Turns an engaged user into a recruiter; how
+            "Shishya = govt exams" spreads through WhatsApp prep groups. */}
+        {enrollments.length > 0 && (
+          <InviteFriendsCard
+            examShort={weakest3[0]?.exam.shortName ?? recommendedExam?.short ?? enrollments[0].exam.shortName}
+            examCode={weakest3[0]?.exam.code ?? recommendedExam?.code ?? enrollments[0].exam.code}
+            firstName={session.user.name?.split(" ")[0] ?? null}
+          />
         )}
       </section>
     </main>
