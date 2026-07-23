@@ -93,15 +93,14 @@ export function HomeChatRouter() {
 
   return (
     <>
-      {/* ── Vertical side tab, right edge, vertically centred (sticky). On
-          lg it sits just left of the calendar rail (right-[20rem]); on
-          mobile it hugs the right edge. ── */}
+      {/* ── Vertical side tab pinned to the right-most edge, vertically
+          centred (sticky), on every breakpoint. ── */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Open the Ask-Shishya helper"
         data-tour="home-chat-fab"
-        className="fixed right-0 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2 rounded-l-xl bg-ink-900 px-2 py-4 text-sm font-medium text-white shadow-lg ring-1 ring-ink-900/20 transition-colors hover:bg-ink-800 lg:right-[20rem]"
+        className="fixed right-0 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2 rounded-l-xl bg-ink-900 px-2 py-4 text-sm font-medium text-white shadow-lg ring-1 ring-ink-900/20 transition-colors hover:bg-ink-800"
       >
         <span aria-hidden>🤖</span>
         <span className="hidden [writing-mode:vertical-rl] sm:inline">What are you looking for?</span>
