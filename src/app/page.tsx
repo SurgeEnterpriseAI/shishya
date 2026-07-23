@@ -310,7 +310,7 @@ const loadUpcomingEvents = unstable_cache(
 // blip falls back to an empty-but-safe shape.
 const EMPTY_VACANCY: VacancyExplorer = {
   grandTotal: 0, totalLakh: "0.0", examCount: 0,
-  national: { total: 0, exams: [] }, states: [], categories: [],
+  national: { total: 0, exams: [] }, states: [], categories: [], updatedAt: null,
 };
 async function loadVacancyExplorerSafe(): Promise<VacancyExplorer> {
   try {

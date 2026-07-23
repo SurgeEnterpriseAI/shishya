@@ -53,6 +53,12 @@ export function VacancyExplorerPanel({ data }: { data: VData }) {
           {fmt(data.grandTotal)}
           <span className="ml-1 text-xs font-medium text-ink-500">≈ {data.totalLakh} lakh / yr</span>
         </p>
+        {data.updatedAt && (
+          <p className="mt-0.5 flex items-center gap-1 text-[10px] text-ink-400">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+            Updated {new Date(data.updatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+          </p>
+        )}
       </div>
 
       {/* Tabs */}

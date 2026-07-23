@@ -240,8 +240,8 @@ export default async function ExamPage({
   // keeps it independent of the Prisma client typegen. Honest framing:
   // our number is indicative; the link is where the truth lives.
   const eligRows = await prisma
-    .$queryRaw<{ vacanciesApprox: number | null; vacanciesNote: string | null; officialUrl: string | null; officialName: string | null }[]>`
-      SELECT "vacanciesApprox", "vacanciesNote", "officialUrl", "officialName"
+    .$queryRaw<{ vacanciesApprox: number | null; vacanciesNote: string | null; officialUrl: string | null; officialName: string | null; generatedAt: Date }[]>`
+      SELECT "vacanciesApprox", "vacanciesNote", "officialUrl", "officialName", "generatedAt"
       FROM "ExamEligibility" WHERE "examId" = ${exam.id} LIMIT 1
     `.catch(() => []);
   const elig = eligRows[0] ?? null;
@@ -540,7 +540,13 @@ export default async function ExamPage({
                 </a>
               )}
             </div>
-            <p className="mt-1 text-[11px] text-ink-500">
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[11px] text-ink-500">
+              {elig?.generatedAt && (
+                <span className="inline-flex items-center gap-1 text-ink-400">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+                  Updated {new Date(elig.generatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} ·
+                </span>
+              )}
               Vacancy counts change every cycle — always confirm the exact number in the latest
               official notification before applying.
             </p>

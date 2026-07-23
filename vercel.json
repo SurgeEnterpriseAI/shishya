@@ -59,6 +59,10 @@
     {
       "path": "/api/cron/telegram-daily",
       "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-vacancies",
+      "schedule": "30 4 * * *"
     }
   ]
 }

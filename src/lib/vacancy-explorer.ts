@@ -38,6 +38,9 @@ export interface VacancyExplorer {
   national: { total: number; exams: VacExam[] };
   states: VacState[];
   categories: VacCategory[];
+  /** ISO timestamp of the most recent vacancy-data refresh (max
+   *  ExamEligibility.generatedAt) — shown as the "updated" stamp. */
+  updatedAt: string | null;
 }
 
 // Standard central-government reservation roster (indicative).
@@ -53,15 +56,20 @@ const STATE_NAME = new Map(INDIAN_STATES.map((s) => [s.code, s.name]));
 
 export async function loadVacancyExplorer(): Promise<VacancyExplorer> {
   const rows = await prisma.$queryRaw<
-    { code: string; short: string; category: string; state: string | null; v: number | null }[]
+    { code: string; short: string; category: string; state: string | null; v: number | null; generatedAt: Date }[]
   >`
-    SELECT e.code, e."shortName" AS short, e.category::text AS category, e.state, x."vacanciesApprox" AS v
+    SELECT e.code, e."shortName" AS short, e.category::text AS category, e.state,
+           x."vacanciesApprox" AS v, x."generatedAt"
     FROM "ExamEligibility" x JOIN "Exam" e ON e.id = x."examId"
     WHERE e.active = TRUE
   `;
 
   const jobs = rows.filter((r) =>
     computeExamTags({ code: r.code, category: r.category, state: r.state }).some((t) => JOB_TAGS.has(t)),
+  );
+  const updatedAt = jobs.reduce<Date | null>(
+    (max, r) => (r.generatedAt && (!max || r.generatedAt > max) ? r.generatedAt : max),
+    null,
   );
 
   const national: VacExam[] = [];
@@ -101,5 +109,6 @@ export async function loadVacancyExplorer(): Promise<VacancyExplorer> {
     national: { total: national.reduce((a, e) => a + e.vac, 0), exams: national },
     states,
     categories,
+    updatedAt: updatedAt ? updatedAt.toISOString() : null,
   };
 }
