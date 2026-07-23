@@ -30,8 +30,9 @@ export interface LiveCounts {
   uniqueVisitors: number;
   /** Total PAGE_VIEW rows. "All-time pageviews" social-proof number. */
   totalPageViews: number;
-  /** PAGE_VIEW rows in the last 24 h. Live "fresh traffic" signal. */
-  pageViewsLast24h: number;
+  /** PAGE_VIEW rows TODAY (since IST midnight). Calendar-day number, not
+   *  a rolling 24 h window — resets each midnight IST. */
+  pageViewsToday: number;
   /** Total mock attempts ever started (any status). */
   mocksAttempted: number;
   /** Total signed-up users. */
@@ -43,20 +44,24 @@ export interface LiveCounts {
    *  ChatMessage / User.createdAt). Powers the small pulsing
    *  "X active right now" line in the sidebar block. */
   activeNow: number;
-  /** Mocks submitted in the last 24h. Live "today's activity" number
-   *  for the sidebar block. */
+  /** Mocks submitted TODAY (since IST midnight). Calendar-day, not a
+   *  rolling 24 h window. */
   mocksToday: number;
 }
 
 export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts> {
   const cutoff30m = new Date(now.getTime() - 30 * 60 * 1000);
-  const cutoff24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const cutoff7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  // Start of TODAY in IST (audience is Indian) — "today's numbers" reset
+  // at IST midnight instead of sliding on a rolling 24 h window.
+  const IST_MS = 5.5 * 3600_000;
+  const istMidnightMs = Math.floor((now.getTime() + IST_MS) / 86_400_000) * 86_400_000;
+  const dayStart = new Date(istMidnightMs - IST_MS);
 
   const [
     uniqueVisitorsRows,
     totalPageViews,
-    pageViewsLast24h,
+    pageViewsToday,
     mocksAttempted,
     totalSignups,
     signupsLast7Days,
@@ -73,9 +78,9 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     // Total PAGE_VIEW rows ever. Reads as "X pageviews so far" social
     // proof — bigger number than uniqueVisitors so visually impressive.
     prisma.analyticsEvent.count({ where: { kind: "PAGE_VIEW" } }),
-    // PAGE_VIEW rows in the last 24 h — live freshness signal.
+    // PAGE_VIEW rows TODAY (since IST midnight).
     prisma.analyticsEvent.count({
-      where: { kind: "PAGE_VIEW", createdAt: { gte: cutoff24h } },
+      where: { kind: "PAGE_VIEW", createdAt: { gte: dayStart } },
     }),
     prisma.attempt.count(),
     prisma.user.count(),
@@ -96,7 +101,7 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     prisma.attempt.count({
       where: {
         status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
-        finishedAt: { gte: cutoff24h },
+        finishedAt: { gte: dayStart },
       },
     }),
   ]);
@@ -104,7 +109,7 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
   return {
     uniqueVisitors: Number(uniqueVisitorsRows[0]?.count ?? 0),
     totalPageViews,
-    pageViewsLast24h,
+    pageViewsToday,
     mocksAttempted,
     totalSignups,
     signupsLast7Days,

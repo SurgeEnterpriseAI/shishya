@@ -13,7 +13,7 @@
 export interface LiveCounts {
   uniqueVisitors: number;
   totalPageViews: number;
-  pageViewsLast24h: number;
+  pageViewsToday: number;
   mocksAttempted: number;
   totalSignups: number;
   signupsLast7Days: number;
@@ -31,7 +31,7 @@ export function getLiveCounts(_now: Date = new Date()): LiveCounts {
   return {
     uniqueVisitors: 370,
     totalPageViews: 1525,
-    pageViewsLast24h: 81,
+    pageViewsToday: 81,
     mocksAttempted: 72,
     totalSignups: 98,
     signupsLast7Days: 14,

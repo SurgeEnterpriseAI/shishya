@@ -42,7 +42,7 @@ const TICK_MS = 30_000;
 const SSR_SAFE_INITIAL: LiveCounts = {
   uniqueVisitors: 370,
   totalPageViews: 1525,
-  pageViewsLast24h: 81,
+  pageViewsToday: 81,
   mocksAttempted: 72,
   totalSignups: 98,
   signupsLast7Days: 14,
@@ -64,7 +64,7 @@ function useLiveCounts(): LiveCounts {
         setCounts((prev) => ({
           uniqueVisitors: data.uniqueVisitors ?? prev.uniqueVisitors,
           totalPageViews: data.totalPageViews ?? prev.totalPageViews,
-          pageViewsLast24h: data.pageViewsLast24h ?? prev.pageViewsLast24h,
+          pageViewsToday: data.pageViewsToday ?? prev.pageViewsToday,
           mocksAttempted: data.mocksAttempted ?? prev.mocksAttempted,
           totalSignups: data.totalSignups ?? prev.totalSignups,
           signupsLast7Days: data.signupsLast7Days ?? prev.signupsLast7Days,
@@ -101,7 +101,7 @@ export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
   const {
     uniqueVisitors,
     totalPageViews,
-    pageViewsLast24h,
+    pageViewsToday,
     mocksAttempted,
     totalSignups,
     signupsLast7Days,
@@ -116,7 +116,7 @@ export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
     // strongest signal the platform is alive right now.
     ...(activeNow > 0 ? [{ icon: "⚡", value: activeNow, label: "active now" }] : []),
     { icon: "👁️", value: totalPageViews, label: "page views" },
-    { icon: "📈", value: pageViewsLast24h, label: "views in last 24h" },
+    { icon: "📈", value: pageViewsToday, label: "views today" },
     { icon: "🧑", value: uniqueVisitors, label: "unique visitors" },
     { icon: "📝", value: mocksAttempted, label: labels.inMockNow },
     { icon: "✅", value: mocksToday, label: "mocks today" },
