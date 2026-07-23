@@ -125,6 +125,7 @@ What you'll get inside:
 • Adaptive mocks that get smarter as you answer
 • Real previous-year papers, organised by year + topic
 • Ask Shishya — AI tutor that knows your syllabus + your mistakes
+• Talk to a real subject expert — free 1-to-1 human help, matched to your exam and the exact topic you're stuck on
 • Free, in your language
 
 — The Shishya team`;
@@ -149,6 +150,7 @@ What you'll get inside:
       <li>Adaptive mocks that get smarter with every answer</li>
       <li>Real previous-year papers, organised by year + topic</li>
       <li>Ask Shishya — AI tutor that knows your syllabus + your mistakes</li>
+      <li><strong style="color:#0f172a;">Talk to a real subject expert</strong> — free 1-to-1 human help, matched to your exam and the exact topic you're stuck on</li>
       <li>Free, in your language</li>
     </ul>
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
@@ -180,6 +182,8 @@ It's 5 questions. 90 seconds. The moment you finish, Shishya can show you which 
 
 Take it now: ${p.ctaUrl}
 
+And remember — if a topic has you stuck, you can talk to a real subject expert free, 1-to-1, matched to your exam. You're never on your own here.
+
 If today's not the day, no stress — but the longer you wait, the longer Shishya can't help.
 
 — The Shishya team`;
@@ -197,7 +201,8 @@ If today's not the day, no stress — but the longer you wait, the longer Shishy
     <p style="margin:24px 0;text-align:center;">
       <a href="${p.ctaUrl}" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:8px;">Take my 5-question diagnostic →</a>
     </p>
-    <p style="font-size:13px;line-height:1.55;margin:24px 0;color:#475569;">After the diagnostic, Shishya will tell you the 3 topics dragging your score down + recommend exactly which mock to take next. No more guessing.</p>
+    <p style="font-size:13px;line-height:1.55;margin:24px 0 8px;color:#475569;">After the diagnostic, Shishya will tell you the 3 topics dragging your score down + recommend exactly which mock to take next. No more guessing.</p>
+    <p style="font-size:13px;line-height:1.55;margin:0 0 24px;color:#475569;">And if a topic has you stuck, <strong style="color:#0f172a;">talk to a real subject expert</strong> — free, 1-to-1, matched to your exam. You're never on your own here.</p>
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
     <p style="font-size:11px;line-height:1.6;color:#94a3b8;margin:0;text-align:center;">
       Not interested? Just ignore this email — we won't send again.<br>
