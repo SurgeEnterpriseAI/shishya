@@ -99,7 +99,7 @@ export function HomeChatRouter() {
         onClick={() => setOpen(true)}
         aria-label="Open the Ask-Shishya helper"
         data-tour="home-chat-fab"
-        className="bottom-safe fixed left-4 z-30 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-ink-900 px-4 py-3 text-sm font-medium text-white shadow-lg ring-1 ring-ink-900/20 transition-colors hover:bg-ink-800"
+        className="bottom-safe fixed left-4 z-30 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-ink-900 px-4 py-3 text-sm font-medium text-white shadow-lg ring-1 ring-ink-900/20 transition-colors hover:bg-ink-800 lg:left-[21rem]"
       >
         <span aria-hidden>🤖</span>
         <span className="hidden sm:inline">What are you looking for?</span>
