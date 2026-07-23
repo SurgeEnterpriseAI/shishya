@@ -70,6 +70,65 @@ export interface SweepResult {
   detail: string;
 }
 
+/**
+ * Adjudicate ONE reported question immediately: re-solve it independently,
+ * fix the key if a different option is clearly right, invalidate if
+ * unsalvageable, then mark all its open reports resolved. Called
+ * fire-and-forget the moment a student flags a question — so a wrong key
+ * is corrected within seconds, not at the next weekly sweep. Best-effort:
+ * any error leaves the report open for the weekly sweep to retry.
+ */
+export async function adjudicateQuestion(
+  questionId: string,
+  resolvedBy: string,
+): Promise<SweepResult> {
+  const q = await prisma.question.findUnique({
+    where: { id: questionId },
+    select: { id: true, body: true, options: true, answerKey: true, solution: true },
+  });
+  if (!q) return { questionId, action: "error", detail: "question not found" };
+  const options = (q.options as { key: string; text: string }[]) ?? [];
+
+  let verdict: Verdict;
+  try {
+    verdict = await solve({ body: q.body, options });
+  } catch (e: any) {
+    return { questionId, action: "error", detail: String(e?.message ?? e).slice(0, 120) };
+  }
+
+  let result: SweepResult;
+  if (verdict.confidence === "HIGH" && verdict.correctKey === q.answerKey) {
+    result = { questionId, action: "confirmed", detail: `key ${q.answerKey} verified` };
+  } else if (
+    verdict.confidence === "HIGH" &&
+    verdict.correctKey &&
+    options.some((o) => o.key === verdict.correctKey)
+  ) {
+    await prisma.question.update({
+      where: { id: questionId },
+      data: {
+        answerKey: verdict.correctKey,
+        solution:
+          (q.solution ?? "") +
+          `\n\n[Correction ${new Date().toISOString().slice(0, 10)}: answer key corrected to ${verdict.correctKey} after student report + independent re-verification. ${verdict.reasoning}]`,
+      },
+    });
+    result = { questionId, action: "key-fixed", detail: `${q.answerKey} → ${verdict.correctKey}` };
+  } else {
+    await prisma.question.update({ where: { id: questionId }, data: { validated: false } });
+    result = {
+      questionId,
+      action: "invalidated",
+      detail: `no clear correct option (verdict: ${verdict.correctKey ?? "none"}, ${verdict.confidence})`,
+    };
+  }
+  await prisma.questionReport.updateMany({
+    where: { questionId, resolved: false },
+    data: { resolved: true, resolvedBy, resolvedAt: new Date() },
+  });
+  return result;
+}
+
 export async function sweepReportedQuestions(opts: {
   resolvedBy: string;
   maxQuestions?: number;

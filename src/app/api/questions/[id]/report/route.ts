@@ -8,11 +8,13 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+import { after } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { bad, notFound, ok, serverError, unauth, parseBody } from "@/lib/http";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
+import { adjudicateQuestion } from "@/lib/question-sweep";
 
 const Body = z.object({
   reason: z.string().trim().min(3).max(1000),
@@ -46,6 +48,19 @@ export async function POST(
         reason: body.reason,
       },
       select: { id: true, createdAt: true },
+    });
+
+    // INSTANT adjudication — re-solve the question with Claude the moment
+    // it's flagged. If the student is right, the answer key is corrected
+    // (or the question invalidated) within seconds, not at the weekly
+    // sweep. Runs AFTER the response so the report submits instantly;
+    // best-effort, so a failure just leaves it for the weekly sweep.
+    after(async () => {
+      try {
+        await adjudicateQuestion(id, "claude:instant-report");
+      } catch (err) {
+        console.error("[report] instant adjudication failed", id, (err as Error)?.message);
+      }
     });
 
     return ok({ reportId: report.id, createdAt: report.createdAt });
