@@ -517,7 +517,7 @@ export default async function ExamsPage({
               anchor: "home-chat-fab",
               placement: "top",
               title: "Or just describe it",
-              body: "Stuck? Tap 'What are you looking for?' bottom-left. Type in any language — Claude reads your intent and takes you to the right page.",
+              body: "Stuck? Tap 'What are you looking for?' on the right edge. Type in any language — Claude reads your intent and takes you to the right page.",
               icon: "🤖",
             },
             {
