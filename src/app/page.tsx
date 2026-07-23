@@ -321,7 +321,9 @@ async function loadVacancyExplorerSafe(): Promise<VacancyExplorer> {
 }
 const loadVacancyExplorerCached = unstable_cache(
   loadVacancyExplorerSafe,
-  ["home-vacancy-explorer-v1"],
+  // v2 — busts the v1 cache so the new `updatedAt` freshness stamp
+  // flows through immediately instead of waiting out the 24h window.
+  ["home-vacancy-explorer-v2"],
   { revalidate: 86400 },
 );
 
