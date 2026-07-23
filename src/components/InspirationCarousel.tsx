@@ -1,9 +1,17 @@
+"use client";
+
 // Homepage inspiration carousel — real, validated YouTube success-story
 // videos for aspirants (topper interviews, "how I cracked it"). Fills
-// the emotional-hook slot above the finder card. Server component: a
-// horizontal scroll-snap row (no JS), each thumbnail opening the video
-// on YouTube. Thumbnails are guaranteed to resolve (every id was
-// oEmbed-validated at generation time).
+// the emotional-hook slot above the finder card. A horizontal scroll-
+// snap row; each thumbnail opens the video on YouTube. Thumbnails are
+// guaranteed to resolve (every id was oEmbed-validated at generation).
+//
+// Instrumented: fires CTA_CLICKED beacons for a first hover (soft
+// engagement) and each video click, so we can measure whether anyone
+// actually engages before deciding where the carousel belongs on the
+// page. Client component, but still SSRs its markup (SEO intact).
+
+import { useRef } from "react";
 
 export interface InspoVideo {
   youtubeId: string;
@@ -14,10 +22,37 @@ export interface InspoVideo {
   examTag: string | null;
 }
 
+function track(cta: string, extra?: Record<string, unknown>) {
+  try {
+    navigator.sendBeacon?.(
+      "/api/analytics",
+      new Blob(
+        [JSON.stringify({
+          kind: "CTA_CLICKED",
+          path: typeof location !== "undefined" ? location.pathname : "/",
+          props: { cta, surface: "inspiration", ...extra },
+        })],
+        { type: "application/json" },
+      ),
+    );
+  } catch {
+    /* analytics is best-effort */
+  }
+}
+
 export function InspirationCarousel({ videos }: { videos: InspoVideo[] }) {
+  const hovered = useRef(false);
   if (!videos.length) return null;
   return (
-    <section aria-label="Inspiration — topper success stories">
+    <section
+      aria-label="Inspiration — topper success stories"
+      onMouseEnter={() => {
+        // Fire once per page load — "did anyone even mouse over it?"
+        if (hovered.current) return;
+        hovered.current = true;
+        track("inspiration-hover");
+      }}
+    >
       <div className="flex items-baseline justify-between">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-saffron-700">
           🎬 Real toppers, real stories — get inspired
@@ -31,6 +66,7 @@ export function InspirationCarousel({ videos }: { videos: InspoVideo[] }) {
               href={`https://www.youtube.com/watch?v=${v.youtubeId}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => track("inspiration-video-click", { youtubeId: v.youtubeId, examTag: v.examTag })}
               className="group block w-56 overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm transition-all hover:border-saffron-400 hover:shadow-md"
             >
               <div className="relative aspect-video bg-ink-100">
