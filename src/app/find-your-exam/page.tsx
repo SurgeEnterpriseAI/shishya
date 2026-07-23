@@ -74,7 +74,8 @@ export default async function FindYourExamPage({
     .$queryRaw<Row[]>`
       SELECT e.code, e."shortName", e.name, e.category::text AS category, e.state,
              x."minAge", x."maxAge", x."educationTags", x."educationNote",
-             x."domicileState", x."vacanciesApprox", x."vacanciesNote", x."skillProfile"
+             x."domicileState", x."vacanciesApprox", x."vacanciesNote", x."skillProfile",
+             x."officialUrl", x."officialName"
       FROM "ExamEligibility" x JOIN "Exam" e ON e.id = x."examId"
       WHERE e.active = TRUE
     `.catch(() => [] as Row[]);
@@ -204,6 +205,16 @@ export default async function FindYourExamPage({
                         <Link href={`/exams/${r.exam.code}/cutoff`} className="text-xs font-medium text-saffron-700 hover:underline self-center">
                           Expected cutoff
                         </Link>
+                        {r.exam.officialUrl && (
+                          <a
+                            href={r.exam.officialUrl}
+                            target="_blank"
+                            rel="nofollow noopener noreferrer"
+                            className="text-xs font-medium text-emerald-700 hover:underline self-center"
+                          >
+                            ✓ Verify official ↗
+                          </a>
+                        )}
                       </div>
                     </li>
                   ))}

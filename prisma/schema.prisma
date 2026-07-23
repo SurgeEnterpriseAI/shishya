@@ -1809,6 +1809,10 @@ model ExamEligibility {
   // strengths: { quant, reasoning, gk, english, technical }
   skillProfile   Json?
   eligibilityNote String? @db.Text // catch-all extra eligibility detail
+  // Official conducting body — where vacancies/notifications are really
+  // published, so students can verify our indicative figures at source.
+  officialUrl    String? // e.g. https://ssc.gov.in
+  officialName   String? // e.g. "Staff Selection Commission (SSC)"
   generatedAt    DateTime @default(now())
   generatedBy    String?
 

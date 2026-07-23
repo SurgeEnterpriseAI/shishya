@@ -235,6 +235,17 @@ export default async function ExamPage({
   // Discard speculative score boost when user isn't enrolled — no UI uses it.
   const scoreBoost = isEnrolled ? speculativeScoreBoost : null;
 
+  // Vacancy figure + OFFICIAL source so a student who came to verify "are
+  // these vacancies real?" can check at the authoritative site. Raw SQL
+  // keeps it independent of the Prisma client typegen. Honest framing:
+  // our number is indicative; the link is where the truth lives.
+  const eligRows = await prisma
+    .$queryRaw<{ vacanciesApprox: number | null; vacanciesNote: string | null; officialUrl: string | null; officialName: string | null }[]>`
+      SELECT "vacanciesApprox", "vacanciesNote", "officialUrl", "officialName"
+      FROM "ExamEligibility" WHERE "examId" = ${exam.id} LIMIT 1
+    `.catch(() => []);
+  const elig = eligRows[0] ?? null;
+
   // ── "Try one question" hook for SIGNED-OUT visitors ───────────────
   // 91% of unique visitors browse anonymously and leave without signing
   // in. The exam pages pull strong organic SEO traffic, but the page
@@ -505,6 +516,36 @@ export default async function ExamPage({
             📖 How to crack it
           </Link>
         </div>
+
+        {/* Vacancies + OFFICIAL source — the "is this real?" verification
+            block. Our figure is indicative; the link goes to the
+            authoritative conducting body where the truth is published. */}
+        {(elig?.vacanciesApprox || elig?.officialUrl) && (
+          <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50/50 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              {elig?.vacanciesApprox ? (
+                <span className="font-semibold text-ink-900">
+                  ~{elig.vacanciesApprox.toLocaleString("en-IN")} vacancies
+                  <span className="ml-1 font-normal text-ink-500">(indicative / typical)</span>
+                </span>
+              ) : null}
+              {elig?.officialUrl && (
+                <a
+                  href={elig.officialUrl}
+                  target="_blank"
+                  rel="nofollow noopener noreferrer"
+                  className="inline-flex items-center gap-1 font-medium text-emerald-700 hover:underline"
+                >
+                  ✓ Verify on {elig.officialName || "the official site"} ↗
+                </a>
+              )}
+            </div>
+            <p className="mt-1 text-[11px] text-ink-500">
+              Vacancy counts change every cycle — always confirm the exact number in the latest
+              official notification before applying.
+            </p>
+          </div>
+        )}
 
         {/* WhatsApp-first share — aspirants organise prep in WhatsApp
             groups; one tap spreads this free PYQ/syllabus hub to a whole

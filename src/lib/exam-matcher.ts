@@ -35,6 +35,8 @@ export interface ExamElig {
   vacanciesApprox: number | null;
   vacanciesNote: string | null;
   skillProfile: Partial<Record<Skill, number>> | null;
+  officialUrl?: string | null;
+  officialName?: string | null;
 }
 
 export interface MatchResult {
