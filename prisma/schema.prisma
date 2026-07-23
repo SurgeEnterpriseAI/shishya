@@ -1821,6 +1821,26 @@ model ExamEligibility {
   @@index([generatedAt])
 }
 
+// Inspiration carousel — real, popular YouTube success-story / "how I
+// cracked it" videos for govt-exam aspirants. Sourced via web_search
+// and VALIDATED through YouTube oEmbed (so every thumbnail resolves to
+// a real video). Rendered as a homepage thumbnail carousel.
+model InspirationVideo {
+  id          String   @id @default(cuid())
+  youtubeId   String   @unique
+  title       String
+  channel     String?
+  thumbnailUrl String?
+  reason      String?  @db.Text // one line on why it inspires
+  examTag     String? // optional exam/domain tag
+  orderIdx    Int      @default(0)
+  active      Boolean  @default(true)
+  addedAt     DateTime @default(now())
+  generatedBy String?
+
+  @@index([active, orderIdx])
+}
+
 // Reach: daily current affairs — the single highest-frequency return
 // search in Indian exam prep ("current affairs today"). One row per
 // item per day; a daily digest page renders all items for a date. Kept

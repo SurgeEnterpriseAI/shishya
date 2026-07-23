@@ -47,6 +47,7 @@ import { PageTour } from "@/components/PageTour";
 import { UpcomingExamsSidebar, type UpcomingEvent, type CalendarBucket } from "@/components/UpcomingExamsSidebar";
 import { VacancyFinderCard } from "@/components/VacancyFinderCard";
 import { PortalStatsBand } from "@/components/PortalStatsBand";
+import { InspirationCarousel, type InspoVideo } from "@/components/InspirationCarousel";
 import { VacancyExplorerSidebar, VacancyExplorerPanel } from "@/components/VacancyExplorer";
 import { loadVacancyExplorer, type VacancyExplorer } from "@/lib/vacancy-explorer";
 import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
@@ -349,6 +350,20 @@ async function loadPortalStatsRaw(): Promise<{ examCount: number; questions: str
 }
 const loadPortalStats = unstable_cache(loadPortalStatsRaw, ["home-portal-stats-v1"], { revalidate: 86400 });
 
+// Inspiration carousel — validated topper success-story videos. Cached
+// daily; a DB blip just hides the section.
+async function loadInspirationVideosRaw(): Promise<InspoVideo[]> {
+  try {
+    return await prisma.$queryRaw<InspoVideo[]>`
+      SELECT "youtubeId", title, channel, "thumbnailUrl", reason, "examTag"
+      FROM "InspirationVideo" WHERE active = TRUE ORDER BY "orderIdx" ASC LIMIT 20
+    `;
+  } catch {
+    return [];
+  }
+}
+const loadInspirationVideos = unstable_cache(loadInspirationVideosRaw, ["home-inspiration-v1"], { revalidate: 86400 });
+
 export default async function ExamsPage({
   searchParams,
 }: {
@@ -357,12 +372,13 @@ export default async function ExamsPage({
   const sp = await searchParams;
   const { t } = await getT();
 
-  const [signedIn, exams, calendar, vacancy, portalStats] = await Promise.all([
+  const [signedIn, exams, calendar, vacancy, portalStats, inspirationVideos] = await Promise.all([
     auth().then((s) => Boolean(s?.user)).catch(() => false),
     loadExams(),
     loadUpcomingEvents(),
     loadVacancyExplorerCached(),
     loadPortalStats(),
+    loadInspirationVideos(),
   ]);
   const upcomingEvents = calendar.events;
   const vacancyStats = { totalLakh: vacancy.totalLakh, examCount: vacancy.examCount };
@@ -534,7 +550,7 @@ export default async function ExamsPage({
         <section className="container-prose pt-10 pb-20 sm:pt-14">
           <Breadcrumbs goal={goal} scope={effectiveScope} stateCode={stateCode} />
 
-          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} />}
+          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} inspirationVideos={inspirationVideos} />}
           {step === "scope" && goal && (
             <StepScope
               goal={goal}
@@ -717,12 +733,14 @@ function StepGoals({
   signedIn,
   vacancyStats,
   portalStats,
+  inspirationVideos,
 }: {
   exams: ExamCard[];
   t: (key: SectionTitleKey) => string;
   signedIn: boolean;
   vacancyStats: { totalLakh: string; examCount: number };
   portalStats: { examCount: number; questions: string; notes: string };
+  inspirationVideos: InspoVideo[];
 }) {
   // 27 May 2026 funnel telemetry — 96 signups, 0 mock attempts in
   // last 24h. The page leads visitors into a goal funnel but never
@@ -754,6 +772,14 @@ function StepGoals({
 
   return (
     <div>
+      {/* Inspiration carousel — real topper success stories, the
+          emotional hook that fills the slot above the finder card. */}
+      {inspirationVideos.length > 0 && (
+        <div className="mb-6">
+          <InspirationCarousel videos={inspirationVideos} />
+        </div>
+      )}
+
       {/* Row 1 — finder card (the "I want a govt job but which one?"
           entry). Row 2 — "at a glance" content-depth numbers. Both full
           width, above the pick-your-exam picker. */}
