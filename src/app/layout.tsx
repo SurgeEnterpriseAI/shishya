@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_Devanagari } from "next/font/google";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
+import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
 import "./globals.css";
 
@@ -163,6 +164,7 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <AnalyticsTracker />
         </Suspense>
+        <Analytics />
       </body>
     </html>
   );
