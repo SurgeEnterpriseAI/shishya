@@ -772,14 +772,6 @@ function StepGoals({
 
   return (
     <div>
-      {/* Inspiration carousel — real topper success stories, the
-          emotional hook that fills the slot above the finder card. */}
-      {inspirationVideos.length > 0 && (
-        <div className="mb-6">
-          <InspirationCarousel videos={inspirationVideos} />
-        </div>
-      )}
-
       {/* Row 1 — finder card (the "I want a govt job but which one?"
           entry). Row 2 — "at a glance" content-depth numbers. Both full
           width, above the pick-your-exam picker. */}
@@ -930,6 +922,16 @@ function StepGoals({
           into the dashboard / signed-out users get bounced
           through /login first. */}
       <HomeFeatureCards signedIn={signedIn} />
+
+      {/* Inspiration carousel — topper success stories. Moved to the
+          bottom (was above the finder card) after engagement data showed
+          near-zero clicks up top; kept as an end-of-page motivational
+          send-off. */}
+      {inspirationVideos.length > 0 && (
+        <div className="mt-12">
+          <InspirationCarousel videos={inspirationVideos} />
+        </div>
+      )}
     </div>
   );
 }
