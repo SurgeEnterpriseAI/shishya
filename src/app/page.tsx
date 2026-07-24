@@ -478,7 +478,7 @@ export default async function ExamsPage({
           category drill-down → exam hub → sign up → personalised funnel).
           Replaced the exam calendar here. Exam-cycle info (concluded /
           upcoming / cutoffs) still lives on each exam's page. */}
-      <VacancyExplorerSidebar data={vacancy} />
+      <VacancyExplorerSidebar data={vacancy} signedIn={signedIn} />
 
       {/* Right rail: exam calendar (moved here from the left rail, which
           is now the vacancy explorer). Concluded / Upcoming / Past with
@@ -601,7 +601,7 @@ export default async function ExamsPage({
                 </h3>
               </div>
               <div className="flex h-[26rem] flex-col">
-                <VacancyExplorerPanel data={vacancy} />
+                <VacancyExplorerPanel data={vacancy} signedIn={signedIn} />
               </div>
             </div>
           )}

@@ -32,7 +32,29 @@ function ExamRow({ e }: { e: VacExam }) {
 
 type Tab = "national" | "state" | "category";
 
-export function VacancyExplorerPanel({ data }: { data: VData }) {
+// Click beacon for the explorer's anon signup nudge. Impressions are NOT
+// tracked here: the desktop rail and the mobile panel both mount (one is
+// CSS-hidden), which would double-count — clicks can only come from the
+// visible one, so clicks are the honest metric.
+function nudgeClick() {
+  try {
+    navigator.sendBeacon?.(
+      "/api/analytics",
+      new Blob(
+        [JSON.stringify({
+          kind: "CTA_CLICKED",
+          path: typeof location !== "undefined" ? location.pathname : "/",
+          props: { cta: "explorer-nudge-click", surface: "explorer-nudge" },
+        })],
+        { type: "application/json" },
+      ),
+    );
+  } catch {
+    /* best-effort */
+  }
+}
+
+export function VacancyExplorerPanel({ data, signedIn }: { data: VData; signedIn?: boolean }) {
   const [tab, setTab] = useState<Tab>("national");
   const [openState, setOpenState] = useState<string | null>(null);
 
@@ -153,18 +175,27 @@ export function VacancyExplorerPanel({ data }: { data: VData }) {
         </div>
       )}
 
-      {/* Footer → the personalized finder */}
+      {/* Footer → the personalized finder (+ anon signup nudge) */}
       <div className="border-t border-ink-200 bg-white px-4 py-3">
         <Link href="/find-your-exam" className="block rounded-lg bg-saffron-500 px-3 py-2 text-center text-xs font-bold text-white hover:bg-saffron-600">
           Which fit YOU? Find my exams →
         </Link>
+        {signedIn === false && (
+          <a
+            href={`/login?callbackUrl=${encodeURIComponent("/dashboard")}`}
+            onClick={nudgeClick}
+            className="mt-2 block rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-center text-xs font-bold text-emerald-800 hover:bg-emerald-100"
+          >
+            Prepping for one of these? Sign in free →
+          </a>
+        )}
       </div>
     </div>
   );
 }
 
 /** Desktop fixed left rail. */
-export function VacancyExplorerSidebar({ data }: { data: VData }) {
+export function VacancyExplorerSidebar({ data, signedIn }: { data: VData; signedIn?: boolean }) {
   return (
     <aside
       className="fixed bottom-0 left-0 top-16 z-20 hidden w-80 flex-col border-r border-ink-200 bg-white shadow-sm lg:flex"
@@ -179,7 +210,7 @@ export function VacancyExplorerSidebar({ data }: { data: VData }) {
           Find mine
         </Link>
       </div>
-      <VacancyExplorerPanel data={data} />
+      <VacancyExplorerPanel data={data} signedIn={signedIn} />
     </aside>
   );
 }

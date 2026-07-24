@@ -11,6 +11,7 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
+import { AnonExamNudge } from "@/components/AnonExamNudge";
 import { inlineMd } from "@/components/NotesMarkdown";
 
 export const revalidate = 3600;
@@ -205,6 +206,17 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
             linkLabel="Ask our subject expert — free"
           />
         </p>
+
+        {/* Signup nudge for anonymous SEO landers at the same anxiety
+            moment — session checked client-side so this page keeps its
+            ISR caching; content is never gated. */}
+        <AnonExamNudge
+          examCode={exam.code}
+          headline={`Will your score clear the ${exam.shortName} cutoff?`}
+          body="Sign in free — take a mock and see exactly where you stand against these bands."
+          cta="See where I stand — free →"
+          surface="cutoff-nudge"
+        />
 
         <h2 className="mt-8 text-base font-semibold text-ink-900">Score → rank → outcome bands</h2>
         <ul className="mt-3 space-y-3">
