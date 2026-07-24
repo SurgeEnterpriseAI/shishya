@@ -9,9 +9,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { FindExamQuiz } from "./FindExamQuiz";
+import { SaveMatchesNudge } from "./SaveMatchesNudge";
 import { computeExamTags } from "@/lib/exam-tags";
 import {
   matchAll, type ExamElig, type MatchInput, type EducationLevel, type Stream, type Category, type Skill,
@@ -112,6 +114,26 @@ export default async function FindYourExamPage({
 
   const eligibleVac = eligible.reduce((a, r) => a + (r.exam.vacanciesApprox ?? 0), 0);
 
+  // "Save your matches" nudge — only for ANONYMOUS visitors with results
+  // (peak intent). The answers live in the URL, so the login callback
+  // brings them straight back to these exact results after Google
+  // sign-in. auth() is only consulted on results views; the bare SEO
+  // landing never reads cookies.
+  let signedIn = false;
+  let saveHref: string | null = null;
+  if (hasAnswers && eligible.length > 0) {
+    signedIn = await auth()
+      .then((s) => Boolean(s?.user))
+      .catch(() => false);
+    if (!signedIn) {
+      const q = new URLSearchParams();
+      for (const k of ["age", "edu", "stream", "state", "cat", "str"] as const) {
+        if (sp[k]) q.set(k, sp[k]!);
+      }
+      saveHref = `/login?callbackUrl=${encodeURIComponent(`/find-your-exam?${q.toString()}#results`)}`;
+    }
+  }
+
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <JsonLd
@@ -167,6 +189,7 @@ export default async function FindYourExamPage({
                       chances — start with your top fits below.
                     </p>
                   )}
+                  {saveHref && <SaveMatchesNudge loginHref={saveHref} matchCount={eligible.length} />}
                 </div>
 
                 <h2 className="mt-6 text-base font-bold text-ink-900">Your best-fit exams</h2>
