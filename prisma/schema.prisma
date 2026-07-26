@@ -1821,6 +1821,20 @@ model ExamEligibility {
   @@index([generatedAt])
 }
 
+// AI-crawler observability — one row per page fetch by a known AI bot
+// (GPTBot, ClaudeBot, Claude-SearchBot, PerplexityBot, Google-Extended…).
+// Answers "is Gemini/Claude/Perplexity actually indexing us?" with data
+// instead of guesses. Written fire-and-forget from edge middleware.
+model BotVisit {
+  id   String   @id @default(cuid())
+  bot  String // canonical bot name
+  path String
+  at   DateTime @default(now())
+
+  @@index([bot, at])
+  @@index([at])
+}
+
 // Inspiration carousel — real, popular YouTube success-story / "how I
 // cracked it" videos for govt-exam aspirants. Sourced via web_search
 // and VALIDATED through YouTube oEmbed (so every thumbnail resolves to

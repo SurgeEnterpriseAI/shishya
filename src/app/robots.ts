@@ -58,11 +58,18 @@ export default function robots(): MetadataRoute.Robots {
     "ClaudeBot",
     "anthropic-ai",
     "Claude-User",
+    "Claude-SearchBot", // Claude search index — the crawler behind Claude's web search
     "Google-Extended", // Gemini
+    "GoogleOther", // Google AI/R&D crawls (feeds Gemini)
+    "Applebot",
     "Applebot-Extended",
     "Bytespider",
     "Amazonbot",
     "cohere-ai",
+    "meta-externalagent", // Meta AI
+    "DuckAssistBot", // DuckDuckGo AI answers
+    "MistralAI-User",
+    "YouBot",
   ];
   return {
     rules: [

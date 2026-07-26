@@ -24,13 +24,57 @@
 //    end-to-end.
 //  - Lets the request through unchanged otherwise.
 
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 
 const COOKIE = "shishya_attrib";
 
-export function middleware(req: NextRequest): NextResponse {
+// Known AI crawlers/fetchers, canonical-name first (order matters — the
+// first match wins, so more specific names precede their prefixes:
+// OAI-SearchBot before GPTBot, Claude-SearchBot before ClaudeBot).
+// Logged fire-and-forget to /api/ops/bot-hit so we can SEE whether
+// Gemini / Claude / Perplexity / Copilot are actually indexing us.
+const AI_BOTS: [string, RegExp][] = [
+  ["OAI-SearchBot", /OAI-SearchBot/i],
+  ["ChatGPT-User", /ChatGPT-User/i],
+  ["GPTBot", /GPTBot/i],
+  ["Claude-SearchBot", /Claude-SearchBot/i],
+  ["Claude-User", /Claude-User/i],
+  ["ClaudeBot", /ClaudeBot|anthropic-ai/i],
+  ["Perplexity-User", /Perplexity-User/i],
+  ["PerplexityBot", /PerplexityBot/i],
+  ["Google-Extended", /Google-Extended/i],
+  ["GoogleOther", /GoogleOther/i],
+  ["Googlebot", /Googlebot/i],
+  ["Bingbot", /bingbot/i],
+  ["CCBot", /CCBot/i],
+  ["Meta", /meta-external|FacebookBot/i],
+  ["Applebot", /Applebot/i],
+  ["Bytespider", /Bytespider/i],
+  ["Amazonbot", /Amazonbot/i],
+  ["DuckAssistBot", /DuckAssistBot|DuckDuckBot/i],
+  ["MistralAI-User", /MistralAI/i],
+  ["Cohere", /cohere/i],
+  ["YouBot", /YouBot/i],
+];
+
+export function middleware(req: NextRequest, event: NextFetchEvent): NextResponse {
   const res = NextResponse.next();
   const path = req.nextUrl.pathname;
+
+  // ── AI-crawler observability (cheap: one regex pass, only on match) ──
+  const ua = req.headers.get("user-agent") ?? "";
+  if (ua) {
+    const hit = AI_BOTS.find(([, rx]) => rx.test(ua));
+    if (hit) {
+      event.waitUntil(
+        fetch(new URL("/api/ops/bot-hit", req.url), {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ bot: hit[0], path }),
+        }).catch(() => {}),
+      );
+    }
+  }
 
   // We intercept several classes of request to make sure NO student
   // reaches sign-in without us first seeing where they came from:
@@ -126,6 +170,8 @@ export const config = {
     "/worldwide",
     "/insights",
     "/scholarships",
+    "/current-affairs/:path*",
+    "/find-your-exam",
     "/api/auth/signin/:path*",
   ],
 };
