@@ -20,6 +20,7 @@ import { getDueRevisions } from "@/lib/db/revision-due";
 import { getStudyStreak, type StudyStreak } from "@/lib/db/streak";
 import { DailyFiveCard } from "./DailyFiveCard";
 import { StreakCard } from "./StreakCard";
+import { MissionCard } from "./MissionCard";
 import { InviteFriendsCard } from "./InviteFriendsCard";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 
@@ -257,6 +258,52 @@ async function renderDashboard() {
   // already wrote a personalised reflection + pre-built adaptive mock).
   const todaysBrief = recommendedExam ? briefByExamId.get(recommendedExam.examId) ?? null : null;
 
+  // ── Mission card data (identity + urgency + progress) ────────────────
+  // Primary exam = same precedence the Daily-5 uses. Three cheap queries:
+  // next exam-day date (countdown), syllabus topic total, and how many
+  // topics this student has touched / is strong in. Best-effort — any
+  // failure just hides the card.
+  let mission: {
+    examShort: string; examCode: string; journeyDay: number;
+    daysToExam: number | null; examDateLabel: string | null;
+    topicsTotal: number; topicsTouched: number; topicsMastered: number;
+  } | null = null;
+  if (enrollments.length > 0) {
+    try {
+      const pEnroll =
+        enrollments.find((e) => e.exam.code === (weakest3[0]?.exam.code ?? recommendedExam?.code)) ??
+        enrollments[0];
+      const pExamId = pEnroll.examId;
+      const now = new Date();
+      const [nextDay, topicsTotal, touched, mastered] = [
+        await prisma.examImportantDate.findFirst({
+          where: { examId: pExamId, isExamDay: true, archivedAt: null, date: { gte: now } },
+          orderBy: { date: "asc" },
+          select: { date: true },
+        }),
+        await prisma.topic.count({ where: { subject: { examId: pExamId } } }),
+        await prisma.weaknessMap.count({ where: { userId, examId: pExamId } }),
+        await prisma.weaknessMap.count({ where: { userId, examId: pExamId, masteryScore: { gte: 0.7 } } }),
+      ];
+      const IST = 5.5 * 3600_000;
+      const dayIdx = (d: Date) => Math.floor((d.getTime() + IST) / 86_400_000);
+      mission = {
+        examShort: pEnroll.exam.shortName,
+        examCode: pEnroll.exam.code,
+        journeyDay: Math.max(1, dayIdx(now) - dayIdx(pEnroll.createdAt) + 1),
+        daysToExam: nextDay ? dayIdx(nextDay.date) - dayIdx(now) : null,
+        examDateLabel: nextDay
+          ? nextDay.date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+          : null,
+        topicsTotal,
+        topicsTouched: touched,
+        topicsMastered: mastered,
+      };
+    } catch {
+      mission = null;
+    }
+  }
+
   // Score Boost is exam-scoped, so it now lives only on /exams/[code] where
   // the student is already focused on a specific exam. The dashboard stays
   // exam-agnostic — multi-exam home, no auto-scope to whichever exam the
@@ -401,6 +448,10 @@ async function renderDashboard() {
         {enrollments.length > 0 && (
           <StreakCard streak={streak} todayDow={istTodayDow} />
         )}
+
+        {/* Mission card — day-N identity, exam-day countdown, syllabus
+            progress. Sits between streak (habit) and Daily-5 (action). */}
+        {mission && <MissionCard {...mission} />}
 
         {/* THE DAILY 5 — retention anchor (Jul 20 checkpoint: D1-7 return
             stuck at 14%; this is the daily reason-to-return). Weakest

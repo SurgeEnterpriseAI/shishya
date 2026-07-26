@@ -92,6 +92,29 @@ export default async function ResultsPage({
   const correctCount = orderedQs.filter((q) => q.correct).length;
   const wrongCount = orderedQs.filter((q) => q.chosen != null && !q.correct).length;
   const skipped = orderedQs.length - correctCount - wrongCount;
+
+  // Personal-best detection — the celebration moment (variable reward:
+  // beating your own record is the most motivating comparison there is,
+  // and it's always about the student's own progress, never others').
+  const prevBest = await prisma.attempt
+    .findFirst({
+      where: {
+        userId: session.user.id,
+        mock: { examId: attempt.mock.examId },
+        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+        scorePct: { not: null },
+        id: { not: attempt.id },
+        finishedAt: { lt: attempt.finishedAt ?? new Date() },
+      },
+      orderBy: { scorePct: "desc" },
+      select: { scorePct: true },
+    })
+    .catch(() => null);
+  const isPersonalBest =
+    prevBest?.scorePct != null &&
+    attempt.scorePct != null &&
+    attempt.scorePct > prevBest.scorePct;
+  const isFirstMock = prevBest == null;
   // rankBands fetched above in the parallel Promise.all.
 
   const topicScores = (attempt.topicScores as Record<string, any>) ?? {};
@@ -184,6 +207,31 @@ export default async function ResultsPage({
             = 5/48 = 10.4%), "Accuracy" is the demoralisation-free hit
             rate (3 right out of 12). Showing both side-by-side avoids
             the "but I got 3 right, why does it say 10%?" confusion. */}
+        {/* Celebration moments — personal best beats any leaderboard;
+            first mock gets a baseline framing instead of a raw judgment. */}
+        {isPersonalBest && (
+          <div className="mt-6 rounded-xl border-2 border-emerald-400 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 p-4 text-center">
+            <p className="text-lg font-bold text-emerald-800">
+              🎉 New personal best in {attempt.mock.exam.shortName}!
+            </p>
+            <p className="mt-0.5 text-sm text-ink-700">
+              {formatDisplayScorePct(attempt.scorePct)} — up from your previous best of{" "}
+              {formatDisplayScorePct(prevBest!.scorePct)}. This is what daily reps do. Keep going.
+            </p>
+          </div>
+        )}
+        {isFirstMock && (
+          <div className="mt-6 rounded-xl border border-sky-300 bg-sky-50 p-4 text-center">
+            <p className="text-sm font-bold text-sky-900">
+              🏁 First {attempt.mock.exam.shortName} mock done — your baseline is set.
+            </p>
+            <p className="mt-0.5 text-xs text-ink-600">
+              Nobody&apos;s first score is their final score. Every mock from here is measured
+              against this one — and beating your own record is the whole game.
+            </p>
+          </div>
+        )}
+
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <ScoreCard
             label={`${t("results.score")} (marks)`}
