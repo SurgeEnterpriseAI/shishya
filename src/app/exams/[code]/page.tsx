@@ -26,6 +26,7 @@ import { SectionVerificationSummary } from "@/components/VerificationBadge";
 import { ExamDeepContentBlock } from "@/components/ExamDeepContentBlock";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { SubjectTestButton } from "./SubjectTestButton";
+import { CustomMockBuilder } from "./CustomMockBuilder";
 import { ExamFaq } from "@/components/ExamFaq";
 import { findDeepContent, hasDeepContent } from "@/data/exam-deep-content";
 import { getExamTheme } from "@/lib/exam-theme";
@@ -848,6 +849,22 @@ export default async function ExamPage({
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {/* ── Build my own mock (custom generation UI over the existing
+            USER_REQUEST / ADAPTIVE APIs — "give me 20 hard questions on
+            Percentage" finally has a button). */}
+        {hasContent && (
+          <section id="custom-mock" className="mt-10 scroll-mt-20">
+            <h2 className="text-base font-semibold text-ink-800">🎯 Build my own mock</h2>
+            <p className="mt-1 text-sm text-ink-600">
+              Tell Shishya exactly what to test you on — topics, size, difficulty — and get a fresh
+              mock in seconds. Leave the box blank and we&apos;ll target your weakest topics.
+            </p>
+            <div className="mt-3">
+              <CustomMockBuilder examCode={exam.code} />
+            </div>
           </section>
         )}
 
