@@ -48,10 +48,14 @@ export async function generateMetadata({
     return { title: "Notification not found — Shishya" };
   }
 
-  // SEO-tuned title: news headline + exam shortname + Shishya. Body
-  // first 160 chars → description. Both feed Google's search snippet.
+  // SEO-tuned title: news headline + exam shortname + Shishya. The
+  // description is the searcher's snippet — trim the body at a word
+  // boundary (a mid-word cut reads broken in the SERP) and end with
+  // the one differentiator none of the ranking job-alert sites have:
+  // everything here is free.
   const title = `${row.title} — ${row.exam.shortName} | Shishya`;
-  const description = row.body.slice(0, 160).replace(/\s+/g, " ").trim();
+  const bodyLead = row.body.slice(0, 140).replace(/\s+/g, " ").replace(/\s+\S*$/, "").trim();
+  const description = `${bodyLead}… Free ${row.exam.shortName} mock tests, PYQs & study notes on Shishya.`;
 
   return {
     title,
@@ -258,15 +262,34 @@ export default async function NewsPermalinkPage({
           )}
         </article>
 
-        <p className="mt-8 text-xs text-ink-500">
-          Looking for the live {row.exam.shortName} prep page?{" "}
-          <Link
-            href={`/exams/${row.exam.code}`}
-            className="font-medium text-saffron-700 hover:underline"
-          >
-            Mocks, PYQ, syllabus → /exams/{row.exam.code}
-          </Link>
-        </p>
+        {/* Funnel card — the reason a searcher should stay after reading
+            the notification. Descriptive anchors double as internal-link
+            signals for the exam hub. */}
+        <div className="mt-8 rounded-xl border border-saffron-200 bg-saffron-50/50 p-5">
+          <p className="text-sm font-bold text-ink-900">
+            Preparing for {row.exam.shortName}? Everything on Shishya is free.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href={`/exams/${row.exam.code}`}
+              className="rounded-lg bg-saffron-500 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
+            >
+              Free {row.exam.shortName} mock tests →
+            </Link>
+            <Link
+              href={`/exams/${row.exam.code}/cutoff`}
+              className="rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-700 transition-colors hover:border-saffron-400"
+            >
+              Expected cutoffs
+            </Link>
+            <Link
+              href={`/exams/${row.exam.code}/syllabus`}
+              className="rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-700 transition-colors hover:border-saffron-400"
+            >
+              Syllabus & study notes
+            </Link>
+          </div>
+        </div>
       </section>
     </main>
   );
