@@ -315,22 +315,10 @@ export default async function TopicPage({
               <NotesRenderer markdown={notes} />
             </article>
 
-            {/* Mastery loop — auto-stamps "read", shows this student's
-                mastery meter, mark-done, and test-to-level-up. Signed-in
-                only (renders nothing for visitors; page stays cached). */}
-            <TopicMasteryPanel examCode={code} topicCode={topic.code} topicName={topic.name} />
-
-            {/* Group study Phase A — invite + shared per-topic room. */}
-            <StudyTogether
-              examCode={code}
-              examShort={exam.shortName}
-              topicCode={topic.code}
-              topicName={topic.name}
-            />
-            {/* The notes→quiz bridge: one inline MCQ right where reading
-                ends. Readers who reach a quiz finish it 93% of the time —
-                reach is the bottleneck, so the first question comes to
-                them. */}
+            {/* The notes→quiz bridge stays FIRST after the notes: one
+                inline MCQ right where reading ends (readers who reach a
+                quiz finish it 93% of the time — the question must come
+                before anything else interrupts). */}
             {practiceQs[0] && (
               <InlineTopicQuestion
                 examCode={code}
@@ -344,6 +332,18 @@ export default async function TopicPage({
                 }}
               />
             )}
+
+            {/* Mastery loop — signed-in only (anon visitors see nothing;
+                page stays clean + cached). */}
+            <TopicMasteryPanel examCode={code} topicCode={topic.code} topicName={topic.name} />
+
+            {/* Group study — end-of-study social hook, after the work. */}
+            <StudyTogether
+              examCode={code}
+              examShort={exam.shortName}
+              topicCode={topic.code}
+              topicName={topic.name}
+            />
           </>
         ) : (
           <div className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-5 py-6">
