@@ -456,6 +456,51 @@ Small daily reps are how toppers are made. See you inside.
   return sendEmail({ to: p.to, subject, html, text, tag: "daily-five" });
 }
 
+/** Evening streak-rescue — sent ~8:30 PM IST ONLY to students whose
+ *  live streak dies at midnight (studied yesterday, not yet today).
+ *  Peak loss-aversion moment + the 9 PM-midnight study block is the
+ *  platform's biggest usage window, so the timing meets them when
+ *  they'd study anyway. Deliberately scarce: streak-holders only. */
+export async function sendEveningRescueEmail(p: {
+  to: string;
+  name: string | null;
+  examShort: string;
+  streakCurrent: number;
+}): Promise<boolean> {
+  const first = (p.name ?? "").split(" ")[0] || "Aspirant";
+  const subject = `🔥 ${first}, your ${p.streakCurrent}-day streak ends at midnight`;
+  const text = `${first},
+
+Your ${p.streakCurrent}-day streak is still alive — but only until midnight. One Daily 5 (~3 minutes) on your weakest ${p.examShort} topic saves it.
+
+Save it now: https://shishya.in/dashboard
+
+Miss tonight and it resets to zero. Toppers aren't smarter — they just don't skip.
+— Shishya
+
+(Reply to this email to stop these reminders.)`;
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-weight:700;font-size:18px;">🔥 ${p.streakCurrent}-day streak — ends at midnight</div>
+    <p style="font-size:14px;line-height:1.6;margin:14px 0;">
+      ${first}, you've shown up ${p.streakCurrent} days in a row. One <strong>3-minute Daily 5</strong> on your weakest
+      <strong>${p.examShort}</strong> topic keeps the run alive. Miss tonight and it resets to zero.
+    </p>
+    <a href="https://shishya.in/dashboard"
+       style="display:inline-block;background:#dc2626;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">
+      Save my streak →
+    </a>
+    <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
+      Toppers aren't smarter — they just don't skip. — Shishya
+    </p>
+    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Reply to this email to stop these reminders.</p>
+  </div>
+</body></html>`;
+  return sendEmail({ to: p.to, subject, html, text, tag: "evening-rescue" });
+}
+
 /** Convenience wrappers — caller doesn't have to think about
  *  templating, just hands us a user. */
 export async function sendWelcomeEmail(user: {
