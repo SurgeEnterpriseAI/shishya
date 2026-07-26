@@ -12,6 +12,7 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
+import { SyllabusProgress } from "./SyllabusProgress";
 
 export const revalidate = 3600;
 
@@ -147,6 +148,10 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
           />
         </p>
 
+        {/* Signed-in overlay: per-topic checkmarks + progress summary
+            (progressive enhancement; ISR + SEO untouched). */}
+        <SyllabusProgress examCode={exam.code} totalTopics={topicCount} />
+
         {subjects.map((s) => (
           <section key={s.code} className="mt-8">
             <div className="flex items-baseline justify-between">
@@ -157,7 +162,7 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
             </div>
             <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {s.topics.map((t) => (
-                <li key={t.code} className="rounded-md border border-ink-200 bg-white p-3">
+                <li key={t.code} data-syllabus-topic={t.code} className="rounded-md border border-ink-200 bg-white p-3">
                   {t.teachingNote ? (
                     <Link
                       href={`/exams/${exam.code}/topics/${t.code}`}

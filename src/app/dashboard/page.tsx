@@ -304,6 +304,30 @@ async function renderDashboard() {
     }
   }
 
+  // "Continue where you left off" — the most recently opened topic that
+  // isn't finished yet (the mastery loop's resume point). Best-effort.
+  let continueTopic: { tcode: string; tname: string; ecode: string; eshort: string } | null = null;
+  try {
+    const rows = await prisma.$queryRaw<
+      { tcode: string; tname: string; ecode: string; eshort: string }[]
+    >`
+      SELECT t.code AS tcode, t.name AS tname, e.code AS ecode, e."shortName" AS eshort
+      FROM "TopicStudyState" s
+      JOIN "Topic" t ON t.id = s."topicId"
+      JOIN "Subject" sub ON sub.id = t."subjectId"
+      JOIN "Exam" e ON e.id = sub."examId"
+      LEFT JOIN "WeaknessMap" w ON w."topicId" = t.id AND w."userId" = s."userId"
+      WHERE s."userId" = ${userId}
+        AND s."completedAt" IS NULL
+        AND COALESCE(w."masteryScore", 0) < 0.7
+      ORDER BY s."readAt" DESC
+      LIMIT 1
+    `;
+    continueTopic = rows[0] ?? null;
+  } catch {
+    continueTopic = null;
+  }
+
   // Score Boost is exam-scoped, so it now lives only on /exams/[code] where
   // the student is already focused on a specific exam. The dashboard stays
   // exam-agnostic — multi-exam home, no auto-scope to whichever exam the
@@ -452,6 +476,22 @@ async function renderDashboard() {
         {/* Mission card — day-N identity, exam-day countdown, syllabus
             progress. Sits between streak (habit) and Daily-5 (action). */}
         {mission && <MissionCard {...mission} />}
+
+        {/* Resume point — the mastery loop's "come back tomorrow and
+            continue" hook (Zeigarnik effect: open loops pull). */}
+        {continueTopic && (
+          <Link
+            href={`/exams/${continueTopic.ecode}/topics/${continueTopic.tcode}`}
+            className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-ink-200 bg-white px-4 py-3 transition-colors hover:border-saffron-400"
+          >
+            <span className="min-w-0 text-sm text-ink-700">
+              ▶ Continue studying{" "}
+              <span className="font-semibold text-ink-900">{continueTopic.tname}</span>{" "}
+              <span className="text-ink-500">({continueTopic.eshort})</span>
+            </span>
+            <span className="shrink-0 text-sm font-bold text-saffron-700">Resume →</span>
+          </Link>
+        )}
 
         {/* THE DAILY 5 — retention anchor (Jul 20 checkpoint: D1-7 return
             stuck at 14%; this is the daily reason-to-return). Weakest

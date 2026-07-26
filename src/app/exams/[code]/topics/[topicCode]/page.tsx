@@ -17,6 +17,8 @@ import { ShareExamButton } from "@/components/ShareExamButton";
 import { TopicQuizButton } from "./TopicQuizButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { InlineTopicQuestion } from "./InlineTopicQuestion";
+import { TopicMasteryPanel } from "./TopicMasteryPanel";
+import { StudyTogether } from "./StudyTogether";
 
 // Public SEO page; data barely changes (notes regen weekly via cron).
 // Revalidate every 10 min so a content update propagates without
@@ -312,6 +314,19 @@ export default async function TopicPage({
             <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
               <NotesRenderer markdown={notes} />
             </article>
+
+            {/* Mastery loop — auto-stamps "read", shows this student's
+                mastery meter, mark-done, and test-to-level-up. Signed-in
+                only (renders nothing for visitors; page stays cached). */}
+            <TopicMasteryPanel examCode={code} topicCode={topic.code} topicName={topic.name} />
+
+            {/* Group study Phase A — invite + shared per-topic room. */}
+            <StudyTogether
+              examCode={code}
+              examShort={exam.shortName}
+              topicCode={topic.code}
+              topicName={topic.name}
+            />
             {/* The notes→quiz bridge: one inline MCQ right where reading
                 ends. Readers who reach a quiz finish it 93% of the time —
                 reach is the bottleneck, so the first question comes to
