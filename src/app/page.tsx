@@ -70,9 +70,9 @@ export async function generateMetadata({
   const scope = sp.s === "state" ? "state" : sp.s === "national" ? "national" : null;
   const state = sp.st ? INDIAN_STATES.find((s) => s.code === sp.st!.toUpperCase()) : null;
 
-  let title = "Shishya — Free exam prep for India's entrance & government exams";
+  let title = "Shishya — Free exam prep for India's government & entrance exams";
   let description =
-    "163 entrance and government exams in India. Tell us what you're preparing for — engineering, medical, govt jobs, banking, civil services — and we'll show you the national and state-level options. Free mocks, PYQ, study help in every Indian language.";
+    "India's end-to-end free government exam preparation platform — 177 government and entrance exams. Tell us what you're preparing for — govt jobs, banking, civil services, engineering, medical — and we'll show you the national and state-level options. Free mocks, PYQ, study notes and AI tutor in every Indian language. 100% free, no credit card.";
 
   if (goal && !scope) {
     title = `${goal.label} entrance exams in India — Shishya`;

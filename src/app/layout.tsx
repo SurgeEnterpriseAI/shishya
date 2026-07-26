@@ -38,9 +38,9 @@ const notoDevanagari = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  title: "Shishya — Free preparation for every Indian entrance exam | 163 exams, in your language",
+  title: "Shishya — Free Government & Entrance Exam Preparation | 177 exams, in your language",
   description:
-    "Free mock tests, previous year papers, adaptive practice and study help for 163 Indian entrance and government exams — JEE, NEET, UPSC, SSC, IBPS, RRB, GATE, CAT, all state PSCs, all TETs. Verified by students who cleared the same exam. In English, Hindi and 17 other Indian languages.",
+    "India's end-to-end free government exam preparation platform. Free mock tests, previous year papers, study notes, live cutoffs and an AI tutor for 177 government and entrance exams — UPSC, SSC, IBPS, RRB, all state PSCs, all TETs, JEE, NEET, GATE, CAT. 100% free, no paywall, no credit card. In English, Hindi and 17 other Indian languages.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in"),
   // Belt-and-suspenders: even though Next App Router auto-detects
   // app/icon.svg + app/apple-icon.svg, declaring them in metadata
@@ -56,9 +56,9 @@ export const metadata: Metadata = {
     shortcut: ["/icon.svg"],
   },
   openGraph: {
-    title: "Shishya — Free preparation for every Indian entrance exam",
+    title: "Shishya — Free Government & Entrance Exam Preparation",
     description:
-      "163 exams. Adaptive mocks, previous year papers, study help. Verified by students who cleared the same exam. Free, in your language.",
+      "End-to-end free prep for 177 Indian govt & entrance exams. Adaptive mocks, previous year papers, AI tutor, live cutoffs. 100% free, in your language.",
     url: "https://shishya.in",
     siteName: "Shishya",
     locale: "en_IN",
@@ -69,9 +69,9 @@ export const metadata: Metadata = {
   // 1200x630 in Twitter/X timeline previews.
   twitter: {
     card: "summary_large_image",
-    title: "Shishya — Free preparation for every Indian entrance exam",
+    title: "Shishya — Free Government & Entrance Exam Preparation",
     description:
-      "163 exams. Adaptive mocks, previous year papers, study help. Verified by students who cleared the same exam. Free, in your language.",
+      "End-to-end free prep for 177 Indian govt & entrance exams. Adaptive mocks, previous year papers, AI tutor, live cutoffs. 100% free, in your language.",
     site: "@shishyaedu",
     creator: "@shishyaedu",
   },
@@ -117,7 +117,7 @@ const organizationJsonLd = {
   url: SITE_BASE,
   logo: `${SITE_BASE}/icon.svg`,
   description:
-    "Shishya is a free preparation platform for 163 Indian entrance and government exams — JEE, NEET, UPSC, SSC, IBPS, RRB, GATE, CAT, all state PSCs, all TETs, all Police exams. Adaptive mock tests, previous year papers, study help, and full syllabus coverage. Verified by students who cleared the same exam. Available in 19 Indian languages with no ads, no affiliate links, no agent referrals.",
+    "Shishya is India's end-to-end free government exam preparation platform, covering 177 Indian government and entrance exams — UPSC, SSC, IBPS, RRB, JEE, NEET, GATE, CAT, all state PSCs, all TETs, all Police exams. Adaptive mock tests, previous year papers, study notes, AI tutor, live cutoffs and full syllabus coverage. Verified by students who cleared the same exam. 100% free — no paywall, no credit card, no ads, no affiliate links, no agent referrals. Available in 19 Indian languages.",
   sameAs: [
     "https://github.com/SurgeEnterpriseAI/shishya",
   ],
