@@ -153,7 +153,7 @@ export default async function ExamPage({
     importantDates,
     pyqYears,
     systemMocks,
-    leaderboard,
+    examStats,
     rankBands,
   } = shared;
 
@@ -882,36 +882,27 @@ export default async function ExamPage({
             </div>
           )}
 
-          {leaderboard.length > 0 && (
-            <div className="mt-5 overflow-hidden rounded-md border border-ink-200 bg-white">
-              <table className="w-full text-sm">
-                <thead className="border-b border-ink-200 bg-ink-50/60 text-left text-xs uppercase tracking-wide text-ink-500">
-                  <tr>
-                    <th className="w-14 px-4 py-2 font-medium">#</th>
-                    <th className="px-4 py-2 font-medium">{t("exam.rank.student")}</th>
-                    <th className="px-4 py-2 text-right font-medium">{t("exam.rank.score")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaderboard.map((row, idx) => {
-                    const display = displayName(row.user?.name, row.userId);
-                    const isMe = row.userId === userId;
-                    return (
-                      <tr
-                        key={row.id}
-                        className={`border-b border-ink-100 last:border-b-0 ${isMe ? "bg-saffron-50/40" : ""}`}
-                      >
-                        <td className="px-4 py-2 tabular-nums text-ink-600">{idx + 1}</td>
-                        <td className="px-4 py-2 text-ink-800">
-                          {display}
-                          {isMe && <span className="ml-2 rounded-full bg-saffron-200 px-2 py-0.5 text-[10px] font-medium text-saffron-900">{t("exam.rank.you")}</span>}
-                        </td>
-                        <td className="px-4 py-2 text-right tabular-nums">{formatDisplayScorePct(row.scorePct)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+          {/* Aggregate cohort stats — how many took it and how they
+              scored. PRIVACY: no names, no individual rows; a student's
+              own rank shows only to that signed-in student (cards above). */}
+          {examStats.attempts > 0 && (
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-md border border-ink-200 bg-white p-4">
+                <p className="text-xs uppercase tracking-wide text-ink-500">Students</p>
+                <p className="mt-1 text-2xl font-bold text-ink-900 tabular-nums">{examStats.students.toLocaleString("en-IN")}</p>
+              </div>
+              <div className="rounded-md border border-ink-200 bg-white p-4">
+                <p className="text-xs uppercase tracking-wide text-ink-500">Mocks taken</p>
+                <p className="mt-1 text-2xl font-bold text-ink-900 tabular-nums">{examStats.attempts.toLocaleString("en-IN")}</p>
+              </div>
+              <div className="rounded-md border border-ink-200 bg-white p-4">
+                <p className="text-xs uppercase tracking-wide text-ink-500">Average score</p>
+                <p className="mt-1 text-2xl font-bold text-ink-900 tabular-nums">{examStats.avgPct != null ? `${Math.round(examStats.avgPct)}%` : "—"}</p>
+              </div>
+              <div className="rounded-md border border-ink-200 bg-white p-4">
+                <p className="text-xs uppercase tracking-wide text-ink-500">Top score</p>
+                <p className="mt-1 text-2xl font-bold text-ink-900 tabular-nums">{examStats.topPct != null ? `${Math.round(examStats.topPct)}%` : "—"}</p>
+              </div>
             </div>
           )}
         </section>
@@ -1388,14 +1379,6 @@ export default async function ExamPage({
       )}
     </main>
   );
-}
-
-function displayName(name: string | null | undefined, userId: string): string {
-  if (!name) return `Student #${userId.slice(-4).toUpperCase()}`;
-  const trimmed = name.trim();
-  const parts = trimmed.split(/\s+/);
-  if (parts.length === 1) return parts[0];
-  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
 function describeTrend(scores: number[]): string {

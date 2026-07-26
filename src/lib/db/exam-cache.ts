@@ -35,7 +35,7 @@ export const getExamShared = unstable_cache(
     });
     if (!exam) return null;
 
-    const [validatedQuestionCount, newsItems, importantDates, pyqYears, systemMocks, leaderboard, rankBands] =
+    const [validatedQuestionCount, newsItems, importantDates, pyqYears, systemMocks, examStats, rankBands] =
       await Promise.all([
         prisma.question.count({ where: { examId: exam.id, validated: true } }),
         // archivedAt IS NULL filter keeps the per-exam page showing
@@ -65,22 +65,28 @@ export const getExamShared = unstable_cache(
           take: 24,
           select: { id: true, title: true, type: true, questionIds: true, config: true },
         }),
-        prisma.attempt.findMany({
-          where: {
-            mock: { examId: exam.id },
-            status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
-            scorePct: { not: null },
-          },
-          orderBy: { scorePct: "desc" },
-          take: 10,
-          select: {
-            id: true,
-            scorePct: true,
-            userId: true,
-            finishedAt: true,
-            user: { select: { name: true } },
-          },
-        }),
+        // PRIVACY: no named leaderboard on the public page — other
+        // students' names/scores must never show to anonymous visitors.
+        // The page shows AGGREGATE participation stats to everyone;
+        // an individual's own rank/percentile renders only for that
+        // signed-in user (myBest, queried per-request in the page).
+        prisma.$queryRaw<
+          { students: number; attempts: number; avgpct: number | null; toppct: number | null }[]
+        >`
+          SELECT COUNT(DISTINCT a."userId")::int AS students,
+                 COUNT(*)::int AS attempts,
+                 AVG(a."scorePct")::float AS avgpct,
+                 MAX(a."scorePct")::float AS toppct
+          FROM "Attempt" a JOIN "Mock" m ON m.id = a."mockId"
+          WHERE m."examId" = ${exam.id}
+            AND a.status IN ('SUBMITTED','AUTO_SUBMITTED')
+            AND a."scorePct" IS NOT NULL
+        `.then((r) => ({
+          students: r[0]?.students ?? 0,
+          attempts: r[0]?.attempts ?? 0,
+          avgPct: r[0]?.avgpct ?? null,
+          topPct: r[0]?.toppct ?? null,
+        })),
         prisma.examRankBand.findMany({
           where: { examId: exam.id, archivedAt: null },
           orderBy: { orderIdx: "asc" },
@@ -103,11 +109,11 @@ export const getExamShared = unstable_cache(
       importantDates,
       pyqYears,
       systemMocks,
-      leaderboard,
+      examStats,
       rankBands,
     };
   },
-  ["exam-shared-v1"],
+  ["exam-shared-v2"],
   { revalidate: EXAM_CACHE_TTL, tags: ["exam-shared"] },
 );
 
