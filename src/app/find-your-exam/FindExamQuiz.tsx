@@ -55,6 +55,22 @@ export function FindExamQuiz({ initial }: { initial?: Partial<Record<string, str
     const a = parseInt(age, 10);
     if (!a || a < 13 || a > 60) { setErr("Enter a valid age."); return; }
     if (!edu) { setErr("Pick your education level."); return; }
+    // Completion beacon — the answers live in the query string, which the
+    // page-view tracker strips, so results views are invisible without
+    // this. One event per submit = the true questionnaire-completion count.
+    try {
+      navigator.sendBeacon?.(
+        "/api/analytics",
+        new Blob(
+          [JSON.stringify({
+            kind: "CTA_CLICKED",
+            path: "/find-your-exam",
+            props: { cta: "finder-submitted", surface: "finder", edu, state: state || null },
+          })],
+          { type: "application/json" },
+        ),
+      );
+    } catch { /* best-effort */ }
     const q = new URLSearchParams({ age: String(a), edu, stream: needsStream ? stream : "ANY", cat });
     if (state) q.set("state", state);
     if (str.length) q.set("str", str.join(","));
