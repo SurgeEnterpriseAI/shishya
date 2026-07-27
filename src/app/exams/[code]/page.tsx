@@ -516,6 +516,12 @@ export default async function ExamPage({
           >
             📖 How to crack it
           </Link>
+          <Link
+            href="/revision"
+            className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
+          >
+            🔁 Mistake Notebook
+          </Link>
         </div>
 
         {/* Vacancies + OFFICIAL source — the "is this real?" verification

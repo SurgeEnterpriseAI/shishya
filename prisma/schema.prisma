@@ -78,6 +78,7 @@ model User {
   accounts           Account[]
   sessions           Session[]
   topicStudyStates   TopicStudyState[]
+  questionBookmarks  QuestionBookmark[]
   enrollments        Enrollment[]
   mocks              Mock[]
   attempts           Attempt[]
@@ -1844,6 +1845,23 @@ model TopicStudyState {
 
   @@unique([userId, topicId])
   @@index([userId, readAt])
+}
+
+// Mistake-notebook bookmarks — questions a student explicitly stars for
+// later revision (auto-collected wrong answers live in Attempt.answers;
+// this table holds only deliberate saves). Toggled from the results
+// review; listed on /revision.
+model QuestionBookmark {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId String
+  examId     String
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@index([userId, examId])
 }
 
 // AI-crawler observability — one row per page fetch by a known AI bot

@@ -6,6 +6,7 @@
 // step-by-step (POST /api/explain).
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { apiPost } from "@/lib/api";
 import { QuestionLangSwitcher } from "@/components/QuestionLangSwitcher";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
@@ -126,6 +127,43 @@ export function ResultsReview({
   // Count wrong + skipped so we can headline the review with a nudge.
   const wrongCount = questions.filter((q) => !q.correct).length;
 
+  // ── Mistake-notebook stars. Hydrate once per page (bounded query),
+  // toggle optimistically. Wrong answers are auto-collected on /revision
+  // regardless — starring is for "this one specifically, keep it".
+  const [stars, setStars] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/bookmarks?exam=${encodeURIComponent(examCode)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && Array.isArray(d?.ids)) setStars(new Set(d.ids));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [examCode]);
+
+  async function toggleStar(id: string) {
+    const has = stars.has(id);
+    setStars((prev) => {
+      const next = new Set(prev);
+      if (has) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    try {
+      await apiPost("/api/bookmarks", { questionId: id, action: has ? "remove" : "add" });
+    } catch {
+      setStars((prev) => {
+        const next = new Set(prev);
+        if (has) next.add(id);
+        else next.delete(id);
+        return next;
+      });
+    }
+  }
+
   return (
     <>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
@@ -134,7 +172,11 @@ export function ResultsReview({
             <span className="font-semibold text-rose-700">{wrongCount}</span> to
             review — tap{" "}
             <span className="font-medium text-saffron-700">Ask Shishya why</span>{" "}
-            on any to get a step-by-step.
+            on any to get a step-by-step. All {wrongCount} are saved in your{" "}
+            <Link href="/revision" className="font-medium text-saffron-700 hover:underline">
+              🔁 Mistake Notebook
+            </Link>
+            .
           </p>
         ) : (
           <span />
@@ -184,6 +226,16 @@ export function ResultsReview({
                     Ask why →
                   </button>
                 )}
+                {/* Star → Mistake Notebook. Outside the toggle (no nested
+                    buttons); optimistic; works on right answers too. */}
+                <button
+                  onClick={() => toggleStar(q.id)}
+                  aria-label={stars.has(q.id) ? "Remove from Mistake Notebook" : "Save to Mistake Notebook"}
+                  title={stars.has(q.id) ? "Saved — tap to remove" : "Save to Mistake Notebook"}
+                  className="shrink-0 self-center mr-3 text-base leading-none"
+                >
+                  {stars.has(q.id) ? "⭐" : "☆"}
+                </button>
               </div>
 
               {openIds.has(q.id) && (
