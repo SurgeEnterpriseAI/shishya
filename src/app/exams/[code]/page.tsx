@@ -530,6 +530,14 @@ export default async function ExamPage({
               ⌨️ Typing practice
             </Link>
           )}
+          {["GOVT_JOBS", "BANKING", "CIVIL_SERVICES", "STATE_LEVEL"].includes(exam.category) && (
+            <Link
+              href="/descriptive"
+              className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
+            >
+              ✍️ Essay &amp; letter check
+            </Link>
+          )}
         </div>
 
         {/* Vacancies + OFFICIAL source — the "is this real?" verification

@@ -278,6 +278,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/current-affairs",
     "/find-your-exam",
     "/typing",
+    "/descriptive",
     "/post-graduation",
     "/jobs",
     "/worldwide",

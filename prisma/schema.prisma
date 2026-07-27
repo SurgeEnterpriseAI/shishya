@@ -1864,6 +1864,24 @@ model QuestionBookmark {
   @@index([userId, examId])
 }
 
+// AI-evaluated descriptive answers (essay / letter / précis / UPSC
+// mains answer). Free AI evaluation of what competitors charge human
+// evaluators for. userId is a plain column (no relation) to keep the
+// hot User model untouched; rows are per-user rate-limited (3/day).
+model DescriptiveAttempt {
+  id         String   @id @default(cuid())
+  userId     String
+  taskType   String // essay | letter | precis | upsc-answer
+  prompt     String   @db.Text
+  answer     String   @db.Text
+  wordCount  Int
+  score      Float?
+  evaluation Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
 // AI-crawler observability — one row per page fetch by a known AI bot
 // (GPTBot, ClaudeBot, Claude-SearchBot, PerplexityBot, Google-Extended…).
 // Answers "is Gemini/Claude/Perplexity actually indexing us?" with data
