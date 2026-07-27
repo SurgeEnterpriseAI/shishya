@@ -169,6 +169,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: n.archivedAt ? 0.35 : 0.6,
   }));
 
+  // Per-result permalink — "{exam} {stage} result {year}" is the largest
+  // query family in this category. One URL per declared result.
+  const resultRows = await prisma
+    .$queryRaw<{ id: string; code: string; declaredOn: Date }[]>`
+      SELECT r.id, e.code, r."declaredOn"
+      FROM "ExamResult" r JOIN "Exam" e ON e.id = r."examId"
+      WHERE r.stage <> '__not_a_result__' AND e.active = TRUE
+      ORDER BY r."declaredOn" DESC LIMIT 5000
+    `.catch(() => [] as { id: string; code: string; declaredOn: Date }[]);
+  newsUrls.push(
+    ...resultRows.map((r) => ({
+      url: `${base}/exams/${r.code}/results/${r.id}`,
+      lastModified: r.declaredOn,
+      changeFrequency: "weekly" as const,
+      priority: 0.65,
+    })),
+  );
+
   // Phase articles — the three time-sensitive long-form pieces per exam
   // (CHECKLIST / LIVE / REACTIONS). Each is a Claude-summarised, source-
   // cited article that lives at /exams/[code]/{checklist,live,reactions}.

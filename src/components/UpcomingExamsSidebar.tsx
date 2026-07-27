@@ -205,9 +205,13 @@ export function UpcomingExamsSidebar({
                 aria-controls={`cal-panel-${t.key}`}
                 onClick={() => setTab(t.key)}
                 className={`flex-1 rounded-t-md border border-b-0 px-1 py-1.5 text-[11px] font-semibold transition-colors ${
-                  active
-                    ? "border-ink-200 bg-white text-saffron-800"
-                    : "border-transparent bg-transparent text-ink-500 hover:text-ink-800"
+                  t.key === "results"
+                    ? active
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                      : "border-transparent bg-transparent text-emerald-700 hover:text-emerald-900"
+                    : active
+                      ? "border-ink-200 bg-white text-saffron-800"
+                      : "border-transparent bg-transparent text-ink-500 hover:text-ink-800"
                 }`}
               >
                 {t.label}
@@ -215,7 +219,7 @@ export function UpcomingExamsSidebar({
                   <span
                     className={`ml-1 rounded-full px-1.5 text-[10px] tabular-nums ${
                       t.key === "results"
-                        ? "bg-saffron-500 text-white"
+                        ? "bg-emerald-500 text-white"
                         : active
                           ? "bg-saffron-100 text-saffron-800"
                           : "bg-ink-100 text-ink-600"
@@ -246,8 +250,8 @@ export function UpcomingExamsSidebar({
             {results.map((r) => (
               <li key={r.id}>
                 <Link
-                  href={`/results#${r.id}`}
-                  className="block px-4 pt-3 transition-colors hover:bg-saffron-50/50"
+                  href={`/exams/${r.examCode}/results/${r.id}`}
+                  className="block px-4 pt-3 transition-colors hover:bg-emerald-50/50"
                 >
                   <div className="flex items-baseline justify-between gap-2">
                     <p className="truncate text-sm font-semibold text-ink-900">{r.examShort}</p>
@@ -264,8 +268,8 @@ export function UpcomingExamsSidebar({
                 </Link>
                 <div className="flex gap-2 px-4 py-2">
                   <Link
-                    href={`/results#${r.id}`}
-                    className="rounded-md bg-saffron-50 px-2 py-1 text-[11px] font-semibold text-saffron-800 hover:bg-saffron-100"
+                    href={`/exams/${r.examCode}/results/${r.id}`}
+                    className="rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100"
                   >
                     What&apos;s next →
                   </Link>

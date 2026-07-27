@@ -76,7 +76,12 @@ export default async function ResultsPage() {
           {r.declaredOn.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
         </span>
       </div>
-      <p className="mt-1.5 text-sm leading-relaxed text-ink-700">{r.headline}</p>
+      <Link
+        href={`/exams/${r.code}/results/${r.id}`}
+        className="mt-1.5 block text-sm leading-relaxed text-ink-700 hover:text-saffron-800"
+      >
+        {r.headline}
+      </Link>
 
       {r.cutoffNote && (
         <p className="mt-3 rounded-lg bg-saffron-50/70 px-3 py-2 text-sm leading-relaxed text-ink-800">

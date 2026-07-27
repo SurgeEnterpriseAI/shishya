@@ -172,6 +172,7 @@ export const config = {
     "/scholarships",
     "/current-affairs/:path*",
     "/find-your-exam",
+    "/results",
     "/api/auth/signin/:path*",
   ],
 };
