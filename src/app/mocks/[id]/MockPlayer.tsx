@@ -67,6 +67,13 @@ interface AnswerLocal {
   marked: boolean;
 }
 
+interface RevealFeedback {
+  correct: boolean;
+  answerKey: string;
+  solution: string;
+  topicName: string | null;
+}
+
 export function MockPlayer({
   mock,
   attemptId,
@@ -75,6 +82,7 @@ export function MockPlayer({
   existingAnswers,
   labels,
   initialLocale = "en",
+  practice = false,
 }: {
   mock: MockMeta;
   attemptId: string;
@@ -83,12 +91,44 @@ export function MockPlayer({
   existingAnswers: AnswerLocal[];
   labels: PlayerLabels;
   initialLocale?: Locale;
+  /** Practice mocks (TOPIC/SUBJECT/REVISION/ADAPTIVE, never live tests)
+   *  get opt-out instant per-question feedback — student-requested. */
+  practice?: boolean;
 }) {
   const router = useRouter();
   const [idx, setIdx] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // ── Instant feedback (practice mocks only) ──────────────────────────
+  // After the student commits an answer, the server reveals
+  // correct/wrong + solution + topic, and the choice locks (no
+  // change-after-reveal score inflation). Weak areas accumulate into a
+  // running tally. Toggleable — some students want exam-style silence.
+  const [instantOn, setInstantOn] = useState(true);
+  const [feedback, setFeedback] = useState<Map<string, RevealFeedback>>(new Map());
+  async function revealNow(questionId: string, chosen: string) {
+    try {
+      const res = await fetch(`/api/attempts/${attemptId}/reveal`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ questionId, chosen }),
+      });
+      if (!res.ok) return;
+      const fb = (await res.json()) as RevealFeedback;
+      setFeedback((prev) => new Map(prev).set(questionId, fb));
+    } catch {
+      /* feedback is best-effort — the mock itself is unaffected */
+    }
+  }
+  const weakTally = (() => {
+    const m = new Map<string, number>();
+    for (const fb of feedback.values()) {
+      if (!fb.correct && fb.topicName) m.set(fb.topicName, (m.get(fb.topicName) ?? 0) + 1);
+    }
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+  })();
 
   // ── On-demand question translation ────────────────────────────────────
   // The questions prop holds the source (usually English). When the
@@ -291,15 +331,20 @@ export function MockPlayer({
 
   function chooseOption(key: string) {
     const q = questions[idx];
+    // Once instant feedback has revealed the answer, the choice is
+    // locked — changing after seeing the key would inflate the score.
+    if (feedback.has(q.id)) return;
+    // Toggle off if same key tapped again (allow clearing). Computed
+    // OUTSIDE the updater so the reveal call sees a deterministic value.
+    const newChosen = (answers.get(q.id)?.chosen ?? null) === key ? null : key;
     setAnswers((prev) => {
       const next = new Map(prev);
       const a = next.get(q.id) ?? { questionId: q.id, chosen: null, timeSec: 0, marked: false };
-      // Toggle off if same key tapped again (allow clearing)
-      const newChosen = a.chosen === key ? null : key;
       next.set(q.id, { ...a, chosen: newChosen });
       return next;
     });
     scheduleSave(q.id);
+    if (practice && instantOn && newChosen) void revealNow(q.id, newChosen);
   }
 
   function toggleMark() {
@@ -430,7 +475,21 @@ export function MockPlayer({
             <span className="hidden font-semibold text-ink-900 sm:inline">{mock.examShort}</span>
           </Link>
           <p className="hidden truncate text-sm font-medium text-ink-700 md:block">{mock.title}</p>
-          <Timer remainingSec={remainingSec} totalSec={totalSec} />
+          <div className="flex items-center gap-2">
+            {practice && (
+              <button
+                type="button"
+                onClick={() => setInstantOn((v) => !v)}
+                title="Instant feedback after each answer (practice mocks only)"
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                  instantOn ? "bg-emerald-100 text-emerald-800" : "bg-ink-100 text-ink-500"
+                }`}
+              >
+                ⚡ Feedback {instantOn ? "ON" : "OFF"}
+              </button>
+            )}
+            <Timer remainingSec={remainingSec} totalSec={totalSec} />
+          </div>
         </div>
         {translateErr && (
           <p className="container-prose pb-1 text-[11px] text-rose-700">{translateErr}</p>
@@ -473,31 +532,73 @@ export function MockPlayer({
           <ul className="mt-6 space-y-2">
             {displayOptions.map((opt) => {
               const selected = localAnswer?.chosen === opt.key;
+              const fb = feedback.get(q.id);
+              const isKey = fb ? fb.answerKey.toUpperCase().split(",").map((k) => k.trim()).includes(opt.key.toUpperCase()) : false;
+              const rowCls = fb
+                ? isKey
+                  ? "flex w-full items-start gap-3 rounded-md border-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-left"
+                  : selected
+                    ? "flex w-full items-start gap-3 rounded-md border-2 border-rose-400 bg-rose-50 px-4 py-3 text-left"
+                    : "flex w-full items-start gap-3 rounded-md border border-ink-200 bg-white px-4 py-3 text-left opacity-60"
+                : selected
+                  ? "flex w-full items-start gap-3 rounded-md border-2 border-saffron-500 bg-saffron-50 px-4 py-3 text-left"
+                  : "flex w-full items-start gap-3 rounded-md border border-ink-300 bg-white px-4 py-3 text-left hover:bg-ink-50";
+              const badgeCls = fb
+                ? isKey
+                  ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-500 text-sm font-semibold text-white"
+                  : selected
+                    ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-rose-400 text-sm font-semibold text-white"
+                    : "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-ink-300 text-sm font-medium text-ink-700"
+                : selected
+                  ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-saffron-500 text-sm font-semibold text-white"
+                  : "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-ink-300 text-sm font-medium text-ink-700";
               return (
                 <li key={opt.key}>
-                  <button
-                    onClick={() => chooseOption(opt.key)}
-                    className={
-                      selected
-                        ? "flex w-full items-start gap-3 rounded-md border-2 border-saffron-500 bg-saffron-50 px-4 py-3 text-left"
-                        : "flex w-full items-start gap-3 rounded-md border border-ink-300 bg-white px-4 py-3 text-left hover:bg-ink-50"
-                    }
-                  >
-                    <span
-                      className={
-                        selected
-                          ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-saffron-500 text-sm font-semibold text-white"
-                          : "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-ink-300 text-sm font-medium text-ink-700"
-                      }
-                    >
-                      {opt.key}
-                    </span>
+                  <button onClick={() => chooseOption(opt.key)} disabled={Boolean(fb)} className={rowCls}>
+                    <span className={badgeCls}>{opt.key}</span>
                     <span className="text-sm text-ink-800">{opt.text}</span>
                   </button>
                 </li>
               );
             })}
           </ul>
+
+          {/* Instant-feedback strip (practice mocks) */}
+          {(() => {
+            const fb = feedback.get(q.id);
+            if (!fb) return null;
+            return (
+              <div
+                className={`mt-4 rounded-lg border p-4 ${
+                  fb.correct ? "border-emerald-300 bg-emerald-50/60" : "border-rose-200 bg-rose-50/50"
+                }`}
+              >
+                <p className={`text-sm font-bold ${fb.correct ? "text-emerald-800" : "text-rose-800"}`}>
+                  {fb.correct ? "✓ Correct!" : `✗ Not quite — correct answer: ${fb.answerKey}`}
+                  {fb.topicName && (
+                    <span className="ml-2 rounded bg-white px-1.5 py-0.5 text-[11px] font-semibold text-ink-600">
+                      {fb.topicName}
+                    </span>
+                  )}
+                </p>
+                {fb.solution && (
+                  <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-ink-700">
+                    {fb.solution}
+                  </p>
+                )}
+                <p className="mt-1.5 text-[11px] text-ink-400">Answer locked for this question.</p>
+              </div>
+            );
+          })()}
+
+          {/* Running weak-areas tally — the student's request, verbatim:
+              "let me find my weak areas after every mcq". */}
+          {weakTally.length > 0 && (
+            <p className="mt-3 text-xs text-ink-600">
+              <span className="font-semibold text-rose-700">Weak so far:</span>{" "}
+              {weakTally.map(([name, n]) => `${name}${n > 1 ? ` ×${n}` : ""}`).join(" · ")}
+            </p>
+          )}
 
           <div className="mt-8 flex items-center justify-between">
             <button

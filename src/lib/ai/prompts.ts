@@ -73,6 +73,9 @@ export function syllabusBlock(args: {
       }
     }
   }
+  lines.push(
+    `\nEvery topic above has a free notes + practice page at https://shishya.in/exams/${args.examCode}/topics/{topic code}. When you teach or explain one of these topics, end your reply with ONE markdown link to its notes page, e.g. [Full ${args.examName} notes on this topic](https://shishya.in/exams/${args.examCode}/topics/TOPIC_CODE) — use the exact topic code from the syllabus. Only link a topic you actually taught in that reply; never more than one link.`,
+  );
   return lines.join("\n");
 }
 

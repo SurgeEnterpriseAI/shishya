@@ -328,6 +328,40 @@ async function renderDashboard() {
     continueTopic = null;
   }
 
+  // Unfinished mock — today's biggest measured leak (~30% of started
+  // mocks never get submitted). Surface the newest resumable attempt;
+  // the ghost-cleanup cron abandons anything older than its window, so
+  // cap at 48h to never offer a stale corpse.
+  let resumeMock: { attemptMockId: string; title: string; eshort: string; answered: number; total: number } | null = null;
+  try {
+    const rows = await prisma.$queryRaw<
+      { mid: string; title: string; eshort: string; answers: any; qcount: number }[]
+    >`
+      SELECT a."mockId" AS mid, m.title, e."shortName" AS eshort, a.answers,
+             COALESCE(array_length(m."questionIds", 1), 0)::int AS qcount
+      FROM "Attempt" a
+      JOIN "Mock" m ON m.id = a."mockId"
+      JOIN "Exam" e ON e.id = m."examId"
+      WHERE a."userId" = ${userId} AND a.status = 'IN_PROGRESS'
+        AND a."startedAt" > NOW() - INTERVAL '48 hours'
+      ORDER BY a."startedAt" DESC LIMIT 1
+    `;
+    if (rows[0]) {
+      const answered = Array.isArray(rows[0].answers)
+        ? rows[0].answers.filter((x: any) => x?.chosen != null).length
+        : 0;
+      resumeMock = {
+        attemptMockId: rows[0].mid,
+        title: rows[0].title,
+        eshort: rows[0].eshort,
+        answered,
+        total: rows[0].qcount,
+      };
+    }
+  } catch {
+    resumeMock = null;
+  }
+
   // Score Boost is exam-scoped, so it now lives only on /exams/[code] where
   // the student is already focused on a specific exam. The dashboard stays
   // exam-agnostic — multi-exam home, no auto-scope to whichever exam the
@@ -476,6 +510,21 @@ async function renderDashboard() {
         {/* Mission card — day-N identity, exam-day countdown, syllabus
             progress. Sits between streak (habit) and Daily-5 (action). */}
         {mission && <MissionCard {...mission} />}
+
+        {/* Unfinished mock — resume beats restart. Amber = gentle
+            urgency without alarm. */}
+        {resumeMock && (
+          <Link
+            href={`/mocks/${resumeMock.attemptMockId}`}
+            className="mt-3 flex items-center justify-between gap-3 rounded-lg border-2 border-amber-300 bg-amber-50 px-4 py-3 transition-colors hover:border-amber-400"
+          >
+            <span className="min-w-0 text-sm text-ink-800">
+              ⏸ You have an unfinished <span className="font-semibold">{resumeMock.eshort}</span>{" "}
+              mock — {resumeMock.answered}/{resumeMock.total} answered
+            </span>
+            <span className="shrink-0 text-sm font-bold text-amber-700">Resume →</span>
+          </Link>
+        )}
 
         {/* Resume point — the mastery loop's "come back tomorrow and
             continue" hook (Zeigarnik effect: open loops pull). */}

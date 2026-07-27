@@ -260,6 +260,30 @@ export default async function ExamPage({
     ? { open: ltRows[0].opensAt <= new Date() }
     : null;
 
+  // Signed-in student's unfinished mock for THIS exam (the ~30%
+  // abandonment leak) — resume banner under the chips.
+  let resumeMock: { mockId: string; answered: number; total: number } | null = null;
+  if (userId) {
+    const rm = await prisma
+      .$queryRaw<{ mid: string; answers: any; qcount: number }[]>`
+        SELECT a."mockId" AS mid, a.answers,
+               COALESCE(array_length(m."questionIds", 1), 0)::int AS qcount
+        FROM "Attempt" a JOIN "Mock" m ON m.id = a."mockId"
+        WHERE a."userId" = ${userId} AND m."examId" = ${exam.id}
+          AND a.status = 'IN_PROGRESS' AND a."startedAt" > NOW() - INTERVAL '48 hours'
+        ORDER BY a."startedAt" DESC LIMIT 1
+      `.catch(() => []);
+    if (rm[0]) {
+      resumeMock = {
+        mockId: rm[0].mid,
+        answered: Array.isArray(rm[0].answers)
+          ? rm[0].answers.filter((x: any) => x?.chosen != null).length
+          : 0,
+        total: rm[0].qcount,
+      };
+    }
+  }
+
   // ── "Try one question" hook for SIGNED-OUT visitors ───────────────
   // 91% of unique visitors browse anonymously and leave without signing
   // in. The exam pages pull strong organic SEO traffic, but the page
@@ -552,6 +576,20 @@ export default async function ExamPage({
             </Link>
           )}
         </div>
+
+        {/* Unfinished-mock resume banner. */}
+        {resumeMock && (
+          <Link
+            href={`/mocks/${resumeMock.mockId}`}
+            className="mt-5 flex items-center justify-between gap-3 rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 transition-colors hover:border-amber-400"
+          >
+            <span className="text-sm text-ink-800">
+              ⏸ You have an unfinished {exam.shortName} mock — {resumeMock.answered}/
+              {resumeMock.total} answered
+            </span>
+            <span className="shrink-0 text-sm font-bold text-amber-700">Resume →</span>
+          </Link>
+        )}
 
         {/* All-India Live Test banner — shown while this exam has a
             test open now or opening within the week. */}

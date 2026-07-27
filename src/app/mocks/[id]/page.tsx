@@ -113,6 +113,10 @@ export default async function MockPlayerPage({
       questions={orderedQs}
       existingAnswers={(attempt.answers as any[]) ?? []}
       initialLocale={locale}
+      practice={
+        ["TOPIC", "SUBJECT", "REVISION", "ADAPTIVE"].includes(mock.type) &&
+        mock.generatedBy !== "live-test"
+      }
       labels={{
         qOf: t("player.q.of"),
         mark: t("player.mark"),
