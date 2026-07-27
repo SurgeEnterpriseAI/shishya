@@ -72,6 +72,10 @@
     {
       "path": "/api/cron/evening-nudge",
       "schedule": "0 15 * * *"
+    },
+    {
+      "path": "/api/cron/live-test-create",
+      "schedule": "0 16 * * 6"
     }
   ]
 }

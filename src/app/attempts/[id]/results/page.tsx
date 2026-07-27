@@ -15,6 +15,7 @@ import { FreshQuestionsButton } from "./FreshQuestionsButton";
 import { NextMockButton } from "./NextMockButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { formatDisplayScorePct } from "@/lib/scoring";
+import { liveTestRank } from "@/lib/live-test";
 
 export default async function ResultsPage({
   params,
@@ -115,6 +116,13 @@ export default async function ResultsPage({
     attempt.scorePct != null &&
     attempt.scorePct > prevBest.scorePct;
   const isFirstMock = prevBest == null;
+
+  // All-India Live Test rank — only for live-test mocks; rank among
+  // each user's FIRST submitted attempt (re-attempts don't re-rank).
+  const airRank =
+    attempt.mock.generatedBy === "live-test"
+      ? await liveTestRank(attempt.mock.id, session.user.id).catch(() => null)
+      : null;
   // rankBands fetched above in the parallel Promise.all.
 
   const topicScores = (attempt.topicScores as Record<string, any>) ?? {};
@@ -207,6 +215,22 @@ export default async function ResultsPage({
             = 5/48 = 10.4%), "Accuracy" is the demoralisation-free hit
             rate (3 right out of 12). Showing both side-by-side avoids
             the "but I got 3 right, why does it say 10%?" confusion. */}
+        {/* All-India Live Test rank — the one place a cross-student
+            comparison IS the product. Rank + cohort size only; no names. */}
+        {airRank && (
+          <div className="mt-6 rounded-xl border-2 border-saffron-400 bg-gradient-to-r from-saffron-50 via-amber-50 to-saffron-50 p-4 text-center">
+            <p className="text-lg font-bold text-saffron-800">
+              🇮🇳 All-India Rank #{airRank.rank}{" "}
+              <span className="text-sm font-semibold text-ink-600">of {airRank.of} across India</span>
+            </p>
+            <p className="mt-0.5 text-sm text-ink-700">
+              Same paper, same day, whole country.{" "}
+              <Link href="/live-test" className="font-semibold text-saffron-700 hover:underline">
+                Next live test →
+              </Link>
+            </p>
+          </div>
+        )}
         {/* Celebration moments — personal best beats any leaderboard;
             first mock gets a baseline framing instead of a raw judgment. */}
         {isPersonalBest && (

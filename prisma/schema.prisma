@@ -1864,6 +1864,24 @@ model QuestionBookmark {
   @@index([userId, examId])
 }
 
+// Weekly All-India Live Test — one shared paper (a system Mock with
+// userId NULL) per top exam, open for a fixed Sunday window (6 AM –
+// 11 PM IST). Everyone attempts the SAME questions; rank = position of
+// a user's FIRST submitted attempt among all first attempts. Created
+// by the Saturday cron; unique(examId, opensAt) makes creation
+// idempotent.
+model LiveTest {
+  id        String   @id @default(cuid())
+  examId    String
+  mockId    String
+  opensAt   DateTime
+  closesAt  DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([examId, opensAt])
+  @@index([closesAt])
+}
+
 // AI-evaluated descriptive answers (essay / letter / précis / UPSC
 // mains answer). Free AI evaluation of what competitors charge human
 // evaluators for. userId is a plain column (no relation) to keep the

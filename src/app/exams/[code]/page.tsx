@@ -247,6 +247,19 @@ export default async function ExamPage({
     `.catch(() => []);
   const elig = eligRows[0] ?? null;
 
+  // All-India Live Test for this exam — open now, or opening within 7
+  // days. One indexed-lookup query; renders the banner under the chips.
+  const ltRows = await prisma
+    .$queryRaw<{ opensAt: Date; closesAt: Date }[]>`
+      SELECT "opensAt", "closesAt" FROM "LiveTest"
+      WHERE "examId" = ${exam.id} AND "closesAt" > NOW()
+        AND "opensAt" < NOW() + INTERVAL '7 days'
+      ORDER BY "opensAt" ASC LIMIT 1
+    `.catch(() => []);
+  const liveTest = ltRows[0]
+    ? { open: ltRows[0].opensAt <= new Date() }
+    : null;
+
   // ── "Try one question" hook for SIGNED-OUT visitors ───────────────
   // 91% of unique visitors browse anonymously and leave without signing
   // in. The exam pages pull strong organic SEO traffic, but the page
@@ -539,6 +552,31 @@ export default async function ExamPage({
             </Link>
           )}
         </div>
+
+        {/* All-India Live Test banner — shown while this exam has a
+            test open now or opening within the week. */}
+        {liveTest && (
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 px-4 py-3">
+            <div>
+              <p className="text-sm font-bold text-ink-900">
+                🇮🇳 All-India Live Test —{" "}
+                {liveTest.open
+                  ? "LIVE now, closes 11 PM IST"
+                  : `this Sunday, 6 AM – 11 PM IST`}
+              </p>
+              <p className="text-xs text-ink-600">
+                Same {exam.shortName} paper across India. Your national rank, the moment you
+                submit. Free.
+              </p>
+            </div>
+            <Link
+              href="/live-test"
+              className="shrink-0 rounded-lg bg-saffron-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-saffron-600"
+            >
+              {liveTest.open ? "Write it now →" : "See details →"}
+            </Link>
+          </div>
+        )}
 
         {/* Vacancies + OFFICIAL source — the "is this real?" verification
             block. Our figure is indicative; the link goes to the
