@@ -114,6 +114,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     };
   });
+  // Monthly capsule pages — one per month that has content.
+  const capsuleMonths = [...new Set(caDates.map((r) => r.d.toISOString().slice(0, 7)))];
+  const capsuleUrls: MetadataRoute.Sitemap = capsuleMonths.map((month) => ({
+    url: `${base}/current-affairs/capsule/${month}`,
+    lastModified: new Date(),
+    changeFrequency: "daily" as const,
+    priority: 0.7,
+  }));
+  currentAffairsUrls.push(...capsuleUrls);
 
   // Per-exam archive aggregator. One URL per active exam. Index target:
   // "[exam] previous year notifications", "[exam] postponement history".

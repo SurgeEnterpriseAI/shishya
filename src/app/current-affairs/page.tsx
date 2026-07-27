@@ -77,6 +77,16 @@ export default async function CurrentAffairsHub() {
           state exams — free, factual, updated every morning. Come back daily; it&apos;s how the
           GK section is won.
         </p>
+        {latest !== null && (
+          <p className="mt-3">
+            <Link
+              href={`/current-affairs/capsule/${iso(latest).slice(0, 7)}`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-saffron-300 bg-saffron-50 px-3 py-1.5 text-sm font-semibold text-saffron-800 hover:bg-saffron-100"
+            >
+              📥 Monthly capsule — read online or download PDF
+            </Link>
+          </p>
+        )}
 
         {latest === null ? (
           <div className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-4 py-10 text-center text-sm text-ink-500">
