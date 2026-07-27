@@ -411,10 +411,12 @@ export default async function ExamsPage({
       loadRecentResults(),
     ]);
   const upcomingEvents = calendar.events;
-  // A result declared in the last 48h outranks everything else on the
+  // A result declared in the last week outranks everything else on the
   // calendar — open the Results tab; otherwise keep the usual default.
+  // (7 days, not 48h: declaredOn is a DATE from lagging news text, so a
+  // tight window almost never fires.)
   const freshResult = recentResults.some(
-    (r) => Date.now() - new Date(r.declaredOn).getTime() < 48 * 3600_000,
+    (r) => Date.now() - new Date(r.declaredOn).getTime() < 7 * 86_400_000,
   );
   const calendarDefault: CalendarBucket = freshResult ? "results" : calendar.defaultTab;
   const vacancyStats = { totalLakh: vacancy.totalLakh, examCount: vacancy.examCount };
