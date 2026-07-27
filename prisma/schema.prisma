@@ -1864,6 +1864,28 @@ model QuestionBookmark {
   @@index([userId, examId])
 }
 
+// Declared exam results — structured from the daily news stream by an
+// AI extraction pass (cron extract-results). Accuracy rule: officialUrl
+// is only ever copied from the source text, never invented; rows render
+// with a "verify on the official portal" line regardless. nextSteps is
+// [{step, note}] — the candidate's path after this declaration.
+model ExamResult {
+  id           String   @id @default(cuid())
+  examId       String
+  stage        String // "Tier 1" / "Prelims" / "Final merit list" — free-form, exams differ
+  headline     String
+  declaredOn   DateTime @db.Date
+  officialUrl  String?
+  officialName String?
+  cutoffNote   String?  @db.Text
+  nextSteps    Json?
+  sourceNewsId String?
+  createdAt    DateTime @default(now())
+
+  @@unique([examId, headline])
+  @@index([declaredOn])
+}
+
 // Weekly All-India Live Test — one shared paper (a system Mock with
 // userId NULL) per top exam, open for a fixed Sunday window (6 AM –
 // 11 PM IST). Everyone attempts the SAME questions; rank = position of

@@ -76,6 +76,10 @@
     {
       "path": "/api/cron/live-test-create",
       "schedule": "0 16 * * 6"
+    },
+    {
+      "path": "/api/cron/extract-results",
+      "schedule": "15 2 * * *"
     }
   ]
 }

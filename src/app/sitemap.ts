@@ -280,6 +280,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/typing",
     "/descriptive",
     "/live-test",
+    "/results",
     "/post-graduation",
     "/jobs",
     "/worldwide",
