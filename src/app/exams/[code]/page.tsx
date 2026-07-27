@@ -522,6 +522,14 @@ export default async function ExamPage({
           >
             🔁 Mistake Notebook
           </Link>
+          {["GOVT_JOBS", "BANKING", "STATE_LEVEL"].includes(exam.category) && (
+            <Link
+              href="/typing"
+              className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
+            >
+              ⌨️ Typing practice
+            </Link>
+          )}
         </div>
 
         {/* Vacancies + OFFICIAL source — the "is this real?" verification
