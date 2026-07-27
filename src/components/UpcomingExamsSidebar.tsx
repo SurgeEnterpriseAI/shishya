@@ -207,8 +207,8 @@ export function UpcomingExamsSidebar({
                 className={`flex-1 rounded-t-md border border-b-0 px-1 py-1.5 text-[11px] font-semibold transition-colors ${
                   t.key === "results"
                     ? active
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-                      : "border-transparent bg-transparent text-emerald-700 hover:text-emerald-900"
+                      ? "border-emerald-600 bg-emerald-600 text-white"
+                      : "border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600"
                     : active
                       ? "border-ink-200 bg-white text-saffron-800"
                       : "border-transparent bg-transparent text-ink-500 hover:text-ink-800"
@@ -219,7 +219,7 @@ export function UpcomingExamsSidebar({
                   <span
                     className={`ml-1 rounded-full px-1.5 text-[10px] tabular-nums ${
                       t.key === "results"
-                        ? "bg-emerald-500 text-white"
+                        ? "bg-white text-emerald-700"
                         : active
                           ? "bg-saffron-100 text-saffron-800"
                           : "bg-ink-100 text-ink-600"
