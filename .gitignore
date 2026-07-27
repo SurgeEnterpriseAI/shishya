@@ -56,3 +56,6 @@ next-env.d.ts
 UsersADMINDesktop_*.json
 .vercel-*-url.tmp
 
+
+.env.prod-readonly
+*.tmp

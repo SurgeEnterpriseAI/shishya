@@ -1,9 +1,0 @@
-<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
-Retrieving project…
-Resolving deployment "shishya.in"
-Streaming logs for deployment dpl_6zS8VFaoM2CQWHqyQv25f5oaX3nE starting from 23:01:24.63
-
-waiting for new logs...
-WARNING! Command automatically interrupted after 5 minutes.
-
-Error: An unexpected error occurred in logs: AbortError: The user aborted a request.
