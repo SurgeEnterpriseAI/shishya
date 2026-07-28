@@ -781,25 +781,45 @@ function StepGoals({
       <div className="mt-6">
         <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />
 
-        {/* Personal Coach entry — told as the story every aspirant has
-            lived: missed days ≠ ruined plan. Never a demotivation story. */}
-        <Link
-          href="/coach"
-          className="mt-3 block rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 px-4 py-3.5 transition-colors hover:border-saffron-400"
-        >
-          <p className="text-sm italic text-ink-600">
-            &ldquo;I missed 5 days. My whole study plan is ruined — I have to start again.&rdquo;
+        {/* Personal Coach entry — two voices every aspirant recognizes
+            (the lost newcomer, the missed-days aspirant), one answer.
+            Never a demotivation story: the portal understands where you
+            are, moulds itself to you, and walks with you to selection. */}
+        <div className="mt-3 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 px-5 py-4">
+          <p className="text-sm italic leading-relaxed text-ink-600">
+            &ldquo;I&apos;m new to all this. I just want a government job — but coaching wants
+            ₹50,000 I don&apos;t have, and I don&apos;t even know which exam I can write or
+            where to start.&rdquo;
           </p>
-          <p className="mt-1.5 text-sm text-ink-900">
-            <span className="font-bold">Not on Shishya.</span> Your free personal coach rebuilds
-            your plan <span className="font-bold">every single morning</span> — for the days you
-            have left and the syllabus that remains. No backlog. No guilt. Just today&apos;s best
-            move toward your government job.
+          <p className="mt-1.5 text-sm italic leading-relaxed text-ink-600">
+            &ldquo;I started once. Missed 5 days. My whole plan felt ruined — so I stopped.&rdquo;
           </p>
-          <span className="mt-2.5 inline-block rounded-lg bg-saffron-500 px-4 py-1.5 text-sm font-bold text-white">
-            Build my free plan →
-          </span>
-        </Link>
+          <p className="mt-3 text-sm leading-relaxed text-ink-900">
+            <span className="font-bold">Shishya was built for exactly you.</span> Tell us the job
+            you dream of — or let us find every exam you&apos;re eligible for, by your age,
+            education and state. Then your free personal coach starts you{" "}
+            <span className="font-bold">small</span> — one topic, one 10-question test, a few
+            minutes today — and gently builds the daily habit. Every single morning it rebuilds
+            your plan around what you actually did, for the days you have left and the syllabus
+            that remains. Miss a day, miss a week — there is no backlog here, no guilt, no
+            &ldquo;behind&rdquo;. Just today&apos;s best move, every day, from your first step to
+            the appointment letter. No ₹50,000. Not even ₹50. This is what Shishya is for.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Link
+              href="/coach"
+              className="rounded-lg bg-saffron-500 px-5 py-2 text-sm font-bold text-white shadow-sm hover:bg-saffron-600"
+            >
+              Build my free plan →
+            </Link>
+            <Link
+              href="/find-your-exam"
+              className="rounded-lg border border-saffron-300 bg-white px-4 py-2 text-sm font-semibold text-saffron-800 hover:bg-saffron-100"
+            >
+              New here? Find which exams fit me first
+            </Link>
+          </div>
+        </div>
       </div>
 
       <div className="mx-auto mt-12 max-w-3xl text-center">
