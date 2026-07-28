@@ -112,10 +112,58 @@ export default async function ResultPermalinkPage({
     ],
   };
 
+  // FAQPage — mirrors the exact questions aspirants type into ChatGPT/
+  // Gemini/Perplexity ("has X result come?", "cutoff?", "what next?"),
+  // so AI answer engines can lift a direct, citeable Q&A.
+  const declaredLabel = r.declaredOn.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const faqEntities = [
+    {
+      "@type": "Question",
+      name: `Has the ${r.short} ${r.stage} result been declared?`,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: `Yes — declared on ${declaredLabel}. ${r.headline} Verify on the official portal${r.officialName ? ` (${r.officialName})` : ""}.`,
+      },
+    },
+    ...(r.cutoffNote
+      ? [
+          {
+            "@type": "Question",
+            name: `What is the expected cutoff for the ${r.short} ${r.stage}?`,
+            acceptedAnswer: { "@type": "Answer", text: r.cutoffNote },
+          },
+        ]
+      : []),
+    ...(Array.isArray(r.nextSteps) && r.nextSteps.length > 0
+      ? [
+          {
+            "@type": "Question",
+            name: `What happens after the ${r.short} ${r.stage} result?`,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: r.nextSteps
+                .map((s, i) => `${i + 1}. ${s.step}${s.note ? ` — ${s.note}` : ""}`)
+                .join(" "),
+            },
+          },
+        ]
+      : []),
+  ];
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqEntities,
+  };
+
   return (
     <main className="min-h-screen bg-paper-50">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">

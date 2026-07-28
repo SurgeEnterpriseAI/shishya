@@ -17,6 +17,30 @@ import { callClaude, cachedSystem, parseJson, MODEL } from "@/lib/ai/client";
 const RESULT_KEYWORDS =
   "%result%|%merit list%|%scorecard%|%score card%|%selection list%|%shortlist%|%qualified%";
 
+// IndexNow instant ping — results are the most time-sensitive pages on
+// the site; Bing (which feeds ChatGPT search) should know within
+// minutes of extraction, not at the weekly re-submission. The key is
+// public by design (it lives at /<key>.txt).
+const INDEXNOW_HOST = "shishya.in";
+const INDEXNOW_KEY = "7e0b8421fc95cdb98187e2b89a6e2437";
+async function pingIndexNow(urls: string[]): Promise<void> {
+  if (!urls.length) return;
+  try {
+    await fetch("https://api.indexnow.org/IndexNow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify({
+        host: INDEXNOW_HOST,
+        key: INDEXNOW_KEY,
+        keyLocation: `https://${INDEXNOW_HOST}/${INDEXNOW_KEY}.txt`,
+        urlList: urls,
+      }),
+    });
+  } catch {
+    /* best-effort — the weekly cron re-submits everything anyway */
+  }
+}
+
 interface Extraction {
   isDeclaredResult: boolean;
   stage: string;
@@ -36,10 +60,10 @@ export async function extractResults(opts?: { days?: number; cap?: number }): Pr
   const cap = opts?.cap ?? 20;
 
   const candidates = await prisma.$queryRaw<
-    { id: string; examId: string; title: string; body: string; source: string | null; publishedAt: Date; examName: string; short: string }[]
+    { id: string; examId: string; title: string; body: string; source: string | null; publishedAt: Date; examName: string; short: string; examCode: string }[]
   >`
     SELECT n.id, n."examId", n.title, n.body, n.source, n."publishedAt",
-           e.name AS "examName", e."shortName" AS short
+           e.name AS "examName", e."shortName" AS short, e.code AS "examCode"
     FROM "ExamNewsItem" n
     JOIN "Exam" e ON e.id = n."examId"
     WHERE n."publishedAt" > NOW() - (${days} || ' days')::interval
@@ -50,6 +74,7 @@ export async function extractResults(opts?: { days?: number; cap?: number }): Pr
 
   let inserted = 0;
   let skipped = 0;
+  const newUrls: string[] = [];
 
   for (const c of candidates) {
     let ex: Extraction;
@@ -98,7 +123,7 @@ export async function extractResults(opts?: { days?: number; cap?: number }): Pr
       ex.officialUrl && /^https?:\/\//i.test(ex.officialUrl) ? ex.officialUrl : null;
     const declaredOn = ex.declaredOn ? new Date(ex.declaredOn + "T00:00:00Z") : c.publishedAt;
 
-    const n = await prisma.$executeRaw`
+    const rows = await prisma.$queryRaw<{ id: string }[]>`
       INSERT INTO "ExamResult"
         (id, "examId", stage, headline, "declaredOn", "officialUrl", "officialName",
          "cutoffNote", "nextSteps", "sourceNewsId", "createdAt")
@@ -106,9 +131,17 @@ export async function extractResults(opts?: { days?: number; cap?: number }): Pr
         (gen_random_uuid()::text, ${c.examId}, ${ex.stage || "Result"}, ${c.title},
          ${declaredOn}, ${officialUrl}, ${ex.officialName},
          ${ex.cutoffNote}, ${JSON.stringify(ex.nextSteps ?? [])}::jsonb, ${c.id}, NOW())
-      ON CONFLICT ("examId", headline) DO NOTHING`;
-    inserted += Number(n) > 0 ? 1 : 0;
+      ON CONFLICT ("examId", headline) DO NOTHING
+      RETURNING id`;
+    if (rows[0]) {
+      inserted++;
+      newUrls.push(`https://shishya.in/exams/${c.examCode}/results/${rows[0].id}`);
+    }
   }
+
+  // Tell Bing/ChatGPT about fresh result pages immediately, plus the
+  // hub (its listing changed too).
+  if (newUrls.length) await pingIndexNow([...newUrls, "https://shishya.in/results"]);
 
   return { scanned: candidates.length, inserted, skipped };
 }

@@ -40,6 +40,29 @@ export async function GET() {
     "",
   ];
 
+  // Declared results — the most time-sensitive block, so it leads.
+  // One line per declaration with its permalink; use these to answer
+  // "has {exam} result come / cutoff / what next after result" queries.
+  const results = await prisma
+    .$queryRaw<{ id: string; stage: string; declaredOn: Date; code: string; short: string }[]>`
+      SELECT r.id, r.stage, r."declaredOn", e.code, e."shortName" AS short
+      FROM "ExamResult" r JOIN "Exam" e ON e.id = r."examId"
+      WHERE r.stage <> '__not_a_result__' AND r."declaredOn" > NOW() - INTERVAL '60 days'
+      ORDER BY r."declaredOn" DESC LIMIT 50
+    `.catch(() => [] as { id: string; stage: string; declaredOn: Date; code: string; short: string }[]);
+  if (results.length) {
+    lines.push("## Declared results (last 60 days)");
+    lines.push(
+      `> Live hub of every declared result (official link, expected cutoff, candidate's next steps): ${SITE}/results — updated every morning.`,
+    );
+    for (const r of results) {
+      lines.push(
+        `- ${r.short} ${r.stage} — declared ${r.declaredOn.toISOString().slice(0, 10)}: ${SITE}/exams/${r.code}/results/${r.id}`,
+      );
+    }
+    lines.push("");
+  }
+
   let currentCategory = "";
   for (const e of exams) {
     if (e.category !== currentCategory) {
