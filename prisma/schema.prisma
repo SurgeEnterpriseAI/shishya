@@ -1883,6 +1883,23 @@ model CoachPlan {
   @@index([userId])
 }
 
+// The AI coach's overnight work — one row per (student, IST day),
+// written by the 4 AM cron while the student sleeps: today's tasks
+// (picked by Claude from a deterministically-validated candidate menu)
+// plus the coach's personal note. Dashboard reads this instantly; if a
+// row is missing (new plan mid-day, cron failure) the deterministic
+// engine answers live — the coach always shows up.
+model CoachDay {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime @db.Date // IST calendar day this plan is FOR
+  tasks     Json // [{kind,label,href}]
+  note      String?  @db.Text // the coach's 1-2 sentence morning note
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+}
+
 // Declared exam results — structured from the daily news stream by an
 // AI extraction pass (cron extract-results). Accuracy rule: officialUrl
 // is only ever copied from the source text, never invented; rows render

@@ -46,6 +46,18 @@ export function CoachPlanView({ plan, full = false }: { plan: ComputedPlan; full
       </div>
       <p className="mt-1 text-xs text-ink-600">{statusLine}</p>
 
+      {/* The coach's overnight note — written by the 4 AM AI pass from
+          this student's actual data. The single most human moment on
+          the dashboard. */}
+      {plan.note && (
+        <p className="mt-3 rounded-lg border-l-4 border-saffron-400 bg-white px-3 py-2 text-sm italic leading-relaxed text-ink-800">
+          “{plan.note}”
+          <span className="mt-0.5 block text-right text-[10px] not-italic text-ink-400">
+            — your coach, planned overnight
+          </span>
+        </p>
+      )}
+
       {/* Syllabus progress */}
       <div className="mt-3">
         <div className="flex items-baseline justify-between text-xs text-ink-600">
