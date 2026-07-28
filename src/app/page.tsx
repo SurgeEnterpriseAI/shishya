@@ -781,21 +781,23 @@ function StepGoals({
       <div className="mt-6">
         <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />
 
-        {/* Personal Coach entry — the platform's core promise, one line.
-            Speaks to the aspirant who just saw the vacancy numbers and
-            is wondering how they'll ever afford preparation. */}
+        {/* Personal Coach entry — told as the story every aspirant has
+            lived: missed days ≠ ruined plan. Never a demotivation story. */}
         <Link
           href="/coach"
-          className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 px-4 py-3 transition-colors hover:border-saffron-400"
+          className="mt-3 block rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 px-4 py-3.5 transition-colors hover:border-saffron-400"
         >
-          <span className="min-w-0 text-sm text-ink-800">
-            🎯 Can&apos;t afford ₹50,000 coaching?{" "}
-            <span className="font-bold text-ink-900">
-              Shishya coaches you free — a day-by-day plan to your exam, rebuilt every morning.
-            </span>
-          </span>
-          <span className="shrink-0 rounded-lg bg-saffron-500 px-4 py-1.5 text-sm font-bold text-white">
-            Build my plan →
+          <p className="text-sm italic text-ink-600">
+            &ldquo;I missed 5 days. My whole study plan is ruined — I have to start again.&rdquo;
+          </p>
+          <p className="mt-1.5 text-sm text-ink-900">
+            <span className="font-bold">Not on Shishya.</span> Your free personal coach rebuilds
+            your plan <span className="font-bold">every single morning</span> — for the days you
+            have left and the syllabus that remains. No backlog. No guilt. Just today&apos;s best
+            move toward your government job.
+          </p>
+          <span className="mt-2.5 inline-block rounded-lg bg-saffron-500 px-4 py-1.5 text-sm font-bold text-white">
+            Build my free plan →
           </span>
         </Link>
       </div>

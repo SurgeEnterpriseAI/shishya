@@ -74,15 +74,31 @@ export default async function CoachPage({
 
         {!userId && (
           <>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-700">
-              Tell the coach three things — your exam, its date, and how much time you
-              honestly have each day. It builds your day-by-day plan to the exam and{" "}
-              <span className="font-semibold text-ink-900">
-                rebuilds it every single morning around what you actually did
-              </span>
-              . Miss a day? No guilt, no backlog — the plan re-organizes so whatever time is
-              left is spent where the marks are. When time runs short, it openly tells you
-              which low-weightage topics to drop and why — exactly what a good coach does.
+            {/* The story every aspirant has lived — missed days are not
+                a ruined plan. This is the product in one vignette. */}
+            <div className="mt-4 max-w-2xl rounded-xl border border-ink-200 bg-white p-5">
+              <p className="text-sm leading-relaxed text-ink-700">
+                Ravi commits to SSC CGL — 60 days out. Ten good days. Then a cousin&apos;s
+                wedding, a fever, a week at the shop.{" "}
+                <span className="italic text-ink-500">
+                  &ldquo;Six days gone. My plan is ruined. I&apos;ll never catch up — maybe next
+                  year.&rdquo;
+                </span>{" "}
+                That thought — not the six days — is what actually kills attempts.
+              </p>
+              <p className="mt-3 text-sm leading-relaxed text-ink-900">
+                On Shishya there is <span className="font-bold">no such thing as a ruined plan</span>.
+                While Ravi slept, his coach quietly rebuilt everything: 44 days left, 39 topics
+                remaining, here&apos;s <span className="font-bold">today&apos;s</span> best move.
+                Fallen too far behind? The coach openly parks the lowest-weightage topics so every
+                remaining hour goes where the marks are. Ravi never sees a backlog. He only ever
+                sees today — and today is always winnable.
+              </p>
+            </div>
+            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-700">
+              Tell the coach three things — your exam, its date, and how much time you honestly
+              have each day. Every morning after that, your plan is rebuilt around what you
+              actually did. That&apos;s what ₹50,000 buys at an institute. Here it&apos;s free.
             </p>
             <ul className="mt-4 max-w-2xl space-y-1.5 text-sm text-ink-700">
               <li>📋 Day-by-day plan from today to exam day — reads, topic tests, mocks</li>
