@@ -30,18 +30,7 @@ import Link from "next/link";
 import { resolvePhase, PHASE_SLUG, istDayNumber } from "@/lib/exam-phase";
 import type { ExamPhase } from "@prisma/client";
 
-export type CalendarBucket = "results" | "concluded" | "upcoming" | "past";
-
-/** A declared result row for the Results tab (from ExamResult). */
-export interface ResultItem {
-  id: string;
-  examCode: string;
-  examShort: string;
-  stage: string;
-  headline: string;
-  declaredOn: string; // ISO date
-  officialUrl: string | null;
-}
+export type CalendarBucket = "concluded" | "upcoming" | "past";
 
 export interface UpcomingEvent {
   id: string;
@@ -138,7 +127,6 @@ function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
 }
 
 const TABS: { key: CalendarBucket; label: string; empty: string }[] = [
-  { key: "results", label: "Results", empty: "Fresh result declarations will appear here." },
   { key: "concluded", label: "Concluded", empty: "No exams concluded in the last 7 days." },
   { key: "upcoming", label: "Upcoming", empty: "No upcoming dates announced." },
   { key: "past", label: "Past", empty: "Older exam analyses will appear here." },
@@ -146,28 +134,23 @@ const TABS: { key: CalendarBucket; label: string; empty: string }[] = [
 
 export function UpcomingExamsSidebar({
   events,
-  results = [],
   defaultTab,
   side = "left",
 }: {
   events: UpcomingEvent[];
-  results?: ResultItem[];
   defaultTab?: CalendarBucket;
   /** Which fixed rail to anchor to. "right" flips the border side. */
   side?: "left" | "right";
 }) {
-  const buckets: Record<Exclude<CalendarBucket, "results">, UpcomingEvent[]> = {
+  const buckets: Record<CalendarBucket, UpcomingEvent[]> = {
     concluded: [],
     upcoming: [],
     past: [],
   };
-  for (const e of events)
-    buckets[(e.bucket ?? "upcoming") as Exclude<CalendarBucket, "results">].push(e);
-  const countFor = (k: CalendarBucket) =>
-    k === "results" ? results.length : buckets[k as Exclude<CalendarBucket, "results">].length;
+  for (const e of events) buckets[e.bucket ?? "upcoming"].push(e);
 
   const [tab, setTab] = useState<CalendarBucket>(
-    defaultTab && countFor(defaultTab) > 0 ? defaultTab : "upcoming",
+    defaultTab && buckets[defaultTab].length > 0 ? defaultTab : "upcoming",
   );
 
   const todayIst = istDayNumber(new Date());
@@ -195,7 +178,7 @@ export function UpcomingExamsSidebar({
         <div role="tablist" aria-label="Exam calendar sections" className="-mb-px mt-2 flex gap-1">
           {TABS.map((t) => {
             const active = tab === t.key;
-            const n = countFor(t.key);
+            const n = buckets[t.key].length;
             return (
               <button
                 key={t.key}
@@ -205,24 +188,16 @@ export function UpcomingExamsSidebar({
                 aria-controls={`cal-panel-${t.key}`}
                 onClick={() => setTab(t.key)}
                 className={`flex-1 rounded-t-md border border-b-0 px-1 py-1.5 text-[11px] font-semibold transition-colors ${
-                  t.key === "results"
-                    ? active
-                      ? "border-emerald-600 bg-emerald-600 text-white"
-                      : "border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600"
-                    : active
-                      ? "border-ink-200 bg-white text-saffron-800"
-                      : "border-transparent bg-transparent text-ink-500 hover:text-ink-800"
+                  active
+                    ? "border-ink-200 bg-white text-saffron-800"
+                    : "border-transparent bg-transparent text-ink-500 hover:text-ink-800"
                 }`}
               >
                 {t.label}
-                {(t.key === "concluded" || t.key === "results") && n > 0 && (
+                {t.key === "concluded" && n > 0 && (
                   <span
                     className={`ml-1 rounded-full px-1.5 text-[10px] tabular-nums ${
-                      t.key === "results"
-                        ? "bg-white text-emerald-700"
-                        : active
-                          ? "bg-saffron-100 text-saffron-800"
-                          : "bg-ink-100 text-ink-600"
+                      active ? "bg-saffron-100 text-saffron-800" : "bg-ink-100 text-ink-600"
                     }`}
                   >
                     {n}
@@ -234,65 +209,8 @@ export function UpcomingExamsSidebar({
         </div>
       </div>
 
-      {/* Results panel — declared results with one-tap cutoff + next-steps. */}
-      <div
-        role="tabpanel"
-        id="cal-panel-results"
-        aria-labelledby="cal-tab-results"
-        className={tab === "results" ? "flex min-h-0 flex-1 flex-col" : "hidden"}
-      >
-        {results.length === 0 ? (
-          <div className="flex-1 px-4 py-10 text-center">
-            <p className="text-sm text-ink-500">Fresh result declarations will appear here.</p>
-          </div>
-        ) : (
-          <ul className="flex-1 divide-y divide-ink-100 overflow-y-auto">
-            {results.map((r) => (
-              <li key={r.id}>
-                <Link
-                  href={`/exams/${r.examCode}/results/${r.id}`}
-                  className="block px-4 pt-3 transition-colors hover:bg-emerald-50/50"
-                >
-                  <div className="flex items-baseline justify-between gap-2">
-                    <p className="truncate text-sm font-semibold text-ink-900">{r.examShort}</p>
-                    <span className="shrink-0 text-[11px] font-medium tabular-nums text-ink-600">
-                      {formatDate(r.declaredOn)}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 line-clamp-2 text-[11px] text-ink-600">
-                    <span className="mr-1.5 rounded bg-emerald-100 px-1 py-0.5 text-[10px] font-semibold text-emerald-800">
-                      🎉 {r.stage}
-                    </span>
-                    {r.headline}
-                  </p>
-                </Link>
-                <div className="flex gap-2 px-4 py-2">
-                  <Link
-                    href={`/exams/${r.examCode}/results/${r.id}`}
-                    className="rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100"
-                  >
-                    What&apos;s next →
-                  </Link>
-                  <Link
-                    href={`/exams/${r.examCode}/cutoff`}
-                    className="rounded-md bg-ink-50 px-2 py-1 text-[11px] font-medium text-ink-700 hover:bg-ink-100"
-                  >
-                    Cutoff
-                  </Link>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="border-t border-ink-100 px-4 py-2 text-center">
-          <Link href="/results" className="text-[11px] font-medium text-saffron-700 hover:underline">
-            All declared results →
-          </Link>
-        </div>
-      </div>
-
-      {TABS.filter((t) => t.key !== "results").map((t) => {
-        const list = buckets[t.key as Exclude<CalendarBucket, "results">];
+      {TABS.map((t) => {
+        const list = buckets[t.key];
         const active = tab === t.key;
         return (
           <div

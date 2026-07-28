@@ -44,7 +44,7 @@ import { HomeSearch } from "@/components/HomeSearch";
 import { HomeFeatureCards } from "@/components/HomeFeatureCards";
 import { HomeChatRouter } from "@/components/HomeChatRouter";
 import { PageTour } from "@/components/PageTour";
-import { UpcomingExamsSidebar, type UpcomingEvent, type CalendarBucket, type ResultItem } from "@/components/UpcomingExamsSidebar";
+import { UpcomingExamsSidebar, type UpcomingEvent, type CalendarBucket } from "@/components/UpcomingExamsSidebar";
 import { VacancyFinderCard } from "@/components/VacancyFinderCard";
 import { PortalStatsBand } from "@/components/PortalStatsBand";
 import { InspirationCarousel, type InspoVideo } from "@/components/InspirationCarousel";
@@ -305,33 +305,6 @@ const loadUpcomingEvents = unstable_cache(
   { revalidate: 300, tags: ["exam-dates"] },
 );
 
-// Declared results for the calendar's Results tab (last 30 days).
-async function loadRecentResultsRaw(): Promise<ResultItem[]> {
-  try {
-    const rows = await prisma.$queryRaw<
-      { id: string; code: string; short: string; stage: string; headline: string; declaredOn: Date; officialUrl: string | null }[]
-    >`
-      SELECT r.id, e.code, e."shortName" AS short, r.stage, r.headline,
-             r."declaredOn", r."officialUrl"
-      FROM "ExamResult" r JOIN "Exam" e ON e.id = r."examId"
-      WHERE r.stage <> '__not_a_result__' AND r."declaredOn" > NOW() - INTERVAL '30 days'
-      ORDER BY r."declaredOn" DESC, r."createdAt" DESC LIMIT 15`;
-    return rows.map((r) => ({
-      id: r.id,
-      examCode: r.code,
-      examShort: r.short,
-      stage: r.stage,
-      headline: r.headline,
-      declaredOn: r.declaredOn.toISOString(),
-      officialUrl: r.officialUrl,
-    }));
-  } catch {
-    return [];
-  }
-}
-const loadRecentResults = unstable_cache(loadRecentResultsRaw, ["home-results-v1"], {
-  revalidate: 900,
-});
 
 // Live government-vacancy explorer data — powers both the homepage
 // finder hero (total + count) and the left-rail Government Vacancies
@@ -400,7 +373,7 @@ export default async function ExamsPage({
   const sp = await searchParams;
   const { t } = await getT();
 
-  const [signedIn, exams, calendar, vacancy, portalStats, inspirationVideos, recentResults] =
+  const [signedIn, exams, calendar, vacancy, portalStats, inspirationVideos] =
     await Promise.all([
       auth().then((s) => Boolean(s?.user)).catch(() => false),
       loadExams(),
@@ -408,17 +381,8 @@ export default async function ExamsPage({
       loadVacancyExplorerCached(),
       loadPortalStats(),
       loadInspirationVideos(),
-      loadRecentResults(),
     ]);
   const upcomingEvents = calendar.events;
-  // A result declared in the last week outranks everything else on the
-  // calendar — open the Results tab; otherwise keep the usual default.
-  // (7 days, not 48h: declaredOn is a DATE from lagging news text, so a
-  // tight window almost never fires.)
-  const freshResult = recentResults.some(
-    (r) => Date.now() - new Date(r.declaredOn).getTime() < 7 * 86_400_000,
-  );
-  const calendarDefault: CalendarBucket = freshResult ? "results" : calendar.defaultTab;
   const vacancyStats = { totalLakh: vacancy.totalLakh, examCount: vacancy.examCount };
 
   // SEO/AEO: schema.org Event markup for the upcoming exam days —
@@ -522,12 +486,7 @@ export default async function ExamsPage({
           is now the vacancy explorer). Concluded / Upcoming / Past with
           verdict-cutoff chips. Discussions moved off the homepage — still
           at /discussions. */}
-      <UpcomingExamsSidebar
-        events={upcomingEvents}
-        results={recentResults}
-        defaultTab={calendarDefault}
-        side="right"
-      />
+      <UpcomingExamsSidebar events={upcomingEvents} defaultTab={calendar.defaultTab} side="right" />
 
       {/* Floating chat-router: bottom-left FAB that asks "What are you
           looking for?" and POSTs the answer to /api/chat-route. Claude
