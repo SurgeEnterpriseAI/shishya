@@ -299,6 +299,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/descriptive",
     "/live-test",
     "/results",
+    "/coach",
     "/post-graduation",
     "/jobs",
     "/worldwide",

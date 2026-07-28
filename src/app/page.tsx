@@ -780,6 +780,24 @@ function StepGoals({
       <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
       <div className="mt-6">
         <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />
+
+        {/* Personal Coach entry — the platform's core promise, one line.
+            Speaks to the aspirant who just saw the vacancy numbers and
+            is wondering how they'll ever afford preparation. */}
+        <Link
+          href="/coach"
+          className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 px-4 py-3 transition-colors hover:border-saffron-400"
+        >
+          <span className="min-w-0 text-sm text-ink-800">
+            🎯 Can&apos;t afford ₹50,000 coaching?{" "}
+            <span className="font-bold text-ink-900">
+              Shishya coaches you free — a day-by-day plan to your exam, rebuilt every morning.
+            </span>
+          </span>
+          <span className="shrink-0 rounded-lg bg-saffron-500 px-4 py-1.5 text-sm font-bold text-white">
+            Build my plan →
+          </span>
+        </Link>
       </div>
 
       <div className="mx-auto mt-12 max-w-3xl text-center">

@@ -21,6 +21,8 @@ import { getStudyStreak, type StudyStreak } from "@/lib/db/streak";
 import { DailyFiveCard } from "./DailyFiveCard";
 import { StreakCard } from "./StreakCard";
 import { MissionCard } from "./MissionCard";
+import { computeCoachPlan } from "@/lib/coach-plan";
+import { CoachPlanView } from "@/app/coach/CoachPlanView";
 import { InviteFriendsCard } from "./InviteFriendsCard";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 
@@ -304,6 +306,9 @@ async function renderDashboard() {
     }
   }
 
+  // Personal Coach — computed fresh on every load (the morning rebuild).
+  const coachPlan = await computeCoachPlan(userId).catch(() => null);
+
   // "Continue where you left off" — the most recently opened topic that
   // isn't finished yet (the mastery loop's resume point). Best-effort.
   let continueTopic: { tcode: string; tname: string; ecode: string; eshort: string } | null = null;
@@ -507,9 +512,26 @@ async function renderDashboard() {
           <StreakCard streak={streak} todayDow={istTodayDow} />
         )}
 
-        {/* Mission card — day-N identity, exam-day countdown, syllabus
-            progress. Sits between streak (habit) and Daily-5 (action). */}
-        {mission && <MissionCard {...mission} />}
+        {/* Personal Coach plan (when committed) supersedes the Mission
+            card — same slot, richer promise: today's rebuilt plan. */}
+        {coachPlan ? (
+          <CoachPlanView plan={coachPlan} />
+        ) : (
+          <>
+            {mission && <MissionCard {...mission} />}
+            <Link
+              href="/coach"
+              className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-saffron-300 bg-saffron-50/60 px-4 py-3 transition-colors hover:border-saffron-400"
+            >
+              <span className="text-sm text-ink-800">
+                🎯 Can&apos;t afford coaching? Get your{" "}
+                <span className="font-semibold">free day-by-day plan</span> — rebuilt every
+                morning around what you actually did.
+              </span>
+              <span className="shrink-0 text-sm font-bold text-saffron-700">Build it →</span>
+            </Link>
+          </>
+        )}
 
         {/* Unfinished mock — resume beats restart. Amber = gentle
             urgency without alarm. */}

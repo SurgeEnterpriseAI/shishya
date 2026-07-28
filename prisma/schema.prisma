@@ -1864,6 +1864,25 @@ model QuestionBookmark {
   @@index([userId, examId])
 }
 
+// Personal Coach — the free coaching-replacement. Stores only the
+// student's COMMITMENT (exam, date, daily minutes); the day-by-day plan
+// itself is computed fresh on every load from syllabus weights ×
+// weakness map × what they actually did × time left (src/lib/
+// coach-plan.ts). Stateless plan = the "rebuilt every morning" promise
+// with zero drift and no cron.
+model CoachPlan {
+  id           String   @id @default(cuid())
+  userId       String
+  examId       String
+  examDate     DateTime @db.Date
+  dailyMinutes Int // 45 | 90 | 180
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+
+  @@unique([userId, examId])
+  @@index([userId])
+}
+
 // Declared exam results — structured from the daily news stream by an
 // AI extraction pass (cron extract-results). Accuracy rule: officialUrl
 // is only ever copied from the source text, never invented; rows render
