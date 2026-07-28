@@ -779,8 +779,6 @@ function StepGoals({
           width, above the pick-your-exam picker. */}
       <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
       <div className="mt-6">
-        <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />
-
         {/* Personal Coach entry — two voices every aspirant recognizes
             (the lost newcomer, the missed-days aspirant), one answer.
             Never a demotivation story: the portal understands where you
@@ -820,6 +818,8 @@ function StepGoals({
             </Link>
           </div>
         </div>
+
+        <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />
       </div>
 
       <div className="mx-auto mt-12 max-w-3xl text-center">
