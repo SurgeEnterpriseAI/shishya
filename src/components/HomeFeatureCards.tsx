@@ -27,18 +27,11 @@ interface CardSpec {
 
 const CARDS: CardSpec[] = [
   {
-    icon: "🎯",
-    title: "Pick your exam",
+    icon: "🎓",
+    title: "Your personal coach",
     body:
-      "Tap a goal, search by name, or browse categories. Shishya curates the right 3-5 exams for your stage instead of dumping the full 163-exam list.",
-    href: "/",
-  },
-  {
-    icon: "📅",
-    title: "Daily plan",
-    body:
-      "Fresh mocks each day from subject experts — Shishya keeps your prep varied so you never see the same paper twice.",
-    href: "/dashboard",
+      "A day-by-day plan to your exam date, rebuilt every morning around what you actually did. Miss a day and it re-organises — no backlog, no guilt.",
+    href: "/coach",
   },
   {
     icon: "📚",

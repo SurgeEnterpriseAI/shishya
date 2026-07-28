@@ -839,73 +839,40 @@ function StepGoals({
               New here? Find which exams fit me first
             </Link>
           </div>
+
+          {/* Zero-commitment on-ramp for hesitant visitors — the AI
+              tutor needs no login. (Moved here from the removed signup
+              banner; it was that block's one unique message.) */}
+          {!signedIn && (
+            <div className="mt-3 border-t border-saffron-200/70 pt-3">
+              <Link
+                href="/chat?general=1"
+                className="text-sm font-medium text-saffron-700 transition-colors hover:text-saffron-900"
+              >
+                Not ready yet? Ask Shishya anything — our free AI tutor, no login needed →
+              </Link>
+            </div>
+          )}
         </div>
 
         <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />
       </div>
 
+      {/* Section header for the three ways to choose an exam that
+          follow (search / categories / goals). The old signed-out
+          signup banner that sat here was a weaker duplicate of the
+          coach card above — removed; its unique ungated-tutor line
+          now lives under the coach card's CTAs. */}
       <div className="mx-auto mt-12 max-w-3xl text-center">
-        <p className="inline-flex items-center gap-2 rounded-full bg-saffron-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-saffron-800">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-saffron-500" aria-hidden />
-          Step 1 of 2
-        </p>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink-900 sm:text-5xl">
+        <h1 className="text-3xl font-bold tracking-tight text-ink-900 sm:text-5xl">
           Pick your exam. We do the rest.
         </h1>
         <p className="mt-4 text-base text-ink-600 sm:text-lg">
-          Take mocks → Shishya spots your weak areas → serves adaptive
-          practice that targets them. Plus cutoffs, news and last-minute
-          checklists for every exam.{" "}
-          <span className="font-medium text-ink-800">
-            Bet yours is covered.
-          </span>
+          Search it by name, browse by category, or pick a goal — then mocks, previous-year
+          papers, cutoffs and study notes are all waiting, free.{" "}
+          <span className="font-medium text-ink-800">Bet yours is covered.</span>
         </p>
       </div>
-
-      {/* ── Signed-out signup CTA banner ──────────────────────────
-          Visitors who scrolled past the hero see this; one tap →
-          /login → /onboarding → /dashboard with a recommended
-          first mock. Skipped for signed-in users (they don't need
-          a sign-up CTA, they need their dashboard). */}
-      {!signedIn && (
-        <div className="mx-auto mt-8 max-w-2xl rounded-2xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5 shadow-sm sm:p-6">
-          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
-                ✦ Free · No credit card · 22 Indian languages
-              </p>
-              <p className="mt-1.5 text-base font-bold text-ink-900 sm:text-lg">
-                Sign up free → take your first adaptive mock
-              </p>
-              <p className="mt-1 text-sm text-ink-600">
-                Personalised practice in 60 seconds. We pick the 3-5 exams
-                that match your stage and serve mocks that target your weak
-                topics.
-              </p>
-            </div>
-            <Link
-              href="/login?callbackUrl=%2Fdashboard"
-              className="shrink-0 rounded-md bg-saffron-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300"
-            >
-              Sign up — start prepping →
-            </Link>
-          </div>
-          {/* No-friction on-ramp: the AI tutor is now open to signed-out
-              visitors, but the signup banner never said so. Surfacing it
-              here gives hesitant visitors a zero-commitment way to feel the
-              product (ask a real exam question, no login) — and a softer
-              path to conversion. (Gemini growth suggestion: promote the
-              ungated AI tutor as a signup hook.) */}
-          <div className="mt-3 border-t border-saffron-200/70 pt-3 text-center sm:text-left">
-            <Link
-              href="/chat?general=1"
-              className="text-sm font-medium text-saffron-700 transition-colors hover:text-saffron-900"
-            >
-              Not ready to sign up? Ask Shishya — our free AI tutor, no login needed →
-            </Link>
-          </div>
-        </div>
-      )}
 
       {/* ── Search-by-name (highest-intent entry) ─────────────────
           Visitors who already know "I want SSC CGL" skip the funnel
