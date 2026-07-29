@@ -32,6 +32,28 @@ const ALLOWED: Set<EventKind> = new Set([
 const ANON_COOKIE = "shishya_anon";
 const ANON_MAX_AGE_S = 30 * 24 * 3600;
 
+// ── Bot filtering ─────────────────────────────────────────────────────
+// Why this exists (29 Jul 2026): a JS-rendering crawler swept 526 pages
+// in one hour. It executed our beacon but kept no cookies, so the API
+// minted a FRESH anonId per page — 478 phantom "visitors" in a single
+// hour, which made a flat day look like a 4× record. Two defences:
+//
+//   1. Known-automation user-agents are dropped outright.
+//   2. Cookie-less requests are recorded WITHOUT minting a persistent
+//      identity (anonId stays null → they count as views, never as
+//      unique visitors). A real browser gets its cookie on the first
+//      event and is counted normally from the second event onward.
+//
+// Deliberately conservative: we would rather under-count a visitor than
+// let one crawler corrupt every growth number we make decisions on.
+const BOT_UA =
+  /bot|crawl|spider|slurp|headless|phantom|puppeteer|playwright|selenium|scrapy|curl|wget|python-requests|axios|http-client|node-fetch|okhttp|java\/|go-http|libwww|lighthouse|pagespeed|gtmetrix|ahrefs|semrush|mj12|dotbot|petalbot|dataforseo|screaming frog|preview|monitor|uptime|pingdom/i;
+
+function looksAutomated(ua: string | null): boolean {
+  if (!ua || ua.trim().length < 15) return true; // empty/stub UA = not a browser
+  return BOT_UA.test(ua);
+}
+
 export async function POST(req: NextRequest) {
   let body: {
     kind?: string;
@@ -53,17 +75,24 @@ export async function POST(req: NextRequest) {
     return new NextResponse(null, { status: 204 });
   }
 
+  // Defence 1 — drop known automation entirely (no row written).
+  if (looksAutomated(req.headers.get("user-agent"))) {
+    return new NextResponse(null, { status: 204 });
+  }
+
   // Session is optional — anonymous events are allowed.
   const session = await auth().catch(() => null);
   const userId = session?.user?.id ?? null;
 
-  // Anonymous id from cookie (creates a fresh one if absent).
-  let anonId = req.cookies.get(ANON_COOKIE)?.value ?? null;
-  let shouldSetCookie = false;
-  if (!anonId) {
-    anonId = crypto.randomUUID();
-    shouldSetCookie = true;
-  }
+  // Defence 2 — the identity cookie. A cookie-less request gets one
+  // issued, but this FIRST event is stored with anonId = null so a
+  // client that never returns the cookie (crawlers) can never inflate
+  // the unique-visitor count. Real browsers send it back immediately
+  // and are counted from their next event on.
+  const existingAnon = req.cookies.get(ANON_COOKIE)?.value ?? null;
+  const anonId = existingAnon;
+  const issuedAnon = existingAnon ?? crypto.randomUUID();
+  const shouldSetCookie = !existingAnon;
   // Once a user is signed in, we still write anonId for the audit trail
   // BUT prefer userId so dashboard joins are clean. Cookie persists either way.
 
@@ -100,7 +129,7 @@ export async function POST(req: NextRequest) {
 
   const res = new NextResponse(null, { status: 204 });
   if (shouldSetCookie) {
-    res.cookies.set(ANON_COOKIE, anonId, {
+    res.cookies.set(ANON_COOKIE, issuedAnon, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
