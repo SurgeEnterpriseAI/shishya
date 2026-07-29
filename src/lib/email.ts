@@ -49,6 +49,10 @@ export interface EmailPayload {
   text?: string;
   /** Optional tag for analytics — appears in the Resend dashboard. */
   tag?: string;
+  /** Where replies should go. Used for founder outreach so a student
+   *  can simply hit Reply and reach a human inbox, not the send-only
+   *  transactional domain. */
+  replyTo?: string;
 }
 
 /**
@@ -75,6 +79,7 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
       html: payload.html,
       text: payload.text,
       bcc: bcc.length > 0 ? bcc : undefined,
+      replyTo: payload.replyTo,
       tags: payload.tag ? [{ name: "kind", value: payload.tag }] : undefined,
     });
     if ("error" in res && res.error) {
