@@ -17,6 +17,8 @@ import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { liveTestRank } from "@/lib/live-test";
 import { CoachEntry } from "@/components/CoachEntry";
+import { PeerProofLine } from "@/components/PeerProofLine";
+import { examPeerProof } from "@/lib/peer-proof";
 
 export default async function ResultsPage({
   params,
@@ -124,6 +126,8 @@ export default async function ResultsPage({
     attempt.mock.generatedBy === "live-test"
       ? await liveTestRank(attempt.mock.id, session.user.id).catch(() => null)
       : null;
+
+  const peerProof = await examPeerProof(attempt.mock.examId, session.user.id).catch(() => null);
 
   // Coach entry is suppressed for students who already have a plan.
   const hasCoachPlan =
@@ -264,6 +268,14 @@ export default async function ResultsPage({
             </p>
           </div>
         )}
+
+        {/* Belonging, right after the score: they didn't just take a
+            test, they joined today's cohort of people doing the work. */}
+        <PeerProofLine
+          proof={peerProof}
+          examShort={attempt.mock.exam.shortName}
+          variant="results"
+        />
 
         {/* Coach entry — "I have a score, now what?" is the moment a
             plan means most. Suppressed once they have one. */}

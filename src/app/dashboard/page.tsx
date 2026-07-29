@@ -22,6 +22,8 @@ import { DailyFiveCard } from "./DailyFiveCard";
 import { StreakCard } from "./StreakCard";
 import { MissionCard } from "./MissionCard";
 import { computeCoachPlan } from "@/lib/coach-plan";
+import { PeerProofLine } from "@/components/PeerProofLine";
+import { examPeerProof } from "@/lib/peer-proof";
 import { CoachPlanView } from "@/app/coach/CoachPlanView";
 import { InviteFriendsCard } from "./InviteFriendsCard";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
@@ -309,6 +311,12 @@ async function renderDashboard() {
   // Personal Coach — computed fresh on every load (the morning rebuild).
   const coachPlan = await computeCoachPlan(userId).catch(() => null);
 
+  // Cohort proof for their main exam — belonging on the surface they
+  // open every day ("you and 12 others studied today").
+  const peerProof = recommendedExam?.examId
+    ? await examPeerProof(recommendedExam.examId, userId).catch(() => null)
+    : null;
+
   // "Continue where you left off" — the most recently opened topic that
   // isn't finished yet (the mastery loop's resume point). Best-effort.
   let continueTopic: { tcode: string; tname: string; ecode: string; eshort: string } | null = null;
@@ -510,6 +518,12 @@ async function renderDashboard() {
             into the one-tap action that keeps it. */}
         {enrollments.length > 0 && (
           <StreakCard streak={streak} todayDow={istTodayDow} />
+        )}
+
+        {/* Cohort proof — the daily reminder that they're not grinding
+            alone (and, quietly, that others are not resting). */}
+        {recommendedExam && (
+          <PeerProofLine proof={peerProof} examShort={recommendedExam.short} variant="dashboard" />
         )}
 
         {/* Personal Coach plan (when committed) supersedes the Mission

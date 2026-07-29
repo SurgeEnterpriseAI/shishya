@@ -432,6 +432,9 @@ export async function sendDailyFiveEmail(p: {
   /** When false, the mail closes with the coach invitation — the
    *  escalation from "daily 5 questions" to "a real plan to the exam". */
   hasCoachPlan?: boolean;
+  /** Yesterday's cohort effort — "N aspirants studied yesterday".
+   *  Omitted when the cohort was too thin to inspire. */
+  peers?: { students: number; sets: number } | null;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const streak = p.streakCurrent ?? 0;
@@ -448,9 +451,17 @@ export async function sendDailyFiveEmail(p: {
     ? `You're on a <strong>${streak}-day streak</strong> 🔥 — 3 minutes today keeps it alive. Miss today and it resets to zero.`
     : `About 3 minutes — and it starts building your daily streak. 🔥`;
 
+  const peerText = p.peers
+    ? `\n${p.peers.students} aspirants put in ${p.peers.sets} practice sets on Shishya yesterday. Your turn.\n`
+    : "";
+  const peerHtml = p.peers
+    ? `<p style="font-size:13px;line-height:1.6;margin:12px 0 0;color:#334155;">🔥 <strong>${p.peers.students} aspirants</strong> put in ${p.peers.sets} practice sets on Shishya yesterday. Your turn.</p>`
+    : "";
+
   const text = `${first},
 
 Your Daily 5 is ready — 5 quick questions on your weakest ${p.examShort} topic. ${streakLineText}
+${peerText}
 
 Start now: https://shishya.in/dashboard
 
@@ -475,6 +486,7 @@ ${
        style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">
       Start today's 5 →
     </a>
+    ${peerHtml}
     <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
       Small daily reps are how toppers are made. — Shishya
     </p>

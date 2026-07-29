@@ -120,6 +120,23 @@ export async function GET(req: Request) {
     ).map((r) => r.userId),
   );
 
+  // Yesterday's platform-wide effort — social proof for the mail. The
+  // Daily-5 goes out at ~8:30 AM IST, so "yesterday" is the honest word.
+  const yesterdayPeers = await (async () => {
+    try {
+      const dayStart = new Date(todayIdx * 86_400_000 - 5.5 * 3600_000);
+      const prevStart = new Date(dayStart.getTime() - 86_400_000);
+      const r = await prisma.$queryRaw<{ students: bigint; sets: bigint }[]>`
+        SELECT COUNT(DISTINCT "userId") students, COUNT(*) sets FROM "Attempt"
+        WHERE "finishedAt" >= ${prevStart} AND "finishedAt" < ${dayStart}
+          AND status IN ('SUBMITTED','AUTO_SUBMITTED') AND "userId" IS NOT NULL`;
+      const students = Number(r[0]?.students ?? 0);
+      return students >= 3 ? { students, sets: Number(r[0].sets) } : null;
+    } catch {
+      return null;
+    }
+  })();
+
   let sent = 0, failed = 0;
   for (const u of users) {
     if (!u.email || !u.enrollments[0]) continue;
@@ -130,6 +147,7 @@ export async function GET(req: Request) {
       examShort: u.enrollments[0].exam.shortName,
       streakCurrent: streak.current,
       hasCoachPlan: planUserIds.has(u.id),
+      peers: yesterdayPeers,
     }).catch(() => false);
     if (ok) sent++; else failed++;
   }

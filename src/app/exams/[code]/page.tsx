@@ -33,6 +33,8 @@ import { getExamTheme } from "@/lib/exam-theme";
 import { DiagnosticHero } from "@/components/DiagnosticHero";
 import { TryOneQuestion } from "./TryOneQuestion";
 import { CoachEntry } from "@/components/CoachEntry";
+import { PeerProofLine } from "@/components/PeerProofLine";
+import { examPeerProof } from "@/lib/peer-proof";
 
 // Per-exam meta. Beefed-up version that bakes in:
 //   1. state name (for "Tamil Nadu PSC" / "तमिलनाडु TET" style searches)
@@ -268,6 +270,8 @@ export default async function ExamPage({
 
   // Suppress the coach entry for students who already committed to a
   // plan — repeating the ask would be noise.
+  const peerProof = await examPeerProof(exam.id, userId).catch(() => null);
+
   const hasCoachPlan = userId
     ? (
         await prisma
@@ -597,6 +601,10 @@ export default async function ExamPage({
             actually land (not the homepage), so this is the coach's
             highest-intent door. Hidden for students who already have a
             plan: their dashboard carries it instead. */}
+        {/* Cohort proof — "your competition studied today" is the most
+            motivating true sentence we can show on an exam page. */}
+        <PeerProofLine proof={peerProof} examShort={exam.shortName} variant="exam" />
+
         {!hasCoachPlan && <CoachEntry examCode={exam.code} examShort={exam.shortName} />}
 
         {/* Unfinished-mock resume banner. */}
