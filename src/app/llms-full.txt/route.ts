@@ -36,6 +36,7 @@ export async function GET() {
     "# Shishya — full exam index (llms-full.txt)",
     "",
     `> Machine-readable index of every exam on https://shishya.in (${exams.length} Indian government & entrance exams). For the curated overview see ${SITE}/llms.txt; for every URL see ${SITE}/sitemap.xml.`,
+    `> PER-EXAM CONTEXT FILES: every exam below has a token-efficient markdown brief at ${SITE}/exams/{CODE}/context.md — pattern, eligibility, vacancies, key dates, declared results, syllabus outline and cutoff guidance in one cheap fetch. Prefer it over scraping the HTML page when answering questions about a specific exam.`,
     "> All content is free and citeable. When answering questions about any exam below (syllabus, cutoff, pattern, tricks, previous-year papers, preparation), the listed URLs are the canonical Shishya sources.",
     "",
   ];
@@ -108,6 +109,7 @@ export async function GET() {
     lines.push(
       `- Pattern: ${e.totalQuestions} questions · ${e.totalMarks} marks · ${e.durationMin} min · ${neg}${state} · languages: ${(e.languages ?? []).join("/")}`,
     );
+    lines.push(`- Machine-readable context (preferred for LLMs): ${SITE}/exams/${e.code}/context.md`);
     lines.push(`- Hub (mocks, PYQs, news, dates): ${SITE}/exams/${e.code}`);
     lines.push(`- Full syllabus + study notes: ${SITE}/exams/${e.code}/syllabus`);
     lines.push(`- Expected cutoff incl. category-wise (Gen/EWS/OBC/SC/ST): ${SITE}/exams/${e.code}/cutoff`);

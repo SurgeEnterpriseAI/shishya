@@ -113,7 +113,12 @@ export async function generateMetadata({
   return {
     title,
     description: description.slice(0, 300),
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      // Machine-readable twin for AI crawlers/answer engines: the same
+      // facts as clean markdown, a fraction of the tokens.
+      types: { "text/markdown": `${url}/context.md` },
+    },
     keywords: [...baseKeywords, ...stateKeywords, ...langKeywords],
     openGraph: {
       title,
