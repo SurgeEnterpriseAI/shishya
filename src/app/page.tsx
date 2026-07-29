@@ -785,28 +785,30 @@ function StepGoals({
             are, moulds itself to you, and walks with you to selection. */}
         <div className="mt-3 overflow-hidden rounded-2xl border-2 border-saffron-300 bg-gradient-to-br from-saffron-50 via-amber-50 to-white p-5 shadow-sm sm:p-6">
           <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
-            🎓 Your free personal coach
+            🎓 Most aspirants can crack a government job
           </p>
 
-          <p className="mt-2 text-sm italic leading-relaxed text-ink-500">
+          <p className="mt-2 text-lg font-bold leading-snug text-ink-900 sm:text-xl">
+            What stops them was never{" "}
+            <span className="underline decoration-saffron-400 decoration-2 underline-offset-2">
+              ability
+            </span>
+            . It&apos;s not knowing which exam fits them, what the syllabus really demands, or
+            what to study today — and coaching that answers all three costs ₹50,000.
+            <br className="hidden sm:block" />{" "}
+            <span className="text-saffron-700">
+              Shishya gives you every bit of it free — guidance, the full syllabus, and a daily
+              plan rebuilt every morning
+            </span>{" "}
+            — until you crack the job.
+          </p>
+
+          <p className="mt-3 text-sm italic leading-relaxed text-ink-500">
             &ldquo;I&apos;m new to all this. I just want a government job — but coaching wants
             ₹50,000 I don&apos;t have, and I don&apos;t even know which exam I can write or where
             to start.&rdquo;
             <br />
             &ldquo;I started once. Missed 5 days. My whole plan felt ruined — so I stopped.&rdquo;
-          </p>
-
-          <p className="mt-3 text-lg font-bold leading-snug text-ink-900 sm:text-xl">
-            Shishya was built for{" "}
-            <span className="underline decoration-saffron-400 decoration-2 underline-offset-2">
-              exactly you
-            </span>
-            .
-            <br className="hidden sm:block" />{" "}
-            <span className="text-saffron-700">
-              We start you small, build the habit, and rebuild your plan every single morning
-            </span>{" "}
-            — until you crack the job.
           </p>
 
           <p className="mt-2.5 text-sm leading-relaxed text-ink-700">
@@ -817,12 +819,12 @@ function StepGoals({
             </span>{" "}
             and grows from there. Miss a day, miss a week —{" "}
             <span className="font-semibold text-ink-900">no backlog, no guilt, no “behind”</span>
-            . Every morning your plan is rebuilt for the days you have left and the syllabus that
+            . The plan simply re-organises for the days you have left and the syllabus that
             remains: just today&apos;s best move, every day,{" "}
             <span className="font-semibold text-ink-900">
               from your first step to the appointment letter
             </span>
-            . No ₹50,000. Not even ₹50.
+            .
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
