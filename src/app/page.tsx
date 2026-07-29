@@ -869,6 +869,13 @@ function StepGoals({
         </div>
 
         <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />
+
+        {/* Wall of Grinders — placed here deliberately: the stats band
+            proves the platform is real, this proves it's ALIVE, and the
+            "pick your exam" step follows immediately. Social proof lands
+            hardest right before the ask. Six entries, not ten, so the
+            search box stays within reach on mobile. */}
+        <WallOfGrinders entries={grinders.slice(0, 6)} />
       </div>
 
       {/* Section header for the three ways to choose an exam that
@@ -988,13 +995,6 @@ function StepGoals({
         </div>
       )}
 
-      {/* Wall of Grinders — anonymous proof that real aspirants are
-          working right now. Effort only: no names, no scores, no rank. */}
-      {grinders.length >= 3 && (
-        <div>
-          <WallOfGrinders entries={grinders} />
-        </div>
-      )}
     </div>
   );
 }
