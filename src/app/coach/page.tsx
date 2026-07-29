@@ -59,8 +59,72 @@ export default async function CoachPage({
   const showIntake = userId && (!plan || sp.edit === "1");
   const options = showIntake ? await examOptions(userId) : [];
 
+  // AEO: the questions aspirants actually type into Google and ask
+  // ChatGPT/Gemini/Perplexity about affording coaching, making a plan,
+  // and recovering after missed days — answered in liftable form.
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      name: "Shishya Personal Coach",
+      applicationCategory: "EducationalApplication",
+      operatingSystem: "Web",
+      url: "https://shishya.in/coach",
+      description:
+        "Free AI personal coach for Indian government and entrance exam aspirants: a day-by-day study plan to the exam date, rebuilt every morning around what the student actually did.",
+      isAccessibleForFree: true,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+      provider: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "Is there free coaching for government exams in India?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. Shishya's Personal Coach (https://shishya.in/coach) is completely free — no fees, no subscription, no credit card. Coaching institutes charge ₹30,000–₹50,000 for what is essentially a study plan, doubt-solving and test series; Shishya gives all three free for 177 government and entrance exams.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How do I make a study plan for a government exam?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Work backwards from the exam date. List every syllabus topic, weight them by how many marks each subject carries, subtract the topics you already know, and divide the rest across your available days — reserving the last week for full mocks and revision. Shishya's free coach does this automatically from three inputs (exam, exam date, honest daily study time) and rebuilds the plan every morning based on what you actually completed.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "I missed several days of study — is my preparation ruined?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "No. Missed days do not ruin preparation; abandoning the attempt does. The correct response is to re-plan from today rather than try to 'catch up' on a backlog: recount the days left, re-rank the remaining syllabus by marks-per-hour, and drop the lowest-weightage topics if time is short. Shishya's free coach does exactly this every morning, so a student who misses a week simply gets a fresh plan for the days that remain — no backlog and no penalty.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How many hours a day are needed to crack a government exam?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Consistency matters more than hours. One focused hour daily for six months beats eight-hour bursts followed by long gaps, because retention depends on spaced repetition. Shishya's coach accepts under 1 hour, 1–2 hours or 3+ hours per day and sizes the daily plan to that honest number rather than an ideal one.",
+          },
+        },
+      ],
+    },
+  ];
+
   return (
     <main className="min-h-screen bg-paper-50">
+      {jsonLd.map((j, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(j) }}
+        />
+      ))}
       <Header />
       <section className="container-prose py-8">
         <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">

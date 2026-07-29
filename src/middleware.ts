@@ -173,6 +173,10 @@ export const config = {
     "/current-affairs/:path*",
     "/find-your-exam",
     "/results",
+    "/coach",
+    "/typing",
+    "/descriptive",
+    "/live-test",
     "/api/auth/signin/:path*",
   ],
 };

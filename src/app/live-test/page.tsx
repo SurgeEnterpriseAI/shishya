@@ -149,8 +149,63 @@ export default async function LiveTestPage() {
     );
   };
 
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      name: "Shishya All-India Live Test",
+      applicationCategory: "EducationalApplication",
+      operatingSystem: "Web",
+      url: "https://shishya.in/live-test",
+      description:
+        "Free weekly All-India live mock test for Indian government exams — every Sunday one shared paper per exam, with an All-India rank on submission.",
+      isAccessibleForFree: true,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+      provider: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "Is there a free All-India mock test with rank for government exams?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. Shishya runs a free All-India Live Test every Sunday from 6 AM to 11 PM IST at https://shishya.in/live-test — one shared 25-question paper per exam, written by aspirants across India on the same day, with your All-India rank shown the moment you submit. No fee and no test-series subscription.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Why should I take a live test instead of a normal mock?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "A live test adds the two things a solo mock cannot: a fixed appointment that builds exam-day routine, and a comparison against everyone else who wrote the same paper that day. That relative position — not your raw score — is what actually predicts selection, because government exams are ranked competitions with cutoffs.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Which exams have the Shishya live test?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: `Papers are created weekly for the most-prepared exams on the platform. Current live tests: ${
+              rows.length ? [...new Set(rows.map((r) => r.short))].slice(0, 8).join(", ") : "published every Saturday night for the coming Sunday"
+            }.`,
+          },
+        },
+      ],
+    },
+  ];
+
   return (
     <main className="min-h-screen bg-paper-50">
+      {jsonLd.map((j, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(j) }}
+        />
+      ))}
       <Header />
       <section className="container-prose py-8">
         <h1 className="text-2xl font-bold text-ink-900">🇮🇳 All-India Live Test</h1>
