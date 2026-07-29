@@ -785,40 +785,42 @@ function StepGoals({
             are, moulds itself to you, and walks with you to selection. */}
         <div className="mt-3 overflow-hidden rounded-2xl border-2 border-saffron-300 bg-gradient-to-br from-saffron-50 via-amber-50 to-white p-5 shadow-sm sm:p-6">
           <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
-            🎓 Most aspirants can crack a government job
+            🎓 You can crack a government job
           </p>
 
           <p className="mt-2 text-lg font-bold leading-snug text-ink-900 sm:text-xl">
-            What stops them was never{" "}
+            What you&apos;re missing isn&apos;t{" "}
             <span className="underline decoration-saffron-400 decoration-2 underline-offset-2">
               ability
-            </span>
-            . It&apos;s not knowing which exam fits them, what the syllabus really demands, or
-            what to study today — and coaching that answers all three costs ₹50,000.
+            </span>{" "}
+            — it&apos;s guidance. Which exam fits you. What the syllabus really demands. What to
+            study today. Coaching that answers those three costs ₹50,000.
             <br className="hidden sm:block" />{" "}
             <span className="text-saffron-700">
-              Shishya gives you every bit of it free — guidance, the full syllabus, and a daily
-              plan rebuilt every morning
+              Shishya gives you all three free — and a daily plan rebuilt every morning
             </span>{" "}
             — until you crack the job.
           </p>
 
           <p className="mt-3 text-sm italic leading-relaxed text-ink-500">
             &ldquo;I started once. Missed 5 days. My whole plan felt ruined — so I stopped.&rdquo;
+            <span className="not-italic"> Sound familiar? That ends here.</span>
           </p>
 
           <p className="mt-2.5 text-sm leading-relaxed text-ink-700">
-            Tell us the job you dream of — or let us find every exam you&apos;re eligible for by
-            your age, education and state. Then your coach starts you{" "}
+            Tell us the job you want — or let us find every exam you&apos;re eligible for by your
+            age, education and state. Then your coach starts you small:{" "}
             <span className="font-semibold text-ink-900">
               one topic, one 10-question test, a few minutes today
-            </span>{" "}
-            and grows from there. Miss a day, miss a week —{" "}
-            <span className="font-semibold text-ink-900">no backlog, no guilt, no “behind”</span>
-            . The plan simply re-organises for the days you have left and the syllabus that
-            remains: just today&apos;s best move, every day,{" "}
+            </span>
+            , and grows with you. Miss a day, miss a week —{" "}
             <span className="font-semibold text-ink-900">
-              from your first step to the appointment letter
+              you have no backlog here, and nothing to feel guilty about
+            </span>
+            . Your plan simply re-organises around the days you have left and the syllabus you
+            still need: just your best move today, every day,{" "}
+            <span className="font-semibold text-ink-900">
+              from your first step to your appointment letter
             </span>
             .
           </p>
