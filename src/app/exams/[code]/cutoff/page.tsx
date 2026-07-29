@@ -12,6 +12,7 @@ import { prisma } from "@/lib/db/prisma";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { AnonExamNudge } from "@/components/AnonExamNudge";
+import { CoachEntry } from "@/components/CoachEntry";
 import { inlineMd } from "@/components/NotesMarkdown";
 
 export const revalidate = 3600;
@@ -217,6 +218,10 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
           cta="See where I stand — free →"
           surface="cutoff-nudge"
         />
+
+        {/* Knowing the target score is step one; the plan to reach it is
+            step two — the coach's most natural handoff on the site. */}
+        <CoachEntry examCode={exam.code} examShort={exam.shortName} variant="cutoff" />
 
         <h2 className="mt-8 text-base font-semibold text-ink-900">Score → rank → outcome bands</h2>
         <ul className="mt-3 space-y-3">

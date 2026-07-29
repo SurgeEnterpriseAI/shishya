@@ -90,6 +90,15 @@ export async function GET(req: Request) {
   });
   const streakById = new Map(atRisk.map((r) => [r.userId, r.current]));
 
+  // Plan-holders get the plain rescue; the rest get the coach invite.
+  const planUserIds = new Set(
+    (
+      await prisma
+        .$queryRaw<{ userId: string }[]>`SELECT "userId" FROM "CoachPlan"`
+        .catch(() => [])
+    ).map((r) => r.userId),
+  );
+
   let sent = 0, failed = 0;
   for (const u of users) {
     if (!u.email || !u.enrollments[0]) continue;
@@ -98,6 +107,7 @@ export async function GET(req: Request) {
       name: u.name,
       examShort: u.enrollments[0].exam.shortName,
       streakCurrent: streakById.get(u.id) ?? 2,
+      hasCoachPlan: planUserIds.has(u.id),
     }).catch(() => false);
     if (ok) sent++; else failed++;
   }

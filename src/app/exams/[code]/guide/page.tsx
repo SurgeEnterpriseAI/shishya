@@ -12,6 +12,7 @@ import { prisma } from "@/lib/db/prisma";
 import { NotesMarkdown } from "@/components/NotesMarkdown";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
+import { CoachEntry } from "@/components/CoachEntry";
 
 export const revalidate = 3600;
 
@@ -156,6 +157,10 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
           AI-curated guidance — pay bands and cutoffs are indicative; always confirm with the
           latest official notification.
         </p>
+
+        {/* Reading strategy is the easy half; the coach turns it into
+            the daily execution that actually crack exams. */}
+        <CoachEntry examCode={exam.code} examShort={exam.shortName} variant="guide" />
 
         <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
           <p className="text-base font-bold text-ink-900">Start your {exam.shortName} prep now — free</p>

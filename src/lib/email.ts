@@ -122,11 +122,14 @@ We've staged a 90-second, 5-question diagnostic for you — once you finish, Shi
 Open it: ${p.ctaUrl}
 
 What you'll get inside:
+• Your free personal coach — a day-by-day plan to your exam date, rebuilt every morning around what you actually did: https://shishya.in/coach
 • Adaptive mocks that get smarter as you answer
 • Real previous-year papers, organised by year + topic
 • Ask Shishya — AI tutor that knows your syllabus + your mistakes
 • Talk to a real subject expert — free 1-to-1 human help, matched to your exam and the exact topic you're stuck on
 • Free, in your language
+
+Serious about cracking it this attempt? Set up your free coach — it takes 30 seconds and three answers: https://shishya.in/coach
 
 — The Shishya team`;
 
@@ -147,6 +150,7 @@ What you'll get inside:
     </p>
     <p style="font-size:13px;line-height:1.55;margin:24px 0 8px;color:#475569;">What you'll get inside:</p>
     <ul style="font-size:13px;line-height:1.6;margin:0 0 24px;padding-left:20px;color:#475569;">
+      <li><strong style="color:#0f172a;">Your free personal coach</strong> — a day-by-day plan to your exam date, rebuilt every morning around what you actually did</li>
       <li>Adaptive mocks that get smarter with every answer</li>
       <li>Real previous-year papers, organised by year + topic</li>
       <li>Ask Shishya — AI tutor that knows your syllabus + your mistakes</li>
@@ -202,7 +206,11 @@ If today's not the day, no stress — but the longer you wait, the longer Shishy
       <a href="${p.ctaUrl}" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:8px;">Take my 5-question diagnostic →</a>
     </p>
     <p style="font-size:13px;line-height:1.55;margin:24px 0 8px;color:#475569;">After the diagnostic, Shishya will tell you the 3 topics dragging your score down + recommend exactly which mock to take next. No more guessing.</p>
-    <p style="font-size:13px;line-height:1.55;margin:0 0 24px;color:#475569;">And if a topic has you stuck, <strong style="color:#0f172a;">talk to a real subject expert</strong> — free, 1-to-1, matched to your exam. You're never on your own here.</p>
+    <p style="font-size:13px;line-height:1.55;margin:0 0 16px;color:#475569;">And if a topic has you stuck, <strong style="color:#0f172a;">talk to a real subject expert</strong> — free, 1-to-1, matched to your exam. You're never on your own here.</p>
+    <div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:10px;padding:14px 16px;margin:0 0 24px;">
+      <p style="font-size:13px;line-height:1.55;margin:0 0 8px;color:#334155;"><strong style="color:#0f172a;">Coming back in bursts never works.</strong> Aspirants who crack it study a little every day — and the hard part is knowing <em>what</em> to study today. Your free personal coach answers that every single morning, and rebuilds the plan when life gets in the way.</p>
+      <a href="https://shishya.in/coach" style="font-size:13px;font-weight:600;color:#c2410c;text-decoration:none;">Set up my free coach (30 seconds) →</a>
+    </div>
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
     <p style="font-size:11px;line-height:1.6;color:#94a3b8;margin:0;text-align:center;">
       Not interested? Just ignore this email — we won't send again.<br>
@@ -408,6 +416,9 @@ export async function sendDailyFiveEmail(p: {
   /** Current streak (days). When ≥2, the email leads with loss-aversion
    *  — the single strongest reason-to-return we can put in a subject line. */
   streakCurrent?: number;
+  /** When false, the mail closes with the coach invitation — the
+   *  escalation from "daily 5 questions" to "a real plan to the exam". */
+  hasCoachPlan?: boolean;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const streak = p.streakCurrent ?? 0;
@@ -432,7 +443,11 @@ Start now: https://shishya.in/dashboard
 
 Small daily reps are how toppers are made. See you inside.
 — Shishya
-
+${
+  p.hasCoachPlan === false
+    ? `\nP.S. Ready to go beyond 5 questions a day? Your free personal coach builds a day-by-day plan all the way to your ${p.examShort} exam date — and rebuilds it every morning around what you actually did. 30 seconds to set up: https://shishya.in/coach\n`
+    : ""
+}
 (Reply to this email to stop the daily reminder.)`;
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>
@@ -450,6 +465,14 @@ Small daily reps are how toppers are made. See you inside.
     <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
       Small daily reps are how toppers are made. — Shishya
     </p>
+    ${
+      p.hasCoachPlan === false
+        ? `<div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:10px;padding:12px 14px;margin:16px 0 0;">
+      <p style="font-size:12px;line-height:1.55;margin:0 0 6px;color:#334155;">Ready for more than 5 questions a day? Your <strong style="color:#0f172a;">free personal coach</strong> plans every day from here to your ${p.examShort} exam — and rebuilds the plan each morning around what you actually did.</p>
+      <a href="https://shishya.in/coach" style="font-size:12px;font-weight:600;color:#c2410c;text-decoration:none;">Set up my free coach (30s) →</a>
+    </div>`
+        : ""
+    }
     <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Reply to this email to stop the daily reminder.</p>
   </div>
 </body></html>`;
@@ -466,6 +489,9 @@ export async function sendEveningRescueEmail(p: {
   name: string | null;
   examShort: string;
   streakCurrent: number;
+  /** When false, closes with the coach invite — a student fighting to
+   *  keep a streak alive is exactly who benefits from a real plan. */
+  hasCoachPlan?: boolean;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const subject = `🔥 ${first}, your ${p.streakCurrent}-day streak ends at midnight`;
@@ -477,7 +503,11 @@ Save it now: https://shishya.in/dashboard
 
 Miss tonight and it resets to zero. Toppers aren't smarter — they just don't skip.
 — Shishya
-
+${
+  p.hasCoachPlan === false
+    ? `\nP.S. Streaks are easier to keep when you know exactly what today's study is. Your free personal coach decides that for you every morning — and never holds a missed day against you: https://shishya.in/coach\n`
+    : ""
+}
 (Reply to this email to stop these reminders.)`;
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>
@@ -495,6 +525,14 @@ Miss tonight and it resets to zero. Toppers aren't smarter — they just don't s
     <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
       Toppers aren't smarter — they just don't skip. — Shishya
     </p>
+    ${
+      p.hasCoachPlan === false
+        ? `<div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:10px;padding:12px 14px;margin:16px 0 0;">
+      <p style="font-size:12px;line-height:1.55;margin:0 0 6px;color:#334155;">Streaks are easier to keep when you already know what today's study is. Your <strong style="color:#0f172a;">free personal coach</strong> decides that every morning — and never holds a missed day against you.</p>
+      <a href="https://shishya.in/coach" style="font-size:12px;font-weight:600;color:#c2410c;text-decoration:none;">Set up my free coach (30s) →</a>
+    </div>`
+        : ""
+    }
     <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Reply to this email to stop these reminders.</p>
   </div>
 </body></html>`;

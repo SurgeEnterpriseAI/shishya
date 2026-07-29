@@ -15,6 +15,7 @@ import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { FindExamQuiz } from "./FindExamQuiz";
 import { SaveMatchesNudge } from "./SaveMatchesNudge";
 import { computeExamTags } from "@/lib/exam-tags";
+import { CoachEntry } from "@/components/CoachEntry";
 import {
   matchAll, type ExamElig, type MatchInput, type EducationLevel, type Stream, type Category, type Skill,
 } from "@/lib/exam-matcher";
@@ -242,6 +243,17 @@ export default async function FindYourExamPage({
                     </li>
                   ))}
                 </ul>
+
+                {/* The finder answers "which exam"; the coach answers
+                    "what do I do about it, starting today" — the natural
+                    next step, pre-filled with their #1 match. */}
+                {eligible[0] && (
+                  <CoachEntry
+                    examCode={eligible[0].exam.code}
+                    examShort={eligible[0].exam.shortName}
+                    variant="finder"
+                  />
+                )}
 
                 {ineligibleSoon.length > 0 && (
                   <div className="mt-8">

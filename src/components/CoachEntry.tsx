@@ -15,15 +15,21 @@ export function CoachEntry({
 }: {
   examCode: string;
   examShort: string;
-  /** "syllabus" and "results" tune the sentence to the moment. */
-  variant?: "default" | "syllabus" | "results";
+  /** Tunes the sentence to the moment the student is in. */
+  variant?: "default" | "syllabus" | "results" | "cutoff" | "guide" | "finder";
 }) {
   const line =
     variant === "syllabus"
       ? `This whole syllabus, split into daily doses — free.`
       : variant === "results"
         ? `Turn this score into a plan — what to study tomorrow, and the day after.`
-        : `Preparing for ${examShort}? Get a free day-by-day plan to exam day.`;
+        : variant === "cutoff"
+          ? `Now you know the score to beat. Get the free day-by-day plan that gets you there.`
+          : variant === "guide"
+            ? `Strategy is easy to read and hard to follow. Get it as a daily plan instead — free.`
+            : variant === "finder"
+              ? `Found your exam. Now get the free day-by-day plan to actually crack ${examShort}.`
+              : `Preparing for ${examShort}? Get a free day-by-day plan to exam day.`;
 
   return (
     <Link

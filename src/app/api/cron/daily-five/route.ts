@@ -110,6 +110,16 @@ export async function GET(req: Request) {
   for (const c of chats) add(c.userId, c.createdAt);
   const todayIdx = istDay(now);
 
+  // Students who already committed to a coach plan — they get the plain
+  // mail; everyone else gets the coach invitation at the end.
+  const planUserIds = new Set(
+    (
+      await prisma
+        .$queryRaw<{ userId: string }[]>`SELECT "userId" FROM "CoachPlan"`
+        .catch(() => [])
+    ).map((r) => r.userId),
+  );
+
   let sent = 0, failed = 0;
   for (const u of users) {
     if (!u.email || !u.enrollments[0]) continue;
@@ -119,6 +129,7 @@ export async function GET(req: Request) {
       name: u.name,
       examShort: u.enrollments[0].exam.shortName,
       streakCurrent: streak.current,
+      hasCoachPlan: planUserIds.has(u.id),
     }).catch(() => false);
     if (ok) sent++; else failed++;
   }
