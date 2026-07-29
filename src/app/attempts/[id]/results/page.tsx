@@ -16,6 +16,7 @@ import { NextMockButton } from "./NextMockButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { liveTestRank } from "@/lib/live-test";
+import { CoachEntry } from "@/components/CoachEntry";
 
 export default async function ResultsPage({
   params,
@@ -123,6 +124,14 @@ export default async function ResultsPage({
     attempt.mock.generatedBy === "live-test"
       ? await liveTestRank(attempt.mock.id, session.user.id).catch(() => null)
       : null;
+
+  // Coach entry is suppressed for students who already have a plan.
+  const hasCoachPlan =
+    (
+      await prisma
+        .$queryRaw<{ n: bigint }[]>`SELECT COUNT(*) n FROM "CoachPlan" WHERE "userId" = ${session.user.id}`
+        .catch(() => [{ n: BigInt(0) }])
+    )[0].n > BigInt(0);
   // rankBands fetched above in the parallel Promise.all.
 
   const topicScores = (attempt.topicScores as Record<string, any>) ?? {};
@@ -254,6 +263,16 @@ export default async function ResultsPage({
               against this one — and beating your own record is the whole game.
             </p>
           </div>
+        )}
+
+        {/* Coach entry — "I have a score, now what?" is the moment a
+            plan means most. Suppressed once they have one. */}
+        {!hasCoachPlan && (
+          <CoachEntry
+            examCode={attempt.mock.exam.code}
+            examShort={attempt.mock.exam.shortName}
+            variant="results"
+          />
         )}
 
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">

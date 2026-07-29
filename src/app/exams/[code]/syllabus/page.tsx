@@ -13,6 +13,7 @@ import { prisma } from "@/lib/db/prisma";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { SyllabusProgress } from "./SyllabusProgress";
+import { CoachEntry } from "@/components/CoachEntry";
 
 export const revalidate = 3600;
 
@@ -151,6 +152,10 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
         {/* Signed-in overlay: per-topic checkmarks + progress summary
             (progressive enhancement; ISR + SEO untouched). */}
         <SyllabusProgress examCode={exam.code} totalTopics={topicCount} />
+
+        {/* Coach entry — peak intent: the student is looking at the
+            whole syllabus and wondering how to get through it. */}
+        <CoachEntry examCode={exam.code} examShort={exam.shortName} variant="syllabus" />
 
         {subjects.map((s) => (
           <section key={s.code} className="mt-8">

@@ -32,6 +32,7 @@ import { findDeepContent, hasDeepContent } from "@/data/exam-deep-content";
 import { getExamTheme } from "@/lib/exam-theme";
 import { DiagnosticHero } from "@/components/DiagnosticHero";
 import { TryOneQuestion } from "./TryOneQuestion";
+import { CoachEntry } from "@/components/CoachEntry";
 
 // Per-exam meta. Beefed-up version that bakes in:
 //   1. state name (for "Tamil Nadu PSC" / "तमिलनाडु TET" style searches)
@@ -264,6 +265,16 @@ export default async function ExamPage({
   const liveTest = ltRows[0]
     ? { open: ltRows[0].opensAt <= new Date() }
     : null;
+
+  // Suppress the coach entry for students who already committed to a
+  // plan — repeating the ask would be noise.
+  const hasCoachPlan = userId
+    ? (
+        await prisma
+          .$queryRaw<{ n: bigint }[]>`SELECT COUNT(*) n FROM "CoachPlan" WHERE "userId" = ${userId}`
+          .catch(() => [{ n: BigInt(0) }])
+      )[0].n > BigInt(0)
+    : false;
 
   // Signed-in student's unfinished mock for THIS exam (the ~30%
   // abandonment leak) — resume banner under the chips.
@@ -581,6 +592,12 @@ export default async function ExamPage({
             </Link>
           )}
         </div>
+
+        {/* Coach entry — the exam hub is where most organic visitors
+            actually land (not the homepage), so this is the coach's
+            highest-intent door. Hidden for students who already have a
+            plan: their dashboard carries it instead. */}
+        {!hasCoachPlan && <CoachEntry examCode={exam.code} examShort={exam.shortName} />}
 
         {/* Unfinished-mock resume banner. */}
         {resumeMock && (

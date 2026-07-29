@@ -49,7 +49,7 @@ async function examOptions(userId: string | null): Promise<ExamOption[]> {
 export default async function CoachPage({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string }>;
+  searchParams: Promise<{ edit?: string; exam?: string }>;
 }) {
   const sp = await searchParams;
   const session = await auth();
@@ -57,7 +57,14 @@ export default async function CoachPage({
 
   const plan = userId ? await computeCoachPlan(userId) : null;
   const showIntake = userId && (!plan || sp.edit === "1");
-  const options = showIntake ? await examOptions(userId) : [];
+  const allOptions = showIntake ? await examOptions(userId) : [];
+  // ?exam=CODE (from the coach entry on exam/syllabus/results pages)
+  // pre-selects that exam so the student lands on a half-filled form.
+  const wanted = sp.exam?.toUpperCase();
+  const preselected = wanted ? allOptions.find((o) => o.code === wanted) : undefined;
+  const options = preselected
+    ? [preselected, ...allOptions.filter((o) => o.code !== preselected.code)]
+    : allOptions;
 
   // AEO: the questions aspirants actually type into Google and ask
   // ChatGPT/Gemini/Perplexity about affording coaching, making a plan,
@@ -171,7 +178,7 @@ export default async function CoachPage({
               <li>🇮🇳 Sunday All-India Live Test as your weekly benchmark</li>
             </ul>
             <Link
-              href="/login?callbackUrl=%2Fcoach"
+              href={`/login?callbackUrl=${encodeURIComponent(wanted ? `/coach?exam=${wanted}` : "/coach")}`}
               className="mt-6 inline-block rounded-lg bg-saffron-500 px-8 py-3 text-sm font-bold text-white shadow-sm hover:bg-saffron-600"
             >
               Start free — build my plan →

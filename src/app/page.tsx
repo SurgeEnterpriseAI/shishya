@@ -872,6 +872,17 @@ function StepGoals({
           papers, cutoffs and study notes are all waiting, free.{" "}
           <span className="font-medium text-ink-800">Bet yours is covered.</span>
         </p>
+
+        {/* Ungated AI tutor — restored to a visible button (it had been
+            demoted to a text link when the old signup banner was
+            removed, and tutor opens dipped the next morning). Zero
+            commitment: no login, any language. */}
+        <Link
+          href="/chat?general=1"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl border-2 border-saffron-300 bg-white px-5 py-3 text-sm font-bold text-saffron-800 shadow-sm transition-colors hover:border-saffron-400 hover:bg-saffron-50"
+        >
+          💬 Ask Shishya anything — free AI tutor, no login needed →
+        </Link>
       </div>
 
       {/* ── Search-by-name (highest-intent entry) ─────────────────
