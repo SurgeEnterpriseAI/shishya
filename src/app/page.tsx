@@ -47,6 +47,8 @@ import { PageTour } from "@/components/PageTour";
 import { UpcomingExamsSidebar, type UpcomingEvent, type CalendarBucket } from "@/components/UpcomingExamsSidebar";
 import { VacancyFinderCard } from "@/components/VacancyFinderCard";
 import { PortalStatsBand } from "@/components/PortalStatsBand";
+import { WallOfGrinders } from "@/components/WallOfGrinders";
+import { loadWallOfGrinders, type GrinderEntry } from "@/lib/wall-of-grinders";
 import { InspirationCarousel, type InspoVideo } from "@/components/InspirationCarousel";
 import { VacancyExplorerSidebar, VacancyExplorerPanel } from "@/components/VacancyExplorer";
 import { loadVacancyExplorer, type VacancyExplorer } from "@/lib/vacancy-explorer";
@@ -365,6 +367,14 @@ async function loadInspirationVideosRaw(): Promise<InspoVideo[]> {
 }
 const loadInspirationVideos = unstable_cache(loadInspirationVideosRaw, ["home-inspiration-v1"], { revalidate: 86400 });
 
+// Wall of Grinders — 5-minute cache keeps it live-feeling without
+// re-running the aggregation on every homepage render.
+const loadGrindersCached = unstable_cache(
+  async () => loadWallOfGrinders(10).catch(() => []),
+  ["wall-of-grinders-v1"],
+  { revalidate: 300 },
+);
+
 export default async function ExamsPage({
   searchParams,
 }: {
@@ -373,7 +383,7 @@ export default async function ExamsPage({
   const sp = await searchParams;
   const { t } = await getT();
 
-  const [signedIn, exams, calendar, vacancy, portalStats, inspirationVideos] =
+  const [signedIn, exams, calendar, vacancy, portalStats, inspirationVideos, grinders] =
     await Promise.all([
       auth().then((s) => Boolean(s?.user)).catch(() => false),
       loadExams(),
@@ -381,6 +391,7 @@ export default async function ExamsPage({
       loadVacancyExplorerCached(),
       loadPortalStats(),
       loadInspirationVideos(),
+      loadGrindersCached(),
     ]);
   const upcomingEvents = calendar.events;
   const vacancyStats = { totalLakh: vacancy.totalLakh, examCount: vacancy.examCount };
@@ -552,7 +563,7 @@ export default async function ExamsPage({
         <section className="container-prose pt-10 pb-20 sm:pt-14">
           <Breadcrumbs goal={goal} scope={effectiveScope} stateCode={stateCode} />
 
-          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} inspirationVideos={inspirationVideos} />}
+          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} inspirationVideos={inspirationVideos} grinders={grinders} />}
           {step === "scope" && goal && (
             <StepScope
               goal={goal}
@@ -736,6 +747,7 @@ function StepGoals({
   vacancyStats,
   portalStats,
   inspirationVideos,
+  grinders,
 }: {
   exams: ExamCard[];
   t: (key: SectionTitleKey) => string;
@@ -743,6 +755,7 @@ function StepGoals({
   vacancyStats: { totalLakh: string; examCount: number };
   portalStats: { examCount: number; questions: string; notes: string };
   inspirationVideos: InspoVideo[];
+  grinders: GrinderEntry[];
 }) {
   // 27 May 2026 funnel telemetry — 96 signups, 0 mock attempts in
   // last 24h. The page leads visitors into a goal funnel but never
@@ -972,6 +985,14 @@ function StepGoals({
       {inspirationVideos.length > 0 && (
         <div className="mt-12">
           <InspirationCarousel videos={inspirationVideos} />
+        </div>
+      )}
+
+      {/* Wall of Grinders — anonymous proof that real aspirants are
+          working right now. Effort only: no names, no scores, no rank. */}
+      {grinders.length >= 3 && (
+        <div>
+          <WallOfGrinders entries={grinders} />
         </div>
       )}
     </div>
