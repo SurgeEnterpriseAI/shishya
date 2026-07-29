@@ -129,7 +129,9 @@ What you'll get inside:
 • Talk to a real subject expert — free 1-to-1 human help, matched to your exam and the exact topic you're stuck on
 • Free, in your language
 
-Serious about cracking it this attempt? Set up your free coach — it takes 30 seconds and three answers: https://shishya.in/coach
+One thing before you go: the difference between aspirants who crack a government job and those who keep re-attempting is almost never talent or hours studied. It's having a clear plan for TODAY — and following it on the ordinary days. That is exactly what your free personal coach does: it turns the whole syllabus into today's 2-3 things, and rebuilds them every morning around what you actually did. It is the single most useful thing on this platform, and it costs nothing.
+
+Set it up in 30 seconds (three answers): https://shishya.in/coach
 
 — The Shishya team`;
 
@@ -150,13 +152,18 @@ Serious about cracking it this attempt? Set up your free coach — it takes 30 s
     </p>
     <p style="font-size:13px;line-height:1.55;margin:24px 0 8px;color:#475569;">What you'll get inside:</p>
     <ul style="font-size:13px;line-height:1.6;margin:0 0 24px;padding-left:20px;color:#475569;">
-      <li><strong style="color:#0f172a;">Your free personal coach</strong> — a day-by-day plan to your exam date, rebuilt every morning around what you actually did</li>
+      <li><strong style="color:#0f172a;">Your free personal coach</strong> — the surest way to crack the job: a day-by-day plan to your exam date, rebuilt every morning around what you actually did</li>
       <li>Adaptive mocks that get smarter with every answer</li>
       <li>Real previous-year papers, organised by year + topic</li>
       <li>Ask Shishya — AI tutor that knows your syllabus + your mistakes</li>
       <li><strong style="color:#0f172a;">Talk to a real subject expert</strong> — free 1-to-1 human help, matched to your exam and the exact topic you're stuck on</li>
       <li>Free, in your language</li>
     </ul>
+    <div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:10px;padding:16px 18px;margin:0 0 24px;">
+      <p style="font-size:14px;font-weight:700;margin:0 0 6px;color:#0f172a;">The surest way to crack the job</p>
+      <p style="font-size:13px;line-height:1.6;margin:0 0 10px;color:#334155;">What separates aspirants who get selected from those who keep re-attempting is almost never talent or hours — it's knowing what to study <em>today</em>, and doing it on ordinary days. Your <strong style="color:#0f172a;">free personal coach</strong> turns the whole syllabus into today's 2–3 things and rebuilds them every morning around what you actually did. Miss a day and it simply re-plans — no backlog, no guilt.</p>
+      <a href="https://shishya.in/coach" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:600;font-size:13px;padding:9px 18px;border-radius:8px;">Set up my free coach (30s) →</a>
+    </div>
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
     <p style="font-size:11px;line-height:1.6;color:#94a3b8;margin:0;text-align:center;">
       You're getting this because you signed up at <a href="https://shishya.in" style="color:#c2410c;">shishya.in</a>. If this wasn't you, ignore this email.
@@ -208,8 +215,9 @@ If today's not the day, no stress — but the longer you wait, the longer Shishy
     <p style="font-size:13px;line-height:1.55;margin:24px 0 8px;color:#475569;">After the diagnostic, Shishya will tell you the 3 topics dragging your score down + recommend exactly which mock to take next. No more guessing.</p>
     <p style="font-size:13px;line-height:1.55;margin:0 0 16px;color:#475569;">And if a topic has you stuck, <strong style="color:#0f172a;">talk to a real subject expert</strong> — free, 1-to-1, matched to your exam. You're never on your own here.</p>
     <div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:10px;padding:14px 16px;margin:0 0 24px;">
-      <p style="font-size:13px;line-height:1.55;margin:0 0 8px;color:#334155;"><strong style="color:#0f172a;">Coming back in bursts never works.</strong> Aspirants who crack it study a little every day — and the hard part is knowing <em>what</em> to study today. Your free personal coach answers that every single morning, and rebuilds the plan when life gets in the way.</p>
-      <a href="https://shishya.in/coach" style="font-size:13px;font-weight:600;color:#c2410c;text-decoration:none;">Set up my free coach (30 seconds) →</a>
+      <p style="font-size:14px;font-weight:700;margin:0 0 6px;color:#0f172a;">The surest way to crack the job</p>
+      <p style="font-size:13px;line-height:1.55;margin:0 0 10px;color:#334155;">Studying in bursts is why most attempts fail — not lack of ability. Aspirants who get selected do a little every day, and the hard part is simply knowing <em>what</em> to do today. Your <strong style="color:#0f172a;">free personal coach</strong> answers that every single morning and re-plans whenever life gets in the way. It is the one thing on Shishya most likely to put you in the merit list.</p>
+      <a href="https://shishya.in/coach" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:600;font-size:13px;padding:9px 18px;border-radius:8px;">Set up my free coach (30s) →</a>
     </div>
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
     <p style="font-size:11px;line-height:1.6;color:#94a3b8;margin:0;text-align:center;">
@@ -445,7 +453,7 @@ Small daily reps are how toppers are made. See you inside.
 — Shishya
 ${
   p.hasCoachPlan === false
-    ? `\nP.S. Ready to go beyond 5 questions a day? Your free personal coach builds a day-by-day plan all the way to your ${p.examShort} exam date — and rebuilds it every morning around what you actually did. 30 seconds to set up: https://shishya.in/coach\n`
+    ? `\nP.S. Five questions keep the habit alive — but a plan is what actually cracks the job. Your free personal coach maps every day from here to your ${p.examShort} exam, and rebuilds it each morning around what you actually did. It's the most useful thing on Shishya and it costs nothing: https://shishya.in/coach\n`
     : ""
 }
 (Reply to this email to stop the daily reminder.)`;
@@ -468,7 +476,8 @@ ${
     ${
       p.hasCoachPlan === false
         ? `<div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:10px;padding:12px 14px;margin:16px 0 0;">
-      <p style="font-size:12px;line-height:1.55;margin:0 0 6px;color:#334155;">Ready for more than 5 questions a day? Your <strong style="color:#0f172a;">free personal coach</strong> plans every day from here to your ${p.examShort} exam — and rebuilds the plan each morning around what you actually did.</p>
+      <p style="font-size:13px;font-weight:700;margin:0 0 4px;color:#0f172a;">The surest way to crack the job</p>
+      <p style="font-size:12px;line-height:1.55;margin:0 0 8px;color:#334155;">Five questions keep the habit alive — a plan is what gets you selected. Your <strong style="color:#0f172a;">free personal coach</strong> maps every day from here to your ${p.examShort} exam and rebuilds it each morning around what you actually did.</p>
       <a href="https://shishya.in/coach" style="font-size:12px;font-weight:600;color:#c2410c;text-decoration:none;">Set up my free coach (30s) →</a>
     </div>`
         : ""
@@ -505,7 +514,7 @@ Miss tonight and it resets to zero. Toppers aren't smarter — they just don't s
 — Shishya
 ${
   p.hasCoachPlan === false
-    ? `\nP.S. Streaks are easier to keep when you know exactly what today's study is. Your free personal coach decides that for you every morning — and never holds a missed day against you: https://shishya.in/coach\n`
+    ? `\nP.S. A streak is the habit; a plan is what converts the habit into a selection. Your free personal coach decides your 2-3 things every morning, never holds a missed day against you, and keeps aiming everything at your exam date — free: https://shishya.in/coach\n`
     : ""
 }
 (Reply to this email to stop these reminders.)`;
@@ -528,7 +537,8 @@ ${
     ${
       p.hasCoachPlan === false
         ? `<div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:10px;padding:12px 14px;margin:16px 0 0;">
-      <p style="font-size:12px;line-height:1.55;margin:0 0 6px;color:#334155;">Streaks are easier to keep when you already know what today's study is. Your <strong style="color:#0f172a;">free personal coach</strong> decides that every morning — and never holds a missed day against you.</p>
+      <p style="font-size:13px;font-weight:700;margin:0 0 4px;color:#0f172a;">The surest way to crack the job</p>
+      <p style="font-size:12px;line-height:1.55;margin:0 0 8px;color:#334155;">A streak is the habit — a plan is what turns it into a selection. Your <strong style="color:#0f172a;">free personal coach</strong> decides your 2–3 things every morning, never holds a missed day against you, and keeps everything aimed at your exam date.</p>
       <a href="https://shishya.in/coach" style="font-size:12px;font-weight:600;color:#c2410c;text-decoration:none;">Set up my free coach (30s) →</a>
     </div>`
         : ""
