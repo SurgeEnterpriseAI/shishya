@@ -804,10 +804,6 @@ function StepGoals({
           </p>
 
           <p className="mt-3 text-sm italic leading-relaxed text-ink-500">
-            &ldquo;I&apos;m new to all this. I just want a government job — but coaching wants
-            ₹50,000 I don&apos;t have, and I don&apos;t even know which exam I can write or where
-            to start.&rdquo;
-            <br />
             &ldquo;I started once. Missed 5 days. My whole plan felt ruined — so I stopped.&rdquo;
           </p>
 
