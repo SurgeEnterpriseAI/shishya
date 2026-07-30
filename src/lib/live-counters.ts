@@ -19,6 +19,9 @@ export interface LiveCounts {
   signupsLast7Days: number;
   activeNow: number;
   mocksToday: number;
+  /** Verified-browser single-page landings since the 31 Jul 2026
+   *  classification cutover — humans of unknown seriousness. */
+  walkIns: number;
 }
 
 /**
@@ -37,6 +40,7 @@ export function getLiveCounts(_now: Date = new Date()): LiveCounts {
     signupsLast7Days: 14,
     activeNow: 0,
     mocksToday: 0,
+    walkIns: 0,
   };
 }
 
