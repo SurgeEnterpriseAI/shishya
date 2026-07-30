@@ -117,7 +117,12 @@ export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
     ...(activeNow > 0 ? [{ icon: "⚡", value: activeNow, label: "active now" }] : []),
     { icon: "👁️", value: totalPageViews, label: "page views" },
     { icon: "📈", value: pageViewsToday, label: "views today" },
-    { icon: "🧑", value: uniqueVisitors, label: "unique visitors" },
+    // "aspirants", not "unique visitors" (31 Jul founder call): the
+    // count deliberately includes only people seen engaging across 2+
+    // pages — it undercounts one-page readers and can't be inflated by
+    // crawlers. "Aspirants" says exactly that: provably real people,
+    // not a claim about total footfall.
+    { icon: "🧑", value: uniqueVisitors, label: "aspirants" },
     { icon: "📝", value: mocksAttempted, label: labels.inMockNow },
     { icon: "✅", value: mocksToday, label: "mocks today" },
     {
