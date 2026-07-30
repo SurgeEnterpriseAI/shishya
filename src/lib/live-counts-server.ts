@@ -60,28 +60,50 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
 
   const [
     uniqueVisitorsRows,
-    totalPageViews,
-    pageViewsToday,
+    totalPageViewsRows,
+    pageViewsTodayRows,
     mocksAttempted,
     totalSignups,
     signupsLast7Days,
     activeNowRows,
     mocksToday,
   ] = await Promise.all([
-    // Distinct visitors all-time. COALESCE(userId, anonId) so a single
-    // person who later signs in doesn't get counted as two people.
+    // Distinct HUMAN visitors all-time — crawler/human separation
+    // (31 Jul 2026, founder call after July's phantom-visitor audit).
+    //
+    // A visitor counts only if their id was seen on 2+ page views.
+    // Why this rule: JS-rendering crawlers used to mint a fresh anonId
+    // per page (no cookie kept), so one sweep = hundreds of phantom
+    // "visitors" — by month-end, 70% of all ids had exactly one view.
+    // A cookie-less client can never reach 2 views on one id, so this
+    // single rule cleans BOTH the historical rows and anything a
+    // stealth crawler does in future. The ingest API additionally tags
+    // events client='bot'/'browser' and never mints ids for bots.
+    // Trade-off, accepted: genuine one-page bouncers are excluded —
+    // we'd rather understate a public number than inflate it.
     prisma.$queryRaw<Array<{ count: bigint }>>`
-      SELECT COUNT(DISTINCT COALESCE("userId", "anonId"))::bigint AS count
-      FROM "AnalyticsEvent"
-      WHERE kind = 'PAGE_VIEW'
+      SELECT COUNT(*)::bigint AS count FROM (
+        SELECT COALESCE("userId", "anonId") AS k
+        FROM "AnalyticsEvent"
+        WHERE kind = 'PAGE_VIEW' AND COALESCE("userId", "anonId") IS NOT NULL
+        GROUP BY 1
+        HAVING COUNT(*) >= 2
+      ) humans
     `,
-    // Total PAGE_VIEW rows ever. Reads as "X pageviews so far" social
-    // proof — bigger number than uniqueVisitors so visually impressive.
-    prisma.analyticsEvent.count({ where: { kind: "PAGE_VIEW" } }),
-    // PAGE_VIEW rows TODAY (since IST midnight).
-    prisma.analyticsEvent.count({
-      where: { kind: "PAGE_VIEW", createdAt: { gte: dayStart } },
-    }),
+    // Total PAGE_VIEW rows, excluding ingest-tagged bot fetches.
+    // (Pre-tagging bot rows can't be identified and remain — the
+    // number converges to human-only as tagged days accumulate.)
+    // Raw SQL: the generated client predates the "client" column.
+    prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent"
+      WHERE kind = 'PAGE_VIEW' AND ("client" IS NULL OR "client" <> 'bot')
+    `,
+    // PAGE_VIEW rows TODAY, bots excluded.
+    prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent"
+      WHERE kind = 'PAGE_VIEW' AND "createdAt" >= ${dayStart}
+        AND ("client" IS NULL OR "client" <> 'bot')
+    `,
     prisma.attempt.count(),
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: cutoff7d } } }),
@@ -108,8 +130,8 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
 
   return {
     uniqueVisitors: Number(uniqueVisitorsRows[0]?.count ?? 0),
-    totalPageViews,
-    pageViewsToday,
+    totalPageViews: Number(totalPageViewsRows[0]?.count ?? 0),
+    pageViewsToday: Number(pageViewsTodayRows[0]?.count ?? 0),
     mocksAttempted,
     totalSignups,
     signupsLast7Days,

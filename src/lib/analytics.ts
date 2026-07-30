@@ -35,6 +35,9 @@ export interface RecordEventInput {
   /** Free-form event payload. Truncated to ~1 KB to bound storage. */
   props?: Record<string, unknown> | null;
   utmSource?: string | null;
+  /** Ingest-time classification: "browser" | "bot". Bots are recorded
+   *  (auditable) but excluded from human counters at query time. */
+  client?: "browser" | "bot" | null;
   utmMedium?: string | null;
   utmCampaign?: string | null;
   refHost?: string | null;
@@ -51,7 +54,7 @@ export async function recordEvent(input: RecordEventInput): Promise<void> {
     await prisma.$executeRaw`
       INSERT INTO "AnalyticsEvent"
         ("id", "kind", "userId", "anonId", "path", "props",
-         "utmSource", "utmMedium", "utmCampaign", "refHost", "createdAt")
+         "utmSource", "utmMedium", "utmCampaign", "refHost", "client", "createdAt")
       VALUES (
         ${`evt_${cuid()}`},
         ${input.kind}::"EventKind",
@@ -63,6 +66,7 @@ export async function recordEvent(input: RecordEventInput): Promise<void> {
         ${input.utmMedium ?? null},
         ${input.utmCampaign ?? null},
         ${input.refHost ?? null},
+        ${input.client ?? null},
         NOW()
       )
     `;

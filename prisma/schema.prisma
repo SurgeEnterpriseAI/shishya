@@ -1236,6 +1236,11 @@ model AnalyticsEvent {
   utmCampaign String?
   // Truncated referrer hostname (e.g., "google.com"), not full URL.
   refHost     String?
+  // Client classification at ingest (31 Jul 2026): "browser" | "bot".
+  // NULL = recorded before classification existed. Bots ARE still
+  // recorded (auditable, nothing hidden) — they're tagged, carry no
+  // anonId, and are excluded from human-facing counters at query time.
+  client      String?
   createdAt   DateTime  @default(now())
 
   @@index([kind, createdAt])
