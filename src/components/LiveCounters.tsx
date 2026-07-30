@@ -48,6 +48,7 @@ const SSR_SAFE_INITIAL: LiveCounts = {
   signupsLast7Days: 14,
   activeNow: 0,
   mocksToday: 0,
+  walkIns: 0,
 };
 
 function useLiveCounts(): LiveCounts {
@@ -70,6 +71,7 @@ function useLiveCounts(): LiveCounts {
           signupsLast7Days: data.signupsLast7Days ?? prev.signupsLast7Days,
           activeNow: data.activeNow ?? prev.activeNow,
           mocksToday: data.mocksToday ?? prev.mocksToday,
+          walkIns: data.walkIns ?? prev.walkIns,
         }));
       } catch {
         /* network blip — keep last-known */
@@ -107,6 +109,7 @@ export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
     signupsLast7Days,
     activeNow,
     mocksToday,
+    walkIns,
   } = useLiveCounts();
   // Counters in one slim strip. Wraps cleanly on narrow viewports
   // (flex-wrap) — desktop gets a single line, mobile gets 2-3 lines.
@@ -123,6 +126,11 @@ export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
     // crawlers. "Aspirants" says exactly that: provably real people,
     // not a claim about total footfall.
     { icon: "🧑", value: uniqueVisitors, label: "aspirants" },
+    // Walk-ins: verified-browser single-page landers — humans too, they
+    // reached us somehow; seriousness unknown yet. Counted since the
+    // 31 Jul classification cutover, so it grows from zero honestly.
+    // Hidden until it's a meaningful number.
+    ...(walkIns >= 25 ? [{ icon: "🚶", value: walkIns, label: "walk-ins" }] : []),
     { icon: "📝", value: mocksAttempted, label: labels.inMockNow },
     { icon: "✅", value: mocksToday, label: "mocks today" },
     {

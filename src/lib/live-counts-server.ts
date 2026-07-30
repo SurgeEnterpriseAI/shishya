@@ -47,6 +47,15 @@ export interface LiveCounts {
   /** Mocks submitted TODAY (since IST midnight). Calendar-day, not a
    *  rolling 24 h window. */
   mocksToday: number;
+  /** Walk-ins: page views by verified BROWSERS that carry no identity —
+   *  the single-page landers. They're humans too (a crawler can't be
+   *  classified 'browser' AND they reached us somehow), we just don't
+   *  know their seriousness yet. Countable only since the 31 Jul 2026
+   *  classification cutover, so it starts small and grows honestly.
+   *  Includes each future-aspirant's very first page view (identity
+   *  starts on their second view) — i.e. this is "human first-touch
+   *  landings", which is exactly what a walk-in is. */
+  walkIns: number;
 }
 
 export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts> {
@@ -67,6 +76,7 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     signupsLast7Days,
     activeNowRows,
     mocksToday,
+    walkInsRows,
   ] = await Promise.all([
     // Distinct HUMAN visitors all-time — crawler/human separation
     // (31 Jul 2026, founder call after July's phantom-visitor audit).
@@ -126,6 +136,14 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
         finishedAt: { gte: dayStart },
       },
     }),
+    // Walk-ins: browser-classified, identity-less page views = human
+    // first-touch landings (see interface doc). Raw SQL — generated
+    // client predates the "client" column.
+    prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent"
+      WHERE kind = 'PAGE_VIEW' AND "client" = 'browser'
+        AND "userId" IS NULL AND "anonId" IS NULL
+    `,
   ]);
 
   return {
@@ -137,6 +155,7 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     signupsLast7Days,
     activeNow: Number(activeNowRows[0]?.count ?? 0),
     mocksToday,
+    walkIns: Number(walkInsRows[0]?.count ?? 0),
   };
 }
 
