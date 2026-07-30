@@ -18,6 +18,7 @@ import { formatDisplayScorePct } from "@/lib/scoring";
 import { liveTestRank } from "@/lib/live-test";
 import { CoachEntry } from "@/components/CoachEntry";
 import { PeerProofLine } from "@/components/PeerProofLine";
+import { CoachNextTask } from "@/components/CoachNextTask";
 import { examPeerProof } from "@/lib/peer-proof";
 
 export default async function ResultsPage({
@@ -278,13 +279,17 @@ export default async function ResultsPage({
         />
 
         {/* Coach entry — "I have a score, now what?" is the moment a
-            plan means most. Suppressed once they have one. */}
-        {!hasCoachPlan && (
+            plan means most. Suppressed once they have one; plan-holders
+            get the next-task breadcrumb instead (a mock often IS a plan
+            task — this closes the loop right after they finish it). */}
+        {!hasCoachPlan ? (
           <CoachEntry
             examCode={attempt.mock.exam.code}
             examShort={attempt.mock.exam.shortName}
             variant="results"
           />
+        ) : (
+          <CoachNextTask />
         )}
 
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">

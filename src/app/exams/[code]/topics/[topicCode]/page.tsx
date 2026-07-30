@@ -18,6 +18,7 @@ import { TopicQuizButton } from "./TopicQuizButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { InlineTopicQuestion } from "./InlineTopicQuestion";
 import { TopicMasteryPanel } from "./TopicMasteryPanel";
+import { CoachNextTask } from "@/components/CoachNextTask";
 import { StudyTogether } from "./StudyTogether";
 
 // Public SEO page; data barely changes (notes regen weekly via cron).
@@ -336,6 +337,11 @@ export default async function TopicPage({
             {/* Mastery loop — signed-in only (anon visitors see nothing;
                 page stays clean + cached). */}
             <TopicMasteryPanel examCode={code} topicCode={topic.code} topicName={topic.name} />
+
+            {/* Coach breadcrumb — after finishing this topic, the plan's
+                next task is one tap away (renders nothing for
+                non-plan-holders; session checked client-side). */}
+            <CoachNextTask />
 
             {/* Group study — end-of-study social hook, after the work. */}
             <StudyTogether

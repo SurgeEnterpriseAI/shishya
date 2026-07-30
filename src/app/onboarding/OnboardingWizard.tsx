@@ -129,7 +129,16 @@ export function OnboardingWizard({
         setError(data.error ?? `Save failed (${res.status})`);
         return;
       }
-      router.push(redirectAfter);
+      // The consequent flow: they just told us their exam — the single
+      // most valuable next step is turning it into a day-by-day plan.
+      // The coach intake opens pre-filled with their first pick (exam +
+      // official date), so it's ~15 seconds from here. Skipping is one
+      // tap (header nav) — no trap.
+      if (prepCodes.length > 0) {
+        router.push(`/coach?exam=${encodeURIComponent(prepCodes[0])}`);
+      } else {
+        router.push(redirectAfter);
+      }
       router.refresh();
     });
   }

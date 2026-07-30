@@ -34,6 +34,7 @@ import { DiagnosticHero } from "@/components/DiagnosticHero";
 import { TryOneQuestion } from "./TryOneQuestion";
 import { CoachEntry } from "@/components/CoachEntry";
 import { PeerProofLine } from "@/components/PeerProofLine";
+import { CoachNextTask } from "@/components/CoachNextTask";
 import { examPeerProof } from "@/lib/peer-proof";
 
 // Per-exam meta. Beefed-up version that bakes in:
@@ -606,6 +607,11 @@ export default async function ExamPage({
         <PeerProofLine proof={peerProof} examShort={exam.shortName} variant="exam" />
 
         {!hasCoachPlan && <CoachEntry examCode={exam.code} examShort={exam.shortName} />}
+
+        {/* Plan-holders don't get re-asked — they get their plan back:
+            the next-task breadcrumb (client-side; renders nothing for
+            everyone else, so the ISR page stays clean). */}
+        {hasCoachPlan && <CoachNextTask />}
 
         {/* Unfinished-mock resume banner. */}
         {resumeMock && (
