@@ -796,8 +796,11 @@ function StepGoals({
 
       {/* Row 1 — finder card (the "I want a govt job but which one?"
           entry). Row 2 — "at a glance" content-depth numbers. Both full
-          width, above the pick-your-exam picker. */}
-      <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
+          width, above the pick-your-exam picker. mt-8 breathing room so
+          the Ask bar and the card don't read as one squeezed unit. */}
+      <div className="mt-8">
+        <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
+      </div>
       <div className="mt-6">
         {/* Personal Coach entry — two voices every aspirant recognizes
             (the lost newcomer, the missed-days aspirant), one answer.
