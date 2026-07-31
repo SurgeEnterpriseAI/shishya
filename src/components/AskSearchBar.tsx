@@ -9,14 +9,42 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+// The placeholder IS the tutorial — one real aspirant question after
+// another, covering the whole psychological range people actually ask
+// from (drawn from our tutor logs and search queries): discovery,
+// eligibility doubt, age anxiety, salary curiosity, comparisons,
+// dates, results, and the emotional ones. A few in Hindi/Marathi/
+// Telugu so vernacular aspirants instantly know they can ask in their
+// own language.
 const SAMPLES = [
   "I want a government job in Bihar — what can I apply for?",
-  "What is the salary in SSC CGL posts?",
   "Which exams can a 12th-pass student write?",
+  "What is the salary in SSC CGL posts?",
+  "I am 29 years old — which government exams am I still eligible for?",
   "How many railway job vacancies are open right now?",
   "मुझे यूपी में सरकारी नौकरी चाहिए — कौन सी परीक्षा दूं?",
   "Bank jobs for a B.Com graduate — where do I start?",
   "When is the next SSC CGL exam and am I eligible?",
+  "Government jobs for women with 10th pass?",
+  "SSC or Banking — which is easier to crack for a beginner?",
+  "What is the age relaxation for OBC in government exams?",
+  "Can I prepare for a government job without coaching?",
+  "Police constable salary and physical test requirements?",
+  "Which government exams have no interview stage?",
+  "मैं दो बार फेल हो गया — क्या मुझे फिर से कोशिश करनी चाहिए?",
+  "Teacher jobs in my state — what is the eligibility?",
+  "Highest paying government job apart from UPSC?",
+  "How many bank clerk vacancies this year?",
+  "Can a final-year student apply for SSC CGL?",
+  "सरकारी नोकरीसाठी कोणती परीक्षा सोपी आहे?",
+  "Government jobs I can prepare for while working full-time?",
+  "What is the expected cutoff for SSC GD this year?",
+  "Which state police exams are open right now?",
+  "డిగ్రీ పూర్తయింది — ఏ ప్రభుత్వ ఉద్యోగాలకు అప్లై చేయగలను?",
+  "Railway ALP vs Group D — what is the difference?",
+  "Am I too old for a government job at 32?",
+  "Which exams can an engineering graduate write besides GATE?",
+  "What documents are needed after clearing a government exam?",
 ];
 
 export function AskSearchBar({
