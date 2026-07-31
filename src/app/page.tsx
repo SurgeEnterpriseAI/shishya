@@ -473,14 +473,27 @@ export default async function ExamsPage({
     <main className="min-h-screen bg-saffron-50/30">
       <Header />
 
-      <LiveCountersStrip
-        labels={{
-          preparingNow:      t("live.preparingNow"),
-          inMockNow:         t("live.inMockNow"),
-          activeDiscussions: t("disc.title"),
-          totalEver:         t("live.totalEver"),
-        }}
-      />
+      {/* One sticky unit: live numbers + Ask bar pin together, so the
+          bar can never slide under the strip regardless of how many
+          lines the strip wraps to (the fixed-offset approach broke
+          exactly that way). Bar is desktop-only here; mobile gets the
+          full in-flow bar below instead of losing viewport to a pin. */}
+      <div className="sticky top-0 z-40">
+        <LiveCountersStrip
+          sticky={false}
+          labels={{
+            preparingNow:      t("live.preparingNow"),
+            inMockNow:         t("live.inMockNow"),
+            activeDiscussions: t("disc.title"),
+            totalEver:         t("live.totalEver"),
+          }}
+        />
+        <div className="hidden border-b border-ink-200 bg-paper-50/95 backdrop-blur-sm lg:mx-80 lg:block">
+          <div className="container-prose py-2">
+            <AskSearchBar compact />
+          </div>
+        </div>
+      </div>
 
       {examDatesJsonLd && (
         <script
@@ -788,11 +801,12 @@ function StepGoals({
 
   return (
     <div>
-      {/* Ask Shishya hero bar — the very first interactive thing on the
-          page (founder call, 31 Jul): a big question box whose rotating
-          placeholders teach usage by example. Everything below shifts
-          down one row. */}
-      <AskSearchBar />
+      {/* Ask Shishya bar, mobile only — desktop has it pinned in the
+          sticky band with the live numbers; on mobile it lives in flow
+          here (a pinned bar would eat the small viewport). */}
+      <div className="lg:hidden">
+        <AskSearchBar />
+      </div>
 
       {/* Row 1 — finder card (the "I want a govt job but which one?"
           entry). Row 2 — "at a glance" content-depth numbers. Both full

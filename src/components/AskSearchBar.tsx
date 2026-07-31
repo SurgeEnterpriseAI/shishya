@@ -19,7 +19,14 @@ const SAMPLES = [
   "When is the next SSC CGL exam and am I eligible?",
 ];
 
-export function AskSearchBar() {
+export function AskSearchBar({
+  compact = false,
+}: {
+  /** compact: the pinned-band variant — no top margin, no helper line
+   *  (the rotating placeholder does the teaching), so the sticky unit
+   *  stays slim. */
+  compact?: boolean;
+} = {}) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [i, setI] = useState(0);
@@ -49,14 +56,7 @@ export function AskSearchBar() {
   }
 
   return (
-    // Sticky under the live-counters strip (top-0, ~42px tall) on lg+
-    // so the question box follows the visitor down the page — like the
-    // numbers do. Static on mobile: the strip wraps to variable height
-    // there and a pinned bar would eat the small viewport.
-    <form
-      onSubmit={submit}
-      className="mt-4 lg:sticky lg:top-[42px] lg:z-30 lg:-mx-2 lg:rounded-2xl lg:bg-paper-50/95 lg:px-2 lg:py-2 lg:backdrop-blur-sm"
-    >
+    <form onSubmit={submit} className={compact ? "" : "mt-4"}>
       <div className="flex items-center gap-2 rounded-2xl border-2 border-saffron-400 bg-white p-2 shadow-sm transition-shadow focus-within:shadow-md">
         <span className="pl-2 text-xl" aria-hidden>
           ✨
@@ -79,10 +79,12 @@ export function AskSearchBar() {
           Ask →
         </button>
       </div>
-      <p className="mt-1.5 px-2 text-xs text-ink-500">
-        Ask in any language — jobs for your state, salary, eligibility, vacancies, dates.
-        Answered from Shishya&apos;s data for 177 exams. Free, no login.
-      </p>
+      {!compact && (
+        <p className="mt-1.5 px-2 text-xs text-ink-500">
+          Ask in any language — jobs for your state, salary, eligibility, vacancies, dates.
+          Answered from Shishya&apos;s data for 177 exams. Free, no login.
+        </p>
+      )}
     </form>
   );
 }

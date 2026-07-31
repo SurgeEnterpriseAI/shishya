@@ -99,7 +99,16 @@ function useLiveCounts(): LiveCounts {
  *
  * Strip is sticky so the social proof persists as the visitor scrolls.
  */
-export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
+export function LiveCountersStrip({
+  labels,
+  sticky = true,
+}: {
+  labels: StripLabels;
+  /** Homepage passes false and provides its own sticky wrapper so the
+   *  strip + Ask bar pin together as one unit (a fixed offset can't
+   *  track the strip's variable wrapped height). */
+  sticky?: boolean;
+}) {
   const {
     uniqueVisitors,
     totalPageViews,
@@ -142,7 +151,9 @@ export function LiveCountersStrip({ labels }: { labels: StripLabels }) {
   ];
 
   return (
-    <div className="sticky top-0 z-40 border-b border-emerald-200 bg-emerald-50/95 backdrop-blur-sm supports-[backdrop-filter]:bg-emerald-50/80 lg:mx-80">
+    <div
+      className={`${sticky ? "sticky top-0 z-40 " : ""}border-b border-emerald-200 bg-emerald-50/95 backdrop-blur-sm supports-[backdrop-filter]:bg-emerald-50/80 lg:mx-80`}
+    >
       <div className="container-prose flex flex-wrap items-center justify-center gap-x-3 gap-y-1 py-1.5 text-[11px] text-emerald-900 sm:gap-x-5 sm:py-2 sm:text-sm">
         {/* Lead with a live pulse so the strip reads as "real-time". */}
         <span className="inline-flex items-center gap-1.5 font-medium">
