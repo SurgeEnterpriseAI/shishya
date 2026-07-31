@@ -77,6 +77,7 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     activeNowRows,
     mocksToday,
     walkInsRows,
+    overlapRows,
   ] = await Promise.all([
     // Distinct HUMAN visitors all-time — crawler/human separation
     // (31 Jul 2026, founder call after July's phantom-visitor audit).
@@ -144,10 +145,33 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
       WHERE kind = 'PAGE_VIEW' AND "client" = 'browser'
         AND "userId" IS NULL AND "anonId" IS NULL
     `,
+    // Overlap correction for the combined "aspirants" number: an
+    // identity first seen AFTER the classification cutover already left
+    // exactly one identity-less landing event (their first page) in the
+    // walk-ins count before their cookie kicked in. Subtracting these
+    // keeps engaged + landings an honest people-count, not a sum that
+    // double-counts every new engaged visitor.
+    prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*)::bigint AS count FROM (
+        SELECT COALESCE("userId", "anonId") AS k
+        FROM "AnalyticsEvent"
+        WHERE kind = 'PAGE_VIEW' AND COALESCE("userId", "anonId") IS NOT NULL
+        GROUP BY 1
+        HAVING COUNT(*) >= 2 AND MIN("createdAt") >= '2026-07-30T20:00:00Z'
+      ) post_cutover_engaged
+    `,
   ]);
 
+  // Combined "aspirants" (founder call, 31 Jul): engaged visitors PLUS
+  // verified-browser single-page landers — they reached Shishya via a
+  // govt-job search, so they're aspirants too, seriousness unknown yet.
+  // Overlap-corrected so a lander who later engages counts once.
+  const engaged = Number(uniqueVisitorsRows[0]?.count ?? 0);
+  const landers = Number(walkInsRows[0]?.count ?? 0);
+  const overlap = Number(overlapRows[0]?.count ?? 0);
+
   return {
-    uniqueVisitors: Number(uniqueVisitorsRows[0]?.count ?? 0),
+    uniqueVisitors: engaged + Math.max(0, landers - overlap),
     totalPageViews: Number(totalPageViewsRows[0]?.count ?? 0),
     pageViewsToday: Number(pageViewsTodayRows[0]?.count ?? 0),
     mocksAttempted,

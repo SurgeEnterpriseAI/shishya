@@ -129,19 +129,12 @@ export function LiveCountersStrip({
     ...(activeNow > 0 ? [{ icon: "⚡", value: activeNow, label: "active now" }] : []),
     { icon: "👁️", value: totalPageViews, label: "page views" },
     { icon: "📈", value: pageViewsToday, label: "views today" },
-    // "aspirants", not "unique visitors" (31 Jul founder call): the
-    // count deliberately includes only people seen engaging across 2+
-    // pages — it undercounts one-page readers and can't be inflated by
-    // crawlers. "Aspirants" says exactly that: provably real people,
-    // not a claim about total footfall.
+    // "aspirants" (founder calls, 31 Jul): ONE combined human number —
+    // engaged visitors (2+ pages) PLUS verified-browser single-page
+    // landers, overlap-corrected server-side. Everyone in it reached
+    // Shishya through govt-job intent and is provably not a crawler;
+    // the split lives in the API (walkIns) for internal analysis.
     { icon: "🧑", value: uniqueVisitors, label: "aspirants" },
-    // "Job seekers" (renamed from walk-ins, founder call): verified-
-    // browser single-page landers. They reached Shishya via a govt-job
-    // search — that's intent, not accident — we just don't know their
-    // seriousness yet. The strip reads as a ladder: job seekers landed →
-    // aspirants engaged → signed up. Counted since the 31 Jul
-    // classification cutover; hidden until meaningful.
-    ...(walkIns >= 25 ? [{ icon: "🚶", value: walkIns, label: "job seekers" }] : []),
     { icon: "📝", value: mocksAttempted, label: labels.inMockNow },
     { icon: "✅", value: mocksToday, label: "mocks today" },
     {
