@@ -14,10 +14,12 @@
 //   - or * bulleted lists
 //   1. 2. numbered lists
 //   **bold**  *italic*  `inline code`
-//   [link text](https://...)
+//   [link text](https://...)  — including nested **[bold links](url)**
+//   | GFM | tables |  (Ask Shishya & tutor answers compare exams in tables)
+//   --- horizontal rules
 //   blank-line-separated paragraphs
 //
-// Anything else (e.g. tables, images, html) is rendered as plain text.
+// Anything else (images, html) is rendered as plain text.
 
 import React from "react";
 
@@ -40,6 +42,8 @@ type Block =
   | { kind: "heading"; level: 1 | 2 | 3; text: string }
   | { kind: "ul"; items: string[] }
   | { kind: "ol"; items: string[] }
+  | { kind: "table"; header: string[]; rows: string[][] }
+  | { kind: "hr" }
   | { kind: "p"; text: string };
 
 function parseBlocks(src: string): Block[] {
@@ -48,6 +52,7 @@ function parseBlocks(src: string): Block[] {
   let paraBuf: string[] = [];
   let ulBuf: string[] = [];
   let olBuf: string[] = [];
+  let tableBuf: string[][] = [];
 
   const flushPara = () => {
     if (paraBuf.length === 0) return;
@@ -64,27 +69,53 @@ function parseBlocks(src: string): Block[] {
     out.push({ kind: "ol", items: olBuf });
     olBuf = [];
   };
+  const flushTable = () => {
+    if (tableBuf.length === 0) return;
+    out.push({ kind: "table", header: tableBuf[0], rows: tableBuf.slice(1) });
+    tableBuf = [];
+  };
+  const flushAll = () => {
+    flushPara(); flushUl(); flushOl(); flushTable();
+  };
 
   for (const raw of lines) {
     const line = raw.trim();
     if (!line) {
-      flushPara();
-      flushUl();
-      flushOl();
+      flushAll();
+      continue;
+    }
+    // | GFM table row | (trailing pipe optional — models drop it).
+    if (line.startsWith("|")) {
+      const cells = line
+        .replace(/^\|/, "")
+        .replace(/\|$/, "")
+        .split("|")
+        .map((c) => c.trim());
+      // Header separator row (|---|:--:|) — swallow it.
+      if (cells.every((c) => /^:?-+:?$/.test(c) && c.length >= 2)) continue;
+      flushPara(); flushUl(); flushOl();
+      tableBuf.push(cells);
+      continue;
+    }
+    flushTable();
+    // --- horizontal rule (the AI uses these as section dividers).
+    if (/^(-{3,}|_{3,}|\*{3,})$/.test(line)) {
+      flushAll();
+      out.push({ kind: "hr" });
       continue;
     }
     if (/^###\s+/.test(line)) {
-      flushPara(); flushUl(); flushOl();
+      flushAll();
       out.push({ kind: "heading", level: 3, text: line.replace(/^###\s+/, "") });
       continue;
     }
     if (/^##\s+/.test(line)) {
-      flushPara(); flushUl(); flushOl();
+      flushAll();
       out.push({ kind: "heading", level: 2, text: line.replace(/^##\s+/, "") });
       continue;
     }
     if (/^#\s+/.test(line)) {
-      flushPara(); flushUl(); flushOl();
+      flushAll();
       out.push({ kind: "heading", level: 1, text: line.replace(/^#\s+/, "") });
       continue;
     }
@@ -103,7 +134,7 @@ function parseBlocks(src: string): Block[] {
     flushUl(); flushOl();
     paraBuf.push(line);
   }
-  flushPara(); flushUl(); flushOl();
+  flushAll();
   return out;
 }
 
@@ -134,6 +165,38 @@ function renderBlock(b: Block, key: number): React.ReactNode {
           ))}
         </ol>
       );
+    case "table":
+      return (
+        <div key={key} className="overflow-x-auto">
+          <table className="min-w-full border-collapse text-left text-sm">
+            <thead>
+              <tr>
+                {b.header.map((h, i) => (
+                  <th
+                    key={i}
+                    className="border-b border-ink-300 bg-ink-100/60 px-2 py-1 font-semibold text-ink-900"
+                  >
+                    {renderInline(h)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {b.rows.map((r, i) => (
+                <tr key={i}>
+                  {r.map((c, j) => (
+                    <td key={j} className="border-b border-ink-200 px-2 py-1 align-top">
+                      {renderInline(c)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    case "hr":
+      return <hr key={key} className="border-ink-200" />;
     case "p":
       return <p key={key}>{renderInline(b.text)}</p>;
   }
@@ -233,14 +296,18 @@ function tokeniseInline(src: string): InlineToken[] {
   return tokens;
 }
 
-function renderInline(src: string): React.ReactNode {
+function renderInline(src: string, depth = 0): React.ReactNode {
   const tokens = tokeniseInline(src);
+  // One level of nesting is enough for real AI output (**[link](/url)**,
+  // [**bold link text**](/url), **`code`**). The depth cap makes the
+  // recursion provably finite even on pathological input.
+  const inner = (text: string) => (depth < 2 ? renderInline(text, depth + 1) : text);
   return tokens.map((t, i) => {
     switch (t.type) {
       case "bold":
-        return <strong key={i}>{t.text}</strong>;
+        return <strong key={i}>{inner(t.text)}</strong>;
       case "italic":
-        return <em key={i}>{t.text}</em>;
+        return <em key={i}>{inner(t.text)}</em>;
       case "code":
         return (
           <code key={i} className="rounded bg-ink-200/70 px-1 py-px font-mono text-[0.85em]">
@@ -258,7 +325,7 @@ function renderInline(src: string): React.ReactNode {
             {...(isInternal ? {} : { target: "_blank", rel: "noopener noreferrer" })}
             className="text-saffron-700 underline hover:text-saffron-800"
           >
-            {t.text}
+            {inner(t.text)}
           </a>
         );
       }
