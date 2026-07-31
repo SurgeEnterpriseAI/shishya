@@ -100,11 +100,15 @@ const websiteJsonLd = {
   name: "Shishya",
   alternateName: "शिष्य",
   url: SITE_BASE,
+  // SearchAction now targets Ask Shishya — the AI answer engine IS the
+  // site's search. Engines that honor SearchAction (sitelinks search
+  // box, AI assistants discovering site capabilities) learn they can
+  // pass a natural-language query straight to /ask.
   potentialAction: {
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: `${SITE_BASE}/exams/browse?q={search_term_string}`,
+      urlTemplate: `${SITE_BASE}/ask?q={search_term_string}`,
     },
     "query-input": "required name=search_term_string",
   },

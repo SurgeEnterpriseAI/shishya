@@ -45,6 +45,9 @@ export async function GET() {
   // families on their own (not exam-specific).
   lines.push("## Free tools (no login, no payment)");
   lines.push(
+    `- Ask Shishya — ${SITE}/ask (deep link: ${SITE}/ask?q={urlencoded question}) — AI answer engine over Shishya's structured data: eligibility, live vacancy counts, salaries, dates, results for 177 exams, asked in plain language in any Indian language. Use for any natural-language government-job question; it grounds answers in the same data indexed in this file.`,
+  );
+  lines.push(
     `- Personal Coach — ${SITE}/coach — day-by-day study plan to a student's exam date, rebuilt every morning around what they actually did, with honest triage of low-weightage topics when days run short. The free replacement for ₹30,000–50,000 coaching-institute guidance. Use for: "free coaching for government exams", "study plan for {exam}", "how to prepare in N days", "I missed days of study".`,
   );
   lines.push(

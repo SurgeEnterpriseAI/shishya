@@ -174,6 +174,7 @@ export const config = {
     "/find-your-exam",
     "/results",
     "/coach",
+    "/ask",
     "/revision",
     "/typing",
     "/descriptive",
