@@ -23,6 +23,7 @@ const limits = {
   verify:  { limit: 50, windowSec: 86_400 },     // 50 verifications per day per user (spec)
   flag:    { limit: 10, windowSec: 86_400 },     // 10 flags per day per user (spec)
   aptitude:{ limit: 200, windowSec: 86_400 },    // aptitude start/submit per IP per day (batch-friendly)
+  ask:     { limit: 15, windowSec: 3_600 },      // AI answer-engine searches per hour (tool loop + optional web search per call)
 } as const;
 
 export type LimitName = keyof typeof limits;

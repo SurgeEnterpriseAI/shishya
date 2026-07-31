@@ -300,6 +300,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/live-test",
     "/results",
     "/coach",
+    "/ask",
     "/revision",
     "/post-graduation",
     "/jobs",

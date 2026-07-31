@@ -48,6 +48,7 @@ import { UpcomingExamsSidebar, type UpcomingEvent, type CalendarBucket } from "@
 import { VacancyFinderCard } from "@/components/VacancyFinderCard";
 import { PortalStatsBand } from "@/components/PortalStatsBand";
 import { WallOfGrinders } from "@/components/WallOfGrinders";
+import { AskSearchBar } from "@/components/AskSearchBar";
 import { loadWallOfGrinders, type GrinderEntry } from "@/lib/wall-of-grinders";
 import { InspirationCarousel, type InspoVideo } from "@/components/InspirationCarousel";
 import { VacancyExplorerSidebar, VacancyExplorerPanel } from "@/components/VacancyExplorer";
@@ -787,6 +788,12 @@ function StepGoals({
 
   return (
     <div>
+      {/* Ask Shishya hero bar — the very first interactive thing on the
+          page (founder call, 31 Jul): a big question box whose rotating
+          placeholders teach usage by example. Everything below shifts
+          down one row. */}
+      <AskSearchBar />
+
       {/* Row 1 — finder card (the "I want a govt job but which one?"
           entry). Row 2 — "at a glance" content-depth numbers. Both full
           width, above the pick-your-exam picker. */}
