@@ -810,9 +810,10 @@ function StepGoals({
 
       {/* Row 1 — finder card (the "I want a govt job but which one?"
           entry). Row 2 — "at a glance" content-depth numbers. Both full
-          width, above the pick-your-exam picker. mt-8 breathing room so
-          the Ask bar and the card don't read as one squeezed unit. */}
-      <div className="mt-8">
+          width, above the pick-your-exam picker. mt-8 only on mobile,
+          where the in-flow Ask bar sits directly above; on desktop the
+          bar lives in the pinned band, so no extra gap is needed. */}
+      <div className="mt-8 lg:mt-0">
         <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
       </div>
       <div className="mt-6">
