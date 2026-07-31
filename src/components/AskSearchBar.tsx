@@ -49,7 +49,14 @@ export function AskSearchBar() {
   }
 
   return (
-    <form onSubmit={submit} className="mt-4">
+    // Sticky under the live-counters strip (top-0, ~42px tall) on lg+
+    // so the question box follows the visitor down the page — like the
+    // numbers do. Static on mobile: the strip wraps to variable height
+    // there and a pinned bar would eat the small viewport.
+    <form
+      onSubmit={submit}
+      className="mt-4 lg:sticky lg:top-[42px] lg:z-30 lg:-mx-2 lg:rounded-2xl lg:bg-paper-50/95 lg:px-2 lg:py-2 lg:backdrop-blur-sm"
+    >
       <div className="flex items-center gap-2 rounded-2xl border-2 border-saffron-400 bg-white p-2 shadow-sm transition-shadow focus-within:shadow-md">
         <span className="pl-2 text-xl" aria-hidden>
           ✨
