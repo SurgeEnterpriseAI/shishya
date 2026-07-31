@@ -79,12 +79,16 @@ export function AskSearchBar({
           Ask →
         </button>
       </div>
-      {!compact && (
-        <p className="mt-1.5 px-2 text-xs text-ink-500">
-          Ask in any language — jobs for your state, salary, eligibility, vacancies, dates.
-          Answered from Shishya&apos;s data for 177 exams. Free, no login.
-        </p>
-      )}
+      <p
+        className={
+          compact
+            ? "mt-1 truncate px-2 text-center text-[11px] text-ink-500"
+            : "mt-1.5 px-2 text-xs text-ink-500"
+        }
+      >
+        Ask in any language — jobs for your state, salary, eligibility, vacancies, dates.
+        Answered from Shishya&apos;s data for 177 exams. Free, no login.
+      </p>
     </form>
   );
 }
