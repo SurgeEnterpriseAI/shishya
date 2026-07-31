@@ -135,11 +135,13 @@ export function LiveCountersStrip({
     // crawlers. "Aspirants" says exactly that: provably real people,
     // not a claim about total footfall.
     { icon: "🧑", value: uniqueVisitors, label: "aspirants" },
-    // Walk-ins: verified-browser single-page landers — humans too, they
-    // reached us somehow; seriousness unknown yet. Counted since the
-    // 31 Jul classification cutover, so it grows from zero honestly.
-    // Hidden until it's a meaningful number.
-    ...(walkIns >= 25 ? [{ icon: "🚶", value: walkIns, label: "walk-ins" }] : []),
+    // "Job seekers" (renamed from walk-ins, founder call): verified-
+    // browser single-page landers. They reached Shishya via a govt-job
+    // search — that's intent, not accident — we just don't know their
+    // seriousness yet. The strip reads as a ladder: job seekers landed →
+    // aspirants engaged → signed up. Counted since the 31 Jul
+    // classification cutover; hidden until meaningful.
+    ...(walkIns >= 25 ? [{ icon: "🚶", value: walkIns, label: "job seekers" }] : []),
     { icon: "📝", value: mocksAttempted, label: labels.inMockNow },
     { icon: "✅", value: mocksToday, label: "mocks today" },
     {
