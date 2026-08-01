@@ -53,6 +53,8 @@ import { loadWallOfGrinders, type GrinderEntry } from "@/lib/wall-of-grinders";
 import { InspirationCarousel, type InspoVideo } from "@/components/InspirationCarousel";
 import { VacancyExplorerSidebar, VacancyExplorerPanel } from "@/components/VacancyExplorer";
 import { loadVacancyExplorer, type VacancyExplorer } from "@/lib/vacancy-explorer";
+import { loadTodaysLiveTests } from "@/lib/live-test-today";
+import { LiveTestTodayBanner } from "@/components/LiveTestTodayBanner";
 import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
 import { resolvePhase, istDayNumber } from "@/lib/exam-phase";
 import { EXAM_GOALS, findGoal, matchesGoal, type ExamGoal } from "@/data/exam-goals";
@@ -389,7 +391,7 @@ export default async function ExamsPage({
   const sp = await searchParams;
   const { t } = await getT();
 
-  const [signedIn, exams, calendar, vacancy, portalStats, inspirationVideos, grinders] =
+  const [signedIn, exams, calendar, vacancy, portalStats, inspirationVideos, grinders, liveToday] =
     await Promise.all([
       auth().then((s) => Boolean(s?.user)).catch(() => false),
       loadExams(),
@@ -398,6 +400,7 @@ export default async function ExamsPage({
       loadPortalStats(),
       loadInspirationVideos(),
       loadGrindersCached(),
+      loadTodaysLiveTests(),
     ]);
   const upcomingEvents = calendar.events;
   const vacancyStats = { totalLakh: vacancy.totalLakh, examCount: vacancy.examCount };
@@ -581,6 +584,10 @@ export default async function ExamsPage({
       <div className="lg:pl-80 lg:pr-80">
         <section className="container-prose pt-10 pb-20 sm:pt-14">
           <Breadcrumbs goal={goal} scope={effectiveScope} stateCode={stateCode} />
+
+          {/* Live-test awareness — renders only when tests are open/opening
+              today; visible on every step so no visitor misses test day. */}
+          <LiveTestTodayBanner data={liveToday} />
 
           {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} inspirationVideos={inspirationVideos} grinders={grinders} />}
           {step === "scope" && goal && (

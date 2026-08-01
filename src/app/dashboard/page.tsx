@@ -27,6 +27,8 @@ import { examPeerProof } from "@/lib/peer-proof";
 import { CoachPlanView } from "@/app/coach/CoachPlanView";
 import { InviteFriendsCard } from "./InviteFriendsCard";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
+import { loadTodaysLiveTests } from "@/lib/live-test-today";
+import { LiveTestTodayBanner } from "@/components/LiveTestTodayBanner";
 
 export default async function DashboardPage() {
   try {
@@ -487,6 +489,11 @@ async function renderDashboard() {
               {t("nav.tutor")}
             </Link>
           )}
+        </div>
+
+        {/* Live-test day banner — the Sunday ritual's front door. */}
+        <div className="mt-5">
+          <LiveTestTodayBanner data={await loadTodaysLiveTests()} />
         </div>
 
         {/* Two-paths explainer. Shown after the welcome heading until
