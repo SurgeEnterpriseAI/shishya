@@ -26,7 +26,7 @@ export interface CurrentAffairItem {
 }
 
 const CATEGORIES =
-  "National, International, Economy, Sci-Tech, Environment, Sports, Awards, Appointments, Schemes, Defence";
+  "National, International, Economy, Sci-Tech, Environment, Sports, Awards, Appointments, Schemes, Defence, Pay & Jobs";
 
 const SYSTEM = `You are the current-affairs editor for Shishya, a free Indian government-exam prep platform. You produce a daily digest of the most exam-relevant current affairs for aspirants (UPSC, SSC, banking, railways, state PSCs, defence).
 
@@ -46,7 +46,9 @@ Return STRICT JSON — no fences, no preamble:
   ]
 }
 
-RULES: 8-12 items. Be factual and verifiable — every item must come from a real search result; never invent a story. Keep summaries neutral and exam-useful (names, dates, numbers, places). examTags from: UPSC, SSC, Banking, Railways, State PSC, Defence, Teaching, General.`;
+RULES: 8-12 items. Be factual and verifiable — every item must come from a real search result; never invent a story. Keep summaries neutral and exam-useful (names, dates, numbers, places). examTags from: UPSC, SSC, Banking, Railways, State PSC, Defence, Teaching, General.
+
+PAY & JOBS (mandatory lens): every day include 1-3 items with category exactly "Pay & Jobs" — the news that motivates aspirants about the government career itself: pay-commission developments (8th CPC), DA/DR announcements, salary/allowance revisions for govt posts, and MAJOR new recruitment notifications with their vacancy counts and pay scales. Always state the concrete numbers (₹, %, vacancy counts). If a day genuinely has no fresh pay/jobs news, one item may recap the most recent still-current development (e.g. the latest DA rate) — factual, sourced, never invented.`;
 
 /**
  * Generate the current-affairs digest for "now" (IST) and upsert each

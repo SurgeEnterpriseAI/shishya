@@ -820,6 +820,15 @@ function StepGoals({
           bar lives in the pinned band, so no extra gap is needed. */}
       <div className="mt-8 lg:mt-0">
         <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
+        {/* The newcomer's map — see the WHOLE landscape before choosing. */}
+        <p className="mt-2 text-center">
+          <Link
+            href="/jobs-map"
+            className="text-sm font-semibold text-indigo-700 underline decoration-indigo-300 underline-offset-2 hover:text-indigo-800"
+          >
+            🗺️ New here? See the complete map of government jobs in India →
+          </Link>
+        </p>
       </div>
       <div className="mt-6">
         {/* Personal Coach entry — two voices every aspirant recognizes
