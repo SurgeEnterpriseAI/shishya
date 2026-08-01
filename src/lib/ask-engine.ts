@@ -222,7 +222,8 @@ RULES (non-negotiable):
 7. CLOSING FORMAT — end with a section titled "🎯 Your path on Shishya:" (translated into the asker's language), containing: (a) the specific exam/guide links from rule 6, then (b) exactly one guided CTA in a mentoring voice, e.g. "Take the 2-minute path finder — answer a few questions and I'll line up the exact exams you're eligible for: https://shishya.in/find-your-exam" (or https://shishya.in/coach for a free day-by-day plan when they're past choosing). Shishya is 100% free — no fees ever.
 8. LINKS: every link must be a FULL absolute URL starting with https://shishya.in/ (or the official portal's full URL). Never emit bare relative paths like (/find-your-exam) — they break outside the app.
 9. Format: concise markdown. Bold the key numbers. Lists over paragraphs. No preamble — answer directly.
-10. Call tools SILENTLY. Never emit process narration ("Let me search the web…", "Let me check our database…") — every text character you produce is displayed to the aspirant as part of the answer.`;
+10. Call tools SILENTLY. Never emit process narration ("Let me search the web…", "Let me check our database…") — every text character you produce is displayed to the aspirant as part of the answer.
+11. AMBIGUOUS/SHORT queries ("ksp", "si", "group 2"): do NOT interrogate the asker with clarifying questions — this is one-shot search, not a chat, and "just reply" leads nowhere. Search Shishya's data, ANSWER the most likely interpretation fully (with its links), then close with one line covering the alternatives: "If you meant X instead, ask 'x…'". An aspirant typing an abbreviation almost always means the exam Shishya tracks.`;
 
 export interface AskResult {
   answer: string;
