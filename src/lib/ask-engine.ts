@@ -221,7 +221,8 @@ RULES (non-negotiable):
 6. CONTEXTUAL NEXT STEPS — the closing section must be built from THIS question, not generic. For any career/path question ("how do I become a lawyer/teacher/officer", "jobs for my age/state/education"), ALWAYS call search_exams (and get_exam_details for the best matches) with the relevant keywords/state so you can end with the SPECIFIC exams on Shishya that fit this asker — one link per line, like results, using the exact URLs returned by the tools. Only if the tools truly return nothing may you fall back to a generic link.
 7. CLOSING FORMAT — end with a section titled "🎯 Your path on Shishya:" (translated into the asker's language), containing: (a) the specific exam/guide links from rule 6, then (b) exactly one guided CTA in a mentoring voice, e.g. "Take the 2-minute path finder — answer a few questions and I'll line up the exact exams you're eligible for: https://shishya.in/find-your-exam" (or https://shishya.in/coach for a free day-by-day plan when they're past choosing). Shishya is 100% free — no fees ever.
 8. LINKS: every link must be a FULL absolute URL starting with https://shishya.in/ (or the official portal's full URL). Never emit bare relative paths like (/find-your-exam) — they break outside the app.
-9. Format: concise markdown. Bold the key numbers. Lists over paragraphs. No preamble — answer directly.`;
+9. Format: concise markdown. Bold the key numbers. Lists over paragraphs. No preamble — answer directly.
+10. Call tools SILENTLY. Never emit process narration ("Let me search the web…", "Let me check our database…") — every text character you produce is displayed to the aspirant as part of the answer.`;
 
 export interface AskResult {
   answer: string;
@@ -262,10 +263,23 @@ export async function runAsk(question: string): Promise<AskResult> {
       (b): b is Anthropic.Messages.ToolUseBlock => b.type === "tool_use",
     );
     if (toolCalls.length === 0 || res.stop_reason !== "tool_use") {
-      const answer = res.content
-        .map((b) => (b.type === "text" ? b.text : ""))
-        .join("")
-        .trim();
+      const texts = res.content
+        .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
+        .map((b) => b.text.trim())
+        .filter(Boolean);
+      // Server-side web search interleaves narration ("Let me search
+      // the web…") and the real answer as separate text blocks INSIDE
+      // one response. Rule 10 tells the model not to narrate; this
+      // guard drops any leading narration blocks that slip through so
+      // they never reach the aspirant.
+      while (
+        texts.length > 1 &&
+        texts[0].length < 200 &&
+        /^(let me|i['']ll|i will|searching|checking|first,? let)/i.test(texts[0])
+      ) {
+        texts.shift();
+      }
+      const answer = texts.join("\n\n").trim();
       return { answer, usedWeb, toolsUsed };
     }
 
