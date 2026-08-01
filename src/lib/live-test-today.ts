@@ -56,3 +56,59 @@ export async function loadTodaysLiveTests(): Promise<LiveTestToday | null> {
     return null; // per-request degradation only — never cached
   }
 }
+
+// ── Email notice ─────────────────────────────────────────────────────
+// One computation per cron run, embedded in every nudge email that day:
+//   Sunday morning  → "LIVE today: N papers … open till X"
+//   Saturday evening → "Tomorrow is All-India Live Test Sunday …"
+// Saturday caveat: the live-test-create cron runs 21:30 IST, AFTER the
+// 20:30 IST evening nudge — so Saturday's notice is day-of-week based
+// (every Sunday has tests) and uses names only when rows already exist.
+
+export interface LiveTestNotice {
+  when: "today" | "tomorrow";
+  text: string;
+  html: string;
+}
+
+export async function liveTestEmailNotice(now = new Date()): Promise<LiveTestNotice | null> {
+  try {
+    const rows = await prisma.$queryRaw<{ short: string; closesAt: Date }[]>`
+      SELECT e."shortName" AS short, lt."closesAt"
+      FROM "LiveTest" lt JOIN "Exam" e ON e.id = lt."examId"
+      WHERE lt."opensAt" <= NOW() + INTERVAL '2 hours' AND lt."closesAt" > NOW()
+      ORDER BY e."shortName" ASC
+    `;
+    if (rows.length > 0) {
+      const names = rows.slice(0, 4).map((r) => r.short).join(", ") + (rows.length > 4 ? ` +${rows.length - 4} more` : "");
+      const latestClose = rows.reduce((m, r) => (r.closesAt > m ? r.closesAt : m), rows[0].closesAt);
+      const h = new Date(latestClose.getTime() + 5.5 * 3600_000).getUTCHours();
+      const till = h === 0 ? "12 AM" : h < 12 ? `${h} AM` : h === 12 ? "12 PM" : `${h - 12} PM`;
+      return {
+        when: "today",
+        text: `🔴 LIVE today on Shishya: ${rows.length} All-India Live Tests (${names}) — free, with your All-India rank the moment you submit. Open till ${till}: https://shishya.in/live-test`,
+        html: `<div style="border:1px solid #fecdd3;background:#fff1f2;border-radius:10px;padding:12px 14px;margin:16px 0 0;">
+      <p style="font-size:13px;font-weight:700;margin:0 0 4px;color:#0f172a;">🔴 LIVE today: ${rows.length} All-India Live Tests</p>
+      <p style="font-size:12px;line-height:1.55;margin:0 0 8px;color:#334155;">${names} — free, and you see your <strong>All-India rank</strong> the moment you submit. Open till ${till}.</p>
+      <a href="https://shishya.in/live-test" style="font-size:12px;font-weight:600;color:#be123c;text-decoration:none;">Enter the test hall →</a>
+    </div>`,
+      };
+    }
+  } catch {
+    /* fall through to the day-of-week notice */
+  }
+
+  const istDow = new Date(now.getTime() + 5.5 * 3600_000).getUTCDay();
+  if (istDow === 6) {
+    return {
+      when: "tomorrow",
+      text: `🏆 Tomorrow is All-India Live Test Sunday — free papers with your All-India rank the moment you submit, open 6 AM–11 PM: https://shishya.in/live-test`,
+      html: `<div style="border:1px solid #fecdd3;background:#fff1f2;border-radius:10px;padding:12px 14px;margin:16px 0 0;">
+      <p style="font-size:13px;font-weight:700;margin:0 0 4px;color:#0f172a;">🏆 Tomorrow is All-India Live Test Sunday</p>
+      <p style="font-size:12px;line-height:1.55;margin:0 0 8px;color:#334155;">Free papers, and you see your <strong>All-India rank</strong> the moment you submit. Open 6 AM–11 PM — set your alarm.</p>
+      <a href="https://shishya.in/live-test" style="font-size:12px;font-weight:600;color:#be123c;text-decoration:none;">See Sunday's papers →</a>
+    </div>`,
+    };
+  }
+  return null;
+}

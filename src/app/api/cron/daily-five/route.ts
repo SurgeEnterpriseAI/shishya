@@ -18,6 +18,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db/prisma";
 import { sendDailyFiveEmail } from "@/lib/email";
 import { computeStreak, istDay } from "@/lib/db/streak";
+import { liveTestEmailNotice } from "@/lib/live-test-today";
 
 const MAX_SENDS = 200;
 
@@ -137,6 +138,10 @@ export async function GET(req: Request) {
     }
   })();
 
+  // Sunday mornings this says "LIVE today: N All-India tests" (the
+  // 8:30 AM send lands 2.5h after the 6 AM test-hall open).
+  const liveTest = await liveTestEmailNotice().catch(() => null);
+
   let sent = 0, failed = 0;
   for (const u of users) {
     if (!u.email || !u.enrollments[0]) continue;
@@ -148,6 +153,7 @@ export async function GET(req: Request) {
       streakCurrent: streak.current,
       hasCoachPlan: planUserIds.has(u.id),
       peers: yesterdayPeers,
+      liveTest,
     }).catch(() => false);
     if (ok) sent++; else failed++;
   }

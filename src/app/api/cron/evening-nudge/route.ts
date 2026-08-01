@@ -16,6 +16,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db/prisma";
 import { sendEveningRescueEmail } from "@/lib/email";
 import { computeStreak, istDay } from "@/lib/db/streak";
+import { liveTestEmailNotice } from "@/lib/live-test-today";
 
 const MAX_SENDS = 200;
 
@@ -99,6 +100,10 @@ export async function GET(req: Request) {
     ).map((r) => r.userId),
   );
 
+  // Saturday evenings this says "tomorrow is Live Test Sunday" (and on
+  // any day tests are still open, "LIVE today"). One lookup per run.
+  const liveTest = await liveTestEmailNotice().catch(() => null);
+
   let sent = 0, failed = 0;
   for (const u of users) {
     if (!u.email || !u.enrollments[0]) continue;
@@ -108,6 +113,7 @@ export async function GET(req: Request) {
       examShort: u.enrollments[0].exam.shortName,
       streakCurrent: streakById.get(u.id) ?? 2,
       hasCoachPlan: planUserIds.has(u.id),
+      liveTest,
     }).catch(() => false);
     if (ok) sent++; else failed++;
   }

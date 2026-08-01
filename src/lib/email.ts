@@ -435,6 +435,9 @@ export async function sendDailyFiveEmail(p: {
   /** Yesterday's cohort effort — "N aspirants studied yesterday".
    *  Omitted when the cohort was too thin to inspire. */
   peers?: { students: number; sets: number } | null;
+  /** Live-test day/eve notice from liveTestEmailNotice() — rendered as
+   *  a highlighted box (html) + a line before the signature (text). */
+  liveTest?: { text: string; html: string } | null;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const streak = p.streakCurrent ?? 0;
@@ -461,7 +464,7 @@ export async function sendDailyFiveEmail(p: {
   const text = `${first},
 
 Your Daily 5 is ready — 5 quick questions on your weakest ${p.examShort} topic. ${streakLineText}
-${peerText}
+${peerText}${p.liveTest ? `\n${p.liveTest.text}\n` : ""}
 
 Start now: https://shishya.in/dashboard
 
@@ -487,6 +490,7 @@ ${
       Start today's 5 →
     </a>
     ${peerHtml}
+    ${p.liveTest?.html ?? ""}
     <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
       Small daily reps are how toppers are made. — Shishya
     </p>
@@ -518,13 +522,15 @@ export async function sendEveningRescueEmail(p: {
   /** When false, closes with the coach invite — a student fighting to
    *  keep a streak alive is exactly who benefits from a real plan. */
   hasCoachPlan?: boolean;
+  /** Live-test notice (Saturday eve: "tomorrow is Live Test Sunday"). */
+  liveTest?: { text: string; html: string } | null;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const subject = `🔥 ${first}, your ${p.streakCurrent}-day streak ends at midnight`;
   const text = `${first},
 
 Your ${p.streakCurrent}-day streak is still alive — but only until midnight. One Daily 5 (~3 minutes) on your weakest ${p.examShort} topic saves it.
-
+${p.liveTest ? `\n${p.liveTest.text}\n` : ""}
 Save it now: https://shishya.in/dashboard
 
 Miss tonight and it resets to zero. Toppers aren't smarter — they just don't skip.
@@ -548,6 +554,7 @@ ${
        style="display:inline-block;background:#dc2626;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">
       Save my streak →
     </a>
+    ${p.liveTest?.html ?? ""}
     <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
       Toppers aren't smarter — they just don't skip. — Shishya
     </p>
