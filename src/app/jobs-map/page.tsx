@@ -190,12 +190,12 @@ const loadMapData = unstable_cache(loadMapDataRaw, ["jobs-map-v1"], { revalidate
 const fmt = (n: number) => n.toLocaleString("en-IN");
 
 export const metadata: Metadata = {
-  title: "Government Jobs in India — the Complete Map: Group A, B, C, Banking, Police, Teaching | Shishya",
+  title: "India's Government Jobs Map — Group A, B, C, Banking, Police, Teaching | Shishya",
   description:
     "One picture of every government job path in India: UPSC Group A, SSC Group B & C, Railways, Banking, Defence, State PSC Group 1/2/3, Police and Teaching — with indicative salaries and live vacancy counts for every exam. Free.",
   alternates: { canonical: "https://shishya.in/jobs-map" },
   openGraph: {
-    title: "The Complete Map of Government Jobs in India",
+    title: "India's Government Jobs Map",
     description:
       "UPSC → SSC → Railways → Banking → State PSC → Police → Teaching: every path, every pay band, live vacancies. One map.",
     url: "https://shishya.in/jobs-map",
@@ -209,7 +209,7 @@ const JSON_LD = [
   {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: "The Complete Map of Government Jobs in India",
+    name: "India's Government Jobs Map",
     url: "https://shishya.in/jobs-map",
     description:
       "Visual hierarchy of every Indian government job path — Central (Group A, B, C, Banking, Defence) and State (PSC, staff boards, Police, Teaching) — with indicative pay bands and live vacancy counts.",
@@ -221,7 +221,7 @@ const JSON_LD = [
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Shishya", item: "https://shishya.in" },
-      { "@type": "ListItem", position: 2, name: "Government Jobs Map", item: "https://shishya.in/jobs-map" },
+      { "@type": "ListItem", position: 2, name: "India's Government Jobs Map", item: "https://shishya.in/jobs-map" },
     ],
   },
   {
@@ -328,8 +328,11 @@ export default async function JobsMapPage() {
           🗺️ The map · free, updated live
         </p>
         <h1 className="mt-1 text-2xl font-bold leading-tight text-ink-900 sm:text-3xl">
-          Every government job in India — one map.
+          India&apos;s Government Jobs Map
         </h1>
+        <p className="mt-1 text-sm font-medium text-ink-700">
+          Every government job in the country — one picture.
+        </p>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-600">
           Central to state, Group A to Group C — where each path leads, what it pays, and{" "}
           <strong>~{fmt(grandTotal)} live vacancies</strong> across {examCount} exams Shishya tracks.

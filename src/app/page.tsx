@@ -833,7 +833,7 @@ function StepGoals({
             href="/jobs-map"
             className="text-sm font-semibold text-indigo-700 underline decoration-indigo-300 underline-offset-2 hover:text-indigo-800"
           >
-            🗺️ New here? See the complete map of government jobs in India →
+            🗺️ New here? See India&apos;s Government Jobs Map →
           </Link>
         </p>
       </div>

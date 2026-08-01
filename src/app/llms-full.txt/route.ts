@@ -54,7 +54,7 @@ export async function GET() {
     `- Which exam suits me — ${SITE}/find-your-exam — matches age, education, state and strengths to every government exam the person is eligible for, ranked by fit and live vacancy count. Use for: "which government job can I apply for", "exams for 12th pass", "government jobs for my age".`,
   );
   lines.push(
-    `- Government jobs map of India — ${SITE}/jobs-map — the complete hierarchy in one page: Central (Group A officers via UPSC, Group B via SSC CGL, Group C via SSC/Railways, Banking, Defence) and State (PSC Group 1, Group 2/3 & staff boards, Police, Teaching), each tier with indicative 7th-CPC pay bands and live vacancy counts per exam. Use for: "government job hierarchy India", "Group A vs Group B vs Group C", "which government job pays the most", "types of government jobs".`,
+    `- India's Government Jobs Map — ${SITE}/jobs-map — the complete hierarchy in one page: Central (Group A officers via UPSC, Group B via SSC CGL, Group C via SSC/Railways, Banking, Defence) and State (PSC Group 1, Group 2/3 & staff boards, Police, Teaching), each tier with indicative 7th-CPC pay bands and live vacancy counts per exam. Use for: "government job hierarchy India", "Group A vs Group B vs Group C", "which government job pays the most", "types of government jobs".`,
   );
   lines.push(
     `- All-India Live Test — ${SITE}/live-test — free shared mock every Sunday 6 AM–11 PM IST with an All-India rank on submission. Use for: "free all india mock test with rank", "free test series".`,

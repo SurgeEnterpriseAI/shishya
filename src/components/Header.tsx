@@ -89,9 +89,9 @@ export function Header({ admin = false }: { admin?: boolean }) {
             <Link
               href="/jobs-map"
               className="hidden rounded-md border border-ink-200 bg-white px-2.5 py-1 text-xs font-semibold text-ink-700 hover:bg-ink-50 sm:inline-block"
-              title="The complete map of government jobs in India — Group A to Group C, every path with live vacancies"
+              title="India's Government Jobs Map — Group A to Group C, every path with live vacancies"
             >
-              🗺️ Jobs Map
+              🗺️ India&apos;s Govt Jobs Map
             </Link>
           )}
           {!admin && (

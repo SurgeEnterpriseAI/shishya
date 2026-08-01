@@ -88,7 +88,7 @@ export default function JobsLanding() {
               🗺️ Start here
             </p>
             <h2 className="mt-1 text-lg font-semibold text-ink-900">
-              The complete map of government jobs in India
+              India&apos;s Government Jobs Map
             </h2>
             <p className="mt-1 text-sm text-ink-600">
               Group A to Group C, Centre and your state — every path in one picture, with
