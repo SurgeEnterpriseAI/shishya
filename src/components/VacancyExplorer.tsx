@@ -79,6 +79,14 @@ export function VacancyExplorerPanel({ data, signedIn }: { data: VData; signedIn
           {fmt(data.grandTotal)}
           <span className="ml-1 text-xs font-medium text-ink-500">≈ {data.totalLakh} lakh / yr</span>
         </p>
+        {/* The explorer shows the numbers; the map shows the LANDSCAPE.
+            Natural next click for anyone studying this widget. */}
+        <Link
+          href="/jobs-map"
+          className="mt-1 inline-block text-[11px] font-semibold text-indigo-700 underline decoration-indigo-300 underline-offset-2 hover:text-indigo-800"
+        >
+          🗺️ See the full map of govt jobs in India →
+        </Link>
         {data.updatedAt && (
           <p className="mt-0.5 flex items-center gap-1 text-[10px] text-ink-400">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />

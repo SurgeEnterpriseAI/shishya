@@ -77,6 +77,29 @@ export default function JobsLanding() {
           where to find official applications.
         </p>
 
+        {/* The map — the "where do I even aim?" answer, before the
+            section cards. */}
+        <Link
+          href="/jobs-map"
+          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-indigo-300 bg-gradient-to-r from-indigo-50 to-violet-50 p-5 transition-colors hover:border-indigo-400"
+        >
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-indigo-700">
+              🗺️ Start here
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-ink-900">
+              The complete map of government jobs in India
+            </h2>
+            <p className="mt-1 text-sm text-ink-600">
+              Group A to Group C, Centre and your state — every path in one picture, with
+              indicative pay bands and live vacancy counts for every exam.
+            </p>
+          </div>
+          <span className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white">
+            See the map →
+          </span>
+        </Link>
+
         {/* Four primary surfaces */}
         <ul className="mt-8 grid gap-4 sm:grid-cols-2">
           <li>

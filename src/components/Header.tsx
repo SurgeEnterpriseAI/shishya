@@ -87,6 +87,15 @@ export function Header({ admin = false }: { admin?: boolean }) {
         <nav className="ml-auto flex shrink-0 items-center gap-3 text-sm text-ink-700">
           {!admin && (
             <Link
+              href="/jobs-map"
+              className="hidden rounded-md border border-ink-200 bg-white px-2.5 py-1 text-xs font-semibold text-ink-700 hover:bg-ink-50 sm:inline-block"
+              title="The complete map of government jobs in India — Group A to Group C, every path with live vacancies"
+            >
+              🗺️ Jobs Map
+            </Link>
+          )}
+          {!admin && (
+            <Link
               href="/results"
               className="rounded-md bg-emerald-500 px-2.5 py-1 text-xs font-bold text-white hover:bg-emerald-600"
               title="Declared exam results — official links, cutoff reads, next steps"
