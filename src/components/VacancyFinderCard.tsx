@@ -26,9 +26,18 @@ export function VacancyFinderCard({
             🎯 Find your government job
           </p>
           <p className="mt-2 text-lg font-bold leading-snug text-ink-900 sm:text-xl">
-            India, as on today, has{" "}
-            <span className="text-saffron-700">~{totalLakh} lakh government job vacancies</span>{" "}
-            across {examCount}+ exams.
+            {/* examCount 0 = the one-request empty fallback after a DB
+                blip — keep the door open with numberless copy rather
+                than claim "~0.0 lakh vacancies across 0+ exams". */}
+            {examCount > 0 ? (
+              <>
+                India, as on today, has{" "}
+                <span className="text-saffron-700">~{totalLakh} lakh government job vacancies</span>{" "}
+                across {examCount}+ exams.
+              </>
+            ) : (
+              <>India has lakhs of government job vacancies open right now.</>
+            )}
             <br className="hidden sm:block" />{" "}
             Which one best fits <span className="underline decoration-saffron-400 decoration-2 underline-offset-2">your strengths</span>?
           </p>

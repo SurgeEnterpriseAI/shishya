@@ -58,6 +58,10 @@ export function VacancyExplorerPanel({ data, signedIn }: { data: VData; signedIn
   const [tab, setTab] = useState<Tab>("national");
   const [openState, setOpenState] = useState<string | null>(null);
 
+  // A DB blip serves the empty fallback shape for one request — hide
+  // the widget entirely rather than show "0 GOVT EXAMS · 0 vacancies".
+  if (data.examCount === 0) return null;
+
   const TABS: { key: Tab; label: string }[] = [
     { key: "national", label: "National" },
     { key: "state", label: "By state" },
@@ -196,6 +200,9 @@ export function VacancyExplorerPanel({ data, signedIn }: { data: VData; signedIn
 
 /** Desktop fixed left rail. */
 export function VacancyExplorerSidebar({ data, signedIn }: { data: VData; signedIn?: boolean }) {
+  // Same empty-fallback guard as the panel — hide the whole rail
+  // (header included) rather than a "Government vacancies" box of zeros.
+  if (data.examCount === 0) return null;
   return (
     <aside
       className="fixed bottom-0 left-0 top-16 z-20 hidden w-80 flex-col border-r border-ink-200 bg-white shadow-sm lg:flex"

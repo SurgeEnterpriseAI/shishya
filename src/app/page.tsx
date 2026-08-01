@@ -317,20 +317,25 @@ const EMPTY_VACANCY: VacancyExplorer = {
   grandTotal: 0, totalLakh: "0.0", examCount: 0,
   national: { total: 0, exams: [] }, states: [], categories: [], updatedAt: null,
 };
+// The catch must live OUTSIDE unstable_cache: errors are never cached,
+// but a caught-and-returned fallback IS. With the old inside-the-cache
+// catch, one Neon blip during revalidation cached EMPTY_VACANCY for
+// 24h → homepage showed "0 GOVT EXAMS · 0 vacancies" all day (seen
+// live 2 Aug 2026). Now a blip degrades exactly one request and the
+// next request retries the DB.
+const loadVacancyExplorerCached = unstable_cache(
+  loadVacancyExplorer,
+  // v3 — busts the v2 entry poisoned by the fallback-caching bug.
+  ["home-vacancy-explorer-v3"],
+  { revalidate: 86400 },
+);
 async function loadVacancyExplorerSafe(): Promise<VacancyExplorer> {
   try {
-    return await loadVacancyExplorer();
+    return await loadVacancyExplorerCached();
   } catch {
     return EMPTY_VACANCY;
   }
 }
-const loadVacancyExplorerCached = unstable_cache(
-  loadVacancyExplorerSafe,
-  // v2 — busts the v1 cache so the new `updatedAt` freshness stamp
-  // flows through immediately instead of waiting out the 24h window.
-  ["home-vacancy-explorer-v2"],
-  { revalidate: 86400 },
-);
 
 // "Shishya at a glance" content-depth stats for the homepage band —
 // real counts, rounded DOWN to an honest "+" figure. Cached daily.
@@ -389,7 +394,7 @@ export default async function ExamsPage({
       auth().then((s) => Boolean(s?.user)).catch(() => false),
       loadExams(),
       loadUpcomingEvents(),
-      loadVacancyExplorerCached(),
+      loadVacancyExplorerSafe(),
       loadPortalStats(),
       loadInspirationVideos(),
       loadGrindersCached(),
