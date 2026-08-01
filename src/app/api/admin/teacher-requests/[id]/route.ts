@@ -17,7 +17,10 @@ const Body = z.object({
   status: z.enum(["PENDING", "CONTACTED", "RESOLVED", "CLOSED"]).optional(),
   referredTo: z.string().max(300).optional(),
   note: z.string().trim().min(1).max(4000).optional(),
-  noteKind: z.enum(["NOTE", "CALL", "FOLLOW_UP", "REFERRAL"]).default("NOTE"),
+  noteKind: z.enum(["NOTE", "CALL", "FOLLOW_UP", "REFERRAL", "ANSWER"]).default("NOTE"),
+  /** Written answer delivered straight to the student's follow-up card
+   *  (the guaranteed-answer half of the closure loop). */
+  answer: z.string().trim().min(10).max(8000).optional(),
 });
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -49,6 +52,26 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     await prisma.teacherRequestNote.create({
       data: { requestId: id, note: body.note, kind: body.noteKind, byEmail: email ?? null },
     });
+  }
+
+  // Written answer → lands on the student's follow-up card wherever
+  // they next open Shishya. Also logged as an ANSWER note for the
+  // trail, and the request advances to CONTACTED unless told otherwise.
+  if (body.answer) {
+    await prisma.$executeRaw`
+      UPDATE "TeacherRequest"
+      SET "answerText" = ${body.answer},
+          "answeredAt" = NOW(),
+          "answeredBy" = 'team',
+          status = CASE WHEN status = 'PENDING' THEN 'CONTACTED'::"TeacherRequestStatus" ELSE status END,
+          "updatedAt" = NOW()
+      WHERE id = ${id}
+    `;
+    await prisma.teacherRequestNote
+      .create({
+        data: { requestId: id, note: body.answer, kind: "ANSWER", byEmail: email ?? null },
+      })
+      .catch(() => {});
   }
 
   return NextResponse.json({ ok: true });

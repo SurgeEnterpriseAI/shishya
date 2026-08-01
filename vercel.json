@@ -84,6 +84,10 @@
     {
       "path": "/api/cron/coach-day",
       "schedule": "30 22 * * *"
+    },
+    {
+      "path": "/api/cron/teacher-request-sla",
+      "schedule": "40 */2 * * *"
     }
   ]
 }

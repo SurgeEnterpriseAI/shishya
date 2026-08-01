@@ -1753,6 +1753,18 @@ model TeacherRequest {
   referredTo   String? // coaching centre / expert the student was routed to
   status       TeacherRequestStatus @default(PENDING)
   adminNotes   String?              @db.Text
+  // ── Student-side follow-up loop (closure guarantee) ─────────────────
+  // The promise: a student who asked for help can NEVER be left in an
+  // open loop. Either they confirm they were helped, or a written
+  // answer (team, else AI after the 24h SLA) lands on their follow-up
+  // card — and they close it themselves with a one-tap rating.
+  answerText    String?   @db.Text // written answer shown to the student
+  answeredAt    DateTime?
+  answeredBy    String? // 'team' | 'ai'
+  studentRating String? // GOT_HELP | NOT_YET | SOLVED | NEED_MORE_HELP
+  ratedAt       DateTime?
+  escalatedAt   DateTime? // 24h-SLA AI auto-answer fired
+  seenAt        DateTime? // student saw the answer card
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
 

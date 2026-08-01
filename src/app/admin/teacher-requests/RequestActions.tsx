@@ -24,6 +24,7 @@ export function RequestActions({
   const [note, setNote] = useState("");
   const [kind, setKind] = useState<(typeof KINDS)[number]>("CALL");
   const [refTo, setRefTo] = useState(referredTo ?? "");
+  const [answer, setAnswer] = useState("");
   const [err, setErr] = useState<string | null>(null);
 
   async function send(payload: Record<string, unknown>) {
@@ -107,6 +108,26 @@ export function RequestActions({
           className="rounded-md bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
         >
           {busy ? "…" : "Add log"}
+        </button>
+      </div>
+      {/* Written answer — delivered straight to the student's follow-up
+          card (the guaranteed-answer half of the closure loop). Markdown
+          supported; the student rates it Solved / Need more help. */}
+      <div className="mt-2 flex flex-wrap items-start gap-1.5">
+        <textarea
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+          placeholder="✍️ Written answer to the student — appears on their follow-up card in the app (markdown ok)…"
+          rows={2}
+          className="min-w-[260px] flex-1 rounded-md border border-ink-200 px-2 py-1 text-xs focus:border-indigo-400 focus:outline-none"
+        />
+        <button
+          type="button"
+          disabled={busy || answer.trim().length < 10}
+          onClick={() => send({ answer: answer.trim() }).then(() => setAnswer(""))}
+          className="rounded-md bg-saffron-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-saffron-700 disabled:opacity-60"
+        >
+          Send answer →
         </button>
       </div>
       {err && <p className="mt-1 text-[11px] text-rose-700">{err}</p>}

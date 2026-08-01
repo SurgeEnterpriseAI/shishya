@@ -13,6 +13,7 @@
 // answers, follow-ups, and referrals so the loop closes.
 
 import { useEffect, useState } from "react";
+import { TeacherFollowUp } from "@/components/TeacherFollowUp";
 
 // Surge office line for subject-expert calls. Override per environment with
 // NEXT_PUBLIC_EXPERT_PHONE (E.164, e.g. +917624967999).
@@ -180,6 +181,10 @@ export function TalkToTeacher({
 
   return (
     <>
+      {/* Closure-guarantee loop: if this student has an open teacher
+          request, its follow-up card renders right where they'd look
+          for help again. One instance per page (module-level claim). */}
+      <TeacherFollowUp />
       {trigger}
       {open && (
         <div
