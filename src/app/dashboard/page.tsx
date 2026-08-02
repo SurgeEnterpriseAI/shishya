@@ -976,6 +976,26 @@ async function renderDashboard() {
           </section>
         )}
 
+        {/* Mentor-network recruiting — the supply side of the human
+            layer. Every signed-in user knows SOMEONE who cleared. */}
+        <a
+          href="/mentors"
+          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50/60 to-white p-4 transition-colors hover:border-indigo-300"
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-ink-900">
+              🧑‍🏫 Cleared a government exam — or know someone who has?
+            </p>
+            <p className="mt-0.5 text-xs text-ink-600">
+              Shishya&apos;s founding mentor batch is open: guide aspirants of your exam, on your
+              time. Forward this to your senior who made it.
+            </p>
+          </div>
+          <span className="shrink-0 rounded-lg border border-indigo-300 bg-white px-3 py-1.5 text-xs font-bold text-indigo-700">
+            Become a mentor →
+          </span>
+        </a>
+
         {/* Word-of-mouth loop — a gentle invite at the bottom of the
             dashboard. Turns an engaged user into a recruiter; how
             "Shishya = govt exams" spreads through WhatsApp prep groups. */}

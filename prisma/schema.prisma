@@ -2070,6 +2070,29 @@ model TopicNoteTranslation {
 // Follow-up trail on a TeacherRequest — every call, answer, and referral is
 // logged so the enquiry loop CLOSES (enquiry → answer → follow-up →
 // referral/commercial). Worked by the Surge office team.
+// The mentor network: cleared-exam seniors who guide current aspirants.
+// Applications come from /mentors (open to signed-in users AND guests);
+// the founder approves each one manually — trust is the product.
+model MentorApplication {
+  id          String   @id @default(cuid())
+  userId      String? // signed-in applicant, if any
+  name        String
+  phone       String
+  email       String?
+  examCode    String // the exam they cleared / are expert in
+  clearedYear String? // e.g. "2024"
+  credential  String   @db.Text // rank / post / proof they cleared
+  languages   String? // languages they can mentor in
+  city        String?
+  why         String?  @db.Text // motivation, availability
+  status      String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  adminNotes  String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, createdAt])
+}
+
 model TeacherRequestNote {
   id        String   @id @default(cuid())
   requestId String

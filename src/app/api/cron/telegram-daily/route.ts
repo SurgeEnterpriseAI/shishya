@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { sendTelegramMessage, telegramConfigured, tgEscape } from "@/lib/telegram";
+import { liveTestEmailNotice } from "@/lib/live-test-today";
 
 function istDateStr(now = new Date()): string {
   return new Date(now.getTime() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -55,6 +56,16 @@ export async function GET(req: Request) {
   } else {
     lines.push(`Today's digest is being prepared — check ${caUrl}`);
   }
+  // Sunday: lead the digest with the live-test call — the channel's
+  // most forwardable line ("free All-India rank today").
+  const live = await liveTestEmailNotice().catch(() => null);
+  if (live?.when === "today") {
+    lines.push(``);
+    lines.push(`🔴 <b>LIVE today:</b> ${tgEscape(live.text.replace(/^🔴 /, "").replace(/https?:\S+/g, "").trim())}`);
+    lines.push(`Enter the test hall: https://shishya.in/live-test`);
+  }
+  lines.push(``);
+  lines.push(`🗺 <b>New:</b> India's Government Jobs Map — every path from UPSC Group A to state police, with live vacancies: https://shishya.in/jobs-map`);
   lines.push(``);
   lines.push(`🎯 <b>Free on Shishya:</b> mock tests, PYQs, syllabus, tricks & an AI tutor in 22 Indian languages for 177 govt exams — 100% free.`);
   lines.push(`Start: https://shishya.in`);

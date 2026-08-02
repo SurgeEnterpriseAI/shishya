@@ -176,6 +176,7 @@ export const config = {
     "/coach",
     "/ask",
     "/jobs-map",
+    "/mentors",
     "/revision",
     "/typing",
     "/descriptive",
