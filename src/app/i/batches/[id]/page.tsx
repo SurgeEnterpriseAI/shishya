@@ -56,6 +56,37 @@ export default async function BatchManagePage({
 
   const inviteUrl = `https://shishya.in/join/${batch.inviteCode}`;
 
+  // ── Batch progress analytics ──────────────────────────────────────
+  // The educator's "what the big apps never show you" view: per-student
+  // practice volume, average score and last-active, plus the batch's
+  // weakest topics — so the next class targets exactly where the batch
+  // bleeds marks. One aggregate query per concern, only when students
+  // exist. (Batch-wide topic drill-down = phase 2.)
+  const memberIds = batch.enrollments.map((e) => e.user.id);
+  type StuStat = { userId: string; total: bigint; wk: bigint; avgPct: number | null; lastAt: Date | null };
+  const stuStats: StuStat[] = memberIds.length
+    ? await prisma.$queryRaw<StuStat[]>`
+        SELECT "userId",
+               COUNT(*) AS total,
+               COUNT(*) FILTER (WHERE "finishedAt" > NOW() - INTERVAL '7 days') AS wk,
+               AVG("scorePct") AS "avgPct",
+               MAX("finishedAt") AS "lastAt"
+        FROM "Attempt"
+        WHERE "userId" = ANY(${memberIds}) AND status IN ('SUBMITTED', 'AUTO_SUBMITTED')
+        GROUP BY "userId"
+      `.catch(() => [])
+    : [];
+  const statBy = new Map(stuStats.map((s) => [s.userId, s]));
+  const batchMocks = stuStats.reduce((a, s) => a + Number(s.total), 0);
+  const batchMocksWk = stuStats.reduce((a, s) => a + Number(s.wk), 0);
+  const scored = stuStats.filter((s) => s.avgPct != null);
+  const batchAvg = scored.length
+    ? Math.round(scored.reduce((a, s) => a + (s.avgPct ?? 0), 0) / scored.length)
+    : null;
+  const activeWk = stuStats.filter((s) => Number(s.wk) > 0).length;
+  const fmtLast = (d: Date | null) =>
+    d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—";
+
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <Header />
@@ -104,6 +135,23 @@ export default async function BatchManagePage({
             </div>
           </div>
 
+          {/* ── Batch progress summary ─────────────────────── */}
+          {batch.enrollments.length > 0 && (
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                { label: "mocks completed", value: String(batchMocks) },
+                { label: "mocks this week", value: String(batchMocksWk) },
+                { label: "batch avg score", value: batchAvg != null ? `${batchAvg}%` : "—" },
+                { label: "active this week", value: `${activeWk}/${batch.enrollments.length}` },
+              ].map((s) => (
+                <div key={s.label} className="rounded-xl border border-ink-200 bg-white p-3 text-center">
+                  <p className="text-xl font-bold tabular-nums text-ink-900">{s.value}</p>
+                  <p className="mt-0.5 text-[10px] uppercase tracking-wide text-ink-500">{s.label}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* ── Enrolled students ──────────────────────────── */}
           <div className="mt-10">
             <h2 className="text-base font-semibold text-ink-900">
@@ -146,6 +194,20 @@ export default async function BatchManagePage({
                             year: "numeric",
                           })}
                         </p>
+                        {(() => {
+                          const s = statBy.get(en.user.id);
+                          return (
+                            <p className="truncate text-[11px] text-ink-600">
+                              📝 <span className="tabular-nums font-medium">{Number(s?.total ?? 0)}</span> mocks
+                              {" · "}wk <span className="tabular-nums font-medium">{Number(s?.wk ?? 0)}</span>
+                              {" · "}avg{" "}
+                              <span className="tabular-nums font-medium">
+                                {s?.avgPct != null ? `${Math.round(s.avgPct)}%` : "—"}
+                              </span>
+                              {" · "}last {fmtLast(s?.lastAt ?? null)}
+                            </p>
+                          );
+                        })()}
                       </div>
                     </div>
                     <RemoveStudentButton enrollmentId={en.id} />

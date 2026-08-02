@@ -2070,6 +2070,29 @@ model TopicNoteTranslation {
 // Follow-up trail on a TeacherRequest — every call, answer, and referral is
 // logged so the enquiry loop CLOSES (enquiry → answer → follow-up →
 // referral/commercial). Worked by the Surge office team.
+// ── Shishya for Educators (B2B) ─────────────────────────────────────
+// The educator/channel play rides the EXISTING Institution → Course →
+// Batch → BatchEnrollment system (self-serve at /institutions/new,
+// portal at /i/, invite links at /join/<code>). This table is only the
+// sales-pipeline top: inbound interest from the /educators pitch page.
+// Free 3-month pilot → ₹99/student/year. "Your teaching, our engine."
+model EducatorLead {
+  id           String   @id @default(cuid())
+  name         String
+  organisation String? // channel/institute name
+  phone        String
+  email        String?
+  audience     String? // "1.8M YouTube", "40k Telegram"…
+  examFocus    String?
+  message      String?  @db.Text
+  status       String   @default("NEW") // NEW | CONTACTED | PILOT | CONVERTED | CLOSED
+  adminNotes   String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status, createdAt])
+}
+
 // The mentor network: cleared-exam seniors who guide current aspirants.
 // Applications come from /mentors (open to signed-in users AND guests);
 // the founder approves each one manually — trust is the product.
