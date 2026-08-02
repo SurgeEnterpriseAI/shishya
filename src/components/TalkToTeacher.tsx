@@ -31,7 +31,8 @@ interface Props {
     | "exam"
     | "review"
     | "weak-areas"
-    | "dashboard";
+    | "dashboard"
+    | "batch";
   examCode?: string | null;
   topicCode?: string | null;
   attemptId?: string | null;

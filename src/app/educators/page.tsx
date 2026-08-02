@@ -45,9 +45,19 @@ const GETS = [
     body: "Unlimited adaptive mocks + previous-year papers for 177 government exams — SSC, Banking, Railways, every state PSC, Police, TET. Your students practise under your banner; you schedule, they attempt, everyone sees ranks.",
   },
   {
+    icon: "📋",
+    title: "Your instructions, documented & tracked",
+    body: "Set assignments — 'complete 1 full mock by Sunday' — and they appear on every student's dashboard. Shishya tracks who actually did it. Your guidance stays written down, reusable for every future batch: that's how one educator scales.",
+  },
+  {
     icon: "📊",
     title: "See every student's weak areas",
     body: "The dashboard coaching apps don't give you: who's practising, who's slipping, which topics your whole batch is bleeding marks on — so your next class targets exactly that.",
+  },
+  {
+    icon: "🙋",
+    title: "A doubt channel that reaches YOU",
+    body: "Students raise doubts from their dashboard; you see them collected on your batch page. The AI tutor absorbs the routine ones between your classes — you handle the ones that build your reputation.",
   },
   {
     icon: "🤖",
@@ -84,18 +94,40 @@ export default function EducatorsPage() {
           Your teaching. Our engine.
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-600">
-          You&apos;ve built the audience and the teaching. Give your batches the infrastructure the
-          big apps charge lakhs for — mocks, AI tutoring, live tests, student analytics — running
-          under <strong>your</strong> brand, shared with one invite link.
+          Here&apos;s our honest math: platforms like Shishya are only <strong>10–20% of a
+          selection</strong> — the practice, the mocks, the data. The other 80% is what YOU do:
+          handholding, discipline, strategy, belief. Aspirants don&apos;t crack exams alone;
+          educator-led aspirants do. So we built the 20% properly — and we&apos;re handing it to
+          the people who own the 80%.
         </p>
 
-        {/* The offer */}
-        <div className="mt-5 flex flex-wrap items-center gap-3 rounded-xl border-2 border-emerald-300 bg-emerald-50 px-4 py-3">
+        {/* Honest traction */}
+        <p className="mt-3 max-w-2xl text-xs leading-relaxed text-ink-500">
+          One month since launch, fully organic: <strong>2,200+ aspirants</strong>, ~100 arriving
+          daily, <strong>1,400+ mocks completed</strong>, growing ~15% week on week. Real numbers
+          from our public live counters — we don&apos;t inflate.
+        </p>
+
+        {/* The offer — free until THEY call it useful */}
+        <div className="mt-5 rounded-xl border-2 border-emerald-300 bg-emerald-50 px-4 py-3">
           <p className="text-sm font-bold text-emerald-900">
-            Free for your first 3 months — every feature, every student.
+            Free until you yourself say &ldquo;this is useful.&rdquo;
           </p>
-          <p className="text-xs text-emerald-800">
-            Then ₹99 per student per year. No setup fee, no lock-in, leave anytime with your data.
+          <p className="mt-0.5 text-xs leading-relaxed text-emerald-800">
+            No fees, no card, no timer. Run your batches on the full engine; when you openly tell
+            us it&apos;s working for your students, we sit down for a simple per-student business
+            agreement (indicatively ₹99/student/year). Until then — and if you leave — you owe
+            nothing and your data goes with you.
+          </p>
+        </div>
+
+        {/* The ship-in-a-day promise */}
+        <div className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-3">
+          <p className="text-xs leading-relaxed text-indigo-900">
+            ⚡ <strong>Missing something you need?</strong> Tell us on the onboarding call — our
+            AI-first build system ships educator requests in <strong>1–2 days</strong>, not
+            quarters. This entire educator suite (batch analytics, assignments, doubt channel) was
+            built and shipped in days. Your feature list becomes our roadmap.
           </p>
         </div>
 
@@ -121,6 +153,34 @@ export default function EducatorsPage() {
           </Link>{" "}
           for the scale.
         </p>
+
+        {/* See it yourself — the navigable sample flow */}
+        <div className="mt-8 rounded-xl border border-ink-200 bg-white p-5">
+          <h2 className="text-base font-bold text-ink-900">See it yourself — 3 links, 5 minutes</h2>
+          <ol className="mt-2 space-y-2 text-sm leading-relaxed text-ink-700">
+            <li>
+              1️⃣ <strong>Feel the student side:</strong> join our demo batch with your Google
+              account —{" "}
+              <Link href="/educators/demo" className="font-semibold text-indigo-700 underline">
+                shishya.in/educators/demo
+              </Link>{" "}
+              — then attempt any mock. That&apos;s exactly what your students experience under your
+              banner.
+            </li>
+            <li>
+              2️⃣ <strong>Create your own institution</strong> in 2 minutes, self-serve:{" "}
+              <Link href="/institutions/new" className="font-semibold text-indigo-700 underline">
+                shishya.in/institutions/new
+              </Link>{" "}
+              — make a course, make a batch, get your invite link.
+            </li>
+            <li>
+              3️⃣ <strong>Watch the dashboard fill:</strong> as students join and practise, your
+              batch page shows live per-student mocks, scores, weak areas, and assignment
+              completion — the view we&apos;ll walk through together on your onboarding call.
+            </li>
+          </ol>
+        </div>
 
         {/* Lead form + self-serve */}
         <div className="mt-8 rounded-2xl border-2 border-saffron-300 bg-white p-5 sm:p-6">

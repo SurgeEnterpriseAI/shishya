@@ -19,7 +19,7 @@ const ANON_COOKIE = "shishya_anon";
 const Body = z.object({
   message: z.string().trim().min(5).max(2000),
   surface: z
-    .enum(["results", "topic", "chat", "onboarding", "nav", "exam", "review", "weak-areas", "dashboard"])
+    .enum(["results", "topic", "chat", "onboarding", "nav", "exam", "review", "weak-areas", "dashboard", "batch"])
     .default("nav"),
   examCode: z.string().max(64).optional(),
   topicCode: z.string().max(128).optional(),

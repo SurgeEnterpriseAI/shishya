@@ -2093,6 +2093,23 @@ model EducatorLead {
   @@index([status, createdAt])
 }
 
+// Educator instructions to a batch: "complete this mock by Sunday",
+// "revise Percentages + 20 questions". The educator's guidance becomes
+// DOCUMENTED and trackable — students see it on their dashboard, the
+// educator sees who actually did it (attempts on the exam since the
+// assignment was set). Reusable guidance = the educator's scaling asset.
+model BatchAssignment {
+  id           String    @id @default(cuid())
+  batchId      String
+  title        String
+  instructions String?   @db.Text
+  examCode     String? // when set, completion = attempts on this exam
+  dueAt        DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([batchId, createdAt])
+}
+
 // The mentor network: cleared-exam seniors who guide current aspirants.
 // Applications come from /mentors (open to signed-in users AND guests);
 // the founder approves each one manually — trust is the product.

@@ -29,6 +29,7 @@ import { InviteFriendsCard } from "./InviteFriendsCard";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { loadTodaysLiveTests } from "@/lib/live-test-today";
 import { LiveTestTodayBanner } from "@/components/LiveTestTodayBanner";
+import { EducatorCard } from "@/components/EducatorCard";
 
 export default async function DashboardPage() {
   try {
@@ -495,6 +496,11 @@ async function renderDashboard() {
         <div className="mt-5">
           <LiveTestTodayBanner data={await loadTodaysLiveTests()} />
         </div>
+
+        {/* From your educator — batch assignments + doubt channel.
+            Renders only for students enrolled in an educator's batch
+            (the B2B layer); everyone else sees nothing. */}
+        <EducatorCard userId={session.user.id} />
 
         {/* Two-paths explainer. Shown after the welcome heading until
             the user clicks "Got it ×" once. Sets expectations about

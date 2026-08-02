@@ -17,6 +17,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requireInstitutionSession } from "@/lib/institution-auth";
 import { InviteLinkCopy } from "./InviteLinkCopy";
 import { RemoveStudentButton } from "./RemoveStudentButton";
+import { AssignmentForm } from "./AssignmentForm";
 
 export const metadata: Metadata = {
   title: "Manage batch | Institution dashboard | Shishya",
@@ -87,6 +88,40 @@ export default async function BatchManagePage({
   const fmtLast = (d: Date | null) =>
     d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—";
 
+  // ── Assignments (educator instructions, documented + tracked) ─────
+  type Asg = { id: string; title: string; instructions: string | null; examCode: string | null; dueAt: Date | null; createdAt: Date };
+  const assignments: Asg[] = await prisma.$queryRaw<Asg[]>`
+    SELECT id, title, instructions, "examCode", "dueAt", "createdAt"
+    FROM "BatchAssignment" WHERE "batchId" = ${batch.id}
+    ORDER BY "createdAt" DESC LIMIT 30
+  `.catch(() => []);
+  // Completion per exam-linked assignment: distinct members who
+  // attempted that exam since the assignment was set.
+  const doneBy = new Map<string, number>();
+  for (const a of assignments) {
+    if (!a.examCode || memberIds.length === 0) continue;
+    const r = await prisma.$queryRaw<{ n: bigint }[]>`
+      SELECT COUNT(DISTINCT t."userId") n
+      FROM "Attempt" t JOIN "Mock" m ON m.id = t."mockId" JOIN "Exam" e ON e.id = m."examId"
+      WHERE t."userId" = ANY(${memberIds}) AND e.code = ${a.examCode}
+        AND t.status IN ('SUBMITTED', 'AUTO_SUBMITTED') AND t."finishedAt" >= ${a.createdAt}
+    `.catch(() => [{ n: BigInt(0) }]);
+    doneBy.set(a.id, Number(r[0]?.n ?? 0));
+  }
+
+  // ── Doubts raised by this batch (surface='batch') ─────────────────
+  const doubts = memberIds.length
+    ? await prisma.teacherRequest
+        .findMany({
+          where: { userId: { in: memberIds }, surface: "batch" },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+          select: { id: true, message: true, status: true, createdAt: true, userId: true },
+        })
+        .catch(() => [])
+    : [];
+  const nameById = new Map(batch.enrollments.map((e) => [e.user.id, e.user.name ?? e.user.email.split("@")[0]]));
+
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <Header />
@@ -149,6 +184,69 @@ export default async function BatchManagePage({
                   <p className="mt-0.5 text-[10px] uppercase tracking-wide text-ink-500">{s.label}</p>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* ── Assignments & guidance ─────────────────────── */}
+          <div className="mt-10">
+            <h2 className="text-base font-semibold text-ink-900">📋 Assignments &amp; guidance</h2>
+            <p className="mt-1 text-xs text-ink-500">
+              Set an instruction — &ldquo;complete 1 full mock by Sunday&rdquo; — and it appears on
+              every student&apos;s dashboard. Link it to an exam and Shishya tracks who actually
+              did it. Your guidance stays documented here, reusable for every future batch.
+            </p>
+            <AssignmentForm batchId={batch.id} />
+            {assignments.length > 0 && (
+              <ul className="mt-4 space-y-2">
+                {assignments.map((a) => (
+                  <li key={a.id} className="rounded-xl border border-ink-200 bg-white px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-ink-900">{a.title}</p>
+                      {a.examCode && (
+                        <span className="rounded bg-saffron-100 px-1.5 py-0.5 text-[10px] font-semibold text-saffron-800">
+                          {a.examCode.replace(/_/g, " ")}
+                        </span>
+                      )}
+                      {a.dueAt && (
+                        <span className="text-[11px] text-ink-500">
+                          due {new Date(a.dueAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                        </span>
+                      )}
+                      {a.examCode && (
+                        <span className="ml-auto text-xs font-semibold tabular-nums text-emerald-700">
+                          {doneBy.get(a.id) ?? 0}/{batch.enrollments.length} done
+                        </span>
+                      )}
+                    </div>
+                    {a.instructions && (
+                      <p className="mt-1 text-xs leading-relaxed text-ink-600">{a.instructions}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* ── Doubts from this batch ─────────────────────── */}
+          {doubts.length > 0 && (
+            <div className="mt-10">
+              <h2 className="text-base font-semibold text-ink-900">🙋 Doubts from your batch</h2>
+              <p className="mt-1 text-xs text-ink-500">
+                Raised via &ldquo;Ask my educator&rdquo; on their dashboards — reach them back on
+                phone/WhatsApp, or in your next class.
+              </p>
+              <ul className="mt-3 space-y-2">
+                {doubts.map((d) => (
+                  <li key={d.id} className="rounded-xl border border-ink-200 bg-white px-4 py-3">
+                    <p className="text-sm text-ink-800">{d.message.slice(0, 300)}</p>
+                    <p className="mt-1 text-[11px] text-ink-500">
+                      {nameById.get(d.userId ?? "") ?? "A student"} ·{" "}
+                      {new Date(d.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
+                      {" · "}{d.status.toLowerCase()}
+                    </p>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
