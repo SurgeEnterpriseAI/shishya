@@ -486,7 +486,12 @@ export default async function ExamsPage({
           lines the strip wraps to (the fixed-offset approach broke
           exactly that way). Bar is desktop-only here; mobile gets the
           full in-flow bar below instead of losing viewport to a pin. */}
-      <div className="sticky top-0 z-40">
+      {/* pointer-events-none on the wrapper: it spans full width at z-40,
+          but its children only PAINT in the lg:mx-80 middle column — the
+          transparent gutters were swallowing clicks meant for the fixed
+          side rails underneath (the vacancy explorer's Jobs-Map link was
+          unclickable). Children re-enable pointer events on themselves. */}
+      <div className="pointer-events-none sticky top-0 z-40">
         <LiveCountersStrip
           sticky={false}
           labels={{
@@ -496,7 +501,7 @@ export default async function ExamsPage({
             totalEver:         t("live.totalEver"),
           }}
         />
-        <div className="hidden border-b border-ink-200 bg-paper-50/95 backdrop-blur-sm lg:mx-80 lg:block">
+        <div className="pointer-events-auto hidden border-b border-ink-200 bg-paper-50/95 backdrop-blur-sm lg:mx-80 lg:block">
           <div className="container-prose py-2">
             <AskSearchBar compact />
           </div>

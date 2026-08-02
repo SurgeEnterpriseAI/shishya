@@ -147,7 +147,7 @@ export function LiveCountersStrip({
 
   return (
     <div
-      className={`${sticky ? "sticky top-0 z-40 " : ""}border-b border-emerald-200 bg-emerald-50/95 backdrop-blur-sm supports-[backdrop-filter]:bg-emerald-50/80 lg:mx-80`}
+      className={`${sticky ? "sticky top-0 z-40 " : ""}pointer-events-auto border-b border-emerald-200 bg-emerald-50/95 backdrop-blur-sm supports-[backdrop-filter]:bg-emerald-50/80 lg:mx-80`}
     >
       <div className="container-prose flex flex-wrap items-center justify-center gap-x-3 gap-y-1 py-1.5 text-[11px] text-emerald-900 sm:gap-x-5 sm:py-2 sm:text-sm">
         {/* Lead with a live pulse so the strip reads as "real-time". */}
