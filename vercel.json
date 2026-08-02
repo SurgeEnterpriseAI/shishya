@@ -88,6 +88,10 @@
     {
       "path": "/api/cron/teacher-request-sla",
       "schedule": "40 */2 * * *"
+    },
+    {
+      "path": "/api/cron/winback",
+      "schedule": "0 4 * * *"
     }
   ]
 }

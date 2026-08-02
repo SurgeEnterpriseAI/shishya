@@ -573,6 +573,86 @@ ${
   return sendEmail({ to: p.to, subject, html, text, tag: "evening-rescue" });
 }
 
+/** Win-back — sent to users lapsed 7+ days (the band no other flow
+ *  touches: Daily-5 needs 3-day recency, evening rescue needs a live
+ *  streak). Loss-framed but NEVER guilt-framed: their preparation is
+ *  saved, their mistakes are waiting to become marks, the door is
+ *  open. Max 2 touches per user, 21 days apart (EmailTouch). */
+export async function sendWinbackEmail(p: {
+  to: string;
+  name: string | null;
+  examShort: string;
+  /** Wrong answers sitting in their Mistake Notebook (0 = hide line). */
+  mistakes: number;
+  /** Days since last seen — used for honest, warm framing. */
+  daysGone: number;
+}): Promise<boolean> {
+  const first = (p.name ?? "").split(" ")[0] || "Aspirant";
+  const subject =
+    p.mistakes > 0
+      ? `📓 ${first}, ${p.mistakes} mistakes in your notebook are ready to become marks`
+      : `🎯 ${first}, your ${p.examShort} preparation is saved right where you left it`;
+
+  const mistakeText =
+    p.mistakes > 0
+      ? `Your Mistake Notebook still holds ${p.mistakes} wrong answers from your mocks — each one you clear is a mark you won't lose in the real exam. Re-testing them takes minutes: https://shishya.in/revision`
+      : `Your practice history and weak-area map are saved exactly as you left them — pick any mock and the platform remembers where you were.`;
+
+  const text = `${first},
+
+It's been about ${p.daysGone} days — no lecture, exams don't care about gaps, and neither do we. What matters: everything you built here is still yours.
+
+${mistakeText}
+
+Since you were last here, Shishya also added:
+• A free Personal Coach — a day-by-day plan to your ${p.examShort} date, rebuilt every morning: https://shishya.in/coach
+• All-India Live Tests every Sunday with real ranks: https://shishya.in/live-test
+• Ask Shishya — any govt-job question, any language: https://shishya.in/ask
+
+Continue where you left off: https://shishya.in/dashboard
+
+One good session is all it takes to be back in rhythm. See you inside.
+— Shishya (100% free, always)
+
+(Reply to this email to stop these check-ins.)`;
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-weight:700;font-size:18px;">${p.mistakes > 0 ? `📓 ${p.mistakes} mistakes, waiting to become marks` : `🎯 Your ${p.examShort} prep is saved`}</div>
+    <p style="font-size:14px;line-height:1.6;margin:14px 0;">
+      ${first}, it's been about ${p.daysGone} days — no lecture. Exams don't care about gaps, and neither do we.
+      What matters: <strong>everything you built here is still yours.</strong>
+    </p>
+    <p style="font-size:13px;line-height:1.6;margin:0 0 14px;color:#334155;">
+      ${
+        p.mistakes > 0
+          ? `Your Mistake Notebook holds <strong>${p.mistakes} wrong answers</strong> from your mocks — each one you clear is a mark you won't lose in the real exam.`
+          : `Your practice history and weak-area map are exactly as you left them — pick any mock and the platform remembers where you were.`
+      }
+    </p>
+    <a href="${p.mistakes > 0 ? "https://shishya.in/revision" : "https://shishya.in/dashboard"}"
+       style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">
+      ${p.mistakes > 0 ? "Clear my mistakes →" : "Continue where I left off →"}
+    </a>
+    <div style="border:1px solid #e2e8f0;background:#fff;border-radius:10px;padding:12px 14px;margin:16px 0 0;">
+      <p style="font-size:12px;font-weight:700;margin:0 0 6px;color:#0f172a;">New since you were last here</p>
+      <p style="font-size:12px;line-height:1.7;margin:0;color:#334155;">
+        🧭 <a href="https://shishya.in/coach" style="color:#c2410c;font-weight:600;text-decoration:none;">Personal Coach</a> — day-by-day plan to your ${p.examShort} date, rebuilt every morning<br/>
+        🏆 <a href="https://shishya.in/live-test" style="color:#c2410c;font-weight:600;text-decoration:none;">All-India Live Tests</a> — every Sunday, real ranks<br/>
+        ✨ <a href="https://shishya.in/ask" style="color:#c2410c;font-weight:600;text-decoration:none;">Ask Shishya</a> — any govt-job question, any language
+      </p>
+    </div>
+    <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
+      One good session and you're back in rhythm. — Shishya, 100% free always
+    </p>
+    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Reply to this email to stop these check-ins.</p>
+  </div>
+</body></html>`;
+  return sendEmail({ to: p.to, subject, html, text, tag: "winback" });
+}
+
 /** Convenience wrappers — caller doesn't have to think about
  *  templating, just hands us a user. */
 export async function sendWelcomeEmail(user: {

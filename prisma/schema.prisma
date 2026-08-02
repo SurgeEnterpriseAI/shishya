@@ -2093,6 +2093,18 @@ model EducatorLead {
   @@index([status, createdAt])
 }
 
+// Generic outbound-email send log — which user got which flow when.
+// First user: the win-back flow (tag 'winback'), which must never
+// re-nag — max 2 touches per user, 21 days apart, tracked here.
+model EmailTouch {
+  id     String   @id @default(cuid())
+  userId String
+  tag    String // 'winback' | future flows
+  sentAt DateTime @default(now())
+
+  @@index([userId, tag, sentAt])
+}
+
 // Educator instructions to a batch: "complete this mock by Sunday",
 // "revise Percentages + 20 questions". The educator's guidance becomes
 // DOCUMENTED and trackable — students see it on their dashboard, the
