@@ -76,8 +76,8 @@ const GETS = [
   },
   {
     icon: "🛡️",
-    title: "Your students stay yours",
-    body: "Your batch, your brand, your fees, your community. We never market to your students or sit between you and them — Shishya is the engine, you are the teacher.",
+    title: "Your students stay yours — provably",
+    body: "Your batch, your brand, your fees, your community. We never market to your students or sit between you and them — and your student list (with progress data) exports to CSV from your dashboard any time, even on your way out.",
   },
 ];
 
@@ -114,20 +114,23 @@ export default function EducatorsPage() {
             Free until you yourself say &ldquo;this is useful.&rdquo;
           </p>
           <p className="mt-0.5 text-xs leading-relaxed text-emerald-800">
-            No fees, no card, no timer. Run your batches on the full engine; when you openly tell
-            us it&apos;s working for your students, we sit down for a simple per-student business
-            agreement (indicatively ₹99/student/year). Until then — and if you leave — you owe
-            nothing and your data goes with you.
+            No fees, no card, no timer. On your onboarding call we&apos;ll agree what
+            &ldquo;useful&rdquo; means <em>together</em> — for example, &ldquo;60% of my batch
+            active every week for a month&rdquo; — and only when you confirm your own milestone do
+            we sit down for a simple per-student agreement (indicatively ₹99/student/year). Until
+            then — and if you leave — you owe nothing, and your student list exports to CSV
+            whenever you ask.
           </p>
         </div>
 
         {/* The ship-in-a-day promise */}
         <div className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-3">
           <p className="text-xs leading-relaxed text-indigo-900">
-            ⚡ <strong>Missing something you need?</strong> Tell us on the onboarding call — our
-            AI-first build system ships educator requests in <strong>1–2 days</strong>, not
-            quarters. This entire educator suite (batch analytics, assignments, doubt channel) was
-            built and shipped in days. Your feature list becomes our roadmap.
+            ⚡ <strong>Missing something you need?</strong> Tell us on the onboarding call —
+            batch-workflow features (assignments, reports, views like the ones on this page) ship
+            in <strong>1–2 days</strong>; bigger builds get an honest timeline upfront. This
+            entire educator suite was built and shipped in days. Your feature list becomes our
+            roadmap.
           </p>
         </div>
 
