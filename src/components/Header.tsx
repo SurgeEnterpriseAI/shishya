@@ -63,14 +63,15 @@ export function Header({ admin = false }: { admin?: boolean }) {
           <BackLink />
         </div>
 
-        {/* Middle: today's quote. Hidden on small screens (the header
-            shrinks to logo + sign-in on mobile so the quote would
-            squeeze the brand). Visible from md upward.
-            truncate + max-width keep it from pushing the right rail
-            off-screen on medium viewports — full text on lg+. */}
+        {/* Middle: today's quote. The nav gained the Jobs-Map pill
+            (Aug 2026), so below xl the middle can't fit a readable
+            sentence — it was clipping mid-word against the nav. Show
+            the quote only from xl up, where it has honest room;
+            min-w-0 + mr-3 make the flex truncation correct and keep a
+            gap from the nav even at tight xl widths. */}
         {quote && (
           <p
-            className="ml-4 hidden flex-1 truncate text-center text-xs italic text-ink-500 md:block lg:text-sm"
+            className="ml-4 mr-3 hidden min-w-0 flex-1 truncate text-center text-sm italic text-ink-500 xl:block"
             title={quote.author ? `${quote.text} — ${quote.author}` : quote.text}
           >
             <span className="mr-1.5 text-saffron-500" aria-hidden>✦</span>
