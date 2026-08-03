@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_Devanagari } from "next/font/google";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
+import { SignupNudge } from "@/components/SignupNudge";
 import { Suspense } from "react";
 import "./globals.css";
 
@@ -161,6 +162,9 @@ export default function RootLayout({
         />
         {children}
         <FeedbackWidget />
+        {/* Engagement-triggered signup nudge for anonymous visitors —
+            5 active minutes + 3 pageviews, hard courtesy caps inside. */}
+        <SignupNudge />
         {/* First-party analytics tracker (no 3rd-party network calls).
             Wrapped in Suspense because useSearchParams() must be inside
             a Suspense boundary in App Router. */}
