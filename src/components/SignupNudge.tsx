@@ -47,13 +47,12 @@ function blockedPath(p: string): boolean {
   );
 }
 
-function signedIn(): boolean {
-  try {
-    return document.cookie.includes("session-token");
-  } catch {
-    return false;
-  }
-}
+// NOTE (4 Aug 2026 incident): the original check read document.cookie
+// for the session token — but auth cookies are httpOnly and INVISIBLE
+// to JS, so the nudge fired for signed-in students too and its bottom
+// sheet could sit over exam-hub UIs. Signed-in detection now probes
+// the session endpoint once; until it answers, we assume signed-in
+// (fail-closed: never nudge when unsure).
 
 function beacon(action: "shown" | "clicked" | "dismissed") {
   try {
@@ -76,6 +75,23 @@ function beacon(action: "shown" | "clicked" | "dismissed") {
 export function SignupNudge() {
   const pathname = usePathname();
   const [show, setShow] = useState(false);
+  // null = unknown (treat as signed-in; never nudge), true = anonymous.
+  const [anon, setAnon] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((s) => setAnon(!(s && (s as any).user)))
+      .catch(() => setAnon(null)); // probe failed → stay silent
+  }, []);
+
+  // If the card is up and the student navigates into a protected page
+  // (mock, attempt, login…), hide it immediately — client-side
+  // navigation keeps this component mounted, so the trigger-time path
+  // check alone isn't enough.
+  useEffect(() => {
+    if (show && blockedPath(pathname)) setShow(false);
+  }, [pathname, show]);
 
   // Count route changes as pageviews (sessionStorage survives
   // navigations within the tab, resets on a new tab/session).
@@ -90,8 +106,10 @@ export function SignupNudge() {
 
   // Accumulate ACTIVE seconds (tab visible only) and evaluate the
   // rules once per tick. Cheap: one 1s interval, all checks local.
+  // Runs ONLY once the session probe has positively confirmed the
+  // visitor is anonymous.
   useEffect(() => {
-    if (signedIn()) return;
+    if (anon !== true) return;
     const id = window.setInterval(() => {
       if (document.hidden || show) return;
       try {
@@ -106,8 +124,7 @@ export function SignupNudge() {
         if (
           secs >= ACTIVE_SECONDS_NEEDED &&
           Number(sessionStorage.getItem(SS_VIEWS) ?? "0") >= MIN_PAGEVIEWS &&
-          !blockedPath(location.pathname) &&
-          !signedIn()
+          !blockedPath(location.pathname)
         ) {
           localStorage.setItem(LS_LAST, today);
           setShow(true);
@@ -118,7 +135,7 @@ export function SignupNudge() {
       }
     }, 1000);
     return () => window.clearInterval(id);
-  }, [show]);
+  }, [show, anon]);
 
   if (!show) return null;
 
