@@ -807,3 +807,75 @@ Whatever your score, you'll know exactly what to fix in the days that matter mos
 </body></html>`;
   return sendEmail({ to: p.to, subject, html, text, tag: "live-test-invite" });
 }
+
+/** Exam-eve wishes — the evening before a student's registered exam.
+ *  Founder call (6 Aug 2026): "say all the best just before the exam
+ *  and send a motivational quote that encourages them whatever be the
+ *  outcome." Deliberately contains NO new study advice (nothing that
+ *  could rattle someone the night before) — only calm, a practical
+ *  checklist, and encouragement that survives either result. */
+export async function sendExamEveEmail(p: {
+  to: string;
+  name: string | null;
+  examShort: string;
+  quote: { text: string; author?: string | null };
+}): Promise<boolean> {
+  const first = (p.name ?? "").split(" ")[0] || "Aspirant";
+  const subject = `🌟 All the best for your ${p.examShort} tomorrow, ${first}`;
+  const attribution = p.quote.author ? ` — ${p.quote.author}` : "";
+
+  const text = `${first},
+
+Tomorrow is your ${p.examShort} exam. All the best. 🌟
+
+You've put in the work — on Shishya and outside it. Tonight is not for new topics. It's for sleep, a calm mind, and trusting what you already know.
+
+Before you sleep, just check:
+• Admit card printed + a photo ID
+• Exam centre location and how long it takes to reach
+• Reach early — rushing costs more marks than any topic
+• Sleep. A rested brain scores higher than a tired one that revised one extra chapter.
+
+"${p.quote.text}"${attribution}
+
+And whatever tomorrow's paper brings: one exam does not measure you. Selection lists change every year; the discipline you built doesn't. If it goes well, we'll celebrate. If it doesn't, Shishya is here the next morning with your weak areas mapped and the next attempt planned — free, always.
+
+Go show up. We're rooting for you.
+— Shishya
+
+(You're getting this because you're preparing for ${p.examShort} on shishya.in. Reply to stop.)`;
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-weight:700;font-size:19px;">🌟 All the best for your ${p.examShort} tomorrow</div>
+    <p style="font-size:14px;line-height:1.6;margin:14px 0;">
+      ${first}, you&apos;ve put in the work — on Shishya and outside it. Tonight isn&apos;t for new
+      topics. It&apos;s for sleep, a calm mind, and trusting what you already know.
+    </p>
+    <div style="border:1px solid #e2e8f0;background:#fff;border-radius:10px;padding:12px 14px;margin:0 0 16px;">
+      <p style="font-size:12px;font-weight:700;margin:0 0 6px;color:#0f172a;">Before you sleep</p>
+      <p style="font-size:12px;line-height:1.8;margin:0;color:#334155;">
+        📄 Admit card printed + photo ID<br/>
+        📍 Centre location &amp; travel time checked<br/>
+        ⏰ Reach early — rushing costs more marks than any topic<br/>
+        😴 Sleep. A rested brain scores higher than a tired one that revised one more chapter.
+      </p>
+    </div>
+    <blockquote style="margin:0 0 16px;padding:12px 16px;border-left:3px solid #f59e0b;background:#fffbeb;font-size:14px;line-height:1.6;font-style:italic;color:#0f172a;">
+      &ldquo;${p.quote.text}&rdquo;${p.quote.author ? `<span style="display:block;margin-top:6px;font-style:normal;font-size:12px;color:#92400e;">— ${p.quote.author}</span>` : ""}
+    </blockquote>
+    <p style="font-size:13px;line-height:1.65;margin:0 0 14px;color:#334155;">
+      And whatever tomorrow&apos;s paper brings: <strong>one exam does not measure you.</strong>
+      Selection lists change every year; the discipline you built doesn&apos;t. If it goes well,
+      we&apos;ll celebrate. If it doesn&apos;t, Shishya is here the next morning with your weak
+      areas mapped and the next attempt planned — free, always.
+    </p>
+    <p style="font-size:14px;font-weight:600;margin:0;color:#0f172a;">Go show up. We&apos;re rooting for you. 💪</p>
+    <p style="font-size:12px;color:#64748b;margin:16px 0 0;">— Shishya</p>
+    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">You&apos;re getting this because you&apos;re preparing for ${p.examShort} on shishya.in. Reply to stop.</p>
+  </div>
+</body></html>`;
+  return sendEmail({ to: p.to, subject, html, text, tag: "exam-eve" });
+}
