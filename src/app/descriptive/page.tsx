@@ -12,6 +12,19 @@ export const metadata: Metadata = {
   description:
     "Write an essay, formal letter, précis or UPSC Mains answer and get an instant examiner-style evaluation — score out of 25, strengths, specific improvements and grammar corrections. Free, 3 per day. For SSC CHSL/CGL descriptive paper, IBPS/SBI PO and UPSC.",
   alternates: { canonical: "https://shishya.in/descriptive" },
+  openGraph: {
+    title: 'Free AI evaluation for essays, letters & UPSC Mains answers | Shishya'.replace(" | Shishya", ""),
+    description: 'Write an essay, formal letter, precis or Mains answer and get an instant examiner-style score out of 25 with specific corrections. Free.',
+    url: "https://shishya.in/descriptive",
+    siteName: "Shishya",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: 'Free AI evaluation for essays, letters & UPSC Mains answers | Shishya'.replace(" | Shishya", ""),
+    description: 'Write an essay, formal letter, precis or Mains answer and get an instant examiner-style score out of 25 with specific corrections. Free.',
+  },
 };
 
 // AEO: descriptive-paper practice is the least-served need in this

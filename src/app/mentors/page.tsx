@@ -14,17 +14,63 @@ export const metadata: Metadata = {
   description:
     "Cleared a government exam? Join Shishya's mentor network: guide current aspirants of your exam, build your teaching profile, and earn as the network grows. Free platform, real students, apply in 2 minutes.",
   alternates: { canonical: "https://shishya.in/mentors" },
+  openGraph: {
+    title: "Become a Shishya Mentor — guide aspirants of the exam you cleared",
+    description:
+      "Cleared a government exam? Guide current aspirants of your exam on your own time, build a verified public teaching profile, and earn as the network grows. Apply in 2 minutes.",
+    url: "https://shishya.in/mentors",
+    siteName: "Shishya",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Become a Shishya Mentor",
+    description: "Cleared a govt exam? Guide the next batch of aspirants. Free platform, real students, apply in 2 minutes.",
+  },
 };
 
-const JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "WebPage",
-  name: "Become a Shishya Mentor",
-  url: "https://shishya.in/mentors",
-  description:
-    "Application page for Shishya's mentor network — cleared-exam seniors guiding current government-exam aspirants.",
-  provider: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
-};
+const JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Become a Shishya Mentor",
+    url: "https://shishya.in/mentors",
+    description:
+      "Application page for Shishya's mentor network — cleared-exam seniors guiding current government-exam aspirants.",
+    provider: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "How can I become a mentor for government exam aspirants?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "If you have cleared a government exam — SSC, a state PSC, police, teaching (TET) or any recruitment — you can mentor current aspirants of that same exam on Shishya. Apply free at https://shishya.in/mentors with your exam, year cleared and rank/post; every application is verified personally by the founder. Mentors answer doubts from aspirants of their exam on their own time, build a verified public teaching profile, and earn as the network grows. No teaching certificate or coaching experience is required — clearing the exam is the qualification.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Do government exam toppers get paid for mentoring students online?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "On Shishya, mentoring starts as guidance work for aspirants of the exam you cleared and grows into paid work as the network scales — guidance sessions, cohort teaching and referral work. Founding mentors help shape that model and benefit from it first. The platform stays 100% free for students; mentors are never asked to pay to join.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What does a Shishya mentor actually do?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Mentors guide aspirants preparing for the exam they themselves cleared: answering subject and strategy doubts in writing, occasional calls when they choose, and sharing what actually worked in their own selection. There are no fixed hours and no targets — mentors respond when free. Shishya's AI tutor absorbs routine doubts, so mentors handle the questions where lived experience matters most.",
+        },
+      },
+    ],
+  },
+];
 
 const POINTS = [
   {
@@ -52,7 +98,9 @@ const POINTS = [
 export default function MentorsPage() {
   return (
     <main className="min-h-screen bg-paper-50">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
+      {JSON_LD.map((j, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(j) }} />
+      ))}
       <Header />
       <section className="container-prose py-8 sm:py-10">
         <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">

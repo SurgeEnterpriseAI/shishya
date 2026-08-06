@@ -146,6 +146,36 @@ export default async function FindYourExamPage({
             path: "/find-your-exam",
           }),
           breadcrumbLd([["Find your exam", "/find-your-exam"]]),
+          {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "How do I know which government exam I am eligible for?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Eligibility for Indian government exams depends on four things: your age (with category relaxation — typically OBC +3 years, SC/ST +5 years), your education level (10th, 12th, graduate or professional degree), your state (for state PSC, police and teaching posts), and each exam's own rules. Shishya's free finder at https://shishya.in/find-your-exam checks all four and ranks every exam you actually qualify for by fit and live vacancy count — no signup required.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Which government job can I apply for after 12th pass?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "After 12th you can apply for SSC CHSL (LDC/DEO), SSC GD Constable, Railway RRB NTPC and Group D, state police constable recruitments, NDA (for defence officer entry) and many state staff-selection board posts — together these carry the largest vacancy counts in Indian government recruitment. Enter your age, state and stream at https://shishya.in/find-your-exam to see the exact list you qualify for today.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "I am 30 years old — is it too late for a government job?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "No. Many recruitments accept candidates up to 32-40 years, and reserved categories receive additional relaxation (OBC +3, SC/ST +5, PwD and ex-servicemen more). State civil services, teaching recruitment, higher judicial services and several state staff-board posts routinely have upper limits of 38-42 years. The finder at https://shishya.in/find-your-exam filters by your exact age so you see only what is genuinely open to you.",
+                },
+              },
+            ],
+          },
         ]}
       />
       <Header />

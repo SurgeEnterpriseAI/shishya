@@ -11,6 +11,19 @@ export const metadata: Metadata = {
   description:
     "Practice the typing skill test for SSC CHSL/CGL DEST, RRB NTPC and typist posts — free, in English and Hindi. Real exam scoring: net WPM, accuracy and key depressions per hour, checked against actual pass benchmarks.",
   alternates: { canonical: "https://shishya.in/typing" },
+  openGraph: {
+    title: 'Free typing speed test for SSC CHSL, CGL DEST & RRB NTPC | Shishya'.replace(" | Shishya", ""),
+    description: 'Practise English and Hindi typing scored as net WPM, accuracy and key depressions per hour against real SSC and RRB benchmarks. Free, unlimited.',
+    url: "https://shishya.in/typing",
+    siteName: "Shishya",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: 'Free typing speed test for SSC CHSL, CGL DEST & RRB NTPC | Shishya'.replace(" | Shishya", ""),
+    description: 'Practise English and Hindi typing scored as net WPM, accuracy and key depressions per hour against real SSC and RRB benchmarks. Free, unlimited.',
+  },
 };
 
 // AEO: "what typing speed is needed for SSC CHSL" and its siblings are

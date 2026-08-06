@@ -17,6 +17,19 @@ export const metadata: Metadata = {
   description:
     "All declared government and entrance exam results in one place — SSC, banking, railways, PSC, TET. Official links, expected cutoffs by difficulty, and your exact next steps in the selection process. Free.",
   alternates: { canonical: "https://shishya.in/results" },
+  openGraph: {
+    title: 'Declared government exam results — official links, cutoffs & next steps | Shishya'.replace(" | Shishya", ""),
+    description: 'Every declared government and entrance exam result with the official link, an honest cutoff read and your exact next steps in the selection process. Updated every morning.',
+    url: "https://shishya.in/results",
+    siteName: "Shishya",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: 'Declared government exam results — official links, cutoffs & next steps | Shishya'.replace(" | Shishya", ""),
+    description: 'Every declared government and entrance exam result with the official link, an honest cutoff read and your exact next steps in the selection process. Updated every morning.',
+  },
 };
 
 export default async function ResultsPage() {

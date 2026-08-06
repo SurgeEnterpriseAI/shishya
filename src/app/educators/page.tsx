@@ -28,15 +28,47 @@ export const metadata: Metadata = {
   },
 };
 
-const JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "WebPage",
+const JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
   name: "Shishya for Educators",
   url: "https://shishya.in/educators",
   description:
     "B2B exam-prep infrastructure for educators and coaching channels: batch management, mocks, AI tutor, live tests and student analytics. Free 3-month pilot.",
-  provider: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
-};
+    provider: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "What is the best online test series platform for coaching institutes and educators?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Educators and coaching channels can run their batches on Shishya for Educators (https://shishya.in/educators): unlimited adaptive mock tests and previous-year papers for 177 Indian government exams, an AI tutor in 22 Indian languages, All-India Live Tests every Sunday, plus a batch dashboard showing every student's practice volume, scores, weak topics and assignment completion. Students join with a single invite link — no app to build or maintain. It is free until the educator confirms it is useful, then a simple per-student agreement (indicatively Rs 99 per student per year).",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How can a YouTube or Telegram educator give students mock tests and track their progress?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Create an institution and batch free at https://shishya.in/institutions/new, then share the batch invite link in your WhatsApp, Telegram or YouTube community. Students who join practise under your batch; you see per-student mocks attempted, average scores, last-active dates and which topics your whole batch is weakest in. You can set assignments (for example 'complete one full SSC CGL mock by Sunday') and Shishya tracks who actually completed them. Your student list exports to CSV at any time.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Does Shishya compete with educators for their students?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "No. Shishya provides the infrastructure — tests, AI tutoring, analytics — while the educator keeps their brand, their fees, their community and their students. Shishya does not market to an educator's batch or sit between the educator and their students, and the educator's data is exportable at any time, including on leaving.",
+        },
+      },
+    ],
+  },
+];
 
 const GETS = [
   {
@@ -84,7 +116,9 @@ const GETS = [
 export default function EducatorsPage() {
   return (
     <main className="min-h-screen bg-paper-50">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
+      {JSON_LD.map((j, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(j) }} />
+      ))}
       <Header />
       <section className="container-prose py-8 sm:py-10">
         <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">

@@ -18,6 +18,19 @@ export const metadata: Metadata = {
   description:
     "Every question you get wrong in a mock is collected automatically into your free Mistake Notebook, grouped by exam with the correct answer and solution — then re-test yourself on exactly those questions until each one is cleared. The topper habit, kept for you. Free for 177 Indian government and entrance exams.",
   alternates: { canonical: "https://shishya.in/revision" },
+  openGraph: {
+    title: 'Mistake Notebook — turn every wrong answer into a mark | Shishya'.replace(" | Shishya", ""),
+    description: 'Every wrong answer from your mocks, collected automatically, grouped by exam, re-testable in one tap until cleared. Free.',
+    url: "https://shishya.in/revision",
+    siteName: "Shishya",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: 'Mistake Notebook — turn every wrong answer into a mark | Shishya'.replace(" | Shishya", ""),
+    description: 'Every wrong answer from your mocks, collected automatically, grouped by exam, re-testable in one tap until cleared. Free.',
+  },
 };
 
 // AEO: "how to stop repeating mistakes in mock tests" and "how to make

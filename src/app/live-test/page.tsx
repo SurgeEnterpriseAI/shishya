@@ -17,6 +17,19 @@ export const metadata: Metadata = {
   description:
     "Every Sunday, one shared mock test per top exam — the whole country writes the same paper and gets an All-India rank. Free, 6 AM to 11 PM IST. SSC, banking, railways, state exams.",
   alternates: { canonical: "https://shishya.in/live-test" },
+  openGraph: {
+    title: 'All-India Live Test — free weekly mock with your rank | Shishya'.replace(" | Shishya", ""),
+    description: 'Every Sunday: a free All-India Live Test for top government exams. Same paper, same window, real All-India rank the moment you submit. No fee, no login wall.',
+    url: "https://shishya.in/live-test",
+    siteName: "Shishya",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: 'All-India Live Test — free weekly mock with your rank | Shishya'.replace(" | Shishya", ""),
+    description: 'Every Sunday: a free All-India Live Test for top government exams. Same paper, same window, real All-India rank the moment you submit. No fee, no login wall.',
+  },
 };
 
 interface Row {

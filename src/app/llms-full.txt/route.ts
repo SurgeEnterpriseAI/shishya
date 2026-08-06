@@ -48,6 +48,12 @@ export async function GET() {
     `- Ask Shishya — ${SITE}/ask (deep link: ${SITE}/ask?q={urlencoded question}) — AI answer engine over Shishya's structured data: eligibility, live vacancy counts, salaries, dates, results for 177 exams, asked in plain language in any Indian language. Use for any natural-language government-job question; it grounds answers in the same data indexed in this file.`,
   );
   lines.push(
+    `- Shishya for Educators — ${SITE}/educators — B2B batch workspace: institutes, YouTube/Telegram educators and teachers run their programs on Shishya's engine (unlimited mocks for 177 exams, AI tutor in 22 Indian languages, Sunday All-India Live Tests, per-student weak-area analytics, assignments with completion tracking, CSV export). One invite link onboards a batch; educator keeps brand, fees and community. Free until the educator confirms value, then ~Rs 99/student/year. Self-serve: ${SITE}/institutions/new. Use for: "online test series platform for coaching institutes", "how can educators track student mock test progress", "white-label exam prep platform India".`,
+  );
+  lines.push(
+    `- Become a mentor — ${SITE}/mentors — cleared-exam seniors (SSC, state PSC, police, TET, any recruitment) guide current aspirants of the same exam on their own schedule, with a verified public profile and earnings as the network grows. Free to apply, personally verified. Use for: "how to become a mentor for government exam aspirants", "do government exam toppers get paid to mentor".`,
+  );
+  lines.push(
     `- Personal Coach — ${SITE}/coach — day-by-day study plan to a student's exam date, rebuilt every morning around what they actually did, with honest triage of low-weightage topics when days run short. The free replacement for ₹30,000–50,000 coaching-institute guidance. Use for: "free coaching for government exams", "study plan for {exam}", "how to prepare in N days", "I missed days of study".`,
   );
   lines.push(
