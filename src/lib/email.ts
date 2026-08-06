@@ -738,3 +738,72 @@ One paper today tells you exactly where you stand against aspirants across India
 </body></html>`;
   return sendEmail({ to: p.to, subject, html, text, tag: "live-test-reminder" });
 }
+
+/** Personalised All-India Live Test invite — sent midweek to students
+ *  who have ALREADY engaged with that exam (enrolled, practised, or
+ *  planned it). Not a broadcast: it names their exam, their date, and
+ *  the one thing a shared paper gives that solo practice cannot —
+ *  where they stand among aspirants sitting the same exam. */
+export async function sendLiveTestInviteEmail(p: {
+  to: string;
+  name: string | null;
+  examShort: string;
+  /** Days until the real exam, when known — makes the urgency honest. */
+  daysToExam?: number | null;
+  sundayLabel: string;
+}): Promise<boolean> {
+  const first = (p.name ?? "").split(" ")[0] || "Aspirant";
+  const subject = `🏆 ${first}, your ${p.examShort} All-India Live Test is on ${p.sundayLabel}`;
+  const urgency =
+    p.daysToExam && p.daysToExam > 0
+      ? `Your ${p.examShort} exam is about ${p.daysToExam} days away — this is the rehearsal that counts.`
+      : `A full paper under real timing, before the real day.`;
+
+  const text = `${first},
+
+You've been preparing for ${p.examShort} on Shishya — so this is for you.
+
+🏆 All-India Live Test — ${p.examShort} — ${p.sundayLabel}, 6 AM to 11 PM.
+${urgency}
+
+Why a shared paper beats a solo mock:
+• Your All-India rank the moment you submit — where you actually stand among aspirants writing the same exam
+• A section-wise strength and weakness map from one sitting
+• Real exam timing, real pressure, zero cost
+
+Register (or just show up): https://shishya.in/live-test
+
+Whatever your score, you'll know exactly what to fix in the days that matter most.
+— Shishya (free, always)
+
+(Reply to stop these.)`;
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-weight:700;font-size:18px;">🏆 Your ${p.examShort} All-India Live Test — ${p.sundayLabel}</div>
+    <p style="font-size:14px;line-height:1.6;margin:14px 0;">
+      ${first}, you&apos;ve been preparing for <strong>${p.examShort}</strong> on Shishya — so this one is for you.
+      ${urgency}
+    </p>
+    <div style="border:1px solid #fed7aa;background:#fff;border-radius:10px;padding:12px 14px;margin:0 0 16px;">
+      <p style="font-size:12px;font-weight:700;margin:0 0 6px;color:#0f172a;">Why a shared paper beats a solo mock</p>
+      <p style="font-size:12px;line-height:1.7;margin:0;color:#334155;">
+        🥇 Your <strong>All-India rank</strong> the moment you submit — where you actually stand<br/>
+        🎯 A section-wise <strong>strength &amp; weakness map</strong> from one sitting<br/>
+        ⏱️ Real exam timing, real pressure, zero cost
+      </p>
+    </div>
+    <a href="https://shishya.in/live-test"
+       style="display:inline-block;background:#dc2626;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">
+      See ${p.sundayLabel}&apos;s papers →
+    </a>
+    <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
+      Whatever your score, you&apos;ll know exactly what to fix in the days that matter most. — Shishya
+    </p>
+    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Reply to stop these.</p>
+  </div>
+</body></html>`;
+  return sendEmail({ to: p.to, subject, html, text, tag: "live-test-invite" });
+}

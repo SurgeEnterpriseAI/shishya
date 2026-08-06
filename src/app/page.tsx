@@ -53,7 +53,7 @@ import { loadWallOfGrinders, type GrinderEntry } from "@/lib/wall-of-grinders";
 import { InspirationCarousel, type InspoVideo } from "@/components/InspirationCarousel";
 import { VacancyExplorerSidebar, VacancyExplorerPanel } from "@/components/VacancyExplorer";
 import { loadVacancyExplorer, type VacancyExplorer } from "@/lib/vacancy-explorer";
-import { loadTodaysLiveTests, loadUpcomingSunday } from "@/lib/live-test-today";
+import { loadTodaysLiveTests, loadUpcomingSunday, type UpcomingSunday } from "@/lib/live-test-today";
 import { LiveTestTodayBanner } from "@/components/LiveTestTodayBanner";
 import { SundayLiveTestBanner } from "@/components/SundayLiveTestBanner";
 import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
@@ -595,10 +595,8 @@ export default async function ExamsPage({
           {/* Live-test awareness — renders only when tests are open/opening
               today; visible on every step so no visitor misses test day. */}
           <LiveTestTodayBanner data={liveToday} />
-          {/* All week: what is coming this Sunday + reminder sign-up. */}
-          <SundayLiveTestBanner data={sundayLive} signedIn={signedIn} />
 
-          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} inspirationVideos={inspirationVideos} grinders={grinders} />}
+          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} inspirationVideos={inspirationVideos} grinders={grinders} sundayLive={sundayLive} />}
           {step === "scope" && goal && (
             <StepScope
               goal={goal}
@@ -783,6 +781,7 @@ function StepGoals({
   portalStats,
   inspirationVideos,
   grinders,
+  sundayLive,
 }: {
   exams: ExamCard[];
   t: (key: SectionTitleKey) => string;
@@ -790,6 +789,7 @@ function StepGoals({
   vacancyStats: { totalLakh: string; examCount: number };
   portalStats: { examCount: number; questions: string; notes: string };
   inspirationVideos: InspoVideo[];
+  sundayLive: UpcomingSunday | null;
   grinders: GrinderEntry[];
 }) {
   // 27 May 2026 funnel telemetry — 96 signups, 0 mock attempts in
@@ -921,6 +921,13 @@ function StepGoals({
               </Link>
             </div>
           )}
+        </div>
+
+        {/* Sunday's All-India Live Tests — placed below the vacancy
+            finder and coach cards (founder call): the two decision
+            banners come first, then the week's event. */}
+        <div className="mt-6">
+          <SundayLiveTestBanner data={sundayLive} signedIn={signedIn} />
         </div>
 
         <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />

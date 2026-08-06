@@ -96,6 +96,10 @@
     {
       "path": "/api/cron/live-test-remind",
       "schedule": "45 0 * * 0"
+    },
+    {
+      "path": "/api/cron/live-test-invite",
+      "schedule": "0 4 * * 5"
     }
   ]
 }

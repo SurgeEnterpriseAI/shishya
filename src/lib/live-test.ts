@@ -63,20 +63,48 @@ export async function createWeeklyLiveTests(): Promise<
 > {
   const { opensAt, closesAt } = nextSundayWindowUTC();
 
-  // Top exams by recent enrollment; falls back to all-time when a
-  // quiet month starves the 30-day window.
-  let top = await prisma.$queryRaw<{ examId: string; code: string; short: string }[]>`
+  // Exam selection (6 Aug 2026 founder rule): a live test should
+  // rehearse an exam that is actually COMING — not one whose paper is
+  // long over. Priority order:
+  //   1. exams whose next exam day falls 7-75 days out (the window
+  //      where a full mock genuinely changes preparation), most
+  //      enrolled first;
+  //   2. fill remaining slots by popularity, but NEVER include an exam
+  //      whose exam day passed within the last 6 months and has no
+  //      upcoming date (that cohort has already sat the paper).
+  const imminent = await prisma.$queryRaw<{ examId: string; code: string; short: string }[]>`
     SELECT e.id AS "examId", e.code, e."shortName" AS short
-    FROM "Enrollment" en JOIN "Exam" e ON e.id = en."examId" AND e.active = TRUE
-    WHERE en."createdAt" > NOW() - INTERVAL '30 days'
+    FROM "Exam" e
+    JOIN "ExamImportantDate" d
+      ON d."examId" = e.id AND d."isExamDay" = TRUE AND d."archivedAt" IS NULL AND d.date > NOW()
+    LEFT JOIN "Enrollment" en ON en."examId" = e.id AND en.active = TRUE
+    WHERE e.active = TRUE
     GROUP BY e.id, e.code, e."shortName"
-    ORDER BY COUNT(*) DESC LIMIT ${TOP_EXAMS}`;
-  if (top.length < 3) {
-    top = await prisma.$queryRaw<{ examId: string; code: string; short: string }[]>`
+    HAVING (MIN(d.date)::date - CURRENT_DATE) BETWEEN 7 AND 75
+    ORDER BY COUNT(en.id) DESC, MIN(d.date) ASC
+    LIMIT ${TOP_EXAMS}`;
+
+  let top = imminent;
+  if (top.length < TOP_EXAMS) {
+    const have = top.map((t) => t.examId);
+    const filler = await prisma.$queryRaw<{ examId: string; code: string; short: string }[]>`
       SELECT e.id AS "examId", e.code, e."shortName" AS short
       FROM "Enrollment" en JOIN "Exam" e ON e.id = en."examId" AND e.active = TRUE
+      WHERE NOT (e.id = ANY(${have}))
+        -- exclude exams already written in the last 6 months with nothing upcoming
+        AND NOT EXISTS (
+          SELECT 1 FROM "ExamImportantDate" d
+          WHERE d."examId" = e.id AND d."isExamDay" = TRUE AND d."archivedAt" IS NULL
+            AND d.date < NOW() AND d.date > NOW() - INTERVAL '6 months'
+            AND NOT EXISTS (
+              SELECT 1 FROM "ExamImportantDate" d2
+              WHERE d2."examId" = e.id AND d2."isExamDay" = TRUE AND d2."archivedAt" IS NULL AND d2.date > NOW()
+            )
+        )
       GROUP BY e.id, e.code, e."shortName"
-      ORDER BY COUNT(*) DESC LIMIT ${TOP_EXAMS}`;
+      ORDER BY COUNT(*) DESC
+      LIMIT ${TOP_EXAMS}`;
+    top = [...top, ...filler].slice(0, TOP_EXAMS);
   }
 
   const results: { examCode: string; mockId: string; created: boolean }[] = [];
