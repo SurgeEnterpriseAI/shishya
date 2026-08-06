@@ -1945,6 +1945,22 @@ model ExamResult {
 // a user's FIRST submitted attempt among all first attempts. Created
 // by the Saturday cron; unique(examId, opensAt) makes creation
 // idempotent.
+// Sunday All-India Live Test reminders — students opt in during the
+// week from the announcement banner; the Sunday-morning cron emails
+// everyone signed up for that week's tests. Anonymous students can
+// register with just an email (no account needed to be reminded).
+model LiveTestReminder {
+  id         String    @id @default(cuid())
+  userId     String?
+  email      String
+  sundayDate DateTime  @db.Date // the Sunday these tests run (IST)
+  notifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([email, sundayDate])
+  @@index([sundayDate, notifiedAt])
+}
+
 model LiveTest {
   id        String   @id @default(cuid())
   examId    String

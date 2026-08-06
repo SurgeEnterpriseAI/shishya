@@ -27,8 +27,9 @@ import { examPeerProof } from "@/lib/peer-proof";
 import { CoachPlanView } from "@/app/coach/CoachPlanView";
 import { InviteFriendsCard } from "./InviteFriendsCard";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
-import { loadTodaysLiveTests } from "@/lib/live-test-today";
+import { loadTodaysLiveTests, loadUpcomingSunday } from "@/lib/live-test-today";
 import { LiveTestTodayBanner } from "@/components/LiveTestTodayBanner";
+import { SundayLiveTestBanner } from "@/components/SundayLiveTestBanner";
 import { EducatorCard } from "@/components/EducatorCard";
 
 export default async function DashboardPage() {
@@ -495,6 +496,7 @@ async function renderDashboard() {
         {/* Live-test day banner — the Sunday ritual's front door. */}
         <div className="mt-5">
           <LiveTestTodayBanner data={await loadTodaysLiveTests()} />
+          <SundayLiveTestBanner data={await loadUpcomingSunday()} signedIn />
         </div>
 
         {/* From your educator — batch assignments + doubt channel.

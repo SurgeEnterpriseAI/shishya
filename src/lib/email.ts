@@ -690,3 +690,51 @@ function pickFirstName(name: string | null | undefined, email: string): string {
   if (!raw) return "there";
   return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
 }
+
+/** Sunday-morning All-India Live Test reminder — sent ONLY to students
+ *  who asked for it during the week from the announcement banner. The
+ *  ritual's alarm clock: papers are open 6 AM–11 PM, rank on submit. */
+export async function sendLiveTestReminderEmail(p: {
+  to: string;
+  exams: string[];
+  count: number;
+}): Promise<boolean> {
+  const names = p.exams.slice(0, 5).join(", ") + (p.exams.length > 5 ? ` +${p.exams.length - 5} more` : "");
+  const subject = `🏆 Today: ${p.count} All-India Live Test${p.count > 1 ? "s" : ""} — you asked us to remind you`;
+  const text = `The test hall is open.
+
+You registered for today's All-India Live Tests: ${names}.
+
+Free, and you see your All-India rank the moment you submit. Open now, closes 11 PM tonight.
+
+Enter the test hall: https://shishya.in/live-test
+
+One paper today tells you exactly where you stand against aspirants across India. Good luck!
+— Shishya
+
+(You asked for this reminder on shishya.in. Reply to stop.)`;
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-weight:700;font-size:18px;">🏆 The test hall is open</div>
+    <p style="font-size:14px;line-height:1.6;margin:14px 0;">
+      You asked us to remind you — today&apos;s <strong>All-India Live Test${p.count > 1 ? "s" : ""}</strong>:
+      ${names}.
+    </p>
+    <p style="font-size:13px;line-height:1.6;margin:0 0 14px;color:#334155;">
+      Free, and your <strong>All-India rank</strong> appears the moment you submit.
+      Open now &middot; closes 11 PM tonight.
+    </p>
+    <a href="https://shishya.in/live-test"
+       style="display:inline-block;background:#dc2626;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">
+      Enter the test hall →
+    </a>
+    <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
+      One paper today tells you exactly where you stand against aspirants across India. — Shishya
+    </p>
+    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">You asked for this reminder on shishya.in. Reply to stop.</p>
+  </div>
+</body></html>`;
+  return sendEmail({ to: p.to, subject, html, text, tag: "live-test-reminder" });
+}

@@ -53,8 +53,9 @@ import { loadWallOfGrinders, type GrinderEntry } from "@/lib/wall-of-grinders";
 import { InspirationCarousel, type InspoVideo } from "@/components/InspirationCarousel";
 import { VacancyExplorerSidebar, VacancyExplorerPanel } from "@/components/VacancyExplorer";
 import { loadVacancyExplorer, type VacancyExplorer } from "@/lib/vacancy-explorer";
-import { loadTodaysLiveTests } from "@/lib/live-test-today";
+import { loadTodaysLiveTests, loadUpcomingSunday } from "@/lib/live-test-today";
 import { LiveTestTodayBanner } from "@/components/LiveTestTodayBanner";
+import { SundayLiveTestBanner } from "@/components/SundayLiveTestBanner";
 import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
 import { resolvePhase, istDayNumber } from "@/lib/exam-phase";
 import { EXAM_GOALS, findGoal, matchesGoal, type ExamGoal } from "@/data/exam-goals";
@@ -391,7 +392,7 @@ export default async function ExamsPage({
   const sp = await searchParams;
   const { t } = await getT();
 
-  const [signedIn, exams, calendar, vacancy, portalStats, inspirationVideos, grinders, liveToday] =
+  const [signedIn, exams, calendar, vacancy, portalStats, inspirationVideos, grinders, liveToday, sundayLive] =
     await Promise.all([
       auth().then((s) => Boolean(s?.user)).catch(() => false),
       loadExams(),
@@ -401,6 +402,7 @@ export default async function ExamsPage({
       loadInspirationVideos(),
       loadGrindersCached(),
       loadTodaysLiveTests(),
+      loadUpcomingSunday(),
     ]);
   const upcomingEvents = calendar.events;
   const vacancyStats = { totalLakh: vacancy.totalLakh, examCount: vacancy.examCount };
@@ -593,6 +595,8 @@ export default async function ExamsPage({
           {/* Live-test awareness — renders only when tests are open/opening
               today; visible on every step so no visitor misses test day. */}
           <LiveTestTodayBanner data={liveToday} />
+          {/* All week: what is coming this Sunday + reminder sign-up. */}
+          <SundayLiveTestBanner data={sundayLive} signedIn={signedIn} />
 
           {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} inspirationVideos={inspirationVideos} grinders={grinders} />}
           {step === "scope" && goal && (

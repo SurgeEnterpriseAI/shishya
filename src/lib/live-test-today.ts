@@ -112,3 +112,58 @@ export async function liveTestEmailNotice(now = new Date()): Promise<LiveTestNot
   }
   return null;
 }
+
+// ── The week-long "This Sunday" announcement ─────────────────────────
+// Live tests are created a full week ahead (daily idempotent cron), so
+// the whole week can advertise Sunday's papers and collect reminder
+// sign-ups. Cached 10 min; catch outside the cache (never cache a blip).
+
+export interface UpcomingSunday {
+  /** ISO date (YYYY-MM-DD) of the Sunday, IST. */
+  sundayDate: string;
+  /** Human label, e.g. "Sunday, 9 Aug". */
+  label: string;
+  /** Whole days until it opens (0 = today). */
+  daysAway: number;
+  exams: { code: string; short: string }[];
+}
+
+async function loadUpcomingRaw(): Promise<UpcomingSunday | null> {
+  const rows = await prisma.$queryRaw<{ code: string; short: string; opensAt: Date }[]>`
+    SELECT e.code, e."shortName" AS short, lt."opensAt"
+    FROM "LiveTest" lt JOIN "Exam" e ON e.id = lt."examId"
+    WHERE lt."opensAt" > NOW()
+    ORDER BY lt."opensAt" ASC, e."shortName" ASC
+  `;
+  if (rows.length === 0) return null;
+  const first = rows[0].opensAt;
+  // Only the nearest Sunday's batch (all share the same opensAt).
+  const batch = rows.filter((r) => r.opensAt.getTime() === first.getTime());
+  const ist = new Date(first.getTime() + 5.5 * 3600_000);
+  const sundayDate = ist.toISOString().slice(0, 10);
+  const label = ist.toLocaleDateString("en-IN", {
+    weekday: "long", day: "numeric", month: "short", timeZone: "UTC",
+  });
+  const daysAway = Math.max(
+    0,
+    Math.ceil((first.getTime() - Date.now()) / 86_400_000),
+  );
+  return {
+    sundayDate,
+    label,
+    daysAway,
+    exams: batch.map((r) => ({ code: r.code, short: r.short })),
+  };
+}
+
+const loadUpcomingCached = unstable_cache(loadUpcomingRaw, ["live-test-upcoming-v1"], {
+  revalidate: 600,
+});
+
+export async function loadUpcomingSunday(): Promise<UpcomingSunday | null> {
+  try {
+    return await loadUpcomingCached();
+  } catch {
+    return null;
+  }
+}

@@ -75,7 +75,7 @@
     },
     {
       "path": "/api/cron/live-test-create",
-      "schedule": "0 16 * * 6"
+      "schedule": "0 1 * * *"
     },
     {
       "path": "/api/cron/extract-results",
@@ -92,6 +92,10 @@
     {
       "path": "/api/cron/winback",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/live-test-remind",
+      "schedule": "45 0 * * 0"
     }
   ]
 }
