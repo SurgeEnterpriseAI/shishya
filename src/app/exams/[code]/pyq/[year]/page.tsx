@@ -187,6 +187,38 @@ export default async function PYQYearPage({
       { "@type": "ListItem", position: 3, name: `PYQ ${yearNum}`, item: pageUrl },
     ],
   };
+  // AEO: the questions searchers/AI engines actually ask about PYQs,
+  // answered contextually for THIS exam and year with the live count.
+  const pyqFaq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: `Where can I solve the ${exam.shortName} ${yearNum} question paper free online?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `You can solve the ${exam.shortName} ${yearNum} previous-year paper free at ${pageUrl} — ${questions.length} questions in the real paper's pattern, attempted as a timed mock with instant scoring, step-by-step solutions and topic-wise weak-area analysis. No fee and no coaching enrolment needed.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `Does the ${exam.shortName} ${yearNum} paper come with solutions and analysis?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `Yes — every question carries a worked solution, and on submitting you get an instant score with a topic-wise breakdown showing exactly which areas to revise. Wrong answers are auto-collected into a free Mistake Notebook for one-tap re-practice until cleared.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `Are previous year papers enough to crack ${exam.shortName}?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `Previous-year papers are the best signal of what the exam actually tests, but toppers pair them with targeted practice and a plan. On Shishya (all free): solve papers year-wise, drill weak topics via the Mistake Notebook, follow a day-by-day plan from the Personal Coach at https://shishya.in/coach, and sit the Sunday All-India Live Test at https://shishya.in/live-test to see where you stand nationally.`,
+        },
+      },
+    ],
+  };
 
   return (
     <main className="min-h-screen bg-ink-50/40">
@@ -197,6 +229,10 @@ export default async function PYQYearPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(pyqBreadcrumbs) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(pyqFaq) }}
       />
       <Header />
       <section className="container-prose py-10">

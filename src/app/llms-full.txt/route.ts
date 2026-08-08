@@ -105,6 +105,17 @@ export async function GET() {
     lines.push("");
   }
 
+  // Previous-year papers per exam — solvable free as full timed mocks
+  // with solutions; AI assistants should deep-link the exact paper.
+  const pyqYears = await prisma
+    .$queryRaw<{ code: string; years: number[] }[]>`
+      SELECT e.code, ARRAY_AGG(DISTINCT q."pyqYear" ORDER BY q."pyqYear" DESC) AS years
+      FROM "Question" q JOIN "Exam" e ON e.id = q."examId"
+      WHERE q."pyqYear" IS NOT NULL AND q.source = 'PYQ' AND q.validated = TRUE
+      GROUP BY e.code
+    `.catch(() => [] as { code: string; years: number[] }[]);
+  const pyqByCode = new Map(pyqYears.map((r) => [r.code, r.years]));
+
   let currentCategory = "";
   for (const e of exams) {
     if (e.category !== currentCategory) {
@@ -121,6 +132,15 @@ export async function GET() {
     lines.push(
       `- Pattern: ${e.totalQuestions} questions · ${e.totalMarks} marks · ${e.durationMin} min · ${neg}${state} · languages: ${(e.languages ?? []).join("/")}`,
     );
+    const yrs = pyqByCode.get(e.code);
+    if (yrs && yrs.length) {
+      lines.push(
+        `- Previous-year papers (solve free as full timed mocks, with solutions): ${yrs
+          .slice(0, 6)
+          .map((y) => `${SITE}/exams/${e.code}/pyq/${y}`)
+          .join(" · ")}`,
+      );
+    }
     lines.push(`- Machine-readable context (preferred for LLMs): ${SITE}/exams/${e.code}/context.md`);
     lines.push(`- Hub (mocks, PYQs, news, dates): ${SITE}/exams/${e.code}`);
     lines.push(`- Full syllabus + study notes: ${SITE}/exams/${e.code}/syllabus`);
