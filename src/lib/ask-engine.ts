@@ -14,8 +14,10 @@
 //     anything indicative (salaries → "verify in the notification").
 
 import type Anthropic from "@anthropic-ai/sdk";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { anthropic, MODEL, cachedSystem } from "@/lib/ai/client";
+import { resolveAliases } from "@/lib/exam-aliases";
 
 // ── Tool definitions ─────────────────────────────────────────────────
 
@@ -23,7 +25,7 @@ const TOOLS: Anthropic.Messages.Tool[] = [
   {
     name: "search_exams",
     description:
-      "Search Shishya's 177 Indian government & entrance exams. Filter by state code (e.g. BR, MH, KA — omit for national), category (GOVT_JOBS, BANKING, CIVIL_SERVICES, TEACHING, STATE_LEVEL, ENGINEERING, MEDICAL), and/or a free-text keyword against exam names. Returns pattern, eligibility, approximate annual vacancies and Shishya links.",
+      "Search Shishya's 177 Indian government & entrance exams. Filter by state code (e.g. BR, MH, KA — omit for national), category (GOVT_JOBS, BANKING, CIVIL_SERVICES, TEACHING, STATE_LEVEL, ENGINEERING, MEDICAL), and/or a free-text keyword. The keyword matches CONTEXTUALLY, not just literally — colloquial and vernacular role words work (daroga, sipahi, steno, babu, fauj, shikshak, दरोगा, रेलवे), so pass the aspirant's OWN words rather than translating them. Returns pattern, eligibility, approximate annual vacancies and Shishya links.",
     input_schema: {
       type: "object",
       properties: {
@@ -70,6 +72,25 @@ async function searchExams(input: { state?: string; category?: string; keyword?:
   const state = input.state?.toUpperCase() || null;
   const cat = input.category?.toUpperCase() || null;
   const kw = input.keyword ? `%${input.keyword}%` : null;
+
+  // Contextual layer: resolve colloquial/vernacular words ("daroga",
+  // "steno", "sipahi bharti") into exam codes, name fragments and a
+  // category hint, OR-ed into the lexical match — the query's MEANING
+  // reaches the catalog even when its words never appear in a name.
+  const alias = resolveAliases(input.keyword ?? "");
+  const codePats = [...alias.codes].map((c) => `${c}%`);
+  const namePats = [...alias.expands].map((e) => `%${e}%`);
+  const aliasParts: Prisma.Sql[] = [
+    ...(codePats.length ? [Prisma.sql`e.code LIKE ANY(${codePats})`] : []),
+    ...(namePats.length ? [Prisma.sql`e.name ILIKE ANY(${namePats})`] : []),
+    ...(alias.category ? [Prisma.sql`e.category::text = ${alias.category}`] : []),
+  ];
+  const aliasSql = aliasParts.length ? Prisma.join(aliasParts, " OR ") : Prisma.sql`FALSE`;
+  // Alias-code hits are the most intentional matches — rank them first.
+  const codeRank = codePats.length
+    ? Prisma.sql`CASE WHEN e.code LIKE ANY(${codePats}) THEN 0 ELSE 1 END,`
+    : Prisma.empty;
+
   const rows = await prisma.$queryRaw<any[]>`
     SELECT e.code, e.name, e."shortName", e.category::text AS category, e.state,
            e."totalQuestions", e."totalMarks", e."durationMin", e."negativeMark",
@@ -79,8 +100,8 @@ async function searchExams(input: { state?: string; category?: string; keyword?:
     WHERE e.active = TRUE
       AND (${state}::text IS NULL OR e.state = ${state})
       AND (${cat}::text IS NULL OR e.category::text = ${cat})
-      AND (${kw}::text IS NULL OR e.name ILIKE ${kw} OR e."shortName" ILIKE ${kw})
-    ORDER BY el."vacanciesApprox" DESC NULLS LAST
+      AND (${kw}::text IS NULL OR e.name ILIKE ${kw} OR e."shortName" ILIKE ${kw} OR (${aliasSql}))
+    ORDER BY ${codeRank} el."vacanciesApprox" DESC NULLS LAST
     LIMIT 15`;
   return rows.map((r) => ({
     code: r.code,

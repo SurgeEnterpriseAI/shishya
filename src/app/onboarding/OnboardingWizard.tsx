@@ -18,6 +18,7 @@
 // the regular 3-step flow.
 
 import { useMemo, useState, useTransition } from "react";
+import { contextualExamFilter } from "@/lib/exam-aliases";
 import { useRouter } from "next/navigation";
 import { STAGE_OPTIONS, statesForWizard } from "@/lib/onboarding-options";
 
@@ -73,16 +74,11 @@ export function OnboardingWizard({
     return exams.filter((e) => set.has(e.code));
   }, [stageOption, exams]);
 
-  const filteredExams = useMemo(() => {
-    const q = examQuery.trim().toLowerCase();
-    if (!q) return exams;
-    return exams.filter(
-      (e) =>
-        e.shortName.toLowerCase().includes(q) ||
-        e.name.toLowerCase().includes(q) ||
-        e.code.toLowerCase().includes(q),
-    );
-  }, [examQuery, exams]);
+  const filteredExams = useMemo(
+    // Contextual: "daroga"/"steno"/"shikshak" resolve to the right exams.
+    () => contextualExamFilter(examQuery, exams),
+    [examQuery, exams],
+  );
 
   function toggleExam(code: string) {
     setPrepCodes((prev) =>

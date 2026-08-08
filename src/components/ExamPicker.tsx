@@ -10,6 +10,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { contextualExamFilter } from "@/lib/exam-aliases";
 
 export interface ExamCard {
   code: string;
@@ -113,14 +114,14 @@ export function ExamPicker({
     !!featured && featured.length > 0 && q.trim() === "" && tag === null && !pickedState && !bypassCurated;
 
   const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return exams.filter((e) => {
+    const scoped = exams.filter((e) => {
       if (tag && !(e.tags ?? []).includes(tag)) return false;
       if (inStateFlow && pickedState && e.state !== pickedState) return false;
-      if (!needle) return true;
-      const hay = `${e.name} ${e.shortName} ${e.code} ${e.category} ${e.state ?? ""}`.toLowerCase();
-      return hay.includes(needle);
+      return true;
     });
+    // Contextual search: "daroga"/"steno"/"sipahi" reach the right exams
+    // even though no exam name contains those words.
+    return contextualExamFilter(q, scoped);
   }, [exams, q, tag, inStateFlow, pickedState]);
 
   const filteredStates = useMemo(() => {

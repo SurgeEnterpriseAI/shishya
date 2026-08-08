@@ -23,6 +23,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiPost } from "@/lib/api";
+import { contextualExamFilter } from "@/lib/exam-aliases";
 
 interface ExamLite {
   code: string;
@@ -68,16 +69,9 @@ export function QuickStartDiagnostic({ exams, popularCodes, presetCode, labels }
   );
 
   const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return exams
-      .filter(
-        (e) =>
-          e.shortName.toLowerCase().includes(q) ||
-          e.name.toLowerCase().includes(q) ||
-          e.code.toLowerCase().includes(q),
-      )
-      .slice(0, 12);
+    if (!query.trim()) return [];
+    // Contextual: "daroga"/"steno"/"shikshak" resolve to the right exams.
+    return contextualExamFilter(query, exams).slice(0, 12);
   }, [query, exams]);
 
   async function launch(code: string) {
