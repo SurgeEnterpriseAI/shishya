@@ -6,6 +6,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { resolveAliases } from "@/lib/exam-aliases";
 
 export interface ResultRow {
   id: string;
@@ -47,6 +48,11 @@ export function ResultsBrowser({ rows }: { rows: ResultRow[] }) {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
+    // Contextual: "daroga result" resolves to police-SI exams even
+    // though no headline contains the word (see exam-aliases.ts).
+    const alias = needle ? resolveAliases(needle) : null;
+    const aliasCodes = alias ? [...alias.codes] : [];
+    const aliasWords = alias ? [...alias.expands].map((w) => w.toLowerCase()) : [];
     return rows.filter(
       (r) =>
         (!cat || r.category === cat) &&
@@ -54,7 +60,9 @@ export function ResultsBrowser({ rows }: { rows: ResultRow[] }) {
           r.short.toLowerCase().includes(needle) ||
           r.code.toLowerCase().includes(needle) ||
           r.headline.toLowerCase().includes(needle) ||
-          r.stage.toLowerCase().includes(needle)),
+          r.stage.toLowerCase().includes(needle) ||
+          aliasCodes.some((c) => r.code.startsWith(c)) ||
+          aliasWords.some((w) => `${r.short} ${r.headline}`.toLowerCase().includes(w))),
     );
   }, [rows, q, cat]);
 

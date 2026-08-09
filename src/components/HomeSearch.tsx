@@ -21,6 +21,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { ExamCard } from "./ExamPicker";
+import { contextualExamFilter } from "@/lib/exam-aliases";
 
 const MAX_RESULTS = 8;
 
@@ -30,14 +31,22 @@ export function HomeSearch({ exams }: { exams: ExamCard[] }) {
 
   const matches = useMemo(() => {
     if (!trimmed) return [];
-    return exams
-      .filter((e) => {
-        const hay = `${e.shortName} ${e.name} ${e.code}`.toLowerCase();
-        return hay.includes(trimmed);
+    // Contextual: "daroga"/"steno"/"sipahi" reach the right exams even
+    // though no exam name contains those words. Lexical hits keep their
+    // popularity order; pure-alias hits keep the filter's intent order.
+    const hits = contextualExamFilter(q, exams);
+    const lexical = new Set(
+      hits.filter((e) => `${e.shortName} ${e.name} ${e.code}`.toLowerCase().includes(trimmed)).map((e) => e.code),
+    );
+    return hits
+      .sort((a, b) => {
+        const al = lexical.has(a.code) ? 1 : 0;
+        const bl = lexical.has(b.code) ? 1 : 0;
+        if (al !== bl) return bl - al;
+        return (b.candidatesPerYear ?? 0) - (a.candidatesPerYear ?? 0);
       })
-      .sort((a, b) => (b.candidatesPerYear ?? 0) - (a.candidatesPerYear ?? 0))
       .slice(0, MAX_RESULTS);
-  }, [exams, trimmed]);
+  }, [exams, q, trimmed]);
 
   return (
     <div className="mx-auto mt-10 max-w-2xl">
