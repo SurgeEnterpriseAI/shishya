@@ -69,21 +69,22 @@ const TOOLS: Anthropic.Messages.Tool[] = [
 // ── Tool executors (raw SQL — grounded, no generation) ───────────────
 
 async function searchExams(input: { state?: string; category?: string; keyword?: string }) {
-  const state = input.state?.toUpperCase() || null;
+  // Contextual layer: resolve colloquial/vernacular words ("daroga",
+  // "steno", "sipahi bharti") into exam codes, name fragments, a
+  // category hint and a STATE ("punjab clerk", "ਪੰਜਾਬ", "meghalaya
+  // psc"), OR-ed into the lexical match — the query's MEANING reaches
+  // the catalog even when its words never appear in a name.
+  const alias = resolveAliases(input.keyword ?? "");
+  const state = input.state?.toUpperCase() || alias.state;
   const cat = input.category?.toUpperCase() || null;
   const kw = input.keyword ? `%${input.keyword}%` : null;
-
-  // Contextual layer: resolve colloquial/vernacular words ("daroga",
-  // "steno", "sipahi bharti") into exam codes, name fragments and a
-  // category hint, OR-ed into the lexical match — the query's MEANING
-  // reaches the catalog even when its words never appear in a name.
-  const alias = resolveAliases(input.keyword ?? "");
   const codePats = [...alias.codes].map((c) => `${c}%`);
   const namePats = [...alias.expands].map((e) => `%${e}%`);
   const aliasParts: Prisma.Sql[] = [
     ...(codePats.length ? [Prisma.sql`e.code LIKE ANY(${codePats})`] : []),
     ...(namePats.length ? [Prisma.sql`e.name ILIKE ANY(${namePats})`] : []),
     ...(alias.category ? [Prisma.sql`e.category::text = ${alias.category}`] : []),
+    ...(alias.state ? [Prisma.sql`e.state = ${alias.state}`] : []),
   ];
   const aliasSql = aliasParts.length ? Prisma.join(aliasParts, " OR ") : Prisma.sql`FALSE`;
   // Alias-code hits are the most intentional matches — rank them first.

@@ -62,7 +62,8 @@ export function ResultsBrowser({ rows }: { rows: ResultRow[] }) {
           r.headline.toLowerCase().includes(needle) ||
           r.stage.toLowerCase().includes(needle) ||
           aliasCodes.some((c) => r.code.startsWith(c)) ||
-          aliasWords.some((w) => `${r.short} ${r.headline}`.toLowerCase().includes(w))),
+          aliasWords.some((w) => `${r.short} ${r.headline}`.toLowerCase().includes(w)) ||
+          (alias?.state != null && r.code.startsWith(alias.state + "_"))),
     );
   }, [rows, q, cat]);
 
