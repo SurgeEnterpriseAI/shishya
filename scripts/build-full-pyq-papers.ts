@@ -96,40 +96,40 @@ async function main() {
     }
   }
 
-  // Assemble the full paper from ALL of this exam-year's PYQ bank,
-  // grouped by topic so sections read like the real paper.
-  const qs = await p.question.findMany({
-    where: { examId: exam.id, pyqYear: year, source: "PYQ" },
-    select: { id: true, topic: { select: { subject: { select: { name: true } } } } },
-    orderBy: { createdAt: "asc" },
+  // The /exams/[code]/pyq/[year] page manages its own mock (keyed by
+  // generatedBy = system:pyq:CODE:YEAR) and self-syncs questionIds on
+  // signed-in visits. We sync it NOW (same key, same id-asc order) so
+  // the full paper is live the moment generation finishes — and we
+  // never create a duplicate mock.
+  const finalQs = await p.question.findMany({
+    where: { examId: exam.id, pyqYear: year, source: "PYQ", validated: true },
+    select: { id: true },
+    orderBy: { id: "asc" },
   });
-  const bySubject = new Map<string, string[]>();
-  for (const q of qs) {
-    const s = q.topic.subject.name;
-    if (!bySubject.has(s)) bySubject.set(s, []);
-    bySubject.get(s)!.push(q.id);
-  }
-  const ordered = [...bySubject.values()].flat().slice(0, target);
-
-  const title = `${exam.shortName} ${year} — Full Paper (PYQ Pattern)`;
-  const existing = await p.mock.findFirst({ where: { examId: exam.id, title }, select: { id: true } });
-  if (existing) {
+  const generatedBy = `system:pyq:${exam.code}:${year}`;
+  const pageMock = await p.mock.findFirst({ where: { examId: exam.id, userId: null, generatedBy } });
+  if (pageMock) {
     await p.mock.update({
-      where: { id: existing.id },
-      data: { questionIds: ordered, config: { count: ordered.length, durationMin: exam.durationMin, pyq: { year, fullPaper: true } } },
-    });
-    console.log(`[paper] UPDATED mock ${existing.id}: ${title} (${ordered.length}q, ${exam.durationMin}min)`);
-  } else {
-    const mock = await p.mock.create({
+      where: { id: pageMock.id },
       data: {
-        userId: null, examId: exam.id, type: "FULL", title,
-        config: { count: ordered.length, durationMin: exam.durationMin, pyq: { year, fullPaper: true } },
-        questionIds: ordered, generatedBy: "system",
+        questionIds: finalQs.map((q) => q.id),
+        config: { source: "PYQ", year, durationMin: exam.durationMin, count: finalQs.length } as any,
       },
-      select: { id: true },
     });
-    console.log(`[paper] CREATED mock ${mock.id}: ${title} (${ordered.length}q, ${exam.durationMin}min)`);
+    console.log(`[paper] SYNCED page mock ${pageMock.id}: ${finalQs.length}q, ${exam.durationMin}min`);
+  } else {
+    await p.mock.create({
+      data: {
+        examId: exam.id, userId: null, type: "FULL",
+        title: `${exam.shortName} — ${year} (Previous Year)`,
+        questionIds: finalQs.map((q) => q.id),
+        generatedBy,
+        config: { source: "PYQ", year, durationMin: exam.durationMin, count: finalQs.length } as any,
+      },
+    });
+    console.log(`[paper] CREATED page mock: ${finalQs.length}q, ${exam.durationMin}min`);
   }
+  console.log(`[paper] DONE ${exam.shortName} ${year}: bank=${finalQs.length}/${target}`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); }).finally(() => p.$disconnect());
