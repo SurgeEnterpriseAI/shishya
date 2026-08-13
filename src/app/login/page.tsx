@@ -4,11 +4,20 @@
 // `src/middleware.ts`, NOT here. Server Components can't write cookies
 // in Next 15 — putting it here just silently dropped every capture.
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { getT } from "@/lib/i18n-server";
+
+// Belt-and-braces alongside the robots.txt disallow: a Disallow-ed URL
+// can still be indexed (link-only, no description) and would then be a
+// terrible SERP entry point. noindex/follow keeps it out for good while
+// letting crawlers walk the escape-hatch links below.
+export const metadata: Metadata = {
+  robots: { index: false, follow: true },
+};
 
 export default async function LoginPage({
   searchParams,
@@ -47,8 +56,29 @@ export default async function LoginPage({
             <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> Adaptive mocks that target your weak topics</li>
             <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> Ask Shishya — your AI tutor for every exam</li>
             <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> Real previous-year papers, by year &amp; topic</li>
-            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> 163 entrance &amp; government-job exams covered</li>
+            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> Every major entrance &amp; government-job exam covered</li>
           </ul>
+        </div>
+
+        {/* Escape hatch. Funnel data (13 Aug 2026): /login was the single
+            biggest one-page exit for first-time visitors — 53 of 148
+            bounces in 7 days. A cold arrival previously had exactly two
+            moves: sign in, or leave. These give them the platform itself
+            without an account, so a stranger can find out what Shishya
+            is before being asked to trust it. */}
+        <div className="mt-6 border-t border-ink-100 pt-4">
+          <p className="text-sm font-medium text-ink-800">First time here? Look around first — no account needed.</p>
+          <div className="mt-3 flex flex-col gap-2">
+            <Link href="/" className="rounded-lg border border-ink-200 px-3 py-2 text-sm font-medium text-ink-800 transition-colors hover:border-saffron-400 hover:bg-saffron-50">
+              Browse every exam &amp; free mock tests →
+            </Link>
+            <Link href="/ask" className="rounded-lg border border-ink-200 px-3 py-2 text-sm font-medium text-ink-800 transition-colors hover:border-saffron-400 hover:bg-saffron-50">
+              Ask Shishya a question — free, no sign-in →
+            </Link>
+            <Link href="/find-your-exam" className="rounded-lg border border-ink-200 px-3 py-2 text-sm font-medium text-ink-800 transition-colors hover:border-saffron-400 hover:bg-saffron-50">
+              Not sure which exam suits you? Find out →
+            </Link>
+          </div>
         </div>
 
         <p className="mt-6 text-xs text-ink-500">{t("login.smallprint")}</p>
