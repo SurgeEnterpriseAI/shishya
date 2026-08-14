@@ -7,6 +7,7 @@
 
 import Link from "next/link";
 import type { ComputedPlan } from "@/lib/coach-plan";
+import { CoachRebuildPing } from "@/components/CoachRebuildPing";
 
 const KIND_ICON: Record<string, string> = {
   read: "📖",
@@ -29,6 +30,7 @@ export function CoachPlanView({ plan, full = false }: { plan: ComputedPlan; full
 
   return (
     <div className={`rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5 ${full ? "mt-6" : "mt-3"}`}>
+      <CoachRebuildPing aiPlanned={plan.aiPlanned} />
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm font-bold text-ink-900">
           🎯 {plan.examShort} — Day {plan.dayNumber}
