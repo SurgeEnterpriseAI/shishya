@@ -154,16 +154,19 @@ export async function summarisePhase({
   phase: ExamPhase;
   snippets: ScrapedSnippet[];
 }): Promise<SummaryResult | null> {
-  // LIVE and REACTIONS are real-time, source-grounded phases: with no
-  // scraped student discussion there is nothing honest to write, so we
-  // bail and let the page show its empty state. CHECKLIST is the
-  // exception — a last-minute prep guide (revision plan, what to carry,
-  // exam-day timing, common final-24h mistakes) is evergreen exam
-  // knowledge that needs no chatter. So when there are no snippets we
-  // still generate the CHECKLIST from the model's knowledge of the
-  // exam's official pattern, and only bail for LIVE / REACTIONS.
+  // LIVE and REACTIONS are real-time, source-grounded phases. Reddit/
+  // RSS covers national exams well (UPSC, RRB, banking) but STATE-exam
+  // aspirants discuss on Telegram, YouTube and local-language news that
+  // our scrapers don't reach — for them the snippet pile is empty and
+  // we used to bail, leaving the "no data yet" placeholder exactly when
+  // students come checking cutoffs (found 14 Aug 2026: AP TET, GSSSB,
+  // Punjab PCS all placeholder). Now: with thin snippets (<3) we hand
+  // Claude the web_search tool to find reactions itself — coaching
+  // sites, local news, answer-key coverage. Same honesty rules apply;
+  // if the search genuinely finds nothing, no article is published.
+  // CHECKLIST needs no chatter at all — it's evergreen prep knowledge.
   const knowledgeOnly = snippets.length === 0;
-  if (knowledgeOnly && phase !== "CHECKLIST") return null;
+  const webGrounded = phase !== "CHECKLIST" && snippets.length < 3;
 
   // Trim + sort by score (high-engagement posts first) then recency.
   const top = snippets
@@ -181,7 +184,21 @@ ${body ? `Body: ${body}` : ""}`;
     })
     .join("\n\n");
 
-  const userPrompt = knowledgeOnly
+  const userPrompt = webGrounded
+    ? `Exam: ${examName} (${examShortName}, code: ${examCode})
+Phase: ${phase}
+Today: ${new Date().toISOString().slice(0, 10)}
+
+Our scrapers found ${top.length === 0 ? "NO" : `only ${top.length}`} student-discussion snippets for this exam${top.length ? ` (included below)` : ""}. Use the web_search tool (up to 6 searches) to find what students and educators are ACTUALLY saying about the just-held paper: difficulty reactions, section-wise reviews, expected-cutoff predictions, answer-key releases. Prioritise Indian coaching sites, local and regional-language news, and exam-specific portals. Search with the exam's real name and year, not just the acronym.
+
+Hard rules:
+- Every numerical claim (cutoffs, question counts) must come from a source you actually found — cite it in sourcesUsed with type "news".
+- Attribute difficulty claims to their sources; never state them as Shishya's own verdict.
+- Cutoffs are RANGES labelled as predictions, never official.
+- If after searching you find NOTHING substantive about this specific exam sitting, do NOT call publish_phase_article — end your turn without publishing instead of padding a hollow article.
+${top.length ? `\n────────────────────\n${inputBundle}\n────────────────────\n` : ""}
+Otherwise, publish via the publish_phase_article tool, following the ${phase} requirements in the system prompt strictly.`
+    : knowledgeOnly
     ? `Exam: ${examName} (${examShortName}, code: ${examCode})
 Phase: CHECKLIST
 Today: ${new Date().toISOString().slice(0, 10)}
@@ -210,14 +227,18 @@ ${inputBundle}
   try {
     const res = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 4096,
+      max_tokens: webGrounded ? 6000 : 4096,
       system: PHASE_SYSTEM[phase],
       messages: [{ role: "user", content: userPrompt }],
-      tools: [SUMMARY_TOOL],
-      tool_choice: { type: "tool", name: SUMMARY_TOOL.name },
+      // webGrounded: tool_choice must stay auto so the model can search
+      // BEFORE publishing (forcing the publish tool would skip search).
+      tools: webGrounded
+        ? ([{ type: "web_search_20250305", name: "web_search", max_uses: 6 }, SUMMARY_TOOL] as any)
+        : [SUMMARY_TOOL],
+      ...(webGrounded ? {} : { tool_choice: { type: "tool" as const, name: SUMMARY_TOOL.name } }),
     });
 
-    const toolUse = res.content.find((b) => b.type === "tool_use");
+    const toolUse = res.content.find((b) => b.type === "tool_use" && b.name === SUMMARY_TOOL.name);
     if (!toolUse || toolUse.type !== "tool_use") return null;
     const input = toolUse.input as Partial<SummaryResult>;
     if (!input.title || !input.bodyMarkdown || !Array.isArray(input.sourcesUsed)) return null;

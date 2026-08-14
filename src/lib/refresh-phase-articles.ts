@@ -55,7 +55,14 @@ async function findCandidates(examCodeOverride?: string): Promise<Candidate[]> {
     where: {
       date: { gte: from, lte: to },
       isExamDay: true,
-      archivedAt: null,
+      // Archived rows must still count on the PAST side: date rows get
+      // archived when the exam concludes, which is exactly when the
+      // REACTIONS window starts. Excluding them silently killed the
+      // post-exam verdict for every concluded exam (found 14 Aug 2026:
+      // GSSSB / UPPSC PCS / Punjab PCS all archived, no verdicts).
+      // Future-side archived rows stay excluded — those are superseded
+      // or moved dates and must not drive checklists.
+      OR: [{ archivedAt: null }, { date: { lte: now } }],
       exam: { active: true, ...(examCodeOverride ? { code: examCodeOverride } : {}) },
     },
     include: { exam: { select: { id: true, code: true, shortName: true, name: true } } },
@@ -169,35 +176,34 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
     }
 
     const snippets = await scrapeForExam(c.examShort, c.examCode);
-    if (snippets.length === 0) {
+    if (snippets.length === 0 && c.phase === "CHECKLIST") {
       // CHECKLIST is evergreen prep content — generate it from exam
       // knowledge even with no scraped chatter, so every exam entering
       // its T-7 window gets a real last-minute guide instead of a chip
       // that dead-ends on an empty page. But only generate ONCE: if an
       // active checklist already exists there is no new signal to fold
       // in, so leave it rather than archiving + rewriting it every 2h.
-      const knowledgeChecklist = c.phase === "CHECKLIST" && !existing;
-      if (!knowledgeChecklist) {
+      if (existing) {
         report.skipped.push({
           examCode: c.examCode,
           phase: c.phase,
-          reason:
-            c.phase === "CHECKLIST"
-              ? "checklist already present (evergreen)"
-              : "no snippets",
+          reason: "checklist already present (evergreen)",
         });
         // Still bump lastScrapedAt so we don't hammer dead sources.
-        if (existing) {
-          await prisma.examPhaseArticle.update({
-            where: { id: existing.id },
-            data: { lastScrapedAt: new Date() },
-          });
-        }
+        await prisma.examPhaseArticle.update({
+          where: { id: existing.id },
+          data: { lastScrapedAt: new Date() },
+        });
         continue;
       }
       // fall through: knowledge-only CHECKLIST generation (summarisePhase
       // handles the empty-snippets case for CHECKLIST).
     }
+    // LIVE/REACTIONS with thin or zero snippets fall through too: the
+    // summariser web-searches its own sources for exactly these (state
+    // exams live on Telegram/YouTube/local news our scrapers don't
+    // reach) and publishes nothing if the web genuinely has nothing —
+    // the 90-min spacing above bounds the retry cost.
 
     let summary;
     try {
