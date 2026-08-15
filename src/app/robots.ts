@@ -41,6 +41,11 @@ export default function robots(): MetadataRoute.Robots {
     "/login",
     "/logout",
     "/onboarding",
+    // Mentor desk (auth-gated, per-student data). NOTE: "/mentor/" +
+    // "/mentor$" — a bare "/mentor" prefix rule would also block the
+    // PUBLIC /mentors marketing page.
+    "/mentor/",
+    "/mentor$",
     // Avoid indexing query-string variants of pages we surface
     // canonically (filtered exam browse, scholarship browser).
     "/exams/browse?*",
