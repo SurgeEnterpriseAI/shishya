@@ -9,7 +9,9 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { buildStudent360 } from "@/lib/student-360";
+import { buildWeekCompare } from "@/lib/student-week-compare";
 import { Student360View } from "@/components/Student360View";
+import { WeekCompareView } from "@/components/WeekCompareView";
 import { MentorRequestCard } from "@/components/MentorRequestCard";
 
 export const metadata: Metadata = {
@@ -23,7 +25,7 @@ export default async function ReportPage() {
   const userId = session?.user?.id;
   if (!userId) redirect("/login?callbackUrl=/me/report");
 
-  const p = await buildStudent360(userId);
+  const [p, wk] = await Promise.all([buildStudent360(userId), buildWeekCompare(userId)]);
   if (!p) redirect("/dashboard");
 
   const reqRows = await prisma.$queryRaw<any[]>`
@@ -46,7 +48,24 @@ export default async function ReportPage() {
       <div className="mb-4 flex items-center justify-between">
         <Link href="/dashboard" className="text-sm text-ink-500 hover:text-ink-700">← Dashboard</Link>
       </div>
+      {/* Take-it-with-you row: the dated report and today's personalised
+          study pack, both saveable as PDF. Quiet buttons, no popups. */}
+      <div className="mb-5 flex flex-wrap gap-2">
+        <Link href="/me/report/print"
+          className="rounded-lg border border-ink-200 px-3 py-2 text-sm font-medium text-ink-800 hover:border-saffron-400 hover:bg-saffron-50">
+          📥 Download today&apos;s status report
+        </Link>
+        <Link href="/me/report/pack"
+          className="rounded-lg border border-saffron-300 bg-saffron-50/60 px-3 py-2 text-sm font-medium text-ink-800 hover:border-saffron-400">
+          📚 Today&apos;s study pack — built for your weak areas
+        </Link>
+      </div>
+
       <Student360View p={p} viewer="self" />
+
+      <div className="mt-6 rounded-lg border border-ink-100 bg-white p-4">
+        <WeekCompareView wk={wk} />
+      </div>
 
       {/* No coach plan yet → explain, gently, how this report gets
           richer: a plan + daily grind = trend lines, mastery movement,
