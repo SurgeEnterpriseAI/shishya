@@ -544,7 +544,15 @@ async function renderDashboard() {
         {/* Personal Coach plan (when committed) supersedes the Mission
             card — same slot, richer promise: today's rebuilt plan. */}
         {coachPlan ? (
-          <CoachPlanView plan={coachPlan} />
+          <>
+            <CoachPlanView plan={coachPlan} />
+            <Link
+              href="/me/report"
+              className="mt-2 block text-right text-xs font-medium text-saffron-700 hover:text-saffron-800"
+            >
+              📊 See your full preparation report — strengths, weak areas, and a mentor to talk them through →
+            </Link>
+          </>
         ) : (
           <>
             {mission && <MissionCard {...mission} />}

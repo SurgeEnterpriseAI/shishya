@@ -2141,6 +2141,28 @@ model BatchAssignment {
 // The mentor network: cleared-exam seniors who guide current aspirants.
 // Applications come from /mentors (open to signed-in users AND guests);
 // the founder approves each one manually — trust is the product.
+// A "talk to a mentor" request from the Student-360 report. The consent
+// flag is the privacy gate: the mentor screen may show this student's
+// behavioral 360 ONLY when consent = true (one-tap, student's choice).
+// Lifecycle: NEW → TAKEN (mentor claimed) → DONE / CLOSED.
+model MentorSessionRequest {
+  id          String    @id @default(cuid())
+  userId      String
+  examCode    String?
+  note        String?   @db.Text // what the aspirant wants to discuss
+  consent     Boolean   @default(false)
+  status      String    @default("NEW") // NEW | TAKEN | DONE | CLOSED
+  mentorId    String? // MentorApplication.id of the mentor who took it
+  meetUrl     String? // Jitsi room both sides join
+  sessionNote String?   @db.Text // mentor's next-steps note after the call
+  takenAt     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId])
+}
+
 model MentorApplication {
   id          String   @id @default(cuid())
   userId      String? // signed-in applicant, if any
