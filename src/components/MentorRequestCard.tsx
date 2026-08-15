@@ -24,17 +24,19 @@ export function MentorRequestCard({ examCode, existing }: { examCode: string | n
     return (
       <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5">
         <p className="text-sm font-bold text-ink-900">
-          🤝 Your mentor{existing.mentorName ? ` — ${existing.mentorName}` : ""} accepted!
+          🎉 Your mentor{existing.mentorName ? ` — ${existing.mentorName}` : ""} accepted!
         </p>
         <p className="mt-1 text-sm text-ink-700">
-          Since this isn&apos;t your first session, there&apos;s a small fee that honours your
-          mentor&apos;s time: <b>₹9, inclusive of GST</b>. Shishya itself stays free, always. The
-          session room unlocks the moment payment completes.
+          One small step: <b>₹9 (incl. GST)</b> — and to be clear about what it&apos;s for:{" "}
+          <b>this is only for your mentor&apos;s personal time</b>, a real person who cleared your
+          exam sitting down just for you. Everything else on Shishya — every mock, note, plan and
+          report — is free and stays free forever. Less than a cup of chai, for a conversation that
+          can reshape your preparation.
         </p>
         {existing.paymentLink && (
           <a href={existing.paymentLink} target="_blank" rel="noopener noreferrer"
             className="mt-3 inline-block rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
-            Pay ₹9 &amp; unlock the session room →
+            Honour your mentor&apos;s time — ₹9 &amp; unlock the room →
           </a>
         )}
         <p className="mt-2 text-xs text-ink-500">
@@ -82,6 +84,10 @@ export function MentorRequestCard({ examCode, existing }: { examCode: string | n
       )}
       <p className="mt-1 text-sm text-ink-600">
         A real person who has cleared this exam looks at this report with you and helps you decide the next steps.
+      </p>
+      <p className="mt-1 text-xs text-ink-500">
+        Your first session is free. Later sessions are ₹9 — only for the mentor&apos;s time, never
+        for the platform: everything you use on Shishya stays free forever.
       </p>
       <textarea
         value={note}

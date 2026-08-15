@@ -31,7 +31,7 @@ export async function createMentorFeeLink(opts: {
       body: JSON.stringify({
         amount: MENTOR_SESSION_FEE_PAISE,
         currency: "INR",
-        description: "Shishya mentor session — ₹9 (incl. GST). Honours your mentor's time; the platform stays free.",
+        description: "₹9 (incl. GST) — only for your mentor's personal time. Everything on Shishya — mocks, notes, plans, reports — is free, always.",
         customer: {
           name: opts.studentName ?? undefined,
           email: opts.studentEmail ?? undefined,
