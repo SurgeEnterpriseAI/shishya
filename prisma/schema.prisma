@@ -2156,6 +2156,13 @@ model MentorSessionRequest {
   meetUrl     String? // Jitsi room both sides join
   sessionNote String?   @db.Text // mentor's next-steps note after the call
   takenAt     DateTime?
+  // Mentor-session fee (founder policy 16 Aug 2026): first session free
+  // forever; from the second, ₹9 INCLUSIVE of 18% GST (SAC 999293).
+  // Fee is asked only AFTER a mentor accepts; the room unlocks on payment.
+  feeDue        Boolean   @default(false)
+  paymentLinkId String? // Razorpay plink id
+  paymentLink   String? // short_url the student pays at
+  paidAt        DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 

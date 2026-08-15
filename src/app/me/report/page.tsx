@@ -30,17 +30,36 @@ export default async function ReportPage() {
   if (!p) redirect("/dashboard");
 
   const reqRows = await prisma.$queryRaw<any[]>`
-    SELECT r.status, r."meetUrl", r."sessionNote", ma.name AS mentor_name
+    SELECT r.id, r.status, r."meetUrl", r."sessionNote", r."feeDue", r."paymentLinkId",
+           r."paymentLink", r."paidAt", ma.name AS mentor_name
     FROM "MentorSessionRequest" r
     LEFT JOIN "MentorApplication" ma ON ma.id = r."mentorId"
     WHERE r."userId" = ${userId}
     ORDER BY r."createdAt" DESC LIMIT 1`;
-  const existing = reqRows[0]
+  const row = reqRows[0];
+
+  // Payment reconciliation on load (no webhook needed): if a fee is due
+  // and unpaid, ask Razorpay whether the link was paid — the student
+  // lands back here via the payment callback, so this is the moment the
+  // room unlocks.
+  if (row && row.feeDue && !row.paidAt && row.paymentLinkId) {
+    const { isLinkPaid } = await import("@/lib/razorpay");
+    if (await isLinkPaid(row.paymentLinkId)) {
+      await prisma.$executeRaw`
+        UPDATE "MentorSessionRequest" SET "paidAt" = NOW(), "updatedAt" = NOW()
+        WHERE id = ${row.id} AND "paidAt" IS NULL`;
+      row.paidAt = new Date();
+    }
+  }
+
+  const existing = row
     ? {
-        status: reqRows[0].status,
-        meetUrl: reqRows[0].meetUrl ?? null,
-        mentorName: reqRows[0].mentor_name ?? null,
-        sessionNote: reqRows[0].sessionNote ?? null,
+        status: row.status,
+        meetUrl: row.meetUrl ?? null,
+        mentorName: row.mentor_name ?? null,
+        sessionNote: row.sessionNote ?? null,
+        awaitingPayment: Boolean(row.feeDue && !row.paidAt && row.status === "TAKEN"),
+        paymentLink: row.paymentLink ?? null,
       }
     : null;
 

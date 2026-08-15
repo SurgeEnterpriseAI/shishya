@@ -11,12 +11,38 @@ interface Existing {
   meetUrl: string | null;
   mentorName: string | null;
   sessionNote: string | null;
+  awaitingPayment?: boolean;
+  paymentLink?: string | null;
 }
 
 export function MentorRequestCard({ examCode, existing }: { examCode: string | null; existing: Existing | null }) {
   const [note, setNote] = useState("");
   const [consent, setConsent] = useState(false);
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  if (existing?.status === "TAKEN" && existing.awaitingPayment) {
+    return (
+      <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5">
+        <p className="text-sm font-bold text-ink-900">
+          🤝 Your mentor{existing.mentorName ? ` — ${existing.mentorName}` : ""} accepted!
+        </p>
+        <p className="mt-1 text-sm text-ink-700">
+          Since this isn&apos;t your first session, there&apos;s a small fee that honours your
+          mentor&apos;s time: <b>₹9, inclusive of GST</b>. Shishya itself stays free, always. The
+          session room unlocks the moment payment completes.
+        </p>
+        {existing.paymentLink && (
+          <a href={existing.paymentLink} target="_blank" rel="noopener noreferrer"
+            className="mt-3 inline-block rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
+            Pay ₹9 &amp; unlock the session room →
+          </a>
+        )}
+        <p className="mt-2 text-xs text-ink-500">
+          Paid already? Refresh this page — the room appears automatically.
+        </p>
+      </div>
+    );
+  }
 
   if (existing?.status === "TAKEN") {
     return (

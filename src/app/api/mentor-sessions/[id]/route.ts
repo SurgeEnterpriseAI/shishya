@@ -10,6 +10,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { sendEmail } from "@/lib/email";
+import { createMentorFeeLink } from "@/lib/razorpay";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,25 +43,57 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (body?.action === "take") {
     if (reqRow.status !== "NEW") return Response.json({ ok: false, error: "already-taken" }, { status: 409 });
     const meetUrl = `https://meet.jit.si/ShishyaMentor-${id.slice(0, 12)}`;
+
+    // Founder policy: first session free forever; from the second, ₹9
+    // incl. GST — asked only now that a mentor has actually accepted.
+    const prior = await prisma.$queryRaw<any[]>`
+      SELECT COUNT(*)::int AS n FROM "MentorSessionRequest"
+      WHERE "userId" = ${reqRow.userId} AND status = 'DONE' AND id <> ${id}`;
+    let feeDue = (prior[0]?.n ?? 0) >= 1;
+    let payLink: { id: string; shortUrl: string } | null = null;
+    if (feeDue) {
+      payLink = await createMentorFeeLink({
+        requestId: id,
+        studentName: reqRow.student_name ?? null,
+        studentEmail: reqRow.student_email ?? null,
+      });
+      // Gateway unavailable/misconfigured → never block a mentor's
+      // accept over ₹9: fall back to free.
+      if (!payLink) feeDue = false;
+    }
+
     await prisma.$executeRaw`
       UPDATE "MentorSessionRequest"
       SET status = 'TAKEN', "mentorId" = ${mentor.id}, "meetUrl" = ${meetUrl},
+          "feeDue" = ${feeDue}, "paymentLinkId" = ${payLink?.id ?? null},
+          "paymentLink" = ${payLink?.shortUrl ?? null},
           "takenAt" = NOW(), "updatedAt" = NOW()
       WHERE id = ${id} AND status = 'NEW'`;
+
     if (reqRow.student_email) {
-      await sendEmail({
-        to: reqRow.student_email,
-        subject: `Your Shishya mentor is ready — ${mentor.name}`,
-        html: `<p>Namaste ${reqRow.student_name ?? ""},</p>
+      const html = feeDue && payLink
+        ? `<p>Namaste ${reqRow.student_name ?? ""},</p>
+<p><b>${mentor.name}</b> — who has cleared this path before — has accepted your session request and can see your preparation report.</p>
+<p>Since this is not your first session, there's a small fee that honours your mentor's time: <b>₹9 (inclusive of GST)</b>. The platform itself stays free, always.</p>
+<p><a href="${payLink.shortUrl}">Pay ₹9 and unlock your session room →</a></p>
+<p>The room link appears on your report page the moment payment completes: https://shishya.in/me/report</p>
+<p>— Shishya</p>`
+        : `<p>Namaste ${reqRow.student_name ?? ""},</p>
 <p><b>${mentor.name}</b> — who has cleared this path before — has picked up your request and can see your preparation report.</p>
 <p>Join your session room here (works in any browser, no install):<br/>
 <a href="${meetUrl}">${meetUrl}</a></p>
 <p>Also visible any time on your report page: https://shishya.in/me/report</p>
-<p>— Shishya</p>`,
+<p>— Shishya</p>`;
+      await sendEmail({
+        to: reqRow.student_email,
+        subject: feeDue
+          ? `Your Shishya mentor accepted — one step to unlock the room`
+          : `Your Shishya mentor is ready — ${mentor.name}`,
+        html,
         tag: "mentor-session",
       }).catch(() => {});
     }
-    return Response.json({ ok: true, meetUrl });
+    return Response.json({ ok: true, meetUrl, feeDue });
   }
 
   if (body?.action === "done") {
