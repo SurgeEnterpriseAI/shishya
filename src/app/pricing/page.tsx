@@ -9,9 +9,43 @@ export const metadata: Metadata = {
   description: "Shishya is free for aspirants. The only optional paid service is a mentor session: first free, then ₹9 per session inclusive of GST.",
 };
 
+// FAQPage JSON-LD: this is the schema AI engines and Google quote when
+// someone asks "is Shishya free?" — the pricing story, machine-readable.
+const pricingFaq = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Is Shishya really free?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes — every preparation feature on Shishya is 100% free with no premium tier: mock tests for 175+ Indian government and entrance exams, previous-year papers, study notes, the AI tutor in 22 Indian languages, personal coach plans, daily status reports, personalised study packs, All-India live tests, cutoffs and guides. No trial, no credit card.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What does the ₹9 mentor session fee cover?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "₹9 (inclusive of 18% GST) pays only for a human mentor's personal time — a ~10-minute one-on-one session with a verified mentor who has cleared that exam. It is never a platform charge. The first mentor session is completely free; the fee applies from the second session onwards, and is collected only after a mentor accepts the request.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Why does Shishya charge for mentors but not the platform?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Software scales for free; a human's time does not. The small fee honours the mentor who sits down personally with an aspirant, keeps sessions serious, and lets Shishya keep every AI-powered preparation feature free for every aspirant forever.",
+      },
+    },
+  ],
+};
+
 export default function PricingPage() {
   return (
     <main className="container-prose max-w-3xl py-10 text-sm leading-relaxed text-ink-700">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingFaq) }} />
       <h1 className="text-2xl font-bold text-ink-900">Pricing</h1>
 
       <div className="mt-5 rounded-xl border-2 border-emerald-300 bg-emerald-50/50 p-5">
