@@ -31,6 +31,7 @@ import { loadTodaysLiveTests, loadUpcomingSunday } from "@/lib/live-test-today";
 import { LiveTestTodayBanner } from "@/components/LiveTestTodayBanner";
 import { SundayLiveTestBanner } from "@/components/SundayLiveTestBanner";
 import { EducatorCard } from "@/components/EducatorCard";
+import { FlashHint } from "@/components/FlashHint";
 
 export default async function DashboardPage() {
   try {
@@ -552,6 +553,10 @@ async function renderDashboard() {
             >
               📊 See your full preparation report — strengths, weak areas, and a mentor to talk them through →
             </Link>
+            <FlashHint
+              id="report-doorway"
+              text="New: your daily report & study pack live behind this link — where you stand, and a PDF pack built from your weak topics, fresh every day."
+            />
           </>
         ) : (
           <>

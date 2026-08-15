@@ -13,6 +13,7 @@ import { buildWeekCompare } from "@/lib/student-week-compare";
 import { Student360View } from "@/components/Student360View";
 import { WeekCompareView } from "@/components/WeekCompareView";
 import { MentorRequestCard } from "@/components/MentorRequestCard";
+import { FlashHint } from "@/components/FlashHint";
 
 export const metadata: Metadata = {
   title: "My preparation report — Shishya",
@@ -50,7 +51,11 @@ export default async function ReportPage() {
       </div>
       {/* Take-it-with-you row: the dated report and today's personalised
           study pack, both saveable as PDF. Quiet buttons, no popups. */}
-      <div className="mb-5 flex flex-wrap gap-2">
+      <FlashHint
+        id="report-downloads"
+        text="These two regenerate every day around your progress — the pack is built from YOUR weak topics. Save them as PDF and study offline."
+      />
+      <div className="mb-5 mt-2 flex flex-wrap gap-2">
         <Link href="/me/report/print"
           className="rounded-lg border border-ink-200 px-3 py-2 text-sm font-medium text-ink-800 hover:border-saffron-400 hover:bg-saffron-50">
           📥 Download today&apos;s status report

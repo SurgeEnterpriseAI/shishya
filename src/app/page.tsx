@@ -48,6 +48,7 @@ import { UpcomingExamsSidebar, type UpcomingEvent, type CalendarBucket } from "@
 import { VacancyFinderCard } from "@/components/VacancyFinderCard";
 import { PortalStatsBand } from "@/components/PortalStatsBand";
 import { WallOfGrinders } from "@/components/WallOfGrinders";
+import { PersonalSystemStrip } from "@/components/PersonalSystemStrip";
 import { AskSearchBar } from "@/components/AskSearchBar";
 import { loadWallOfGrinders, type GrinderEntry } from "@/lib/wall-of-grinders";
 import { InspirationCarousel, type InspoVideo } from "@/components/InspirationCarousel";
@@ -938,6 +939,8 @@ function StepGoals({
             hardest right before the ask. Six entries, not ten, so the
             search box stays within reach on mobile. */}
         <WallOfGrinders entries={grinders.slice(0, 6)} />
+
+        <PersonalSystemStrip />
       </div>
 
       {/* Section header for the three ways to choose an exam that
