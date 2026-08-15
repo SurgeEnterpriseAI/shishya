@@ -13,11 +13,13 @@ export function SiteFooter() {
           © {new Date().getFullYear()} Surge Software Solutions Pvt Ltd · Shishya is free for
           aspirants, always.
         </p>
-        <p className="flex gap-4">
+        <p className="flex flex-wrap gap-4">
+          <Link href="/about" className="hover:text-ink-800">About</Link>
+          <Link href="/pricing" className="hover:text-ink-800">Pricing</Link>
           <Link href="/terms" className="hover:text-ink-800">Terms</Link>
           <Link href="/privacy" className="hover:text-ink-800">Privacy</Link>
           <Link href="/refunds" className="hover:text-ink-800">Refunds</Link>
-          <a href="mailto:corp@surgesoftware.co.in" className="hover:text-ink-800">Contact</a>
+          <Link href="/contact" className="hover:text-ink-800">Contact</Link>
         </p>
       </div>
     </footer>
