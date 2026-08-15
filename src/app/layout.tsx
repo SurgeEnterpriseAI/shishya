@@ -3,6 +3,7 @@ import { Inter, Noto_Sans_Devanagari } from "next/font/google";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 import { SignupNudge } from "@/components/SignupNudge";
+import { SiteFooter } from "@/components/SiteFooter";
 import { Suspense } from "react";
 import "./globals.css";
 
@@ -161,6 +162,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
         {children}
+        <SiteFooter />
         <FeedbackWidget />
         {/* Engagement-triggered signup nudge for anonymous visitors —
             5 active minutes + 3 pageviews, hard courtesy caps inside. */}
