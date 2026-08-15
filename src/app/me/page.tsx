@@ -236,6 +236,10 @@ export default async function MeProfilePage() {
           )}
         </p>
         <p className="mt-2 text-xs">
+          <Link href="/me/report" className="text-saffron-700 underline">
+            📊 My preparation report →
+          </Link>
+          {" · "}
           <Link href="/me/credentials" className="text-saffron-700 underline">
             Manage credentials →
           </Link>

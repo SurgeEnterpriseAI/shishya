@@ -47,6 +47,25 @@ export default async function ReportPage() {
         <Link href="/dashboard" className="text-sm text-ink-500 hover:text-ink-700">← Dashboard</Link>
       </div>
       <Student360View p={p} viewer="self" />
+
+      {/* No coach plan yet → explain, gently, how this report gets
+          richer: a plan + daily grind = trend lines, mastery movement,
+          a day-by-day path. Never a popup, never guilt — an invitation. */}
+      {!p.plan && (
+        <Link
+          href="/coach"
+          className="mt-6 block rounded-xl border border-saffron-300 bg-saffron-50/60 p-4 transition-colors hover:border-saffron-400"
+        >
+          <p className="text-sm text-ink-800">
+            🎯 This report grows with you. Take a{" "}
+            <span className="font-semibold">free day-by-day coach plan</span> and practice a little
+            daily — your score trend, subject mastery and study rhythm fill in, and every morning
+            the plan re-arranges around the days you have left.
+          </p>
+          <p className="mt-1 text-right text-sm font-bold text-saffron-700">Build my plan →</p>
+        </Link>
+      )}
+
       <div className="mt-6">
         <MentorRequestCard examCode={p.exam?.code ?? null} existing={existing} />
       </div>

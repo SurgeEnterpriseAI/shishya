@@ -177,6 +177,14 @@ export default async function ResultsPage({
         </p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900">{attempt.mock.title}</h1>
 
+        {/* Quiet doorway to the Student-360 — post-mock is the moment a
+            student wonders "where am I overall?". One line, no popup. */}
+        <p className="mt-2 text-xs">
+          <Link href="/me/report" className="font-medium text-saffron-700 hover:text-saffron-800">
+            📊 This test just updated your preparation report — see the full picture →
+          </Link>
+        </p>
+
         {/* Soft landing for rough scores. 42% of submitted mocks land under
             30% — the silent-churn moment where a student decides the platform
             "makes them feel dumb". We never hide the honest score (core

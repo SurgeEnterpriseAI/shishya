@@ -567,6 +567,12 @@ async function renderDashboard() {
               </span>
               <span className="shrink-0 text-sm font-bold text-saffron-700">Build it →</span>
             </Link>
+            <Link
+              href="/me/report"
+              className="mt-2 block text-right text-xs font-medium text-saffron-700 hover:text-saffron-800"
+            >
+              📊 See your full preparation report — everything Shishya has learned about your prep →
+            </Link>
           </>
         )}
 
