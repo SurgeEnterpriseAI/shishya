@@ -65,7 +65,7 @@ export default function TermsPage() {
       <h2 className="mt-6 text-base font-bold text-ink-900">7. Changes and governing law</h2>
       <p className="mt-2">
         We may update these terms; material changes will be noted on this page with a new date.
-        These terms are governed by the laws of India; courts at Hyderabad, Telangana have
+        These terms are governed by the laws of India; courts at Bengaluru, Karnataka have
         jurisdiction.
       </p>
     </main>
