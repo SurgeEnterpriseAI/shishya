@@ -10,6 +10,7 @@ import { prisma } from "@/lib/db/prisma";
 import { buildStudent360 } from "@/lib/student-360";
 import { Student360View } from "@/components/Student360View";
 import { TakeButton, DoneForm } from "@/components/MentorActions";
+import { SessionThread, type ThreadMsg } from "@/components/SessionThread";
 
 export const metadata: Metadata = { title: "Student — Mentor desk", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -37,6 +38,11 @@ export default async function MentorStudent({ params }: { params: Promise<{ id: 
   const p = await buildStudent360(r.userId);
   if (!p) notFound();
 
+  const msgs = await prisma.$queryRaw<any[]>`
+    SELECT "from", body, to_char("createdAt" + interval '5.5 hours', 'DD Mon HH24:MI') AS at
+    FROM "MentorSessionMessage" WHERE "requestId" = ${r.id} ORDER BY "createdAt" ASC LIMIT 100`;
+  const thread: ThreadMsg[] = msgs.map((m) => ({ from: m.from, body: m.body, at: m.at }));
+
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <Link href="/mentor" className="text-sm text-ink-500 hover:text-ink-700">← Mentor desk</Link>
@@ -52,8 +58,12 @@ export default async function MentorStudent({ params }: { params: Promise<{ id: 
               Session room (shared with the student by email):{" "}
               <a className="font-semibold text-saffron-700 underline" href={r.meetUrl} target="_blank" rel="noopener noreferrer">{r.meetUrl}</a>
             </p>
+            <SessionThread requestId={r.id} messages={thread} viewer="MENTOR" meetUrl={r.meetUrl} />
             <DoneForm id={r.id} />
           </div>
+        )}
+        {r.status === "NEW" && thread.length > 0 && (
+          <SessionThread requestId={r.id} messages={thread} viewer="MENTOR" meetUrl={null} />
         )}
         {r.status === "DONE" && r.sessionNote && (
           <p className="mt-2 text-sm text-ink-700"><span className="font-semibold">Next steps sent:</span> {r.sessionNote}</p>

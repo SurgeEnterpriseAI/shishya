@@ -13,6 +13,7 @@ import { buildWeekCompare } from "@/lib/student-week-compare";
 import { Student360View } from "@/components/Student360View";
 import { WeekCompareView } from "@/components/WeekCompareView";
 import { MentorRequestCard } from "@/components/MentorRequestCard";
+import { SessionThread } from "@/components/SessionThread";
 import { FlashHint } from "@/components/FlashHint";
 
 export const metadata: Metadata = {
@@ -63,6 +64,12 @@ export default async function ReportPage() {
       }
     : null;
 
+  const threadMsgs = row
+    ? await prisma.$queryRaw<any[]>`
+        SELECT "from", body, to_char("createdAt" + interval '5.5 hours', 'DD Mon HH24:MI') AS at
+        FROM "MentorSessionMessage" WHERE "requestId" = ${row.id} ORDER BY "createdAt" ASC LIMIT 100`
+    : [];
+
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <div className="mb-4 flex items-center justify-between">
@@ -111,6 +118,15 @@ export default async function ReportPage() {
 
       <div className="mt-6">
         <MentorRequestCard examCode={p.exam?.code ?? null} existing={existing} />
+        {row && (row.status === "TAKEN" || threadMsgs.length > 0) && (
+          <div className="mt-3 rounded-xl border border-ink-200 bg-white p-4">
+            <SessionThread
+              requestId={row.id}
+              messages={threadMsgs.map((m: any) => ({ from: m.from, body: m.body, at: m.at }))}
+              viewer="STUDENT"
+            />
+          </div>
+        )}
       </div>
       <p className="mt-6 text-xs text-ink-400">
         This report is private to you. It is shown to a mentor only if you explicitly choose to share it above.

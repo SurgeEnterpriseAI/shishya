@@ -2170,6 +2170,19 @@ model MentorSessionRequest {
   @@index([userId])
 }
 
+// Two-way message thread on a mentor session — how the mentor invites
+// the student to join / proposes times, and how the student replies.
+// Async-first (both sides get an email per message); no realtime infra.
+model MentorSessionMessage {
+  id        String   @id @default(cuid())
+  requestId String
+  from      String // 'MENTOR' | 'STUDENT'
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([requestId, createdAt])
+}
+
 model MentorApplication {
   id          String   @id @default(cuid())
   userId      String? // signed-in applicant, if any
