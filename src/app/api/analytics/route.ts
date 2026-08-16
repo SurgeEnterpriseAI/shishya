@@ -85,7 +85,6 @@ export async function POST(req: NextRequest) {
   // cookie-less browser gets a cookie ISSUED but this first event
   // carries no anonId — identity begins when the cookie comes back.
   const cookieAnon = req.cookies.get(ANON_COOKIE)?.value ?? null;
-  const anonId = client === "bot" ? null : cookieAnon;
   const issuedAnon = cookieAnon ?? crypto.randomUUID();
   const shouldSetCookie = client === "browser" && !cookieAnon;
 
@@ -107,6 +106,21 @@ export async function POST(req: NextRequest) {
 
   // Bound path to keep table neat
   const path = body.path ? body.path.slice(0, 256) : null;
+
+  // Identity decision (needs refHost, so it lives after referrer parse).
+  //   • bot → never an identity.
+  //   • browser + cookie → identified (business as usual).
+  //   • browser, no cookie, but a REAL external referrer → count this
+  //     first hit under the freshly issued id. Founder audit (16 Aug):
+  //     ~80 genuine humans/day arriving from Google/Bing/ChatGPT bounced
+  //     after one page and were counted as NOBODY — the growth segment
+  //     was invisible. Crawlers essentially never send a Referer, so
+  //     this stays crawler-proof: a cookie-less sweep with no referrer
+  //     still creates no identities, no matter how many pages it hits.
+  //   • browser, no cookie, no referrer (direct first hit) → identity
+  //     still begins on the second event (conservative, as before).
+  const anonId =
+    client === "bot" ? null : cookieAnon ?? (refHost !== null ? issuedAnon : null);
 
   await recordEvent({
     kind,
