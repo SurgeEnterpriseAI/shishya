@@ -79,19 +79,21 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     walkInsRows,
     overlapRows,
   ] = await Promise.all([
-    // Distinct HUMAN visitors all-time — crawler/human separation
-    // (31 Jul 2026, founder call after July's phantom-visitor audit).
-    //
-    // A visitor counts only if their id was seen on 2+ page views.
-    // Why this rule: JS-rendering crawlers used to mint a fresh anonId
-    // per page (no cookie kept), so one sweep = hundreds of phantom
-    // "visitors" — by month-end, 70% of all ids had exactly one view.
-    // A cookie-less client can never reach 2 views on one id, so this
-    // single rule cleans BOTH the historical rows and anything a
-    // stealth crawler does in future. The ingest API additionally tags
-    // events client='bot'/'browser' and never mints ids for bots.
-    // Trade-off, accepted: genuine one-page bouncers are excluded —
-    // we'd rather understate a public number than inflate it.
+    // Distinct HUMAN visitors all-time — definitions audited 16 Aug 2026
+    // after the founder caught a 17-day undercount (~80-130 real
+    // humans/day invisible). Three provable-human classes:
+    //   (a) engaged — id seen on 2+ page views (cookie came back; a
+    //       cookie-less crawler can never reach 2 views on one id);
+    //   (b) referred bouncers WITH id — single-view ids whose view
+    //       carries a real external referrer (post-16-Aug ingest stamps
+    //       the id on referred first-hits; crawlers don't send
+    //       Referer, so these are humans who bounced);
+    //   (c) gap-era referred landers — identity-less browser PVs with a
+    //       referrer (31 Jul → 16 Aug, when first-hits carried no id).
+    // Overlap: engaged visitors whose identity began in the gap era
+    // left exactly one identity-less landing each — subtracted below.
+    // Pre-cutover crawler-minted ids (1 view, no referrer) stay out of
+    // every class. We'd still rather understate than inflate.
     prisma.$queryRaw<Array<{ count: bigint }>>`
       SELECT COUNT(*)::bigint AS count FROM (
         SELECT COALESCE("userId", "anonId") AS k
@@ -99,15 +101,28 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
         WHERE kind = 'PAGE_VIEW' AND COALESCE("userId", "anonId") IS NOT NULL
         GROUP BY 1
         HAVING COUNT(*) >= 2
+           OR (bool_or("refHost" IS NOT NULL) AND COUNT(*) = 1)
       ) humans
     `,
-    // Total PAGE_VIEW rows, excluding ingest-tagged bot fetches.
-    // (Pre-tagging bot rows can't be identified and remain — the
-    // number converges to human-only as tagged days accumulate.)
-    // Raw SQL: the generated client predates the "client" column.
+    // Total PAGE_VIEW rows: ingest-tagged bot fetches excluded, and the
+    // pre-tagging crawler era cleaned by excluding views from phantom
+    // ids (single view, no referrer, minted before the 30 Jul cutover —
+    // the server minted ids for every fetch back then, so one crawler
+    // sweep = hundreds of one-view ids).
     prisma.$queryRaw<Array<{ count: bigint }>>`
-      SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent"
-      WHERE kind = 'PAGE_VIEW' AND ("client" IS NULL OR "client" <> 'bot')
+      SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent" e
+      WHERE e.kind = 'PAGE_VIEW' AND (e."client" IS NULL OR e."client" <> 'bot')
+        AND (COALESCE(e."userId", e."anonId") IS NULL
+          OR COALESCE(e."userId", e."anonId") NOT IN (
+          SELECT k FROM (
+            SELECT COALESCE("userId", "anonId") AS k
+            FROM "AnalyticsEvent"
+            WHERE kind = 'PAGE_VIEW' AND "anonId" IS NOT NULL
+              AND "createdAt" < '2026-07-30T20:00:00Z'
+            GROUP BY 1
+            HAVING COUNT(*) = 1 AND bool_or("refHost" IS NOT NULL) = FALSE
+          ) phantoms
+        ))
     `,
     // PAGE_VIEW rows TODAY, bots excluded.
     prisma.$queryRaw<Array<{ count: bigint }>>`
@@ -137,28 +152,32 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
         finishedAt: { gte: dayStart },
       },
     }),
-    // Walk-ins: browser-classified, identity-less page views = human
-    // first-touch landings (see interface doc). Raw SQL — generated
-    // client predates the "client" column.
+    // Walk-ins: identity-less browser page views WITH a real external
+    // referrer — gap-era (31 Jul → 16 Aug) human landings that never got
+    // an id. Referrer required: cookie-less crawlers with spoofed
+    // browser UAs send no Referer, so they stay out. Post-16-Aug this
+    // class stops growing (referred first-hits now carry an id).
     prisma.$queryRaw<Array<{ count: bigint }>>`
       SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent"
       WHERE kind = 'PAGE_VIEW' AND "client" = 'browser'
-        AND "userId" IS NULL AND "anonId" IS NULL
+        AND "userId" IS NULL AND "anonId" IS NULL AND "refHost" IS NOT NULL
     `,
-    // Overlap correction for the combined "aspirants" number: an
-    // identity first seen AFTER the classification cutover already left
-    // exactly one identity-less landing event (their first page) in the
-    // walk-ins count before their cookie kicked in. Subtracting these
-    // keeps engaged + landings an honest people-count, not a sum that
-    // double-counts every new engaged visitor.
+    // Overlap correction: an identity that BEGAN in the gap era (between
+    // the 30 Jul cutover and the 16 Aug referred-first-hit fix) left its
+    // first landing as an identity-less event before the cookie kicked
+    // in — subtract so those people aren't counted twice. Identities
+    // born after the fix carry their id from the first event, so they
+    // leave no orphan landing and need no correction.
     prisma.$queryRaw<Array<{ count: bigint }>>`
       SELECT COUNT(*)::bigint AS count FROM (
         SELECT COALESCE("userId", "anonId") AS k
         FROM "AnalyticsEvent"
         WHERE kind = 'PAGE_VIEW' AND COALESCE("userId", "anonId") IS NOT NULL
         GROUP BY 1
-        HAVING COUNT(*) >= 2 AND MIN("createdAt") >= '2026-07-30T20:00:00Z'
-      ) post_cutover_engaged
+        HAVING COUNT(*) >= 2
+          AND MIN("createdAt") >= '2026-07-30T20:00:00Z'
+          AND MIN("createdAt") < '2026-08-16T17:00:00Z'
+      ) gap_era_engaged
     `,
   ]);
 
