@@ -164,6 +164,26 @@ export default async function ResultsPage({
     (weakTopicNames.length ? ` — weakest: ${weakTopicNames.join(", ")}` : "") +
     `. Go through my mistakes one by one: why the right answer is right, and how to get it next time.`;
 
+  // Score-spiral detection (founder call, 16 Aug): an aspirant re-testing
+  // 3+ times in a day with scores stuck under 35% is doing the WRONG kind
+  // of effort — testing as if repetition were study. The intervention
+  // redirects (never shames): it's strategy, not mugging, that moves a
+  // score — and Shishya builds them a personal one.
+  const istMidnight = new Date(
+    Math.floor((Date.now() + 5.5 * 3600_000) / 86_400_000) * 86_400_000 - 5.5 * 3600_000,
+  );
+  const spiralRows = await prisma.$queryRaw<{ n: number; low: number }[]>`
+    SELECT COUNT(*)::int AS n,
+      COUNT(*) FILTER (WHERE "scorePct" < 35)::int AS low
+    FROM "Attempt"
+    WHERE "userId" = ${session.user.id} AND status IN ('SUBMITTED','AUTO_SUBMITTED')
+      AND "finishedAt" >= ${istMidnight}`;
+  const isSpiral =
+    (attempt.scorePct ?? 100) < 35 &&
+    (spiralRows[0]?.n ?? 0) >= 3 &&
+    (spiralRows[0]?.low ?? 0) >= 3;
+  const negativeGuesses = wrongCount;
+
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
@@ -185,13 +205,63 @@ export default async function ResultsPage({
           </Link>
         </p>
 
+        {/* Score-spiral intervention — 3+ tests today all under 35%.
+            Confidence first (their effort is REAL), then the awareness
+            shift: scores grow by STRATEGY, not by re-testing — and
+            Shishya builds their personal one. Supersedes the soft-landing
+            block below (one intervention, never two stacked). */}
+        {isSpiral && topicArr.length > 0 && (
+          <div className="mt-6 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
+              {spiralRows[0].n} tests today — your effort is real. Let&apos;s aim it.
+            </p>
+            <p className="mt-1 text-base font-bold text-ink-900">
+              Here&apos;s what toppers know: scores don&apos;t grow by re-testing — they grow by strategy.
+            </p>
+            <ul className="mt-2 space-y-1.5 text-sm text-ink-700">
+              <li>
+                📖 <span className="font-semibold">Mugging more tests repeats the same mistakes.</span>{" "}
+                Fixing ONE topic, then re-testing — that&apos;s what moves a score. Your highest-impact
+                topic right now: <span className="font-semibold text-ink-900">{topicArr[0].name}</span>{" "}
+                ({topicArr[0].correct}/{topicArr[0].total} this time). Ten focused minutes there beats
+                three more full tests.
+              </li>
+              {negativeGuesses >= 3 && (
+                <li>
+                  ✋ <span className="font-semibold">{negativeGuesses} wrong answers cost you negative marks.</span>{" "}
+                  Unsure? Skip it — a blank is 0, a wrong guess is minus. Toppers skip strategically.
+                </li>
+              )}
+              <li>
+                🎯 <span className="font-semibold">You don&apos;t have to figure the strategy out alone</span> —
+                Shishya builds your personal one from your own results: which topics first, how much
+                daily, what to skip.
+              </li>
+            </ul>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                href={`/exams/${attempt.mock.exam.code}/topics/${topicArr[0].code}`}
+                className="rounded-lg bg-saffron-500 px-4 py-2 text-sm font-semibold text-white hover:bg-saffron-600"
+              >
+                Fix {topicArr[0].name} now — 10 min →
+              </Link>
+              <Link
+                href="/me/report"
+                className="rounded-lg border border-saffron-300 bg-white px-4 py-2 text-sm font-semibold text-saffron-700 hover:bg-saffron-50"
+              >
+                See my personal strategy →
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Soft landing for rough scores. 42% of submitted mocks land under
             30% — the silent-churn moment where a student decides the platform
             "makes them feel dumb". We never hide the honest score (core
             value), but we LEAD with the path forward: the 1-2 topics that
             would lift the score most. Framing: every topper's first mock
             looked like this. */}
-        {(attempt.scorePct ?? 0) < 30 && topicArr.length > 0 && (
+        {!isSpiral && (attempt.scorePct ?? 0) < 30 && topicArr.length > 0 && (
           <div className="mt-6 rounded-xl border border-sky-200 bg-gradient-to-r from-sky-50 to-indigo-50/60 p-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-sky-700">
               Rough one — that&apos;s normal for a first attempt
