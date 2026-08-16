@@ -152,15 +152,17 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
         finishedAt: { gte: dayStart },
       },
     }),
-    // Walk-ins: identity-less browser page views WITH a real external
-    // referrer — gap-era (31 Jul → 16 Aug) human landings that never got
-    // an id. Referrer required: cookie-less crawlers with spoofed
-    // browser UAs send no Referer, so they stay out. Post-16-Aug this
-    // class stops growing (referred first-hits now carry an id).
+    // Walk-ins: ALL identity-less browser page views — founder call
+    // (16 Aug 2026): "no genuine visit should miss." This includes the
+    // no-referrer landings (WhatsApp-app opens, privacy browsers, typed
+    // URLs) at the cost of counting any cookie-less crawler that spoofs
+    // a browser UA and sends no referrer. Known crawlers stay excluded
+    // (ingest-tagged bots never enter; July's phantom-id sweeps are
+    // scrubbed elsewhere). Public number: complete over pristine.
     prisma.$queryRaw<Array<{ count: bigint }>>`
       SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent"
       WHERE kind = 'PAGE_VIEW' AND "client" = 'browser'
-        AND "userId" IS NULL AND "anonId" IS NULL AND "refHost" IS NOT NULL
+        AND "userId" IS NULL AND "anonId" IS NULL
     `,
     // Overlap correction: an identity that BEGAN in the gap era (between
     // the 30 Jul cutover and the 16 Aug referred-first-hit fix) left its
