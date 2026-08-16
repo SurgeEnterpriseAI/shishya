@@ -40,7 +40,7 @@ export default async function MentorDesk() {
     );
   }
 
-  const [mine, waiting] = await Promise.all([
+  const [mine, waiting, completed] = await Promise.all([
     prisma.$queryRaw<any[]>`
       SELECT r.id, r.status, r."examCode", r.note, r."takenAt", u.name
       FROM "MentorSessionRequest" r JOIN "User" u ON u.id = r."userId"
@@ -51,6 +51,11 @@ export default async function MentorDesk() {
       FROM "MentorSessionRequest" r JOIN "User" u ON u.id = r."userId"
       WHERE r.status = 'NEW' AND r.consent = TRUE
       ORDER BY r."createdAt" ASC`,
+    prisma.$queryRaw<any[]>`
+      SELECT r.id, r."examCode", r."sessionNote", r."updatedAt", u.name
+      FROM "MentorSessionRequest" r JOIN "User" u ON u.id = r."userId"
+      WHERE r."mentorId" = ${mentor.id} AND r.status = 'DONE'
+      ORDER BY r."updatedAt" DESC LIMIT 10`,
   ]);
 
   return (
@@ -83,6 +88,22 @@ export default async function MentorDesk() {
           </li>
         ))}
       </ul>
+
+      {completed.length > 0 && (
+        <>
+          <h2 className="mt-8 text-sm font-bold uppercase tracking-wider text-ink-500">Recently completed ({completed.length})</h2>
+          <ul className="mt-2 space-y-2">
+            {completed.map((r) => (
+              <li key={r.id}>
+                <Link href={`/mentor/${r.id}`} className="block rounded-lg border border-ink-100 bg-ink-50/50 p-4 hover:border-ink-300">
+                  <p className="text-sm font-semibold text-ink-700">{r.name} {r.examCode && <span className="font-normal text-ink-500">· {r.examCode}</span>}</p>
+                  {r.sessionNote && <p className="mt-1 truncate text-sm text-ink-500">Next steps sent: “{r.sessionNote}”</p>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </main>
   );
 }
