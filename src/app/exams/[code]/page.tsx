@@ -66,18 +66,34 @@ export async function generateMetadata({
   const langs = exam.languages.length > 0 ? exam.languages : ["EN", "HI"];
   const year = new Date().getUTCFullYear();
 
-  // Title — prioritises state name for state exams (huge SEO lever for
-  // "Tamil Nadu TET 2026" / "Bihar Police mock test"-style searches).
-  const stateBit = st ? ` (${st.name})` : "";
-  const title = `${exam.shortName}${stateBit} ${year} — Free Mock Tests, PYQ, Syllabus | Shishya`;
+  // Exam-date answer in the title/description — GSC (16 Aug 2026) found
+  // a large ZERO-CLICK query class: "{exam} exam date {year}" queries
+  // where we rank ~8-10 but never win the click because the title
+  // doesn't answer the question. Lead with the date when we have one.
+  const nextDateRows = await prisma.$queryRaw<{ d: Date }[]>`
+    SELECT MIN(date) AS d FROM "ExamImportantDate"
+    WHERE "examId" = (SELECT id FROM "Exam" WHERE code = ${code})
+      AND "isExamDay" = TRUE AND "archivedAt" IS NULL AND date > now()`;
+  const nextDate = nextDateRows[0]?.d
+    ? new Date(nextDateRows[0].d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    : null;
 
-  // Description — packs in: exam full name, state name (English + Hindi
-  // + native script), the languages the questions are available in, and
-  // the year. ≤300 chars so Google doesn't truncate.
+  // Title — prioritises state name for state exams (huge SEO lever for
+  // "Tamil Nadu TET 2026" / "Bihar Police mock test"-style searches),
+  // and the exam-date answer when known.
+  const stateBit = st ? ` (${st.name})` : "";
+  const dateBit = nextDate ? `Exam Date ${nextDate}, ` : "";
+  const title = `${exam.shortName}${stateBit} ${year} — ${dateBit}Free Mock Tests, PYQ | Shishya`;
+
+  // Description — packs in: the date answer first (zero-click queries),
+  // exam full name, state name (English + Hindi + native script), the
+  // languages the questions are available in, and the year. ≤300 chars
+  // so Google doesn't truncate.
   const langCopy = languageList(langs);
   const stateCopy = st ? `${st.name} (${st.nativeName} / ${st.hindiName}). ` : "";
+  const dateCopy = nextDate ? `${exam.shortName} exam date: ${nextDate}. ` : "";
   const description =
-    `Free ${exam.shortName} (${exam.name}) ${year} mock tests, previous year papers ` +
+    `${dateCopy}Free ${exam.shortName} (${exam.name}) ${year} mock tests, previous year papers ` +
     `and study help — verified by students who cleared it. ${stateCopy}Questions available in ${langCopy}. No paywall.`;
 
   // Keywords — a wide net mixing English, native-script state name, exam
