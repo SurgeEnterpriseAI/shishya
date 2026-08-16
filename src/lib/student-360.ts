@@ -45,7 +45,10 @@ function istDate(): string {
   return new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
 }
 
-export async function buildStudent360(userId: string): Promise<Student360 | null> {
+export async function buildStudent360(
+  userId: string,
+  audience: "self" | "mentor" = "self",
+): Promise<Student360 | null> {
   const users = await prisma.$queryRaw<any[]>`
     SELECT id, name, email, "createdAt" FROM "User" WHERE id = ${userId} LIMIT 1`;
   const u = users[0];
@@ -170,17 +173,27 @@ export async function buildStudent360(userId: string): Promise<Student360 | null
     coachRead: null,
   };
 
-  // The coach's read — small daily-cached synthesis. try/catch stays
-  // OUTSIDE the cache so an API failure is never cached as the answer.
+  // The coach's read — small daily-cached synthesis, one variant per
+  // AUDIENCE: the aspirant hears their coach speaking TO them (second
+  // person, encouraging); the mentor gets a counsellor's brief ABOUT
+  // them (third person, clinical). try/catch stays OUTSIDE the cache so
+  // an API failure is never cached as the answer.
   try {
-    profile.coachRead = await cachedCoachRead(userId, istDate(), profile);
+    profile.coachRead = await cachedCoachRead(userId, istDate(), profile, audience);
   } catch {
     profile.coachRead = null;
   }
   return profile;
 }
 
-const cachedCoachRead = (userId: string, day: string, p: Student360) =>
+const COACH_READ_SYSTEM: Record<"self" | "mentor", string> = {
+  self:
+    "You are the student's own exam-prep coach writing 3-4 sentences DIRECTLY TO THEM (second person: 'you'). Name their single biggest strength, their single biggest opportunity, and the one next step to take today. Ground every claim in the data given — never invent numbers. Encouraging and specific, never guilt: gaps are framed as 'your opportunity'. Plain English, no headings, no bullets.",
+  mentor:
+    "You are an exam-prep counsellor writing a 3-4 sentence professional read of ONE aspirant for a human mentor about to counsel them. Name the single biggest strength, the single biggest risk, and the one next step you would push. Ground every claim in the data given — never invent numbers. Never guilt language: gaps are framed as 'the opportunity'. Plain English, no headings, no bullets.",
+};
+
+const cachedCoachRead = (userId: string, day: string, p: Student360, audience: "self" | "mentor") =>
   unstable_cache(
     async () => {
       const packet = JSON.stringify({
@@ -192,12 +205,7 @@ const cachedCoachRead = (userId: string, day: string, p: Student360) =>
         recentTutorAsks: p.tutorThemes.slice(0, 4), planDay: p.plan?.dayNumber ?? null,
       });
       const res = await callClaude({
-        system: [
-          {
-            type: "text" as const,
-            text: "You are an exam-prep counsellor writing a 3-4 sentence professional read of ONE aspirant for a human mentor about to counsel them. Name the single biggest strength, the single biggest risk, and the one next step you would push. Ground every claim in the data given — never invent numbers. Never guilt language: gaps are framed as 'the opportunity'. Plain English, no headings, no bullets.",
-          },
-        ],
+        system: [{ type: "text" as const, text: COACH_READ_SYSTEM[audience] }],
         messages: [{ role: "user", content: packet }],
         maxTokens: 220,
         model: MODEL,
@@ -209,6 +217,6 @@ const cachedCoachRead = (userId: string, day: string, p: Student360) =>
       if (!text) throw new Error("empty coach read");
       return text;
     },
-    ["student-360-read", userId, day],
+    ["student-360-read", userId, day, audience],
     { revalidate: 86_400 },
   )();

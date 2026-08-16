@@ -35,7 +35,7 @@ export default async function MentorStudent({ params }: { params: Promise<{ id: 
   // A TAKEN/DONE request is visible only to the mentor who holds it.
   if (r.status !== "NEW" && r.mentorId !== mentor.id) redirect("/mentor");
 
-  const p = await buildStudent360(r.userId);
+  const p = await buildStudent360(r.userId, "mentor");
   if (!p) notFound();
 
   const msgs = await prisma.$queryRaw<any[]>`
