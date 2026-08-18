@@ -38,5 +38,18 @@ async function main() {
           AND COUNT(*)::numeric / GREATEST(COUNT(DISTINCT "ipHash"), 1) <= 1.3
       )`;
   console.log(`retro-tagged ${n} sweep rows as client='bot' (marker: ${tag})`);
+  // JS-executing crawlers fire non-PAGE_VIEW beacons too (CHAT_OPENED on
+  // /chat, CTA_CLICKED…). Tag any unidentified browser event whose uaHash
+  // is already convicted via the PAGE_VIEW cluster rule above.
+  const n2 = await p.$executeRaw`
+    UPDATE "AnalyticsEvent" SET client = 'bot',
+      props = COALESCE(props, '{}'::jsonb) || jsonb_build_object('retroTag', ${tag}::text)
+    WHERE kind <> 'PAGE_VIEW' AND client = 'browser'
+      AND "userId" IS NULL AND "anonId" IS NULL AND "refHost" IS NULL
+      AND "uaHash" IN (
+        SELECT DISTINCT "uaHash" FROM "AnalyticsEvent"
+        WHERE props->>'retroTag' LIKE 'ua-sweep-%' AND "uaHash" IS NOT NULL
+      )`;
+  console.log(`retro-tagged ${n2} non-PAGE_VIEW beacon rows from convicted sweep UAs`);
 }
 main().catch((e) => { console.error(e); process.exit(1); }).finally(() => p.$disconnect());
