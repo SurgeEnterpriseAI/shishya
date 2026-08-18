@@ -78,6 +78,10 @@
       "schedule": "0 1 * * *"
     },
     {
+      "path": "/api/cron/live-test-close",
+      "schedule": "0 18 * * 0"
+    },
+    {
       "path": "/api/cron/extract-results",
       "schedule": "15 2 * * *"
     },

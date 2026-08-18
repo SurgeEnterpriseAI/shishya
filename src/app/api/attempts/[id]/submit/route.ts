@@ -199,6 +199,28 @@ export async function POST(
       // intentionally fall through to ok() — student is already SUBMITTED
     }
 
+    // Percentile against this exam's other submitted attempts — cheap
+    // COUNT, best-effort. Before this the exam-hub "Rank & Leaderboard"
+    // percentile column was never computed and every student saw "—"
+    // forever (audit 18 Aug 2026).
+    try {
+      const pctRows = await prisma.$queryRaw<{ below: bigint; total: bigint }[]>`
+        SELECT
+          COUNT(*) FILTER (WHERE a."scorePct" < ${scorePct})::bigint AS below,
+          COUNT(*)::bigint AS total
+        FROM "Attempt" a JOIN "Mock" m ON m.id = a."mockId"
+        WHERE m."examId" = ${examId}
+          AND a.status IN ('SUBMITTED','AUTO_SUBMITTED') AND a."scorePct" IS NOT NULL`;
+      const total = Number(pctRows[0]?.total ?? 0);
+      if (total > 1) {
+        const percentile = Math.round((Number(pctRows[0].below) / total) * 100);
+        await prisma.$executeRaw`
+          UPDATE "Attempt" SET percentile = ${percentile} WHERE id = ${id}`;
+      }
+    } catch {
+      /* percentile is decorative — never block the submit on it */
+    }
+
     return ok({
       attemptId: id,
       scoreRaw,

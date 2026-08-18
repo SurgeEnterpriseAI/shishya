@@ -424,13 +424,47 @@ export function MockPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeUp]);
 
-  // Save dirty answers on tab close
+  // Save dirty answers on tab close. A normal fetch is aborted when the
+  // page unloads, so the LAST answers before closing were silently
+  // dropped (audit 18 Aug 2026). navigator.sendBeacon survives unload.
   useEffect(() => {
-    const onBeforeUnload = () => {
-      if (dirtyRef.current.size > 0) flushSaves();
+    const flushViaBeacon = () => {
+      if (dirtyRef.current.size === 0) return;
+      const ids = [...dirtyRef.current];
+      dirtyRef.current.clear();
+      for (const qid of ids) {
+        const a = answersRef.current.get(qid);
+        if (!a) continue;
+        const payload = JSON.stringify({
+          questionId: a.questionId,
+          chosen: a.chosen,
+          timeSec: a.timeSec,
+          marked: a.marked,
+        });
+        const ok =
+          typeof navigator !== "undefined" &&
+          typeof navigator.sendBeacon === "function" &&
+          navigator.sendBeacon(
+            `/api/attempts/${attemptId}/answer`,
+            new Blob([payload], { type: "application/json" }),
+          );
+        if (!ok) {
+          // Fallback: keepalive fetch also survives unload in modern browsers.
+          fetch(`/api/attempts/${attemptId}/answer`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: payload,
+            keepalive: true,
+          }).catch(() => {});
+        }
+      }
     };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+    window.addEventListener("beforeunload", flushViaBeacon);
+    window.addEventListener("pagehide", flushViaBeacon);
+    return () => {
+      window.removeEventListener("beforeunload", flushViaBeacon);
+      window.removeEventListener("pagehide", flushViaBeacon);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

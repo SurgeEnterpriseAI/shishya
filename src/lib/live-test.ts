@@ -172,3 +172,27 @@ export async function liveTestRank(
   const better = rows.filter((r) => r.pct != null && r.pct! > mine.pct!).length;
   return { rank: better + 1, of: rows.length };
 }
+
+/** Final leaderboard for a closed live test: every in-window participant
+ *  with their rank + email, for the Sunday-night results email. */
+export async function liveTestFinalBoard(
+  mockId: string,
+): Promise<{ userId: string; email: string; name: string | null; pct: number; rank: number; of: number }[]> {
+  const lt = await prisma.$queryRaw<{ opensAt: Date; closesAt: Date }[]>`
+    SELECT "opensAt", "closesAt" FROM "LiveTest" WHERE "mockId" = ${mockId} LIMIT 1`;
+  if (!lt[0]) return [];
+  const rows = await prisma.$queryRaw<{ userId: string; email: string; name: string | null; pct: number }[]>`
+    SELECT DISTINCT ON (a."userId") a."userId", u.email, u.name, a."scorePct" AS pct
+    FROM "Attempt" a JOIN "User" u ON u.id = a."userId"
+    WHERE a."mockId" = ${mockId} AND a.status IN ('SUBMITTED','AUTO_SUBMITTED')
+      AND a."scorePct" IS NOT NULL AND u.email <> ''
+      AND a."startedAt" >= ${lt[0].opensAt} AND a."startedAt" <= ${lt[0].closesAt}
+    ORDER BY a."userId", a."startedAt" ASC`;
+  const sorted = [...rows].sort((a, b) => b.pct - a.pct);
+  const of = sorted.length;
+  return sorted.map((r) => ({
+    ...r,
+    rank: sorted.filter((x) => x.pct > r.pct).length + 1,
+    of,
+  }));
+}
