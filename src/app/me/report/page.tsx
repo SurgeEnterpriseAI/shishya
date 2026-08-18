@@ -45,7 +45,7 @@ export default async function ReportPage() {
   // and unpaid, ask Razorpay whether the link was paid — the student
   // lands back here via the payment callback, so this is the moment the
   // room unlocks.
-  if (row && row.feeDue && !row.paidAt && row.paymentLinkId) {
+  if (row && row.status === "TAKEN" && row.feeDue && !row.paidAt && row.paymentLinkId) {
     const { isLinkPaid } = await import("@/lib/razorpay");
     if (await isLinkPaid(row.paymentLinkId)) {
       await prisma.$executeRaw`

@@ -10,7 +10,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { sendEmail } from "@/lib/email";
-import { createMentorFeeLink } from "@/lib/razorpay";
+import { createMentorFeeLink, cancelLink } from "@/lib/razorpay";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,7 +34,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = await req.json().catch(() => ({}));
 
   const rows = await prisma.$queryRaw<any[]>`
-    SELECT r.id, r.status, r."mentorId", r."userId", u.name AS student_name, u.email AS student_email
+    SELECT r.id, r.status, r."mentorId", r."userId", r."feeDue", r."paidAt", r."paymentLinkId",
+           u.name AS student_name, u.email AS student_email
     FROM "MentorSessionRequest" r JOIN "User" u ON u.id = r."userId"
     WHERE r.id = ${id} LIMIT 1`;
   const reqRow = rows[0];
@@ -99,6 +100,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (body?.action === "done") {
     if (reqRow.mentorId !== mentor.id) return Response.json({ ok: false }, { status: 403 });
     const note = typeof body?.sessionNote === "string" ? body.sessionNote.slice(0, 2000) : null;
+    // If a fee was due but never paid, cancel the link so the student
+    // can't pay for a session that's now over (audit 18 Aug 2026).
+    if (reqRow.feeDue && !reqRow.paidAt && reqRow.paymentLinkId) {
+      await cancelLink(reqRow.paymentLinkId).catch(() => {});
+    }
     await prisma.$executeRaw`
       UPDATE "MentorSessionRequest"
       SET status = 'DONE', "sessionNote" = ${note}, "updatedAt" = NOW()
@@ -126,6 +132,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   // session had occurred (audit 18 Aug 2026).
   if (body?.action === "release") {
     if (reqRow.mentorId !== mentor.id) return Response.json({ ok: false }, { status: 403 });
+    // Cancel any unpaid fee link before handing the student back.
+    if (reqRow.feeDue && !reqRow.paidAt && reqRow.paymentLinkId) {
+      await cancelLink(reqRow.paymentLinkId).catch(() => {});
+    }
     await prisma.$executeRaw`
       UPDATE "MentorSessionRequest"
       SET status = 'NEW', "mentorId" = NULL, "meetUrl" = NULL, "takenAt" = NULL,

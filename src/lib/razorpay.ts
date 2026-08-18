@@ -40,6 +40,11 @@ export async function createMentorFeeLink(opts: {
         notes: { requestId: opts.requestId },
         callback_url: `https://shishya.in/me/report?paid=1`,
         callback_method: "get",
+        // Expire the link in 7 days — a stale link for a long-closed
+        // session shouldn't stay payable forever (audit 18 Aug 2026).
+        // Razorpay wants a Unix-seconds timestamp.
+        expire_by: Math.floor((Date.now() + 7 * 24 * 3600_000) / 1000),
+        reminder_enable: false,
       }),
     });
     if (!res.ok) {
@@ -68,5 +73,22 @@ export async function isLinkPaid(paymentLinkId: string): Promise<boolean> {
     return j.status === "paid";
   } catch {
     return false;
+  }
+}
+
+/** Cancel a payment link so it can no longer be paid — used when a
+ *  session is closed or released while still unpaid, so a student can't
+ *  pay for a session that's over (audit 18 Aug 2026). Best-effort;
+ *  Razorpay rejects cancelling an already-paid link, which is fine. */
+export async function cancelLink(paymentLinkId: string): Promise<void> {
+  const auth = authHeader();
+  if (!auth) return;
+  try {
+    await fetch(`${BASE}/payment_links/${paymentLinkId}/cancel`, {
+      method: "POST",
+      headers: { Authorization: auth },
+    });
+  } catch {
+    /* best-effort */
   }
 }

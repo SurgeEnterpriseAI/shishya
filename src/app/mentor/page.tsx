@@ -49,7 +49,7 @@ export default async function MentorDesk() {
     SELECT id, "paymentLinkId" FROM "MentorSessionRequest"
     WHERE "mentorId" = ${mentor.id} AND status = 'TAKEN'
       AND "feeDue" = TRUE AND "paidAt" IS NULL AND "paymentLinkId" IS NOT NULL
-    LIMIT 10`;
+    LIMIT 10`; // status='TAKEN' guard: never reconcile a closed/released session
   if (pendingPay.length > 0) {
     const { isLinkPaid } = await import("@/lib/razorpay");
     for (const row of pendingPay) {
