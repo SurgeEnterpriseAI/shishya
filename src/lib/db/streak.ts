@@ -89,7 +89,7 @@ export function computeStreak(activeDays: Set<number>, today: number): StudyStre
 export async function getStudyStreak(userId: string): Promise<StudyStreak> {
   const since = new Date(Date.now() - WINDOW_DAYS * 86_400_000);
 
-  const [attempts, chats] = await Promise.all([
+  const [attempts, chats, descriptive] = await Promise.all([
     prisma.attempt.findMany({
       where: {
         userId,
@@ -102,11 +102,18 @@ export async function getStudyStreak(userId: string): Promise<StudyStreak> {
       where: { userId, createdAt: { gte: since } },
       select: { createdAt: true },
     }),
+    // Descriptive-writing practice counts as a study day too — a student
+    // who wrote an essay was told they "hadn't studied" before (audit
+    // 18 Aug 2026).
+    prisma.descriptiveAttempt
+      .findMany({ where: { userId, createdAt: { gte: since } }, select: { createdAt: true } })
+      .catch(() => [] as { createdAt: Date }[]),
   ]);
 
   const activeDays = new Set<number>();
   for (const a of attempts) if (a.finishedAt) activeDays.add(istDay(a.finishedAt));
   for (const c of chats) activeDays.add(istDay(c.createdAt));
+  for (const d of descriptive) activeDays.add(istDay(d.createdAt));
 
   return computeStreak(activeDays, istDay(new Date()));
 }
