@@ -82,7 +82,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 <p><b>${mentor.name}</b> — who has cleared this path before — has picked up your request and can see your preparation report.</p>
 <p>Join your session room here (works in any browser, no install):<br/>
 <a href="${meetUrl}">${meetUrl}</a></p>
-<p>Also visible any time on your report page: https://shishya.in/me/report</p>
+<p><b>When you enter the room</b>, tap "🎥 I'm in the room — ping my mentor" on your <a href="https://shishya.in/me/report">report page</a> — your mentor gets an instant email and joins you. You can also message them there to fix a better time.</p>
 <p>— Shishya</p>`;
       await sendEmail({
         to: reqRow.student_email,

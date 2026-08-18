@@ -124,6 +124,9 @@ export default async function ReportPage() {
               requestId={row.id}
               messages={threadMsgs.map((m: any) => ({ from: m.from, body: m.body, at: m.at }))}
               viewer="STUDENT"
+              meetUrl={
+                row.status === "TAKEN" && !(row.feeDue && !row.paidAt) ? row.meetUrl : null
+              }
             />
           </div>
         )}

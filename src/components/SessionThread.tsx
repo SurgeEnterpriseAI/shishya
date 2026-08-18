@@ -96,6 +96,17 @@ export function SessionThread({
           📣 Invite to join now (sends message + email with the room link)
         </button>
       )}
+      {viewer === "STUDENT" && meetUrl && (
+        <button
+          disabled={busy}
+          onClick={() =>
+            send(`I'm in the session room now — please join me: ${meetUrl}`)
+          }
+          className="mt-2 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+        >
+          🎥 I&apos;m in the room — ping my mentor (sends them an email instantly)
+        </button>
+      )}
     </div>
   );
 }
