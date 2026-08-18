@@ -8,6 +8,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
+import { LeaveBatchLink } from "@/components/LeaveBatchLink";
 
 interface Asg {
   id: string;
@@ -89,13 +90,14 @@ export async function EducatorCard({ userId }: { userId: string }) {
         </p>
       )}
 
-      <div className="mt-3">
+      <div className="mt-3 flex items-center justify-between gap-2">
         <TalkToTeacher
           surface="batch"
           variant="link"
           linkLabel="🙋 Ask your educator a doubt →"
           contextLabel={`batch: ${enrollments[0].batch.name}`}
         />
+        <LeaveBatchLink batchId={enrollments[0].batchId} batchName={enrollments[0].batch.name} />
       </div>
     </div>
   );

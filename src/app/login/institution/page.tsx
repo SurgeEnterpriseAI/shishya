@@ -51,6 +51,19 @@ export default function InstitutionLoginPage() {
               Use the student sign-in instead
             </Link>
           </p>
+          {/* Recovery path — an educator who forgets their password was
+              otherwise permanently locked out of their students' data
+              (audit 18 Aug 2026). Founder resets by hand until a
+              self-serve token flow ships. */}
+          <p className="mt-2 text-center text-xs text-ink-500">
+            Forgot your password?{" "}
+            <a
+              href="mailto:corp@surgesoftware.co.in?subject=Shishya%20institution%20password%20reset"
+              className="font-medium text-saffron-700 underline-offset-2 hover:underline"
+            >
+              Email us to reset it
+            </a>
+          </p>
         </div>
       </section>
     </main>

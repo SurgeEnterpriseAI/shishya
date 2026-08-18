@@ -12,8 +12,10 @@
 // nice-to-have, not the gate.
 
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { sendEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -31,7 +33,9 @@ export async function POST(
   const batch = await prisma.batch.findUnique({
     where: { inviteCode },
     include: {
-      course: { select: { name: true, institution: { select: { name: true } } } },
+      course: {
+        select: { name: true, institution: { select: { name: true, contactEmail: true } } },
+      },
       _count: { select: { enrollments: { where: { status: "ACTIVE" } } } },
     },
   });
@@ -69,6 +73,23 @@ export async function POST(
   } else {
     await prisma.batchEnrollment.create({
       data: { batchId: batch.id, userId, status: "ACTIVE" },
+    });
+  }
+
+  // Tell the educator a student just joined — the B2B activation moment
+  // fired no signal before (audit 18 Aug 2026). After the response.
+  const contactEmail = batch.course.institution.contactEmail;
+  if (contactEmail) {
+    const studentName = session?.user?.name ?? session?.user?.email ?? "A student";
+    after(async () => {
+      await sendEmail({
+        to: contactEmail,
+        subject: `${studentName} joined your batch "${batch.name}"`,
+        html: `<p>${studentName.replace(/</g, "&lt;")} just joined <b>${batch.name}</b> (${batch.course.name}) on Shishya.</p>
+<p>You can see their practice and set assignments from your dashboard: <a href="https://shishya.in/i/dashboard">shishya.in/i/dashboard</a></p>
+<p>— Shishya</p>`,
+        tag: "batch-join",
+      }).catch(() => {});
     });
   }
 

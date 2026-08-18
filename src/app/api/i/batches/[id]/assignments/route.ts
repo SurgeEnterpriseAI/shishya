@@ -6,8 +6,10 @@
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { after } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { requireInstitutionSession } from "@/lib/institution-auth";
+import { sendEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -76,6 +78,39 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       return false;
     });
   if (!ok) return NextResponse.json({ error: "Couldn't save — try again." }, { status: 500 });
+
+  // Notify active batch members — an assignment used to reach only
+  // students who happened to open their dashboard (audit 18 Aug 2026).
+  // After the response so the educator isn't kept waiting on the fan-out.
+  after(async () => {
+    try {
+      const members = await prisma.$queryRaw<{ id: string; email: string; name: string | null }[]>`
+        SELECT u.id, u.email, u.name
+        FROM "BatchEnrollment" be JOIN "User" u ON u.id = be."userId"
+        WHERE be."batchId" = ${id} AND be.status = 'ACTIVE' AND u.email <> ''
+        LIMIT 500`;
+      const due = body.dueAt
+        ? ` (due ${new Date(body.dueAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})`
+        : "";
+      for (const m of members) {
+        await sendEmail({
+          to: m.email,
+          unsubUserId: m.id,
+          subject: `New task from your educator: ${body.title}`,
+          html: `<p>Namaste ${(m.name ?? "").split(" ")[0] || "there"},</p>
+<p>Your educator set a new task for your batch${due}:</p>
+<p style="font-size:15px;font-weight:600">${body.title.replace(/</g, "&lt;")}</p>
+${body.instructions ? `<p>${body.instructions.replace(/</g, "&lt;")}</p>` : ""}
+${examCode ? `<p>Start here: <a href="https://shishya.in/exams/${examCode}">shishya.in/exams/${examCode}</a></p>` : ""}
+<p>It's on your <a href="https://shishya.in/dashboard">dashboard</a> too.</p>
+<p>— Shishya</p>`,
+          tag: "batch-assignment",
+        }).catch(() => {});
+      }
+    } catch (e) {
+      console.error("[assignments] member notify failed (non-fatal):", e);
+    }
+  });
 
   return NextResponse.json({ ok: true, id: aid, examCode });
 }
