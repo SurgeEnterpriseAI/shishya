@@ -49,6 +49,31 @@ export default async function MockPlayerPage({
     redirect(`/attempts/${existingSubmitted.id}/results`);
   }
 
+  // Expired-resume guard (audit 18 Aug 2026). If a student "resumes" an
+  // IN_PROGRESS attempt whose timer already ran out, the live player used
+  // to mount and SILENTLY auto-submit on load — a jarring instant 0/fail
+  // on a path the dashboard sells as "safe to resume". Instead we show an
+  // interstitial: submit what they had, or discard and start fresh. Only
+  // for RESUMED attempts — a fresh attempt's clock starts now.
+  const durationMinEarly = ((mock.config as any)?.durationMin as number | undefined) ?? 30;
+  if (existingInProgress) {
+    const elapsedMin = (Date.now() - existingInProgress.startedAt.getTime()) / 60_000;
+    if (elapsedMin > durationMinEarly + 1) {
+      const answers = (existingInProgress.answers as any[]) ?? [];
+      const answered = answers.filter((a) => a && a.chosen != null && a.chosen !== "").length;
+      const { ExpiredAttemptGate } = await import("./ExpiredAttemptGate");
+      return (
+        <ExpiredAttemptGate
+          attemptId={existingInProgress.id}
+          answered={answered}
+          total={mock.questionIds.length}
+          examShort={mock.exam.shortName}
+          examCode={mock.exam.code}
+        />
+      );
+    }
+  }
+
   let attempt = existingInProgress;
   if (!attempt) {
     // Auto-enrol the student on the exam before creating the attempt.

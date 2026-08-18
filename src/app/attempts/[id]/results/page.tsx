@@ -197,6 +197,13 @@ export default async function ResultsPage({
         </p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900">{attempt.mock.title}</h1>
 
+        {attempt.status === "AUTO_SUBMITTED" && (
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
+            ⏱️ Time ran out — this attempt was auto-submitted with whatever you&apos;d
+            answered. In the real exam the clock is final too; use this to pace your next run.
+          </div>
+        )}
+
         {/* Quiet doorway to the Student-360 — post-mock is the moment a
             student wonders "where am I overall?". One line, no popup. */}
         <p className="mt-2 text-xs">

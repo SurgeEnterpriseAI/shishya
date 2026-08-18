@@ -154,14 +154,18 @@ export async function liveTestRank(
   mockId: string,
   userId: string,
 ): Promise<{ rank: number; of: number } | null> {
-  const lt = await prisma.$queryRaw<{ id: string }[]>`
-    SELECT id FROM "LiveTest" WHERE "mockId" = ${mockId} LIMIT 1`;
+  const lt = await prisma.$queryRaw<{ id: string; opensAt: Date; closesAt: Date }[]>`
+    SELECT id, "opensAt", "closesAt" FROM "LiveTest" WHERE "mockId" = ${mockId} LIMIT 1`;
   if (!lt[0]) return null;
 
+  // Only attempts STARTED inside the live window count toward the
+  // national rank — a practice run after close must never rewrite the
+  // board for everyone who competed on time (audit 18 Aug 2026).
   const rows = await prisma.$queryRaw<{ userId: string; pct: number | null }[]>`
     SELECT DISTINCT ON ("userId") "userId", "scorePct" AS pct
     FROM "Attempt"
     WHERE "mockId" = ${mockId} AND status IN ('SUBMITTED', 'AUTO_SUBMITTED')
+      AND "startedAt" >= ${lt[0].opensAt} AND "startedAt" <= ${lt[0].closesAt}
     ORDER BY "userId", "startedAt" ASC`;
   const mine = rows.find((r) => r.userId === userId);
   if (mine?.pct == null) return null;

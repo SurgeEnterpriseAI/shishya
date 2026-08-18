@@ -17,10 +17,23 @@ export async function POST(req: Request) {
 
     const mock = await prisma.mock.findUnique({
       where: { id: body.mockId },
-      select: { id: true, userId: true, examId: true },
+      select: { id: true, userId: true, examId: true, generatedBy: true },
     });
     if (!mock) return notFound("mock");
     if (mock.userId && mock.userId !== session.user.id) return forbidden();
+
+    // Live-test window guard (audit 18 Aug 2026). The shared Sunday paper
+    // must not be startable BEFORE it opens (that would leak the
+    // questions early). After it closes, starting is allowed as ordinary
+    // practice — but the attempt won't be ranked (liveTestRank counts
+    // only in-window attempts, so a late run never rewrites the board).
+    if (mock.generatedBy === "live-test") {
+      const lt = await prisma.$queryRaw<{ opensAt: Date; closesAt: Date }[]>`
+        SELECT "opensAt", "closesAt" FROM "LiveTest" WHERE "mockId" = ${mock.id} LIMIT 1`;
+      if (lt[0] && Date.now() < lt[0].opensAt.getTime()) {
+        return bad("This All-India Live Test hasn't opened yet. It goes live Sunday 6 AM IST — come back then to compete for a national rank.");
+      }
+    }
 
     // Auto-enrol the student on the exam when they start any mock — covers
     // SME pre-built mocks (RRB Group D — Full Mock 1, etc.) which are

@@ -33,6 +33,15 @@ export async function POST(
     if (!session?.user?.id) return unauth();
     const { id } = await ctx.params;
 
+    // A timed-out submit (client timer expired, or the expired-resume
+    // interstitial) is recorded as AUTO_SUBMITTED so the results page can
+    // tell the student "time ran out — auto-submitted with N answered"
+    // rather than presenting it as a chosen finish (audit 18 Aug 2026).
+    const auto = await _req
+      .json()
+      .then((b) => b?.auto === true)
+      .catch(() => false);
+
     const attempt = await prisma.attempt.findUnique({
       where: { id },
       include: { mock: { include: { exam: true } } },
@@ -137,7 +146,7 @@ export async function POST(
     await prisma.attempt.update({
       where: { id },
       data: {
-        status: "SUBMITTED",
+        status: auto ? "AUTO_SUBMITTED" : "SUBMITTED",
         finishedAt,
         durationSec,
         answers: scored as unknown as Prisma.InputJsonValue,

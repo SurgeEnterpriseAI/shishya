@@ -358,7 +358,7 @@ export function MockPlayer({
     scheduleSave(q.id);
   }
 
-  async function submit() {
+  async function submit(auto = false) {
     setSubmitting(true);
     setError(null);
     trackTimeOnSwitch(idx);
@@ -403,11 +403,14 @@ export function MockPlayer({
     await flushSaves();
 
     try {
-      await apiPost(`/api/attempts/${attemptId}/submit`);
+      await apiPost(`/api/attempts/${attemptId}/submit`, { auto });
       router.replace(`/attempts/${attemptId}/results`);
     } catch (e: any) {
       setError(e.message ?? "Could not submit");
       setSubmitting(false);
+      // On a failed auto-submit, re-arm so a later retry (or the user's
+      // own submit tap) can fire again instead of being stuck.
+      if (auto) autoSubmittedRef.current = false;
     }
   }
 
@@ -416,7 +419,7 @@ export function MockPlayer({
   useEffect(() => {
     if (timeUp && !autoSubmittedRef.current && !submitting) {
       autoSubmittedRef.current = true;
-      submit();
+      submit(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeUp]);
@@ -699,7 +702,7 @@ export function MockPlayer({
                 {labels.confirmKeep}
               </button>
               <button
-                onClick={submit}
+                onClick={() => submit(false)}
                 disabled={submitting}
                 className="btn-primary !py-2 !px-4 text-sm"
               >
