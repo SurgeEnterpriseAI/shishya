@@ -32,7 +32,8 @@ export interface RecordEventInput {
   /** Anonymous cookie id when not authenticated. */
   anonId?: string | null;
   path?: string | null;
-  /** Free-form event payload. Truncated to ~1 KB to bound storage. */
+  /** Free-form event payload. Dropped entirely if it serializes past
+   *  1 KB (bounding storage) — the event row itself is always kept. */
   props?: Record<string, unknown> | null;
   utmSource?: string | null;
   /** Ingest-time classification: "browser" | "bot". Bots are recorded
@@ -41,6 +42,11 @@ export interface RecordEventInput {
   utmMedium?: string | null;
   utmCampaign?: string | null;
   refHost?: string | null;
+  /** HMAC-SHA256 fingerprints (16 hex chars) of user-agent / client IP.
+   *  Raw values are never stored — these only group traffic so stealth
+   *  crawler sweeps can be identified and retro-tagged as bots. */
+  uaHash?: string | null;
+  ipHash?: string | null;
 }
 
 /**
@@ -50,11 +56,16 @@ export interface RecordEventInput {
  */
 export async function recordEvent(input: RecordEventInput): Promise<void> {
   try {
-    const propsStr = input.props ? JSON.stringify(input.props).slice(0, 1024) : null;
+    // Props over 1 KB serialized are DROPPED whole, not truncated — a
+    // sliced JSON string never re-parses, and the resulting throw used
+    // to silently kill the entire event row, not just the payload.
+    const serialized = input.props ? JSON.stringify(input.props) : null;
+    const propsStr = serialized && serialized.length <= 1024 ? serialized : null;
     await prisma.$executeRaw`
       INSERT INTO "AnalyticsEvent"
         ("id", "kind", "userId", "anonId", "path", "props",
-         "utmSource", "utmMedium", "utmCampaign", "refHost", "client", "createdAt")
+         "utmSource", "utmMedium", "utmCampaign", "refHost", "client",
+         "uaHash", "ipHash", "createdAt")
       VALUES (
         ${`evt_${cuid()}`},
         ${input.kind}::"EventKind",
@@ -67,6 +78,8 @@ export async function recordEvent(input: RecordEventInput): Promise<void> {
         ${input.utmCampaign ?? null},
         ${input.refHost ?? null},
         ${input.client ?? null},
+        ${input.uaHash ?? null},
+        ${input.ipHash ?? null},
         NOW()
       )
     `;

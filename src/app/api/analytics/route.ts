@@ -12,6 +12,7 @@
 //   - Swallows internal errors (analytics failures must not break user flows)
 //   - Validates kind against the EventKind enum; rejects unknown kinds
 
+import { createHmac } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { recordEvent, type EventKind } from "@/lib/analytics";
@@ -52,6 +53,37 @@ const BOT_UA =
 function classifyClient(ua: string | null): "browser" | "bot" {
   if (!ua || ua.trim().length < 15) return "bot"; // empty/stub UA — no real browser sends this
   return BOT_UA.test(ua) ? "bot" : "browser";
+}
+
+// ── Forensic fingerprints (18 Aug 2026) ──────────────────────────────
+// A stealth crawler (clean browser UA, no cookie, no referrer) is
+// indistinguishable from a human at the single-row level, so we store
+// grouping keys for UNIDENTIFIED traffic only: HMAC-SHA256 of the UA
+// string / client IP, truncated to 16 hex chars.
+//
+// Privacy bounds (both are load-bearing, don't relax them):
+//   • Fingerprints are computed ONLY when the row carries no userId and
+//     no anonId — identified rows never get one, so no user↔IP linkage
+//     and no anon↔account join channel exists in the table.
+//   • The HMAC key is derived from NEXTAUTH_SECRET + the calendar
+//     month, so linkability is bounded to ~30 days: a sweep clusters
+//     within its month, but hashes can't be joined across months and a
+//     leaked key from one month reverses nothing from another. A keyed
+//     IP hash is pseudonymous data, not anonymous — the rotation is
+//     what keeps it honest.
+const HASH_SECRET = process.env.NEXTAUTH_SECRET ?? "shishya-analytics";
+function fingerprint(value: string | null, now = new Date()): string | null {
+  if (!value) return null;
+  const month = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+  const monthKey = createHmac("sha256", HASH_SECRET).update(`fp-${month}`).digest();
+  return createHmac("sha256", monthKey).update(value).digest("hex").slice(0, 16);
+}
+
+function clientIp(req: NextRequest): string | null {
+  // Vercel sets x-forwarded-for with the real client IP first.
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) return xff.split(",")[0]!.trim() || null;
+  return req.headers.get("x-real-ip");
 }
 
 export async function POST(req: NextRequest) {
@@ -133,6 +165,10 @@ export async function POST(req: NextRequest) {
     utmCampaign: body.utmCampaign?.slice(0, 128) ?? null,
     refHost,
     client,
+    // Unidentified rows only (see fingerprint block comment) — the
+    // stealth-sweep class always lands here; identified humans never do.
+    uaHash: !userId && !anonId ? fingerprint(req.headers.get("user-agent")) : null,
+    ipHash: !userId && !anonId ? fingerprint(clientIp(req)) : null,
   });
 
   const res = new NextResponse(null, { status: 204 });

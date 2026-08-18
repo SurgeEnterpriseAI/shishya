@@ -1241,6 +1241,17 @@ model AnalyticsEvent {
   // recorded (auditable, nothing hidden) — they're tagged, carry no
   // anonId, and are excluded from human-facing counters at query time.
   client      String?
+  // Forensic fingerprints (18 Aug 2026): HMAC-SHA256 of the user-agent
+  // string / client IP, truncated to 16 hex chars, stored ONLY on rows
+  // with no userId and no anonId (unidentified traffic — the class a
+  // stealth crawler lands in). Identified rows never carry one, so the
+  // table holds no user↔IP linkage. The HMAC key rotates monthly
+  // (derived from NEXTAUTH_SECRET + calendar month), bounding
+  // linkability to ~30 days — enough to cluster a sweep and retro-tag
+  // it client='bot', not enough to profile anyone across time. Raw UA
+  // and IP are never stored. NULL = identified row or pre-feature.
+  uaHash      String?
+  ipHash      String?
   createdAt   DateTime  @default(now())
 
   @@index([kind, createdAt])
@@ -1248,6 +1259,7 @@ model AnalyticsEvent {
   @@index([anonId, createdAt])
   @@index([path])
   @@index([createdAt])
+  @@index([ipHash])
 }
 
 enum EventKind {
