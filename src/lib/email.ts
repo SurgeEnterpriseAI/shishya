@@ -622,12 +622,22 @@ export async function sendWinbackEmail(p: {
   mistakes: number;
   /** Days since last seen — used for honest, warm framing. */
   daysGone: number;
+  /** If they have a live coach plan, days to their exam — the email then
+   *  leads with "your coach already rebuilt your plan, N days left". */
+  coachDaysLeft?: number;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
-  const subject =
-    p.mistakes > 0
+  const hasCoach = typeof p.coachDaysLeft === "number" && p.coachDaysLeft > 0;
+  const subject = hasCoach
+    ? `🧭 ${first}, your coach rebuilt your plan — ${p.coachDaysLeft} days to ${p.examShort}, still winnable`
+    : p.mistakes > 0
       ? `📓 ${first}, ${p.mistakes} mistakes in your notebook are ready to become marks`
       : `🎯 ${first}, your ${p.examShort} preparation is saved right where you left it`;
+  const coachLineHtml = hasCoach
+    ? `<div style="border:1px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:12px 14px;margin:0 0 14px;">
+      <p style="font-size:13px;line-height:1.6;margin:0;color:#92400e;"><strong>Your coach already rebuilt your plan for the days you have left.</strong> ${p.coachDaysLeft} days to your ${p.examShort} exam — that's still enough if you start today. Open it and today's work is waiting: <a href="https://shishya.in/coach" style="color:#c2410c;font-weight:700;text-decoration:none;">shishya.in/coach</a></p>
+    </div>`
+    : "";
 
   const mistakeText =
     p.mistakes > 0
@@ -661,6 +671,7 @@ One good session is all it takes to be back in rhythm. See you inside.
       ${first}, it's been about ${p.daysGone} days — no lecture. Exams don't care about gaps, and neither do we.
       What matters: <strong>everything you built here is still yours.</strong>
     </p>
+    ${coachLineHtml}
     <p style="font-size:13px;line-height:1.6;margin:0 0 14px;color:#334155;">
       ${
         p.mistakes > 0

@@ -33,7 +33,7 @@ export async function GET(req: Request) {
 
   // Lapsed 7–60 days, enrolled, has email, within anti-nag limits.
   const candidates = await prisma.$queryRaw<
-    { id: string; email: string; name: string | null; lastSeen: Date; short: string }[]
+    { id: string; email: string; name: string | null; lastSeen: Date; short: string; coachDaysLeft: number | null }[]
   >`
     WITH act AS (
       SELECT "userId", MAX("createdAt") AS last_seen
@@ -42,7 +42,14 @@ export async function GET(req: Request) {
     SELECT u.id, u.email, u.name, act.last_seen AS "lastSeen",
            (SELECT e."shortName" FROM "Enrollment" en JOIN "Exam" e ON e.id = en."examId"
             WHERE en."userId" = u.id AND en.active = TRUE
-            ORDER BY en."createdAt" DESC LIMIT 1) AS short
+            ORDER BY en."createdAt" DESC LIMIT 1) AS short,
+           -- Coach-plan awareness: if they still have a future exam via a
+           -- coach plan, the winback leads with "your coach already
+           -- rebuilt your plan — N days left" instead of a cold nudge
+           -- (audit 18 Aug 2026 — the comeback promise was client-only).
+           (SELECT GREATEST(0, CEIL(EXTRACT(EPOCH FROM (cp."examDate" - NOW())) / 86400))::int
+            FROM "CoachPlan" cp WHERE cp."userId" = u.id AND cp."examDate" > NOW()
+            ORDER BY cp."updatedAt" DESC LIMIT 1) AS "coachDaysLeft"
     FROM "User" u JOIN act ON act."userId" = u.id
     WHERE u.email <> ''
       AND act.last_seen < NOW() - INTERVAL '7 days'
@@ -92,6 +99,7 @@ export async function GET(req: Request) {
       examShort: c.short,
       mistakes: Math.min(mBy.get(c.id) ?? 0, 999),
       daysGone,
+      coachDaysLeft: c.coachDaysLeft ?? undefined,
     }).catch(() => false);
     if (ok) {
       sent++;

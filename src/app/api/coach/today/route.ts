@@ -22,27 +22,44 @@ export async function GET() {
     Math.floor((Date.now() + 5.5 * 3600_000) / 86_400_000) * 86_400_000 - 5.5 * 3600_000,
   );
 
-  // Today's actual activity, for done-detection.
+  // Today's actual activity, for done-detection. Attempts carry their
+  // mock's type + generatedBy so each task matches only the RIGHT kind
+  // of attempt — a 10-question topic drill must not tick off the
+  // full-length mock (audit 18 Aug 2026).
   const [topicsToday, attemptsToday] = await Promise.all([
     prisma.$queryRaw<{ code: string }[]>`
       SELECT t.code FROM "TopicStudyState" ts JOIN "Topic" t ON t.id = ts."topicId"
       WHERE ts."userId" = ${userId}
         AND (ts."readAt" >= ${dayStart} OR ts."completedAt" >= ${dayStart})`.catch(() => []),
-    prisma.$queryRaw<{ n: bigint }[]>`
-      SELECT COUNT(*) n FROM "Attempt"
-      WHERE "userId" = ${userId} AND "startedAt" >= ${dayStart}
-        AND status IN ('SUBMITTED','AUTO_SUBMITTED')`.catch(() => [{ n: BigInt(0) }]),
+    prisma.$queryRaw<{ type: string; generatedBy: string | null }[]>`
+      SELECT m.type::text AS type, m."generatedBy"
+      FROM "Attempt" a JOIN "Mock" m ON m.id = a."mockId"
+      WHERE a."userId" = ${userId} AND a."startedAt" >= ${dayStart}
+        AND a.status IN ('SUBMITTED','AUTO_SUBMITTED')`.catch(() => []),
   ]);
   const touchedTopics = new Set(topicsToday.map((t) => t.code));
-  const anyMockToday = Number(attemptsToday[0]?.n ?? 0) > 0;
+  const fullMockToday = attemptsToday.some((a) => a.type === "FULL" && a.generatedBy !== "live-test");
+  const liveTestToday = attemptsToday.some((a) => a.generatedBy === "live-test");
+  // daily5 / generic "did you practise" stays lenient — any submitted
+  // attempt keeps the momentum task ticked.
+  const anyAttemptToday = attemptsToday.length > 0;
 
   const tasks = plan.todayTasks.map((t) => {
     const m = t.href.match(/\/topics\/([^/?#]+)/);
-    const done = m
-      ? touchedTopics.has(decodeURIComponent(m[1]))
-      : t.kind === "daily5" || t.kind === "mock" || t.kind === "livetest" || t.kind === "test"
-        ? anyMockToday
-        : false;
+    let done = false;
+    if (m) {
+      done = touchedTopics.has(decodeURIComponent(m[1]));
+    } else if (t.kind === "mock") {
+      done = fullMockToday;
+    } else if (t.kind === "livetest") {
+      done = liveTestToday;
+    } else if (t.kind === "daily5") {
+      done = anyAttemptToday;
+    } else if (t.kind === "test") {
+      // A weak-topic revise task with no /topics/ href — any attempt is
+      // a reasonable proxy that they practised.
+      done = anyAttemptToday;
+    }
     return { ...t, done };
   });
 

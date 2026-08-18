@@ -33,7 +33,11 @@ export interface ComputedPlan {
   dayNumber: number;
   totalDays: number;
   daysLeft: number;
-  phase: "cover" | "strengthen" | "final";
+  // "exam-day" = the exam is today (a send-off, not a study day);
+  // "post-exam" = the exam date has passed (the plan is over — we ask
+  // how it went instead of assigning more mocks). Both were a permanent
+  // "Day N · 0 days left" trap before (audit 18 Aug 2026).
+  phase: "cover" | "strengthen" | "final" | "exam-day" | "post-exam";
   status: "fresh" | "on-track" | "rebuilt";
   todayTasks: CoachTask[];
   progress: { covered: number; total: number; mastered: number };
@@ -94,7 +98,8 @@ async function loadPlanContext(userId: string): Promise<PlanContext | null> {
   if (!plan) return null;
 
   const today = istDay(Date.now());
-  const daysLeft = Math.max(0, istDay(plan.examDate) - today);
+  const rawDaysLeft = istDay(plan.examDate) - today; // signed: <0 = exam passed
+  const daysLeft = Math.max(0, rawDaysLeft);
   const dayNumber = Math.max(1, today - istDay(plan.createdAt) + 1);
   const totalDays = Math.max(1, istDay(plan.examDate) - istDay(plan.createdAt));
 
@@ -117,7 +122,16 @@ async function loadPlanContext(userId: string): Promise<PlanContext | null> {
     .map((t) => ({ ...t, priority: t.weight * (1 - (t.mastery ?? 0)) }))
     .sort((a, b) => b.priority - a.priority || a.code.localeCompare(b.code));
 
-  const phase: ComputedPlan["phase"] = daysLeft > 14 ? "cover" : daysLeft > 7 ? "strengthen" : "final";
+  const phase: ComputedPlan["phase"] =
+    rawDaysLeft < 0
+      ? "post-exam"
+      : rawDaysLeft === 0
+        ? "exam-day"
+        : daysLeft > 14
+          ? "cover"
+          : daysLeft > 7
+            ? "strengthen"
+            : "final";
 
   const reserve = Math.min(7, Math.ceil(daysLeft * 0.2));
   const slots = Math.max(0, (daysLeft - reserve) * topicsPerDay(plan.dailyMinutes));
@@ -166,6 +180,18 @@ async function loadPlanContext(userId: string): Promise<PlanContext | null> {
 // ── Task construction from stable ids (shared by both layers) ─────────
 
 function taskFromId(ctx: PlanContext, id: string): CoachTask | null {
+  if (id === "examday")
+    return {
+      kind: "read",
+      label: `Today is your ${ctx.examShort} exam. Carry your admit card & ID, reach early, stay calm — you've prepared for this. Go get it. 🇮🇳`,
+      href: `/exams/${ctx.examCode}`,
+    };
+  if (id === "postexam")
+    return {
+      kind: "read",
+      label: `Your ${ctx.examShort} exam is done — how did it go? Tell us, and we'll set up what's next.`,
+      href: `/me/report?exam-done=1`,
+    };
   if (id === "daily5") return { kind: "daily5", label: "Daily 5 — keep the streak", href: "/dashboard" };
   if (id === "livetest")
     return ctx.isSunday
@@ -192,6 +218,10 @@ function taskFromId(ctx: PlanContext, id: string): CoachTask | null {
 function deterministicTaskIds(ctx: PlanContext): string[] {
   const per = topicsPerDay(ctx.dailyMinutes);
   const ids: string[] = [];
+  // Terminal phases don't assign study work — no Sunday live test, no
+  // mock on the morning of the exam (audit 18 Aug 2026).
+  if (ctx.phase === "exam-day") return ["examday"];
+  if (ctx.phase === "post-exam") return ["postexam"];
   if (ctx.isSunday) ids.push("livetest");
   if (ctx.phase === "final") {
     ids.push("fullmock");

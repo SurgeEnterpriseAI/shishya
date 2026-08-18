@@ -110,5 +110,49 @@ export async function GET(req: Request) {
     report.push({ exam: ex.short, students: students.length, sent });
   }
 
+  // Second recipient source: coach-plan holders whose OWN confirmed exam
+  // date is tomorrow (IST) — the one date the student personally set,
+  // which the global exam calendar above may not carry (audit 18 Aug
+  // 2026). Deduped via the same 'exam-eve' EmailTouch tag so nobody who
+  // already got one from the enrollment path is emailed twice.
+  const coachStudents = await prisma.$queryRaw<
+    { id: string; email: string; name: string | null; short: string }[]
+  >`
+    SELECT DISTINCT ON (u.id) u.id, u.email, u.name, e."shortName" AS short
+    FROM "CoachPlan" cp
+    JOIN "User" u ON u.id = cp."userId"
+    JOIN "Exam" e ON e.id = cp."examId"
+    WHERE u.email <> ''
+      AND (cp."examDate" + INTERVAL '5.5 hours')::date
+          = (NOW() + INTERVAL '5.5 hours' + INTERVAL '1 day')::date
+      AND NOT EXISTS (
+        SELECT 1 FROM "EmailTouch" t
+        WHERE t."userId" = u.id AND t.tag = 'exam-eve'
+          AND t."sentAt" > NOW() - INTERVAL '20 hours'
+      )
+    LIMIT ${MAX_SENDS}
+  `.catch(() => []);
+
+  let coachSent = 0;
+  if (!dry) {
+    for (const s of coachStudents) {
+      const ok = await sendExamEveEmail({
+        to: s.email,
+        userId: s.id,
+        name: s.name,
+        examShort: s.short,
+        quote: { text: quote.text, author: quote.author },
+      }).catch(() => false);
+      if (ok) {
+        coachSent++;
+        totalSent++;
+        await prisma
+          .$executeRaw`INSERT INTO "EmailTouch" (id, "userId", tag) VALUES (${crypto.randomUUID()}, ${s.id}, 'exam-eve')`
+          .catch(() => {});
+      }
+    }
+  }
+  report.push({ exam: "(coach-plan dates)", students: coachStudents.length, sent: coachSent });
+
   return Response.json({ ok: true, dry, exams: exams.length, sent: totalSent, report });
 }
