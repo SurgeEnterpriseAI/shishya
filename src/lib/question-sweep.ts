@@ -12,6 +12,35 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
 import { anthropic, MODEL } from "@/lib/ai/client";
+import { createNotification } from "@/lib/db/notifications";
+
+// Close the loop back to the students who flagged a question: when a
+// report leads to a key fix or an invalidation, the reporter was RIGHT
+// and deserves to hear it (audit 18 Aug 2026 — this was a permanent
+// one-way street before). Best-effort; dedup on the report event.
+async function notifyReporters(questionId: string, action: "key-fixed" | "invalidated"): Promise<void> {
+  try {
+    const reporters = await prisma.$queryRaw<Array<{ userId: string; examCode: string | null }>>`
+      SELECT DISTINCT qr."userId", q."examCode"
+      FROM "QuestionReport" qr JOIN "Question" q ON q.id = qr."questionId"
+      WHERE qr."questionId" = ${questionId} AND qr."userId" IS NOT NULL`;
+    for (const r of reporters) {
+      await createNotification({
+        userId: r.userId,
+        type: "FLAG_VALIDATED",
+        title: action === "key-fixed" ? "You were right — we fixed an answer key" : "You were right — we pulled a flawed question",
+        body:
+          action === "key-fixed"
+            ? "A question you reported had a wrong answer key. We re-verified it and corrected it. Thank you — you made Shishya more accurate for everyone."
+            : "A question you reported didn't have a clean correct answer, so we've removed it from the practice pool. Thank you for the sharp eye.",
+        link: r.examCode ? `/exams/${r.examCode}` : "/dashboard",
+        dedupKey: `qreport:${questionId}:${action}`,
+      });
+    }
+  } catch (err) {
+    console.error("[question-sweep] reporter notify failed (non-fatal):", err);
+  }
+}
 
 interface Verdict {
   correctKey: string | null;
@@ -126,6 +155,9 @@ export async function adjudicateQuestion(
     where: { questionId, resolved: false },
     data: { resolved: true, resolvedBy, resolvedAt: new Date() },
   });
+  if (result.action === "key-fixed" || result.action === "invalidated") {
+    await notifyReporters(questionId, result.action);
+  }
   return result;
 }
 
@@ -192,6 +224,10 @@ export async function sweepReportedQuestions(opts: {
       where: { questionId: qid, resolved: false },
       data: { resolved: true, resolvedBy: opts.resolvedBy, resolvedAt: new Date() },
     });
+    const last = results[results.length - 1];
+    if (last && (last.action === "key-fixed" || last.action === "invalidated")) {
+      await notifyReporters(qid, last.action);
+    }
   }
   return results;
 }

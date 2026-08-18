@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import { isCurrentUserAdmin } from "@/lib/admin";
+import { emailTeacherRequestAnswer } from "@/lib/teacher-request-notify";
 
 export const runtime = "nodejs";
 
@@ -72,6 +73,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         data: { requestId: id, note: body.answer, kind: "ANSWER", byEmail: email ?? null },
       })
       .catch(() => {});
+    // The answer must REACH the student, not wait on a card they may
+    // never revisit (audit 18 Aug 2026).
+    await emailTeacherRequestAnswer(id).catch(() => {});
   }
 
   return NextResponse.json({ ok: true });

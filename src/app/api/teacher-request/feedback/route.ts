@@ -62,15 +62,21 @@ export async function POST(req: NextRequest) {
   if (!owns) return NextResponse.json({ error: "not yours" }, { status: 403 });
 
   const closes = body.rating === "GOT_HELP" || body.rating === "SOLVED";
+  const reopens = body.rating === "NEED_MORE_HELP";
   await prisma.$executeRaw`
     UPDATE "TeacherRequest"
     SET "studentRating" = ${body.rating},
         "ratedAt" = NOW(),
         status = CASE
           WHEN ${closes} THEN 'RESOLVED'::"TeacherRequestStatus"
-          WHEN ${body.rating === "NEED_MORE_HELP"} THEN 'PENDING'::"TeacherRequestStatus"
+          WHEN ${reopens} THEN 'PENDING'::"TeacherRequestStatus"
           ELSE status
         END,
+        -- Re-arm the 24h SLA net on a reopen: clearing escalatedAt makes
+        -- the cron pick this request up again and generate a deeper
+        -- answer (audit 18 Aug 2026 — reopens used to escape the net
+        -- forever because the cron only saw answerText IS NULL rows).
+        "escalatedAt" = CASE WHEN ${reopens} THEN NULL ELSE "escalatedAt" END,
         "updatedAt" = NOW()
     WHERE id = ${body.id}
   `;

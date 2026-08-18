@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import { isCurrentUserAdmin } from "@/lib/admin";
+import { sendEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -25,13 +26,45 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
-  const rows = await prisma.$queryRaw<{ id: string; adminNotes: string | null }[]>`
-    SELECT id, "adminNotes" FROM "MentorApplication" WHERE id = ${id}`;
+  const rows = await prisma.$queryRaw<
+    { id: string; adminNotes: string | null; status: string; name: string; email: string | null; examCode: string }[]
+  >`
+    SELECT id, "adminNotes", status, name, email, "examCode" FROM "MentorApplication" WHERE id = ${id}`;
   if (rows.length === 0) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   if (body.status) {
     await prisma.$executeRaw`
       UPDATE "MentorApplication" SET status = ${body.status}, "updatedAt" = NOW() WHERE id = ${id}`;
+
+    // Tell the applicant the outcome — approval was silent before (audit
+    // 18 Aug 2026), so approved mentors never learned they could start,
+    // nor where the desk was. Only on an actual status change, and only
+    // if we have an email to reach them.
+    const app = rows[0];
+    if (app.email && body.status !== app.status) {
+      if (body.status === "APPROVED") {
+        await sendEmail({
+          to: app.email,
+          subject: `You're now a Shishya mentor 🎓`,
+          html: `<p>Namaste ${app.name.split(" ")[0]},</p>
+<p>Your application to mentor ${app.examCode} aspirants has been <b>approved</b>. Thank you for giving your time to people walking the path you've already cleared.</p>
+<p>Your mentor desk is here: <a href="https://shishya.in/mentor">shishya.in/mentor</a> — <b>sign in with this same email address</b> (Google sign-in) to see students who've asked to talk and shared their preparation report.</p>
+<p>First session with any student is free. From their second, it's ₹9 for your time — paid to you, never to the platform.</p>
+<p>— Shishya</p>`,
+          tag: "mentor-approval",
+        }).catch(() => {});
+      } else if (body.status === "REJECTED") {
+        await sendEmail({
+          to: app.email,
+          subject: `Your Shishya mentor application`,
+          html: `<p>Namaste ${app.name.split(" ")[0]},</p>
+<p>Thank you for applying to mentor on Shishya. We're not able to take your application forward right now — often it's simply that we need clearer proof of clearing the exam, or we're not yet onboarding for ${app.examCode}.</p>
+<p>You're welcome to apply again with more detail any time at <a href="https://shishya.in/mentors">shishya.in/mentors</a>. And everything on Shishya stays free for your own preparation.</p>
+<p>— Shishya</p>`,
+          tag: "mentor-rejection",
+        }).catch(() => {});
+      }
+    }
   }
   if (body.note) {
     // Append with a stamp so the trail stays readable.

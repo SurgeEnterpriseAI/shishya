@@ -22,6 +22,7 @@ export const maxDuration = 300;
 import { prisma } from "@/lib/db/prisma";
 import { runAsk } from "@/lib/ask-engine";
 import { sendTeacherRequestEmail } from "@/lib/email";
+import { emailTeacherRequestAnswer } from "@/lib/teacher-request-notify";
 
 const SLA_HOURS = 24;
 const MAX_PER_RUN = 8;
@@ -39,15 +40,23 @@ export async function GET(req: Request) {
   // JS-side cutoff: make_interval(hours => $1) trips Prisma's parser
   // (the => named-arg syntax), so bind a plain timestamp instead.
   const cutoff = new Date(Date.now() - SLA_HOURS * 3600_000);
+  // Two classes are picked up, both gated on escalatedAt IS NULL (the
+  // "needs an AI answer" flag): (1) never-answered requests past 24h;
+  // (2) reopens — the student rated NEED_MORE_HELP, which clears
+  // escalatedAt, so a request with a prior answer re-enters the net and
+  // gets a deeper second pass (audit 18 Aug 2026).
   const stale = await prisma.$queryRaw<
-    { id: string; examCode: string | null; message: string; surface: string; contactName: string | null }[]
+    { id: string; examCode: string | null; message: string; surface: string; contactName: string | null; isReopen: boolean }[]
   >`
-    SELECT id, "examCode", message, surface, "contactName"
+    SELECT id, "examCode", message, surface, "contactName",
+           ("answerText" IS NOT NULL) AS "isReopen"
     FROM "TeacherRequest"
     WHERE status IN ('PENDING', 'CONTACTED')
-      AND "answerText" IS NULL
       AND "escalatedAt" IS NULL
-      AND "createdAt" < ${cutoff}
+      AND (
+        ("answerText" IS NULL AND "createdAt" < ${cutoff})
+        OR ("studentRating" = 'NEED_MORE_HELP' AND "ratedAt" < ${cutoff})
+      )
     ORDER BY "createdAt" ASC
     LIMIT ${MAX_PER_RUN}
   `.catch(() => []);
@@ -60,8 +69,11 @@ export async function GET(req: Request) {
     // actual ask (contextLabel), e.g. "…about APPSC Group II — is my
     // self-study plan realistic?".
     const cleaned = r.message.replace(/^\[(WHATSAPP|CALL) tap\] Student initiated (a WhatsApp chat|a call)( about )?/i, "").replace(/\.$/, "").trim();
+    const reopenPrefix = r.isReopen
+      ? "The student says the first answer didn't fully help — go deeper, be more specific, and add concrete next steps. "
+      : "";
     const question = cleaned.length >= 8
-      ? `${r.examCode ? `[Student preparing for ${r.examCode}] ` : ""}${cleaned}`
+      ? `${reopenPrefix}${r.examCode ? `[Student preparing for ${r.examCode}] ` : ""}${cleaned}`
       : // Tap with no actual question — ask the engine for a warm,
         // useful check-in for this exam rather than a generic form letter.
         `A student preparing for ${r.examCode ?? "a government exam"} asked to talk to a teacher but didn't leave a specific question. Write a short, warm check-in: the 2-3 things most ${r.examCode ?? "government-exam"} aspirants need help with right now, with Shishya links for each, and an invitation to reply with their exact doubt.`;
@@ -77,7 +89,7 @@ export async function GET(req: Request) {
             "escalatedAt" = NOW(),
             status = CASE WHEN status = 'PENDING' THEN 'CONTACTED'::"TeacherRequestStatus" ELSE status END,
             "updatedAt" = NOW()
-        WHERE id = ${r.id} AND "answerText" IS NULL
+        WHERE id = ${r.id} AND "escalatedAt" IS NULL
       `;
       void prisma.teacherRequestNote
         .create({
@@ -89,6 +101,8 @@ export async function GET(req: Request) {
           },
         })
         .catch(() => {});
+      // Deliver it to the student by email too, not just the in-app card.
+      await emailTeacherRequestAnswer(r.id).catch(() => {});
       answered.push({ id: r.id, q: question.slice(0, 90) });
     } catch (e) {
       console.error("teacher-request-sla: AI answer failed for", r.id, e);

@@ -48,6 +48,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // A guest applying without an email could never be matched to a mentor
+  // desk after approval (the desk gate is userId OR email) — audit
+  // 18 Aug 2026. Require an email unless they're signed in (their
+  // account email is used then).
+  const resolvedEmail = body.email || session?.user?.email || null;
+  if (!resolvedEmail) {
+    return NextResponse.json(
+      { error: "Please add an email — we send your approval and your mentor desk sign-in there." },
+      { status: 400 },
+    );
+  }
+
   // Raw SQL: the generated client predates MentorApplication (established
   // pattern). id via randomUUID; updatedAt has no DB default so set it.
   const id = crypto.randomUUID();
@@ -56,7 +68,7 @@ export async function POST(req: NextRequest) {
       INSERT INTO "MentorApplication"
         (id, "userId", name, phone, email, "examCode", "clearedYear", credential, languages, city, why, "updatedAt")
       VALUES
-        (${id}, ${userId}, ${body.name}, ${body.phone}, ${body.email || session?.user?.email || null},
+        (${id}, ${userId}, ${body.name}, ${body.phone}, ${resolvedEmail},
          ${body.examCode.toUpperCase()}, ${body.clearedYear || null}, ${body.credential},
          ${body.languages || null}, ${body.city || null}, ${body.why || null}, NOW())
     `

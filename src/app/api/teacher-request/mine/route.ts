@@ -45,11 +45,30 @@ export async function GET(req: NextRequest) {
       SELECT id, "examCode", message, status::text AS status, "createdAt",
              "answerText", "answeredAt", "answeredBy", "studentRating"
       FROM "TeacherRequest"
-      WHERE ${userId ? Prisma.sql`"userId" = ${userId}` : Prisma.sql`"anonId" = ${anonId}`}
-        AND "createdAt" > NOW() - INTERVAL '14 days'
-        AND status NOT IN ('RESOLVED', 'CLOSED')
-        AND ("studentRating" IS NULL OR "studentRating" = 'NOT_YET'
-             OR ("studentRating" = 'NEED_MORE_HELP' AND "answeredAt" > "ratedAt"))
+      WHERE ${
+        // Match on BOTH identities for a signed-in user: they may have
+        // asked while anonymous, then signed in — that answer must not
+        // vanish at the identity switch (audit 18 Aug 2026).
+        userId && anonId
+          ? Prisma.sql`("userId" = ${userId} OR "anonId" = ${anonId})`
+          : userId
+            ? Prisma.sql`"userId" = ${userId}`
+            : Prisma.sql`"anonId" = ${anonId}`
+      }
+        AND (
+          -- An answer still awaiting the student's Solved / Need-more-help
+          -- is ALWAYS shown — no status filter, no time cap — until they
+          -- act on it. An admin marking RESOLVED, or 14 days passing, must
+          -- never hide an answer the student never saw.
+          ("answerText" IS NOT NULL
+             AND ("studentRating" IS NULL OR "studentRating" = 'NOT_YET'
+                  OR ("studentRating" = 'NEED_MORE_HELP' AND "answeredAt" > "ratedAt")))
+          OR
+          -- Still awaiting an answer: show while open and recent.
+          ("answerText" IS NULL
+             AND status NOT IN ('RESOLVED', 'CLOSED')
+             AND "createdAt" > NOW() - INTERVAL '14 days')
+        )
       ORDER BY "createdAt" DESC
       LIMIT 3
     `
