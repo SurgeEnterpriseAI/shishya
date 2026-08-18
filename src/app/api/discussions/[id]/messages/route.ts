@@ -22,6 +22,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { bad, forbidden, notFound, ok, parseBody, serverError, unauth } from "@/lib/http";
 import { generateAiReply } from "@/lib/ai/discussion-reply";
+import { createNotification } from "@/lib/db/notifications";
 
 const Body = z.object({
   content: z.string().min(2).max(4000),
@@ -44,7 +45,7 @@ export async function POST(
 
     const thread = await prisma.discussion.findUnique({
       where: { id },
-      select: { id: true, locked: true, title: true, exam: { select: { shortName: true } } },
+      select: { id: true, locked: true, title: true, authorId: true, exam: { select: { shortName: true } } },
     });
     if (!thread) return notFound("discussion");
     if (thread.locked) return forbidden();
@@ -73,6 +74,22 @@ export async function POST(
         },
       }),
     ]);
+
+    // Tell the thread's author someone replied to their doubt — before
+    // this they had to keep re-opening the thread to notice (audit
+    // 18 Aug 2026). Skip when the author is replying to themselves.
+    if (thread.authorId && thread.authorId !== session.user.id) {
+      after(async () => {
+        await createNotification({
+          userId: thread.authorId!,
+          type: "ADMIN_MESSAGE",
+          title: `${authorName} replied to your question`,
+          body: `"${thread.title}" has a new reply.`,
+          link: `/discussions/${id}`,
+          dedupKey: `discuss-reply:${message.id}`,
+        }).catch(() => {});
+      });
+    }
 
     // Schedule an AI peer reply AFTER the response goes back to the
     // user. `after()` keeps the lambda alive until the callback

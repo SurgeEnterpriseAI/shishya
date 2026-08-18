@@ -11,6 +11,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { bad, ok, parseBody, serverError, unauth } from "@/lib/http";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
+import { sendEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +68,23 @@ export async function POST(req: Request) {
       },
       select: { id: true, title: true, area: true, createdAt: true },
     });
+
+    // Signal the team on submit — otherwise a feature request sat unseen
+    // until someone happened to open /admin (audit 18 Aug 2026).
+    const notifyTo =
+      process.env.TEACHER_REQUEST_NOTIFY_EMAIL ??
+      (process.env.ADMIN_EMAILS ?? "").split(",").map((s) => s.trim()).filter(Boolean)[0] ??
+      null;
+    if (notifyTo) {
+      void sendEmail({
+        to: notifyTo,
+        subject: `💡 Feature request (${area}) — ${created.title}`,
+        html: `<p><b>${(user?.name ?? "A student").replace(/</g, "&lt;")}</b> (${user?.email ?? "—"}) suggested:</p>
+<blockquote style="border-left:3px solid #f59e0b;padding-left:10px">${body.body.replace(/</g, "&lt;")}</blockquote>
+<p>Area: ${area} · from ${body.routePath}<br/>Review: https://shishya.in/admin/feedback</p>`,
+        tag: "feature-request",
+      }).catch(() => {});
+    }
     return ok({ request: created });
   } catch (err: any) {
     if (err?.status === 400) return bad(err.message);
