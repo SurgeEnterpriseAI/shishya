@@ -103,6 +103,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       UPDATE "MentorSessionRequest"
       SET status = 'DONE', "sessionNote" = ${note}, "updatedAt" = NOW()
       WHERE id = ${id}`;
+    // Two-actor rule: the note must REACH the student, not sit in the DB
+    // until they happen to revisit — email it the moment the mentor closes.
+    if (reqRow.student_email && note) {
+      await sendEmail({
+        to: reqRow.student_email,
+        subject: `Your next steps from ${mentor.name} — Shishya mentor session`,
+        html: `<p>Namaste ${reqRow.student_name ?? ""},</p>
+<p>Your mentor <b>${mentor.name}</b> wrapped up your session and wrote down your next steps:</p>
+<blockquote style="border-left:3px solid #f59e0b;margin:12px 0;padding:8px 12px;background:#fffbeb">${note.replace(/</g, "&lt;")}</blockquote>
+<p>It stays on your <a href="https://shishya.in/me/report">report page</a> too. Work the plan a little every day — and when you want the next conversation, request a session from the same page.</p>
+<p>— Shishya</p>`,
+        tag: "mentor-session",
+      }).catch(() => {});
+    }
     return Response.json({ ok: true });
   }
 

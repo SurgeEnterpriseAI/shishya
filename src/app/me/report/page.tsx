@@ -32,9 +32,11 @@ export default async function ReportPage() {
 
   const reqRows = await prisma.$queryRaw<any[]>`
     SELECT r.id, r.status, r."meetUrl", r."sessionNote", r."feeDue", r."paymentLinkId",
-           r."paymentLink", r."paidAt", ma.name AS mentor_name
+           r."paymentLink", r."paidAt", ma.name AS mentor_name, ma.email AS mentor_email,
+           u.name AS student_name
     FROM "MentorSessionRequest" r
     LEFT JOIN "MentorApplication" ma ON ma.id = r."mentorId"
+    JOIN "User" u ON u.id = r."userId"
     WHERE r."userId" = ${userId}
     ORDER BY r."createdAt" DESC LIMIT 1`;
   const row = reqRows[0];
@@ -50,6 +52,17 @@ export default async function ReportPage() {
         UPDATE "MentorSessionRequest" SET "paidAt" = NOW(), "updatedAt" = NOW()
         WHERE id = ${row.id} AND "paidAt" IS NULL`;
       row.paidAt = new Date();
+      // Two-actor rule: the mentor must KNOW the room just unlocked —
+      // otherwise the student sits in a room the mentor never enters.
+      if (row.mentor_email) {
+        const { sendEmail } = await import("@/lib/email");
+        await sendEmail({
+          to: row.mentor_email,
+          subject: `${row.student_name ?? "Your student"} paid — session room is unlocked`,
+          html: `<p>${row.student_name ?? "Your student"} completed the ₹9 payment. The room is now open on their side — expect their "I'm in the room" ping, or invite them from your desk: <a href="https://shishya.in/mentor">shishya.in/mentor</a></p>`,
+          tag: "mentor-session",
+        }).catch(() => {});
+      }
     }
   }
 
