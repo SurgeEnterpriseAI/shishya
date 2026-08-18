@@ -69,6 +69,26 @@ export async function POST(req: Request) {
     WHERE "id" = ${session.user.id}
   `;
 
+  // The declared exams must become Enrollments — every outbound loop
+  // (Daily-5, live-test invite, exam-eve, winback) keys on Enrollment.
+  // Without this, an aspirant who tells us their exam here and then only
+  // browses is invisible to every email we send (audit, 18 Aug 2026).
+  if (prepCodes.length > 0) {
+    const exams = await prisma.exam.findMany({
+      where: { code: { in: prepCodes } },
+      select: { id: true },
+    });
+    for (const e of exams) {
+      await prisma.enrollment
+        .upsert({
+          where: { userId_examId: { userId: session.user.id, examId: e.id } },
+          update: { active: true },
+          create: { userId: session.user.id, examId: e.id },
+        })
+        .catch(() => {}); // enrollment failure must not break onboarding
+    }
+  }
+
   // Track completion as an analytics event so we can see funnel.
   void recordEvent({
     kind: "CTA_CLICKED",

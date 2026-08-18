@@ -40,9 +40,30 @@ export default async function MentorDesk() {
     );
   }
 
+  // Payment reconciliation ALSO runs here, not only on the student's
+  // report page: a student who pays from the email link and never
+  // revisits used to leave paidAt NULL forever, so the mentor sat
+  // waiting on a session that was actually paid for (audit 18 Aug 2026).
+  // The mentor opening their desk is the second, reliable trigger.
+  const pendingPay = await prisma.$queryRaw<any[]>`
+    SELECT id, "paymentLinkId" FROM "MentorSessionRequest"
+    WHERE "mentorId" = ${mentor.id} AND status = 'TAKEN'
+      AND "feeDue" = TRUE AND "paidAt" IS NULL AND "paymentLinkId" IS NOT NULL
+    LIMIT 10`;
+  if (pendingPay.length > 0) {
+    const { isLinkPaid } = await import("@/lib/razorpay");
+    for (const row of pendingPay) {
+      if (await isLinkPaid(row.paymentLinkId).catch(() => false)) {
+        await prisma.$executeRaw`
+          UPDATE "MentorSessionRequest" SET "paidAt" = NOW(), "updatedAt" = NOW()
+          WHERE id = ${row.id} AND "paidAt" IS NULL`;
+      }
+    }
+  }
+
   const [mine, waiting, completed] = await Promise.all([
     prisma.$queryRaw<any[]>`
-      SELECT r.id, r.status, r."examCode", r.note, r."takenAt", u.name
+      SELECT r.id, r.status, r."examCode", r.note, r."takenAt", r."feeDue", r."paidAt", u.name
       FROM "MentorSessionRequest" r JOIN "User" u ON u.id = r."userId"
       WHERE r."mentorId" = ${mentor.id} AND r.status = 'TAKEN'
       ORDER BY r."takenAt" DESC`,
@@ -69,7 +90,21 @@ export default async function MentorDesk() {
         {mine.map((r) => (
           <li key={r.id}>
             <Link href={`/mentor/${r.id}`} className="block rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 hover:border-emerald-400">
-              <p className="text-sm font-semibold text-ink-900">{r.name} {r.examCode && <span className="font-normal text-ink-500">· {r.examCode}</span>}</p>
+              <p className="text-sm font-semibold text-ink-900">
+                {r.name} {r.examCode && <span className="font-normal text-ink-500">· {r.examCode}</span>}
+                {/* Payment state must be visible here — a mentor was
+                    otherwise blind to whether the room had unlocked. */}
+                {r.feeDue && !r.paidAt && (
+                  <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                    awaiting ₹9 — room locked
+                  </span>
+                )}
+                {r.feeDue && r.paidAt && (
+                  <span className="ml-2 rounded bg-emerald-100 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-800">
+                    paid · room open
+                  </span>
+                )}
+              </p>
               {r.note && <p className="mt-1 truncate text-sm text-ink-600">“{r.note}”</p>}
             </Link>
           </li>

@@ -120,5 +120,32 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return Response.json({ ok: true });
   }
 
+  // The call never happened — hand the student back to the waiting list.
+  // Before this existed, the only exit from TAKEN was a "done" with a
+  // note, which burned the student's free first session and told them a
+  // session had occurred (audit 18 Aug 2026).
+  if (body?.action === "release") {
+    if (reqRow.mentorId !== mentor.id) return Response.json({ ok: false }, { status: 403 });
+    await prisma.$executeRaw`
+      UPDATE "MentorSessionRequest"
+      SET status = 'NEW', "mentorId" = NULL, "meetUrl" = NULL, "takenAt" = NULL,
+          "feeDue" = FALSE, "paymentLinkId" = NULL, "paymentLink" = NULL,
+          "updatedAt" = NOW()
+      WHERE id = ${id} AND status = 'TAKEN' AND "paidAt" IS NULL`;
+    if (reqRow.student_email) {
+      await sendEmail({
+        to: reqRow.student_email,
+        subject: `Your Shishya mentor session — let's find you another time`,
+        html: `<p>Namaste ${reqRow.student_name ?? ""},</p>
+<p>That session couldn't happen, so we've put your request back at the front of the queue — <b>your free session is still yours</b>, nothing was used up.</p>
+<p>A mentor will pick it up again shortly. You can also add a line about when you're usually free on your <a href="https://shishya.in/me/report">report page</a> — it helps them reach you at the right time.</p>
+<p>Meanwhile your mocks, plan and daily study pack are all where you left them.</p>
+<p>— Shishya</p>`,
+        tag: "mentor-session",
+      }).catch(() => {});
+    }
+    return Response.json({ ok: true });
+  }
+
   return Response.json({ ok: false, error: "unknown-action" }, { status: 400 });
 }

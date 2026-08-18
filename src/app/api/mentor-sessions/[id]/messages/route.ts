@@ -24,7 +24,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (text.length < 1) return Response.json({ ok: false, error: "empty" }, { status: 400 });
 
   const rows = await prisma.$queryRaw<any[]>`
-    SELECT r.id, r."userId", r."mentorId", r."meetUrl", u.name AS student_name, u.email AS student_email,
+    SELECT r.id, r."userId", r."mentorId", r."meetUrl", r."feeDue", r."paidAt",
+           u.name AS student_name, u.email AS student_email,
            ma.name AS mentor_name, ma.email AS mentor_email, ma."userId" AS mentor_user_id
     FROM "MentorSessionRequest" r
     JOIN "User" u ON u.id = r."userId"
@@ -51,6 +52,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   // Notify the other side by email — tiny volumes, always relevant.
   const to = isStudent ? (r.mentor_email as string | null) : (r.student_email as string | null);
+  // The room link is a paid good once a fee is due: never put it in an
+  // email to a student who hasn't paid (audit 18 Aug 2026 — this leaked
+  // the Jitsi URL and bypassed the ₹9 gate entirely). Mentors always
+  // get it; students get it only when nothing is owed.
+  const roomVisible = isStudent || !(r.feeDue && !r.paidAt);
   if (to) {
     await sendEmail({
       to,
@@ -59,7 +65,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         : `Your mentor ${r.mentor_name ?? ""} sent a message — Shishya`,
       html: `<p>${isStudent ? r.student_name ?? "Your student" : `Your mentor ${r.mentor_name ?? ""}`} says:</p>
 <blockquote style="border-left:3px solid #f59e0b;padding-left:10px;color:#333">${text.replace(/</g, "&lt;")}</blockquote>
-<p>Reply here: <a href="${isStudent ? `https://shishya.in/mentor/${id}` : "https://shishya.in/me/report"}">${isStudent ? "mentor desk" : "your report page"}</a>${r.meetUrl ? `<br/>Session room: <a href="${r.meetUrl}">${r.meetUrl}</a>` : ""}</p>
+<p>Reply here: <a href="${isStudent ? `https://shishya.in/mentor/${id}` : "https://shishya.in/me/report"}">${isStudent ? "mentor desk" : "your report page"}</a>${r.meetUrl && roomVisible ? `<br/>Session room: <a href="${r.meetUrl}">${r.meetUrl}</a>` : ""}</p>
 <p>— Shishya</p>`,
       tag: "mentor-session",
     }).catch(() => {});

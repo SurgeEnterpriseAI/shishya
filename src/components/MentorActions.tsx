@@ -65,6 +65,61 @@ export function DoneForm({ id }: { id: string }) {
       >
         {busy ? "Saving…" : "Session over — send next steps & complete"}
       </button>
+      <ReleaseButton id={id} />
+    </div>
+  );
+}
+
+// The call never happened — student didn't show, or the mentor can't
+// continue. Without this the only exit from TAKEN was a fake "done",
+// which burned the student's one free session and told them a session
+// had happened (audit, 18 Aug 2026). Release hands the request back to
+// the waiting list; nothing is consumed.
+export function ReleaseButton({ id }: { id: string }) {
+  const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const router = useRouter();
+  if (!confirming) {
+    return (
+      <button
+        onClick={() => setConfirming(true)}
+        className="mt-2 ml-2 rounded-lg border border-ink-200 px-3 py-2 text-xs font-medium text-ink-600 hover:border-ink-300 hover:bg-ink-50"
+      >
+        The call didn&apos;t happen — release this student
+      </button>
+    );
+  }
+  return (
+    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+      <p className="text-xs text-ink-700">
+        This returns the student to the waiting list so any mentor can pick them up. Their free
+        session is <span className="font-semibold">not</span> used, and they&apos;ll be told they
+        can request again.
+      </p>
+      <div className="mt-2 flex gap-2">
+        <button
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            const r = await fetch(`/api/mentor-sessions/${id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "release" }),
+            }).catch(() => null);
+            setBusy(false);
+            if (r?.ok) router.push("/mentor");
+          }}
+          className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+        >
+          {busy ? "Releasing…" : "Yes, release"}
+        </button>
+        <button
+          onClick={() => setConfirming(false)}
+          className="rounded-lg border border-ink-200 px-3 py-1.5 text-xs text-ink-600 hover:bg-white"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
