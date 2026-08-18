@@ -63,6 +63,7 @@ export async function GET(req: Request) {
       (now - u.createdAt.getTime()) / 86_400_000,
     );
     const ok = await sendDay3NudgeEmail({
+      id: u.id,
       email: u.email,
       name: u.name,
       daysSinceSignup,

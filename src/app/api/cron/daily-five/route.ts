@@ -148,6 +148,7 @@ export async function GET(req: Request) {
     const streak = computeStreak(daysByUser.get(u.id) ?? new Set(), todayIdx);
     const ok = await sendDailyFiveEmail({
       to: u.email,
+      userId: u.id,
       name: u.name,
       examShort: u.enrollments[0].exam.shortName,
       streakCurrent: streak.current,

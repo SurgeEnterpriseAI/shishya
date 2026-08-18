@@ -94,6 +94,7 @@ export async function GET(req: Request) {
     for (const s of students) {
       const ok = await sendExamEveEmail({
         to: s.email,
+        userId: s.id,
         name: s.name,
         examShort: ex.short,
         quote: { text: quote.text, author: quote.author },

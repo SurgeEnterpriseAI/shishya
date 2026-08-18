@@ -109,6 +109,7 @@ export async function GET(req: Request) {
     if (!u.email || !u.enrollments[0]) continue;
     const ok = await sendEveningRescueEmail({
       to: u.email,
+      userId: u.id,
       name: u.name,
       examShort: u.enrollments[0].exam.shortName,
       streakCurrent: streakById.get(u.id) ?? 2,

@@ -72,6 +72,13 @@ model User {
   onbState                String? // ISO 2-letter Indian state code, e.g., "MH", "TN"
   onbPrepCodes            String[]   @default([]) // exam codes the user is targeting
   onbCompletedAt          DateTime? // set when wizard is submitted (different from onboardedAt which is the dashboard tour)
+  // Email opt-out (18 Aug 2026). When set, EVERY non-transactional cron
+  // (Daily-5, winback, live-test invite, exam-eve, nudges) must exclude
+  // this user. Transactional one-to-one mail a user's own action caused
+  // (mentor replies, teacher-request answers, payment receipts) still
+  // sends — those aren't marketing. Set via the signed /unsubscribe link.
+  emailOptOut             Boolean    @default(false)
+  emailOptOutAt           DateTime?
   createdAt               DateTime   @default(now())
   updatedAt               DateTime   @updatedAt
 

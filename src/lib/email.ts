@@ -18,6 +18,7 @@
 //                     Defaults to tutor@shishya.in if unset.
 
 import { Resend } from "resend";
+import { unsubFooterHtml, unsubUrl } from "./email-unsubscribe";
 
 const apiKey = process.env.RESEND_API_KEY;
 const from = process.env.EMAIL_FROM ?? "Shishya <tutor@shishya.in>";
@@ -53,6 +54,11 @@ export interface EmailPayload {
    *  can simply hit Reply and reach a human inbox, not the send-only
    *  transactional domain. */
   replyTo?: string;
+  /** When set, this is a marketing/nudge email to that user: append a
+   *  one-click unsubscribe footer and the List-Unsubscribe headers.
+   *  Omit for purely transactional mail the user's own action triggered
+   *  (mentor replies, payment receipts) — those need no opt-out. */
+  unsubUserId?: string;
 }
 
 /**
@@ -68,18 +74,46 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
     );
     return false;
   }
+  // Opt-out is enforced at the send layer, not just in cron filters: a
+  // marketing email (unsubUserId set) to an opted-out user is dropped
+  // here even if the caller forgot to exclude them. Transactional mail
+  // (no unsubUserId) always sends.
+  if (payload.unsubUserId) {
+    try {
+      const { prisma } = await import("./db/prisma");
+      const rows = await prisma.$queryRaw<Array<{ opt: boolean }>>`
+        SELECT "emailOptOut" AS opt FROM "User" WHERE id = ${payload.unsubUserId} LIMIT 1`;
+      if (rows[0]?.opt) {
+        console.log(`[email] skipped — user ${payload.unsubUserId} opted out`);
+        return false;
+      }
+    } catch {
+      /* opt-out check must not block a send on a transient DB error */
+    }
+  }
   try {
     // Don't BCC the founder onto an email that IS already addressed to
     // them (growth report, teacher-request alerts) — avoids a duplicate.
     const bcc = founderBcc.filter((a) => a.toLowerCase() !== payload.to.toLowerCase());
+    // Marketing mail gets the opt-out footer + RFC 8058 one-click headers.
+    const html = payload.unsubUserId
+      ? payload.html + unsubFooterHtml(payload.unsubUserId)
+      : payload.html;
+    const headers = payload.unsubUserId
+      ? {
+          "List-Unsubscribe": `<${unsubUrl(payload.unsubUserId)}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        }
+      : undefined;
     const res = await c.emails.send({
       from,
       to: payload.to,
       subject: payload.subject,
-      html: payload.html,
+      html,
       text: payload.text,
       bcc: bcc.length > 0 ? bcc : undefined,
       replyTo: payload.replyTo,
+      headers,
       tags: payload.tag ? [{ name: "kind", value: payload.tag }] : undefined,
     });
     if ("error" in res && res.error) {
@@ -424,6 +458,7 @@ Work the queue: https://shishya.in/admin/teacher-requests`;
  */
 export async function sendDailyFiveEmail(p: {
   to: string;
+  userId?: string;
   name: string | null;
   examShort: string;
   /** Current streak (days). When ≥2, the email leads with loss-aversion
@@ -506,7 +541,7 @@ ${
     <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Reply to this email to stop the daily reminder.</p>
   </div>
 </body></html>`;
-  return sendEmail({ to: p.to, subject, html, text, tag: "daily-five" });
+  return sendEmail({ to: p.to, subject, html, text, tag: "daily-five", unsubUserId: p.userId });
 }
 
 /** Evening streak-rescue — sent ~8:30 PM IST ONLY to students whose
@@ -516,6 +551,7 @@ ${
  *  they'd study anyway. Deliberately scarce: streak-holders only. */
 export async function sendEveningRescueEmail(p: {
   to: string;
+  userId?: string;
   name: string | null;
   examShort: string;
   streakCurrent: number;
@@ -567,10 +603,9 @@ ${
     </div>`
         : ""
     }
-    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Reply to this email to stop these reminders.</p>
   </div>
 </body></html>`;
-  return sendEmail({ to: p.to, subject, html, text, tag: "evening-rescue" });
+  return sendEmail({ to: p.to, subject, html, text, tag: "evening-rescue", unsubUserId: p.userId });
 }
 
 /** Win-back — sent to users lapsed 7+ days (the band no other flow
@@ -580,6 +615,7 @@ ${
  *  open. Max 2 touches per user, 21 days apart (EmailTouch). */
 export async function sendWinbackEmail(p: {
   to: string;
+  userId?: string;
   name: string | null;
   examShort: string;
   /** Wrong answers sitting in their Mistake Notebook (0 = hide line). */
@@ -647,10 +683,9 @@ One good session is all it takes to be back in rhythm. See you inside.
     <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
       One good session and you're back in rhythm. — Shishya, 100% free always
     </p>
-    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Reply to this email to stop these check-ins.</p>
   </div>
 </body></html>`;
-  return sendEmail({ to: p.to, subject, html, text, tag: "winback" });
+  return sendEmail({ to: p.to, subject, html, text, tag: "winback", unsubUserId: p.userId });
 }
 
 /** Convenience wrappers — caller doesn't have to think about
@@ -668,6 +703,7 @@ export async function sendWelcomeEmail(user: {
 }
 
 export async function sendDay3NudgeEmail(user: {
+  id?: string;
   email: string;
   name?: string | null;
   daysSinceSignup: number;
@@ -678,7 +714,7 @@ export async function sendDay3NudgeEmail(user: {
     ctaUrl: "https://shishya.in/dashboard",
     daysSinceSignup: user.daysSinceSignup,
   });
-  return sendEmail({ to: user.email, subject, html, text, tag: "day3-nudge" });
+  return sendEmail({ to: user.email, subject, html, text, tag: "day3-nudge", unsubUserId: user.id });
 }
 
 /** "Aarav Sharma" → "Aarav", "riya.kumar2003@gmail.com" → "Riya".
@@ -746,6 +782,7 @@ One paper today tells you exactly where you stand against aspirants across India
  *  where they stand among aspirants sitting the same exam. */
 export async function sendLiveTestInviteEmail(p: {
   to: string;
+  userId?: string;
   name: string | null;
   examShort: string;
   /** Days until the real exam, when known — makes the urgency honest. */
@@ -802,10 +839,9 @@ Whatever your score, you'll know exactly what to fix in the days that matter mos
     <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
       Whatever your score, you&apos;ll know exactly what to fix in the days that matter most. — Shishya
     </p>
-    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Reply to stop these.</p>
   </div>
 </body></html>`;
-  return sendEmail({ to: p.to, subject, html, text, tag: "live-test-invite" });
+  return sendEmail({ to: p.to, subject, html, text, tag: "live-test-invite", unsubUserId: p.userId });
 }
 
 /** Exam-eve wishes — the evening before a student's registered exam.
@@ -816,6 +852,7 @@ Whatever your score, you'll know exactly what to fix in the days that matter mos
  *  checklist, and encouragement that survives either result. */
 export async function sendExamEveEmail(p: {
   to: string;
+  userId?: string;
   name: string | null;
   examShort: string;
   quote: { text: string; author?: string | null };
@@ -874,8 +911,7 @@ Go show up. We're rooting for you.
     </p>
     <p style="font-size:14px;font-weight:600;margin:0;color:#0f172a;">Go show up. We&apos;re rooting for you. 💪</p>
     <p style="font-size:12px;color:#64748b;margin:16px 0 0;">— Shishya</p>
-    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">You&apos;re getting this because you&apos;re preparing for ${p.examShort} on shishya.in. Reply to stop.</p>
   </div>
 </body></html>`;
-  return sendEmail({ to: p.to, subject, html, text, tag: "exam-eve" });
+  return sendEmail({ to: p.to, subject, html, text, tag: "exam-eve", unsubUserId: p.userId });
 }

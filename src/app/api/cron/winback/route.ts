@@ -87,6 +87,7 @@ export async function GET(req: Request) {
     const daysGone = Math.max(7, Math.round((Date.now() - c.lastSeen.getTime()) / 86_400_000));
     const ok = await sendWinbackEmail({
       to: c.email,
+      userId: c.id,
       name: c.name,
       examShort: c.short,
       mistakes: Math.min(mBy.get(c.id) ?? 0, 999),

@@ -103,6 +103,7 @@ export async function GET(req: Request) {
   for (const t of eligible) {
     const ok = await sendLiveTestInviteEmail({
       to: t.email,
+      userId: t.id,
       name: t.name,
       examShort: shortById.get(t.examId) ?? "your exam",
       daysToExam: t.daysToExam,
