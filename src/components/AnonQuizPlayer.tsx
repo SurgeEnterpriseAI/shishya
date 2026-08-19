@@ -33,6 +33,30 @@ export function AnonQuizPlayer({ quiz }: { quiz: AnonQuiz }) {
     setAnswers(nextAnswers);
     if (idx + 1 >= qs.length) {
       setDone(true);
+      // Preserve the guest result across the signup wall (audit 18 Aug
+      // 2026) — the CTA promises to "track your weak topics", so stash
+      // score + the questions they missed. A post-signup recall on the
+      // exam hub reads and clears this.
+      try {
+        const missed = qs
+          .filter((_, i) => !nextAnswers[i]?.correct)
+          .map((qq) => qq.body.slice(0, 200));
+        localStorage.setItem(
+          "shishya_anon_quiz",
+          JSON.stringify({
+            examCode: quiz.examCode,
+            examShort: quiz.examShort,
+            topicCode: quiz.topicCode,
+            scopeLabel: quiz.scopeLabel,
+            score: nextAnswers.filter((a) => a.correct).length,
+            total: qs.length,
+            missed,
+            at: Date.now(),
+          }),
+        );
+      } catch {
+        /* localStorage may be unavailable (private mode) — non-fatal */
+      }
       // Fire-and-forget completion signal so the funnel report sees it.
       try {
         navigator.sendBeacon?.(
@@ -67,7 +91,15 @@ export function AnonQuizPlayer({ quiz }: { quiz: AnonQuiz }) {
     const score = answers.filter((a) => a.correct).length;
     const pct = Math.round((score / qs.length) * 100);
     const loginHref = `/login?callbackUrl=${encodeURIComponent(`/exams/${quiz.examCode}`)}`;
-    const tutorSeed = `I just took a quick ${quiz.scopeLabel} quiz for ${quiz.examShort} and scored ${score}/${qs.length}. Explain the ones I likely got wrong and how to improve.`;
+    // Give the tutor the ACTUAL questions the student missed so it can
+    // explain them, instead of a vague "the ones I got wrong" (audit
+    // 18 Aug 2026).
+    const missedBodies = qs.filter((_, i) => !answers[i]?.correct).map((qq) => `• ${qq.body}`);
+    const tutorSeed =
+      `I just took a quick ${quiz.scopeLabel} quiz for ${quiz.examShort} and scored ${score}/${qs.length}.` +
+      (missedBodies.length
+        ? ` Explain these questions I got wrong and how to approach them:\n${missedBodies.join("\n")}`
+        : ` Give me the next things to study.`);
     const tutorHref = `/chat?examCode=${quiz.examCode}&seed=${encodeURIComponent(tutorSeed)}`;
     const good = pct >= 60;
     return (

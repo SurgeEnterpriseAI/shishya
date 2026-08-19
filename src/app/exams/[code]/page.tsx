@@ -12,6 +12,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { RankLadder } from "@/components/RankCard";
+import { AnonQuizRecall } from "@/components/AnonQuizRecall";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getExamShared } from "@/lib/db/exam-cache";
@@ -518,6 +519,7 @@ export default async function ExamPage({
           brand colour beneath the ribbon. */}
       <div className={`h-1.5 w-full ${theme.ribbon}`} aria-hidden />
       <section className="container-prose py-10">
+        <AnonQuizRecall examCode={exam.code} />
         <p className="text-xs text-ink-500">
           <Link href="/dashboard" className="hover:text-ink-800">{t("nav.dashboard")}</Link> · {t("nav.exams")} · {exam.shortName}
         </p>
