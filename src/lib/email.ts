@@ -544,6 +544,76 @@ ${
   return sendEmail({ to: p.to, subject, html, text, tag: "daily-five", unsubUserId: p.userId });
 }
 
+/** The coach's morning email — a DEDICATED, standalone "here's your plan
+ *  for today" for coach-plan holders (founder call 18 Aug 2026: keep it
+ *  independent of the Daily-5 so the plan content itself pulls them back
+ *  to preparation). Leads with the coach's note + the day's 2-3 tasks +
+ *  days to exam. Sent ~7 AM IST after the 4 AM night-brain builds today's
+ *  plan. Marketing → carries the opt-out footer. */
+export async function sendCoachDayEmail(p: {
+  to: string;
+  userId: string;
+  name: string | null;
+  examShort: string;
+  daysLeft: number;
+  tasks: string[];
+  note: string | null;
+  streakCurrent?: number;
+}): Promise<boolean> {
+  const first = (p.name ?? "").split(" ")[0] || "Aspirant";
+  const dl = `${p.daysLeft} ${p.daysLeft === 1 ? "day" : "days"}`;
+  const streak = p.streakCurrent ?? 0;
+  const subject =
+    streak >= 3
+      ? `📋 ${first}, day ${streak} — today's plan (${dl} to ${p.examShort})`
+      : `📋 ${first}, your ${p.examShort} plan for today — ${dl} left`;
+
+  const taskLines = p.tasks.map((t) => `  • ${t}`).join("\n");
+  const text = `${first},
+
+Your coach rebuilt your plan around what you did — here's today, with ${dl} to your ${p.examShort} exam:
+
+${taskLines}
+${p.note ? `\n${p.note}\n` : ""}
+Do just these today and you're a day closer. Open your plan: https://shishya.in/coach
+
+— Shishya (your free personal coach)
+
+(Reply to stop, or unsubscribe below.)`;
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <p style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#c2410c;margin:0 0 4px;">Your plan for today</p>
+    <div style="font-weight:700;font-size:20px;margin:0 0 4px;">${dl} to your ${p.examShort} exam${streak >= 3 ? ` · day ${streak} 🔥` : ""}</div>
+    <p style="font-size:13px;line-height:1.6;margin:8px 0 16px;color:#334155;">
+      ${first}, your coach rebuilt today around what you actually did. Just these — nothing more to figure out:
+    </p>
+    ${
+      p.note
+        ? `<p style="font-size:14px;line-height:1.6;margin:0 0 14px;color:#0f172a;border-left:3px solid #f59e0b;padding-left:12px;font-style:italic;">"${p.note.replace(/</g, "&lt;")}"</p>`
+        : ""
+    }
+    <div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:12px;padding:14px 16px;margin:0 0 18px;">
+      <ol style="margin:0;padding-left:20px;">
+        ${p.tasks.map((t) => `<li style="font-size:14px;line-height:1.8;color:#0f172a;">${t.replace(/</g, "&lt;")}</li>`).join("")}
+      </ol>
+    </div>
+    <a href="https://shishya.in/coach"
+       style="display:inline-block;background:#ea580c;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 24px;">
+      Open my plan →
+    </a>
+    <p style="font-size:13px;color:#475569;margin:16px 0 0;line-height:1.6;">
+      Do just these today and you're a day closer. That's the whole game — small, aimed, daily.
+    </p>
+    <p style="font-size:12px;color:#94a3b8;margin:14px 0 0;">— Shishya, your free personal coach</p>
+  </div>
+</body></html>`;
+
+  return sendEmail({ to: p.to, subject, html, text, tag: "coach-morning", unsubUserId: p.userId });
+}
+
 /** Evening streak-rescue — sent ~8:30 PM IST ONLY to students whose
  *  live streak dies at midnight (studied yesterday, not yet today).
  *  Peak loss-aversion moment + the 9 PM-midnight study block is the
