@@ -977,9 +977,13 @@ export default async function ExamPage({
             subject → 25-Q SUBJECT mock from the validated pool. */}
         {subjectTests.length > 0 && (
           <section id="subject-tests" className="mt-10 scroll-mt-20">
-            <h2 className="text-base font-semibold text-ink-800">Practice by subject</h2>
+            <h2 className="text-base font-semibold text-ink-800">Practice by subject &amp; topic</h2>
             <p className="mt-1 text-xs text-ink-500">
-              Full-length subject tests — 25 questions each, real exam format, instant scoring.
+              Full-length subject tests below — 25 questions each, real exam format, instant scoring.
+              Want to drill a single topic? Every topic has its own{" "}
+              <a href="#syllabus" className="font-medium text-saffron-700 underline-offset-2 hover:underline">
+                10-question test in the syllabus
+              </a>.
             </p>
             <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {subjectTests.map((s) => (
