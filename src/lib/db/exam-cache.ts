@@ -59,10 +59,14 @@ export const getExamShared = unstable_cache(
           _count: true,
           orderBy: { pyqYear: "desc" },
         }),
+        // take:40 (was 24) — an exam that grows past 24 system mocks used
+        // to silently hide its NEWEST papers (createdAt asc), so freshly
+        // added ones like SSC CGL 2025 Shift 2/3 never rendered (20 Aug
+        // 2026). 40 gives headroom; the mocks section still groups by kind.
         prisma.mock.findMany({
           where: { examId: exam.id, userId: null },
           orderBy: [{ createdAt: "asc" }],
-          take: 24,
+          take: 40,
           select: { id: true, title: true, type: true, questionIds: true, config: true },
         }),
         // PRIVACY: no named leaderboard on the public page — other
