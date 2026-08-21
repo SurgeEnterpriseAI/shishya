@@ -74,6 +74,10 @@
       "schedule": "0 15 * * *"
     },
     {
+      "path": "/api/cron/scrub-bots",
+      "schedule": "0 * * * *"
+    },
+    {
       "path": "/api/cron/live-test-create",
       "schedule": "0 1 * * *"
     },
