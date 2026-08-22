@@ -919,7 +919,9 @@ One paper today tells you exactly where you stand against aspirants across India
     <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">You asked for this reminder on shishya.in. Reply to stop.</p>
   </div>
 </body></html>`;
-  return sendEmail({ to: p.to, subject, html, text, tag: "live-test-reminder" });
+  // User-requested, time-bound ("remind me Sunday") — always important:
+  // must never be held by the routine inbox budget.
+  return sendEmail({ to: p.to, subject, html, text, tag: "live-test-reminder", priority: "important" });
 }
 
 /** Personalised All-India Live Test invite — sent midweek to students

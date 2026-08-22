@@ -17,5 +17,6 @@ async function main() {
   console.log(`restored ${r.restored} rows to human (below the botnet bar)`);
   console.log(`tagged ${r.tagged} page-view rows as botnet`);
   console.log(`tagged ${r.beacons} non-PAGE_VIEW beacon rows`);
+  console.log(`login-redirect phantoms: tagged ${r.redirects}, restored ${r.restoredRedirects}`);
 }
 main().catch((e) => { console.error(e); process.exit(1); }).finally(() => p.$disconnect());
