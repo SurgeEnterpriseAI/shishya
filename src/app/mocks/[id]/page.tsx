@@ -37,15 +37,50 @@ export default async function MockPlayerPage({
         status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
       },
       orderBy: { finishedAt: "desc" },
-      select: { id: true },
+      select: { id: true, startedAt: true },
     }),
   ]);
   if (!mock) notFound();
   if (mock.userId && mock.userId !== userId) redirect("/dashboard");
 
+  // Live-test gate ON THE REAL START PATH (22 Aug 2026). The earlier gate
+  // lived only in POST /api/attempts, which nothing calls — so the Sunday
+  // paper was openable a week early from the hub, and an early attempt
+  // then locked the student out of a ranked run. Here: before opensAt we
+  // render a notice instead of creating an attempt; and any attempt that
+  // was started BEFORE the window is void (abandoned if still open,
+  // ignored if submitted) so the student gets a clean ranked run.
+  let liveWindow: { opensAt: Date; closesAt: Date } | null = null;
+  let inProgress = existingInProgress;
+  if (mock.generatedBy === "live-test") {
+    const lt = await prisma.$queryRaw<{ opensAt: Date; closesAt: Date }[]>`
+      SELECT "opensAt", "closesAt" FROM "LiveTest" WHERE "mockId" = ${mock.id} LIMIT 1`;
+    liveWindow = lt[0] ?? null;
+    if (liveWindow && Date.now() < liveWindow.opensAt.getTime()) {
+      const { LiveTestNotOpen } = await import("./LiveTestNotOpen");
+      return (
+        <LiveTestNotOpen
+          examCode={mock.exam.code}
+          examShort={mock.exam.shortName}
+          opensAtIso={liveWindow.opensAt.toISOString()}
+        />
+      );
+    }
+    if (liveWindow && inProgress && inProgress.startedAt < liveWindow.opensAt) {
+      await prisma.attempt
+        .update({ where: { id: inProgress.id }, data: { status: "ABANDONED", finishedAt: new Date() } })
+        .catch(() => {});
+      inProgress = null;
+    }
+  }
+
   // If they already submitted (and have no in-progress reattempt),
   // bounce to results IMMEDIATELY — no question fetch, no JIT prep.
-  if (!existingInProgress && existingSubmitted) {
+  // For a live test only an IN-WINDOW submission counts; a pre-window one
+  // is void and they may start fresh.
+  const submittedCounts =
+    !!existingSubmitted && (!liveWindow || existingSubmitted.startedAt >= liveWindow.opensAt);
+  if (!inProgress && existingSubmitted && submittedCounts) {
     redirect(`/attempts/${existingSubmitted.id}/results`);
   }
 
@@ -56,15 +91,15 @@ export default async function MockPlayerPage({
   // interstitial: submit what they had, or discard and start fresh. Only
   // for RESUMED attempts — a fresh attempt's clock starts now.
   const durationMinEarly = ((mock.config as any)?.durationMin as number | undefined) ?? 30;
-  if (existingInProgress) {
-    const elapsedMin = (Date.now() - existingInProgress.startedAt.getTime()) / 60_000;
+  if (inProgress) {
+    const elapsedMin = (Date.now() - inProgress.startedAt.getTime()) / 60_000;
     if (elapsedMin > durationMinEarly + 1) {
-      const answers = (existingInProgress.answers as any[]) ?? [];
+      const answers = (inProgress.answers as any[]) ?? [];
       const answered = answers.filter((a) => a && a.chosen != null && a.chosen !== "").length;
       const { ExpiredAttemptGate } = await import("./ExpiredAttemptGate");
       return (
         <ExpiredAttemptGate
-          attemptId={existingInProgress.id}
+          attemptId={inProgress.id}
           answered={answered}
           total={mock.questionIds.length}
           examShort={mock.exam.shortName}
@@ -74,7 +109,7 @@ export default async function MockPlayerPage({
     }
   }
 
-  let attempt = existingInProgress;
+  let attempt = inProgress;
   if (!attempt) {
     // Auto-enrol the student on the exam before creating the attempt.
     // Mirrors POST /api/attempts (Sachin-pattern fix). This page is the

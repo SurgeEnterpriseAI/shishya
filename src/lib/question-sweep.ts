@@ -20,9 +20,14 @@ import { createNotification } from "@/lib/db/notifications";
 // one-way street before). Best-effort; dedup on the report event.
 async function notifyReporters(questionId: string, action: "key-fixed" | "invalidated"): Promise<void> {
   try {
+    // Question has examId (FK), not examCode — join Exam for the code.
+    // (Review 22 Aug 2026: the original q."examCode" select threw 42703
+    // and was swallowed, so no reporter was ever notified.)
     const reporters = await prisma.$queryRaw<Array<{ userId: string; examCode: string | null }>>`
-      SELECT DISTINCT qr."userId", q."examCode"
-      FROM "QuestionReport" qr JOIN "Question" q ON q.id = qr."questionId"
+      SELECT DISTINCT qr."userId", e.code AS "examCode"
+      FROM "QuestionReport" qr
+      JOIN "Question" q ON q.id = qr."questionId"
+      LEFT JOIN "Exam" e ON e.id = q."examId"
       WHERE qr."questionId" = ${questionId} AND qr."userId" IS NOT NULL`;
     for (const r of reporters) {
       await createNotification({

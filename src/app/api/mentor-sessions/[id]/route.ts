@@ -105,10 +105,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (reqRow.feeDue && !reqRow.paidAt && reqRow.paymentLinkId) {
       await cancelLink(reqRow.paymentLinkId).catch(() => {});
     }
-    await prisma.$executeRaw`
+    const doneChanged = await prisma.$executeRaw`
       UPDATE "MentorSessionRequest"
       SET status = 'DONE', "sessionNote" = ${note}, "updatedAt" = NOW()
-      WHERE id = ${id}`;
+      WHERE id = ${id} AND status = 'TAKEN'`;
+    // Rowcount guard (review 22 Aug 2026): a double submit must not
+    // re-write DONE and re-send the next-steps email.
+    if (Number(doneChanged) === 0) {
+      return Response.json({ ok: false, error: "already-closed" }, { status: 409 });
+    }
     // Two-actor rule: the note must REACH the student, not sit in the DB
     // until they happen to revisit — email it the moment the mentor closes.
     if (reqRow.student_email && note) {
@@ -132,16 +137,36 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   // session had occurred (audit 18 Aug 2026).
   if (body?.action === "release") {
     if (reqRow.mentorId !== mentor.id) return Response.json({ ok: false }, { status: 403 });
-    // Cancel any unpaid fee link before handing the student back.
+    // MONEY SAFETY (review 22 Aug 2026): the DB's paidAt can lag Razorpay
+    // (payment is only reconciled when the student's report page loads).
+    // Before wiping a fee-due session, ask Razorpay directly — a paid
+    // session must NEVER be released (that would lose the student's ₹9
+    // with no trace). If paid: record it and refuse the release.
     if (reqRow.feeDue && !reqRow.paidAt && reqRow.paymentLinkId) {
+      const { isLinkPaid } = await import("@/lib/razorpay");
+      if (await isLinkPaid(reqRow.paymentLinkId).catch(() => false)) {
+        await prisma.$executeRaw`
+          UPDATE "MentorSessionRequest" SET "paidAt" = NOW(), "updatedAt" = NOW()
+          WHERE id = ${id} AND "paidAt" IS NULL`;
+        return Response.json(
+          { ok: false, error: "student-has-paid", message: "This student has already paid for the session — it can't be released. Please hold the session or complete it." },
+          { status: 409 },
+        );
+      }
       await cancelLink(reqRow.paymentLinkId).catch(() => {});
     }
-    await prisma.$executeRaw`
+    const changed = await prisma.$executeRaw`
       UPDATE "MentorSessionRequest"
       SET status = 'NEW', "mentorId" = NULL, "meetUrl" = NULL, "takenAt" = NULL,
           "feeDue" = FALSE, "paymentLinkId" = NULL, "paymentLink" = NULL,
           "updatedAt" = NOW()
       WHERE id = ${id} AND status = 'TAKEN' AND "paidAt" IS NULL`;
+    // Rowcount guard: if nothing changed (paid in the meantime, or already
+    // closed), say so — don't email the student a "couldn't happen" note
+    // for a session that's actually live.
+    if (Number(changed) === 0) {
+      return Response.json({ ok: false, error: "not-released", message: "Nothing to release — the session is paid or already closed. Refresh the desk." }, { status: 409 });
+    }
     if (reqRow.student_email) {
       await sendEmail({
         to: reqRow.student_email,

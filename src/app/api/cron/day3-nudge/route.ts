@@ -48,6 +48,7 @@ export async function GET(req: Request) {
     WHERE u."createdAt" >= ${from}
       AND u."createdAt" < ${to}
       AND u.email IS NOT NULL
+      AND u."emailOptOut" = FALSE
       AND NOT EXISTS (SELECT 1 FROM "Attempt" a WHERE a."userId" = u.id)
       AND NOT EXISTS (
         SELECT 1 FROM "ChatSession" cs

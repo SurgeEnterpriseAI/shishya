@@ -18,7 +18,7 @@
 //                     Defaults to tutor@shishya.in if unset.
 
 import { Resend } from "resend";
-import { unsubFooterHtml, unsubUrl } from "./email-unsubscribe";
+import { unsubFooterHtml, unsubApiUrl } from "./email-unsubscribe";
 
 const apiKey = process.env.RESEND_API_KEY;
 const from = process.env.EMAIL_FROM ?? "Shishya <tutor@shishya.in>";
@@ -87,21 +87,33 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
         console.log(`[email] skipped — user ${payload.unsubUserId} opted out`);
         return false;
       }
-    } catch {
-      /* opt-out check must not block a send on a transient DB error */
+    } catch (err) {
+      // FAIL CLOSED (review 22 Aug 2026): if we can't verify opt-out
+      // status, don't send marketing mail — a missed nudge is harmless, a
+      // nudge to someone who unsubscribed is a broken promise.
+      console.error("[email] opt-out check failed — skipping marketing send:", err);
+      return false;
     }
   }
   try {
     // Don't BCC the founder onto an email that IS already addressed to
     // them (growth report, teacher-request alerts) — avoids a duplicate.
-    const bcc = founderBcc.filter((a) => a.toLowerCase() !== payload.to.toLowerCase());
+    // Also no BCC on MARKETING mail (unsubUserId set): the BCC copy carried
+    // that student's one-click List-Unsubscribe token, so a single founder
+    // tap on Gmail's "Unsubscribe" would silently opt the student out
+    // (review 22 Aug 2026) — and bulk nudges flooded the inbox anyway.
+    const bcc = payload.unsubUserId
+      ? []
+      : founderBcc.filter((a) => a.toLowerCase() !== payload.to.toLowerCase());
     // Marketing mail gets the opt-out footer + RFC 8058 one-click headers.
     const html = payload.unsubUserId
       ? payload.html + unsubFooterHtml(payload.unsubUserId)
       : payload.html;
+    // One-click header points at the POST API (state change on POST only);
+    // the body footer links to the confirm PAGE (no state change on GET).
     const headers = payload.unsubUserId
       ? {
-          "List-Unsubscribe": `<${unsubUrl(payload.unsubUserId)}>`,
+          "List-Unsubscribe": `<${unsubApiUrl(payload.unsubUserId)}>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         }
       : undefined;

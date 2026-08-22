@@ -64,9 +64,10 @@ export async function GET(req: Request) {
     return [];
   });
 
-  if (exams.length === 0) {
-    return Response.json({ ok: true, sent: 0, reason: "no confidently-dated exams tomorrow" });
-  }
+  // NOTE (review 22 Aug 2026): no early return here — the coach-plan
+  // recipient source below must run even when the global calendar has no
+  // confidently-dated exam tomorrow (that is exactly the case it exists
+  // for). An empty `exams` simply skips the enrollment loop.
 
   const quote = getDailyQuote();
   const report: { exam: string; students: number; sent: number }[] = [];
@@ -76,7 +77,7 @@ export async function GET(req: Request) {
     const students = await prisma.$queryRaw<{ id: string; email: string; name: string | null }[]>`
       SELECT u.id, u.email, u.name
       FROM "Enrollment" en JOIN "User" u ON u.id = en."userId"
-      WHERE en."examId" = ${ex.examId} AND en.active = TRUE AND u.email <> ''
+      WHERE en."examId" = ${ex.examId} AND en.active = TRUE AND u.email <> '' AND u."emailOptOut" = FALSE
         AND NOT EXISTS (
           SELECT 1 FROM "EmailTouch" t
           WHERE t."userId" = u.id AND t.tag = 'exam-eve'
@@ -122,7 +123,7 @@ export async function GET(req: Request) {
     FROM "CoachPlan" cp
     JOIN "User" u ON u.id = cp."userId"
     JOIN "Exam" e ON e.id = cp."examId"
-    WHERE u.email <> ''
+    WHERE u.email <> '' AND u."emailOptOut" = FALSE
       AND (cp."examDate" + INTERVAL '5.5 hours')::date
           = (NOW() + INTERVAL '5.5 hours' + INTERVAL '1 day')::date
       AND NOT EXISTS (

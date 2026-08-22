@@ -40,9 +40,18 @@ export async function GET(req: Request) {
       FROM "AnalyticsEvent" WHERE "userId" IS NOT NULL GROUP BY "userId"
     )
     SELECT u.id, u.email, u.name, act.last_seen AS "lastSeen",
-           (SELECT e."shortName" FROM "Enrollment" en JOIN "Exam" e ON e.id = en."examId"
-            WHERE en."userId" = u.id AND en.active = TRUE
-            ORDER BY en."createdAt" DESC LIMIT 1) AS short,
+           -- Exam name: when a live coach plan exists, take the exam FROM
+           -- THAT PLAN so the subject's "N days to <exam>" names the same
+           -- exam the countdown refers to (review 22 Aug 2026); else the
+           -- newest active enrollment.
+           COALESCE(
+             (SELECT e."shortName" FROM "CoachPlan" cp JOIN "Exam" e ON e.id = cp."examId"
+              WHERE cp."userId" = u.id AND cp."examDate" > NOW()
+              ORDER BY cp."updatedAt" DESC LIMIT 1),
+             (SELECT e."shortName" FROM "Enrollment" en JOIN "Exam" e ON e.id = en."examId"
+              WHERE en."userId" = u.id AND en.active = TRUE
+              ORDER BY en."createdAt" DESC LIMIT 1)
+           ) AS short,
            -- Coach-plan awareness: if they still have a future exam via a
            -- coach plan, the winback leads with "your coach already
            -- rebuilt your plan — N days left" instead of a cold nudge
@@ -51,7 +60,7 @@ export async function GET(req: Request) {
             FROM "CoachPlan" cp WHERE cp."userId" = u.id AND cp."examDate" > NOW()
             ORDER BY cp."updatedAt" DESC LIMIT 1) AS "coachDaysLeft"
     FROM "User" u JOIN act ON act."userId" = u.id
-    WHERE u.email <> ''
+    WHERE u.email <> '' AND u."emailOptOut" = FALSE
       AND act.last_seen < NOW() - INTERVAL '7 days'
       AND act.last_seen > NOW() - INTERVAL '60 days'
       AND (SELECT COUNT(*) FROM "EmailTouch" t WHERE t."userId" = u.id AND t.tag = 'winback') < 2

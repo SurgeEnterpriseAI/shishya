@@ -76,14 +76,20 @@ export async function POST(req: Request) {
       (process.env.ADMIN_EMAILS ?? "").split(",").map((s) => s.trim()).filter(Boolean)[0] ??
       null;
     if (notifyTo) {
-      void sendEmail({
-        to: notifyTo,
-        subject: `💡 Feature request (${area}) — ${created.title}`,
-        html: `<p><b>${(user?.name ?? "A student").replace(/</g, "&lt;")}</b> (${user?.email ?? "—"}) suggested:</p>
-<blockquote style="border-left:3px solid #f59e0b;padding-left:10px">${body.body.replace(/</g, "&lt;")}</blockquote>
-<p>Area: ${area} · from ${body.routePath}<br/>Review: https://shishya.in/admin/feedback</p>`,
-        tag: "feature-request",
-      }).catch(() => {});
+      // Escape every user-controlled field — routePath/body/name were
+      // interpolated raw into the admin inbox (review 22 Aug 2026).
+      const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      const { after } = await import("next/server");
+      after(async () => {
+        await sendEmail({
+          to: notifyTo,
+          subject: `💡 Feature request (${area}) — ${created.title.replace(/[\r\n]/g, " ").slice(0, 120)}`,
+          html: `<p><b>${esc(user?.name ?? "A student")}</b> (${esc(user?.email ?? "—")}) suggested:</p>
+<blockquote style="border-left:3px solid #f59e0b;padding-left:10px">${esc(body.body)}</blockquote>
+<p>Area: ${esc(area)} · from ${esc(body.routePath)}<br/>Review: https://shishya.in/admin/feedback</p>`,
+          tag: "feature-request",
+        }).catch(() => {});
+      });
     }
     return ok({ request: created });
   } catch (err: any) {

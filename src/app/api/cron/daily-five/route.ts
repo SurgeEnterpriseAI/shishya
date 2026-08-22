@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { sendDailyFiveEmail } from "@/lib/email";
+import { optedOutUserIds } from "@/lib/email-optout";
 import { computeStreak, istDay } from "@/lib/db/streak";
 import { liveTestEmailNotice } from "@/lib/live-test-today";
 
@@ -66,7 +67,7 @@ export async function GET(req: Request) {
 
   const users = await prisma.user.findMany({
     where: {
-      id: { in: candidates },
+      id: { in: candidates, notIn: await optedOutUserIds() }, // opt-out applied at selection too (review 22 Aug 2026)
       email: { not: "" },
       enrollments: { some: { active: true } },
     },

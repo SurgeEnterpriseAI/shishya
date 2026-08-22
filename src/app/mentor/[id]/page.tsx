@@ -55,10 +55,24 @@ export default async function MentorStudent({ params }: { params: Promise<{ id: 
         {r.status === "TAKEN" && (
           <div className="mt-2">
             <p className="text-sm text-ink-700">
-              Session room (shared with the student by email):{" "}
+              Session room{r.feeDue && !r.paidAt ? " (unlocks for the student after the ₹9 payment)" : " (shared with the student by email)"}:{" "}
               <a className="font-semibold text-saffron-700 underline" href={r.meetUrl} target="_blank" rel="noopener noreferrer">{r.meetUrl}</a>
             </p>
-            <SessionThread requestId={r.id} messages={thread} viewer="MENTOR" meetUrl={r.meetUrl} />
+            {r.feeDue && !r.paidAt && (
+              <p className="mt-1 rounded bg-amber-50 px-2 py-1 text-xs text-amber-800">
+                ⏳ Awaiting the student&apos;s ₹9 — the room link is withheld from them until it&apos;s paid
+                (your &quot;Invite to join now&quot; won&apos;t include the link yet).
+              </p>
+            )}
+            {/* Room link is passed to the invite preset ONLY once nothing is owed —
+                otherwise the mentor's one-tap invite leaked the URL past the
+                payment gate (review 22 Aug 2026). */}
+            <SessionThread
+              requestId={r.id}
+              messages={thread}
+              viewer="MENTOR"
+              meetUrl={r.feeDue && !r.paidAt ? null : r.meetUrl}
+            />
             <DoneForm id={r.id} />
           </div>
         )}

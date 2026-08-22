@@ -68,7 +68,7 @@ export async function GET(req: Request) {
         WHERE d."examId" = t.eid AND d."isExamDay" = TRUE AND d."archivedAt" IS NULL AND d.date > NOW()
       ) AS "daysToExam"
     FROM touched t JOIN "User" u ON u.id = t.uid
-    WHERE u.email <> ''
+    WHERE u.email <> '' AND u."emailOptOut" = FALSE
       AND NOT EXISTS (
         SELECT 1 FROM "LiveTestReminder" r
         WHERE LOWER(r.email) = LOWER(u.email) AND r."sundayDate" = ${sundayDate}::date

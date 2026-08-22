@@ -63,8 +63,16 @@ export const getExamShared = unstable_cache(
         // to silently hide its NEWEST papers (createdAt asc), so freshly
         // added ones like SSC CGL 2025 Shift 2/3 never rendered (20 Aug
         // 2026). 40 gives headroom; the mocks section still groups by kind.
+        // Live-test papers are EXCLUDED from the hub list (22 Aug 2026):
+        // they were listed with a direct "Take →" link a week before
+        // opening, leaking the paper and voiding the student's ranked run.
+        // Their home is /live-test (banner on the hub points there).
         prisma.mock.findMany({
-          where: { examId: exam.id, userId: null },
+          where: {
+            examId: exam.id,
+            userId: null,
+            generatedBy: { not: "live-test" },
+          },
           orderBy: [{ createdAt: "asc" }],
           take: 40,
           select: { id: true, title: true, type: true, questionIds: true, config: true },

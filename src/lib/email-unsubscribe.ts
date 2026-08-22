@@ -16,8 +16,15 @@ function sign(userId: string): string {
   return createHmac("sha256", SECRET).update(`unsub:${userId}`).digest("hex").slice(0, 24);
 }
 
+/** Human-facing confirm page (GET renders a button; no state change). */
 export function unsubUrl(userId: string): string {
   return `${BASE}/unsubscribe?u=${encodeURIComponent(userId)}&t=${sign(userId)}`;
+}
+
+/** RFC 8058 one-click endpoint (POST flips the state) — goes in the
+ *  List-Unsubscribe header, never in a crawlable body link. */
+export function unsubApiUrl(userId: string): string {
+  return `${BASE}/api/unsubscribe?u=${encodeURIComponent(userId)}&t=${sign(userId)}`;
 }
 
 export function verifyUnsubToken(userId: string, token: string): boolean {

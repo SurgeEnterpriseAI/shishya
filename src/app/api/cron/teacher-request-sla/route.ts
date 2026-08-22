@@ -55,7 +55,11 @@ export async function GET(req: Request) {
       AND "escalatedAt" IS NULL
       AND (
         ("answerText" IS NULL AND "createdAt" < ${cutoff})
-        OR ("studentRating" = 'NEED_MORE_HELP' AND "ratedAt" < ${cutoff})
+        -- Reopen: only if NO human has re-answered since the student's
+        -- NEED_MORE_HELP rating (review 22 Aug 2026 — the AI must never
+        -- overwrite a teacher's fresh answer).
+        OR ("studentRating" = 'NEED_MORE_HELP' AND "ratedAt" < ${cutoff}
+            AND ("answeredAt" IS NULL OR "answeredAt" < "ratedAt"))
       )
     ORDER BY "createdAt" ASC
     LIMIT ${MAX_PER_RUN}
@@ -90,6 +94,7 @@ export async function GET(req: Request) {
             status = CASE WHEN status = 'PENDING' THEN 'CONTACTED'::"TeacherRequestStatus" ELSE status END,
             "updatedAt" = NOW()
         WHERE id = ${r.id} AND "escalatedAt" IS NULL
+          AND ("answeredAt" IS NULL OR "ratedAt" IS NULL OR "answeredAt" < "ratedAt")
       `;
       void prisma.teacherRequestNote
         .create({

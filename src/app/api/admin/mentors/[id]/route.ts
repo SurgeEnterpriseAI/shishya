@@ -41,13 +41,17 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     // nor where the desk was. Only on an actual status change, and only
     // if we have an email to reach them.
     const app = rows[0];
+    // Escape applicant-supplied name/examCode before HTML (review 22 Aug 2026).
+    const esc = (s: string) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const firstName = esc((app.name ?? "").split(" ")[0] || "there");
+    const examSafe = esc((app.examCode ?? "").replace(/[^A-Za-z0-9_ -]/g, "").slice(0, 40));
     if (app.email && body.status !== app.status) {
       if (body.status === "APPROVED") {
         await sendEmail({
           to: app.email,
           subject: `You're now a Shishya mentor 🎓`,
-          html: `<p>Namaste ${app.name.split(" ")[0]},</p>
-<p>Your application to mentor ${app.examCode} aspirants has been <b>approved</b>. Thank you for giving your time to people walking the path you've already cleared.</p>
+          html: `<p>Namaste ${firstName},</p>
+<p>Your application to mentor ${examSafe} aspirants has been <b>approved</b>. Thank you for giving your time to people walking the path you've already cleared.</p>
 <p>Your mentor desk is here: <a href="https://shishya.in/mentor">shishya.in/mentor</a> — <b>sign in with this same email address</b> (Google sign-in) to see students who've asked to talk and shared their preparation report.</p>
 <p>First session with any student is free. From their second, it's ₹9 for your time — paid to you, never to the platform.</p>
 <p>— Shishya</p>`,
@@ -57,8 +61,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         await sendEmail({
           to: app.email,
           subject: `Your Shishya mentor application`,
-          html: `<p>Namaste ${app.name.split(" ")[0]},</p>
-<p>Thank you for applying to mentor on Shishya. We're not able to take your application forward right now — often it's simply that we need clearer proof of clearing the exam, or we're not yet onboarding for ${app.examCode}.</p>
+          html: `<p>Namaste ${firstName},</p>
+<p>Thank you for applying to mentor on Shishya. We're not able to take your application forward right now — often it's simply that we need clearer proof of clearing the exam, or we're not yet onboarding for ${examSafe}.</p>
 <p>You're welcome to apply again with more detail any time at <a href="https://shishya.in/mentors">shishya.in/mentors</a>. And everything on Shishya stays free for your own preparation.</p>
 <p>— Shishya</p>`,
           tag: "mentor-rejection",

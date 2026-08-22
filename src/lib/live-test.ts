@@ -158,14 +158,17 @@ export async function liveTestRank(
     SELECT id, "opensAt", "closesAt" FROM "LiveTest" WHERE "mockId" = ${mockId} LIMIT 1`;
   if (!lt[0]) return null;
 
-  // Only attempts STARTED inside the live window count toward the
-  // national rank — a practice run after close must never rewrite the
-  // board for everyone who competed on time (audit 18 Aug 2026).
+  // Only attempts STARTED inside the live window AND FINISHED by close
+  // (+60 min grace) count toward the national rank — a practice run
+  // after close, or a Monday resume-submit, must never rewrite the board
+  // everyone was emailed on Sunday night (audit 18 Aug + review 22 Aug).
+  const freeze = new Date(lt[0].closesAt.getTime() + 60 * 60_000);
   const rows = await prisma.$queryRaw<{ userId: string; pct: number | null }[]>`
     SELECT DISTINCT ON ("userId") "userId", "scorePct" AS pct
     FROM "Attempt"
     WHERE "mockId" = ${mockId} AND status IN ('SUBMITTED', 'AUTO_SUBMITTED')
       AND "startedAt" >= ${lt[0].opensAt} AND "startedAt" <= ${lt[0].closesAt}
+      AND "finishedAt" <= ${freeze}
     ORDER BY "userId", "startedAt" ASC`;
   const mine = rows.find((r) => r.userId === userId);
   if (mine?.pct == null) return null;
@@ -181,12 +184,14 @@ export async function liveTestFinalBoard(
   const lt = await prisma.$queryRaw<{ opensAt: Date; closesAt: Date }[]>`
     SELECT "opensAt", "closesAt" FROM "LiveTest" WHERE "mockId" = ${mockId} LIMIT 1`;
   if (!lt[0]) return [];
+  const freeze = new Date(lt[0].closesAt.getTime() + 60 * 60_000);
   const rows = await prisma.$queryRaw<{ userId: string; email: string; name: string | null; pct: number }[]>`
     SELECT DISTINCT ON (a."userId") a."userId", u.email, u.name, a."scorePct" AS pct
     FROM "Attempt" a JOIN "User" u ON u.id = a."userId"
     WHERE a."mockId" = ${mockId} AND a.status IN ('SUBMITTED','AUTO_SUBMITTED')
       AND a."scorePct" IS NOT NULL AND u.email <> ''
       AND a."startedAt" >= ${lt[0].opensAt} AND a."startedAt" <= ${lt[0].closesAt}
+      AND a."finishedAt" <= ${freeze}
     ORDER BY a."userId", a."startedAt" ASC`;
   const sorted = [...rows].sort((a, b) => b.pct - a.pct);
   const of = sorted.length;

@@ -49,7 +49,7 @@ export async function GET(req: Request) {
       JOIN "CoachPlan" cp ON cp."userId" = cd."userId"
       JOIN "User" u ON u.id = cd."userId"
       JOIN "Exam" e ON e.id = cp."examId"
-      WHERE cd.date = ${dayKey} AND u.email <> ''
+      WHERE cd.date = ${dayKey} AND u.email <> '' AND u."emailOptOut" = FALSE
         AND NOT EXISTS (
           SELECT 1 FROM "EmailTouch" t
           WHERE t."userId" = cd."userId" AND t.tag = 'coach-morning'

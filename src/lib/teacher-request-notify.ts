@@ -27,9 +27,15 @@ export async function emailTeacherRequestAnswer(requestId: string): Promise<void
   const to = r.userEmail ?? r.contactEmail;
   if (!to) return; // no way to reach this student (anon, no email left)
 
-  const name = (r.userName ?? r.contactName ?? "").split(" ")[0] || "there";
-  const examBit = r.examCode ? ` about ${r.examCode}` : "";
-  const safe = r.answerText.replace(/</g, "&lt;");
+  // Escape EVERYTHING student-supplied — contactName/examCode are free
+  // text on an anon form and the recipient can be an attacker-chosen
+  // address (review 22 Aug 2026: HTML injection into a branded email).
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const rawName = (r.userName ?? r.contactName ?? "").split(" ")[0] || "there";
+  const name = esc(rawName.slice(0, 40));
+  const examCodeSafe = r.examCode ? esc(r.examCode.replace(/[^A-Za-z0-9_ -]/g, "").slice(0, 40)) : "";
+  const examBit = examCodeSafe ? ` about ${examCodeSafe}` : "";
+  const safe = esc(r.answerText);
 
   await sendEmail({
     to,
