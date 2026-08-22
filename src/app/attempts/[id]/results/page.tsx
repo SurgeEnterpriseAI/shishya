@@ -194,6 +194,12 @@ export default async function ResultsPage({
     (spiralRows[0]?.n ?? 0) >= 3 &&
     (spiralRows[0]?.low ?? 0) >= 3;
   const negativeGuesses = wrongCount;
+  // Non-intrusion rule: at most ONE nudge above the score. When a
+  // low-score intervention (spiral / soft-landing) owns the page, the
+  // setup card waits for a later mock; the spiral block already links
+  // the report, so the report card hides under it too.
+  const softLanding = !isSpiral && (attempt.scorePct ?? 0) < 30 && topicArr.length > 0;
+  const intervention = isSpiral || softLanding;
 
   return (
     <main className="min-h-screen bg-ink-50/40">
@@ -220,6 +226,7 @@ export default async function ResultsPage({
             moment "where am I overall / what should I study now?" — so the
             report and today's study pack are offered as two visible
             actions, still no popup. */}
+        {!isSpiral && (
         <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-saffron-200 bg-saffron-50/60 px-3 py-2">
           <span className="text-xs font-semibold text-ink-800">📊 This test just updated your personal system:</span>
           <Link href="/me/report" className="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-saffron-800 ring-1 ring-saffron-300 hover:bg-saffron-100">
@@ -229,8 +236,9 @@ export default async function ResultsPage({
             Today&apos;s study pack (built from this) →
           </Link>
         </div>
+        )}
 
-        {showSetup && (
+        {showSetup && !intervention && (
           <div className="mt-3 rounded-lg border border-ink-200 bg-white px-3 py-2.5 text-xs text-ink-700">
             <span className="font-semibold text-ink-900">20-second setup:</span> tell Shishya your
             target exams, state and stage — your hub, state exams and emails get personalised.{" "}
@@ -296,7 +304,7 @@ export default async function ResultsPage({
             value), but we LEAD with the path forward: the 1-2 topics that
             would lift the score most. Framing: every topper's first mock
             looked like this. */}
-        {!isSpiral && (attempt.scorePct ?? 0) < 30 && topicArr.length > 0 && (
+        {softLanding && (
           <div className="mt-6 rounded-xl border border-sky-200 bg-gradient-to-r from-sky-50 to-indigo-50/60 p-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-sky-700">
               Rough one — that&apos;s normal for a first attempt
