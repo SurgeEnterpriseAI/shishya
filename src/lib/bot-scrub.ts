@@ -37,22 +37,25 @@ export async function runBotScrub(p: {
   const convicted = convictedRows.map((r) => r.uaHash);
 
   // HUMAN-SAFETY (review 22 Aug 2026): within a convicted UA cluster we
-  // still cannot tell a botnet hit from a genuine direct first-touch human
-  // on the same popular Android-Chrome UA. The one shape that separates
-  // them is the PATH: the crawler sweeps deep long-tail pages
-  // (/exams/X/topics/Y, /pyq/…, /colleges/…) one view each, while a human
-  // typing the URL or opening a WhatsApp link lands on the home page, an
-  // exam hub, /chat or /coach. So we tag ONLY deep paths (≥3 segments)
-  // and keep every shallow landing as human — founder rule "keep the
-  // rest as human". Accepted cost: some bot hits on hubs stay counted.
+  // cannot tell a botnet hit from a genuine direct first-touch human on
+  // the same popular Android-Chrome UA — EXCEPT by where they land. A
+  // real person typing the URL or opening a shared link lands on the
+  // HOME page, an EXAM HUB, or one of a few entry pages. The crawler
+  // hammers /chat (2,178 of 2,730 shallow hits measured 22 Aug), deep
+  // topic/pyq pages and everything in between. So: rows on genuine
+  // landing pages stay human (founder rule "keep the rest as human");
+  // every other path in a 15+-IP botnet cluster is tagged as the sure
+  // bot it is. Accepted cost: a bot hit on a hub/home stays counted.
   const restored = await p.$executeRaw`
     UPDATE "AnalyticsEvent" SET client = 'browser', props = props - 'retroTag'
     WHERE client = 'bot' AND props->>'retroTag' LIKE 'ua-sweep%'
       AND (
         "uaHash" IS NULL
         OR NOT ("uaHash" = ANY(${convicted}::text[]))
-        OR array_length(string_to_array(trim(both '/' from split_part(COALESCE(path,''),'?',1)), '/'), 1) < 3
-        OR path IS NULL
+        OR (kind = 'PAGE_VIEW' AND (
+             split_part(COALESCE(path,''),'?',1) IN ('/', '/ask', '/jobs-map', '/live-test', '/current-affairs', '/aptitude', '/find-your-exam')
+             OR split_part(COALESCE(path,''),'?',1) ~ '^/exams/[^/]+/?$'
+           ))
       )`;
 
   if (convicted.length === 0) {
@@ -65,8 +68,10 @@ export async function runBotScrub(p: {
     WHERE kind = 'PAGE_VIEW' AND client = 'browser'
       AND "userId" IS NULL AND "anonId" IS NULL AND "refHost" IS NULL
       AND "uaHash" = ANY(${convicted}::text[])
-      AND path IS NOT NULL
-      AND array_length(string_to_array(trim(both '/' from split_part(path,'?',1)), '/'), 1) >= 3`;
+      AND NOT (
+        split_part(COALESCE(path,''),'?',1) IN ('/', '/ask', '/jobs-map', '/live-test', '/current-affairs', '/aptitude', '/find-your-exam')
+        OR split_part(COALESCE(path,''),'?',1) ~ '^/exams/[^/]+/?$'
+      )`;
 
   const beacons = await p.$executeRaw`
     UPDATE "AnalyticsEvent" SET client = 'bot',
