@@ -121,6 +121,17 @@ export default async function ResultsPage({
     attempt.scorePct > prevBest.scorePct;
   const isFirstMock = prevBest == null;
 
+  // One-time setup nudge (23 Aug 2026): the onboarding wizard had 8
+  // completions EVER because nothing routed new users to it. The moment
+  // after a first mock is when "which exams/state are you aiming for?"
+  // makes sense — it personalises the hub, state exams and emails. Shown
+  // only while onbCompletedAt is null and within their first 3 mocks.
+  const onbRow = await prisma.$queryRaw<{ done: boolean; n: bigint }[]>`
+    SELECT (u."onbCompletedAt" IS NOT NULL) AS done,
+      (SELECT COUNT(*) FROM "Attempt" a WHERE a."userId" = u.id AND a.status IN ('SUBMITTED','AUTO_SUBMITTED')) AS n
+    FROM "User" u WHERE u.id = ${session.user.id}`.catch(() => [] as { done: boolean; n: bigint }[]);
+  const showSetup = !!onbRow[0] && !onbRow[0].done && Number(onbRow[0].n) <= 3;
+
   // All-India Live Test rank — only for live-test mocks; rank among
   // each user's FIRST submitted attempt (re-attempts don't re-rank).
   const airRank =
@@ -204,13 +215,30 @@ export default async function ResultsPage({
           </div>
         )}
 
-        {/* Quiet doorway to the Student-360 — post-mock is the moment a
-            student wonders "where am I overall?". One line, no popup. */}
-        <p className="mt-2 text-xs">
-          <Link href="/me/report" className="font-medium text-saffron-700 hover:text-saffron-800">
-            📊 This test just updated your preparation report — see the full picture →
+        {/* Post-mock doorway to the personal system (23 Aug 2026): the
+            one-line link got ~11 report visitors a WEEK. Post-mock is the
+            moment "where am I overall / what should I study now?" — so the
+            report and today's study pack are offered as two visible
+            actions, still no popup. */}
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-saffron-200 bg-saffron-50/60 px-3 py-2">
+          <span className="text-xs font-semibold text-ink-800">📊 This test just updated your personal system:</span>
+          <Link href="/me/report" className="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-saffron-800 ring-1 ring-saffron-300 hover:bg-saffron-100">
+            My report — strong & weak areas →
           </Link>
-        </p>
+          <Link href="/me/report/pack" className="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-saffron-800 ring-1 ring-saffron-300 hover:bg-saffron-100">
+            Today&apos;s study pack (built from this) →
+          </Link>
+        </div>
+
+        {showSetup && (
+          <div className="mt-3 rounded-lg border border-ink-200 bg-white px-3 py-2.5 text-xs text-ink-700">
+            <span className="font-semibold text-ink-900">20-second setup:</span> tell Shishya your
+            target exams, state and stage — your hub, state exams and emails get personalised.{" "}
+            <Link href="/onboarding?from=results" className="font-semibold text-saffron-700 underline-offset-2 hover:underline">
+              Set it up →
+            </Link>
+          </div>
+        )}
 
         {/* Score-spiral intervention — 3+ tests today all under 35%.
             Confidence first (their effort is REAL), then the awareness
@@ -247,10 +275,10 @@ export default async function ResultsPage({
             </ul>
             <div className="mt-3 flex flex-wrap gap-2">
               <Link
-                href={`/exams/${attempt.mock.exam.code}/topics/${topicArr[0].code}`}
+                href={`/exams/${attempt.mock.exam.code}/topics/${encodeURIComponent(topicArr[0].code)}?start=1`}
                 className="rounded-lg bg-saffron-500 px-4 py-2 text-sm font-semibold text-white hover:bg-saffron-600"
               >
-                Fix {topicArr[0].name} now — 10 min →
+                Fix {topicArr[0].name} now — 10-question test starts instantly →
               </Link>
               <Link
                 href="/me/report"
@@ -289,6 +317,18 @@ export default async function ResultsPage({
               Your next mock below is a short confidence-builder on your weakest topic — small wins
               first, full mocks after.
             </p>
+            {/* ONE TAP to the fix (23 Aug 2026): this block used to name
+                the weak topic but offer no button — only 47% of low
+                scorers ever reached a topic test. ?start=1 builds the
+                10-question test the moment the page opens. */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                href={`/exams/${attempt.mock.exam.code}/topics/${encodeURIComponent(topicArr[0].code)}?start=1`}
+                className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+              >
+                Fix {topicArr[0].name} now — 10-question test starts instantly →
+              </Link>
+            </div>
             {/* Low score is the highest-value expert moment: a human can
                 diagnose what a percentage can't. */}
             <div className="mt-3">

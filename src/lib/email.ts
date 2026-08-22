@@ -636,6 +636,9 @@ ${taskLines}
 ${p.note ? `\n${p.note}\n` : ""}
 Do just these today and you're a day closer. Open your plan: https://shishya.in/coach
 
+Your report (strong & weak areas, days left): https://shishya.in/me/report
+Today's study pack, built from your weakest topics: https://shishya.in/me/report/pack
+
 — Shishya (your free personal coach)
 
 (Reply to stop, or unsubscribe below.)`;
@@ -665,6 +668,10 @@ Do just these today and you're a day closer. Open your plan: https://shishya.in/
     </a>
     <p style="font-size:13px;color:#475569;margin:16px 0 0;line-height:1.6;">
       Do just these today and you're a day closer. That's the whole game — small, aimed, daily.
+    </p>
+    <p style="font-size:12px;color:#475569;margin:12px 0 0;line-height:1.6;">
+      📊 <a href="https://shishya.in/me/report" style="color:#c2410c;font-weight:600;text-decoration:none;">Your report</a> (strong &amp; weak areas, days left) and
+      📚 <a href="https://shishya.in/me/report/pack" style="color:#c2410c;font-weight:600;text-decoration:none;">today's study pack</a> — rebuilt from your own weakest topics, ready to save as PDF.
     </p>
     <p style="font-size:12px;color:#94a3b8;margin:14px 0 0;">— Shishya, your free personal coach</p>
   </div>

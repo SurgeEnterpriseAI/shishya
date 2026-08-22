@@ -915,6 +915,19 @@ export default async function ExamPage({
             </Link>
           </div>
           <p className="mt-1 text-xs text-ink-500">{t("exam.mocks.langHint")}</p>
+          {/* START SMALL for newcomers (23 Aug 2026): week data — 25-Q
+              subject / topic tests finish 81% of the time, 100-Q full
+              mocks only 66%; a first full mock is the #1 abandonment
+              point. Until an aspirant has finished 2 mocks on this exam,
+              short formats are listed first and a one-line steer points
+              at the subject tests. Full mocks stay one scroll away. */}
+          {recent.length < 2 && subjectTests.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-900">
+              <span className="font-semibold">New to {exam.shortName}? Start small:</span>
+              <span>a 25-question subject test first — 4 in 5 aspirants finish these; full mocks after your first win.</span>
+              <a href="#subject-tests" className="font-semibold underline underline-offset-2">Pick a subject test ↓</a>
+            </div>
+          )}
           {systemMocks.length === 0 ? (
             <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
               {t("exam.mocks.empty")}
@@ -927,7 +940,16 @@ export default async function ExamPage({
             // until xl (1280px+) where the main column reaches
             // ~960px and 3 columns have proper breathing room.
             <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {systemMocks.map((m) => (
+              {(recent.length < 2
+                ? [...systemMocks].sort((a, b) => {
+                    // Newcomers: short formats first (diagnostic, subject,
+                    // topic), full-length papers after — stable otherwise.
+                    const w = (m: { type: string }) =>
+                      m.type === "DIAGNOSTIC" ? 0 : m.type === "SUBJECT" || m.type === "TOPIC" ? 1 : m.type === "FULL" ? 3 : 2;
+                    return w(a) - w(b);
+                  })
+                : systemMocks
+              ).map((m) => (
                 <li key={m.id} className="rounded-md border border-ink-200 bg-white p-4">
                   <div className="flex items-baseline justify-between">
                     <p className="text-sm font-medium text-ink-900">{m.title}</p>

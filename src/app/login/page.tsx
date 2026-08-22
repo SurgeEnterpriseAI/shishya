@@ -30,6 +30,25 @@ export default async function LoginPage({
   const cb = sp.callbackUrl ?? "/dashboard";
   const { t } = await getT();
 
+  // Context-aware wall (23 Aug 2026): /login is the most-viewed page on
+  // the site (~140 anon views/day) — people arrive here from a gated
+  // action (start a mock, open the coach, a deep link from an email or
+  // ChatGPT) and see a generic sign-in. Tell them exactly what's one tap
+  // away, and — for exam contexts — let them taste 5 questions WITHOUT
+  // signing in first. Value before the wall.
+  const examMatch = cb.match(/\/exams\/([A-Z0-9_]+)/i);
+  const examCode = examMatch ? examMatch[1] : null;
+  const isMock = /\/mocks\//.test(cb) || /\/pyq\//.test(cb) || (!!examCode && /\/(quiz|topics)\b/.test(cb));
+  const isCoach = /\/coach/.test(cb);
+  const isReturn = /\/(dashboard|me\/report|live-test|mentor)/.test(cb);
+  const intent = isMock || examCode
+    ? { h1: examCode ? `Your ${examCode.replace(/_/g, " ")} mock is one tap away` : "Your mock is one tap away", body: "Sign in with Google once (5 seconds, no password) and it opens straight away — with your score, weak topics and rank saved." }
+    : isCoach
+      ? { h1: "Your free day-by-day plan, one tap away", body: "The coach needs an account only to remember your progress and rebuild your plan every morning. Google sign-in, 5 seconds." }
+      : isReturn
+        ? { h1: "Welcome back", body: "Sign in to continue where you left off — your mocks, plan and report are all still here." }
+        : null;
+
   return (
     <main className="min-h-screen bg-saffron-50/30 flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-lg border border-ink-200 bg-white p-8 shadow-sm">
@@ -39,9 +58,17 @@ export default async function LoginPage({
           </span>
           <span className="text-lg font-semibold tracking-tight text-ink-900">Shishya</span>
         </Link>
-        <h1 className="mt-6 text-2xl font-bold text-ink-900">{t("login.h1")}</h1>
-        <p className="mt-2 text-sm text-ink-600">{t("login.body")}</p>
+        <h1 className="mt-6 text-2xl font-bold text-ink-900">{intent?.h1 ?? t("login.h1")}</h1>
+        <p className="mt-2 text-sm text-ink-600">{intent?.body ?? t("login.body")}</p>
         <GoogleSignInButton callbackUrl={cb} label={t("login.continue")} />
+        {examCode && (
+          <Link
+            href={`/exams/${examCode}/quiz`}
+            className="mt-3 block rounded-lg border border-saffron-300 bg-saffron-50 px-3 py-2 text-center text-sm font-semibold text-saffron-800 hover:bg-saffron-100"
+          >
+            Not ready to sign in? Try 5 {examCode.replace(/_/g, " ")} questions first — no login →
+          </Link>
+        )}
 
         {/* Value prop for cold visitors who land straight on /login (it's a
             top entry page in the funnel data, and a bare sign-in wall was

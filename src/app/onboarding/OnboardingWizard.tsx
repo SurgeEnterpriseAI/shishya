@@ -40,7 +40,9 @@ export interface PersonaPrefill {
 export function OnboardingWizard({
   exams,
   prefill,
-  redirectAfter = "/",
+  // Default is the DASHBOARD (23 Aug 2026): a signed-in user finishing or
+  // skipping the wizard used to be dropped onto the anonymous homepage.
+  redirectAfter = "/dashboard",
 }: {
   exams: ExamLite[];
   prefill?: PersonaPrefill | null;

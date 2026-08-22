@@ -9,7 +9,7 @@
 //     moves — the loop closes.
 // Renders nothing for signed-out visitors (page stays clean + cached).
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export function TopicMasteryPanel({
@@ -54,6 +54,20 @@ export function TopicMasteryPanel({
       cancelled = true;
     };
   }, [examCode, topicCode]);
+
+  // One-tap fix (23 Aug 2026): a low-score results page links here with
+  // ?start=1 so the 10-question topic test builds immediately instead of
+  // asking the aspirant to find and tap "Test me" on the notes page.
+  // Fires once per page load, only for signed-in users with state loaded.
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (!signedIn || !state || autoStarted.current) return;
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("start") !== "1") return;
+    autoStarted.current = true;
+    void testMe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signedIn, state]);
 
   if (!signedIn || !state) return null;
 
