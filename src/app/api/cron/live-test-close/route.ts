@@ -65,6 +65,7 @@ export async function GET(req: Request) {
 Next All-India Live Test is next Sunday — same time, fresh paper.</p>
 <p>— Shishya</p>`,
         tag: "lt-result",
+        priority: "important", // their own national rank — always gets through the inbox budget
       }).catch(() => false);
       if (ok) {
         sent++;

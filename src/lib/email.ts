@@ -59,7 +59,20 @@ export interface EmailPayload {
    *  Omit for purely transactional mail the user's own action triggered
    *  (mentor replies, payment receipts) — those need no opt-out. */
   unsubUserId?: string;
+  /** Inbox-respect (founder rule 23 Aug 2026: "don't spam — if we've
+   *  already emailed an aspirant, hold the routine ones until something
+   *  important"). Applies only to mail with unsubUserId:
+   *    'routine'   (default) — nudges/digests: at most ONE per user per
+   *                ROUTINE_WINDOW_H across ALL routine kinds;
+   *    'important' — time-critical personal mail (exam eve, their live-test
+   *                rank, a reminder they explicitly asked for) — bypasses
+   *                the budget but still respects opt-out.
+   *  Transactional mail (no unsubUserId) is never budgeted. */
+  priority?: "routine" | "important";
 }
+
+/** Hours a user's inbox is "occupied" by one routine email. */
+const ROUTINE_WINDOW_H = 20;
 
 /**
  * Send a transactional email. Returns true on accepted-for-delivery,
@@ -93,6 +106,27 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
       // nudge to someone who unsubscribed is a broken promise.
       console.error("[email] opt-out check failed — skipping marketing send:", err);
       return false;
+    }
+    // INBOX BUDGET (founder rule 23 Aug 2026): one routine email per user
+    // per ROUTINE_WINDOW_H, across every routine kind. If anything already
+    // went to them in the window, hold this one — only 'important' mail
+    // (exam eve, their own live-test rank, a reminder they asked for)
+    // gets through. Fail closed here too: can't check → don't send.
+    if (payload.priority !== "important") {
+      try {
+        const { prisma } = await import("./db/prisma");
+        const since = new Date(Date.now() - ROUTINE_WINDOW_H * 3600_000);
+        const recent = await prisma.$queryRaw<Array<{ n: bigint }>>`
+          SELECT COUNT(*)::bigint AS n FROM "EmailTouch"
+          WHERE "userId" = ${payload.unsubUserId} AND "sentAt" > ${since}`;
+        if (Number(recent[0]?.n ?? 0) > 0) {
+          console.log(`[email] held — user ${payload.unsubUserId} already emailed in the last ${ROUTINE_WINDOW_H}h (routine "${payload.tag ?? "email"}")`);
+          return false;
+        }
+      } catch (err) {
+        console.error("[email] inbox-budget check failed — skipping routine send:", err);
+        return false;
+      }
     }
   }
   try {
@@ -131,6 +165,19 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
     if ("error" in res && res.error) {
       console.error("[email] send rejected:", res.error);
       return false;
+    }
+    // Unified send log for the inbox budget: every mail to a KNOWN user
+    // leaves a row, so the next routine send in the window is held.
+    // (Crons also write their own dedup tags; both coexist.)
+    if (payload.unsubUserId) {
+      try {
+        const { prisma } = await import("./db/prisma");
+        const { randomUUID } = await import("node:crypto");
+        await prisma.$executeRaw`
+          INSERT INTO "EmailTouch" (id, "userId", tag) VALUES (${randomUUID()}, ${payload.unsubUserId}, ${"sent:" + (payload.tag ?? "email")})`;
+      } catch {
+        /* logging must never fail a delivered send */
+      }
     }
     return true;
   } catch (err) {
@@ -1006,5 +1053,6 @@ Go show up. We're rooting for you.
     <p style="font-size:12px;color:#64748b;margin:16px 0 0;">— Shishya</p>
   </div>
 </body></html>`;
-  return sendEmail({ to: p.to, subject, html, text, tag: "exam-eve", unsubUserId: p.userId });
+  // Exam eve is IMPORTANT — the night before their exam always gets through the inbox budget.
+  return sendEmail({ to: p.to, subject, html, text, tag: "exam-eve", unsubUserId: p.userId, priority: "important" });
 }
