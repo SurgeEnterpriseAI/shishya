@@ -66,6 +66,12 @@ const AI_BOTS: [string, RegExp][] = [
 const URL_LOCALES = new Set(["hi", "te"]);
 const LANG_HEADER = "x-shishya-lang";
 const LANG_COOKIE = "shishya-lang";
+// Only PUBLIC, indexable surfaces get locale twins. Anything else under
+// /hi or /te (dashboard, api, mocks, login…) is redirected to the plain
+// path so no private/duplicate page is ever served — or indexed — under
+// a prefix. Keep in sync with src/app/sitemap.ts localeTwinUrls.
+const TWIN_PUBLIC_RE =
+  /^\/(exams(\/|$)|exam-calendar$|current-affairs(\/|$)|live-test$|ask$|jobs-map$|find-your-exam$|results$|mentors$|educators$|pricing$|about$|for\/)/;
 
 export function middleware(req: NextRequest, event: NextFetchEvent): NextResponse {
   const rawPath = req.nextUrl.pathname;
@@ -75,6 +81,11 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
   if (localeMatch && URL_LOCALES.has(localeMatch[1])) {
     const lang = localeMatch[1];
     path = localeMatch[2] && localeMatch[2] !== "/" ? localeMatch[2] : "/";
+    if (path !== "/" && !TWIN_PUBLIC_RE.test(path)) {
+      const plain = req.nextUrl.clone();
+      plain.pathname = path;
+      return NextResponse.redirect(plain, 307);
+    }
     const url = req.nextUrl.clone();
     url.pathname = path;
     const reqHeaders = new Headers(req.headers);
@@ -83,6 +94,13 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
     if (req.cookies.get(LANG_COOKIE)?.value !== lang) {
       res.cookies.set({ name: LANG_COOKIE, value: lang, path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
     }
+  } else if (req.headers.has(LANG_HEADER)) {
+    // Header hygiene: the locale header is ours to set (from the URL), never
+    // the client's — strip a spoofed one so it can't select a language that
+    // the URL didn't promise.
+    const reqHeaders = new Headers(req.headers);
+    reqHeaders.delete(LANG_HEADER);
+    res = NextResponse.next({ request: { headers: reqHeaders } });
   } else {
     res = NextResponse.next();
   }
