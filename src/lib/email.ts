@@ -346,12 +346,14 @@ If today's not the day, no stress — but the longer you wait, the longer Shishy
 
 // ── Surge admission: aptitude PASS email ───────────────────────────────
 // Sent to a candidate the moment they clear the aptitude cutoff. Tells
-// them they're shortlisted and to contact Nikhil for the next steps.
+// them they're shortlisted and who to contact for the next steps.
+// Contact = Muvva (founder) since 23 Aug 2026 — all calls/requests route
+// to 9160057000 (was Nikhil / 7624967999).
 const SURGE_CONTACT = {
-  name: "Nikhil",
-  phone: "7624967999",
+  name: "Muvva",
+  phone: "9160057000",
   // WhatsApp deep-link (India country code).
-  whatsapp: "https://wa.me/917624967999",
+  whatsapp: "https://wa.me/919160057000",
 } as const;
 
 interface AptitudePassProps extends CommonProps {

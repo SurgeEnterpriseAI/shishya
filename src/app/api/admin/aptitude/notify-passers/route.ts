@@ -1,6 +1,6 @@
 // POST /api/admin/aptitude/notify-passers — one-shot backfill: email every
 // candidate who cleared the cutoff but hasn't yet received the "contact
-// Nikhil" email. Idempotent (passEmailedAt guards re-sends). Bearer
+// Muvva" email. Idempotent (passEmailedAt guards re-sends). Bearer
 // ${CRON_SECRET} auth.
 //
 //   curl -X POST -H "Authorization: Bearer $CRON_SECRET" \

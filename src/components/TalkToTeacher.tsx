@@ -16,8 +16,9 @@ import { useEffect, useState } from "react";
 import { TeacherFollowUp } from "@/components/TeacherFollowUp";
 
 // Surge office line for subject-expert calls. Override per environment with
-// NEXT_PUBLIC_EXPERT_PHONE (E.164, e.g. +917624967999).
-const EXPERT_PHONE = process.env.NEXT_PUBLIC_EXPERT_PHONE ?? "+917624967999";
+// NEXT_PUBLIC_EXPERT_PHONE (E.164, e.g. +919160057000). Default = Muvva
+// (founder) since 23 Aug 2026 — all calls/requests route to 9160057000.
+const EXPERT_PHONE = process.env.NEXT_PUBLIC_EXPERT_PHONE ?? "+919160057000";
 const EXPERT_PHONE_DISPLAY = EXPERT_PHONE.replace(/^\+91/, "+91 ");
 const OFFICE_HOURS = "10 AM – 7 PM IST, Mon–Sat";
 

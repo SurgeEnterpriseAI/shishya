@@ -67,7 +67,7 @@ export async function POST(req: Request) {
   });
 
   // Candidate cleared the cutoff → email them their next step (contact
-  // Nikhil). Best-effort + awaited so the serverless function doesn't get
+  // Muvva). Best-effort + awaited so the serverless function doesn't get
   // frozen before the send; a failure here never blocks the result. We
   // skip if this email was already notified (earlier pass / retake) so no
   // one gets the "you cleared" mail twice.
