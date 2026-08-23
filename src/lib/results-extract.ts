@@ -19,27 +19,9 @@ const RESULT_KEYWORDS =
 
 // IndexNow instant ping — results are the most time-sensitive pages on
 // the site; Bing (which feeds ChatGPT search) should know within
-// minutes of extraction, not at the weekly re-submission. The key is
-// public by design (it lives at /<key>.txt).
-const INDEXNOW_HOST = "shishya.in";
-const INDEXNOW_KEY = "7e0b8421fc95cdb98187e2b89a6e2437";
-async function pingIndexNow(urls: string[]): Promise<void> {
-  if (!urls.length) return;
-  try {
-    await fetch("https://api.indexnow.org/IndexNow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify({
-        host: INDEXNOW_HOST,
-        key: INDEXNOW_KEY,
-        keyLocation: `https://${INDEXNOW_HOST}/${INDEXNOW_KEY}.txt`,
-        urlList: urls,
-      }),
-    });
-  } catch {
-    /* best-effort — the weekly cron re-submits everything anyway */
-  }
-}
+// minutes of extraction, not at the weekly re-submission. Shared helper
+// (src/lib/indexnow.ts) since 23 Aug 2026.
+import { pingIndexNow } from "@/lib/indexnow";
 
 interface Extraction {
   isDeclaredResult: boolean;

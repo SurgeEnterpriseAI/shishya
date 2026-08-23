@@ -101,6 +101,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "monthly" as const,
     priority: 0.75,
   }));
+  // Exam tracker pages (23 Aug 2026) — "[exam] exam date / admit card /
+  // result / notification" is the largest query class in this niche;
+  // every active exam has a tracker. Plus the Hindi/Telugu URL twins of
+  // the hub + tracker (self-canonical, hreflang-paired in page metadata).
+  const updatesUrls: MetadataRoute.Sitemap = exams.map((e) => ({
+    url: `${base}/exams/${e.code}/updates`,
+    lastModified: new Date(),
+    changeFrequency: "daily" as const,
+    priority: 0.8,
+  }));
+  const localeTwinUrls: MetadataRoute.Sitemap = exams.flatMap((e) =>
+    (["hi", "te"] as const).flatMap((lc) => [
+      { url: `${base}/${lc}/exams/${e.code}`, lastModified: e.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 },
+      { url: `${base}/${lc}/exams/${e.code}/updates`, lastModified: new Date(), changeFrequency: "daily" as const, priority: 0.7 },
+    ]),
+  );
+  localeTwinUrls.push(
+    { url: `${base}/hi/exam-calendar`, lastModified: new Date(), changeFrequency: "daily" as const, priority: 0.7 },
+    { url: `${base}/te/exam-calendar`, lastModified: new Date(), changeFrequency: "daily" as const, priority: 0.7 },
+  );
   // Daily current-affairs pages — every date that has content.
   const caDates = await prisma
     .$queryRaw<{ d: Date }[]>`SELECT DISTINCT date AS d FROM "CurrentAffair" ORDER BY date DESC LIMIT 400`
@@ -298,6 +318,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/typing",
     "/descriptive",
     "/live-test",
+    "/exam-calendar",
     "/results",
     "/coach",
     "/ask",
@@ -498,6 +519,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...syllabusUrls,
     ...tricksUrls,
     ...guideUrls,
+    ...updatesUrls,
+    ...localeTwinUrls,
     ...currentAffairsUrls,
     ...examArchiveUrls,
     ...phaseUrls,

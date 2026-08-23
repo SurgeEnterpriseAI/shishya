@@ -85,19 +85,28 @@ async function main() {
               title: n.title,
               body: n.body,
               source: GEN_SOURCE,
+              url: n.source ?? null,
               publishedAt: new Date(now.getTime() - n.daysAgo * 24 * 60 * 60 * 1000),
             },
           });
         }
         for (const d of info.dates) {
+          // Same write shape as /api/cron/refresh-exam-data (tracker
+          // fields, 23 Aug 2026): absolute dates at midnight UTC.
+          const date = d.date
+            ? new Date(`${d.date}T00:00:00Z`)
+            : new Date(now.getTime() + d.daysFromNow * 24 * 60 * 60 * 1000);
           await prisma.examImportantDate.create({
             data: {
               examId: exam.id,
               label: d.label,
-              date: new Date(now.getTime() + d.daysFromNow * 24 * 60 * 60 * 1000),
+              date,
               isExamDay: d.isExamDay,
               notes: d.notes,
               source: GEN_SOURCE,
+              kind: d.kind,
+              confidence: d.confidence,
+              url: d.source ?? null,
             },
           });
         }

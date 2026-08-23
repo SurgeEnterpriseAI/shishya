@@ -63,6 +63,11 @@ export async function generateMetadata({
   if (!exam) return { title: "Exam not found — Shishya" };
 
   const { stateInfo, languageList, languageName } = await import("@/lib/state-info");
+  // URL locale (23 Aug 2026): /hi/exams/X and /te/exams/X are crawlable
+  // twins — self-canonical, hreflang-paired, titled in that language.
+  const { getUrlLocale } = await import("@/lib/i18n-server");
+  const { localizedUrl, languageAlternates, ogLocale } = await import("@/lib/seo-locale");
+  const urlLocale = await getUrlLocale();
   const st = stateInfo(exam.state);
   const langs = exam.languages.length > 0 ? exam.languages : ["EN", "HI"];
   const year = new Date().getUTCFullYear();
@@ -130,23 +135,40 @@ export async function generateMetadata({
     ];
   });
 
-  const url = `https://shishya.in/exams/${exam.code}`;
+  const path = `/exams/${exam.code}`;
+  const url = localizedUrl(path, urlLocale);
+  // Localised title/description for the Hindi/Telugu twins — the exam
+  // name stays in Latin script (that's how aspirants type it), the
+  // intent words are in the language the URL promises.
+  const locTitle =
+    urlLocale === "hi"
+      ? `${exam.shortName}${stateBit} ${year} — ${nextDate ? `परीक्षा तिथि ${nextDate}, ` : ""}मुफ़्त मॉक टेस्ट, पिछले साल के पेपर | Shishya`
+      : urlLocale === "te"
+        ? `${exam.shortName}${stateBit} ${year} — ${nextDate ? `పరీక్ష తేదీ ${nextDate}, ` : ""}ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు | Shishya`
+        : title;
+  const locDescription =
+    urlLocale === "hi"
+      ? `${nextDate ? `${exam.shortName} परीक्षा तिथि: ${nextDate}. ` : ""}${exam.shortName} (${exam.name}) ${year} के मुफ़्त मॉक टेस्ट, पिछले साल के पेपर, सिलेबस, कटऑफ़ और AI ट्यूटर — हिंदी में। ${stateCopy}कोई पेवॉल नहीं।`
+      : urlLocale === "te"
+        ? `${nextDate ? `${exam.shortName} పరీక్ష తేదీ: ${nextDate}. ` : ""}${exam.shortName} (${exam.name}) ${year} ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు, సిలబస్, కటాఫ్, AI ట్యూటర్ — తెలుగులో. ${stateCopy}పేవాల్ లేదు.`
+        : description;
   return {
-    title,
-    description: description.slice(0, 300),
+    title: locTitle,
+    description: locDescription.slice(0, 300),
     alternates: {
       canonical: url,
+      languages: languageAlternates(path),
       // Machine-readable twin for AI crawlers/answer engines: the same
       // facts as clean markdown, a fraction of the tokens.
-      types: { "text/markdown": `${url}/context.md` },
+      types: { "text/markdown": `https://shishya.in${path}/context.md` },
     },
     keywords: [...baseKeywords, ...stateKeywords, ...langKeywords],
     openGraph: {
-      title,
-      description: description.slice(0, 300),
+      title: locTitle,
+      description: locDescription.slice(0, 300),
       url,
       siteName: "Shishya",
-      locale: "en_IN",
+      locale: ogLocale(urlLocale),
       type: "website",
     },
     twitter: {
@@ -568,6 +590,12 @@ export default async function ExamPage({
           </span>
           {/* Deep links to the dedicated SEO landings — also internal-link
               equity for the "[exam] syllabus/cutoff" pages. */}
+          <Link
+            href={`/exams/${exam.code}/updates`}
+            className="rounded-full border border-saffron-400 bg-saffron-100 px-3 py-1 font-semibold text-saffron-900 hover:bg-saffron-200"
+          >
+            {t("tracker.pill")}
+          </Link>
           <Link
             href={`/exams/${exam.code}/syllabus`}
             className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"

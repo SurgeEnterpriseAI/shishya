@@ -69,6 +69,12 @@ export interface EmailPayload {
    *                the budget but still respects opt-out.
    *  Transactional mail (no unsubUserId) is never budgeted. */
   priority?: "routine" | "important";
+  /** Email-keyed list mail (exam-tracker alerts, 23 Aug 2026) where the
+   *  recipient may have NO account: supplies its own unsubscribe URLs so
+   *  the send gets List-Unsubscribe headers + a footer and NO founder
+   *  BCC, without the user-keyed opt-out/budget machinery (which needs a
+   *  userId). When `unsubUserId` is ALSO set, that path wins. */
+  bulk?: { unsubscribeUrl: string; unsubscribeApiUrl: string };
 }
 
 /** Hours a user's inbox is "occupied" by one routine email. */
@@ -136,13 +142,17 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
     // that student's one-click List-Unsubscribe token, so a single founder
     // tap on Gmail's "Unsubscribe" would silently opt the student out
     // (review 22 Aug 2026) — and bulk nudges flooded the inbox anyway.
-    const bcc = payload.unsubUserId
+    const isList = !!payload.unsubUserId || !!payload.bulk;
+    const bcc = isList
       ? []
       : founderBcc.filter((a) => a.toLowerCase() !== payload.to.toLowerCase());
     // Marketing mail gets the opt-out footer + RFC 8058 one-click headers.
     const html = payload.unsubUserId
       ? payload.html + unsubFooterHtml(payload.unsubUserId)
-      : payload.html;
+      : payload.bulk
+        ? payload.html +
+          `<p style="font-size:11px;color:#94a3b8;margin:18px 0 0;font-family:system-ui,sans-serif;">You asked for these alerts on shishya.in. <a href="${payload.bulk.unsubscribeUrl}" style="color:#64748b;">Unsubscribe</a> any time.</p>`
+        : payload.html;
     // One-click header points at the POST API (state change on POST only);
     // the body footer links to the confirm PAGE (no state change on GET).
     const headers = payload.unsubUserId
@@ -150,7 +160,12 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
           "List-Unsubscribe": `<${unsubApiUrl(payload.unsubUserId)}>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         }
-      : undefined;
+      : payload.bulk
+        ? {
+            "List-Unsubscribe": `<${payload.bulk.unsubscribeApiUrl}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          }
+        : undefined;
     const res = await c.emails.send({
       from,
       to: payload.to,
@@ -922,6 +937,80 @@ One paper today tells you exactly where you stand against aspirants across India
   // User-requested, time-bound ("remind me Sunday") — always important:
   // must never be held by the routine inbox budget.
   return sendEmail({ to: p.to, subject, html, text, tag: "live-test-reminder", priority: "important" });
+}
+
+/** Exam-tracker alert (23 Aug 2026) — sent by /api/cron/exam-alerts when
+ *  something MATERIAL changed for an exam the subscriber follows
+ *  (notification / admit card / exam date / answer key / result). One
+ *  email per subscriber-exam per 7 days max. Email-keyed: anonymous
+ *  subscribers get their own HMAC unsubscribe; known users also get the
+ *  opt-out + "important" priority (they asked for it). */
+export async function sendExamAlertEmail(p: {
+  to: string;
+  userId?: string | null;
+  examCode: string;
+  examShort: string;
+  examName: string;
+  /** 1–4 bullet lines describing what changed, already plain text. */
+  changes: { title: string; detail?: string | null; url?: string | null }[];
+  /** Next key date, if known. */
+  nextDate?: { label: string; date: string; official: boolean } | null;
+  unsubscribeUrl: string;
+  unsubscribeApiUrl: string;
+}): Promise<boolean> {
+  const tracker = `https://shishya.in/exams/${p.examCode}/updates`;
+  const first = p.changes[0];
+  const subject = `${p.examShort}: ${first ? first.title.slice(0, 80) : "update"}`;
+  const nextLine = p.nextDate
+    ? `Next key date: ${p.nextDate.label} — ${p.nextDate.date}${p.nextDate.official ? "" : " (expected, not yet announced)"}.`
+    : "";
+  const text = `${p.examName} — update you asked to be told about:
+
+${p.changes.map((c) => `• ${c.title}${c.detail ? ` — ${c.detail}` : ""}${c.url ? `\n  ${c.url}` : ""}`).join("\n")}
+
+${nextLine ? nextLine + "\n\n" : ""}Full tracker (every date, official vs expected, latest notices): ${tracker}
+Practice while you wait — free ${p.examShort} mock: https://shishya.in/exams/${p.examCode}
+
+Always confirm on the official website before acting.
+— Shishya`;
+  const rows = p.changes
+    .map(
+      (c) =>
+        `<li style="margin:0 0 8px;"><strong>${esc(c.title)}</strong>${c.detail ? ` — ${esc(c.detail)}` : ""}${
+          c.url ? ` <a href="${esc(c.url)}" style="color:#b45309;">official notice ↗</a>` : ""
+        }</li>`,
+    )
+    .join("");
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#b45309;">${esc(p.examShort)} · exam tracker</div>
+    <div style="font-weight:700;font-size:18px;margin-top:6px;">${esc(p.examName)} — what changed</div>
+    <ul style="font-size:14px;line-height:1.6;margin:14px 0 0;padding-left:18px;">${rows}</ul>
+    ${nextLine ? `<p style="font-size:13px;line-height:1.6;margin:14px 0 0;color:#334155;">${esc(nextLine)}</p>` : ""}
+    <a href="${tracker}" style="display:inline-block;margin-top:16px;background:#f97316;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">Open the full tracker →</a>
+    <p style="font-size:13px;color:#334155;margin:16px 0 0;">Practice while you wait — <a href="https://shishya.in/exams/${esc(p.examCode)}" style="color:#b45309;">free ${esc(p.examShort)} mock</a>, instant score and weak areas.</p>
+    <p style="font-size:12px;color:#64748b;margin:18px 0 0;">Always confirm on the official website before acting. — Shishya</p>
+  </div>
+</body></html>`;
+  return sendEmail({
+    to: p.to,
+    subject,
+    html,
+    text,
+    tag: "exam-alert",
+    ...(p.userId ? { unsubUserId: p.userId, priority: "important" as const } : {}),
+    bulk: { unsubscribeUrl: p.unsubscribeUrl, unsubscribeApiUrl: p.unsubscribeApiUrl },
+  });
+}
+
+function esc(s: string): string {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 /** Personalised All-India Live Test invite — sent midweek to students

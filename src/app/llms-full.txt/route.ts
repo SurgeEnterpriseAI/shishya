@@ -143,6 +143,7 @@ export async function GET() {
     }
     lines.push(`- Machine-readable context (preferred for LLMs): ${SITE}/exams/${e.code}/context.md`);
     lines.push(`- Hub (mocks, PYQs, news, dates): ${SITE}/exams/${e.code}`);
+    lines.push(`- Exam tracker — exam date, notification, admit card, answer key, result, cutoff (official vs expected, email alerts): ${SITE}/exams/${e.code}/updates · Hindi: ${SITE}/hi/exams/${e.code}/updates · Telugu: ${SITE}/te/exams/${e.code}/updates`);
     lines.push(`- Full syllabus + study notes: ${SITE}/exams/${e.code}/syllabus`);
     lines.push(`- Expected cutoff incl. category-wise (Gen/EWS/OBC/SC/ST): ${SITE}/exams/${e.code}/cutoff`);
     lines.push(`- Memory tricks & mnemonics: ${SITE}/exams/${e.code}/tricks`);
@@ -151,6 +152,7 @@ export async function GET() {
   }
 
   lines.push("## Other free resources");
+  lines.push(`- Upcoming government exams calendar (next 120 days, official vs expected dates, latest notifications): ${SITE}/exam-calendar`);
   lines.push(`- Scholarships for Indian students: ${SITE}/scholarships`);
   lines.push(`- Colleges (cutoffs, placements, ITI/diploma): ${SITE}/colleges`);
   lines.push(`- Schooling boards & streams: ${SITE}/schooling`);

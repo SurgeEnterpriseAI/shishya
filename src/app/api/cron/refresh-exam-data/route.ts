@@ -122,19 +122,32 @@ export async function GET(req: Request) {
             title: n.title,
             body: n.body,
             source: GEN_SOURCE,
+            // Cited notice URL (23 Aug 2026) — the tracker page links it
+            // as "Official notice ↗"; `source` stays the provenance tag.
+            url: n.source ?? null,
             publishedAt: new Date(now.getTime() - n.daysAgo * 24 * 60 * 60 * 1000),
           },
         });
       }
       for (const d of info.dates) {
+        // Absolute dates are stored at midnight UTC of the calendar day
+        // (the convention every consumer — sidebar, exam-eve, phase
+        // articles — already assumes); offset-only rows keep the old
+        // "now + offset" behaviour.
+        const date = d.date
+          ? new Date(`${d.date}T00:00:00Z`)
+          : new Date(now.getTime() + d.daysFromNow * 24 * 60 * 60 * 1000);
         await prisma.examImportantDate.create({
           data: {
             examId: exam.id,
             label: d.label,
-            date: new Date(now.getTime() + d.daysFromNow * 24 * 60 * 60 * 1000),
+            date,
             isExamDay: d.isExamDay,
             notes: d.notes,
             source: GEN_SOURCE,
+            kind: d.kind,
+            confidence: d.confidence,
+            url: d.source ?? null,
           },
         });
       }

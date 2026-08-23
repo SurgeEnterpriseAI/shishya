@@ -286,7 +286,7 @@ export function UpcomingExamsSidebar({
 
       <div className="border-t border-ink-200 bg-white px-4 py-3 text-center">
         <Link
-          href="/exams"
+          href="/exam-calendar"
           className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
         >
           Browse all exam dates →

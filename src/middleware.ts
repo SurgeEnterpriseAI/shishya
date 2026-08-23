@@ -57,9 +57,35 @@ const AI_BOTS: [string, RegExp][] = [
   ["YouBot", /YouBot/i],
 ];
 
+// URL locales for SEO (23 Aug 2026): /hi/<path> and /te/<path> are
+// crawlable twins of the English pages. We REWRITE them to the real
+// route (no redirect — the URL stays in the address bar and in Google's
+// index) and stamp x-shishya-lang so getLocale() renders that language.
+// We also set the language cookie so the visitor's NEXT click (which
+// goes to an un-prefixed internal link) stays in the same language.
+const URL_LOCALES = new Set(["hi", "te"]);
+const LANG_HEADER = "x-shishya-lang";
+const LANG_COOKIE = "shishya-lang";
+
 export function middleware(req: NextRequest, event: NextFetchEvent): NextResponse {
-  const res = NextResponse.next();
-  const path = req.nextUrl.pathname;
+  const rawPath = req.nextUrl.pathname;
+  const localeMatch = rawPath.match(/^\/(hi|te)(\/.*)?$/);
+  let res: NextResponse;
+  let path = rawPath;
+  if (localeMatch && URL_LOCALES.has(localeMatch[1])) {
+    const lang = localeMatch[1];
+    path = localeMatch[2] && localeMatch[2] !== "/" ? localeMatch[2] : "/";
+    const url = req.nextUrl.clone();
+    url.pathname = path;
+    const reqHeaders = new Headers(req.headers);
+    reqHeaders.set(LANG_HEADER, lang);
+    res = NextResponse.rewrite(url, { request: { headers: reqHeaders } });
+    if (req.cookies.get(LANG_COOKIE)?.value !== lang) {
+      res.cookies.set({ name: LANG_COOKIE, value: lang, path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+    }
+  } else {
+    res = NextResponse.next();
+  }
 
   // ── AI-crawler observability (cheap: one regex pass, only on match) ──
   const ua = req.headers.get("user-agent") ?? "";
@@ -161,6 +187,11 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
 export const config = {
   matcher: [
     "/",
+    "/hi",
+    "/te",
+    "/hi/:path*",
+    "/te/:path*",
+    "/exam-calendar",
     "/login",
     "/exams/:path*",
     "/schooling",

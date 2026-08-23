@@ -643,7 +643,11 @@ model ExamNewsItem {
   examId      String
   title       String
   body        String    @db.Text
-  source      String? // optional URL to official notice / news source
+  source      String? // provenance tag ("ai-generated:claude") or a URL on curated rows
+  // Official notice / news URL the generator cited (23 Aug 2026) — kept
+  // separate from `source` because the cron keys staleness/archival on
+  // source = "ai-generated:claude".
+  url         String?
   publishedAt DateTime  @default(now())
   createdAt   DateTime  @default(now())
   // Soft-delete marker. The refresh-exam-data cron sets this on prior
@@ -665,8 +669,17 @@ model ExamImportantDate {
   label      String // e.g. "Application opens", "Tier 1 exam date"
   date       DateTime
   isExamDay  Boolean   @default(false) // highlight in UI
-  source     String? // optional URL
+  source     String? // provenance tag ("ai-generated:claude") or a URL on curated rows
   notes      String?   @db.Text
+  // Exam-tracker fields (23 Aug 2026). kind: NOTIFICATION | APPLICATION_START |
+  // APPLICATION_END | CORRECTION_WINDOW | ADMIT_CARD | EXAM | ANSWER_KEY |
+  // RESULT | INTERVIEW | OTHER (free text kept loose — classify() in
+  // src/lib/exam-timeline.ts falls back to the label for older rows).
+  // confidence: "official" (dated by an official/reliable notice, url set)
+  // or "expected" (typical-cycle estimate — shown as such, never as fact).
+  kind       String?
+  confidence String?
+  url        String?
   createdAt  DateTime  @default(now())
   // Soft-delete marker. Same semantics as ExamNewsItem.archivedAt —
   // refresh-exam-data archives prior generated rows rather than
@@ -1978,6 +1991,28 @@ model LiveTestReminder {
 
   @@unique([email, sundayDate])
   @@index([sundayDate, notifiedAt])
+}
+
+// Exam tracker alerts (23 Aug 2026) — "tell me when the notification /
+// admit card / result for THIS exam comes". Email-keyed so anonymous
+// visitors (the search-landing majority) can subscribe without an
+// account; userId is stamped when known so signed-in subscribers get
+// the opt-out + inbox-budget machinery. One row per (email, exam);
+// unsubscribedAt is a soft flag so a re-subscribe just clears it.
+// Sent by /api/cron/exam-alerts (material changes only, ≤1 mail per
+// subscriber-exam per 7 days).
+model ExamAlert {
+  id             String    @id @default(cuid())
+  examId         String
+  email          String
+  userId         String?
+  createdAt      DateTime  @default(now())
+  unsubscribedAt DateTime?
+  lastNotifiedAt DateTime?
+
+  @@unique([email, examId])
+  @@index([examId, unsubscribedAt])
+  @@index([userId])
 }
 
 model LiveTest {

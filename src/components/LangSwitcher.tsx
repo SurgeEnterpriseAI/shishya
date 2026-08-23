@@ -10,14 +10,26 @@
 // popover at this scale.
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { locales, localeNames, type Locale } from "@/lib/i18n";
+import { useEffect, useTransition } from "react";
+import { locales, localeNames, isRtl, type Locale } from "@/lib/i18n";
 
 const COOKIE = "shishya-lang";
 
 export function LangSwitcher({ current }: { current: Locale }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+
+  // The root layout ships <html lang="en" dir="ltr"> (it is deliberately
+  // static). Reflect the rendered locale post-hydration so screen
+  // readers, browser translate prompts and RTL scripts (ur/sd/ks) behave.
+  useEffect(() => {
+    try {
+      document.documentElement.lang = current;
+      document.documentElement.dir = isRtl(current) ? "rtl" : "ltr";
+    } catch {
+      /* non-DOM env */
+    }
+  }, [current]);
 
   function setLocale(lc: Locale) {
     if (lc === current) return;
