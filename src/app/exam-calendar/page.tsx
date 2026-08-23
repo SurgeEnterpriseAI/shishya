@@ -12,8 +12,13 @@ import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale } from "@/lib/seo-locale";
 import { KIND_ICON, MATERIAL_NEWS_RE, buildTimeline, fmtDay, type DateKind, type TimelineRow } from "@/lib/exam-timeline";
 import { istDayNumber } from "@/lib/exam-phase";
+import { LangTwinLinks } from "@/components/LangTwinLinks";
 
 export const revalidate = 1800;
+
+function jsonLdText(d: object): string {
+  return JSON.stringify(d).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
+}
 
 type TFn = (key: any) => string;
 const HORIZON_DAYS = 120;
@@ -159,7 +164,7 @@ export default async function ExamCalendarPage() {
   return (
     <main className="min-h-screen bg-ink-50/40">
       {jsonLd.map((d, i) => (
-        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(d) }} />
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdText(d) }} />
       ))}
       <Header />
       <section className="container-prose py-8 sm:py-10">
@@ -168,11 +173,7 @@ export default async function ExamCalendarPage() {
         </p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{fill(t("calendar.h1"), { year })}</h1>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">{t("calendar.intro")}</p>
-        <p className="mt-2 text-xs text-ink-500">
-          {urlLocale !== "en" && <Link href={path} className="mr-3 hover:text-ink-800">English</Link>}
-          {urlLocale !== "hi" && <Link href={`/hi${path}`} className="mr-3 hover:text-ink-800">हिंदी में</Link>}
-          {urlLocale !== "te" && <Link href={`/te${path}`} className="hover:text-ink-800">తెలుగులో</Link>}
-        </p>
+        <LangTwinLinks path={path} current={urlLocale} />
         <p className="mt-3 inline-block rounded-full bg-saffron-500 px-3 py-1 text-sm font-bold text-white">
           {fill(t("calendar.count"), { n: distinctExams, d: HORIZON_DAYS })}
         </p>
@@ -191,7 +192,7 @@ export default async function ExamCalendarPage() {
                     <span className="font-medium">{fmtDay(r.date, locale, true)}</span>
                     {badge(r)}
                     {r.url && (
-                      <a href={r.url} target="_blank" rel="noopener noreferrer" className="font-medium text-saffron-700 hover:text-saffron-800">{t("tracker.officialNotice")}</a>
+                      <a href={r.url} target="_blank" rel="noopener noreferrer" className="font-medium text-saffron-700 hover:text-saffron-800">{r.official ? t("tracker.officialNotice") : t("tracker.source")}</a>
                     )}
                   </p>
                 </li>
@@ -227,7 +228,7 @@ export default async function ExamCalendarPage() {
                           <Link href={p(`/exams/${r.examCode}`)} className="font-semibold text-ink-900 hover:text-saffron-700">{r.examShort}</Link>
                           <span className="text-ink-600"> — {r.label}</span>
                           {r.url && (
-                            <a href={r.url} target="_blank" rel="noopener noreferrer" className="ml-2 text-xs font-medium text-saffron-700 hover:text-saffron-800">{t("tracker.officialNotice")}</a>
+                            <a href={r.url} target="_blank" rel="noopener noreferrer" className="ml-2 text-xs font-medium text-saffron-700 hover:text-saffron-800">{r.official ? t("tracker.officialNotice") : t("tracker.source")}</a>
                           )}
                         </td>
                         <td className="whitespace-nowrap px-3 py-2 text-xs">
@@ -256,7 +257,7 @@ export default async function ExamCalendarPage() {
                     <Link href={`/exams/${n.exam.code}/news/${n.id}`} prefetch={false} className="text-ink-900 hover:text-saffron-700">{n.title}</Link>
                     <span className="ml-2 text-xs text-ink-500">{fmtDay(new Date(n.publishedAt as unknown as string | Date), locale)}</span>
                     {link && (
-                      <a href={link} target="_blank" rel="noopener noreferrer" className="ml-2 text-xs font-medium text-saffron-700 hover:text-saffron-800">{t("tracker.officialNotice")}</a>
+                      <a href={link} target="_blank" rel="noopener noreferrer" className="ml-2 text-xs font-medium text-saffron-700 hover:text-saffron-800">{t("tracker.source")}</a>
                     )}
                   </li>
                 );

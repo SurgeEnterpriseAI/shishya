@@ -30,6 +30,13 @@ import {
 } from "@/lib/exam-timeline";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { ShareExamButton } from "@/components/ShareExamButton";
+import { LangTwinLinks } from "@/components/LangTwinLinks";
+
+/** JSON-LD safe for inline <script>: a "</script>" inside a model- or
+ *  web-derived label must not break out of the block. */
+function jsonLdText(d: object): string {
+  return JSON.stringify(d).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
+}
 
 export const revalidate = 1800;
 
@@ -64,12 +71,12 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   const timeline = await loadTimeline(exam.id);
   const year = cycleYear(timeline);
   const { nextExam } = stageOf(timeline);
-  const dateBit = nextExam
-    ? nextExam.official
-      ? ` — ${tt("tracker.kind.EXAM")} ${fmtDay(nextExam.date, urlLocale)}`
-      : ` — ${tt("tracker.kind.EXAM")} ${fmtDay(nextExam.date, urlLocale)} (${tt("tracker.expected").toLowerCase()})`
+  // Lead with the answer (the date) so it survives SERP truncation; the
+  // qualifier "(expected)" stays glued to an estimated date.
+  const dateLead = nextExam
+    ? `${tt("tracker.kind.EXAM")} ${fmtDay(nextExam.date, urlLocale)}${nextExam.official ? "" : ` (${tt("tracker.expected").toLowerCase()})`} — `
     : "";
-  const title = `${exam.shortName} ${year} ${tt("tracker.title")}${dateBit} | Shishya`;
+  const title = `${exam.shortName} ${year} ${dateLead}${tt("tracker.title")} | Shishya`;
   const description = `${fill(tt("tracker.intro"), { exam: exam.shortName })} ${exam.name}.`.slice(0, 300);
   const path = `/exams/${exam.code}/updates`;
   const url = localizedUrl(path, urlLocale);
@@ -137,6 +144,8 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   if (nextExam && nextExam.daysFromToday === 0) statusLine = t("tracker.status.examToday");
   else if (nextExam && nextExam.daysFromToday === 1) statusLine = t("tracker.status.examTomorrow");
   else if (nextExam) statusLine = fill(t("tracker.status.examIn"), { n: nextExam.daysFromToday });
+  // An estimated exam day is never stated bare — same qualifier as the title.
+  if (statusLine && nextExam && !nextExam.official) statusLine = `${statusLine} (${t("tracker.expected").toLowerCase()})`;
   const nextLine = next && next !== nextExam ? fill(t("tracker.status.next"), { label: next.label }) : null;
   const lastLine = last ? fill(t("tracker.status.last"), { label: last.label }) : null;
 
@@ -157,7 +166,8 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
     const q = fill(t(qKey), { exam: short, year });
     let a: string;
     if (!row) a = t("tracker.faq.a.unknown");
-    else if (row.status === "done") a = fill(t("tracker.faq.a.done"), { label: row.label, date: fmtDay(row.date, locale) });
+    else if (row.status === "done")
+      a = fill(t(row.official ? "tracker.faq.a.done" : "tracker.faq.a.doneExpected"), { label: row.label, date: fmtDay(row.date, locale) });
     else if (row.official) a = fill(t("tracker.faq.a.official"), { label: row.label, date: fmtDay(row.date, locale) });
     else a = fill(t("tracker.faq.a.expected"), { label: row.label, date: fmtDay(row.date, locale) });
     return { q, a };
@@ -228,7 +238,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   return (
     <main className="min-h-screen bg-ink-50/40">
       {jsonLd.map((d, i) => (
-        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(d) }} />
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdText(d) }} />
       ))}
       <Header />
       <section className="container-prose py-8 sm:py-10">
@@ -239,11 +249,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
         <p className="mt-2 max-w-3xl text-sm text-ink-700">{fill(t("tracker.intro"), { exam: short })}</p>
 
         {/* Language twins — real links for humans AND the crawl graph. */}
-        <p className="mt-2 text-xs text-ink-500">
-          {urlLocale !== "en" && <Link href={path} className="mr-3 hover:text-ink-800">English</Link>}
-          {urlLocale !== "hi" && <Link href={`/hi${path}`} className="mr-3 hover:text-ink-800">हिंदी में</Link>}
-          {urlLocale !== "te" && <Link href={`/te${path}`} className="hover:text-ink-800">తెలుగులో</Link>}
-        </p>
+        <LangTwinLinks path={path} current={urlLocale} />
 
         {/* Status strip */}
         <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
@@ -279,7 +285,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
                       </p>
                       {row.url && (
                         <a href={row.url} target="_blank" rel="noopener noreferrer" className="mt-1 block text-xs font-medium text-saffron-700 hover:text-saffron-800">
-                          {t("tracker.officialNotice")}
+                          {row.official ? t("tracker.officialNotice") : t("tracker.source")}
                         </a>
                       )}
                     </>
@@ -333,7 +339,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
                         {r.notes && <p className="mt-0.5 text-xs text-ink-500">{r.notes}</p>}
                         {r.url && (
                           <a href={r.url} target="_blank" rel="noopener noreferrer" className="ml-1 text-xs font-medium text-saffron-700 hover:text-saffron-800">
-                            {t("tracker.officialNotice")}
+                            {r.official ? t("tracker.officialNotice") : t("tracker.source")}
                           </a>
                         )}
                       </td>
@@ -377,7 +383,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
                     <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
                       <Link href={`/exams/${exam.code}/news/${n.id}`} prefetch={false} className="font-medium text-saffron-700 hover:text-saffron-800">{t("tracker.readMore")}</Link>
                       {link && (
-                        <a href={link} target="_blank" rel="noopener noreferrer" className="font-medium text-ink-500 hover:text-ink-700">{t("tracker.officialNotice")}</a>
+                        <a href={link} target="_blank" rel="noopener noreferrer" className="font-medium text-ink-500 hover:text-ink-700">{t("tracker.source")}</a>
                       )}
                     </div>
                   </li>

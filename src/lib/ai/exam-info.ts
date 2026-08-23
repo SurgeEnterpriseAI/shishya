@@ -189,13 +189,17 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
           }
           const source = httpUrl(d.source);
           const kind = normaliseKind(d.kind, String(d.label), Boolean(d.isExamDay));
-          // A row can only be official if it can be cited.
+          // A row can only be official if it can be cited AND carries an
+          // absolute calendar date — an "official" offset would be stored
+          // as now+N (drifting each refresh) and re-alerted as new.
           const confidence: "official" | "expected" =
-            d.confidence === "official" && source ? "official" : "expected";
+            d.confidence === "official" && source && iso ? "official" : "expected";
           return {
             label: String(d.label).slice(0, 120),
             daysFromNow,
-            isExamDay: kind === "EXAM" || Boolean(d.isExamDay),
+            // Only EXAM rows are exam days (normaliseKind already folds a
+            // true isExamDay into EXAM when the kind was missing/unknown).
+            isExamDay: kind === "EXAM",
             notes: typeof d.notes === "string" ? d.notes.slice(0, 600) : null,
             kind,
             date: iso,
@@ -230,9 +234,12 @@ function isoDate(v: any): string | null {
   if (typeof v !== "string") return null;
   const m = v.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!m) return null;
-  const t = Date.parse(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`);
+  const s = `${m[1]}-${m[2]}-${m[3]}`;
+  const t = Date.parse(`${s}T00:00:00Z`);
   if (!Number.isFinite(t)) return null;
-  return `${m[1]}-${m[2]}-${m[3]}`;
+  // Reject impossible dates (2026-02-30) instead of letting JS roll them over.
+  if (new Date(t).toISOString().slice(0, 10) !== s) return null;
+  return s;
 }
 
 /** Accept the model's kind when valid; otherwise infer from the label. */

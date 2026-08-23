@@ -39,6 +39,9 @@ export interface UpcomingEvent {
   date: string; // ISO
   label: string;
   isExamDay: boolean;
+  /** Officially-cited date (tracker confidence). Optional — fallback
+   *  events and older caches omit it; treat missing as false. */
+  official?: boolean;
   /**
    * 1-2 sentence preview from the matching phase article, server-
    * resolved alongside the phase. When present, the sidebar renders

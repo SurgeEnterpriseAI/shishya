@@ -8,32 +8,68 @@
 // We keep this as a native <select> for accessibility (screen readers,
 // keyboard navigation, mobile native picker) — far better UX than a custom
 // popover at this scale.
+//
+// 23 Aug 2026 (URL twins /hi, /te): on a prefixed URL the URL's language
+// beats the cookie, so a refresh would keep the same language — instead we
+// NAVIGATE to the chosen twin (/te/exams/X, or the plain path for English
+// and every non-URL locale). The header renders this with the static
+// default locale for edge-cacheability, so the real current locale is read
+// from the cookie client-side (it is also what drives <html lang/dir>).
 
-import { useRouter } from "next/navigation";
-import { useEffect, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import { locales, localeNames, isRtl, type Locale } from "@/lib/i18n";
 
 const COOKIE = "shishya-lang";
+const URL_LOCALE_RE = /^\/(hi|te)(\/.*)?$/;
+
+function readCookieLocale(): Locale | null {
+  try {
+    const m = document.cookie.match(/(?:^|;\s*)shishya-lang=([^;]+)/);
+    const v = m ? decodeURIComponent(m[1]) : "";
+    return (locales as readonly string[]).includes(v) ? (v as Locale) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function LangSwitcher({ current }: { current: Locale }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
+  const [cur, setCur] = useState<Locale>(current);
 
-  // The root layout ships <html lang="en" dir="ltr"> (it is deliberately
-  // static). Reflect the rendered locale post-hydration so screen
-  // readers, browser translate prompts and RTL scripts (ur/sd/ks) behave.
+  // Real locale: URL prefix wins, then the cookie, then the server prop.
+  useEffect(() => {
+    const m = (pathname ?? "").match(URL_LOCALE_RE);
+    const fromUrl = m ? (m[1] as Locale) : null;
+    setCur(fromUrl ?? readCookieLocale() ?? current);
+  }, [pathname, current]);
+
+  // The root layout ships <html lang="en" dir="ltr"> (deliberately static).
+  // Reflect the rendered locale post-hydration so screen readers, browser
+  // translate prompts and RTL scripts (ur/sd/ks) behave.
   useEffect(() => {
     try {
-      document.documentElement.lang = current;
-      document.documentElement.dir = isRtl(current) ? "rtl" : "ltr";
+      document.documentElement.lang = cur;
+      document.documentElement.dir = isRtl(cur) ? "rtl" : "ltr";
     } catch {
       /* non-DOM env */
     }
-  }, [current]);
+  }, [cur]);
 
   function setLocale(lc: Locale) {
-    if (lc === current) return;
-    document.cookie = `${COOKIE}=${lc}; path=/; max-age=${60 * 60 * 24 * 365}`;
+    if (lc === cur) return;
+    document.cookie = `${COOKIE}=${lc}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+    setCur(lc);
+    const m = (pathname ?? "").match(URL_LOCALE_RE);
+    if (m) {
+      // On a twin URL, go to the chosen twin (plain path for non-URL locales).
+      const stripped = m[2] && m[2] !== "/" ? m[2] : "/";
+      const target = lc === "hi" || lc === "te" ? `/${lc}${stripped === "/" ? "" : stripped}` : stripped;
+      startTransition(() => router.push(target));
+      return;
+    }
     startTransition(() => router.refresh());
   }
 
@@ -42,7 +78,7 @@ export function LangSwitcher({ current }: { current: Locale }) {
       <span className="sr-only">Language</span>
       <GlobeIcon />
       <select
-        value={current}
+        value={cur}
         onChange={(e) => setLocale(e.target.value as Locale)}
         disabled={pending}
         className="appearance-none rounded-md border border-ink-200 bg-white py-1.5 pl-7 pr-7 text-xs font-medium text-ink-800 hover:border-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-200 disabled:opacity-60"

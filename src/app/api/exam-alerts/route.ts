@@ -41,23 +41,29 @@ export async function POST(req: NextRequest) {
   }
   const email = normaliseEmail(emailRaw);
 
-  // Own bucket — "aptitude" is the generous per-IP/day bucket (200) and
-  // an alert subscription is cheap; the 3/day "mentor" bucket would block
-  // a student who followed three exams in one sitting.
-  const rl = await checkRateLimit("aptitude", `exam-alert:${userId ?? clientIp(req)}`);
+  // Abuse limits (review 23 Aug 2026 — anonymous subscribe can enrol any
+  // address): 10/day per IP (or user) AND 10/day per target email.
+  const rl = await checkRateLimit("examAlert", `ip:${userId ?? clientIp(req)}`);
   if (!rl.ok) return rateLimited(rl);
+  const rlEmail = await checkRateLimit("examAlert", `email:${email}`);
+  if (!rlEmail.ok) return rateLimited(rlEmail);
 
   const exam = await prisma.exam
     .findUnique({ where: { code: body.examCode }, select: { id: true, active: true } })
     .catch(() => null);
   if (!exam || !exam.active) return NextResponse.json({ error: "unknown exam" }, { status: 404 });
 
+  // Re-activating an UNSUBSCRIBED row is allowed only for the signed-in
+  // owner of that email (or via the token-verified resub on the
+  // unsubscribe page) — an anonymous POST must not undo someone's
+  // unsubscribe. Anonymous repeat = no-op (still answers ok).
+  const ownerId = userId ?? null;
   const ok = await prisma
     .$executeRaw`
       INSERT INTO "ExamAlert" (id, "examId", email, "userId")
-      VALUES (${crypto.randomUUID()}, ${exam.id}, ${email}, ${userId})
+      VALUES (${crypto.randomUUID()}, ${exam.id}, ${email}, ${ownerId})
       ON CONFLICT (email, "examId") DO UPDATE
-        SET "unsubscribedAt" = NULL,
+        SET "unsubscribedAt" = CASE WHEN ${ownerId}::text IS NULL THEN "ExamAlert"."unsubscribedAt" ELSE NULL END,
             "userId" = COALESCE("ExamAlert"."userId", EXCLUDED."userId")
     `
     .then(() => true)

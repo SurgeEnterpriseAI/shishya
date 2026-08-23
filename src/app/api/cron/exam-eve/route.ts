@@ -47,8 +47,11 @@ export async function GET(req: Request) {
       AND d."archivedAt" IS NULL
       AND (d.date + INTERVAL '5.5 hours')::date
           = (NOW() + INTERVAL '5.5 hours' + INTERVAL '1 day')::date
-      -- trustworthy row: sourced, or recently refreshed
+      -- trustworthy row: sourced, or recently refreshed — and NEVER an
+      -- AI "expected" estimate (tracker confidence, 23 Aug 2026): an
+      -- "exam is tomorrow" email on a guessed date is a broken promise.
       AND (d.source IS NOT NULL OR d."createdAt" > NOW() - INTERVAL '30 days')
+      AND d.confidence IS DISTINCT FROM 'expected'
       -- and the calendar must not contradict itself for this exam
       AND NOT EXISTS (
         SELECT 1 FROM "ExamImportantDate" d2

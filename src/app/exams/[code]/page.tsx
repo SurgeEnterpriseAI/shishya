@@ -76,12 +76,20 @@ export async function generateMetadata({
   // a large ZERO-CLICK query class: "{exam} exam date {year}" queries
   // where we rank ~8-10 but never win the click because the title
   // doesn't answer the question. Lead with the date when we have one.
-  const nextDateRows = await prisma.$queryRaw<{ d: Date }[]>`
-    SELECT MIN(date) AS d FROM "ExamImportantDate"
+  // Honesty (23 Aug 2026): an ESTIMATED exam day is never stated bare —
+  // the qualifier travels with the date into title + description.
+  const nextDateRows = await prisma.$queryRaw<{ d: Date; confidence: string | null; url: string | null; source: string | null }[]>`
+    SELECT date AS d, confidence, url, source FROM "ExamImportantDate"
     WHERE "examId" = (SELECT id FROM "Exam" WHERE code = ${code})
-      AND "isExamDay" = TRUE AND "archivedAt" IS NULL AND date > now()`;
-  const nextDate = nextDateRows[0]?.d
-    ? new Date(nextDateRows[0].d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+      AND "isExamDay" = TRUE AND "archivedAt" IS NULL AND date > now()
+    ORDER BY date ASC LIMIT 1`;
+  const nextRow = nextDateRows[0];
+  const nextOfficial =
+    !!nextRow && (nextRow.confidence ?? "").toLowerCase() === "official" && /^https?:\/\//.test(nextRow.url ?? nextRow.source ?? "");
+  const expectedWord = urlLocale === "hi" ? "अनुमानित" : urlLocale === "te" ? "అంచనా" : "expected";
+  const nextDate = nextRow
+    ? new Date(nextRow.d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) +
+      (nextOfficial ? "" : ` (${expectedWord})`)
     : null;
 
   // Title — prioritises state name for state exams (huge SEO lever for

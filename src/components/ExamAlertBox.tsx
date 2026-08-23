@@ -46,7 +46,10 @@ export function ExamAlertBox({
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
         setErr(j?.error ?? labels.err);
-        setState(withEmail ? "form" : "idle");
+        // A one-tap (no email) attempt that the server bounced with 400
+        // means the session is gone since render — offer the email field
+        // instead of a dead button.
+        setState(withEmail || res.status === 400 ? "form" : "idle");
         return;
       }
       setState("done");

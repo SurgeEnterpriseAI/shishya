@@ -18,8 +18,7 @@
 
 import { prisma } from "../src/lib/db/prisma";
 import { generateExamInfo } from "../src/lib/ai/exam-info";
-
-const GEN_SOURCE = "ai-generated:claude";
+import { writeExamInfo, GEN_SOURCE } from "../src/lib/exam-data-writer";
 const COST_PER_EXAM_USD = 0.06; // sonnet + web search, conservative
 const CONCURRENCY = Math.max(1, Number(process.env.NEWS_CONCURRENCY ?? 4));
 
@@ -69,47 +68,8 @@ async function main() {
           },
           { useWebSearch: true },
         );
-        const now = new Date();
-        await prisma.examNewsItem.updateMany({
-          where: { examId: exam.id, source: GEN_SOURCE, archivedAt: null },
-          data: { archivedAt: now },
-        });
-        await prisma.examImportantDate.updateMany({
-          where: { examId: exam.id, source: GEN_SOURCE, archivedAt: null },
-          data: { archivedAt: now },
-        });
-        for (const n of info.news) {
-          await prisma.examNewsItem.create({
-            data: {
-              examId: exam.id,
-              title: n.title,
-              body: n.body,
-              source: GEN_SOURCE,
-              url: n.source ?? null,
-              publishedAt: new Date(now.getTime() - n.daysAgo * 24 * 60 * 60 * 1000),
-            },
-          });
-        }
-        for (const d of info.dates) {
-          // Same write shape as /api/cron/refresh-exam-data (tracker
-          // fields, 23 Aug 2026): absolute dates at midnight UTC.
-          const date = d.date
-            ? new Date(`${d.date}T00:00:00Z`)
-            : new Date(now.getTime() + d.daysFromNow * 24 * 60 * 60 * 1000);
-          await prisma.examImportantDate.create({
-            data: {
-              examId: exam.id,
-              label: d.label,
-              date,
-              isExamDay: d.isExamDay,
-              notes: d.notes,
-              source: GEN_SOURCE,
-              kind: d.kind,
-              confidence: d.confidence,
-              url: d.source ?? null,
-            },
-          });
-        }
+        // Same writer as /api/cron/refresh-exam-data (src/lib/exam-data-writer.ts).
+        await writeExamInfo(prisma, exam.id, info);
         spent += COST_PER_EXAM_USD;
         done++;
         console.log(`  ✓ ${exam.code.padEnd(22)} news=${info.news.length} dates=${info.dates.length}  ~$${spent.toFixed(2)}  (${done + failed}/${exams.length})`);

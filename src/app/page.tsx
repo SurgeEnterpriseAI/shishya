@@ -288,6 +288,9 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
         date: r.date.toISOString(),
         label: r.label,
         isExamDay: r.isExamDay,
+        // Tracker honesty flag (23 Aug 2026): only officially-cited rows
+        // may become schema.org Events below.
+        official: (r.confidence ?? "").toLowerCase() === "official" && !!r.url,
         phaseSnippet: phase ? (snippetsByKey.get(`${r.exam.id}:${phase}`) ?? null) : null,
         bucket: bucketById.get(r.id) ?? ("upcoming" as CalendarBucket),
       };
@@ -308,7 +311,7 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
 // with the three-tab bucket field attached to every event.
 const loadUpcomingEvents = unstable_cache(
   loadUpcomingEventsRaw,
-  ["home-upcoming-v5"],
+  ["home-upcoming-v6"],
   { revalidate: 300, tags: ["exam-dates"] },
 );
 
@@ -412,7 +415,8 @@ export default async function ExamsPage({
   // Google event rich-results + a machine-readable date list AI
   // engines can quote directly ("when is the next SSC CGL exam?").
   const jsonLdEvents = upcomingEvents
-    .filter((e) => (e.bucket ?? "upcoming") === "upcoming" && e.isExamDay)
+    // Only OFFICIAL (cited) exam days become Events — never an estimate.
+    .filter((e) => (e.bucket ?? "upcoming") === "upcoming" && e.isExamDay && e.official)
     .slice(0, 15);
   const examDatesJsonLd =
     jsonLdEvents.length > 0

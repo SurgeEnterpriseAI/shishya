@@ -147,22 +147,24 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
       ? []
       : founderBcc.filter((a) => a.toLowerCase() !== payload.to.toLowerCase());
     // Marketing mail gets the opt-out footer + RFC 8058 one-click headers.
-    const html = payload.unsubUserId
-      ? payload.html + unsubFooterHtml(payload.unsubUserId)
-      : payload.bulk
-        ? payload.html +
-          `<p style="font-size:11px;color:#94a3b8;margin:18px 0 0;font-family:system-ui,sans-serif;">You asked for these alerts on shishya.in. <a href="${payload.bulk.unsubscribeUrl}" style="color:#64748b;">Unsubscribe</a> any time.</p>`
+    // A per-list (bulk) unsubscribe takes precedence over the global one:
+    // "stop THESE alerts" must not be the "stop ALL Shishya email" switch.
+    const html = payload.bulk
+      ? payload.html +
+        `<p style="font-size:11px;color:#94a3b8;margin:18px 0 0;font-family:system-ui,sans-serif;">You asked for these alerts on shishya.in. <a href="${payload.bulk.unsubscribeUrl}" style="color:#64748b;">Unsubscribe</a> any time.</p>`
+      : payload.unsubUserId
+        ? payload.html + unsubFooterHtml(payload.unsubUserId)
         : payload.html;
     // One-click header points at the POST API (state change on POST only);
     // the body footer links to the confirm PAGE (no state change on GET).
-    const headers = payload.unsubUserId
+    const headers = payload.bulk
       ? {
-          "List-Unsubscribe": `<${unsubApiUrl(payload.unsubUserId)}>`,
+          "List-Unsubscribe": `<${payload.bulk.unsubscribeApiUrl}>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         }
-      : payload.bulk
+      : payload.unsubUserId
         ? {
-            "List-Unsubscribe": `<${payload.bulk.unsubscribeApiUrl}>`,
+            "List-Unsubscribe": `<${unsubApiUrl(payload.unsubUserId)}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           }
         : undefined;
@@ -994,13 +996,17 @@ Always confirm on the official website before acting.
     <p style="font-size:12px;color:#64748b;margin:18px 0 0;">Always confirm on the official website before acting. — Shishya</p>
   </div>
 </body></html>`;
+  // The ExamAlert row IS the consent record (explicit per-exam opt-in with
+  // its own unsubscribe), so this goes out on the bulk path only — it is
+  // not gated by the global emailOptOut/inbox budget (review 23 Aug 2026:
+  // a globally opted-out user who then asks for alerts would otherwise
+  // subscribe successfully and silently never receive one).
   return sendEmail({
     to: p.to,
     subject,
     html,
     text,
     tag: "exam-alert",
-    ...(p.userId ? { unsubUserId: p.userId, priority: "important" as const } : {}),
     bulk: { unsubscribeUrl: p.unsubscribeUrl, unsubscribeApiUrl: p.unsubscribeApiUrl },
   });
 }

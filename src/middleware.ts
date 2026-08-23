@@ -91,7 +91,16 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
     const reqHeaders = new Headers(req.headers);
     reqHeaders.set(LANG_HEADER, lang);
     res = NextResponse.rewrite(url, { request: { headers: reqHeaders } });
-    if (req.cookies.get(LANG_COOKIE)?.value !== lang) {
+    // Set the language cookie ONLY when the visitor has none (a Hindi
+    // searcher landing cold stays in Hindi on the next click) — never
+    // overwrite an explicit choice, and never on a Link PREFETCH (review
+    // 23 Aug 2026: prefetching a /hi link flipped the visitor's language
+    // without a click).
+    const isPrefetch =
+      req.headers.get("next-router-prefetch") === "1" ||
+      req.headers.get("purpose") === "prefetch" ||
+      (req.headers.get("sec-purpose") ?? "").includes("prefetch");
+    if (!isPrefetch && !req.cookies.get(LANG_COOKIE)?.value) {
       res.cookies.set({ name: LANG_COOKIE, value: lang, path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
     }
   } else if (req.headers.has(LANG_HEADER)) {

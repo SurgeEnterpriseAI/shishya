@@ -98,7 +98,9 @@ export function buildTimeline(rows: TimelineInput[], now: Date = new Date()): Ti
       label: r.label,
       date,
       day: isoDay(date),
-      isExamDay: r.isExamDay || kind === "EXAM",
+      // resolveKind already folds a legacy isExamDay=true with no kind into
+      // EXAM; a row with a valid non-EXAM kind is never an exam day.
+      isExamDay: kind === "EXAM",
       official,
       url,
       notes: r.notes ?? null,

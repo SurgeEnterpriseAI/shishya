@@ -11,13 +11,14 @@ import { normaliseEmail, verifyAlertToken } from "@/lib/exam-alerts";
 
 export const runtime = "nodejs";
 
-async function readParams(req: NextRequest): Promise<{ e: string; x: string; t: string; c: string; resub: boolean }> {
+async function readParams(req: NextRequest): Promise<{ e: string; x: string; t: string; c: string; resub: boolean; oneClick: boolean }> {
   const sp = req.nextUrl.searchParams;
   let e = sp.get("e") ?? "";
   let x = sp.get("x") ?? "";
   let t = sp.get("t") ?? "";
   let c = sp.get("c") ?? "";
   let resub = sp.get("resub") === "1";
+  let oneClick = false;
   const ct = req.headers.get("content-type") ?? "";
   try {
     if (ct.includes("application/json")) {
@@ -29,6 +30,9 @@ async function readParams(req: NextRequest): Promise<{ e: string; x: string; t: 
       resub = j.resub === true || j.resub === "1" || resub;
     } else if (ct.includes("form")) {
       const f = await req.formData();
+      // RFC 8058 one-click: mail clients POST `List-Unsubscribe=One-Click`
+      // as the form body and expect a 2xx, never a redirect.
+      oneClick = f.get("List-Unsubscribe") === "One-Click";
       e = String(f.get("e") ?? e);
       x = String(f.get("x") ?? x);
       t = String(f.get("t") ?? t);
@@ -38,11 +42,11 @@ async function readParams(req: NextRequest): Promise<{ e: string; x: string; t: 
   } catch {
     /* fall back to query params */
   }
-  return { e, x, t, c, resub };
+  return { e, x, t, c, resub, oneClick };
 }
 
 export async function POST(req: NextRequest) {
-  const { e, x, t, c, resub } = await readParams(req);
+  const { e, x, t, c, resub, oneClick } = await readParams(req);
   const email = normaliseEmail(e);
   if (!email || !x || !verifyAlertToken(email, x, t)) {
     return NextResponse.json({ error: "invalid link" }, { status: 400 });
@@ -61,8 +65,7 @@ export async function POST(req: NextRequest) {
   // HTML clients (the confirm page's form, mail-client one-click) get a
   // redirect back to the page with a done flag; API clients get JSON.
   const accept = req.headers.get("accept") ?? "";
-  const isForm = (req.headers.get("content-type") ?? "").includes("form") || accept.includes("text/html");
-  if (isForm && !(req.headers.get("list-unsubscribe") ?? "")) {
+  if (!oneClick && accept.includes("text/html")) {
     const url = new URL("/exam-alerts/unsubscribe", req.nextUrl.origin);
     url.searchParams.set("e", email);
     url.searchParams.set("x", x);

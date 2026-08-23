@@ -19,8 +19,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { generateExamInfo } from "@/lib/ai/exam-info";
-
-const GEN_SOURCE = "ai-generated:claude";
+import { writeExamInfo, GEN_SOURCE } from "@/lib/exam-data-writer";
 // Approximate Sonnet 4.5 cost per exam (~1k input + 1.5k output).
 const COST_PER_EXAM_USD = 0.04;
 // Safety cap: total per-day cron spend ceiling.
@@ -100,58 +99,14 @@ export async function GET(req: Request) {
         },
         { useWebSearch: true },
       );
-      const now = new Date();
-      // ARCHIVE (don't delete) prior generated rows. Students can
-      // still browse the historical news + dates via the "Show older
-      // updates" toggle on the per-exam page — preserves the
-      // institutional memory of each exam cycle (last year's cutoff
-      // notification, postponement notices, syllabus changes, etc).
-      // Only the active feed (archivedAt IS NULL) is shown by default.
-      await prisma.examNewsItem.updateMany({
-        where: { examId: exam.id, source: GEN_SOURCE, archivedAt: null },
-        data: { archivedAt: now },
-      });
-      await prisma.examImportantDate.updateMany({
-        where: { examId: exam.id, source: GEN_SOURCE, archivedAt: null },
-        data: { archivedAt: now },
-      });
-      for (const n of info.news) {
-        await prisma.examNewsItem.create({
-          data: {
-            examId: exam.id,
-            title: n.title,
-            body: n.body,
-            source: GEN_SOURCE,
-            // Cited notice URL (23 Aug 2026) — the tracker page links it
-            // as "Official notice ↗"; `source` stays the provenance tag.
-            url: n.source ?? null,
-            publishedAt: new Date(now.getTime() - n.daysAgo * 24 * 60 * 60 * 1000),
-          },
-        });
-      }
-      for (const d of info.dates) {
-        // Absolute dates are stored at midnight UTC of the calendar day
-        // (the convention every consumer — sidebar, exam-eve, phase
-        // articles — already assumes); offset-only rows keep the old
-        // "now + offset" behaviour.
-        const date = d.date
-          ? new Date(`${d.date}T00:00:00Z`)
-          : new Date(now.getTime() + d.daysFromNow * 24 * 60 * 60 * 1000);
-        await prisma.examImportantDate.create({
-          data: {
-            examId: exam.id,
-            label: d.label,
-            date,
-            isExamDay: d.isExamDay,
-            notes: d.notes,
-            source: GEN_SOURCE,
-            kind: d.kind,
-            confidence: d.confidence,
-            url: d.source ?? null,
-          },
-        });
-      }
-      log.push({ code: exam.code, ok: true, news: info.news.length, dates: info.dates.length });
+      // ARCHIVE (don't delete) prior generated rows and insert the new
+      // generation — shared writer (src/lib/exam-data-writer.ts) so the
+      // cron and the backfill script can't drift: archives only when the
+      // new run returned rows, keeps prior OFFICIAL dates the new run did
+      // not re-confirm, stores absolute dates at midnight UTC, persists
+      // cited URLs. Students can still browse history via the archive page.
+      const w = await writeExamInfo(prisma, exam.id, info);
+      log.push({ code: exam.code, ok: true, news: w.news, dates: w.dates });
       spent += COST_PER_EXAM_USD;
     } catch (err) {
       log.push({ code: exam.code, ok: false, err: (err as Error).message });
