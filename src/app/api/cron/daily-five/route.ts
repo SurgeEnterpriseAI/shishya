@@ -122,22 +122,9 @@ export async function GET(req: Request) {
     ).map((r) => r.userId),
   );
 
-  // Plan-holders get a richer, DEDICATED "your plan for today" email from
-  // the coach-morning cron (7 AM IST). To avoid two morning emails, skip
-  // anyone who already received that today (18 Aug 2026 founder call:
-  // keep the coach plan email independent, not folded into Daily-5).
-  const gotCoachEmail = new Set(
-    userIds.length
-      ? (
-          await prisma
-            .$queryRaw<{ userId: string }[]>`
-              SELECT DISTINCT "userId" FROM "EmailTouch"
-              WHERE tag = 'coach-morning' AND "userId" = ANY(${userIds})
-                AND "sentAt" > NOW() - INTERVAL '20 hours'`
-            .catch(() => [])
-        ).map((r) => r.userId)
-      : [],
-  );
+  // REVERTED 25 Aug 2026 (founder call): Daily-5 goes to every candidate
+  // again, including coach-plan holders who also got the 7 AM coach
+  // email — email scenarios restored to the pre-22-Aug behaviour.
 
   // Yesterday's platform-wide effort — social proof for the mail. The
   // Daily-5 goes out at ~8:30 AM IST, so "yesterday" is the honest word.
@@ -160,10 +147,9 @@ export async function GET(req: Request) {
   // 8:30 AM send lands 2.5h after the 6 AM test-hall open).
   const liveTest = await liveTestEmailNotice().catch(() => null);
 
-  let sent = 0, failed = 0, skippedCoach = 0;
+  let sent = 0, failed = 0;
   for (const u of users) {
     if (!u.email || !u.enrollments[0]) continue;
-    if (gotCoachEmail.has(u.id)) { skippedCoach++; continue; } // got the dedicated coach email
     const streak = computeStreak(daysByUser.get(u.id) ?? new Set(), todayIdx);
     const ok = await sendDailyFiveEmail({
       to: u.email,
@@ -178,5 +164,5 @@ export async function GET(req: Request) {
     if (ok) sent++; else failed++;
   }
 
-  return Response.json({ ok: true, candidates: candidates.length, sent, failed, skippedCoach });
+  return Response.json({ ok: true, candidates: candidates.length, sent, failed });
 }
