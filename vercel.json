@@ -120,6 +120,14 @@
     {
       "path": "/api/cron/exam-alerts",
       "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-exam-data",
+      "schedule": "15 7 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-exam-data",
+      "schedule": "15 13 * * *"
     }
   ]
 }

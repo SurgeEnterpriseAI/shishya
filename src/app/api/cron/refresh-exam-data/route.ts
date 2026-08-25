@@ -67,10 +67,30 @@ export async function GET(req: Request) {
   );
   const exams = await prisma.exam.findMany({
     where: { active: true },
-    select: { id: true, code: true, name: true, shortName: true, category: true },
+    select: { id: true, code: true, name: true, shortName: true, category: true, candidatesPerYear: true },
   });
+  // FRESHNESS TIERS (25 Aug 2026, Google-channel push): the TOP_N biggest
+  // exams refresh at least once a day — their tracker pages compete on
+  // "latest updates" freshness — everything else stays most-stale-first.
+  // The cron now runs 3×/day (vercel.json), so the tail still cycles
+  // ~2× faster than the old once-daily rotation.
+  const TOP_N = 15;
+  const STALE_MS = 20 * 3600_000;
+  const topIds = new Set(
+    [...exams]
+      .sort((a, b) => (b.candidatesPerYear ?? 0) - (a.candidatesPerYear ?? 0))
+      .slice(0, TOP_N)
+      .map((e) => e.id),
+  );
+  const nowMs = Date.now();
   const slice = exams
-    .sort((a, b) => (lastRefreshed.get(a.id) ?? 0) - (lastRefreshed.get(b.id) ?? 0))
+    .sort((a, b) => {
+      const la = lastRefreshed.get(a.id) ?? 0;
+      const lb = lastRefreshed.get(b.id) ?? 0;
+      const pa = topIds.has(a.id) && nowMs - la > STALE_MS ? 0 : 1;
+      const pb = topIds.has(b.id) && nowMs - lb > STALE_MS ? 0 : 1;
+      return pa - pb || la - lb;
+    })
     .slice(0, DAILY_EXAM_CAP);
 
   const started = Date.now();

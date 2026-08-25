@@ -14,6 +14,10 @@ export function SiteFooter() {
           aspirants, always.
         </p>
         <p className="flex flex-wrap gap-4">
+          {/* Exam calendar in the site-wide footer (25 Aug 2026): every
+              page passes crawl equity to the tracker surface — the
+              counter-move for the Google slump. */}
+          <Link href="/exam-calendar" className="hover:text-ink-800">Exam calendar</Link>
           <Link href="/about" className="hover:text-ink-800">About</Link>
           <Link href="/pricing" className="hover:text-ink-800">Pricing</Link>
           <Link href="/terms" className="hover:text-ink-800">Terms</Link>

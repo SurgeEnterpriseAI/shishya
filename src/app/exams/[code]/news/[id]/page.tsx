@@ -277,6 +277,12 @@ export default async function NewsPermalinkPage({
               Free {row.exam.shortName} mock tests →
             </Link>
             <Link
+              href={`/exams/${row.exam.code}/updates`}
+              className="rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-700 transition-colors hover:border-saffron-400"
+            >
+              Exam date, admit card & result tracker
+            </Link>
+            <Link
               href={`/exams/${row.exam.code}/cutoff`}
               className="rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-700 transition-colors hover:border-saffron-400"
             >
