@@ -108,7 +108,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   const t = tRaw as TFn;
   const signedIn = !!session?.user?.id;
 
-  const [timeline, news, results, elig, pyqCount] = await Promise.all([
+  const [timeline, news, results, elig, pyqCount, dataTs] = await Promise.all([
     loadTimeline(exam.id),
     prisma.examNewsItem
       .findMany({ where: { examId: exam.id, archivedAt: null }, orderBy: { publishedAt: "desc" }, take: 8 })
@@ -127,7 +127,18 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
         SELECT COUNT(DISTINCT "pyqYear")::bigint AS n FROM "Question"
         WHERE "examId" = ${exam.id} AND source = 'PYQ' AND validated = TRUE AND "pyqYear" IS NOT NULL`
       .catch(() => [] as { n: bigint }[]),
+    // When the DATA last changed — honest dateModified for humans and
+    // schema (never render-time; claiming freshness we don't have is
+    // exactly the kind of signal the index diet exists to remove).
+    prisma
+      .$queryRaw<{ t: Date | null }[]>`
+        SELECT GREATEST(
+          (SELECT MAX("createdAt") FROM "ExamImportantDate" WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL),
+          (SELECT MAX("createdAt") FROM "ExamNewsItem" WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL)
+        ) AS t`
+      .catch(() => [] as { t: Date | null }[]),
   ]);
+  const dataUpdatedAt = dataTs[0]?.t ? new Date(dataTs[0].t) : null;
 
   const year = cycleYear(timeline);
   const { next, last, nextExam } = stageOf(timeline);
@@ -190,7 +201,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
       url,
       inLanguage: lang,
       isAccessibleForFree: true,
-      dateModified: new Date().toISOString(),
+      ...(dataUpdatedAt ? { dateModified: dataUpdatedAt.toISOString() } : {}),
       about: [{ "@type": "Thing", name: exam.name }],
       publisher: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
       isPartOf: { "@type": "Course", name: `${short} preparation`, url: `https://shishya.in/exams/${exam.code}` },
@@ -295,7 +306,10 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
                 </div>
               ))}
             </div>
-            <p className="mt-2 text-xs text-ink-500">{t("tracker.expected.note")}</p>
+            <p className="mt-2 text-xs text-ink-500">
+              {t("tracker.expected.note")}
+              {dataUpdatedAt && <> · {fill(t("tracker.updated"), { date: fmtDay(dataUpdatedAt, locale) })}</>}
+            </p>
           </section>
         )}
 

@@ -31,6 +31,9 @@ export default function AboutPage() {
         company. Reach us any time at{" "}
         <a className="text-saffron-700 underline" href="mailto:corp@surgesoftware.co.in">corp@surgesoftware.co.in</a>{" "}
         or via the <Link href="/contact" className="text-saffron-700 underline">contact page</Link>.
+        How our content is produced and checked — including what is AI-assisted, what is
+        official-source-linked, and how errors get fixed — is documented in our{" "}
+        <Link href="/editorial-policy" className="text-saffron-700 underline">editorial policy</Link>.
       </p>
       <p className="mt-6">
         <Link href="/" className="font-medium text-saffron-700 underline">Start preparing — pick your exam →</Link>

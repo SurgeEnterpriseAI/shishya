@@ -64,13 +64,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // dedicated page for. Every active exam has rank bands + a syllabus tree.
   const cutoffUrls: MetadataRoute.Sitemap = exams.map((e) => ({
     url: `${base}/exams/${e.code}/cutoff`,
-    lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.75,
   }));
   const syllabusUrls: MetadataRoute.Sitemap = exams.map((e) => ({
     url: `${base}/exams/${e.code}/syllabus`,
-    lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.75,
   }));
@@ -84,7 +82,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     `.catch(() => [] as { code: string }[]);
   const tricksUrls: MetadataRoute.Sitemap = tricksExams.map((e) => ({
     url: `${base}/exams/${e.code}/tricks`,
-    lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
@@ -97,7 +94,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     `.catch(() => [] as { code: string }[]);
   const guideUrls: MetadataRoute.Sitemap = guideExams.map((e) => ({
     url: `${base}/exams/${e.code}/guide`,
-    lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.75,
   }));
@@ -107,19 +103,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // the hub + tracker (self-canonical, hreflang-paired in page metadata).
   const updatesUrls: MetadataRoute.Sitemap = exams.map((e) => ({
     url: `${base}/exams/${e.code}/updates`,
-    lastModified: new Date(),
     changeFrequency: "daily" as const,
     priority: 0.8,
   }));
   const localeTwinUrls: MetadataRoute.Sitemap = exams.flatMap((e) =>
     (["hi", "te"] as const).flatMap((lc) => [
       { url: `${base}/${lc}/exams/${e.code}`, lastModified: e.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 },
-      { url: `${base}/${lc}/exams/${e.code}/updates`, lastModified: new Date(), changeFrequency: "daily" as const, priority: 0.7 },
+      { url: `${base}/${lc}/exams/${e.code}/updates`, changeFrequency: "daily" as const, priority: 0.7 },
     ]),
   );
   localeTwinUrls.push(
-    { url: `${base}/hi/exam-calendar`, lastModified: new Date(), changeFrequency: "daily" as const, priority: 0.7 },
-    { url: `${base}/te/exam-calendar`, lastModified: new Date(), changeFrequency: "daily" as const, priority: 0.7 },
+    { url: `${base}/hi/exam-calendar`, changeFrequency: "daily" as const, priority: 0.7 },
+    { url: `${base}/te/exam-calendar`, changeFrequency: "daily" as const, priority: 0.7 },
   );
   // Daily current-affairs pages — every date that has content.
   const caDates = await prisma
@@ -138,7 +133,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const capsuleMonths = [...new Set(caDates.map((r) => r.d.toISOString().slice(0, 7)))];
   const capsuleUrls: MetadataRoute.Sitemap = capsuleMonths.map((month) => ({
     url: `${base}/current-affairs/capsule/${month}`,
-    lastModified: new Date(),
     changeFrequency: "daily" as const,
     priority: 0.7,
   }));
@@ -222,7 +216,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   `.catch(() => [] as { code: string; year: number }[]);
   const pyqUrls: MetadataRoute.Sitemap = pyqSets.map((p) => ({
     url: `${base}/exams/${p.code}/pyq/${Number(p.year)}`,
-    lastModified: new Date(),
     changeFrequency: "yearly" as const,
     priority: 0.6,
   }));
@@ -232,7 +225,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // "how to prepare for ..." style queries; statically defined in data.
   const personaUrls: MetadataRoute.Sitemap = PERSONAS.map((p) => ({
     url: `${base}/for/${p.slug}`,
-    lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
@@ -247,7 +239,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
   const stateUrls: MetadataRoute.Sitemap = Array.from(statesWithExams).map((code) => ({
     url: `${base}/exams/state/${stateSlug(code)}`,
-    lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.85,
   }));
@@ -292,6 +283,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/descriptive",
     "/live-test",
     "/exam-calendar",
+    "/editorial-policy",
     "/results",
     "/coach",
     "/ask",
@@ -329,7 +321,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/career-map",
   ].map((path) => ({
     url: `${base}${path}`,
-    lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.9,
   }));
@@ -339,7 +330,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // "NIRF rank AIIMS Delhi", etc.
   const collegeUrls: MetadataRoute.Sitemap = COLLEGES.map((c) => ({
     url: `${base}/colleges/${c.slug}`,
-    lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
@@ -349,7 +339,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // "top NLU India law" etc.
   const streamUrls: MetadataRoute.Sitemap = ALL_STREAMS.map((s) => ({
     url: `${base}/colleges/stream/${s.value}`,
-    lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.85,
   }));
@@ -357,7 +346,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Per-board schooling pages.
   const boardUrls: MetadataRoute.Sitemap = BOARDS.map((b) => ({
     url: `${base}/schooling/${b.slug}`,
-    lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));
@@ -366,7 +354,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // SEO targets: "CBSE Class 10 syllabus", "ICSE Class 12 subjects", etc.
   const classUrls: MetadataRoute.Sitemap = CLASS_SYLLABUS.map((c) => ({
     url: `${base}/schooling/${c.boardSlug}/class-${c.classNum}`,
-    lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.75,
   }));
@@ -377,8 +364,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const subjectUrls: MetadataRoute.Sitemap = CLASS_SYLLABUS.flatMap((c) =>
     c.subjects.map((s) => ({
       url: `${base}/schooling/${c.boardSlug}/class-${c.classNum}/${s.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
+        changeFrequency: "monthly" as const,
       priority: 0.65,
     })),
   );
@@ -387,7 +373,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // an authored chapter list. Highest-density long-tail SEO.
   const chapterUrls: MetadataRoute.Sitemap = allChapterPaths().map((p) => ({
     url: `${base}/schooling/${p.boardSlug}/class-${p.classNum}/${p.subjectSlug}/${p.chapterSlug}`,
-    lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.55,
   }));
@@ -396,7 +381,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // scholarship 2026", "AICTE Pragati eligibility", etc.)
   const scholarshipUrls: MetadataRoute.Sitemap = SCHOLARSHIPS.map((s) => ({
     url: `${base}/scholarships/${s.id}`,
-    lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.65,
   }));
@@ -404,21 +388,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Worldwide: country + per-university + test-prep URLs.
   const countryUrls: MetadataRoute.Sitemap = WORLDWIDE_COUNTRIES.map((c) => ({
     url: `${base}/worldwide/${c.slug}`,
-    lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.85,
   }));
   const universityUrls: MetadataRoute.Sitemap = WORLDWIDE_COUNTRIES.flatMap((c) =>
     c.universities.map((u) => ({
       url: `${base}/worldwide/${c.slug}/${u.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
+        changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
   );
   const testPrepUrls: MetadataRoute.Sitemap = TEST_PREP.map((t) => ({
     url: `${base}/worldwide/test-prep/${t.slug}`,
-    lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.65,
   }));
@@ -435,7 +416,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // salary india", "how to become IAS", etc.)
   const careerUrls: MetadataRoute.Sitemap = CAREERS.map((c) => ({
     url: `${base}/careers/${c.slug}`,
-    lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.75,
   }));
@@ -444,7 +424,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // cutoff/placement/salary" queries.
   const branchUrls: MetadataRoute.Sitemap = allBranchPaths().map((p) => ({
     url: `${base}/colleges/${p.collegeSlug}/${p.branchSlug}`,
-    lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
@@ -462,16 +441,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((code): code is string => Boolean(code) && code in STATES)
     .map((code) => ({
       url: `${base}/colleges/state/${stateSlug(code)}`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
+        changeFrequency: "weekly" as const,
       priority: 0.85,
     }));
 
   return [
     {
       url: base,
-      lastModified: new Date(),
-      changeFrequency: "daily" as const,
+      // The one honest new Date(): the homepage genuinely changes daily
+      // (live counters, calendar, current affairs).
+        changeFrequency: "daily" as const,
       priority: 1.0,
     },
     ...sectionLandings,

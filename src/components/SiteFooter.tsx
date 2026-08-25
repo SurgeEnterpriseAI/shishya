@@ -19,6 +19,7 @@ export function SiteFooter() {
               counter-move for the Google slump. */}
           <Link href="/exam-calendar" className="hover:text-ink-800">Exam calendar</Link>
           <Link href="/about" className="hover:text-ink-800">About</Link>
+          <Link href="/editorial-policy" className="hover:text-ink-800">Editorial policy</Link>
           <Link href="/pricing" className="hover:text-ink-800">Pricing</Link>
           <Link href="/terms" className="hover:text-ink-800">Terms</Link>
           <Link href="/privacy" className="hover:text-ink-800">Privacy</Link>

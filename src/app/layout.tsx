@@ -127,6 +127,17 @@ const organizationJsonLd = {
   sameAs: [
     "https://github.com/SurgeEnterpriseAI/shishya",
   ],
+  // Real-entity signals (25 Aug 2026, E-E-A-T): who operates the site,
+  // where, and how to reach them — same facts as /about and /terms.
+  parentOrganization: {
+    "@type": "Organization",
+    name: "Surge Software Solutions Pvt Ltd",
+    legalName: "Surge Software Solutions Pvt Ltd",
+    email: "corp@surgesoftware.co.in",
+    url: "https://surgesoftware.co.in",
+    address: { "@type": "PostalAddress", addressLocality: "Bengaluru", addressRegion: "Karnataka", addressCountry: "IN" },
+  },
+  contactPoint: { "@type": "ContactPoint", email: "corp@surgesoftware.co.in", contactType: "customer support", availableLanguage: ["en", "hi", "te"] },
 };
 
 // Root layout is intentionally synchronous and free of cookies()/auth()
