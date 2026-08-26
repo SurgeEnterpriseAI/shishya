@@ -130,7 +130,7 @@ export function Header({ admin = false }: { admin?: boolean }) {
           className="border-t border-ink-100 bg-white/60"
         >
           <div className="container-prose flex h-9 items-center gap-4 overflow-x-auto whitespace-nowrap text-[13px] font-medium text-ink-600">
-            <Link href="/exams" className="hover:text-ink-900">All Exams</Link>
+            <Link href="/exams/browse" className="hover:text-ink-900">All Exams</Link>
             <Link href="/exam-calendar" className="hover:text-ink-900">Exam Calendar</Link>
             <Link href="/live-test" className="hover:text-ink-900">Live Tests</Link>
             <Link href="/find-your-exam" className="hover:text-ink-900">Find Your Exam</Link>
