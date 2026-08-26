@@ -118,6 +118,28 @@ export function Header({ admin = false }: { admin?: boolean }) {
           )}
         </nav>
       </div>
+      {/* Primary site navigation (26 Aug 2026). One consistent, crawlable
+          row of the core destinations on every page — what users need one
+          tap away, and the structural precondition Google's sitelinks
+          algorithm looks for (clear nav, descriptive anchors, stable
+          across the site). Plain text anchors on purpose: the anchor text
+          is what a sitelink displays. */}
+      {!admin && (
+        <nav
+          aria-label="Primary"
+          className="border-t border-ink-100 bg-white/60"
+        >
+          <div className="container-prose flex h-9 items-center gap-4 overflow-x-auto whitespace-nowrap text-[13px] font-medium text-ink-600">
+            <Link href="/exams" className="hover:text-ink-900">All Exams</Link>
+            <Link href="/exam-calendar" className="hover:text-ink-900">Exam Calendar</Link>
+            <Link href="/live-test" className="hover:text-ink-900">Live Tests</Link>
+            <Link href="/find-your-exam" className="hover:text-ink-900">Find Your Exam</Link>
+            <Link href="/current-affairs" className="hidden hover:text-ink-900 sm:inline">Current Affairs</Link>
+            <Link href="/mentors" className="hidden hover:text-ink-900 sm:inline">Mentors</Link>
+            <Link href="/pricing" className="hidden hover:text-ink-900 sm:inline">Pricing</Link>
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
