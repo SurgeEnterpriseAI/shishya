@@ -73,6 +73,10 @@ export interface EmailPayload {
   bulk?: { unsubscribeUrl: string; unsubscribeApiUrl: string };
 }
 
+/** One founder copy per marketing tag per invocation (a cron run is one
+ *  warm invocation, so this is "first email of each wave"). */
+const founderCopySent = new Set<string>();
+
 /**
  * Send a transactional email. Returns true on accepted-for-delivery,
  * false on any failure (logged). Never throws — caller treats email
@@ -158,6 +162,29 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
     if ("error" in res && res.error) {
       console.error("[email] send rejected:", res.error);
       return false;
+    }
+    // FOUNDER COPY (26 Aug 2026): one copy of each marketing WAVE to the
+    // founder — the first send of each tag in this invocation. Replaces
+    // the old per-recipient BCC (removed 22 Aug: the BCC copy carried the
+    // student's one-click unsubscribe token — one founder tap on Gmail's
+    // "Unsubscribe" would silently opt the student out — and 90+ copies
+    // per morning buried the inbox). The copy goes out transactionally
+    // (no token, no footer) with the ORIGINAL body.
+    if (payload.unsubUserId && payload.tag && !founderCopySent.has(payload.tag) && founderBcc.length > 0) {
+      founderCopySent.add(payload.tag);
+      for (const addr of founderBcc) {
+        if (addr.toLowerCase() === payload.to.toLowerCase()) continue;
+        void c.emails
+          .send({
+            from,
+            to: addr,
+            subject: `[wave: ${payload.tag}] ${payload.subject}`,
+            html: payload.html,
+            text: payload.text,
+            tags: [{ name: "kind", value: "founder-copy" }],
+          })
+          .catch(() => {});
+      }
     }
     // Unified send log for the inbox budget: every mail to a KNOWN user
     // leaves a row, so the next routine send in the window is held.
