@@ -34,9 +34,7 @@ export async function generateMetadata({
     title: `${exam.shortName} — older notifications & timeline | Shishya`,
     description: `Historical news, postponements, important dates and cutoff predictions for ${exam.name}. Browse every cycle's official-source notifications archived by Shishya.`,
     alternates: { canonical: `https://shishya.in/exams/${code}/archive` },
-    // INDEX DIET (25 Aug 2026): archives list superseded AI-generated
-    // items — for students, not for the index.
-    robots: { index: false, follow: true },
+    robots: { index: true, follow: true },
   };
 }
 

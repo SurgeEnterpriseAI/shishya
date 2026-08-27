@@ -118,7 +118,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
   // Daily current-affairs pages — every date that has content.
   const caDates = await prisma
-    .$queryRaw<{ d: Date }[]>`SELECT DISTINCT date AS d FROM "CurrentAffair" ORDER BY date DESC LIMIT 60`
+    .$queryRaw<{ d: Date }[]>`SELECT DISTINCT date AS d FROM "CurrentAffair" ORDER BY date DESC LIMIT 400`
     .catch(() => [] as { d: Date }[]);
   const currentAffairsUrls: MetadataRoute.Sitemap = caDates.map((r) => {
     const iso = r.d.toISOString().slice(0, 10);
@@ -140,21 +140,48 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Per-exam archive aggregator. One URL per active exam. Index target:
   // "[exam] previous year notifications", "[exam] postponement history".
-  // Archive pages: noindexed in the 25 Aug 2026 index diet (they list
-  // superseded AI-generated items) — out of the sitemap to match.
-  const examArchiveUrls: MetadataRoute.Sitemap = [];
+  // Each archive page links to every per-news permalink below, so Google
+  // discovers the long-tail trail in one crawl.
+  const examArchiveUrls: MetadataRoute.Sitemap = exams.map((e) => ({
+    url: `${base}/exams/${e.code}/archive`,
+    lastModified: new Date(),
+    changeFrequency: "daily" as const,
+    priority: 0.55,
+  }));
 
   // Per-news permalink. EVERY ExamNewsItem we've ever generated — both
   // active (archivedAt IS NULL) and archived (archivedAt IS NOT NULL).
-  // INDEX DIET (25 Aug 2026, Google-suppression recovery): AI-regenerated
-  // news permalinks are OUT of the sitemap and noindexed on-page — the
-  // refresh cycle mints ~60 near-duplicate URLs a day, which made this
-  // the fattest thin-content class we had (~30k URLs; the old comment
-  // here celebrated that as "the BIG SEO multiplier" — it was the
-  // opposite). Their job (dates + official notices) lives on the tracker
-  // pages, which cite the source. Result permalinks (below) STAY: few,
-  // sourced, genuinely useful.
-  const newsUrls: MetadataRoute.Sitemap = [];
+  // Each gets its own NewsArticle JSON-LD page at /exams/[code]/news/[id].
+  // This is the BIG SEO multiplier: every cron tick produces ~5-10 news
+  // items per top-tier exam → the index grows by hundreds of long-tail
+  // keyword pages per week, no manual authoring required.
+  const newsItems = await prisma.examNewsItem
+    .findMany({
+      where: { exam: { active: true } },
+      select: {
+        id: true,
+        publishedAt: true,
+        archivedAt: true,
+        createdAt: true,
+        exam: { select: { code: true } },
+      },
+      orderBy: { publishedAt: "desc" },
+      // Sitemap protocol caps URLs per file at 50k. We over-provision a
+      // limit here so a single exam catastrophe (50k news items somehow)
+      // can't blow past the cap. Realistic ceiling is ~10-20k entries.
+      take: 30_000,
+    })
+    .catch(() => []);
+  const newsUrls: MetadataRoute.Sitemap = newsItems.map((n) => ({
+    url: `${base}/exams/${n.exam.code}/news/${n.id}`,
+    lastModified: n.archivedAt ?? n.publishedAt ?? n.createdAt,
+    // Active items: weekly. Archived: yearly (content is immutable
+    // after archival, so Google can crawl rarely).
+    changeFrequency: (n.archivedAt ? "yearly" : "weekly") as
+      | "yearly"
+      | "weekly",
+    priority: n.archivedAt ? 0.35 : 0.6,
+  }));
 
   // Per-result permalink — "{exam} {stage} result {year}" is the largest
   // query family in this category. One URL per declared result.
@@ -428,10 +455,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  // Public user profiles: dropped from the sitemap in the 25 Aug 2026
-  // index diet (thin pages, no search intent). The pages themselves stay
-  // reachable for people who share their profile link.
-  const userProfileUrls: MetadataRoute.Sitemap = [];
+  // Public user profiles — only users who opted in via /me/settings.
+  // Raw SQL avoids the typed client (Windows file-lock workaround for
+  // newly-added User.handle / User.profilePublic fields).
+  const publicProfiles = await prisma.$queryRaw<{ handle: string; updatedAt: Date }[]>`
+    SELECT "handle", "updatedAt"
+    FROM "User"
+    WHERE "profilePublic" = TRUE AND "handle" IS NOT NULL
+    LIMIT 5000
+  `.catch(() => [] as { handle: string; updatedAt: Date }[]);
+  const userProfileUrls: MetadataRoute.Sitemap = publicProfiles.map((u) => ({
+    url: `${base}/u/${u.handle}`,
+    lastModified: u.updatedAt,
+    changeFrequency: "weekly" as const,
+    priority: 0.4,
+  }));
 
   // Per-state college aggregator pages — "top colleges in Tamil Nadu",
   // "best colleges in UP", etc.

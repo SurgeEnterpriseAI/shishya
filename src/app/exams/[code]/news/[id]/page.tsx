@@ -77,12 +77,8 @@ export async function generateMetadata({
     },
     // We keep archived rows indexable too — they're a key long-tail
     // SEO surface ("[exam] notification 2024", "last year postponement
-    // INDEX DIET (25 Aug 2026): AI-regenerated news permalinks are
-    // noindexed — ~60 near-duplicate URLs/day was the fattest thin-content
-    // class feeding the Google-side suppression. follow:true keeps link
-    // equity flowing to the hub/tracker links below. Users still read
-    // these pages normally.
-    robots: { index: false, follow: true },
+    // [exam]"). robots default = index, follow.
+    robots: { index: true, follow: true },
   };
 }
 
