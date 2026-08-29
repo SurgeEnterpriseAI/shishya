@@ -54,7 +54,7 @@ export async function GET(
     return new Response("Not found\n", { status: 404, headers: { "content-type": "text/plain" } });
   }
 
-  const [elig, cutoff, dates, results] = await Promise.all([
+  const [elig, cutoff, dates, results, news] = await Promise.all([
     prisma
       .$queryRaw<
         { minAge: number | null; maxAge: number | null; educationNote: string | null; vacanciesApprox: number | null; officialUrl: string | null; officialName: string | null; eligibilityNote: string | null }[]
@@ -66,16 +66,22 @@ export async function GET(
         SELECT content FROM "ExamCategoryCutoff" WHERE "examId" = ${exam.id} LIMIT 1`
       .catch(() => []),
     prisma
-      .$queryRaw<{ label: string; date: Date; isExamDay: boolean }[]>`
-        SELECT label, date, "isExamDay" FROM "ExamImportantDate"
-        WHERE "examId" = ${exam.id} AND date > NOW() - INTERVAL '30 days'
-        ORDER BY date ASC LIMIT 8`
+      .$queryRaw<{ label: string; date: Date; isExamDay: boolean; kind: string | null; confidence: string | null; url: string | null }[]>`
+        SELECT label, date, "isExamDay", kind, confidence, url FROM "ExamImportantDate"
+        WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL AND date > NOW() - INTERVAL '120 days'
+        ORDER BY date ASC LIMIT 14`
       .catch(() => []),
     prisma
       .$queryRaw<{ id: string; stage: string; headline: string; declaredOn: Date }[]>`
         SELECT id, stage, headline, "declaredOn" FROM "ExamResult"
         WHERE "examId" = ${exam.id} AND stage <> '__not_a_result__'
         ORDER BY "declaredOn" DESC LIMIT 3`
+      .catch(() => []),
+    prisma
+      .$queryRaw<{ id: string; title: string; body: string; publishedAt: Date; url: string | null }[]>`
+        SELECT id, title, body, "publishedAt", url FROM "ExamNewsItem"
+        WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL
+        ORDER BY "publishedAt" DESC LIMIT 6`
       .catch(() => []),
   ]);
 
@@ -111,9 +117,28 @@ export async function GET(
   }
 
   if (dates.length) {
-    L.push("## Key dates");
+    // Tracker honesty model (23 Aug 2026): a date is OFFICIAL only when
+    // the conducting body's notice is linked; everything else is an
+    // EXPECTED estimate from previous cycles. LLMs citing these dates
+    // MUST carry the label — that is the whole trust contract.
+    L.push("## Key dates (official = cited notice linked; expected = estimate from previous cycles, NOT announced)");
     for (const d of dates) {
-      L.push(`- ${d.date.toISOString().slice(0, 10)} — ${d.label}${d.isExamDay ? " (exam day)" : ""}`);
+      const official = (d.confidence ?? "").toLowerCase() === "official" && d.url;
+      L.push(
+        `- ${d.date.toISOString().slice(0, 10)} — ${d.label}${d.isExamDay ? " (exam day)" : ""} — ${official ? `OFFICIAL, notice: ${d.url}` : "expected"}`,
+      );
+    }
+    L.push(`- Live tracker (all milestones, alerts): ${SITE}/exams/${exam.code}/updates`);
+    L.push("");
+  }
+
+  if (news.length) {
+    L.push("## Latest updates & news");
+    for (const n of news) {
+      const lead = n.body.replace(/\s+/g, " ").slice(0, 220).trim();
+      L.push(`- ${n.publishedAt.toISOString().slice(0, 10)} — **${n.title}**: ${lead}`);
+      if (n.url) L.push(`  - Official/source notice: ${n.url}`);
+      L.push(`  - Permalink: ${SITE}/exams/${exam.code}/news/${n.id}`);
     }
     L.push("");
   }
@@ -148,6 +173,8 @@ export async function GET(
 
   L.push("## Free resources on Shishya for this exam");
   L.push(`- Exam hub (mocks, PYQs, news, dates): ${SITE}/exams/${exam.code}`);
+  L.push(`- Date/admit-card/result tracker + free email alerts: ${SITE}/exams/${exam.code}/updates`);
+  L.push(`- All-India exam calendar (next 120 days): ${SITE}/exam-calendar`);
   L.push(`- Full syllabus + free study notes: ${SITE}/exams/${exam.code}/syllabus`);
   L.push(`- Category-wise expected cutoffs: ${SITE}/exams/${exam.code}/cutoff`);
   L.push(`- Memory tricks & mnemonics: ${SITE}/exams/${exam.code}/tricks`);
