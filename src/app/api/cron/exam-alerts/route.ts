@@ -25,6 +25,7 @@ import { prisma } from "@/lib/db/prisma";
 import { sendExamAlertEmail } from "@/lib/email";
 import { alertUnsubApiUrl, alertUnsubUrl } from "@/lib/exam-alerts";
 import { MATERIAL_NEWS_RE, buildTimeline, fmtDay, stageOf } from "@/lib/exam-timeline";
+import { sourceTier } from "@/lib/official-source";
 
 const MAX_SENDS = 400;
 const RESEND_DAYS = 7;
@@ -32,7 +33,7 @@ const RESEND_DAYS = 7;
 // subscriber was capped is ever skipped.
 const LOOKBACK_H = RESEND_DAYS * 24 + 26;
 
-type Change = { title: string; detail?: string | null; url?: string | null; at: Date };
+type Change = { title: string; detail?: string | null; url?: string | null; linkLabel?: string; at: Date };
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -46,10 +47,13 @@ export async function GET(req: Request) {
   const since = new Date(now.getTime() - LOOKBACK_H * 3600_000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 86_400_000);
 
-  // Exams that have at least one live subscriber.
-  const examRows = await prisma.$queryRaw<{ id: string; code: string; short: string; name: string }[]>`
-    SELECT DISTINCT e.id, e.code, e."shortName" AS short, e.name
+  // Exams that have at least one live subscriber. officialUrl widens the
+  // gold source tier to conducting bodies on commercial TLDs (NABARD,
+  // LIC, …) so their own notices are never mailed as "press reports".
+  const examRows = await prisma.$queryRaw<{ id: string; code: string; short: string; name: string; officialUrl: string | null }[]>`
+    SELECT DISTINCT e.id, e.code, e."shortName" AS short, e.name, el."officialUrl"
     FROM "ExamAlert" a JOIN "Exam" e ON e.id = a."examId"
+    LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
     WHERE a."unsubscribedAt" IS NULL AND e.active = TRUE`.catch(() => []);
 
   const report: Array<{ code: string; subscribers: number; changes: number; sent: number; held: number }> = [];
@@ -75,7 +79,17 @@ export async function GET(req: Request) {
         )
       ORDER BY date ASC LIMIT 4`.catch(() => []);
     for (const d of newDates) {
-      changes.push({ title: `${d.label}: ${fmtDay(new Date(d.date))}`, detail: "official date", url: d.url, at: new Date(d.createdAt) });
+      // Tier honesty (29 Aug 2026): only conducting-body citations may be
+      // called "official" in the mail; press/coaching citations are real
+      // announcements but say so — in the detail AND the link label.
+      const gold = sourceTier("official", d.url, ex.officialUrl) === "official";
+      changes.push({
+        title: `${d.label}: ${fmtDay(new Date(d.date))}`,
+        detail: gold ? "official date" : "announced date (via press reports)",
+        url: d.url,
+        linkLabel: gold ? "official notice" : "source",
+        at: new Date(d.createdAt),
+      });
     }
 
     // 2) Declared results in the window.
@@ -83,10 +97,12 @@ export async function GET(req: Request) {
       SELECT id, headline, stage, "officialUrl", "createdAt" FROM "ExamResult"
       WHERE "examId" = ${ex.id} AND "createdAt" > ${since} ORDER BY "createdAt" DESC LIMIT 2`.catch(() => []);
     for (const r of results) {
+      const url = r.officialUrl ?? `https://shishya.in/exams/${ex.code}/results/${r.id}`;
       changes.push({
         title: `Result declared — ${r.stage}`,
         detail: r.headline,
-        url: r.officialUrl ?? `https://shishya.in/exams/${ex.code}/results/${r.id}`,
+        url,
+        linkLabel: r.officialUrl && sourceTier("official", url, ex.officialUrl) === "official" ? "official notice" : "details",
         at: new Date(r.createdAt),
       });
     }
@@ -112,9 +128,11 @@ export async function GET(req: Request) {
     const live = await prisma.$queryRaw<{ id: string; label: string; date: Date; isExamDay: boolean; kind: string | null; confidence: string | null; url: string | null; notes: string | null }[]>`
       SELECT id, label, date, "isExamDay", kind, confidence, url, notes FROM "ExamImportantDate"
       WHERE "examId" = ${ex.id} AND "archivedAt" IS NULL ORDER BY date ASC`.catch(() => []);
-    const timeline = buildTimeline(live, now);
+    const timeline = buildTimeline(live, now, ex.officialUrl);
     const { nextExam, next } = stageOf(timeline);
-    if (nextExam && nextExam.official && nextExam.daysFromToday >= 0 && nextExam.daysFromToday <= 3 && changes.length < 4) {
+    // Any ANNOUNCED exam day (official or reported tier) within 3 days
+    // deserves the reminder — only estimates are excluded.
+    if (nextExam && nextExam.tier !== "expected" && nextExam.daysFromToday >= 0 && nextExam.daysFromToday <= 3 && changes.length < 4) {
       changes.push({
         title:
           nextExam.daysFromToday === 0
@@ -122,6 +140,7 @@ export async function GET(req: Request) {
             : `Exam in ${nextExam.daysFromToday} day${nextExam.daysFromToday === 1 ? "" : "s"} — ${nextExam.label}`,
         detail: fmtDay(nextExam.date),
         url: nextExam.url,
+        linkLabel: nextExam.tier === "official" ? "official notice" : "source",
         at: now,
       });
     }
@@ -155,7 +174,10 @@ export async function GET(req: Request) {
         examShort: ex.short,
         examName: ex.name,
         changes: mine.map(({ title, detail, url }) => ({ title, detail, url })),
-        nextDate: next ? { label: next.label, date: fmtDay(next.date), official: next.official } : null,
+        // The template's `official` flag gates "(expected, not yet
+        // announced)" — semantically it means ANNOUNCED, so reported
+        // (press-cited) dates must pass it too.
+        nextDate: next ? { label: next.label, date: fmtDay(next.date), official: next.tier !== "expected" } : null,
         unsubscribeUrl: alertUnsubUrl(s.email, ex.id, ex.code),
         unsubscribeApiUrl: alertUnsubApiUrl(s.email, ex.id),
       }).catch(() => false);

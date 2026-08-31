@@ -2,17 +2,21 @@
 // status-tagged timeline the /exams/[code]/updates page and the
 // /exam-calendar page render. Pure functions, no DB.
 //
-// Honesty model (23 Aug 2026): a row is OFFICIAL only when the generator
-// could cite an official/reliable notice (confidence = "official" AND a
-// url). Everything else is EXPECTED — a typical-cycle estimate that the
-// UI must label as such, never present as the date. Rows written before
-// the tracker fields existed (kind/confidence NULL) are classified from
-// their label and treated as expected.
+// Honesty model (23 Aug 2026, tiered 29 Aug 2026): every row carries a
+// source tier derived from its cited domain (src/lib/official-source.ts):
+//   official — announced + cited on the conducting body's own site; the
+//              only tier that earns the gold badge and structured data
+//   reported — announced, but cited via a secondary source (news /
+//              coaching portal); real, labelled with its provenance
+//   expected — a typical-cycle estimate the UI must label as such
+// Rows written before the tracker fields existed (kind/confidence NULL)
+// are classified from their label and treated as expected.
 
 import { kindFromLabel, type DateKind } from "@/lib/ai/exam-info";
 import { istDayNumber } from "@/lib/exam-phase";
+import { sourceTier, type SourceTier } from "@/lib/official-source";
 
-export type { DateKind };
+export type { DateKind, SourceTier };
 
 export type TimelineStatus = "done" | "today" | "upcoming";
 
@@ -36,8 +40,11 @@ export interface TimelineRow {
   /** ISO calendar day (YYYY-MM-DD) of the IST date. */
   day: string;
   isExamDay: boolean;
-  /** Dated by a cited official/reliable notice. */
+  /** Gold tier only: announced AND cited on the conducting body's own
+   *  site. The only rows that may enter schema.org structured data. */
   official: boolean;
+  /** official | reported (announced via secondary source) | expected. */
+  tier: SourceTier;
   url: string | null;
   notes: string | null;
   status: TimelineStatus;
@@ -83,14 +90,16 @@ export function isoDay(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Build the ordered timeline. Sorted by date, then by cycle order. */
-export function buildTimeline(rows: TimelineInput[], now: Date = new Date()): TimelineRow[] {
+/** Build the ordered timeline. Sorted by date, then by cycle order.
+ *  `officialUrl` (the exam's portal from ExamEligibility) widens the
+ *  gold tier to that portal's domain even off-government TLDs. */
+export function buildTimeline(rows: TimelineInput[], now: Date = new Date(), officialUrl?: string | null): TimelineRow[] {
   const today = istDayNumber(now);
   const out: TimelineRow[] = rows.map((r) => {
     const date = r.date instanceof Date ? r.date : new Date(r.date);
     const kind = resolveKind({ kind: r.kind, label: r.label, isExamDay: r.isExamDay });
     const url = r.url && /^https?:\/\//i.test(r.url) ? r.url : r.source && /^https?:\/\//i.test(r.source) ? r.source : null;
-    const official = (r.confidence ?? "").toLowerCase() === "official" && !!url;
+    const tier = sourceTier(r.confidence, url, officialUrl);
     const delta = istDayNumber(date) - today;
     return {
       id: r.id,
@@ -101,7 +110,8 @@ export function buildTimeline(rows: TimelineInput[], now: Date = new Date()): Ti
       // resolveKind already folds a legacy isExamDay=true with no kind into
       // EXAM; a row with a valid non-EXAM kind is never an exam day.
       isExamDay: kind === "EXAM",
-      official,
+      official: tier === "official",
+      tier,
       url,
       notes: r.notes ?? null,
       status: delta < 0 ? "done" : delta === 0 ? "today" : "upcoming",

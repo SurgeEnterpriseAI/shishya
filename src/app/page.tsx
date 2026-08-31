@@ -38,6 +38,7 @@ import { getT } from "@/lib/i18n-server";
 import { Header } from "@/components/Header";
 import type { ExamCard } from "@/components/ExamPicker";
 import { computeExamTags } from "@/lib/exam-tags";
+import { sourceTier } from "@/lib/official-source";
 import { type ThreadItem } from "@/components/DiscussionsSidebar";
 import { LiveCountersStrip } from "@/components/LiveCounters";
 import { HomeSearch } from "@/components/HomeSearch";
@@ -192,7 +193,7 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
       },
       orderBy: { date: "asc" },
       take: 800, // over-fetch — bucketed + deduped + capped below
-      include: { exam: { select: { id: true, code: true, shortName: true } } },
+      include: { exam: { select: { id: true, code: true, shortName: true, eligibility: { select: { officialUrl: true } } } } },
     });
     type RawRow = (typeof rowsRaw)[number];
     const classify = (r: RawRow): Exclude<CalendarBucket, "results"> | null => {
@@ -288,9 +289,10 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
         date: r.date.toISOString(),
         label: r.label,
         isExamDay: r.isExamDay,
-        // Tracker honesty flag (23 Aug 2026): only officially-cited rows
-        // may become schema.org Events below.
-        official: (r.confidence ?? "").toLowerCase() === "official" && !!r.url,
+        // Tracker honesty flag (23 Aug 2026, tiered 29 Aug 2026): only
+        // gold-tier rows — announced AND cited on the conducting body's
+        // own domain (incl. the exam's portal) — may become Events below.
+        official: sourceTier(r.confidence, r.url, r.exam.eligibility?.officialUrl) === "official",
         phaseSnippet: phase ? (snippetsByKey.get(`${r.exam.id}:${phase}`) ?? null) : null,
         bucket: bucketById.get(r.id) ?? ("upcoming" as CalendarBucket),
       };
@@ -311,7 +313,8 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
 // with the three-tab bucket field attached to every event.
 const loadUpcomingEvents = unstable_cache(
   loadUpcomingEventsRaw,
-  ["home-upcoming-v6"],
+  // v7: `official` tightened to gold source tier (conducting-body domain).
+  ["home-upcoming-v7"],
   { revalidate: 300, tags: ["exam-dates"] },
 );
 

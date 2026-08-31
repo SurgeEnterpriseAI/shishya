@@ -67,7 +67,17 @@ export async function GET(req: Request) {
   );
   const exams = await prisma.exam.findMany({
     where: { active: true },
-    select: { id: true, code: true, name: true, shortName: true, category: true, candidatesPerYear: true },
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      shortName: true,
+      category: true,
+      candidatesPerYear: true,
+      // Conducting-body portal — steers the generator's web search to the
+      // official domain (the only source tier labelled OFFICIAL).
+      eligibility: { select: { officialUrl: true, officialName: true } },
+    },
   });
   // FRESHNESS TIERS (25 Aug 2026, Google-channel push): the TOP_N biggest
   // exams refresh at least once a day — their tracker pages compete on
@@ -116,6 +126,8 @@ export async function GET(req: Request) {
           examName: exam.name,
           examShortName: exam.shortName,
           category: String(exam.category),
+          officialUrl: exam.eligibility?.officialUrl ?? null,
+          officialName: exam.eligibility?.officialName ?? null,
         },
         { useWebSearch: true },
       );

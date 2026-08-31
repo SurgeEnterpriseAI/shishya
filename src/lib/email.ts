@@ -958,8 +958,10 @@ export async function sendExamAlertEmail(p: {
   examCode: string;
   examShort: string;
   examName: string;
-  /** 1–4 bullet lines describing what changed, already plain text. */
-  changes: { title: string; detail?: string | null; url?: string | null }[];
+  /** 1–4 bullet lines describing what changed, already plain text.
+   *  linkLabel: "official notice" ONLY for conducting-body URLs (gold
+   *  source tier) — callers pass "source" for press/coaching citations. */
+  changes: { title: string; detail?: string | null; url?: string | null; linkLabel?: string }[];
   /** Next key date, if known. */
   nextDate?: { label: string; date: string; official: boolean } | null;
   unsubscribeUrl: string;
@@ -984,7 +986,7 @@ Always confirm on the official website before acting.
     .map(
       (c) =>
         `<li style="margin:0 0 8px;"><strong>${esc(c.title)}</strong>${c.detail ? ` — ${esc(c.detail)}` : ""}${
-          c.url ? ` <a href="${esc(c.url)}" style="color:#b45309;">official notice ↗</a>` : ""
+          c.url ? ` <a href="${esc(c.url)}" style="color:#b45309;">${esc(c.linkLabel ?? "source")} ↗</a>` : ""
         }</li>`,
     )
     .join("");

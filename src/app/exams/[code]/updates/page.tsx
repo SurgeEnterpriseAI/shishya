@@ -56,10 +56,16 @@ async function loadExam(code: string) {
 }
 
 async function loadTimeline(examId: string) {
-  const rows = await prisma.examImportantDate
-    .findMany({ where: { examId, archivedAt: null }, orderBy: { date: "asc" }, take: 60 })
-    .catch(() => []);
-  return buildTimeline(rows);
+  const [rows, elig] = await Promise.all([
+    prisma.examImportantDate
+      .findMany({ where: { examId, archivedAt: null }, orderBy: { date: "asc" }, take: 60 })
+      .catch(() => []),
+    prisma
+      .$queryRaw<{ officialUrl: string | null }[]>`
+        SELECT "officialUrl" FROM "ExamEligibility" WHERE "examId" = ${examId} LIMIT 1`
+      .catch(() => [] as { officialUrl: string | null }[]),
+  ]);
+  return buildTimeline(rows, new Date(), elig[0]?.officialUrl ?? null);
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
@@ -74,7 +80,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   // Lead with the answer (the date) so it survives SERP truncation; the
   // qualifier "(expected)" stays glued to an estimated date.
   const dateLead = nextExam
-    ? `${tt("tracker.kind.EXAM")} ${fmtDay(nextExam.date, urlLocale)}${nextExam.official ? "" : ` (${tt("tracker.expected").toLowerCase()})`} — `
+    ? `${tt("tracker.kind.EXAM")} ${fmtDay(nextExam.date, urlLocale)}${nextExam.tier === "expected" ? ` (${tt("tracker.expected").toLowerCase()})` : ""} — `
     : "";
   const title = `${exam.shortName} ${year} ${dateLead}${tt("tracker.title")} | Shishya`;
   const description = `${fill(tt("tracker.intro"), { exam: exam.shortName })} ${exam.name}.`.slice(0, 300);
@@ -155,8 +161,9 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   if (nextExam && nextExam.daysFromToday === 0) statusLine = t("tracker.status.examToday");
   else if (nextExam && nextExam.daysFromToday === 1) statusLine = t("tracker.status.examTomorrow");
   else if (nextExam) statusLine = fill(t("tracker.status.examIn"), { n: nextExam.daysFromToday });
-  // An estimated exam day is never stated bare — same qualifier as the title.
-  if (statusLine && nextExam && !nextExam.official) statusLine = `${statusLine} (${t("tracker.expected").toLowerCase()})`;
+  // An estimated exam day is never stated bare — same qualifier as the
+  // title. Announced days (official OR reported) carry no qualifier.
+  if (statusLine && nextExam && nextExam.tier === "expected") statusLine = `${statusLine} (${t("tracker.expected").toLowerCase()})`;
   const nextLine = next && next !== nextExam ? fill(t("tracker.status.next"), { label: next.label }) : null;
   const lastLine = last ? fill(t("tracker.status.last"), { label: last.label }) : null;
 
@@ -178,8 +185,9 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
     let a: string;
     if (!row) a = t("tracker.faq.a.unknown");
     else if (row.status === "done")
-      a = fill(t(row.official ? "tracker.faq.a.done" : "tracker.faq.a.doneExpected"), { label: row.label, date: fmtDay(row.date, locale) });
-    else if (row.official) a = fill(t("tracker.faq.a.official"), { label: row.label, date: fmtDay(row.date, locale) });
+      a = fill(t(row.tier === "expected" ? "tracker.faq.a.doneExpected" : "tracker.faq.a.done"), { label: row.label, date: fmtDay(row.date, locale) });
+    else if (row.tier === "official") a = fill(t("tracker.faq.a.official"), { label: row.label, date: fmtDay(row.date, locale) });
+    else if (row.tier === "reported") a = fill(t("tracker.faq.a.reported"), { label: row.label, date: fmtDay(row.date, locale) });
     else a = fill(t("tracker.faq.a.expected"), { label: row.label, date: fmtDay(row.date, locale) });
     return { q, a };
   };
@@ -240,8 +248,10 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   }
 
   const badge = (r: TimelineRow) =>
-    r.official ? (
+    r.tier === "official" ? (
       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">{t("tracker.official")}</span>
+    ) : r.tier === "reported" ? (
+      <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-800">{t("tracker.reported")}</span>
     ) : (
       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{t("tracker.expected")}</span>
     );

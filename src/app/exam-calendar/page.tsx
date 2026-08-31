@@ -11,6 +11,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale } from "@/lib/seo-locale";
 import { KIND_ICON, MATERIAL_NEWS_RE, buildTimeline, fmtDay, type DateKind, type TimelineRow } from "@/lib/exam-timeline";
+import { sourceTier } from "@/lib/official-source";
 import { istDayNumber } from "@/lib/exam-phase";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
 
@@ -68,22 +69,38 @@ export default async function ExamCalendarPage() {
       where: { date: { gte: from, lte: to }, archivedAt: null, exam: { active: true } },
       orderBy: { date: "asc" },
       take: 800,
-      include: { exam: { select: { id: true, code: true, shortName: true } } },
+      include: {
+        exam: {
+          select: {
+            id: true,
+            code: true,
+            shortName: true,
+            // Portal domain widens the gold tier per exam (NABARD, LIC and
+            // other bodies on commercial TLDs) — see official-source.ts.
+            eligibility: { select: { officialUrl: true } },
+          },
+        },
+      },
     })
     .catch(() => []);
 
   const rows: Row[] = buildTimeline(raw).map((r) => {
     const src = raw.find((x) => x.id === r.id)!;
-    return { ...r, examCode: src.exam.code, examShort: src.exam.shortName, examId: src.exam.id };
+    // buildTimeline takes ONE officialUrl; this page spans every exam, so
+    // re-derive the tier per row with that exam's own portal.
+    const tier = sourceTier(src.confidence, r.url, src.exam.eligibility?.officialUrl);
+    return { ...r, tier, official: tier === "official", examCode: src.exam.code, examShort: src.exam.shortName, examId: src.exam.id };
   }).filter((r) => r.daysFromToday >= 0);
 
-  // Exam days grouped by IST month; one row per (exam, day) — prefer official.
+  // Exam days grouped by IST month; one row per (exam, day) — prefer the
+  // highest source tier (official > reported > expected).
+  const tierRank = { official: 2, reported: 1, expected: 0 } as const;
   const examDays = new Map<string, Row>();
   for (const r of rows) {
     if (!r.isExamDay) continue;
     const key = `${r.examId}:${r.day}`;
     const prev = examDays.get(key);
-    if (!prev || (!prev.official && r.official)) examDays.set(key, r);
+    if (!prev || tierRank[prev.tier] < tierRank[r.tier]) examDays.set(key, r);
   }
   const byMonth = new Map<string, Row[]>();
   for (const r of examDays.values()) {
@@ -155,8 +172,10 @@ export default async function ExamCalendarPage() {
   }
 
   const badge = (r: TimelineRow) =>
-    r.official ? (
+    r.tier === "official" ? (
       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">{t("tracker.official")}</span>
+    ) : r.tier === "reported" ? (
+      <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-800">{t("tracker.reported")}</span>
     ) : (
       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{t("tracker.expected")}</span>
     );

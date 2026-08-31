@@ -33,6 +33,7 @@ import {
 import { checkRateLimit } from "@/lib/rate-limit";
 import { contextualExamFilter } from "@/lib/exam-aliases";
 import { buildTimeline, fmtDay, stageOf, upcomingOfKind, latestOfKind } from "@/lib/exam-timeline";
+import { sourceTier } from "@/lib/official-source";
 import { liveTestEmailNotice } from "@/lib/live-test-today";
 
 type Exam = { id: string; code: string; name: string; shortName: string; category: string; state: string | null; candidatesPerYear: number | null };
@@ -54,7 +55,7 @@ async function activeExams(): Promise<Exam[]> {
 const HELP = [
   `<b>Shishya</b> — free govt-exam prep for 177 exams. Try:`,
   `• /today — 5 practice questions, right here`,
-  `• /exam SSC CGL — exam date, admit card, result (official vs expected)`,
+  `• /exam SSC CGL — exam date, admit card, result (official / announced / expected)`,
   `• /calendar — exam days in the next 30 days`,
   `• /livetest — this Sunday's All-India Live Test`,
   `Or just type an exam name: <i>rrb ntpc date</i>`,
@@ -136,15 +137,23 @@ async function handleAnswer(cb: any) {
 }
 
 async function examCard(exam: Exam): Promise<{ text: string; buttons: InlineButton[][] }> {
-  const rows = await prisma.examImportantDate
-    .findMany({ where: { examId: exam.id, archivedAt: null }, orderBy: { date: "asc" }, take: 60 })
-    .catch(() => []);
-  const timeline = buildTimeline(rows);
+  const [rows, elig] = await Promise.all([
+    prisma.examImportantDate
+      .findMany({ where: { examId: exam.id, archivedAt: null }, orderBy: { date: "asc" }, take: 60 })
+      .catch(() => []),
+    prisma
+      .$queryRaw<{ officialUrl: string | null }[]>`
+        SELECT "officialUrl" FROM "ExamEligibility" WHERE "examId" = ${exam.id} LIMIT 1`
+      .catch(() => [] as { officialUrl: string | null }[]),
+  ]);
+  const timeline = buildTimeline(rows, new Date(), elig[0]?.officialUrl ?? null);
   const { nextExam } = stageOf(timeline);
   const line = (label: string, kind: Parameters<typeof upcomingOfKind>[1]) => {
     const r = upcomingOfKind(timeline, kind) ?? latestOfKind(timeline, kind);
     if (!r) return `• ${label}: not announced yet`;
-    const tag = r.official ? "official" : "expected";
+    // official = conducting-body notice · reported = announced via press ·
+    // expected = estimate (the footer explains "expected").
+    const tag = r.tier === "official" ? "official" : r.tier === "reported" ? "announced" : "expected";
     const when = r.status === "done" ? "done" : r.status === "today" ? "TODAY" : `in ${r.daysFromToday}d`;
     return `• ${label}: <b>${tgEscape(fmtDay(r.date))}</b> (${tag}, ${when})`;
   };
@@ -154,7 +163,7 @@ async function examCard(exam: Exam): Promise<{ text: string; buttons: InlineButt
   const head = nextExam
     ? nextExam.daysFromToday === 0
       ? `🎯 <b>Exam is TODAY</b>`
-      : `🎯 <b>Exam ${nextExam.daysFromToday > 0 ? `in ${nextExam.daysFromToday} days` : "passed"}</b> — ${tgEscape(fmtDay(nextExam.date))}${nextExam.official ? "" : " (expected)"}`
+      : `🎯 <b>Exam ${nextExam.daysFromToday > 0 ? `in ${nextExam.daysFromToday} days` : "passed"}</b> — ${tgEscape(fmtDay(nextExam.date))}${nextExam.tier === "expected" ? " (expected)" : ""}`
     : `📅 No dates announced for the next cycle yet`;
   const text = [
     `<b>${tgEscape(exam.shortName)}</b> — ${tgEscape(exam.name)}`,
@@ -165,8 +174,8 @@ async function examCard(exam: Exam): Promise<{ text: string; buttons: InlineButt
     line("Exam day", "EXAM"),
     line("Answer key", "ANSWER_KEY"),
     line("Result", "RESULT"),
-    news ? `\n🆕 ${tgEscape(news.title)}${news.url ? ` — <a href="${news.url}">notice</a>` : ""}` : "",
-    `\n<i>Expected = estimate from previous cycles, not an announcement. Always confirm on the official site.</i>`,
+    news ? `\n🆕 ${tgEscape(news.title)}${news.url ? ` — <a href="${news.url}">source</a>` : ""}` : "",
+    `\n<i>Announced = per press reports · expected = estimate from previous cycles, not an announcement. Always confirm on the official site.</i>`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -214,7 +223,7 @@ async function sendCalendar(chatId: number | string) {
       where: { archivedAt: null, isExamDay: true, date: { gte: new Date(now.getTime() - 86_400_000), lte: new Date(now.getTime() + 30 * 86_400_000) }, exam: { active: true } },
       orderBy: { date: "asc" },
       take: 120,
-      include: { exam: { select: { shortName: true, code: true } } },
+      include: { exam: { select: { shortName: true, code: true, eligibility: { select: { officialUrl: true } } } } },
     })
     .catch(() => []);
   const tl = buildTimeline(rows, now);
@@ -226,11 +235,15 @@ async function sendCalendar(chatId: number | string) {
     const key = `${src.exam.code}:${r.day}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    lines.push(`${r.official ? "✅" : "🟡"} <b>${tgEscape(fmtDay(r.date))}</b> — ${tgEscape(src.exam.shortName)}${r.official ? "" : " (expected)"}`);
+    // ✅ official · 📌 reported (announced via press) · 🟡 expected.
+    // Tier per row: each exam's own portal widens its gold tier.
+    const tier = sourceTier(src.confidence, r.url, src.exam.eligibility?.officialUrl);
+    const mark = tier === "official" ? "✅" : tier === "reported" ? "📌" : "🟡";
+    lines.push(`${mark} <b>${tgEscape(fmtDay(r.date))}</b> — ${tgEscape(src.exam.shortName)}${tier === "expected" ? " (expected)" : ""}`);
     if (lines.length > 16) break;
   }
   if (lines.length === 2) lines.push(`No dated exams in this window.`);
-  lines.push(``, `✅ official · 🟡 expected. Full calendar: ${tgUrl("/exam-calendar")}`);
+  lines.push(``, `✅ official · 📌 reported · 🟡 expected. Full calendar: ${tgUrl("/exam-calendar")}`);
   await sendTelegramMessage({ chatId, text: lines.join("\n"), disablePreview: true });
 }
 

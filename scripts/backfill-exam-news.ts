@@ -42,7 +42,14 @@ async function main() {
   const exams = (
     await prisma.exam.findMany({
       where: { active: true },
-      select: { id: true, code: true, name: true, shortName: true, category: true },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        shortName: true,
+        category: true,
+        eligibility: { select: { officialUrl: true, officialName: true } },
+      },
     })
   )
     .filter((e) => (lastByExam.get(e.id) ?? 0) < cutoff)
@@ -65,6 +72,8 @@ async function main() {
             examName: exam.name,
             examShortName: exam.shortName,
             category: String(exam.category),
+            officialUrl: exam.eligibility?.officialUrl ?? null,
+            officialName: exam.eligibility?.officialName ?? null,
           },
           { useWebSearch: true },
         );

@@ -34,6 +34,11 @@ export interface ExamInfoInput {
   examName: string;
   examShortName: string;
   category: string;
+  /** The conducting body's portal (ExamEligibility.officialUrl). When
+   *  present the prompt pushes the model to cite THIS domain for
+   *  official dates — the platform's gold source tier. */
+  officialUrl?: string | null;
+  officialName?: string | null;
 }
 
 export interface NewsItem {
@@ -93,9 +98,10 @@ Your output: STRICT JSON describing recent news items + the important-dates time
 
 RULES:
 1. HONESTY ABOUT CERTAINTY is the whole job. Every date row carries "confidence":
-   - "official" ONLY when you found the exact date in an official notice / the conducting body's site / a reliable national news report from THIS cycle — and you MUST put that URL in "source". If you cannot cite it, it is NOT official.
+   - "official" ONLY when the conducting body has ANNOUNCED this exact date THIS cycle and you can cite a URL in "source". If you cannot cite it, it is NOT official.
    - "expected" for everything else: typical-cycle estimates ("Tier 1 usually runs June–July"), tentative calendar entries, or dates inferred from last year. Use the label to say so ("Tier 1 exam (expected)").
    Never present an estimate as official. Never invent vacancy counts or cut-off marks.
+1b. SOURCE QUALITY: for every "official" date, work hardest to cite the CONDUCTING BODY'S OWN website (their notice/PDF/press page — gov.in / nic.in / the official portal given in the input). Search it directly (e.g. site:ssc.gov.in). The platform labels conducting-body citations "OFFICIAL" and everything else (newspapers, testbook/adda247-style coaching portals) merely "reported" — so a coaching-site URL is strictly weaker evidence even for the same fact. Cite a secondary source only when the official page genuinely cannot be found, and prefer national newspapers over coaching portals.
 2. Prefer ABSOLUTE dates ("date": "YYYY-MM-DD") whenever you know them (official or expected). If only a rough window is known, still give your best single date and say "(expected)" in the label; put the window in "notes" ("usually mid-June to early July").
 3. Give each date a "kind" from exactly this list: NOTIFICATION, APPLICATION_START, APPLICATION_END, CORRECTION_WINDOW, ADMIT_CARD, EXAM, ANSWER_KEY, RESULT, INTERVIEW, OTHER. Set "isExamDay": true only on EXAM rows. Multi-stage exams (Tier 1/2, Prelims/Mains) get one EXAM row per stage with the stage in the label.
 4. Cover the CURRENT cycle end to end: notification → application window → admit card → exam day(s) → answer key → result. Include recent past milestones (up to ~120 days back) so the tracker shows "done" steps, and upcoming ones up to ~18 months ahead when the next cycle's notification is expected.
@@ -121,16 +127,26 @@ export async function generateExamInfo(
 ): Promise<ExamInfoResult> {
   const today = new Date();
   const todayIso = today.toISOString().slice(0, 10);
+  const officialLine = input.officialUrl
+    ? `Official portal: ${input.officialUrl}${input.officialName ? ` (${input.officialName})` : ""}\n`
+    : "";
+  const officialDomain = (() => {
+    try {
+      return input.officialUrl ? new URL(input.officialUrl).hostname.replace(/^www\./, "") : null;
+    } catch {
+      return null;
+    }
+  })();
   const userPrompt = `Generate news + the important-dates timeline for this Indian exam.
 
 Exam code:   ${input.examCode}
 Exam name:   ${input.examName}
 Short name:  ${input.examShortName}
 Category:    ${input.category}
-
+${officialLine}
 Today's date: ${todayIso}.
 
-${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST notification, application window, admit-card, exam-date, answer-key and result announcements for this exam from the official conducting body's website (e.g. ssc.gov.in, upsc.gov.in, ibps.in, rrbcdg.gov.in, the state PSC/board site) and reliable national news. Cite the real URL in "source" for every "official" date and every news item you found.\n\n` : ""}Return 2-5 news items and 5-10 timeline dates as STRICT JSON per the schema in the system prompt.`;
+${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST notification, application window, admit-card, exam-date, answer-key and result announcements for this exam. Search the conducting body's OWN site first${officialDomain ? ` (try "site:${officialDomain} ..." queries)` : " (e.g. ssc.gov.in, upsc.gov.in, ibps.in, rrbcdg.gov.in, the state PSC/board site)"} — its URLs are the only ones the platform can label OFFICIAL. Fall back to reliable national news only when the official page can't be found. Cite the real URL in "source" for every "official" date and every news item you found.\n\n` : ""}Return 2-5 news items and 5-10 timeline dates as STRICT JSON per the schema in the system prompt.`;
 
   // The web_search server-side tool lets Claude fetch live pages during
   // generation so news items reference real, recent notifications rather

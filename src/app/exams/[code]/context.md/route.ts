@@ -13,6 +13,7 @@
 // Text/markdown, cached daily. Never contains personal data.
 
 import { prisma } from "@/lib/db/prisma";
+import { sourceHostLabel, sourceTier } from "@/lib/official-source";
 
 export const revalidate = 86400;
 
@@ -117,16 +118,23 @@ export async function GET(
   }
 
   if (dates.length) {
-    // Tracker honesty model (23 Aug 2026): a date is OFFICIAL only when
-    // the conducting body's notice is linked; everything else is an
-    // EXPECTED estimate from previous cycles. LLMs citing these dates
-    // MUST carry the label — that is the whole trust contract.
-    L.push("## Key dates (official = cited notice linked; expected = estimate from previous cycles, NOT announced)");
+    // Tracker honesty model (23 Aug 2026, tiered 29 Aug 2026): OFFICIAL
+    // means the conducting body's own notice is linked; REPORTED means
+    // announced but cited via a secondary source; EXPECTED is an
+    // estimate from previous cycles. LLMs citing these dates MUST carry
+    // the label — that is the whole trust contract.
+    L.push(
+      "## Key dates (OFFICIAL = conducting body's notice linked · REPORTED = announced, secondary source cited · expected = estimate from previous cycles, NOT announced)",
+    );
     for (const d of dates) {
-      const official = (d.confidence ?? "").toLowerCase() === "official" && d.url;
-      L.push(
-        `- ${d.date.toISOString().slice(0, 10)} — ${d.label}${d.isExamDay ? " (exam day)" : ""} — ${official ? `OFFICIAL, notice: ${d.url}` : "expected"}`,
-      );
+      const tier = sourceTier(d.confidence, d.url, e?.officialUrl);
+      const tag =
+        tier === "official"
+          ? `OFFICIAL, notice: ${d.url}`
+          : tier === "reported"
+            ? `REPORTED (announced; via ${sourceHostLabel(d.url!)}): ${d.url}`
+            : "expected";
+      L.push(`- ${d.date.toISOString().slice(0, 10)} — ${d.label}${d.isExamDay ? " (exam day)" : ""} — ${tag}`);
     }
     L.push(`- Live tracker (all milestones, alerts): ${SITE}/exams/${exam.code}/updates`);
     L.push("");

@@ -15,6 +15,7 @@ import { prisma } from "@/lib/db/prisma";
 import { sendTelegramMessage, telegramConfigured, tgEscape, tgUrl, ensureTelegramWebhook } from "@/lib/telegram";
 import { liveTestEmailNotice } from "@/lib/live-test-today";
 import { buildTimeline, fmtDay } from "@/lib/exam-timeline";
+import { sourceTier } from "@/lib/official-source";
 
 function istDateStr(now = new Date()): string {
   return new Date(now.getTime() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -48,7 +49,7 @@ export async function GET(req: Request) {
       where: { archivedAt: null, isExamDay: true, date: { gte: new Date(now.getTime() - 86_400_000), lte: new Date(now.getTime() + 7 * 86_400_000) }, exam: { active: true } },
       orderBy: { date: "asc" },
       take: 60,
-      include: { exam: { select: { shortName: true, code: true } } },
+      include: { exam: { select: { shortName: true, code: true, eligibility: { select: { officialUrl: true } } } } },
     })
     .catch(() => []);
   const weekTl = buildTimeline(weekRows, now).filter((r) => r.status !== "done");
@@ -59,13 +60,20 @@ export async function GET(req: Request) {
     const key = `${src.exam.code}:${r.day}`;
     if (seenWeek.has(key)) continue;
     seenWeek.add(key);
-    weekLines.push(`${r.official ? "✅" : "🟡"} ${tgEscape(fmtDay(r.date))} — <a href="${tgUrl(`/exams/${src.exam.code}/updates`, "channel")}">${tgEscape(src.exam.shortName)}</a>${r.official ? "" : " (expected)"}`);
+    // ✅ official (conducting-body notice) · 📌 reported (announced via
+    // secondary source) · 🟡 expected (estimate — labelled as such).
+    // Tier re-derived per row: this list spans many exams, and each
+    // exam's own portal widens its gold tier.
+    const tier = sourceTier(src.confidence, r.url, src.exam.eligibility?.officialUrl);
+    const mark = tier === "official" ? "✅" : tier === "reported" ? "📌" : "🟡";
+    weekLines.push(`${mark} ${tgEscape(fmtDay(r.date))} — <a href="${tgUrl(`/exams/${src.exam.code}/updates`, "channel")}">${tgEscape(src.exam.shortName)}</a>${tier === "expected" ? " (expected)" : ""}`);
     if (weekLines.length >= 6) break;
   }
   const fresh = await prisma
-    .$queryRaw<{ label: string; date: Date; short: string; code: string; url: string | null }[]>`
-      SELECT d.label, d.date, e."shortName" AS short, e.code, d.url
+    .$queryRaw<{ label: string; date: Date; short: string; code: string; url: string | null; officialUrl: string | null }[]>`
+      SELECT d.label, d.date, e."shortName" AS short, e.code, d.url, el."officialUrl"
       FROM "ExamImportantDate" d JOIN "Exam" e ON e.id = d."examId"
+      LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
       WHERE d."archivedAt" IS NULL AND d.confidence = 'official' AND e.active = TRUE
         AND d."createdAt" > NOW() - INTERVAL '26 hours' AND d.date >= NOW() - INTERVAL '1 day'
       ORDER BY d.date ASC LIMIT 4`
@@ -101,15 +109,19 @@ export async function GET(req: Request) {
   }
   if (weekLines.length > 0) {
     lines.push(``);
-    lines.push(`<b>📅 Exam days this week</b> (✅ official · 🟡 expected)`);
+    lines.push(`<b>📅 Exam days this week</b> (✅ official · 📌 reported · 🟡 expected)`);
     lines.push(...weekLines);
     lines.push(`All dates: ${tgUrl("/exam-calendar", "channel")}`);
   }
   if (fresh.length > 0) {
     lines.push(``);
-    lines.push(`<b>🆕 Official dates announced</b>`);
+    // "official notice" link text is gold-tier-only; press/coaching
+    // citations link as "as reported" — announced, but say the provenance.
+    lines.push(`<b>🆕 New dates announced</b>`);
     for (const f of fresh) {
-      lines.push(`• ${tgEscape(f.short)} — ${tgEscape(f.label)}: <b>${tgEscape(fmtDay(new Date(f.date)))}</b>${f.url ? ` · <a href="${f.url}">notice</a>` : ""} · <a href="${tgUrl(`/exams/${f.code}/updates`, "channel")}">tracker</a>`);
+      const gold = sourceTier("official", f.url, f.officialUrl) === "official";
+      const link = f.url ? ` · <a href="${f.url}">${gold ? "official notice" : "as reported"}</a>` : "";
+      lines.push(`• ${tgEscape(f.short)} — ${tgEscape(f.label)}: <b>${tgEscape(fmtDay(new Date(f.date)))}</b>${link} · <a href="${tgUrl(`/exams/${f.code}/updates`, "channel")}">tracker</a>`);
     }
   }
   lines.push(``);
