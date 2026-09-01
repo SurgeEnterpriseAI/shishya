@@ -952,6 +952,66 @@ One paper today tells you exactly where you stand against aspirants across India
  *  email per subscriber-exam per 7 days max. Email-keyed: anonymous
  *  subscribers get their own HMAC unsubscribe; known users also get the
  *  opt-out + "important" priority (they asked for it). */
+/** "You asked — it's live" (1 Sep 2026): the demand closure loop.
+ *  Sent to each signed-in student whose mined ask (tutor chat, PulseAsk
+ *  note, teacher request, ideas post) a ship answers. Their OWN words
+ *  are quoted back — that's the whole magic of the mail. Marketing-
+ *  classed (unsubUserId): opt-out enforced, footer + one-click headers,
+ *  founder gets one wave copy per cluster tag. */
+export async function sendDemandShippedEmail(p: {
+  to: string;
+  userId: string;
+  /** The student's own scrubbed words, quoted back. */
+  askedQuote: string;
+  /** Human date they said it, e.g. "28 Aug". */
+  askedOn: string;
+  /** What shipped, e.g. "Build-your-own topic mock". */
+  title: string;
+  /** 1-2 sentences: what it does, in plain words. */
+  note: string;
+  /** Personalised destination (already exam-resolved). */
+  url: string;
+  clusterKey: string;
+}): Promise<boolean> {
+  const subject = `You asked for it — it's live: ${p.title.slice(0, 70)}`;
+  const text = `You told us what was missing, and we built it.
+
+On ${p.askedOn} you wrote:
+  "${p.askedQuote}"
+
+It's live now — ${p.title}.
+${p.note}
+
+Go explore: ${p.url}
+
+Everything on Shishya stays free. Keep telling us what you need — we read every word.
+— Team Shishya`;
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#b45309;">You asked · we built</div>
+    <div style="font-weight:700;font-size:20px;margin-top:6px;">${esc(p.title)} — live now</div>
+    <div style="margin:16px 0 0;border-left:3px solid #f97316;background:#fffbeb;border-radius:0 10px 10px 0;padding:10px 14px;">
+      <div style="font-size:11px;color:#92400e;text-transform:uppercase;letter-spacing:.03em;">Your words, ${esc(p.askedOn)}</div>
+      <div style="font-size:14px;font-style:italic;color:#431407;margin-top:2px;">&ldquo;${esc(p.askedQuote)}&rdquo;</div>
+    </div>
+    <p style="font-size:14px;line-height:1.6;margin:14px 0 0;color:#334155;">${esc(p.note)}</p>
+    <a href="${esc(p.url)}" style="display:inline-block;margin-top:18px;background:#f97316;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">Go explore it →</a>
+    <p style="font-size:12px;line-height:1.6;margin:20px 0 0;color:#64748b;">Everything on Shishya stays free. Keep telling us what you need — we read every word, and when we build it, you&rsquo;ll hear from us like this.</p>
+    <p style="font-size:12px;color:#94a3b8;margin:14px 0 0;">— Team Shishya</p>
+  </div>
+</body></html>`;
+  return sendEmail({
+    to: p.to,
+    subject,
+    html,
+    text,
+    tag: `demand-shipped:${p.clusterKey}`,
+    unsubUserId: p.userId,
+  });
+}
+
 export async function sendExamAlertEmail(p: {
   to: string;
   userId?: string | null;

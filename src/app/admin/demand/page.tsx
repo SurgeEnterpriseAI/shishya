@@ -16,6 +16,7 @@ import { Header } from "@/components/Header";
 import { isCurrentUserAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/db/prisma";
 import { DEMAND_CATEGORIES } from "@/lib/demand-mine";
+import { ShipForm } from "./ShipForm";
 
 export const dynamic = "force-dynamic";
 
@@ -36,13 +37,13 @@ export default async function AdminDemandPage() {
   // Cluster × ISO-week counts, last 8 weeks (weeks keyed by their
   // Monday date, IST). One grouped query.
   const grid = await prisma
-    .$queryRaw<{ clusterKey: string; label: string; category: string; wk: Date; c: bigint }[]>`
-      SELECT s."clusterKey", c.label, c.category,
+    .$queryRaw<{ clusterKey: string; label: string; category: string; shippedAt: Date | null; shipTitle: string | null; wk: Date; c: bigint }[]>`
+      SELECT s."clusterKey", c.label, c.category, c."shippedAt", c."shipTitle",
         date_trunc('week', s."saidAt" + interval '330 minutes')::date wk,
         COUNT(*) c
       FROM "DemandSignal" s JOIN "DemandCluster" c ON c.key = s."clusterKey"
       WHERE s."saidAt" >= NOW() - interval '1 week' * ${WEEKS} AND c.status = 'active'
-      GROUP BY 1, 2, 3, 4`
+      GROUP BY 1, 2, 3, 4, 5, 6`
     .catch(() => []);
 
   const quotes = await prisma
@@ -81,11 +82,11 @@ export default async function AdminDemandPage() {
   };
 
   // Rows: cluster → {label, category, counts by week, total}.
-  const rowMap = new Map<string, { label: string; category: string; byWeek: Map<string, number>; total: number }>();
+  const rowMap = new Map<string, { label: string; category: string; shippedAt: Date | null; shipTitle: string | null; byWeek: Map<string, number>; total: number }>();
   let maxCell = 1;
   for (const r of grid) {
     const w = r.wk.toISOString().slice(0, 10);
-    const row = rowMap.get(r.clusterKey) ?? { label: r.label, category: r.category, byWeek: new Map(), total: 0 };
+    const row = rowMap.get(r.clusterKey) ?? { label: r.label, category: r.category, shippedAt: r.shippedAt, shipTitle: r.shipTitle, byWeek: new Map(), total: 0 };
     const n = Number(r.c);
     row.byWeek.set(w, (row.byWeek.get(w) ?? 0) + n);
     row.total += n;
@@ -177,7 +178,12 @@ export default async function AdminDemandPage() {
                         <tr key={key}>
                           <td className="py-1 pr-2">
                             <details>
-                              <summary className="cursor-pointer text-ink-900 hover:text-saffron-700">{r.label}</summary>
+                              <summary className="cursor-pointer text-ink-900 hover:text-saffron-700">
+                                {r.label}
+                                {r.shippedAt && (
+                                  <span className="ml-1.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800" title={r.shipTitle ?? ""}>shipped ✓</span>
+                                )}
+                              </summary>
                               <ul className="mt-1 space-y-1 pl-1">
                                 {(quotesByCluster.get(key) ?? []).map((qr, i) => (
                                   <li key={i} className="text-xs text-ink-600">
@@ -188,6 +194,7 @@ export default async function AdminDemandPage() {
                                   </li>
                                 ))}
                               </ul>
+                              <ShipForm clusterKey={key} label={r.label} />
                             </details>
                           </td>
                           {weeks.map((w) => {

@@ -2030,6 +2030,13 @@ model DemandCluster {
   mergedInto String?
   firstSeen DateTime @default(now())
   lastSeen  DateTime @default(now())
+  // Closure loop (1 Sep 2026): when the founder ships what a cluster
+  // asked for, everyone who voiced it gets a "you asked — it's live"
+  // email and the cluster is stamped here (shown on /admin/demand).
+  shippedAt DateTime?
+  shipTitle String?
+  shipNote  String?
+  shipUrl   String? // may contain {exam} — personalised per signal
 }
 
 // One row per mined ask. sourceId is the origin row's id — unique with
