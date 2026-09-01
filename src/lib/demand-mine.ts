@@ -50,6 +50,7 @@ const SEED_PREFIXES = [
   "Walk me through the ",
   "Pick up where we left off",
   "Make me a 30-minute study plan",
+  "Quiz me on ",
 ];
 
 export interface DemandItem {

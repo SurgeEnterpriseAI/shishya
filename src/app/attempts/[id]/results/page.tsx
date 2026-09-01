@@ -650,6 +650,18 @@ export default async function ResultsPage({
                 : null
             }
           />
+          {/* Custom builder pre-filled with the weakest topics (mined
+              demand: students ask the tutor for exactly this mock). */}
+          {topicArr.length > 0 && (
+            <Link
+              href={`/exams/${attempt.mock.exam.code}/build-mock?topics=${encodeURIComponent(
+                topicArr.slice(0, 3).map((tp: any) => tp.code).join(","),
+              )}`}
+              className="block rounded-md border border-ink-300 bg-white px-3 py-2 text-center text-sm font-semibold text-ink-800 hover:border-saffron-400 hover:bg-saffron-50/40"
+            >
+              🧩 Build a mock from your weak topics →
+            </Link>
+          )}
           <Link
             href={`/exams/${attempt.mock.exam.code}`}
             className="block w-full text-center text-xs font-medium text-ink-500 hover:text-ink-700"

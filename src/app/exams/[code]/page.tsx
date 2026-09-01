@@ -877,6 +877,19 @@ export default async function ExamPage({
               </div>
             </div>
           )}
+          {/* Custom mock builder + language line (1 Sep 2026) — both are
+              top mined demands: "mock in which (maths, polity…)" and
+              "mock test only hindi language". The builder link answers
+              the first; the line answers the second (the player has
+              translated questions since July — students just never
+              found the picker). */}
+          <p className="mt-3 text-xs text-ink-600">
+            🧩{" "}
+            <Link href={`/exams/${exam.code}/build-mock`} className="font-semibold text-saffron-700 hover:underline">
+              Build your own mock — pick exact topics →
+            </Link>{" "}
+            <span className="text-ink-500">· every mock readable in हिंदी + 12 languages inside the test</span>
+          </p>
         </div>
 
         {/* ── Deep content (eligibility / cutoffs / paper analysis / salary)

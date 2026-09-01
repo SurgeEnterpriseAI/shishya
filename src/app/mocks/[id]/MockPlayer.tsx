@@ -143,8 +143,13 @@ export function MockPlayer({
   // want the SITE in Hindi but the question in English (or vice
   // versa) for practice in their target language. They opt in to
   // question translation via this picker explicitly per mock.
-  void initialLocale;
+  //
+  // 1 Sep 2026 (mined demand): Hindi-medium students never found the
+  // picker — they went to the tutor and typed "mock test only hindi
+  // language". Opt-in stays, but when the SITE language is non-English
+  // we show a one-tap hint strip until they choose either way.
   const [locale, setLocale] = useState<Locale>("en");
+  const [langHint, setLangHint] = useState(initialLocale !== "en");
   const [translations, setTranslations] = useState<Map<string, { body: string; options: { key: string; text: string }[] }>>(new Map());
   const [translating, setTranslating] = useState(false);
   const [translateErr, setTranslateErr] = useState<string | null>(null);
@@ -536,6 +541,36 @@ export function MockPlayer({
       <div className="container-prose grid grid-cols-1 gap-6 py-6 lg:grid-cols-[1fr_280px]">
         {/* Question */}
         <article className="rounded-md border border-ink-200 bg-white p-6">
+          {langHint && locale === "en" && (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-2">
+              <p className="text-xs font-medium text-sky-900">
+                {initialLocale === "hi"
+                  ? "यह मॉक हिंदी में पढ़ना चाहेंगे? एक टैप में।"
+                  : initialLocale === "te"
+                    ? "ఈ మాక్‌ను తెలుగులో చదవాలనుకుంటున్నారా? ఒక్క ట్యాప్."
+                    : "Read this mock in your language? One tap."}
+              </p>
+              <div className="flex shrink-0 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLangHint(false);
+                    void changeLocale(initialLocale);
+                  }}
+                  className="rounded-md bg-sky-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-sky-700"
+                >
+                  {initialLocale === "hi" ? "हिंदी में" : initialLocale === "te" ? "తెలుగులో" : "Translate"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLangHint(false)}
+                  className="rounded-md px-2 py-1 text-xs font-medium text-sky-700 hover:bg-sky-100"
+                >
+                  English ✓
+                </button>
+              </div>
+            </div>
+          )}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-medium uppercase tracking-wider text-ink-500">
               Q {idx + 1} {labels.qOf} {questions.length} · {q.topic.name} · {q.difficulty}

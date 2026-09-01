@@ -174,7 +174,10 @@ export default async function MockPlayerPage({
       existingAnswers={(attempt.answers as any[]) ?? []}
       initialLocale={locale}
       practice={
-        ["TOPIC", "SUBJECT", "REVISION", "ADAPTIVE"].includes(mock.type) &&
+        // USER_REQUEST = the custom topic builder (1 Sep 2026) — a
+        // self-built drill earns instant-feedback mode like other
+        // topic practice, never exam-mode strictness.
+        ["TOPIC", "SUBJECT", "REVISION", "ADAPTIVE", "USER_REQUEST"].includes(mock.type) &&
         mock.generatedBy !== "live-test"
       }
       labels={{
