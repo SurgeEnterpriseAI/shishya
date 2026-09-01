@@ -2015,6 +2015,30 @@ model ExamAlert {
   @@index([userId])
 }
 
+// PulseAsk micro-feedback (1 Sep 2026): one-tap chip + optional short
+// text captured from quiet inline rows across the portal. Deliberately
+// its OWN table — TeacherRequest carries a 24h-SLA human queue and
+// FeatureRequest emails admin per row + feeds the public /ideas board;
+// pulse taps are high-volume low-ceremony signal, not tickets.
+model PulseFeedback {
+  id        String   @id @default(cuid())
+  // Mount point: results | coach | exam | updates | pyq
+  surface   String
+  // The tapped chip label (short, from a fixed per-surface set).
+  chip      String
+  // Optional free text — signed-in users only (anon = chips only).
+  text      String?  @db.Text
+  examCode  String?
+  topicCode String?
+  attemptId String?
+  userId    String?
+  anonId    String?
+  createdAt DateTime @default(now())
+
+  @@index([surface, createdAt])
+  @@index([examCode, createdAt])
+}
+
 model LiveTest {
   id        String   @id @default(cuid())
   examId    String

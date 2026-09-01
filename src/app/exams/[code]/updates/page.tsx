@@ -29,6 +29,7 @@ import {
   type TimelineRow,
 } from "@/lib/exam-timeline";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
+import { PulseAsk } from "@/components/PulseAsk";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
 
@@ -340,6 +341,17 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
             }}
           />
         </div>
+
+        {/* PulseAsk (1 Sep 2026): date-coverage pulse right under the
+            alert box — the honesty surface invites corrections. */}
+        <PulseAsk
+          surface="updates"
+          promptKey={`updates-${exam.code}`}
+          prompt={fill(t("pulse.updates.prompt"), { exam: short })}
+          chips={[t("pulse.updates.c1"), t("pulse.updates.c2"), t("pulse.updates.c3")]}
+          signedIn={signedIn}
+          examCode={exam.code}
+        />
 
         {/* Full timeline */}
         {timeline.length > 0 && (

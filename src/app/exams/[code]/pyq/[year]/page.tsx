@@ -17,6 +17,7 @@ import { getT } from "@/lib/i18n-server";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { StartFullMockButton } from "./StartFullMockButton";
 import { ShareExamButton } from "@/components/ShareExamButton";
+import { PulseAsk } from "@/components/PulseAsk";
 
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
@@ -364,6 +365,21 @@ export default async function PYQYearPage({
               ))}
             </ul>
           </section>
+        )}
+
+        {/* PulseAsk (1 Sep 2026): back-year papers are ~20-Q samplers
+            for many exams — when this year is thin, ask whether the
+            student needs the full paper. Direct demand-validation for
+            the full-PYQ build. */}
+        {questions.length < 100 && (
+          <PulseAsk
+            surface="pyq"
+            promptKey={`pyq-${exam.code}-${yearNum}`}
+            prompt={`Want the full ${exam.shortName} ${yearNum} paper? Today this page has ${questions.length} questions.`}
+            chips={["Yes, need the full paper", "This sampler is enough"]}
+            signedIn={!!userId}
+            examCode={exam.code}
+          />
         )}
       </section>
     </main>

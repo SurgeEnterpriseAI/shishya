@@ -18,6 +18,7 @@ import { formatDisplayScorePct } from "@/lib/scoring";
 import { liveTestRank } from "@/lib/live-test";
 import { CoachEntry } from "@/components/CoachEntry";
 import { PeerProofLine } from "@/components/PeerProofLine";
+import { PulseAsk } from "@/components/PulseAsk";
 import { CoachNextTask } from "@/components/CoachNextTask";
 import { examPeerProof } from "@/lib/peer-proof";
 
@@ -598,6 +599,19 @@ export default async function ResultsPage({
             initialLocale={locale}
           />
         </section>
+
+        {/* PulseAsk (1 Sep 2026): one quiet mock-realism question after
+            the review — the moment they can actually judge it. Keyed per
+            exam so each exam is asked at most once per 14 days. */}
+        <PulseAsk
+          surface="results"
+          promptKey={`results-${attempt.mock.exam.code}`}
+          prompt={`Did this ${attempt.mock.exam.shortName} mock feel like the real exam?`}
+          chips={["Felt real", "Too easy", "Too hard"]}
+          signedIn
+          examCode={attempt.mock.exam.code}
+          attemptId={attempt.id}
+        />
 
         </div>{/* /lg:col-span-2 */}
 

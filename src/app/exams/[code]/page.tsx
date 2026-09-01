@@ -34,6 +34,7 @@ import { getExamTheme } from "@/lib/exam-theme";
 import { DiagnosticHero } from "@/components/DiagnosticHero";
 import { TryOneQuestion } from "./TryOneQuestion";
 import { CoachEntry } from "@/components/CoachEntry";
+import { PulseAsk } from "@/components/PulseAsk";
 import { PeerProofLine } from "@/components/PeerProofLine";
 import { CoachNextTask } from "@/components/CoachNextTask";
 import { examPeerProof } from "@/lib/peer-proof";
@@ -1552,6 +1553,18 @@ export default async function ExamPage({
         </aside>
 
         </div>{/* /lg:grid */}
+
+        {/* PulseAsk (1 Sep 2026): the exam hub is the commitment
+            surface — one quiet line asking what's missing for THIS
+            exam, keyed per exam. Anon visitors get chips only. */}
+        <PulseAsk
+          surface="exam"
+          promptKey={`exam-${exam.code}`}
+          prompt={`What's missing here for your ${exam.shortName} prep?`}
+          chips={["More PYQs", "A full study path", "Cutoff clarity", "Nothing — it's enough"]}
+          signedIn={!!userId}
+          examCode={exam.code}
+        />
       </section>
 
       {/* First-visit coach-mark tour for the per-exam page. tourId is

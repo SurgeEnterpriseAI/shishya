@@ -107,6 +107,12 @@ export default async function AdminHome() {
           >
             Browse all questions
           </Link>
+          <Link
+            href="/admin/pulse"
+            className="btn-secondary !py-2 !px-4 text-sm"
+          >
+            Pulse — aspirant minds
+          </Link>
         </div>
       </section>
     </main>

@@ -8,6 +8,7 @@
 import Link from "next/link";
 import type { ComputedPlan } from "@/lib/coach-plan";
 import { CoachRebuildPing } from "@/components/CoachRebuildPing";
+import { PulseAsk } from "@/components/PulseAsk";
 
 const KIND_ICON: Record<string, string> = {
   read: "📖",
@@ -110,6 +111,19 @@ export function CoachPlanView({ plan, full = false }: { plan: ComputedPlan; full
             </p>
           )}
         </div>
+      )}
+
+      {/* PulseAsk (1 Sep 2026): plan-quality pulse on the full /coach
+          view only (the compact strip stays clean). Coach requires
+          sign-in, so free text is available. */}
+      {full && (
+        <PulseAsk
+          surface="coach"
+          prompt="Is the coach pointing you at the right things?"
+          chips={["Spot on", "Too generic", "Wrong topics"]}
+          signedIn
+          examCode={plan.examCode}
+        />
       )}
 
       {!full && (

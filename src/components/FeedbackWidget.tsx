@@ -27,7 +27,9 @@ const AREAS = [
   "Other",
 ] as const;
 
-const SNOOZE_KEY = "shishya-feedback-snooze";
+// Exported so PulseAsk can READ (never write) the same snooze — a user
+// who snoozed the widget goes quiet across every feedback surface.
+export const SNOOZE_KEY = "shishya-feedback-snooze";
 const DISMISS_COUNT_KEY = "shishya-feedback-dismiss-count";
 const DISMISS_LIMIT = 3;
 const SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
