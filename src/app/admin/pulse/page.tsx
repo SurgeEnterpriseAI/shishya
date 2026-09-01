@@ -26,7 +26,8 @@ const POSITIVE_CHIPS = new Set([
 ]);
 
 export default async function AdminPulsePage() {
-  if (!(await isCurrentUserAdmin())) redirect("/");
+  const { isAdmin } = await isCurrentUserAdmin();
+  if (!isAdmin) redirect("/");
 
   const counts = await prisma
     .$queryRaw<{ surface: string; chip: string; c7: bigint; c30: bigint }[]>`

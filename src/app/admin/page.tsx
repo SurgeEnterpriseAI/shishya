@@ -113,6 +113,12 @@ export default async function AdminHome() {
           >
             Pulse — aspirant minds
           </Link>
+          <Link
+            href="/admin/demand"
+            className="btn-secondary !py-2 !px-4 text-sm"
+          >
+            Demand heatmap
+          </Link>
         </div>
       </section>
     </main>

@@ -2015,6 +2015,50 @@ model ExamAlert {
   @@index([userId])
 }
 
+// Demand mining (1 Sep 2026): free-form user text (tutor chat, PulseAsk
+// notes, teacher requests, /ideas) is classified daily by one Claude
+// call into a controlled vocabulary of demand clusters; /admin/demand
+// renders the heatmap the founder builds features from.
+
+// The vocabulary. Weekly consolidation may merge clusters — merged ones
+// keep status='merged' + mergedInto, and their signals are re-pointed.
+model DemandCluster {
+  key       String   @id // stable slug, e.g. "full-pyq-papers"
+  label     String // human label shown on the heatmap
+  category  String // fixed taxonomy — see DEMAND_CATEGORIES in demand-mine.ts
+  status    String   @default("active") // active | merged
+  mergedInto String?
+  firstSeen DateTime @default(now())
+  lastSeen  DateTime @default(now())
+}
+
+// One row per mined ask. sourceId is the origin row's id — unique with
+// source so re-runs and backfills can never double-count a message.
+model DemandSignal {
+  id         String   @id @default(cuid())
+  clusterKey String
+  category   String
+  source     String // chat | pulse | teacher | ideas
+  sourceId   String
+  examCode   String?
+  language   String? // en | hi | te | other (of the user's text)
+  quote      String // PII-scrubbed excerpt, <=200 chars
+  saidAt     DateTime // when the user said it (not when mined)
+  createdAt  DateTime @default(now())
+
+  @@unique([source, sourceId])
+  @@index([clusterKey, saidAt])
+  @@index([category, saidAt])
+  @@index([examCode, saidAt])
+}
+
+// Weekly "build next" paragraph from the consolidation pass.
+model DemandDigest {
+  id        String   @id @default(cuid())
+  text      String   @db.Text
+  createdAt DateTime @default(now())
+}
+
 // PulseAsk micro-feedback (1 Sep 2026): one-tap chip + optional short
 // text captured from quiet inline rows across the portal. Deliberately
 // its OWN table — TeacherRequest carries a 24h-SLA human queue and

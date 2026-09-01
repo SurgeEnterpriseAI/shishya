@@ -10,6 +10,10 @@
   ],
   "crons": [
     {
+      "path": "/api/cron/demand-mine",
+      "schedule": "0 20 * * *"
+    },
+    {
       "path": "/api/cron/daily-brief",
       "schedule": "30 20 * * *"
     },
