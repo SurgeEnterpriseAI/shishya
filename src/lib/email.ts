@@ -157,7 +157,10 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
       bcc: bcc.length > 0 ? bcc : undefined,
       replyTo: payload.replyTo,
       headers,
-      tags: payload.tag ? [{ name: "kind", value: payload.tag }] : undefined,
+      // Resend rejects tag values with anything outside [A-Za-z0-9_-] —
+      // a colon in a tag fails the WHOLE send (learned 1 Sep 2026 when
+      // "demand-shipped:cluster" bounced 10/10). Sanitize defensively.
+      tags: payload.tag ? [{ name: "kind", value: payload.tag.replace(/[^A-Za-z0-9_-]/g, "-") }] : undefined,
     });
     if ("error" in res && res.error) {
       console.error("[email] send rejected:", res.error);
@@ -1007,7 +1010,7 @@ Everything on Shishya stays free. Keep telling us what you need — we read ever
     subject,
     html,
     text,
-    tag: `demand-shipped:${p.clusterKey}`,
+    tag: `demand-shipped-${p.clusterKey}`,
     unsubUserId: p.userId,
   });
 }

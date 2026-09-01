@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     // Per-user re-ship guard: the send layer logs `sent:<tag>` rows.
     const seen = await prisma.$queryRaw<{ n: bigint }[]>`
       SELECT COUNT(*) n FROM "EmailTouch"
-      WHERE "userId" = ${v.userId} AND tag = ${"sent:demand-shipped:" + clusterKey}`;
+      WHERE "userId" = ${v.userId} AND tag = ${"sent:demand-shipped-" + clusterKey}`;
     if (Number(seen[0]?.n ?? 0) > 0) {
       skippedDupe++;
       continue;
@@ -113,7 +113,11 @@ export async function POST(req: Request) {
     else failed++;
   }
 
-  if (!dry) {
+  // Stamp shipped only when something actually went out (or there was
+  // nobody to tell) — an all-failed run must stay retryable, not wear a
+  // green badge (learned 1 Sep: 10/10 sends bounced on a bad tag and
+  // the cluster still got stamped).
+  if (!dry && (sent > 0 || voices.length === 0 || skippedDupe === voices.length)) {
     await prisma.$executeRaw`
       UPDATE "DemandCluster"
       SET "shippedAt" = NOW(), "shipTitle" = ${title}, "shipNote" = ${note}, "shipUrl" = ${urlTemplate}
