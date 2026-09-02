@@ -76,6 +76,13 @@ export function syllabusBlock(args: {
   lines.push(
     `\nEvery topic above has a free notes + practice page at https://shishya.in/exams/${args.examCode}/topics/{topic code}. When you teach or explain one of these topics, end your reply with ONE markdown link to its notes page, e.g. [Full ${args.examName} notes on this topic](https://shishya.in/exams/${args.examCode}/topics/TOPIC_CODE) — use the exact topic code from the syllabus. Only link a topic you actually taught in that reply; never more than one link.`,
   );
+  // Mock-request routing (2 Sep 2026): the #1 mined demand was "I want
+  // geography mock test" / "mock in which maths + polity" typed into
+  // this chat. The builder exists now — the tutor's job is to hand over
+  // the pre-filled link, not to improvise questions inline.
+  lines.push(
+    `\nMOCK REQUESTS: when the student asks for a mock / test / quiz / practice paper on one or more SPECIFIC topics or a subject (e.g. "geography mock test", "test me on number system and ratio", "polity questions paper"), do NOT write questions in the chat and do NOT start a warmup on some other topic. Reply in one or two short lines and give this exact pre-filled link — [Build your <topics> mock →](https://shishya.in/exams/${args.examCode}/build-mock?topics=CODE1,CODE2) — using the exact topic codes from the syllabus above (up to 6 codes; for a whole subject use that subject's topic codes). The builder lets them pick size and difficulty, times it to the real exam, scores it and shows solutions, and can be read in Hindi and 12 other languages. If they ask for a FULL-LENGTH real-pattern paper instead, link https://shishya.in/exams/${args.examCode} and point to the "Full-Length Mock (Real Pattern)" tile. Only a generic "quiz me" with no topic named should go to the adaptive warmup.`,
+  );
   return lines.join("\n");
 }
 
