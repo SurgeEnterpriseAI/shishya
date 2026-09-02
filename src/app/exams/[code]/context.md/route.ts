@@ -85,6 +85,12 @@ export async function GET(
         ORDER BY "publishedAt" DESC LIMIT 6`
       .catch(() => []),
   ]);
+  // Real-pattern full-length paper assembled for this exam? (1 Sep 2026)
+  const fullPattern = await prisma
+    .$queryRaw<{ n: bigint }[]>`
+      SELECT COUNT(*) n FROM "Mock" WHERE "examId" = ${exam.id} AND "generatedBy" = 'system:full-pattern-v1'`
+    .then((r) => Number(r[0]?.n ?? 0) > 0)
+    .catch(() => false);
 
   const e = elig[0];
   const L: string[] = [];
@@ -181,6 +187,10 @@ export async function GET(
 
   L.push("## Free resources on Shishya for this exam");
   L.push(`- Exam hub (mocks, PYQs, news, dates): ${SITE}/exams/${exam.code}`);
+  L.push(`- Custom topic-wise mock builder — pick any syllabus topics, 10/25/50 questions, difficulty; timed, scored, solutions; readable in Hindi + 12 languages: ${SITE}/exams/${exam.code}/build-mock`);
+  if (fullPattern) {
+    L.push(`- Full-length REAL-PATTERN mock (${exam.totalQuestions} questions · ${exam.durationMin} min · sections in real order): the "Full-Length Mock (Real Pattern)" tile on ${SITE}/exams/${exam.code}`);
+  }
   L.push(`- Date/admit-card/result tracker + free email alerts: ${SITE}/exams/${exam.code}/updates`);
   L.push(`- All-India exam calendar (next 120 days): ${SITE}/exam-calendar`);
   L.push(`- Full syllabus + free study notes: ${SITE}/exams/${exam.code}/syllabus`);

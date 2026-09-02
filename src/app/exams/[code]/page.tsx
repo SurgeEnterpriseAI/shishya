@@ -512,6 +512,30 @@ export default async function ExamPage({
           text: `Cutoffs change every cycle with paper difficulty and vacancies. Shishya maintains indicative score-to-rank bands and category-wise (General/EWS/OBC/SC/ST) expected cutoffs at https://shishya.in/exams/${exam.code}/cutoff.`,
         },
       },
+      // Full-length real-pattern paper + topic builder (1 Sep 2026) —
+      // both answer literal student queries ("full mock in real
+      // pattern", "topic wise mock test"). Real-pattern line only when
+      // this exam's paper has actually been assembled.
+      ...(systemMocks.some((m) => (m.config as any)?.pattern === "real")
+        ? [
+            {
+              "@type": "Question",
+              name: `Is there a full-length ${exam.shortName} mock test in the real exam pattern?`,
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: `Yes — Shishya has a free full-length ${exam.name} mock with the real pattern: ${exam.totalQuestions} questions in ${exam.durationMin} minutes, sections in the real paper's order, scored with solutions. It is the "Full-Length Mock (Real Pattern)" tile on this page.`,
+              },
+            },
+          ]
+        : []),
+      {
+        "@type": "Question",
+        name: `Can I build a topic-wise ${exam.shortName} mock test?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `Yes — pick any topics from the ${exam.shortName} syllabus, choose 10, 25 or 50 questions and the difficulty, and attempt it as a timed mock with solutions and weak-topic analysis, free, at https://shishya.in/exams/${exam.code}/build-mock. Questions can be read in Hindi and 12 other Indian languages inside the test.`,
+        },
+      },
       {
         "@type": "Question",
         name: `How can I prepare for ${exam.shortName} for free?`,

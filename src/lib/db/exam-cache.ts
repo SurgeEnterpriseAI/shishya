@@ -67,16 +67,29 @@ export const getExamShared = unstable_cache(
         // they were listed with a direct "Take →" link a week before
         // opening, leaking the paper and voiding the student's ranked run.
         // Their home is /live-test (banner on the hub points there).
-        prisma.mock.findMany({
-          where: {
-            examId: exam.id,
-            userId: null,
-            generatedBy: { not: "live-test" },
-          },
-          orderBy: [{ createdAt: "asc" }],
-          take: 40,
-          select: { id: true, title: true, type: true, questionIds: true, config: true },
-        }),
+        prisma.mock
+          .findMany({
+            where: {
+              examId: exam.id,
+              userId: null,
+              generatedBy: { not: "live-test" },
+            },
+            orderBy: [{ createdAt: "asc" }],
+            take: 40,
+            select: { id: true, title: true, type: true, questionIds: true, config: true },
+          })
+          .then(async (mocks) => {
+            // The real-pattern full-length paper (1 Sep 2026) is the
+            // NEWEST shared mock, so on flagship exams with 40+ older
+            // shared mocks the createdAt-asc take(40) silently dropped
+            // it — no hub tile, no FAQ entry. Always include it, first.
+            const fp = await prisma.mock.findFirst({
+              where: { examId: exam.id, userId: null, generatedBy: "system:full-pattern-v1" },
+              select: { id: true, title: true, type: true, questionIds: true, config: true },
+            });
+            if (fp && !mocks.some((m) => m.id === fp.id)) return [fp, ...mocks];
+            return mocks;
+          }),
         // PRIVACY: no named leaderboard on the public page — other
         // students' names/scores must never show to anonymous visitors.
         // The page shows AGGREGATE participation stats to everyone;

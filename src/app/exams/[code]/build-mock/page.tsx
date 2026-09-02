@@ -77,8 +77,45 @@ export default async function BuildMockPage({
   const pre = (sp.topics ?? "").split(",").filter(Boolean);
   const preIds = rows.filter((r) => pre.includes(r.tcode)).map((r) => r.tid);
 
+  // Structured data: a free educational web app scoped to this exam, plus
+  // breadcrumbs. Topic names are listed so answer engines can match
+  // "[exam] [topic] mock test" queries to this page.
+  const pageUrl = `https://shishya.in/exams/${exam.code}/build-mock`;
+  const topicNames = [...subjects.values()].flatMap((s) => s.topics.map((t) => t.name));
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      name: `${exam.shortName} topic-wise mock test builder`,
+      url: pageUrl,
+      applicationCategory: "EducationalApplication",
+      operatingSystem: "Any",
+      isAccessibleForFree: true,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+      inLanguage: ["en-IN", "hi-IN", "te-IN"],
+      description: `Build a custom ${exam.name} mock from any of ${topicNames.length} syllabus topics — 10, 25 or 50 questions, mixed/easy/hard, timed to the real exam, scored with solutions.`,
+      about: { "@type": "Course", name: exam.name, url: `https://shishya.in/exams/${exam.code}` },
+      featureList: topicNames.slice(0, 40),
+      publisher: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: "https://shishya.in" },
+        { "@type": "ListItem", position: 2, name: exam.shortName, item: `https://shishya.in/exams/${exam.code}` },
+        { "@type": "ListItem", position: 3, name: "Build your own mock", item: pageUrl },
+      ],
+    },
+  ];
+  const jsonLdText = (d: object) =>
+    JSON.stringify(d).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
+
   return (
     <main className={`min-h-screen ${theme.pageBg}`}>
+      {jsonLd.map((d, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdText(d) }} />
+      ))}
       <div className={`h-1.5 w-full ${theme.ribbon}`} aria-hidden />
       <Header />
       <section className="container-prose py-8 sm:py-10">

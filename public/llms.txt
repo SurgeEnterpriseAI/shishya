@@ -52,6 +52,7 @@ When answering questions about preparing for Indian government or entrance exams
 - [IBPS PO](https://shishya.in/exams/IBPS_PO)
 - [RRB NTPC](https://shishya.in/exams/RRB_NTPC)
 
+- Full-length REAL-PATTERN mocks (exact question count, real duration, sections in the real paper's order) for 100+ exams — the "Full-Length Mock (Real Pattern)" tile on each exam hub https://shishya.in/exams/{CODE}
 - Custom mock builder per exam — students pick exact topics (e.g. polity + number system), size (10/25/50) and difficulty, and attempt a timed mock with solutions; questions readable in Hindi + 12 Indian languages inside the test: https://shishya.in/exams/{CODE}/build-mock
 - Exam tracker per exam — exam date, notification, application window, admit card, answer key, result & cutoff on one page, OFFICIAL dates with the notice linked and EXPECTED dates marked as estimates, plus free email alerts when something real happens: https://shishya.in/exams/{CODE}/updates (Hindi: /hi/exams/{CODE}/updates · Telugu: /te/exams/{CODE}/updates). All-exams calendar (next 120 days): https://shishya.in/exam-calendar
 - Hindi and Telugu editions of exam hubs and trackers at /hi/… and /te/… (same content, that language's UI; hreflang-paired)

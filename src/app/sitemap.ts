@@ -106,6 +106,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "daily" as const,
     priority: 0.8,
   }));
+  // Custom mock builder (1 Sep 2026) — "[exam] topic wise mock test" is
+  // a real query class and each page carries unique content (that
+  // exam's topic list with live question counts). Only exams whose bank
+  // has at least one buildable topic (≥3 validated questions) — an
+  // empty builder must never be a sitemap URL.
+  const buildable = new Set(
+    (
+      await prisma
+        .$queryRaw<{ code: string }[]>`
+          SELECT DISTINCT e.code FROM "Exam" e
+          JOIN "Subject" s ON s."examId" = e.id JOIN "Topic" t ON t."subjectId" = s.id
+          JOIN "Question" q ON q."topicId" = t.id AND q.validated = TRUE
+          WHERE e.active = TRUE GROUP BY e.code, t.id HAVING COUNT(q.id) >= 3`
+        .catch(() => [] as { code: string }[])
+    ).map((r) => r.code),
+  );
+  const builderUrls: MetadataRoute.Sitemap = exams
+    .filter((e) => buildable.has(e.code))
+    .map((e) => ({
+      url: `${base}/exams/${e.code}/build-mock`,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
   const localeTwinUrls: MetadataRoute.Sitemap = exams.flatMap((e) =>
     (["hi", "te"] as const).flatMap((lc) => [
       { url: `${base}/${lc}/exams/${e.code}`, lastModified: e.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 },
@@ -499,6 +522,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...tricksUrls,
     ...guideUrls,
     ...updatesUrls,
+    ...builderUrls,
     ...localeTwinUrls,
     ...currentAffairsUrls,
     ...examArchiveUrls,

@@ -32,6 +32,17 @@ export async function GET() {
     },
   });
 
+  // Exams with an assembled real-pattern full-length paper (1 Sep 2026).
+  const fullPattern = new Set(
+    (
+      await prisma
+        .$queryRaw<{ code: string }[]>`
+          SELECT DISTINCT e.code FROM "Mock" m JOIN "Exam" e ON e.id = m."examId"
+          WHERE m."generatedBy" = 'system:full-pattern-v1'`
+        .catch(() => [] as { code: string }[])
+    ).map((r) => r.code),
+  );
+
   const lines: string[] = [
     "# Shishya — full exam index (llms-full.txt)",
     "",
@@ -144,6 +155,10 @@ export async function GET() {
     lines.push(`- Machine-readable context (preferred for LLMs): ${SITE}/exams/${e.code}/context.md`);
     lines.push(`- Hub (mocks, PYQs, news, dates): ${SITE}/exams/${e.code}`);
     lines.push(`- Exam tracker — exam date, notification, admit card, answer key, result, cutoff (official vs expected, email alerts): ${SITE}/exams/${e.code}/updates · Hindi: ${SITE}/hi/exams/${e.code}/updates · Telugu: ${SITE}/te/exams/${e.code}/updates`);
+    lines.push(`- Custom topic-wise mock builder (pick topics, 10/25/50 Qs, difficulty; readable in Hindi + 12 languages): ${SITE}/exams/${e.code}/build-mock`);
+    if (fullPattern.has(e.code)) {
+      lines.push(`- Full-length REAL-PATTERN mock: ${e.totalQuestions} questions · ${e.durationMin} min · sections in real order — the "Full-Length Mock (Real Pattern)" tile on ${SITE}/exams/${e.code}`);
+    }
     lines.push(`- Full syllabus + study notes: ${SITE}/exams/${e.code}/syllabus`);
     lines.push(`- Expected cutoff incl. category-wise (Gen/EWS/OBC/SC/ST): ${SITE}/exams/${e.code}/cutoff`);
     lines.push(`- Memory tricks & mnemonics: ${SITE}/exams/${e.code}/tricks`);
