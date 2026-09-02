@@ -864,7 +864,7 @@ export default async function ExamPage({
           {!hasContent ? (
             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-ink-600">{t("exam.no.content")}</p>
-              <Link href={`/chat?examCode=${exam.code}`} className="btn-secondary !py-2 !px-4 text-xs sm:text-sm">
+              <Link rel="nofollow" href={`/chat?examCode=${exam.code}`} className="btn-secondary !py-2 !px-4 text-xs sm:text-sm">
                 {t("nav.tutor")}
               </Link>
             </div>
@@ -880,7 +880,7 @@ export default async function ExamPage({
               </div>
               <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
                 <Link
-                  href={`/chat?examCode=${exam.code}`}
+                  rel="nofollow" href={`/chat?examCode=${exam.code}`}
                   data-tour="exam-ask"
                   className="btn-secondary !py-2 !px-4 text-xs sm:text-sm"
                 >
@@ -1374,7 +1374,7 @@ export default async function ExamPage({
               {weakness.map((w) => (
                 <li key={w.id}>
                   <Link
-                    href={`/chat?examCode=${exam.code}&topicCode=${encodeURIComponent(w.topic.code)}&seed=${encodeURIComponent(`I'm weak in ${w.topic.name} for ${exam.shortName}. Tutor me on this topic.`)}`}
+                    rel="nofollow" href={`/chat?examCode=${exam.code}&topicCode=${encodeURIComponent(w.topic.code)}&seed=${encodeURIComponent(`I'm weak in ${w.topic.name} for ${exam.shortName}. Tutor me on this topic.`)}`}
                     className="block rounded-md border border-ink-200 bg-white p-3 hover:border-saffron-400 hover:bg-saffron-50/30"
                   >
                     <div className="flex items-baseline justify-between">
@@ -1497,7 +1497,7 @@ export default async function ExamPage({
                           {t("dash.focus.cta.study")}
                         </Link>
                         <Link
-                          href={`/chat?examCode=${exam.code}&topicCode=${encodeURIComponent(ft.topicCode)}&seed=${encodeURIComponent(`I'm weak in ${ft.topicName} for ${exam.shortName}. Tutor me on this topic.`)}`}
+                          rel="nofollow" href={`/chat?examCode=${exam.code}&topicCode=${encodeURIComponent(ft.topicCode)}&seed=${encodeURIComponent(`I'm weak in ${ft.topicName} for ${exam.shortName}. Tutor me on this topic.`)}`}
                           className="rounded border border-ink-200 bg-white px-2 py-1 text-[11px] font-medium text-ink-700 hover:border-saffron-400"
                         >
                           {t("dash.focus.cta.ask")}
@@ -1541,7 +1541,7 @@ export default async function ExamPage({
               <div className="flex items-baseline justify-between">
                 <h3 className="text-sm font-semibold text-ink-900">{t("exam.shishya.title")}</h3>
                 <Link
-                  href={`/chat?examCode=${exam.code}`}
+                  rel="nofollow" href={`/chat?examCode=${exam.code}`}
                   className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
                 >
                   {t("exam.shishya.openChat")} →
@@ -1557,7 +1557,7 @@ export default async function ExamPage({
                 ] as const).map(([labelKey, q]) => (
                   <li key={labelKey}>
                     <Link
-                      href={`/chat?examCode=${exam.code}&seed=${encodeURIComponent(q)}`}
+                      rel="nofollow" href={`/chat?examCode=${exam.code}&seed=${encodeURIComponent(q)}`}
                       className="block rounded-md border border-ink-200 bg-white p-2.5 text-xs text-ink-800 hover:border-saffron-400 hover:bg-saffron-50/40"
                     >
                       <span className="block font-medium">{t(labelKey)}</span>

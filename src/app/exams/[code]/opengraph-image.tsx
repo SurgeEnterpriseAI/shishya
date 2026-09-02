@@ -14,9 +14,15 @@ export const alt = "Shishya — exam preparation";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function Image({ params }: { params: { code: string } }) {
+// Next 15: `params` is a Promise for metadata image routes too. Reading
+// `params.code` synchronously gave undefined → every exam card 500'd in
+// prod (GSC "Server error (5xx)" report, 2 Sep 2026). Satori also needs
+// an explicit display:flex on any element with >1 child — every text
+// container below is flex for that reason.
+export default async function Image({ params }: { params: Promise<{ code: string }> }) {
+  const { code } = await params;
   const exam = await prisma.exam.findUnique({
-    where: { code: params.code },
+    where: { code },
     select: { shortName: true, name: true, category: true, state: true },
   }).catch(() => null);
 
@@ -58,12 +64,13 @@ export default async function Image({ params }: { params: { code: string } }) {
           >
             शि
           </div>
-          <div style={{ fontSize: "44px", fontWeight: 800, color: "#1c1917" }}>
+          <div style={{ display: "flex", fontSize: "44px", fontWeight: 800, color: "#1c1917" }}>
             Shishya
           </div>
-          {category && (
+          {category ? (
             <div
               style={{
+                display: "flex",
                 marginLeft: "auto",
                 padding: "8px 18px",
                 background: "#fff",
@@ -76,13 +83,14 @@ export default async function Image({ params }: { params: { code: string } }) {
             >
               {category}
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Middle: exam name */}
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div
             style={{
+              display: "flex",
               fontSize: "96px",
               fontWeight: 800,
               color: "#1c1917",
@@ -94,6 +102,7 @@ export default async function Image({ params }: { params: { code: string } }) {
           </div>
           <div
             style={{
+              display: "flex",
               fontSize: "32px",
               color: "#57534e",
               fontWeight: 500,
@@ -116,8 +125,8 @@ export default async function Image({ params }: { params: { code: string } }) {
             fontWeight: 500,
           }}
         >
-          <div>Free mocks · syllabus · PYQ · verified by students</div>
-          <div style={{ color: "#c2410c", fontWeight: 700 }}>{year}</div>
+          <div style={{ display: "flex" }}>Free mocks · syllabus · PYQ · verified by students</div>
+          <div style={{ display: "flex", color: "#c2410c", fontWeight: 700 }}>{year}</div>
         </div>
       </div>
     ),

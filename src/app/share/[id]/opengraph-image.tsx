@@ -44,10 +44,12 @@ const CATEGORY_PALETTE: Record<string, { bg: string; accent: string; label: stri
 export default async function Image({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  // Next 15: params is a Promise (sync read → undefined → 500 in prod).
+  const { id } = await params;
   const attempt = await prisma.attempt.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: {
       scorePct: true,
       user: { select: { name: true } },

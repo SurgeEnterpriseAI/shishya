@@ -343,7 +343,7 @@ export default async function PYQYearPage({
             {yearNum} question, concept, or shortcut, step by step, in your language.
           </p>
           <Link
-            href={`/chat?examCode=${code}&seed=${encodeURIComponent(
+            rel="nofollow" href={`/chat?examCode=${code}&seed=${encodeURIComponent(
               `I'm solving the ${exam.shortName} ${yearNum} previous year paper. Explain the questions and concepts I'm stuck on, step by step.`,
             )}`}
             prefetch={false}

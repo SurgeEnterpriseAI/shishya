@@ -435,7 +435,12 @@ export default async function ExamsPage({
             item: {
               "@type": "Event",
               name: `${e.examShort} — ${e.label}`,
+              // GSC "improve item appearance" (2 Sep 2026): description,
+              // endDate and image were missing on all 47 valid Events.
+              description: `${e.examShort} ${e.label} — exam day per the official notice. Free mock tests, syllabus and cutoff analysis on Shishya.`,
               startDate: e.date.slice(0, 10),
+              endDate: e.date.slice(0, 10),
+              image: [`https://shishya.in/exams/${e.examCode}/opengraph-image`],
               eventStatus: "https://schema.org/EventScheduled",
               eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
               location: {

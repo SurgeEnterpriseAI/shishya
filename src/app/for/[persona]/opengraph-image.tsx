@@ -22,9 +22,9 @@ export const contentType = "image/png";
 export async function generateImageMetadata({
   params,
 }: {
-  params: { persona: string };
+  params: Promise<{ persona: string }>;
 }) {
-  const persona = findPersona(params.persona);
+  const persona = findPersona((await params).persona);
   if (!persona) return [];
   return [
     {
@@ -40,8 +40,9 @@ export async function generateStaticParams() {
   return PERSONAS.map((p) => ({ persona: p.slug }));
 }
 
-export default async function Image({ params }: { params: { persona: string } }) {
-  const persona = findPersona(params.persona);
+// Next 15: params is a Promise (sync read → undefined → 500 in prod).
+export default async function Image({ params }: { params: Promise<{ persona: string }> }) {
+  const persona = findPersona((await params).persona);
   // Render a generic Shishya card if the slug is unknown — better than
   // erroring out the social preview.
   const examShortNames = persona

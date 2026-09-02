@@ -238,7 +238,12 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
       "@context": "https://schema.org",
       "@type": "Event",
       name: `${short} ${year} — ${nextExam.label}`,
+      // GSC "improve item appearance" (2 Sep 2026): description, endDate,
+      // image were missing on every valid Event.
+      description: `${exam.name} — ${nextExam.label}, ${fmtDay(nextExam.date, "en")}, per the conducting body's official notice. Free mock tests, syllabus, cutoffs and a date tracker on Shishya.`,
       startDate: nextExam.day,
+      endDate: nextExam.day,
+      image: [`https://shishya.in/exams/${exam.code}/opengraph-image`],
       eventStatus: "https://schema.org/EventScheduled",
       eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
       location: { "@type": "Place", name: "Exam centres across India", address: { "@type": "PostalAddress", addressCountry: "IN" } },

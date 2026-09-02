@@ -8,8 +8,10 @@ export const alt = "Shishya — scholarship";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function Image({ params }: { params: { id: string } }) {
-  const s = SCHOLARSHIPS.find((x) => x.id === params.id);
+// Next 15: params is a Promise (sync read → undefined → 500 in prod).
+export default async function Image({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const s = SCHOLARSHIPS.find((x) => x.id === id);
   const name = s?.name ?? "Shishya scholarships";
   const body = s?.awardingBody ?? "Free, sourced, no agents.";
   const amount = s?.amount ?? "";
@@ -86,9 +88,11 @@ export default function Image({ params }: { params: { id: string } }) {
           <div style={{ fontSize: "26px", color: "#86198f", fontWeight: 600 }}>
             {body}
           </div>
-          {amountShort && (
+          {amountShort ? (
+            // Satori: "💰 " + {amountShort} = two child nodes → one string.
             <div
               style={{
+                display: "flex",
                 fontSize: "24px",
                 color: "#1c1917",
                 fontWeight: 500,
@@ -96,9 +100,9 @@ export default function Image({ params }: { params: { id: string } }) {
                 maxWidth: "1000px",
               }}
             >
-              💰 {amountShort}
+              {`💰 ${amountShort}`}
             </div>
-          )}
+          ) : null}
         </div>
 
         <div

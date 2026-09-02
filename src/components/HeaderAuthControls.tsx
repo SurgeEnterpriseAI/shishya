@@ -86,7 +86,7 @@ export function HeaderAuthControls({
           </Link>
         </>
       ) : (
-        <Link href="/login" className="btn-primary !py-2 !px-4 text-xs sm:text-sm">
+        <Link rel="nofollow" href="/login" className="btn-primary !py-2 !px-4 text-xs sm:text-sm">
           {labels.signinShort}
         </Link>
       )}

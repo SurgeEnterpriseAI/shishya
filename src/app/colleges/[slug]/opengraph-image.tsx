@@ -8,8 +8,10 @@ export const alt = "Shishya — college profile";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function Image({ params }: { params: { slug: string } }) {
-  const c = COLLEGES.find((x) => x.slug === params.slug);
+// Next 15: params is a Promise (sync read → undefined → 500 in prod).
+export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const c = COLLEGES.find((x) => x.slug === slug);
   const name = c?.shortName ?? c?.name ?? "Shishya";
   const fullName = c?.name ?? "Indian colleges — neutral profiles";
   const overallRank = (c as { nirfOverall?: number } | undefined)?.nirfOverall;
@@ -89,11 +91,13 @@ export default function Image({ params }: { params: { slug: string } }) {
           >
             {fullName}
           </div>
-          {location && (
-            <div style={{ fontSize: "24px", color: "#0c4a6e", fontWeight: 600 }}>
-              📍 {location}
+          {location ? (
+            // Satori: "📍 " + {location} is TWO child nodes → must be one
+            // string or a flex container. One string.
+            <div style={{ display: "flex", fontSize: "24px", color: "#0c4a6e", fontWeight: 600 }}>
+              {`📍 ${location}`}
             </div>
-          )}
+          ) : null}
         </div>
 
         <div

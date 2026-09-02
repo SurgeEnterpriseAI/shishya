@@ -356,7 +356,7 @@ export default async function TopicPage({
             <p className="text-sm font-medium text-ink-800">{t("topic.notes.empty.headline")}</p>
             <p className="mt-1 text-sm text-ink-600">{t("topic.notes.empty.body")}</p>
             <Link
-              href={`/chat?examCode=${code}&topicCode=${encodeURIComponent(topic.code)}&seed=${encodeURIComponent(`Teach me ${topic.name} for ${exam.shortName} — concepts, formulas, common mistakes, and a few examples.`)}`}
+              rel="nofollow" href={`/chat?examCode=${code}&topicCode=${encodeURIComponent(topic.code)}&seed=${encodeURIComponent(`Teach me ${topic.name} for ${exam.shortName} — concepts, formulas, common mistakes, and a few examples.`)}`}
               className="btn-primary mt-4 !py-2 !px-4 text-xs sm:text-sm"
             >
               {t("topic.notes.empty.cta")}
@@ -377,7 +377,7 @@ export default async function TopicPage({
             ] as const).map(([key, q]) => (
               <li key={key}>
                 <Link
-                  href={`/chat?examCode=${code}&topicCode=${encodeURIComponent(topic.code)}&seed=${encodeURIComponent(q)}`}
+                  rel="nofollow" href={`/chat?examCode=${code}&topicCode=${encodeURIComponent(topic.code)}&seed=${encodeURIComponent(q)}`}
                   className="block rounded-md border border-ink-200 bg-white p-3 text-sm text-ink-800 hover:border-saffron-400 hover:bg-white"
                 >
                   <span className="block font-medium">{t(key)}</span>
@@ -387,7 +387,7 @@ export default async function TopicPage({
             ))}
           </ul>
           <Link
-            href={`/chat?examCode=${code}&topicCode=${encodeURIComponent(topic.code)}&seed=${encodeURIComponent(`I'm studying ${topic.name} for ${exam.shortName}. Be my tutor for this topic.`)}`}
+            rel="nofollow" href={`/chat?examCode=${code}&topicCode=${encodeURIComponent(topic.code)}&seed=${encodeURIComponent(`I'm studying ${topic.name} for ${exam.shortName}. Be my tutor for this topic.`)}`}
             className="btn-primary mt-4 !py-2 !px-4 text-sm"
           >
             {t("topic.shishya.openChat")}
@@ -436,7 +436,7 @@ export default async function TopicPage({
                 scoped to this topic — the highest-intent "explain this" moment.
                 prefetch=false to avoid re-inflating CHAT_OPENED. */}
             <Link
-              href={`/chat?examCode=${code}&topicCode=${encodeURIComponent(topic.code)}&seed=${encodeURIComponent(
+              rel="nofollow" href={`/chat?examCode=${code}&topicCode=${encodeURIComponent(topic.code)}&seed=${encodeURIComponent(
                 `Walk me through these ${topic.name} practice questions for ${exam.shortName} one at a time — let me try first, then explain where I go wrong.`,
               )}`}
               prefetch={false}
