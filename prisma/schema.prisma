@@ -1265,11 +1265,13 @@ model AnalyticsEvent {
   // string / client IP, truncated to 16 hex chars, stored ONLY on rows
   // with no userId and no anonId (unidentified traffic — the class a
   // stealth crawler lands in). Identified rows never carry one, so the
-  // table holds no user↔IP linkage. The HMAC key rotates monthly
-  // (derived from NEXTAUTH_SECRET + calendar month), bounding
+  // table holds no user↔IP linkage. The IP hash key rotates monthly
+  // (derived from NEXTAUTH_SECRET + calendar month), bounding IP
   // linkability to ~30 days — enough to cluster a sweep and retro-tag
-  // it client='bot', not enough to profile anyone across time. Raw UA
-  // and IP are never stored. NULL = identified row or pre-feature.
+  // it client='bot', not enough to profile anyone across time. The UA
+  // hash key is stable (5 Sep 2026): a UA string identifies nobody, and
+  // rotating it reset every scrub conviction on the 1st of each month.
+  // Raw UA and IP are never stored. NULL = identified row or pre-feature.
   uaHash      String?
   ipHash      String?
   createdAt   DateTime  @default(now())

@@ -8,6 +8,11 @@
 // run tagged whose cluster no longer meets the bar, then tags those that
 // do. props.retroTag keeps every action auditable/reversible.
 
+// NOTE (5 Sep 2026): uaHash is stable across months, ipHash rotates
+// monthly. A convicted UA therefore stays convicted across the 1st of the
+// month (rows before 5 Sep carry per-month UA hashes and cluster only
+// within their own month). Distinct-IP counts do include the same IP
+// re-hashed in a later month — harmless for a "sure bot" bar this high.
 const MIN_IPS = 15;           // distinct IPs on one UA to be "sure" it's a botnet
 const MAX_VIEWS_PER_IP = 1.5; // proxy-rotation signature (one page per IP)
 

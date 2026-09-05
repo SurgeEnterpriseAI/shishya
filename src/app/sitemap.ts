@@ -165,10 +165,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // "[exam] previous year notifications", "[exam] postponement history".
   // Each archive page links to every per-news permalink below, so Google
   // discovers the long-tail trail in one crawl.
+  // lastModified is the exam row's real timestamp (the 27 Aug revert had
+  // re-introduced `new Date()` here — 178 URLs claiming "changed today"
+  // every day, the spam signal the 25 Aug honesty pass removed elsewhere).
   const examArchiveUrls: MetadataRoute.Sitemap = exams.map((e) => ({
     url: `${base}/exams/${e.code}/archive`,
-    lastModified: new Date(),
-    changeFrequency: "daily" as const,
+    lastModified: e.updatedAt,
+    changeFrequency: "weekly" as const,
     priority: 0.55,
   }));
 
@@ -325,7 +328,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/schooling",
     "/colleges",
     "/scholarships",
-    "/exams",
+    // "/exams" is a permanent redirect to "/" — never list a redirect.
     "/exams/browse",
     "/current-affairs",
     "/find-your-exam",

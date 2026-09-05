@@ -65,18 +65,30 @@ function classifyClient(ua: string | null): "browser" | "bot" {
 //   • Fingerprints are computed ONLY when the row carries no userId and
 //     no anonId — identified rows never get one, so no user↔IP linkage
 //     and no anon↔account join channel exists in the table.
-//   • The HMAC key is derived from NEXTAUTH_SECRET + the calendar
-//     month, so linkability is bounded to ~30 days: a sweep clusters
-//     within its month, but hashes can't be joined across months and a
-//     leaked key from one month reverses nothing from another. A keyed
+//   • The IP hash key is derived from NEXTAUTH_SECRET + the calendar
+//     month, so IP linkability is bounded to ~30 days: a sweep clusters
+//     within its month, but IP hashes can't be joined across months and
+//     a leaked key from one month reverses nothing from another. A keyed
 //     IP hash is pseudonymous data, not anonymous — the rotation is
 //     what keeps it honest.
+//   • The UA hash key does NOT rotate (5 Sep 2026). A user-agent string
+//     is shared by thousands of devices and identifies nobody on its
+//     own, so rotating it bought no privacy — but it silently reset the
+//     scrub every 1st of the month: bot-scrub convicts a UA cluster by
+//     counting distinct IPs on one uaHash, and when every uaHash changed
+//     on 1 Sep each convicted crawler dropped back under the 15-IP bar
+//     and escaped tagging for days (deep-path landers 6/day → 22/day).
+//     A stable UA hash keeps convictions across month boundaries; the
+//     rotating IP hash still limits the ipHash↔IP linkage window.
 const HASH_SECRET = process.env.NEXTAUTH_SECRET ?? "shishya-analytics";
-function fingerprint(value: string | null, now = new Date()): string | null {
+function fingerprint(value: string | null, scope: "ua" | "ip", now = new Date()): string | null {
   if (!value) return null;
-  const month = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
-  const monthKey = createHmac("sha256", HASH_SECRET).update(`fp-${month}`).digest();
-  return createHmac("sha256", monthKey).update(value).digest("hex").slice(0, 16);
+  const period =
+    scope === "ip"
+      ? `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`
+      : "stable";
+  const scopeKey = createHmac("sha256", HASH_SECRET).update(`fp-${scope}-${period}`).digest();
+  return createHmac("sha256", scopeKey).update(value).digest("hex").slice(0, 16);
 }
 
 function clientIp(req: NextRequest): string | null {
@@ -167,8 +179,8 @@ export async function POST(req: NextRequest) {
     client,
     // Unidentified rows only (see fingerprint block comment) — the
     // stealth-sweep class always lands here; identified humans never do.
-    uaHash: !userId && !anonId ? fingerprint(req.headers.get("user-agent")) : null,
-    ipHash: !userId && !anonId ? fingerprint(clientIp(req)) : null,
+    uaHash: !userId && !anonId ? fingerprint(req.headers.get("user-agent"), "ua") : null,
+    ipHash: !userId && !anonId ? fingerprint(clientIp(req), "ip") : null,
   });
 
   const res = new NextResponse(null, { status: 204 });
