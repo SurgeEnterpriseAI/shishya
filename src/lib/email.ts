@@ -19,6 +19,7 @@
 
 import { Resend } from "resend";
 import { unsubFooterHtml, unsubApiUrl } from "./email-unsubscribe";
+import { tk } from "./i18n";
 
 const apiKey = process.env.RESEND_API_KEY;
 const from = process.env.EMAIL_FROM ?? "Shishya <tutor@shishya.in>";
@@ -1163,21 +1164,55 @@ Whatever your score, you'll know exactly what to fix in the days that matter mos
  *  and send a motivational quote that encourages them whatever be the
  *  outcome." Deliberately contains NO new study advice (nothing that
  *  could rattle someone the night before) — only calm, a practical
- *  checklist, and encouragement that survives either result. */
+ *  checklist, and encouragement that survives either result.
+ *
+ *  Exam Week Mode (6 Sep 2026): the mail now carries the date WITH its
+ *  tier word, the sourced checklist article (or the hub when there is
+ *  none), the official admit-card row when the tracker has one, the
+ *  tracker's next two dated rows, and the one promise the product does
+ *  keep — "tomorrow evening we will ask you how the paper was". The old
+ *  "Shishya is here the next morning with your weak areas mapped" line
+ *  is gone: nothing sends that. */
 export async function sendExamEveEmail(p: {
   to: string;
   userId?: string;
   name: string | null;
   examShort: string;
+  examCode: string;
+  /** Plain IST day, e.g. "12 Sep" — the template adds the tier word. */
+  examDate: string;
+  /** Tier word for examDate ("official" / "reported"), already localised. */
+  tier: string;
+  /** Last day of a multi-day / multi-shift window (null for single-day exams). */
+  windowEnd?: { date: string; tier: string } | null;
+  /** /exams/{code}/checklist only when a sourced CHECKLIST article exists, else the hub. */
+  checklistUrl: string;
+  checklistIsArticle: boolean;
+  /** Official ADMIT_CARD row from the tracker, when it has one. `when` carries the tier word. */
+  admitCard?: { label: string; when: string; url: string | null } | null;
+  /** The tracker's next two dated rows after the exam; `when` carries the tier word. */
+  nextDates: { label: string; when: string }[];
   quote: { text: string; author?: string | null };
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const subject = `🌟 All the best for your ${p.examShort} tomorrow, ${first}`;
   const attribution = p.quote.author ? ` — ${p.quote.author}` : "";
+  const hub = `https://shishya.in/exams/${p.examCode}`;
+  const tracker = `${hub}/updates`;
+  const dateLine = p.windowEnd
+    ? fillVars(tk("ew.window.title"), {
+        from: p.examDate,
+        to: p.windowEnd.date,
+        tier: p.windowEnd.tier === p.tier ? p.tier : `${p.tier} / ${p.windowEnd.tier}`,
+      })
+    : fillVars(tk("ew.eve.title"), { date: p.examDate, tier: p.tier });
+  const admitLine = p.admitCard ? fillVars(tk("ew.eve.admit"), { text: `${p.admitCard.label} — ${p.admitCard.when}` }) : "";
+  const checklistLabel = p.checklistIsArticle ? `${tk("ew.week.checklist")} for ${p.examShort}` : `Your ${p.examShort} hub`;
 
   const text = `${first},
 
 Tomorrow is your ${p.examShort} exam. All the best. 🌟
+${dateLine}
 
 You've put in the work — on Shishya and outside it. Tonight is not for new topics. It's for sleep, a calm mind, and trusting what you already know.
 
@@ -1186,23 +1221,30 @@ Before you sleep, just check:
 • Exam centre location and how long it takes to reach
 • Reach early — rushing costs more marks than any topic
 • Sleep. A rested brain scores higher than a tired one that revised one extra chapter.
-
+${admitLine ? `\n${admitLine}${p.admitCard?.url ? `\n  ${p.admitCard.url}` : ""}\n` : ""}
+${checklistLabel}: ${p.checklistUrl}
+${
+  p.nextDates.length
+    ? `\nAfter the exam, from the ${p.examShort} tracker:\n${p.nextDates.map((d) => `• ${d.label}: ${d.when}`).join("\n")}\nFull tracker: ${tracker}\n`
+    : `\nFull tracker (every date, official vs expected): ${tracker}\n`
+}
 "${p.quote.text}"${attribution}
 
-And whatever tomorrow's paper brings: one exam does not measure you. Selection lists change every year; the discipline you built doesn't. If it goes well, we'll celebrate. If it doesn't, Shishya is here the next morning with your weak areas mapped and the next attempt planned — free, always.
+And whatever tomorrow's paper brings: one exam does not measure you. Selection lists change every year; the discipline you built doesn't. Tomorrow evening we will ask you how the paper was — one tap, and once 10 or more students have rated it you will see how the paper felt to them.
 
 Go show up. We're rooting for you.
 — Shishya
 
-(You're getting this because you're preparing for ${p.examShort} on shishya.in. Reply to stop.)`;
+(You're getting this because you're preparing for ${p.examShort} on shishya.in. Reply to stop, or unsubscribe below.)`;
 
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
   <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
-    <div style="font-weight:700;font-size:19px;">🌟 All the best for your ${p.examShort} tomorrow</div>
+    <div style="font-weight:700;font-size:19px;">🌟 All the best for your ${esc(p.examShort)} tomorrow</div>
+    <p style="font-size:13px;font-weight:600;margin:6px 0 0;color:#b45309;">${esc(dateLine)}</p>
     <p style="font-size:14px;line-height:1.6;margin:14px 0;">
-      ${first}, you&apos;ve put in the work — on Shishya and outside it. Tonight isn&apos;t for new
+      ${esc(first)}, you&apos;ve put in the work — on Shishya and outside it. Tonight isn&apos;t for new
       topics. It&apos;s for sleep, a calm mind, and trusting what you already know.
     </p>
     <div style="border:1px solid #e2e8f0;background:#fff;border-radius:10px;padding:12px 14px;margin:0 0 16px;">
@@ -1213,15 +1255,32 @@ Go show up. We're rooting for you.
         ⏰ Reach early — rushing costs more marks than any topic<br/>
         😴 Sleep. A rested brain scores higher than a tired one that revised one more chapter.
       </p>
+      ${
+        admitLine
+          ? `<p style="font-size:12px;line-height:1.6;margin:8px 0 0;color:#0f172a;">🎫 ${esc(admitLine)}${
+              p.admitCard?.url ? ` <a href="${esc(p.admitCard.url)}" style="color:#b45309;">official notice ↗</a>` : ""
+            }</p>`
+          : ""
+      }
     </div>
-    <blockquote style="margin:0 0 16px;padding:12px 16px;border-left:3px solid #f59e0b;background:#fffbeb;font-size:14px;line-height:1.6;font-style:italic;color:#0f172a;">
-      &ldquo;${p.quote.text}&rdquo;${p.quote.author ? `<span style="display:block;margin-top:6px;font-style:normal;font-size:12px;color:#92400e;">— ${p.quote.author}</span>` : ""}
+    <a href="${esc(p.checklistUrl)}" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">${esc(checklistLabel)} →</a>
+    ${
+      p.nextDates.length
+        ? `<div style="border:1px solid #fed7aa;background:#fff;border-radius:10px;padding:12px 14px;margin:16px 0 0;">
+      <p style="font-size:12px;font-weight:700;margin:0 0 6px;color:#0f172a;">After the exam, from the ${esc(p.examShort)} tracker</p>
+      <p style="font-size:12px;line-height:1.8;margin:0;color:#334155;">${p.nextDates.map((d) => `${esc(d.label)}: <strong>${esc(d.when)}</strong>`).join("<br/>")}</p>
+      <p style="font-size:12px;margin:6px 0 0;"><a href="${tracker}" style="color:#b45309;">Full tracker →</a></p>
+    </div>`
+        : `<p style="font-size:12px;margin:14px 0 0;color:#334155;">Every date, official vs expected: <a href="${tracker}" style="color:#b45309;">${esc(p.examShort)} tracker →</a></p>`
+    }
+    <blockquote style="margin:16px 0;padding:12px 16px;border-left:3px solid #f59e0b;background:#fffbeb;font-size:14px;line-height:1.6;font-style:italic;color:#0f172a;">
+      &ldquo;${esc(p.quote.text)}&rdquo;${p.quote.author ? `<span style="display:block;margin-top:6px;font-style:normal;font-size:12px;color:#92400e;">— ${esc(p.quote.author)}</span>` : ""}
     </blockquote>
     <p style="font-size:13px;line-height:1.65;margin:0 0 14px;color:#334155;">
       And whatever tomorrow&apos;s paper brings: <strong>one exam does not measure you.</strong>
-      Selection lists change every year; the discipline you built doesn&apos;t. If it goes well,
-      we&apos;ll celebrate. If it doesn&apos;t, Shishya is here the next morning with your weak
-      areas mapped and the next attempt planned — free, always.
+      Selection lists change every year; the discipline you built doesn&apos;t.
+      Tomorrow evening we will ask you how the paper was — one tap, and once 10 or more
+      students have rated it you will see how the paper felt to them.
     </p>
     <p style="font-size:14px;font-weight:600;margin:0;color:#0f172a;">Go show up. We&apos;re rooting for you. 💪</p>
     <p style="font-size:12px;color:#64748b;margin:16px 0 0;">— Shishya</p>
@@ -1229,4 +1288,100 @@ Go show up. We're rooting for you.
 </body></html>`;
   // Exam eve is IMPORTANT — the night before their exam always gets through the inbox budget.
   return sendEmail({ to: p.to, subject, html, text, tag: "exam-eve", unsubUserId: p.userId, priority: "important" });
+}
+
+/** "How did the paper go?" — the morning after the exam day, to the
+ *  students who got the exam-eve mail (Exam Week Mode, 6 Sep 2026).
+ *  Three one-tap verdict links land on the exam hub, which preselects
+ *  the chip and posts it. Then ONLY what the tracker holds: answer key /
+ *  result with their tier word or "not announced yet", the cutoff page,
+ *  and the next exam in the student's track. No prediction, no LLM. */
+export async function sendExamDayAfterEmail(p: {
+  to: string;
+  userId: string;
+  name: string | null;
+  examShort: string;
+  examCode: string;
+  /** Yesterday's exam day WITH its tier word, e.g. "12 Sep (official)". */
+  examDayLine: string;
+  /** Last day of a still-running window, tier-worded; null once the window is over. */
+  windowEndLine?: string | null;
+  /** "Answer key: 20 Sep (expected)" / "Answer key: not announced yet" — built by statusLine(). */
+  answerKeyLine: string;
+  resultLine: string;
+  /** Next exam in the same category + state, 7–60 days out: plain day + its tier word. */
+  nextExam?: { code: string; short: string; date: string; tier: string } | null;
+}): Promise<boolean> {
+  const first = (p.name ?? "").split(" ")[0] || "Aspirant";
+  const hub = `https://shishya.in/exams/${p.examCode}`;
+  const subject = `${first}, how did the ${p.examShort} paper go?`;
+  const verdictUrl = (v: "EASY" | "MODERATE" | "TOUGH") => `${hub}?verdict=${v}`;
+  const chips: { key: "ew.verdict.easy" | "ew.verdict.moderate" | "ew.verdict.tough"; v: "EASY" | "MODERATE" | "TOUGH" }[] = [
+    { key: "ew.verdict.easy", v: "EASY" },
+    { key: "ew.verdict.moderate", v: "MODERATE" },
+    { key: "ew.verdict.tough", v: "TOUGH" },
+  ];
+  const opener = p.windowEndLine
+    ? `Your ${p.examShort} exam window opened yesterday (${p.examDayLine}) and runs to ${p.windowEndLine}. ${tk("ew.window.tip")}`
+    : `Yesterday was your ${p.examShort} exam (${p.examDayLine}). ${tk("ew.today.pm")}`;
+  const nextLine = p.nextExam ? fillVars(tk("ew.post.next"), { exam: p.nextExam.short, date: p.nextExam.date, tier: p.nextExam.tier }) : "";
+
+  const text = `${first},
+
+${opener} One tap:
+
+${chips.map((c) => `${tk(c.key)}: ${verdictUrl(c.v)}`).join("\n")}
+
+Your rating joins other students' — we show the split as counts once 10 or more have rated, never as a prediction.
+
+What happens next, from the ${p.examShort} tracker:
+• ${p.answerKeyLine}
+• ${p.resultLine}
+• ${tk("ew.post.cutoff")}: ${hub}/cutoff
+Full tracker: ${hub}/updates
+${nextLine ? `\n${nextLine}: https://shishya.in/exams/${p.nextExam?.code}\n` : ""}
+Whatever the paper felt like, the next step is the same one — keep the routine going.
+— Shishya (free, always)
+
+(Reply to stop, or unsubscribe below.)`;
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#b45309;">${esc(p.examShort)} · exam week</div>
+    <div style="font-weight:700;font-size:19px;margin-top:6px;">${esc(tk("ew.today.pm"))}</div>
+    <p style="font-size:14px;line-height:1.6;margin:12px 0 14px;">${esc(first)}, ${esc(opener)} One tap:</p>
+    <div style="margin:0 0 10px;">
+      ${chips
+        .map(
+          (c) =>
+            `<a href="${verdictUrl(c.v)}" style="display:inline-block;margin:0 8px 8px 0;background:#f97316;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">${esc(tk(c.key))}</a>`,
+        )
+        .join("")}
+    </div>
+    <p style="font-size:12px;color:#64748b;margin:0 0 18px;line-height:1.6;">Your rating joins other students&apos; — we show the split as counts once 10 or more have rated, never as a prediction.</p>
+    <div style="border:1px solid #fed7aa;background:#fff;border-radius:10px;padding:12px 14px;margin:0 0 16px;">
+      <p style="font-size:12px;font-weight:700;margin:0 0 6px;color:#0f172a;">What happens next, from the ${esc(p.examShort)} tracker</p>
+      <p style="font-size:13px;line-height:1.8;margin:0;color:#334155;">
+        🔑 ${esc(p.answerKeyLine)}<br/>
+        🏁 ${esc(p.resultLine)}<br/>
+        🎯 <a href="${hub}/cutoff" style="color:#b45309;font-weight:600;">${esc(tk("ew.post.cutoff"))} →</a>
+      </p>
+      <p style="font-size:12px;margin:6px 0 0;"><a href="${hub}/updates" style="color:#b45309;">Full tracker →</a></p>
+    </div>
+    ${
+      nextLine && p.nextExam
+        ? `<p style="font-size:13px;line-height:1.6;margin:0 0 14px;color:#334155;">${esc(nextLine)} — <a href="https://shishya.in/exams/${esc(p.nextExam.code)}" style="color:#b45309;font-weight:600;">${esc(p.nextExam.short)} hub →</a></p>`
+        : ""
+    }
+    <p style="font-size:13px;line-height:1.6;margin:0;color:#334155;">Whatever the paper felt like, the next step is the same one — keep the routine going.</p>
+    <p style="font-size:12px;color:#64748b;margin:16px 0 0;">— Shishya, free always</p>
+  </div>
+</body></html>`;
+  return sendEmail({ to: p.to, subject, html, text, tag: "exam-day-after", unsubUserId: p.userId });
+}
+
+function fillVars(s: string, vars: Record<string, string | number>): string {
+  return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
 }

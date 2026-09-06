@@ -126,6 +126,10 @@
       "schedule": "30 3 * * *"
     },
     {
+      "path": "/api/cron/exam-day-after",
+      "schedule": "0 3 * * *"
+    },
+    {
       "path": "/api/cron/refresh-exam-data",
       "schedule": "15 7 * * *"
     },
