@@ -11,9 +11,26 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { AnonQuiz } from "@/lib/anon-quiz";
+import type { ExamWeekPhase } from "@/lib/exam-week";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
+import { ExamAlertBox, type ExamAlertLabels, type ExamAlertWeekLabels } from "@/components/ExamAlertBox";
 
-export function AnonQuizPlayer({ quiz }: { quiz: AnonQuiz }) {
+/** Exam Week Mode (6 Sep 2026): the server page that renders the player
+ *  computes the exam's phase (computeExamWeekState) and passes the
+ *  translated alert labels; the result screen then offers the one-email
+ *  alert capture. Absent = the result screen is unchanged. */
+export interface AnonQuizExamWeek {
+  phase: ExamWeekPhase;
+  signedIn?: boolean;
+  labels: ExamAlertLabels;
+  weekLabels?: ExamAlertWeekLabels;
+  note?: string;
+}
+
+/** Phases where a guest who just tried 5 questions is worth one alert tap. */
+const ALERT_PHASES: ReadonlySet<ExamWeekPhase> = new Set<ExamWeekPhase>(["week", "eve", "post"]);
+
+export function AnonQuizPlayer({ quiz, examWeek }: { quiz: AnonQuiz; examWeek?: AnonQuizExamWeek }) {
   const qs = quiz.questions;
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
@@ -128,6 +145,22 @@ export function AnonQuizPlayer({ quiz }: { quiz: AnonQuiz }) {
             Ask Shishya to explain these
           </Link>
         </div>
+
+        {/* Exam week: the guest is here because the exam is days away or
+            just happened — one tap for the answer-key / result email. */}
+        {examWeek && ALERT_PHASES.has(examWeek.phase) && (
+          <div className="mt-4">
+            <ExamAlertBox
+              examCode={quiz.examCode}
+              compact
+              signedIn={examWeek.signedIn ?? false}
+              labels={examWeek.labels}
+              phase={examWeek.phase}
+              weekLabels={examWeek.weekLabels}
+              note={examWeek.note}
+            />
+          </div>
+        )}
 
         {/* Low score + anonymous = peak discouragement; a human offer
             here retains aspirants the signup CTA alone would lose. */}

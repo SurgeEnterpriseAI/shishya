@@ -3,21 +3,168 @@
 // search patterns we didn't own a page for). Data: ExamRankBand — the same
 // AI-curated, source-annotated score→rank→outcome bands that power the
 // post-mock RankCard. PUBLIC + cached; honest disclaimer built in.
+//
+// Exam Week Mode (6 Sep 2026). This is the one page with a measured
+// exam-day spike (39 landers on exam day across events; 41 of IOQM's 136
+// first landings) and it was phase-blind — it ended with a coach pitch for
+// the exam that had just finished. From D-1 to D+7 it now opens with what
+// that lander wants: when the official cutoff arrives (result / answer-key
+// status straight from the tracker — every date with its tier word,
+// "not announced yet" when the tracker holds nothing), last cycle's table,
+// where Shishya mock-takers scored (n>=10, and the copy says it is not a
+// prediction), the paper-difficulty tally (n>=10, counts only) and a
+// one-email alert. Outside that window the page renders exactly as before
+// and stays ISR-cached: the locale / session reads that make a render
+// request-time run only inside the exam-week branch.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
+import { auth } from "@/lib/auth";
+import { getExamShared } from "@/lib/db/exam-cache";
+import { getT, getUrlLocale } from "@/lib/i18n-server";
+import { localizedPath } from "@/lib/seo-locale";
+import { computeExamWeekState, dateWithTier, istDay, type ExamWeekPhase, type ExamWeekState } from "@/lib/exam-week";
+import type { TimelineRow } from "@/lib/exam-timeline";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { AnonExamNudge } from "@/components/AnonExamNudge";
 import { CoachEntry } from "@/components/CoachEntry";
+import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { inlineMd } from "@/components/NotesMarkdown";
 
-export const revalidate = 3600;
+// 900 (was 3600): the exam-week boundaries (D-1 in, D+7 out) must show up
+// within 15 minutes. ISR applies while the render stays static — i.e.
+// outside exam week. Inside it the page reads the locale header/cookie and
+// the session, so it renders per request, like /updates and the hub.
+export const revalidate = 900;
 
 const YEAR = new Date().getFullYear();
+
+type TFn = (key: any) => string;
+
+function fill(s: string, vars: Record<string, string | number>): string {
+  return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
+}
+
+/** Phases the cutoff block covers: D-1 .. D+7 (not the run-up week). */
+const CUTOFF_PHASES: ReadonlySet<ExamWeekPhase> = new Set<ExamWeekPhase>(["eve", "today-am", "today-pm", "window", "post"]);
+
+// Tracker rows + official portal for the state machine, cached 15 min per
+// exam so the static render adds one cache read, not two queries. Date
+// fields come back from the cache as ISO strings, which buildTimeline
+// accepts (TimelineInput.date is Date | string).
+const getExamWeekInputs = unstable_cache(
+  async (examId: string) => {
+    const [rows, elig] = await Promise.all([
+      prisma.examImportantDate
+        .findMany({ where: { examId, archivedAt: null }, orderBy: { date: "asc" }, take: 60 })
+        .catch(() => []),
+      prisma
+        .$queryRaw<{ officialUrl: string | null }[]>`
+          SELECT "officialUrl" FROM "ExamEligibility" WHERE "examId" = ${examId} LIMIT 1`
+        .catch(() => [] as { officialUrl: string | null }[]),
+    ]);
+    return { rows, officialUrl: elig[0]?.officialUrl ?? null };
+  },
+  ["cutoff-exam-week-v1"],
+  { revalidate: 900, tags: ["exam-shared"] },
+);
+
+/** Paper-difficulty poll counts for one exam day — the shared contract
+ *  shape { n, easy, moderate, tough, sections }.
+ *  TODO(lead): agent B exports getVerdictTally(examId, examDateIso) from
+ *  "@/lib/exam-verdict"; that file is absent in this worktree, so this is
+ *  a local copy of the same groupBy. Replace with the import on merge. */
+async function getVerdictTally(examId: string, examDateIso: string) {
+  const examDate = new Date(`${examDateIso}T00:00:00.000Z`);
+  const [byVerdict, bySection] = await Promise.all([
+    prisma.examVerdict.groupBy({ by: ["verdict"], where: { examId, examDate }, _count: { _all: true } }),
+    prisma.examVerdict.groupBy({ by: ["section"], where: { examId, examDate, section: { not: null } }, _count: { _all: true } }),
+  ]);
+  const count = (v: string) => byVerdict.find((r) => r.verdict === v)?._count._all ?? 0;
+  const easy = count("EASY");
+  const moderate = count("MODERATE");
+  const tough = count("TOUGH");
+  const sections = bySection
+    .flatMap((r) => (r.section ? [{ label: r.section, n: r._count._all }] : []))
+    .sort((a, b) => b.n - a.n);
+  return { n: easy + moderate + tough, easy, moderate, tough, sections };
+}
+
+// Two minutes is fresh enough for a count that only shows from n>=10, and
+// keeps exam-day landers from each hitting the poll table.
+const getVerdictTallyCached = unstable_cache(
+  (examId: string, day: string) => getVerdictTally(examId, day).catch(() => null),
+  ["cutoff-verdict-tally-v1"],
+  { revalidate: 120 },
+);
+
+/** Everything the exam-week block renders, resolved server-side in the
+ *  page's language. Only called for D-1 .. D+7 — this is where the
+ *  request-time reads (locale, session) live. */
+async function loadExamWeekView(exam: { id: string; code: string; shortName: string }, ew: ExamWeekState) {
+  const [{ t: tRaw, locale }, urlLocale, session, shared, tally] = await Promise.all([
+    getT(),
+    getUrlLocale(),
+    auth().catch(() => null),
+    // Cohort stats the hub already computes (10-min cache); cold cache
+    // pays the hub payload once, which exam-day traffic keeps warm anyway.
+    getExamShared(exam.code).catch(() => null),
+    ew.focusDay ? getVerdictTallyCached(exam.id, ew.focusDay) : Promise.resolve(null),
+  ]);
+  const t = tRaw as TFn;
+  const short = exam.shortName;
+  // Every date carries its tier word; a missing tracker row is said plainly.
+  const status = (row: TimelineRow | null) =>
+    row ? dateWithTier(row, t(`ew.tier.${row.tier}`), locale) : t("ew.post.notAnnounced");
+  const stats = shared?.examStats ?? null;
+  const pct = (part: number, whole: number) => Math.round((part / whole) * 100);
+
+  return {
+    phase: ew.phase,
+    urlLocale,
+    signedIn: !!session?.user?.id,
+    title: fill(t("ew.cutoff.title"), { exam: short }),
+    lead: fill(t("ew.cutoff.lead"), { result: status(ew.result), key: status(ew.answerKey) }),
+    lastCycle: t("ew.cutoff.lastCycle"),
+    // Cohort line from 10 students only; the copy itself says it is where
+    // mock-takers scored, not a prediction.
+    mockAvg:
+      stats && stats.students >= 10 && stats.avgPct != null
+        ? fill(t("ew.cutoff.mockAvg"), { n: stats.students.toLocaleString("en-IN"), pct: Math.round(stats.avgPct), exam: short })
+        : null,
+    // Verdict tally from 10 ratings only — counts and shares, never a prediction.
+    tally:
+      tally && tally.n >= 10
+        ? fill(t("ew.verdict.tally"), {
+            n: tally.n,
+            easy: pct(tally.easy, tally.n),
+            moderate: pct(tally.moderate, tally.n),
+            tough: pct(tally.tough, tally.n),
+          })
+        : null,
+    hubLink: fill(t("ew.post.title"), { exam: short }),
+    alert: {
+      labels: {
+        title: fill(t("tracker.alert.title"), { exam: short }),
+        body: t("tracker.alert.body"),
+        emailPlaceholder: t("tracker.alert.email"),
+        btn: t("tracker.alert.btn"),
+        btnSigned: fill(t("tracker.alert.btnSigned"), { exam: short }),
+        done: t("tracker.alert.done"),
+        invalid: t("tracker.alert.invalid"),
+        err: t("tracker.alert.err"),
+      },
+      weekLabels: { cta: t("ew.alert.cta"), done: t("ew.alert.done") },
+      // The existing "one email … no spam, unsubscribe anytime" line.
+      note: t("tracker.alert.body"),
+    },
+  };
+}
 
 export async function generateMetadata({
   params,
@@ -74,6 +221,12 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
   });
   if (bands.length === 0) notFound();
 
+  // Exam Week Mode: phase from the cached tracker reads (static-safe);
+  // the request-time work runs only for D-1 .. D+7.
+  const { rows: dateRows, officialUrl } = await getExamWeekInputs(exam.id);
+  const ew = computeExamWeekState(dateRows, officialUrl);
+  const view = CUTOFF_PHASES.has(ew.phase) ? await loadExamWeekView(exam, ew) : null;
+
   const url = `https://shishya.in/exams/${exam.code}/cutoff`;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -83,6 +236,8 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
     url,
     inLanguage: "en-IN",
     isAccessibleForFree: true,
+    // In exam-week mode the page's lead really does change day by day.
+    ...(view ? { dateModified: istDay(new Date()) } : {}),
     about: [{ "@type": "Thing", name: exam.name }, { "@type": "Thing", name: `${exam.shortName} cutoff` }],
     publisher: { "@type": "Organization", name: "Shishya", url: "https://shishya.in" },
     isPartOf: { "@type": "Course", name: `${exam.shortName} preparation`, url: `https://shishya.in/exams/${exam.code}` },
@@ -141,6 +296,30 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
         <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">
           {exam.shortName} Cutoff {YEAR} — expected score &amp; rank bands
         </h1>
+
+        {/* Exam-week block (D-1 .. D+7): the answer the exam-day lander
+            came for — when the official cutoff arrives — before the
+            historic bands. Dates carry their tier; nothing is guessed. */}
+        {view && (
+          <section className="mt-4 rounded-xl border border-saffron-300 bg-white p-5">
+            <h2 className="text-base font-bold text-ink-900">{view.title}</h2>
+            <p className="mt-1 text-sm text-ink-700">{view.lead}</p>
+            {view.mockAvg && <p className="mt-2 text-sm text-ink-700">{view.mockAvg}</p>}
+            {view.tally && <p className="mt-1 text-sm text-ink-700">{view.tally}</p>}
+            <div className="mt-3">
+              <ExamAlertBox
+                examCode={exam.code}
+                compact
+                signedIn={view.signedIn}
+                labels={view.alert.labels}
+                phase={view.phase}
+                weekLabels={view.alert.weekLabels}
+                note={view.alert.note}
+              />
+            </div>
+          </section>
+        )}
+
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
           What does your score in {exam.name} actually get you? These bands map a mock/exam
           percentage to the rank window and outcomes that score range has typically achieved.
@@ -159,11 +338,12 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
         </div>
 
         {/* Category-wise table — the way aspirants actually ask the
-            question ("safe for OBC?"). */}
+            question ("safe for OBC?"). In exam-week mode it is framed as
+            last cycle's figure; the source bullets below it are kept. */}
         {catTable.length > 1 && (
           <section className="mt-6">
             <h2 className="text-base font-semibold text-ink-900">
-              Category-wise expected cutoff (indicative)
+              {view ? view.lastCycle : "Category-wise expected cutoff (indicative)"}
             </h2>
             <div className="mt-3 overflow-x-auto rounded-lg border border-ink-200 bg-white">
               <table className="w-full text-sm">
@@ -210,7 +390,7 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
 
         {/* Signup nudge for anonymous SEO landers at the same anxiety
             moment — session checked client-side so this page keeps its
-            ISR caching; content is never gated. */}
+            ISR caching outside exam week; content is never gated. */}
         <AnonExamNudge
           examCode={exam.code}
           headline={`Will your score clear the ${exam.shortName} cutoff?`}
@@ -220,8 +400,20 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
         />
 
         {/* Knowing the target score is step one; the plan to reach it is
-            step two — the coach's most natural handoff on the site. */}
-        <CoachEntry examCode={exam.code} examShort={exam.shortName} variant="cutoff" />
+            step two — the coach's most natural handoff on the site. After
+            the exam that pitch is wrong; the hub's "what next" block is
+            the door instead. */}
+        {view?.phase === "post" ? (
+          <Link
+            href={localizedPath(`/exams/${exam.code}`, view.urlLocale)}
+            className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-saffron-300 bg-saffron-50/70 px-4 py-3 transition-colors hover:border-saffron-400 hover:bg-saffron-50"
+          >
+            <span className="min-w-0 text-sm font-semibold text-ink-800">{view.hubLink}</span>
+            <span className="shrink-0 text-sm font-bold text-saffron-700">→</span>
+          </Link>
+        ) : (
+          <CoachEntry examCode={exam.code} examShort={exam.shortName} variant="cutoff" />
+        )}
 
         <h2 className="mt-8 text-base font-semibold text-ink-900">Score → rank → outcome bands</h2>
         <ul className="mt-3 space-y-3">

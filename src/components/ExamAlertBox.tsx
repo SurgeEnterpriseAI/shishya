@@ -5,8 +5,17 @@
 // SundayLiveTestBanner: signed-in = one tap (we know the email);
 // anonymous = one email field, no account needed. Labels come from
 // the server page so the box renders in the page's language.
+//
+// Exam Week Mode (6 Sep 2026): the box is phase-aware. On exam evening
+// and in the post-exam week the promise a student wants is "tell me when
+// the answer key / result is out", so the server page passes the ew.alert.*
+// strings as `weekLabels` and the phase; the box swaps the title and the
+// confirmation for post / today-pm and keeps the default copy elsewhere.
+// Every existing mount (examCode + signedIn + labels [+ compact]) renders
+// exactly as before — the new props are optional.
 
 import { useState } from "react";
+import type { ExamWeekPhase } from "@/lib/exam-week";
 
 export interface ExamAlertLabels {
   title: string;
@@ -19,20 +28,43 @@ export interface ExamAlertLabels {
   err: string;
 }
 
+/** ew.alert.cta / ew.alert.done — the answer-key / result wording. */
+export interface ExamAlertWeekLabels {
+  cta: string;
+  done: string;
+}
+
+/** Phases where "alert me" means the answer key / result, not the notification. */
+const KEY_RESULT_PHASES: ReadonlySet<ExamWeekPhase> = new Set<ExamWeekPhase>(["today-pm", "post"]);
+
 export function ExamAlertBox({
   examCode,
   signedIn,
   labels,
   compact = false,
+  phase,
+  weekLabels,
+  note,
 }: {
   examCode: string;
   signedIn: boolean;
   labels: ExamAlertLabels;
   compact?: boolean;
+  /** From computeExamWeekState(); only "today-pm" and "post" change the copy. */
+  phase?: ExamWeekPhase;
+  /** Required for the phase copy to apply (server-translated ew.alert.*). */
+  weekLabels?: ExamAlertWeekLabels;
+  /** Light footnote under the control, e.g. the existing tracker.alert.body
+   *  ("one email when something real happens … unsubscribe anytime"). */
+  note?: string;
 }) {
   const [state, setState] = useState<"idle" | "form" | "busy" | "done">("idle");
   const [email, setEmail] = useState("");
   const [err, setErr] = useState<string | null>(null);
+
+  const keyResultMode = !!phase && KEY_RESULT_PHASES.has(phase) && !!weekLabels;
+  const title = keyResultMode ? weekLabels!.cta : labels.title;
+  const doneText = keyResultMode ? weekLabels!.done : labels.done;
 
   async function subscribe(withEmail?: string) {
     setErr(null);
@@ -54,7 +86,7 @@ export function ExamAlertBox({
       }
       setState("done");
       try {
-        window.shishyaTrack?.("CTA_CLICKED", { cta: "exam-alert", examCode });
+        window.shishyaTrack?.("CTA_CLICKED", { cta: "exam-alert", examCode, ...(phase ? { phase } : {}) });
       } catch {
         /* analytics is best-effort */
       }
@@ -72,11 +104,11 @@ export function ExamAlertBox({
           : "rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5"
       }
     >
-      <p className={compact ? "text-sm font-bold text-ink-900" : "text-base font-bold text-ink-900"}>{labels.title}</p>
+      <p className={compact ? "text-sm font-bold text-ink-900" : "text-base font-bold text-ink-900"}>{title}</p>
       {!compact && <p className="mt-1 text-sm text-ink-700">{labels.body}</p>}
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {state === "done" ? (
-          <span className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white">{labels.done}</span>
+          <span className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white">{doneText}</span>
         ) : state === "form" ? (
           <>
             <input
@@ -115,6 +147,7 @@ export function ExamAlertBox({
         )}
       </div>
       {err && <p className="mt-2 text-xs font-medium text-rose-700">{err}</p>}
+      {note && <p className="mt-2 text-xs text-ink-500">{note}</p>}
     </div>
   );
 }
