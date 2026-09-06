@@ -6,10 +6,14 @@
 //   sitemap  (default; weekly per vercel.json) — every sitemap URL. The
 //            original submission was a one-shot script; every page shipped
 //            since was never pushed. Idempotent — engines dedupe.
-//   examweek (daily; 6 Sep 2026 Exam Week Mode) — for every exam currently
-//            in phase week…post (typed exam-day row within ±7 days): hub,
+//   examweek (6 Sep 2026 Exam Week Mode) — for every exam currently in
+//            phase week…post (typed exam-day row within ±7 days): hub,
 //            /updates, /cutoff, the hi/te twins, and any REAL phase-article
 //            URL. These pages change daily that week; weekly is too slow.
+//            The DAILY schedule lives on its own path,
+//            /api/cron/indexnow-examweek (Vercel cron paths with a query
+//            string are undocumented); ?scope=examweek here is for manual
+//            runs and shares the same helper (src/lib/indexnow-examweek.ts).
 //
 // Scope selection: ?scope=examweek, or — because Vercel sends the
 // triggering cron expression in x-vercel-cron-schedule and one path may
@@ -22,7 +26,7 @@ export const maxDuration = 120;
 export const dynamic = "force-dynamic";
 
 import { pingIndexNow } from "@/lib/indexnow";
-import { examWeekIndexNowUrls, loadExamWeekExams, loadRealPhaseArticles } from "@/lib/exam-week-aeo";
+import { submitExamWeekIndexNow } from "@/lib/indexnow-examweek";
 
 const HOST = "shishya.in";
 
@@ -43,21 +47,8 @@ export async function GET(req: Request) {
   const scope = url.searchParams.get("scope") ?? (schedule && !isWeeklySchedule(schedule) ? "examweek" : "sitemap");
 
   if (scope === "examweek") {
-    try {
-      const exams = await loadExamWeekExams();
-      const articles = await loadRealPhaseArticles(exams.map((e) => e.id));
-      const urls = exams.flatMap((e) => examWeekIndexNowUrls(e, articles.get(e.id) ?? []));
-      const accepted = urls.length ? await pingIndexNow(urls) : 0;
-      return Response.json({
-        ok: true,
-        scope,
-        exams: exams.map((e) => `${e.code}:${e.state.phase}`),
-        urls: urls.length,
-        acceptedChunks: accepted,
-      });
-    } catch (err) {
-      return Response.json({ ok: false, scope, error: String((err as Error)?.message).slice(0, 200) }, { status: 500 });
-    }
+    const report = await submitExamWeekIndexNow();
+    return Response.json(report, { status: report.ok ? 200 : 500 });
   }
 
   try {

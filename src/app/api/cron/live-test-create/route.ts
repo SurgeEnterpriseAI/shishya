@@ -1,5 +1,8 @@
-// Saturday cron — create next Sunday's All-India Live Tests.
-// Auth: Bearer ${CRON_SECRET}. Schedule: 0 16 * * 6 (9:30 PM IST Sat).
+// Daily cron — create next Sunday's All-India Live Tests (idempotent: a
+// paper exists once per (exam, Sunday)), plus — Exam Week Mode wave 2 —
+// one rehearsal paper per exam whose announced exam day is 3–7 days out
+// (once per exam day; see createRehearsalLiveTests in src/lib/live-test.ts).
+// Auth: Bearer ${CRON_SECRET}. Schedule (vercel.json): 0 1 * * * (6:30 AM IST).
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,5 +17,10 @@ export async function GET(req: Request) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
   const results = await createWeeklyLiveTests();
-  return Response.json({ ok: true, results });
+  const rehearsals = results.filter((r) => r.rehearsal);
+  return Response.json({
+    ok: true,
+    results,
+    rehearsals: { total: rehearsals.length, created: rehearsals.filter((r) => r.created).length },
+  });
 }
