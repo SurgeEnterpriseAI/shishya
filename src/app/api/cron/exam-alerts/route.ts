@@ -14,7 +14,11 @@
 // changes newer than their last alert, so a result declared the day
 // after an admit-card mail is NOT lost to the 7-day cap — it goes out
 // when the cap lifts (review 23 Aug 2026). Caps: one email per
-// subscriber-exam per 7 days (lastNotifiedAt), ≤400 sends/run.
+// subscriber-exam per 7 days (lastNotifiedAt) — tightened to 2 days while
+// the exam is within ±5 days of an exam day (Exam Week Mode, 6 Sep 2026:
+// admit-card corrections, shift timings and the answer key all land in
+// that week, and a 7-day cap would hold them until they are useless) —
+// and ≤400 sends/run.
 // Auth: Bearer ${CRON_SECRET}.  ?dry=1 → compute, don't send.
 
 export const runtime = "nodejs";
@@ -25,12 +29,15 @@ import { prisma } from "@/lib/db/prisma";
 import { sendExamAlertEmail } from "@/lib/email";
 import { alertUnsubApiUrl, alertUnsubUrl } from "@/lib/exam-alerts";
 import { MATERIAL_NEWS_RE, buildTimeline, fmtDay, stageOf } from "@/lib/exam-timeline";
+import { computeExamWeekState } from "@/lib/exam-week";
 import { sourceTier } from "@/lib/official-source";
 
 const MAX_SENDS = 400;
 const RESEND_DAYS = 7;
-// Look back a little beyond the resend cap so nothing that appeared while a
-// subscriber was capped is ever skipped.
+/** Resend cap while any exam day of the window is within ±5 days. */
+const EXAM_WEEK_RESEND_DAYS = 2;
+// Look back a little beyond the (longest) resend cap so nothing that
+// appeared while a subscriber was capped is ever skipped.
 const LOOKBACK_H = RESEND_DAYS * 24 + 26;
 
 type Change = { title: string; detail?: string | null; url?: string | null; linkLabel?: string; at: Date };
@@ -56,7 +63,7 @@ export async function GET(req: Request) {
     LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
     WHERE a."unsubscribedAt" IS NULL AND e.active = TRUE`.catch(() => []);
 
-  const report: Array<{ code: string; subscribers: number; changes: number; sent: number; held: number }> = [];
+  const report: Array<{ code: string; subscribers: number; changes: number; sent: number; held: number; examWeek: boolean }> = [];
   let totalSent = 0;
 
   for (const ex of examRows) {
@@ -130,6 +137,11 @@ export async function GET(req: Request) {
       WHERE "examId" = ${ex.id} AND "archivedAt" IS NULL ORDER BY date ASC`.catch(() => []);
     const timeline = buildTimeline(live, now, ex.officialUrl);
     const { nextExam, next } = stageOf(timeline);
+    // Exam week (shared state machine): any exam day of the current window
+    // within ±5 days → the per-subscriber resend cap drops from 7 to 2 days.
+    const week = computeExamWeekState(live, ex.officialUrl, now);
+    const examWeek = week.windowDays.some((r) => Math.abs(r.daysFromToday) <= 5);
+    const resendDays = examWeek ? EXAM_WEEK_RESEND_DAYS : RESEND_DAYS;
     // Any ANNOUNCED exam day (official or reported tier) within 3 days
     // deserves the reminder — only estimates are excluded.
     if (nextExam && nextExam.tier !== "expected" && nextExam.daysFromToday >= 0 && nextExam.daysFromToday <= 3 && changes.length < 4) {
@@ -146,14 +158,14 @@ export async function GET(req: Request) {
     }
 
     if (changes.length === 0) {
-      report.push({ code: ex.code, subscribers: 0, changes: 0, sent: 0, held: 0 });
+      report.push({ code: ex.code, subscribers: 0, changes: 0, sent: 0, held: 0, examWeek });
       continue;
     }
 
     const subs = await prisma.$queryRaw<{ id: string; email: string; userId: string | null; lastNotifiedAt: Date | null }[]>`
       SELECT id, email, "userId", "lastNotifiedAt" FROM "ExamAlert"
       WHERE "examId" = ${ex.id} AND "unsubscribedAt" IS NULL
-        AND ("lastNotifiedAt" IS NULL OR "lastNotifiedAt" < ${new Date(now.getTime() - RESEND_DAYS * 86_400_000)})
+        AND ("lastNotifiedAt" IS NULL OR "lastNotifiedAt" < ${new Date(now.getTime() - resendDays * 86_400_000)})
       LIMIT ${MAX_SENDS}`.catch(() => []);
 
     let sent = 0;
@@ -189,7 +201,7 @@ export async function GET(req: Request) {
         held++;
       }
     }
-    report.push({ code: ex.code, subscribers: subs.length, changes: changes.length, sent, held });
+    report.push({ code: ex.code, subscribers: subs.length, changes: changes.length, sent, held, examWeek });
   }
 
   return Response.json({ ok: true, dry, exams: examRows.length, totalSent, elapsedMs: Date.now() - started, report });
