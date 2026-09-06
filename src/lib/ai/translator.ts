@@ -7,6 +7,7 @@
 // student who picks the same locale on the same question gets it instantly.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { anthropic, MODEL } from "./client";
 import type { Locale } from "@/lib/i18n";
 import { localeNames } from "@/lib/i18n";
@@ -163,6 +164,7 @@ export async function translateBatch(
     messages: [{ role: "user", content: userBlock }],
   });
   const latencyMs = Date.now() - start;
+  recordAiUsage("translate", finalMessage, { model: TRANSLATION_MODEL, ref: input.locale, latencyMs });
 
   const text = finalMessage.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")

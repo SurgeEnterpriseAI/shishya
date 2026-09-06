@@ -345,6 +345,7 @@ export async function generateCoachDay(userId: string): Promise<"planned" | "ski
   try {
     const persona = await personaPacket(ctx);
     const res = await callClaude({
+      feature: "coach-day",
       system: cachedSystem(COACH_SYSTEM),
       messages: [
         {

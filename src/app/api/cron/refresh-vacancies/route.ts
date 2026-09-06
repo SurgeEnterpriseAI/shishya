@@ -4,8 +4,10 @@
 // aspirants trust the numbers are current. To make that stamp genuine,
 // this cron re-verifies the MOST-STALE slice of exams each day (Claude +
 // web_search), refreshing vacanciesApprox + vacanciesNote and rolling
-// generatedAt forward. ~15 exams/day → all ~177 refresh every ~12 days,
-// and the most-recent-update date is always today.
+// generatedAt forward. 5 exams/day → all ~178 refresh every ~5 weeks
+// (vacancy totals change once per recruitment cycle; 15/day was ~$1/day
+// of web-search calls re-verifying numbers that had not moved), and the
+// most-recent-update date is still always today.
 //
 // Auth: Bearer ${CRON_SECRET}. Daily per vercel.json.
 
@@ -15,10 +17,13 @@ export const dynamic = "force-dynamic";
 
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
+import { recordAiUsage } from "@/lib/ai/usage";
 
 const MODEL = "claude-sonnet-4-5-20250929";
-const BATCH = 15;
+const BATCH = 5;
 const TIME_BUDGET_MS = 250_000;
+const SYSTEM =
+  "You report the TYPICAL/latest annual vacancy count for an Indian government exam, verified via web_search against the official notification or recent recruitment news. Return STRICT JSON only: {\"vacanciesApprox\": int|null, \"vacanciesNote\": \"short context\"|null}. Use null if genuinely unsure; never invent. Prefer the most recent cycle's total posts.";
 
 function firstJson(text: string): any {
   const s = text.indexOf("{");
@@ -41,14 +46,15 @@ export async function GET(req: Request) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
   const started = Date.now();
 
-  // Most-stale first — the rows whose vacancy data is oldest.
+  // Most-stale first — by the later of last SUCCESS (generatedAt) and last
+  // ATTEMPT (vacanciesAttemptedAt), so a failing exam cannot hog the batch.
   const exams = await prisma.$queryRawUnsafe<
     { id: string; code: string; name: string; shortName: string }[]
   >(
     `SELECT e.id, e.code, e.name, e."shortName"
      FROM "ExamEligibility" x JOIN "Exam" e ON e.id = x."examId"
      WHERE e.active = TRUE
-     ORDER BY x."generatedAt" ASC
+     ORDER BY GREATEST(x."generatedAt", COALESCE(x."vacanciesAttemptedAt", 'epoch'::timestamp)) ASC
      LIMIT ${BATCH}`,
   );
 
@@ -56,18 +62,23 @@ export async function GET(req: Request) {
   let updated = 0, failed = 0;
   for (const ex of exams) {
     if (Date.now() - started > TIME_BUDGET_MS) break;
+    await prisma
+      .$executeRawUnsafe(`UPDATE "ExamEligibility" SET "vacanciesAttemptedAt" = NOW() WHERE "examId" = $1`, ex.id)
+      .catch(() => {});
     try {
       const res = await client.messages.create(
         {
           model: MODEL,
           max_tokens: 500,
-          system:
-            "You report the TYPICAL/latest annual vacancy count for an Indian government exam, verified via web_search against the official notification or recent recruitment news. Return STRICT JSON only: {\"vacanciesApprox\": int|null, \"vacanciesNote\": \"short context\"|null}. Use null if genuinely unsure; never invent. Prefer the most recent cycle's total posts.",
+          // cache_control breakpoint so the web_search loop caches its
+          // growing context between iterations instead of re-billing it.
+          system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
           tools,
           messages: [{ role: "user", content: `Exam: ${ex.name} (${ex.shortName}). Find the latest/typical annual vacancies and return the JSON.` }],
         },
         { timeout: 90_000, maxRetries: 1 },
       );
+      recordAiUsage("vacancies", res, { model: MODEL, ref: ex.code });
       const text = res.content.filter((b): b is Anthropic.TextBlock => b.type === "text").map((b) => b.text).join("\n");
       const j = firstJson(text);
       const vac = Number.isInteger(j.vacanciesApprox) ? j.vacanciesApprox : null;

@@ -27,6 +27,7 @@
 
 import type { ExamPhase } from "@prisma/client";
 import { anthropic, MODEL } from "./client";
+import { recordAiUsage } from "./usage";
 import type { ScrapedSnippet } from "@/lib/scrape/types";
 
 export interface SummaryResult {
@@ -228,7 +229,10 @@ ${inputBundle}
     const res = await anthropic.messages.create({
       model: MODEL,
       max_tokens: webGrounded ? 6000 : 4096,
-      system: PHASE_SYSTEM[phase],
+      // cache_control breakpoint so the web-grounded search loop caches
+      // its growing context between iterations (was a plain string: every
+      // iteration re-billed the whole context at full price).
+      system: [{ type: "text", text: PHASE_SYSTEM[phase], cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: userPrompt }],
       // webGrounded: tool_choice must stay auto so the model can search
       // BEFORE publishing (forcing the publish tool would skip search).
@@ -237,6 +241,8 @@ ${inputBundle}
         : [SUMMARY_TOOL],
       ...(webGrounded ? {} : { tool_choice: { type: "tool" as const, name: SUMMARY_TOOL.name } }),
     });
+
+    recordAiUsage(webGrounded ? "phase-article-web" : "phase-article", res, { model: MODEL, ref: `${examCode}:${phase}` });
 
     const toolUse = res.content.find((b) => b.type === "tool_use" && b.name === SUMMARY_TOOL.name);
     if (!toolUse || toolUse.type !== "tool_use") return null;

@@ -19,6 +19,7 @@
 import type { PrismaClient } from "@prisma/client";
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropic, MODEL } from "@/lib/ai/client";
+import { recordAiUsage } from "@/lib/ai/usage";
 
 // Fixed taxonomy — the heatmap's row groups. The model must pick one
 // per signal; "other" is the escape hatch we review weekly.
@@ -181,6 +182,7 @@ export async function mineDemand(db: PrismaClient, since: Date, until: Date): Pr
       system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: user }],
     });
+    recordAiUsage("demand-mine", resp, { model: MODEL });
     const text = resp.content
       .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
       .map((b) => b.text)
@@ -260,6 +262,7 @@ export async function consolidateDemand(db: PrismaClient): Promise<{ merges: num
       },
     ],
   });
+  recordAiUsage("demand-consolidate", resp, { model: MODEL });
   const text = resp.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
     .map((b) => b.text)

@@ -16,6 +16,7 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { anthropic, MODEL } from "@/lib/ai/client";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { prisma } from "@/lib/db/prisma";
 import { EXAM_GOALS } from "@/data/exam-goals";
 
@@ -107,6 +108,7 @@ export async function POST(req: NextRequest) {
       tools: [ROUTE_TOOL],
       tool_choice: { type: "tool", name: ROUTE_TOOL.name },
     });
+    recordAiUsage("intent-router", res, { model: MODEL });
 
     const toolUse = res.content.find((b) => b.type === "tool_use");
     if (!toolUse || toolUse.type !== "tool_use") {

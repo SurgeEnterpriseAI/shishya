@@ -12,6 +12,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
 import { anthropic, MODEL } from "@/lib/ai/client";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { createNotification } from "@/lib/db/notifications";
 
 // Close the loop back to the students who flagged a question: when a
@@ -70,6 +71,7 @@ Rules: work the problem fully before choosing. If your computed answer is not am
     { model: MODEL, max_tokens: 1500, messages: [{ role: "user", content: prompt }] },
     { timeout: 90_000, maxRetries: 3 },
   );
+  recordAiUsage("question-adjudicate", res, { model: MODEL });
   const text = res.content
     .filter((b): b is Anthropic.TextBlock => b.type === "text")
     .map((b) => b.text)

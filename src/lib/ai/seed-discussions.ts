@@ -12,6 +12,7 @@
 // user-created threads are untouched.
 
 import { anthropic, MODEL } from "./client";
+import { recordAiUsage } from "./usage";
 
 export interface SeedThreadTitle {
   /** A plausible, realistic student question — 60-120 chars. */
@@ -98,6 +99,7 @@ Generate 6-8 sample thread titles via the publish_seed_threads tool.`;
       tools: [TOOL],
       tool_choice: { type: "tool", name: TOOL.name },
     });
+    recordAiUsage("seed-discussions", res, { model: MODEL });
     const toolUse = res.content.find((b) => b.type === "tool_use");
     if (!toolUse || toolUse.type !== "tool_use") return [];
     const input = toolUse.input as { threads?: Array<{ title?: string }> };

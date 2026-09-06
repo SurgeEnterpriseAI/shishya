@@ -9,6 +9,7 @@
 // per exam with curated, more-recent data.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { anthropic, MODEL } from "./client";
 
 export interface RankBandInput {
@@ -87,6 +88,7 @@ Return STRICT JSON per the schema in the system prompt. 5-8 bands, full 0-100 sc
     system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: userPrompt }],
   });
+  recordAiUsage("rank-bands", response, { model: MODEL, ref: input.examCode });
 
   const text = response.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")

@@ -62,6 +62,7 @@ export async function POST(req: Request) {
   const wordCount = answer.trim().split(/\s+/).length;
 
   const res = await callClaude({
+    feature: "descriptive-eval",
     system: cachedSystem(
       `You are Shishya's descriptive-writing evaluator for Indian government exams (SSC descriptive paper, bank PO essay/letter, UPSC Mains). You evaluate exactly like a fair, experienced examiner: strict but constructive, marks justified by the rubric, feedback specific to THIS answer (quote the student's own phrases when pointing at issues). Students may write in English or Hindi — evaluate in the language they wrote in, but keep JSON keys in English.
 Respond with ONLY a JSON object:

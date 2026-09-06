@@ -10,6 +10,7 @@
 // Prisma client regen (Windows DLL-lock pattern used across the repo).
 
 import Anthropic from "@anthropic-ai/sdk";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { anthropic } from "./ai/client";
 import { parseJson } from "./ai/client";
 import { prisma } from "./db/prisma";
@@ -64,7 +65,10 @@ export async function generateDailyCurrentAffairs(opts: {
     {
       model: MODEL,
       max_tokens: 4000,
-      system: SYSTEM,
+      // cache_control breakpoint: with caching enabled on the request, the
+      // API caches the growing context between web_search iterations
+      // instead of re-billing all of it at full price on every turn.
+      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
       tools,
       messages: [
         {
@@ -75,6 +79,7 @@ export async function generateDailyCurrentAffairs(opts: {
     },
     { timeout: 180_000, maxRetries: 2 },
   );
+  recordAiUsage("current-affairs", res, { model: MODEL, ref: opts.istDate });
 
   const text = res.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")

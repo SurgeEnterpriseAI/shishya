@@ -17,6 +17,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { anthropic, MODEL, cachedSystem } from "@/lib/ai/client";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { resolveAliases } from "@/lib/exam-aliases";
 
 // ── Tool definitions ─────────────────────────────────────────────────
@@ -286,6 +287,7 @@ export async function runAsk(question: string): Promise<AskResult> {
       messages,
       tools: allTools,
     });
+    recordAiUsage("ask", res, { model: MODEL });
 
     // Track server-side web search (executed by the API itself).
     if (res.content.some((b: any) => b.type === "server_tool_use" || b.type === "web_search_tool_result")) {

@@ -205,6 +205,7 @@ const cachedCoachRead = (userId: string, day: string, p: Student360, audience: "
         recentTutorAsks: p.tutorThemes.slice(0, 4), planDay: p.plan?.dayNumber ?? null,
       });
       const res = await callClaude({
+        feature: "student-360",
         system: [{ type: "text" as const, text: COACH_READ_SYSTEM[audience] }],
         messages: [{ role: "user", content: packet }],
         maxTokens: 220,

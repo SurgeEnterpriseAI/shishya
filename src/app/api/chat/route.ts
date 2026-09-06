@@ -129,14 +129,23 @@ export async function POST(req: Request) {
       ? (
           await prisma.chatMessage.findMany({
             where: { sessionId: chatSession.id },
-            orderBy: { createdAt: "asc" },
+            // The LAST 30 turns, oldest-first. (Was asc/take 30 = the FIRST
+            // 30 turns of the session: long sessions lost their recent
+            // turns and re-sent the same stale head every time.)
+            orderBy: { createdAt: "desc" },
             take: 30, // cap context
           })
-        ).map((m) => ({
+        )
+          .reverse()
+          .map((m) => ({
           role: m.role === "USER" ? ("user" as const) : ("assistant" as const),
           content: m.content,
         }))
       : (body.history ?? []).slice(-12);
+  // The Messages API requires the first turn to be a user turn. A failed
+  // reply leaves an unpaired USER row, so a 30-newest window can start on
+  // an ASSISTANT row — trim leading assistant turns.
+  while (history.length && history[0].role === "assistant") history.shift();
 
   // Persist the user's message (signed-in only).
   if (userId && chatSession) {

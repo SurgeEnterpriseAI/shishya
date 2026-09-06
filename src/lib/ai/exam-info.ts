@@ -27,6 +27,7 @@
 // ExamNewsItem.url.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { anthropic, MODEL } from "./client";
 
 export interface ExamInfoInput {
@@ -157,6 +158,7 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
     ? [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }]
     : undefined;
 
+  const startedAt = Date.now();
   const response = await anthropic.messages.create({
     model: MODEL,
     max_tokens: 3000,
@@ -164,6 +166,7 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
     messages: [{ role: "user", content: userPrompt }],
     ...(tools ? { tools } : {}),
   } as any);
+  recordAiUsage("exam-info", response, { model: MODEL, ref: input.examCode, latencyMs: Date.now() - startedAt });
 
   const text = response.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")

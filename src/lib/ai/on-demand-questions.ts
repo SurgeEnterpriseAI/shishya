@@ -11,6 +11,7 @@
 // The endpoint that calls this rate-limits per user per day.
 
 import { anthropic, MODEL } from "./client";
+import { recordAiUsage } from "./usage";
 
 export interface FreshQuestion {
   body: string;
@@ -106,6 +107,7 @@ Generate ${Math.min(opts.count, 20)} questions via publish_questions.`;
       tools: [TOOL],
       tool_choice: { type: "tool", name: TOOL.name },
     });
+    recordAiUsage("fresh-questions", res, { model: MODEL, ref: opts.examShortName });
     const tu = res.content.find((b) => b.type === "tool_use");
     if (!tu || tu.type !== "tool_use") return [];
     const input = tu.input as { questions?: FreshQuestion[] };

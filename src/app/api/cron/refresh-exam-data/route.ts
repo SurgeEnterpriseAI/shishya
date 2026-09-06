@@ -20,10 +20,15 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db/prisma";
 import { generateExamInfo } from "@/lib/ai/exam-info";
 import { writeExamInfo, GEN_SOURCE } from "@/lib/exam-data-writer";
-// Approximate Sonnet 4.5 cost per exam (~1k input + 1.5k output).
-const COST_PER_EXAM_USD = 0.04;
-// Safety cap: total per-day cron spend ceiling.
-const PER_DAY_BUDGET_USD = 5.0;
+// Measured 6 Sep 2026 (spend audit): Sonnet 4.5 + 3-5 web searches per
+// exam ≈ $0.15-0.20, not the $0.04 the old constant assumed — which is
+// why the "budget" below never bound. Real per-call cost is now logged
+// to AiUsage (feature "exam-info") by generateExamInfo itself.
+const COST_PER_EXAM_USD = 0.18;
+// Spend cap per RUN (the cron runs 3×/day): 10 exams at the real cost ≈
+// 30 exams/day — the top-15 daily plus ~15 of the tail, so the tail
+// cycles in ~10 days. Was effectively ~14/run (time-bound) ≈ $7.5/day.
+const PER_DAY_BUDGET_USD = 1.8;
 // Upper bound on exams attempted per run; the time guard below usually
 // stops the run first (~12-16 exams/run at ~15-25s each).
 const DAILY_EXAM_CAP = 60;
@@ -62,7 +67,7 @@ export async function GET(req: Request) {
     where: { source: GEN_SOURCE },
     _max: { createdAt: true },
   });
-  const lastRefreshed = new Map(
+  const lastNews = new Map(
     staleness.map((s) => [s.examId, s._max.createdAt?.getTime() ?? 0]),
   );
   const exams = await prisma.exam.findMany({
@@ -74,6 +79,7 @@ export async function GET(req: Request) {
       shortName: true,
       category: true,
       candidatesPerYear: true,
+      refreshAttemptedAt: true,
       // Conducting-body portal — steers the generator's web search to the
       // official domain (the only source tier labelled OFFICIAL).
       eligibility: { select: { officialUrl: true, officialName: true } },
@@ -91,6 +97,15 @@ export async function GET(req: Request) {
       .sort((a, b) => (b.candidatesPerYear ?? 0) - (a.candidatesPerYear ?? 0))
       .slice(0, TOP_N)
       .map((e) => e.id),
+  );
+  // Staleness = the later of "last generated news row" and "last refresh
+  // ATTEMPT" (6 Sep 2026). Before, only news rows counted, so an exam that
+  // returned zero news or failed to parse kept its old timestamp, stayed
+  // at the head of the queue and was re-queried (Sonnet + web search) on
+  // every one of the three daily runs — the single biggest line of the
+  // ~$20/day API bill. Now every attempt moves the exam to the back.
+  const lastRefreshed = new Map(
+    exams.map((e) => [e.id, Math.max(lastNews.get(e.id) ?? 0, e.refreshAttemptedAt?.getTime() ?? 0)]),
   );
   const nowMs = Date.now();
   const slice = exams
@@ -116,6 +131,17 @@ export async function GET(req: Request) {
       log.push({ code: exam.code, ok: false, err: "budget" });
       continue;
     }
+    // Stamp the attempt FIRST so a timeout, parse failure or empty result
+    // still moves this exam to the back of the staleness queue. Raw SQL on
+    // purpose: prisma.exam.update() would also bump Exam.updatedAt, which
+    // is the sitemap lastModified for every exam URL — "changed today" on
+    // ~30 exams/day is the spam signal the 25 Aug honesty pass removed.
+    await prisma
+      .$executeRaw`UPDATE "Exam" SET "refreshAttemptedAt" = NOW() WHERE id = ${exam.id}`
+      .catch(() => {});
+    // Charge the run budget whether the call succeeds or fails — a failed
+    // web-search call costs the same tokens.
+    spent += COST_PER_EXAM_USD;
     try {
       // Web search is enabled in the daily cron so refresh runs always
       // surface the freshest official notifications. Each search bumps
@@ -139,7 +165,6 @@ export async function GET(req: Request) {
       // cited URLs. Students can still browse history via the archive page.
       const w = await writeExamInfo(prisma, exam.id, info);
       log.push({ code: exam.code, ok: true, news: w.news, dates: w.dates });
-      spent += COST_PER_EXAM_USD;
     } catch (err) {
       log.push({ code: exam.code, ok: false, err: (err as Error).message });
     }

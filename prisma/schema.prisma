@@ -167,6 +167,11 @@ model Exam {
   // ISO state code for STATE_LEVEL exams (TN, KA, MH, UP, ...). Null for
   // national/central exams. Drives the StatePicker grouping.
   state             String?
+  // Last time refresh-exam-data ATTEMPTED this exam (6 Sep 2026) — stamped
+  // on every attempt incl. zero-news and parse failures. Staleness ordering
+  // uses max(this, last generated news) so an exam that returns nothing
+  // no longer sits at the head of the queue and gets re-queried 3x/day.
+  refreshAttemptedAt DateTime?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
@@ -501,6 +506,28 @@ model WeaknessMap {
 
   @@unique([userId, examId, topicId])
   @@index([userId, examId])
+}
+
+// One row per Anthropic call (6 Sep 2026) — the spend ledger behind
+// /admin/ai-spend. feature = "tutor" | "ask" | "exam-info" | "vacancies" |
+// "current-affairs" | "phase-article" | "daily-brief" | "mock-adaptive" | …
+// costUsd is estimated from list prices incl. $0.01 per web search.
+model AiUsage {
+  id               String   @id @default(cuid())
+  feature          String
+  ref              String?
+  model            String
+  inputTokens      Int
+  outputTokens     Int
+  cacheWriteTokens Int      @default(0)
+  cacheReadTokens  Int      @default(0)
+  webSearches      Int      @default(0)
+  costUsd          Float
+  latencyMs        Int?
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([feature, createdAt])
 }
 
 model ChatSession {
@@ -1872,6 +1899,10 @@ model ExamEligibility {
   officialName   String? // e.g. "Staff Selection Commission (SSC)"
   generatedAt    DateTime @default(now())
   generatedBy    String?
+  // Last refresh-vacancies ATTEMPT (6 Sep 2026), stamped before the call so
+  // a failing exam moves to the back of the rotation instead of being
+  // re-picked every day (generatedAt only moves on success).
+  vacanciesAttemptedAt DateTime?
 
   exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
 

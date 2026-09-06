@@ -46,6 +46,7 @@ Rules:
 - The nudge must NOT be generic ("you can do it!"). Tie it to something specific from their data.`;
 
   const { response } = await callClaude({
+    feature: "coach-weekly",
     system: systemBlocks,
     messages: [{ role: "user", content: userPrompt }],
     maxTokens: TOKEN_LIMITS.coach,

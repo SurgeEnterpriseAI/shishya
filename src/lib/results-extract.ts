@@ -62,6 +62,7 @@ export async function extractResults(opts?: { days?: number; cap?: number }): Pr
     let ex: Extraction;
     try {
       const res = await callClaude({
+        feature: "results-extract",
         system: cachedSystem(
           `You classify and structure Indian exam-result announcements for Shishya (a free exam-prep platform). Given a news item about an exam, respond with ONLY JSON:
 {

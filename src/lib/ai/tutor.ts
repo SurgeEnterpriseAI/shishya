@@ -10,6 +10,7 @@
 // up your weak topics…" while we work.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { anthropic, MODEL, cachedSystem, TOKEN_LIMITS } from "./client";
 import {
   PLATFORM_PERSONA,
@@ -118,6 +119,7 @@ Skip if no clear next step.`;
       messages,
       tools: ctx ? tutorTools : undefined,
     });
+    recordAiUsage(ctx ? "tutor" : "tutor-anon", response, { model: MODEL, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
 
     // Append the assistant message to the conversation history (full content blocks
     // — tool_use blocks need to be carried forward so tool_result can reference them).
@@ -133,18 +135,38 @@ Skip if no clear next step.`;
     }
 
     if (toolTurns >= MAX_TOOL_TURNS) {
-      // Soft-cap: tell the model to wrap up.
+      // Soft-cap: tell the model to wrap up. The API requires a tool_result
+      // for every tool_use in the previous assistant turn, so answer each
+      // pending tool call with an error result (a bare text message here
+      // was a guaranteed 400 — "Something went wrong" for the student).
+      const pending = response.content.filter(
+        (b): b is Anthropic.Messages.ToolUseBlock => b.type === "tool_use",
+      );
       messages.push({
         role: "user",
-        content: "Tool budget exhausted. Answer the student now using what you already know.",
+        content: [
+          ...pending.map((tu) => ({
+            type: "tool_result" as const,
+            tool_use_id: tu.id,
+            is_error: true,
+            content: "Tool budget exhausted — answer the student now using what you already know.",
+          })),
+          { type: "text" as const, text: "Tool budget exhausted. Answer the student now using what you already know." },
+        ],
       });
-      // One last call without tools to force a text answer.
+      // One last call that forbids further tool use to force a text
+      // answer. `tools` stays in the request so the cached prefix
+      // (tools → system) is byte-identical to the loop's requests and the
+      // call is a cache HIT; omitting tools re-wrote ~4k tokens per wrap.
       const wrap = await anthropic.messages.create({
         model: MODEL,
         max_tokens: TOKEN_LIMITS.tutor,
         system: systemBlocks,
         messages,
+        tools: tutorTools,
+        tool_choice: { type: "none" },
       });
+      recordAiUsage("tutor-wrap", wrap, { model: MODEL, ref: input.syllabus?.examCode ?? null });
       for (const block of wrap.content) {
         if (block.type === "text") finalText += (finalText ? "\n" : "") + block.text;
       }

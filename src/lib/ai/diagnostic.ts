@@ -60,6 +60,7 @@ Rules:
 - Be honest. If the score is low, say so kindly and frame the path forward.`;
 
   const { response, stats } = await callClaude({
+    feature: "diagnostic",
     system: systemBlocks,
     messages: [{ role: "user", content: userPrompt }],
     maxTokens: TOKEN_LIMITS.diagnostic,

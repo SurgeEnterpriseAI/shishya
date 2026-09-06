@@ -166,8 +166,12 @@ async function llmAdaptive(input: GenerateMockInput): Promise<GenerateMockOutput
   };
 
   const systemBlocks = cachedSystem(PLATFORM_PERSONA, ANSWER_FORMAT_RULES, syllabusBlock(syllabus));
-  // Keep candidate pool compact — top 200 by relevance (weakest topics first)
-  const pool = availableQuestions.slice(0, 200);
+  // Compact, weakness-weighted candidate pool (6 Sep 2026). The old
+  // "top 200" was really the first 200 rows of an unsorted query — 4,400
+  // uncached tokens per call carrying no information a weighted sampler
+  // lacks. Now: weakest topics get the most slots, every topic keeps a
+  // difficulty spread, and the pool is capped at 60 lines (~1,300 tokens).
+  const pool = compactPool(availableQuestions, studentState.weaknesses, Math.min(200, Math.max(60, request.questionCount * 2)));
 
   const userPrompt = `${studentStateBlock(studentState)}
 
@@ -190,6 +194,8 @@ Rules:
 - Exactly ${request.questionCount} unique ids from the pool. No invented ids.`;
 
   const { response } = await callClaude({
+    feature: "mock-adaptive",
+    ref: syllabus.examCode,
     system: systemBlocks,
     messages: [{ role: "user", content: userPrompt }],
     maxTokens: TOKEN_LIMITS.generator,
@@ -223,7 +229,9 @@ async function llmFromUserRequest(input: GenerateMockInput): Promise<GenerateMoc
   };
 
   const systemBlocks = cachedSystem(PLATFORM_PERSONA, ANSWER_FORMAT_RULES, syllabusBlock(syllabus));
-  const pool = availableQuestions.slice(0, 200);
+  // Free-form requests may target topics outside the weakness list, so
+  // keep a broader (but still bounded) pool here.
+  const pool = availableQuestions.slice(0, 120);
 
   const userPrompt = `${studentStateBlock(studentState)}
 
@@ -246,6 +254,8 @@ Return STRICT JSON:
 Only use ids from the pool.`;
 
   const { response } = await callClaude({
+    feature: "mock-user-request",
+    ref: syllabus.examCode,
     system: systemBlocks,
     messages: [{ role: "user", content: userPrompt }],
     maxTokens: TOKEN_LIMITS.generator,
@@ -265,6 +275,50 @@ Only use ids from the pool.`;
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Weakness-weighted candidate pool for the LLM picker. Topics are ranked by
+ * the student's mastery (weakest first, unknown topics last); the weakest
+ * 5 topics get at least 6 slots each, the next 10 get 2, the rest 1, then
+ * any remaining slots are filled round-robin weakest-first so the model
+ * always sees every topic with a difficulty spread. Order within a topic
+ * is preserved.
+ */
+export function compactPool(
+  available: QuestionRef[],
+  weaknesses: Array<{ topicCode: string }>,
+  max: number,
+): QuestionRef[] {
+  if (available.length <= max) return available;
+  const rank = new Map<string, number>();
+  weaknesses.forEach((w, i) => { if (!rank.has(w.topicCode)) rank.set(w.topicCode, i); });
+  const byTopic = new Map<string, QuestionRef[]>();
+  for (const q of available) {
+    const arr = byTopic.get(q.topicCode) ?? [];
+    arr.push(q);
+    byTopic.set(q.topicCode, arr);
+  }
+  const topics = [...byTopic.keys()].sort((a, b) => (rank.get(a) ?? 1e9) - (rank.get(b) ?? 1e9));
+  const quota = (i: number) => (i < 5 ? 6 : i < 15 ? 2 : 1);
+  const out: QuestionRef[] = [];
+  topics.forEach((t, i) => {
+    const arr = byTopic.get(t)!;
+    out.push(...arr.splice(0, Math.min(quota(i), arr.length, Math.max(0, max - out.length))));
+  });
+  let added = true;
+  while (out.length < max && added) {
+    added = false;
+    for (const t of topics) {
+      const arr = byTopic.get(t)!;
+      if (arr.length === 0) continue;
+      out.push(arr.shift()!);
+      added = true;
+      if (out.length >= max) break;
+    }
+  }
+  return out;
+}
+
 function pickByDifficulty(
   pool: QuestionRef[],
   count: number,

@@ -22,6 +22,7 @@
 // — adds zero latency to the post itself.
 
 import { anthropic, MODEL } from "./client";
+import { recordAiUsage } from "./usage";
 import { pickSyntheticHandle } from "@/data/synthetic-handles";
 
 const SYSTEM_PROMPT = `You are writing a single short discussion-reply on an Indian exam-prep platform.
@@ -103,6 +104,8 @@ export async function generateAiReply(ctx: ReplyContext): Promise<AiReply | null
         },
       ],
     });
+
+    recordAiUsage("discussion-reply", res, { model: MODEL });
 
     const block = res.content.find((b) => b.type === "text");
     if (!block || block.type !== "text") return null;

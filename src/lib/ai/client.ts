@@ -2,6 +2,7 @@
 // All AI services route through this to ensure consistent caching, logging, and config.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { recordAiUsage, PRICING } from "@/lib/ai/usage";
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) {
@@ -53,6 +54,10 @@ export async function callClaude(opts: {
   tools?: Anthropic.Messages.Tool[];
   toolChoice?: Anthropic.Messages.ToolChoice;
   metadata?: Record<string, string>;
+  /** Spend-ledger label (see ai/usage.ts). Defaults to "other". */
+  feature?: string;
+  /** Optional reference for the ledger row (exam code, user id …). */
+  ref?: string | null;
 }) {
   const model = opts.model ?? MODEL;
   const start = Date.now();
@@ -80,6 +85,7 @@ export async function callClaude(opts: {
     }
   }
   const latencyMs = Date.now() - start;
+  recordAiUsage(opts.feature ?? "other", response, { model, ref: opts.ref, latencyMs });
 
   return {
     response,
@@ -144,12 +150,7 @@ export interface CallStats {
   cacheReadTokens: number;
 }
 
-/** Approximate USD pricing per 1M tokens, keyed by tier substring in the model id. */
-const PRICING: Record<string, { in: number; out: number; cacheW: number; cacheR: number }> = {
-  haiku: { in: 1.0, out: 5.0, cacheW: 1.25, cacheR: 0.1 },
-  sonnet: { in: 3.0, out: 15.0, cacheW: 3.75, cacheR: 0.3 },
-  opus: { in: 15.0, out: 75.0, cacheW: 18.75, cacheR: 1.5 },
-};
+/** Approximate USD pricing per 1M tokens — single source of truth is PRICING in ai/usage.ts. */
 
 /** Estimate USD cost of one call from its stats. Used for spend observability. */
 export function estimateCostUsd(stats: CallStats): number {

@@ -52,6 +52,7 @@ Style for stepByStep:
 - ${detailLevel === "BRIEF" ? "2–3 steps max." : detailLevel === "DEEP" ? "Up to 8 steps; include intuition." : "4–6 steps."}`;
 
   const { response } = await callClaude({
+    feature: "explain",
     system: systemBlocks,
     messages: [{ role: "user", content: userPrompt }],
     maxTokens: TOKEN_LIMITS.explainer,

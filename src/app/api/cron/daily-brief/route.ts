@@ -21,6 +21,7 @@ export const dynamic = "force-dynamic";
 
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { generateMock } from "@/lib/ai";
 import { getStudentState } from "@/lib/db/student-state";
 import { getSyllabusContext } from "@/lib/db/syllabus";
@@ -77,27 +78,71 @@ export async function GET(req: Request) {
   };
 
   const briefDate = todayUtcMidnight();
+  const started = Date.now();
 
-  // Active enrollments — only generate for users who have actually used the
-  // platform (taken ≥1 mock or had ≥1 chat session). Saves spend on dormant
-  // accounts that aren't going to open the dashboard tomorrow.
-  const enrollments = await prisma.enrollment.findMany({
-    where: { active: true },
-    include: {
-      exam: { select: { id: true, code: true, shortName: true } },
-      user: {
-        select: {
-          id: true,
-          _count: { select: { attempts: true, chatSessions: true } },
+  // WHO GETS A BRIEF (rewritten 6 Sep 2026). The old loop walked EVERY
+  // enrollment in table order with no per-day skip and was killed at
+  // maxDuration — so the same 8 accounts (all May signups, most never
+  // seen since) got 14-15 briefs every night while 228 active enrolled
+  // students got none. Now:
+  //   1. only users active in the last 14 days (page view or attempt);
+  //   2. skip (user, exam) pairs that already have today's brief;
+  //   3. never-briefed users first, then longest-since-last-brief, then
+  //      most recently active — so the budget rotates across the whole
+  //      active base instead of re-briefing the same heads every night;
+  //   4. hard time guard so the run ends cleanly with its report.
+  const ACTIVE_WINDOW_MS = 14 * 24 * 3600_000;
+  const since = new Date(Date.now() - ACTIVE_WINDOW_MS);
+  const activeRows = await prisma.$queryRaw<{ userId: string; last: Date }[]>`
+    SELECT "userId", MAX(t) AS last FROM (
+      SELECT "userId", MAX("createdAt") t FROM "AnalyticsEvent"
+        WHERE "userId" IS NOT NULL AND "createdAt" >= ${since} GROUP BY 1
+      UNION ALL
+      SELECT "userId", MAX("startedAt") t FROM "Attempt" WHERE "startedAt" >= ${since} GROUP BY 1
+    ) x GROUP BY 1`;
+  const lastActive = new Map(activeRows.map((r) => [r.userId, new Date(r.last).getTime()]));
+  const recentBriefs = await prisma.dailyBrief.findMany({
+    where: { createdAt: { gte: new Date(Date.now() - 30 * 24 * 3600_000) } },
+    select: { userId: true, examId: true, briefDate: true },
+  });
+  const briefedToday = new Set(
+    recentBriefs.filter((b) => b.briefDate.getTime() === briefDate.getTime()).map((b) => `${b.userId}:${b.examId}`),
+  );
+  // Last brief per user (30-day window) — never-briefed users sort first,
+  // then the longest-unbriefed, so the whole active base rotates.
+  const lastBrief = new Map<string, number>();
+  for (const b of recentBriefs) {
+    const t = b.briefDate.getTime();
+    if ((lastBrief.get(b.userId) ?? 0) < t) lastBrief.set(b.userId, t);
+  }
+
+  const enrollments = (
+    await prisma.enrollment.findMany({
+      where: { active: true, userId: { in: [...lastActive.keys()] } },
+      include: {
+        exam: { select: { id: true, code: true, shortName: true } },
+        user: {
+          select: {
+            id: true,
+            _count: { select: { attempts: true, chatSessions: true } },
+          },
         },
       },
-    },
-  });
+    })
+  )
+    .filter((e) => !briefedToday.has(`${e.userId}:${e.examId}`))
+    .sort(
+      (a, b) =>
+        (lastBrief.get(a.userId) ?? 0) - (lastBrief.get(b.userId) ?? 0) ||
+        (lastActive.get(b.userId) ?? 0) - (lastActive.get(a.userId) ?? 0),
+    );
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
+  const TIME_BUDGET_MS = 240_000;
 
   for (const enr of enrollments) {
     if (spendUsd(stats) >= TOTAL_BUDGET_USD) break;
+    if (Date.now() - started > TIME_BUDGET_MS) break;
     stats.enrollmentsScanned += 1;
 
     // Skip dormant users — fewer than 1 attempt and 0 chat sessions.
@@ -190,6 +235,7 @@ Output ONLY the note, no quotes, no formatting markers.`;
       stats.out += response.usage.output_tokens;
       stats.cacheW += response.usage.cache_creation_input_tokens ?? 0;
       stats.cacheR += response.usage.cache_read_input_tokens ?? 0;
+      recordAiUsage("daily-brief", response, { model: MODEL, ref: enr.exam.code });
 
       const reflection = response.content
         .filter((b): b is Anthropic.TextBlock => b.type === "text")
@@ -263,6 +309,9 @@ Output ONLY the note, no quotes, no formatting markers.`;
   return Response.json({
     ok: true,
     briefDate: briefDate.toISOString().slice(0, 10),
+    activeUsers: lastActive.size,
+    queued: enrollments.length,
+    elapsedMs: Date.now() - started,
     enrollmentsScanned: stats.enrollmentsScanned,
     skipped: stats.skipped,
     briefsCreated: stats.briefsCreated,
