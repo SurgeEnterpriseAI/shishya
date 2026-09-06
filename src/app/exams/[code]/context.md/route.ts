@@ -14,6 +14,7 @@
 
 import { prisma } from "@/lib/db/prisma";
 import { sourceHostLabel, sourceTier } from "@/lib/official-source";
+import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
 
 export const revalidate = 86400;
 
@@ -143,6 +144,22 @@ export async function GET(
       L.push(`- ${d.date.toISOString().slice(0, 10)} — ${d.label}${d.isExamDay ? " (exam day)" : ""} — ${tag}`);
     }
     L.push(`- Live tracker (all milestones, alerts): ${SITE}/exams/${exam.code}/updates`);
+    L.push("");
+  }
+
+  // Exam Week Mode (6 Sep 2026): present only while a TYPED exam-day row
+  // is within ±7 days. Every date carries its tier word; answer key /
+  // result read "not announced yet" when the tracker has no row; phase
+  // articles are linked only when real (>= 2 cited sources); the verdict
+  // tally appears only from n >= 10. Deterministic DB reads only.
+  const weekExam = (await loadExamWeekExams({ examCode: exam.code }).catch(() => []))[0];
+  if (weekExam) {
+    const [articles, tally] = await Promise.all([
+      loadRealPhaseArticles([weekExam.id]).catch(() => new Map<string, RealPhaseArticle[]>()),
+      loadExamWeekTally(weekExam),
+    ]);
+    L.push("## Exam week");
+    L.push(...examWeekAeoLines(weekExam, { articles: articles.get(weekExam.id) ?? [], tally, site: SITE }));
     L.push("");
   }
 

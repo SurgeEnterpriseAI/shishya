@@ -20,16 +20,24 @@
 import type { PrismaClient } from "@prisma/client";
 import type { ExamInfoResult } from "@/lib/ai/exam-info";
 import { istDayNumber } from "@/lib/exam-phase";
+import { examWeekUrls, submitIndexNow } from "@/lib/indexnow";
 
 export const GEN_SOURCE = "ai-generated:claude";
 const MS_PER_DAY = 86_400_000;
+// Exam Week Mode (6 Sep 2026): a write for an exam whose exam day is within
+// this many days (either side) re-submits its hub / tracker / cutoff URLs
+// to IndexNow immediately — the weekly sitemap ping is too slow that week.
+const EXAM_WEEK_DAYS = 7;
 
-type Db = Pick<PrismaClient, "examNewsItem" | "examImportantDate">;
+type Db = Pick<PrismaClient, "examNewsItem" | "examImportantDate" | "exam">;
 
 export interface WriteResult {
   news: number;
   dates: number;
   keptOfficial: number;
+  /** True when the exam is inside its exam week and the URL set was
+   *  handed to IndexNow (fire-and-forget; acceptance is not awaited). */
+  indexNow?: boolean;
 }
 
 export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult, now: Date = new Date()): Promise<WriteResult> {
@@ -103,5 +111,31 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
     }
   }
 
-  return { news: info.news.length, dates: info.dates.length, keptOfficial };
+  // ── exam week → IndexNow ────────────────────────────────────────────
+  // Only when something was actually written, and only for an exam with a
+  // live TYPED exam-day row within ±7 days (legacy untyped rows never
+  // trigger). Fire-and-forget: the cron loop's next Claude call gives the
+  // ping time to complete; the daily ?scope=examweek IndexNow cron is the
+  // safety net for the last exam of a run.
+  let indexNow = false;
+  if (info.news.length > 0 || info.dates.length > 0) {
+    const todayIst = istDayNumber(now);
+    const from = new Date((todayIst - EXAM_WEEK_DAYS) * MS_PER_DAY);
+    const to = new Date((todayIst + EXAM_WEEK_DAYS + 1) * MS_PER_DAY);
+    const near = await db.examImportantDate
+      .findFirst({
+        where: { examId, archivedAt: null, kind: "EXAM", date: { gte: from, lt: to } },
+        select: { id: true },
+      })
+      .catch(() => null);
+    if (near) {
+      const exam = await db.exam.findUnique({ where: { id: examId }, select: { code: true } }).catch(() => null);
+      if (exam?.code) {
+        indexNow = true;
+        void submitIndexNow(examWeekUrls(exam.code));
+      }
+    }
+  }
+
+  return { news: info.news.length, dates: info.dates.length, keptOfficial, indexNow };
 }

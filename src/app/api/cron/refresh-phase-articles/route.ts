@@ -1,8 +1,13 @@
 // GET /api/cron/refresh-phase-articles — Vercel cron entry.
 //
-// Runs every 2 hours (per vercel.json). Finds every (examId, phase)
-// pair currently in a phase window, scrapes free public sources,
-// summarises via Claude, upserts the article.
+// Runs daily at 07:00 IST (per vercel.json). Finds every (examId, phase)
+// pair currently in an exam-week phase (typed tracker rows only), scrapes
+// free public sources, summarises via Claude, and writes a new article
+// version ONLY when the result is real (>= 2 cited sources, no
+// placeholder) — otherwise the previous article is kept untouched.
+// Per-exam daily caps: LIVE 2, REACTIONS 1, CHECKLIST 1. LIVE is only
+// generated from 10:00 IST, so a second daily run after the first shift
+// (e.g. 13:30 IST) is what actually produces exam-day coverage.
 //
 // Auth: Bearer ${CRON_SECRET}. Vercel cron injects this header
 // automatically; manual invocations need to include it explicitly.

@@ -2,9 +2,10 @@
 //
 // Highest-traffic moment for any exam: students step out of the
 // centre, grab their phone, and Google "{exam} difficulty today".
-// This route is the canonical landing for that intent. The Stage-2
-// scraping pipeline rewrites the body every 2 hours on exam day so
-// the "Updated X min ago" badge always shows fresh time.
+// This route is the canonical landing for that intent. The phase-article
+// cron compiles the body from public student discussion during the exam
+// window; nothing is published until at least two real sources exist, so
+// the page never claims coverage it does not have.
 
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
@@ -24,11 +25,11 @@ export async function generateMetadata({
   if (!exam) return { title: "Exam not found — Shishya" };
   return {
     title: `${exam.shortName} live analysis — difficulty, shift-wise, answer key | Shishya`,
-    description: `Live ${exam.name} coverage — students' first reactions, shift-by-shift difficulty, leaked answer-keys. Refreshed every 2 hours.`,
+    description: `Live ${exam.name} coverage — students' first reactions and shift-by-shift difficulty, compiled from public discussion during the exam window.`,
     alternates: { canonical: `https://shishya.in/exams/${code}/live` },
     openGraph: {
       title: `${exam.shortName} — Live exam-day analysis`,
-      description: `Live ${exam.name} difficulty, shift-by-shift, answer keys. Refreshed every 2 hours.`,
+      description: `Live ${exam.name} difficulty, shift-by-shift, from public student discussion.`,
       url: `https://shishya.in/exams/${code}/live`,
       type: "article",
     },

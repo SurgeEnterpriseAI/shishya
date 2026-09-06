@@ -105,6 +105,7 @@ RULES:
 1b. SOURCE QUALITY: for every "official" date, work hardest to cite the CONDUCTING BODY'S OWN website (their notice/PDF/press page — gov.in / nic.in / the official portal given in the input). Search it directly (e.g. site:ssc.gov.in). The platform labels conducting-body citations "OFFICIAL" and everything else (newspapers, testbook/adda247-style coaching portals) merely "reported" — so a coaching-site URL is strictly weaker evidence even for the same fact. Cite a secondary source only when the official page genuinely cannot be found, and prefer national newspapers over coaching portals.
 2. Prefer ABSOLUTE dates ("date": "YYYY-MM-DD") whenever you know them (official or expected). If only a rough window is known, still give your best single date and say "(expected)" in the label; put the window in "notes" ("usually mid-June to early July").
 3. Give each date a "kind" from exactly this list: NOTIFICATION, APPLICATION_START, APPLICATION_END, CORRECTION_WINDOW, ADMIT_CARD, EXAM, ANSWER_KEY, RESULT, INTERVIEW, OTHER. Set "isExamDay": true only on EXAM rows. Multi-stage exams (Tier 1/2, Prelims/Mains) get one EXAM row per stage with the stage in the label.
+3b. ANSWER_KEY rows are the strictest of all: emit an ANSWER_KEY row ONLY when the conducting body has actually announced or published the answer key (provisional or final) for that stage and you can cite the URL in "source" with "confidence": "official". NEVER estimate an answer-key date from previous cycles, coaching-site guesses or "usually within a week" patterns — an estimated key date is worse than no row. When no key has been published for a stage, emit NO ANSWER_KEY row for it and instead append the exact line "no key published for this stage" to that EXAM row's "notes".
 4. Cover the CURRENT cycle end to end: notification → application window → admit card → exam day(s) → answer key → result. Include recent past milestones (up to ~120 days back) so the tracker shows "done" steps, and upcoming ones up to ~18 months ahead when the next cycle's notification is expected.
 5. News: each item title MUST be exam-specific ("Tier 1 admit card window confirmed by SSC"), body 1-3 sentences, and "source" = the real URL when you found one (null otherwise). Recent (last 60 days) news only. If nothing genuinely new happened, return fewer items — never filler.
 6. If the exam is low-coverage and you don't have confident detail, return shorter arrays (1-2 news, 3-5 expected dates) rather than padding.
@@ -231,10 +232,47 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
 
   return {
     news,
-    dates,
+    dates: enforceAnswerKeyRule(dates),
     inputTokens: response.usage.input_tokens,
     outputTokens: response.usage.output_tokens,
   };
+}
+
+/** The notes line an EXAM row carries when no answer key has been
+ *  published for that stage (rule 3b). Exported so the tracker / exam-week
+ *  surfaces can recognise it. */
+export const NO_KEY_PUBLISHED_NOTE = "no key published for this stage";
+
+// An EXAM row this far in the past normally HAS a published key the model
+// merely failed to cite; stamping "no key published" on it would be a
+// false statement, so the note is only added to recent / upcoming stages.
+const NO_KEY_NOTE_MAX_DAYS_AGO = 45;
+
+/**
+ * Rule 3b, enforced in code so the tracker can never carry an estimated
+ * answer-key date even if the model disobeys (6 Sep 2026, Exam Week Mode):
+ *   • ANSWER_KEY rows survive only when "official" (which the parser above
+ *     already ties to a citable URL + absolute date); every "expected"
+ *     ANSWER_KEY row is dropped — the tracker prints "not announced yet".
+ *   • Each recent / upcoming EXAM stage with no surviving key row between
+ *     it and the next stage gets the "no key published for this stage"
+ *     notes line (once).
+ */
+export function enforceAnswerKeyRule(dates: ImportantDate[]): ImportantDate[] {
+  const kept = dates.filter((d) => d.kind !== "ANSWER_KEY" || (d.confidence === "official" && !!d.source));
+  const keyOffsets = kept.filter((d) => d.kind === "ANSWER_KEY").map((d) => d.daysFromNow);
+  const stages = kept.filter((d) => d.kind === "EXAM").sort((a, b) => a.daysFromNow - b.daysFromNow);
+  for (let i = 0; i < stages.length; i++) {
+    const stage = stages[i];
+    if (stage.daysFromNow < -NO_KEY_NOTE_MAX_DAYS_AGO) continue;
+    const next = stages[i + 1];
+    const hasKey = keyOffsets.some((k) => k >= stage.daysFromNow && (!next || k < next.daysFromNow));
+    if (hasKey) continue;
+    const notes = (stage.notes ?? "").trim();
+    if (notes.toLowerCase().includes(NO_KEY_PUBLISHED_NOTE)) continue;
+    stage.notes = (notes ? `${notes} · ${NO_KEY_PUBLISHED_NOTE}` : NO_KEY_PUBLISHED_NOTE).slice(0, 600);
+  }
+  return kept;
 }
 
 function clampInt(v: any, lo: number, hi: number): number {
