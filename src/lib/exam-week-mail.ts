@@ -185,7 +185,9 @@ export async function checklistLink(examId: string, code: string): Promise<{ url
  *  exam-day rows of the window itself (those are the exam, not "next"). */
 export function nextTrackerRows(timeline: TimelineRow[], fromDay: string, exclude: Iterable<string>, n = 2): TimelineRow[] {
   const skip = new Set(exclude);
-  return timeline.filter((r) => !skip.has(r.id) && istDay(r.date) >= fromDay).slice(0, n);
+  // Never list another EXAM row as "after the exam" — on the coach-plan
+  // path (tracker disagrees) that would print a contradicting exam date.
+  return timeline.filter((r) => !skip.has(r.id) && r.kind !== "EXAM" && istDay(r.date) >= fromDay).slice(0, n);
 }
 
 /** First row of `kind` dated on/after `fromDay`; null when the tracker

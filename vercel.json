@@ -74,6 +74,14 @@
       "schedule": "0 2 * * 1"
     },
     {
+      "path": "/api/cron/indexnow?scope=examweek",
+      "schedule": "45 2 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-phase-articles",
+      "schedule": "30 6 * * *"
+    },
+    {
       "path": "/api/cron/evening-nudge",
       "schedule": "0 15 * * *"
     },

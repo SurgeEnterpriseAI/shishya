@@ -744,7 +744,7 @@ model ExamImportantDate {
 //   CHECKLIST  (T-7 to T-1)  — last-minute revision, must-know topics,
 //                              what to carry to the exam centre
 //   LIVE       (T-0)         — exam day: difficulty so far, shift-by-
-//                              shift analysis, leaked answer keys
+//                              shift analysis, official answer keys
 //   REACTIONS  (T+1 to T+3)  — student verdict, expected cutoff,
 //                              official key analysis, "what did you
 //                              think of Q34?" threads

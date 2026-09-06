@@ -155,11 +155,13 @@ export async function GET(req: Request) {
             AND t."sentAt" > NOW() - INTERVAL '20 hours'
         )
         AND (
-          EXISTS (
+          ${why === "tracker"
+            ? Prisma.sql`EXISTS (
             SELECT 1 FROM "Enrollment" en
             WHERE en."userId" = u.id AND en."examId" = ${meta.examId} AND en.active = TRUE
-          )
-          OR EXISTS (
+          ) OR`
+            : Prisma.empty}
+          EXISTS (
             SELECT 1 FROM "CoachPlan" cp
             WHERE cp."userId" = u.id AND cp."examId" = ${meta.examId}
               AND (cp."examDate" + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' - INTERVAL '1 day')::date

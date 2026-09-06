@@ -5,17 +5,25 @@
 // exam day is in focus and WHAT phase today is in IST:
 //
 //   none      no exam day within [-7, +7] days
-//   week      2..7 days before the exam
+//   week      2..7 days before the (first) exam day
 //   eve       the day before
 //   today-am  exam day, before 18:00 IST
 //   today-pm  exam day, 18:00 IST onwards ("how was the paper?")
 //   window    the exam is a multi-day/multi-shift window and today is inside it
 //   post      1..7 days after the (last) exam day
 //
-// Honesty rules baked in: the focus row keeps its source tier (official /
-// reported / expected) and callers must print it next to every date; the
-// answer-key / result rows are only ever what the tracker holds — callers
-// print "not announced yet" when null, never a guessed date.
+// Honesty rules baked in: only TYPED rows count (kind set) — untyped legacy
+// seed rows never open a phase; the focus row keeps its source tier
+// (official / reported / expected) and callers must print it next to every
+// date; answer-key / result rows are only ever what the tracker holds —
+// callers print "not announced yet" when null, never a guessed date.
+//
+// Window semantics (review fix, 6 Sep): a window is a chain of exam-day rows
+// no more than 14 days apart, built from ALL exam days (not just those near
+// today), so a 12–25 Sep CBT window stays "window" on its 8th day instead of
+// turning back into "week/eve" for the last row. Inside a window the FOCUS
+// is the latest exam day on or before today — the day students can rate —
+// never a future row.
 
 import { buildTimeline, type TimelineInput, type TimelineRow, type SourceTier } from "@/lib/exam-timeline";
 
@@ -23,20 +31,21 @@ export type ExamWeekPhase = "none" | "week" | "eve" | "today-am" | "today-pm" | 
 
 export interface ExamWeekState {
   phase: ExamWeekPhase;
-  /** The exam-day row in focus (null when phase === "none"). */
+  /** The exam-day row in focus (null when phase === "none"). Before the
+   *  window: its first day. Inside/after: the latest exam day ≤ today. */
   focus: TimelineRow | null;
-  /** IST calendar date of the focus row, "YYYY-MM-DD". */
+  /** IST calendar date of the focus row, "YYYY-MM-DD" — the poll's key. */
   focusDay: string | null;
   tier: SourceTier | null;
-  /** Days from today (IST) to the focus day: positive = upcoming, negative = past. */
+  /** Days from today (IST) to the window's FIRST day: positive = upcoming, negative = past. */
   daysTo: number | null;
-  /** Last exam-day date of a multi-day window (same as focus for single-day exams). */
+  /** Last exam-day row of the window (same as focus for single-day exams). */
   windowEnd: TimelineRow | null;
-  /** All exam-day rows that form the window (focus first). */
+  /** All exam-day rows that form the window, earliest first. */
   windowDays: TimelineRow[];
-  /** Nearest ANSWER_KEY row on/after the focus day, if the tracker has one. */
+  /** Nearest ANSWER_KEY row on/after the window's first day, if the tracker has one. */
   answerKey: TimelineRow | null;
-  /** Nearest RESULT row on/after the focus day, if the tracker has one. */
+  /** Nearest RESULT row on/after the window's first day, if the tracker has one. */
   result: TimelineRow | null;
   /** Next exam-day row for this exam after the window (e.g. Tier 2 / Mains). */
   nextStage: TimelineRow | null;
@@ -44,6 +53,8 @@ export interface ExamWeekState {
 
 const IST_OFFSET_MS = 330 * 60_000;
 const DAY_MS = 86_400_000;
+const WINDOW_GAP_DAYS = 14;
+const NEAR_DAYS = 7;
 
 /** "YYYY-MM-DD" of an instant in IST. */
 export function istDay(d: Date): string {
@@ -61,9 +72,15 @@ function dayDiff(fromDay: string, toDay: string): number {
 
 const TIER_RANK: Record<SourceTier, number> = { official: 0, reported: 1, expected: 2 };
 
+const NONE: ExamWeekState = {
+  phase: "none", focus: null, focusDay: null, tier: null, daysTo: null,
+  windowEnd: null, windowDays: [], answerKey: null, result: null, nextStage: null,
+};
+
 /**
  * Compute the exam-week state from the exam's tracker rows.
- * @param rows        ExamImportantDate rows (archived rows must already be excluded)
+ * @param rows        ExamImportantDate rows (archived rows must already be excluded;
+ *                    untyped legacy rows are ignored here)
  * @param officialUrl the exam's conducting-body URL (ExamEligibility.officialUrl) — drives the tier
  * @param now         instant to evaluate at (tests pass a fixed date)
  */
@@ -72,59 +89,63 @@ export function computeExamWeekState(
   officialUrl?: string | null,
   now: Date = new Date(),
 ): ExamWeekState {
-  const timeline = buildTimeline(rows, now, officialUrl);
+  // Typed rows only: the May-2026 seed left untyped rows (kind null) that
+  // buildTimeline would otherwise promote to EXAM via isExamDay.
+  const typed = rows.filter((r) => typeof r.kind === "string" && r.kind.length > 0);
+  const timeline = buildTimeline(typed, now, officialUrl);
   const today = istDay(now);
   const examDays = timeline
-    .filter((r) => r.isExamDay || r.kind === "EXAM")
+    .filter((r) => r.kind === "EXAM")
     .map((r) => ({ row: r, day: istDay(r.date) }))
-    .sort((a, b) => a.day.localeCompare(b.day));
+    .sort((a, b) => a.day.localeCompare(b.day) || TIER_RANK[a.row.tier] - TIER_RANK[b.row.tier]);
+  if (examDays.length === 0) return NONE;
 
-  const none: ExamWeekState = {
-    phase: "none", focus: null, focusDay: null, tier: null, daysTo: null,
-    windowEnd: null, windowDays: [], answerKey: null, result: null, nextStage: null,
-  };
-  if (examDays.length === 0) return none;
-
-  // Candidate focus rows: exam days within [-7, +7] of today. Prefer the
-  // best tier, then the one nearest to today (upcoming before past on ties).
-  const candidates = examDays
-    .map((e) => ({ ...e, diff: dayDiff(today, e.day) }))
-    .filter((e) => e.diff >= -7 && e.diff <= 7);
-  if (candidates.length === 0) return none;
-  candidates.sort((a, b) =>
-    TIER_RANK[a.row.tier] - TIER_RANK[b.row.tier] ||
-    Math.abs(a.diff) - Math.abs(b.diff) ||
-    b.diff - a.diff,
-  );
-  // A window is a run of exam days no more than 14 days apart. Anchor the
-  // window on the EARLIEST candidate so "window" covers SSC-style CBTs.
-  const earliest = [...candidates].sort((a, b) => a.diff - b.diff)[0];
-  const windowDays: typeof examDays = [earliest];
+  // Chains: consecutive exam days ≤ 14 days apart form one window.
+  const chains: (typeof examDays)[] = [];
   for (const e of examDays) {
-    if (e.day <= earliest.day) continue;
-    const last = windowDays[windowDays.length - 1];
-    if (dayDiff(last.day, e.day) <= 14) windowDays.push(e);
-    else break;
+    const cur = chains[chains.length - 1];
+    if (cur && dayDiff(cur[cur.length - 1].day, e.day) <= WINDOW_GAP_DAYS) cur.push(e);
+    else chains.push([e]);
   }
-  const first = windowDays[0];
-  const last = windowDays[windowDays.length - 1];
-  const focus = candidates[0].row === first.row ? first : candidates[0];
+
+  // The relevant chain: one with any day within [-7, +7] of today. If several
+  // qualify (rare), prefer the one whose nearest day is best-tier, then nearest.
+  const scored = chains
+    .map((c) => {
+      const near = c
+        .map((e) => ({ e, diff: dayDiff(today, e.day) }))
+        .filter((x) => x.diff >= -NEAR_DAYS && x.diff <= NEAR_DAYS)
+        .sort((a, b) => TIER_RANK[a.e.row.tier] - TIER_RANK[b.e.row.tier] || Math.abs(a.diff) - Math.abs(b.diff) || b.diff - a.diff);
+      return { c, near: near[0] ?? null };
+    })
+    .filter((x) => x.near);
+  if (scored.length === 0) return NONE;
+  scored.sort((a, b) => TIER_RANK[a.near!.e.row.tier] - TIER_RANK[b.near!.e.row.tier] || Math.abs(a.near!.diff) - Math.abs(b.near!.diff));
+  const chain = scored[0].c;
+  const first = chain[0];
+  const last = chain[chain.length - 1];
   const daysTo = dayDiff(today, first.day);
   const daysAfterLast = dayDiff(last.day, today);
 
   let phase: ExamWeekPhase = "none";
-  if (daysTo >= 2 && daysTo <= 7) phase = "week";
+  let focus = first;
+  if (daysTo >= 2 && daysTo <= NEAR_DAYS) phase = "week";
   else if (daysTo === 1) phase = "eve";
-  else if (daysTo === 0) phase = istHour(now) >= 18 ? "today-pm" : "today-am";
-  else if (daysTo < 0 && today <= last.day) phase = "window";
-  else if (daysAfterLast >= 1 && daysAfterLast <= 7) phase = "post";
-  if (phase === "none") return none;
+  else if (daysTo <= 0 && today <= last.day) {
+    // Inside the window: focus = latest exam day on or before today.
+    focus = [...chain].reverse().find((e) => e.day <= today) ?? first;
+    phase = focus.day === today ? (istHour(now) >= 18 ? "today-pm" : "today-am") : "window";
+  } else if (daysAfterLast >= 1 && daysAfterLast <= NEAR_DAYS) {
+    phase = "post";
+    focus = last;
+  }
+  if (phase === "none") return NONE;
 
   const after = (kind: string) =>
     timeline
       .filter((r) => r.kind === kind && istDay(r.date) >= first.day)
       .sort((a, b) => a.date.getTime() - b.date.getTime())[0] ?? null;
-  const nextStage = examDays.find((e) => dayDiff(last.day, e.day) > 14)?.row ?? null;
+  const nextStage = examDays.find((e) => dayDiff(last.day, e.day) > WINDOW_GAP_DAYS)?.row ?? null;
 
   return {
     phase,
@@ -133,7 +154,7 @@ export function computeExamWeekState(
     tier: focus.row.tier,
     daysTo,
     windowEnd: last.row,
-    windowDays: windowDays.map((w) => w.row),
+    windowDays: chain.map((w) => w.row),
     answerKey: after("ANSWER_KEY"),
     result: after("RESULT"),
     nextStage,

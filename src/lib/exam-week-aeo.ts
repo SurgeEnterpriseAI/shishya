@@ -219,17 +219,25 @@ export function examWeekAeoLines(
       L.push(`- Status: exam day is today — ${dateTier(s.focus)}`);
       break;
     case "today-pm":
-      L.push(`- Status: the paper was held today — ${dateTier(s.focus)}`);
+      // An "expected" date is an estimate — never assert the paper was held.
+      L.push(
+        s.tier === "expected"
+          ? `- Status: expected exam day is today (estimate — the conducting body has not announced it; the paper may not have been held) — ${dateTier(s.focus)}`
+          : `- Status: the paper was held today — ${dateTier(s.focus)}`,
+      );
       break;
     case "window":
       L.push(`- Status: multi-day exam window in progress — ${dateTier(first)} to ${dateTier(last)}; today is inside the window`);
       break;
     case "post": {
       const ago = Math.max(1, Math.round((Date.parse(today + "T00:00:00Z") - Date.parse(last.day + "T00:00:00Z")) / DAY_MS));
+      const agoText = `${ago} day${ago === 1 ? "" : "s"} ago`;
       L.push(
-        multiDay
-          ? `- Status: exam window ended ${ago} day${ago === 1 ? "" : "s"} ago — ${dateTier(first)} to ${dateTier(last)}`
-          : `- Status: paper held ${ago} day${ago === 1 ? "" : "s"} ago — ${dateTier(last)}`,
+        s.tier === "expected"
+          ? `- Status: expected exam day was ${agoText} (estimate — not announced; whether the paper was held is unconfirmed) — ${dateTier(last)}`
+          : multiDay
+            ? `- Status: exam window ended ${agoText} — ${dateTier(first)} to ${dateTier(last)}`
+            : `- Status: paper held ${agoText} — ${dateTier(last)}`,
       );
       break;
     }
@@ -248,7 +256,7 @@ export function examWeekAeoLines(
     if (secs.length) L.push(`- Hardest section (self-reported): ${secs.map((x) => `${x.label} (${x.n})`).join(", ")}`);
   }
 
-  L.push(`- Category-wise cutoff — last cycle's official cutoff + this cycle's expected range: ${site}/exams/${ex.code}/cutoff`);
+  L.push(`- Category-wise indicative cutoff (estimate from score bands, NOT official; the official cutoff comes with the result):${site}/exams/${ex.code}/cutoff`);
   L.push(
     `- Exam tracker (every milestone with its source tier, free email alerts for official answer key / result): ${site}/exams/${ex.code}/updates · Hindi: ${site}/hi/exams/${ex.code}/updates · Telugu: ${site}/te/exams/${ex.code}/updates`,
   );

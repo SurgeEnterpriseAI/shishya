@@ -12,7 +12,7 @@ import { prisma } from "@/lib/db/prisma";
 import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
 import { istDay } from "@/lib/exam-week";
 
-export const revalidate = 86400; // daily
+export const revalidate = 3600; // hourly — the exam-week block flips phase within a day
 
 const SITE = "https://shishya.in";
 

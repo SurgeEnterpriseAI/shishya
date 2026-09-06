@@ -94,6 +94,10 @@ export async function ExamWeekBlock({
   const focus = state.focus;
   const tier = state.tier ?? focus.tier;
   const { phase } = state;
+  // An "expected" exam day is an estimate, not an announcement. Show the
+  // countdown with its tier word in the run-up, but never ask "how was the
+  // paper?" or say the exam is done on a date nobody has confirmed.
+  if (tier === "expected" && phase !== "week" && phase !== "eve") return null;
 
   const pollLabels = {
     prompt: t("ew.today.pm"),
@@ -170,9 +174,11 @@ export async function ExamWeekBlock({
   if (phase === "eve") {
     const timeline = buildTimeline(rows, now, officialUrl);
     const admit = timeline.filter((r) => r.kind === "ADMIT_CARD" && r.tier === "official").pop() ?? null;
-    const admitText = admit
-      ? admit.notes?.trim() || `${admit.label}, ${dateWithTier(admit, tierWord(admit.tier), locale)}`
-      : null;
+    // Reporting instructions live in the row's notes; without them the line
+    // describes the admit-card RELEASE date, so it gets the admit-card label.
+    const admitNotes = admit?.notes?.trim() || null;
+    const admitText = admit ? admitNotes || dateWithTier(admit, tierWord(admit.tier), locale) : null;
+    const admitKey = admitNotes ? "ew.eve.admit" : "ew.eve.admitCard";
     return wrap(
       <>
         <p className="text-sm font-bold text-ink-900">
@@ -181,7 +187,7 @@ export async function ExamWeekBlock({
         <p className="mt-1 text-sm text-ink-800">{t("ew.eve.tip")}</p>
         {admit && admitText && (
           <p className="mt-1 text-xs text-ink-700">
-            🎫 {fill(t("ew.eve.admit"), { text: admitText })}
+            🎫 {fill(t(admitKey as StringKey), { text: admitText })}
             {admit.url && (
               <>
                 {" "}
@@ -237,7 +243,11 @@ export async function ExamWeekBlock({
               {fill(t("ew.window.title"), {
                 from: dayLabel(state.windowDays[0]?.date ?? focus.date, locale),
                 to: dayLabel(end.date, locale),
-                tier: tierWord(tier),
+                // A mixed-tier window prints both tier words, as the eve mail does.
+                tier:
+                  (state.windowDays[0]?.tier ?? tier) === end.tier
+                    ? tierWord(end.tier)
+                    : `${tierWord(state.windowDays[0]?.tier ?? tier)} / ${tierWord(end.tier)}`,
               })}
             </p>
             <p className="mt-1 text-xs text-ink-700">{t("ew.window.tip")}</p>

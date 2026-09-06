@@ -62,10 +62,9 @@ export async function getVerdictTallyRange(examId: string, fromIso: string, toIs
   }
 }
 
-/** Contract-shaped single-day helper (same signature as src/lib/exam-verdict.ts). */
-export function getVerdictTally(examId: string, examDateIso: string): Promise<VerdictTally> {
-  return getVerdictTallyRange(examId, examDateIso, examDateIso);
-}
+/** Single-day tally — the canonical implementation lives in src/lib/exam-verdict.ts
+ *  (same (examId, examDateIso) keying and UTC-midnight date convention). */
+export { getVerdictTally } from "@/lib/exam-verdict";
 
 /** "N students rated the paper: x% easy / y% moderate / z% tough" — or
  *  null below the n >= 10 floor. English only: consumed by the

@@ -1230,7 +1230,7 @@ ${
 }
 "${p.quote.text}"${attribution}
 
-And whatever tomorrow's paper brings: one exam does not measure you. Selection lists change every year; the discipline you built doesn't. Tomorrow evening we will ask you how the paper was — one tap, and once 10 or more students have rated it you will see how the paper felt to them.
+And whatever tomorrow's paper brings: one exam does not measure you. Selection lists change every year; the discipline you built doesn't. Tomorrow evening the exam page will ask you how the paper was, and the next morning we will email you the same question — one tap, and once 10 or more students have rated it you will see how the paper felt to them.
 
 Go show up. We're rooting for you.
 — Shishya
@@ -1279,7 +1279,7 @@ Go show up. We're rooting for you.
     <p style="font-size:13px;line-height:1.65;margin:0 0 14px;color:#334155;">
       And whatever tomorrow&apos;s paper brings: <strong>one exam does not measure you.</strong>
       Selection lists change every year; the discipline you built doesn&apos;t.
-      Tomorrow evening we will ask you how the paper was — one tap, and once 10 or more
+      Tomorrow evening the exam page will ask you how the paper was, and the next morning we will email you the same question — one tap, and once 10 or more
       students have rated it you will see how the paper felt to them.
     </p>
     <p style="font-size:14px;font-weight:600;margin:0;color:#0f172a;">Go show up. We&apos;re rooting for you. 💪</p>
@@ -1322,8 +1322,8 @@ export async function sendExamDayAfterEmail(p: {
     { key: "ew.verdict.tough", v: "TOUGH" },
   ];
   const opener = p.windowEndLine
-    ? `Your ${p.examShort} exam window opened yesterday (${p.examDayLine}) and runs to ${p.windowEndLine}. ${tk("ew.window.tip")}`
-    : `Yesterday was your ${p.examShort} exam (${p.examDayLine}). ${tk("ew.today.pm")}`;
+    ? `Your ${p.examShort} exam window opened yesterday, ${p.examDayLine}, and runs to ${p.windowEndLine}. ${tk("ew.window.tip")}`
+    : `Yesterday was your ${p.examShort} exam: ${p.examDayLine}. ${tk("ew.today.pm")}`;
   const nextLine = p.nextExam ? fillVars(tk("ew.post.next"), { exam: p.nextExam.short, date: p.nextExam.date, tier: p.nextExam.tier }) : "";
 
   const text = `${first},

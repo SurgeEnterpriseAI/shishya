@@ -132,7 +132,9 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
       const exam = await db.exam.findUnique({ where: { id: examId }, select: { code: true } }).catch(() => null);
       if (exam?.code) {
         indexNow = true;
-        void submitIndexNow(examWeekUrls(exam.code));
+        // Awaited (10 s cap inside submitIndexNow): a detached fetch can be
+        // dropped when the cron's function returns right after the last exam.
+        await submitIndexNow(examWeekUrls(exam.code));
       }
     }
   }

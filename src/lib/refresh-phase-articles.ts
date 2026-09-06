@@ -101,6 +101,10 @@ async function findCandidates(examCodeOverride: string | undefined, now: Date): 
   const out: Candidate[] = [];
   for (const e of exams) {
     for (const phase of PHASES_FOR[e.state.phase]) {
+      // Exam-day coverage needs a confirmed exam day: an "expected" date is
+      // an estimate, so no LIVE / REACTIONS article for it (checklists are
+      // still fine — they say "expected" on the date).
+      if (phase !== "CHECKLIST" && e.state.tier === "expected") continue;
       out.push({
         examId: e.id,
         examCode: e.code,
@@ -216,7 +220,14 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
   const phaseRank: Record<ExamPhase, number> = { LIVE: 0, REACTIONS: 1, CHECKLIST: 2 };
   candidates.sort((a, b) => phaseRank[a.phase] - phaseRank[b.phase]);
 
+  // Hard time guard: Vercel kills the function at 300 s and a killed run
+  // loses its report and the end-of-run IndexNow submission.
+  const startedMs = Date.now();
   for (const c of candidates) {
+    if (Date.now() - startedMs > 240_000) {
+      report.skipped.push({ examCode: c.examCode, phase: c.phase, reason: "time budget — resumes next run" });
+      break;
+    }
     if (report.claudeCalls >= maxCalls) {
       report.skipped.push({ examCode: c.examCode, phase: c.phase, reason: "max claude calls reached" });
       continue;

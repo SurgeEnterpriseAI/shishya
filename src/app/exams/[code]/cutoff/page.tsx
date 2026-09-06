@@ -23,6 +23,7 @@ import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
+import { getVerdictTally } from "@/lib/exam-verdict";
 import { auth } from "@/lib/auth";
 import { getExamShared } from "@/lib/db/exam-cache";
 import { getT, getUrlLocale } from "@/lib/i18n-server";
@@ -74,27 +75,8 @@ const getExamWeekInputs = unstable_cache(
   { revalidate: 900, tags: ["exam-shared"] },
 );
 
-/** Paper-difficulty poll counts for one exam day — the shared contract
- *  shape { n, easy, moderate, tough, sections }.
- *  TODO(lead): agent B exports getVerdictTally(examId, examDateIso) from
- *  "@/lib/exam-verdict"; that file is absent in this worktree, so this is
- *  a local copy of the same groupBy. Replace with the import on merge. */
-async function getVerdictTally(examId: string, examDateIso: string) {
-  const examDate = new Date(`${examDateIso}T00:00:00.000Z`);
-  const [byVerdict, bySection] = await Promise.all([
-    prisma.examVerdict.groupBy({ by: ["verdict"], where: { examId, examDate }, _count: { _all: true } }),
-    prisma.examVerdict.groupBy({ by: ["section"], where: { examId, examDate, section: { not: null } }, _count: { _all: true } }),
-  ]);
-  const count = (v: string) => byVerdict.find((r) => r.verdict === v)?._count._all ?? 0;
-  const easy = count("EASY");
-  const moderate = count("MODERATE");
-  const tough = count("TOUGH");
-  const sections = bySection
-    .flatMap((r) => (r.section ? [{ label: r.section, n: r._count._all }] : []))
-    .sort((a, b) => b.n - a.n);
-  return { n: easy + moderate + tough, easy, moderate, tough, sections };
-}
-
+// Paper-difficulty poll counts come from the shared helper in
+// src/lib/exam-verdict.ts so the hub, tracker, API and this page agree.
 // Two minutes is fresh enough for a count that only shows from n>=10, and
 // keeps exam-day landers from each hitting the poll table.
 const getVerdictTallyCached = unstable_cache(
@@ -225,7 +207,7 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
   // the request-time work runs only for D-1 .. D+7.
   const { rows: dateRows, officialUrl } = await getExamWeekInputs(exam.id);
   const ew = computeExamWeekState(dateRows, officialUrl);
-  const view = CUTOFF_PHASES.has(ew.phase) ? await loadExamWeekView(exam, ew) : null;
+  const view = CUTOFF_PHASES.has(ew.phase) && ew.tier !== "expected" ? await loadExamWeekView(exam, ew) : null;
 
   const url = `https://shishya.in/exams/${exam.code}/cutoff`;
   const jsonLd = {

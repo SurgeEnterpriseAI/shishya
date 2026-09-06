@@ -108,14 +108,32 @@ export async function POST(req: NextRequest) {
 
   const rl = await checkRateLimit("verdict", userId ?? `anon:${identityKey}`);
   if (!rl.ok) return rateLimited(rl);
+  // A cookie-less client mints a fresh identity per request, so the
+  // per-identity bucket alone would never fill: also limit issuance per IP.
+  if (issuedAnon) {
+    const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+    const rlIp = await checkRateLimit("verdict", `ip:${ip}`);
+    if (!rlIp.ok) return rateLimited(rlIp);
+  }
 
   const exam = await prisma.exam
     .findUnique({ where: { code: examCode }, select: { id: true, active: true } })
     .catch(() => null);
   if (!exam || !exam.active) return NextResponse.json({ error: "unknown exam" }, { status: 404 });
 
+  // The hardest-section label must be one of the exam's own subjects —
+  // it is echoed into context.md / llms-full.txt, so never free text.
+  let sectionChecked = section;
+  if (typeof section === "string") {
+    const subjects = await prisma.subject
+      .findMany({ where: { examId: exam.id }, select: { name: true } })
+      .catch(() => [] as { name: string }[]);
+    const match = subjects.find((s) => s.name.trim().toLowerCase() === section.toLowerCase());
+    sectionChecked = match ? match.name : null;
+  }
+
   try {
-    await upsertVerdict({ examId: exam.id, examDateIso: examDate, identityKey, verdict, section });
+    await upsertVerdict({ examId: exam.id, examDateIso: examDate, identityKey, verdict, section: sectionChecked });
   } catch (err) {
     console.error("[exam-verdict] upsert failed:", err);
     return NextResponse.json({ error: "could not save" }, { status: 500 });

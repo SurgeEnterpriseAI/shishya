@@ -16,7 +16,7 @@ import { prisma } from "@/lib/db/prisma";
 import { sourceHostLabel, sourceTier } from "@/lib/official-source";
 import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
 
-export const revalidate = 86400;
+export const revalidate = 3600; // hourly — the exam-week block flips phase within a day
 
 const SITE = "https://shishya.in";
 
@@ -225,7 +225,7 @@ export async function GET(
   return new Response(L.join("\n"), {
     headers: {
       "content-type": "text/markdown; charset=utf-8",
-      "cache-control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+      "cache-control": "public, max-age=900, s-maxage=3600, stale-while-revalidate=86400",
     },
   });
 }
