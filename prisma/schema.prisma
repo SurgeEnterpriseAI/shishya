@@ -425,6 +425,11 @@ model Enrollment {
   targetDate DateTime? // when the student plans to take the exam
   goalScore  Float?
   active     Boolean   @default(true)
+  // Exam Week Mode (6 Sep 2026): the student's OWN shift day inside a
+  // multi-day CBT window (SSC CGL 12–25 Sep runs 3-4 shifts a day for two
+  // weeks). One tap on the hub block; the eve / day-after mails and the
+  // poll key off it instead of the window's first day.
+  shiftDate  DateTime? @db.Date
   createdAt  DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -432,6 +437,7 @@ model Enrollment {
 
   @@unique([userId, examId])
   @@index([userId])
+  @@index([examId, shiftDate])
 }
 
 // ─────────────────────────────────────────────────────────────────────────
