@@ -16,7 +16,10 @@ import { AnonQuizRecall } from "@/components/AnonQuizRecall";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getExamShared } from "@/lib/db/exam-cache";
-import { getT } from "@/lib/i18n-server";
+import { getT, getUrlLocale } from "@/lib/i18n-server";
+import { computeExamWeekState } from "@/lib/exam-week";
+import { buildTimeline } from "@/lib/exam-timeline";
+import { ExamWeekBlock } from "@/components/ExamWeekBlock";
 import { StartMockButton } from "./StartMockButton";
 import { PageTour } from "@/components/PageTour";
 import { formatDisplayScorePct } from "@/lib/scoring";
@@ -196,7 +199,7 @@ export default async function ExamPage({
   const session = await auth();
   const userId = session?.user?.id ?? null;
   const { code } = await params;
-  const { locale, t } = await getT();
+  const [{ locale, t }, urlLocale] = await Promise.all([getT(), getUrlLocale()]);
 
   // Shared payload — cached by unstable_cache for EXAM_CACHE_TTL seconds.
   // First request after a content change pays the DB cost; everyone else
@@ -213,7 +216,19 @@ export default async function ExamPage({
     systemMocks,
     examStats,
     rankBands,
+    officialUrl,
   } = shared;
+
+  // Exam Week Mode (6 Sep 2026) — recomputed per request (pure, no DB)
+  // rather than read off the cached copy: the today-am/today-pm split
+  // flips at 18:00 IST inside the cache TTL, and cache hits hand back
+  // Date fields as strings. Phase "none" keeps the plain countdown chip
+  // (now with its source tier); any other phase mounts ExamWeekBlock.
+  const examWeek = computeExamWeekState(importantDates, officialUrl);
+  const nextExamDay =
+    examWeek.phase === "none"
+      ? buildTimeline(importantDates, new Date(), officialUrl).find((r) => r.kind === "EXAM" && r.daysFromToday > 0) ?? null
+      : null;
 
   // Subject-wise test rows (gap-fill #1 — users asked for "25-question
   // English/GK/Computer tests" verbatim; the SUBJECT mock API existed but
@@ -595,26 +610,21 @@ export default async function ExamPage({
         <p className="mt-4 max-w-3xl text-sm text-ink-700">{exam.description}</p>
 
         <div className="mt-4 flex flex-wrap gap-3 text-xs text-ink-600">
-          {/* Exam-day countdown — the next upcoming isExamDay date from the
-              Important Dates feed, surfaced in the hero so the urgency is
-              visible without scrolling. Hidden when no future exam date is
-              known. */}
-          {(() => {
-            const nextExamDay = importantDates
-              .map((d) => ({ d, t: new Date(d.date as unknown as string | Date).getTime() }))
-              .filter((x) => x.d.isExamDay && x.t > Date.now())
-              .sort((a, b) => a.t - b.t)[0];
-            if (!nextExamDay) return null;
-            const days = Math.ceil((nextExamDay.t - Date.now()) / 86_400_000);
-            return (
-              <span className={`inline-flex items-center gap-1 rounded-full border-2 px-3 py-1 font-semibold ${theme.borderAccent} bg-white text-ink-900`}>
-                <span aria-hidden>🎯</span>
-                {days === 1
-                  ? t("exam.countdown.tomorrow")
-                  : `${days} ${t("exam.countdown.days")}`}
-              </span>
-            );
-          })()}
+          {/* Exam-day countdown — only while the exam is MORE than a week
+              out (phase none). Inside the week the ExamWeekBlock below
+              takes over, and it keeps rendering on exam day and after
+              (the old chip died at 05:30 IST on D0). IST day math, and
+              the source tier travels with the number — an estimated
+              date is never counted down to bare. */}
+          {nextExamDay && (
+            <span className={`inline-flex items-center gap-1 rounded-full border-2 px-3 py-1 font-semibold ${theme.borderAccent} bg-white text-ink-900`}>
+              <span aria-hidden>🎯</span>
+              {nextExamDay.daysFromToday === 1
+                ? t("exam.countdown.tomorrow")
+                : `${nextExamDay.daysFromToday} ${t("exam.countdown.days")}`}
+              <span className="font-normal text-ink-500">({t(`ew.tier.${nextExamDay.tier}`)})</span>
+            </span>
+          )}
           <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.totalQuestions} {t("exam.totalQs")}</span>
           <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.totalMarks} {t("exam.marks")}</span>
           <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.durationMin} {t("exam.minutes")}</span>
@@ -676,6 +686,24 @@ export default async function ExamPage({
             </Link>
           )}
         </div>
+
+        {/* Exam Week Mode (6 Sep 2026) — one card that changes with the
+            IST phase: week / eve / exam day / window / post. Renders
+            nothing outside the ±7-day window. Sits above everything
+            else because on D-1 and D0 this is what the visitor came for.
+            Weakest-topic quiz link only for a signed-in student whose
+            weakness map we already loaded. */}
+        {examWeek.phase !== "none" && (
+          <ExamWeekBlock
+            exam={{ id: exam.id, code: exam.code, shortName: exam.shortName, category: exam.category, state: exam.state }}
+            rows={importantDates}
+            officialUrl={officialUrl}
+            locale={locale}
+            urlLocale={urlLocale}
+            signedIn={!!userId}
+            weakTopicCode={weakness[0]?.topic.code ?? null}
+          />
+        )}
 
         {/* Coach entry — the exam hub is where most organic visitors
             actually land (not the homepage), so this is the coach's
@@ -1322,7 +1350,11 @@ export default async function ExamPage({
                 </p>
               ) : (
                 <ol className="mt-3 space-y-2">
-                  {importantDates.map((d) => {
+                  {/* The cache now carries up to 30 tracker rows (3 past +
+                      27 from 10 days ago onward) so the exam day is never
+                      missing; the hub column shows the first 12 and the
+                      tracker pill above holds the full list. */}
+                  {importantDates.slice(0, 12).map((d) => {
                     // Same Date deserialisation guard as newsItems above.
                     const dateObj = new Date(d.date as unknown as string | Date);
                     const days = Math.ceil((dateObj.getTime() - Date.now()) / (24 * 60 * 60 * 1000));

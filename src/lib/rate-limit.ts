@@ -26,6 +26,7 @@ const limits = {
   ask:     { limit: 15, windowSec: 3_600 },      // AI answer-engine searches per hour (tool loop + optional web search per call)
   mentor:  { limit: 3,  windowSec: 86_400 },     // mentor applications per identity per day
   examAlert: { limit: 10, windowSec: 86_400 },   // exam-tracker alert subscriptions per IP / per email per day
+  verdict: { limit: 12, windowSec: 3_600 },      // exam-day verdict poll taps per identity per hour (vote + section + re-votes)
 } as const;
 
 export type LimitName = keyof typeof limits;

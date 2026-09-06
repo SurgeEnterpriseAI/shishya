@@ -29,6 +29,7 @@ import {
   type TimelineRow,
 } from "@/lib/exam-timeline";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
+import { ExamWeekBlock } from "@/components/ExamWeekBlock";
 import { PulseAsk } from "@/components/PulseAsk";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
@@ -56,6 +57,10 @@ async function loadExam(code: string) {
   });
 }
 
+/** Tracker rows + the built timeline. The raw rows travel alongside so
+ *  ExamWeekBlock can run the shared exam-week state machine on the same
+ *  data (it needs the stored confidence/url, which TimelineRow folds
+ *  into a tier). */
 async function loadTimeline(examId: string) {
   const [rows, elig] = await Promise.all([
     prisma.examImportantDate
@@ -66,7 +71,8 @@ async function loadTimeline(examId: string) {
         SELECT "officialUrl" FROM "ExamEligibility" WHERE "examId" = ${examId} LIMIT 1`
       .catch(() => [] as { officialUrl: string | null }[]),
   ]);
-  return buildTimeline(rows, new Date(), elig[0]?.officialUrl ?? null);
+  const officialUrl = elig[0]?.officialUrl ?? null;
+  return { rows, officialUrl, timeline: buildTimeline(rows, new Date(), officialUrl) };
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
@@ -75,7 +81,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   if (!exam) return { title: "Exam tracker — Shishya" };
   const urlLocale = await getUrlLocale();
   const tt = tFor(urlLocale) as TFn;
-  const timeline = await loadTimeline(exam.id);
+  const { timeline } = await loadTimeline(exam.id);
   const year = cycleYear(timeline);
   const { nextExam } = stageOf(timeline);
   // Lead with the answer (the date) so it survives SERP truncation; the
@@ -115,7 +121,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   const t = tRaw as TFn;
   const signedIn = !!session?.user?.id;
 
-  const [timeline, news, results, elig, pyqCount, dataTs] = await Promise.all([
+  const [{ timeline, rows: trackerRows }, news, results, elig, pyqCount, dataTs] = await Promise.all([
     loadTimeline(exam.id),
     prisma.examNewsItem
       .findMany({ where: { examId: exam.id, archivedAt: null }, orderBy: { publishedAt: "desc" }, take: 8 })
@@ -288,6 +294,20 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
           {nextLine && <span className="rounded-full border border-ink-200 bg-white px-3 py-1 text-ink-800">{nextLine}</span>}
           {lastLine && <span className="rounded-full border border-ink-200 bg-white px-3 py-1 text-ink-600">{lastLine}</span>}
         </div>
+
+        {/* Exam Week Mode (6 Sep 2026) — the same phase card as the hub,
+            above the key dates and the timeline. Renders nothing outside
+            the ±7-day window. The page's own alert box below stays the
+            capture surface, so the block's compact one is switched off. */}
+        <ExamWeekBlock
+          exam={{ id: exam.id, code: exam.code, shortName: short, category: exam.category, state: exam.state }}
+          rows={trackerRows}
+          officialUrl={officialUrl}
+          locale={locale}
+          urlLocale={urlLocale}
+          signedIn={signedIn}
+          showAlert={false}
+        />
 
         {/* Key dates */}
         {timeline.length > 0 && (
