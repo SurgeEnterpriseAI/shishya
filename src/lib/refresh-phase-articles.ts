@@ -1,10 +1,32 @@
 // The Stage-2 orchestrator: figure out which exams are in a phase
-// window, scrape their sources, summarise via Claude, upsert the
+// window, scrape their sources, summarise via Claude, write the
 // ExamPhaseArticle row.
 //
 // Called by:
-//   - GET /api/cron/refresh-phase-articles (Vercel cron, every 2h)
+//   - GET /api/cron/refresh-phase-articles (Vercel cron, daily 07:00 IST)
 //   - scripts/refresh-phase-articles.ts    (manual / local testing)
+//
+// Exam Week Mode (6 Sep 2026) — honesty + cost rules, in order:
+//   1. Candidates come from the shared IST state machine
+//      (computeExamWeekState over TYPED tracker rows only). A legacy
+//      untyped row can never put an exam on a "live today" page (CDS got
+//      one from a stale row before this).
+//        week / eve        → CHECKLIST
+//        today-am          → LIVE       (only after the first shift can
+//                                        have ended, LIVE_EARLIEST_IST_HOUR)
+//        today-pm          → REACTIONS
+//        window            → LIVE + REACTIONS (multi-day CBT windows)
+//        post              → REACTIONS
+//   2. Per-exam daily caps checked BEFORE the model is called:
+//      LIVE 2/day, REACTIONS 1/day, CHECKLIST 1/day — plus the existing
+//      90-minute spacing, and a checklist is not rewritten while a live
+//      one from this window exists.
+//   3. The summariser returns null for anything that is not REAL (< 2
+//      cited sources, placeholder body) — then the previous article is
+//      KEPT untouched: no archive-and-create, nothing written.
+//   4. Titles are dated from the focus day ("SSC CGL 2026 paper analysis
+//      (12 Sep)"), never "live today" without a date.
+//   5. New article URLs are submitted to IndexNow (best-effort).
 //
 // Returns a structured summary so the cron handler can log + return
 // it to the caller.
@@ -15,7 +37,10 @@ import { fetchRss } from "@/lib/scrape/rss";
 import type { ScrapedSnippet } from "@/lib/scrape/types";
 import { getSourcesFor } from "@/data/exam-sources";
 import { summarisePhase } from "@/lib/ai/phase-summariser";
-import { resolvePhase } from "@/lib/exam-phase";
+import { istDay, istHour, type ExamWeekPhase, type ExamWeekState } from "@/lib/exam-week";
+import { loadExamWeekExams } from "@/lib/exam-week-aeo";
+import { MIN_ARTICLE_SOURCES } from "@/lib/phase-article-quality";
+import { phaseArticleUrl, SITE_ORIGIN, submitIndexNow } from "@/lib/indexnow";
 import type { ExamPhase } from "@prisma/client";
 
 export interface RefreshOptions {
@@ -25,6 +50,8 @@ export interface RefreshOptions {
   maxClaudeCalls?: number;
   /** When set, only refresh this examCode (used for manual debugging). */
   examCodeOverride?: string;
+  /** Evaluate "now" at a fixed instant (tests / dry runs). */
+  now?: Date;
 }
 
 export interface RefreshReport {
@@ -33,6 +60,7 @@ export interface RefreshReport {
   skipped: Array<{ examCode: string; phase: ExamPhase; reason: string }>;
   errors: Array<{ examCode: string; phase: ExamPhase; error: string }>;
   claudeCalls: number;
+  indexNow: { urls: number; acceptedChunks: number };
 }
 
 interface Candidate {
@@ -41,48 +69,47 @@ interface Candidate {
   examShort: string;
   examName: string;
   phase: ExamPhase;
+  state: ExamWeekState;
 }
 
-async function findCandidates(examCodeOverride?: string): Promise<Candidate[]> {
-  // Pull all upcoming/recent exam-day rows; we filter to ±7 days in
-  // SQL to bound the result set on busy weeks (CET season has 30+ a
-  // week). Then narrow to a phase window in JS using the shared
-  // IST-aware resolvePhase().
-  const now = new Date();
-  const from = new Date(now.getTime() - 4 * 86_400_000); // 4 days past
-  const to = new Date(now.getTime() + 8 * 86_400_000); // 8 days future
-  const rows = await prisma.examImportantDate.findMany({
-    where: {
-      date: { gte: from, lte: to },
-      isExamDay: true,
-      // Archived rows must still count on the PAST side: date rows get
-      // archived when the exam concludes, which is exactly when the
-      // REACTIONS window starts. Excluding them silently killed the
-      // post-exam verdict for every concluded exam (found 14 Aug 2026:
-      // GSSSB / UPPSC PCS / Punjab PCS all archived, no verdicts).
-      // Future-side archived rows stay excluded — those are superseded
-      // or moved dates and must not drive checklists.
-      OR: [{ archivedAt: null }, { date: { lte: now } }],
-      exam: { active: true, ...(examCodeOverride ? { code: examCodeOverride } : {}) },
-    },
-    include: { exam: { select: { id: true, code: true, shortName: true, name: true } } },
-  });
+/** Per-exam, per-phase generation cap per IST day (archived versions count). */
+export const DAILY_CAP: Record<ExamPhase, number> = { LIVE: 2, REACTIONS: 1, CHECKLIST: 1 };
 
-  const seen = new Set<string>(); // dedupe (examId, phase) across multiple shifts
+/** No "live" article before the first shift can have ended — an exam-day
+ *  page written at 07:00 IST can only be about yesterday's paper. */
+export const LIVE_EARLIEST_IST_HOUR = 10;
+
+/** A checklist written inside this many days is "this window's" and is
+ *  kept rather than rewritten (evergreen prep content, no new signal). */
+const CHECKLIST_KEEP_DAYS = 8;
+
+const IST_OFFSET_MS = 330 * 60_000;
+const DAY_MS = 86_400_000;
+
+const PHASES_FOR: Record<ExamWeekPhase, ExamPhase[]> = {
+  none: [],
+  week: ["CHECKLIST"],
+  eve: ["CHECKLIST"],
+  "today-am": ["LIVE"],
+  "today-pm": ["REACTIONS"],
+  window: ["LIVE", "REACTIONS"],
+  post: ["REACTIONS"],
+};
+
+async function findCandidates(examCodeOverride: string | undefined, now: Date): Promise<Candidate[]> {
+  const exams = await loadExamWeekExams({ examCode: examCodeOverride, now });
   const out: Candidate[] = [];
-  for (const r of rows) {
-    const phase = resolvePhase(r.date, now);
-    if (!phase) continue;
-    const key = `${r.exam.id}:${phase}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({
-      examId: r.exam.id,
-      examCode: r.exam.code,
-      examShort: r.exam.shortName,
-      examName: r.exam.name,
-      phase,
-    });
+  for (const e of exams) {
+    for (const phase of PHASES_FOR[e.state.phase]) {
+      out.push({
+        examId: e.id,
+        examCode: e.code,
+        examShort: e.shortName,
+        examName: e.name,
+        phase,
+        state: e.state,
+      });
+    }
   }
   return out;
 }
@@ -130,18 +157,59 @@ async function scrapeForExam(examShort: string, examCode: string): Promise<Scrap
   return [...byId.values()].slice(0, 120);
 }
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "12 Sep" from "2026-09-12" — fixed English month names so the title
+ *  never depends on the runtime's ICU data. */
+function dayMon(iso: string): string {
+  const [, m, d] = iso.split("-").map(Number);
+  return `${d} ${MONTHS[(m || 1) - 1]}`;
+}
+
+/**
+ * Dated title from the focus day — "{exam} {year} paper analysis ({day}
+ * {Mon})" style. Multi-day windows print the span; a LIVE article inside
+ * an open window is dated TODAY (the sitting it covers).
+ */
+export function datedTitle(short: string, phase: ExamPhase, state: ExamWeekState, now: Date = new Date()): string {
+  const today = istDay(now);
+  const days = state.windowDays.map((r) => r.day).sort();
+  const first = days[0] ?? state.focusDay ?? today;
+  const last = days[days.length - 1] ?? first;
+  const year = first.slice(0, 4);
+  const span = first === last ? dayMon(first) : `${dayMon(first)}–${dayMon(last)}`;
+  switch (phase) {
+    case "CHECKLIST":
+      return `${short} ${year} last-minute checklist (exam ${span})`;
+    case "LIVE": {
+      const day = state.phase === "window" && today >= first && today <= last ? today : (state.focusDay ?? first);
+      return `${short} ${year} paper analysis (${dayMon(day)}) — exam-day live`;
+    }
+    case "REACTIONS":
+      return `${short} ${year} paper analysis (${span}) — student verdict & expected cutoff`;
+  }
+}
+
+/** Start of the current IST calendar day, as a UTC instant. */
+function istDayStart(now: Date): Date {
+  return new Date(Date.parse(istDay(now) + "T00:00:00Z") - IST_OFFSET_MS);
+}
+
 export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<RefreshReport> {
   const minMinutes = opts.minMinutesBetweenRuns ?? 90;
   const maxCalls = opts.maxClaudeCalls ?? 25;
+  const now = opts.now ?? new Date();
 
-  const candidates = await findCandidates(opts.examCodeOverride);
+  const candidates = await findCandidates(opts.examCodeOverride, now);
   const report: RefreshReport = {
     candidatesConsidered: candidates.length,
     refreshed: [],
     skipped: [],
     errors: [],
     claudeCalls: 0,
+    indexNow: { urls: 0, acceptedChunks: 0 },
   };
+  const newUrls: string[] = [];
 
   // Sort by phase priority: LIVE > REACTIONS > CHECKLIST. If we hit
   // the budget cap, time-sensitive phases get refreshed first.
@@ -151,6 +219,31 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
   for (const c of candidates) {
     if (report.claudeCalls >= maxCalls) {
       report.skipped.push({ examCode: c.examCode, phase: c.phase, reason: "max claude calls reached" });
+      continue;
+    }
+
+    // No exam-day "live" page before the first shift can have ended.
+    if (c.phase === "LIVE" && istHour(now) < LIVE_EARLIEST_IST_HOUR) {
+      report.skipped.push({
+        examCode: c.examCode,
+        phase: c.phase,
+        reason: `before ${LIVE_EARLIEST_IST_HOUR}:00 IST — no live page before the first shift ends`,
+      });
+      continue;
+    }
+
+    // Daily cap per (exam, phase), counted BEFORE any scraping or model
+    // call. Archived versions created today count too — the cap bounds
+    // generations, not live rows.
+    const madeToday = await prisma.examPhaseArticle.count({
+      where: { examId: c.examId, phase: c.phase, createdAt: { gte: istDayStart(now) } },
+    });
+    if (madeToday >= DAILY_CAP[c.phase]) {
+      report.skipped.push({
+        examCode: c.examCode,
+        phase: c.phase,
+        reason: `daily cap reached (${madeToday}/${DAILY_CAP[c.phase]})`,
+      });
       continue;
     }
 
@@ -164,7 +257,7 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
       orderBy: { lastUpdatedAt: "desc" },
     });
     if (existing?.lastUpdatedAt) {
-      const minsAgo = (Date.now() - existing.lastUpdatedAt.getTime()) / 60_000;
+      const minsAgo = (now.getTime() - existing.lastUpdatedAt.getTime()) / 60_000;
       if (minsAgo < minMinutes) {
         report.skipped.push({
           examCode: c.examCode,
@@ -173,37 +266,44 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
         });
         continue;
       }
-    }
-
-    const snippets = await scrapeForExam(c.examShort, c.examCode);
-    if (snippets.length === 0 && c.phase === "CHECKLIST") {
-      // CHECKLIST is evergreen prep content — generate it from exam
-      // knowledge even with no scraped chatter, so every exam entering
-      // its T-7 window gets a real last-minute guide instead of a chip
-      // that dead-ends on an empty page. But only generate ONCE: if an
-      // active checklist already exists there is no new signal to fold
-      // in, so leave it rather than archiving + rewriting it every 2h.
-      if (existing) {
+      // A checklist is evergreen prep content: once this window has one,
+      // there is no new signal to fold in — keep it rather than archiving
+      // and rewriting it every run.
+      if (c.phase === "CHECKLIST" && minsAgo < CHECKLIST_KEEP_DAYS * 24 * 60) {
         report.skipped.push({
           examCode: c.examCode,
           phase: c.phase,
-          reason: "checklist already present (evergreen)",
+          reason: "checklist already present for this window (evergreen)",
         });
-        // Still bump lastScrapedAt so we don't hammer dead sources.
         await prisma.examPhaseArticle.update({
           where: { id: existing.id },
-          data: { lastScrapedAt: new Date() },
+          data: { lastScrapedAt: now },
         });
         continue;
       }
-      // fall through: knowledge-only CHECKLIST generation (summarisePhase
-      // handles the empty-snippets case for CHECKLIST).
     }
-    // LIVE/REACTIONS with thin or zero snippets fall through too: the
+
+    const snippets = await scrapeForExam(c.examShort, c.examCode);
+    if (c.phase === "CHECKLIST" && snippets.length < MIN_ARTICLE_SOURCES) {
+      // A checklist can only be REAL when it cites >= 2 scraped sources;
+      // the summariser would refuse anyway — don't spend the call.
+      report.skipped.push({
+        examCode: c.examCode,
+        phase: c.phase,
+        reason: `${snippets.length} snippet(s) < ${MIN_ARTICLE_SOURCES} sources`,
+      });
+      continue;
+    }
+    // LIVE/REACTIONS with thin or zero snippets fall through: the
     // summariser web-searches its own sources for exactly these (state
     // exams live on Telegram/YouTube/local news our scrapers don't
     // reach) and publishes nothing if the web genuinely has nothing —
-    // the 90-min spacing above bounds the retry cost.
+    // the daily cap + spacing above bound the retry cost.
+
+    const days = c.state.windowDays.map((r) => r.day).sort();
+    const examWindow = days.length > 1 && days[0] !== days[days.length - 1] ? `${days[0]} to ${days[days.length - 1]}` : null;
+    const examDay =
+      c.phase === "LIVE" && c.state.phase === "window" ? istDay(now) : (c.state.focusDay ?? days[0] ?? null);
 
     let summary;
     try {
@@ -213,6 +313,8 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
         examCode: c.examCode,
         phase: c.phase,
         snippets,
+        examDay,
+        examWindow,
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -221,43 +323,60 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
     }
     report.claudeCalls++;
     if (!summary) {
-      report.skipped.push({ examCode: c.examCode, phase: c.phase, reason: "summariser returned null" });
+      // Nothing REAL came back — the previous article (if any) stays as
+      // is. No archive, no placeholder row.
+      report.skipped.push({ examCode: c.examCode, phase: c.phase, reason: "no real article (kept previous)" });
+      if (existing) {
+        await prisma.examPhaseArticle.update({ where: { id: existing.id }, data: { lastScrapedAt: now } }).catch(() => {});
+      }
       continue;
     }
 
-    // ARCHIVE-THEN-CREATE (was overwrite-in-place). When fresh content
-    // is generated, stamp the current active version as archived and
-    // insert a new active row. This preserves every prior cycle's
+    const title = datedTitle(c.examShort, c.phase, c.state, now);
+
+    // ARCHIVE-THEN-CREATE (was overwrite-in-place). When fresh REAL
+    // content is generated, stamp the current active version as archived
+    // and insert a new active row. This preserves every prior cycle's
     // write-up so the phase page can show "previous updates" — students
     // returning a year later can read what last cycle's LIVE / REACTIONS
     // article said. Reactions + shares stay attached to the version they
     // were made on (historical accuracy).
-    const now = new Date();
+    const writtenAt = new Date();
     if (existing) {
       await prisma.examPhaseArticle.update({
         where: { id: existing.id },
-        data: { archivedAt: now },
+        data: { archivedAt: writtenAt },
       });
     }
+    const slug = c.phase.toLowerCase();
     await prisma.examPhaseArticle.create({
       data: {
         examId: c.examId,
         phase: c.phase,
-        slug: c.phase.toLowerCase(),
-        title: summary.title,
+        slug,
+        title,
         summarySnippet: summary.summarySnippet,
         bodyMarkdown: summary.bodyMarkdown,
         sourcesScraped: summary.sourcesUsed,
-        lastUpdatedAt: now,
-        lastScrapedAt: now,
+        lastUpdatedAt: writtenAt,
+        lastScrapedAt: writtenAt,
       },
     });
+    newUrls.push(phaseArticleUrl(c.examCode, slug), `${SITE_ORIGIN}/exams/${c.examCode}`);
     report.refreshed.push({
       examCode: c.examCode,
       phase: c.phase,
       snippetCount: snippets.length,
-      title: summary.title,
+      title,
     });
+  }
+
+  // Tell Bing/ChatGPT about the new article pages. Awaited (10s cap
+  // inside) rather than detached so a serverless run cannot drop the
+  // final ping when the function returns; still best-effort — the daily
+  // ?scope=examweek IndexNow cron re-submits every real article URL.
+  if (newUrls.length) {
+    report.indexNow = { urls: new Set(newUrls).size, acceptedChunks: await submitIndexNow(newUrls) };
   }
 
   return report;

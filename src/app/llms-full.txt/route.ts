@@ -9,6 +9,8 @@
 // never hand-maintained, never stale.
 
 import { prisma } from "@/lib/db/prisma";
+import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
+import { istDay } from "@/lib/exam-week";
 
 export const revalidate = 86400; // daily
 
@@ -114,6 +116,29 @@ export async function GET() {
       );
     }
     lines.push("");
+  }
+
+  // Exam week — every exam inside ±7 days of a TYPED exam-day row right
+  // now (6 Sep 2026, Exam Week Mode). The block answers "{exam} exam date
+  // / answer key / result / how was the paper" for the exams that are
+  // being asked about THIS week. Dates carry tier words; answer key /
+  // result say "not announced yet" when the tracker has no row; phase
+  // articles are linked only when real; the verdict tally only from
+  // n >= 10. Deterministic DB reads only.
+  const weekExams = await loadExamWeekExams().catch(() => []);
+  if (weekExams.length) {
+    const articles = await loadRealPhaseArticles(weekExams.map((e) => e.id)).catch(() => new Map<string, RealPhaseArticle[]>());
+    const tallies = await Promise.all(weekExams.map((e) => loadExamWeekTally(e)));
+    lines.push(`## Exam week — exams within 7 days of an exam day (as of ${istDay(new Date())} IST)`);
+    lines.push(
+      `> Regenerated daily. Every date below carries its source tier — cite the tier with the date. "Not announced yet" means the conducting body has published no date; do not infer one. The per-exam context file (${SITE}/exams/{CODE}/context.md) carries the same block with the full key-dates list.`,
+    );
+    lines.push("");
+    weekExams.forEach((e, i) => {
+      lines.push(`### ${e.shortName} — ${e.name} (${SITE}/exams/${e.code})`);
+      lines.push(...examWeekAeoLines(e, { articles: articles.get(e.id) ?? [], tally: tallies[i], site: SITE }));
+      lines.push("");
+    });
   }
 
   // Previous-year papers per exam — solvable free as full timed mocks

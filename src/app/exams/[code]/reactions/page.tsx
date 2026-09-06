@@ -6,10 +6,9 @@
 //   "{exam} difficulty review"
 //   "what students are saying about {exam}"
 //
-// The 2-hour scraping pipeline aggregates social-media reactions
-// (Reddit + Telegram + YouTube + X / Twitter when budget allows) so
-// the article is always within a couple hours of the freshest
-// student chatter.
+// The phase-article cron aggregates public reactions (Reddit, RSS, web
+// search) after each sitting; an article appears only once at least two
+// real sources exist — never a placeholder.
 
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
@@ -29,7 +28,7 @@ export async function generateMetadata({
   if (!exam) return { title: "Exam not found — Shishya" };
   return {
     title: `${exam.shortName} — student verdict, expected cutoff, answer key | Shishya`,
-    description: `What ${exam.name} candidates are saying: difficulty verdict, expected cutoff, answer-key analysis. Refreshed every 2 hours for 3 days post-exam.`,
+    description: `What ${exam.name} candidates are saying: difficulty verdict, expected cutoff, answer-key analysis — compiled from public student discussion after the paper.`,
     alternates: { canonical: `https://shishya.in/exams/${code}/reactions` },
     openGraph: {
       title: `${exam.shortName} — Post-exam reactions`,

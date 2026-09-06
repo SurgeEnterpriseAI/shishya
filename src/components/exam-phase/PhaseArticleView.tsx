@@ -15,8 +15,9 @@
 //   6. ShareButtons (X / WhatsApp / Telegram / LinkedIn / FB / copy)
 //   7. Link to / start a Discussion thread scoped to this article
 //
-// Stage-1 content is hand-seeded; Stage 2 (next sprint) plugs the
-// 2-hour Claude scraping pipeline in to keep it fresh.
+// Content comes from the phase-article cron (src/lib/refresh-phase-
+// articles.ts): compiled from public student discussion, published only
+// when at least two real sources exist (src/lib/phase-article-quality.ts).
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -58,9 +59,9 @@ const PHASE_COPY: Record<
     badge: "🔴 Live — exam day",
     badgeColor: "bg-rose-100 text-rose-900 border-rose-300",
     tagline: (s) =>
-      `${s} is happening today. Live difficulty, shift-by-shift analysis and the first answer-key trackers as they release — refreshed every two hours from Reddit, X, Telegram, YouTube comments.`,
+      `${s} is happening today. Live difficulty and shift-by-shift analysis, compiled from public student discussion (Reddit, news, YouTube comments) during the exam window.`,
     emptyBody: (s) =>
-      `Live coverage for ${s} starts shortly. As students step out of the centre, we'll surface their first reactions, difficulty signals and any leaked answer keys here — refreshed every two hours.`,
+      `Live coverage for ${s} appears once students step out of the centre and real reactions exist in public discussion — first impressions, difficulty signals, section-wise complaints. Nothing is published before that.`,
   },
   REACTIONS: {
     badge: "📊 Post-exam reactions",
@@ -68,7 +69,7 @@ const PHASE_COPY: Record<
     tagline: (s) =>
       `${s} is done — here's the verdict. Student consensus on difficulty, expected cutoff, answer-key analysis and "did you get Q-34?" threads.`,
     emptyBody: (s) =>
-      `Post-exam analysis for ${s} is being compiled. Within hours of the last shift ending we'll publish the student verdict — expected cutoff, difficulty breakdown, answer-key analysis.`,
+      `Post-exam analysis for ${s} is compiled from public student discussion after the paper — expected cutoff, difficulty breakdown, answer-key analysis. It appears here once real reactions exist, not before.`,
   },
 };
 
