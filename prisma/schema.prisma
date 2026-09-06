@@ -530,6 +530,24 @@ model AiUsage {
   @@index([feature, createdAt])
 }
 
+// Exam-day verdict poll (6 Sep 2026, Exam Week Mode): one tap per identity
+// per (exam, exam day) — "How was the paper?" Easy / Moderate / Tough plus an
+// optional hardest-section chip. Anonymous allowed (shishya_anon cookie =
+// identityKey). Tally is shown as counts only from n >= 10, never as a
+// cutoff prediction.
+model ExamVerdict {
+  id          String   @id @default(cuid())
+  examId      String
+  examDate    DateTime @db.Date
+  identityKey String   // userId or anonId
+  verdict     String   // EASY | MODERATE | TOUGH
+  section     String?  // free label of the hardest section, <= 40 chars
+  createdAt   DateTime @default(now())
+
+  @@unique([examId, examDate, identityKey])
+  @@index([examId, examDate])
+}
+
 model ChatSession {
   id              String   @id @default(cuid())
   userId          String
