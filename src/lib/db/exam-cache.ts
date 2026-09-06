@@ -12,8 +12,35 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
+import { computeExamWeekState, istDay } from "@/lib/exam-week";
 
 export const EXAM_CACHE_TTL = 600; // 10 minutes
+
+/** Tracker rows for the hub: everything from 10 IST days ago onwards
+ *  (so the next exam day is ALWAYS in the payload) plus the last 3 rows
+ *  before that as context. Capped at 30 rows.
+ *
+ *  Why (6 Sep 2026): the old `orderBy date asc, take 10` had no date
+ *  filter, so on exams with a long tracker (SSC CGL, RRB NTPC, CDS, SBI
+ *  PO — 27 exams) the ten OLDEST rows filled the slice, the upcoming exam
+ *  day fell off, and the hub countdown was silently hidden. */
+async function loadHubDates(examId: string) {
+  const cutoff = new Date(`${istDay(new Date())}T00:00:00.000Z`);
+  cutoff.setUTCDate(cutoff.getUTCDate() - 10);
+  const [past, recent] = await Promise.all([
+    prisma.examImportantDate.findMany({
+      where: { examId, archivedAt: null, date: { lt: cutoff } },
+      orderBy: { date: "desc" },
+      take: 3,
+    }),
+    prisma.examImportantDate.findMany({
+      where: { examId, archivedAt: null, date: { gte: cutoff } },
+      orderBy: { date: "asc" },
+      take: 27,
+    }),
+  ]);
+  return [...past.reverse(), ...recent];
+}
 
 /** Shared exam payload — safe to cache across all users. */
 export const getExamShared = unstable_cache(
@@ -35,7 +62,7 @@ export const getExamShared = unstable_cache(
     });
     if (!exam) return null;
 
-    const [validatedQuestionCount, newsItems, importantDates, pyqYears, systemMocks, examStats, rankBands] =
+    const [validatedQuestionCount, newsItems, importantDates, pyqYears, systemMocks, examStats, rankBands, eligibility] =
       await Promise.all([
         prisma.question.count({ where: { examId: exam.id, validated: true } }),
         // archivedAt IS NULL filter keeps the per-exam page showing
@@ -48,11 +75,7 @@ export const getExamShared = unstable_cache(
           orderBy: { publishedAt: "desc" },
           take: 5,
         }),
-        prisma.examImportantDate.findMany({
-          where: { examId: exam.id, archivedAt: null },
-          orderBy: { date: "asc" },
-          take: 10,
-        }),
+        loadHubDates(exam.id),
         prisma.question.groupBy({
           by: ["pyqYear"],
           where: { examId: exam.id, source: "PYQ", pyqYear: { not: null } },
@@ -125,7 +148,15 @@ export const getExamShared = unstable_cache(
             source: true,
           },
         }),
+        // Conducting-body URL — widens the "official" source tier to the
+        // exam's own portal (src/lib/official-source.ts) and drives the
+        // exam-week state below.
+        prisma.examEligibility
+          .findUnique({ where: { examId: exam.id }, select: { officialUrl: true } })
+          .catch(() => null),
       ]);
+
+    const officialUrl = eligibility?.officialUrl ?? null;
 
     return {
       exam,
@@ -136,9 +167,18 @@ export const getExamShared = unstable_cache(
       systemMocks,
       examStats,
       rankBands,
+      officialUrl,
+      // Exam Week Mode state at cache-fill time (phase week/eve/today/
+      // window/post, focus row + tier, answer-key/result rows). NOTE:
+      // unstable_cache serialises Date fields to ISO strings on cache
+      // hits, and the today-am/today-pm split flips at 18:00 IST inside
+      // the TTL — surfaces that render dates or the poll should recompute
+      // computeExamWeekState(importantDates, officialUrl) per request
+      // (pure, no DB) and use this copy only for cheap phase checks.
+      examWeek: computeExamWeekState(importantDates, officialUrl),
     };
   },
-  ["exam-shared-v2"],
+  ["exam-shared-v3"],
   { revalidate: EXAM_CACHE_TTL, tags: ["exam-shared"] },
 );
 
