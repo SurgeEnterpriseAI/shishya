@@ -9,6 +9,12 @@
 //
 // Recency window keeps it a nudge, not spam: lapse >3 days and the daily
 // email stops (the day-3 nudge and future win-back flows own that band).
+//
+// Exam Week Mode wave 2 (play 10): the exam the mail names comes from
+// resolveMailExam() — never a finished exam. When the addressed exam is in
+// phase week / eve the mail carries one line: "Exam in N days (tier):
+// checklist · full-length paper · no new topics tonight" (checklist link
+// only when the article is REAL, else the hub).
 // Auth: Bearer ${CRON_SECRET}. Daily per vercel.json.
 
 export const runtime = "nodejs";
@@ -16,10 +22,21 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
-import { sendDailyFiveEmail } from "@/lib/email";
+import { sendDailyFiveEmail, type MailRollover } from "@/lib/email";
 import { optedOutUserIds } from "@/lib/email-optout";
 import { computeStreak, istDay } from "@/lib/db/streak";
 import { liveTestEmailNotice } from "@/lib/live-test-today";
+import {
+  examWeekMailLine,
+  loadExamBundles,
+  nextExamsInTrack,
+  resolveMailExam,
+  trackKey,
+  type ExamBundle,
+  type ExamMeta,
+  type ExamWeekMailLine,
+  type NextExam,
+} from "@/lib/exam-week-mail";
 
 const MAX_SENDS = 200;
 
@@ -42,6 +59,7 @@ export async function GET(req: Request) {
       status: 401, headers: { "content-type": "application/json" },
     });
   }
+  const dry = new URL(req.url).searchParams.get("dry") === "1";
 
   const now = new Date();
   const dayStart = istTodayStart(now);
@@ -62,7 +80,7 @@ export async function GET(req: Request) {
     .filter(([, t]) => t < dayStart.getTime())
     .map(([id]) => id);
   if (candidates.length === 0) {
-    return Response.json({ ok: true, sent: 0, reason: "no candidates" });
+    return Response.json({ ok: true, dry, sent: 0, reason: "no candidates" });
   }
 
   const users = await prisma.user.findMany({
@@ -73,11 +91,11 @@ export async function GET(req: Request) {
     },
     select: {
       id: true, email: true, name: true,
+      // ALL active enrollments, newest first — resolveMailExam walks them.
       enrollments: {
         where: { active: true },
         orderBy: { createdAt: "desc" },
-        take: 1,
-        select: { exam: { select: { shortName: true } } },
+        select: { examId: true, createdAt: true, exam: { select: { code: true, shortName: true } } },
       },
     },
     take: MAX_SENDS,
@@ -147,22 +165,84 @@ export async function GET(req: Request) {
   // 8:30 AM send lands 2.5h after the 6 AM test-hall open).
   const liveTest = await liveTestEmailNotice().catch(() => null);
 
+  // Exam-week machinery: bundles for every enrolled exam in the batch,
+  // next-in-track candidates once per track, exam-week line once per exam.
+  const bundles = await loadExamBundles(users.flatMap((u) => u.enrollments.map((e) => e.examId)));
+  const trackCache = new Map<string, NextExam[]>();
+  const nextInTrack = async (meta: ExamMeta) => {
+    const key = trackKey(meta);
+    let list = trackCache.get(key);
+    if (!list) {
+      list = await nextExamsInTrack(meta, now);
+      trackCache.set(key, list);
+    }
+    return list;
+  };
+  const bundleFor = async (examId: string): Promise<ExamBundle | null> => {
+    const hit = bundles.get(examId);
+    if (hit) return hit;
+    const extra = await loadExamBundles([examId]);
+    for (const [k, v] of extra) bundles.set(k, v);
+    return bundles.get(examId) ?? null;
+  };
+  const weekLineCache = new Map<string, ExamWeekMailLine | null>();
+  const weekLineFor = async (examId: string): Promise<ExamWeekMailLine | null> => {
+    if (weekLineCache.has(examId)) return weekLineCache.get(examId) ?? null;
+    const bundle = await bundleFor(examId);
+    const line = bundle ? await examWeekMailLine(bundle, now).catch(() => null) : null;
+    weekLineCache.set(examId, line);
+    return line;
+  };
+
   let sent = 0, failed = 0;
+  const modes: Record<string, number> = {};
+  const sample: { name: string | null; short: string | null; mode: string; examWeek: string | null }[] = [];
   for (const u of users) {
     if (!u.email || !u.enrollments[0]) continue;
+    const resolved = await resolveMailExam(
+      u.enrollments.map((e) => ({ examId: e.examId, code: e.exam.code, short: e.exam.shortName, createdAt: e.createdAt })),
+      bundles,
+      now,
+      nextInTrack,
+    );
+    if (!resolved) continue;
+    let examShort: string | null = null;
+    let rollover: MailRollover | null = null;
+    let examWeek: ExamWeekMailLine | null = null;
+    let mode: string = resolved.mode;
+    if (resolved.mode === "same") {
+      examShort = resolved.short;
+      examWeek = await weekLineFor(resolved.examId);
+    } else if (resolved.mode === "next") {
+      examShort = resolved.short;
+      rollover = { done: resolved.done.short, next: { code: resolved.code, short: resolved.short, when: resolved.when } };
+      examWeek = await weekLineFor(resolved.examId);
+      mode = `next:${resolved.done.code}→${resolved.code}`;
+    } else {
+      rollover = { done: resolved.done.short, next: null };
+      mode = `generic:${resolved.done.code}`;
+    }
+    modes[mode] = (modes[mode] ?? 0) + 1;
+    if (dry) {
+      if (sample.length < 10) sample.push({ name: u.name, short: examShort, mode, examWeek: examWeek?.text ?? null });
+      continue;
+    }
     const streak = computeStreak(daysByUser.get(u.id) ?? new Set(), todayIdx);
     const ok = await sendDailyFiveEmail({
       to: u.email,
       userId: u.id,
       name: u.name,
-      examShort: u.enrollments[0].exam.shortName,
+      examShort,
       streakCurrent: streak.current,
       hasCoachPlan: planUserIds.has(u.id),
       peers: yesterdayPeers,
       liveTest,
+      examWeek: examWeek ? { text: examWeek.text, html: examWeek.html } : null,
+      rollover,
     }).catch(() => false);
     if (ok) sent++; else failed++;
   }
 
-  return Response.json({ ok: true, candidates: candidates.length, sent, failed });
+  if (dry) return Response.json({ ok: true, dry: true, candidates: candidates.length, users: users.length, modes, sample });
+  return Response.json({ ok: true, candidates: candidates.length, sent, failed, modes });
 }
