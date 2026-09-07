@@ -9,11 +9,18 @@
 // The phase-article cron aggregates public reactions (Reddit, RSS, web
 // search) after each sitting; an article appears only once at least two
 // real sources exist — never a placeholder.
+//
+// Metadata is phase-aware (6 Sep 2026 review): "after the paper" only
+// when the tracker puts an announced exam day behind us; otherwise the
+// dated "{date} ({tier}) paper" — the same helper PhaseArticleView uses
+// for the tagline, so <title> and body cannot disagree.
 
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { PhaseArticleView } from "@/components/exam-phase/PhaseArticleView";
 import { prisma } from "@/lib/db/prisma";
+import { getExamWeekInputs } from "@/lib/exam-week-inputs";
+import { examDayClaim, phaseArticleMeta } from "@/lib/phase-article-copy";
 
 export async function generateMetadata({
   params,
@@ -23,17 +30,20 @@ export async function generateMetadata({
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
     where: { code },
-    select: { shortName: true, name: true },
+    select: { id: true, shortName: true, name: true },
   });
   if (!exam) return { title: "Exam not found — Shishya" };
+  const inputs = await getExamWeekInputs(exam.id);
+  const meta = phaseArticleMeta("REACTIONS", exam, examDayClaim(inputs.rows, inputs.officialUrl));
+  const url = `https://shishya.in/exams/${code}/reactions`;
   return {
-    title: `${exam.shortName} — student verdict, expected cutoff, answer key | Shishya`,
-    description: `What ${exam.name} candidates are saying: difficulty verdict, expected cutoff, answer-key analysis — compiled from public student discussion after the paper.`,
-    alternates: { canonical: `https://shishya.in/exams/${code}/reactions` },
+    title: meta.title,
+    description: meta.description,
+    alternates: { canonical: url },
     openGraph: {
-      title: `${exam.shortName} — Post-exam reactions`,
-      description: `Student verdict, expected cutoff, answer-key analysis for ${exam.name}.`,
-      url: `https://shishya.in/exams/${code}/reactions`,
+      title: meta.ogTitle,
+      description: meta.ogDescription,
+      url,
       type: "article",
     },
   };
