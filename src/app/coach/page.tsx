@@ -3,17 +3,93 @@
 // "free online coaching for government exams"); signed-in students
 // without a plan get the 30-second intake; students with a plan get
 // today's rebuilt plan in full.
+//
+// Rollover (Exam Week Mode wave 2, play 12): /coach?next=1&from=CODE —
+// the post-exam task and the dashboard rollover card land here. The
+// intake opens pre-filled with the NEXT exam in the student's track (same
+// category + state, exam day 7–90 days out, other active enrolments
+// first), the old plan's daily minutes kept, and the syllabus overlap
+// between the two exams named. No model call — the plan itself is
+// rebuilt by the usual night pass.
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { getT } from "@/lib/i18n-server";
 import { Header } from "@/components/Header";
 import { computeCoachPlan } from "@/lib/coach-plan";
-import { CoachIntake, type ExamOption } from "./CoachIntake";
+import { CoachIntake, type CoachRollover, type ExamOption } from "./CoachIntake";
 import { CoachPlanView } from "./CoachPlanView";
 
 export const dynamic = "force-dynamic";
+
+const EXAM_CODE_RE = /^[A-Z0-9_]{2,40}$/;
+const DAY_MS = 86_400_000;
+const IST_OFFSET_MS = 330 * 60_000;
+
+function fill(s: string, vars: Record<string, string | number>): string {
+  return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
+}
+
+interface RolloverData {
+  from: { code: string; short: string };
+  /** Recommended next exam (null when nothing in the track is 7–90 days out). */
+  next: { code: string; short: string; day: string } | null;
+  /** Subject names both syllabi share (next exam's spelling), max 5. */
+  overlap: string[];
+}
+
+/** The next exam in the finished exam's track for this student. */
+async function loadRollover(userId: string, fromCode: string): Promise<RolloverData | null> {
+  if (!EXAM_CODE_RE.test(fromCode)) return null;
+  const from = await prisma.exam
+    .findUnique({ where: { code: fromCode }, select: { id: true, code: true, shortName: true, category: true, state: true } })
+    .catch(() => null);
+  if (!from) return null;
+
+  const todayUtc = new Date(`${new Date(Date.now() + IST_OFFSET_MS).toISOString().slice(0, 10)}T00:00:00.000Z`);
+  const lo = new Date(todayUtc.getTime() + 7 * DAY_MS);
+  const hi = new Date(todayUtc.getTime() + 90 * DAY_MS);
+  const rows = await prisma.$queryRaw<{ id: string; code: string; short: string; date: Date; enrolled: boolean }[]>`
+    SELECT e.id, e.code, e."shortName" AS short, MIN(d.date) AS date, (en."userId" IS NOT NULL) AS enrolled
+    FROM "ExamImportantDate" d
+    JOIN "Exam" e ON e.id = d."examId" AND e.active = TRUE
+    LEFT JOIN "Enrollment" en ON en."examId" = e.id AND en."userId" = ${userId} AND en.active = TRUE
+    WHERE d."archivedAt" IS NULL
+      AND (d.kind = 'EXAM' OR (d.kind IS NULL AND d."isExamDay" = TRUE))
+      AND e.category::text = ${from.category}
+      AND e.state IS NOT DISTINCT FROM ${from.state}::text
+      AND e.id <> ${from.id}
+      AND d.date >= ${lo} AND d.date <= ${hi}
+    GROUP BY e.id, e.code, e."shortName", en."userId"
+    ORDER BY (en."userId" IS NOT NULL) DESC, MIN(d.date) ASC
+    LIMIT 1`.catch((err) => {
+    console.error("[coach] rollover next-in-track failed (non-fatal):", err);
+    return [] as { id: string; code: string; short: string; date: Date; enrolled: boolean }[];
+  });
+  const hit = rows[0] ?? null;
+  const next = hit ? { id: hit.id, code: hit.code, short: hit.short, day: new Date(hit.date).toISOString().slice(0, 10) } : null;
+
+  let overlap: string[] = [];
+  if (next) {
+    const subjects = await prisma.subject
+      .findMany({ where: { examId: { in: [from.id, next.id] } }, select: { examId: true, name: true }, orderBy: { orderIdx: "asc" } })
+      .catch(() => [] as { examId: string; name: string }[]);
+    const norm = (s: string) => s.trim().toLowerCase();
+    const fromNames = new Set(subjects.filter((s) => s.examId === from.id).map((s) => norm(s.name)));
+    const seen = new Set<string>();
+    for (const s of subjects) {
+      if (s.examId !== next.id) continue;
+      const key = norm(s.name);
+      if (!key || !fromNames.has(key) || seen.has(key)) continue;
+      seen.add(key);
+      overlap.push(s.name.trim());
+    }
+    overlap = overlap.slice(0, 5);
+  }
+  return { from: { code: from.code, short: from.shortName }, next: next && { code: next.code, short: next.short, day: next.day }, overlap };
+}
 
 export const metadata: Metadata = {
   title: "Free Personal Coach for Government Exams — day-by-day plan | Shishya",
@@ -62,22 +138,60 @@ async function examOptions(userId: string | null): Promise<ExamOption[]> {
 export default async function CoachPage({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string; exam?: string }>;
+  searchParams: Promise<{ edit?: string; exam?: string; next?: string; from?: string }>;
 }) {
   const sp = await searchParams;
   const session = await auth();
   const userId = session?.user?.id ?? null;
 
   const plan = userId ? await computeCoachPlan(userId) : null;
-  const showIntake = userId && (!plan || sp.edit === "1");
+  // ?next=1&from=CODE — the rollover intake (post-exam task / dashboard
+  // card). `from` defaults to the current plan's exam.
+  const wantsRollover = sp.next === "1";
+  const fromCode = (sp.from ?? plan?.examCode ?? "").toUpperCase();
+  const rolloverData = userId && wantsRollover ? await loadRollover(userId, fromCode) : null;
+  const showIntake = userId && (!plan || sp.edit === "1" || !!rolloverData);
   const allOptions = showIntake ? await examOptions(userId) : [];
   // ?exam=CODE (from the coach entry on exam/syllabus/results pages)
-  // pre-selects that exam so the student lands on a half-filled form.
-  const wanted = sp.exam?.toUpperCase();
-  const preselected = wanted ? allOptions.find((o) => o.code === wanted) : undefined;
+  // pre-selects that exam so the student lands on a half-filled form; the
+  // rollover's recommended next exam wins when both are present.
+  const wanted = rolloverData?.next?.code ?? sp.exam?.toUpperCase();
+  const preselected = wanted
+    ? allOptions.find((o) => o.code === wanted) ??
+      (rolloverData?.next && rolloverData.next.code === wanted
+        ? { code: rolloverData.next.code, short: rolloverData.next.short, nextDate: rolloverData.next.day }
+        : undefined)
+    : undefined;
   const options = preselected
     ? [preselected, ...allOptions.filter((o) => o.code !== preselected.code)]
     : allOptions;
+
+  const { t } = await getT();
+  const rollover: CoachRollover | null = rolloverData
+    ? {
+        title: fill(t("ew.coach.postexam.title"), { exam: rolloverData.from.short }),
+        body: t("ew.coach.postexam.body"),
+        cta: t("ew.coach.postexam.cta"),
+        overlap:
+          rolloverData.next && rolloverData.overlap.length > 0
+            ? fill(t("ew.coach.overlap"), { exam: rolloverData.next.short, topics: rolloverData.overlap.join(", ") })
+            : null,
+        nextCode: rolloverData.next?.code ?? null,
+      }
+    : null;
+  // Prefill: the next exam + its date, the old plan's daily minutes.
+  const intakeInitial = rolloverData
+    ? {
+        examCode: rolloverData.next?.code,
+        examDate: rolloverData.next?.day,
+        dailyMinutes: plan?.dailyMinutes,
+      }
+    : null;
+  const selfPath = wantsRollover && EXAM_CODE_RE.test(fromCode)
+    ? `/coach?next=1&from=${fromCode}`
+    : sp.exam
+      ? `/coach?exam=${sp.exam.toUpperCase()}`
+      : "/coach";
 
   // AEO: the questions aspirants actually type into Google and ask
   // ChatGPT/Gemini/Perplexity about affording coaching, making a plan,
@@ -192,7 +306,7 @@ export default async function CoachPage({
               <li>🇮🇳 Sunday All-India Live Test as your weekly benchmark</li>
             </ul>
             <Link
-              href={`/login?callbackUrl=${encodeURIComponent(wanted ? `/coach?exam=${wanted}` : "/coach")}`}
+              href={`/login?callbackUrl=${encodeURIComponent(selfPath)}`}
               className="mt-6 inline-block rounded-lg bg-saffron-500 px-8 py-3 text-sm font-bold text-white shadow-sm hover:bg-saffron-600"
             >
               Start free — build my plan →
@@ -203,9 +317,9 @@ export default async function CoachPage({
           </>
         )}
 
-        {showIntake && <CoachIntake options={options} />}
+        {showIntake && <CoachIntake options={options} initial={intakeInitial} rollover={rollover} />}
 
-        {userId && plan && sp.edit !== "1" && (
+        {userId && plan && sp.edit !== "1" && !rolloverData && (
           <>
             <CoachPlanView plan={plan} full />
             <p className="mt-4 text-xs text-ink-500">

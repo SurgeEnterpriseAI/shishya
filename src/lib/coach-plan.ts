@@ -186,11 +186,14 @@ function taskFromId(ctx: PlanContext, id: string): CoachTask | null {
       label: `Today is your ${ctx.examShort} exam. Carry your admit card & ID, reach early, stay calm — you've prepared for this. Go get it. 🇮🇳`,
       href: `/exams/${ctx.examCode}`,
     };
+  // Play 12 (Exam Week Mode wave 2, 6 Sep 2026): the post-exam task lands
+  // on the coach rollover intake — next exam in the track pre-filled,
+  // daily minutes carried over — instead of a report URL nothing read.
   if (id === "postexam")
     return {
       kind: "read",
       label: `Your ${ctx.examShort} exam is done — how did it go? Tell us, and we'll set up what's next.`,
-      href: `/me/report?exam-done=1`,
+      href: `/coach?next=1&from=${encodeURIComponent(ctx.examCode)}`,
     };
   if (id === "daily5") return { kind: "daily5", label: "Daily 5 — keep the streak", href: "/dashboard" };
   if (id === "livetest")

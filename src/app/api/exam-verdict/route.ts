@@ -6,6 +6,10 @@
 //   GET  ?exam=CODE&date=YYYY-MM-DD
 //        → 200 { n, easy, moderate, tough, sections: [{ label, n }] }
 //
+// Below the n >= VERDICT_MIN_N floor both responses carry only n — the
+// split and the section votes are zeroed (publicTally) so nobody can read
+// a "prediction" out of three votes.
+//
 // Identity: session userId, else the shishya_anon cookie (the analytics
 // beacon's 30-day UUID). A browser without the cookie gets one issued here
 // the same way /api/analytics issues it, so a first-visit student on exam
@@ -24,6 +28,7 @@ import {
   examDateFromIso,
   getVerdictTally,
   isVerdict,
+  publicTally,
   upsertVerdict,
 } from "@/lib/exam-verdict";
 
@@ -60,7 +65,7 @@ export async function GET(req: NextRequest) {
   }
   const exam = await prisma.exam.findUnique({ where: { code }, select: { id: true } }).catch(() => null);
   if (!exam) return NextResponse.json({ error: "unknown exam" }, { status: 404 });
-  const tally = await getVerdictTally(exam.id, date);
+  const tally = publicTally(await getVerdictTally(exam.id, date));
   return NextResponse.json(tally, {
     headers: { "cache-control": "public, s-maxage=60, stale-while-revalidate=300" },
   });
@@ -139,7 +144,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "could not save" }, { status: 500 });
   }
 
-  const tally = await getVerdictTally(exam.id, examDate);
+  const tally = publicTally(await getVerdictTally(exam.id, examDate));
   const res = NextResponse.json({ ok: true, tally });
   if (issuedAnon) {
     res.cookies.set(ANON_COOKIE, issuedAnon, {

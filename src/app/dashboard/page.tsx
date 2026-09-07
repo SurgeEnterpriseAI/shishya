@@ -22,6 +22,7 @@ import { DailyFiveCard } from "./DailyFiveCard";
 import { StreakCard } from "./StreakCard";
 import { MissionCard } from "./MissionCard";
 import { computeCoachPlan } from "@/lib/coach-plan";
+import { examDone } from "@/lib/exam-week-student";
 import { PeerProofLine } from "@/components/PeerProofLine";
 import { examPeerProof } from "@/lib/peer-proof";
 import { CoachPlanView } from "@/app/coach/CoachPlanView";
@@ -277,6 +278,10 @@ async function renderDashboard() {
     daysToExam: number | null; examDateLabel: string | null;
     topicsTotal: number; topicsTouched: number; topicsMastered: number;
   } | null = null;
+  // Exam Week Mode wave 2 (play 12): once the mission exam's last announced
+  // exam day is behind the student, the card swaps its countdown for the
+  // coach rollover ("{exam} is done. Roll your plan?"). Best-effort.
+  let missionRollover: { href: string; title: string; body: string; cta: string } | null = null;
   if (enrollments.length > 0) {
     try {
       const pEnroll =
@@ -308,8 +313,23 @@ async function renderDashboard() {
         topicsTouched: touched,
         topicsMastered: mastered,
       };
+      const dateRows = await prisma.examImportantDate.findMany({
+        where: { examId: pExamId, archivedAt: null },
+        select: { id: true, label: true, date: true, isExamDay: true, kind: true, confidence: true, url: true, source: true, notes: true },
+      });
+      const eligRows = await prisma.$queryRaw<{ officialUrl: string | null }[]>`
+        SELECT "officialUrl" FROM "ExamEligibility" WHERE "examId" = ${pExamId} LIMIT 1`;
+      if (examDone(dateRows, eligRows[0]?.officialUrl ?? null, now)) {
+        missionRollover = {
+          href: `/coach?next=1&from=${encodeURIComponent(pEnroll.exam.code)}`,
+          title: String(t("ew.coach.postexam.title")).replace("{exam}", pEnroll.exam.shortName),
+          body: t("ew.coach.postexam.body"),
+          cta: t("ew.coach.postexam.cta"),
+        };
+      }
     } catch {
       mission = null;
+      missionRollover = null;
     }
   }
 
@@ -560,7 +580,7 @@ async function renderDashboard() {
           </>
         ) : (
           <>
-            {mission && <MissionCard {...mission} />}
+            {mission && <MissionCard {...mission} rollover={missionRollover} />}
             <Link
               href="/coach"
               className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-saffron-300 bg-saffron-50/60 px-4 py-3 transition-colors hover:border-saffron-400"

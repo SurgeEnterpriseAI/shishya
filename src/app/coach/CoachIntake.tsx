@@ -3,9 +3,16 @@
 // The 30-second intake — three answers, zero friction:
 // which exam, when is it, how much time daily. Exam date prefills from
 // our own calendar the moment an exam is picked.
+//
+// Rollover mode (Exam Week Mode wave 2, play 12): /coach?next=1&from=X
+// lands here with the NEXT exam in the student's track pre-selected, the
+// old plan's daily minutes kept, and the rollover card above the form
+// ("{exam} is done. Roll your plan?" + the syllabus overlap between the
+// two exams). The submit button reads the rollover CTA.
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CoachRolloverCard, type CoachRolloverLabels } from "@/components/CoachRolloverCard";
 
 export interface ExamOption {
   code: string;
@@ -13,20 +20,27 @@ export interface ExamOption {
   nextDate: string | null; // YYYY-MM-DD from our calendar, if announced
 }
 
+export interface CoachRollover extends CoachRolloverLabels {
+  /** The recommended next exam — the overlap line applies only while it is selected. */
+  nextCode: string | null;
+}
+
 export function CoachIntake({
   options,
   initial,
+  rollover,
 }: {
   options: ExamOption[];
-  initial?: { examCode: string; examDate: string; dailyMinutes: number } | null;
+  initial?: { examCode?: string; examDate?: string; dailyMinutes?: number } | null;
+  rollover?: CoachRollover | null;
 }) {
   const router = useRouter();
   const [examCode, setExamCode] = useState(initial?.examCode ?? options[0]?.code ?? "");
   const [date, setDate] = useState(
-    initial?.examDate ?? options[0]?.nextDate ?? "",
+    initial?.examDate ?? options.find((o) => o.code === (initial?.examCode ?? options[0]?.code))?.nextDate ?? "",
   );
   const [minutes, setMinutes] = useState<45 | 90 | 180>(
-    (initial?.dailyMinutes as 45 | 90 | 180) ?? 90,
+    (initial?.dailyMinutes as 45 | 90 | 180 | undefined) ?? 90,
   );
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -64,8 +78,14 @@ export function CoachIntake({
     }
   }
 
+  const showOverlap = !!rollover?.overlap && (!rollover.nextCode || rollover.nextCode === examCode);
+
   return (
-    <div className="mt-6 max-w-xl rounded-xl border-2 border-saffron-200 bg-white p-6">
+    <div className="mt-6 max-w-xl">
+      {rollover && (
+        <CoachRolloverCard labels={{ title: rollover.title, body: rollover.body, cta: rollover.cta, overlap: showOverlap ? rollover.overlap : null }} />
+      )}
+      <div className={`rounded-xl border-2 border-saffron-200 bg-white p-6 ${rollover ? "mt-3" : ""}`}>
       <p className="text-sm font-bold text-ink-900">Three answers. Thirty seconds. Then your plan.</p>
 
       <label className="mt-4 block text-xs font-semibold uppercase tracking-wider text-ink-500">
@@ -124,11 +144,12 @@ export function CoachIntake({
         disabled={busy}
         className="mt-5 w-full rounded-lg bg-saffron-500 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 disabled:cursor-wait disabled:opacity-70"
       >
-        {busy ? "Building your plan…" : "Build my day-by-day plan →"}
+        {busy ? "Building your plan…" : rollover ? `${rollover.cta} →` : "Build my day-by-day plan →"}
       </button>
       <p className="mt-2 text-center text-[11px] text-ink-400">
         Free forever. Rebuilt every morning around what you actually did.
       </p>
+      </div>
     </div>
   );
 }
