@@ -18,6 +18,19 @@
 // Content comes from the phase-article cron (src/lib/refresh-phase-
 // articles.ts): compiled from public student discussion, published only
 // when at least two real sources exist (src/lib/phase-article-quality.ts).
+//
+// Honesty (6 Sep 2026 review, Exam Week Mode wave 2):
+//   • an ACTIVE row that fails the quality gate (fewer than two cited
+//     sources, or a placeholder body) renders as absent — the empty-state
+//     copy — exactly as the AEO surfaces and IndexNow already treat it;
+//     the same gate filters the "Previous updates" list
+//   • the badge / tagline / fallback title come from
+//     src/lib/phase-article-copy.ts, which reads the shared exam-week state
+//     machine: "is happening today" / "is done" only on an announced
+//     (official / reported) exam day that the tracker puts today / behind
+//     us; otherwise the dated "{date} ({tier}) paper", or a neutral line
+//     when no typed exam day exists. The page routes build their <title>
+//     from the same helper, so metadata and body never disagree.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -26,6 +39,9 @@ import { auth } from "@/lib/auth";
 import { ReactionButtons } from "./ReactionButtons";
 import { ShareButtons } from "./ShareButtons";
 import { renderMarkdown } from "@/lib/markdown";
+import { isRealArticle } from "@/lib/phase-article-quality";
+import { getExamWeekInputs } from "@/lib/exam-week-inputs";
+import { examDayClaim, phaseArticleCopy } from "@/lib/phase-article-copy";
 import type { ExamPhase, ArticleReaction } from "@prisma/client";
 
 export interface PhaseSource {
@@ -37,41 +53,6 @@ export interface PhaseSource {
   /** Optional human-readable label shown in the "Sources we read" list. */
   label?: string;
 }
-
-const PHASE_COPY: Record<
-  ExamPhase,
-  {
-    badge: string;
-    badgeColor: string;
-    tagline: (examShort: string) => string;
-    emptyBody: (examShort: string) => string;
-  }
-> = {
-  CHECKLIST: {
-    badge: "📋 Last-minute checklist",
-    badgeColor: "bg-amber-100 text-amber-900 border-amber-300",
-    tagline: (s) =>
-      `One week to go for ${s}. Here's the cheat-sheet to revise — what to carry, last-mile topics, formulae, mock targets.`,
-    emptyBody: (s) =>
-      `We're putting together the last-minute checklist for ${s}. Check back closer to the exam date — students who've cleared the same paper will have written the revision sheet by then.`,
-  },
-  LIVE: {
-    badge: "🔴 Live — exam day",
-    badgeColor: "bg-rose-100 text-rose-900 border-rose-300",
-    tagline: (s) =>
-      `${s} is happening today. Live difficulty and shift-by-shift analysis, compiled from public student discussion (Reddit, news, YouTube comments) during the exam window.`,
-    emptyBody: (s) =>
-      `Live coverage for ${s} appears once students step out of the centre and real reactions exist in public discussion — first impressions, difficulty signals, section-wise complaints. Nothing is published before that.`,
-  },
-  REACTIONS: {
-    badge: "📊 Post-exam reactions",
-    badgeColor: "bg-sky-100 text-sky-900 border-sky-300",
-    tagline: (s) =>
-      `${s} is done — here's the verdict. Student consensus on difficulty, expected cutoff, answer-key analysis and "did you get Q-34?" threads.`,
-    emptyBody: (s) =>
-      `Post-exam analysis for ${s} is compiled from public student discussion after the paper — expected cutoff, difficulty breakdown, answer-key analysis. It appears here once real reactions exist, not before.`,
-  },
-};
 
 const PHASE_SLUG: Record<ExamPhase, "checklist" | "live" | "reactions"> = {
   CHECKLIST: "checklist",
@@ -92,35 +73,46 @@ export async function PhaseArticleView({
   });
   if (!exam) notFound();
 
-  // Active (current) version — archivedAt IS NULL. findFirst because
-  // the (examId, phase) unique was replaced by version history; there
-  // can be many archived rows + one active row.
-  const article = await prisma.examPhaseArticle.findFirst({
-    where: { examId: exam.id, phase, archivedAt: null },
-    orderBy: { lastUpdatedAt: "desc" },
-    include: {
-      _count: { select: { reactions: true } },
-    },
-  });
+  const [activeRow, archivedRows, inputs, session] = await Promise.all([
+    // Active (current) version — archivedAt IS NULL. findFirst because
+    // the (examId, phase) unique was replaced by version history; there
+    // can be many archived rows + one active row.
+    prisma.examPhaseArticle.findFirst({
+      where: { examId: exam.id, phase, archivedAt: null },
+      orderBy: { lastUpdatedAt: "desc" },
+      include: {
+        _count: { select: { reactions: true } },
+      },
+    }),
+    // Previous (archived) versions — earlier cycles' write-ups, newest
+    // first. Shown collapsed under the live article so a student can read
+    // what last cycle's checklist / live / reactions said. Over-fetched a
+    // little because hollow placeholders are dropped below.
+    prisma.examPhaseArticle.findMany({
+      where: { examId: exam.id, phase, archivedAt: { not: null } },
+      orderBy: { archivedAt: "desc" },
+      take: 24,
+      select: {
+        id: true,
+        title: true,
+        bodyMarkdown: true,
+        summarySnippet: true,
+        sourcesScraped: true,
+        lastUpdatedAt: true,
+        archivedAt: true,
+      },
+    }),
+    // Tracker rows + official portal (15-min cache) for the honest copy.
+    getExamWeekInputs(exam.id),
+    auth().catch(() => null),
+  ]);
 
-  // Previous (archived) versions — earlier cycles' write-ups, newest
-  // first. Shown collapsed under the live article so a student can read
-  // what last cycle's checklist / live / reactions said.
-  const archivedVersions = await prisma.examPhaseArticle.findMany({
-    where: { examId: exam.id, phase, archivedAt: { not: null } },
-    orderBy: { archivedAt: "desc" },
-    take: 12,
-    select: {
-      id: true,
-      title: true,
-      bodyMarkdown: true,
-      summarySnippet: true,
-      lastUpdatedAt: true,
-      archivedAt: true,
-    },
-  });
+  // Quality gate: a row that is not REAL is treated as absent.
+  const article = activeRow && isRealArticle(activeRow) ? activeRow : null;
+  const archivedVersions = archivedRows.filter((v) => isRealArticle(v)).slice(0, 12);
+  const claim = examDayClaim(inputs.rows, inputs.officialUrl);
+  const copy = phaseArticleCopy(phase, exam.shortName, claim);
 
-  const session = await auth().catch(() => null);
   const userId = session?.user?.id ?? null;
 
   // Reaction counts — broken down by like vs dislike. Done as two
@@ -146,17 +138,16 @@ export async function PhaseArticleView({
         })
       : null;
 
-  const copy = PHASE_COPY[phase];
   const sources = (article?.sourcesScraped as unknown as PhaseSource[]) ?? [];
 
   // JSON-LD — Article + BreadcrumbList. Mirrors the NewsArticle markup on
   // the per-news permalink pages so Google treats these phase write-ups as
   // first-class editorial content (rich-result + Discover eligibility).
-  // Only emitted when a live article exists — empty-state pages have no
+  // Only emitted when a REAL article exists — empty-state pages have no
   // content to mark up. Highest leverage during the T-7 → T+3 window when
   // these pages spike in search ("<exam> checklist", "<exam> cutoff").
   const phaseUrl = `https://shishya.in/exams/${exam.code}/${PHASE_SLUG[phase]}`;
-  const phaseLabel = copy.badge.replace(/^[^ ]+\s/, "");
+  const phaseLabel = copy.label;
   const articleJsonLd = article
     ? {
         "@context": "https://schema.org",
@@ -216,7 +207,7 @@ export async function PhaseArticleView({
           {exam.shortName}
         </Link>
         <span aria-hidden>›</span>
-        <span className="font-medium text-ink-700">{copy.badge.replace(/^[^ ]+\s/, "")}</span>
+        <span className="font-medium text-ink-700">{phaseLabel}</span>
       </nav>
 
       {/* Phase badge + freshness */}
@@ -236,9 +227,9 @@ export async function PhaseArticleView({
 
       {/* Title + tagline */}
       <h1 className="text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
-        {article?.title ?? `${exam.shortName} — ${copy.badge.replace(/^[^ ]+\s/, "")}`}
+        {article?.title ?? copy.fallbackTitle}
       </h1>
-      <p className="mt-3 text-base text-ink-600">{copy.tagline(exam.shortName)}</p>
+      <p className="mt-3 text-base text-ink-600">{copy.tagline}</p>
 
       {/* Body — either rendered markdown or the empty-state placeholder */}
       <div className="prose prose-ink mt-8 max-w-none">
@@ -247,7 +238,7 @@ export async function PhaseArticleView({
             dangerouslySetInnerHTML={{ __html: renderMarkdown(article.bodyMarkdown) }}
           />
         ) : (
-          <p className="text-ink-600">{copy.emptyBody(exam.shortName)}</p>
+          <p className="text-ink-600">{copy.emptyBody}</p>
         )}
       </div>
 
@@ -304,7 +295,7 @@ export async function PhaseArticleView({
             Previous updates ({archivedVersions.length})
           </h2>
           <p className="mt-1 text-xs text-ink-500">
-            Earlier versions of this {copy.badge.replace(/^[^ ]+\s/, "").toLowerCase()},
+            Earlier versions of this {phaseLabel.toLowerCase()},
             archived as the page refreshed. Tap to expand.
           </p>
           <div className="mt-3 space-y-2">

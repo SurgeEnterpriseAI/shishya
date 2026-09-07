@@ -2,12 +2,20 @@
 // Reachable from the topic-notes page for signed-out readers (who dwell
 // ~20s and bounce). Client-graded taste that ends on a sign-in CTA. noindex
 // — utility page carrying answers, not an SEO surface (the notes page is).
+//
+// Exam Week Mode (6 Sep 2026, wave 2): same alert wiring as the exam-level
+// quiz — phase from the cached tracker rows, translated labels, and the
+// one-email alert on the result screen in the run-up / eve / post-exam
+// phases (an expected-tier exam day never opens the post-exam copy).
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { auth } from "@/lib/auth";
+import { getT } from "@/lib/i18n-server";
 import { getAnonQuiz } from "@/lib/anon-quiz";
-import { AnonQuizPlayer } from "@/components/AnonQuizPlayer";
+import { AnonQuizPlayer, type AnonQuizExamWeek } from "@/components/AnonQuizPlayer";
+import { alertPhase, examAlertLabels, getExamWeekStateByCode } from "@/lib/exam-week-inputs";
 
 export const metadata: Metadata = { robots: { index: false, follow: true } };
 export const dynamic = "force-dynamic";
@@ -18,7 +26,15 @@ export default async function TopicQuizPage({
   params: Promise<{ code: string; topicCode: string }>;
 }) {
   const { code, topicCode } = await params;
-  const quiz = await getAnonQuiz({ examCode: code, topicCode, count: 5 });
+  const [quiz, examWeekState, { t }, session] = await Promise.all([
+    getAnonQuiz({ examCode: code, topicCode, count: 5 }),
+    getExamWeekStateByCode(code),
+    getT(),
+    auth().catch(() => null),
+  ]);
+  const examWeek: AnonQuizExamWeek | undefined = quiz
+    ? { phase: alertPhase(examWeekState), signedIn: !!session?.user?.id, ...examAlertLabels(t, quiz.examShort) }
+    : undefined;
 
   return (
     <main className="min-h-screen bg-ink-50/40">
@@ -55,7 +71,7 @@ export default async function TopicQuizPage({
               no signup — see where you stand in ~3 minutes.
             </p>
             <div className="mt-6">
-              <AnonQuizPlayer quiz={quiz} />
+              <AnonQuizPlayer quiz={quiz} examWeek={examWeek} />
             </div>
           </>
         )}

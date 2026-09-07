@@ -160,6 +160,8 @@ export async function GET(
     ]);
     L.push("## Exam week");
     L.push(...examWeekAeoLines(weekExam, { articles: articles.get(weekExam.id) ?? [], tally, site: SITE }));
+    L.push(`- Score estimator (marking-scheme arithmetic from the answer key: correct × ${exam.marksPerQ} − wrong × ${Number(exam.negativeMark.toFixed(2))}; nothing stored, no prediction): ${SITE}/exams/${exam.code}/score-estimate`);
+    L.push(`- Calendar file (.ics): the exam day(s), answer key and result dates the tracker holds, each with its tier word — missing dates are omitted, never invented: ${SITE}/exams/${exam.code}/exam-week.ics`);
     L.push("");
   }
 

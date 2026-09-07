@@ -6,11 +6,18 @@
 // cron compiles the body from public student discussion during the exam
 // window; nothing is published until at least two real sources exist, so
 // the page never claims coverage it does not have.
+//
+// Metadata is phase-aware (6 Sep 2026 review): "live … today" only when
+// the tracker puts an announced exam day today; otherwise the dated
+// "{date} ({tier}) paper" — the same helper PhaseArticleView uses for the
+// tagline, so <title> and body cannot disagree.
 
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { PhaseArticleView } from "@/components/exam-phase/PhaseArticleView";
 import { prisma } from "@/lib/db/prisma";
+import { getExamWeekInputs } from "@/lib/exam-week-inputs";
+import { examDayClaim, phaseArticleMeta } from "@/lib/phase-article-copy";
 
 export async function generateMetadata({
   params,
@@ -20,17 +27,20 @@ export async function generateMetadata({
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
     where: { code },
-    select: { shortName: true, name: true },
+    select: { id: true, shortName: true, name: true },
   });
   if (!exam) return { title: "Exam not found — Shishya" };
+  const inputs = await getExamWeekInputs(exam.id);
+  const meta = phaseArticleMeta("LIVE", exam, examDayClaim(inputs.rows, inputs.officialUrl));
+  const url = `https://shishya.in/exams/${code}/live`;
   return {
-    title: `${exam.shortName} live analysis — difficulty, shift-wise, answer key | Shishya`,
-    description: `Live ${exam.name} coverage — students' first reactions and shift-by-shift difficulty, compiled from public discussion during the exam window.`,
-    alternates: { canonical: `https://shishya.in/exams/${code}/live` },
+    title: meta.title,
+    description: meta.description,
+    alternates: { canonical: url },
     openGraph: {
-      title: `${exam.shortName} — Live exam-day analysis`,
-      description: `Live ${exam.name} difficulty, shift-by-shift, from public student discussion.`,
-      url: `https://shishya.in/exams/${code}/live`,
+      title: meta.ogTitle,
+      description: meta.ogDescription,
+      url,
       type: "article",
     },
   };

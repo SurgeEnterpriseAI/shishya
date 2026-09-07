@@ -72,6 +72,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "monthly" as const,
     priority: 0.75,
   }));
+  // Score estimator (6 Sep 2026, Exam Week Mode) — the marking-scheme
+  // calculator at /exams/[code]/score-estimate exists for every active
+  // exam but is only worth a crawl around exam day: emit it for exams with
+  // a TYPED exam-day row within ±30 days (untyped legacy rows never count).
+  const estimatorExams = await prisma
+    .$queryRaw<{ code: string }[]>`
+      SELECT DISTINCT e.code FROM "Exam" e
+      JOIN "ExamImportantDate" d ON d."examId" = e.id
+      WHERE e.active = TRUE AND d."archivedAt" IS NULL AND d.kind = 'EXAM'
+        AND d.date >= NOW() - INTERVAL '30 days' AND d.date <= NOW() + INTERVAL '30 days'
+    `.catch(() => [] as { code: string }[]);
+  const scoreEstimateUrls: MetadataRoute.Sitemap = estimatorExams.map((e) => ({
+    url: `${base}/exams/${e.code}/score-estimate`,
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+  }));
   // Tricks & mnemonics landings — only exams that actually have generated
   // content (the page 404s otherwise, so the sitemap must not lead there).
   const tricksExams = await prisma
@@ -522,6 +538,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...examUrls,
     ...cutoffUrls,
     ...syllabusUrls,
+    ...scoreEstimateUrls,
     ...tricksUrls,
     ...guideUrls,
     ...updatesUrls,

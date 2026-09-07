@@ -137,6 +137,8 @@ export async function GET() {
     weekExams.forEach((e, i) => {
       lines.push(`### ${e.shortName} — ${e.name} (${SITE}/exams/${e.code})`);
       lines.push(...examWeekAeoLines(e, { articles: articles.get(e.id) ?? [], tally: tallies[i], site: SITE }));
+      lines.push(`- Score estimator (marking-scheme arithmetic from the answer key: correct × marks per question − wrong × negative mark; nothing stored, no prediction): ${SITE}/exams/${e.code}/score-estimate`);
+      lines.push(`- Calendar file (.ics): the exam day(s), answer key and result dates the tracker holds, each with its tier word — missing dates are omitted, never invented: ${SITE}/exams/${e.code}/exam-week.ics`);
       lines.push("");
     });
   }
