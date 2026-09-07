@@ -19,11 +19,23 @@
 //     strictly HIGHER tier within ±30 days that names a different date;
 //     untyped legacy rows are ignored, same-tier rows on other days are
 //     the window itself.
+//
+// SHIFT DAYS (wave 2): Enrollment.shiftDate is the student's OWN day
+// inside a multi-day window. A student with a shiftDate gets this mail on
+// the evening before THAT day (and only then) — on the window's first-day
+// eve they are skipped unless their shift IS the first day. Students
+// without a shiftDate keep the window-first-day behaviour. The shift path
+// requires tomorrow to lie inside an ANNOUNCED window (official / reported
+// first row); the date line reads "{date} (your shift day, window
+// official)" so the tier still travels with the date.
+//
 // Every date in the mail carries its tier word. Anti-duplicate: EmailTouch
-// tag 'exam-eve' per user per day (the send log also writes
-// 'sent:exam-eve', which the day-after cron reads). Opt-outs are
-// excluded here AND at the send layer. ?dry=1 returns the would-send list
-// (code, users, reason) and the skips, and sends nothing.
+// tag 'exam-eve' per user per day PLUS the exam-scoped tag
+// 'exam-eve-{CODE}' (wave 2) which the day-after cron requires, so a
+// student who got "all the best for SSC CGL" is never asked about another
+// exam. (The send log also writes 'sent:exam-eve'.) Opt-outs are excluded
+// here AND at the send layer. ?dry=1 returns the would-send list (code,
+// users, reason) and the skips, and sends nothing.
 // Auth: Bearer ${CRON_SECRET}.
 
 export const runtime = "nodejs";
@@ -33,16 +45,18 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db/prisma";
 import { sendExamEveEmail } from "@/lib/email";
 import { getDailyQuote } from "@/data/motivational-quotes";
-import { istDay } from "@/lib/exam-week";
-import { latestOfKind, type TimelineRow } from "@/lib/exam-timeline";
+import { computeExamWeekState, istDay } from "@/lib/exam-week";
+import { buildTimeline, latestOfKind, type TimelineRow } from "@/lib/exam-timeline";
 import {
   checklistLink,
   examEveDecision,
   loadExamBundles,
   nextTrackerRows,
   plainDay,
+  shiftTierWord,
   tierWord,
   whenWithTier,
+  windowContainsDay,
   type ExamBundle,
 } from "@/lib/exam-week-mail";
 
@@ -60,7 +74,7 @@ interface EveContent {
   windowEnd: { date: string; tier: string } | null;
   checklistUrl: string;
   checklistIsArticle: boolean;
-  admitCard: { label: string; when: string; url: string | null } | null;
+  admitCard: { label: string; when: string; url: string | null; notes: string | null } | null;
   nextDates: { label: string; when: string }[];
 }
 
@@ -72,8 +86,14 @@ async function buildContent(
   const { meta } = bundle;
   const checklist = await checklistLink(meta.examId, meta.code);
   const admit = latestOfKind(timeline, "ADMIT_CARD");
+  // Reporting instructions live in the row's notes; without them the line
+  // describes the admit-card RELEASE date ("Admit card: 5 Sep (official)")
+  // — the template picks ew.eve.admit vs ew.eve.admitCard exactly like
+  // ExamWeekBlock does.
   const admitCard =
-    admit && admit.tier === "official" ? { label: admit.label, when: whenWithTier(admit), url: admit.url } : null;
+    admit && admit.tier === "official"
+      ? { label: admit.label, when: whenWithTier(admit), url: admit.url, notes: admit.notes?.trim() || null }
+      : null;
   const nextDates = nextTrackerRows(timeline, eve.day, eve.windowIds, 2).map((r) => ({
     label: r.label,
     when: whenWithTier(r),
@@ -91,6 +111,11 @@ async function buildContent(
   };
 }
 
+/** EmailTouch tags must match [A-Za-z0-9_-]; exam codes are A-Z0-9_ already. */
+function scopedTag(code: string): string {
+  return `exam-eve-${code.replace(/[^A-Za-z0-9_-]/g, "-")}`;
+}
+
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret) return Response.json({ error: "CRON_SECRET not configured" }, { status: 500 });
@@ -101,6 +126,7 @@ export async function GET(req: Request) {
   const started = Date.now();
   const now = new Date();
   const tomorrow = istDay(new Date(now.getTime() + DAY_MS));
+  const tomorrowDate = new Date(tomorrow + "T00:00:00Z");
   const outOfTime = () => Date.now() - started > (maxDuration - 30) * 1000;
 
   // 1) Exams with ANY live exam-day row dated tomorrow (IST). The shared
@@ -139,7 +165,23 @@ export async function GET(req: Request) {
     return [] as (Student & { examId: string; planDate: Date })[];
   });
 
-  const bundles = await loadExamBundles([...tomorrowExams.map((x) => x.examId), ...coachStudents.map((s) => s.examId)]);
+  // 3) Exams where some active enrollment names TOMORROW as the student's
+  //    shift day (wave 2). Verified per exam against the window below.
+  const shiftExams = await prisma.$queryRaw<{ examId: string }[]>`
+    SELECT DISTINCT en."examId"
+    FROM "Enrollment" en
+    JOIN "Exam" e ON e.id = en."examId" AND e.active = TRUE
+    WHERE en.active = TRUE AND en."shiftDate" = ${tomorrow}::date
+  `.catch((err) => {
+    console.error("[exam-eve] shift-day selection failed", err);
+    return [] as { examId: string }[];
+  });
+
+  const bundles = await loadExamBundles([
+    ...tomorrowExams.map((x) => x.examId),
+    ...coachStudents.map((s) => s.examId),
+    ...shiftExams.map((x) => x.examId),
+  ]);
 
   const quote = getDailyQuote();
   const wouldSend: { code: string; users: number; reason: string }[] = [];
@@ -162,14 +204,15 @@ export async function GET(req: Request) {
     if (ok) {
       mailed.add(s.id);
       totalSent++;
+      // Generic per-day guard + the exam-scoped tag the day-after cron requires.
       await prisma
-        .$executeRaw`INSERT INTO "EmailTouch" (id, "userId", tag) VALUES (${crypto.randomUUID()}, ${s.id}, 'exam-eve')`
+        .$executeRaw`INSERT INTO "EmailTouch" (id, "userId", tag) VALUES (${crypto.randomUUID()}, ${s.id}, 'exam-eve'), (${crypto.randomUUID()}, ${s.id}, ${scopedTag(content.examCode)})`
         .catch(() => {});
     }
     return ok;
   }
 
-  // ── Enrollment path ────────────────────────────────────────────────
+  // ── Enrollment path (window's first day is tomorrow) ───────────────
   for (const { examId } of tomorrowExams) {
     const bundle = bundles.get(examId);
     if (!bundle) continue;
@@ -192,10 +235,13 @@ export async function GET(req: Request) {
     contentCache.set(examId, content);
     const reason = `eve: ${whenWithTier(eveRow)}${windowEnd ? ` → window to ${whenWithTier(windowEnd)}` : ""}`;
 
+    // Students with a shift day elsewhere in the window get their own eve
+    // (the shift path below, on the evening before THEIR day).
     const students = await prisma.$queryRaw<Student[]>`
       SELECT u.id, u.email, u.name
       FROM "Enrollment" en JOIN "User" u ON u.id = en."userId"
       WHERE en."examId" = ${examId} AND en.active = TRUE AND u.email <> '' AND u."emailOptOut" = FALSE
+        AND (en."shiftDate" IS NULL OR en."shiftDate" = ${tomorrow}::date)
         AND NOT EXISTS (
           SELECT 1 FROM "EmailTouch" t
           WHERE t."userId" = u.id AND t.tag = 'exam-eve'
@@ -216,6 +262,58 @@ export async function GET(req: Request) {
     }
     report.push({ exam: meta.short, students: students.length, sent });
   }
+
+  // ── Shift-day path (tomorrow is the student's own day inside the window) ──
+  let shiftCount = 0;
+  let shiftSent = 0;
+  for (const { examId } of shiftExams) {
+    const bundle = bundles.get(examId);
+    if (!bundle) continue;
+    const { meta } = bundle;
+    // First-day exams already mailed their shiftDate = tomorrow students above.
+    if (contentCache.has(examId)) continue;
+    const state = computeExamWeekState(bundle.rows, meta.officialUrl, now);
+    if (!windowContainsDay(state, tomorrow)) {
+      skipped.push({ code: `${meta.code} (shift-day)`, reason: `tomorrow is not inside an announced exam window (phase:${state.phase})` });
+      continue;
+    }
+    const days = state.windowDays.map((r) => istDay(r.date)).sort();
+    const firstRow = state.windowDays.find((r) => istDay(r.date) === days[0]) ?? state.windowDays[0];
+    const windowEnd = state.windowEnd && istDay(state.windowEnd.date) > tomorrow ? state.windowEnd : null;
+    const timeline = buildTimeline(bundle.rows, now, meta.officialUrl);
+    const content = await buildContent(bundle, timeline, {
+      date: plainDay(tomorrowDate),
+      tier: shiftTierWord(firstRow.tier),
+      day: tomorrow,
+      windowIds: state.windowDays.map((r) => r.id),
+      windowEnd,
+    });
+    const students = await prisma.$queryRaw<Student[]>`
+      SELECT u.id, u.email, u.name
+      FROM "Enrollment" en JOIN "User" u ON u.id = en."userId"
+      WHERE en."examId" = ${examId} AND en.active = TRUE AND en."shiftDate" = ${tomorrow}::date
+        AND u.email <> '' AND u."emailOptOut" = FALSE
+        AND NOT EXISTS (
+          SELECT 1 FROM "EmailTouch" t
+          WHERE t."userId" = u.id AND t.tag = 'exam-eve'
+            AND t."sentAt" > NOW() - INTERVAL '20 hours'
+        )
+      LIMIT ${MAX_SENDS}
+    `.catch(() => [] as Student[]);
+    const pending = students.filter((s) => !mailed.has(s.id));
+    shiftCount += pending.length;
+    wouldSend.push({
+      code: `${meta.code} (shift-day)`,
+      users: pending.length,
+      reason: `shift day ${tomorrow} inside window ${days[0]}…${days[days.length - 1]} (${firstRow.tier})`,
+    });
+    if (dry) continue;
+    for (const s of pending) {
+      if (totalSent >= MAX_SENDS || outOfTime()) break;
+      if (await deliver(s, content)) shiftSent++;
+    }
+  }
+  if (shiftExams.length > 0) report.push({ exam: "(shift days)", students: shiftCount, sent: shiftSent });
 
   // ── Coach-plan path ────────────────────────────────────────────────
   // The student's own date is authoritative for them. When the tracker
@@ -263,6 +361,7 @@ export async function GET(req: Request) {
     dry,
     tomorrow,
     exams: tomorrowExams.length,
+    shiftExams: shiftExams.length,
     sent: totalSent,
     wouldSend,
     skipped,

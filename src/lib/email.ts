@@ -541,11 +541,39 @@ Work the queue: https://shishya.in/admin/teacher-requests`;
  * The Daily 5 nudge — retention loop. Sent each morning to recently-active
  * students who haven't visited yet today: "your 5 questions are ready".
  */
+/** "Never name a finished exam" (Exam Week Mode wave 2, play 10): when a
+ *  student's enrolled exam is over, the routine mails roll over to the next
+ *  exam in their track — with its date AND tier word — or go generic. */
+export interface MailRollover {
+  /** The finished exam's short name. */
+  done: string;
+  /** Next exam in the student's track (7–60 days out); `when` already
+   *  carries the tier word, e.g. "12 Oct (official)". Null = none known. */
+  next: { code: string; short: string; when: string } | null;
+}
+
+function rolloverBlock(r: MailRollover | null | undefined): { text: string; html: string } {
+  if (!r) return { text: "", html: "" };
+  const text = r.next
+    ? `✅ Your ${r.done} is done. Next exam in your track: ${r.next.short} on ${r.next.when} — https://shishya.in/exams/${r.next.code}`
+    : `✅ Your ${r.done} is done. The exam calendar lists every upcoming exam with its source tier: https://shishya.in/exam-calendar`;
+  const html = r.next
+    ? `<div style="border:1px solid #bbf7d0;background:#f0fdf4;border-radius:10px;padding:12px 14px;margin:16px 0 0;">
+      <p style="font-size:13px;line-height:1.6;margin:0;color:#14532d;">✅ Your <strong>${esc(r.done)}</strong> is done. Next exam in your track: <strong>${esc(r.next.short)}</strong> on ${esc(r.next.when)} — <a href="https://shishya.in/exams/${esc(r.next.code)}" style="color:#15803d;font-weight:600;text-decoration:none;">${esc(r.next.short)} hub →</a></p>
+    </div>`
+    : `<div style="border:1px solid #bbf7d0;background:#f0fdf4;border-radius:10px;padding:12px 14px;margin:16px 0 0;">
+      <p style="font-size:13px;line-height:1.6;margin:0;color:#14532d;">✅ Your <strong>${esc(r.done)}</strong> is done. Every upcoming exam, with its source tier: <a href="https://shishya.in/exam-calendar" style="color:#15803d;font-weight:600;text-decoration:none;">exam calendar →</a></p>
+    </div>`;
+  return { text, html };
+}
+
 export async function sendDailyFiveEmail(p: {
   to: string;
   userId?: string;
   name: string | null;
-  examShort: string;
+  /** Exam the mail may name. Null = generic (the enrolled exam is over and
+   *  no next exam in the track is known) — no exam name anywhere. */
+  examShort: string | null;
   /** Current streak (days). When ≥2, the email leads with loss-aversion
    *  — the single strongest reason-to-return we can put in a subject line. */
   streakCurrent?: number;
@@ -558,14 +586,22 @@ export async function sendDailyFiveEmail(p: {
   /** Live-test day/eve notice from liveTestEmailNotice() — rendered as
    *  a highlighted box (html) + a line before the signature (text). */
   liveTest?: { text: string; html: string } | null;
+  /** Exam-week line (phase week / eve) from examWeekMailLine(). */
+  examWeek?: { text: string; html: string } | null;
+  /** Set when the enrolled exam is over: "Your X is done. Next: Y on date (tier)". */
+  rollover?: MailRollover | null;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const streak = p.streakCurrent ?? 0;
   const hasStreak = streak >= 2;
+  const exam = p.examShort ? esc(p.examShort) : null;
+  const roll = rolloverBlock(p.rollover);
 
   const subject = hasStreak
     ? `🔥 ${first}, don't break your ${streak}-day streak`
-    : `☀️ ${first}, your Daily 5 for ${p.examShort} is ready`;
+    : exam
+      ? `☀️ ${first}, your Daily 5 for ${p.examShort} is ready`
+      : `☀️ ${first}, your Daily 5 is ready`;
 
   const streakLineText = hasStreak
     ? `You're on a ${streak}-day streak. 3 minutes today keeps it alive — miss today and it resets to zero.`
@@ -580,11 +616,14 @@ export async function sendDailyFiveEmail(p: {
   const peerHtml = p.peers
     ? `<p style="font-size:13px;line-height:1.6;margin:12px 0 0;color:#334155;">🔥 <strong>${p.peers.students} aspirants</strong> put in ${p.peers.sets} practice sets on Shishya yesterday. Your turn.</p>`
     : "";
+  const weakText = p.examShort ? `your weakest ${p.examShort} topic` : "your weakest topic";
+  const weakHtml = exam ? `your weakest <strong>${exam}</strong> topic` : "your weakest topic";
+  const coachTarget = p.examShort ? `your ${p.examShort} exam` : "your exam date";
 
   const text = `${first},
 
-Your Daily 5 is ready — 5 quick questions on your weakest ${p.examShort} topic. ${streakLineText}
-${peerText}${p.liveTest ? `\n${p.liveTest.text}\n` : ""}
+Your Daily 5 is ready — 5 quick questions on ${weakText}. ${streakLineText}
+${peerText}${p.examWeek ? `\n${p.examWeek.text}\n` : ""}${roll.text ? `\n${roll.text}\n` : ""}${p.liveTest ? `\n${p.liveTest.text}\n` : ""}
 
 Start now: https://shishya.in/dashboard
 
@@ -592,7 +631,7 @@ Small daily reps are how toppers are made. See you inside.
 — Shishya
 ${
   p.hasCoachPlan === false
-    ? `\nP.S. Five questions keep the habit alive — but a plan is what actually cracks the job. Your free personal coach maps every day from here to your ${p.examShort} exam, and rebuilds it each morning around what you actually did. It's the most useful thing on Shishya and it costs nothing: https://shishya.in/coach\n`
+    ? `\nP.S. Five questions keep the habit alive — but a plan is what actually cracks the job. Your free personal coach maps every day from here to ${coachTarget}, and rebuilds it each morning around what you actually did. It's the most useful thing on Shishya and it costs nothing: https://shishya.in/coach\n`
     : ""
 }
 (Reply to this email to stop the daily reminder.)`;
@@ -602,7 +641,7 @@ ${
   <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
     <div style="font-weight:700;font-size:18px;">${hasStreak ? `🔥 Keep your ${streak}-day streak alive` : "☀️ Your Daily 5 is ready"}</div>
     <p style="font-size:14px;line-height:1.6;margin:14px 0;">
-      ${first}, 5 quick questions on your weakest <strong>${p.examShort}</strong> topic are waiting.
+      ${esc(first)}, 5 quick questions on ${weakHtml} are waiting.
       ${streakLineHtml}
     </p>
     <a href="https://shishya.in/dashboard"
@@ -610,6 +649,8 @@ ${
       Start today's 5 →
     </a>
     ${peerHtml}
+    ${p.examWeek?.html ?? ""}
+    ${roll.html}
     ${p.liveTest?.html ?? ""}
     <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
       Small daily reps are how toppers are made. — Shishya
@@ -618,7 +659,7 @@ ${
       p.hasCoachPlan === false
         ? `<div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:10px;padding:12px 14px;margin:16px 0 0;">
       <p style="font-size:13px;font-weight:700;margin:0 0 4px;color:#0f172a;">The surest way to crack the job</p>
-      <p style="font-size:12px;line-height:1.55;margin:0 0 8px;color:#334155;">Five questions keep the habit alive — a plan is what gets you selected. Your <strong style="color:#0f172a;">free personal coach</strong> maps every day from here to your ${p.examShort} exam and rebuilds it each morning around what you actually did.</p>
+      <p style="font-size:12px;line-height:1.55;margin:0 0 8px;color:#334155;">Five questions keep the habit alive — a plan is what gets you selected. Your <strong style="color:#0f172a;">free personal coach</strong> maps every day from here to ${esc(coachTarget)} and rebuilds it each morning around what you actually did.</p>
       <a href="https://shishya.in/coach" style="font-size:12px;font-weight:600;color:#c2410c;text-decoration:none;">Set up my free coach (30s) →</a>
     </div>`
         : ""
@@ -639,27 +680,54 @@ export async function sendCoachDayEmail(p: {
   to: string;
   userId: string;
   name: string | null;
-  examShort: string;
-  daysLeft: number;
+  /** Exam the mail may name; null = generic (plan's exam is over, no next known). */
+  examShort: string | null;
+  /** Days to the named exam; null when there is no date to count to. On a
+   *  rollover this counts to the NEXT exam's tracker date (its tier word is
+   *  in `rollover.next.when`), not to the finished plan's date. */
+  daysLeft: number | null;
   tasks: string[];
   note: string | null;
   streakCurrent?: number;
+  /** Exam-week line (phase week / eve) from examWeekMailLine(). */
+  examWeek?: { text: string; html: string } | null;
+  /** Set when the plan's exam is over: rolls the mail to the next exam in
+   *  the track and offers "Set up my next plan". */
+  rollover?: MailRollover | null;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
-  const dl = `${p.daysLeft} ${p.daysLeft === 1 ? "day" : "days"}`;
+  const dl = p.daysLeft == null ? null : `${p.daysLeft} ${p.daysLeft === 1 ? "day" : "days"}`;
   const streak = p.streakCurrent ?? 0;
+  const exam = p.examShort ? esc(p.examShort) : null;
+  const roll = rolloverBlock(p.rollover);
   const subject =
-    streak >= 3
-      ? `📋 ${first}, day ${streak} — today's plan (${dl} to ${p.examShort})`
-      : `📋 ${first}, your ${p.examShort} plan for today — ${dl} left`;
+    p.examShort && dl
+      ? streak >= 3
+        ? `📋 ${first}, day ${streak} — today's plan (${dl} to ${p.examShort})`
+        : `📋 ${first}, your ${p.examShort} plan for today — ${dl} left`
+      : streak >= 3
+        ? `📋 ${first}, day ${streak} — today's plan`
+        : `📋 ${first}, your plan for today`;
+  const headingHtml = exam && dl ? `${dl} to your ${exam} exam` : "Your plan for today";
+  const withText = p.examShort && dl ? `, with ${dl} to your ${p.examShort} exam` : "";
+  const nextPlanText = p.rollover
+    ? `\n${tk("ew.coach.postexam.title").replace("{exam}", p.rollover.done)} ${tk("ew.coach.postexam.body")} ${tk("ew.coach.postexam.cta")}: https://shishya.in/coach\n`
+    : "";
+  const nextPlanHtml = p.rollover
+    ? `<div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:10px;padding:12px 14px;margin:12px 0 0;">
+      <p style="font-size:13px;font-weight:700;margin:0 0 4px;color:#0f172a;">${esc(tk("ew.coach.postexam.title").replace("{exam}", p.rollover.done))}</p>
+      <p style="font-size:12px;line-height:1.55;margin:0 0 8px;color:#334155;">${esc(tk("ew.coach.postexam.body"))}</p>
+      <a href="https://shishya.in/coach" style="font-size:12px;font-weight:600;color:#c2410c;text-decoration:none;">${esc(tk("ew.coach.postexam.cta"))} →</a>
+    </div>`
+    : "";
 
   const taskLines = p.tasks.map((t) => `  • ${t}`).join("\n");
   const text = `${first},
 
-Your coach rebuilt your plan around what you did — here's today, with ${dl} to your ${p.examShort} exam:
+Your coach rebuilt your plan around what you did — here's today${withText}:
 
 ${taskLines}
-${p.note ? `\n${p.note}\n` : ""}
+${p.note ? `\n${p.note}\n` : ""}${p.examWeek ? `\n${p.examWeek.text}\n` : ""}${roll.text ? `\n${roll.text}\n` : ""}${nextPlanText}
 Do just these today and you're a day closer. Open your plan: https://shishya.in/coach
 
 Your report (strong & weak areas, days left): https://shishya.in/me/report
@@ -674,9 +742,9 @@ Today's study pack, built from your weakest topics: https://shishya.in/me/report
 <body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a;">
   <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
     <p style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#c2410c;margin:0 0 4px;">Your plan for today</p>
-    <div style="font-weight:700;font-size:20px;margin:0 0 4px;">${dl} to your ${p.examShort} exam${streak >= 3 ? ` · day ${streak} 🔥` : ""}</div>
+    <div style="font-weight:700;font-size:20px;margin:0 0 4px;">${headingHtml}${streak >= 3 ? ` · day ${streak} 🔥` : ""}</div>
     <p style="font-size:13px;line-height:1.6;margin:8px 0 16px;color:#334155;">
-      ${first}, your coach rebuilt today around what you actually did. Just these — nothing more to figure out:
+      ${esc(first)}, your coach rebuilt today around what you actually did. Just these — nothing more to figure out:
     </p>
     ${
       p.note
@@ -692,6 +760,9 @@ Today's study pack, built from your weakest topics: https://shishya.in/me/report
        style="display:inline-block;background:#ea580c;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 24px;">
       Open my plan →
     </a>
+    ${p.examWeek?.html ?? ""}
+    ${roll.html}
+    ${nextPlanHtml}
     <p style="font-size:13px;color:#475569;margin:16px 0 0;line-height:1.6;">
       Do just these today and you're a day closer. That's the whole game — small, aimed, daily.
     </p>
@@ -779,7 +850,8 @@ export async function sendWinbackEmail(p: {
   to: string;
   userId?: string;
   name: string | null;
-  examShort: string;
+  /** Exam the mail may name; null = generic (enrolled exam is over, no next known). */
+  examShort: string | null;
   /** Wrong answers sitting in their Mistake Notebook (0 = hide line). */
   mistakes: number;
   /** Days since last seen — used for honest, warm framing. */
@@ -787,19 +859,28 @@ export async function sendWinbackEmail(p: {
   /** If they have a live coach plan, days to their exam — the email then
    *  leads with "your coach already rebuilt your plan, N days left". */
   coachDaysLeft?: number;
+  /** Set when the enrolled exam is over: "Your X is done. Next: Y on date (tier)". */
+  rollover?: MailRollover | null;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
-  const hasCoach = typeof p.coachDaysLeft === "number" && p.coachDaysLeft > 0;
+  const hasCoach = typeof p.coachDaysLeft === "number" && p.coachDaysLeft > 0 && !!p.examShort;
+  const exam = p.examShort ? esc(p.examShort) : null;
+  const roll = rolloverBlock(p.rollover);
   const subject = hasCoach
     ? `🧭 ${first}, your coach rebuilt your plan — ${p.coachDaysLeft} days to ${p.examShort}, still winnable`
     : p.mistakes > 0
       ? `📓 ${first}, ${p.mistakes} mistakes in your notebook are ready to become marks`
-      : `🎯 ${first}, your ${p.examShort} preparation is saved right where you left it`;
+      : p.rollover?.next
+        ? `🎯 ${first}, your ${p.rollover.done} is done — ${p.rollover.next.short} is next, and your prep is saved`
+        : p.examShort
+          ? `🎯 ${first}, your ${p.examShort} preparation is saved right where you left it`
+          : `🎯 ${first}, your preparation is saved right where you left it`;
   const coachLineHtml = hasCoach
     ? `<div style="border:1px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:12px 14px;margin:0 0 14px;">
-      <p style="font-size:13px;line-height:1.6;margin:0;color:#92400e;"><strong>Your coach already rebuilt your plan for the days you have left.</strong> ${p.coachDaysLeft} days to your ${p.examShort} exam — that's still enough if you start today. Open it and today's work is waiting: <a href="https://shishya.in/coach" style="color:#c2410c;font-weight:700;text-decoration:none;">shishya.in/coach</a></p>
+      <p style="font-size:13px;line-height:1.6;margin:0;color:#92400e;"><strong>Your coach already rebuilt your plan for the days you have left.</strong> ${p.coachDaysLeft} days to your ${exam} exam — that's still enough if you start today. Open it and today's work is waiting: <a href="https://shishya.in/coach" style="color:#c2410c;font-weight:700;text-decoration:none;">shishya.in/coach</a></p>
     </div>`
     : "";
+  const coachTarget = p.examShort ? `your ${p.examShort} date` : "your exam date";
 
   const mistakeText =
     p.mistakes > 0
@@ -811,9 +892,9 @@ export async function sendWinbackEmail(p: {
 It's been about ${p.daysGone} days — no lecture, exams don't care about gaps, and neither do we. What matters: everything you built here is still yours.
 
 ${mistakeText}
-
+${roll.text ? `\n${roll.text}\n` : ""}
 Since you were last here, Shishya also added:
-• A free Personal Coach — a day-by-day plan to your ${p.examShort} date, rebuilt every morning: https://shishya.in/coach
+• A free Personal Coach — a day-by-day plan to ${coachTarget}, rebuilt every morning: https://shishya.in/coach
 • All-India Live Tests every Sunday with real ranks: https://shishya.in/live-test
 • Ask Shishya — any govt-job question, any language: https://shishya.in/ask
 
@@ -828,12 +909,13 @@ One good session is all it takes to be back in rhythm. See you inside.
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a;">
   <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
-    <div style="font-weight:700;font-size:18px;">${p.mistakes > 0 ? `📓 ${p.mistakes} mistakes, waiting to become marks` : `🎯 Your ${p.examShort} prep is saved`}</div>
+    <div style="font-weight:700;font-size:18px;">${p.mistakes > 0 ? `📓 ${p.mistakes} mistakes, waiting to become marks` : exam ? `🎯 Your ${exam} prep is saved` : "🎯 Your prep is saved"}</div>
     <p style="font-size:14px;line-height:1.6;margin:14px 0;">
-      ${first}, it's been about ${p.daysGone} days — no lecture. Exams don't care about gaps, and neither do we.
+      ${esc(first)}, it's been about ${p.daysGone} days — no lecture. Exams don't care about gaps, and neither do we.
       What matters: <strong>everything you built here is still yours.</strong>
     </p>
     ${coachLineHtml}
+    ${roll.html ? roll.html.replace("margin:16px 0 0;", "margin:0 0 14px;") : ""}
     <p style="font-size:13px;line-height:1.6;margin:0 0 14px;color:#334155;">
       ${
         p.mistakes > 0
@@ -848,7 +930,7 @@ One good session is all it takes to be back in rhythm. See you inside.
     <div style="border:1px solid #e2e8f0;background:#fff;border-radius:10px;padding:12px 14px;margin:16px 0 0;">
       <p style="font-size:12px;font-weight:700;margin:0 0 6px;color:#0f172a;">New since you were last here</p>
       <p style="font-size:12px;line-height:1.7;margin:0;color:#334155;">
-        🧭 <a href="https://shishya.in/coach" style="color:#c2410c;font-weight:600;text-decoration:none;">Personal Coach</a> — day-by-day plan to your ${p.examShort} date, rebuilt every morning<br/>
+        🧭 <a href="https://shishya.in/coach" style="color:#c2410c;font-weight:600;text-decoration:none;">Personal Coach</a> — day-by-day plan to ${esc(coachTarget)}, rebuilt every morning<br/>
         🏆 <a href="https://shishya.in/live-test" style="color:#c2410c;font-weight:600;text-decoration:none;">All-India Live Tests</a> — every Sunday, real ranks<br/>
         ✨ <a href="https://shishya.in/ask" style="color:#c2410c;font-weight:600;text-decoration:none;">Ask Shishya</a> — any govt-job question, any language
       </p>
@@ -1103,17 +1185,31 @@ export async function sendLiveTestInviteEmail(p: {
   /** Days until the real exam, when known — makes the urgency honest. */
   daysToExam?: number | null;
   sundayLabel: string;
+  /** Cross-exam invite (Exam Week Mode wave 2, play 14): the student's own
+   *  exam just finished; `examShort` is the NEXT same-track exam whose
+   *  paper runs this Sunday. `when` carries the tier word ("12 Oct
+   *  (official)"); null when the tracker has no upcoming date for it. */
+  crossExam?: { done: string; when: string | null } | null;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
-  const subject = `🏆 ${first}, your ${p.examShort} All-India Live Test is on ${p.sundayLabel}`;
-  const urgency =
-    p.daysToExam && p.daysToExam > 0
+  const cross = p.crossExam ?? null;
+  const subject = cross
+    ? `🏆 ${first}, your ${cross.done} is done — ${p.examShort}'s All-India Live Test is on ${p.sundayLabel}`
+    : `🏆 ${first}, your ${p.examShort} All-India Live Test is on ${p.sundayLabel}`;
+  const urgency = cross
+    ? cross.when
+      ? `Your ${cross.done} is done. ${p.examShort} is on ${cross.when} — Sunday's shared paper, national rank, free.`
+      : `Your ${cross.done} is done. ${p.examShort} is next in your track — Sunday's shared paper, national rank, free.`
+    : p.daysToExam && p.daysToExam > 0
       ? `Your ${p.examShort} exam is about ${p.daysToExam} days away — this is the rehearsal that counts.`
       : `A full paper under real timing, before the real day.`;
+  const opener = cross
+    ? `You just sat ${cross.done} — the next exam in your track is ${p.examShort}, and its shared paper runs this Sunday.`
+    : `You've been preparing for ${p.examShort} on Shishya — so this is for you.`;
 
   const text = `${first},
 
-You've been preparing for ${p.examShort} on Shishya — so this is for you.
+${opener}
 
 🏆 All-India Live Test — ${p.examShort} — ${p.sundayLabel}, 6 AM to 11 PM.
 ${urgency}
@@ -1134,10 +1230,10 @@ Whatever your score, you'll know exactly what to fix in the days that matter mos
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
   <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
-    <div style="font-weight:700;font-size:18px;">🏆 Your ${p.examShort} All-India Live Test — ${p.sundayLabel}</div>
+    <div style="font-weight:700;font-size:18px;">🏆 ${cross ? `${esc(p.examShort)} All-India Live Test` : `Your ${esc(p.examShort)} All-India Live Test`} — ${esc(p.sundayLabel)}</div>
     <p style="font-size:14px;line-height:1.6;margin:14px 0;">
-      ${first}, you&apos;ve been preparing for <strong>${p.examShort}</strong> on Shishya — so this one is for you.
-      ${urgency}
+      ${esc(first)}, ${cross ? `you just sat <strong>${esc(cross.done)}</strong> — the next exam in your track is <strong>${esc(p.examShort)}</strong>, and its shared paper runs this Sunday.` : `you&apos;ve been preparing for <strong>${esc(p.examShort)}</strong> on Shishya — so this one is for you.`}
+      ${esc(urgency)}
     </p>
     <div style="border:1px solid #fed7aa;background:#fff;border-radius:10px;padding:12px 14px;margin:0 0 16px;">
       <p style="font-size:12px;font-weight:700;margin:0 0 6px;color:#0f172a;">Why a shared paper beats a solo mock</p>
@@ -1188,8 +1284,12 @@ export async function sendExamEveEmail(p: {
   /** /exams/{code}/checklist only when a sourced CHECKLIST article exists, else the hub. */
   checklistUrl: string;
   checklistIsArticle: boolean;
-  /** Official ADMIT_CARD row from the tracker, when it has one. `when` carries the tier word. */
-  admitCard?: { label: string; when: string; url: string | null } | null;
+  /** Official ADMIT_CARD row from the tracker, when it has one. `when`
+   *  carries the tier word; `notes` = reporting instructions, when the row
+   *  has them. With notes the line reads "Reporting: {notes}"; without them
+   *  it describes the release date — "Admit card: {date (tier)}" — the
+   *  same rule ExamWeekBlock applies (ew.eve.admit vs ew.eve.admitCard). */
+  admitCard?: { label: string; when: string; url: string | null; notes?: string | null } | null;
   /** The tracker's next two dated rows after the exam; `when` carries the tier word. */
   nextDates: { label: string; when: string }[];
   quote: { text: string; author?: string | null };
@@ -1206,7 +1306,12 @@ export async function sendExamEveEmail(p: {
         tier: p.windowEnd.tier === p.tier ? p.tier : `${p.tier} / ${p.windowEnd.tier}`,
       })
     : fillVars(tk("ew.eve.title"), { date: p.examDate, tier: p.tier });
-  const admitLine = p.admitCard ? fillVars(tk("ew.eve.admit"), { text: `${p.admitCard.label} — ${p.admitCard.when}` }) : "";
+  const admitNotes = p.admitCard?.notes?.trim() || null;
+  const admitLine = p.admitCard
+    ? admitNotes
+      ? fillVars(tk("ew.eve.admit"), { text: admitNotes })
+      : fillVars(tk("ew.eve.admitCard"), { text: p.admitCard.when })
+    : "";
   const checklistLabel = p.checklistIsArticle ? `${tk("ew.week.checklist")} for ${p.examShort}` : `Your ${p.examShort} hub`;
 
   const text = `${first},
@@ -1380,6 +1485,91 @@ Whatever the paper felt like, the next step is the same one — keep the routine
   </div>
 </body></html>`;
   return sendEmail({ to: p.to, subject, html, text, tag: "exam-day-after", unsubUserId: p.userId });
+}
+
+/** Result-day mail (Exam Week Mode wave 2, play 13) — sent once per
+ *  (student, exam) when the tracker holds an OFFICIAL result row dated in
+ *  the last two days. Two honest paths, nothing else: cleared → the next
+ *  stage exactly as the tracker has it (with tier word, or "not announced
+ *  yet"); not this time → the next exam in the student's track with its
+ *  date and tier word. Plus the conducting body's own notice, the cutoff
+ *  page and the tracker. No score, no prediction, no LLM. Marketing tag →
+ *  opt-out footer + one-click unsubscribe headers via sendEmail. */
+export async function sendResultDayEmail(p: {
+  to: string;
+  userId: string;
+  name: string | null;
+  examShort: string;
+  examCode: string;
+  /** The result row's label + date WITH its tier word, e.g. "Tier 1 result — 5 Sep (official)". */
+  resultLine: string;
+  /** The conducting body's notice (the result row's URL — official tier only). */
+  officialUrl: string;
+  /** Next stage for cleared candidates, as the tracker has it; null → "not announced yet". */
+  nextStage: { label: string; when: string } | null;
+  /** Next exam in the student's track (7–60 days out): plain IST day + its tier word. */
+  nextExam: { code: string; short: string; date: string; tier: string } | null;
+}): Promise<boolean> {
+  const first = (p.name ?? "").split(" ")[0] || "Aspirant";
+  const hub = `https://shishya.in/exams/${p.examCode}`;
+  const subject = `${first}, the ${p.examShort} result is out — two honest next steps`;
+  const nextStageText = p.nextStage
+    ? `Next stage: ${p.nextStage.label} — ${p.nextStage.when}`
+    : `Next stage: ${tk("ew.post.notAnnounced")}`;
+  const nextExamText = p.nextExam
+    ? fillVars(tk("ew.post.next"), { exam: p.nextExam.short, date: p.nextExam.date, tier: p.nextExam.tier })
+    : `Next exam in your track: ${tk("ew.post.notAnnounced")} — every upcoming exam with its tier: https://shishya.in/exam-calendar`;
+
+  const text = `${first},
+
+The ${p.examShort} result is out: ${p.resultLine}.
+Check your own name on the conducting body's notice — nothing else counts: ${p.officialUrl}
+
+If you cleared:
+• ${nextStageText}
+• Full tracker (every date with its source tier): ${hub}/updates
+
+If not this time:
+• ${nextExamText}${p.nextExam ? ` — https://shishya.in/exams/${p.nextExam.code}` : ""}
+• Your practice history, weak-area map and mistake notebook carry over: https://shishya.in/dashboard
+
+Either way: ${tk("ew.post.cutoff")} — ${hub}/cutoff (the official cutoff is in the notice above; ours is indicative).
+
+One result does not measure you. Selection lists change every year; the routine you built does not.
+— Shishya (free, always)
+
+(You are getting this once because you are enrolled in ${p.examShort} on shishya.in. Unsubscribe below to stop all Shishya email.)`;
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#b45309;">${esc(p.examShort)} · result day</div>
+    <div style="font-weight:700;font-size:19px;margin-top:6px;">The ${esc(p.examShort)} result is out</div>
+    <p style="font-size:13px;font-weight:600;margin:6px 0 0;color:#b45309;">${esc(p.resultLine)}</p>
+    <p style="font-size:14px;line-height:1.6;margin:12px 0 14px;">${esc(first)}, check your own name on the conducting body&apos;s notice — nothing else counts.</p>
+    <a href="${esc(p.officialUrl)}" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">Official notice ↗</a>
+    <div style="border:1px solid #bbf7d0;background:#f0fdf4;border-radius:10px;padding:12px 14px;margin:18px 0 0;">
+      <p style="font-size:12px;font-weight:700;margin:0 0 6px;color:#14532d;">If you cleared</p>
+      <p style="font-size:13px;line-height:1.8;margin:0;color:#334155;">
+        🎯 ${esc(nextStageText)}<br/>
+        📅 <a href="${hub}/updates" style="color:#15803d;font-weight:600;">Full tracker →</a> every date with its source tier
+      </p>
+    </div>
+    <div style="border:1px solid #fed7aa;background:#fff;border-radius:10px;padding:12px 14px;margin:12px 0 0;">
+      <p style="font-size:12px;font-weight:700;margin:0 0 6px;color:#0f172a;">If not this time</p>
+      <p style="font-size:13px;line-height:1.8;margin:0;color:#334155;">
+        ➡️ ${esc(nextExamText)}${p.nextExam ? ` — <a href="https://shishya.in/exams/${esc(p.nextExam.code)}" style="color:#b45309;font-weight:600;">${esc(p.nextExam.short)} hub →</a>` : ""}<br/>
+        📓 Your practice history, weak-area map and mistake notebook carry over — <a href="https://shishya.in/dashboard" style="color:#b45309;font-weight:600;">dashboard →</a>
+      </p>
+    </div>
+    <p style="font-size:12px;line-height:1.6;margin:14px 0 0;color:#334155;">Either way: <a href="${hub}/cutoff" style="color:#b45309;font-weight:600;">${esc(tk("ew.post.cutoff"))} →</a> — the official cutoff is in the notice above; ours is indicative.</p>
+    <p style="font-size:13px;line-height:1.6;margin:14px 0 0;color:#334155;">One result does not measure you. Selection lists change every year; the routine you built does not.</p>
+    <p style="font-size:12px;color:#64748b;margin:16px 0 0;">— Shishya, free always</p>
+  </div>
+</body></html>`;
+  // Tag carries the exam code so the send log ('sent:result-day-{CODE}') is the once-per-exam guard.
+  return sendEmail({ to: p.to, subject, html, text, tag: `result-day-${p.examCode.replace(/[^A-Za-z0-9_-]/g, "-")}`, unsubUserId: p.userId });
 }
 
 function fillVars(s: string, vars: Record<string, string | number>): string {

@@ -2,14 +2,23 @@
 // after the exam day (Exam Week Mode, 6 Sep 2026). Runs 03:00 UTC =
 // 08:30 IST, ~38 h after the exam-eve cron (18:30 IST, two evenings back).
 //
-// Recipients: users who RECEIVED the exam-eve mail (EmailTouch tag
-// 'exam-eve' — the eve cron's own guard row — or 'sent:exam-eve', the
-// send-layer log) within the last 40 h, are not opted out, and are
-// actively enrolled in — or hold a coach plan dated yesterday for — an
-// exam whose exam day was yesterday (IST). The exam must pass the SAME
-// eve decision the eve cron used, re-evaluated at the eve instant, so a
-// student who got "all the best for SSC CGL" is never asked about a
-// different exam the calendar disagreed on.
+// Recipients: users who RECEIVED the exam-eve mail FOR THIS EXAM — the
+// exam-scoped EmailTouch tag 'exam-eve-{CODE}' (wave 2) within the last
+// 40 h. Rows written before the scoped tag shipped carry only the generic
+// 'exam-eve' / 'sent:exam-eve' tags; those are accepted for a 7-day grace
+// (sentAt < 2026-09-14) and never after. They must also be not opted out
+// and actively enrolled in — or hold a coach plan dated yesterday for — an
+// exam whose exam day was yesterday (IST). The exam must pass the SAME eve
+// decision the eve cron used, re-evaluated at the eve instant, so a student
+// who got "all the best for SSC CGL" is never asked about a different exam
+// the calendar disagreed on.
+//
+// SHIFT DAYS (wave 2): a student with Enrollment.shiftDate is asked on the
+// morning after THEIR day, not the window's first day — on the first-day
+// morning they are skipped unless their shift was the first day; on their
+// own day-after they are picked up by the shift path (which requires the
+// scoped eve touch, i.e. they got the eve mail the evening before).
+//
 // One send per (user, exam day): EmailTouch tag 'sent:exam-day-after'
 // (written by the send layer) within 20 h.
 //
@@ -20,7 +29,7 @@
 //     "not announced yet" — never a guessed date;
 //   • "what score qualifies" → /exams/{code}/cutoff;
 //   • the next exam in the same category + state 7–60 days out (the
-//     student's own other enrollments first), with its tier.
+//     student's own enrollments first), with its tier.
 // Auth: Bearer ${CRON_SECRET}.  ?dry=1 → compute the recipient list per
 // exam, send nothing.
 
@@ -38,11 +47,15 @@ import {
   examRowOnDay,
   loadExamBundles,
   nextExamsInTrack,
+  pickNextInTrack,
   plainDay,
   rowOnOrAfter,
+  shiftTierWord,
   statusLine,
   tierWord,
+  trackKey,
   whenWithTier,
+  windowContainsDay,
   type ExamBundle,
   type NextExam,
 } from "@/lib/exam-week-mail";
@@ -51,8 +64,16 @@ const MAX_SENDS = 400;
 const DAY_MS = 86_400_000;
 /** Eve cron (18:30 IST, D-1) → this cron (08:30 IST, D+1). */
 const EVE_OFFSET_MS = 38 * 3600_000;
+/** Generic 'exam-eve' touches are accepted only when written before this
+ *  instant (7-day grace after the scoped tag shipped, 7 Sep 2026). */
+const LEGACY_TOUCH_BEFORE = "2026-09-14";
 
 type Student = { id: string; email: string; name: string | null };
+type Why = "tracker" | "coach-plan" | "shift-day";
+
+function scopedTag(code: string): string {
+  return `exam-eve-${code.replace(/[^A-Za-z0-9_-]/g, "-")}`;
+}
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -64,6 +85,7 @@ export async function GET(req: Request) {
   const started = Date.now();
   const now = new Date();
   const yesterday = istDay(new Date(now.getTime() - DAY_MS));
+  const yesterdayDate = new Date(yesterday + "T00:00:00Z");
   const eveInstant = new Date(now.getTime() - EVE_OFFSET_MS);
   const outOfTime = () => Date.now() - started > (maxDuration - 30) * 1000;
 
@@ -92,11 +114,28 @@ export async function GET(req: Request) {
     return [] as { examId: string }[];
   });
 
-  const bundles = await loadExamBundles([...trackerExams.map((x) => x.examId), ...coachExams.map((x) => x.examId)]);
+  // 3) Exams where some active enrollment names YESTERDAY as the student's
+  //    shift day (wave 2) — verified against the window per exam below.
+  const shiftExams = await prisma.$queryRaw<{ examId: string }[]>`
+    SELECT DISTINCT en."examId"
+    FROM "Enrollment" en
+    JOIN "Exam" e ON e.id = en."examId" AND e.active = TRUE
+    WHERE en.active = TRUE AND en."shiftDate" = ${yesterday}::date
+  `.catch((err) => {
+    console.error("[exam-day-after] shift-day selection failed", err);
+    return [] as { examId: string }[];
+  });
+
+  const bundles = await loadExamBundles([
+    ...trackerExams.map((x) => x.examId),
+    ...coachExams.map((x) => x.examId),
+    ...shiftExams.map((x) => x.examId),
+  ]);
 
   // Order: tracker exams whose eve decision was "send" first, then the
-  // coach-plan-only exams. Each user gets at most one mail per run.
-  const targets: { bundle: ExamBundle; why: "tracker" | "coach-plan" }[] = [];
+  // coach-plan-only exams, then shift-day exams. Each user gets at most
+  // one mail per run.
+  const targets: { bundle: ExamBundle; why: Why }[] = [];
   const skipped: { code: string; reason: string }[] = [];
   const coachSet = new Set(coachExams.map((x) => x.examId));
   for (const { examId } of trackerExams) {
@@ -109,7 +148,22 @@ export async function GET(req: Request) {
   const targeted = new Set(targets.map((t) => t.bundle.meta.examId));
   for (const { examId } of coachExams) {
     const bundle = bundles.get(examId);
-    if (bundle && !targeted.has(examId)) targets.push({ bundle, why: "coach-plan" });
+    if (bundle && !targeted.has(examId)) {
+      targets.push({ bundle, why: "coach-plan" });
+      targeted.add(examId);
+    }
+  }
+  for (const { examId } of shiftExams) {
+    const bundle = bundles.get(examId);
+    if (!bundle) continue;
+    // A first-day exam already includes its shiftDate = yesterday students.
+    if (targeted.has(examId) && targets.some((t) => t.bundle.meta.examId === examId && t.why === "tracker")) continue;
+    const state = computeExamWeekState(bundle.rows, bundle.meta.officialUrl, now);
+    if (!windowContainsDay(state, yesterday)) {
+      skipped.push({ code: `${bundle.meta.code} (shift-day)`, reason: `yesterday is not inside an announced exam window (phase:${state.phase})` });
+      continue;
+    }
+    targets.push({ bundle, why: "shift-day" });
   }
 
   const report: { code: string; why: string; users: number; sent: number; next: string | null }[] = [];
@@ -122,51 +176,75 @@ export async function GET(req: Request) {
     const { meta, rows } = bundle;
     const timeline = buildTimeline(rows, now, meta.officialUrl);
     const state = computeExamWeekState(rows, meta.officialUrl, now);
-    const examDay = why === "tracker" ? examRowOnDay(timeline, yesterday) : null;
+    const examDay = why === "coach-plan" ? null : examRowOnDay(timeline, yesterday);
     // Coach-plan-only exams reached the student on THEIR date, not the
-    // tracker's: label it as such — never dressed up as a tracker tier.
-    const examDayLine = examDay
-      ? whenWithTier(examDay)
-      : `${plainDay(new Date(now.getTime() - DAY_MS))} (the date you set in your coach plan)`;
+    // tracker's: label it as such — never dressed up as a tracker tier. A
+    // shift day with no row of its own carries the window's tier.
+    let examDayLine: string;
+    if (examDay) examDayLine = whenWithTier(examDay);
+    else if (why === "shift-day") {
+      const days = state.windowDays.map((r) => istDay(r.date)).sort();
+      const firstRow = state.windowDays.find((r) => istDay(r.date) === days[0]) ?? state.windowDays[0];
+      examDayLine = `${plainDay(yesterdayDate)} (${shiftTierWord(firstRow.tier)})`;
+    } else examDayLine = `${plainDay(yesterdayDate)} (the date you set in your coach plan)`;
     const windowEnd = state.windowEnd && istDay(state.windowEnd.date) > yesterday ? state.windowEnd : null;
     const answerKeyLine = statusLine("ew.post.key", rowOnOrAfter(timeline, "ANSWER_KEY", yesterday));
     const resultLine = statusLine("ew.post.result", rowOnOrAfter(timeline, "RESULT", yesterday));
 
-    const trackKey = `${meta.category}|${meta.state ?? ""}`;
-    let candidates = trackCache.get(trackKey);
+    const tk = trackKey(meta);
+    let candidates = trackCache.get(tk);
     if (!candidates) {
       candidates = await nextExamsInTrack(meta, now);
-      trackCache.set(trackKey, candidates);
+      trackCache.set(tk, candidates);
     }
     const inTrack = candidates.filter((c) => c.examId !== meta.examId);
+
+    // Eve-touch proof: the exam-scoped tag, or a generic one from before
+    // the scoped tag shipped (7-day grace).
+    const eveTouch = Prisma.sql`EXISTS (
+          SELECT 1 FROM "EmailTouch" t
+          WHERE t."userId" = u.id AND t."sentAt" > NOW() - INTERVAL '40 hours'
+            AND (
+              t.tag = ${scopedTag(meta.code)}
+              OR (t.tag IN ('exam-eve', 'sent:exam-eve') AND t."sentAt" < ${LEGACY_TOUCH_BEFORE}::timestamp)
+            )
+        )`;
+    const membership =
+      why === "tracker"
+        ? Prisma.sql`(
+          EXISTS (
+            SELECT 1 FROM "Enrollment" en
+            WHERE en."userId" = u.id AND en."examId" = ${meta.examId} AND en.active = TRUE
+              AND (en."shiftDate" IS NULL OR en."shiftDate" = ${yesterday}::date)
+          ) OR EXISTS (
+            SELECT 1 FROM "CoachPlan" cp
+            WHERE cp."userId" = u.id AND cp."examId" = ${meta.examId}
+              AND (cp."examDate" + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' - INTERVAL '1 day')::date
+          )
+        )`
+        : why === "shift-day"
+          ? Prisma.sql`EXISTS (
+            SELECT 1 FROM "Enrollment" en
+            WHERE en."userId" = u.id AND en."examId" = ${meta.examId} AND en.active = TRUE
+              AND en."shiftDate" = ${yesterday}::date
+          )`
+          : Prisma.sql`EXISTS (
+            SELECT 1 FROM "CoachPlan" cp
+            WHERE cp."userId" = u.id AND cp."examId" = ${meta.examId}
+              AND (cp."examDate" + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' - INTERVAL '1 day')::date
+          )`;
 
     const students = await prisma.$queryRaw<Student[]>`
       SELECT u.id, u.email, u.name
       FROM "User" u
       WHERE u.email <> '' AND u."emailOptOut" = FALSE
-        AND EXISTS (
-          SELECT 1 FROM "EmailTouch" t
-          WHERE t."userId" = u.id AND t.tag IN ('exam-eve', 'sent:exam-eve')
-            AND t."sentAt" > NOW() - INTERVAL '40 hours'
-        )
+        AND ${eveTouch}
         AND NOT EXISTS (
           SELECT 1 FROM "EmailTouch" t
           WHERE t."userId" = u.id AND t.tag = 'sent:exam-day-after'
             AND t."sentAt" > NOW() - INTERVAL '20 hours'
         )
-        AND (
-          ${why === "tracker"
-            ? Prisma.sql`EXISTS (
-            SELECT 1 FROM "Enrollment" en
-            WHERE en."userId" = u.id AND en."examId" = ${meta.examId} AND en.active = TRUE
-          ) OR`
-            : Prisma.empty}
-          EXISTS (
-            SELECT 1 FROM "CoachPlan" cp
-            WHERE cp."userId" = u.id AND cp."examId" = ${meta.examId}
-              AND (cp."examDate" + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' - INTERVAL '1 day')::date
-          )
-        )
+        AND ${membership}
       LIMIT ${MAX_SENDS}
     `.catch((err) => {
       console.error("[exam-day-after] recipients failed", err);
@@ -188,10 +266,7 @@ export async function GET(req: Request) {
         enrolled.set(r.userId, set);
       }
     }
-    const pickNext = (userId: string): NextExam | null => {
-      const mine = enrolled.get(userId);
-      return (mine && inTrack.find((c) => mine.has(c.examId))) ?? inTrack[0] ?? null;
-    };
+    const pickNext = (userId: string): NextExam | null => pickNextInTrack(inTrack, enrolled.get(userId) ?? [], meta.examId);
 
     let sent = 0;
     if (!dry) {

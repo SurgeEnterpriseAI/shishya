@@ -74,7 +74,7 @@
       "schedule": "0 2 * * 1"
     },
     {
-      "path": "/api/cron/indexnow?scope=examweek",
+      "path": "/api/cron/indexnow-examweek",
       "schedule": "45 2 * * *"
     },
     {
@@ -136,6 +136,10 @@
     {
       "path": "/api/cron/exam-day-after",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/result-day",
+      "schedule": "15 4 * * *"
     },
     {
       "path": "/api/cron/refresh-exam-data",
