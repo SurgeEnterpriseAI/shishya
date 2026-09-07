@@ -130,7 +130,7 @@ export function DiscussionsSidebar({
     <>
       {/* ─── Desktop: fixed right-edge panel ───────────────────────────── */}
       <aside
-        className="fixed bottom-0 right-0 top-16 z-20 hidden w-80 flex-col border-l border-ink-200 bg-white shadow-sm lg:flex"
+        className="fixed bottom-0 right-0 top-[101px] z-20 hidden w-80 flex-col border-l border-ink-200 bg-white shadow-sm lg:flex"
         aria-label={labels.title}
       >
         <PanelHeader labels={labels} newHref={newDiscHref} />

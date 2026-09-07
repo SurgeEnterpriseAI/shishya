@@ -85,7 +85,7 @@ const PHASE_CHIP_META: Record<ExamPhase, { icon: string; color: string; fallback
   REACTIONS: {
     icon: "📊",
     color: "bg-sky-100 text-sky-900",
-    fallback: "Student verdict, expected cutoff, answer-key analysis — refreshed every 2 h.",
+    fallback: "Student verdict and answer-key status, once students have rated the paper.",
   },
 };
 
@@ -160,7 +160,7 @@ export function UpcomingExamsSidebar({
 
   return (
     <aside
-      className={`fixed bottom-0 top-16 z-20 hidden w-80 flex-col border-ink-200 bg-white shadow-sm lg:flex ${
+      className={`fixed bottom-0 top-[101px] z-20 hidden w-80 flex-col border-ink-200 bg-white shadow-sm lg:flex ${
         side === "right" ? "right-0 border-l" : "left-0 border-r"
       }`}
       aria-label="Exam calendar"
