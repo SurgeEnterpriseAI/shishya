@@ -111,6 +111,14 @@ export async function upsertVerdict(input: {
   return true;
 }
 
+/** What leaves the server below the floor (wave 2, 6 Sep 2026): only n
+ *  is public while n < VERDICT_MIN_N — the split (and the hardest-section
+ *  votes) would otherwise be readable from the API / RSC payload and
+ *  quoted as a "prediction" from three votes. */
+export function publicTally(t: VerdictTally): VerdictTally {
+  return t.n >= VERDICT_MIN_N ? t : { n: t.n, easy: 0, moderate: 0, tough: 0, sections: [] };
+}
+
 /** Percentages (rounded, summing to ~100) for a tally — the shape
  *  ew.verdict.tally interpolates. */
 export function tallyPercents(t: VerdictTally): { easy: number; moderate: number; tough: number } {

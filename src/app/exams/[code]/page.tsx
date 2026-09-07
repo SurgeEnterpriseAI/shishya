@@ -18,8 +18,9 @@ import { prisma } from "@/lib/db/prisma";
 import { getExamShared } from "@/lib/db/exam-cache";
 import { getT, getUrlLocale } from "@/lib/i18n-server";
 import { computeExamWeekState } from "@/lib/exam-week";
+import { shiftDayIso } from "@/lib/exam-week-student";
 import { buildTimeline } from "@/lib/exam-timeline";
-import { ExamWeekBlock } from "@/components/ExamWeekBlock";
+import { ExamWeekBlock, type ExamWeekViewer } from "@/components/ExamWeekBlock";
 import { StartMockButton } from "./StartMockButton";
 import { PageTour } from "@/components/PageTour";
 import { formatDisplayScorePct } from "@/lib/scoring";
@@ -307,6 +308,15 @@ export default async function ExamPage({
   const hasContent = validatedQuestionCount > 0;
   // Discard speculative score boost when user isn't enrolled — no UI uses it.
   const scoreBoost = isEnrolled ? speculativeScoreBoost : null;
+  // Exam Week Mode wave 2: what the block knows about THIS student — the
+  // shift-day picker (enrolled) and the stored shift day (re-keys the
+  // phase). Anonymous → null, nothing new renders.
+  const examWeekViewer: ExamWeekViewer | null = userId
+    ? { enrolled: isEnrolled, shiftDay: shiftDayIso(enrollment?.shiftDate) }
+    : null;
+  // Empty-state seed (wave 2): the chat auto-sends the seed as the first
+  // message, so it is a complete ask, not an open-ended prefix.
+  const emptySeed = `I'm preparing for ${exam.shortName} (${exam.name}). There are no ${exam.shortName} practice questions on Shishya yet — ask me what I need (topics, question types, language) so it can be built.`;
 
   // Vacancy figure + OFFICIAL source so a student who came to verify "are
   // these vacancies real?" can check at the authoritative site. Raw SQL
@@ -702,6 +712,7 @@ export default async function ExamPage({
             urlLocale={urlLocale}
             signedIn={!!userId}
             weakTopicCode={weakness[0]?.topic.code ?? null}
+            viewer={examWeekViewer}
           />
         )}
 
@@ -897,37 +908,45 @@ export default async function ExamPage({
               </Link>
             </div>
           ) : (
-            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-ink-900">
-                  {isEnrolled ? t("exam.action.continue") : t("exam.action.start")}
-                </p>
-                <p className="mt-0.5 text-xs text-ink-500">
-                  {isEnrolled ? t("exam.action.continue.body") : t("exam.action.start.body")}
-                </p>
+            <>
+              <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-ink-900">
+                    {isEnrolled ? t("exam.action.continue") : t("exam.action.start")}
+                  </p>
+                  <p className="mt-0.5 text-xs text-ink-500">
+                    {isEnrolled ? t("exam.action.continue.body") : t("exam.action.start.body")}
+                  </p>
+                </div>
+                <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                  <Link
+                    rel="nofollow" href={`/chat?examCode=${exam.code}`}
+                    data-tour="exam-ask"
+                    className="btn-secondary !py-2 !px-4 text-xs sm:text-sm"
+                  >
+                    {t("nav.tutor")}
+                  </Link>
+                  <span data-tour="exam-start-mock">
+                    <StartMockButton
+                      examCode={exam.code}
+                      hasHistory={isEnrolled && recent.length > 0}
+                      labels={{
+                        adaptive: t("exam.cta.adaptive"),
+                        diagnostic: t("exam.cta.diagnostic"),
+                        firstDiagnostic: t("exam.cta.firstDiagnostic"),
+                        building: t("exam.cta.building"),
+                      }}
+                    />
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-                <Link
-                  rel="nofollow" href={`/chat?examCode=${exam.code}`}
-                  data-tour="exam-ask"
-                  className="btn-secondary !py-2 !px-4 text-xs sm:text-sm"
-                >
-                  {t("nav.tutor")}
-                </Link>
-                <span data-tour="exam-start-mock">
-                  <StartMockButton
-                    examCode={exam.code}
-                    hasHistory={isEnrolled && recent.length > 0}
-                    labels={{
-                      adaptive: t("exam.cta.adaptive"),
-                      diagnostic: t("exam.cta.diagnostic"),
-                      firstDiagnostic: t("exam.cta.firstDiagnostic"),
-                      building: t("exam.cta.building"),
-                    }}
-                  />
-                </span>
-              </div>
-            </div>
+              {/* Exam Week Mode wave 2: the one promise attached to
+                  enrolling — under the enrol (first diagnostic) button,
+                  until the student is enrolled. */}
+              {!isEnrolled && (
+                <p className="mt-2 text-[11px] text-ink-500 sm:text-right">{t("ew.enrol.resultNote")}</p>
+              )}
+            </>
           )}
           {/* Custom mock builder + language line (1 Sep 2026) — both are
               top mined demands: "mock in which (maths, polity…)" and
@@ -1030,7 +1049,24 @@ export default async function ExamPage({
               <a href="#subject-tests" className="font-semibold underline underline-offset-2">Pick a subject test ↓</a>
             </div>
           )}
-          {systemMocks.length === 0 ? (
+          {systemMocks.length === 0 && validatedQuestionCount === 0 ? (
+            /* Exam Week Mode wave 2 — honest empty state: no validated
+               questions AND no shared mocks. Instead of "being curated",
+               the student tells the tutor what they need (the chat seed is
+               auto-sent as the first message) and gets one email when it
+               is live. nofollow: the chat is a per-student surface. */
+            <div className="mt-3 rounded-xl border-2 border-dashed border-saffron-300 bg-white px-4 py-5">
+              <p className="text-sm font-bold text-ink-900">{String(t("ew.empty.title")).replace("{exam}", exam.shortName)}</p>
+              <p className="mt-1 text-sm text-ink-700">{String(t("ew.empty.body")).replace(/\{exam\}/g, exam.shortName)}</p>
+              <Link
+                rel="nofollow"
+                href={`/chat?examCode=${exam.code}&seed=${encodeURIComponent(emptySeed)}`}
+                className="mt-3 inline-block rounded-lg bg-saffron-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-saffron-600"
+              >
+                💬 {t("ew.empty.cta")} →
+              </Link>
+            </div>
+          ) : systemMocks.length === 0 ? (
             <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
               {t("exam.mocks.empty")}
             </p>

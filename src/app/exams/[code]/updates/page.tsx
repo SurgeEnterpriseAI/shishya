@@ -28,8 +28,10 @@ import {
   type DateKind,
   type TimelineRow,
 } from "@/lib/exam-timeline";
+import { computeExamWeekState } from "@/lib/exam-week";
+import { applyShiftDay, shiftDayIso } from "@/lib/exam-week-student";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
-import { ExamWeekBlock } from "@/components/ExamWeekBlock";
+import { ExamWeekBlock, type ExamWeekViewer } from "@/components/ExamWeekBlock";
 import { PulseAsk } from "@/components/PulseAsk";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
@@ -119,9 +121,10 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
 
   const [{ t: tRaw, locale }, urlLocale, session] = await Promise.all([getT(), getUrlLocale(), auth().catch(() => null)]);
   const t = tRaw as TFn;
-  const signedIn = !!session?.user?.id;
+  const userId = session?.user?.id ?? null;
+  const signedIn = !!userId;
 
-  const [{ timeline, rows: trackerRows }, news, results, elig, pyqCount, dataTs] = await Promise.all([
+  const [{ timeline, rows: trackerRows }, news, results, elig, pyqCount, dataTs, enrollment] = await Promise.all([
     loadTimeline(exam.id),
     prisma.examNewsItem
       .findMany({ where: { examId: exam.id, archivedAt: null }, orderBy: { publishedAt: "desc" }, take: 8 })
@@ -150,13 +153,25 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
           (SELECT MAX("createdAt") FROM "ExamNewsItem" WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL)
         ) AS t`
       .catch(() => [] as { t: Date | null }[]),
+    // Exam Week Mode wave 2: the signed-in student's enrolment (shift day)
+    // — the block's picker and the alert box's phase key off it.
+    userId
+      ? prisma.enrollment
+          .findUnique({ where: { userId_examId: { userId, examId: exam.id } }, select: { shiftDate: true } })
+          .catch(() => null)
+      : Promise.resolve(null),
   ]);
   const dataUpdatedAt = dataTs[0]?.t ? new Date(dataTs[0].t) : null;
+  const viewer: ExamWeekViewer | null = userId ? { enrolled: !!enrollment, shiftDay: shiftDayIso(enrollment?.shiftDate) } : null;
 
   const year = cycleYear(timeline);
   const { next, last, nextExam } = stageOf(timeline);
   const officialUrl = elig[0]?.officialUrl ?? null;
   const officialName = elig[0]?.officialName ?? null;
+  // The same phase the hub's block renders — re-keyed on the student's
+  // shift day when they set one — so the alert box below says "answer key
+  // / result" exactly when the block does.
+  const examWeek = applyShiftDay(computeExamWeekState(trackerRows, officialUrl), viewer?.shiftDay);
   const hasPyq = Number(pyqCount[0]?.n ?? 0) > 0;
   const short = exam.shortName;
   const path = `/exams/${exam.code}/updates`;
@@ -307,6 +322,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
           urlLocale={urlLocale}
           signedIn={signedIn}
           showAlert={false}
+          viewer={viewer}
         />
 
         {/* Key dates */}
@@ -349,11 +365,15 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
           </section>
         )}
 
-        {/* Alerts — the moment of peak intent. */}
+        {/* Alerts — the moment of peak intent. Phase-aware (wave 2): on
+            exam night and in the post-exam week the promise reads
+            "answer key / result", matching the hub block. */}
         <div className="mt-6">
           <ExamAlertBox
             examCode={exam.code}
             signedIn={signedIn}
+            phase={examWeek.phase}
+            weekLabels={{ cta: t("ew.alert.cta"), done: t("ew.alert.done") }}
             labels={{
               title: fill(t("tracker.alert.title"), { exam: short }),
               body: t("tracker.alert.body"),

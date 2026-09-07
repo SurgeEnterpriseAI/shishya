@@ -9,8 +9,14 @@
 //   • PROGRESS  — syllabus coverage bar (endowed progress + goal
 //     gradient: visible progress accelerates completion)
 // No dark patterns: every element points at the student's own outcome.
+//
+// Exam Week Mode wave 2 (play 12): once the exam's last announced day has
+// passed (post phase, or up to 90 days beyond), the empty countdown slot
+// carries the coach rollover card instead — "{exam} is done. Roll your
+// plan to the next exam?" → /coach?next=1&from={code}.
 
 import Link from "next/link";
+import { CoachRolloverCard, type CoachRolloverLabels } from "@/components/CoachRolloverCard";
 
 export function MissionCard({
   examShort,
@@ -21,6 +27,7 @@ export function MissionCard({
   topicsTotal,
   topicsTouched,
   topicsMastered,
+  rollover = null,
 }: {
   examShort: string;
   examCode: string;
@@ -30,6 +37,8 @@ export function MissionCard({
   topicsTotal: number;
   topicsTouched: number;
   topicsMastered: number;
+  /** Translated ew.coach.postexam.* strings + the rollover href; null → countdown as before. */
+  rollover?: (CoachRolloverLabels & { href: string }) | null;
 }) {
   const pct = topicsTotal > 0 ? Math.min(100, Math.round((topicsTouched / topicsTotal) * 100)) : 0;
   return (
@@ -42,7 +51,7 @@ export function MissionCard({
           </Link>{" "}
           journey
         </p>
-        {daysToExam != null && daysToExam >= 0 && (
+        {!rollover && daysToExam != null && daysToExam >= 0 && (
           <p className="text-sm font-semibold tabular-nums text-ink-900">
             ⏳ {daysToExam === 0 ? "Exam is TODAY" : `${daysToExam} day${daysToExam === 1 ? "" : "s"} to exam`}
             {examDateLabel && daysToExam > 0 && (
@@ -51,6 +60,12 @@ export function MissionCard({
           </p>
         )}
       </div>
+
+      {rollover && (
+        <div className="mt-3">
+          <CoachRolloverCard labels={rollover} href={rollover.href} />
+        </div>
+      )}
 
       {topicsTotal > 0 && (
         <div className="mt-3">

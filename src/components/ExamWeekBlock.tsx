@@ -18,6 +18,13 @@
 //             again so the day-after mail's ?verdict= link lands
 //   none      renders nothing (no DB reads either)
 //
+// Wave 2 (6 Sep 2026): a SIGNED-IN, ENROLLED student inside a multi-day
+// CBT window gets a ShiftDayPicker (one chip per announced window day);
+// once Enrollment.shiftDate is set the block's phase and the poll key off
+// THAT day (applyShiftDay) — "week/eve" while their shift is ahead, the
+// poll on their night, "post" after it, even while the window keeps
+// running for everyone else. Anonymous visitors see nothing new.
+//
 // Honesty rules: every date carries its source tier word; answer-key and
 // result dates come only from the tracker; the tally is counts from
 // n >= 10 and is never called a prediction; no per-student model calls —
@@ -28,13 +35,15 @@ import type { ReactNode } from "react";
 import { prisma } from "@/lib/db/prisma";
 import { tFor } from "@/lib/i18n-server";
 import type { Locale, StringKey } from "@/lib/i18n";
-import { localizedPath, type PageLocale } from "@/lib/seo-locale";
-import { computeExamWeekState, dateWithTier } from "@/lib/exam-week";
+import { localizedPath, localizedUrl, type PageLocale } from "@/lib/seo-locale";
+import { computeExamWeekState, dateWithTier, istDay } from "@/lib/exam-week";
+import { applyShiftDay, shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline, type SourceTier, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
 import { sourceTier } from "@/lib/official-source";
-import { getVerdictTally, VERDICT_MIN_N } from "@/lib/exam-verdict";
+import { getVerdictTally, publicTally, VERDICT_MIN_N } from "@/lib/exam-verdict";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { ExamVerdictPoll } from "@/components/ExamVerdictPoll";
+import { ShiftDayPicker } from "@/components/ShiftDayPicker";
 
 const IST_OFFSET_MS = 330 * 60_000;
 const DAY_MS = 86_400_000;
@@ -71,6 +80,16 @@ export interface ExamWeekBlockProps {
   weakTopicCode?: string | null;
   /** The tracker page carries its own alert box — pass false there. */
   showAlert?: boolean;
+  /** The signed-in student's relationship to this exam (wave 2). Omitted /
+   *  null for anonymous visitors → no shift picker, shared phase. */
+  viewer?: ExamWeekViewer | null;
+}
+
+export interface ExamWeekViewer {
+  /** Has an Enrollment row on this exam. */
+  enrolled: boolean;
+  /** Enrollment.shiftDate as IST "YYYY-MM-DD" (shiftDayIso), or null. */
+  shiftDay: string | null;
 }
 
 export async function ExamWeekBlock({
@@ -82,9 +101,14 @@ export async function ExamWeekBlock({
   signedIn,
   weakTopicCode = null,
   showAlert = true,
+  viewer = null,
 }: ExamWeekBlockProps) {
   const now = new Date();
-  const state = computeExamWeekState(rows, officialUrl, now);
+  const base = computeExamWeekState(rows, officialUrl, now);
+  if (base.phase === "none") return null;
+  // A stored shift day re-keys the phase for THIS student only; the base
+  // state still decides that the block mounts at all.
+  const state = signedIn && viewer?.shiftDay ? applyShiftDay(base, viewer.shiftDay, now) : base;
   if (state.phase === "none" || !state.focus || !state.focusDay) return null;
 
   const t = tFor(locale) as (key: StringKey) => string;
@@ -108,7 +132,33 @@ export async function ExamWeekBlock({
     thanks: t("ew.verdict.thanks"),
     tally: t("ew.verdict.tally"),
     few: t("ew.verdict.few"),
+    err: t("tracker.alert.err"),
+    nudge: t("ew.signup.nudge"),
+    shareTally: t("ew.share.tally"),
+    shareCta: t("ew.share.cta"),
   };
+
+  // Shift-day picker: signed-in + enrolled, a window with more than one
+  // announced day, and the window itself not yet over (base phase). The
+  // chips are the BASE window's days, so a student who picked the wrong
+  // day — and whose own phase is therefore already "post" — can still
+  // change it while the window runs.
+  const shiftDays = base.windowDays.length > 1 ? shiftableDays(base) : [];
+  const picker =
+    signedIn && viewer?.enrolled && shiftDays.length > 1 && base.phase !== "post" ? (
+      <ShiftDayPicker
+        examCode={exam.code}
+        days={shiftDays.map((r) => ({ iso: istDay(r.date), label: dateWithTier(r, tierWord(r.tier), locale) }))}
+        initial={viewer.shiftDay && shiftDays.some((r) => istDay(r.date) === viewer.shiftDay) ? viewer.shiftDay : null}
+        labels={{
+          prompt: t("ew.shift.prompt"),
+          save: t("ew.shift.save"),
+          saved: t("ew.shift.saved"),
+          change: t("ew.shift.change"),
+          err: t("tracker.alert.err"),
+        }}
+      />
+    ) : null;
 
   const wrap = (children: ReactNode) => (
     <section
@@ -166,6 +216,7 @@ export async function ExamWeekBlock({
             💬 {fill(t("ew.week.ask"), { exam: short })}
           </Link>
         </div>
+        {picker}
       </>,
     );
   }
@@ -203,18 +254,26 @@ export async function ExamWeekBlock({
             )}
           </p>
         )}
+        {picker}
       </>,
     );
   }
 
   // ── today, before 18:00 IST ─────────────────────────────────────────
   if (phase === "today-am") {
-    return wrap(<p className="text-sm font-bold text-ink-900">🎯 {t("ew.today.am")}</p>);
+    return wrap(
+      <>
+        <p className="text-sm font-bold text-ink-900">🎯 {t("ew.today.am")}</p>
+        {picker}
+      </>,
+    );
   }
 
-  // Poll phases share the tally + section chips.
+  // Poll phases share the tally + section chips. The tally handed to the
+  // client is the PUBLIC one (only n below the floor) — the RSC payload
+  // is readable by anyone.
   const [tally, subjects] = await Promise.all([
-    getVerdictTally(exam.id, state.focusDay),
+    getVerdictTally(exam.id, state.focusDay).then(publicTally),
     prisma.subject
       .findMany({ where: { examId: exam.id }, orderBy: { orderIdx: "asc" }, select: { name: true }, take: 6 })
       .then((s) => s.map((x) => x.name.trim()).filter(Boolean))
@@ -228,6 +287,9 @@ export async function ExamWeekBlock({
       sections={subjects}
       initialTally={tally}
       minN={VERDICT_MIN_N}
+      signedIn={signedIn}
+      examShort={short}
+      shareUrl={localizedUrl(`/exams/${exam.code}`, urlLocale)}
     />
   );
 
@@ -253,6 +315,7 @@ export async function ExamWeekBlock({
             <p className="mt-1 text-xs text-ink-700">{t("ew.window.tip")}</p>
           </>
         )}
+        {picker}
         {poll}
       </>,
     );
@@ -330,7 +393,10 @@ export async function ExamWeekBlock({
           />
         </div>
       )}
-      <div className="mt-2 border-t border-saffron-200 pt-2">{poll}</div>
+      <div className="mt-2 border-t border-saffron-200 pt-2">
+        {picker}
+        {poll}
+      </div>
     </>,
   );
 }
