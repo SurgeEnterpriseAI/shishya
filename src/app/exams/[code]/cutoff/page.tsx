@@ -44,6 +44,8 @@ import { computeExamWeekState, dateWithTier, istDay, type ExamWeekPhase, type Ex
 import type { SourceTier, TimelineRow } from "@/lib/exam-timeline";
 import { examAlertLabels, getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { categoryHeaderKey, parseCategoryCutoff } from "@/lib/category-cutoff";
+import { markingSchemeStatable } from "@/lib/marking-scheme";
+import { ExamVerdictPoll } from "@/components/ExamVerdictPoll";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { AnonExamNudge } from "@/components/AnonExamNudge";
@@ -88,18 +90,42 @@ const getVerdictTallyCached = unstable_cache(
 /** Everything the exam-week block renders, resolved server-side in the
  *  page's language. Only called for D-1 .. D+7 — this is where the
  *  session read lives. */
-async function loadExamWeekView(exam: { id: string; code: string; shortName: string }, ew: ExamWeekState, t: TFn, locale: Locale) {
-  const [session, shared, tally] = await Promise.all([
+async function loadExamWeekView(
+  exam: {
+    id: string; code: string; shortName: string;
+    totalQuestions: number; scoredQuestions: number | null; totalMarks: number; marksPerQ: number; description: string;
+  },
+  ew: ExamWeekState,
+  t: TFn,
+  locale: Locale,
+) {
+  const [session, shared, tally, subjects] = await Promise.all([
     auth().catch(() => null),
     // Cohort stats the hub already computes (10-min cache); cold cache
     // pays the hub payload once, which exam-day traffic keeps warm anyway.
     getExamShared(exam.code).catch(() => null),
     ew.focusDay ? getVerdictTallyCached(exam.id, ew.focusDay) : Promise.resolve(null),
+    // Section chips for the poll — the same six the hub block offers.
+    prisma.subject
+      .findMany({ where: { examId: exam.id }, orderBy: { orderIdx: "asc" }, select: { name: true }, take: 6 })
+      .then((rows) => rows.map((r) => r.name.trim()).filter(Boolean))
+      .catch(() => [] as string[]),
   ]);
   const short = exam.shortName;
   // Every date carries its tier word; a missing tracker row is said plainly.
-  const status = (row: TimelineRow | null) =>
-    row ? dateWithTier(row, t(TIER_KEY[row.tier]), locale) : t("ew.post.notAnnounced");
+  //
+  // An EXPECTED date that has already gone by must not read as the thing
+  // still to come: on 7 Sep this page told students who had just sat IOQM
+  // that the answer key was "expected 6 Sept" — a date already behind them.
+  // Past estimates say so; official and reported rows keep their date.
+  const todayIst = istDay(new Date());
+  const status = (row: TimelineRow | null) => {
+    if (!row) return t("ew.post.notAnnounced");
+    const dated = dateWithTier(row, t(TIER_KEY[row.tier]), locale);
+    return row.tier === "expected" && istDay(row.date) < todayIst
+      ? fill(t("ew.date.overdue"), { date: dated })
+      : dated;
+  };
   const stats = shared?.examStats ?? null;
   const pct = (part: number, whole: number) => Math.round((part / whole) * 100);
 
@@ -126,6 +152,36 @@ async function loadExamWeekView(exam: { id: string; code: string; shortName: str
             moderate: pct(tally.moderate, tally.n),
             tough: pct(tally.tough, tally.n),
           })
+        : null,
+    // The estimator is only a destination when we can state ONE marking
+    // scheme for this paper. IOQM cannot be stated (30 questions, 100 marks,
+    // tiered 2/3/5) and is the biggest cutoff lander on the site, so the pill
+    // was sending its post-exam arrivals to a page that refuses them.
+    canEstimate: markingSchemeStatable(exam),
+    // The poll is the one action a post-exam lander can take without an
+    // account: one tap, and it is what fills the tally the next visitor
+    // reads. 40 of 47 cutoff landers today read one page and left.
+    poll:
+      ew.focusDay && (ew.phase === "today-pm" || ew.phase === "post" || ew.phase === "window")
+        ? {
+            examDate: ew.focusDay,
+            sections: subjects,
+            initialTally: tally && tally.n >= VERDICT_MIN_N ? tally : tally ? { ...tally, easy: 0, moderate: 0, tough: 0, sections: [] } : null,
+            labels: {
+              prompt: t("ew.today.pm"),
+              easy: t("ew.verdict.easy"),
+              moderate: t("ew.verdict.moderate"),
+              tough: t("ew.verdict.tough"),
+              section: t("ew.verdict.section"),
+              thanks: t("ew.verdict.thanks"),
+              tally: t("ew.verdict.tally"),
+              few: t("ew.verdict.few"),
+              err: t("tracker.alert.err"),
+              nudge: t("ew.signup.nudge"),
+              shareTally: t("ew.share.tally"),
+              shareCta: t("ew.share.cta"),
+            },
+          }
         : null,
     hubLink: fill(t("ew.post.title"), { exam: short }),
     icsCta: t("ew.ics.cta"),
@@ -176,7 +232,12 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
     where: { code },
-    select: { id: true, code: true, shortName: true, name: true, active: true, totalMarks: true },
+    select: {
+      id: true, code: true, shortName: true, name: true, active: true,
+      // The marking-scheme test decides whether the estimator pill is a real
+      // destination for this exam or a page that refuses (see below).
+      totalMarks: true, totalQuestions: true, scoredQuestions: true, marksPerQ: true, description: true,
+    },
   });
   if (!exam || !exam.active) notFound();
 
@@ -298,8 +359,23 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
                 /exams/{code}/exam-week.ics (the hub links the same URL), and
                 rel="nofollow" because the .ics is a companion download, not a
                 page that should compete with the tracker in the index. */}
+            {view.poll && (
+              <div className="mt-3 border-t border-saffron-200 pt-3">
+                <ExamVerdictPoll
+                  examCode={exam.code}
+                  examDate={view.poll.examDate}
+                  labels={view.poll.labels}
+                  sections={view.poll.sections}
+                  initialTally={view.poll.initialTally}
+                  minN={VERDICT_MIN_N}
+                  signedIn={view.signedIn}
+                  examShort={short}
+                  shareUrl={url}
+                />
+              </div>
+            )}
             <div className="mt-3 flex flex-wrap gap-2">
-              {(view.phase === "today-pm" || view.phase === "post") && (
+              {(view.phase === "today-pm" || view.phase === "post") && view.canEstimate && (
                 <Link href={p(`/exams/${exam.code}/score-estimate`)} className={pill}>
                   🧮 {view.scoreCta}
                 </Link>
@@ -323,19 +399,15 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
           </section>
         )}
 
-        <p className="mt-2 max-w-3xl text-sm text-ink-700">{fill(t("cutoff.intro"), { exam: exam.name })}</p>
+        {/* The number the search brought them for comes FIRST (7 Sep
+            2026): 40 of 47 cutoff landers read this page and nothing
+            else, and the category table used to sit below the intro,
+            the disclaimer and the share row. The honesty line stays
+            attached to the figure it qualifies; the prose and the share
+            row move under the table. */}
         <p className="mt-2 max-w-3xl rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-200">
           {t("cutoff.disclaimer")}
         </p>
-
-        <div className="mt-4">
-          <ShareExamButton
-            url={url}
-            message={fill(t("cutoff.share"), { exam: short, year: YEAR })}
-            label={t("cutoff.shareLabel")}
-            surface="exam"
-          />
-        </div>
 
         {/* Category-wise table — the way aspirants actually ask the
             question ("safe for OBC?"). In exam-week mode it is framed as
@@ -376,6 +448,17 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
             )}
           </section>
         )}
+
+        <p className="mt-2 max-w-3xl text-sm text-ink-700">{fill(t("cutoff.intro"), { exam: exam.name })}</p>
+
+        <div className="mt-4">
+          <ShareExamButton
+            url={url}
+            message={fill(t("cutoff.share"), { exam: short, year: YEAR })}
+            label={t("cutoff.shareLabel")}
+            surface="exam"
+          />
+        </div>
 
         {/* Cutoff anxiety is the single most expert-worthy moment — surface
             the human option right where the doubt forms. */}
