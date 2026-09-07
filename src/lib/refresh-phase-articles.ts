@@ -24,6 +24,14 @@
 //   3. The summariser returns null for anything that is not REAL (< 2
 //      cited sources, placeholder body) — then the previous article is
 //      KEPT untouched: no archive-and-create, nothing written.
+//   3b. …which used to mean a failing exam cost a web-search call on
+//      EVERY run forever: nothing was written, so the daily cap (counted
+//      on rows CREATED today) never bound and the same exam re-qualified
+//      next run. Measured 7 Sep: five exams burned ~$4.20/day between
+//      them and had not produced an article since 24 Aug. Every attempt
+//      that reaches the model is now recorded in PhaseArticleAttempt and
+//      a repeatedly-failing (exam, phase) backs off one extra day per
+//      consecutive failure, to a week. A real article resets the count.
 //   4. Titles are dated from the focus day ("SSC CGL 2026 paper analysis
 //      (12 Sep)"), never "live today" without a date.
 //   5. New article URLs are submitted to IndexNow (best-effort).
@@ -118,6 +126,31 @@ async function findCandidates(examCodeOverride: string | undefined, now: Date): 
   return out;
 }
 
+/** Longest a repeatedly-failing (exam, phase) waits between attempts. */
+const MAX_BACKOFF_DAYS = 7;
+
+/** Consecutive no-real-article attempts per (exam, phase), for the backoff. */
+async function loadAttempts(): Promise<Map<string, { failures: number; lastAttemptAt: Date }>> {
+  const rows = await prisma.phaseArticleAttempt
+    .findMany({ where: { failures: { gt: 0 } }, select: { examId: true, phase: true, failures: true, lastAttemptAt: true } })
+    .catch(() => [] as { examId: string; phase: ExamPhase; failures: number; lastAttemptAt: Date }[]);
+  return new Map(rows.map((r) => [`${r.examId}:${r.phase}`, { failures: r.failures, lastAttemptAt: r.lastAttemptAt }]));
+}
+
+/** Record one model-reaching attempt. Success resets the failure count. */
+async function recordAttempt(examId: string, phase: ExamPhase, real: boolean, now: Date): Promise<void> {
+  await prisma.phaseArticleAttempt
+    .upsert({
+      where: { examId_phase: { examId, phase } },
+      create: { examId, phase, failures: real ? 0 : 1, lastAttemptAt: now },
+      update: real ? { failures: 0, lastAttemptAt: now } : { failures: { increment: 1 }, lastAttemptAt: now },
+    })
+    .catch((err) => {
+      // Never let bookkeeping break a run that produced a real article.
+      console.error("[phase-articles] attempt bookkeeping failed (non-fatal):", err);
+    });
+}
+
 async function scrapeForExam(examShort: string, examCode: string): Promise<ScrapedSnippet[]> {
   const cfg = getSourcesFor(examCode);
   const tasks: Array<Promise<ScrapedSnippet[]>> = [];
@@ -205,6 +238,7 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
   const now = opts.now ?? new Date();
 
   const candidates = await findCandidates(opts.examCodeOverride, now);
+  const attempts = await loadAttempts();
   const report: RefreshReport = {
     candidatesConsidered: candidates.length,
     refreshed: [],
@@ -256,6 +290,24 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
         reason: `daily cap reached (${madeToday}/${DAILY_CAP[c.phase]})`,
       });
       continue;
+    }
+
+    // Backoff for an (exam, phase) whose last attempts produced nothing
+    // REAL. The daily cap above cannot see these — it counts rows that
+    // were created, and a rejected generation creates none — so without
+    // this a dead exam is web-searched on every run indefinitely.
+    const attempt = attempts.get(`${c.examId}:${c.phase}`);
+    if (attempt && attempt.failures >= 2) {
+      const waitDays = Math.min(attempt.failures, MAX_BACKOFF_DAYS);
+      const daysSince = (now.getTime() - attempt.lastAttemptAt.getTime()) / 86_400_000;
+      if (daysSince < waitDays) {
+        report.skipped.push({
+          examCode: c.examCode,
+          phase: c.phase,
+          reason: `${attempt.failures} attempts produced no real article — retrying in ${Math.ceil(waitDays - daysSince)}d`,
+        });
+        continue;
+      }
     }
 
     // Skip if we just refreshed this article — bounds writes per day.
@@ -335,13 +387,18 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
     report.claudeCalls++;
     if (!summary) {
       // Nothing REAL came back — the previous article (if any) stays as
-      // is. No archive, no placeholder row.
+      // is. No archive, no placeholder row. The attempt IS recorded, so
+      // the next run can back this (exam, phase) off instead of paying
+      // for the same web search again.
+      await recordAttempt(c.examId, c.phase, false, now);
       report.skipped.push({ examCode: c.examCode, phase: c.phase, reason: "no real article (kept previous)" });
       if (existing) {
         await prisma.examPhaseArticle.update({ where: { id: existing.id }, data: { lastScrapedAt: now } }).catch(() => {});
       }
       continue;
     }
+    // A real article clears the failure count for this (exam, phase).
+    await recordAttempt(c.examId, c.phase, true, now);
 
     const title = datedTitle(c.examShort, c.phase, c.state, now);
 

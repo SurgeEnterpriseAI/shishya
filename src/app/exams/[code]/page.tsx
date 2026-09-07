@@ -43,6 +43,19 @@ import { PeerProofLine } from "@/components/PeerProofLine";
 import { CoachNextTask } from "@/components/CoachNextTask";
 import { examPeerProof } from "@/lib/peer-proof";
 
+// Honesty guard for the Previous Papers cards (7 Sep 2026): most PYQ years
+// hold a set of questions out of that year's paper, not the paper (534 of
+// 587 exam-years on prod hold under half). A card only reads as "the paper"
+// once the year holds ≥80% of the real paper's question count.
+const FULL_PAPER_RATIO = 0.8;
+function isPartialPaper(held: number, totalQuestions: number): boolean {
+  // totalQuestions <= 0 → real paper size unknown; claim nothing.
+  return totalQuestions > 0 && held < totalQuestions * FULL_PAPER_RATIO;
+}
+function fill(s: string, vars: Record<string, string | number>): string {
+  return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
+}
+
 // Per-exam meta. Beefed-up version that bakes in:
 //   1. state name (for "Tamil Nadu PSC" / "तमिलनाडु TET" style searches)
 //   2. native-script + English language coverage (for "TNPSC in Tamil" type
@@ -1029,22 +1042,34 @@ export default async function ExamPage({
               {t("exam.pyq.empty")}
             </p>
           ) : (
-            <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-              {pyqYears.map((y) => (
-                <li key={y.pyqYear ?? 0} className="rounded-md border border-ink-200 bg-white p-3">
-                  <p className="text-lg font-semibold text-ink-900">{y.pyqYear}</p>
-                  <p className="mt-0.5 text-xs text-ink-500">
-                    {y._count} {t("exam.pyq.questions")}
-                  </p>
-                  <Link
-                    href={`/exams/${exam.code}/pyq/${y.pyqYear}`}
-                    className="mt-2 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
-                  >
-                    {t("exam.pyq.take")} →
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <>
+              {/* A student scanning five year cards should not have to open
+                  one to find out it is 20 questions of a 150-Q paper. */}
+              {pyqYears.some((y) => isPartialPaper(y._count, exam.totalQuestions)) && (
+                <p className="mt-2 text-xs text-ink-500">{t("exam.pyq.partialNote")}</p>
+              )}
+              <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                {pyqYears.map((y) => {
+                  const partial = isPartialPaper(y._count, exam.totalQuestions);
+                  return (
+                    <li key={y.pyqYear ?? 0} className="rounded-md border border-ink-200 bg-white p-3">
+                      <p className="text-lg font-semibold text-ink-900">{y.pyqYear}</p>
+                      <p className="mt-0.5 text-xs text-ink-500">
+                        {partial
+                          ? fill(t("exam.pyq.partialCount"), { n: y._count, m: exam.totalQuestions })
+                          : `${y._count} ${t("exam.pyq.questions")}`}
+                      </p>
+                      <Link
+                        href={`/exams/${exam.code}/pyq/${y.pyqYear}`}
+                        className="mt-2 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
+                      >
+                        {partial ? t("exam.pyq.takeSet") : t("exam.pyq.take")} →
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
           )}
         </section>
 

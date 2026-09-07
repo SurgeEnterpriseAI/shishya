@@ -24,7 +24,8 @@
 
 import { prisma } from "@/lib/db/prisma";
 import { loadExamWeekExams } from "@/lib/exam-week-aeo";
-import { whenWithTier } from "@/lib/exam-week-mail";
+import { plainDay, tierWord, whenWithTier } from "@/lib/exam-week-mail";
+import type { SourceTier } from "@/lib/exam-timeline";
 
 export const LIVE_TEST_QUESTIONS = 25;
 export const LIVE_TEST_DURATION_MIN = 20;
@@ -378,4 +379,88 @@ export async function liveTestFinalBoard(
     rank: sorted.filter((x) => x.pct > r.pct).length + 1,
     of,
   }));
+}
+
+// ── Final-result email copy ──────────────────────────────────────────
+// The close cron now runs DAILY (review 7 Sep 2026) because rehearsals
+// close on a weekday, so it delivers final ranks for BOTH kinds of paper
+// and the copy has to know which one it is. The Sunday text below is
+// unchanged. A rehearsal gets its own, because "your All-India rank in
+// today's Live Test … next one is next Sunday" is wrong twice over for a
+// student who wrote an exam-week warm-up and whose next paper is the
+// actual exam.
+
+/** The parts of a just-closed live test its result email needs.
+ *  `rehearsalFor` is the Mock's config marker (see createRehearsalLiveTests)
+ *  — null on the shared Sunday papers. */
+export interface ClosedLiveTest {
+  short: string;
+  examCode: string;
+  /** IST exam day (YYYY-MM-DD) this paper rehearsed; null = Sunday paper. */
+  rehearsalFor: string | null;
+  /** Tier of that exam day as recorded at creation ('official' | 'reported'). */
+  examDayTier: string | null;
+}
+
+export interface LiveTestResultRow {
+  name: string | null;
+  pct: number;
+  rank: number;
+  of: number;
+}
+
+const SOURCE_TIERS: SourceTier[] = ["official", "reported", "expected"];
+
+/** "12 Sep (official)" for a rehearsal's exam day, or null when the tier
+ *  was not recorded — a date never ships to a student without its source
+ *  tier word, so we drop the date rather than the word. */
+function rehearsalExamDay(t: ClosedLiveTest): string | null {
+  if (!t.rehearsalFor) return null;
+  const tier = SOURCE_TIERS.find((w) => w === t.examDayTier);
+  if (!tier) return null;
+  const d = new Date(Date.parse(t.rehearsalFor + "T00:00:00Z"));
+  if (Number.isNaN(d.getTime())) return null;
+  return `${plainDay(d)} (${tierWord(tier)})`;
+}
+
+/** Subject + HTML for one participant's final result mail. */
+export function liveTestResultEmail(
+  t: ClosedLiveTest,
+  p: LiveTestResultRow,
+): { subject: string; html: string } {
+  const first = (p.name ?? "").split(" ")[0] || "Aspirant";
+  const topThird = p.rank <= Math.ceil(p.of / 3);
+  const hub = `https://shishya.in/exams/${t.examCode}`;
+
+  if (t.rehearsalFor) {
+    const when = rehearsalExamDay(t);
+    // No "All-India" and no "today's": a rehearsal is one exam's private
+    // warm-up, open for days — not the country writing the same paper.
+    return {
+      subject: `🏆 Your rank in the ${t.short} exam-day rehearsal: #${p.rank} of ${p.of}`,
+      html: `<p>${first}, the ${t.short} exam-day rehearsal has closed.</p>
+<p style="font-size:16px"><b>Rank #${p.rank}</b> out of <b>${p.of}</b> aspirants who wrote this rehearsal — you scored ${Math.round(p.pct)}%.</p>
+<p>${
+        topThird
+          ? "Top third of everyone who rehearsed — carry that into the hall."
+          : "A rehearsal is the cheap place to find a weak area. Yours are already on your report — take the one that costs you most and give it an hour."
+      }</p>
+<p>This was the warm-up for your ${t.short} exam${when ? ` on ${when}` : ""}, so what comes next is the exam itself, not another paper from us. Your hub carries every date we hold, each with its source: <a href="${hub}">shishya.in/exams/${t.examCode}</a></p>
+<p>— Shishya</p>`,
+    };
+  }
+
+  return {
+    subject: `🏆 Your All-India rank in today's ${t.short} Live Test: #${p.rank} of ${p.of}`,
+    html: `<p>${first}, the results are in.</p>
+<p style="font-size:16px"><b>All-India Rank #${p.rank}</b> out of <b>${p.of}</b> aspirants who took today's ${t.short} Live Test — you scored ${Math.round(p.pct)}%.</p>
+<p>${
+      topThird
+        ? "Top third of the country today — that's real. Keep this rhythm and the rank sheet on exam day will look familiar."
+        : "Every rank is a starting line. Your weak areas from today are already on your report — fix one this week and watch next Sunday's rank move."
+    }</p>
+<p>See the full breakdown: <a href="${hub}">shishya.in/exams/${t.examCode}</a><br/>
+Next All-India Live Test is next Sunday — same time, fresh paper.</p>
+<p>— Shishya</p>`,
+  };
 }

@@ -74,11 +74,25 @@ async function loadExam(code: string) {
       active: true,
       description: true,
       totalQuestions: true,
+      scoredQuestions: true,
       totalMarks: true,
       marksPerQ: true,
       negativeMark: true,
     },
   });
+}
+
+/**
+ * How many of the paper's questions actually score. Exam.scoredQuestions is
+ * set only where the paper asks more than it scores — NEET UG asks 200 and
+ * scores 180, CUET UG asks 175 and scores 140, the rest being optional — and
+ * is null everywhere else, where every question counts. A value outside
+ * (0, totalQuestions] is nonsense, so it is ignored rather than trusted.
+ */
+// (module-local: a page file must only export the Next.js entry points)
+function scoredCount(exam: { totalQuestions: number; scoredQuestions: number | null }): number {
+  const s = exam.scoredQuestions;
+  return s != null && s > 0 && s <= exam.totalQuestions ? s : exam.totalQuestions;
 }
 
 /**
@@ -97,13 +111,18 @@ async function loadExam(code: string) {
  *      number, a half, a third or a quarter (1, 2, 1.5, 4/3 stored 1.33,
  *      2.5). 1.4, 1.6, 3.6 are fifths — nobody prints those, they are
  *      averages (NSEP is 3 marks in Part A1 and 6 in Part A2 → "3.6").
- *   2. A paper where every question carries m marks tops out at m × Q. When
- *      that does not equal totalMarks the paper is NOT uniform — different
- *      papers/sections score differently (NDA, UPPSC PCS, JEE Advanced,
- *      the SOF olympiads' Achievers section) or not every question counts
- *      towards the total (NEET's 200-attempt-180). Either way "+m per
- *      correct, Q questions, T marks" cannot all three be true. Tolerance
- *      of 1 mark / 0.5% only forgives schemes stored rounded (4/3 → 1.33).
+ *   2. A paper where every question carries m marks tops out at m × (the
+ *      number of questions that SCORE). When that does not equal totalMarks
+ *      the paper is NOT uniform — different papers/sections score differently
+ *      (NDA, UPPSC PCS, JEE Advanced, the SOF olympiads' Achievers section)
+ *      and "+m per correct, T marks" cannot both be true. The scored count is
+ *      Exam.scoredQuestions where the paper asks more than it scores and
+ *      totalQuestions otherwise: until 7 Sep this test used totalQuestions
+ *      unconditionally and so withheld the calculator from NEET UG (200 asked,
+ *      180 scored, a uniform +4 → 720) and CUET UG (175 asked, 140 scored,
+ *      a uniform +5 → 700), which are two of the most-searched exams here and
+ *      score perfectly uniformly. Tolerance of 1 mark / 0.5% only forgives
+ *      schemes stored rounded (4/3 → 1.33).
  *   3. The exam's own description listing two or more DIFFERENT part totals
  *      ("Mathematics (300 marks…)" + "General Ability Test (600 marks…)",
  *      "Paper-I (150 Qs, 150 marks)" + "Paper-II (150 Qs, 300 marks)") is
@@ -117,6 +136,7 @@ async function loadExam(code: string) {
 // (module-local: a page file must only export the Next.js entry points)
 function markingSchemeStatable(exam: {
   totalQuestions: number;
+  scoredQuestions: number | null;
   totalMarks: number;
   marksPerQ: number;
   description: string;
@@ -126,8 +146,10 @@ function markingSchemeStatable(exam: {
   // 1 — a value a notice could print: halves, thirds, quarters (0.02 slack
   // for 4/3 stored as "1.33"). Anything else is an average of its papers.
   if (![1, 2, 3, 4].some((d) => Math.abs(m * d - Math.round(m * d)) < 0.02)) return false;
-  // 2 — full marks under the printed scheme must be the printed total.
-  if (Math.abs(m * q - total) > Math.max(1, total * 0.005)) return false;
+  // 2 — full marks under the printed scheme must be the printed total, over
+  // the questions that SCORE (see scoredCount): a uniform scheme on a scored
+  // subset states honestly, the optional questions do not make it mixed.
+  if (Math.abs(m * scoredCount(exam) - total) > Math.max(1, total * 0.005)) return false;
   // 3 — part totals the exam's own description lists.
   const partTotals = new Set(
     [...exam.description.matchAll(/(\d[\d,]*)\s*marks/gi)]
@@ -202,10 +224,18 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
   const tierWord = (row: TimelineRow) => t(TIER_KEY[row.tier]);
   // Every date carries its tier word; a missing tracker row is said plainly.
   const status = (row: TimelineRow | null) => (row ? dateWithTier(row, tierWord(row), locale) : t("ew.post.notAnnounced"));
+  // The scheme applies to the questions that SCORE, so that is the count the
+  // marking line prints and the count the calculator works in. On a paper
+  // that asks more than it scores (NEET UG: 180 of 200), printing 200 beside
+  // "+4 per correct … 720 marks" would not add up, and a student entering 200
+  // correct would be handed 800 out of 720. Printed as "{scored} / {asked}"
+  // so the optional questions still show; it stays numeric because
+  // ew.score.marking is one shared sentence across en/hi/te.
+  const scored = scoredCount(exam);
   const marking = fill(t("ew.score.marking"), {
     plus: num(exam.marksPerQ),
     minus: num(exam.negativeMark),
-    total: exam.totalQuestions,
+    total: scored === exam.totalQuestions ? scored : `${scored} / ${exam.totalQuestions}`,
     marks: num(exam.totalMarks),
   });
   const th = (h: string) => {
@@ -266,7 +296,11 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
               <ScoreEstimator
                 marksPerQ={exam.marksPerQ}
                 negativeMark={exam.negativeMark}
-                totalQuestions={exam.totalQuestions}
+                /* The scored count, not the asked count: ScoreEstimator clamps
+                   every input to this and caps correct + wrong by it, which is
+                   the sensible handling of a student who attempted more than
+                   scores — the score can never exceed totalMarks or 100%. */
+                totalQuestions={scored}
                 totalMarks={exam.totalMarks}
                 labels={{
                   attempted: t("ew.score.attempted"),

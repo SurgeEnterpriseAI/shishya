@@ -22,6 +22,22 @@ import { PulseAsk } from "@/components/PulseAsk";
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
 
+// Honesty guard (7 Sep 2026): of 587 PYQ exam-years on prod, 534 hold less
+// than half the real paper and 521 hold ≤25 questions. Calling a 20-question
+// set "the 2023 paper" is the single biggest overclaim on the site, so every
+// surface below states what the year actually holds against the real paper.
+// A year counts as the paper only once it holds ≥80% of it.
+const FULL_PAPER_RATIO = 0.8;
+function isPartialPaper(held: number, totalQuestions: number): boolean {
+  // totalQuestions <= 0 means we don't know the real paper's size — say
+  // nothing rather than guess.
+  return totalQuestions > 0 && held < totalQuestions * FULL_PAPER_RATIO;
+}
+/** "{n} of {m}" → substitutes named vars; same helper shape as ExamWeekBlock. */
+function fill(s: string, vars: Record<string, string | number>): string {
+  return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -30,13 +46,28 @@ export async function generateMetadata({
   const { code, year } = await params;
   const exam = await prisma.exam.findUnique({
     where: { code },
-    select: { code: true, shortName: true, name: true },
+    select: { id: true, code: true, shortName: true, name: true, totalQuestions: true },
   });
   if (!exam) return { title: "Previous year paper — Shishya" };
-  const title = `${exam.shortName} ${year} Previous Year Paper (PYQ) — Solve Free Online | Shishya`;
-  const description =
-    `Solve the ${exam.shortName} (${exam.name}) ${year} previous year question paper free on Shishya — ` +
-    `real exam questions with instant scoring, solutions, and topic-wise analysis. No coaching fees, in your language.`;
+  const yearNum = parseInt(year, 10);
+  if (!Number.isFinite(yearNum)) return { title: "Previous year paper — Shishya" };
+  // Same filter as the page body, so the title can never promise more
+  // questions than the page renders.
+  const held = await prisma.question.count({
+    where: { examId: exam.id, source: "PYQ", pyqYear: yearNum, validated: true },
+  });
+  const partial = isPartialPaper(held, exam.totalQuestions);
+  // Exam name + year stay at the front of the title — these pages rank for
+  // "<exam> <year> previous year paper"; only the claim changes.
+  const title = partial
+    ? `${exam.shortName} ${year} Previous Year Questions (PYQ) — ${held} of ${exam.totalQuestions}, Solve Free | Shishya`
+    : `${exam.shortName} ${year} Previous Year Paper (PYQ) — Solve Free Online | Shishya`;
+  const description = partial
+    ? `${held} questions from the ${exam.shortName} (${exam.name}) ${year} previous year paper — the full paper had ` +
+      `${exam.totalQuestions}. Solve this set free on Shishya with instant scoring, solutions and topic-wise analysis. ` +
+      `No coaching fees, in your language.`
+    : `Solve the ${exam.shortName} (${exam.name}) ${year} previous year question paper free on Shishya — ` +
+      `real exam questions with instant scoring, solutions, and topic-wise analysis. No coaching fees, in your language.`;
   const url = `https://shishya.in/exams/${exam.code}/pyq/${year}`;
   return {
     title,
@@ -91,6 +122,11 @@ export default async function PYQYearPage({
       </main>
     );
   }
+
+  // Is this year the paper, or a set of questions out of it? Drives the H1
+  // line, the CTA copy, the JSON-LD and the AEO answer below.
+  const partial = isPartialPaper(questions.length, exam.totalQuestions);
+  const counts = { n: questions.length, m: exam.totalQuestions, year: yearNum };
 
   // Signed-in only: find-or-create the system Mock + the user's attempt
   // state. Anonymous visitors (and crawlers) get a read-only landing — no
@@ -164,13 +200,19 @@ export default async function PYQYearPage({
   const pyqJsonLd = {
     "@context": "https://schema.org",
     "@type": ["Article", "LearningResource"],
-    headline: `${exam.shortName} ${yearNum} Previous Year Question Paper`,
+    headline: partial
+      ? `${exam.shortName} ${yearNum} Previous Year Questions (${questions.length} of ${exam.totalQuestions})`
+      : `${exam.shortName} ${yearNum} Previous Year Question Paper`,
     name: `${exam.shortName} ${yearNum} PYQ`,
-    description: `Solve the ${exam.name} ${yearNum} previous year paper free — ${questions.length} real questions with instant scoring and solutions.`,
+    description: partial
+      ? `${questions.length} questions from the ${exam.name} ${yearNum} previous year paper — the full paper had ${exam.totalQuestions}. Solve this set free with instant scoring and solutions.`
+      : `Solve the ${exam.name} ${yearNum} previous year paper free — ${questions.length} real questions with instant scoring and solutions.`,
     url: pageUrl,
     inLanguage: "en-IN",
     isAccessibleForFree: true,
-    learningResourceType: "Previous year question paper",
+    learningResourceType: partial
+      ? "Previous year questions (part of the paper)"
+      : "Previous year question paper",
     educationalLevel: "Competitive exam preparation",
     about: [
       { "@type": "Thing", name: exam.name },
@@ -199,12 +241,16 @@ export default async function PYQYearPage({
         name: `Where can I solve the ${exam.shortName} ${yearNum} question paper free online?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `You can solve the ${exam.shortName} ${yearNum} previous-year paper free at ${pageUrl} — ${questions.length} questions in the real paper's pattern, attempted as a timed mock with instant scoring, step-by-step solutions and topic-wise weak-area analysis. No fee and no coaching enrolment needed.`,
+          text: partial
+            ? `At ${pageUrl} you can solve ${questions.length} questions from the ${exam.shortName} ${yearNum} previous-year paper free — that is ${questions.length} of the paper's ${exam.totalQuestions} questions, not the whole paper. They run as a timed mock with instant scoring, step-by-step solutions and topic-wise weak-area analysis. No fee and no coaching enrolment needed.`
+            : `You can solve the ${exam.shortName} ${yearNum} previous-year paper free at ${pageUrl} — ${questions.length} questions in the real paper's pattern, attempted as a timed mock with instant scoring, step-by-step solutions and topic-wise weak-area analysis. No fee and no coaching enrolment needed.`,
         },
       },
       {
         "@type": "Question",
-        name: `Does the ${exam.shortName} ${yearNum} paper come with solutions and analysis?`,
+        name: partial
+          ? `Do these ${exam.shortName} ${yearNum} questions come with solutions and analysis?`
+          : `Does the ${exam.shortName} ${yearNum} paper come with solutions and analysis?`,
         acceptedAnswer: {
           "@type": "Answer",
           text: `Yes — every question carries a worked solution, and on submitting you get an instant score with a topic-wise breakdown showing exactly which areas to revise. Wrong answers are auto-collected into a free Mistake Notebook for one-tap re-practice until cleared.`,
@@ -242,13 +288,21 @@ export default async function PYQYearPage({
         </p>
         <h1 className="mt-1 text-3xl font-bold text-ink-900">{exam.shortName} — {yearNum}</h1>
         <p className="mt-1 text-sm text-ink-600">
-          {t("exam.pyq.title")} · {questions.length} {t("exam.pyq.questions")} · {exam.durationMin} {t("exam.minutes")}
+          {partial
+            ? // "20 previous-year questions (the 2023 paper had 150)" — the
+              // student knows exactly what they are getting before they start.
+              `${fill(t("exam.pyq.partialLine"), counts)} · ${exam.durationMin} ${t("exam.minutes")}`
+            : `${t("exam.pyq.title")} · ${questions.length} ${t("exam.pyq.questions")} · ${exam.durationMin} ${t("exam.minutes")}`}
         </p>
 
         <div className="mt-4">
           <ShareExamButton
             url={`https://shishya.in/exams/${code}/pyq/${yearNum}`}
-            message={`${exam.shortName} ${yearNum} previous year paper — solve it free on Shishya (full mock, instant score):`}
+            message={
+              partial
+                ? `${questions.length} questions from the ${exam.shortName} ${yearNum} previous year paper (of ${exam.totalQuestions}) — solve them free on Shishya, instant score:`
+                : `${exam.shortName} ${yearNum} previous year paper — solve it free on Shishya (full mock, instant score):`
+            }
             surface="pyq"
           />
         </div>
@@ -260,11 +314,15 @@ export default async function PYQYearPage({
             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-ink-900">
-                  Solve this {yearNum} paper as a timed mock — free
+                  {partial
+                    ? `Solve these ${questions.length} ${yearNum} questions as a timed mock — free`
+                    : `Solve this ${yearNum} paper as a timed mock — free`}
                 </p>
                 <p className="mt-0.5 text-xs text-ink-500">
-                  {questions.length} real questions · instant scoring · topic-wise analysis. Sign in
-                  free to attempt and track your progress.
+                  {partial
+                    ? `${questions.length} real questions from the ${yearNum} paper (which had ${exam.totalQuestions}) · instant scoring · topic-wise analysis. `
+                    : `${questions.length} real questions · instant scoring · topic-wise analysis. `}
+                  Sign in free to attempt and track your progress.
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
@@ -287,14 +345,16 @@ export default async function PYQYearPage({
             <div>
               <p className="text-sm font-semibold text-ink-900">
                 {userAttempt?.status === "SUBMITTED" || userAttempt?.status === "AUTO_SUBMITTED"
-                  ? t("exam.pyq.retake")
+                  ? t(partial ? "exam.pyq.retakePartial" : "exam.pyq.retake")
                   : userAttempt?.status === "IN_PROGRESS"
                   ? t("exam.pyq.resume")
-                  : t("exam.pyq.start")}
+                  : t(partial ? "exam.pyq.startPartial" : "exam.pyq.start")}
               </p>
               <p className="mt-0.5 text-xs text-ink-500">
                 {userAttempt?.scorePct != null
                   ? `${t("exam.rank.bestScore")}: ${formatDisplayScorePct(userAttempt.scorePct)}`
+                  : partial
+                  ? fill(t("exam.pyq.startBodyPartial"), counts)
                   : t("exam.pyq.startBody")}
               </p>
             </div>
@@ -370,12 +430,14 @@ export default async function PYQYearPage({
         {/* PulseAsk (1 Sep 2026): back-year papers are ~20-Q samplers
             for many exams — when this year is thin, ask whether the
             student needs the full paper. Direct demand-validation for
-            the full-PYQ build. */}
-        {questions.length < 100 && (
+            the full-PYQ build. Gated on `partial` rather than a flat
+            "<100 questions" (7 Sep 2026): an 80-question exam whose year
+            holds 78 is complete, and was being asked for "the full paper". */}
+        {partial && (
           <PulseAsk
             surface="pyq"
             promptKey={`pyq-${exam.code}-${yearNum}`}
-            prompt={`Want the full ${exam.shortName} ${yearNum} paper? Today this page has ${questions.length} questions.`}
+            prompt={`Want the rest of the ${exam.shortName} ${yearNum} paper? This page has ${questions.length} of its ${exam.totalQuestions} questions.`}
             chips={["Yes, need the full paper", "This sampler is enough"]}
             signedIn={!!userId}
             examCode={exam.code}

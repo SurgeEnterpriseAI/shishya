@@ -37,7 +37,10 @@ export interface ExamWeekState {
   /** IST calendar date of the focus row, "YYYY-MM-DD" — the poll's key. */
   focusDay: string | null;
   tier: SourceTier | null;
-  /** Days from today (IST) to the window's FIRST day: positive = upcoming, negative = past. */
+  /** Days from today (IST) to the FOCUS day: positive = upcoming, negative
+   *  = past. Always describes `focusDay`, so a caller can print the two
+   *  together — inside a long window that is the day students just sat,
+   *  not the day the window opened. */
   daysTo: number | null;
   /** Last exam-day row of the window (same as focus for single-day exams). */
   windowEnd: TimelineRow | null;
@@ -124,14 +127,18 @@ export function computeExamWeekState(
   const chain = scored[0].c;
   const first = chain[0];
   const last = chain[chain.length - 1];
-  const daysTo = dayDiff(today, first.day);
+  // Distance to the window's FIRST day — this is what decides the phase
+  // (week / eve / inside / post). The value REPORTED as daysTo is
+  // re-based on the focus row further down, so daysTo and focusDay always
+  // describe the same day; applyShiftDay does the same for a shift day.
+  const daysToFirst = dayDiff(today, first.day);
   const daysAfterLast = dayDiff(last.day, today);
 
   let phase: ExamWeekPhase = "none";
   let focus = first;
-  if (daysTo >= 2 && daysTo <= NEAR_DAYS) phase = "week";
-  else if (daysTo === 1) phase = "eve";
-  else if (daysTo <= 0 && today <= last.day) {
+  if (daysToFirst >= 2 && daysToFirst <= NEAR_DAYS) phase = "week";
+  else if (daysToFirst === 1) phase = "eve";
+  else if (daysToFirst <= 0 && today <= last.day) {
     // Inside the window: focus = latest exam day on or before today.
     focus = [...chain].reverse().find((e) => e.day <= today) ?? first;
     phase = focus.day === today ? (istHour(now) >= 18 ? "today-pm" : "today-am") : "window";
@@ -152,7 +159,7 @@ export function computeExamWeekState(
     focus: focus.row,
     focusDay: focus.day,
     tier: focus.row.tier,
-    daysTo,
+    daysTo: dayDiff(today, focus.day),
     windowEnd: last.row,
     windowDays: chain.map((w) => w.row),
     answerKey: after("ANSWER_KEY"),

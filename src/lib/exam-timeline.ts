@@ -35,6 +35,11 @@ export interface TimelineInput {
 export interface TimelineRow {
   id: string;
   kind: DateKind;
+  /** True when `kind` came from the row's own kind column; false when it
+   *  was GUESSED from the label (legacy rows written before the column
+   *  existed). A guess must never outrank a declared value — see
+   *  rowsOfKind(). */
+  kindDeclared: boolean;
   label: string;
   date: Date;
   /** ISO calendar day (YYYY-MM-DD) of the IST date. */
@@ -78,10 +83,20 @@ export const KIND_ICON: Record<DateKind, string> = {
   OTHER: "📌",
 };
 
-export function resolveKind(r: { kind?: string | null; label: string; isExamDay: boolean }): DateKind {
+/** Resolve a row's kind AND say where it came from: `declared` means the
+ *  row's own kind column held it, otherwise it was inferred from the
+ *  label (ExamImportantDate.kind is NULL on legacy rows). */
+export function resolveKindInfo(r: { kind?: string | null; label: string; isExamDay: boolean }): {
+  kind: DateKind;
+  declared: boolean;
+} {
   const k = (r.kind ?? "").toUpperCase();
-  if (k && k in KIND_ORDER) return k as DateKind;
-  return kindFromLabel(r.label, r.isExamDay);
+  if (k && k in KIND_ORDER) return { kind: k as DateKind, declared: true };
+  return { kind: kindFromLabel(r.label, r.isExamDay), declared: false };
+}
+
+export function resolveKind(r: { kind?: string | null; label: string; isExamDay: boolean }): DateKind {
+  return resolveKindInfo(r).kind;
 }
 
 export function isoDay(d: Date): string {
@@ -97,13 +112,14 @@ export function buildTimeline(rows: TimelineInput[], now: Date = new Date(), off
   const today = istDayNumber(now);
   const out: TimelineRow[] = rows.map((r) => {
     const date = r.date instanceof Date ? r.date : new Date(r.date);
-    const kind = resolveKind({ kind: r.kind, label: r.label, isExamDay: r.isExamDay });
+    const { kind, declared } = resolveKindInfo({ kind: r.kind, label: r.label, isExamDay: r.isExamDay });
     const url = r.url && /^https?:\/\//i.test(r.url) ? r.url : r.source && /^https?:\/\//i.test(r.source) ? r.source : null;
     const tier = sourceTier(r.confidence, url, officialUrl);
     const delta = istDayNumber(date) - today;
     return {
       id: r.id,
       kind,
+      kindDeclared: declared,
       label: r.label,
       date,
       day: isoDay(date),
@@ -128,7 +144,14 @@ export function stageOf(timeline: TimelineRow[]): { next: TimelineRow | null; la
   const next = timeline.find((r) => r.status === "today") ?? timeline.find((r) => r.status === "upcoming") ?? null;
   const done = timeline.filter((r) => r.status === "done");
   const last = done.length ? done[done.length - 1] : null;
-  const nextExam = timeline.find((r) => r.kind === "EXAM" && r.status !== "done") ?? null;
+  // Same declared-beats-inferred rule the key-dates helpers use: an exam
+  // day the tracker actually typed outranks one guessed from a legacy
+  // row's label, so the status strip and the EXAM card cannot name two
+  // different days for the same exam.
+  const nextExam =
+    timeline.find((r) => r.kind === "EXAM" && r.kindDeclared && r.status !== "done") ??
+    timeline.find((r) => r.kind === "EXAM" && r.status !== "done") ??
+    null;
   return { next, last, nextExam };
 }
 
@@ -140,14 +163,46 @@ export function cycleYear(timeline: TimelineRow[], now: Date = new Date()): numb
   return ref ? ref.date.getUTCFullYear() : now.getUTCFullYear();
 }
 
+/** Rows of one kind — but an INFERRED kind never outranks a DECLARED one
+ *  (7 Sep 2026). SSC CGL's May seed row "Tier 1 result announcement"
+ *  (kind NULL, guessed RESULT, 16 Sep) was answering the result question
+ *  ahead of the exam's own declared RESULT row (15 Dec), because it is
+ *  earlier. When any row of this kind carries a declared kind we trust
+ *  only those; when none do, every row stays in play, so exams whose rows
+ *  are all legacy behave exactly as before. */
+function rowsOfKind(timeline: TimelineRow[], kind: DateKind): TimelineRow[] {
+  const rows = timeline.filter((r) => r.kind === kind);
+  const declared = rows.filter((r) => r.kindDeclared);
+  return declared.length ? declared : rows;
+}
+
+const OUTCOME_KINDS: DateKind[] = ["ANSWER_KEY", "RESULT"];
+
+/** An answer key or result cannot be published before the exam it reports
+ *  on. A still-to-come outcome row dated before EVERY exam day on the
+ *  tracker belongs to no exam we know of, so it must not be offered as
+ *  the answer to "when is the result?" — it stays in the timeline list,
+ *  which students legitimately read as history.
+ *
+ *  Compared against the EARLIEST exam day rather than the next upcoming
+ *  one on purpose: in a multi-stage exam a Tier-1 result genuinely falls
+ *  before the Tier-2 exam day, and that row must keep showing. Rows
+ *  already past, and exams with no exam day on record, are untouched. */
+function outcomeBeforeAnyExam(timeline: TimelineRow[], row: TimelineRow): boolean {
+  if (row.status === "done" || !OUTCOME_KINDS.includes(row.kind)) return false;
+  const examDays = timeline.filter((r) => r.kind === "EXAM").map((r) => r.day);
+  // ISO day strings compare lexicographically.
+  return examDays.length > 0 && examDays.every((d) => d > row.day);
+}
+
 /** First row of a kind that is not done (for the "key dates" strip). */
 export function upcomingOfKind(timeline: TimelineRow[], kind: DateKind): TimelineRow | null {
-  return timeline.find((r) => r.kind === kind && r.status !== "done") ?? null;
+  return rowsOfKind(timeline, kind).find((r) => r.status !== "done" && !outcomeBeforeAnyExam(timeline, r)) ?? null;
 }
 
 /** Latest row of a kind regardless of status. */
 export function latestOfKind(timeline: TimelineRow[], kind: DateKind): TimelineRow | null {
-  const rows = timeline.filter((r) => r.kind === kind);
+  const rows = rowsOfKind(timeline, kind).filter((r) => !outcomeBeforeAnyExam(timeline, r));
   return rows.length ? rows[rows.length - 1] : null;
 }
 

@@ -158,6 +158,15 @@ model Exam {
   description       String       @db.Text
   durationMin       Int // exam duration in minutes
   totalQuestions    Int // total Qs in real exam
+  // How many of those questions actually count towards totalMarks, for the
+  // papers that ask more than they score: NEET UG prints 200 questions of
+  // which 180 are answered and scored (720 = 180 × 4), CUET UG 175 of which
+  // 140 (700 = 140 × 5). NULL for the normal case — every question counts —
+  // so read it as `scoredQuestions ?? totalQuestions`. /score-estimate needs
+  // it: a uniform +m per question tops out at m × scored, and without this
+  // the marking-scheme honesty gate reads the gap as "different papers score
+  // differently" and withholds the calculator from a uniform paper.
+  scoredQuestions   Int?
   totalMarks        Float
   marksPerQ         Float
   negativeMark      Float        @default(0)
@@ -190,6 +199,7 @@ model Exam {
   guide          ExamGuide?
   eligibility    ExamEligibility?
   phaseArticles  ExamPhaseArticle[]
+  phaseArticleAttempts PhaseArticleAttempt[]
   reviewStates   ReviewState[]
 
   @@index([code])
@@ -765,6 +775,29 @@ model ExamImportantDate {
 // active article per phase. Re-running the scraper updates the row
 // in-place rather than creating duplicates.
 // ─────────────────────────────────────────────────────────────────────────
+
+// One row per (exam, phase) that the phase-article refresher has actually
+// put in front of the model, with a count of consecutive attempts that came
+// back with nothing REAL (< 2 cited sources, or a placeholder body).
+//
+// Why this exists: a rejected generation writes no ExamPhaseArticle row, so
+// the per-day cap — which counts rows CREATED today — never bound a failing
+// exam, and the same exam was web-searched on every run indefinitely.
+// Measured 7 Sep 2026: five exams spent ~$4.20/day between them and had not
+// produced an article since 24 Aug. The refresher backs off one extra day
+// per consecutive failure, to a week; a real article resets the count.
+model PhaseArticleAttempt {
+  id            String    @id @default(cuid())
+  examId        String
+  phase         ExamPhase
+  // Consecutive attempts that produced nothing real. 0 = last one worked.
+  failures      Int       @default(0)
+  lastAttemptAt DateTime  @default(now())
+  exam          Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, phase])
+  @@index([lastAttemptAt])
+}
 
 model ExamPhaseArticle {
   id             String    @id @default(cuid())

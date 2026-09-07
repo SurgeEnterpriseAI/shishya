@@ -95,7 +95,7 @@
     },
     {
       "path": "/api/cron/live-test-close",
-      "schedule": "0 18 * * 0"
+      "schedule": "0 18 * * *"
     },
     {
       "path": "/api/cron/extract-results",
