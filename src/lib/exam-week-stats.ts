@@ -31,13 +31,20 @@
 //                    loadExamWeekTally); past rows: examDate = that day
 //   alerts           ExamAlert rows created on IST days D-7..D+3
 //   enrolled/shift   active enrollments / of those with a shiftDate set
-//   eve/dayAfter     EmailTouch 'sent:exam-eve' on D-1 / 'sent:exam-day-after'
-//                    on D+1 (window: the eve/day-after of every window day),
-//                    attributed to the exam through the user's active
-//                    enrollment — a user enrolled in two exams that week is
-//                    counted under both (approximate by construction)
-//   resultSends      EmailTouch tags 'sent:result-day-*' on/after D0, same
-//                    attribution
+//   eve              EmailTouch 'exam-eve-{CODE}' on D-1 — the EXAM-SCOPED
+//                    tag the eve cron writes, so the send is attributed to
+//                    the exam it was actually about
+//   dayAfter         EmailTouch 'sent:exam-day-after' on D+1. That cron has
+//                    no scoped tag, so this one still goes through the
+//                    user's active enrollment — a user enrolled in two
+//                    exams that week is counted under both (approximate)
+//   resultSends      EmailTouch 'sent:result-day-{CODE}' on/after D0, again
+//                    the exam-scoped tag
+//
+// A loader that fails (Neon timeout) does NOT render as 0 — its columns go
+// to null / "–" and the page prints which sources are missing. A row of
+// zeros reads as "nobody came", which is a different and much worse claim
+// than "we could not count" (review 6 Sep 2026).
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
@@ -64,6 +71,29 @@ export interface VerdictCounts {
   tough: number;
 }
 
+/** One read that can fail on its own; its columns then render "–". */
+export type StatSource =
+  | "seeds"
+  | "pastDays"
+  | "people"
+  | "d1Return"
+  | "verdicts"
+  | "alerts"
+  | "enrolments"
+  | "mail";
+
+/** Founder-readable name of each source, for the "could not load" notice. */
+export const SOURCE_LABEL: Record<StatSource, string> = {
+  seeds: "the exam list",
+  pastDays: "past exam days",
+  people: "people / cutoff / landers",
+  d1Return: "D+1 return",
+  verdicts: "verdicts",
+  alerts: "alerts",
+  enrolments: "enrolled / shift set",
+  mail: "eve / day-after / result sends",
+};
+
 export interface ExamWeekStatRow {
   examId: string;
   code: string;
@@ -78,18 +108,20 @@ export interface ExamWeekStatRow {
   windowLast: string;
   /** d0 − today in days (negative = past). */
   daysTo: number;
-  /** One entry per DAY_OFFSETS; null = that IST day has not started yet. */
+  /** One entry per DAY_OFFSETS; null = that IST day has not started yet,
+   *  OR the read that feeds it failed (see ExamWeekStats.failed). Every
+   *  nullable field below is null for the same two reasons — never 0. */
   people: (number | null)[];
   cutoffD0: number | null;
   cutoffLandersD0: number | null;
   d1Return: number | null;
-  verdicts: VerdictCounts;
-  alerts: number;
-  enrolled: number;
-  shiftSet: number;
-  eveSends: number;
-  dayAfterSends: number;
-  resultSends: number;
+  verdicts: VerdictCounts | null;
+  alerts: number | null;
+  enrolled: number | null;
+  shiftSet: number | null;
+  eveSends: number | null;
+  dayAfterSends: number | null;
+  resultSends: number | null;
 }
 
 interface Seed {
@@ -125,9 +157,18 @@ function maxDay(days: string[]): string {
 
 // ── Seeds ─────────────────────────────────────────────────────────────
 
-async function currentSeeds(now: Date): Promise<Seed[]> {
+/** `ok: false` = the read failed, so an empty list means "unknown", not
+ *  "none" — the page says so instead of printing a confident zero. */
+interface Loaded<T> {
+  rows: T;
+  ok: boolean;
+}
+
+async function currentSeeds(now: Date): Promise<Loaded<Seed[]>> {
+  let ok = true;
   const exams = await loadExamWeekExams({ now }).catch((err) => {
     console.error("[exam-week-stats] loadExamWeekExams failed", err);
+    ok = false;
     return [];
   });
   const seeds: Seed[] = [];
@@ -147,7 +188,7 @@ async function currentSeeds(now: Date): Promise<Seed[]> {
     });
   }
   seeds.sort((a, b) => a.d0.localeCompare(b.d0) || a.code.localeCompare(b.code));
-  return seeds;
+  return { rows: seeds, ok };
 }
 
 interface PastDateRow extends TimelineInput {
@@ -169,10 +210,11 @@ interface PastDateRow extends TimelineInput {
 const TIER_RANK: Record<SourceTier, number> = { official: 0, reported: 1, expected: 2 };
 
 /** One seed per (active exam, typed exam day) with the day 8–30 days ago. */
-async function pastSeeds(now: Date): Promise<Seed[]> {
+async function pastSeeds(now: Date): Promise<Loaded<Seed[]>> {
   const today = istDay(now);
   const fromDay = shiftDay(today, -PAST_FROM_DAYS);
   const toDay = shiftDay(today, -PAST_TO_DAYS);
+  let ok = true;
   const rows = await prisma.$queryRaw<PastDateRow[]>`
     SELECT d.id, d."examId", e.code, e."shortName" AS short, el."officialUrl",
            d.label, d.date, d."isExamDay", d.kind, d.confidence, d.url, d.source, d.notes
@@ -185,6 +227,7 @@ async function pastSeeds(now: Date): Promise<Seed[]> {
       AND (d.date + INTERVAL '330 minutes')::date <= ${toDay}::date
     ORDER BY d.date ASC`.catch((err) => {
     console.error("[exam-week-stats] past exam days failed", err);
+    ok = false;
     return [] as PastDateRow[];
   });
   const byKey = new Map<string, Seed>();
@@ -205,7 +248,10 @@ async function pastSeeds(now: Date): Promise<Seed[]> {
       windowLast: t.day,
     });
   }
-  return [...byKey.values()].sort((a, b) => b.d0.localeCompare(a.d0) || a.code.localeCompare(b.code));
+  return {
+    rows: [...byKey.values()].sort((a, b) => b.d0.localeCompare(a.d0) || a.code.localeCompare(b.code)),
+    ok,
+  };
 }
 
 // ── Enrichment (sequential reads) ─────────────────────────────────────
@@ -218,8 +264,9 @@ interface PageDayRow {
   landers: number;
 }
 
-/** People per (exam code, IST day) on the exam's pages in [from, to). */
-async function pageViewsByDay(codes: string[], from: Date, to: Date): Promise<PageDayRow[]> {
+/** People per (exam code, IST day) on the exam's pages in [from, to).
+ *  null = the read failed (NOT "nobody came"). */
+async function pageViewsByDay(codes: string[], from: Date, to: Date): Promise<PageDayRow[] | null> {
   if (codes.length === 0) return [];
   return prisma.$queryRaw<PageDayRow[]>`
     SELECT code, day,
@@ -250,12 +297,13 @@ async function pageViewsByDay(codes: string[], from: Date, to: Date): Promise<Pa
     ) w
     GROUP BY code, day`.catch((err) => {
     console.error("[exam-week-stats] page views failed", err);
-    return [] as PageDayRow[];
+    return null;
   });
 }
 
-/** People on the exam's pages on D0 who had any page view on D0+1. */
-async function d1Returns(seeds: { code: string; d0: string }[]): Promise<Map<string, number>> {
+/** People on the exam's pages on D0 who had any page view on D0+1.
+ *  null = the read failed. */
+async function d1Returns(seeds: { code: string; d0: string }[]): Promise<Map<string, number> | null> {
   const out = new Map<string, number>();
   if (seeds.length === 0) return out;
   const from = istDayStart(minDay(seeds.map((s) => s.d0)));
@@ -288,8 +336,9 @@ async function d1Returns(seeds: { code: string; d0: string }[]): Promise<Map<str
     )
     GROUP BY d.code, d.d0`.catch((err) => {
     console.error("[exam-week-stats] D+1 return failed", err);
-    return [] as { code: string; d0: string; returned: number }[];
+    return null;
   });
+  if (rows == null) return null;
   for (const r of rows) out.set(`${r.code}|${r.d0}`, Number(r.returned));
   return out;
 }
@@ -301,7 +350,7 @@ interface VerdictRow {
   n: number;
 }
 
-async function verdictRows(examIds: string[], fromDay: string, toDay: string): Promise<VerdictRow[]> {
+async function verdictRows(examIds: string[], fromDay: string, toDay: string): Promise<VerdictRow[] | null> {
   if (examIds.length === 0) return [];
   return prisma.$queryRaw<VerdictRow[]>`
     SELECT "examId", to_char("examDate", 'YYYY-MM-DD') AS day, verdict, COUNT(*)::int AS n
@@ -310,7 +359,7 @@ async function verdictRows(examIds: string[], fromDay: string, toDay: string): P
       AND "examDate" >= ${fromDay}::date AND "examDate" <= ${toDay}::date
     GROUP BY 1, 2, 3`.catch((err) => {
     console.error("[exam-week-stats] verdicts failed", err);
-    return [] as VerdictRow[];
+    return null;
   });
 }
 
@@ -320,7 +369,7 @@ interface DayCountRow {
   n: number;
 }
 
-async function alertRows(examIds: string[], from: Date, to: Date): Promise<DayCountRow[]> {
+async function alertRows(examIds: string[], from: Date, to: Date): Promise<DayCountRow[] | null> {
   if (examIds.length === 0) return [];
   return prisma.$queryRaw<DayCountRow[]>`
     SELECT "examId", to_char(("createdAt" + INTERVAL '330 minutes')::date, 'YYYY-MM-DD') AS day, COUNT(*)::int AS n
@@ -329,11 +378,13 @@ async function alertRows(examIds: string[], from: Date, to: Date): Promise<DayCo
       AND "createdAt" >= ${from} AND "createdAt" < ${to}
     GROUP BY 1, 2`.catch((err) => {
     console.error("[exam-week-stats] alerts failed", err);
-    return [] as DayCountRow[];
+    return null;
   });
 }
 
-async function enrollmentRows(examIds: string[]): Promise<{ examId: string; enrolled: number; shiftSet: number }[]> {
+async function enrollmentRows(
+  examIds: string[],
+): Promise<{ examId: string; enrolled: number; shiftSet: number }[] | null> {
   if (examIds.length === 0) return [];
   return prisma.$queryRaw<{ examId: string; enrolled: number; shiftSet: number }[]>`
     SELECT "examId",
@@ -343,88 +394,149 @@ async function enrollmentRows(examIds: string[]): Promise<{ examId: string; enro
     WHERE "examId" IN (${Prisma.join(examIds)})
     GROUP BY 1`.catch((err) => {
     console.error("[exam-week-stats] enrollments failed", err);
-    return [] as { examId: string; enrolled: number; shiftSet: number }[];
+    return null;
   });
 }
 
 interface TouchRow {
   examId: string;
-  tag: string;
+  kind: "eve" | "after" | "result";
   day: string;
   n: number;
 }
 
-/** Exam-week mail sends per (exam, tag, IST day), attributed via active enrollment. */
-async function touchRows(examIds: string[], from: Date, to: Date): Promise<TouchRow[]> {
-  if (examIds.length === 0) return [];
+/** Same normalisation the eve / result-day crons apply when they write the
+ *  exam-scoped EmailTouch tag (src/app/api/cron/exam-eve, .../result-day). */
+function tagCode(code: string): string {
+  return code.replace(/[^A-Za-z0-9_-]/g, "-");
+}
+
+/**
+ * Exam-week mail sends per (exam, kind, IST day).
+ *
+ * The eve and result-day tags CARRY the exam code, so those two are matched
+ * on the scoped tag. Attributing them through "any active enrollment" (as
+ * this did) credited an SSC CGL eve mail to the same reader's NDA row too,
+ * inflating both columns (review 6 Sep 2026). The day-after cron writes no
+ * scoped tag — only 'sent:exam-day-after' — so that one still goes through
+ * the enrollment join and stays approximate, as the header says.
+ * null = the read failed.
+ */
+async function touchRows(
+  exams: { examId: string; code: string }[],
+  from: Date,
+  to: Date,
+): Promise<TouchRow[] | null> {
+  if (exams.length === 0) return [];
+  const examIds = exams.map((e) => e.examId);
+  const scoped = Prisma.join(
+    exams.map(
+      (e) =>
+        Prisma.sql`(${e.examId}::text, ${"exam-eve-" + tagCode(e.code)}::text, ${"sent:result-day-" + tagCode(e.code)}::text)`,
+    ),
+  );
+  const allScoped = Prisma.join(
+    exams.flatMap((e) => ["exam-eve-" + tagCode(e.code), "sent:result-day-" + tagCode(e.code)]),
+  );
+  // EmailTouch is indexed on (userId, tag, sentAt), so a tag+sentAt filter
+  // scans; the CTE is referenced twice, so Postgres materialises it and we
+  // pay for exactly ONE scan (Neon rule: keep the heavy read singular).
   return prisma.$queryRaw<TouchRow[]>`
-    SELECT en."examId", t.tag,
-           to_char((t."sentAt" + INTERVAL '330 minutes')::date, 'YYYY-MM-DD') AS day,
-           COUNT(DISTINCT t."userId")::int AS n
-    FROM "EmailTouch" t
-    JOIN "Enrollment" en ON en."userId" = t."userId" AND en.active = TRUE
+    WITH ex(exam_id, eve_tag, result_tag) AS (VALUES ${scoped}),
+    touch AS (
+      SELECT t."userId", t.tag,
+             to_char((t."sentAt" + INTERVAL '330 minutes')::date, 'YYYY-MM-DD') AS day
+      FROM "EmailTouch" t
+      WHERE t."sentAt" >= ${from} AND t."sentAt" < ${to}
+        AND (t.tag = 'sent:exam-day-after' OR t.tag IN (${allScoped}))
+    )
+    SELECT ex.exam_id AS "examId",
+           (CASE WHEN tc.tag = ex.eve_tag THEN 'eve' ELSE 'result' END)::text AS kind,
+           tc.day, COUNT(DISTINCT tc."userId")::int AS n
+    FROM touch tc
+    JOIN ex ON tc.tag = ex.eve_tag OR tc.tag = ex.result_tag
+    GROUP BY 1, 2, 3
+    UNION ALL
+    SELECT en."examId", 'after'::text AS kind,
+           tc.day, COUNT(DISTINCT tc."userId")::int AS n
+    FROM touch tc
+    JOIN "Enrollment" en ON en."userId" = tc."userId" AND en.active = TRUE
       AND en."examId" IN (${Prisma.join(examIds)})
-    WHERE t."sentAt" >= ${from} AND t."sentAt" < ${to}
-      AND (t.tag IN ('sent:exam-eve', 'sent:exam-day-after') OR t.tag LIKE 'sent:result-day-%')
-    GROUP BY 1, 2, 3`.catch((err) => {
+    WHERE tc.tag = 'sent:exam-day-after'
+    GROUP BY en."examId", tc.day`.catch((err) => {
     console.error("[exam-week-stats] email touches failed", err);
-    return [] as TouchRow[];
+    return null;
   });
 }
 
-async function enrich(seeds: Seed[], now: Date): Promise<ExamWeekStatRow[]> {
-  if (seeds.length === 0) return [];
+async function enrich(seeds: Seed[], now: Date): Promise<{ rows: ExamWeekStatRow[]; failed: StatSource[] }> {
+  if (seeds.length === 0) return { rows: [], failed: [] };
   const today = istDay(now);
   const codes = [...new Set(seeds.map((s) => s.code))];
   const examIds = [...new Set(seeds.map((s) => s.examId))];
+  const byExam = new Map(seeds.map((s) => [s.examId, s.code]));
   const d0s = seeds.map((s) => s.d0);
   const firstDays = seeds.map((s) => s.windowFirst);
   const lastDays = seeds.map((s) => s.windowLast);
+  // Each null below means "we could not count", which the row renders as
+  // "–". Printing 0 instead would read as "nobody came" — a claim we have
+  // no evidence for (review 6 Sep 2026).
+  const failed: StatSource[] = [];
 
   // 1) page views — the heavy one; bounded to the columns we render.
   const pvFrom = istDayStart(shiftDay(minDay(d0s), MIN_OFFSET));
   const pvToDay = shiftDay(maxDay(d0s), MAX_OFFSET + 1);
   const pvTo = istDayStart(pvToDay < shiftDay(today, 1) ? pvToDay : shiftDay(today, 1));
   const pv = pvTo > pvFrom ? await pageViewsByDay(codes, pvFrom, pvTo) : [];
+  if (pv == null) failed.push("people");
   const pvMap = new Map<string, PageDayRow>();
-  for (const r of pv) pvMap.set(`${r.code}|${r.day}`, r);
+  for (const r of pv ?? []) pvMap.set(`${r.code}|${r.day}`, r);
 
   // 2) D+1 return — only for exam days whose D+1 has begun, one seed per (code, D0).
   const retSeeds = new Map<string, { code: string; d0: string }>();
   for (const s of seeds) if (s.d0 < today) retSeeds.set(`${s.code}|${s.d0}`, { code: s.code, d0: s.d0 });
   const ret = await d1Returns([...retSeeds.values()]);
+  if (ret == null) failed.push("d1Return");
 
   // 3) verdicts — pooled like the hub tally.
   const vFrom = shiftDay(minDay(firstDays), -WINDOW_GAP_DAYS);
   const vTo = maxDay([...lastDays, today]);
   const verdicts = await verdictRows(examIds, vFrom, vTo);
+  if (verdicts == null) failed.push("verdicts");
 
   // 4) alert subscriptions D-7..D+3.
   const aFrom = istDayStart(shiftDay(minDay(d0s), MIN_OFFSET));
   const aTo = istDayStart(shiftDay(maxDay(d0s), MAX_OFFSET + 1));
   const alerts = await alertRows(examIds, aFrom, aTo);
+  if (alerts == null) failed.push("alerts");
 
   // 5) enrollments + shift dates.
   const enr = await enrollmentRows(examIds);
-  const enrMap = new Map(enr.map((r) => [r.examId, r]));
+  if (enr == null) failed.push("enrolments");
+  const enrMap = new Map((enr ?? []).map((r) => [r.examId, r]));
 
   // 6) exam-week mail sends: eve of the first window day … now.
   const tFrom = istDayStart(shiftDay(minDay(firstDays), -2));
-  const touches = await touchRows(examIds, tFrom, new Date(now.getTime() + DAY_MS));
+  const touches = await touchRows(
+    examIds.map((id) => ({ examId: id, code: byExam.get(id)! })),
+    tFrom,
+    new Date(now.getTime() + DAY_MS),
+  );
+  if (touches == null) failed.push("mail");
 
-  return seeds.map((s) => {
+  const rows = seeds.map((s) => {
     const people = DAY_OFFSETS.map((off) => {
       const day = shiftDay(s.d0, off);
-      if (day > today) return null;
+      if (day > today || pv == null) return null;
       return pvMap.get(`${s.code}|${day}`)?.people ?? 0;
     });
-    const d0Started = s.d0 <= today;
+    const d0Started = s.d0 <= today && pv != null;
     const d0Row = pvMap.get(`${s.code}|${s.d0}`);
 
     const vFromRow = s.phase === "past" ? s.d0 : shiftDay(s.windowFirst, -WINDOW_GAP_DAYS);
     const vToRow = s.phase === "past" ? s.d0 : maxDay([s.windowLast, today]);
     const vc: VerdictCounts = { n: 0, easy: 0, moderate: 0, tough: 0 };
-    for (const v of verdicts) {
+    for (const v of verdicts ?? []) {
       if (v.examId !== s.examId || v.day < vFromRow || v.day > vToRow) continue;
       const n = Number(v.n);
       if (v.verdict === "EASY") vc.easy += n;
@@ -437,7 +549,7 @@ async function enrich(seeds: Seed[], now: Date): Promise<ExamWeekStatRow[]> {
     const aFromRow = shiftDay(s.d0, MIN_OFFSET);
     const aToRow = shiftDay(s.d0, MAX_OFFSET);
     let alertN = 0;
-    for (const a of alerts) if (a.examId === s.examId && a.day >= aFromRow && a.day <= aToRow) alertN += Number(a.n);
+    for (const a of alerts ?? []) if (a.examId === s.examId && a.day >= aFromRow && a.day <= aToRow) alertN += Number(a.n);
 
     const eveFrom = shiftDay(s.windowFirst, -1);
     const eveTo = shiftDay(s.windowLast, -1);
@@ -446,12 +558,12 @@ async function enrich(seeds: Seed[], now: Date): Promise<ExamWeekStatRow[]> {
     let eve = 0;
     let after = 0;
     let result = 0;
-    for (const t of touches) {
+    for (const t of touches ?? []) {
       if (t.examId !== s.examId) continue;
       const n = Number(t.n);
-      if (t.tag === "sent:exam-eve" && t.day >= eveFrom && t.day <= eveTo) eve += n;
-      else if (t.tag === "sent:exam-day-after" && t.day >= afterFrom && t.day <= afterTo) after += n;
-      else if (t.tag.startsWith("sent:result-day-") && t.day >= s.d0) result += n;
+      if (t.kind === "eve" && t.day >= eveFrom && t.day <= eveTo) eve += n;
+      else if (t.kind === "after" && t.day >= afterFrom && t.day <= afterTo) after += n;
+      else if (t.kind === "result" && t.day >= s.d0) result += n;
     }
 
     const e = enrMap.get(s.examId);
@@ -468,16 +580,17 @@ async function enrich(seeds: Seed[], now: Date): Promise<ExamWeekStatRow[]> {
       people,
       cutoffD0: d0Started ? (d0Row?.cutoff ?? 0) : null,
       cutoffLandersD0: d0Started ? (d0Row?.landers ?? 0) : null,
-      d1Return: s.d0 < today ? (ret.get(`${s.code}|${s.d0}`) ?? 0) : null,
-      verdicts: vc,
-      alerts: alertN,
-      enrolled: e ? Number(e.enrolled) : 0,
-      shiftSet: e ? Number(e.shiftSet) : 0,
-      eveSends: eve,
-      dayAfterSends: after,
-      resultSends: result,
+      d1Return: ret != null && s.d0 < today ? (ret.get(`${s.code}|${s.d0}`) ?? 0) : null,
+      verdicts: verdicts == null ? null : vc,
+      alerts: alerts == null ? null : alertN,
+      enrolled: enr == null ? null : e ? Number(e.enrolled) : 0,
+      shiftSet: enr == null ? null : e ? Number(e.shiftSet) : 0,
+      eveSends: touches == null ? null : eve,
+      dayAfterSends: touches == null ? null : after,
+      resultSends: touches == null ? null : result,
     };
   });
+  return { rows, failed };
 }
 
 // ── Public API ────────────────────────────────────────────────────────
@@ -490,20 +603,32 @@ export interface ExamWeekStats {
   past: ExamWeekStatRow[];
   pastFromDay: string;
   pastToDay: string;
+  /** Reads that failed on this open. Their columns are "–", NOT 0, and the
+   *  page prints the list — a full row of zeros reads as "nobody came". */
+  failed: StatSource[];
 }
 
 /** Everything /admin/exam-week renders. Sequential reads; never throws. */
 export async function loadExamWeekStats(now: Date = new Date()): Promise<ExamWeekStats> {
   const today = istDay(now);
+  const failed = new Set<StatSource>();
+
   const cur = await currentSeeds(now);
-  const current = await enrich(cur, now);
+  if (!cur.ok) failed.add("seeds");
+  const current = await enrich(cur.rows, now);
+  for (const f of current.failed) failed.add(f);
+
   const pastSeedList = await pastSeeds(now);
-  const past = await enrich(pastSeedList, now);
+  if (!pastSeedList.ok) failed.add("pastDays");
+  const past = await enrich(pastSeedList.rows, now);
+  for (const f of past.failed) failed.add(f);
+
   return {
     today,
-    current,
-    past,
+    current: current.rows,
+    past: past.rows,
     pastFromDay: shiftDay(today, -PAST_FROM_DAYS),
     pastToDay: shiftDay(today, -PAST_TO_DAYS),
+    failed: [...failed],
   };
 }

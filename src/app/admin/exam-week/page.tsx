@@ -16,8 +16,15 @@ import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { isCurrentUserAdmin } from "@/lib/admin";
 import { VERDICT_MIN_N, tallyPercents } from "@/lib/exam-verdict";
-import { DAY_OFFSETS, loadExamWeekStats, type ExamWeekStatRow } from "@/lib/exam-week-stats";
+import { DAY_OFFSETS, SOURCE_LABEL, loadExamWeekStats, type ExamWeekStatRow } from "@/lib/exam-week-stats";
 
+// ~12 sequential Neon reads, two of them window-function scans over ~35
+// days of AnalyticsEvent. Serialised through one pooled Prisma connection
+// against an Asia DB, the wall clock comfortably passes the default 10s
+// Vercel timeout — same reason /admin/insights and /admin/coverage raise
+// it (the generic "Application error" the founder saw there).
+export const runtime = "nodejs";
+export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 const PHASE_LABEL: Record<ExamWeekStatRow["phase"], string> = {
@@ -45,6 +52,7 @@ function offsetLabel(off: number): string {
 
 function tally(r: ExamWeekStatRow): string {
   const v = r.verdicts;
+  if (!v) return "–"; // read failed — see the "could not load" notice
   if (v.n === 0) return "–";
   if (v.n < VERDICT_MIN_N) return `${v.n} (n<${VERDICT_MIN_N})`;
   const p = tallyPercents({ ...v, sections: [] });
@@ -91,13 +99,13 @@ function Table({ rows, emptyText }: { rows: ExamWeekStatRow[]; emptyText: string
             <th className={th} title="Active enrolments with a shift date set">
               Shift set
             </th>
-            <th className={th} title="'sent:exam-eve' on the eve (via enrolment)">
+            <th className={th} title="'exam-eve-{CODE}' on the eve (exam-scoped tag)">
               Eve
             </th>
-            <th className={th} title="'sent:exam-day-after' on D+1 (via enrolment)">
+            <th className={th} title="'sent:exam-day-after' on D+1 (no scoped tag — via enrolment)">
               Day-after
             </th>
-            <th className={th} title="'sent:result-day-*' on/after D0 (via enrolment)">
+            <th className={th} title="'sent:result-day-{CODE}' on/after D0 (exam-scoped tag)">
               Result
             </th>
             <th className={th} title="People on the exam's pages on D0 who had any page view on D+1">
@@ -179,13 +187,32 @@ export default async function AdminExamWeekPage() {
           Today {fmtDay(stats.today)} (IST). Computed on open — no cron, no cache. People = identified humans
           (userId or anon cookie, bots excluded) on <code>/exams/{"{code}"}</code> and below, incl. the /hi and /te twins,
           per IST day. Tally = taps · easy/moderate/tough %, printed only from n ≥ {VERDICT_MIN_N} — a mood reading,
-          not a prediction. Mail columns attribute a send to every exam the user is enrolled in that week (approximate).
+          not a prediction. Eve and result sends are matched on the exam-scoped mail tag; the day-after cron writes no
+          scoped tag, so that column alone still attributes via active enrolment (approximate).
         </p>
+
+        {/* A Neon timeout used to render a full row of ZEROS, which reads as
+            "nobody came". Say which reads failed and show "–" in their
+            columns instead (review 6 Sep 2026). */}
+        {stats.failed.length > 0 && (
+          <p className="mt-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            <strong>Incomplete read.</strong> These did not load just now:{" "}
+            {stats.failed.map((f) => SOURCE_LABEL[f]).join(", ")}. Their columns show &ldquo;–&rdquo;, not 0 — reload to
+            try again. Do not read a missing column as zero activity.
+          </p>
+        )}
 
         <h2 className="mt-8 text-base font-semibold text-ink-800">
           In exam week now <span className="font-normal text-ink-500">— typed exam day within ±7 days ({stats.current.length})</span>
         </h2>
-        <Table rows={stats.current} emptyText="No exam has a typed exam-day row within ±7 days of today." />
+        <Table
+          rows={stats.current}
+          emptyText={
+            stats.failed.includes("seeds")
+              ? "Could not load the exam list — this is not “no exams”. Reload."
+              : "No exam has a typed exam-day row within ±7 days of today."
+          }
+        />
 
         <h2 className="mt-8 text-base font-semibold text-ink-800">
           Past exam days{" "}
@@ -193,13 +220,20 @@ export default async function AdminExamWeekPage() {
             — {fmtDay(stats.pastFromDay)} to {fmtDay(stats.pastToDay)}, one row per exam day ({stats.past.length})
           </span>
         </h2>
-        <Table rows={stats.past} emptyText="No typed exam day between 8 and 30 days ago." />
+        <Table
+          rows={stats.past}
+          emptyText={
+            stats.failed.includes("pastDays")
+              ? "Could not load past exam days — this is not “none”. Reload."
+              : "No typed exam day between 8 and 30 days ago."
+          }
+        />
 
         <p className="mt-4 text-xs text-ink-500">
           Tier words: official = conducting body&apos;s notice linked · reported = announced via a secondary source ·
           expected = estimate, not announced (student surfaces never treat an expected day as held). D0 for an exam inside a
           multi-day window is the state machine&apos;s focus day (latest exam day ≤ today); the window span is in brackets.
-          &ldquo;–&rdquo; = that day has not started yet.
+          &ldquo;–&rdquo; = that day has not started yet, or the read behind that column failed on this open (never 0).
         </p>
       </section>
     </main>

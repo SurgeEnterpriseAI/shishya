@@ -31,7 +31,7 @@ describe("exam-week .ics", () => {
     expect(ics).toContain("STATUS:CONFIRMED");
     expect(ics).toContain("https://ssc.gov.in/key");
     expect(ics).toContain("https://shishya.in/exams/SSC_CGL");
-    expect(ics).not.toContain("legacy@shishya.in");
+    expect(ics).not.toContain("UID:SSC_CGL-EXAM-2026-09-14"); // the untyped legacy row
     expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(3);
     // RFC 5545: every physical line ≤ 75 octets.
     expect(ics.split("\r\n").every((l) => octets(l) <= 75)).toBe(true);
@@ -46,6 +46,27 @@ describe("exam-week .ics", () => {
   it("outside exam week lists only upcoming typed exam / key / result rows", () => {
     const events = examWeekCalendarRows(rows, null, new Date("2026-10-15T06:00:00Z"));
     expect(events.map((r) => r.id)).toEqual(["d3"]);
+  });
+
+  it("keeps the same UID when the tracker row is re-created (no duplicate events)", () => {
+    // exam-data-writer archives + re-creates generated rows on every
+    // refresh, so the row id changes while the event does not. A
+    // re-download must UPDATE the calendar entry, not add a second one.
+    const before = examWeekCalendarRows([rows[0], rows[1]], null, now);
+    const after = examWeekCalendarRows(
+      [
+        { ...rows[0], id: "regenerated-1" },
+        { ...rows[1], id: "regenerated-2" },
+      ],
+      null,
+      now,
+    );
+    const uids = (ics: string) => ics.split("\r\n").filter((l) => l.startsWith("UID:"));
+    expect(uids(buildExamWeekIcs(exam, before, now))).toEqual(uids(buildExamWeekIcs(exam, after, now)));
+    expect(uids(buildExamWeekIcs(exam, before, now))).toEqual([
+      "UID:SSC_CGL-EXAM-2026-09-13@shishya.in",
+      "UID:SSC_CGL-ANSWER_KEY-2026-09-20@shishya.in",
+    ]);
   });
 
   it("escapes and folds per RFC 5545", () => {

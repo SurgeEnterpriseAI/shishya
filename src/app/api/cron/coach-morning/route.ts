@@ -21,6 +21,20 @@
 // no countdown). Otherwise the plan's own date drives the countdown as
 // before, plus one exam-week line in phase week / eve.
 //
+// Two honesty fixes (7 Sep 2026):
+//   • ROLLOVER NEVER HEADLINES A COUNTDOWN. The next exam's tracker date is
+//     often expected-tier, and "30 days to your SSC CHSL exam" in the
+//     subject/H1 read as a firm date with no tier word — and named an exam
+//     the student isn't preparing for. Rollover now passes daysLeft null
+//     (heading falls back to "Your plan for today") and names the next exam
+//     only inside the rollover block, which carries its date + tier word.
+//   • ONE MAIL, ONE EXAM DAY. The exam-week line used to key off the
+//     window's FIRST day while the countdown came from CoachPlan.examDate —
+//     a 15 Sep shift got "exam tomorrow, 12 Sep". The line is now keyed on
+//     the plan's own day (and, on a rollover, the student's shiftDate); if
+//     the tracker still lands on a different day the line is dropped rather
+//     than printed as a second countdown.
+//
 // Dedup: EmailTouch tag 'coach-morning', one per user per day.
 // Auth: Bearer ${CRON_SECRET}.
 
@@ -32,7 +46,6 @@ import { prisma } from "@/lib/db/prisma";
 import { sendCoachDayEmail, type MailRollover } from "@/lib/email";
 import { istDay } from "@/lib/exam-week";
 import {
-  dayDiff,
   examDoneState,
   examWeekMailLine,
   loadExamBundles,
@@ -43,6 +56,7 @@ import {
   type ExamWeekMailLine,
   type NextExam,
 } from "@/lib/exam-week-mail";
+import { shiftDayIso } from "@/lib/exam-week-student";
 
 const MAX_SENDS = 500;
 
@@ -56,6 +70,9 @@ type Row = {
   tasks: unknown;
   note: string | null;
   daysLeft: number;
+  /** The plan's own exam date (@db.Date → UTC midnight) — the day the
+   *  countdown counts to, and the day the exam-week line must agree with. */
+  examDate: Date;
   planCreatedAt: Date;
 };
 
@@ -67,7 +84,6 @@ export async function GET(req: Request) {
   }
   const dry = new URL(req.url).searchParams.get("dry") === "1";
   const now = new Date();
-  const today = istDay(now);
 
   // Today's IST calendar day = the CoachDay.date key (stored as a DATE at
   // UTC midnight of the IST day).
@@ -80,7 +96,7 @@ export async function GET(req: Request) {
       SELECT DISTINCT ON (cd."userId") cd."userId", u.email, u.name,
         cp."examId", e.code, e."shortName" AS short, cd.tasks, cd.note,
         GREATEST(0, CEIL(EXTRACT(EPOCH FROM (cp."examDate" - NOW())) / 86400))::int AS "daysLeft",
-        cp."createdAt" AS "planCreatedAt"
+        cp."examDate", cp."createdAt" AS "planCreatedAt"
       FROM "CoachDay" cd
       JOIN "CoachPlan" cp ON cp."userId" = cd."userId"
       JOIN "User" u ON u.id = cd."userId"
@@ -104,14 +120,18 @@ export async function GET(req: Request) {
   // track candidates once per track, the exam-week line once per exam.
   const bundles = await loadExamBundles(rows.map((r) => r.examId));
   const enrolled = new Map<string, Set<string>>();
-  const enrRows = await prisma.$queryRaw<{ userId: string; examId: string }[]>`
-    SELECT "userId", "examId" FROM "Enrollment"
+  /** "userId|examId" → the student's own shift day, when they picked one. */
+  const shiftBy = new Map<string, string | null>();
+  type EnrRow = { userId: string; examId: string; shiftDate: Date | null };
+  const enrRows = await prisma.$queryRaw<EnrRow[]>`
+    SELECT "userId", "examId", "shiftDate" FROM "Enrollment"
     WHERE active = TRUE AND "userId" = ANY(${rows.map((r) => r.userId)})
-  `.catch(() => [] as { userId: string; examId: string }[]);
+  `.catch(() => [] as EnrRow[]);
   for (const r of enrRows) {
     const set = enrolled.get(r.userId) ?? new Set<string>();
     set.add(r.examId);
     enrolled.set(r.userId, set);
+    shiftBy.set(`${r.userId}|${r.examId}`, shiftDayIso(r.shiftDate));
   }
   const trackCache = new Map<string, NextExam[]>();
   const weekLineCache = new Map<string, ExamWeekMailLine | null>();
@@ -144,18 +164,35 @@ export async function GET(req: Request) {
       }
       const next = pickNextInTrack(candidates, enrolled.get(r.userId) ?? [], r.examId);
       if (next) {
+        // The next exam is a SUGGESTION — this student's plan was for the
+        // finished one. Name it only inside the rollover block (which
+        // carries its date AND tier word) unless they are actually enrolled
+        // in it; and never count down to it in the subject / H1, where the
+        // tier word cannot travel with the number.
+        const alsoEnrolled = (enrolled.get(r.userId) ?? new Set<string>()).has(next.examId);
         const nextBundle = bundles.get(next.examId) ?? (await loadExamBundles([next.examId])).get(next.examId) ?? null;
         if (nextBundle) bundles.set(next.examId, nextBundle);
-        let examWeek = weekLineCache.get(next.examId) ?? null;
-        if (!weekLineCache.has(next.examId)) {
-          examWeek = nextBundle ? await examWeekMailLine(nextBundle, now).catch(() => null) : null;
-          weekLineCache.set(next.examId, examWeek);
+        // The exam-week line ("exam in N days") is a preparing-for-it line,
+        // so it only renders for a student who IS enrolled in the next exam
+        // — keyed on their own shift day when they picked one.
+        let examWeek: ExamWeekMailLine | null = null;
+        if (alsoEnrolled) {
+          const nextShift = shiftBy.get(`${r.userId}|${next.examId}`) ?? null;
+          const cacheKey = `${next.examId}|${nextShift ?? ""}`;
+          if (weekLineCache.has(cacheKey)) examWeek = weekLineCache.get(cacheKey) ?? null;
+          else {
+            examWeek = nextBundle ? await examWeekMailLine(nextBundle, now, nextShift).catch(() => null) : null;
+            weekLineCache.set(cacheKey, examWeek);
+          }
         }
         prepared.push({
           row: r,
           tasks,
-          examShort: next.short,
-          daysLeft: Math.max(0, dayDiff(today, istDay(next.row.date))),
+          examShort: alsoEnrolled ? next.short : null,
+          // Never a bare countdown to a rollover suggestion: the next exam's
+          // date is often expected-tier and the subject / H1 cannot carry the
+          // tier word. The rollover block prints it WITH its tier instead.
+          daysLeft: null,
           rollover: { done: r.short, next: { code: next.code, short: next.short, when: whenWithTier(next.row) } },
           examWeek,
           mode: `next:${r.code}→${next.code}`,
@@ -165,11 +202,20 @@ export async function GET(req: Request) {
       }
       continue;
     }
-    let examWeek = weekLineCache.get(r.examId) ?? null;
-    if (!weekLineCache.has(r.examId)) {
-      examWeek = bundle ? await examWeekMailLine(bundle, now).catch(() => null) : null;
-      weekLineCache.set(r.examId, examWeek);
+    // ONE MAIL, ONE EXAM DAY: the countdown above comes from the plan's own
+    // examDate, so the exam-week line is keyed on that same day (a shift the
+    // student picked is what the plan holds). applyShiftDay inside
+    // examWeekMailLine accepts it only when it IS one of the window's
+    // announced exam days; when the tracker still points elsewhere we drop
+    // the line rather than print a second, contradicting countdown.
+    const planDay = shiftDayIso(r.examDate);
+    const cacheKey = `${r.examId}|${planDay ?? ""}`;
+    let examWeek = weekLineCache.get(cacheKey) ?? null;
+    if (!weekLineCache.has(cacheKey)) {
+      examWeek = bundle ? await examWeekMailLine(bundle, now, planDay).catch(() => null) : null;
+      weekLineCache.set(cacheKey, examWeek);
     }
+    if (examWeek && planDay && examWeek.focusDay !== planDay) examWeek = null;
     prepared.push({ row: r, tasks, examShort: r.short, daysLeft: r.daysLeft, rollover: null, examWeek, mode: "same" });
   }
 

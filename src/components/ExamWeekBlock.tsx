@@ -41,6 +41,7 @@ import { applyShiftDay, shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline, type SourceTier, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
 import { sourceTier } from "@/lib/official-source";
 import { getVerdictTally, publicTally, VERDICT_MIN_N } from "@/lib/exam-verdict";
+import { isRealArticle } from "@/lib/phase-article-quality";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { ExamVerdictPoll } from "@/components/ExamVerdictPoll";
 import { ShiftDayPicker } from "@/components/ShiftDayPicker";
@@ -175,14 +176,20 @@ export async function ExamWeekBlock({
   // ── week ────────────────────────────────────────────────────────────
   if (phase === "week") {
     const [checklist, fullMock] = await Promise.all([
-      // Only a SOURCED checklist earns a link (>= 2 sources read).
+      // Only a REAL checklist earns a link — the SAME gate the eve mail
+      // applies in checklistLink (src/lib/exam-week-mail.ts): isRealArticle
+      // = >= 2 distinct cited http(s) sources AND a body that is not a
+      // placeholder. A bare sourcesScraped.length counted entries without a
+      // URL and let hollow "check back later" bodies through, so on exam
+      // week the hub sent students to a page the mail deliberately refused
+      // to link (hollow phase articles are a live bug, 6 Sep 2026).
       prisma.examPhaseArticle
         .findFirst({
           where: { examId: exam.id, phase: "CHECKLIST", archivedAt: null },
           orderBy: { lastUpdatedAt: "desc" },
-          select: { sourcesScraped: true },
+          select: { bodyMarkdown: true, sourcesScraped: true },
         })
-        .then((a) => !!a && Array.isArray(a.sourcesScraped) && a.sourcesScraped.length >= 2)
+        .then((a) => !!a && isRealArticle(a))
         .catch(() => false),
       prisma.mock
         .findFirst({

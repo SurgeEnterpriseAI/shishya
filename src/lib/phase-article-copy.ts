@@ -31,9 +31,9 @@ export interface ExamDayClaim {
   row: TimelineRow | null;
   /** "13 Sep (official)" for `row`, or null. */
   dated: string | null;
-  /** The paper is being held today (today-am / today-pm / window) on an announced date. */
+  /** The paper is being held today (today-am / today-pm) on an announced date. */
   live: boolean;
-  /** The paper has been held (today-pm / post, or a window with a past shift) on an announced date. */
+  /** The paper has been held (today-pm / post) on an announced date. */
   held: boolean;
   /** Exam day is within the run-up (week / eve), any tier — the date itself carries the tier word. */
   runUp: boolean;
@@ -51,8 +51,14 @@ export function examDayClaim(rows: TimelineInput[], officialUrl: string | null, 
   return {
     row,
     dated: row ? dateWithTier(row, tk(TIER_KEY[row.tier])) : null,
-    live: announced && (state.phase === "today-am" || state.phase === "today-pm" || state.phase === "window"),
-    held: announced && (state.phase === "today-pm" || state.phase === "post" || state.phase === "window"),
+    // "window" is deliberately in NEITHER claim (review, 6 Sep): a window is
+    // any chain of typed exam days ≤14 days apart, so a window day is a day
+    // with NO sitting — "{exam} is happening today" is false, and "{exam} is
+    // done" is false too while later shifts are still to be sat. Those days
+    // fall through to the dated wording ("the {exam} paper on {date (tier)}"),
+    // which stays true on every day of the window.
+    live: announced && (state.phase === "today-am" || state.phase === "today-pm"),
+    held: announced && (state.phase === "today-pm" || state.phase === "post"),
     runUp: state.phase === "week" || state.phase === "eve",
   };
 }

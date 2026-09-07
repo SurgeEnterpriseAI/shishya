@@ -5,8 +5,10 @@
 // Recipients: users who RECEIVED the exam-eve mail FOR THIS EXAM — the
 // exam-scoped EmailTouch tag 'exam-eve-{CODE}' (wave 2) within the last
 // 40 h. Rows written before the scoped tag shipped carry only the generic
-// 'exam-eve' / 'sent:exam-eve' tags; those are accepted for a 7-day grace
-// (sentAt < 2026-09-14) and never after. They must also be not opted out
+// 'exam-eve' / 'sent:exam-eve' tags; those are accepted only until
+// 2026-09-09 (see LEGACY_TOUCH_BEFORE — the eve cron still writes the
+// generic tag, so a longer grace leaves exam scoping inert).
+// They must also be not opted out
 // and actively enrolled in — or hold a coach plan dated yesterday for — an
 // exam whose exam day was yesterday (IST). The exam must pass the SAME eve
 // decision the eve cron used, re-evaluated at the eve instant, so a student
@@ -18,6 +20,12 @@
 // morning they are skipped unless their shift was the first day; on their
 // own day-after they are picked up by the shift path (which requires the
 // scoped eve touch, i.e. they got the eve mail the evening before).
+// Only THIS window's announced days move a student (review fix, 7 Sep): a
+// stale shiftDate from an earlier cycle is ignored, exactly as the hub
+// ignores it (applyShiftDay, src/lib/exam-week-student.ts), and the
+// coach-plan membership obeys the same rule instead of ignoring shiftDate
+// and asking the same student twice. The shift mail is about ONE day, so
+// it carries no window-end line.
 //
 // One send per (user, exam day): EmailTouch tag 'sent:exam-day-after'
 // (written by the send layer) within 20 h.
@@ -41,6 +49,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { sendExamDayAfterEmail } from "@/lib/email";
 import { computeExamWeekState, istDay } from "@/lib/exam-week";
+import { shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline } from "@/lib/exam-timeline";
 import {
   examEveDecision,
@@ -65,14 +74,28 @@ const DAY_MS = 86_400_000;
 /** Eve cron (18:30 IST, D-1) → this cron (08:30 IST, D+1). */
 const EVE_OFFSET_MS = 38 * 3600_000;
 /** Generic 'exam-eve' touches are accepted only when written before this
- *  instant (7-day grace after the scoped tag shipped, 7 Sep 2026). */
-const LEGACY_TOUCH_BEFORE = "2026-09-14";
+ *  instant. The grace exists for rows written BEFORE the scoped tag shipped
+ *  (deploy 7 Sep 2026) — and only those matter, for the ~40 h the eve-touch
+ *  lookback reaches back. It cannot run longer: the eve cron still writes
+ *  the generic 'exam-eve' / 'sent:exam-eve' tags today, so every extra day
+ *  of grace is a day exam scoping is inert and the wrong-exam mail wave 2
+ *  fixed can happen again (e.g. through SSC CGL opening on 12 Sep). */
+const LEGACY_TOUCH_BEFORE = "2026-09-09";
 
 type Student = { id: string; email: string; name: string | null };
 type Why = "tracker" | "coach-plan" | "shift-day";
 
 function scopedTag(code: string): string {
   return `exam-eve-${code.replace(/[^A-Za-z0-9_-]/g, "-")}`;
+}
+
+/** `en."shiftDate" IN (…)` over the window's OTHER announced days — the
+ *  student sat one of them, so yesterday's paper was not theirs. FALSE when
+ *  the window has no other day, which leaves the caller's guard a no-op.
+ *  Days are compared as dates (Enrollment.shiftDate is @db.Date). */
+function onAnotherShiftDay(days: string[]): Prisma.Sql {
+  if (days.length === 0) return Prisma.sql`FALSE`;
+  return Prisma.sql`en."shiftDate" IN (${Prisma.join(days.map((d) => Prisma.sql`${d}::date`))})`;
 }
 
 export async function GET(req: Request) {
@@ -163,6 +186,18 @@ export async function GET(req: Request) {
       skipped.push({ code: `${bundle.meta.code} (shift-day)`, reason: `yesterday is not inside an announced exam window (phase:${state.phase})` });
       continue;
     }
+    // When yesterday WAS the window's first day, this is the same paper the
+    // tracker path asks about, so it owes the same eve decision (re-evaluated
+    // at the eve instant): an exam whose eve mail was refused must not reach
+    // the student here through their shiftDate (review fix, 7 Sep).
+    const firstDay = state.windowDays.map((r) => istDay(r.date)).sort()[0];
+    if (yesterday === firstDay) {
+      const decision = examEveDecision(bundle.rows, bundle.meta.officialUrl, eveInstant);
+      if (!decision.ok) {
+        skipped.push({ code: `${bundle.meta.code} (shift-day)`, reason: `eve was not sent (${decision.reason})` });
+        continue;
+      }
+    }
     targets.push({ bundle, why: "shift-day" });
   }
 
@@ -187,7 +222,16 @@ export async function GET(req: Request) {
       const firstRow = state.windowDays.find((r) => istDay(r.date) === days[0]) ?? state.windowDays[0];
       examDayLine = `${plainDay(yesterdayDate)} (${shiftTierWord(firstRow.tier)})`;
     } else examDayLine = `${plainDay(yesterdayDate)} (the date you set in your coach plan)`;
+    // A shift-day mail is about ONE day — the student's own — so it never
+    // carries the window range: "your exam window opened yesterday, 15 Sep,
+    // and runs to 25 Sep" is false when the window opened on the 12th. null
+    // falls through to the single-day opener in sendExamDayAfterEmail.
     const windowEnd = state.windowEnd && istDay(state.windowEnd.date) > yesterday ? state.windowEnd : null;
+    // Same reasoning for a coach-plan mail: its day is the date the student
+    // typed into their plan, not the day the tracker's window opened, so
+    // "your window opened yesterday … and runs to" would be false there too.
+    const windowEndLine =
+      why === "shift-day" || why === "coach-plan" || !windowEnd ? null : whenWithTier(windowEnd);
     const answerKeyLine = statusLine("ew.post.key", rowOnOrAfter(timeline, "ANSWER_KEY", yesterday));
     const resultLine = statusLine("ew.post.result", rowOnOrAfter(timeline, "RESULT", yesterday));
 
@@ -199,8 +243,8 @@ export async function GET(req: Request) {
     }
     const inTrack = candidates.filter((c) => c.examId !== meta.examId);
 
-    // Eve-touch proof: the exam-scoped tag, or a generic one from before
-    // the scoped tag shipped (7-day grace).
+    // Eve-touch proof: the exam-scoped tag, or a generic one written before
+    // the scoped tag shipped (short grace, LEGACY_TOUCH_BEFORE).
     const eveTouch = Prisma.sql`EXISTS (
           SELECT 1 FROM "EmailTouch" t
           WHERE t."userId" = u.id AND t."sentAt" > NOW() - INTERVAL '40 hours'
@@ -209,18 +253,35 @@ export async function GET(req: Request) {
               OR (t.tag IN ('exam-eve', 'sent:exam-eve') AND t."sentAt" < ${LEGACY_TOUCH_BEFORE}::timestamp)
             )
         )`;
+    // The window's OTHER announced days: a student booked on one of them is
+    // asked on THEIR morning, not this one. Only days of THIS window count —
+    // a stale shiftDate from an earlier cycle is ignored, so the student
+    // stays on the window's first-day mail (the hub's applyShiftDay ignores
+    // it too, and mail and hub must not disagree).
+    const otherShiftDays = shiftableDays(state)
+      .map((r) => istDay(r.date))
+      .filter((d) => d !== yesterday);
+    const elsewhere = onAnotherShiftDay(otherShiftDays);
+    // Coach-plan holders used to be pulled in with no shiftDate condition at
+    // all, so a student on shift 15 Sep was asked on the window's first-day
+    // morning AND again after their own day (review fix, 7 Sep).
+    const coachPlanYesterday = Prisma.sql`EXISTS (
+            SELECT 1 FROM "CoachPlan" cp
+            WHERE cp."userId" = u.id AND cp."examId" = ${meta.examId}
+              AND (cp."examDate" + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' - INTERVAL '1 day')::date
+          ) AND NOT EXISTS (
+            SELECT 1 FROM "Enrollment" en
+            WHERE en."userId" = u.id AND en."examId" = ${meta.examId} AND en.active = TRUE
+              AND en."shiftDate" IS NOT NULL AND (${elsewhere})
+          )`;
     const membership =
       why === "tracker"
         ? Prisma.sql`(
           EXISTS (
             SELECT 1 FROM "Enrollment" en
             WHERE en."userId" = u.id AND en."examId" = ${meta.examId} AND en.active = TRUE
-              AND (en."shiftDate" IS NULL OR en."shiftDate" = ${yesterday}::date)
-          ) OR EXISTS (
-            SELECT 1 FROM "CoachPlan" cp
-            WHERE cp."userId" = u.id AND cp."examId" = ${meta.examId}
-              AND (cp."examDate" + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' - INTERVAL '1 day')::date
-          )
+              AND (en."shiftDate" IS NULL OR NOT (${elsewhere}))
+          ) OR (${coachPlanYesterday})
         )`
         : why === "shift-day"
           ? Prisma.sql`EXISTS (
@@ -228,11 +289,7 @@ export async function GET(req: Request) {
             WHERE en."userId" = u.id AND en."examId" = ${meta.examId} AND en.active = TRUE
               AND en."shiftDate" = ${yesterday}::date
           )`
-          : Prisma.sql`EXISTS (
-            SELECT 1 FROM "CoachPlan" cp
-            WHERE cp."userId" = u.id AND cp."examId" = ${meta.examId}
-              AND (cp."examDate" + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' - INTERVAL '1 day')::date
-          )`;
+          : Prisma.sql`(${coachPlanYesterday})`;
 
     const students = await prisma.$queryRaw<Student[]>`
       SELECT u.id, u.email, u.name
@@ -280,7 +337,7 @@ export async function GET(req: Request) {
           examShort: meta.short,
           examCode: meta.code,
           examDayLine,
-          windowEndLine: windowEnd ? whenWithTier(windowEnd) : null,
+          windowEndLine,
           answerKeyLine,
           resultLine,
           nextExam: next ? { code: next.code, short: next.short, date: plainDay(next.row.date), tier: tierWord(next.row.tier) } : null,

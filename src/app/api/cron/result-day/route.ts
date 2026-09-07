@@ -10,10 +10,17 @@
 //
 // Cohort: ACTIVELY enrolled students (Enrollment.active) with email, not
 // opted out, seen in the last 60 days (AnalyticsEvent or Attempt). Once
-// per user per exam: EmailTouch 'sent:result-day-{CODE}' (the send layer
-// writes it from the mail's tag) — the cron also writes the bare
-// 'result-day-{CODE}' guard itself. Tags are [A-Za-z0-9_-]; exam codes
-// are A-Z0-9_.
+// per user per exam PER RESULT DAY: EmailTouch 'sent:result-day-{CODE}-
+// {YYYYMMDD}' (the send layer writes it from the mail's tag) — the cron
+// also writes the bare 'result-day-{CODE}-{YYYYMMDD}' guard itself. The
+// day is part of the key (fix 7 Sep 2026) because a code-only guard meant
+// the Tier-2 / next-cycle result never reached anyone who had already got
+// a result mail for that exam. Tags are [A-Za-z0-9_-]; exam codes are
+// A-Z0-9_.
+//
+// The mail NEVER asserts publication: an official RESULT row certifies the
+// announced DATE, not that the list is live. It prints "the tracker's
+// official result date is {date (tier)}" + the conducting body's notice.
 //
 // Content is deterministic DB reads only — two honest paths, no score,
 // no prediction, no LLM:
@@ -56,8 +63,11 @@ const RESULT_LOOKBACK_DAYS = 2;
 
 type Student = { id: string; email: string; name: string | null };
 
-function guardTag(code: string): string {
-  return `result-day-${code.replace(/[^A-Za-z0-9_-]/g, "-")}`;
+/** Once-per-(user, exam, RESULT DAY) guard. The day (IST, YYYYMMDD) is in
+ *  the key so a later result for the same exam — Tier 2, the next cycle —
+ *  still mails to students who already got the previous one. */
+function guardTag(code: string, resultDay: string): string {
+  return `result-day-${code.replace(/[^A-Za-z0-9_-]/g, "-")}-${resultDay.replace(/-/g, "")}`;
 }
 
 export async function GET(req: Request) {
@@ -112,7 +122,8 @@ export async function GET(req: Request) {
       continue;
     }
     const resultDay = istDay(result.date);
-    const resultLine = `${result.label} — ${whenWithTier(result)}`;
+    const resultWhen = whenWithTier(result); // "5 Sep (official)" — the date, never a claim it published
+    const resultLine = `${result.label} — ${resultWhen}`;
     const stage = nextStageAfter(timeline, resultDay);
     const nextStage = stage ? { label: stage.label, when: whenWithTier(stage) } : null;
 
@@ -124,7 +135,7 @@ export async function GET(req: Request) {
     }
     const inTrack = candidates.filter((c) => c.examId !== meta.examId);
 
-    const tag = guardTag(meta.code);
+    const tag = guardTag(meta.code, resultDay);
     const students = await prisma.$queryRaw<Student[]>`
       SELECT u.id, u.email, u.name
       FROM "Enrollment" en JOIN "User" u ON u.id = en."userId"
@@ -170,7 +181,9 @@ export async function GET(req: Request) {
           examShort: meta.short,
           examCode: meta.code,
           resultLine,
+          resultWhen,
           officialUrl: result.url,
+          guardTag: tag,
           nextStage,
           nextExam: next ? { code: next.code, short: next.short, date: plainDay(next.row.date), tier: tierWord(next.row.tier) } : null,
         }).catch(() => false);

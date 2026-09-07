@@ -49,6 +49,21 @@ describe("phase-article copy honesty", () => {
     expect(phaseArticleCopy("LIVE", "CDS", none).fallbackTitle).toBe("CDS — exam-day analysis");
   });
 
+  it("on a window day with no sitting says neither 'today' nor 'done'", () => {
+    // 12 + 20 Sep = one window (≤14 days apart). On 16 Sep nobody sits a
+    // paper and shifts remain, so both claims must be off and the copy
+    // falls back to the dated (last sat) paper.
+    const mid = examDayClaim([row("a", "2026-09-12"), row("b", "2026-09-20")], null, new Date("2026-09-16T04:00:00Z"));
+    expect(mid.live).toBe(false);
+    expect(mid.held).toBe(false);
+    expect(mid.dated).toMatch(/^12 Sept? \(official\)$/);
+    expect(phaseArticleCopy("LIVE", "SSC CGL", mid).tagline).not.toMatch(/happening today/);
+    expect(phaseArticleCopy("LIVE", "SSC CGL", mid).badge).not.toMatch(/Live/);
+    expect(phaseArticleCopy("REACTIONS", "SSC CGL", mid).tagline).not.toMatch(/is done/);
+    expect(phaseArticleMeta("LIVE", exam, mid).title).not.toMatch(/today/);
+    expect(phaseArticleMeta("REACTIONS", exam, mid).title).toMatch(/post-exam reactions/);
+  });
+
   it("says done after an announced paper, and dates the run-up checklist", () => {
     const post = examDayClaim([row("a", "2026-09-10")], null, new Date("2026-09-12T04:00:00Z"));
     expect(post.held).toBe(true);

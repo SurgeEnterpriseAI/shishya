@@ -27,7 +27,15 @@
 // without a shiftDate keep the window-first-day behaviour. The shift path
 // requires tomorrow to lie inside an ANNOUNCED window (official / reported
 // first row); the date line reads "{date} (your shift day, window
-// official)" so the tier still travels with the date.
+// official)" so the tier still travels with the date, and it carries NO
+// window-end (it is one day — the student's — not the window opening).
+//
+// A shiftDate only removes a student from another day's mail when it is
+// one of THIS window's announced days (review fix, 7 Sep). A stale value
+// left by an earlier cycle is ignored here exactly as the hub ignores it
+// (applyShiftDay, src/lib/exam-week-student.ts), so mail and hub agree and
+// the student still hears from us. The coach-plan path obeys the same rule
+// — it used to ignore shiftDate entirely and send a second eve mail.
 //
 // Every date in the mail carries its tier word. Anti-duplicate: EmailTouch
 // tag 'exam-eve' per user per day PLUS the exam-scoped tag
@@ -42,10 +50,12 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { sendExamEveEmail } from "@/lib/email";
 import { getDailyQuote } from "@/data/motivational-quotes";
 import { computeExamWeekState, istDay } from "@/lib/exam-week";
+import { shiftDayIso, shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline, latestOfKind, type TimelineRow } from "@/lib/exam-timeline";
 import {
   checklistLink,
@@ -116,6 +126,15 @@ function scopedTag(code: string): string {
   return `exam-eve-${code.replace(/[^A-Za-z0-9_-]/g, "-")}`;
 }
 
+/** `en."shiftDate" IN (…)` over the window's OTHER announced days — the
+ *  student sits one of them, so tonight's mail is not theirs. FALSE when
+ *  the window has no other day, which leaves the caller's guard a no-op.
+ *  Days are compared as dates (Enrollment.shiftDate is @db.Date). */
+function onAnotherShiftDay(days: string[]): Prisma.Sql {
+  if (days.length === 0) return Prisma.sql`FALSE`;
+  return Prisma.sql`en."shiftDate" IN (${Prisma.join(days.map((d) => Prisma.sql`${d}::date`))})`;
+}
+
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret) return Response.json({ error: "CRON_SECRET not configured" }, { status: 500 });
@@ -146,12 +165,17 @@ export async function GET(req: Request) {
   // 2) Coach-plan holders whose OWN confirmed exam date is tomorrow (IST)
   //    — the one date the student personally set, which the global exam
   //    calendar may not carry (audit 18 Aug 2026). Deduped via the same
-  //    'exam-eve' EmailTouch tag so nobody is emailed twice.
-  const coachStudents = await prisma.$queryRaw<(Student & { examId: string; planDate: Date })[]>`
-    SELECT DISTINCT ON (u.id) u.id, u.email, u.name, cp."examId", cp."examDate" AS "planDate"
+  //    'exam-eve' EmailTouch tag so nobody is emailed twice. Their
+  //    enrollment's shiftDate rides along: a student who booked a shift day
+  //    of this exam's window is mailed on THAT eve by the shift path below,
+  //    never twice (review fix, 7 Sep — the window is decided per exam once
+  //    the bundles are loaded, so the filter itself lives in the loop).
+  const coachStudents = await prisma.$queryRaw<(Student & { examId: string; planDate: Date; shiftDate: Date | null })[]>`
+    SELECT DISTINCT ON (u.id) u.id, u.email, u.name, cp."examId", cp."examDate" AS "planDate", en."shiftDate"
     FROM "CoachPlan" cp
     JOIN "User" u ON u.id = cp."userId"
     JOIN "Exam" e ON e.id = cp."examId" AND e.active = TRUE
+    LEFT JOIN "Enrollment" en ON en."userId" = u.id AND en."examId" = cp."examId" AND en.active = TRUE
     WHERE u.email <> '' AND u."emailOptOut" = FALSE
       AND (cp."examDate" + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' + INTERVAL '1 day')::date
       AND NOT EXISTS (
@@ -162,7 +186,7 @@ export async function GET(req: Request) {
     LIMIT ${MAX_SENDS}
   `.catch((err) => {
     console.error("[exam-eve] coach-plan selection failed", err);
-    return [] as (Student & { examId: string; planDate: Date })[];
+    return [] as (Student & { examId: string; planDate: Date; shiftDate: Date | null })[];
   });
 
   // 3) Exams where some active enrollment names TOMORROW as the student's
@@ -236,12 +260,19 @@ export async function GET(req: Request) {
     const reason = `eve: ${whenWithTier(eveRow)}${windowEnd ? ` → window to ${whenWithTier(windowEnd)}` : ""}`;
 
     // Students with a shift day elsewhere in the window get their own eve
-    // (the shift path below, on the evening before THEIR day).
+    // (the shift path below, on the evening before THEIR day). Only THIS
+    // window's announced days count as "elsewhere": a stale shiftDate from
+    // an earlier cycle used to drop the student out of every eve mail while
+    // the hub still showed them the window's first day (applyShiftDay
+    // ignores stale values) — mail and hub now agree (review fix, 7 Sep).
+    const otherShiftDays = shiftableDays(state)
+      .map((r) => istDay(r.date))
+      .filter((d) => d !== tomorrow);
     const students = await prisma.$queryRaw<Student[]>`
       SELECT u.id, u.email, u.name
       FROM "Enrollment" en JOIN "User" u ON u.id = en."userId"
       WHERE en."examId" = ${examId} AND en.active = TRUE AND u.email <> '' AND u."emailOptOut" = FALSE
-        AND (en."shiftDate" IS NULL OR en."shiftDate" = ${tomorrow}::date)
+        AND (en."shiftDate" IS NULL OR NOT (${onAnotherShiftDay(otherShiftDays)}))
         AND NOT EXISTS (
           SELECT 1 FROM "EmailTouch" t
           WHERE t."userId" = u.id AND t.tag = 'exam-eve'
@@ -279,14 +310,30 @@ export async function GET(req: Request) {
     }
     const days = state.windowDays.map((r) => istDay(r.date)).sort();
     const firstRow = state.windowDays.find((r) => istDay(r.date) === days[0]) ?? state.windowDays[0];
-    const windowEnd = state.windowEnd && istDay(state.windowEnd.date) > tomorrow ? state.windowEnd : null;
+    // When tomorrow IS the window's first day this is the same mail the
+    // enrollment path sends, so it owes the same honesty guard: reuse
+    // examEveDecision (higher-tier contradiction, expected-tier estimate).
+    // contentCache is only set when that decision said "send", so without
+    // this a REFUSED exam still reached students through their shiftDate
+    // (review fix, 7 Sep).
+    if (tomorrow === days[0]) {
+      const decision = examEveDecision(bundle.rows, meta.officialUrl, now);
+      if (!decision.ok) {
+        skipped.push({ code: `${meta.code} (shift-day)`, reason: `eve refused for the window's first day (${decision.reason})` });
+        continue;
+      }
+    }
     const timeline = buildTimeline(bundle.rows, now, meta.officialUrl);
+    // windowEnd stays NULL here: this mail is about ONE day — the student's
+    // own — and the window-range line would claim the window opens on it
+    // ("Exam window: 15 Sep to 25 Sep" when it opened on the 12th). null
+    // falls through to the single-day opener in sendExamEveEmail.
     const content = await buildContent(bundle, timeline, {
       date: plainDay(tomorrowDate),
       tier: shiftTierWord(firstRow.tier),
       day: tomorrow,
       windowIds: state.windowDays.map((r) => r.id),
-      windowEnd,
+      windowEnd: null,
     });
     const students = await prisma.$queryRaw<Student[]>`
       SELECT u.id, u.email, u.name
@@ -331,11 +378,30 @@ export async function GET(req: Request) {
     const bundle = bundles.get(examId);
     if (!bundle) continue;
     const { meta } = bundle;
+    // A coach-plan holder who booked a shift day of THIS exam's announced
+    // window hears from the shift path on their own eve — this path used to
+    // ignore shiftDate entirely and mail them a second time (a student on
+    // shift 15 Sep got 11 Sep from here AND 14 Sep from the shift path).
+    // A shiftDate outside the window is stale: ignored, like the hub does.
+    const coachState = computeExamWeekState(bundle.rows, meta.officialUrl, now);
+    const bookedDays = new Set(shiftableDays(coachState).map((r) => istDay(r.date)));
+    const eligible = list.filter((s) => {
+      const day = shiftDayIso(s.shiftDate);
+      return !(day && day !== tomorrow && bookedDays.has(day));
+    });
+    const onOwnShift = list.length - eligible.length;
+    if (onOwnShift > 0) {
+      skipped.push({
+        code: `${meta.code} (coach-plan)`,
+        reason: `${onOwnShift} student(s) hold a shift day in this window — mailed on their own eve instead`,
+      });
+    }
+    if (eligible.length === 0) continue;
     let content = contentCache.get(examId) ?? null;
     let reason = "coach-plan date agrees with the tracker";
     if (!content) {
       const decision = examEveDecision(bundle.rows, meta.officialUrl, now);
-      const planDate = list[0].planDate;
+      const planDate = eligible[0].planDate;
       content = await buildContent(bundle, decision.timeline, {
         date: plainDay(planDate),
         tier: "the date you set in your coach plan",
@@ -345,7 +411,7 @@ export async function GET(req: Request) {
       });
       reason = `coach-plan date ${tomorrow} (tracker: ${decision.ok ? "eve" : decision.reason})`;
     }
-    const pending = list.filter((s) => !mailed.has(s.id));
+    const pending = eligible.filter((s) => !mailed.has(s.id));
     coachCount += pending.length;
     wouldSend.push({ code: `${meta.code} (coach-plan)`, users: pending.length, reason });
     if (dry) continue;

@@ -19,8 +19,11 @@
 // past, nothing within 60 days; an enrollment created after that day is
 // next-cycle prep and is named as-is). When every enrollment is on a
 // finished exam the mail rolls over to the next exam in the track with
-// its date + tier word, or goes generic with no exam name. A live coach
-// plan with a FUTURE date is the student's own word and keeps its exam.
+// its date + tier word — inside the rollover block ONLY; the rest of the
+// mail stays generic ("your prep is saved"), because a suggested next exam
+// is not prep the student did (fix 7 Sep 2026) — or goes generic with no
+// exam name. A live coach plan with a FUTURE date is the student's own
+// word and keeps its exam.
 // Auth: Bearer ${CRON_SECRET}. Daily 04:00 UTC (9:30 AM IST).
 
 export const runtime = "nodejs";
@@ -129,9 +132,14 @@ export async function GET(req: Request) {
     if (!resolved) continue; // neither an enrollment nor a live plan — nothing honest to say
     if (resolved.mode === "same") eligible.push({ ...c, examShort: resolved.short, rollover: null, mode: "same" });
     else if (resolved.mode === "next")
+      // Rollover: the next exam is a SUGGESTION, not their exam — "your CHSL
+      // prep is saved" would be false for prep they never did. It is named
+      // only inside the rollover block (and the subject's "X is done — Y is
+      // next"), so examShort stays null unless they are enrolled in it too
+      // (fix 7 Sep 2026).
       eligible.push({
         ...c,
-        examShort: resolved.short,
+        examShort: mine.some((e) => e.examId === resolved.examId) ? resolved.short : null,
         rollover: { done: resolved.done.short, next: { code: resolved.code, short: resolved.short, when: resolved.when } },
         mode: `next:${resolved.done.code}→${resolved.code}`,
       });

@@ -13,6 +13,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { tk, type Locale, type StringKey } from "@/lib/i18n";
 import { computeExamWeekState, dateWithTier, istDay, type ExamWeekState } from "@/lib/exam-week";
+import { applyShiftDay } from "@/lib/exam-week-student";
 import { buildTimeline, type SourceTier, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
 import { isRealArticle } from "@/lib/phase-article-quality";
 
@@ -297,6 +298,12 @@ export interface ExamWeekMailLine {
   phase: "week" | "eve";
   daysTo: number;
   tier: SourceTier;
+  /** IST day ("YYYY-MM-DD") the line counts to — the student's own shift
+   *  day when they picked one, else the window's first day. Callers that
+   *  print a countdown of their own (coach-morning reads CoachPlan.examDate)
+   *  compare it before printing both, so one mail can never carry two
+   *  different exam days. */
+  focusDay: string;
   text: string;
   html: string;
 }
@@ -308,11 +315,22 @@ export interface ExamWeekMailLine {
  * article is REAL (isRealArticle), else the hub; the paper link is the
  * system full-pattern mock when one exists, else the hub. Null outside
  * week / eve.
+ *
+ * `studentDay` (Enrollment.shiftDate as "YYYY-MM-DD", or a coach plan's own
+ * exam day) re-keys the line on the day THAT student sits the paper —
+ * through the same applyShiftDay() the hub block uses (wave 2). Without it
+ * a 15 Sep shift inside the 12–25 Sep CGL window would read "exam tomorrow,
+ * 12 Sep" on 11 Sep while the hub says 15 Sep. Ignored (base window state
+ * kept) when the day is not one of this window's ANNOUNCED exam days.
  */
-export async function examWeekMailLine(bundle: ExamBundle, now: Date): Promise<ExamWeekMailLine | null> {
+export async function examWeekMailLine(
+  bundle: ExamBundle,
+  now: Date,
+  studentDay?: string | null,
+): Promise<ExamWeekMailLine | null> {
   const { meta, rows } = bundle;
-  const state = computeExamWeekState(rows, meta.officialUrl, now);
-  if ((state.phase !== "week" && state.phase !== "eve") || !state.focus || state.daysTo == null) return null;
+  const state = applyShiftDay(computeExamWeekState(rows, meta.officialUrl, now), studentDay, now);
+  if ((state.phase !== "week" && state.phase !== "eve") || !state.focus || state.daysTo == null || !state.focusDay) return null;
   const tier = state.focus.tier;
   const [checklist, paper] = await Promise.all([checklistLink(meta.examId, meta.code), fullPaperLink(meta.examId, meta.code)]);
   const when = state.daysTo === 1 ? "tomorrow" : `in ${state.daysTo} days`;
@@ -329,7 +347,7 @@ export async function examWeekMailLine(bundle: ExamBundle, now: Date): Promise<E
         😴 no new topics tonight
       </p>
     </div>`;
-  return { phase: state.phase, daysTo: state.daysTo, tier, text, html };
+  return { phase: state.phase, daysTo: state.daysTo, tier, focusDay: state.focusDay, text, html };
 }
 
 // ── Shift-day helpers (Enrollment.shiftDate, wave 2) ──────────────────

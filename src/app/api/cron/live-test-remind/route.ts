@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { sendLiveTestReminderEmail } from "@/lib/email";
+import { EXCLUDE_REHEARSAL_SQL } from "@/lib/live-test-today";
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -23,10 +24,14 @@ export async function GET(req: Request) {
   // Today's IST date — the reminders keyed to it are due now.
   const istToday = new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
 
+  // Sunday-paper rows only. An exam-week rehearsal stays open for days,
+  // so without this filter its exam name lands in the 6:15 AM reminder
+  // that people signed up for THIS SUNDAY's All-India test.
   const exams = await prisma.$queryRaw<{ short: string }[]>`
     SELECT e."shortName" AS short
     FROM "LiveTest" lt JOIN "Exam" e ON e.id = lt."examId"
     WHERE lt."closesAt" > NOW() AND lt."opensAt" <= NOW() + INTERVAL '2 hours'
+      AND ${EXCLUDE_REHEARSAL_SQL}
     ORDER BY e."shortName"
   `.catch(() => []);
   if (exams.length === 0) {

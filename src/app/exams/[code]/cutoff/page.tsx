@@ -20,7 +20,13 @@
 // (cookie / /hi / /te header), not just the exam-week block, so the page
 // now reads the locale on every request like the hub and the tracker.
 // The tracker rows behind the phase still come from the shared 15-minute
-// cache (src/lib/exam-week-inputs.ts). JSON-LD is unchanged.
+// cache (src/lib/exam-week-inputs.ts).
+//
+// Searchability (7 Sep 2026): wave 2 localised the body but left the
+// <title>, description, canonical and og:locale English on every twin —
+// /hi and /te read as duplicates of the English page. They now follow the
+// URL locale, declare hreflang alternates, carry the language-twin links
+// and are listed (hi + te) in src/app/sitemap.ts.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -28,12 +34,12 @@ import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
-import { getVerdictTally } from "@/lib/exam-verdict";
+import { getVerdictTally, VERDICT_MIN_N } from "@/lib/exam-verdict";
 import { auth } from "@/lib/auth";
 import { getExamShared } from "@/lib/db/exam-cache";
-import { getT, getUrlLocale } from "@/lib/i18n-server";
+import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import type { Locale, StringKey } from "@/lib/i18n";
-import { localizedPath } from "@/lib/seo-locale";
+import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale } from "@/lib/seo-locale";
 import { computeExamWeekState, dateWithTier, istDay, type ExamWeekPhase, type ExamWeekState } from "@/lib/exam-week";
 import type { SourceTier, TimelineRow } from "@/lib/exam-timeline";
 import { examAlertLabels, getExamWeekInputs } from "@/lib/exam-week-inputs";
@@ -43,6 +49,7 @@ import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { AnonExamNudge } from "@/components/AnonExamNudge";
 import { CoachEntry } from "@/components/CoachEntry";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
+import { LangTwinLinks } from "@/components/LangTwinLinks";
 import { inlineMd } from "@/components/NotesMarkdown";
 
 // 900: the exam-week boundaries (D-1 in, D+7 out) must show up within 15
@@ -108,9 +115,11 @@ async function loadExamWeekView(exam: { id: string; code: string; shortName: str
       stats && stats.students >= 10 && stats.avgPct != null
         ? fill(t("ew.cutoff.mockAvg"), { n: stats.students.toLocaleString("en-IN"), pct: Math.round(stats.avgPct), exam: short })
         : null,
-    // Verdict tally from 10 ratings only — counts and shares, never a prediction.
+    // Verdict tally from VERDICT_MIN_N ratings only — counts and shares,
+    // never a prediction. The floor is the shared constant, so the hub,
+    // tracker, API and this page can never drift apart.
     tally:
-      tally && tally.n >= 10
+      tally && tally.n >= VERDICT_MIN_N
         ? fill(t("ew.verdict.tally"), {
             n: tally.n,
             easy: pct(tally.easy, tally.n),
@@ -137,15 +146,20 @@ export async function generateMetadata({
     select: { code: true, shortName: true, name: true },
   });
   if (!exam) return { title: "Exam cutoff — Shishya" };
-  const title = `${exam.shortName} Cutoff ${YEAR} — Expected Score, Rank & What It Gets You | Shishya`;
-  const description =
-    `${exam.shortName} (${exam.name}) expected cutoff ${YEAR}: score-to-rank bands, what each score range typically achieves, ` +
-    `curated from historic patterns. Take a free mock to see exactly where you stand.`;
-  const url = `https://shishya.in/exams/${exam.code}/cutoff`;
+  // Wave 2 serves the body in the URL's language but still emitted an
+  // English title/description, an English canonical on every twin and no
+  // hreflang — the /hi and /te cutoff pages looked like duplicates of the
+  // English one. Same shape as score-estimate/page.tsx now.
+  const urlLocale = await getUrlLocale();
+  const tt = tFor(urlLocale) as TFn;
+  const title = `${fill(tt("cutoff.metaTitle"), { exam: exam.shortName, year: YEAR })} | Shishya`;
+  const description = fill(tt("cutoff.metaDescription"), { exam: exam.shortName, name: exam.name, year: YEAR });
+  const path = `/exams/${exam.code}/cutoff`;
+  const url = localizedUrl(path, urlLocale);
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages: languageAlternates(path) },
     keywords: [
       `${exam.shortName} cutoff ${YEAR}`,
       `${exam.shortName} expected cutoff`,
@@ -153,7 +167,7 @@ export async function generateMetadata({
       `${exam.shortName} safe score`,
       `${exam.shortName} rank predictor`,
     ],
-    openGraph: { title, description, url, siteName: "Shishya", locale: "en_IN", type: "article" },
+    openGraph: { title, description, url, siteName: "Shishya", locale: ogLocale(urlLocale), type: "article" },
     twitter: { card: "summary_large_image", title, description },
   };
 }
@@ -200,14 +214,22 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
   const ew = computeExamWeekState(dateRows, officialUrl);
   const view = CUTOFF_PHASES.has(ew.phase) && ew.tier !== "expected" ? await loadExamWeekView(exam, ew, t, locale) : null;
 
-  const url = `https://shishya.in/exams/${exam.code}/cutoff`;
+  // Self-canonical per twin: on /hi and /te the page describes ITSELF (the
+  // canonical + hreflang in generateMetadata say the same), so the share
+  // link and the JSON-LD must not point at the English URL either.
+  const path = `/exams/${exam.code}/cutoff`;
+  const url = localizedUrl(path, urlLocale);
+  // Structured data follows the URL locale, exactly like the canonical and
+  // the metadata above — the body follows the reader's cookie, but a
+  // crawler has none, so on /hi and /te the two agree.
+  const tUrl = tFor(urlLocale) as TFn;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: `${exam.shortName} Cutoff ${YEAR} — Expected Score & Rank Bands`,
-    description: `Score-to-rank cutoff bands for ${exam.name}, curated from historic patterns.`,
+    headline: fill(tUrl("cutoff.metaTitle"), { exam: exam.shortName, year: YEAR }),
+    description: fill(tUrl("cutoff.metaDescription"), { exam: exam.shortName, name: exam.name, year: YEAR }),
     url,
-    inLanguage: "en-IN",
+    inLanguage: inLanguage(urlLocale),
     isAccessibleForFree: true,
     // In exam-week mode the page's lead really does change day by day.
     ...(view ? { dateModified: istDay(new Date()) } : {}),
@@ -256,6 +278,10 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
         </p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{fill(t("cutoff.h1"), { exam: short, year: YEAR })}</h1>
 
+        {/* Language twins — real links for humans AND the crawl graph, the
+            same pair the hreflang block in generateMetadata declares. */}
+        <LangTwinLinks path={path} current={urlLocale} />
+
         {/* Exam-week block (D-1 .. D+7): the answer the exam-day lander
             came for — when the official cutoff arrives — before the
             historic bands. Dates carry their tier; nothing is guessed. */}
@@ -265,16 +291,20 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
             <p className="mt-1 text-sm text-ink-700">{view.lead}</p>
             {view.mockAvg && <p className="mt-2 text-sm text-ink-700">{view.mockAvg}</p>}
             {view.tally && <p className="mt-1 text-sm text-ink-700">{view.tally}</p>}
-            {/* After the paper: the marking-scheme estimator. Always: the
-                calendar file — a plain anchor (no prefetch), path fixed at
-                /exams/{code}/exam-week.ics (the hub links the same URL). */}
+            {/* After the paper: the marking-scheme estimator. From today-pm,
+                not only "post" — the evening the paper is sat is exactly when
+                students start counting marks against a coaching key. Always:
+                the calendar file — a plain anchor (no prefetch), path fixed at
+                /exams/{code}/exam-week.ics (the hub links the same URL), and
+                rel="nofollow" because the .ics is a companion download, not a
+                page that should compete with the tracker in the index. */}
             <div className="mt-3 flex flex-wrap gap-2">
-              {view.phase === "post" && (
+              {(view.phase === "today-pm" || view.phase === "post") && (
                 <Link href={p(`/exams/${exam.code}/score-estimate`)} className={pill}>
                   🧮 {view.scoreCta}
                 </Link>
               )}
-              <a href={`/exams/${exam.code}/exam-week.ics`} className={pill}>
+              <a href={`/exams/${exam.code}/exam-week.ics`} rel="nofollow" className={pill}>
                 📅 {view.icsCta}
               </a>
             </div>

@@ -14,7 +14,15 @@
 // resolveMailExam() — never a finished exam. When the addressed exam is in
 // phase week / eve the mail carries one line: "Exam in N days (tier):
 // checklist · full-length paper · no new topics tonight" (checklist link
-// only when the article is REAL, else the hub).
+// only when the article is REAL, else the hub). That line is keyed on the
+// student's OWN shift day (Enrollment.shiftDate → applyShiftDay), so it can
+// never say "exam tomorrow" while the hub says their shift is four days out.
+//
+// Rollover honesty (fix 7 Sep 2026): in "next" mode the named exam is a
+// SUGGESTION — the dashboard's Daily 5 still serves the ENROLLED exam. So
+// the next exam appears only inside the rollover block; the subject, the
+// weakest-topic line and the exam-week line go generic unless the student
+// is actually enrolled in that next exam too.
 // Auth: Bearer ${CRON_SECRET}. Daily per vercel.json.
 
 export const runtime = "nodejs";
@@ -37,6 +45,7 @@ import {
   type ExamWeekMailLine,
   type NextExam,
 } from "@/lib/exam-week-mail";
+import { shiftDayIso } from "@/lib/exam-week-student";
 
 const MAX_SENDS = 200;
 
@@ -95,7 +104,9 @@ export async function GET(req: Request) {
       enrollments: {
         where: { active: true },
         orderBy: { createdAt: "desc" },
-        select: { examId: true, createdAt: true, exam: { select: { code: true, shortName: true } } },
+        // shiftDate: the day THIS student sits a multi-day window — the
+        // exam-week line is keyed on it, exactly like the hub block.
+        select: { examId: true, createdAt: true, shiftDate: true, exam: { select: { code: true, shortName: true } } },
       },
     },
     take: MAX_SENDS,
@@ -185,12 +196,16 @@ export async function GET(req: Request) {
     for (const [k, v] of extra) bundles.set(k, v);
     return bundles.get(examId) ?? null;
   };
+  // Cached per (exam, shift day): students who picked different shift days
+  // inside the same window get different countdowns, so the day is part of
+  // the key (most students have no shiftDate → one shared entry).
   const weekLineCache = new Map<string, ExamWeekMailLine | null>();
-  const weekLineFor = async (examId: string): Promise<ExamWeekMailLine | null> => {
-    if (weekLineCache.has(examId)) return weekLineCache.get(examId) ?? null;
+  const weekLineFor = async (examId: string, shiftDay: string | null): Promise<ExamWeekMailLine | null> => {
+    const key = `${examId}|${shiftDay ?? ""}`;
+    if (weekLineCache.has(key)) return weekLineCache.get(key) ?? null;
     const bundle = await bundleFor(examId);
-    const line = bundle ? await examWeekMailLine(bundle, now).catch(() => null) : null;
-    weekLineCache.set(examId, line);
+    const line = bundle ? await examWeekMailLine(bundle, now, shiftDay).catch(() => null) : null;
+    weekLineCache.set(key, line);
     return line;
   };
 
@@ -206,17 +221,25 @@ export async function GET(req: Request) {
       nextInTrack,
     );
     if (!resolved) continue;
+    // The student's own shift day for an exam they are enrolled in (null
+    // when they never picked one, or the exam isn't theirs).
+    const shiftDayFor = (examId: string) =>
+      shiftDayIso(u.enrollments.find((e) => e.examId === examId)?.shiftDate ?? null);
     let examShort: string | null = null;
     let rollover: MailRollover | null = null;
     let examWeek: ExamWeekMailLine | null = null;
     let mode: string = resolved.mode;
     if (resolved.mode === "same") {
       examShort = resolved.short;
-      examWeek = await weekLineFor(resolved.examId);
+      examWeek = await weekLineFor(resolved.examId, shiftDayFor(resolved.examId));
     } else if (resolved.mode === "next") {
-      examShort = resolved.short;
+      // Rollover: the next exam is a suggestion, and the dashboard's Daily 5
+      // still serves the ENROLLED exam — so name it only inside the rollover
+      // block unless the student is genuinely enrolled in it as well.
+      const alsoEnrolled = u.enrollments.some((e) => e.examId === resolved.examId);
+      examShort = alsoEnrolled ? resolved.short : null;
       rollover = { done: resolved.done.short, next: { code: resolved.code, short: resolved.short, when: resolved.when } };
-      examWeek = await weekLineFor(resolved.examId);
+      examWeek = alsoEnrolled ? await weekLineFor(resolved.examId, shiftDayFor(resolved.examId)) : null;
       mode = `next:${resolved.done.code}→${resolved.code}`;
     } else {
       rollover = { done: resolved.done.short, next: null };

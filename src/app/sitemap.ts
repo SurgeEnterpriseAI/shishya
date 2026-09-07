@@ -145,11 +145,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     }));
+  // Hindi/Telugu URL twins. The hub + tracker have had them since 23 Aug;
+  // the cutoff page and the score estimator declare hreflang alternates of
+  // their own (both render in the URL's language) but were English-only
+  // here, so Google had no way to discover the twins it was told exist.
+  // Cutoff: every active exam. Score estimator: the same ±30-day exam-day
+  // set as the English URL above — never a twin of a URL we don't list.
   const localeTwinUrls: MetadataRoute.Sitemap = exams.flatMap((e) =>
     (["hi", "te"] as const).flatMap((lc) => [
       { url: `${base}/${lc}/exams/${e.code}`, lastModified: e.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 },
       { url: `${base}/${lc}/exams/${e.code}/updates`, changeFrequency: "daily" as const, priority: 0.7 },
+      { url: `${base}/${lc}/exams/${e.code}/cutoff`, changeFrequency: "weekly" as const, priority: 0.65 },
     ]),
+  );
+  localeTwinUrls.push(
+    ...estimatorExams.flatMap((e) =>
+      (["hi", "te"] as const).map((lc) => ({
+        url: `${base}/${lc}/exams/${e.code}/score-estimate`,
+        changeFrequency: "weekly" as const,
+        priority: 0.5,
+      })),
+    ),
   );
   localeTwinUrls.push(
     { url: `${base}/hi/exam-calendar`, changeFrequency: "daily" as const, priority: 0.7 },

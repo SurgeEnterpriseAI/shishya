@@ -3,6 +3,13 @@
 // countdown (upcoming), Join (open) or aggregate results (closed).
 // Privacy: aggregates + the signed-in user's OWN rank only — never a
 // named public leaderboard.
+//
+// Exam-week rehearsals (Mock.config.rehearsalFor) also live in "LiveTest"
+// but are open for 3–7 days before ONE exam's day, so they get their own
+// section here and are kept out of the Sunday buckets and the FAQ list —
+// calling a Tuesday warm-up "this Sunday's paper" is simply wrong (review
+// 6 Sep 2026). Every other "open now" surface excludes them outright; this
+// hub is where they stay reachable.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -39,6 +46,8 @@ interface Row {
   closesAt: Date;
   code: string;
   short: string;
+  /** IST exam day the paper rehearses for; null on the Sunday papers. */
+  rehearsalFor: string | null;
   participants: number;
   topPct: number | null;
   avgPct: number | null;
@@ -62,10 +71,12 @@ export default async function LiveTestPage() {
   const rows = await prisma.$queryRaw<Row[]>`
     SELECT lt.id, lt."mockId", lt."opensAt", lt."closesAt",
            e.code, e."shortName" AS short,
+           m.config->>'rehearsalFor' AS "rehearsalFor",
            COALESCE(agg.participants, 0)::int AS participants,
            agg."topPct", agg."avgPct"
     FROM "LiveTest" lt
     JOIN "Exam" e ON e.id = lt."examId"
+    LEFT JOIN "Mock" m ON m.id = lt."mockId"
     LEFT JOIN LATERAL (
       SELECT COUNT(DISTINCT a."userId")::int AS participants,
              MAX(a."scorePct") AS "topPct",
@@ -90,11 +101,17 @@ export default async function LiveTestPage() {
     for (const m of mine) myByMock.set(m.mockId, { pct: m.pct, attemptId: m.id });
   }
 
-  const upcoming = rows.filter((r) => r.opensAt > now);
-  const open = rows.filter((r) => r.opensAt <= now && r.closesAt > now);
-  const closed = rows.filter((r) => r.closesAt <= now);
+  // Sunday papers and exam-week rehearsals are different products; the
+  // Sunday buckets below must never quietly absorb a rehearsal.
+  const sunday = rows.filter((r) => !r.rehearsalFor);
+  const rehearsalsOpen = rows.filter(
+    (r) => r.rehearsalFor && r.opensAt <= now && r.closesAt > now,
+  );
+  const upcoming = sunday.filter((r) => r.opensAt > now);
+  const open = sunday.filter((r) => r.opensAt <= now && r.closesAt > now);
+  const closed = sunday.filter((r) => r.closesAt <= now);
 
-  const card = (r: Row, state: "upcoming" | "open" | "closed") => {
+  const card = (r: Row, state: "upcoming" | "open" | "closed" | "rehearsal") => {
     const mine = myByMock.get(r.mockId);
     return (
       <div key={r.id} className="rounded-xl border border-ink-200 bg-white p-4">
@@ -115,9 +132,16 @@ export default async function LiveTestPage() {
               Concluded
             </span>
           )}
+          {state === "rehearsal" && (
+            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
+              ● Open till {istLabel(r.closesAt)}
+            </span>
+          )}
         </div>
         <p className="mt-1 text-xs text-ink-500">
-          25 questions · 20 minutes · same paper across India
+          {state === "rehearsal"
+            ? "25 questions · 20 minutes · a calm run-through before your exam day"
+            : "25 questions · 20 minutes · same paper across India"}
         </p>
 
         {(state !== "upcoming" || r.participants > 0) && (
@@ -143,7 +167,7 @@ export default async function LiveTestPage() {
           >
             Your result{mine.pct != null ? ` — ${Math.round(mine.pct)}%` : ""} &amp; rank →
           </Link>
-        ) : state === "open" ? (
+        ) : state === "open" || state === "rehearsal" ? (
           <Link
             href={userId ? `/mocks/${r.mockId}` : `/login?callbackUrl=%2Flive-test`}
             className="mt-3 inline-flex items-center rounded-lg bg-saffron-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-saffron-600"
@@ -201,8 +225,10 @@ export default async function LiveTestPage() {
           name: "Which exams have the Shishya live test?",
           acceptedAnswer: {
             "@type": "Answer",
+            // Sunday papers only — a rehearsal is not one of "the exams that
+            // have the Sunday live test".
             text: `Papers are created weekly for the most-prepared exams on the platform. Current live tests: ${
-              rows.length ? [...new Set(rows.map((r) => r.short))].slice(0, 8).join(", ") : "published every Saturday night for the coming Sunday"
+              sunday.length ? [...new Set(sunday.map((r) => r.short))].slice(0, 8).join(", ") : "published every Saturday night for the coming Sunday"
             }.`,
           },
         },
@@ -234,6 +260,21 @@ export default async function LiveTestPage() {
             <div className="mt-3 grid gap-3 sm:grid-cols-2">{open.map((r) => card(r, "open"))}</div>
           </>
         )}
+        {rehearsalsOpen.length > 0 && (
+          <>
+            <h2 className="mt-7 text-base font-bold text-ink-900">Exam-week rehearsal</h2>
+            {/* No exam DATE printed here: we hold only the day, not its
+                source tier, and an untiered date is not ours to show. */}
+            <p className="mt-1 max-w-2xl text-xs leading-relaxed text-ink-600">
+              These exams are being written this week. An easier-leaning warm-up paper — open now,
+              closing the evening before the exam day. Not the Sunday All-India paper: write one to
+              settle the nerves and check your timing.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {rehearsalsOpen.map((r) => card(r, "rehearsal"))}
+            </div>
+          </>
+        )}
         {upcoming.length > 0 && (
           <>
             <h2 className="mt-7 text-base font-bold text-ink-900">This Sunday</h2>
@@ -250,7 +291,9 @@ export default async function LiveTestPage() {
             </div>
           </>
         )}
-        {rows.length === 0 && (
+        {/* closed rehearsals render nowhere, so key the empty state on what
+            is actually shown — not on the raw row count. */}
+        {sunday.length === 0 && rehearsalsOpen.length === 0 && (
           <div className="mt-8 rounded-xl border border-dashed border-ink-300 bg-white px-4 py-10 text-center text-sm text-ink-500">
             This week&apos;s tests are being prepared — papers go up by Saturday night.
           </div>

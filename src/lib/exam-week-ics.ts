@@ -8,6 +8,11 @@
 // stage); outside it, the upcoming typed EXAM / ANSWER_KEY / RESULT rows.
 // Missing rows are simply absent — no invented dates, ever.
 //
+// Event identity: the UID is exam code + kind + IST day (icsUid), never the
+// ExamImportantDate row id — the refresh writer re-creates generated rows,
+// so a row-id UID duplicated every event in the student's calendar on the
+// next download.
+//
 // Honesty in the file itself: every SUMMARY ends with the row's tier word
 // ("SSC CGL Tier 1 (expected)"), expected rows are STATUS:TENTATIVE, and
 // the DESCRIPTION carries the cited source URL (or says the date is an
@@ -97,7 +102,19 @@ function summaryOf(exam: IcsExam, row: TimelineRow): string {
   const label = row.label.trim();
   const short = exam.shortName.trim();
   const withExam = label.toLowerCase().startsWith(short.toLowerCase()) ? label : `${short} ${label}`;
-  return `${withExam} (${tier})`;
+  // Tracker labels often already end in the tier word ("Tier 1 Exam
+  // (expected)") — never print it twice.
+  return withExam.toLowerCase().includes(`(${tier.toLowerCase()})`) ? withExam : `${withExam} (${tier})`;
+}
+
+/** Stable VEVENT UID — exam code + kind + IST day, NOT the row id.
+ *  src/lib/exam-data-writer.ts archives and re-CREATES every generated
+ *  ExamImportantDate row on each refresh, so a row-id UID made the same
+ *  exam day a brand-new event on every re-download and the student's
+ *  calendar collected duplicates. Code+kind+day is the identity of the
+ *  event itself and survives the rewrite. */
+export function icsUid(exam: IcsExam, row: TimelineRow): string {
+  return `${exam.code}-${row.kind}-${row.day}@shishya.in`;
 }
 
 function descriptionOf(exam: IcsExam, row: TimelineRow): string {
@@ -127,13 +144,20 @@ export function buildExamWeekIcs(exam: IcsExam, rows: TimelineRow[], now: Date =
     "X-WR-TIMEZONE:Asia/Kolkata",
   ];
   const stamp = icsStamp(now);
+  const seen = new Set<string>();
   for (const r of rows) {
+    // One entry per stable UID: two typed rows of the same kind on the same
+    // day are one calendar event, and duplicate UIDs in a single VCALENDAR
+    // are invalid per RFC 5545 (calendars would overwrite them anyway).
+    const uid = icsUid(exam, r);
+    if (seen.has(uid)) continue;
+    seen.add(uid);
     // The row's IST calendar day is stored as midnight UTC (repo convention);
     // TimelineRow.day is that ISO day, so the event lands on the right date
     // in any calendar app without a timezone conversion.
     L.push(
       "BEGIN:VEVENT",
-      `UID:${r.id}@shishya.in`,
+      `UID:${uid}`,
       `DTSTAMP:${stamp}`,
       `DTSTART;VALUE=DATE:${icsDate(r.day)}`,
       `DTEND;VALUE=DATE:${icsDate(nextDay(r.day))}`,

@@ -16,6 +16,11 @@
 // treat them exactly like the Sunday paper. Opening immediately keeps every
 // "next Sunday" reader (opensAt > NOW(): SundayLiveTestBanner, the Friday
 // invite, the reminder flow) blind to them by construction.
+//
+// BUT a rehearsal is OPEN for 3–7 days, and every "open now / today"
+// reader treated an open LiveTest as today's shared Sunday paper (review
+// 6 Sep 2026). Those readers now filter on the same no-migration marker —
+// see EXCLUDE_REHEARSAL_SQL in src/lib/live-test-today.ts.
 
 import { prisma } from "@/lib/db/prisma";
 import { loadExamWeekExams } from "@/lib/exam-week-aeo";
@@ -46,6 +51,10 @@ export interface LiveTestCreateResult {
   /** true for an exam-week rehearsal paper (absent on Sunday papers). */
   rehearsal?: boolean;
 }
+
+/** Rolls the rehearsal transaction back when (examId, opensAt) collided —
+ *  benign, never logged as a failure. */
+class RehearsalCollision extends Error {}
 
 /** UTC instant of REHEARSAL_CLOSE_IST_HOUR on the IST day before `examDayIso`. */
 export function rehearsalCloseUTC(examDayIso: string): Date {
@@ -124,19 +133,27 @@ export async function createRehearsalLiveTests(now: Date = new Date()): Promise<
     // the tracker never made.
     if (!s.focus || !s.focusDay || (s.tier !== "official" && s.tier !== "reported")) continue;
     const examDay = s.focusDay;
+    // Hoisted out of the guard above: narrowing does not survive into the
+    // transaction closure below.
+    const focus = s.focus;
     const closesAt = rehearsalCloseUTC(examDay);
     if (closesAt.getTime() <= now.getTime()) continue;
 
     try {
-      // Once per (exam, exam day).
-      const existing = await prisma.$queryRaw<{ mockId: string }[]>`
-        SELECT lt."mockId" FROM "LiveTest" lt
-        JOIN "Mock" m ON m.id = lt."mockId"
-        WHERE lt."examId" = ${ex.id} AND m."generatedBy" = 'live-test'
+      // Once per (exam, exam day). The MOCK is the idempotency key, not the
+      // LiveTest row: if the LiveTest INSERT ever failed after the Mock was
+      // created, a check that needed the LiveTest row would miss the orphan
+      // and the next daily run would build a SECOND rehearsal mock for the
+      // same exam day, inflating the system-mock counts (review 6 Sep 2026).
+      // No index covers this predicate, but only a handful of exams a day
+      // reach this line (phase "week", announced, 3–7 days out).
+      const existing = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT m.id FROM "Mock" m
+        WHERE m."examId" = ${ex.id} AND m."generatedBy" = 'live-test'
           AND m.config->>'rehearsalFor' = ${examDay}
         LIMIT 1`;
       if (existing[0]) {
-        results.push({ examCode: ex.code, mockId: existing[0].mockId, created: false, rehearsal: true });
+        results.push({ examCode: ex.code, mockId: existing[0].id, created: false, rehearsal: true });
         continue;
       }
 
@@ -144,36 +161,39 @@ export async function createRehearsalLiveTests(now: Date = new Date()): Promise<
       if (questionIds.length < 10) continue; // not enough bank for a fair paper
 
       const opensAt = now;
-      const mock = await prisma.mock.create({
-        data: {
-          userId: null,
-          examId: ex.id,
-          type: "FULL",
-          title: `${ex.shortName} rehearsal — ${whenWithTier(s.focus)}`,
-          config: {
-            count: questionIds.length,
-            durationMin: LIVE_TEST_DURATION_MIN,
-            liveTest: true,
-            rehearsal: true,
-            rehearsalFor: examDay,
-            examDayTier: s.tier,
+      // Both writes in ONE transaction — a mock without its LiveTest row is
+      // an unreachable orphan, so either both land or neither does.
+      const mockId = await prisma.$transaction(async (tx) => {
+        const mock = await tx.mock.create({
+          data: {
+            userId: null,
+            examId: ex.id,
+            type: "FULL",
+            title: `${ex.shortName} rehearsal — ${whenWithTier(focus)}`,
+            config: {
+              count: questionIds.length,
+              durationMin: LIVE_TEST_DURATION_MIN,
+              liveTest: true,
+              rehearsal: true,
+              rehearsalFor: examDay,
+              examDayTier: s.tier,
+            },
+            questionIds,
+            generatedBy: "live-test",
           },
-          questionIds,
-          generatedBy: "live-test",
-        },
-      });
-      const inserted = await prisma.$executeRaw`
-        INSERT INTO "LiveTest" (id, "examId", "mockId", "opensAt", "closesAt", "createdAt")
-        VALUES (gen_random_uuid()::text, ${ex.id}, ${mock.id}, ${opensAt}, ${closesAt}, NOW())
-        ON CONFLICT ("examId", "opensAt") DO NOTHING`;
-      if (inserted === 0) {
+        });
+        const inserted = await tx.$executeRaw`
+          INSERT INTO "LiveTest" (id, "examId", "mockId", "opensAt", "closesAt", "createdAt")
+          VALUES (gen_random_uuid()::text, ${ex.id}, ${mock.id}, ${opensAt}, ${closesAt}, NOW())
+          ON CONFLICT ("examId", "opensAt") DO NOTHING`;
         // (examId, opensAt) collided with a paper created in the same
-        // instant — never leave an orphan system mock behind.
-        await prisma.mock.delete({ where: { id: mock.id } }).catch(() => {});
-        continue;
-      }
-      results.push({ examCode: ex.code, mockId: mock.id, created: true, rehearsal: true });
+        // instant — roll the mock back rather than leave it orphaned.
+        if (inserted === 0) throw new RehearsalCollision();
+        return mock.id;
+      });
+      results.push({ examCode: ex.code, mockId, created: true, rehearsal: true });
     } catch (err) {
+      if (err instanceof RehearsalCollision) continue; // benign, already rolled back
       console.error(`[live-test] rehearsal for ${ex.code} failed`, err);
     }
   }
@@ -182,7 +202,42 @@ export async function createRehearsalLiveTests(now: Date = new Date()): Promise<
 
 export async function createWeeklyLiveTests(now: Date = new Date()): Promise<LiveTestCreateResult[]> {
   const { opensAt, closesAt } = nextSundayWindowUTC(now);
+  const results: LiveTestCreateResult[] = [];
 
+  // ROSTER FREEZE (review 6 Sep 2026). The create cron now runs DAILY, but
+  // the "imminent" top-N below is recomputed from a MOVING day-range window
+  // — so each morning could add another paper to the SAME Sunday as exams
+  // churn in and out of the 7–75-day range, and one Sunday would end up
+  // with far more than TOP_EXAMS papers. The first run that lands on a
+  // Sunday fixes that Sunday's roster; later runs report it unchanged and
+  // only the rehearsals below keep running. Accepted trade-off: if that
+  // first run dies half-way, the week keeps the partial roster rather than
+  // topping it up — a short roster is honest, a growing one is not.
+  const frozen = await prisma.$queryRaw<{ mockId: string; code: string }[]>`
+    SELECT lt."mockId", e.code
+    FROM "LiveTest" lt JOIN "Exam" e ON e.id = lt."examId"
+    WHERE lt."opensAt" = ${opensAt}
+    ORDER BY e."shortName" ASC`;
+
+  if (frozen.length > 0) {
+    for (const f of frozen) results.push({ examCode: f.code, mockId: f.mockId, created: false });
+  } else {
+    results.push(...(await createSundayPapers(opensAt, closesAt)));
+  }
+
+  // Exam-week rehearsals ride the same daily run; they never block the
+  // Sunday papers above.
+  const rehearsals = await createRehearsalLiveTests(now).catch((err) => {
+    console.error("[live-test] rehearsal creation failed", err);
+    return [] as LiveTestCreateResult[];
+  });
+  return [...results, ...rehearsals];
+}
+
+/** This Sunday's shared papers — one per top-enrolled imminent exam.
+ *  Only called on the first run that reaches a given Sunday (see the
+ *  roster freeze above). */
+async function createSundayPapers(opensAt: Date, closesAt: Date): Promise<LiveTestCreateResult[]> {
   // Exam selection (6 Aug 2026 founder rule): a live test should
   // rehearse an exam that is actually COMING — not one whose paper is
   // long over. Priority order:
@@ -229,6 +284,8 @@ export async function createWeeklyLiveTests(now: Date = new Date()): Promise<Liv
 
   const results: LiveTestCreateResult[] = [];
   for (const t of top) {
+    // Defensive: a concurrent run could have claimed this (exam, Sunday)
+    // between the freeze check and here.
     const existing = await prisma.$queryRaw<{ mockId: string }[]>`
       SELECT "mockId" FROM "LiveTest" WHERE "examId" = ${t.examId} AND "opensAt" = ${opensAt}`;
     if (existing[0]) {
@@ -266,13 +323,7 @@ export async function createWeeklyLiveTests(now: Date = new Date()): Promise<Liv
     results.push({ examCode: t.code, mockId: mock.id, created: true });
   }
 
-  // Exam-week rehearsals ride the same daily run; they never block the
-  // Sunday papers above.
-  const rehearsals = await createRehearsalLiveTests(now).catch((err) => {
-    console.error("[live-test] rehearsal creation failed", err);
-    return [] as LiveTestCreateResult[];
-  });
-  return [...results, ...rehearsals];
+  return results;
 }
 
 /** Rank of an attempt among first-submitted-attempts on a live-test

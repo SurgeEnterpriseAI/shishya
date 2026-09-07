@@ -1488,13 +1488,22 @@ Whatever the paper felt like, the next step is the same one — keep the routine
 }
 
 /** Result-day mail (Exam Week Mode wave 2, play 13) — sent once per
- *  (student, exam) when the tracker holds an OFFICIAL result row dated in
- *  the last two days. Two honest paths, nothing else: cleared → the next
- *  stage exactly as the tracker has it (with tier word, or "not announced
- *  yet"); not this time → the next exam in the student's track with its
- *  date and tier word. Plus the conducting body's own notice, the cutoff
- *  page and the tracker. No score, no prediction, no LLM. Marketing tag →
- *  opt-out footer + one-click unsubscribe headers via sendEmail. */
+ *  (student, exam, result day) when the tracker holds an OFFICIAL result
+ *  row dated in the last two days.
+ *
+ *  HONESTY (fix 7 Sep 2026): a RESULT date row certifies the DATE the
+ *  conducting body announced — it does NOT certify that the result is
+ *  published, live, or that the student's own name is on a list. The mail
+ *  therefore never says "the result is out"; it says what the tracker
+ *  holds ("the official result date is 5 Sep (official)") and sends the
+ *  student to the conducting body's own notice to see whether it is up.
+ *
+ *  Two honest paths, nothing else: cleared → the next stage exactly as the
+ *  tracker has it (with tier word, or "not announced yet"); not this time
+ *  → the next exam in the student's track with its date and tier word.
+ *  Plus the conducting body's own notice, the cutoff page and the tracker.
+ *  No score, no prediction, no LLM. Marketing tag → opt-out footer +
+ *  one-click unsubscribe headers via sendEmail. */
 export async function sendResultDayEmail(p: {
   to: string;
   userId: string;
@@ -1503,16 +1512,24 @@ export async function sendResultDayEmail(p: {
   examCode: string;
   /** The result row's label + date WITH its tier word, e.g. "Tier 1 result — 5 Sep (official)". */
   resultLine: string;
+  /** Just the result row's date + tier word, e.g. "5 Sep (official)" — the
+   *  subject and heading print this, never a claim of publication. */
+  resultWhen: string;
   /** The conducting body's notice (the result row's URL — official tier only). */
   officialUrl: string;
   /** Next stage for cleared candidates, as the tracker has it; null → "not announced yet". */
   nextStage: { label: string; when: string } | null;
   /** Next exam in the student's track (7–60 days out): plain IST day + its tier word. */
   nextExam: { code: string; short: string; date: string; tier: string } | null;
+  /** Send-log tag = the cron's once-per-(user, exam, result day) guard,
+   *  e.g. "result-day-SSC_CGL-20260905". sendEmail writes 'sent:'+tag, which
+   *  is what the cron's NOT EXISTS check reads. Keyed on the result DAY so a
+   *  Tier-2 / next-cycle result still reaches a student who got the last one. */
+  guardTag: string;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const hub = `https://shishya.in/exams/${p.examCode}`;
-  const subject = `${first}, the ${p.examShort} result is out — two honest next steps`;
+  const subject = `${first}, ${p.examShort} result day: ${p.resultWhen}`;
   const nextStageText = p.nextStage
     ? `Next stage: ${p.nextStage.label} — ${p.nextStage.when}`
     : `Next stage: ${tk("ew.post.notAnnounced")}`;
@@ -1522,8 +1539,8 @@ export async function sendResultDayEmail(p: {
 
   const text = `${first},
 
-The ${p.examShort} result is out: ${p.resultLine}.
-Check your own name on the conducting body's notice — nothing else counts: ${p.officialUrl}
+The tracker's ${p.examShort} result date: ${p.resultLine}.
+That date is what the conducting body announced — it is not a promise the list is already on screen. Check the notice for your own name; nothing else counts: ${p.officialUrl}
 
 If you cleared:
 • ${nextStageText}
@@ -1538,16 +1555,16 @@ Either way: ${tk("ew.post.cutoff")} — ${hub}/cutoff (the official cutoff is in
 One result does not measure you. Selection lists change every year; the routine you built does not.
 — Shishya (free, always)
 
-(You are getting this once because you are enrolled in ${p.examShort} on shishya.in. Unsubscribe below to stop all Shishya email.)`;
+(You are getting this once per announced ${p.examShort} result date because you are enrolled in it on shishya.in. Unsubscribe below to stop all Shishya email.)`;
 
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
   <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
     <div style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#b45309;">${esc(p.examShort)} · result day</div>
-    <div style="font-weight:700;font-size:19px;margin-top:6px;">The ${esc(p.examShort)} result is out</div>
+    <div style="font-weight:700;font-size:19px;margin-top:6px;">${esc(p.examShort)} result day: ${esc(p.resultWhen)}</div>
     <p style="font-size:13px;font-weight:600;margin:6px 0 0;color:#b45309;">${esc(p.resultLine)}</p>
-    <p style="font-size:14px;line-height:1.6;margin:12px 0 14px;">${esc(first)}, check your own name on the conducting body&apos;s notice — nothing else counts.</p>
+    <p style="font-size:14px;line-height:1.6;margin:12px 0 14px;">${esc(first)}, that is the date the conducting body announced — only its own notice says whether the list is up. Check your own name there; nothing else counts.</p>
     <a href="${esc(p.officialUrl)}" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">Official notice ↗</a>
     <div style="border:1px solid #bbf7d0;background:#f0fdf4;border-radius:10px;padding:12px 14px;margin:18px 0 0;">
       <p style="font-size:12px;font-weight:700;margin:0 0 6px;color:#14532d;">If you cleared</p>
@@ -1568,8 +1585,9 @@ One result does not measure you. Selection lists change every year; the routine 
     <p style="font-size:12px;color:#64748b;margin:16px 0 0;">— Shishya, free always</p>
   </div>
 </body></html>`;
-  // Tag carries the exam code so the send log ('sent:result-day-{CODE}') is the once-per-exam guard.
-  return sendEmail({ to: p.to, subject, html, text, tag: `result-day-${p.examCode.replace(/[^A-Za-z0-9_-]/g, "-")}`, unsubUserId: p.userId });
+  // The cron owns the guard tag (exam code + result DAY): sendEmail writes
+  // 'sent:'+tag, which is exactly what its NOT EXISTS check reads.
+  return sendEmail({ to: p.to, subject, html, text, tag: p.guardTag, unsubUserId: p.userId });
 }
 
 function fillVars(s: string, vars: Record<string, string | number>): string {

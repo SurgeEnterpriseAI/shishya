@@ -331,15 +331,30 @@ export default async function ExamPage({
 
   // All-India Live Test for this exam — open now, or opening within 7
   // days. One indexed-lookup query; renders the banner under the chips.
+  //
+  // Exam-week rehearsals (live-test.ts createRehearsalLiveTests) are also
+  // LiveTest rows, but they open on a weekday and close 8 PM IST on exam
+  // eve — so they must never be announced with the Sunday paper's "this
+  // Sunday / closes 11 PM" copy. The join carries the marker so the
+  // banner can say what the row actually is.
   const ltRows = await prisma
-    .$queryRaw<{ opensAt: Date; closesAt: Date }[]>`
-      SELECT "opensAt", "closesAt" FROM "LiveTest"
-      WHERE "examId" = ${exam.id} AND "closesAt" > NOW()
-        AND "opensAt" < NOW() + INTERVAL '7 days'
-      ORDER BY "opensAt" ASC LIMIT 1
+    .$queryRaw<{ opensAt: Date; closesAt: Date; rehearsalFor: string | null }[]>`
+      SELECT lt."opensAt", lt."closesAt", m.config->>'rehearsalFor' AS "rehearsalFor"
+      FROM "LiveTest" lt LEFT JOIN "Mock" m ON m.id = lt."mockId"
+      WHERE lt."examId" = ${exam.id} AND lt."closesAt" > NOW()
+        AND lt."opensAt" < NOW() + INTERVAL '7 days'
+      ORDER BY lt."opensAt" ASC LIMIT 1
     `.catch(() => []);
   const liveTest = ltRows[0]
-    ? { open: ltRows[0].opensAt <= new Date() }
+    ? {
+        open: ltRows[0].opensAt <= new Date(),
+        rehearsal: !!ltRows[0].rehearsalFor,
+        closesIst: new Date(ltRows[0].closesAt).toLocaleTimeString("en-IN", {
+          timeZone: "Asia/Kolkata",
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+      }
     : null;
 
   // Suppress the coach entry for students who already committed to a
@@ -751,10 +766,19 @@ export default async function ExamPage({
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 px-4 py-3">
             <div>
               <p className="text-sm font-bold text-ink-900">
-                🇮🇳 All-India Live Test —{" "}
-                {liveTest.open
-                  ? "LIVE now, closes 11 PM IST"
-                  : `this Sunday, 6 AM – 11 PM IST`}
+                {liveTest.rehearsal ? (
+                  <>
+                    🇮🇳 Exam-week rehearsal —{" "}
+                    {liveTest.open
+                      ? `open now, closes ${liveTest.closesIst} IST on exam eve`
+                      : `opens soon, closes ${liveTest.closesIst} IST on exam eve`}
+                  </>
+                ) : (
+                  <>
+                    🇮🇳 All-India Live Test —{" "}
+                    {liveTest.open ? "LIVE now, closes 11 PM IST" : `this Sunday, 6 AM – 11 PM IST`}
+                  </>
+                )}
               </p>
               <p className="text-xs text-ink-600">
                 Same {exam.shortName} paper across India. Your national rank, the moment you

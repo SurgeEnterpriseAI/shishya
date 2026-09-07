@@ -30,6 +30,7 @@ import {
 } from "@/lib/exam-timeline";
 import { computeExamWeekState } from "@/lib/exam-week";
 import { applyShiftDay, shiftDayIso } from "@/lib/exam-week-student";
+import { alertPhase } from "@/lib/exam-week-inputs";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { ExamWeekBlock, type ExamWeekViewer } from "@/components/ExamWeekBlock";
 import { PulseAsk } from "@/components/PulseAsk";
@@ -367,12 +368,15 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
 
         {/* Alerts — the moment of peak intent. Phase-aware (wave 2): on
             exam night and in the post-exam week the promise reads
-            "answer key / result", matching the hub block. */}
+            "answer key / result", matching the hub block. The phase goes
+            through alertPhase() — the same guard the quiz / estimator use —
+            so an EXPECTED-tier exam day never flips the copy to "the paper
+            is done, alert me for the key" on a date nobody announced. */}
         <div className="mt-6">
           <ExamAlertBox
             examCode={exam.code}
             signedIn={signedIn}
-            phase={examWeek.phase}
+            phase={alertPhase(examWeek)}
             weekLabels={{ cta: t("ew.alert.cta"), done: t("ew.alert.done") }}
             labels={{
               title: fill(t("tracker.alert.title"), { exam: short }),

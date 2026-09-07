@@ -104,7 +104,7 @@ export const dict = {
     "ew.share.tally": "{n} students rated today's {exam} paper: {easy}% easy, {moderate}% moderate, {tough}% tough. Add yours:",
     "ew.share.cta": "Share on WhatsApp",
     "ew.empty.title": "No {exam} questions on Shishya yet",
-    "ew.empty.body": "Tell the tutor what you need for {exam} and we build it. You get one email the day it is live.",
+    "ew.empty.body": "Tell the tutor what you need for {exam} and we build it. This page updates the moment questions land.",
     "ew.empty.cta": "Tell us what you need",
     "ew.enrol.resultNote": "One email when the official result is out, nothing else.",
     "ew.coach.postexam.title": "{exam} is done. Roll your plan to the next exam?",
@@ -124,7 +124,17 @@ export const dict = {
     "ew.score.compare": "Indicative cutoff bands below are estimates from score bands, not official. The official cutoff comes with the result.",
     "ew.score.cta": "Estimate my score",
     "ew.score.invalid": "Correct plus wrong cannot exceed the questions attempted.",
+    // Marking schemes we cannot state honestly (7 Sep 2026 review): some
+    // exams store marksPerQ as a WEIGHTED AVERAGE across papers that carry
+    // different marks per question, so "+{plus} per correct" would simply
+    // be false. Those exams get this note instead of the calculator.
+    "ew.score.mixed.title": "We can't state one marking scheme for the {exam} paper",
+    "ew.score.mixed.body": "On our records {exam} does not carry the same marks on every question — different papers or sections score differently, or not every question counts towards the total. A single calculator would hand you a wrong number, so we don't show one. Take the marking scheme from the official notice and count your marks against that.",
     // ── /exams/[code]/cutoff page body (6 Sep 2026, wave 2) ──
+    // metaTitle / metaDescription: the <title> and description of the same
+    // page in the URL's language (wave 2 left them English-only).
+    "cutoff.metaTitle": "{exam} Cutoff {year} — Expected Score, Rank & What It Gets You",
+    "cutoff.metaDescription": "{exam} ({name}) expected cutoff {year}: score-to-rank bands, what each score range typically achieves, curated from historic patterns. Take a free mock to see exactly where you stand.",
     "cutoff.h1": "{exam} cutoff {year}: expected score and rank bands",
     "cutoff.intro": "What does your score in {exam} actually get you? These bands map a mock or exam percentage to the rank window and the outcomes that score range has typically achieved.",
     "cutoff.disclaimer": "AI-curated from historic cutoff patterns. Indicative, not official. Always verify with the latest official notification.",
@@ -732,7 +742,7 @@ export const dict = {
     "ew.share.tally": "{n} छात्रों ने आज का {exam} पेपर रेट किया: {easy}% आसान, {moderate}% मध्यम, {tough}% कठिन। अपनी रेटिंग जोड़ें:",
     "ew.share.cta": "WhatsApp पर शेयर करें",
     "ew.empty.title": "शिष्य पर अभी {exam} के सवाल नहीं हैं",
-    "ew.empty.body": "ट्यूटर को बताइए {exam} के लिए आपको क्या चाहिए, हम बनाएँगे। लाइव होते ही एक ईमेल मिलेगा।",
+    "ew.empty.body": "ट्यूटर को बताइए {exam} के लिए आपको क्या चाहिए, हम बनाएँगे। सवाल तैयार होते ही यह पेज अपडेट हो जाएगा।",
     "ew.empty.cta": "बताइए आपको क्या चाहिए",
     "ew.enrol.resultNote": "आधिकारिक रिज़ल्ट आने पर एक ईमेल, और कुछ नहीं।",
     "ew.coach.postexam.title": "{exam} हो गई। प्लान को अगली परीक्षा पर ले चलें?",
@@ -752,6 +762,10 @@ export const dict = {
     "ew.score.compare": "नीचे के सांकेतिक कटऑफ बैंड स्कोर बैंड से अनुमान हैं, आधिकारिक नहीं। आधिकारिक कटऑफ रिज़ल्ट के साथ आता है।",
     "ew.score.cta": "मेरा स्कोर अनुमानित करें",
     "ew.score.invalid": "सही और गलत मिलाकर अटेम्प्ट किए सवालों से ज़्यादा नहीं हो सकते।",
+    "ew.score.mixed.title": "{exam} पेपर के लिए एक ही मार्किंग स्कीम नहीं बताई जा सकती",
+    "ew.score.mixed.body": "हमारे रिकॉर्ड में {exam} के हर सवाल के अंक एक जैसे नहीं हैं — अलग-अलग पेपर या सेक्शन के अंक अलग हैं, या हर सवाल कुल में नहीं जुड़ता। एक ही कैलकुलेटर आपको गलत नंबर देगा, इसलिए हम वह नहीं दिखाते। मार्किंग स्कीम आधिकारिक सूचना से लें और उसी हिसाब से अपने अंक गिनें।",
+    "cutoff.metaTitle": "{exam} कटऑफ {year} — अपेक्षित स्कोर, रैंक और उससे क्या मिलता है",
+    "cutoff.metaDescription": "{exam} ({name}) अपेक्षित कटऑफ {year}: स्कोर-से-रैंक बैंड और हर स्कोर रेंज आमतौर पर क्या दिलाती है — पिछले कटऑफ पैटर्न से तैयार। मुफ़्त मॉक दें और देखें कि आप कहाँ खड़े हैं।",
     "cutoff.h1": "{exam} कटऑफ {year}: अपेक्षित स्कोर और रैंक बैंड",
     "cutoff.intro": "{exam} में आपका स्कोर असल में क्या दिलाता है? ये बैंड मॉक या परीक्षा के प्रतिशत को उस रैंक दायरे और नतीजों से जोड़ते हैं जो उस स्कोर रेंज ने आमतौर पर हासिल किए हैं।",
     "cutoff.disclaimer": "पिछले कटऑफ पैटर्न से AI द्वारा तैयार। सांकेतिक, आधिकारिक नहीं। हमेशा नवीनतम आधिकारिक अधिसूचना से पुष्टि करें।",
@@ -1713,7 +1727,7 @@ export const dict = {
     "ew.share.tally": "{n} విద్యార్థులు ఈరోజు {exam} పేపర్‌ను రేట్ చేశారు: {easy}% సులభం, {moderate}% మధ్యస్థం, {tough}% కఠినం. మీది కూడా జోడించండి:",
     "ew.share.cta": "WhatsAppలో షేర్ చేయండి",
     "ew.empty.title": "శిష్యలో ఇంకా {exam} ప్రశ్నలు లేవు",
-    "ew.empty.body": "{exam} కోసం మీకు ఏం కావాలో ట్యూటర్‌కు చెప్పండి, మేము తయారు చేస్తాం. లైవ్ అయిన రోజు ఒక ఈమెయిల్ వస్తుంది.",
+    "ew.empty.body": "{exam} కోసం మీకు ఏం కావాలో ట్యూటర్‌కు చెప్పండి, మేము తయారు చేస్తాం. ప్రశ్నలు సిద్ధమైన వెంటనే ఈ పేజీ అప్‌డేట్ అవుతుంది.",
     "ew.empty.cta": "మీకు ఏం కావాలో చెప్పండి",
     "ew.enrol.resultNote": "అధికారిక ఫలితం వచ్చినప్పుడు ఒక ఈమెయిల్, ఇంకేమీ కాదు.",
     "ew.coach.postexam.title": "{exam} అయిపోయింది. ప్లాన్‌ను తదుపరి పరీక్షకు మార్చాలా?",
@@ -1733,6 +1747,10 @@ export const dict = {
     "ew.score.compare": "కింది సూచనాత్మక కటాఫ్ బ్యాండ్‌లు స్కోరు బ్యాండ్‌ల నుండి అంచనాలు, అధికారికం కాదు. అధికారిక కటాఫ్ ఫలితంతో వస్తుంది.",
     "ew.score.cta": "నా స్కోరు అంచనా వేయండి",
     "ew.score.invalid": "సరైనవి, తప్పు కలిపి ప్రయత్నించిన ప్రశ్నల కంటే ఎక్కువ ఉండకూడదు.",
+    "ew.score.mixed.title": "{exam} పేపర్‌కు ఒకే మార్కింగ్ స్కీమ్ చెప్పలేము",
+    "ew.score.mixed.body": "మా రికార్డుల ప్రకారం {exam}లో ప్రతి ప్రశ్నకూ ఒకే మార్కులు ఉండవు — వేర్వేరు పేపర్లు లేదా విభాగాలకు వేర్వేరు మార్కులు, లేదా అన్ని ప్రశ్నలూ మొత్తంలో లెక్కకు రావు. ఒకే కాలిక్యులేటర్ మీకు తప్పు సంఖ్య ఇస్తుంది, అందుకే దాన్ని చూపించడం లేదు. మార్కింగ్ స్కీమ్‌ను అధికారిక నోటీసు నుండి తీసుకుని, దాని ప్రకారం మీ మార్కులు లెక్కించండి.",
+    "cutoff.metaTitle": "{exam} కటాఫ్ {year} — అంచనా స్కోరు, ర్యాంక్, ఆ స్కోరుతో ఏమి వస్తుంది",
+    "cutoff.metaDescription": "{exam} ({name}) అంచనా కటాఫ్ {year}: స్కోరు-నుండి-ర్యాంక్ బ్యాండ్‌లు, ప్రతి స్కోరు పరిధి సాధారణంగా ఏమి సాధిస్తుంది — గత కటాఫ్ నమూనాల నుండి రూపొందించినది. ఉచిత మాక్ రాసి మీరు ఎక్కడ ఉన్నారో చూడండి.",
     "cutoff.h1": "{exam} కటాఫ్ {year}: అంచనా స్కోరు, ర్యాంక్ బ్యాండ్‌లు",
     "cutoff.intro": "{exam}లో మీ స్కోరు నిజంగా ఏమి ఇస్తుంది? ఈ బ్యాండ్‌లు మాక్ లేదా పరీక్ష శాతాన్ని, ఆ స్కోరు పరిధి సాధారణంగా సాధించిన ర్యాంక్ పరిధి, ఫలితాలతో కలుపుతాయి.",
     "cutoff.disclaimer": "గత కటాఫ్ నమూనాల నుండి AI రూపొందించినది. సూచనాత్మకం, అధికారికం కాదు. ఎల్లప్పుడూ తాజా అధికారిక నోటిఫికేషన్‌తో సరిచూసుకోండి.",

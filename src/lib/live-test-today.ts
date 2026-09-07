@@ -9,7 +9,30 @@
 // cached (lesson from the vacancy-explorer poisoning, same day).
 
 import { unstable_cache } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+
+/**
+ * Keeps ONLY the shared Sunday All-India papers.
+ *
+ * Exam-week rehearsals (wave 2, play 16 — see createRehearsalLiveTests in
+ * src/lib/live-test.ts) are LiveTest rows that stay open for 3–7 days, so
+ * every "open right now" reader below used to count them as today's
+ * All-India Sunday test: the homepage/dashboard banner announced "N
+ * All-India Live Tests today … open till 8 PM" on a Tuesday, and the email
+ * / Telegram notice said the same. A rehearsal is a private warm-up before
+ * ONE exam's day — not the country writing the same paper — so the
+ * awareness surfaces exclude it while /live-test still lists it under its
+ * own heading.
+ *
+ * No migration: the marker is the rehearsal Mock's config.rehearsalFor
+ * (set only by createRehearsalLiveTests). Requires the "LiveTest" row to
+ * be aliased `lt` in the surrounding query.
+ */
+export const EXCLUDE_REHEARSAL_SQL = Prisma.sql`NOT EXISTS (
+      SELECT 1 FROM "Mock" m
+      WHERE m.id = lt."mockId" AND m.config->>'rehearsalFor' IS NOT NULL
+    )`;
 
 export interface LiveTestToday {
   count: number;
@@ -29,6 +52,7 @@ async function loadRaw(): Promise<LiveTestToday | null> {
     SELECT e.code, e."shortName" AS short, lt."opensAt", lt."closesAt"
     FROM "LiveTest" lt JOIN "Exam" e ON e.id = lt."examId"
     WHERE lt."closesAt" > NOW() AND lt."opensAt" < NOW() + INTERVAL '18 hours'
+      AND ${EXCLUDE_REHEARSAL_SQL}
     ORDER BY lt."opensAt" ASC, e."shortName" ASC
   `;
   if (rows.length === 0) return null;
@@ -77,6 +101,7 @@ export async function liveTestEmailNotice(now = new Date()): Promise<LiveTestNot
       SELECT e."shortName" AS short, lt."closesAt"
       FROM "LiveTest" lt JOIN "Exam" e ON e.id = lt."examId"
       WHERE lt."opensAt" <= NOW() + INTERVAL '2 hours' AND lt."closesAt" > NOW()
+        AND ${EXCLUDE_REHEARSAL_SQL}
       ORDER BY e."shortName" ASC
     `;
     if (rows.length > 0) {
@@ -133,6 +158,10 @@ async function loadUpcomingRaw(): Promise<UpcomingSunday | null> {
     SELECT e.code, e."shortName" AS short, lt."opensAt"
     FROM "LiveTest" lt JOIN "Exam" e ON e.id = lt."examId"
     WHERE lt."opensAt" > NOW()
+      -- rehearsals open the instant they are created, so they are normally
+      -- already in the past here; excluded anyway so a clock skew can never
+      -- make one the "nearest Sunday" and break the batch grouping below.
+      AND ${EXCLUDE_REHEARSAL_SQL}
     ORDER BY lt."opensAt" ASC, e."shortName" ASC
   `;
   if (rows.length === 0) return null;
