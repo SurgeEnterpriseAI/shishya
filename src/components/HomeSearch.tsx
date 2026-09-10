@@ -18,10 +18,11 @@
 // <Link>, so keyboard nav (Tab + Enter) works without JS too —
 // progressive enhancement.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { ExamCard } from "./ExamPicker";
 import { contextualExamFilter } from "@/lib/exam-aliases";
+import { nearestExams } from "@/lib/exam-nearest";
 
 const MAX_RESULTS = 8;
 
@@ -47,6 +48,34 @@ export function HomeSearch({ exams }: { exams: ExamCard[] }) {
       })
       .slice(0, MAX_RESULTS);
   }, [exams, q, trimmed]);
+
+  // Closest exams when nothing matched — deterministic, no model call.
+  const nearest = useMemo(
+    () => (trimmed && matches.length === 0 ? nearestExams(q, exams, 4) : []),
+    [exams, q, trimmed, matches.length],
+  );
+
+  // Log the miss once the typing settles, once per distinct query. A
+  // search that matched nothing was invisible before this: the only way
+  // we learned a name was unreachable was a student emailing in.
+  const loggedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!trimmed || trimmed.length < 3 || matches.length > 0) return;
+    const id = window.setTimeout(() => {
+      if (loggedRef.current.has(trimmed)) return;
+      loggedRef.current.add(trimmed);
+      try {
+        window.shishyaTrack?.("SEARCH_MISS", {
+          q: trimmed.slice(0, 120),
+          surface: "home-search",
+          nearest: nearest.map((n) => n.exam.code).slice(0, 3),
+        });
+      } catch {
+        /* analytics is best-effort */
+      }
+    }, 900);
+    return () => window.clearTimeout(id);
+  }, [trimmed, matches.length, nearest]);
 
   return (
     <div className="mx-auto mt-10 max-w-2xl">
@@ -88,9 +117,45 @@ export function HomeSearch({ exams }: { exams: ExamCard[] }) {
       {trimmed && (
         <div className="mt-3 overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm">
           {matches.length === 0 ? (
-            <div className="px-4 py-5 text-center text-sm text-ink-500">
-              No exam matches “{q}”. Try a shorter query — or browse the goal
-              cards below.
+            <div className="px-4 py-4">
+              {nearest.length > 0 ? (
+                <>
+                  <p className="text-sm text-ink-700">
+                    Nothing is named “{q}” on Shishya. The closest we have:
+                  </p>
+                  <ul className="mt-2 divide-y divide-ink-100">
+                    {nearest.map((n) => (
+                      <li key={n.exam.code}>
+                        <Link
+                          href={`/exams/${n.exam.code}`}
+                          prefetch={false}
+                          className="flex items-start justify-between gap-3 py-2 transition-colors hover:bg-saffron-50/60"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-ink-900">{n.exam.shortName}</p>
+                            <p className="mt-0.5 truncate text-xs text-ink-600">{n.exam.name}</p>
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="text-sm text-ink-700">
+                  Nothing on Shishya is named “{q}” — and nothing close either.
+                </p>
+              )}
+              {/* The loop that was missing until 10 Sep 2026: a search we
+                  cannot answer used to end here, telling the aspirant to
+                  "try a shorter query". Now it offers the finder, and the
+                  miss itself is logged so the gap reaches us without
+                  anyone having to write in. */}
+              <p className="mt-3 border-t border-ink-100 pt-3 text-xs text-ink-600">
+                Not what you meant?{" "}
+                <Link href="/find-your-exam" className="font-semibold text-saffron-700 hover:text-saffron-800">
+                  Tell us what you are preparing for →
+                </Link>
+              </p>
             </div>
           ) : (
             <ul className="divide-y divide-ink-100">

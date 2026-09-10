@@ -1377,6 +1377,11 @@ enum EventKind {
   SCHOLARSHIP_SAVED // user clicked "Save scholarship" — local + event
   CHAT_OPENED // user opened /chat (the AI tutor)
   CTA_CLICKED // generic — for ad-hoc button instrumentation
+  // A search that matched NOTHING. Until 10 Sep 2026 a miss was invisible:
+  // the only way we learned a name was unreachable was a student writing in
+  // (an aspirant typed "SCT PC", got an empty box, and emailed the founder).
+  // props: { q, surface }.
+  SEARCH_MISS
 }
 
 // ─────────────────────────────────────────────────────────────────────

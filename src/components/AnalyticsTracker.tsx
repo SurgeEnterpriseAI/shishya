@@ -24,7 +24,8 @@ type EventKind =
   | "CHAPTER_COMPLETED"
   | "SCHOLARSHIP_SAVED"
   | "CHAT_OPENED"
-  | "CTA_CLICKED";
+  | "CTA_CLICKED"
+  | "SEARCH_MISS";
 
 const UTM_STORAGE_KEY = "shishya:utm";
 

@@ -23,7 +23,8 @@ export type EventKind =
   | "CHAPTER_COMPLETED"
   | "SCHOLARSHIP_SAVED"
   | "CHAT_OPENED"
-  | "CTA_CLICKED";
+  | "CTA_CLICKED"
+  | "SEARCH_MISS";
 
 export interface RecordEventInput {
   kind: EventKind;

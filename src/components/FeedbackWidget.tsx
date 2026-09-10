@@ -118,6 +118,29 @@ export function FeedbackWidget({ signedIn: signedInProp }: { signedIn?: boolean 
     if (open) textareaRef.current?.focus();
   }, [open]);
 
+  // Any surface can open this box already filled in (10 Sep 2026):
+  //   window.dispatchEvent(new CustomEvent("shishya:feedback", {
+  //     detail: { body: "…", area: "Other" }
+  //   }))
+  // The search empty state uses it so telling us an exam is missing costs
+  // one tap instead of an email — which is how we found out that "SCT PC"
+  // reached nothing. A prefill never overwrites something already typed.
+  useEffect(() => {
+    function onPrefill(ev: Event) {
+      const detail = (ev as CustomEvent).detail as { body?: string; area?: string } | undefined;
+      const text = typeof detail?.body === "string" ? detail.body.slice(0, 1000) : "";
+      setBody((prev) => (prev.trim() ? prev : text));
+      if (detail?.area && (AREAS as readonly string[]).includes(detail.area)) {
+        setArea(detail.area as (typeof AREAS)[number]);
+      }
+      setSubmittedId(null);
+      setErr(null);
+      setOpen(true);
+    }
+    window.addEventListener("shishya:feedback", onPrefill);
+    return () => window.removeEventListener("shishya:feedback", onPrefill);
+  }, []);
+
   // IMPORTANT: this useMemo MUST live above the early returns below.
   // Rules of hooks — hook count must be identical on every render. When
   // we placed it after `if (hidden) return null`, navigating between a

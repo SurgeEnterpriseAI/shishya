@@ -9,8 +9,9 @@
 // even when JS is slow to hydrate.
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { contextualExamFilter } from "@/lib/exam-aliases";
+import { nearestExams } from "@/lib/exam-nearest";
 
 export interface ExamCard {
   code: string;
@@ -292,7 +293,7 @@ export function ExamPicker({
 
       {/* ── Filtered result grid (when chip / search / state-picked) ─── */}
       {showCurated || showStateGrid ? null : filtered.length === 0 ? (
-        <p className="mt-10 text-center text-sm text-ink-500">{labels.noResults}</p>
+        <ExamPickerMiss query={q} exams={exams} labels={labels} signedIn={signedIn} />
       ) : (
         <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((e) => (
@@ -399,4 +400,85 @@ function formatVolume(n: number): string {
   if (n >= 100_000) return `${Math.round(n / 100_000)}L`;
   if (n >= 1000) return `${Math.round(n / 1000)}k`;
   return String(n);
+}
+
+/**
+ * What the picker shows when a search matches nothing (10 Sep 2026).
+ *
+ * It used to be one flat line of "no results", which is where a Telangana
+ * student searching "SCT PC" gave up and enrolled in the wrong state's
+ * exam. Now: the closest exams we actually have, honestly labelled as
+ * closest rather than as matches, one tap to tell us when none of them
+ * fit, and the miss itself logged so the gap reaches us without anyone
+ * having to write in.
+ */
+function ExamPickerMiss({
+  query,
+  exams,
+  labels,
+  signedIn,
+}: {
+  query: string;
+  exams: ExamCard[];
+  labels: Labels;
+  signedIn: boolean;
+}) {
+  const near = useMemo(() => nearestExams(query, exams, 4), [query, exams]);
+  const logged = useRef<Set<string>>(new Set());
+  const key = query.trim().toLowerCase();
+
+  useEffect(() => {
+    if (key.length < 3) return;
+    const id = window.setTimeout(() => {
+      if (logged.current.has(key)) return;
+      logged.current.add(key);
+      try {
+        window.shishyaTrack?.("SEARCH_MISS", {
+          q: key.slice(0, 120),
+          surface: "exam-picker",
+          nearest: near.map((n) => n.exam.code).slice(0, 3),
+        });
+      } catch {
+        /* analytics is best-effort */
+      }
+    }, 900);
+    return () => window.clearTimeout(id);
+  }, [key, near]);
+
+  function tellUs() {
+    window.dispatchEvent(
+      new CustomEvent("shishya:feedback", {
+        detail: { body: `I am preparing for ${query.trim()} — I could not find it on Shishya.`, area: "Other" },
+      }),
+    );
+  }
+
+  return (
+    <div className="mx-auto mt-10 max-w-2xl">
+      {near.length > 0 ? (
+        <>
+          <p className="text-center text-sm text-ink-600">
+            Nothing is named “{query.trim()}”. The closest we have:
+          </p>
+          <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {near.map((n) => (
+              <li key={n.exam.code}>
+                <ExamCardLink exam={n.exam} signedIn={signedIn} labels={labels} />
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p className="text-center text-sm text-ink-500">{labels.noResults}</p>
+      )}
+      {signedIn && (
+        <p className="mt-5 text-center text-xs text-ink-600">
+          None of these?{" "}
+          <button type="button" onClick={tellUs} className="font-semibold text-saffron-700 hover:text-saffron-800">
+            Tell us what you are preparing for →
+          </button>
+        </p>
+      )}
+    </div>
+  );
 }

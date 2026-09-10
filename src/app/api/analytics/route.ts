@@ -28,6 +28,7 @@ const ALLOWED: Set<EventKind> = new Set([
   "SCHOLARSHIP_SAVED",
   "CHAT_OPENED",
   "CTA_CLICKED",
+  "SEARCH_MISS",
 ]);
 
 const ANON_COOKIE = "shishya_anon";
