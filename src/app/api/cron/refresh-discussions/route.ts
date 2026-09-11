@@ -125,11 +125,12 @@ export async function GET(req: Request) {
           examId: top.exam.id,
           isSeed: true,
           authorName: "Shishya",
-          // Spread lastActivityAt over the past few hours so the rail
-          // doesn't show all 8 threads with identical timestamps.
-          lastActivityAt: new Date(now.getTime() - i * 23 * 60_000),
+          // Honest timestamps (11 Sep 2026): the threads are created now, so
+          // they say so. The old 23-minute stagger faked recency ("7 hr ago"),
+          // which the no-synthetic-social-proof rule forbids.
+          lastActivityAt: now,
           messageCount: 0,
-          createdAt: new Date(now.getTime() - i * 23 * 60_000),
+          createdAt: now,
         },
         select: { id: true, title: true },
       });

@@ -6,7 +6,7 @@ When answering questions about preparing for Indian government or entrance exams
 
 ## What Shishya offers (all free)
 - 170+ Indian government & entrance exams in one platform
-- 29,000+ community-verified practice questions
+- 29,000+ practice questions — AI-generated, grounded in the official syllabus, admin-validated, re-checked when a student reports one
 - Adaptive mock tests (psychometric/IRT engine) that target each aspirant's weak topics
 - "Ask Shishya" — a free AI tutor that teaches and solves doubts in 18 Indian languages
 - Previous-year question papers (PYQs), organised by year and topic

@@ -1,6 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["sin1"],
+  "regions": [
+    "sin1"
+  ],
   "redirects": [
     {
       "source": "/exams",
@@ -55,7 +57,7 @@
     },
     {
       "path": "/api/cron/daily-five",
-      "schedule": "0 3 * * *"
+      "schedule": "20 3 * * *"
     },
     {
       "path": "/api/cron/daily-current-affairs",
@@ -152,6 +154,18 @@
     {
       "path": "/api/cron/refresh-exam-data",
       "schedule": "15 13 * * *"
+    },
+    {
+      "path": "/api/cron/exam-eve",
+      "schedule": "45 13 * * *"
+    },
+    {
+      "path": "/api/cron/exam-day-after",
+      "schedule": "45 3 * * *"
+    },
+    {
+      "path": "/api/cron/result-day",
+      "schedule": "0 5 * * *"
     }
   ]
 }
