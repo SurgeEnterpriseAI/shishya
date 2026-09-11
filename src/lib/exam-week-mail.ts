@@ -435,3 +435,50 @@ export async function nextExamsInTrack(meta: ExamMeta, now: Date): Promise<NextE
   }
   return out;
 }
+
+// ── Plan date vs announced date (11 Sep 2026, first real exam weekend) ──
+//
+// The coach-plan mail paths honoured the student's OWN typed exam date. The
+// data said that was wrong: of every coach plan within three days of an
+// announced exam day, all eight disagreed in the same direction — the plan
+// was one to three days EARLY — and the eve cron mailed "exam tomorrow" on
+// the wrong night (an NDA student with plan date 12 Sep got the eve on the
+// 11th; the official paper is the 13th). An official or reported tracker
+// row beats a typed date. The student's date only stands when the tracker
+// holds nothing announced within three days of it.
+
+/** IST "YYYY-MM-DD" of every official/reported EXAM row in a timeline. */
+export function announcedExamDays(timeline: TimelineRow[]): string[] {
+  return [...new Set(timeline.filter((r) => r.kind === "EXAM" && r.tier !== "expected").map((r) => istDay(r.date)))].sort();
+}
+
+function addDays(day: string, n: number): string {
+  return new Date(Date.parse(day + "T00:00:00Z") + n * DAY_MS).toISOString().slice(0, 10);
+}
+
+/**
+ * Which coach-plan dates should be treated AS `target`?
+ *
+ * A plan date's EFFECTIVE day is the nearest announced exam day within `tol`
+ * days of it, else the plan date itself. This returns every plan date within
+ * ±tol of `target` whose effective day IS `target` — so a mail keyed on
+ * "tomorrow" reaches the student whose plan says the 12th when the paper is
+ * announced for the 13th, on the 12th's evening, and NOT on the 11th's.
+ */
+export function acceptedPlanDays(announced: string[], target: string, tol = 3): string[] {
+  const out: string[] = [];
+  for (let k = -tol; k <= tol; k++) {
+    const d = addDays(target, k);
+    let best: string | null = null;
+    let bestDist = tol + 1;
+    for (const a of announced) {
+      const dist = Math.abs(dayDiff(d, a));
+      if (dist <= tol && dist < bestDist) {
+        best = a;
+        bestDist = dist;
+      }
+    }
+    if ((best ?? d) === target) out.push(d);
+  }
+  return out;
+}

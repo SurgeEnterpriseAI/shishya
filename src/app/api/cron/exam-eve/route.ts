@@ -59,6 +59,8 @@ import { shiftDayIso, shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline, latestOfKind, type TimelineRow } from "@/lib/exam-timeline";
 import {
   checklistLink,
+  acceptedPlanDays,
+  announcedExamDays,
   examEveDecision,
   loadExamBundles,
   nextTrackerRows,
@@ -177,7 +179,8 @@ export async function GET(req: Request) {
     JOIN "Exam" e ON e.id = cp."examId" AND e.active = TRUE
     LEFT JOIN "Enrollment" en ON en."userId" = u.id AND en."examId" = cp."examId" AND en.active = TRUE
     WHERE u.email <> '' AND u."emailOptOut" = FALSE
-      AND (cp."examDate" + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' + INTERVAL '1 day')::date
+      AND (cp."examDate" + INTERVAL '5.5 hours')::date
+        BETWEEN (NOW() + INTERVAL '5.5 hours' - INTERVAL '2 days')::date AND (NOW() + INTERVAL '5.5 hours' + INTERVAL '4 days')::date
       AND NOT EXISTS (
         SELECT 1 FROM "EmailTouch" t
         WHERE t."userId" = u.id AND t.tag = 'exam-eve'
@@ -385,11 +388,29 @@ export async function GET(req: Request) {
     // A shiftDate outside the window is stale: ignored, like the hub does.
     const coachState = computeExamWeekState(bundle.rows, meta.officialUrl, now);
     const bookedDays = new Set(shiftableDays(coachState).map((r) => istDay(r.date)));
+    // An OFFICIAL/REPORTED exam day beats a typed plan date (11 Sep 2026):
+    // every coach plan within three days of an announced day was EARLY, and
+    // this path mailed "exam tomorrow" a night early. A plan date now maps to
+    // the nearest announced day within three days of it and the student is
+    // mailed on THAT eve; the plan date stands only when nothing is announced
+    // nearby. The SQL above pulls plans within a few days so this can decide.
+    const decisionForDays = examEveDecision(bundle.rows, meta.officialUrl, now);
+    const announced = announcedExamDays(decisionForDays.timeline);
+    const accepted = new Set(acceptedPlanDays(announced, tomorrow));
+    const rerouted = list.filter((s) => !accepted.has(istDay(s.planDate)));
+    if (rerouted.length > 0) {
+      const days = [...new Set(rerouted.map((s) => istDay(s.planDate)))].sort().join(", ");
+      skipped.push({
+        code: `${meta.code} (coach-plan)`,
+        reason: `${rerouted.length} plan date(s) ${days} are not tonight's eve — an announced exam day within three days wins${announced.length ? " (announced: " + announced.join("/") + ")" : ""}, otherwise the plan date is its own eve`,
+      });
+    }
     const eligible = list.filter((s) => {
+      if (!accepted.has(istDay(s.planDate))) return false;
       const day = shiftDayIso(s.shiftDate);
       return !(day && day !== tomorrow && bookedDays.has(day));
     });
-    const onOwnShift = list.length - eligible.length;
+    const onOwnShift = list.filter((s) => accepted.has(istDay(s.planDate))).length - eligible.length;
     if (onOwnShift > 0) {
       skipped.push({
         code: `${meta.code} (coach-plan)`,
@@ -400,16 +421,22 @@ export async function GET(req: Request) {
     let content = contentCache.get(examId) ?? null;
     let reason = "coach-plan date agrees with the tracker";
     if (!content) {
-      const decision = examEveDecision(bundle.rows, meta.officialUrl, now);
-      const planDate = eligible[0].planDate;
+      const decision = decisionForDays;
+      const announcedRow =
+        decision.timeline.find((r) => r.kind === "EXAM" && r.tier !== "expected" && istDay(r.date) === tomorrow) ?? null;
+      // Tomorrow IS an announced day → its date and tier word. The plan date
+      // mapped onto it, so it is wrong by construction and must not be
+      // printed as though it were the exam date.
       content = await buildContent(bundle, decision.timeline, {
-        date: plainDay(planDate),
-        tier: "the date you set in your coach plan",
-        day: istDay(planDate),
+        date: announcedRow ? plainDay(announcedRow.date) : plainDay(tomorrowDate),
+        tier: announcedRow ? tierWord(announcedRow.tier) : "the date you set in your coach plan",
+        day: tomorrow,
         windowIds: decision.state.windowDays.map((r) => r.id),
         windowEnd: null,
       });
-      reason = `coach-plan date ${tomorrow} (tracker: ${decision.ok ? "eve" : decision.reason})`;
+      reason = announcedRow
+        ? `announced exam day ${tomorrow} (${announcedRow.tier}) — plan dates mapped onto it`
+        : `coach-plan date ${tomorrow} (tracker: ${decision.ok ? "eve" : decision.reason})`;
     }
     const pending = eligible.filter((s) => !mailed.has(s.id));
     coachCount += pending.length;

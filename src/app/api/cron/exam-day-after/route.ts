@@ -67,6 +67,8 @@ import {
   windowContainsDay,
   type ExamBundle,
   type NextExam,
+  acceptedPlanDays,
+  announcedExamDays,
 } from "@/lib/exam-week-mail";
 
 const MAX_SENDS = 400;
@@ -131,7 +133,8 @@ export async function GET(req: Request) {
     SELECT DISTINCT cp."examId"
     FROM "CoachPlan" cp
     JOIN "Exam" e ON e.id = cp."examId" AND e.active = TRUE
-    WHERE (cp."examDate" + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' - INTERVAL '1 day')::date
+    WHERE (cp."examDate" + INTERVAL '5.5 hours')::date
+      BETWEEN (NOW() + INTERVAL '5.5 hours' - INTERVAL '4 days')::date AND (NOW() + INTERVAL '5.5 hours' + INTERVAL '2 days')::date
   `.catch((err) => {
     console.error("[exam-day-after] coach-plan selection failed", err);
     return [] as { examId: string }[];
@@ -211,7 +214,10 @@ export async function GET(req: Request) {
     const { meta, rows } = bundle;
     const timeline = buildTimeline(rows, now, meta.officialUrl);
     const state = computeExamWeekState(rows, meta.officialUrl, now);
-    const examDay = why === "coach-plan" ? null : examRowOnDay(timeline, yesterday);
+    // Even a coach-plan target gets the tracker's row when yesterday IS an
+    // announced day — the plan date only labels the mail when the tracker
+    // holds nothing for that day (11 Sep 2026: announced beats typed).
+    const examDay = examRowOnDay(timeline, yesterday);
     // Coach-plan-only exams reached the student on THEIR date, not the
     // tracker's: label it as such — never dressed up as a tracker tier. A
     // shift day with no row of its own carries the window's tier.
@@ -265,10 +271,13 @@ export async function GET(req: Request) {
     // Coach-plan holders used to be pulled in with no shiftDate condition at
     // all, so a student on shift 15 Sep was asked on the window's first-day
     // morning AND again after their own day (review fix, 7 Sep).
+    // A plan date maps to the nearest announced exam day within three days
+    // of it (acceptedPlanDays) — the same rule the eve cron used to send.
+    const planDays = acceptedPlanDays(announcedExamDays(timeline), yesterday);
     const coachPlanYesterday = Prisma.sql`EXISTS (
             SELECT 1 FROM "CoachPlan" cp
             WHERE cp."userId" = u.id AND cp."examId" = ${meta.examId}
-              AND (cp."examDate" + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' - INTERVAL '1 day')::date
+              AND (cp."examDate" + INTERVAL '5.5 hours')::date = ANY(${planDays}::date[])
           ) AND NOT EXISTS (
             SELECT 1 FROM "Enrollment" en
             WHERE en."userId" = u.id AND en."examId" = ${meta.examId} AND en.active = TRUE
