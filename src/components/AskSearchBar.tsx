@@ -115,7 +115,7 @@ export function AskSearchBar({
         }
       >
         Ask in any language — jobs for your state, salary, eligibility, vacancies, dates.
-        Answered from Shishya&apos;s data for 177 exams. Free, no login.
+        Answered from Shishya&apos;s data for 170+ exams. Free, no login.
       </p>
     </form>
   );

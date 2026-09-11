@@ -5,8 +5,8 @@
 // & proportion), Polity(...)" and "I want topic wise mock test like,
 // today india polity" into the tutor. This page is that sentence as a
 // form: pick topics → pick size → pick difficulty → attempt in the
-// normal player (which already translates into Hindi + 12 more
-// languages on demand).
+// normal player (which already translates into Hindi + the other
+// supported languages on demand — count from src/lib/languages.ts).
 //
 // Deliberately NOT in the sitemap while the Google suppression
 // recovery runs (no new mass URL families) — discovery is via the exam
@@ -20,6 +20,7 @@ import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
 import { getExamTheme } from "@/lib/exam-theme";
 import { BuilderForm } from "./BuilderForm";
+import { OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 
 export const revalidate = 3600;
 
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   const exam = await prisma.exam.findUnique({ where: { code }, select: { shortName: true, name: true } });
   if (!exam) return { title: "Build a mock — Shishya" };
   const title = `${exam.shortName} topic-wise mock test builder — pick your topics, free | Shishya`;
-  const description = `Build your own ${exam.name} mock: choose exact topics (polity, number system, anything), size and difficulty. Instant scoring, solutions, Hindi + 12 languages. Free.`;
+  const description = `Build your own ${exam.name} mock: choose exact topics (polity, number system, anything), size and difficulty. Instant scoring, solutions, Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages. Free.`;
   return {
     title,
     description,
@@ -128,7 +129,7 @@ export default async function BuildMockPage({
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
           Pick exactly the topics you want — today polity, tomorrow number system — choose the size and
           difficulty, and attempt it like any mock: timed, scored, full solutions, weak-topic analysis.
-          Questions can be read in Hindi and 12 other languages inside the test.
+          Questions can be read in Hindi and {OTHER_INDIAN_LANGUAGE_COUNT} other languages inside the test.
         </p>
 
         {subjects.size === 0 ? (

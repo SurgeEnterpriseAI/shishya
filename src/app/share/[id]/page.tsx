@@ -2,21 +2,28 @@
 //
 // The personalised destination that lands when a student shares their
 // score on WhatsApp / Twitter / Telegram. Shows:
-//   - exam name + their score
-//   - a one-line "join Shishya" CTA → free signup with the same exam
-//     pre-pinned via onbPrepCodes hint in URL
+//   - exam name + their score (when the sharer has a name on their account)
+//   - ONE CTA → the anonymous 5-question quiz for the same exam
+//     (/exams/:code/quiz — no sign-in; the quiz itself ends on the
+//     sign-in offer). Until 11 Sep 2026 the only button was /login,
+//     i.e. a friend tapping a WhatsApp forward hit a login wall first.
 //   - per-category theme wash so it visually ties to the exam
 //
 // PRIVACY
 // We expose ONLY exam shortname + score percentage + the student's
-// first name (or "A student" if they're nameless). No email, no
-// userId, no per-question detail. Safe to make public.
+// first name. No email, no userId, no per-question detail. Safe to make
+// public. A sharer with NO name on their account gets no score shown
+// either — "A student scored 72%" is a number with nobody attached, and
+// reads like synthetic social proof, which Shishya never shows.
 //
-// Sister files in this directory:
+// ATTRIBUTION
+// The quiz CTA is utm-tagged (src/lib/share-url.ts, campaign
+// share-landing) and forwards the inbound channel (utm_source) so the
+// quiz visit keeps its WhatsApp / Telegram origin. Canonical stays bare.
+//
+// Sister file in this directory:
 //   opengraph-image.tsx — the dynamic OG card embedded in WhatsApp
 //                          previews (built via next/og ImageResponse)
-//   twitter-image.tsx   — uses the same component, served as the
-//                          Twitter card.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -25,9 +32,16 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { getExamTheme } from "@/lib/exam-theme";
 import { formatDisplayScorePct } from "@/lib/scoring";
+import { locales } from "@/lib/i18n";
+import { isShareChannel, sharePath } from "@/lib/share-url";
 
 interface RouteParams {
   id: string;
+}
+
+function firstNameOf(name: string | null | undefined): string | null {
+  const first = name?.trim().split(/\s+/)[0];
+  return first ? first : null;
 }
 
 export async function generateMetadata({
@@ -36,24 +50,34 @@ export async function generateMetadata({
   params: Promise<RouteParams>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const attempt = await prisma.attempt.findUnique({
-    where: { id },
-    select: {
-      scorePct: true,
-      mock: { select: { exam: { select: { shortName: true, name: true } } } },
-    },
-  });
+  const attempt = await prisma.attempt
+    .findUnique({
+      where: { id },
+      select: {
+        scorePct: true,
+        user: { select: { name: true } },
+        mock: { select: { exam: { select: { shortName: true, name: true } } } },
+      },
+    })
+    .catch(() => null);
   if (!attempt?.mock) return { title: "Mock result — Shishya" };
 
-  const score = formatDisplayScorePct(attempt.scorePct);
   const exam = attempt.mock.exam.shortName;
+  const showScore = !!firstNameOf(attempt.user?.name) && attempt.scorePct != null;
+  const score = formatDisplayScorePct(attempt.scorePct);
+  const headline = showScore
+    ? `Scored ${score} on ${exam} — try 5 questions free`
+    : `${exam} mock on Shishya — try 5 questions free`;
+  const description = showScore
+    ? `A friend scored ${score} on a ${attempt.mock.exam.name} mock on Shishya. Check your own 5 questions — free, no sign-in.`
+    : `A friend took a ${attempt.mock.exam.name} mock on Shishya. Check your own 5 questions — free, no sign-in.`;
   return {
-    title: `Scored ${score} on ${exam} — try Shishya free | Shishya`,
-    description: `A student just attempted ${attempt.mock.exam.name} on Shishya and scored ${score}. Free mocks, PYQ, AI tutor — pick your exam and start in 60 seconds.`,
+    title: `${headline} | Shishya`,
+    description,
     alternates: { canonical: `https://shishya.in/share/${id}` },
     openGraph: {
-      title: `Scored ${score} on ${exam} — try Shishya free`,
-      description: `Real Indian exam prep. Free mocks, PYQ, AI tutor. Verified by students who cleared the same paper.`,
+      title: headline,
+      description: `Real Indian exam prep. Free mocks, PYQ, AI tutor — no paywall, no sign-in to try.`,
       url: `https://shishya.in/share/${id}`,
       siteName: "Shishya",
       locale: "en_IN",
@@ -61,7 +85,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `Scored ${score} on ${exam} — try Shishya free`,
+      title: headline,
       description: `Real Indian exam prep. Free mocks, PYQ, AI tutor.`,
     },
     robots: { index: true, follow: true },
@@ -70,37 +94,55 @@ export async function generateMetadata({
 
 export default async function SharePage({
   params,
+  searchParams,
 }: {
   params: Promise<RouteParams>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { id } = await params;
-  const attempt = await prisma.attempt.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      scorePct: true,
-      finishedAt: true,
-      user: { select: { name: true } },
-      mock: {
-        select: {
-          exam: {
-            select: {
-              code: true,
-              name: true,
-              shortName: true,
-              category: true,
+  const [{ id }, sp] = await Promise.all([params, searchParams]);
+  const [attempt, activeExams] = await Promise.all([
+    prisma.attempt.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        scorePct: true,
+        finishedAt: true,
+        user: { select: { name: true } },
+        mock: {
+          select: {
+            exam: {
+              select: {
+                code: true,
+                name: true,
+                shortName: true,
+                category: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    }),
+    // Honest count at render time — the old "all 163 exams" was a number
+    // frozen in copy while the catalogue kept growing.
+    prisma.exam.count({ where: { active: true } }).catch(() => null),
+  ]);
   if (!attempt || !attempt.mock) notFound();
 
-  const theme = getExamTheme(attempt.mock.exam.category);
+  const exam = attempt.mock.exam;
+  const theme = getExamTheme(exam.category);
+  const firstName = firstNameOf(attempt.user?.name);
+  const showScore = !!firstName && attempt.scorePct != null;
   const score = formatDisplayScorePct(attempt.scorePct);
-  const studentName =
-    attempt.user?.name?.trim().split(/\s+/)[0] ?? "A student";
+
+  // Keep the inbound channel on the CTA (a WhatsApp arrival stays a
+  // WhatsApp arrival on the quiz); a bare link counts as a copied one.
+  const inbound = Array.isArray(sp.utm_source) ? sp.utm_source[0] : sp.utm_source;
+  const quizHref = sharePath(`/exams/${exam.code}/quiz`, {
+    surface: "share-landing",
+    channel: isShareChannel(inbound) ? inbound : "copy",
+    exam: exam.code,
+  });
+  const languageCount = locales.length; // English + the scheduled Indian languages the translator serves
 
   return (
     <main className={`min-h-screen ${theme.pageBg}`}>
@@ -114,20 +156,34 @@ export default async function SharePage({
             <span aria-hidden>{theme.icon}</span>
             {theme.label}
           </span>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink-900 sm:text-5xl">
-            {studentName} scored{" "}
-            <span className="text-saffron-600">{score}</span>
-          </h1>
-          <p className="mt-2 text-base text-ink-700 sm:text-lg">
-            on a{" "}
-            <Link
-              href={`/exams/${attempt.mock.exam.code}`}
-              className="font-semibold text-ink-900 hover:underline"
-            >
-              {attempt.mock.exam.shortName}
-            </Link>{" "}
-            mock at Shishya
-          </p>
+          {showScore ? (
+            <>
+              <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink-900 sm:text-5xl">
+                {firstName} scored{" "}
+                <span className="text-saffron-600">{score}</span>
+              </h1>
+              <p className="mt-2 text-base text-ink-700 sm:text-lg">
+                on a{" "}
+                <Link href={`/exams/${exam.code}`} className="font-semibold text-ink-900 hover:underline">
+                  {exam.shortName}
+                </Link>{" "}
+                mock at Shishya
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink-900 sm:text-5xl">
+                A friend sent you a{" "}
+                <Link href={`/exams/${exam.code}`} className="text-saffron-600 hover:underline">
+                  {exam.shortName}
+                </Link>{" "}
+                mock
+              </h1>
+              <p className="mt-2 text-base text-ink-700 sm:text-lg">
+                from Shishya — free mocks, previous-year papers and exam dates for {exam.name}
+              </p>
+            </>
+          )}
           {attempt.finishedAt && (
             <p className="mt-1 text-xs text-ink-500">
               {new Date(attempt.finishedAt).toLocaleDateString("en-IN", {
@@ -140,33 +196,32 @@ export default async function SharePage({
 
           <div className="mx-auto mt-10 max-w-md rounded-2xl border-2 border-saffron-300 bg-white p-6 shadow-md sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
-              Take your own mock — free
+              Free · no sign-in
             </p>
             <h2 className="mt-2 text-xl font-bold text-ink-900">
-              Where do YOU stand on {attempt.mock.exam.shortName}?
+              {showScore
+                ? `Your friend scored ${score} — check your own 5 questions`
+                : `Check your own 5 ${exam.shortName} questions`}
             </h2>
             <p className="mt-2 text-sm text-ink-600">
-              90 seconds. 5 questions. Shishya spots your weak topics →
-              every next mock targets exactly those. Free, in your
-              language.
+              About 90 seconds: 5 {exam.shortName}-level questions, graded instantly, with the
+              answers. No account, no app.
             </p>
             <Link
-              href={`/login?callbackUrl=${encodeURIComponent(`/exams/${attempt.mock.exam.code}`)}`}
+              href={quizHref}
+              prefetch={false}
               className="mt-5 inline-flex w-full items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-base font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
             >
-              Try {attempt.mock.exam.shortName} free →
+              Try 5 {exam.shortName} questions — no sign-in →
             </Link>
             <p className="mt-3 text-[11px] text-ink-500">
-              Free · No credit card · 19 Indian languages
+              Free · No credit card · {languageCount} languages
             </p>
           </div>
 
           <p className="mt-10 text-xs text-ink-500">
-            <Link
-              href="/"
-              className="font-medium text-saffron-700 hover:underline"
-            >
-              Explore all 163 exams →
+            <Link href="/" className="font-medium text-saffron-700 hover:underline">
+              {activeExams ? `Explore all ${activeExams} exams →` : "Explore all exams →"}
             </Link>
           </p>
         </div>

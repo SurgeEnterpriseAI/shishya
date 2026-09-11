@@ -14,6 +14,7 @@ import type { AnonQuiz } from "@/lib/anon-quiz";
 import type { ExamWeekPhase } from "@/lib/exam-week";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { ExamAlertBox, type ExamAlertLabels, type ExamAlertWeekLabels } from "@/components/ExamAlertBox";
+import { inlineMd } from "@/components/NotesMarkdown";
 
 /** Exam Week Mode (6 Sep 2026): the server page that renders the player
  *  computes the exam's phase (computeExamWeekState) and passes the
@@ -30,7 +31,53 @@ export interface AnonQuizExamWeek {
 /** Phases where a guest who just tried 5 questions is worth one alert tap. */
 const ALERT_PHASES: ReadonlySet<ExamWeekPhase> = new Set<ExamWeekPhase>(["week", "eve", "post"]);
 
-export function AnonQuizPlayer({ quiz, examWeek }: { quiz: AnonQuiz; examWeek?: AnonQuizExamWeek }) {
+/** Cutoff-page arrivals (?from=cutoff, 11 Sep 2026): the category cutoff
+ *  table the visitor just read, rendered under the score with its source
+ *  tier word and the page's own disclaimer. Absent = no block. */
+export interface AnonQuizCutoff {
+  /** Section heading, e.g. "Indicative cutoff (estimate, not official)". */
+  heading: string;
+  /** Source tier word for these figures, e.g. "expected". */
+  tier: string;
+  /** Header row first, headers already translated. */
+  table: string[][];
+  /** The generator's source / guidance bullets (inline markdown). */
+  notes: string[];
+  /** The /cutoff page's honesty line. */
+  disclaimer: string;
+}
+
+// First-party analytics beacon (same shape as ShareExamButton) — the
+// WhatsApp share is counted as CTA_CLICKED cta 'share', surface 'anon-quiz'.
+function beacon(props: Record<string, unknown>) {
+  try {
+    navigator.sendBeacon?.(
+      "/api/analytics",
+      new Blob(
+        [
+          JSON.stringify({
+            kind: "CTA_CLICKED",
+            path: typeof location !== "undefined" ? location.pathname : "/",
+            props,
+          }),
+        ],
+        { type: "application/json" },
+      ),
+    );
+  } catch {
+    /* analytics is best-effort */
+  }
+}
+
+export function AnonQuizPlayer({
+  quiz,
+  examWeek,
+  cutoff,
+}: {
+  quiz: AnonQuiz;
+  examWeek?: AnonQuizExamWeek;
+  cutoff?: AnonQuizCutoff;
+}) {
   const qs = quiz.questions;
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
@@ -89,6 +136,10 @@ export function AnonQuizPlayer({ quiz, examWeek }: { quiz: AnonQuiz; examWeek?: 
                   topic: quiz.topicCode,
                   score: nextAnswers.filter((a) => a.correct).length,
                   total: qs.length,
+                  // 11 Sep 2026: split shared-set replays and cutoff-page
+                  // arrivals from the plain hub quiz.
+                  replay: quiz.replay,
+                  fromCutoff: !!cutoff,
                 },
               }),
             ],
@@ -119,6 +170,20 @@ export function AnonQuizPlayer({ quiz, examWeek }: { quiz: AnonQuiz; examWeek?: 
         : ` Give me the next things to study.`);
     const tutorHref = `/chat?examCode=${quiz.examCode}&seed=${encodeURIComponent(tutorSeed)}`;
     const good = pct >= 60;
+    // "Same N questions" challenge (11 Sep 2026): a replay link to THESE
+    // questions in THIS order (?set=), built here rather than via
+    // src/lib/share-url.ts (in flight elsewhere). The path is the page
+    // the student is on (exam or topic quiz, /hi and /te twins included),
+    // so a shared topic quiz lands back on the topic quiz. No counters,
+    // no urgency — just the score and the link.
+    const origin = typeof location !== "undefined" ? location.origin : "https://shishya.in";
+    const pathnameNow =
+      typeof location !== "undefined" ? location.pathname : `/exams/${quiz.examCode}/quiz`;
+    const shareUrl =
+      `${origin}${pathnameNow}?set=${qs.map((qq) => qq.id).join(",")}` +
+      `&utm_source=whatsapp&utm_medium=share&utm_campaign=anon-quiz&utm_content=${encodeURIComponent(quiz.examCode)}`;
+    const shareText = `I got ${score}/${qs.length} on these ${quiz.examShort} questions — try the same ${qs.length}:\n${shareUrl}`;
+    const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
     return (
       <div className="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">Your score</p>
@@ -130,6 +195,57 @@ export function AnonQuizPlayer({ quiz, examWeek }: { quiz: AnonQuiz; examWeek?: 
             ? `Strong start on ${quiz.scopeLabel} — now go deeper.`
             : `${quiz.scopeLabel} needs some work — that's exactly what Shishya's built for.`}
         </p>
+
+        {/* Cutoff-page arrivals: the rows they came from, right under the
+            score. The figures keep their tier word and the cutoff page's
+            disclaimer; the sample line says what this is and isn't. No
+            verdict is computed — the bands are marks in free text and a
+            10-question sample can't be mapped onto them honestly. */}
+        {cutoff && (
+          <div className="mt-5 rounded-lg border border-ink-200 bg-ink-50/60 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">
+              {cutoff.heading} · <span className="normal-case text-ink-600">{cutoff.tier}</span>
+            </p>
+            <p className="mt-1 text-sm text-ink-800">
+              Your sample score: <span className="font-semibold">{pct}%</span> ({score}/{qs.length}).
+            </p>
+            <div className="mt-2 overflow-x-auto rounded-md border border-ink-200 bg-white">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-ink-200 bg-ink-50/60 text-left">
+                    {cutoff.table[0].map((h, i) => (
+                      <th key={i} className="px-3 py-1.5 font-semibold text-ink-800">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {cutoff.table.slice(1).map((row, i) => (
+                    <tr key={i} className="border-b border-ink-100 last:border-0">
+                      {row.map((c, j) => (
+                        <td key={j} className={`px-3 py-1.5 ${j === 0 ? "font-medium text-ink-900" : "tabular-nums text-ink-700"}`}>
+                          {c}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {cutoff.notes.length > 0 && (
+              <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-ink-600">
+                {cutoff.notes.map((n, i) => (
+                  <li key={i}>{inlineMd(n)}</li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-2 text-xs font-medium text-ink-700">
+              This is a {qs.length}-question sample scored against last cycle&apos;s cutoff bands — not a prediction.
+            </p>
+            <p className="mt-1 text-xs text-ink-500">{cutoff.disclaimer}</p>
+          </div>
+        )}
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
           <Link
@@ -144,6 +260,26 @@ export function AnonQuizPlayer({ quiz, examWeek }: { quiz: AnonQuiz; examWeek?: 
           >
             Ask Shishya to explain these
           </Link>
+        </div>
+
+        {/* Same-questions challenge: one tap to a WhatsApp group with the
+            score and a replay link. Indian aspirants organise prep in
+            WhatsApp groups; a peer opening the same 5 is the cheapest
+            honest growth loop this page has. */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-ink-600">Challenge a friend with the same {qs.length}:</span>
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => beacon({ cta: "share", surface: "anon-quiz", via: "whatsapp", exam: quiz.examCode, score, total: qs.length })}
+            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+            </svg>
+            WhatsApp
+          </a>
         </div>
 
         {/* Exam week: the guest is here because the exam is days away or

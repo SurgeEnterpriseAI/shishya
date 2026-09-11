@@ -96,6 +96,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   const description = `${fill(tt("tracker.intro"), { exam: exam.shortName })} ${exam.name}.`.slice(0, 300);
   const path = `/exams/${exam.code}/updates`;
   const url = localizedUrl(path, urlLocale);
+  const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
   return {
     title,
     description,
@@ -110,8 +111,19 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
       `${exam.shortName} cutoff`,
       `${exam.shortName} latest news`,
     ],
-    openGraph: { title, description, url, siteName: "Shishya", locale: ogLocale(urlLocale), type: "article" },
-    twitter: { card: "summary_large_image", title, description },
+    // Explicit og:image — a child segment's openGraph block REPLACES the
+    // parent's, so the per-exam card from /exams/[code]/opengraph-image
+    // was not inherited here and shares rendered image-less (11 Sep 2026).
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Shishya",
+      locale: ogLocale(urlLocale),
+      type: "article",
+      images: [{ url: image, width: 1200, height: 630, alt: `${exam.shortName} — Shishya` }],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
 
@@ -192,7 +204,9 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
 
   const kindLabel = (k: DateKind) => t(`tracker.kind.${k}`);
   const statusLabel = (r: TimelineRow) =>
-    r.status === "done"
+    r.displayStatus === "passed-estimate"
+      ? t("tracker.passedEstimate")
+      : r.status === "done"
       ? t("tracker.done")
       : r.status === "today"
         ? t("tracker.today")
@@ -200,6 +214,21 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
 
   // Key-dates strip: one card per key kind (upcoming first, else latest).
   const keyCards = KEY_KINDS.map((k) => ({ kind: k, row: upcomingOfKind(timeline, k) ?? latestOfKind(timeline, k) }));
+
+  // WhatsApp share text (11 Sep 2026): the dated rows THEMSELVES, each
+  // with its tier word, instead of a generic "one page" line — the forward
+  // is useful in the group even if nobody taps. Only rows that exist, via
+  // the same upcoming-else-latest pick as the key-dates strip; a kind
+  // with no row says "not announced yet" (never a guess). Before the exam
+  // day: exam · admit card · result. After it: exam · answer key · result.
+  const shareKinds: DateKind[] = nextExam ? ["EXAM", "ADMIT_CARD", "RESULT"] : ["EXAM", "ANSWER_KEY", "RESULT"];
+  const shareRows = shareKinds.map((k) => {
+    const row = upcomingOfKind(timeline, k) ?? latestOfKind(timeline, k);
+    return row
+      ? `${kindLabel(k)}: ${fmtDay(row.date, locale)} (${t(`tracker.${row.tier}`).toLowerCase()})`
+      : `${kindLabel(k)}: ${t("tracker.notAnnounced").toLowerCase()}`;
+  });
+  const shareMessage = `${short} ${year} — ${t("tracker.keyDates")}: ${shareRows.join(" · ")} — ${t("tracker.title")}:`;
 
   // FAQ — generated from the data, never from imagination.
   const faqFor = (qKey: string, kind: DateKind) => {
@@ -529,7 +558,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
         </div>
 
         <div className="mt-4">
-          <ShareExamButton url={url} message={`${short} ${year} — ${t("tracker.title")} (official vs expected, one page):`} surface="exam" />
+          <ShareExamButton url={url} message={shareMessage} surface="tracker" exam={exam.code} />
         </div>
 
         {/* FAQ (visible; same text as the FAQPage schema above). */}

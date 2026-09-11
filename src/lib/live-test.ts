@@ -9,7 +9,9 @@
 // a REHEARSAL live test for every exam whose ANNOUNCED (official /
 // reported — never expected) exam day is 3–7 days out: 25 easy-leaning
 // questions (EASY 40 / MEDIUM 45 / HARD 15), 20 min, open the moment it is
-// created and closing 8 PM IST the evening before the exam day. One per
+// created and closing REHEARSAL_CLOSE_IST_HOUR (6 PM IST since 11 Sep
+// 2026 — it was 8 PM, which had the rank mail landing at 23:30 IST on the
+// night the eve mail says is for sleep) the evening before the exam day. One per
 // (exam, exam day) — Mock.config.rehearsalFor carries the IST exam day and
 // is the idempotency key. Rehearsals keep generatedBy = 'live-test' so the
 // ranked-attempt gate, the results-page rank and the question exclusion
@@ -36,8 +38,11 @@ const DAY_MS = 86_400_000;
 /** Rehearsal window: announced exam day this many days out (inclusive). */
 const REHEARSAL_MIN_DAYS = 3;
 const REHEARSAL_MAX_DAYS = 7;
-/** Closes at this IST hour on the evening before the exam day. */
-const REHEARSAL_CLOSE_IST_HOUR = 20;
+/** Closes at this IST hour on the evening before the exam day. Exported so
+ *  the hub's rehearsal card and the close cron's schedule (vercel.json:
+ *  12:50 UTC = 18:20 IST) can say the same hour. Existing LiveTest rows keep
+ *  the closesAt they were created with — this only shapes new rehearsals. */
+export const REHEARSAL_CLOSE_IST_HOUR = 18;
 
 type DifficultyMix = { EASY: number; MEDIUM: number; HARD: number };
 /** Sunday paper: balanced. */

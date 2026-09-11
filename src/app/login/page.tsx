@@ -10,6 +10,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { getT } from "@/lib/i18n-server";
+import { getExamCatalog } from "@/lib/db/exam-cache";
+import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 
 // Belt-and-braces alongside the robots.txt disallow: a Disallow-ed URL
 // can still be indexed (link-only, no description) and would then be a
@@ -30,17 +32,35 @@ export default async function LoginPage({
   const cb = sp.callbackUrl ?? "/dashboard";
   const { t } = await getT();
 
+  // Exam count for the default copy — the cached catalogue (same list
+  // /exams renders, same "govt & entrance" definition as the homepage
+  // band: active, school boards excluded). Never a typed number; if the
+  // cache is unreachable the sentence simply drops the count.
+  const examCount = await getExamCatalog()
+    .then((list) => list.filter((e) => e.category !== "SCHOOL_BOARD").length)
+    .catch(() => 0);
+
   // Context-aware wall (23 Aug 2026): /login is the most-viewed page on
   // the site (~140 anon views/day) — people arrive here from a gated
   // action (start a mock, open the coach, a deep link from an email or
   // ChatGPT) and see a generic sign-in. Tell them exactly what's one tap
   // away, and — for exam contexts — let them taste 5 questions WITHOUT
   // signing in first. Value before the wall.
+  //
+  // "Welcome back" (11 Sep 2026 audit): the header's Sign-in button
+  // lands strangers on bare /login with the default callback
+  // (/dashboard), and this used to greet them as returning students
+  // (135 landers / 14 d, 53% bounce). Nothing the app sets in the
+  // browser proves a previous SIGNED-IN visit (`shishya_anon` and
+  // `shishya_attrib` are issued to anonymous visitors, `shishya-lang`
+  // is a preference), so the only honest signal is the callback: the
+  // report, the mentor desk and the live test are pages a stranger has
+  // no reason to be sent to. /dashboard is NOT in that list any more.
   const examMatch = cb.match(/\/exams\/([A-Z0-9_]+)/i);
   const examCode = examMatch ? examMatch[1] : null;
   const isMock = /\/mocks\//.test(cb) || /\/pyq\//.test(cb) || (!!examCode && /\/(quiz|topics)\b/.test(cb));
   const isCoach = /\/coach/.test(cb);
-  const isReturn = /\/(dashboard|me\/report|live-test|mentor)/.test(cb);
+  const isReturn = /\/(me\/report|live-test|mentor)/.test(cb);
   const intent = isMock || examCode
     ? { h1: examCode ? `Your ${examCode.replace(/_/g, " ")} mock is one tap away` : "Your mock is one tap away", body: "Sign in with Google once (5 seconds, no password) and it opens straight away — with your score, weak topics and rank saved." }
     : isCoach
@@ -48,6 +68,12 @@ export default async function LoginPage({
       : isReturn
         ? { h1: "Welcome back", body: "Sign in to continue where you left off — your mocks, plan and report are all still here." }
         : null;
+  // Default (bare /login): the concrete offer, localised via i18n. The
+  // English string carries an "{n} exams" clause that is filled from
+  // the catalogue count and dropped when the count is unavailable.
+  const defaultBody = examCount > 0
+    ? t("login.body").replace(/\{n\}/g, String(examCount))
+    : t("login.body").replace(/\s*—\s*for any of \{n\} exams/, "");
 
   return (
     <main className="min-h-screen bg-saffron-50/30 flex items-center justify-center p-4">
@@ -59,7 +85,7 @@ export default async function LoginPage({
           <span className="text-lg font-semibold tracking-tight text-ink-900">Shishya</span>
         </Link>
         <h1 className="mt-6 text-2xl font-bold text-ink-900">{intent?.h1 ?? t("login.h1")}</h1>
-        <p className="mt-2 text-sm text-ink-600">{intent?.body ?? t("login.body")}</p>
+        <p className="mt-2 text-sm text-ink-600">{intent?.body ?? defaultBody}</p>
         <GoogleSignInButton callbackUrl={cb} label={t("login.continue")} />
         {examCode && (
           <Link
@@ -77,13 +103,13 @@ export default async function LoginPage({
             suggestion: optimize the /login entry experience.) */}
         <div className="mt-6 rounded-lg bg-saffron-50 p-4 text-left ring-1 ring-saffron-100">
           <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
-            Free · No credit card · 22 Indian languages
+            Free · No credit card · {INDIAN_LANGUAGE_COUNT} Indian languages
           </p>
           <ul className="mt-2 space-y-1.5 text-sm text-ink-700">
-            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> Adaptive mocks that target your weak topics</li>
-            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> Ask Shishya — your AI tutor for every exam</li>
-            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> Real previous-year papers, by year &amp; topic</li>
-            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> Every major entrance &amp; government-job exam covered</li>
+            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> A free day-by-day plan to exam day, rebuilt every morning</li>
+            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> Full-length mocks — your scores, weak topics and rank saved</li>
+            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> PYQ-pattern papers — questions modelled on each year&apos;s paper, by topic</li>
+            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> Ask Shishya — your AI tutor for every exam · one email on result day</li>
           </ul>
         </div>
 

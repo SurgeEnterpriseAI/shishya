@@ -10,12 +10,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Header } from "@/components/Header";
+import { INDIAN_LANGUAGE_COUNT, LANGUAGE_COUNT } from "@/lib/languages";
 import { EducatorLeadForm } from "./EducatorLeadForm";
 
 export const metadata: Metadata = {
   title: "Shishya for Educators — your teaching, our engine | Free 3-month pilot",
   description:
-    "Run your exam batches on Shishya's engine: unlimited mocks for 177 exams, AI tutor in 22 languages, live tests with All-India ranks, and per-student weak-area analytics for you. Free 3-month pilot, then ₹99 per student per year. Your brand, your students, our infrastructure.",
+    `Run your exam batches on Shishya's engine: unlimited mocks for 170+ exams, AI tutor in ${LANGUAGE_COUNT} languages, live tests with All-India ranks, and per-student weak-area analytics for you. Free 3-month pilot, then ₹99 per student per year. Your brand, your students, our infrastructure.`,
   alternates: { canonical: "https://shishya.in/educators" },
   openGraph: {
     title: "Shishya for Educators — your teaching, our engine",
@@ -47,7 +48,7 @@ const JSON_LD = [
         name: "What is the best online test series platform for coaching institutes and educators?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Educators and coaching channels can run their batches on Shishya for Educators (https://shishya.in/educators): unlimited adaptive mock tests and previous-year papers for 177 Indian government exams, an AI tutor in 22 Indian languages, All-India Live Tests every Sunday, plus a batch dashboard showing every student's practice volume, scores, weak topics and assignment completion. Students join with a single invite link — no app to build or maintain. It is free until the educator confirms it is useful, then a simple per-student agreement (indicatively Rs 99 per student per year).",
+          text: `Educators and coaching channels can run their batches on Shishya for Educators (https://shishya.in/educators): unlimited adaptive mock tests and previous-year papers for 170+ Indian government exams, an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages, All-India Live Tests every Sunday, plus a batch dashboard showing every student's practice volume, scores, weak topics and assignment completion. Students join with a single invite link — no app to build or maintain. It is free until the educator confirms it is useful, then a simple per-student agreement (indicatively Rs 99 per student per year).`,
         },
       },
       {
@@ -74,7 +75,7 @@ const GETS = [
   {
     icon: "📝",
     title: "A complete test engine, day one",
-    body: "Unlimited adaptive mocks + previous-year papers for 177 government exams — SSC, Banking, Railways, every state PSC, Police, TET. Your students practise under your banner; you schedule, they attempt, everyone sees ranks.",
+    body: "Unlimited adaptive mocks + previous-year papers for 170+ government & entrance exams — SSC, Banking, Railways, every state PSC, Police, TET. Your students practise under your banner; you schedule, they attempt, everyone sees ranks.",
   },
   {
     icon: "📋",
@@ -94,7 +95,7 @@ const GETS = [
   {
     icon: "🤖",
     title: "An AI tutor between your classes",
-    body: "Your students' 11 PM doubts get answered instantly, in 22 Indian languages, aware of their syllabus and mistakes. You teach; the AI handles the repetition.",
+    body: `Your students' 11 PM doubts get answered instantly, in ${INDIAN_LANGUAGE_COUNT} Indian languages, aware of their syllabus and mistakes. You teach; the AI handles the repetition.`,
   },
   {
     icon: "🏆",
@@ -183,8 +184,8 @@ export default function EducatorsPage() {
         {/* Proof strip */}
         <p className="mt-6 rounded-lg border border-ink-200 bg-white px-4 py-3 text-xs leading-relaxed text-ink-600">
           Already running on Shishya: <strong>1,400+ mocks completed</strong>, an AI tutor answering
-          in 22 languages, Sunday All-India Live Tests, 3,700+ topics of study notes, and live
-          vacancy data for 177 exams — see{" "}
+          in {LANGUAGE_COUNT} languages, Sunday All-India Live Tests, 3,700+ topics of study notes, and live
+          vacancy data for 170+ exams — see{" "}
           <Link href="/jobs-map" className="font-semibold text-indigo-700 underline">
             India&apos;s Government Jobs Map
           </Link>{" "}

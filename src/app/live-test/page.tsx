@@ -31,9 +31,13 @@ export const metadata: Metadata = {
     siteName: "Shishya",
     locale: "en_IN",
     type: "website",
+    // Explicit og:image: a page-level openGraph block replaces the root's,
+    // so the root card (src/app/opengraph-image.tsx) was not inherited.
+    images: [{ url: "https://shishya.in/opengraph-image", width: 1200, height: 630, alt: "Shishya — free Indian exam prep" }],
   },
   twitter: {
     card: "summary_large_image",
+    images: ["https://shishya.in/opengraph-image"],
     title: 'All-India Live Test — free weekly mock with your rank | Shishya'.replace(" | Shishya", ""),
     description: 'Every Sunday: a free All-India Live Test for top government exams. Same paper, same window, real All-India rank the moment you submit. No fee, no login wall.',
   },

@@ -10,7 +10,7 @@ import { useSearchParams } from "next/navigation";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
 
 const STAGES = [
-  "Searching Shishya's 177 exams…",
+  "Searching Shishya's 170+ exams…",
   "Checking vacancies, eligibility & guides…",
   "Cross-checking dates and results…",
   "Writing your answer…",

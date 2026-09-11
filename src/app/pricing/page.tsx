@@ -3,6 +3,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 
 export const metadata: Metadata = {
   title: "Pricing — Shishya",
@@ -20,7 +21,7 @@ const pricingFaq = {
       name: "Is Shishya really free?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes — every preparation feature on Shishya is 100% free with no premium tier: mock tests for 175+ Indian government and entrance exams, previous-year papers, study notes, the AI tutor in 22 Indian languages, personal coach plans, daily status reports, personalised study packs, All-India live tests, cutoffs and guides. No trial, no credit card.",
+        text: `Yes — every preparation feature on Shishya is 100% free with no premium tier: mock tests for 175+ Indian government and entrance exams, previous-year papers, study notes, the AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages, personal coach plans, daily status reports, personalised study packs, All-India live tests, cutoffs and guides. No trial, no credit card.`,
       },
     },
     {
@@ -51,7 +52,7 @@ export default function PricingPage() {
       <div className="mt-5 rounded-xl border-2 border-emerald-300 bg-emerald-50/50 p-5">
         <p className="text-base font-bold text-ink-900">The platform: ₹0. Free, always.</p>
         <p className="mt-1">
-          Mock tests for 175+ exams, previous-year papers, study notes, the AI tutor in 22 Indian
+          Mock tests for 175+ exams, previous-year papers, study notes, the AI tutor in {INDIAN_LANGUAGE_COUNT} Indian
           languages, personal coach plans, daily status reports, personalised study packs, All-India
           live tests, cutoffs and guides — all free. No trial, no credit card, no premium tier.
         </p>

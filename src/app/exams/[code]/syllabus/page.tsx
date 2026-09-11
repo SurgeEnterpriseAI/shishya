@@ -35,6 +35,7 @@ export async function generateMetadata({
     `Complete ${exam.shortName} (${exam.name}) syllabus ${YEAR}: every subject and topic with weightage, ` +
     `free study notes, practice questions and mock tests for each topic. No coaching fees, in your language.`;
   const url = `https://shishya.in/exams/${exam.code}/syllabus`;
+  const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
   return {
     title,
     description,
@@ -46,8 +47,18 @@ export async function generateMetadata({
       `${exam.shortName} syllabus with weightage`,
       `${exam.shortName} study notes`,
     ],
-    openGraph: { title, description, url, siteName: "Shishya", locale: "en_IN", type: "article" },
-    twitter: { card: "summary_large_image", title, description },
+    // Explicit og:image — a child segment's openGraph block replaces the
+    // parent's, so /exams/[code]/opengraph-image was not inherited here.
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Shishya",
+      locale: "en_IN",
+      type: "article",
+      images: [{ url: image, width: 1200, height: 630, alt: `${exam.shortName} — Shishya` }],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
 
@@ -132,7 +143,8 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
           <ShareExamButton
             url={url}
             message={`Complete ${exam.shortName} syllabus ${YEAR} — every topic with free study notes & practice (Shishya):`}
-            surface="exam"
+            surface="syllabus"
+            exam={exam.code}
           />
         </div>
 

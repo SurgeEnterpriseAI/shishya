@@ -53,7 +53,7 @@ async function activeExams(): Promise<Exam[]> {
 }
 
 const HELP = [
-  `<b>Shishya</b> — free govt-exam prep for 177 exams. Try:`,
+  `<b>Shishya</b> — free govt-exam prep for 170+ exams. Try:`,
   `• /today — 5 practice questions, right here`,
   `• /exam SSC CGL — exam date, admit card, result (official / announced / expected)`,
   `• /calendar — exam days in the next 30 days`,
@@ -154,7 +154,10 @@ async function examCard(exam: Exam): Promise<{ text: string; buttons: InlineButt
     // official = conducting-body notice · reported = announced via press ·
     // expected = estimate (the footer explains "expected").
     const tag = r.tier === "official" ? "official" : r.tier === "reported" ? "announced" : "expected";
-    const when = r.status === "done" ? "done" : r.status === "today" ? "TODAY" : `in ${r.daysFromToday}d`;
+    // A passed estimate was never confirmed — it must not read as "done".
+    const when = r.displayStatus === "passed-estimate"
+      ? "was expected — not confirmed"
+      : r.status === "done" ? "done" : r.status === "today" ? "TODAY" : `in ${r.daysFromToday}d`;
     return `• ${label}: <b>${tgEscape(fmtDay(r.date))}</b> (${tag}, ${when})`;
   };
   const news = await prisma.examNewsItem

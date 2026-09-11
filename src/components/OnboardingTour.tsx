@@ -40,7 +40,7 @@ const STEPS: Step[] = [
     anchor: "explore",
     title: "1 · Pick your exam",
     body:
-      "Search or browse 163 Indian entrance exams — SSC, RRB, banking, JEE, NEET, UPSC, state boards, olympiads, and more. Click any card to open it.",
+      "Search or browse 170+ Indian govt & entrance exams — SSC, RRB, banking, JEE, NEET, UPSC, state boards, olympiads, and more. Click any card to open it.",
   },
   {
     key: "start-mock",

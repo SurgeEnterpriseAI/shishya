@@ -51,6 +51,7 @@ import { sendExamDayAfterEmail } from "@/lib/email";
 import { computeExamWeekState, istDay } from "@/lib/exam-week";
 import { shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline } from "@/lib/exam-timeline";
+import { markingSchemeStatable } from "@/lib/marking-scheme";
 import {
   examEveDecision,
   examRowOnDay,
@@ -238,8 +239,18 @@ export async function GET(req: Request) {
     // "your window opened yesterday … and runs to" would be false there too.
     const windowEndLine =
       why === "shift-day" || why === "coach-plan" || !windowEnd ? null : whenWithTier(windowEnd);
-    const answerKeyLine = statusLine("ew.post.key", rowOnOrAfter(timeline, "ANSWER_KEY", yesterday));
+    const answerKeyRow = rowOnOrAfter(timeline, "ANSWER_KEY", yesterday);
+    const answerKeyLine = statusLine("ew.post.key", answerKeyRow);
     const resultLine = statusLine("ew.post.result", rowOnOrAfter(timeline, "RESULT", yesterday));
+    // Estimator link only when the exam's marking scheme can be stated
+    // (markingSchemeStatable) — one read per exam, never per student.
+    const canEstimate = await prisma.exam
+      .findUnique({
+        where: { id: meta.examId },
+        select: { totalQuestions: true, scoredQuestions: true, totalMarks: true, marksPerQ: true, description: true },
+      })
+      .then((e) => !!e && markingSchemeStatable(e))
+      .catch(() => false);
 
     const tk = trackKey(meta);
     let candidates = trackCache.get(tk);
@@ -350,6 +361,8 @@ export async function GET(req: Request) {
           answerKeyLine,
           resultLine,
           nextExam: next ? { code: next.code, short: next.short, date: plainDay(next.row.date), tier: tierWord(next.row.tier) } : null,
+          answerKeyAnnounced: !!answerKeyRow,
+          canEstimate,
         }).catch(() => false);
         if (ok) {
           sent++;

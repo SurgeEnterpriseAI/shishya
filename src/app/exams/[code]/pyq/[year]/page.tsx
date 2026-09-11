@@ -27,6 +27,17 @@ export const revalidate = 600;
 // set "the 2023 paper" is the single biggest overclaim on the site, so every
 // surface below states what the year actually holds against the real paper.
 // A year counts as the paper only once it holds ≥80% of it.
+//
+// Second honesty guard (11 Sep 2026): NONE of these questions is the
+// original. Every PYQ question on the site is freshly worded in the PATTERN
+// of that year's paper (src/lib/ai/pyq-generator.ts — "never reproduce a
+// real PYQ verbatim"; scripts/build-full-pyq-papers.ts assembles the
+// full-length ones the same way). This page said "real questions from the
+// {year} paper". Every surface below — title, description, JSON-LD, FAQ
+// answers, share text, body, tutor seed — now says "{n} PYQ-pattern
+// questions modelled on the {year} paper (which had {total})". The SEO
+// title keeps the phrase students search for, "Previous Year Questions
+// (PYQ)", because that is the query; the claim lives in the rest.
 const FULL_PAPER_RATIO = 0.8;
 function isPartialPaper(held: number, totalQuestions: number): boolean {
   // totalQuestions <= 0 means we don't know the real paper's size — say
@@ -58,17 +69,20 @@ export async function generateMetadata({
   });
   const partial = isPartialPaper(held, exam.totalQuestions);
   // Exam name + year stay at the front of the title — these pages rank for
-  // "<exam> <year> previous year paper"; only the claim changes.
+  // "<exam> <year> previous year paper"; the title keeps the search phrase
+  // "Previous Year Questions (PYQ)", the description carries the claim:
+  // pattern-modelled, never the original questions.
   const title = partial
     ? `${exam.shortName} ${year} Previous Year Questions (PYQ) — ${held} of ${exam.totalQuestions}, Solve Free | Shishya`
-    : `${exam.shortName} ${year} Previous Year Paper (PYQ) — Solve Free Online | Shishya`;
-  const description = partial
-    ? `${held} questions from the ${exam.shortName} (${exam.name}) ${year} previous year paper — the full paper had ` +
-      `${exam.totalQuestions}. Solve this set free on Shishya with instant scoring, solutions and topic-wise analysis. ` +
-      `No coaching fees, in your language.`
-    : `Solve the ${exam.shortName} (${exam.name}) ${year} previous year question paper free on Shishya — ` +
-      `real exam questions with instant scoring, solutions, and topic-wise analysis. No coaching fees, in your language.`;
+    : `${exam.shortName} ${year} Previous Year Questions (PYQ) — Full-Length Pattern Paper, Solve Free | Shishya`;
+  const description =
+    `${held} PYQ-pattern questions modelled on the ${exam.shortName} (${exam.name}) ${year} paper (which had ` +
+    `${exam.totalQuestions}) — freshly worded in that paper's pattern, not the original questions. ` +
+    (partial ? "Solve this set free" : "Solve it free as a full-length timed mock") +
+    ` on Shishya with instant scoring, solutions and topic-wise analysis. No coaching fees, in your language.`;
   const url = `https://shishya.in/exams/${exam.code}/pyq/${year}`;
+  // The per-exam social card (src/app/exams/[code]/opengraph-image.tsx).
+  const ogImage = `https://shishya.in/exams/${exam.code}/opengraph-image`;
   return {
     title,
     description,
@@ -80,8 +94,16 @@ export async function generateMetadata({
       `${exam.shortName} ${year} paper with solutions`,
       `${exam.shortName} old papers`,
     ],
-    openGraph: { title, description, url, siteName: "Shishya", locale: "en_IN", type: "article" },
-    twitter: { card: "summary_large_image", title, description },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Shishya",
+      locale: "en_IN",
+      type: "article",
+      images: [{ url: ogImage, width: 1200, height: 630, alt: `${exam.shortName} — Shishya` }],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [ogImage] },
   };
 }
 
@@ -123,10 +145,13 @@ export default async function PYQYearPage({
     );
   }
 
-  // Is this year the paper, or a set of questions out of it? Drives the H1
-  // line, the CTA copy, the JSON-LD and the AEO answer below.
+  // Is this year a full-length pattern paper, or a set of questions in the
+  // paper's pattern? Drives the H1 line, the CTA copy, the JSON-LD and the
+  // AEO answer below. Either way the questions are pattern-modelled, and
+  // `modelled` is the one sentence every surface on this page uses.
   const partial = isPartialPaper(questions.length, exam.totalQuestions);
   const counts = { n: questions.length, m: exam.totalQuestions, year: yearNum };
+  const modelled = `${questions.length} PYQ-pattern questions modelled on the ${yearNum} paper (which had ${exam.totalQuestions})`;
 
   // Signed-in only: find-or-create the system Mock + the user's attempt
   // state. Anonymous visitors (and crawlers) get a read-only landing — no
@@ -145,7 +170,7 @@ export default async function PYQYearPage({
           examId: exam.id,
           userId: null,
           type: "FULL",
-          title: `${exam.shortName} — ${yearNum} (Previous Year)`,
+          title: `${exam.shortName} — ${yearNum} (PYQ Pattern)`,
           questionIds: questions.map((q) => q.id),
           generatedBy,
           config: {
@@ -201,18 +226,16 @@ export default async function PYQYearPage({
     "@context": "https://schema.org",
     "@type": ["Article", "LearningResource"],
     headline: partial
-      ? `${exam.shortName} ${yearNum} Previous Year Questions (${questions.length} of ${exam.totalQuestions})`
-      : `${exam.shortName} ${yearNum} Previous Year Question Paper`,
+      ? `${exam.shortName} ${yearNum} PYQ-Pattern Questions (${questions.length} of ${exam.totalQuestions})`
+      : `${exam.shortName} ${yearNum} PYQ-Pattern Paper (${questions.length} questions)`,
     name: `${exam.shortName} ${yearNum} PYQ`,
-    description: partial
-      ? `${questions.length} questions from the ${exam.name} ${yearNum} previous year paper — the full paper had ${exam.totalQuestions}. Solve this set free with instant scoring and solutions.`
-      : `Solve the ${exam.name} ${yearNum} previous year paper free — ${questions.length} real questions with instant scoring and solutions.`,
+    description: `${questions.length} PYQ-pattern questions modelled on the ${exam.name} ${yearNum} paper (which had ${exam.totalQuestions}) — freshly worded in that paper's pattern, not the original questions. Solve ${partial ? "this set" : "it as a full-length timed mock"} free with instant scoring and solutions.`,
     url: pageUrl,
     inLanguage: "en-IN",
     isAccessibleForFree: true,
     learningResourceType: partial
-      ? "Previous year questions (part of the paper)"
-      : "Previous year question paper",
+      ? "PYQ-pattern practice questions (modelled on part of the paper)"
+      : "PYQ-pattern practice paper (full-length, modelled on the paper)",
     educationalLevel: "Competitive exam preparation",
     about: [
       { "@type": "Thing", name: exam.name },
@@ -238,19 +261,26 @@ export default async function PYQYearPage({
     mainEntity: [
       {
         "@type": "Question",
-        name: `Where can I solve the ${exam.shortName} ${yearNum} question paper free online?`,
+        name: `Where can I solve ${exam.shortName} ${yearNum} previous year questions free online?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: partial
-            ? `At ${pageUrl} you can solve ${questions.length} questions from the ${exam.shortName} ${yearNum} previous-year paper free — that is ${questions.length} of the paper's ${exam.totalQuestions} questions, not the whole paper. They run as a timed mock with instant scoring, step-by-step solutions and topic-wise weak-area analysis. No fee and no coaching enrolment needed.`
-            : `You can solve the ${exam.shortName} ${yearNum} previous-year paper free at ${pageUrl} — ${questions.length} questions in the real paper's pattern, attempted as a timed mock with instant scoring, step-by-step solutions and topic-wise weak-area analysis. No fee and no coaching enrolment needed.`,
+          text:
+            `At ${pageUrl} you can solve ${exam.shortName} ${modelled} free. Shishya does not reproduce the original paper: every question is freshly worded in that year's pattern — same topics, style and difficulty, new wording and numbers` +
+            (partial ? `, and this set covers ${questions.length} of the paper's ${exam.totalQuestions} questions, not the whole paper` : ", at the real paper's full length") +
+            `. They run as a timed mock with instant scoring, step-by-step solutions and topic-wise weak-area analysis. No fee and no coaching enrolment needed.`,
         },
       },
       {
         "@type": "Question",
-        name: partial
-          ? `Do these ${exam.shortName} ${yearNum} questions come with solutions and analysis?`
-          : `Does the ${exam.shortName} ${yearNum} paper come with solutions and analysis?`,
+        name: `Are these the actual ${exam.shortName} ${yearNum} paper questions?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `No. They are PYQ-pattern questions modelled on the ${exam.shortName} ${yearNum} paper — freshly worded practice questions in the same pattern, not the original questions, which Shishya does not reproduce. The page shows how many questions it holds (${questions.length}) against the real paper's length (${exam.totalQuestions}).`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `Do these ${exam.shortName} ${yearNum} pattern questions come with solutions and analysis?`,
         acceptedAnswer: {
           "@type": "Answer",
           text: `Yes — every question carries a worked solution, and on submitting you get an instant score with a topic-wise breakdown showing exactly which areas to revise. Wrong answers are auto-collected into a free Mistake Notebook for one-tap re-practice until cleared.`,
@@ -261,7 +291,7 @@ export default async function PYQYearPage({
         name: `Are previous year papers enough to crack ${exam.shortName}?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Previous-year papers are the best signal of what the exam actually tests, but toppers pair them with targeted practice and a plan. On Shishya (all free): solve papers year-wise, drill weak topics via the Mistake Notebook, follow a day-by-day plan from the Personal Coach at https://shishya.in/coach, and sit the Sunday All-India Live Test at https://shishya.in/live-test to see where you stand nationally.`,
+          text: `Previous-year papers are the best signal of what the exam actually tests, but toppers pair them with targeted practice and a plan. On Shishya (all free): solve PYQ-pattern sets year-wise, drill weak topics via the Mistake Notebook, follow a day-by-day plan from the Personal Coach at https://shishya.in/coach, and sit the Sunday All-India Live Test at https://shishya.in/live-test to see where you stand nationally.`,
         },
       },
     ],
@@ -288,21 +318,22 @@ export default async function PYQYearPage({
         </p>
         <h1 className="mt-1 text-3xl font-bold text-ink-900">{exam.shortName} — {yearNum}</h1>
         <p className="mt-1 text-sm text-ink-600">
-          {partial
-            ? // "20 previous-year questions (the 2023 paper had 150)" — the
-              // student knows exactly what they are getting before they start.
-              `${fill(t("exam.pyq.partialLine"), counts)} · ${exam.durationMin} ${t("exam.minutes")}`
-            : `${t("exam.pyq.title")} · ${questions.length} ${t("exam.pyq.questions")} · ${exam.durationMin} ${t("exam.minutes")}`}
+          {/* "20 PYQ-pattern questions modelled on the 2023 paper (which
+              had 150) · 60 minutes" — the student knows exactly what they
+              are getting before they start. English on every locale: the
+              i18n line (exam.pyq.partialLine) still says "previous-year
+              questions", which is the claim this page must not make. */}
+          {modelled} · {exam.durationMin} {t("exam.minutes")}
+        </p>
+        <p className="mt-2 max-w-3xl text-xs text-ink-500">
+          Every question here is freshly worded in the pattern of the {yearNum} paper — same topics, style and
+          difficulty — not the original questions, which Shishya does not reproduce.
         </p>
 
         <div className="mt-4">
           <ShareExamButton
             url={`https://shishya.in/exams/${code}/pyq/${yearNum}`}
-            message={
-              partial
-                ? `${questions.length} questions from the ${exam.shortName} ${yearNum} previous year paper (of ${exam.totalQuestions}) — solve them free on Shishya, instant score:`
-                : `${exam.shortName} ${yearNum} previous year paper — solve it free on Shishya (full mock, instant score):`
-            }
+            message={`${exam.shortName} ${yearNum}: ${modelled} — solve them free on Shishya, ${partial ? "instant score" : "full-length timed mock, instant score"}:`}
             surface="pyq"
           />
         </div>
@@ -315,14 +346,11 @@ export default async function PYQYearPage({
               <div>
                 <p className="text-sm font-semibold text-ink-900">
                   {partial
-                    ? `Solve these ${questions.length} ${yearNum} questions as a timed mock — free`
-                    : `Solve this ${yearNum} paper as a timed mock — free`}
+                    ? `Solve these ${questions.length} ${yearNum}-pattern questions as a timed mock — free`
+                    : `Solve this ${yearNum}-pattern paper as a full-length timed mock — free`}
                 </p>
                 <p className="mt-0.5 text-xs text-ink-500">
-                  {partial
-                    ? `${questions.length} real questions from the ${yearNum} paper (which had ${exam.totalQuestions}) · instant scoring · topic-wise analysis. `
-                    : `${questions.length} real questions · instant scoring · topic-wise analysis. `}
-                  Sign in free to attempt and track your progress.
+                  {modelled} · instant scoring · topic-wise analysis. Sign in free to attempt and track your progress.
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
@@ -351,11 +379,12 @@ export default async function PYQYearPage({
                   : t(partial ? "exam.pyq.startPartial" : "exam.pyq.start")}
               </p>
               <p className="mt-0.5 text-xs text-ink-500">
+                {/* The i18n bodies (exam.pyq.startBodyPartial: "This set is
+                    {n} of the paper's {m} questions") claim the questions
+                    are the paper's; this English line does not. */}
                 {userAttempt?.scorePct != null
                   ? `${t("exam.rank.bestScore")}: ${formatDisplayScorePct(userAttempt.scorePct)}`
-                  : partial
-                  ? fill(t("exam.pyq.startBodyPartial"), counts)
-                  : t("exam.pyq.startBody")}
+                  : `${t("exam.pyq.startBody")} ${modelled}.`}
               </p>
             </div>
             {userAttempt?.status === "IN_PROGRESS" ? (
@@ -396,20 +425,20 @@ export default async function PYQYearPage({
             prefetch inflation we just fixed isn't reintroduced here. */}
         <div className="mt-6 rounded-md border border-saffron-200 bg-saffron-50/60 p-5">
           <p className="text-sm font-semibold text-ink-900">
-            Stuck on a question from this paper?
+            Stuck on a question from this set?
           </p>
           <p className="mt-1 text-sm text-ink-600">
             Ask <strong>Shishya</strong> — your free AI tutor — to explain any {exam.shortName}{" "}
-            {yearNum} question, concept, or shortcut, step by step, in your language.
+            {yearNum}-pattern question, concept, or shortcut, step by step, in your language.
           </p>
           <Link
             rel="nofollow" href={`/chat?examCode=${code}&seed=${encodeURIComponent(
-              `I'm solving the ${exam.shortName} ${yearNum} previous year paper. Explain the questions and concepts I'm stuck on, step by step.`,
+              `I'm solving PYQ-pattern questions modelled on the ${exam.shortName} ${yearNum} paper. Explain the questions and concepts I'm stuck on, step by step.`,
             )}`}
             prefetch={false}
             className="btn-primary mt-4 !py-2 !px-4 text-sm"
           >
-            Ask Shishya about this paper →
+            Ask Shishya about this set →
           </Link>
         </div>
 
@@ -437,8 +466,8 @@ export default async function PYQYearPage({
           <PulseAsk
             surface="pyq"
             promptKey={`pyq-${exam.code}-${yearNum}`}
-            prompt={`Want the rest of the ${exam.shortName} ${yearNum} paper? This page has ${questions.length} of its ${exam.totalQuestions} questions.`}
-            chips={["Yes, need the full paper", "This sampler is enough"]}
+            prompt={`Want a full-length ${exam.shortName} ${yearNum}-pattern paper? This page has ${questions.length} pattern questions; the real paper had ${exam.totalQuestions}.`}
+            chips={["Yes, need the full-length paper", "This sampler is enough"]}
             signedIn={!!userId}
             examCode={exam.code}
           />

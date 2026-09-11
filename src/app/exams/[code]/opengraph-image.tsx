@@ -125,7 +125,7 @@ export default async function Image({ params }: { params: Promise<{ code: string
             fontWeight: 500,
           }}
         >
-          <div style={{ display: "flex" }}>Free mocks · syllabus · PYQ · verified by students</div>
+          <div style={{ display: "flex" }}>Free mocks · syllabus · PYQ pattern · AI tutor</div>
           <div style={{ display: "flex", color: "#c2410c", fontWeight: 700 }}>{year}</div>
         </div>
       </div>

@@ -126,11 +126,11 @@ export default async function CollegesLanding({
           <Link href="/" className="hover:text-ink-800">Home</Link> · Colleges &amp; Graduation
         </p>
         <h1 className="mt-1 text-3xl font-bold text-ink-900">
-          Find the right college, with people who actually got in
+          Find the right college, on numbers you can check
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-ink-700">
           NIRF rankings, real fee structures, honest cutoffs, scholarships you
-          may have missed. Verified by students currently studying there.{" "}
+          may have missed.{" "}
           {COLLEGES.length} colleges curated from the official NIRF{" "}
           {NIRF_SOURCE_YEAR} rankings — engineering, medical, management, law,
           universities and pharmacy. Every rank cites NIRF directly. No invented

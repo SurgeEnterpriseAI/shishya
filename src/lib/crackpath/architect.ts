@@ -59,7 +59,7 @@ export interface DesignTask {
   effort: "S" | "M" | "L";
 }
 
-const PLATFORM_CONTEXT = `Shishya is a free Indian exam-prep platform (163 entrance/government exams). CURRENT INFRASTRUCTURE (what already exists — design ON TOP of it, don't re-build it):
+const PLATFORM_CONTEXT = `Shishya is a free Indian exam-prep platform (170+ entrance/government exams). CURRENT INFRASTRUCTURE (what already exists — design ON TOP of it, don't re-build it):
 - 29,875 VALIDATED practice questions; adaptive CAT/IRT mock engine; per-topic question pools.
 - WeaknessMap (per-topic mastery), FSRS spaced-repetition (ReviewState), study streaks, a daily-brief cron.
 - An AI tutor ("Ask Shishya") now open to signed-out users, scoped to exam syllabus, with on-demand doubt-solving.

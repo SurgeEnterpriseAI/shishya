@@ -18,8 +18,11 @@
 //   • never during a mock/live-test attempt, never on /login, /admin,
 //     /i/, /join, /aptitude
 //   • max once per day; gone forever after 3 dismissals or 1 click
-//   • every shown/clicked/dismissed logged (surface 'signup-nudge')
-//     so the conversion lift is measured, not assumed.
+//   • every shown/clicked/dismissed logged as CTA_CLICKED with
+//     cta 'signup-nudge' + action, so the conversion lift is measured,
+//     not assumed. (11 Sep 2026: the beacon used to carry only
+//     surface+action while the CTA report groups by props.cta — 386
+//     events collapsed into one "(none)" row.)
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -62,7 +65,7 @@ function beacon(action: "shown" | "clicked" | "dismissed") {
         [JSON.stringify({
           kind: "CTA_CLICKED",
           path: location.pathname,
-          props: { surface: "signup-nudge", action },
+          props: { cta: "signup-nudge", surface: "signup-nudge", action },
         })],
         { type: "application/json" },
       ),

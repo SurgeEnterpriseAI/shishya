@@ -4,9 +4,11 @@
 // dead when there's no recent activity. For a freshly-upcoming exam,
 // real student threads might not exist yet — especially in the first
 // 24 h after an exam-day or before a niche state PSC paper. We seed
-// 6-8 plausible thread TITLES via Claude so the rail always feels
-// populated; each is stored with isSeed=true and labeled "sample" in
-// the UI so visitors know it's starter content, not actual posts.
+// 6-8 plausible thread TITLES via Claude so the rail always has a
+// question to answer; each is stored with isSeed=true, authored by
+// "Shishya", and labelled "Starter question · Shishya" wherever it
+// renders (sidebar, /discussions, thread page) so visitors know it is
+// the platform's starter content, not a student's post.
 //
 // Each run replaces the previous batch — never accumulates. Real
 // user-created threads are untouched.
@@ -22,7 +24,7 @@ export interface SeedThreadTitle {
 const SYSTEM_PROMPT = `You are writing sample discussion thread TITLES for an Indian exam-prep platform's homepage right-rail.
 
 GOAL
-Generate 6 plausible thread titles that real student aspirants might post about the upcoming exam. The titles seed the discussion sidebar with realistic-looking activity for an exam that's about to happen — these are CLEARLY LABELED as "sample" in the UI, so don't try to fake authenticity, just write what real students actually ask.
+Generate 6 plausible thread titles that real student aspirants might post about the upcoming exam. The titles give the discussion sidebar starter questions for an exam that's about to happen — they are posted under the platform's own name and CLEARLY LABELLED "Starter question · Shishya" in the UI, so don't try to fake authenticity, just write what real students actually ask.
 
 STYLE
 - Match how Indian students actually phrase questions: mix of English with occasional Hindi/Telugu/Tamil words is fine.
@@ -33,7 +35,7 @@ STYLE
 DO NOT
 - Don't use the same opening word for every title.
 - Don't make them all positive or all worried — mix the emotional range.
-- Don't include "Sample" or "AI-generated" in the title itself; the UI handles labeling.`;
+- Don't include "Starter question" or "AI-generated" in the title itself; the UI handles labelling.`;
 
 const TOOL = {
   name: "publish_seed_threads",

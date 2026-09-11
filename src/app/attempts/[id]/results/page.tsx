@@ -11,6 +11,7 @@ import { getT } from "@/lib/i18n-server";
 import { ResultsReview } from "./ResultsReview";
 import { RankCard } from "@/components/RankCard";
 import { ShareScoreButton } from "./ShareScoreButton";
+import { InviteFriendsCard } from "@/app/dashboard/InviteFriendsCard";
 import { FreshQuestionsButton } from "./FreshQuestionsButton";
 import { NextMockButton } from "./NextMockButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
@@ -403,6 +404,20 @@ export default async function ResultsPage({
             </p>
           </div>
         )}
+        {/* Invite at the EARNED moment (11 Sep 2026): a new personal best or
+            a first baseline is when "study with me" is true rather than a
+            sales line. First person, the student's own number only,
+            utm-tagged link, no incentive, no counter. The two moments are
+            mutually exclusive (first mock ⇒ no previous best). */}
+        {(isPersonalBest || isFirstMock) && (
+          <InviteFriendsCard
+            examShort={attempt.mock.exam.shortName}
+            examCode={attempt.mock.exam.code}
+            firstName={session.user.name?.split(" ")[0] ?? null}
+            moment={isPersonalBest ? "personal-best" : "first-mock"}
+            scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
+          />
+        )}
 
         {/* Belonging, right after the score: they didn't just take a
             test, they joined today's cohort of people doing the work. */}
@@ -514,6 +529,7 @@ export default async function ResultsPage({
         {attempt.finishedAt && (
           <ShareScoreButton
             attemptId={attempt.id}
+            examCode={attempt.mock.exam.code}
             examShortName={attempt.mock.exam.shortName}
             scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
           />

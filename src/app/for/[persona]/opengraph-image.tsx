@@ -202,7 +202,7 @@ export default async function Image({ params }: { params: Promise<{ persona: str
             display: "flex",
           }}
         >
-          free · verified by students who&apos;ve been there · in your language
+          free · grounded in official notifications · in your language
         </div>
       </div>
     ),

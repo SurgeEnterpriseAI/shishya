@@ -11,10 +11,30 @@
 // and advertised on every exam page via <link rel="alternate">.
 //
 // Text/markdown, cached daily. Never contains personal data.
+//
+// Marking-scheme honesty (11 Sep 2026): "Marks per question" and the
+// score-estimator line are printed only when src/lib/marking-scheme.ts can
+// state ONE scheme for the sitting in question — the exam-day row the
+// exam-week state has in focus, else the next / just-held exam day on the
+// tracker. SBI PO's row is the Prelims pattern while its 12 Sep sitting is
+// Mains; CDS scores its papers unequally. For those the file says "not
+// stated" and why, so an answer engine cannot lift "+1 per correct" off
+// this file and hand it to a Mains candidate on exam night.
+//
+// Key dates (11 Sep 2026, audit judge): the list used to stop at the 14
+// EARLIEST rows since −120 days, so a busy exam lost its future dates, and
+// a passed estimate printed bare. It now lists every non-archived row from
+// −120 days to +365 days through buildTimeline (so the expected-answer-key
+// guard applies here too), each with its tier word, "was expected — not
+// confirmed" on passed estimates, and a data-updated line.
 
 import { prisma } from "@/lib/db/prisma";
-import { sourceHostLabel, sourceTier } from "@/lib/official-source";
+import { sourceHostLabel } from "@/lib/official-source";
+import { buildTimeline, focusExamRow, PASSED_ESTIMATE_TEXT, type TimelineRow } from "@/lib/exam-timeline";
+import { istDay } from "@/lib/exam-week";
+import { markingSchemeVerdict } from "@/lib/marking-scheme";
 import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
+import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 
 export const revalidate = 3600; // hourly — the exam-week block flips phase within a day
 
@@ -36,12 +56,15 @@ export async function GET(
       category: true,
       state: true,
       active: true,
+      description: true,
       totalQuestions: true,
+      scoredQuestions: true,
       totalMarks: true,
       marksPerQ: true,
       durationMin: true,
       negativeMark: true,
       languages: true,
+      refreshAttemptedAt: true,
       subjects: {
         select: {
           name: true,
@@ -67,11 +90,17 @@ export async function GET(
       .$queryRaw<{ content: string }[]>`
         SELECT content FROM "ExamCategoryCutoff" WHERE "examId" = ${exam.id} LIMIT 1`
       .catch(() => []),
+    // Every live row from −120 d to +365 d — no row cap, so the future
+    // dates of a busy exam are never cut off (the tracker page shows the
+    // same rows). Hard ceiling of 200 only as a runaway guard.
     prisma
-      .$queryRaw<{ label: string; date: Date; isExamDay: boolean; kind: string | null; confidence: string | null; url: string | null }[]>`
-        SELECT label, date, "isExamDay", kind, confidence, url FROM "ExamImportantDate"
-        WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL AND date > NOW() - INTERVAL '120 days'
-        ORDER BY date ASC LIMIT 14`
+      .$queryRaw<
+        { id: string; label: string; date: Date; isExamDay: boolean; kind: string | null; confidence: string | null; url: string | null; source: string | null; notes: string | null; createdAt: Date }[]
+      >`
+        SELECT id, label, date, "isExamDay", kind, confidence, url, source, notes, "createdAt" FROM "ExamImportantDate"
+        WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL
+          AND date >= NOW() - INTERVAL '120 days' AND date <= NOW() + INTERVAL '365 days'
+        ORDER BY date ASC LIMIT 200`
       .catch(() => []),
     prisma
       .$queryRaw<{ id: string; stage: string; headline: string; declaredOn: Date }[]>`
@@ -94,6 +123,24 @@ export async function GET(
     .catch(() => false);
 
   const e = elig[0];
+  const now = new Date();
+
+  // The key-dates list goes through the shared timeline builder: the
+  // expected-answer-key guard, the passed-estimate flag and the tier all
+  // come from src/lib/exam-timeline.ts, so this file can never disagree
+  // with the tracker page. All rows (typed + legacy) for the listing, as
+  // the tracker does; typed rows only for the sitting pick, as the
+  // exam-week state machine does.
+  const timeline = buildTimeline(dates, now, e?.officialUrl);
+  const typedDates = dates.filter((d) => typeof d.kind === "string" && d.kind.length > 0);
+
+  // Exam Week Mode state (6 Sep 2026) — loaded up front because the
+  // marking-scheme verdict below needs the exam-day row in focus. Outside
+  // the ±7-day window the sitting is the next / just-held typed exam day.
+  const weekExam = (await loadExamWeekExams({ examCode: exam.code }).catch(() => []))[0];
+  const sitting = weekExam?.state.focus ?? focusExamRow(buildTimeline(typedDates, now, e?.officialUrl));
+  const scheme = markingSchemeVerdict(exam, { rowLabel: sitting?.label, rowDate: sitting?.date });
+
   const L: string[] = [];
   L.push(`# ${exam.name} (${exam.shortName}) — Shishya exam context`);
   L.push("");
@@ -104,10 +151,22 @@ export async function GET(
 
   L.push("## Exam pattern");
   L.push(`- Category: ${exam.category}${exam.state ? ` · state: ${exam.state}` : " · national"}`);
-  L.push(`- Questions: ${exam.totalQuestions} · Total marks: ${exam.totalMarks} · Marks per question: ${exam.marksPerQ}`);
+  if (scheme.ok) {
+    L.push(`- Questions: ${exam.totalQuestions} · Total marks: ${exam.totalMarks} · Marks per question: ${exam.marksPerQ}`);
+  } else {
+    // The stored figures stay (they are the row's own numbers); the
+    // per-question claim does not, and the reason says which paper the
+    // figures belong to.
+    L.push(`- Questions: ${exam.totalQuestions} · Total marks: ${exam.totalMarks} · Marks per question: not stated`);
+    L.push(
+      `- Marking scheme: not stated — ${scheme.reason} Do not derive a per-question mark from the figures above; take the scheme from the conducting body's notice.`,
+    );
+  }
   L.push(`- Duration: ${exam.durationMin} minutes`);
   L.push(
-    `- Negative marking: ${exam.negativeMark > 0 ? `−${Number(exam.negativeMark.toFixed(2))} per wrong answer` : "none"}`,
+    `- Negative marking: ${exam.negativeMark > 0 ? `−${Number(exam.negativeMark.toFixed(2))} per wrong answer` : "none"}${
+      scheme.ok ? "" : " (stored-pattern figure — read the marking-scheme line before relying on it)"
+    }`,
   );
   L.push(`- Languages offered: ${(exam.languages ?? []).join(", ") || "not specified"}`);
   L.push("");
@@ -124,25 +183,36 @@ export async function GET(
     L.push("");
   }
 
-  if (dates.length) {
+  if (timeline.length) {
     // Tracker honesty model (23 Aug 2026, tiered 29 Aug 2026): OFFICIAL
     // means the conducting body's own notice is linked; REPORTED means
     // announced but cited via a secondary source; EXPECTED is an
     // estimate from previous cycles. LLMs citing these dates MUST carry
-    // the label — that is the whole trust contract.
+    // the label — that is the whole trust contract. A passed estimate
+    // (11 Sep 2026) is marked so it is never read as a concluded event.
     L.push(
-      "## Key dates (OFFICIAL = conducting body's notice linked · REPORTED = announced, secondary source cited · expected = estimate from previous cycles, NOT announced)",
+      `## Key dates — every tracker row from 120 days back to 365 days ahead (OFFICIAL = conducting body's notice linked · REPORTED = announced, secondary source cited · expected = estimate from previous cycles, NOT announced · "${PASSED_ESTIMATE_TEXT}" = the estimated date has passed and nothing was announced; do not treat it as having happened)`,
     );
-    for (const d of dates) {
-      const tier = sourceTier(d.confidence, d.url, e?.officialUrl);
-      const tag =
-        tier === "official"
-          ? `OFFICIAL, notice: ${d.url}`
-          : tier === "reported"
-            ? `REPORTED (announced; via ${sourceHostLabel(d.url!)}): ${d.url}`
+    const tag = (r: TimelineRow) =>
+      r.tier === "official"
+        ? `OFFICIAL, notice: ${r.url}`
+        : r.tier === "reported"
+          ? `REPORTED (announced; via ${sourceHostLabel(r.url ?? "")}): ${r.url}`
+          : r.passedEstimate
+            ? `expected — ${PASSED_ESTIMATE_TEXT}`
             : "expected";
-      L.push(`- ${d.date.toISOString().slice(0, 10)} — ${d.label}${d.isExamDay ? " (exam day)" : ""} — ${tag}`);
+    const when = (r: TimelineRow) => (r.status === "today" ? " — today" : r.status === "upcoming" ? ` — in ${r.daysFromToday} days` : "");
+    for (const r of timeline) {
+      L.push(`- ${r.day} — ${r.label}${r.isExamDay ? " (exam day)" : ""} — ${tag(r)}${when(r)}`);
     }
+    // Data-updated line: when the newest listed row was added, when the
+    // refresh cron last looked at this exam, and when this file was built.
+    const newest = dates.reduce<Date | null>((m, d) => (d.createdAt && (!m || d.createdAt > m) ? d.createdAt : m), null);
+    L.push(
+      `- Data updated: latest tracker row added ${newest ? newest.toISOString().slice(0, 10) : "unknown"}` +
+        `${exam.refreshAttemptedAt ? ` · last refresh check ${exam.refreshAttemptedAt.toISOString().slice(0, 10)}` : ""}` +
+        ` · this file generated ${istDay(now)} (IST)`,
+    );
     L.push(`- Live tracker (all milestones, alerts): ${SITE}/exams/${exam.code}/updates`);
     L.push("");
   }
@@ -151,8 +221,9 @@ export async function GET(
   // is within ±7 days. Every date carries its tier word; answer key /
   // result read "not announced yet" when the tracker has no row; phase
   // articles are linked only when real (>= 2 cited sources); the verdict
-  // tally appears only from n >= 10. Deterministic DB reads only.
-  const weekExam = (await loadExamWeekExams({ examCode: exam.code }).catch(() => []))[0];
+  // tally appears only from n >= 10; the score-estimator line (inside
+  // examWeekAeoLines) only when one marking scheme can be stated for the
+  // sitting. Deterministic DB reads only.
   if (weekExam) {
     const [articles, tally] = await Promise.all([
       loadRealPhaseArticles([weekExam.id]).catch(() => new Map<string, RealPhaseArticle[]>()),
@@ -160,7 +231,6 @@ export async function GET(
     ]);
     L.push("## Exam week");
     L.push(...examWeekAeoLines(weekExam, { articles: articles.get(weekExam.id) ?? [], tally, site: SITE }));
-    L.push(`- Score estimator (marking-scheme arithmetic from the answer key: correct × ${exam.marksPerQ} − wrong × ${Number(exam.negativeMark.toFixed(2))}; nothing stored, no prediction): ${SITE}/exams/${exam.code}/score-estimate`);
     L.push(`- Calendar file (.ics): the exam day(s), answer key and result dates the tracker holds, each with its tier word — missing dates are omitted, never invented: ${SITE}/exams/${exam.code}/exam-week.ics`);
     L.push("");
   }
@@ -206,7 +276,7 @@ export async function GET(
 
   L.push("## Free resources on Shishya for this exam");
   L.push(`- Exam hub (mocks, PYQs, news, dates): ${SITE}/exams/${exam.code}`);
-  L.push(`- Custom topic-wise mock builder — pick any syllabus topics, 10/25/50 questions, difficulty; timed, scored, solutions; readable in Hindi + 12 languages: ${SITE}/exams/${exam.code}/build-mock`);
+  L.push(`- Custom topic-wise mock builder — pick any syllabus topics, 10/25/50 questions, difficulty; timed, scored, solutions; readable in Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages: ${SITE}/exams/${exam.code}/build-mock`);
   if (fullPattern) {
     L.push(`- Full-length REAL-PATTERN mock (${exam.totalQuestions} questions · ${exam.durationMin} min · sections in real order): the "Full-Length Mock (Real Pattern)" tile on ${SITE}/exams/${exam.code}`);
   }
@@ -217,7 +287,7 @@ export async function GET(
   L.push(`- Memory tricks & mnemonics: ${SITE}/exams/${exam.code}/tricks`);
   L.push(`- How to crack it (strategy guide): ${SITE}/exams/${exam.code}/guide`);
   L.push(`- Free day-by-day study plan (personal coach): ${SITE}/coach`);
-  L.push(`- Free AI tutor (22 Indian languages, no login): ${SITE}/chat`);
+  L.push(`- Free AI tutor (${INDIAN_LANGUAGE_COUNT} Indian languages, no login): ${SITE}/chat`);
   L.push("");
   L.push(
     `Everything is free — no paywall, no subscription, no credit card. Platform index for LLMs: ${SITE}/llms.txt and ${SITE}/llms-full.txt`,

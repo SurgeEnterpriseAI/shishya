@@ -32,6 +32,7 @@ export async function generateMetadata({
     `${exam.shortName} (${exam.name}) short tricks, mnemonics and memory hacks — subject-wise, ` +
     `exam-tested, free. Practice each trick immediately with a free mock.`;
   const url = `https://shishya.in/exams/${exam.code}/tricks`;
+  const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
   return {
     title,
     description,
@@ -43,8 +44,18 @@ export async function generateMetadata({
       `${exam.shortName} shortcuts`,
       `${exam.shortName} memory tricks`,
     ],
-    openGraph: { title, description, url, siteName: "Shishya", locale: "en_IN", type: "article" },
-    twitter: { card: "summary_large_image", title, description },
+    // Explicit og:image — a child segment's openGraph block replaces the
+    // parent's, so /exams/[code]/opengraph-image was not inherited here.
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Shishya",
+      locale: "en_IN",
+      type: "article",
+      images: [{ url: image, width: 1200, height: 630, alt: `${exam.shortName} — Shishya` }],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
 
@@ -112,7 +123,8 @@ export default async function TricksPage({ params }: { params: Promise<{ code: s
           <ShareExamButton
             url={url}
             message={`${exam.shortName} short tricks & mnemonics — subject-wise memory hacks, free on Shishya:`}
-            surface="exam"
+            surface="tricks"
+            exam={exam.code}
           />
         </div>
 

@@ -8,10 +8,19 @@
 //
 // Honesty gate (7 Sep 2026): Exam.marksPerQ is sometimes a WEIGHTED AVERAGE
 // across papers with different per-question marks, and then "+{marksPerQ}
-// per correct" is false. markingSchemeStatable() below decides from the
-// exam's own numbers whether the scheme may be stated; when it may not,
-// the page says so and points at the official notice instead of running a
-// calculator that would hand out wrong marks.
+// per correct" is false. markingSchemeVerdict() (src/lib/marking-scheme.ts)
+// decides from the exam's own numbers whether the scheme may be stated;
+// when it may not, the page says so — the specific reason, in words — and
+// points at the official notice instead of running a calculator that
+// would hand out wrong marks.
+//
+// Stage gate (11 Sep 2026): the Exam row describes ONE stage. SBI_PO is the
+// Prelims pattern (100 Q, 100 marks) but its 12 Sep 2026 sitting is Mains
+// (200 marks, unequal section weights) — the numbers passed, the page
+// printed Prelims arithmetic for a Mains paper. The verdict now also takes
+// the exam-day row this sitting belongs to (the exam-week focus row, else
+// the next / just-held exam day on the tracker) and refuses when its label
+// names a different stage from the exam's name.
 //
 // Below it: the answer-key / result status straight from the tracker (every
 // date with its tier word, "not announced yet" when the tracker holds
@@ -26,14 +35,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
-import { markingSchemeStatable, scoredCount } from "@/lib/marking-scheme";
+import { markingSchemeVerdict, scoredCount } from "@/lib/marking-scheme";
 import { auth } from "@/lib/auth";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import type { StringKey } from "@/lib/i18n";
 import { languageAlternates, localizedPath, localizedUrl, ogLocale } from "@/lib/seo-locale";
 import { computeExamWeekState, dateWithTier } from "@/lib/exam-week";
-import type { SourceTier, TimelineRow } from "@/lib/exam-timeline";
-import { alertPhase, examAlertLabels, getExamWeekInputs } from "@/lib/exam-week-inputs";
+import { buildTimeline, focusExamRow, type SourceTier, type TimelineRow } from "@/lib/exam-timeline";
+import { alertPhase, examAlertLabels, getExamWeekInputs, type ExamWeekInputs } from "@/lib/exam-week-inputs";
 import { categoryHeaderKey, parseCategoryCutoff } from "@/lib/category-cutoff";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
@@ -83,32 +92,45 @@ async function loadExam(code: string) {
   });
 }
 
+type ExamRow = NonNullable<Awaited<ReturnType<typeof loadExam>>>;
+
 /**
- * How many of the paper's questions actually score. Exam.scoredQuestions is
- * set only where the paper asks more than it scores — NEET UG asks 200 and
- * scores 180, CUET UG asks 175 and scores 140, the rest being optional — and
- * is null everywhere else, where every question counts. A value outside
- * (0, totalQuestions] is nonsense, so it is ignored rather than trusted.
+ * The sitting this page is about and whether ONE marking scheme can be
+ * stated for it. The exam-day row is the exam-week focus row (inside the
+ * ±7-day window) or else the next / just-held typed exam day on the
+ * tracker; its label carries the stage ("Mains Exam") the verdict checks
+ * against the exam's name ("… (Prelims)"). Shared by generateMetadata and
+ * the page so the <title> can never promise a calculator the body refuses.
  */
-// (module-local: a page file must only export the Next.js entry points)
-
-
-
+function sittingVerdict(exam: ExamRow, inputs: ExamWeekInputs, now: Date = new Date()) {
+  const state = computeExamWeekState(inputs.rows, inputs.officialUrl, now);
+  const typed = inputs.rows.filter((r) => typeof r.kind === "string" && r.kind.length > 0);
+  const sitting = state.focus ?? focusExamRow(buildTimeline(typed, now, inputs.officialUrl));
+  const verdict = markingSchemeVerdict(exam, { rowLabel: sitting?.label, rowDate: sitting?.date });
+  return { state, sitting, verdict };
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
   const { code } = await params;
   const exam = await loadExam(code);
   if (!exam) return { title: "Score estimator — Shishya" };
-  const urlLocale = await getUrlLocale();
+  const [urlLocale, inputs] = await Promise.all([getUrlLocale(), getExamWeekInputs(exam.id)]);
   const tt = tFor(urlLocale) as TFn;
   const short = exam.shortName;
   // An exam whose scheme we cannot state honestly gets no calculator, so the
-  // <title> must not promise one — it says what the page actually holds.
-  const statable = markingSchemeStatable(exam);
-  const title = `${fill(tt(statable ? "ew.score.title" : "ew.score.mixed.title"), { exam: short })} | Shishya`;
-  const description = fill(tt(statable ? "ew.score.lead" : "ew.score.mixed.body"), { exam: short });
+  // <title> must not promise one — it says what the page actually holds,
+  // and the description carries the reason (English: it is the verdict's
+  // own sentence, the same one the body prints).
+  const { verdict } = sittingVerdict(exam, inputs);
+  const title = `${fill(tt(verdict.ok ? "ew.score.title" : "ew.score.mixed.title"), { exam: short })} | Shishya`;
+  const description = verdict.ok
+    ? fill(tt("ew.score.lead"), { exam: short })
+    : `${verdict.reason} Shishya shows no calculator for this sitting — take the marking scheme from the official notice.`;
   const path = `/exams/${exam.code}/score-estimate`;
   const url = localizedUrl(path, urlLocale);
+  // The per-exam social card (src/app/exams/[code]/opengraph-image.tsx) —
+  // absolute so WhatsApp / Slack unfurl it whatever metadataBase says.
+  const ogImage = `https://shishya.in/exams/${exam.code}/opengraph-image`;
   return {
     title,
     description,
@@ -120,8 +142,16 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
       `${short} expected score`,
       `${short} cutoff`,
     ],
-    openGraph: { title, description, url, siteName: "Shishya", locale: ogLocale(urlLocale), type: "article" },
-    twitter: { card: "summary_large_image", title, description },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Shishya",
+      locale: ogLocale(urlLocale),
+      type: "article",
+      images: [{ url: ogImage, width: 1200, height: 630, alt: `${short} — Shishya` }],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [ogImage] },
   };
 }
 
@@ -142,7 +172,12 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
   ]);
   const t = tRaw as TFn;
   const short = exam.shortName;
-  const state = computeExamWeekState(inputs.rows, inputs.officialUrl);
+  // Marking scheme honesty (see markingSchemeVerdict): when the exam's own
+  // numbers say the paper does not score uniformly, or the sitting in focus
+  // is a different stage from the stored pattern, the calculator and its
+  // "+{plus} per correct" line are replaced by the reason, in words.
+  const { state, verdict } = sittingVerdict(exam, inputs);
+  const statable = verdict.ok;
   // Alert / status surfaces follow the shared rule: an expected-tier exam
   // day may not open the answer-key / result copy.
   const phase = alertPhase(state);
@@ -152,14 +187,17 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
   const path = `/exams/${exam.code}/score-estimate`;
   const url = localizedUrl(path, urlLocale);
   const p = (rel: string) => localizedPath(rel, urlLocale);
-  // Marking scheme honesty (see markingSchemeStatable): when the exam's own
-  // numbers say the paper does not score uniformly, the calculator and its
-  // "+{plus} per correct" line are replaced by a note saying so.
-  const statable = markingSchemeStatable(exam);
   const title = fill(t(statable ? "ew.score.title" : "ew.score.mixed.title"), { exam: short });
   const tierWord = (row: TimelineRow) => t(TIER_KEY[row.tier]);
   // Every date carries its tier word; a missing tracker row is said plainly.
-  const status = (row: TimelineRow | null) => (row ? dateWithTier(row, tierWord(row), locale) : t("ew.post.notAnnounced"));
+  // A passed estimate (the expected date went by, nothing announced) is
+  // worded as such — same rule and same ew.date.overdue string as the
+  // cutoff page — never as the thing still to come.
+  const status = (row: TimelineRow | null) => {
+    if (!row) return t("ew.post.notAnnounced");
+    const dated = dateWithTier(row, tierWord(row), locale);
+    return row.passedEstimate ? fill(t("ew.date.overdue"), { date: dated }) : dated;
+  };
   // The scheme applies to the questions that SCORE, so that is the count the
   // marking line prints and the count the calculator works in. On a paper
   // that asks more than it scores (NEET UG: 180 of 200), printing 200 beside
@@ -222,9 +260,12 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
 
         {/* The calculator: marking scheme line + three inputs. When the
             scheme cannot be stated honestly (mixed papers / not every
-            question counts) there is no calculator — a wrong number the
-            evening of the exam is worse than no number — just the reason
-            and the two places the real scheme lives. */}
+            question counts / the sitting is a different stage from the
+            stored pattern) there is no calculator — a wrong number the
+            evening of the exam is worse than no number — just the specific
+            reason, the general note, and the two places the real scheme
+            lives. The reason is the verdict's own English sentence on every
+            locale: honesty outranks translation here. */}
         <section className="mt-5 rounded-xl border-2 border-saffron-300 bg-white p-5">
           {statable ? (
             <>
@@ -250,7 +291,8 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
             </>
           ) : (
             <>
-              <p className="text-sm text-ink-700">{fill(t("ew.score.mixed.body"), { exam: short })}</p>
+              {verdict.reason && <p className="text-sm font-semibold text-ink-900">{verdict.reason}</p>}
+              <p className="mt-2 text-sm text-ink-700">{fill(t("ew.score.mixed.body"), { exam: short })}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {inputs.officialUrl && (
                   <a href={inputs.officialUrl} target="_blank" rel="nofollow noopener noreferrer" className={pill}>

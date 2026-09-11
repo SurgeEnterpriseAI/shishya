@@ -92,7 +92,7 @@ const getVerdictTallyCached = unstable_cache(
  *  session read lives. */
 async function loadExamWeekView(
   exam: {
-    id: string; code: string; shortName: string;
+    id: string; code: string; shortName: string; name: string;
     totalQuestions: number; scoredQuestions: number | null; totalMarks: number; marksPerQ: number; description: string;
   },
   ew: ExamWeekState,
@@ -157,7 +157,9 @@ async function loadExamWeekView(
     // scheme for this paper. IOQM cannot be stated (30 questions, 100 marks,
     // tiered 2/3/5) and is the biggest cutoff lander on the site, so the pill
     // was sending its post-exam arrivals to a page that refuses them.
-    canEstimate: markingSchemeStatable(exam),
+    // The sitting in focus decides: a Prelims entity on a "Mains" row (SBI PO
+    // 12 Sep 2026) must refuse, so the pill only shows when the verdict is ok.
+    canEstimate: markingSchemeStatable(exam, { rowLabel: ew.focus?.label, rowDate: ew.focus?.date }),
     // The poll is the one action a post-exam lander can take without an
     // account: one tap, and it is what fills the tally the next visitor
     // reads. 40 of 47 cutoff landers today read one page and left.
@@ -212,6 +214,7 @@ export async function generateMetadata({
   const description = fill(tt("cutoff.metaDescription"), { exam: exam.shortName, name: exam.name, year: YEAR });
   const path = `/exams/${exam.code}/cutoff`;
   const url = localizedUrl(path, urlLocale);
+  const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
   return {
     title,
     description,
@@ -223,8 +226,18 @@ export async function generateMetadata({
       `${exam.shortName} safe score`,
       `${exam.shortName} rank predictor`,
     ],
-    openGraph: { title, description, url, siteName: "Shishya", locale: ogLocale(urlLocale), type: "article" },
-    twitter: { card: "summary_large_image", title, description },
+    // Explicit og:image — a child segment's openGraph block replaces the
+    // parent's, so /exams/[code]/opengraph-image was not inherited here.
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Shishya",
+      locale: ogLocale(urlLocale),
+      type: "article",
+      images: [{ url: image, width: 1200, height: 630, alt: `${exam.shortName} — Shishya` }],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
 
@@ -456,7 +469,8 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
             url={url}
             message={fill(t("cutoff.share"), { exam: short, year: YEAR })}
             label={t("cutoff.shareLabel")}
-            surface="exam"
+            surface="cutoff"
+            exam={exam.code}
           />
         </div>
 

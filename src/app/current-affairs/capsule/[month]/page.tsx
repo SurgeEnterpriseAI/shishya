@@ -129,7 +129,7 @@ export default async function CapsulePage({
           <Link href="/current-affairs" className="font-medium text-saffron-700">
             shishya.in/current-affairs
           </Link>
-          . Free mock tests for 177 exams at shishya.in.
+          . Free mock tests for 170+ exams at shishya.in.
         </p>
       </section>
     </main>

@@ -21,8 +21,13 @@ import { getStudyStreak, type StudyStreak } from "@/lib/db/streak";
 import { DailyFiveCard } from "./DailyFiveCard";
 import { StreakCard } from "./StreakCard";
 import { MissionCard } from "./MissionCard";
+import { ExamWeekLines, type ExamWeekLine } from "./ExamWeekLines";
+import { Prisma } from "@prisma/client";
 import { computeCoachPlan } from "@/lib/coach-plan";
-import { examDone } from "@/lib/exam-week-student";
+import { computeExamWeekState, dateWithTier, examDayPollOpen } from "@/lib/exam-week";
+import { applyShiftDay, examDone, shiftDayIso } from "@/lib/exam-week-student";
+import type { SourceTier } from "@/lib/exam-timeline";
+import type { StringKey } from "@/lib/i18n";
 import { PeerProofLine } from "@/components/PeerProofLine";
 import { examPeerProof } from "@/lib/peer-proof";
 import { CoachPlanView } from "@/app/coach/CoachPlanView";
@@ -68,7 +73,7 @@ async function renderDashboard() {
   if (isAdmin) redirect("/admin/insights");
 
   const userId = session.user.id;
-  const { t } = await getT();
+  const { t, locale } = await getT();
 
   // Attribution capture on first authenticated dashboard load. Reads
   // the `shishya_attrib` cookie (Referer + UTM payload set by the edge
@@ -282,13 +287,85 @@ async function renderDashboard() {
   // exam day is behind the student, the card swaps its countdown for the
   // coach rollover ("{exam} is done. Roll your plan?"). Best-effort.
   let missionRollover: { href: string; title: string; body: string; cta: string } | null = null;
+  const now = new Date();
+
+  // ── Exam-week lines (11 Sep 2026) ────────────────────────────────────
+  // ONE query for every enrolled exam's live tracker rows plus the
+  // conducting body's URL (the tier needs it). It replaces the two reads
+  // the mission card made for the primary exam alone (its rows + its
+  // ExamEligibility.officialUrl — examId is unique there, so the join
+  // never duplicates a row) and feeds both the rollover check below and
+  // the per-exam exam-week lines. Best-effort: a failure hides the lines.
+  type WeekRow = {
+    id: string; examId: string; label: string; date: Date; isExamDay: boolean;
+    kind: string | null; confidence: string | null; url: string | null; source: string | null; notes: string | null;
+    officialUrl: string | null;
+  };
+  const weekRows: WeekRow[] =
+    enrollments.length > 0
+      ? await prisma.$queryRaw<WeekRow[]>`
+          SELECT d.id, d."examId", d.label, d.date, d."isExamDay", d.kind, d.confidence, d.url, d.source, d.notes,
+                 el."officialUrl"
+          FROM "ExamImportantDate" d
+          LEFT JOIN "ExamEligibility" el ON el."examId" = d."examId"
+          WHERE d."archivedAt" IS NULL
+            AND d."examId" IN (${Prisma.join(enrollments.map((e) => e.examId))})
+          ORDER BY d.date ASC`.catch((err) => {
+          console.error("[dashboard] exam-week rows failed (non-fatal):", err);
+          return [] as WeekRow[];
+        })
+      : [];
+  const rowsFor = (examId: string) => weekRows.filter((r) => r.examId === examId);
+
+  // eve → "{exam} tomorrow, {date} ({tier})" → hub (checklist lives there);
+  // exam day → "how was the paper?" → hub poll (before the first shift has
+  // started: the good-luck line); window → the shift tip; post → answer key
+  // / result exactly as the tracker holds them, with tier words. TYPED,
+  // ANNOUNCED rows only — an expected-tier day prints nothing here, and the
+  // student's own shift day re-keys the phase the way the hub does.
+  const fillT = (s: string, vars: Record<string, string | number>) =>
+    s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
+  const tierWord = (tier: SourceTier) => t(`ew.tier.${tier}` as StringKey);
+  const examWeekLines: ExamWeekLine[] = enrollments.flatMap((e) => {
+    const rows = rowsFor(e.examId);
+    if (rows.length === 0) return [];
+    const state = applyShiftDay(computeExamWeekState(rows, rows[0].officialUrl, now), shiftDayIso(e.shiftDate), now);
+    if (state.phase === "none" || !state.focus || !state.tier || state.tier === "expected") return [];
+    const short = e.exam.shortName;
+    const hub = `/exams/${e.exam.code}`;
+    const line = (icon: string, text: string, cta: string | null): ExamWeekLine[] => [{ code: e.exam.code, icon, text, href: hub, cta }];
+    switch (state.phase) {
+      case "eve":
+        return line("🎯", fillT(t("ew.dash.eve"), { exam: short, when: dateWithTier(state.focus, tierWord(state.tier), locale) }), t("ew.dash.eveCta"));
+      case "today-am":
+        return examDayPollOpen(state, now)
+          ? line("🗳️", fillT(t("ew.dash.today"), { exam: short }), t("ew.today.done"))
+          : line("🎯", `${short}: ${t("ew.today.am")}`, null);
+      case "today-pm":
+        return line("🗳️", fillT(t("ew.dash.today"), { exam: short }), t("ew.today.pm"));
+      case "window":
+        return line("🗳️", `${short}: ${t("ew.window.tip")}`, t("ew.today.pm"));
+      case "post": {
+        const keyText = state.answerKey ? dateWithTier(state.answerKey, tierWord(state.answerKey.tier), locale) : t("ew.post.notAnnounced");
+        const resultText = state.result ? dateWithTier(state.result, tierWord(state.result.tier), locale) : t("ew.post.notAnnounced");
+        return line(
+          "🏁",
+          `${fillT(t("ew.dash.post"), { exam: short })} · 🔑 ${fillT(t("ew.post.key"), { text: keyText })} · 📊 ${fillT(t("ew.post.result"), { text: resultText })}`,
+          t("ew.post.cutoff"),
+        );
+      }
+      default:
+        // "week": the mission card's countdown already covers the run-up.
+        return [];
+    }
+  });
+
   if (enrollments.length > 0) {
     try {
       const pEnroll =
         enrollments.find((e) => e.exam.code === (weakest3[0]?.exam.code ?? recommendedExam?.code)) ??
         enrollments[0];
       const pExamId = pEnroll.examId;
-      const now = new Date();
       const [nextDay, topicsTotal, touched, mastered] = [
         await prisma.examImportantDate.findFirst({
           where: { examId: pExamId, isExamDay: true, archivedAt: null, date: { gte: now } },
@@ -313,13 +390,10 @@ async function renderDashboard() {
         topicsTouched: touched,
         topicsMastered: mastered,
       };
-      const dateRows = await prisma.examImportantDate.findMany({
-        where: { examId: pExamId, archivedAt: null },
-        select: { id: true, label: true, date: true, isExamDay: true, kind: true, confidence: true, url: true, source: true, notes: true },
-      });
-      const eligRows = await prisma.$queryRaw<{ officialUrl: string | null }[]>`
-        SELECT "officialUrl" FROM "ExamEligibility" WHERE "examId" = ${pExamId} LIMIT 1`;
-      if (examDone(dateRows, eligRows[0]?.officialUrl ?? null, now)) {
+      // Same rows the exam-week lines above already loaded (one query for
+      // every enrolled exam) — no second read for the primary exam.
+      const dateRows = rowsFor(pExamId);
+      if (examDone(dateRows, dateRows[0]?.officialUrl ?? null, now)) {
         missionRollover = {
           href: `/coach?next=1&from=${encodeURIComponent(pEnroll.exam.code)}`,
           title: String(t("ew.coach.postexam.title")).replace("{exam}", pEnroll.exam.shortName),
@@ -561,6 +635,11 @@ async function renderDashboard() {
         {recommendedExam && (
           <PeerProofLine proof={peerProof} examShort={recommendedExam.short} variant="dashboard" />
         )}
+
+        {/* Exam week, per enrolled exam: tomorrow's date with its tier,
+            "how was the paper?" on the day, key / result status after.
+            Nothing on an expected-tier day. */}
+        <ExamWeekLines lines={examWeekLines} />
 
         {/* Personal Coach plan (when committed) supersedes the Mission
             card — same slot, richer promise: today's rebuilt plan. */}

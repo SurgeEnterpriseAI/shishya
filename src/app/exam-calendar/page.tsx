@@ -48,8 +48,18 @@ export async function generateMetadata(): Promise<Metadata> {
       `admit card ${year}`,
       "upcoming exams in India",
     ],
-    openGraph: { title, description, url, siteName: "Shishya", locale: ogLocale(urlLocale), type: "website" },
-    twitter: { card: "summary_large_image", title, description },
+    // Explicit og:image: a page-level openGraph block replaces the root's,
+    // so the root card (src/app/opengraph-image.tsx) was not inherited.
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Shishya",
+      locale: ogLocale(urlLocale),
+      type: "website",
+      images: [{ url: "https://shishya.in/opengraph-image", width: 1200, height: 630, alt: "Shishya — free Indian exam prep" }],
+    },
+    twitter: { card: "summary_large_image", title, description, images: ["https://shishya.in/opengraph-image"] },
   };
 }
 

@@ -15,15 +15,31 @@
 //     placeholder — src/lib/phase-article-quality.ts)
 //   • the verdict tally line appears only from n >= 10 and is never called
 //     a prediction
+//   • the marking scheme (and the score-estimator link) is printed only
+//     when src/lib/marking-scheme.ts can state ONE scheme for the exam-day
+//     row in focus (11 Sep 2026) — SBI PO's stored row is the Prelims
+//     pattern while its 12 Sep sitting is Mains; CDS scores its papers
+//     unequally. For those the block says "not stated" and why.
 // No model calls anywhere in this file.
 
 import { prisma } from "@/lib/db/prisma";
 import { computeExamWeekState, istDay, type ExamWeekPhase, type ExamWeekState } from "@/lib/exam-week";
-import type { TimelineRow } from "@/lib/exam-timeline";
+import { PASSED_ESTIMATE_TEXT, type TimelineRow } from "@/lib/exam-timeline";
+import { markingSchemeVerdict, type MarkingSchemeVerdict } from "@/lib/marking-scheme";
 import { sourceHostLabel } from "@/lib/official-source";
 import { getVerdictTallyRange, emptyTally, tallyLine, type VerdictTally } from "@/lib/exam-verdict-tally";
 import { examWeekUrls, phaseArticleUrl, SITE_ORIGIN } from "@/lib/indexnow";
 import { isRealArticle, realSourceCount } from "@/lib/phase-article-quality";
+
+/** The Exam row's marking numbers — what markingSchemeVerdict judges. */
+export interface ExamWeekScheme {
+  totalQuestions: number;
+  scoredQuestions: number | null;
+  totalMarks: number;
+  marksPerQ: number;
+  negativeMark: number;
+  description: string;
+}
 
 export interface ExamWeekExam {
   id: string;
@@ -32,6 +48,17 @@ export interface ExamWeekExam {
   name: string;
   officialUrl: string | null;
   state: ExamWeekState;
+  scheme: ExamWeekScheme;
+}
+
+/** Can ONE marking scheme be stated for the exam-day row in focus? The
+ *  same call the score-estimate page makes, so the AEO block and the page
+ *  can never disagree about a sitting. */
+export function examWeekSchemeVerdict(ex: ExamWeekExam): MarkingSchemeVerdict {
+  return markingSchemeVerdict(
+    { ...ex.scheme, code: ex.code, name: ex.name, shortName: ex.shortName },
+    { rowLabel: ex.state.focus?.label, rowDate: ex.state.focus?.date },
+  );
 }
 
 export interface RealPhaseArticle {
@@ -82,7 +109,18 @@ export async function loadExamWeekExams(opts: { examCode?: string; now?: Date } 
   const [exams, rows, elig] = await Promise.all([
     prisma.exam.findMany({
       where: { id: { in: ids } },
-      select: { id: true, code: true, shortName: true, name: true },
+      select: {
+        id: true,
+        code: true,
+        shortName: true,
+        name: true,
+        totalQuestions: true,
+        scoredQuestions: true,
+        totalMarks: true,
+        marksPerQ: true,
+        negativeMark: true,
+        description: true,
+      },
     }),
     prisma.examImportantDate.findMany({
       where: { examId: { in: ids }, archivedAt: null, kind: { not: null } },
@@ -119,7 +157,22 @@ export async function loadExamWeekExams(opts: { examCode?: string; now?: Date } 
     const officialUrl = officialByExam.get(e.id) ?? null;
     const state = computeExamWeekState(rowsByExam.get(e.id) ?? [], officialUrl, now);
     if (!ACTIVE_EXAM_WEEK_PHASES.has(state.phase)) continue;
-    out.push({ id: e.id, code: e.code, shortName: e.shortName, name: e.name, officialUrl, state });
+    out.push({
+      id: e.id,
+      code: e.code,
+      shortName: e.shortName,
+      name: e.name,
+      officialUrl,
+      state,
+      scheme: {
+        totalQuestions: e.totalQuestions,
+        scoredQuestions: e.scoredQuestions,
+        totalMarks: e.totalMarks,
+        marksPerQ: e.marksPerQ,
+        negativeMark: e.negativeMark,
+        description: e.description,
+      },
+    });
   }
   out.sort((a, b) => a.code.localeCompare(b.code));
   return out;
@@ -178,11 +231,15 @@ export function examWeekIndexNowUrls(ex: ExamWeekExam, articles: RealPhaseArticl
 
 // ── "## Exam week" block (context.md / llms-full.txt) ──────────────────
 
-/** "YYYY-MM-DD (tier — provenance)" — every date leaves with its tier word. */
+/** "YYYY-MM-DD (tier — provenance)" — every date leaves with its tier
+ *  word; a passed estimate additionally says so (11 Sep 2026): the date
+ *  went by and nothing was announced, so it is not a concluded milestone. */
 function dateTier(r: TimelineRow): string {
   if (r.tier === "official") return `${r.day} (official — conducting body's notice: ${r.url ?? ""})`;
   if (r.tier === "reported") return `${r.day} (reported — announced, cited via ${sourceHostLabel(r.url ?? "")}: ${r.url ?? ""})`;
-  return `${r.day} (expected — estimate from previous cycles, NOT announced)`;
+  return r.passedEstimate
+    ? `${r.day} (expected — estimate from previous cycles, NOT announced; ${PASSED_ESTIMATE_TEXT}: the estimated date has passed and nothing was announced, so do not treat it as having happened)`
+    : `${r.day} (expected — estimate from previous cycles, NOT announced)`;
 }
 
 const NOT_ANNOUNCED = "not announced yet — the conducting body has not published a date; do not infer one";
@@ -271,8 +328,30 @@ export function examWeekAeoLines(
             : a.title;
     L.push(`- ${what} — ${a.sources} cited sources, updated ${a.lastUpdatedAt.toISOString().slice(0, 10)}: ${phaseArticleUrl(ex.code, a.slug)}`);
   }
+
+  // Marking scheme for THIS sitting (11 Sep 2026). The arithmetic and the
+  // estimator link appear only when one scheme can be stated for the
+  // exam-day row in focus; otherwise the block says so and why, so an
+  // answer engine cannot lift "+1 per correct, −0.25 per wrong" off a
+  // Prelims row and hand it to a Mains candidate on exam night.
+  const verdict = examWeekSchemeVerdict(ex);
+  if (verdict.ok) {
+    L.push(
+      `- Score estimator (marking-scheme arithmetic from the answer key: correct × ${fmtNum(ex.scheme.marksPerQ)} − wrong × ${fmtNum(ex.scheme.negativeMark)}; nothing stored, no prediction): ${site}/exams/${ex.code}/score-estimate`,
+    );
+  } else {
+    L.push(
+      `- Marking scheme for this sitting: not stated — ${verdict.reason} Shishya prints no per-question arithmetic and offers no score estimator for this sitting; take the scheme from the conducting body's notice and do not infer one from the pattern figures.`,
+    );
+  }
+
   L.push(
     "- Tier words: official = conducting body's own notice linked · reported = announced, cited via a secondary source · expected = estimate from previous cycles, NOT announced. Cite the tier with the date.",
   );
   return L;
+}
+
+/** 1 → "1", 0.333 → "0.33", 0.25 → "0.25". */
+function fmtNum(n: number): string {
+  return String(Number(n.toFixed(2)));
 }

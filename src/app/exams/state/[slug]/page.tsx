@@ -141,9 +141,9 @@ export default async function StateIndexPage({
         <p className="mt-4 max-w-3xl text-sm text-ink-700">
           Free preparation for all {exams.length} entrance exams in {st.name} — PSC,
           TET, Police, Polytechnic, CET and more. Generate adaptive mock tests in
-          {" "}{languageList(st.languages)}, practice previous year papers, and Ask
-          Shishya when you need study help — verified by students who cleared
-          the same path. No payment, no premium tier.
+          {" "}{languageList(st.languages)}, practice PYQ-pattern papers, and Ask
+          Shishya when you need study help — AI-drafted, checked against the
+          official notification. No payment, no premium tier.
         </p>
 
         <ul className="mt-8 grid gap-3 sm:grid-cols-2">

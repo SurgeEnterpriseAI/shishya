@@ -10,14 +10,25 @@
 // / on exam eve / in the post-exam week gets the one-email alert on the
 // result screen. An expected-tier exam day never opens the post-exam
 // copy (alertPhase).
+//
+// 11 Sep 2026 signup-leak audit — three query params, all optional:
+//   ?n=10          5..10 questions (the cutoff-page nudge sends 10).
+//   ?from=cutoff   the result screen shows the category cutoff rows the
+//                  visitor just read on /cutoff, with their source tier
+//                  and an honest "sample, not a prediction" line.
+//   ?set=id1,id2   deterministic replay of a shared set ("try the same
+//                  5" WhatsApp share); ids are validated server-side
+//                  against this exam and capped at 10.
+// Still client-graded, still noindex.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
-import { getAnonQuiz } from "@/lib/anon-quiz";
-import { AnonQuizPlayer, type AnonQuizExamWeek } from "@/components/AnonQuizPlayer";
+import { clampAnonQuizCount, getAnonCutoffRows, getAnonQuiz, parseAnonQuizSet } from "@/lib/anon-quiz";
+import { categoryHeaderKey } from "@/lib/category-cutoff";
+import { AnonQuizPlayer, type AnonQuizCutoff, type AnonQuizExamWeek } from "@/components/AnonQuizPlayer";
 import { alertPhase, examAlertLabels, getExamWeekStateByCode } from "@/lib/exam-week-inputs";
 
 export const metadata: Metadata = { robots: { index: false, follow: true } };
@@ -26,19 +37,47 @@ export const dynamic = "force-dynamic";
 
 export default async function ExamQuizPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ code: string }>;
+  searchParams: Promise<{ n?: string | string[]; from?: string | string[]; set?: string | string[] }>;
 }) {
-  const { code } = await params;
-  const [quiz, examWeekState, { t }, session] = await Promise.all([
-    getAnonQuiz({ examCode: code, count: 5 }),
+  const [{ code }, sp] = await Promise.all([params, searchParams]);
+  const count = clampAnonQuizCount(sp.n);
+  const ids = parseAnonQuizSet(sp.set);
+  const fromCutoff = (Array.isArray(sp.from) ? sp.from[0] : sp.from) === "cutoff";
+  const [quiz, examWeekState, { t }, session, cutoffRows] = await Promise.all([
+    getAnonQuiz({ examCode: code, count, ids }),
     getExamWeekStateByCode(code),
     getT(),
     auth().catch(() => null),
+    fromCutoff ? getAnonCutoffRows(code) : Promise.resolve(null),
   ]);
   const examWeek: AnonQuizExamWeek | undefined = quiz
     ? { phase: alertPhase(examWeekState), signedIn: !!session?.user?.id, ...examAlertLabels(t, quiz.examShort) }
     : undefined;
+  // The cutoff page's own table, with the two generator headers translated
+  // the same way it does, framed with its tier word ("expected" — the
+  // ExamCategoryCutoff block is AI-curated and indicative) and the page's
+  // own disclaimer. The player adds the "sample, not a prediction" line.
+  const cutoff: AnonQuizCutoff | undefined =
+    quiz && cutoffRows
+      ? {
+          heading: t("ew.cutoff.lastCycle"),
+          tier: t("ew.tier.expected"),
+          table: cutoffRows.table.map((row, i) =>
+            i === 0
+              ? row.map((h) => {
+                  const k = categoryHeaderKey(h);
+                  return k ? t(k) : h;
+                })
+              : row,
+          ),
+          notes: cutoffRows.notes,
+          disclaimer: t("cutoff.disclaimer"),
+        }
+      : undefined;
+  const n = quiz?.questions.length ?? count;
 
   return (
     <main className="min-h-screen bg-ink-50/40">
@@ -64,14 +103,15 @@ export default async function ExamQuizPage({
         ) : (
           <>
             <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">
-              {quiz.examShort} — free 5-question quiz
+              {quiz.examShort} — free {n}-question quiz
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-ink-600">
-              No signup needed. Answer 5 real {quiz.examShort} questions, get instant scoring and
-              solutions, then unlock full mocks and your weak-topic map for free.
+              {quiz.replay
+                ? `Same ${n} questions as the link you opened, in the same order — no signup, instant scoring and solutions.`
+                : `No signup needed. Answer ${n} real ${quiz.examShort} questions, get instant scoring and solutions, then unlock full mocks and your weak-topic map for free.`}
             </p>
             <div className="mt-6">
-              <AnonQuizPlayer quiz={quiz} examWeek={examWeek} />
+              <AnonQuizPlayer quiz={quiz} examWeek={examWeek} cutoff={cutoff} />
             </div>
           </>
         )}

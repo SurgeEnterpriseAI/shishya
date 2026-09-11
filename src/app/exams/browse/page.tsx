@@ -17,40 +17,52 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { Prisma } from "@prisma/client";
 import { STATES, stateSlug, languageName } from "@/lib/state-info";
+import { getExamCatalog } from "@/lib/db/exam-cache";
 import { ExamSearchBox } from "./ExamSearchBox";
 
 export const revalidate = 300; // 5 min — the underlying list barely changes
 
-export const metadata: Metadata = {
-  title: "All Entrance Exams in India — Search by State, Exam, Language | Shishya",
-  description:
-    "Search and filter 163 entrance exams across India by state, exam name, language, or category. Free mock tests, previous year papers, study help — verified by students who cleared the same path. SSC, UPSC, IBPS, RRB, NEET, JEE, GATE, CAT, all state PSCs, all TETs, all Police exams.",
-  alternates: { canonical: "https://shishya.in/exams/browse" },
-  keywords: [
-    "entrance exams india",
-    "search entrance exams",
-    "state-wise entrance exams",
-    "exam by language",
-    "free mock tests",
-    "previous year papers",
-    "exam preparation online",
-    "SSC RRB NEET JEE UPSC preparation",
-    "state level exams india",
-    "olympiad mock tests",
-    "Shishya verified prep",
-    "government job exam list",
-    "banking exam list",
-    "teaching exam list",
-  ],
-  openGraph: {
-    title: "Search All Entrance Exams in India — Free Mocks & Study Help",
-    description: "163 entrance exams. Filter by state, language, or category. Free.",
-    url: "https://shishya.in/exams/browse",
-    siteName: "Shishya",
-    locale: "en_IN",
-    type: "website",
-  },
-};
+// Metadata is generated so the exam count comes from the cached catalogue
+// (same definition as the page body's `totalActive`: active, school boards
+// excluded) instead of a typed number that drifts (audit 11 Sep 2026: it
+// said 163 while the catalogue held 178). No "verified by students who
+// cleared" — content is AI-drafted and checked against the official
+// notification.
+export async function generateMetadata(): Promise<Metadata> {
+  const n = await getExamCatalog()
+    .then((list) => list.filter((e) => e.category !== "SCHOOL_BOARD").length)
+    .catch(() => 0);
+  const scope = n > 0 ? `${n} government and entrance exams` : "every government and entrance exam";
+  return {
+    title: "All Entrance Exams in India — Search by State, Exam, Language | Shishya",
+    description:
+      `Search and filter ${scope} across India by state, exam name, language, or category. Free mock tests, PYQ-pattern papers, AI tutor and a free day-by-day coach plan — AI-drafted, checked against the official notification. SSC, UPSC, IBPS, RRB, NEET, JEE, GATE, CAT, all state PSCs, all TETs, all Police exams.`,
+    alternates: { canonical: "https://shishya.in/exams/browse" },
+    keywords: [
+      "entrance exams india",
+      "search entrance exams",
+      "state-wise entrance exams",
+      "exam by language",
+      "free mock tests",
+      "previous year papers",
+      "exam preparation online",
+      "SSC RRB NEET JEE UPSC preparation",
+      "state level exams india",
+      "olympiad mock tests",
+      "government job exam list",
+      "banking exam list",
+      "teaching exam list",
+    ],
+    openGraph: {
+      title: "Search All Entrance Exams in India — Free Mocks & Study Help",
+      description: `${n > 0 ? `${n} exams` : "Every government and entrance exam"}. Filter by state, language, or category. Free.`,
+      url: "https://shishya.in/exams/browse",
+      siteName: "Shishya",
+      locale: "en_IN",
+      type: "website",
+    },
+  };
+}
 
 const CATEGORY_LABELS: Record<string, string> = {
   GOVT_JOBS: "Government Jobs",

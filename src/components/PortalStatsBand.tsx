@@ -3,6 +3,8 @@
 // visitor needs (how much is here, how many languages, that it's free),
 // complementing the LIVE activity strip which shows real-time traffic.
 
+import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+
 interface Stat {
   value: string;
   label: string;
@@ -14,15 +16,15 @@ export function PortalStatsBand({
   questions,
   notes,
 }: {
-  examCount: number;
+  examCount: string; // live DB count, or "170+" when the count is unavailable
   questions: string; // pre-rounded, e.g. "30,000+"
   notes: string; // e.g. "3,700+"
 }) {
   const stats: Stat[] = [
-    { icon: "🎯", value: String(examCount), label: "Govt & entrance exams" },
+    { icon: "🎯", value: examCount, label: "Govt & entrance exams" },
     { icon: "📝", value: questions, label: "Practice questions" },
     { icon: "📖", value: notes, label: "Free study notes" },
-    { icon: "🗣️", value: "22", label: "Indian languages" },
+    { icon: "🗣️", value: String(INDIAN_LANGUAGE_COUNT), label: "Indian languages" },
     { icon: "🆓", value: "₹0", label: "Always free" },
   ];
   return (

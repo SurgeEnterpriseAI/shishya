@@ -14,10 +14,40 @@
 // 15) with a clear time estimate, and defaults to 10 (not 15) so the
 // commitment reads as reasonable before they click. They pick what fits
 // their time, then start — no surprise 15-Q timed wall.
+//
+// DEAD PRIMARY CTA FIX (11 Sep 2026 signup-leak audit)
+// For an anonymous visitor this button — the hub's primary CTA — POSTed
+// /api/mocks, got 401 {error:"UNAUTHENTICATED"} and printed that string in
+// red. Now a 401 sends them to /login with callbackUrl back to this hub
+// carrying ?start=diagnostic; on the signed-in return the diagnostic they
+// asked for starts by itself, once (sessionStorage guard — never a loop).
+// Same pattern as SubjectTestButton / CustomMockBuilder.
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { apiPost } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
+// First-party analytics beacon (same shape as ShareExamButton) — the 401
+// path is counted so the audit can see how much mock intent the wall
+// receives and how much of it returns signed in.
+function beacon(cta: string, extra?: Record<string, unknown>) {
+  try {
+    navigator.sendBeacon?.(
+      "/api/analytics",
+      new Blob(
+        [
+          JSON.stringify({
+            kind: "CTA_CLICKED",
+            path: typeof location !== "undefined" ? location.pathname : "/",
+            props: { cta, ...extra },
+          }),
+        ],
+        { type: "application/json" },
+      ),
+    );
+  } catch {
+    /* analytics is best-effort */
+  }
+}
 
 interface Labels {
   adaptive: string;
@@ -45,6 +75,10 @@ export function StartMockButton({
   labels: Labels;
 }) {
   const router = useRouter();
+  // The hub page renders per request (it reads the session), so this needs
+  // no Suspense boundary of its own; the root layout's AnalyticsTracker
+  // is the precedent.
+  const searchParams = useSearchParams();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   // Default to 10 questions — the previous instant-15 was the wall.
@@ -54,19 +88,64 @@ export function StartMockButton({
     setErr(null);
     setBusy(true);
     try {
-      const res = await apiPost<{ mock: { id: string } }>("/api/mocks", {
-        examCode,
-        request:
-          kind === "DIAGNOSTIC"
-            ? { type: "DIAGNOSTIC", questionCount: 5 }
-            : { type: "ADAPTIVE", questionCount: n ?? count },
+      const res = await fetch("/api/mocks", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          examCode,
+          request:
+            kind === "DIAGNOSTIC"
+              ? { type: "DIAGNOSTIC", questionCount: 5 }
+              : { type: "ADAPTIVE", questionCount: n ?? count },
+        }),
       });
-      router.push(`/mocks/${res.mock.id}`);
-    } catch (e: any) {
-      setErr(e.message ?? "Could not start mock");
+      if (res.status === 401) {
+        // Anonymous visitor: keep the intent instead of printing the error.
+        // The callback brings them back to THIS hub with ?start=diagnostic,
+        // which the effect below turns into the mock they asked for.
+        beacon("diagnostic-401", { examCode, kind });
+        window.location.href = `/login?callbackUrl=${encodeURIComponent(`/exams/${examCode}?start=diagnostic`)}`;
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.mock?.id) {
+        setErr(data?.error ?? "Could not start mock");
+        setBusy(false);
+        return;
+      }
+      router.push(`/mocks/${data.mock.id}`);
+    } catch {
+      setErr("Network hiccup — try again.");
       setBusy(false);
     }
   }
+
+  // Post-login auto-start: /exams/CODE?start=diagnostic is only ever
+  // produced by the 401 path above, so a signed-in arrival with it means
+  // "you asked for the diagnostic before the wall — here it is". Guarded
+  // by sessionStorage so a reload, back-navigation, Strict Mode double
+  // effect or an expired session mid-flight can never loop through
+  // /login again, and by a session probe so a pasted URL just shows the
+  // button to a guest. No storage → no guard → no auto-start.
+  useEffect(() => {
+    if (searchParams?.get("start") !== "diagnostic") return;
+    const key = `shishya_autostart_diag:${examCode}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch {
+      return;
+    }
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((s) => {
+        if (s && (s as { user?: unknown }).user) void start("DIAGNOSTIC");
+      })
+      .catch(() => {
+        /* probe failed — leave the button to the student */
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, examCode]);
 
   // First-timer (no history): single low-commitment diagnostic.
   if (!hasHistory) {

@@ -16,6 +16,7 @@ import { sendTelegramMessage, telegramConfigured, tgEscape, tgUrl, ensureTelegra
 import { liveTestEmailNotice } from "@/lib/live-test-today";
 import { buildTimeline, fmtDay } from "@/lib/exam-timeline";
 import { sourceTier } from "@/lib/official-source";
+import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 
 function istDateStr(now = new Date()): string {
   return new Date(now.getTime() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -40,6 +41,10 @@ export async function GET(req: Request) {
 
   const date = istDateStr();
   const now = new Date();
+  // Live catalogue size for the footer line (audit 11 Sep 2026: this
+  // carried a typed "177" that drifted). Stable wording if the count fails.
+  const examCount = await prisma.exam.count({ where: { active: true } }).catch(() => 0);
+  const examScope = examCount > 0 ? String(examCount) : "170+";
 
   // Exam tracker signals for the channel (23 Aug 2026): exam days in the
   // next 7 days (official first) and official dates/results that appeared
@@ -127,7 +132,7 @@ export async function GET(req: Request) {
   lines.push(``);
   lines.push(`🗺 <b>New:</b> India's Government Jobs Map — every path from UPSC Group A to state police, with live vacancies: ${tgUrl("/jobs-map", "channel")}`);
   lines.push(``);
-  lines.push(`🎯 <b>Free on Shishya:</b> mock tests, PYQs, syllabus, tricks & an AI tutor in 22 Indian languages for 177 govt exams — 100% free.`);
+  lines.push(`🎯 <b>Free on Shishya:</b> mock tests, PYQs, syllabus, tricks & an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages for ${examScope} govt & entrance exams — 100% free.`);
   lines.push(`Start: https://shishya.in`);
   lines.push(``);
   lines.push(`Forward this to your prep group 🙏`);

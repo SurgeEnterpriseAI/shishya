@@ -11,6 +11,14 @@
 //   expected — a typical-cycle estimate the UI must label as such
 // Rows written before the tracker fields existed (kind/confidence NULL)
 // are classified from their label and treated as expected.
+//
+// Passed estimates (11 Sep 2026): an EXPECTED-tier row whose date has gone
+// by is not a concluded milestone — nothing was announced, so we do not
+// know that anything happened. `status` stays "done" (it IS in the past,
+// and every "what is still to come?" filter depends on that), but the row
+// also carries `passedEstimate: true` and `displayStatus:
+// "passed-estimate"`, and surfaces must render THAT — "was expected — not
+// confirmed" — never "Done".
 
 import { kindFromLabel, type DateKind } from "@/lib/ai/exam-info";
 import { istDayNumber } from "@/lib/exam-phase";
@@ -18,7 +26,20 @@ import { sourceTier, type SourceTier } from "@/lib/official-source";
 
 export type { DateKind, SourceTier };
 
+/** Chronological status — drives every "still to come" / "already past"
+ *  filter (stageOf, upcomingOfKind, the crons, the Telegram replies). */
 export type TimelineStatus = "done" | "today" | "upcoming";
+
+/** What a surface should SAY about the row. Identical to `status` except
+ *  that a past EXPECTED-tier row is "passed-estimate": the estimate went
+ *  by and nothing was announced, so it is neither done nor upcoming. A
+ *  status column must print PASSED_ESTIMATE_TEXT (or its translation) for
+ *  it, never "Done". */
+export type TimelineDisplayStatus = TimelineStatus | "passed-estimate";
+
+/** English wording for a passed estimate — the cutoff page's
+ *  ew.date.overdue says the same thing in en/hi/te. */
+export const PASSED_ESTIMATE_TEXT = "was expected — not confirmed";
 
 export interface TimelineInput {
   id: string;
@@ -53,6 +74,13 @@ export interface TimelineRow {
   url: string | null;
   notes: string | null;
   status: TimelineStatus;
+  /** True when the row is a passed estimate: `status` is "done" AND the
+   *  tier is "expected". The date went by with nothing announced — do not
+   *  call it done or concluded. */
+  passedEstimate: boolean;
+  /** `status`, except "passed-estimate" for a passed estimate — the value
+   *  a status column should render. */
+  displayStatus: TimelineDisplayStatus;
   /** IST calendar-day delta from today (negative = past). */
   daysFromToday: number;
 }
@@ -107,16 +135,34 @@ export function isoDay(d: Date): string {
 
 /** Build the ordered timeline. Sorted by date, then by cycle order.
  *  `officialUrl` (the exam's portal from ExamEligibility) widens the
- *  gold tier to that portal's domain even off-government TLDs. */
+ *  gold tier to that portal's domain even off-government TLDs.
+ *
+ *  Answer-key guard (11 Sep 2026): an ANSWER_KEY row that is not announced
+ *  — tier "expected", i.e. confidence not "official" or no citable URL —
+ *  is DROPPED here, in the one place every surface builds its rows from
+ *  (tracker, estimator, .ics, AEO block, mails, Telegram, crons). The
+ *  generator already refuses to write such rows (exam-info.ts rule 3b:
+ *  "an estimated key date is worse than no row"), but 40 stored rows from
+ *  before that rule were still reaching prod pages as "answer key
+ *  (expected) 17 Sep". Founder rule: never show an expected answer-key
+ *  date — the surfaces print "not announced yet" instead. RESULT rows keep
+ *  their expected tier: a result estimate is allowed with its tier word. */
 export function buildTimeline(rows: TimelineInput[], now: Date = new Date(), officialUrl?: string | null): TimelineRow[] {
   const today = istDayNumber(now);
-  const out: TimelineRow[] = rows.map((r) => {
+  const out: TimelineRow[] = [];
+  for (const r of rows) {
     const date = r.date instanceof Date ? r.date : new Date(r.date);
     const { kind, declared } = resolveKindInfo({ kind: r.kind, label: r.label, isExamDay: r.isExamDay });
     const url = r.url && /^https?:\/\//i.test(r.url) ? r.url : r.source && /^https?:\/\//i.test(r.source) ? r.source : null;
     const tier = sourceTier(r.confidence, url, officialUrl);
+    if (kind === "ANSWER_KEY" && tier === "expected") continue;
     const delta = istDayNumber(date) - today;
-    return {
+    const status: TimelineStatus = delta < 0 ? "done" : delta === 0 ? "today" : "upcoming";
+    // A passed estimate is chronologically past ("done" for the filters)
+    // but not concluded — nothing was announced. Surfaces render
+    // displayStatus, so it can never read "Done".
+    const passedEstimate = status === "done" && tier === "expected";
+    out.push({
       id: r.id,
       kind,
       kindDeclared: declared,
@@ -130,10 +176,12 @@ export function buildTimeline(rows: TimelineInput[], now: Date = new Date(), off
       tier,
       url,
       notes: r.notes ?? null,
-      status: delta < 0 ? "done" : delta === 0 ? "today" : "upcoming",
+      status,
+      passedEstimate,
+      displayStatus: passedEstimate ? "passed-estimate" : status,
       daysFromToday: delta,
-    };
-  });
+    });
+  }
   out.sort((a, b) => a.date.getTime() - b.date.getTime() || KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
   return out;
 }
@@ -153,6 +201,20 @@ export function stageOf(timeline: TimelineRow[]): { next: TimelineRow | null; la
     timeline.find((r) => r.kind === "EXAM" && r.status !== "done") ??
     null;
   return { next, last, nextExam };
+}
+
+/** The exam-day row a "this sitting" question is about: today's / the
+ *  next upcoming EXAM row (declared kind preferred, as stageOf), else the
+ *  most recently HELD one (declared preferred). Feeds the marking-scheme
+ *  stage check (src/lib/marking-scheme.ts rule 4) on surfaces outside the
+ *  ±7-day exam-week window, where computeExamWeekState has no focus row. */
+export function focusExamRow(timeline: TimelineRow[]): TimelineRow | null {
+  const { nextExam } = stageOf(timeline);
+  if (nextExam) return nextExam;
+  const done = timeline.filter((r) => r.kind === "EXAM" && r.status === "done");
+  const declared = done.filter((r) => r.kindDeclared);
+  const pool = declared.length ? declared : done;
+  return pool.length ? pool[pool.length - 1] : null;
 }
 
 /** Cycle year to show in titles: year of the next exam day, else the

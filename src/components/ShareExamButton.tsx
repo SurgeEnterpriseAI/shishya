@@ -10,25 +10,36 @@
 // and it spreads exactly the pages we most want indexed and visited
 // (free PYQ, syllabus, study notes). Each share also seeds a real referral
 // the analytics channel report can later attribute.
+//
+// Attribution (11 Sep 2026): every outbound link is utm-tagged per
+// channel through src/lib/share-url.ts (utm_source = whatsapp | copy |
+// native, utm_campaign = `surface`, utm_content = `exam`), so the channel
+// report can tell a forwarded link from a typed one. The page's own
+// canonical / hreflang stay bare — only the copy that leaves the site
+// carries tags.
 
 import { useState } from "react";
+import { shareUrl, type ShareChannel } from "@/lib/share-url";
 
 interface Props {
-  /** Absolute URL to share (must be public + OG-rich). */
+  /** Public URL of the page to share — absolute, or a site-relative path. */
   url: string;
   /** Pre-filled message body. The URL is appended automatically. */
   message: string;
   /** Small label shown before the buttons. Defaults to a generic prompt. */
   label?: string;
-  /** Optional analytics tag (e.g. "exam", "pyq", "topic"). */
+  /** Analytics tag + utm_campaign (e.g. "exam", "tracker", "cutoff", "invite"). */
   surface?: string;
+  /** Exam code the page is about → utm_content + analytics examCode. */
+  exam?: string | null;
 }
 
-export function ShareExamButton({ url, message, label, surface }: Props) {
+export function ShareExamButton({ url, message, label, surface, exam }: Props) {
   const [copied, setCopied] = useState(false);
 
-  const shareText = `${message}\n${url}`;
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+  const campaign = surface ?? "page";
+  const tagged = (channel: ShareChannel) => shareUrl(url, { surface: campaign, channel, exam });
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${message}\n${tagged("whatsapp")}`)}`;
 
   function track(via: string) {
     // Best-effort, non-blocking — routed through the first-party analytics
@@ -42,7 +53,7 @@ export function ShareExamButton({ url, message, label, surface }: Props) {
             JSON.stringify({
               kind: "CTA_CLICKED",
               path: typeof location !== "undefined" ? location.pathname : url,
-              props: { cta: "share", surface: surface ?? "page", via },
+              props: { cta: "share", surface: campaign, via, ...(exam ? { examCode: exam } : {}) },
             }),
           ],
           { type: "application/json" },
@@ -55,7 +66,7 @@ export function ShareExamButton({ url, message, label, surface }: Props) {
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(tagged("copy"));
       setCopied(true);
       track("copy");
       setTimeout(() => setCopied(false), 2000);
@@ -67,7 +78,7 @@ export function ShareExamButton({ url, message, label, surface }: Props) {
   async function nativeShare() {
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ text: message, url });
+        await navigator.share({ text: message, url: tagged("native") });
         track("native");
       } catch {
         /* user cancelled — no-op */

@@ -344,8 +344,8 @@ export async function PhaseArticleView({
           Talk to other {exam.shortName} candidates
         </h3>
         <p className="mt-1 text-sm text-ink-600">
-          Comments, what-did-you-get threads, doubts, score predictions — every
-          post is from someone preparing or who&apos;s cleared the same paper.
+          Comments, what-did-you-get threads, doubts, score estimates — scoped
+          to this exam. Shishya&apos;s own starter questions and AI replies are labelled.
         </p>
         <Link
           href={`/discussions?examCode=${exam.code}`}

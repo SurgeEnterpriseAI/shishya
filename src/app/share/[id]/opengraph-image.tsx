@@ -1,16 +1,26 @@
-// Dynamic OG card for /share/:id.
+// Dynamic OG card for /share/:id — the preview a friend sees in WhatsApp
+// when a student forwards their mock score.
 //
 // Next 15's file-based convention: a file named opengraph-image.tsx
-// under a route automatically becomes that route's og:image. Returns
-// an ImageResponse from next/og — Vercel runs it on the Edge so
-// generation is fast (typical 100-300 ms cold start).
+// under a route automatically becomes that route's og:image.
 //
-// Renders the share-friendly hero: student name + score + exam name +
-// "Shishya — free Indian exam prep" footer. WhatsApp / Twitter /
-// Telegram show this when someone shares a /share/:id link.
+// 11 Sep 2026: prod returned HTTP 500 for every /share/:id/opengraph-image
+// (missing AND real attempts), so each "Share your score" forward landed
+// image-less. Root cause: Satori throws 'Expected <div> to have explicit
+// "display: flex"' for any <div> whose children are more than one node —
+// `{studentName} scored` and `on {exam}` are two-node child lists in
+// non-flex divs. Rebuilt on the per-exam route that works on prod
+// (src/app/exams/[code]/opengraph-image.tsx): Node runtime, the DB read
+// is .catch()'d, every text container is display:flex, and each line is
+// a single template string.
 //
-// Image dimensions are 1200x630 (canonical OG card size). Embedded
-// Inter font so the typography is consistent across previewers.
+// PRIVACY — mirrors page.tsx: first name + score + exam short name only.
+// A sharer with no name on their account gets an exam card WITHOUT the
+// score ("A student scored 72%" reads like synthetic social proof, and
+// the friend has nobody to attach it to). A missing attempt renders the
+// plain brand card — never a 500, never an empty preview.
+//
+// Image dimensions are 1200x630 (canonical OG card size).
 
 import { ImageResponse } from "next/og";
 import { prisma } from "@/lib/db/prisma";
@@ -41,31 +51,42 @@ const CATEGORY_PALETTE: Record<string, { bg: string; accent: string; label: stri
   OTHER:          { bg: "#fff7ed", accent: "#c2410c", label: "Exam prep" },
 };
 
-export default async function Image({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   // Next 15: params is a Promise (sync read → undefined → 500 in prod).
   const { id } = await params;
-  const attempt = await prisma.attempt.findUnique({
-    where: { id },
-    select: {
-      scorePct: true,
-      user: { select: { name: true } },
-      mock: { select: { exam: { select: { shortName: true, category: true } } } },
-    },
-  });
+  const attempt = await prisma.attempt
+    .findUnique({
+      where: { id },
+      select: {
+        scorePct: true,
+        user: { select: { name: true } },
+        mock: { select: { exam: { select: { shortName: true, category: true } } } },
+      },
+    })
+    .catch(() => null);
 
-  // Gracefully degrade if the attempt is missing — render a generic
-  // Shishya brand card. WhatsApp will still get a preview rather than
-  // a 404 / empty preview that drops the link's CTR.
-  const exam = attempt?.mock?.exam?.shortName ?? "Indian exam prep";
+  const exam = attempt?.mock?.exam?.shortName ?? null;
+  const firstName = attempt?.user?.name?.trim().split(/\s+/)[0] || null;
+  const showScore = !!attempt && !!firstName && attempt.scorePct != null;
   const score = formatDisplayScorePct(attempt?.scorePct);
-  const studentName =
-    attempt?.user?.name?.trim().split(/\s+/)[0] ?? "A student";
   const category = (attempt?.mock?.exam?.category ?? "OTHER") as string;
   const palette = CATEGORY_PALETTE[category] ?? CATEGORY_PALETTE.OTHER;
+
+  // Three shapes, one layout:
+  //   named sharer   → "Rahul scored" / 72.4% / "on SBI PO"
+  //   nameless sharer→ "SBI PO mock" / "Try 5 questions free — no sign-in"
+  //   missing attempt→ plain brand card
+  const headline = showScore
+    ? `${firstName} scored`
+    : exam
+      ? `${exam} mock`
+      : "Free Indian exam prep";
+  const subline = showScore
+    ? `on ${exam}`
+    : exam
+      ? "Try 5 questions free — no sign-in"
+      : "Mock tests · syllabus · cutoffs · exam trackers";
+  const kicker = attempt ? palette.label : "Shishya";
 
   return new ImageResponse(
     (
@@ -76,8 +97,8 @@ export default async function Image({
           background: palette.bg,
           display: "flex",
           flexDirection: "column",
-          padding: 64,
-          fontFamily: "Inter, system-ui, sans-serif",
+          padding: "64px",
+          fontFamily: "sans-serif",
         }}
       >
         {/* Top ribbon — accent stripe */}
@@ -87,96 +108,62 @@ export default async function Image({
             top: 0,
             left: 0,
             right: 0,
-            height: 12,
+            height: "12px",
             background: palette.accent,
+            display: "flex",
           }}
         />
 
         {/* Top row — brand */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <div
             style={{
-              width: 64,
-              height: 64,
+              width: "64px",
+              height: "64px",
               background: "#f97316",
-              borderRadius: 14,
+              borderRadius: "14px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "white",
-              fontSize: 32,
+              fontSize: "32px",
               fontWeight: 700,
             }}
           >
             शि
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: "#0f172a" }}>
-              Shishya
-            </div>
-            <div style={{ fontSize: 16, color: "#475569", marginTop: 2 }}>
+            <div style={{ display: "flex", fontSize: "28px", fontWeight: 700, color: "#0f172a" }}>Shishya</div>
+            <div style={{ display: "flex", fontSize: "16px", color: "#475569", marginTop: "2px" }}>
               Free Indian exam prep
             </div>
           </div>
         </div>
 
         {/* Middle — the headline */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 28,
-              color: palette.accent,
-              fontWeight: 600,
-              marginBottom: 8,
-            }}
-          >
-            {palette.label}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ display: "flex", fontSize: "28px", color: palette.accent, fontWeight: 600, marginBottom: "8px" }}>
+            {kicker}
           </div>
-          <div
-            style={{
-              fontSize: 68,
-              fontWeight: 800,
-              color: "#0f172a",
-              lineHeight: 1.1,
-            }}
-          >
-            {studentName} scored
+          <div style={{ display: "flex", fontSize: "68px", fontWeight: 800, color: "#0f172a", lineHeight: 1.1 }}>
+            {headline}
           </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "baseline",
-              gap: 24,
-              marginTop: 12,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 140,
-                fontWeight: 900,
-                color: "#f97316",
-                letterSpacing: "-3px",
-                lineHeight: 1,
-              }}
-            >
-              {score}
-            </div>
-            <div
-              style={{
-                fontSize: 40,
-                color: "#1e293b",
-                fontWeight: 600,
-              }}
-            >
-              on {exam}
-            </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "24px", marginTop: "12px" }}>
+            {showScore ? (
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: "140px",
+                  fontWeight: 900,
+                  color: "#f97316",
+                  letterSpacing: "-3px",
+                  lineHeight: 1,
+                }}
+              >
+                {score}
+              </div>
+            ) : null}
+            <div style={{ display: "flex", fontSize: "40px", color: "#1e293b", fontWeight: 600 }}>{subline}</div>
           </div>
         </div>
 
@@ -187,24 +174,16 @@ export default async function Image({
             alignItems: "center",
             justifyContent: "space-between",
             borderTop: "1px solid rgba(15,23,42,0.1)",
-            paddingTop: 24,
+            paddingTop: "24px",
           }}
         >
-          <div style={{ fontSize: 22, color: "#334155" }}>
-            Where do YOU stand?
+          <div style={{ display: "flex", fontSize: "22px", color: "#334155" }}>
+            {showScore ? "Where do YOU stand? 5 questions, no sign-in" : "Free mocks · PYQ · exam dates · in your language"}
           </div>
-          <div
-            style={{
-              fontSize: 22,
-              fontWeight: 700,
-              color: "#f97316",
-            }}
-          >
-            shishya.in →
-          </div>
+          <div style={{ display: "flex", fontSize: "22px", fontWeight: 700, color: "#f97316" }}>shishya.in →</div>
         </div>
       </div>
     ),
-    size,
+    { ...size },
   );
 }

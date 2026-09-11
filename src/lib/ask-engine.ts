@@ -18,6 +18,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { anthropic, MODEL, cachedSystem } from "@/lib/ai/client";
 import { recordAiUsage } from "@/lib/ai/usage";
+import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { resolveAliases } from "@/lib/exam-aliases";
 
 // ── Tool definitions ─────────────────────────────────────────────────
@@ -26,7 +27,7 @@ const TOOLS: Anthropic.Messages.Tool[] = [
   {
     name: "search_exams",
     description:
-      "Search Shishya's 177 Indian government & entrance exams. Filter by state code (e.g. BR, MH, KA — omit for national), category (GOVT_JOBS, BANKING, CIVIL_SERVICES, TEACHING, STATE_LEVEL, ENGINEERING, MEDICAL), and/or a free-text keyword. The keyword matches CONTEXTUALLY, not just literally — colloquial and vernacular role words work (daroga, sipahi, steno, babu, fauj, shikshak, दरोगा, रेलवे), so pass the aspirant's OWN words rather than translating them. Returns pattern, eligibility, approximate annual vacancies and Shishya links.",
+      "Search Shishya's 170+ Indian government & entrance exams. Filter by state code (e.g. BR, MH, KA — omit for national), category (GOVT_JOBS, BANKING, CIVIL_SERVICES, TEACHING, STATE_LEVEL, ENGINEERING, MEDICAL), and/or a free-text keyword. The keyword matches CONTEXTUALLY, not just literally — colloquial and vernacular role words work (daroga, sipahi, steno, babu, fauj, shikshak, दरोगा, रेलवे), so pass the aspirant's OWN words rather than translating them. Returns pattern, eligibility, approximate annual vacancies and Shishya links.",
     input_schema: {
       type: "object",
       properties: {
@@ -247,7 +248,7 @@ RULES (non-negotiable):
 9. FULL CAPABILITIES — Shishya already has ALL of the following, free. NEVER tell an aspirant to wait for, or that we lack, any of these; when asked "do you have X / can I do X", answer "Yes —" and point to the exact place. (Aspirants keep requesting features that already exist because they can't find them — your job is to surface them.)
    • Mock tests: full-length exam-pattern mocks, previous-year papers 2021–2025 (/exams/{CODE}/pyq/{YEAR}), subject-wise tests (25 Q, "Practice by subject" on the hub), topic-wise tests (10 Q per topic, from the syllabus at /exams/{CODE}/topics/{TOPIC}), and "Build my own mock" (pick exact topics, count, difficulty) — all on the exam hub /exams/{CODE}.
    • All-India Live Tests every Sunday with a real national rank & leaderboard (/live-test).
-   • AI tutor with VOICE INPUT (a mic button — "speak your question") in 22 Indian languages (/chat). When asked for a "mic / voice / speak" feature, confirm it's already there in the tutor.
+   • AI tutor with VOICE INPUT (a mic button — "speak your question") in ${INDIAN_LANGUAGE_COUNT} Indian languages (/chat). When asked for a "mic / voice / speak" feature, confirm it's already there in the tutor.
    • Weak-area analysis after EVERY mock: the results page names your weakest topics, and /me/report gives a full strong/weak breakdown + week-vs-week trend, downloadable as PDF.
    • Descriptive/essay-writing practice with AI evaluation, typing practice, current-affairs capsules, a daily-5 habit quiz, and streaks.
    • Study notes for 3,700+ topics (Hindi versions for top topics), memory tricks/mnemonics (/exams/{CODE}/tricks), full syllabus, category-wise cutoffs (/exams/{CODE}/cutoff), eligibility, and an exam calendar with dates.

@@ -112,7 +112,7 @@ export function phaseArticleCopy(phase: ArticlePhase, examShort: string, claim: 
       ? `${s} is on ${claim.dated}. Here's the cheat-sheet to revise — what to carry, last-mile topics, formulae, mock targets.`
       : `Last-minute checklist for ${paper} — what to carry, last-mile topics, formulae, mock targets.`,
     fallbackTitle: `${s} — last-minute checklist${claim.dated ? ` (exam ${claim.dated})` : ""}`,
-    emptyBody: `We're putting together the last-minute checklist for ${s}. Check back closer to the exam date — students who've cleared the same paper will have written the revision sheet by then.`,
+    emptyBody: `We're putting together the last-minute checklist for ${s}. Check back closer to the exam date — we compile it from the official notice and past papers as the date nears.`,
   };
 }
 

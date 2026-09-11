@@ -3,10 +3,20 @@
 // present on the page (not schema-only), so this component renders both
 // from the SAME data — every answer shown to a user is exactly what's in
 // the structured data. All facts are sourced from real exam data (free
-// pricing, verified-question count, available PYQ years, exam duration);
-// nothing is fabricated, and items only appear when the underlying fact
-// exists. FAQ rich results are high-leverage for exam queries like
-// "is <exam> free", "how many <exam> questions", "<exam> previous papers".
+// pricing, admin-validated question count, available PYQ years, exam
+// duration); nothing is fabricated, and items only appear when the
+// underlying fact exists. FAQ rich results are high-leverage for exam
+// queries like "is <exam> free", "how many <exam> questions", "<exam>
+// previous papers".
+//
+// Honesty (11 Sep 2026 audit): these answers used to claim the questions
+// were "community-verified … by students and educators who have cleared
+// the same exam" and "student-verified". Question.validated is set only
+// by admin routes; there is no student-verification loop. The answers
+// now state the real pipeline: AI-generated, grounded in the official
+// syllabus/notification, admin-validated before going live, and
+// re-checked when a student reports one. PYQ sets are PYQ-pattern
+// (freshly worded in that year's pattern), never "the paper".
 
 interface FaqItem {
   q: string;
@@ -29,16 +39,16 @@ export function ExamFaq({
 }) {
   const faqs: FaqItem[] = [];
 
-  // Always true — Shishya is free + community-verified.
+  // Always true — Shishya is free; the question pipeline is stated as it is.
   faqs.push({
     q: `Is Shishya free for ${examShortName} preparation?`,
-    a: `Yes. Every ${examShortName} mock test, previous-year paper, and study tool on Shishya is completely free — no subscription and no credit card. Shishya is community-verified, so questions are checked by students and educators who have cleared the same exam.`,
+    a: `Yes. Every ${examShortName} mock test, PYQ-pattern paper and study tool on Shishya is completely free — no subscription and no credit card. Questions are AI-generated, grounded in the official syllabus and notification, validated by Shishya's admin team before they go live, and re-checked whenever a student reports one.`,
   });
 
   if (questionCount > 0) {
     faqs.push({
       q: `How many ${examShortName} practice questions does Shishya have?`,
-      a: `Shishya has ${questionCount.toLocaleString("en-IN")} student-verified ${examShortName} practice questions, available as adaptive mock tests with a worked solution for every question.`,
+      a: `Shishya has ${questionCount.toLocaleString("en-IN")} admin-validated ${examShortName} practice questions (AI-generated and source-grounded; any question a student reports is re-checked), available as adaptive mock tests with a worked solution for every question.`,
     });
   }
 
@@ -50,7 +60,7 @@ export function ExamFaq({
         : `${sorted[0]}`;
     faqs.push({
       q: `Are ${examShortName} previous year question papers available?`,
-      a: `Yes. Shishya has free ${examShortName} previous-year papers covering ${range} (${pyqYears.length} ${pyqYears.length === 1 ? "year" : "years"}). Each is a timed practice set with full solutions.`,
+      a: `Yes. Shishya has free ${examShortName} PYQ-pattern papers covering ${range} (${pyqYears.length} ${pyqYears.length === 1 ? "year" : "years"}) — questions freshly worded in the pattern of each year's paper, not the paper itself; each year's page shows how many questions it holds against the real paper's count. Each is a timed practice set with full solutions.`,
     });
   }
 

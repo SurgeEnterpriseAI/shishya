@@ -64,8 +64,7 @@ export default function WorldwideLanding() {
         </h1>
         <p className="mt-2 max-w-3xl text-base text-ink-700">
           Country information, university comparisons, visa processes, loans,
-          scholarships. Verified by Indian students who&apos;ve actually made
-          it. Tuition costs, visa processes, post-study work permits, PR
+          scholarships. Tuition costs, visa processes, post-study work permits, PR
           pathways, and university lists — sourced from official embassies,
           universities, and government portals.{" "}
           <strong className="text-ink-900">

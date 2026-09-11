@@ -112,10 +112,17 @@ export default async function DiscussionsList() {
                           {th.exam.shortName}
                         </span>
                       )}
+                      {/* Disclosure (11 Sep 2026 audit): seed threads are
+                          Shishya's starter questions, labelled as such. */}
+                      {th.isSeed && (
+                        <span className="rounded bg-saffron-50 px-1.5 py-0.5 text-[10px] font-medium text-saffron-800 ring-1 ring-saffron-200">
+                          Starter question · Shishya
+                        </span>
+                      )}
                       <h2 className="truncate text-sm font-semibold text-ink-900 sm:text-base">{th.title}</h2>
                     </div>
                     <p className="mt-1 flex flex-wrap items-baseline gap-1.5 text-xs text-ink-500">
-                      <span>{th.authorName ?? "Anonymous"}</span>
+                      <span>{th.isSeed ? "Shishya" : (th.authorName ?? "Anonymous")}</span>
                       {th.authorId && (
                         <UserBadge level={badgeByAuthor.get(th.authorId)} compact />
                       )}

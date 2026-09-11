@@ -20,9 +20,10 @@ export interface ThreadItem {
   messageCount: number;
   pinned: boolean;
   lastActivityAt: string;
-  /** When true, this thread is AI-seeded sample content for the
-   *  top-upcoming exam. Render with a "sample" tag so visitors know
-   *  it's a starter conversation, not a real student post. */
+  /** When true, this thread is Shishya's own AI-seeded starter question
+   *  for the top-upcoming exam. Always rendered with the
+   *  "Starter question · Shishya" label so visitors know it is not a
+   *  student's post. */
   isSeed?: boolean;
 }
 
@@ -315,13 +316,16 @@ function ThreadList({
                     {t.examShort}
                   </span>
                 )}
-                {/* Previously rendered an amber "sample" pill for
-                    isSeed threads to mark them as AI-seeded. Removed
-                    so seed threads read like organic student posts —
-                    new visitors trust the sidebar as a real
-                    conversation, not a placeholder list. Real
-                    moderation flags / spam labels still surface
-                    elsewhere; this label was UX scaffolding only. */}
+                {/* Disclosure (11 Sep 2026 audit): seed threads are
+                    Shishya's own starter questions, not student posts,
+                    and they say so. This label had been removed so seeds
+                    would "read like organic student posts" — synthetic
+                    social proof, which the founder rules forbid. */}
+                {t.isSeed && (
+                  <span className="mr-1.5 rounded bg-saffron-50 px-1 py-0.5 text-[10px] font-medium text-saffron-800 ring-1 ring-saffron-200">
+                    Starter question · Shishya
+                  </span>
+                )}
                 <span className="font-medium text-ink-700">
                   {t.messageCount} {t.messageCount === 1 ? labels.reply : labels.replies}
                 </span>

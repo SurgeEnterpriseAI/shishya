@@ -246,7 +246,7 @@ Open it: ${p.ctaUrl}
 What you'll get inside:
 • Your free personal coach — a day-by-day plan to your exam date, rebuilt every morning around what you actually did: https://shishya.in/coach
 • Adaptive mocks that get smarter as you answer
-• Real previous-year papers, organised by year + topic
+• PYQ-pattern papers — questions modelled on each year's paper, organised by year + topic
 • Ask Shishya — AI tutor that knows your syllabus + your mistakes
 • Talk to a real subject expert — free 1-to-1 human help, matched to your exam and the exact topic you're stuck on
 • Free, in your language
@@ -276,7 +276,7 @@ Set it up in 30 seconds (three answers): https://shishya.in/coach
     <ul style="font-size:13px;line-height:1.6;margin:0 0 24px;padding-left:20px;color:#475569;">
       <li><strong style="color:#0f172a;">Your free personal coach</strong> — the surest way to crack the job: a day-by-day plan to your exam date, rebuilt every morning around what you actually did</li>
       <li>Adaptive mocks that get smarter with every answer</li>
-      <li>Real previous-year papers, organised by year + topic</li>
+      <li>PYQ-pattern papers — questions modelled on each year's paper, organised by year + topic</li>
       <li>Ask Shishya — AI tutor that knows your syllabus + your mistakes</li>
       <li><strong style="color:#0f172a;">Talk to a real subject expert</strong> — free 1-to-1 human help, matched to your exam and the exact topic you're stuck on</li>
       <li>Free, in your language</li>
@@ -1293,12 +1293,23 @@ export async function sendExamEveEmail(p: {
   /** The tracker's next two dated rows after the exam; `when` carries the tier word. */
   nextDates: { label: string; when: string }[];
   quote: { text: string; author?: string | null };
+  /** markingSchemeStatable(exam) — only then may the score-estimator link
+   *  appear (11 Sep 2026); a calculator on a mixed-scheme paper hands the
+   *  student a wrong number on exam night. Omitted = no link. */
+  canEstimate?: boolean;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const subject = `🌟 All the best for your ${p.examShort} tomorrow, ${first}`;
   const attribution = p.quote.author ? ` — ${p.quote.author}` : "";
   const hub = `https://shishya.in/exams/${p.examCode}`;
   const tracker = `${hub}/updates`;
+  // 11 Sep 2026: the three things the mail used to leave out — the poll
+  // (one tap, no login, opens once the first shift is over), the calendar
+  // file, and the estimator when the marking scheme can be stated.
+  const utm = "utm_source=email&utm_medium=exam-eve";
+  const pollUrl = `${hub}?${utm}`;
+  const icsUrl = `${hub}/exam-week.ics`;
+  const estimateUrl = p.canEstimate ? `${hub}/score-estimate?${utm}` : null;
   const dateLine = p.windowEnd
     ? fillVars(tk("ew.window.title"), {
         from: p.examDate,
@@ -1335,8 +1346,11 @@ ${
 }
 "${p.quote.text}"${attribution}
 
-And whatever tomorrow's paper brings: one exam does not measure you. Selection lists change every year; the discipline you built doesn't. Tomorrow evening the exam page will ask you how the paper was, and the next morning we will email you the same question — one tap, and once 10 or more students have rated it you will see how the paper felt to them.
+And whatever tomorrow's paper brings: one exam does not measure you. Selection lists change every year; the discipline you built doesn't. Once your shift is over the exam page will ask you how the paper was, and the next morning we will email you the same question — one tap, and once 10 or more students have rated it you will see how the paper felt to them.
 
+After your shift, rate the paper in one tap — no login: ${pollUrl}
+Add the exam day, answer key and result dates to your calendar (each with its source): ${icsUrl}
+${estimateUrl ? `Estimate your score when the key is out: ${estimateUrl}\n` : ""}
 Go show up. We're rooting for you.
 — Shishya
 
@@ -1384,9 +1398,17 @@ Go show up. We're rooting for you.
     <p style="font-size:13px;line-height:1.65;margin:0 0 14px;color:#334155;">
       And whatever tomorrow&apos;s paper brings: <strong>one exam does not measure you.</strong>
       Selection lists change every year; the discipline you built doesn&apos;t.
-      Tomorrow evening the exam page will ask you how the paper was, and the next morning we will email you the same question — one tap, and once 10 or more
+      Once your shift is over the exam page will ask you how the paper was, and the next morning we will email you the same question — one tap, and once 10 or more
       students have rated it you will see how the paper felt to them.
     </p>
+    <div style="border:1px solid #e2e8f0;background:#fff;border-radius:10px;padding:12px 14px;margin:0 0 16px;">
+      <p style="font-size:12px;line-height:1.8;margin:0;color:#334155;">
+        🗳️ <a href="${pollUrl}" style="color:#b45309;font-weight:600;">After your shift, rate the paper in one tap — no login →</a><br/>
+        📅 <a href="${icsUrl}" style="color:#b45309;font-weight:600;">Add the exam day, answer key and result dates to your calendar →</a> <span style="color:#64748b;">(each with its source)</span>${
+          estimateUrl ? `<br/>🧮 <a href="${estimateUrl}" style="color:#b45309;font-weight:600;">Estimate your score when the key is out →</a>` : ""
+        }
+      </p>
+    </div>
     <p style="font-size:14px;font-weight:600;margin:0;color:#0f172a;">Go show up. We&apos;re rooting for you. 💪</p>
     <p style="font-size:12px;color:#64748b;margin:16px 0 0;">— Shishya</p>
   </div>
@@ -1416,11 +1438,30 @@ export async function sendExamDayAfterEmail(p: {
   resultLine: string;
   /** Next exam in the same category + state, 7–60 days out: plain day + its tier word. */
   nextExam?: { code: string; short: string; date: string; tier: string } | null;
+  /** Does the tracker hold an ANSWER_KEY row on/after the exam day? Decides
+   *  whether the alert line promises the key or the result (11 Sep 2026). */
+  answerKeyAnnounced?: boolean;
+  /** markingSchemeStatable(exam) — only then the score-estimator link. */
+  canEstimate?: boolean;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const hub = `https://shishya.in/exams/${p.examCode}`;
   const subject = `${first}, how did the ${p.examShort} paper go?`;
-  const verdictUrl = (v: "EASY" | "MODERATE" | "TOUGH") => `${hub}?verdict=${v}`;
+  const utm = "utm_source=email&utm_medium=exam-day-after";
+  const verdictUrl = (v: "EASY" | "MODERATE" | "TOUGH") => `${hub}?verdict=${v}&${utm}`;
+  // The tracker page carries the email-keyed alert box (ExamAlertBox):
+  // one email when the official key / result lands, never a guessed date.
+  const alertUrl = `${hub}/updates?${utm}`;
+  const alertLine = p.answerKeyAnnounced
+    ? "One email when the official result is out"
+    : "Official answer key: not announced yet — one email when it is";
+  const estimateUrl = p.canEstimate ? `${hub}/score-estimate?${utm}` : null;
+  // First-person invite the student can forward as-is: the next exam in
+  // their track, prepared together. No countdown, no urgency.
+  const inviteUrl = p.nextExam ? `https://shishya.in/exams/${p.nextExam.code}?${utm}` : null;
+  const inviteLine = p.nextExam
+    ? `Prep for ${p.nextExam.short} together — forward this to a friend: "I'm preparing for ${p.nextExam.short} on Shishya, free. Join me: ${inviteUrl}"`
+    : "";
   const chips: { key: "ew.verdict.easy" | "ew.verdict.moderate" | "ew.verdict.tough"; v: "EASY" | "MODERATE" | "TOUGH" }[] = [
     { key: "ew.verdict.easy", v: "EASY" },
     { key: "ew.verdict.moderate", v: "MODERATE" },
@@ -1442,9 +1483,10 @@ Your rating joins other students' — we show the split as counts once 10 or mor
 What happens next, from the ${p.examShort} tracker:
 • ${p.answerKeyLine}
 • ${p.resultLine}
-• ${tk("ew.post.cutoff")}: ${hub}/cutoff
+• ${alertLine}: ${alertUrl}
+${estimateUrl ? `• Estimate your score when the key is out: ${estimateUrl}\n` : ""}• ${tk("ew.post.cutoff")}: ${hub}/cutoff
 Full tracker: ${hub}/updates
-${nextLine ? `\n${nextLine}: https://shishya.in/exams/${p.nextExam?.code}\n` : ""}
+${nextLine ? `\n${nextLine}: https://shishya.in/exams/${p.nextExam?.code}\n${inviteLine}\n` : ""}
 Whatever the paper felt like, the next step is the same one — keep the routine going.
 — Shishya (free, always)
 
@@ -1471,13 +1513,17 @@ Whatever the paper felt like, the next step is the same one — keep the routine
       <p style="font-size:13px;line-height:1.8;margin:0;color:#334155;">
         🔑 ${esc(p.answerKeyLine)}<br/>
         🏁 ${esc(p.resultLine)}<br/>
+        🔔 <a href="${alertUrl}" style="color:#b45309;font-weight:600;">${esc(alertLine)} →</a><br/>${
+          estimateUrl ? `\n        🧮 <a href="${estimateUrl}" style="color:#b45309;font-weight:600;">Estimate your score when the key is out →</a><br/>` : ""
+        }
         🎯 <a href="${hub}/cutoff" style="color:#b45309;font-weight:600;">${esc(tk("ew.post.cutoff"))} →</a>
       </p>
       <p style="font-size:12px;margin:6px 0 0;"><a href="${hub}/updates" style="color:#b45309;">Full tracker →</a></p>
     </div>
     ${
       nextLine && p.nextExam
-        ? `<p style="font-size:13px;line-height:1.6;margin:0 0 14px;color:#334155;">${esc(nextLine)} — <a href="https://shishya.in/exams/${esc(p.nextExam.code)}" style="color:#b45309;font-weight:600;">${esc(p.nextExam.short)} hub →</a></p>`
+        ? `<p style="font-size:13px;line-height:1.6;margin:0 0 8px;color:#334155;">${esc(nextLine)} — <a href="https://shishya.in/exams/${esc(p.nextExam.code)}" style="color:#b45309;font-weight:600;">${esc(p.nextExam.short)} hub →</a></p>
+    <p style="font-size:12px;line-height:1.6;margin:0 0 14px;color:#334155;">Prep for ${esc(p.nextExam.short)} together — forward this to a friend: <em>&ldquo;I&apos;m preparing for ${esc(p.nextExam.short)} on Shishya, free. Join me: <a href="${inviteUrl}" style="color:#b45309;">${esc(inviteUrl ?? "")}</a>&rdquo;</em></p>`
         : ""
     }
     <p style="font-size:13px;line-height:1.6;margin:0;color:#334155;">Whatever the paper felt like, the next step is the same one — keep the routine going.</p>

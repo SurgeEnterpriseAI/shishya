@@ -3,6 +3,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 
 export const metadata: Metadata = {
   title: "About — Shishya",
@@ -17,7 +18,7 @@ export default function AboutPage() {
         Crores of Indians prepare for government and entrance exams every year, and most are told
         the serious way to prepare costs ₹30,000–₹1,50,000 at a coaching institute. Shishya exists
         to delete that fee: everything a coaching institute sells — mock tests for 175+ exams,
-        previous-year papers, study notes, a personal AI tutor in 22 Indian languages, a day-by-day
+        previous-year papers, study notes, a personal AI tutor in {INDIAN_LANGUAGE_COUNT} Indian languages, a day-by-day
         coach plan, cutoffs and exam-day analysis — free, in the aspirant&apos;s own language.
       </p>
       <p className="mt-3">

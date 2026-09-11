@@ -7,9 +7,15 @@
 //     find-or-created server-side, so everyone meets in the SAME room.
 // Async-friendly by design (works even when friends aren't online at
 // the same moment). Voice rooms come later, once rooms have people.
+//
+// The invite link is utm-tagged (src/lib/share-url.ts: campaign
+// study-together, content = exam) and the tap beacons CTA_CLICKED, the
+// same way every other share surface does — an untagged invite is
+// indistinguishable from a typed URL in the channel report.
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { shareUrl } from "@/lib/share-url";
 
 export function StudyTogether({
   examCode,
@@ -26,9 +32,33 @@ export function StudyTogether({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const pageUrl = `https://shishya.in/exams/${examCode}/topics/${encodeURIComponent(topicCode)}`;
+  const pageUrl = shareUrl(`/exams/${examCode}/topics/${encodeURIComponent(topicCode)}`, {
+    surface: "study-together",
+    channel: "whatsapp",
+    exam: examCode,
+  });
   const waText = `Let's study ${topicName} (${examShort}) together on Shishya — free notes + practice:\n${pageUrl}`;
   const waHref = `https://wa.me/?text=${encodeURIComponent(waText)}`;
+
+  function trackInvite() {
+    try {
+      navigator.sendBeacon?.(
+        "/api/analytics",
+        new Blob(
+          [
+            JSON.stringify({
+              kind: "CTA_CLICKED",
+              path: typeof location !== "undefined" ? location.pathname : `/exams/${examCode}/topics/${topicCode}`,
+              props: { cta: "share", surface: "study-together", via: "whatsapp", examCode, topicCode },
+            }),
+          ],
+          { type: "application/json" },
+        ),
+      );
+    } catch {
+      /* analytics is best-effort */
+    }
+  }
 
   async function openRoom() {
     setBusy(true);
@@ -66,6 +96,7 @@ export function StudyTogether({
           href={waHref}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={trackInvite}
           className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-600"
         >
           Invite to study

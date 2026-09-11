@@ -111,22 +111,20 @@ export async function GET(req: Request) {
   }
 
   // ── Replace any prior seed rows + insert the fresh batch ──────────
-  // Author names rotate through the synthetic-handles pool so the
-  // sidebar reads as 6-8 different students chatting, not "Shishya
-  // sample" eight times.
-  const { pickSyntheticHandle } = await import("@/data/synthetic-handles");
+  // Disclosure (11 Sep 2026 audit): seed threads are authored by
+  // "Shishya" and every surface labels them "Starter question ·
+  // Shishya". They used to rotate through invented student names so
+  // the rail "read as 6-8 different students chatting" — fabricated
+  // peers, which the founder rules (no synthetic social proof) forbid.
   await prisma.discussion.deleteMany({ where: { isSeed: true } });
-  const usedNames: string[] = [];
   const created = await prisma.$transaction(
     titles.map((t, i) => {
-      const handle = pickSyntheticHandle(usedNames);
-      usedNames.push(handle);
       return prisma.discussion.create({
         data: {
           title: t.title,
           examId: top.exam.id,
           isSeed: true,
-          authorName: handle,
+          authorName: "Shishya",
           // Spread lastActivityAt over the past few hours so the rail
           // doesn't show all 8 threads with identical timestamps.
           lastActivityAt: new Date(now.getTime() - i * 23 * 60_000),

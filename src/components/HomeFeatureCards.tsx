@@ -6,7 +6,7 @@
 // Six flows, in the order they happen for a student:
 //   1. Pick your exam      → goal picker / search
 //   2. Daily plan          → fresh mocks every day
-//   3. PYQ                 → real previous-year papers
+//   3. PYQ                 → PYQ-pattern papers (modelled on each year's paper)
 //   4. Adaptive mocks      → each next mock targets weak topics
 //   5. Weakness map        → per-topic mastery surfaces
 //   6. AI tutor            → ask Shishya anything
@@ -37,7 +37,7 @@ const CARDS: CardSpec[] = [
     icon: "📚",
     title: "Previous year papers",
     body:
-      "Real PYQs for every exam, organised by year and topic. Practise the questions that actually appear, not made-up clones.",
+      "PYQ-pattern papers for every exam — questions modelled on each year's paper, organised by year and topic. Practise the pattern that actually appears.",
     href: "/dashboard",
   },
   {

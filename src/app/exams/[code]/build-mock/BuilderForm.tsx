@@ -8,6 +8,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 
 interface TopicRow {
   id: string;
@@ -172,7 +173,7 @@ export function BuilderForm({
             )}
             {err && <p className="mt-2 text-xs text-red-600">{err}</p>}
             <p className="mt-3 text-xs text-ink-500">
-              Timed to the real exam&apos;s pace · full solutions after · readable in हिंदी + 12 languages inside
+              Timed to the real exam&apos;s pace · full solutions after · readable in हिंदी + {OTHER_INDIAN_LANGUAGE_COUNT} languages inside
               the test.
             </p>
           </div>

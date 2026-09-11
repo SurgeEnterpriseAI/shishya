@@ -80,7 +80,7 @@ const LIFECYCLE: Stage[] = [
       { label: "CUET UG (Central Universities)", href: "/exams/CUET_UG" },
       { label: "CLAT (Law)", href: "/exams/CLAT" },
       { label: "BITSAT", href: "/exams" },
-      { label: "All 163 entrance exams", href: "/exams" },
+      { label: "All 170+ govt & entrance exams", href: "/exams" },
     ],
   },
   {

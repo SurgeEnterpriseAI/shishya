@@ -51,6 +51,23 @@ function readUtmFromStorage(): UtmBlob {
   }
 }
 
+// /login is the most-viewed page on the site and its views were one
+// undifferentiated number. The callbackUrl says WHAT the visitor was
+// trying to do when the wall appeared; this folds it into a small family
+// so login views can be split by intent (11 Sep 2026 signup-leak audit).
+// Order matters: /exams/X/pyq/... is "pyq", not "exam". "none" = a bare
+// /login visit (cold arrival / header link) — /login itself defaults
+// that to /dashboard, but it is not a dashboard intent.
+export function loginCallbackFamily(cb: string | null | undefined): string {
+  if (!cb) return "none";
+  if (/\/pyq(\/|$|\?|#)/.test(cb)) return "pyq";
+  if (/\/mocks\//.test(cb)) return "mock";
+  if (/\/coach(\/|$|\?|#)/.test(cb)) return "coach";
+  if (/\/dashboard(\/|$|\?|#)/.test(cb)) return "dashboard";
+  if (/\/exams\//.test(cb)) return "exam";
+  return "other";
+}
+
 function captureUtmFromUrl(params: URLSearchParams): UtmBlob {
   const utmSource = params.get("utm_source") ?? undefined;
   const utmMedium = params.get("utm_medium") ?? undefined;
@@ -116,7 +133,11 @@ export function AnalyticsTracker() {
     const fullKey = pathname + (searchParams?.toString() ?? "");
     if (lastFiredRef.current === fullKey) return;
     lastFiredRef.current = fullKey;
-    void send("PAGE_VIEW", pathname, undefined, utm);
+    const props =
+      pathname === "/login"
+        ? { callbackFamily: loginCallbackFamily(searchParams?.get("callbackUrl")) }
+        : undefined;
+    void send("PAGE_VIEW", pathname, props, utm);
   }, [pathname, searchParams]);
 
   return null;

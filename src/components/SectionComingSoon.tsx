@@ -69,7 +69,7 @@ export function SectionComingSoon({ title, subtitle, intro, bullets, eta, breadc
             In the meantime
           </h3>
           <p className="mt-2">
-            Our Entrance & Government Exams section is live now — 163 exams
+            Our Entrance & Government Exams section is live now — 170+ exams
             covered with adaptive mock tests, previous year papers and Ask
             Shishya to explain every wrong answer. All free.
           </p>

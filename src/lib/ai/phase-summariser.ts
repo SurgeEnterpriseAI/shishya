@@ -85,7 +85,7 @@ REQUIREMENTS:
 - Include exam-day timing details.
 - Include a "Don't do this" anti-list: things students mistakenly do in the final 24h.
 - NO speculation about questions that will appear. Past pattern is OK; predicting specific MCQs is not.
-- Tone: an older sibling who has cleared the same exam — confident, kind, specific.
+- Tone: an older sibling who knows this exam inside out — confident, kind, specific. Never claim to have sat or cleared it.
 - 600-1100 words. No more.
 - DO NOT include disclaimers like "I am an AI". Write as if you are the Shishya editorial team.
 - DO NOT hallucinate official rules — when uncertain, write "verify on official site".

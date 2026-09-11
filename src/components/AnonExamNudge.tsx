@@ -1,9 +1,17 @@
 "use client";
 
-// Anonymous-visitor signup nudge for public SEO pages (cutoff, and
-// reusable for tricks/guide later). Never gates content — the page
-// stays fully readable; this only OFFERS the next step at a high-intent
-// moment ("will my score clear the cutoff?").
+// Anonymous-visitor nudge for public SEO pages (cutoff, and reusable for
+// tricks/guide later). Never gates content — the page stays fully
+// readable; this only OFFERS the next step at a high-intent moment
+// ("will my score clear the cutoff?").
+//
+// 11 Sep 2026 signup-leak audit: this offered a login wall
+// (/login?callbackUrl=/exams/CODE) — shown 699×, clicked 31× in 30 days,
+// on a page that bounces 81% (Bing landers converted at 0%). It now
+// offers the thing the lander actually wants: 10 real questions, scored
+// in the browser against the category cutoffs on this page, no sign-in
+// (/exams/CODE/quiz?n=10&from=cutoff — the existing anonymous quiz). The
+// sign-in ask moves to the quiz's result screen, after value.
 //
 // Session is checked CLIENT-side (/api/auth/session) so the host page
 // keeps its ISR caching — no server cookie read. Renders nothing until
@@ -30,6 +38,16 @@ function beacon(cta: string, extra?: Record<string, unknown>) {
   }
 }
 
+// English only for now: the copy is the audit's, and i18n.ts is owned
+// elsewhere — see the report for the hi/te keys to add
+// (cutoff.nudge.quizBody / cutoff.nudge.quizCta), after which these two
+// lines should come back in through props like `headline` does.
+// English fallbacks; the cutoff page passes the localised i18n strings
+// (cutoff.nudge.body / cutoff.nudge.cta, rewritten 11 Sep 2026 for the
+// no-sign-in quiz) through `body` / `cta`.
+const QUIZ_BODY = "Answer 10 questions in this exam's pattern and see your score next to these category cutoffs — no account needed.";
+const QUIZ_CTA = "Try 10 questions — see where you stand, no sign-in →";
+
 export function AnonExamNudge({
   examCode,
   headline,
@@ -40,10 +58,11 @@ export function AnonExamNudge({
   examCode: string;
   /** Bold lead-in, e.g. "Will your score clear the SSC CGL cutoff?" */
   headline: string;
-  /** Follow-on sentence. */
-  body: string;
-  /** Button label. */
-  cta: string;
+  /** Localised body (i18n cutoff.nudge.body) — describes the no-sign-in
+   *  10-question quiz; falls back to the English constant. */
+  body?: string;
+  /** Localised button label (i18n cutoff.nudge.cta). */
+  cta?: string;
   /** Analytics surface tag, e.g. "cutoff-nudge". */
   surface: string;
 }) {
@@ -68,24 +87,26 @@ export function AnonExamNudge({
   useEffect(() => {
     if (anon && !seen.current) {
       seen.current = true;
-      beacon(`${surface}-shown`, { surface, examCode });
+      beacon(`${surface}-shown`, { surface, examCode, target: "anon-quiz" });
     }
   }, [anon, surface, examCode]);
 
   if (!anon) return null;
 
-  const href = `/login?callbackUrl=${encodeURIComponent(`/exams/${examCode}`)}`;
+  // The anonymous quiz page is noindex and client-graded; n=10 is its cap,
+  // from=cutoff makes its result screen show the category cutoff rows.
+  const href = `/exams/${examCode}/quiz?n=10&from=cutoff`;
   return (
     <div className="mt-4 flex flex-col items-start gap-2 rounded-lg border border-emerald-300 bg-emerald-50/60 p-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-ink-700">
-        <span className="font-semibold text-ink-900">{headline}</span> {body}
+        <span className="font-semibold text-ink-900">{headline}</span> {body || QUIZ_BODY}
       </p>
       <a
         href={href}
-        onClick={() => beacon(`${surface}-click`, { surface, examCode })}
+        onClick={() => beacon(`${surface}-click`, { surface, examCode, target: "anon-quiz" })}
         className="inline-flex shrink-0 items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700"
       >
-        {cta}
+        {cta || QUIZ_CTA}
       </a>
     </div>
   );

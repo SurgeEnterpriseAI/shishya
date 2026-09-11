@@ -57,6 +57,7 @@ import { getDailyQuote } from "@/data/motivational-quotes";
 import { computeExamWeekState, istDay } from "@/lib/exam-week";
 import { shiftDayIso, shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline, latestOfKind, type TimelineRow } from "@/lib/exam-timeline";
+import { markingSchemeStatable } from "@/lib/marking-scheme";
 import {
   checklistLink,
   acceptedPlanDays,
@@ -88,6 +89,8 @@ interface EveContent {
   checklistIsArticle: boolean;
   admitCard: { label: string; when: string; url: string | null; notes: string | null } | null;
   nextDates: { label: string; when: string }[];
+  /** markingSchemeStatable(exam) → the mail may link the score estimator. */
+  canEstimate: boolean;
 }
 
 async function buildContent(
@@ -96,7 +99,15 @@ async function buildContent(
   eve: { date: string; tier: string; day: string; windowIds: string[]; windowEnd: TimelineRow | null },
 ): Promise<EveContent> {
   const { meta } = bundle;
-  const checklist = await checklistLink(meta.examId, meta.code);
+  const [checklist, marking] = await Promise.all([
+    checklistLink(meta.examId, meta.code),
+    prisma.exam
+      .findUnique({
+        where: { id: meta.examId },
+        select: { totalQuestions: true, scoredQuestions: true, totalMarks: true, marksPerQ: true, description: true },
+      })
+      .catch(() => null),
+  ]);
   const admit = latestOfKind(timeline, "ADMIT_CARD");
   // Reporting instructions live in the row's notes; without them the line
   // describes the admit-card RELEASE date ("Admit card: 5 Sep (official)")
@@ -120,6 +131,7 @@ async function buildContent(
     checklistIsArticle: checklist.isArticle,
     admitCard,
     nextDates,
+    canEstimate: !!marking && markingSchemeStatable(marking),
   };
 }
 

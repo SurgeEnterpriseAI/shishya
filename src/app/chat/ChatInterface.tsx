@@ -49,11 +49,33 @@ function prettyTool(name?: string): string {
   }
 }
 
+// First-party analytics beacon (same shape as ShareExamButton).
+function beacon(props: Record<string, unknown>) {
+  try {
+    navigator.sendBeacon?.(
+      "/api/analytics",
+      new Blob(
+        [
+          JSON.stringify({
+            kind: "CTA_CLICKED",
+            path: typeof location !== "undefined" ? location.pathname : "/chat",
+            props,
+          }),
+        ],
+        { type: "application/json" },
+      ),
+    );
+  } catch {
+    /* analytics is best-effort */
+  }
+}
+
 export function ChatInterface({
   examCode,
   topicFocus,
   initialSeed,
   labels,
+  guestSignInHref,
 }: {
   /** Null when the chat is in "General" mode — exam-agnostic Q&A. The
    *  /api/chat call then sends `general: true` instead of an examCode
@@ -63,6 +85,11 @@ export function ChatInterface({
   topicFocus?: TopicFocus | null;
   initialSeed?: string | null;
   labels: ChatLabels;
+  /** Guest (signed-out) chats only: the /login URL whose callback returns
+   *  to this chat. When set, an inline save-this-conversation card appears
+   *  after the second completed reply (11 Sep 2026 signup-leak audit) —
+   *  the ask comes after value, and costs no model call. */
+  guestSignInHref?: string | null;
 }) {
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -367,6 +394,26 @@ export function ChatInterface({
             </div>
           </div>
         ))}
+
+        {/* Guest save card — after the second completed reply the guest has
+            seen the tutor work; this is the one moment the sign-in ask is
+            earned. Plain link, no timer, no counter; the callback brings
+            them straight back to this exam's chat. */}
+        {guestSignInHref && !busy && messages.filter((m) => m.role === "assistant" && m.content).length >= 2 && (
+          <div className="rounded-md border border-saffron-200 bg-saffron-50/60 px-3 py-2">
+            <p className="text-xs text-ink-700">
+              Save this conversation and let the tutor see your mock mistakes —{" "}
+              <a
+                href={guestSignInHref}
+                onClick={() => beacon({ cta: "chat-guest-save", surface: "chat", examCode })}
+                className="font-semibold text-saffron-700 hover:underline"
+              >
+                sign in, free
+              </a>
+              .
+            </p>
+          </div>
+        )}
 
         {/* Human escalation — "still stuck?" appears once the student has
             had a real exchange with the AI (2+ completed replies) and the

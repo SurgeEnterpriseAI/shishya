@@ -29,6 +29,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { resolvePhase, PHASE_SLUG, istDayNumber } from "@/lib/exam-phase";
 import type { ExamPhase } from "@prisma/client";
+import type { SourceTier } from "@/lib/official-source";
 
 export type CalendarBucket = "concluded" | "upcoming" | "past";
 
@@ -42,6 +43,14 @@ export interface UpcomingEvent {
   /** Officially-cited date (tracker confidence). Optional — fallback
    *  events and older caches omit it; treat missing as false. */
   official?: boolean;
+  /** Source tier of the row (official | reported | expected). Optional —
+   *  fallback events and older caches omit it. */
+  tier?: SourceTier;
+  /** True for an exam-day row whose date is only an estimate (tier
+   *  expected). Such rows are NOT exam days for pills / phase chips —
+   *  they render "(expected)" or, once passed, "was expected — not
+   *  confirmed" (11 Sep 2026 audit). */
+  expectedExamDay?: boolean;
   /**
    * 1-2 sentence preview from the matching phase article, server-
    * resolved alongside the phase. When present, the sidebar renders
@@ -260,6 +269,13 @@ export function UpcomingExamsSidebar({
                           ) : e.isExamDay ? (
                             <span className="mr-1.5 rounded bg-saffron-200 px-1 py-0.5 text-[10px] font-medium text-saffron-900">
                               EXAM DAY
+                            </span>
+                          ) : e.expectedExamDay ? (
+                            /* An estimate is never an exam day: it says so,
+                               and once the date has passed it says it was
+                               never confirmed. */
+                            <span className="mr-1.5 rounded bg-ink-100 px-1 py-0.5 text-[10px] font-medium text-ink-600">
+                              {istDayNumber(new Date(e.date)) < todayIst ? "was expected — not confirmed" : "(expected)"}
                             </span>
                           ) : null}
                           {e.label}

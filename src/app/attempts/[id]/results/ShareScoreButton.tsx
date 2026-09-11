@@ -14,30 +14,63 @@
 //      text + the /share/[id] short URL
 //   3. Recipient sees an OG-rich preview (dynamic card from
 //      src/app/share/[id]/opengraph-image.tsx) in WhatsApp
-//   4. Tap → /share/[id] public page → signup CTA
+//   4. Tap → /share/[id] public page → 5-question quiz, no sign-in
 //
 // Also handles the generic "Copy link" path for non-WhatsApp shares
 // + a Web Share API fallback for mobile browsers that support it.
+//
+// Attribution (11 Sep 2026): until now this fired no analytics and the
+// link carried no tag, so the biggest share surface on the site was
+// invisible in the channel report. Every link is now utm-tagged per
+// channel (src/lib/share-url.ts: utm_campaign=results, utm_content=exam)
+// and each tap beacons CTA_CLICKED exactly like ShareExamButton.
 
 import { useState } from "react";
+import { shareUrl, type ShareChannel } from "@/lib/share-url";
 
 interface Props {
   attemptId: string;
+  examCode: string;
   examShortName: string;
   scoreDisplay: string;
 }
 
-export function ShareScoreButton({ attemptId, examShortName, scoreDisplay }: Props) {
+export function ShareScoreButton({ attemptId, examCode, examShortName, scoreDisplay }: Props) {
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = `https://shishya.in/share/${attemptId}`;
-  const shareText = `I just scored ${scoreDisplay} on a ${examShortName} mock at Shishya 🎯\n\nFree mocks, PYQ, AI tutor — see where YOU stand:\n${shareUrl}`;
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+  const tagged = (channel: ShareChannel) =>
+    shareUrl(`/share/${attemptId}`, { surface: "results", channel, exam: examCode });
+  const textFor = (link: string) =>
+    `I just scored ${scoreDisplay} on a ${examShortName} mock at Shishya 🎯\n\nFree mocks, PYQ, AI tutor — see where YOU stand (5 questions, no sign-in):\n${link}`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(textFor(tagged("whatsapp")))}`;
+
+  function track(via: string) {
+    // Best-effort, non-blocking — same first-party CTA_CLICKED beacon as
+    // ShareExamButton, so results-page shares sit in the same report.
+    try {
+      navigator.sendBeacon?.(
+        "/api/analytics",
+        new Blob(
+          [
+            JSON.stringify({
+              kind: "CTA_CLICKED",
+              path: typeof location !== "undefined" ? location.pathname : `/attempts/${attemptId}/results`,
+              props: { cta: "share", surface: "results", via, examCode },
+            }),
+          ],
+          { type: "application/json" },
+        ),
+      );
+    } catch {
+      /* analytics is best-effort */
+    }
+  }
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(tagged("copy"));
       setCopied(true);
+      track("copy");
       setTimeout(() => setCopied(false), 2000);
     } catch {
       /* silent — old browsers w/o clipboard API */
@@ -47,11 +80,13 @@ export function ShareScoreButton({ attemptId, examShortName, scoreDisplay }: Pro
   async function nativeShare() {
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
+        const link = tagged("native");
         await navigator.share({
           title: `Scored ${scoreDisplay} on ${examShortName} — Shishya`,
-          text: shareText,
-          url: shareUrl,
+          text: textFor(link),
+          url: link,
         });
+        track("native");
       } catch {
         /* user cancelled — no-op */
       }
@@ -70,7 +105,8 @@ export function ShareScoreButton({ attemptId, examShortName, scoreDisplay }: Pro
           </p>
           <p className="mt-1 text-xs text-ink-600">
             One tap → WhatsApp message pre-filled with your score and the
-            link. Friends who click see your card + can take their own mock.
+            link. Friends who click see your card and can try 5 questions
+            without signing in.
           </p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -78,6 +114,7 @@ export function ShareScoreButton({ attemptId, examShortName, scoreDisplay }: Pro
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => track("whatsapp")}
             className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-300"
           >
             <svg

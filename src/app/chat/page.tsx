@@ -89,6 +89,7 @@ export default async function ChatPage({
             examCode={anonExamCode}
             topicFocus={null}
             initialSeed={sp.seed ?? null}
+            guestSignInHref={loginHref}
             labels={{
               placeholder: t("chat.placeholder"),
               send: t("chat.send"),

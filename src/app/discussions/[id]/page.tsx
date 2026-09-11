@@ -9,6 +9,7 @@ import { getT } from "@/lib/i18n-server";
 import { formatRelative } from "@/lib/relative-time";
 import { ReplyForm } from "./ReplyForm";
 import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
+import { isSyntheticHandle } from "@/data/synthetic-handles";
 
 export const revalidate = 0; // always fresh on direct page load
 
@@ -83,7 +84,10 @@ export default async function DiscussionPage({
     ...(firstMsg ? { articleBody: firstMsg.content.slice(0, 500) } : {}),
     datePublished: thread.createdAt.toISOString(),
     dateModified: thread.lastActivityAt.toISOString(),
-    author: { "@type": "Person", name: thread.authorName || "Shishya aspirant" },
+    // Seed threads are the platform's own starter questions — never a Person.
+    author: thread.isSeed
+      ? { "@type": "Organization", name: "Shishya" }
+      : { "@type": "Person", name: thread.authorName || "Shishya aspirant" },
     url: threadUrl,
     mainEntityOfPage: threadUrl,
     inLanguage: "en-IN",
@@ -141,10 +145,18 @@ export default async function DiscussionPage({
                 Locked
               </span>
             )}
+            {/* Disclosure (11 Sep 2026 audit): seed threads are Shishya's
+                starter questions. Older seed rows still carry invented
+                student names as authorName — never show those. */}
+            {thread.isSeed && (
+              <span className="rounded bg-saffron-50 px-2 py-0.5 text-xs font-medium text-saffron-800 ring-1 ring-saffron-200">
+                Starter question · Shishya
+              </span>
+            )}
           </div>
           <h1 className="mt-2 text-2xl font-bold text-ink-900 sm:text-3xl">{thread.title}</h1>
           <p className="mt-2 flex flex-wrap items-baseline gap-1.5 text-xs text-ink-500">
-            <span className="font-medium text-ink-700">{thread.authorName ?? "Anonymous"}</span>
+            <span className="font-medium text-ink-700">{thread.isSeed ? "Shishya" : (thread.authorName ?? "Anonymous")}</span>
             {thread.authorId && <UserBadge level={badgeByAuthor.get(thread.authorId)} />}
             <span className="text-ink-300">·</span>
             <span>{formatRelative(thread.createdAt, relLabels, now)}</span>
@@ -157,11 +169,20 @@ export default async function DiscussionPage({
         <ol className="mt-6 space-y-3">
           {thread.messages.map((m, i) => {
             const isYou = myUserId && m.authorId === myUserId;
-            // Backwards-compat: handle both the legacy "Shishya AI" author
-            // name (still in older DB rows) and the new "Shishya" — render
-            // both as the simple "Shishya" brand.
-            const isShishya = m.authorName === "Shishya AI" || m.authorName === "Shishya";
-            const displayName = isShishya ? "Shishya" : (m.authorName ?? "Anonymous");
+            // Disclosure (11 Sep 2026 audit): a message with no backing
+            // user (authorId null) is the platform's AI — the auto-reply
+            // in /api/discussions/[id]/messages writes exactly that shape
+            // and nothing in the app ever nulls a real user's authorId.
+            // Rows written before the audit carry invented student names
+            // ("Aarav S.", from the retired synthetic-handles pool) or the
+            // legacy "Shishya"/"Shishya AI"; all of them render as
+            // "Shishya AI" with a visible AI tag, never as a person.
+            const isShishya =
+              m.authorId === null ||
+              m.authorName === "Shishya AI" ||
+              m.authorName === "Shishya" ||
+              isSyntheticHandle(m.authorName);
+            const displayName = isShishya ? "Shishya AI" : (m.authorName ?? "Anonymous");
             return (
               <li
                 key={m.id}
@@ -178,7 +199,11 @@ export default async function DiscussionPage({
                     <span>{displayName}</span>
                     {m.authorId && <UserBadge level={badgeByAuthor.get(m.authorId)} compact />}
                     {isYou && <span className="text-xs font-normal text-emerald-700">({youLabel})</span>}
-                    {isShishya && <span className="text-xs font-normal text-saffron-700">🤖</span>}
+                    {isShishya && (
+                      <span className="rounded bg-saffron-50 px-1.5 py-0.5 text-[10px] font-medium text-saffron-800 ring-1 ring-saffron-200">
+                        AI reply · not a student
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-ink-500">
                     {i === 0 ? "" : "#" + (i + 1) + " · "}

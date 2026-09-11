@@ -16,7 +16,7 @@ import { AnonQuizRecall } from "@/components/AnonQuizRecall";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getExamShared } from "@/lib/db/exam-cache";
-import { getT, getUrlLocale } from "@/lib/i18n-server";
+import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import { computeExamWeekState } from "@/lib/exam-week";
 import { shiftDayIso } from "@/lib/exam-week-student";
 import { buildTimeline } from "@/lib/exam-timeline";
@@ -42,18 +42,27 @@ import { PulseAsk } from "@/components/PulseAsk";
 import { PeerProofLine } from "@/components/PeerProofLine";
 import { CoachNextTask } from "@/components/CoachNextTask";
 import { examPeerProof } from "@/lib/peer-proof";
+import { REHEARSAL_CLOSE_IST_HOUR } from "@/lib/live-test";
+import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 
-// Honesty guard for the Previous Papers cards (7 Sep 2026): most PYQ years
-// hold a set of questions out of that year's paper, not the paper (534 of
-// 587 exam-years on prod hold under half). A card only reads as "the paper"
-// once the year holds ≥80% of the real paper's question count.
-const FULL_PAPER_RATIO = 0.8;
-function isPartialPaper(held: number, totalQuestions: number): boolean {
-  // totalQuestions <= 0 → real paper size unknown; claim nothing.
-  return totalQuestions > 0 && held < totalQuestions * FULL_PAPER_RATIO;
+// Honesty line for the Previous Papers cards (7 Sep + 11 Sep 2026).
+// Every PYQ question on the platform is freshly worded in the PATTERN of
+// that year's paper (src/lib/ai/pyq-generator.ts) — none of them is the
+// paper, so no card may read "Take paper" / "real questions". The line
+// keeps the "N of M" depth framing (534 of 587 exam-years on prod hold
+// under half a real paper) against the real paper's question count.
+function pyqSetLine(held: number, year: number | null, totalQuestions: number): string {
+  const paper = year ? `the ${year} paper` : "that year's paper";
+  // totalQuestions <= 0 → real paper size unknown; claim nothing about it.
+  return totalQuestions > 0
+    ? `${held} PYQ-pattern questions modelled on ${paper} (which had ${totalQuestions})`
+    : `${held} PYQ-pattern questions modelled on ${paper}`;
 }
-function fill(s: string, vars: Record<string, string | number>): string {
-  return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
+// "6:00 pm" from an IST hour constant — the rehearsal close time comes
+// from src/lib/live-test.ts, never a typed number.
+function formatIstHour(hour24: number): string {
+  const h12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  return `${h12}:00 ${hour24 < 12 ? "am" : "pm"}`;
 }
 
 // Per-exam meta. Beefed-up version that bakes in:
@@ -63,22 +72,19 @@ function fill(s: string, vars: Record<string, string | number>): string {
 //   3. current year (2026 — refreshed annually by the title template)
 //   4. JSON-LD Course schema is added inline in the page body further down
 //
-// Goal: rank for every plausible spelling of every one of 163 exams in
-// every Indian language a student would type in.
+// Goal: rank for every plausible spelling of every exam in the catalogue
+// in every Indian language a student would type in.
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ code: string }>;
 }): Promise<Metadata> {
   const { code } = await params;
-  const exam = await prisma.exam.findUnique({
-    where: { code },
-    select: {
-      code: true, name: true, shortName: true, description: true,
-      category: true, state: true, languages: true,
-    },
-  });
-  if (!exam) return { title: "Exam not found — Shishya" };
+  // Same cached payload the page renders from (exam + tracker rows +
+  // official portal) — one cache hit instead of a separate exam query.
+  const shared = await getExamShared(code);
+  if (!shared) return { title: "Exam not found — Shishya" };
+  const { exam, importantDates, officialUrl } = shared;
 
   const { stateInfo, languageList, languageName } = await import("@/lib/state-info");
   // URL locale (23 Aug 2026): /hi/exams/X and /te/exams/X are crawlable
@@ -94,27 +100,29 @@ export async function generateMetadata({
   // a large ZERO-CLICK query class: "{exam} exam date {year}" queries
   // where we rank ~8-10 but never win the click because the title
   // doesn't answer the question. Lead with the date when we have one.
-  // Honesty (23 Aug 2026): an ESTIMATED exam day is never stated bare —
-  // the qualifier travels with the date into title + description.
-  const nextDateRows = await prisma.$queryRaw<{ d: Date; confidence: string | null; url: string | null; source: string | null }[]>`
-    SELECT date AS d, confidence, url, source FROM "ExamImportantDate"
-    WHERE "examId" = (SELECT id FROM "Exam" WHERE code = ${code})
-      AND "isExamDay" = TRUE AND "archivedAt" IS NULL AND date > now()
-    ORDER BY date ASC LIMIT 1`;
-  const nextRow = nextDateRows[0];
-  const nextOfficial =
-    !!nextRow && (nextRow.confidence ?? "").toLowerCase() === "official" && /^https?:\/\//.test(nextRow.url ?? nextRow.source ?? "");
-  const expectedWord = urlLocale === "hi" ? "अनुमानित" : urlLocale === "te" ? "అంచనా" : "expected";
-  const nextDate = nextRow
-    ? new Date(nextRow.d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) +
-      (nextOfficial ? "" : ` (${expectedWord})`)
+  // Honesty (23 Aug 2026, tightened 11 Sep 2026): the title leads ONLY
+  // with an ANNOUNCED next exam day — source tier official (bare) or
+  // reported (with its tier word). It never leads with an estimate: the
+  // next expected row is often a LATER stage ("SSC CGL 2026 — Exam Date
+  // 15 Jan 2027 (expected)" while the tracker's own news says Tier 1
+  // dates are awaited), and a passed estimate is worse still. With no
+  // announced row the true answer to the query is "not announced yet".
+  const timeline = buildTimeline(importantDates, new Date(), officialUrl);
+  const announced =
+    timeline.find((r) => r.kind === "EXAM" && r.daysFromToday >= 0 && r.tier !== "expected") ?? null;
+  const tierWord = tFor(urlLocale);
+  const nextDate = announced
+    ? announced.date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) +
+      (announced.tier === "official" ? "" : ` (${tierWord("ew.tier.reported")})`)
     : null;
+  const notAnnounced =
+    urlLocale === "hi" ? "अभी घोषित नहीं" : urlLocale === "te" ? "ఇంకా ప్రకటించలేదు" : "not announced yet";
 
   // Title — prioritises state name for state exams (huge SEO lever for
   // "Tamil Nadu TET 2026" / "Bihar Police mock test"-style searches),
   // and the exam-date answer when known.
   const stateBit = st ? ` (${st.name})` : "";
-  const dateBit = nextDate ? `Exam Date ${nextDate}, ` : "";
+  const dateBit = nextDate ? `Exam Date ${nextDate}, ` : "Exam Date Not Announced Yet, ";
   const title = `${exam.shortName}${stateBit} ${year} — ${dateBit}Free Mock Tests, PYQ | Shishya`;
 
   // Description — packs in: the date answer first (zero-click queries),
@@ -123,10 +131,14 @@ export async function generateMetadata({
   // so Google doesn't truncate.
   const langCopy = languageList(langs);
   const stateCopy = st ? `${st.name} (${st.nativeName} / ${st.hindiName}). ` : "";
-  const dateCopy = nextDate ? `${exam.shortName} exam date: ${nextDate}. ` : "";
+  const dateCopy = `${exam.shortName} exam date: ${nextDate ?? notAnnounced}. `;
+  // Honesty (11 Sep 2026): no "verified by students who cleared it" — the
+  // content is AI-drafted and checked against the official notification
+  // (the page's own SectionVerificationSummary says exactly that).
   const description =
-    `${dateCopy}Free ${exam.shortName} (${exam.name}) ${year} mock tests, previous year papers ` +
-    `and study help — verified by students who cleared it. ${stateCopy}Questions available in ${langCopy}. No paywall.`;
+    `${dateCopy}Free ${exam.shortName} (${exam.name}) ${year} mock tests, PYQ-pattern papers, ` +
+    `AI tutor and a free day-by-day coach plan — AI-drafted, checked against the official notification. ` +
+    `${stateCopy}Questions available in ${langCopy}. No paywall.`;
 
   // Keywords — a wide net mixing English, native-script state name, exam
   // name in native script (transliteration via state's hindi/native name),
@@ -168,15 +180,15 @@ export async function generateMetadata({
   // intent words are in the language the URL promises.
   const locTitle =
     urlLocale === "hi"
-      ? `${exam.shortName}${stateBit} ${year} — ${nextDate ? `परीक्षा तिथि ${nextDate}, ` : ""}मुफ़्त मॉक टेस्ट, पिछले साल के पेपर | Shishya`
+      ? `${exam.shortName}${stateBit} ${year} — परीक्षा तिथि ${nextDate ?? notAnnounced}, मुफ़्त मॉक टेस्ट, पिछले साल के पेपर | Shishya`
       : urlLocale === "te"
-        ? `${exam.shortName}${stateBit} ${year} — ${nextDate ? `పరీక్ష తేదీ ${nextDate}, ` : ""}ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు | Shishya`
+        ? `${exam.shortName}${stateBit} ${year} — పరీక్ష తేదీ ${nextDate ?? notAnnounced}, ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు | Shishya`
         : title;
   const locDescription =
     urlLocale === "hi"
-      ? `${nextDate ? `${exam.shortName} परीक्षा तिथि: ${nextDate}. ` : ""}${exam.shortName} (${exam.name}) ${year} के मुफ़्त मॉक टेस्ट, पिछले साल के पेपर, सिलेबस, कटऑफ़ और AI ट्यूटर — हिंदी में। ${stateCopy}कोई पेवॉल नहीं।`
+      ? `${exam.shortName} परीक्षा तिथि: ${nextDate ?? notAnnounced}. ${exam.shortName} (${exam.name}) ${year} के मुफ़्त मॉक टेस्ट, पिछले साल के पेपर, सिलेबस, कटऑफ़ और AI ट्यूटर — हिंदी में। ${stateCopy}कोई पेवॉल नहीं।`
       : urlLocale === "te"
-        ? `${nextDate ? `${exam.shortName} పరీక్ష తేదీ: ${nextDate}. ` : ""}${exam.shortName} (${exam.name}) ${year} ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు, సిలబస్, కటాఫ్, AI ట్యూటర్ — తెలుగులో. ${stateCopy}పేవాల్ లేదు.`
+        ? `${exam.shortName} పరీక్ష తేదీ: ${nextDate ?? notAnnounced}. ${exam.shortName} (${exam.name}) ${year} ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు, సిలబస్, కటాఫ్, AI ట్యూటర్ — తెలుగులో. ${stateCopy}పేవాల్ లేదు.`
         : description;
   return {
     title: locTitle,
@@ -346,10 +358,10 @@ export default async function ExamPage({
   // days. One indexed-lookup query; renders the banner under the chips.
   //
   // Exam-week rehearsals (live-test.ts createRehearsalLiveTests) are also
-  // LiveTest rows, but they open on a weekday and close 8 PM IST on exam
-  // eve — so they must never be announced with the Sunday paper's "this
-  // Sunday / closes 11 PM" copy. The join carries the marker so the
-  // banner can say what the row actually is.
+  // LiveTest rows, but they open on a weekday and close at
+  // REHEARSAL_CLOSE_IST_HOUR on exam eve — so they must never be announced
+  // with the Sunday paper's "this Sunday / closes 11 PM" copy. The join
+  // carries the marker so the banner can say what the row actually is.
   const ltRows = await prisma
     .$queryRaw<{ opensAt: Date; closesAt: Date; rehearsalFor: string | null }[]>`
       SELECT lt."opensAt", lt."closesAt", m.config->>'rehearsalFor' AS "rehearsalFor"
@@ -362,13 +374,11 @@ export default async function ExamPage({
     ? {
         open: ltRows[0].opensAt <= new Date(),
         rehearsal: !!ltRows[0].rehearsalFor,
-        closesIst: new Date(ltRows[0].closesAt).toLocaleTimeString("en-IN", {
-          timeZone: "Asia/Kolkata",
-          hour: "numeric",
-          minute: "2-digit",
-        }),
       }
     : null;
+  // Rehearsal close hour = the live-test module's constant (one source of
+  // truth shared with the reminder emails and /live-test), formatted here.
+  const rehearsalCloseIst = formatIstHour(REHEARSAL_CLOSE_IST_HOUR);
 
   // Suppress the coach entry for students who already committed to a
   // plan — repeating the ask would be noise.
@@ -459,7 +469,7 @@ export default async function ExamPage({
     "@context": "https://schema.org",
     "@type": "Course",
     name: `${exam.shortName}${stateInfo2 ? ` (${stateInfo2.name})` : ""} — Free Mock Tests, Syllabus & Study Help`,
-    description: exam.description ?? `${exam.name} preparation on Shishya — free expert-curated mocks, previous year papers, and study help verified by students who cleared the same path.`,
+    description: exam.description ?? `${exam.name} preparation on Shishya — free full-length mocks, PYQ-pattern papers, an AI tutor and a free day-by-day coach plan. Content is AI-drafted and checked against the official notification.`,
     provider: {
       "@type": "EducationalOrganization",
       name: "Shishya",
@@ -586,7 +596,7 @@ export default async function ExamPage({
         name: `Can I build a topic-wise ${exam.shortName} mock test?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Yes — pick any topics from the ${exam.shortName} syllabus, choose 10, 25 or 50 questions and the difficulty, and attempt it as a timed mock with solutions and weak-topic analysis, free, at https://shishya.in/exams/${exam.code}/build-mock. Questions can be read in Hindi and 12 other Indian languages inside the test.`,
+          text: `Yes — pick any topics from the ${exam.shortName} syllabus, choose 10, 25 or 50 questions and the difficulty, and attempt it as a timed mock with solutions and weak-topic analysis, free, at https://shishya.in/exams/${exam.code}/build-mock. Questions can be read in Hindi and ${OTHER_INDIAN_LANGUAGE_COUNT} other Indian languages inside the test.`,
         },
       },
       {
@@ -594,7 +604,7 @@ export default async function ExamPage({
         name: `How can I prepare for ${exam.shortName} for free?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Shishya offers ${exam.shortName} preparation 100% free: adaptive mock tests, previous-year papers, full syllabus with study notes (https://shishya.in/exams/${exam.code}/syllabus), subject-wise memory tricks (https://shishya.in/exams/${exam.code}/tricks), and an AI tutor in 22 Indian languages.`,
+          text: `Shishya offers ${exam.shortName} preparation 100% free: adaptive mock tests, PYQ-pattern papers modelled on each year's paper, full syllabus with study notes (https://shishya.in/exams/${exam.code}/syllabus), subject-wise memory tricks (https://shishya.in/exams/${exam.code}/tricks), a free day-by-day coach plan, and an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages.`,
         },
       },
     ],
@@ -783,8 +793,8 @@ export default async function ExamPage({
                   <>
                     🇮🇳 Exam-week rehearsal —{" "}
                     {liveTest.open
-                      ? `open now, closes ${liveTest.closesIst} IST on exam eve`
-                      : `opens soon, closes ${liveTest.closesIst} IST on exam eve`}
+                      ? `open now, closes ${rehearsalCloseIst} IST on exam eve`
+                      : `opens soon, closes ${rehearsalCloseIst} IST on exam eve`}
                   </>
                 ) : (
                   <>
@@ -868,24 +878,30 @@ export default async function ExamPage({
             this; search-arriving students see exactly what they get for free.
             Border + background take their colour from the per-category theme
             so the CTA feels native to the exam track (blue for engineering,
-            green for medical, etc) rather than a generic saffron pop-out. */}
+            green for medical, etc) rather than a generic saffron pop-out.
+            Audit 11 Sep 2026: sells the concrete account value (the coach
+            plan is what converts — coach landers bounce 8%), in CoachEntry's
+            own words; no "expert-curated" / "verified by students who
+            cleared" — content is AI-drafted and checked against the official
+            notification. The CTA's callback is the coach intake so /login
+            greets them with the plan, not a mock. */}
         {!userId && (
           <div className={`mt-6 rounded-md border p-5 ${theme.borderAccent} ${theme.heroTint}`}>
             <p className="text-sm font-semibold text-ink-900">
-              Free {exam.shortName} preparation on Shishya
+              Get your free day-by-day {exam.shortName} plan to exam day — rebuilt every morning.
             </p>
             <p className="mt-1 text-sm text-ink-700">
-              Take expert-curated mocks, practise previous year papers, and Ask{" "}
-              <strong>Shishya</strong> when you&apos;re stuck — verified by
-              students who cleared the same path. All free, no credit card.
-              Sign in with Google to begin.
+              Scores and rank saved. One email when the result is out. Plus free
+              full-length mocks, PYQ-pattern papers and Ask <strong>Shishya</strong>{" "}
+              when you&apos;re stuck. Content is AI-drafted and checked against the
+              official notification. All free, no credit card.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <Link
-                href={`/login?callbackUrl=/exams/${exam.code}`}
+                href={`/login?callbackUrl=${encodeURIComponent(`/coach?exam=${exam.code}`)}`}
                 className="btn-primary inline-block !py-2 !px-4 text-sm"
               >
-                Sign in to start →
+                Sign in free — build my plan →
               </Link>
               {/* Lever #2 — anonymous 5-question diagnostic. Lets a signed-out
                   visitor experience the mock loop before the login gate (44%
@@ -996,7 +1012,7 @@ export default async function ExamPage({
             <Link href={`/exams/${exam.code}/build-mock`} className="font-semibold text-saffron-700 hover:underline">
               Build your own mock — pick exact topics →
             </Link>{" "}
-            <span className="text-ink-500">· every mock readable in हिंदी + 12 languages inside the test</span>
+            <span className="text-ink-500">· every mock readable in हिंदी + {OTHER_INDIAN_LANGUAGE_COUNT} languages inside the test</span>
           </p>
         </div>
 
@@ -1043,31 +1059,30 @@ export default async function ExamPage({
             </p>
           ) : (
             <>
-              {/* A student scanning five year cards should not have to open
-                  one to find out it is 20 questions of a 150-Q paper. */}
-              {pyqYears.some((y) => isPartialPaper(y._count, exam.totalQuestions)) && (
-                <p className="mt-2 text-xs text-ink-500">{t("exam.pyq.partialNote")}</p>
-              )}
+              {/* Honesty (11 Sep 2026): none of these is the paper. Every
+                  question is freshly worded in that year's pattern, and a
+                  student scanning five year cards should not have to open
+                  one to find out it is 20 questions against a 150-Q paper. */}
+              <p className="mt-2 text-xs text-ink-500">
+                Each year is a set of PYQ-pattern questions — freshly worded in the pattern
+                of that year&apos;s paper, not the paper itself. Every card shows how many it
+                holds against the real paper&apos;s count.
+              </p>
               <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-                {pyqYears.map((y) => {
-                  const partial = isPartialPaper(y._count, exam.totalQuestions);
-                  return (
-                    <li key={y.pyqYear ?? 0} className="rounded-md border border-ink-200 bg-white p-3">
-                      <p className="text-lg font-semibold text-ink-900">{y.pyqYear}</p>
-                      <p className="mt-0.5 text-xs text-ink-500">
-                        {partial
-                          ? fill(t("exam.pyq.partialCount"), { n: y._count, m: exam.totalQuestions })
-                          : `${y._count} ${t("exam.pyq.questions")}`}
-                      </p>
-                      <Link
-                        href={`/exams/${exam.code}/pyq/${y.pyqYear}`}
-                        className="mt-2 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
-                      >
-                        {partial ? t("exam.pyq.takeSet") : t("exam.pyq.take")} →
-                      </Link>
-                    </li>
-                  );
-                })}
+                {pyqYears.map((y) => (
+                  <li key={y.pyqYear ?? 0} className="rounded-md border border-ink-200 bg-white p-3">
+                    <p className="text-lg font-semibold text-ink-900">{y.pyqYear}</p>
+                    <p className="mt-0.5 text-xs text-ink-500">
+                      {pyqSetLine(y._count, y.pyqYear, exam.totalQuestions)}
+                    </p>
+                    <Link
+                      href={`/exams/${exam.code}/pyq/${y.pyqYear}`}
+                      className="mt-2 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
+                    >
+                      {t("exam.pyq.takeSet")} →
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </>
           )}

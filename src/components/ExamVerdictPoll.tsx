@@ -14,7 +14,15 @@
 //   • wave 2 (6 Sep 2026): after an ANONYMOUS vote, one sign-in nudge
 //     (nofollow, /login?callbackUrl=<this page>); after a signed-in vote
 //     nothing extra. From n >= minN a WhatsApp share line carries the
-//     tally + the hub URL (CTA_CLICKED via window.shishyaTrack).
+//     tally + the hub URL.
+//   • 11 Sep 2026: BELOW the floor the share exists too — counts only
+//     ("{n} rated so far" / "be among the first"), never a verdict: IOQM
+//     crossed the floor with 0 share clicks because nothing was shareable
+//     until then. WhatsApp + copy, both tagged utm_campaign=verdict-share
+//     and tracked as CTA_CLICKED cta 'exam-verdict-share' (sendBeacon, the
+//     ShareExamButton pattern — survives the tab leaving for WhatsApp).
+//     The vote event carries via 'mail' (the ?verdict= auto-vote from the
+//     day-after mail) or 'tap', plus the surface, so the two are separable.
 //
 // Identity is the server's business (session or shishya_anon cookie,
 // issued on demand) — this never asks for a login. Labels come from the
@@ -46,10 +54,42 @@ export interface ExamVerdictLabels {
   shareTally?: string;
   /** ew.share.cta — the WhatsApp link text. */
   shareCta?: string;
+  /** ew.share.pre — below the floor, n >= 1: template with {exam} {date} {n}. */
+  sharePre?: string;
+  /** ew.share.preFirst — below the floor, n = 0: template with {exam} {date}. */
+  sharePreFirst?: string;
+  /** ew.share.copy / ew.share.copied — the copy button's two states. */
+  shareCopy?: string;
+  shareCopied?: string;
 }
+
+/** How the vote was cast: a chip tap, or the ?verdict= link in the day-after mail. */
+type VoteVia = "tap" | "mail";
 
 function fill(s: string, vars: Record<string, string | number>): string {
   return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
+}
+
+/** utm-tagged hub URL for a share channel (built inline — no shared helper yet). */
+function shareLink(base: string, examCode: string, source: "whatsapp" | "copy"): string {
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}utm_source=${source}&utm_medium=share&utm_campaign=verdict-share&utm_content=${encodeURIComponent(examCode)}`;
+}
+
+/** CTA_CLICKED beacon that outlives the navigation to WhatsApp — the
+ *  ShareExamButton pattern. Best-effort, never throws. */
+function beacon(props: Record<string, unknown>) {
+  try {
+    navigator.sendBeacon?.(
+      "/api/analytics",
+      new Blob(
+        [JSON.stringify({ kind: "CTA_CLICKED", path: typeof location !== "undefined" ? location.pathname : "/", props })],
+        { type: "application/json" },
+      ),
+    );
+  } catch {
+    /* analytics is best-effort */
+  }
 }
 
 function isVerdict(x: unknown): x is Verdict {
@@ -66,6 +106,8 @@ export function ExamVerdictPoll({
   signedIn = false,
   examShort,
   shareUrl,
+  examDayLabel,
+  surface = "hub",
 }: {
   examCode: string;
   /** IST exam day in focus, "YYYY-MM-DD". */
@@ -81,17 +123,23 @@ export function ExamVerdictPoll({
   examShort?: string;
   /** Absolute hub URL appended to the WhatsApp text. */
   shareUrl?: string;
+  /** {date} in the pre-floor share line WITH its tier word, e.g.
+   *  "12 Sep (official)" — a date never leaves without one. Defaults to examDate. */
+  examDayLabel?: string;
+  /** Where the poll is mounted ("hub" / "tracker" / "cutoff") — on the vote event. */
+  surface?: string;
 }) {
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [section, setSection] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [tally, setTally] = useState<VerdictTally | null>(initialTally);
   const autoFired = useRef(false);
 
   const submit = useCallback(
-    async (v: Verdict, s?: string) => {
+    async (v: Verdict, s?: string, via: VoteVia = "tap") => {
       setBusy(true);
       setErr(false);
       try {
@@ -107,7 +155,7 @@ export function ExamVerdictPoll({
         if (j.tally) setTally(j.tally);
         setDone(true);
         try {
-          window.shishyaTrack?.("CTA_CLICKED", { cta: "exam-verdict", examCode, verdict: v, section: s ?? null });
+          window.shishyaTrack?.("CTA_CLICKED", { cta: "exam-verdict", examCode, verdict: v, section: s ?? null, via, surface });
         } catch {
           /* analytics is best-effort */
         }
@@ -120,7 +168,7 @@ export function ExamVerdictPoll({
         setBusy(false);
       }
     },
-    [examCode, examDate],
+    [examCode, examDate, surface],
   );
 
   // Day-after mail links: /exams/X?verdict=TOUGH → one auto-submit, then
@@ -136,7 +184,7 @@ export function ExamVerdictPoll({
       url.searchParams.delete("verdict");
       window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
       setVerdict(v);
-      void submit(v);
+      void submit(v, undefined, "mail");
     } catch {
       /* URL API unavailable — the chips still work */
     }
@@ -159,13 +207,41 @@ export function ExamVerdictPoll({
       : null;
   const tallyLine = pct ? fill(labels.tally, pct) : labels.few;
 
-  // WhatsApp share — the tally sentence plus the hub URL. Only from the
-  // floor: below it there is nothing honest to share.
-  const shareText =
-    pct && labels.shareTally && labels.shareCta
-      ? `${fill(labels.shareTally, { ...pct, exam: examShort ?? examCode })}\n${shareUrl ?? `https://shishya.in/exams/${examCode}`}`
-      : null;
-  const shareHref = shareText ? `https://wa.me/?text=${encodeURIComponent(shareText)}` : null;
+  // Share — from the floor the tally sentence; below it counts only ("{n}
+  // rated so far" / "be among the first"): an invitation to rate, never a
+  // verdict the numbers cannot yet carry. Each channel gets its own utm
+  // source on the hub URL so the referral report can tell them apart.
+  const n = tally?.n ?? 0;
+  const shareBase = shareUrl ?? `https://shishya.in/exams/${examCode}`;
+  const shareVars = { exam: examShort ?? examCode, date: examDayLabel ?? examDate, n };
+  const shareSentence = pct
+    ? labels.shareTally
+      ? fill(labels.shareTally, { ...pct, exam: shareVars.exam })
+      : null
+    : n === 0
+      ? labels.sharePreFirst
+        ? fill(labels.sharePreFirst, shareVars)
+        : null
+      : labels.sharePre
+        ? fill(labels.sharePre, shareVars)
+        : null;
+  const shareText = (source: "whatsapp" | "copy") => (shareSentence ? `${shareSentence}\n${shareLink(shareBase, examCode, source)}` : null);
+  const waText = shareText("whatsapp");
+  const shareHref = waText && labels.shareCta ? `https://wa.me/?text=${encodeURIComponent(waText)}` : null;
+  const trackShare = (via: "whatsapp" | "copy") =>
+    beacon({ cta: "exam-verdict-share", examCode, examDate, via, n, floor: !!pct, surface });
+  const copyShare = async () => {
+    const text = shareText("copy");
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      trackShare("copy");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* old browsers without the clipboard API — the WhatsApp link still works */
+    }
+  };
 
   // Sign-in nudge lands on the page the student is on (hub or tracker);
   // computed at render on the client only — it is gated by `done`, which
@@ -237,18 +313,12 @@ export function ExamVerdictPoll({
       {err && labels.err && <p className="mt-2 text-xs text-rose-700">{labels.err}</p>}
       <p className="mt-2 text-xs text-ink-600">{tallyLine}</p>
       {shareHref && (
-        <p className="mt-1 text-xs text-ink-700">
+        <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-700">
           <a
             href={shareHref}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => {
-              try {
-                window.shishyaTrack?.("CTA_CLICKED", { cta: "exam-verdict-share", examCode, examDate, via: "whatsapp" });
-              } catch {
-                /* analytics is best-effort */
-              }
-            }}
+            onClick={() => trackShare("whatsapp")}
             className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -256,6 +326,15 @@ export function ExamVerdictPoll({
             </svg>
             {labels.shareCta}
           </a>
+          {labels.shareCopy && (
+            <button
+              type="button"
+              onClick={() => void copyShare()}
+              className="inline-flex items-center rounded-full border border-ink-300 bg-white px-3 py-1 text-xs font-medium text-ink-700 transition-colors hover:bg-ink-50"
+            >
+              {copied ? (labels.shareCopied ?? labels.shareCopy) : labels.shareCopy}
+            </button>
+          )}
         </p>
       )}
     </div>

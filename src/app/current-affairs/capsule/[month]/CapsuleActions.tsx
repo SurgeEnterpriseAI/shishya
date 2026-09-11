@@ -2,6 +2,10 @@
 
 // Download-as-PDF (browser print — every phone/desktop can save the
 // print dialog output as PDF) + WhatsApp share for the monthly capsule.
+// The share link is utm-tagged via src/lib/share-url.ts (campaign
+// ca-capsule) so capsule forwards show up in the channel report.
+
+import { shareUrl } from "@/lib/share-url";
 
 function track(cta: string) {
   try {
@@ -22,7 +26,7 @@ function track(cta: string) {
 }
 
 export function CapsuleActions({ month, label }: { month: string; label: string }) {
-  const url = `https://shishya.in/current-affairs/capsule/${month}`;
+  const url = shareUrl(`/current-affairs/capsule/${month}`, { surface: "ca-capsule", channel: "whatsapp" });
   const waHref = `https://wa.me/?text=${encodeURIComponent(
     `${label} current affairs capsule for govt exams — every day of the month, free:\n${url}`,
   )}`;

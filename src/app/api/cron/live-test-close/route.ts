@@ -8,20 +8,30 @@
 // DAILY, not Sunday-only (review 7 Sep 2026). The schedule was
 // "0 18 * * 0" — Sunday 18:00 UTC (23:30 IST), 30 min after the Sunday
 // window closes at 23:00 IST. Then wave 2 added exam-week REHEARSAL
-// papers (createRehearsalLiveTests) that close at 20:00 IST on exam eve,
+// papers (createRehearsalLiveTests) that closed at 20:00 IST on exam eve,
 // which is a WEEKDAY: a rehearsal that closed on a Tuesday fell outside
 // every Sunday run's 26-hour lookback and its writers never got the one
-// thing this cron exists to deliver. Now "0 18 * * *", same time of day,
-// so the Sunday paper's behaviour is unchanged (it still closes 17:30 UTC
-// and is picked up 30 min later) and a rehearsal closing 14:30 UTC is
-// picked up 3.5h later the same evening.
+// thing this cron exists to deliver. So "0 18 * * *" — but that put the
+// rehearsal rank mail at 23:30 IST on exam eve, five hours after the
+// 18:30 IST eve mail told the student tonight is for sleep.
 //
-// Running daily means the Sunday paper is ALSO re-listed by Monday's run
-// (17:30 UTC Sunday is still inside 26h at 18:00 UTC Monday). That is
-// harmless: the per-mock EmailTouch tag 'lt-result:{mockId}' is checked
-// per user before every send, so a participant emailed on Sunday night is
-// skipped on Monday. The only thing Monday does is re-freeze the same
-// board and re-read the guard.
+// TWO runs a day since 11 Sep 2026 (vercel.json):
+//   "50 12 * * *"  12:50 UTC = 18:20 IST. Rehearsals now close at 18:00
+//                  IST (REHEARSAL_CLOSE_IST_HOUR, src/lib/live-test.ts);
+//                  a 20-minute paper started at the last permitted second
+//                  is auto-submitted by 18:20, so the board is complete
+//                  and every rank mail is out before the 13:00 UTC eve mail.
+//   "0 18 * * *"   18:00 UTC = 23:30 IST, unchanged: the Sunday paper
+//                  (closes 17:30 UTC), rehearsal rows created before the
+//                  hour changed (they keep their stored 20:00 IST closesAt),
+//                  and a catch-up for anything the 12:50 run missed.
+//
+// Running twice a day means every paper is listed by more than one run
+// (a rehearsal closing 12:30 UTC is inside the 26h lookback at 12:50 and
+// again at 18:00; Sunday's paper again on Monday). That is harmless: the
+// per-mock EmailTouch tag 'lt-result:{mockId}' is checked per user before
+// every send, so a participant emailed once is skipped by every later run.
+// A later run only re-freezes the same board and re-reads the guard.
 //
 // Dedup: EmailTouch tag 'lt-result:{mockId}' — one result email per user
 // per test, for both paper kinds. Auth: Bearer ${CRON_SECRET}.

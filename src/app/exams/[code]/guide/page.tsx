@@ -34,6 +34,7 @@ export async function generateMetadata({
     `Complete free guide to cracking ${exam.shortName} (${exam.name}): how to prepare without coaching, a realistic study plan, ` +
     `honest difficulty for an average student, and salary & career growth. 100% free on Shishya.`;
   const url = `https://shishya.in/exams/${exam.code}/guide`;
+  const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
   return {
     title,
     description,
@@ -46,8 +47,18 @@ export async function generateMetadata({
       `${exam.shortName} salary`,
       `${exam.shortName} preparation strategy`,
     ],
-    openGraph: { title, description, url, siteName: "Shishya", locale: "en_IN", type: "article" },
-    twitter: { card: "summary_large_image", title, description },
+    // Explicit og:image — a child segment's openGraph block replaces the
+    // parent's, so /exams/[code]/opengraph-image was not inherited here.
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Shishya",
+      locale: "en_IN",
+      type: "article",
+      images: [{ url: image, width: 1200, height: 630, alt: `${exam.shortName} — Shishya` }],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
 
@@ -132,7 +143,8 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
           <ShareExamButton
             url={url}
             message={`How to crack ${exam.shortName} without coaching — free study plan, difficulty & salary guide on Shishya:`}
-            surface="exam"
+            surface="guide"
+            exam={exam.code}
           />
         </div>
 

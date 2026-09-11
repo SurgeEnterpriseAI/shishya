@@ -6,6 +6,8 @@ import type { NextAuthOptions, DefaultSession } from "next-auth";
 import { getServerSession } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./db/prisma";
+// Type-only: the runtime import stays inline in the event (no cycle).
+import type { SignupAttribution } from "./signup-attribution";
 
 declare module "next-auth" {
   interface Session {
@@ -48,17 +50,48 @@ export const authOptions: NextAuthOptions = {
   },
   // NextAuth events — createUser fires exactly once per real signup
   // (first OAuth callback for an email we've never seen). Perfect
-  // hook for the SIGNUP analytics event.
+  // hook for the SIGNUP analytics event — and, since 11 Sep 2026, for
+  // signup attribution.
   events: {
     async createUser({ user }) {
+      // Signup attribution (11 Sep 2026 signup-leak audit). Capture used
+      // to run only from /dashboard inside the cookie window, but every
+      // exam-surface CTA sends a new student back to /exams/CODE, /pyq or
+      // /mocks/ID — a third of signups ended up with no source. This event
+      // runs inside the OAuth callback route handler, so cookies() is in
+      // scope and the trail is written for every new user regardless of
+      // where they land next. /dashboard keeps the same call as an
+      // idempotent fallback (see src/lib/signup-attribution.ts).
+      let attribution: SignupAttribution | null = null;
+      let anonId: string | null = null;
+      try {
+        const { captureSignupAttribution, readAnalyticsAnonId } = await import("./signup-attribution");
+        anonId = await readAnalyticsAnonId();
+        attribution = await captureSignupAttribution(user.id);
+      } catch (err) {
+        console.error("[auth] signup attribution capture failed (non-fatal):", err);
+      }
       try {
         // Inline import avoids a circular dep (analytics → prisma → auth).
         const { recordEvent } = await import("./analytics");
         await recordEvent({
           kind: "SIGNUP",
           userId: user.id,
+          // The link row: the browser's anonymous analytics id rides on the
+          // one event that also carries the new userId, so the pre-sign-in
+          // trail (real landing page, real referrer) joins to the account.
+          // Without it the first identified row of a land-once-then-sign-in
+          // visitor was the OAuth return with refHost accounts.google.com.
+          anonId,
           path: "/login",
           props: { provider: "google" },
+          // Same trail on the SIGNUP row itself, so attributionSources()
+          // (which groups SIGNUP by utmSource / refHost) stops reading
+          // every signup as "(direct)".
+          utmSource: attribution?.utmSource ?? null,
+          utmMedium: attribution?.utmMedium ?? null,
+          utmCampaign: attribution?.utmCampaign ?? null,
+          refHost: attribution?.refHost ?? null,
         });
       } catch (err) {
         console.error("[auth] SIGNUP event record failed (non-fatal):", err);

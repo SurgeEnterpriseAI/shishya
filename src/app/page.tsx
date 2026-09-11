@@ -78,9 +78,14 @@ export async function generateMetadata({
   const scope = sp.s === "state" ? "state" : sp.s === "national" ? "national" : null;
   const state = sp.st ? INDIAN_STATES.find((s) => s.code === sp.st!.toUpperCase()) : null;
 
+  // Exam count from the same daily-cached DB count the stats band shows
+  // (audit 11 Sep 2026: this string carried a typed "177" that drifted
+  // from the catalogue). Number-free phrasing if the count is unknown.
+  const { examCount } = await loadPortalStats().catch(() => ({ examCount: "", questions: "", notes: "" }));
+  const examScope = examCount ? `${examCount} government and entrance exams` : "every government and entrance exam";
   let title = "Shishya — Free exam prep for India's government & entrance exams";
   let description =
-    "India's end-to-end free government exam preparation platform — 177 government and entrance exams. Tell us what you're preparing for — govt jobs, banking, civil services, engineering, medical — and we'll show you the national and state-level options. Free mocks, PYQ, study notes and AI tutor in every Indian language. 100% free, no credit card.";
+    `India's end-to-end free government exam preparation platform — ${examScope}. Tell us what you're preparing for — govt jobs, banking, civil services, engineering, medical — and we'll show you the national and state-level options. Free mocks, PYQ-pattern papers, study notes and AI tutor in every Indian language. 100% free, no credit card.`;
 
   if (goal && !scope) {
     title = `${goal.label} entrance exams in India — Shishya`;
@@ -243,8 +248,11 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
     const bucketById = new Map(buckets.map((b) => [b.row.id, b.bucket]));
     // Smart default: land on Concluded only while the answer-key rush
     // is real (an exam ran within the last ~3 days) — else Upcoming.
+    // An expected (unconfirmed) date never counts as an exam that ran.
     const defaultTab: CalendarBucket = byBucket.concluded.some(
-      (r) => nowDay - istDayNumber(r.date) <= 3,
+      (r) =>
+        nowDay - istDayNumber(r.date) <= 3 &&
+        sourceTier(r.confidence, r.url, r.exam.eligibility?.officialUrl) !== "expected",
     )
       ? "concluded"
       : "upcoming";
@@ -282,17 +290,25 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
 
     const events = rows.map((r) => {
       const phase = lookupPhaseFor(r);
+      const tier = sourceTier(r.confidence, r.url, r.exam.eligibility?.officialUrl);
       return {
         id: r.id,
         examCode: r.exam.code,
         examShort: r.exam.shortName,
         date: r.date.toISOString(),
         label: r.label,
-        isExamDay: r.isExamDay,
+        // Only an ANNOUNCED row (tier official/reported) is an exam day
+        // (11 Sep 2026 audit: an expected SSC CGL date was pilled "EXAM
+        // DAY" under Concluded). An expected exam-day row stays in its
+        // bucket but renders "(expected)" / "was expected — not
+        // confirmed" instead — never the exam-day pill or a phase chip.
+        isExamDay: r.isExamDay && tier !== "expected",
+        expectedExamDay: r.isExamDay && tier === "expected",
+        tier,
         // Tracker honesty flag (23 Aug 2026, tiered 29 Aug 2026): only
         // gold-tier rows — announced AND cited on the conducting body's
         // own domain (incl. the exam's portal) — may become Events below.
-        official: sourceTier(r.confidence, r.url, r.exam.eligibility?.officialUrl) === "official",
+        official: tier === "official",
         phaseSnippet: phase ? (snippetsByKey.get(`${r.exam.id}:${phase}`) ?? null) : null,
         bucket: bucketById.get(r.id) ?? ("upcoming" as CalendarBucket),
       };
@@ -306,7 +322,13 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
     // policy as the live data — so it's accurate, just less fresh.
     console.error("[shishya/loadUpcomingEvents] DB query failed, using fallback:", err);
     const { getFallbackEvents } = await import("@/data/fallback-events");
-    return { events: getFallbackEvents(), defaultTab: "upcoming" as CalendarBucket };
+    // The static list cites no URL per row, so under the source-tier
+    // model its exam days are estimates: rendered "(expected)", never
+    // pilled as exam days.
+    const events = getFallbackEvents().map((e) =>
+      e.isExamDay ? { ...e, isExamDay: false, expectedExamDay: true, tier: "expected" as const } : e,
+    );
+    return { events, defaultTab: "upcoming" as CalendarBucket };
   }
 }
 // v4 — busts the v3 cache: the loader now returns { events, defaultTab }
@@ -314,7 +336,8 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
 const loadUpcomingEvents = unstable_cache(
   loadUpcomingEventsRaw,
   // v7: `official` tightened to gold source tier (conducting-body domain).
-  ["home-upcoming-v7"],
+  // v8: `isExamDay` only for announced rows; `expectedExamDay` + `tier` added.
+  ["home-upcoming-v8"],
   { revalidate: 300, tags: ["exam-dates"] },
 );
 
@@ -349,7 +372,7 @@ async function loadVacancyExplorerSafe(): Promise<VacancyExplorer> {
 
 // "Shishya at a glance" content-depth stats for the homepage band —
 // real counts, rounded DOWN to an honest "+" figure. Cached daily.
-async function loadPortalStatsRaw(): Promise<{ examCount: number; questions: string; notes: string }> {
+async function loadPortalStatsRaw(): Promise<{ examCount: string; questions: string; notes: string }> {
   try {
     const [ex, q, n] = await Promise.all([
       prisma.exam.count({ where: { active: true, category: { not: "SCHOOL_BOARD" } } }),
@@ -359,15 +382,17 @@ async function loadPortalStatsRaw(): Promise<{ examCount: number; questions: str
     const notesCount = Number(n[0]?.c ?? 0);
     const floorTo = (v: number, step: number) => Math.floor(v / step) * step;
     return {
-      examCount: ex,
+      examCount: String(ex),
       questions: `${floorTo(q, 1000).toLocaleString("en-IN")}+`,
       notes: `${floorTo(notesCount, 100).toLocaleString("en-IN")}+`,
     };
   } catch {
-    return { examCount: 177, questions: "30,000+", notes: "3,700+" };
+    // DB unreachable: stable "+" wording, never a precise number that
+    // goes stale (audit 11 Sep 2026: this carried a typed 177).
+    return { examCount: "170+", questions: "30,000+", notes: "3,700+" };
   }
 }
-const loadPortalStats = unstable_cache(loadPortalStatsRaw, ["home-portal-stats-v1"], { revalidate: 86400 });
+const loadPortalStats = unstable_cache(loadPortalStatsRaw, ["home-portal-stats-v2"], { revalidate: 86400 });
 
 // Inspiration carousel — validated topper success-story videos. Cached
 // daily; a DB blip just hides the section.
@@ -634,8 +659,11 @@ export default async function ExamsPage({
               <Link href="/login?callbackUrl=%2Fdashboard" className="btn-primary">
                 Free sign-up — start prepping
               </Link>
+              {/* Audit 11 Sep 2026: was "Verified by students who've cleared
+                  the same path" — unbacked. Say what the account actually
+                  gives (the same offer bare /login makes). */}
               <p className="mt-2 text-xs text-ink-500">
-                Verified by students who&apos;ve cleared the same path · in your language
+                Free day-by-day plan to exam day · scores and rank saved · one email on result day · in your language
               </p>
             </div>
           )}
@@ -729,6 +757,11 @@ function MobileInlineRails({
                         {e.bucket === "concluded" ? "Done" : "Exam"}
                       </span>
                     )}
+                    {e.expectedExamDay && (
+                      <span className="ml-1.5 rounded bg-ink-100 px-1 py-0.5 text-[9px] font-medium text-ink-600">
+                        {e.bucket === "concluded" || e.bucket === "past" ? "was expected — not confirmed" : "(expected)"}
+                      </span>
+                    )}
                   </p>
                   <p className="mt-1 line-clamp-2 text-[11px] text-ink-600">{e.label}</p>
                 </Link>
@@ -769,6 +802,13 @@ function MobileInlineRails({
                         {th.examShort}
                       </span>
                     )}
+                    {/* Disclosure: seed threads are Shishya's starter
+                        questions, never shown as student posts. */}
+                    {th.isSeed && (
+                      <span className="mr-1.5 rounded bg-saffron-50 px-1 py-0.5 text-[10px] font-medium text-saffron-800 ring-1 ring-saffron-200">
+                        Starter question · Shishya
+                      </span>
+                    )}
                     <span className="font-medium text-ink-700">
                       {th.messageCount} {th.messageCount === 1 ? "reply" : "replies"}
                     </span>
@@ -800,7 +840,7 @@ function StepGoals({
   t: (key: SectionTitleKey) => string;
   signedIn: boolean;
   vacancyStats: { totalLakh: string; examCount: number };
-  portalStats: { examCount: number; questions: string; notes: string };
+  portalStats: { examCount: string; questions: string; notes: string };
   inspirationVideos: InspoVideo[];
   sundayLive: UpcomingSunday | null;
   grinders: GrinderEntry[];

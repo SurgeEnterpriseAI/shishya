@@ -22,7 +22,7 @@ export async function generateMetadata({
   if (!exam) return { title: "Exam not found — Shishya" };
   return {
     title: `${exam.shortName} last-minute checklist — what to revise, what to carry | Shishya`,
-    description: `One week to go for ${exam.name}. Last-mile revision topics, formulae sheet, what to carry to the centre, mock-score targets — written by students who've cleared the same paper.`,
+    description: `One week to go for ${exam.name}. Last-mile revision topics, formulae sheet, what to carry to the centre, mock-score targets — compiled from the official notice and past papers.`,
     alternates: { canonical: `https://shishya.in/exams/${code}/checklist` },
     openGraph: {
       title: `${exam.shortName} — Last-minute checklist`,

@@ -12,10 +12,17 @@ export default async function MockPlayerPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
-  if (!session?.user?.id) redirect(`/login?callbackUrl=/dashboard`);
-  const userId = session.user.id;
   const { id } = await params;
+  const session = await auth();
+  // The gate keeps the mock intent (11 Sep 2026 signup-leak audit). Every
+  // mock card on an exam hub and the exam-week "Full-length paper" link land
+  // here, and the gate used to bounce guests to /login?callbackUrl=/dashboard
+  // — the paper they tapped was gone after sign-in. /login already reads a
+  // /mocks/ callback ("Your mock is one tap away"), and on return this page
+  // auto-enrols and creates the attempt (see below), so the callback is the
+  // mock itself.
+  if (!session?.user?.id) redirect(`/login?callbackUrl=${encodeURIComponent(`/mocks/${id}`)}`);
+  const userId = session.user.id;
 
   // Lookup mock + attempt state IN PARALLEL. Critically, we DO NOT
   // fetch the 100 questions yet — for a re-visit where the user already

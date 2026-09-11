@@ -30,7 +30,10 @@ export interface RecordEventInput {
   kind: EventKind;
   /** Authenticated user id when known. */
   userId?: string | null;
-  /** Anonymous cookie id when not authenticated. */
+  /** Anonymous cookie id when not authenticated. /api/analytics drops it
+   *  once a userId exists; the ONE row that carries both is the SIGNUP
+   *  event (src/lib/auth.ts createUser) — the link that joins a
+   *  visitor's pre-sign-in trail to the account (11 Sep 2026). */
   anonId?: string | null;
   path?: string | null;
   /** Free-form event payload. Dropped entirely if it serializes past

@@ -6,16 +6,26 @@
 // content is decided by computeExamWeekState (src/lib/exam-week.ts):
 //
 //   week      exam date (tier) + days to go + checklist / real-pattern
-//             paper / ask-the-tutor links
+//             paper / ask-the-tutor links + the .ics calendar link + the
+//             compact "get alerted" box (11 Sep 2026: an anonymous
+//             visitor used to leave the run-up with nothing to keep)
 //   eve       tomorrow's date (tier) + the no-new-topics tip + reporting
-//             line when the tracker holds an OFFICIAL admit-card row
-//   today-am  good luck, come back tonight
-//   today-pm  "How was the paper?" poll + tally
+//             line when the tracker holds an OFFICIAL admit-card row,
+//             plus the same .ics link + alert box
+//   today-am  good luck; once the first shift has plausibly started
+//             (examDayPollOpen: the EXAM row's own timing, else noon IST)
+//             the poll joins it as "Done with your paper? Tell us how it
+//             was" — NDA ends 16:30, SBI PO Mains is a morning sitting,
+//             and the fixed 18:00 gate asked hours too late
+//   today-pm  "How was the paper?" poll + tally, the answer-key alert box
+//             ("not announced yet — one email when it is") and, only when
+//             markingSchemeStatable(exam), the score-estimator link
 //   window    window dates (tier) + shift tip + poll + tally
 //   post      answer key / result (tracker dates with tier, or "not
-//             announced yet" — never guessed), cutoff link, one-tap alert,
-//             next exam in the same track, weakest-topic quiz, and the poll
-//             again so the day-after mail's ?verdict= link lands
+//             announced yet" — never guessed), cutoff link, estimator link
+//             (statable only), one-tap alert, next exam in the same track,
+//             weakest-topic quiz, and the poll again so the day-after
+//             mail's ?verdict= link lands
 //   none      renders nothing (no DB reads either)
 //
 // Wave 2 (6 Sep 2026): a SIGNED-IN, ENROLLED student inside a multi-day
@@ -36,11 +46,12 @@ import { prisma } from "@/lib/db/prisma";
 import { tFor } from "@/lib/i18n-server";
 import type { Locale, StringKey } from "@/lib/i18n";
 import { localizedPath, localizedUrl, type PageLocale } from "@/lib/seo-locale";
-import { computeExamWeekState, dateWithTier, istDay } from "@/lib/exam-week";
+import { computeExamWeekState, dateWithTier, examDayPollOpen, istDay } from "@/lib/exam-week";
 import { applyShiftDay, shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline, type SourceTier, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
 import { sourceTier } from "@/lib/official-source";
 import { getVerdictTally, publicTally, VERDICT_MIN_N } from "@/lib/exam-verdict";
+import { markingSchemeStatable } from "@/lib/marking-scheme";
 import { isRealArticle } from "@/lib/phase-article-quality";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { ExamVerdictPoll } from "@/components/ExamVerdictPoll";
@@ -84,6 +95,9 @@ export interface ExamWeekBlockProps {
   /** The signed-in student's relationship to this exam (wave 2). Omitted /
    *  null for anonymous visitors → no shift picker, shared phase. */
   viewer?: ExamWeekViewer | null;
+  /** Which page mounts the block — travels on the poll's vote / share
+   *  events. Defaults to "hub", or "tracker" when showAlert is false. */
+  surface?: "hub" | "tracker";
 }
 
 export interface ExamWeekViewer {
@@ -103,6 +117,7 @@ export async function ExamWeekBlock({
   weakTopicCode = null,
   showAlert = true,
   viewer = null,
+  surface = showAlert ? "hub" : "tracker",
 }: ExamWeekBlockProps) {
   const now = new Date();
   const base = computeExamWeekState(rows, officialUrl, now);
@@ -116,6 +131,8 @@ export async function ExamWeekBlock({
   const tierWord = (tier: SourceTier) => t(`ew.tier.${tier}` as StringKey);
   const p = (rel: string) => localizedPath(rel, urlLocale);
   const short = exam.shortName;
+  const linkCls =
+    "inline-flex items-center gap-1 rounded-full border border-saffron-300 bg-white px-3 py-1 text-xs font-semibold text-saffron-800 hover:bg-saffron-100";
   const focus = state.focus;
   const tier = state.tier ?? focus.tier;
   const { phase } = state;
@@ -137,7 +154,50 @@ export async function ExamWeekBlock({
     nudge: t("ew.signup.nudge"),
     shareTally: t("ew.share.tally"),
     shareCta: t("ew.share.cta"),
+    sharePre: t("ew.share.pre"),
+    sharePreFirst: t("ew.share.preFirst"),
+    shareCopy: t("ew.share.copy"),
+    shareCopied: t("ew.share.copied"),
   };
+
+  // ── Things a visitor can KEEP (11 Sep 2026) ─────────────────────────
+  // The .ics calendar link (every tracker date with its tier word; missing
+  // dates omitted, never invented) and the email-keyed alert box. Before
+  // the paper the box carries the standard "Get alerted for {exam}" copy;
+  // on exam night and after it, the answer-key / result promise — with
+  // "not announced yet — one email when it is" while the tracker holds no
+  // key row. Both respect showAlert (the tracker page has its own box).
+  const icsLink = (
+    <a href={`/exams/${exam.code}/exam-week.ics`} rel="nofollow" className={linkCls}>
+      📅 {t("ew.ics.dates")}
+    </a>
+  );
+  const alertBox = (mode: "get" | "key") =>
+    showAlert ? (
+      <div className="mt-3">
+        <ExamAlertBox
+          examCode={exam.code}
+          signedIn={signedIn}
+          compact
+          phase={mode === "key" ? phase : undefined}
+          weekLabels={
+            mode === "key"
+              ? { cta: state.answerKey ? t("ew.alert.cta") : t("ew.alert.key"), done: t("ew.alert.done") }
+              : undefined
+          }
+          labels={{
+            title: mode === "key" ? t("ew.alert.cta") : fill(t("tracker.alert.title"), { exam: short }),
+            body: t("tracker.alert.body"),
+            emailPlaceholder: t("tracker.alert.email"),
+            btn: t("tracker.alert.btn"),
+            btnSigned: mode === "key" ? `🔔 ${t("tracker.alert.btn")}` : fill(t("tracker.alert.btnSigned"), { exam: short }),
+            done: mode === "key" ? t("ew.alert.done") : t("tracker.alert.done"),
+            invalid: t("tracker.alert.invalid"),
+            err: t("tracker.alert.err"),
+          }}
+        />
+      </div>
+    ) : null;
 
   // Shift-day picker: signed-in + enrolled, a window with more than one
   // announced day, and the window itself not yet over (base phase). The
@@ -169,9 +229,6 @@ export async function ExamWeekBlock({
       {children}
     </section>
   );
-
-  const linkCls =
-    "inline-flex items-center gap-1 rounded-full border border-saffron-300 bg-white px-3 py-1 text-xs font-semibold text-saffron-800 hover:bg-saffron-100";
 
   // ── week ────────────────────────────────────────────────────────────
   if (phase === "week") {
@@ -222,8 +279,10 @@ export async function ExamWeekBlock({
           <Link rel="nofollow" href={`/chat?examCode=${exam.code}&seed=${encodeURIComponent(seed)}`} className={linkCls}>
             💬 {fill(t("ew.week.ask"), { exam: short })}
           </Link>
+          {icsLink}
         </div>
         {picker}
+        {alertBox("get")}
       </>,
     );
   }
@@ -261,13 +320,21 @@ export async function ExamWeekBlock({
             )}
           </p>
         )}
+        <div className="mt-2 flex flex-wrap gap-2">{icsLink}</div>
         {picker}
+        {alertBox("get")}
       </>,
     );
   }
 
   // ── today, before 18:00 IST ─────────────────────────────────────────
-  if (phase === "today-am") {
+  // "All the best" alone until the first shift has plausibly started
+  // (the EXAM row's own timing, else noon IST); from then the poll joins
+  // it. The announced-tier gate above already keeps an "expected" day
+  // out of here, so the question is only ever asked about a paper that
+  // was announced for today.
+  const morningPoll = phase === "today-am" && examDayPollOpen(state, now);
+  if (phase === "today-am" && !morningPoll) {
     return wrap(
       <>
         <p className="text-sm font-bold text-ink-900">🎯 {t("ew.today.am")}</p>
@@ -278,27 +345,56 @@ export async function ExamWeekBlock({
 
   // Poll phases share the tally + section chips. The tally handed to the
   // client is the PUBLIC one (only n below the floor) — the RSC payload
-  // is readable by anyone.
-  const [tally, subjects] = await Promise.all([
+  // is readable by anyone. The marking-scheme read decides whether the
+  // score-estimator link may appear at all (markingSchemeStatable — a
+  // false negative is a wrong score in a student's hands on exam night).
+  const [tally, subjects, statable] = await Promise.all([
     getVerdictTally(exam.id, state.focusDay).then(publicTally),
     prisma.subject
       .findMany({ where: { examId: exam.id }, orderBy: { orderIdx: "asc" }, select: { name: true }, take: 6 })
       .then((s) => s.map((x) => x.name.trim()).filter(Boolean))
       .catch(() => [] as string[]),
+    phase === "today-pm" || phase === "post"
+      ? prisma.exam
+          .findUnique({
+            where: { id: exam.id },
+            select: { totalQuestions: true, scoredQuestions: true, totalMarks: true, marksPerQ: true, description: true },
+          })
+          .then((e) => !!e && markingSchemeStatable(e))
+          .catch(() => false)
+      : Promise.resolve(false),
   ]);
   const poll = (
     <ExamVerdictPoll
       examCode={exam.code}
       examDate={state.focusDay}
-      labels={pollLabels}
+      labels={morningPoll ? { ...pollLabels, prompt: t("ew.today.done") } : pollLabels}
       sections={subjects}
       initialTally={tally}
       minN={VERDICT_MIN_N}
       signedIn={signedIn}
       examShort={short}
       shareUrl={localizedUrl(`/exams/${exam.code}`, urlLocale)}
+      examDayLabel={dateWithTier(focus, tierWord(tier), locale)}
+      surface={surface}
     />
   );
+  const estimatorLink = statable ? (
+    <Link href={p(`/exams/${exam.code}/score-estimate`)} className={linkCls}>
+      🧮 {t("ew.score.when")}
+    </Link>
+  ) : null;
+
+  // ── exam day, first shift over ──────────────────────────────────────
+  if (morningPoll) {
+    return wrap(
+      <>
+        <p className="text-sm font-bold text-ink-900">🎯 {t("ew.today.am")}</p>
+        {picker}
+        {poll}
+      </>,
+    );
+  }
 
   // ── exam night / inside a multi-day window ──────────────────────────
   if (phase === "today-pm" || phase === "window") {
@@ -324,6 +420,12 @@ export async function ExamWeekBlock({
         )}
         {picker}
         {poll}
+        {phase === "today-pm" && (
+          <>
+            {estimatorLink && <div className="mt-2 flex flex-wrap gap-2">{estimatorLink}</div>}
+            {alertBox("key")}
+          </>
+        )}
       </>,
     );
   }
@@ -363,6 +465,7 @@ export async function ExamWeekBlock({
         <Link href={p(`/exams/${exam.code}/cutoff`)} className={linkCls}>
           🎯 {t("ew.post.cutoff")}
         </Link>
+        {estimatorLink}
         {weakTopicCode && (
           <Link href={`/exams/${exam.code}/topics/${encodeURIComponent(weakTopicCode)}/quiz`} prefetch={false} className={linkCls}>
             🧠 {t("ew.post.weak")}
@@ -381,25 +484,7 @@ export async function ExamWeekBlock({
           </Link>
         </p>
       )}
-      {showAlert && (
-        <div className="mt-3">
-          <ExamAlertBox
-            examCode={exam.code}
-            signedIn={signedIn}
-            compact
-            labels={{
-              title: t("ew.alert.cta"),
-              body: t("tracker.alert.body"),
-              emailPlaceholder: t("tracker.alert.email"),
-              btn: t("tracker.alert.btn"),
-              btnSigned: `🔔 ${t("tracker.alert.btn")}`,
-              done: t("ew.alert.done"),
-              invalid: t("tracker.alert.invalid"),
-              err: t("tracker.alert.err"),
-            }}
-          />
-        </div>
-      )}
+      {alertBox("key")}
       <div className="mt-2 border-t border-saffron-200 pt-2">
         {picker}
         {poll}

@@ -200,7 +200,7 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
     name: COOKIE,
     value: payload,
     path: "/",
-    maxAge: 30 * 60, // 30 min — long enough to outlast OAuth round-trip
+    maxAge: 24 * 60 * 60, // 24 h — a read-then-sign-in-tomorrow visitor still carries the trail (was 30 min; 11 Sep 2026 audit)
     httpOnly: true,
     sameSite: "lax",
   });

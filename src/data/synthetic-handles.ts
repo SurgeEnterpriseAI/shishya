@@ -1,19 +1,18 @@
-// Pool of synthetic student handles used for:
-//   1. AI-seeded discussion thread authors (the right-rail sidebar
-//      threads). Previously these all read "Shishya sample" which
-//      visibly outed them as filler — now they wear varied Indian
-//      student names + last-initial.
-//   2. AI auto-reply authors when a real user posts in a discussion.
+// LEGACY pool of invented student handles — RETIRED FOR AUTHORSHIP.
 //
-// Names are intentionally diverse across:
-//   - region (north/south/east/west India + Hindi/Tamil/Telugu/Bengali roots)
-//   - gender (mix of female + male first names)
-//   - language script (we keep them in English transliteration since
-//     the discussions UI doesn't yet preview per-locale fonts).
+// Until the 11 Sep 2026 audit these names were written as the authors of
+// AI-seeded discussion threads and of AI auto-replies, so the rail read
+// as real students chatting. That is synthetic social proof, which the
+// founder rules forbid. Live code no longer signs anything with them:
+// seed threads are authored "Shishya" (src/app/api/cron/refresh-
+// discussions) and AI replies "Shishya AI" (src/lib/ai/discussion-reply).
 //
-// Each entry is "First L." style — matches how Shishya's own real
-// users render (we display first name + last initial for privacy via
-// displayName() in src/app/exams/[code]/page.tsx).
+// The list is kept for ONE reason: rows written before the audit still
+// carry these names, and the thread page must recognise them so they
+// render as "Shishya AI" instead of as a person. Do not add a new use.
+// (The one-off scripts that used to pick these names —
+// scripts/rename-seed-authors.ts and scripts/seed-discussion-replies.ts —
+// and the pickSyntheticHandle helper were deleted in the same audit.)
 
 export const SYNTHETIC_HANDLES: readonly string[] = [
   // North / Hindi belt
@@ -74,11 +73,7 @@ export const SYNTHETIC_HANDLES: readonly string[] = [
   "Shruti N.",
 ];
 
-/** Pick a random handle. Optional `avoid` list keeps consecutive
- *  posts from collapsing to the same persona (e.g. don't AI-reply
- *  as the same name twice in a row in the same thread). */
-export function pickSyntheticHandle(avoid: ReadonlyArray<string> = []): string {
-  const pool = SYNTHETIC_HANDLES.filter((h) => !avoid.includes(h));
-  const arr = pool.length > 0 ? pool : SYNTHETIC_HANDLES;
-  return arr[Math.floor(Math.random() * arr.length)];
+/** True when a stored authorName is one of the retired invented handles. */
+export function isSyntheticHandle(name: string | null | undefined): boolean {
+  return !!name && SYNTHETIC_HANDLES.includes(name);
 }

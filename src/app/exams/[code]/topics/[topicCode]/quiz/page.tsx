@@ -7,13 +7,18 @@
 // quiz — phase from the cached tracker rows, translated labels, and the
 // one-email alert on the result screen in the run-up / eve / post-exam
 // phases (an expected-tier exam day never opens the post-exam copy).
+//
+// 11 Sep 2026: ?n= (5..10) and ?set=id1,id2,… (deterministic replay of a
+// shared set, validated against the exam, capped at 10) — the same
+// contract as the exam-level quiz, so the "try the same 5" WhatsApp share
+// from a topic quiz lands back here.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
-import { getAnonQuiz } from "@/lib/anon-quiz";
+import { clampAnonQuizCount, getAnonQuiz, parseAnonQuizSet } from "@/lib/anon-quiz";
 import { AnonQuizPlayer, type AnonQuizExamWeek } from "@/components/AnonQuizPlayer";
 import { alertPhase, examAlertLabels, getExamWeekStateByCode } from "@/lib/exam-week-inputs";
 
@@ -22,12 +27,14 @@ export const dynamic = "force-dynamic";
 
 export default async function TopicQuizPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ code: string; topicCode: string }>;
+  searchParams: Promise<{ n?: string | string[]; set?: string | string[] }>;
 }) {
-  const { code, topicCode } = await params;
+  const [{ code, topicCode }, sp] = await Promise.all([params, searchParams]);
   const [quiz, examWeekState, { t }, session] = await Promise.all([
-    getAnonQuiz({ examCode: code, topicCode, count: 5 }),
+    getAnonQuiz({ examCode: code, topicCode, count: clampAnonQuizCount(sp.n), ids: parseAnonQuizSet(sp.set) }),
     getExamWeekStateByCode(code),
     getT(),
     auth().catch(() => null),
@@ -67,8 +74,9 @@ export default async function TopicQuizPage({
               {quiz.scopeLabel} — quick quiz
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-ink-600">
-              5 real {quiz.examShort} questions on {quiz.scopeLabel}. Instant scoring and solutions,
-              no signup — see where you stand in ~3 minutes.
+              {quiz.replay
+                ? `Same ${quiz.questions.length} questions as the link you opened, in the same order. Instant scoring and solutions, no signup.`
+                : `${quiz.questions.length} real ${quiz.examShort} questions on ${quiz.scopeLabel}. Instant scoring and solutions, no signup — see where you stand in a few minutes.`}
             </p>
             <div className="mt-6">
               <AnonQuizPlayer quiz={quiz} examWeek={examWeek} />

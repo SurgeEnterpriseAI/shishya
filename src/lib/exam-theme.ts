@@ -73,7 +73,10 @@ const SAFFRON: ExamTheme = {
   examDayBg: "bg-saffron-50",
   examDayText: "text-saffron-900",
   phaseChip: "bg-saffron-100 text-saffron-800 hover:bg-saffron-200",
-  tagline: "Verified by students who&apos;ve cleared the same path",
+  // Audit 11 Sep 2026: was "Verified by students who've cleared the same
+  // path" — an unbacked claim. Content is AI-drafted and checked against
+  // the official notification; say what is true.
+  tagline: "Free mocks, PYQ-pattern papers, a tutor and a day-by-day plan — AI-drafted, checked against the official notification",
 };
 
 // IMPORTANT: every class string here must appear verbatim in source —

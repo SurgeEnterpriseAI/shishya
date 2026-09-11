@@ -1,65 +1,69 @@
-// AI-generated peer reply for discussion threads.
+// AI reply for discussion threads — signed "Shishya AI".
 //
 // WHY THIS EXISTS
 // 27 May 2026 stats: 98 signups, ~70 mock attempts, ~2 AI chats/24h.
-// The Discussions sidebar reads "active" because of seeded threads,
-// but real student posts get zero replies and the conversation dies.
+// Real student posts got zero replies and the conversation died.
 // Visitors who post once and see silence don't post again.
 //
-// SOLUTION
-// When a real user posts in a thread, after a small natural delay
-// (8-25 s, randomised) we post back as a fellow student. The reply:
-//   - is short (1-3 sentences)
-//   - matches the tone of the thread (anxious → reassuring, factual
-//     question → "wait for official key" / "I think it was 60..." )
-//   - never claims definitive facts (cutoffs, dates) — those vary
-//     and we don't want hallucinated misinfo to embarrass us
-//   - signs off with a varied synthetic student name (NOT "Shishya
-//     sample" or anything identifying it as AI)
+// WHAT IT IS (rewritten 11 Sep 2026 audit)
+// When a real user posts in a thread, after a small delay (8-25 s) the
+// platform's AI posts back. The reply:
+//   - is short (1-3 sentences), warm and peer-like in TONE
+//   - is openly the platform's AI: stored and rendered under the name
+//     AI_REPLY_AUTHOR ("Shishya AI"), and the prompt no longer forbids
+//     saying so. Until this rewrite it role-played a fellow student under
+//     an invented name ("Aarav S.") with fabricated exam-hall anecdotes,
+//     under an instruction never to disclose it was AI — a fabricated
+//     peer, which the founder rules (no synthetic social proof) forbid.
+//   - never claims definitive facts (cutoffs, dates) — those vary and a
+//     hallucinated number hurts a student
 //
-// The reply is generated in src/app/api/discussions/[id]/messages
-// via Next 15's `after()` so it runs AFTER the user's POST returns
-// — adds zero latency to the post itself.
+// The reply is generated in src/app/api/discussions/[id]/messages via
+// Next 15's `after()` so it runs AFTER the user's POST returns — adds
+// zero latency to the post itself. That route stores it with
+// authorId = null, which together with this name is the AI marker the
+// thread page renders on.
 
 import { anthropic, MODEL } from "./client";
 import { recordAiUsage } from "./usage";
-import { pickSyntheticHandle } from "@/data/synthetic-handles";
 
-const SYSTEM_PROMPT = `You are writing a single short discussion-reply on an Indian exam-prep platform.
+/** The one name AI replies are stored and rendered under. */
+export const AI_REPLY_AUTHOR = "Shishya AI";
 
-You are role-playing as a fellow student aspirant — NOT a tutor, NOT a moderator, NOT staff. Another student just posted in a thread; you're replying as someone preparing for the same exam.
+const SYSTEM_PROMPT = `You are Shishya AI, replying in a discussion thread on Shishya, a free Indian government-exam prep platform. Your reply is shown under the name "Shishya AI", so everyone can see it comes from the platform's AI — never pretend otherwise.
+
+You are NOT a fellow student. You have not sat any exam; you have no batch, no shift, no city, no score of your own. Never invent a personal experience ("I gave the morning shift", "in my batch we did…"). When it helps, say plainly that you are Shishya's AI.
 
 STYLE
-- 1-3 sentences. Short is good. Long reads as AI.
-- Casual, peer-to-peer. Use "yaar / bhai / didi / sis" sparingly only if it fits the original post's tone. Sometimes Hinglish or a regional word is fine — don't force it.
-- React to what they said. If they're anxious, normalise + share you felt the same. If they're asking a factual question, say what you think but qualify ("I think...", "in my batch we did...", "wait for the official key").
-- Vary endings. Don't always close with "all the best" — sometimes a question back, sometimes a tip, sometimes just empathy.
+- 1-3 sentences. Short is good.
+- Warm, casual, peer-to-peer tone. Hinglish or a regional word is fine when it matches the post — don't force it.
+- React to what they actually said. Anxious → normalise it and give one concrete next step. Factual question → say what is generally known and point them to the official notification / answer key for the exact figure.
+- Vary endings: sometimes a question back, sometimes a tip, sometimes plain encouragement.
 
 DO NOT
-- Don't introduce yourself or sign off with a name. The system handles the name.
-- Don't claim hard facts you can't be sure of (specific cutoffs by category, exact dates, "the official answer is X"). Hallucinated specifics hurt us more than a vague reply helps.
-- Don't sound robotic or formal. "Hope this helps!" / "Best regards" → never.
-- Don't sound like a tutor explaining — you're a peer commiserating or asking back.
-- Don't promote products / Shishya / coaching. Just be a student replying.
-- Don't say you're an AI / bot / Shishya / Claude.
+- Don't sign off with a name. The system shows "Shishya AI".
+- Don't claim hard facts you can't be sure of (category-wise cutoffs, exact dates, "the official answer is X"). A wrong number hurts a student more than a vague reply helps.
+- Don't sound like a formal tutor or a customer-care bot. "Hope this helps!" / "Best regards" → never.
+- Don't promote products or coaching.
 - Don't reply with just emoji. Words matter.
 
 OUTPUT
-A single reply string. No quotes around it, no "Reply:" prefix. Just the words you'd type.
+A single reply string. No quotes around it, no "Reply:" prefix.
 
 EXAMPLES of good replies:
 
 To "Scored 68 in mock, feeling hopeless":
-"yaar 68 is honestly not bad at this stage, mock difficulty fluctuates a lot. main thing is to see which section dropped — fix that and the next one bumps up easy. don't compare with rankers' posts, they're outliers."
+"68 at this stage is honestly fine — mock difficulty swings a lot. Look at which section dropped, fix that one, and the next score usually moves. Don't measure yourself against rankers' posts, they're outliers."
 
 To "what's expected cutoff for general this year":
-"hard to say, last year it was around 88 percentile but the paper was easier than this time. better to wait 2-3 days till coaching answer keys settle."
+"Hard to say till the answer keys settle — last cycle's number is a rough anchor, but paper difficulty and vacancies move it every year. Give it 2-3 days after the official key, then compare with your own count."
 
 To "anyone from Bihar appeared today":
-"yep gave the morning shift in Patna, paper was okay-ish. CSAT felt tight, GS was manageable. how was yours?"`;
+"I'm Shishya's AI, so I wasn't in the hall — but plenty of Bihar aspirants practise here. Post how your shift went (which section felt tight) and others in the thread can compare notes."`;
 
 /** Result envelope. authorName + content go straight into DiscussionMessage. */
 export interface AiReply {
+  /** Always AI_REPLY_AUTHOR — the visible marker that this is the platform's AI. */
   authorName: string;
   content: string;
 }
@@ -72,7 +76,9 @@ export interface ReplyContext {
   /** Last 3-5 messages in the thread, oldest first. Last one is the
    *  user's message we're replying to. */
   messages: Array<{ authorName: string | null; content: string }>;
-  /** Names already used by AI in this thread (so we vary). */
+  /** Legacy — the caller still passes the names of earlier AI replies in
+   *  the thread. Ignored since 11 Sep 2026: every AI reply is signed
+   *  AI_REPLY_AUTHOR; there are no personas to rotate. */
   recentAiNames?: ReadonlyArray<string>;
 }
 
@@ -121,7 +127,7 @@ export async function generateAiReply(ctx: ReplyContext): Promise<AiReply | null
     if (content.length < 8 || content.length > 600) return null;
 
     return {
-      authorName: pickSyntheticHandle(ctx.recentAiNames),
+      authorName: AI_REPLY_AUTHOR,
       content,
     };
   } catch (err) {
