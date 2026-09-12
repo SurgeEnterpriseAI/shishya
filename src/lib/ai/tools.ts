@@ -15,6 +15,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
 import { createAdaptiveQuiz } from "./adaptive-quiz";
+import { getSeenQuestions } from "@/lib/seen-questions";
+import { pickWithSeenExclusion } from "@/lib/question-pick";
 import { SCHOLARSHIPS, scholarshipsForExam, type Scholarship } from "@/data/scholarships";
 
 export interface ToolContext {
@@ -347,10 +349,12 @@ async function findQuestionsOnTopic(
     where.difficulty = difficulty;
   }
 
-  const qs = await prisma.question.findMany({
+  // Seen-exclusion (11 Sep 2026): `orderBy id asc, take limit` handed every
+  // student the identical first N forever. Fetch a pool, pick unseen first.
+  const seen = (await getSeenQuestions(ctx.userId, exam.id)) ?? new Map();
+  const pool = await prisma.question.findMany({
     where,
-    take: limit,
-    orderBy: { id: "asc" },
+    take: 400,
     select: {
       id: true,
       body: true,
@@ -361,6 +365,7 @@ async function findQuestionsOnTopic(
       topic: { select: { code: true, name: true } },
     },
   });
+  const qs = pickWithSeenExclusion(pool, limit, seen).picked;
   if (qs.length === 0) {
     return {
       questions: [],

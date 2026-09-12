@@ -2,10 +2,17 @@
 //
 // Jul 20 retention checkpoint: D1-7 return stuck at 14%, one-and-done 85%,
 // and the only outbound touch was a single day-3 email. This cron gives
-// recently-active students a daily reason to return: each morning (8:30 AM
-// IST) it emails everyone who (a) has an active enrollment, (b) was active
-// in the last 3 days, (c) hasn't visited yet today — "your Daily 5 is
-// ready", linking to the dashboard's one-tap weakest-topic quiz.
+// recently-active students a daily reason to return: each morning (03:20
+// UTC = 08:50 IST per vercel.json) it emails everyone who (a) has an active
+// enrollment, (b) was active in the last 3 days, (c) hasn't visited yet
+// today — "your Daily 5 is ready", linking to /today (11 Sep 2026: the
+// deep link that builds or resumes the weakest-topic set in one hop; it
+// used to point at /dashboard, two taps short of the quiz).
+//
+// Streak input (11 Sep 2026): study days come from the ONE definition in
+// src/lib/study-day.ts (loadStudyDays) — attempts incl. live tests, tutor
+// chats, descriptive attempts and coach topic completions — so the mail's
+// streak number matches the dashboard and the results page.
 //
 // Recency window keeps it a nudge, not spam: lapse >3 days and the daily
 // email stops (the day-3 nudge and future win-back flows own that band).
@@ -33,6 +40,7 @@ import { prisma } from "@/lib/db/prisma";
 import { sendDailyFiveEmail, type MailRollover } from "@/lib/email";
 import { optedOutUserIds } from "@/lib/email-optout";
 import { computeStreak, istDay } from "@/lib/db/streak";
+import { loadStudyDays } from "@/lib/study-day";
 import { liveTestEmailNotice } from "@/lib/live-test-today";
 import {
   examWeekMailLine,
@@ -112,33 +120,13 @@ export async function GET(req: Request) {
     take: MAX_SENDS,
   });
 
-  // Batch-compute each recipient's streak (two queries total, not two
-  // per user) so the email can lead with loss-aversion when a streak is
-  // actually live. 90-day window matches getStudyStreak.
+  // Batch-compute each recipient's streak (one UNION query for the whole
+  // batch, not one per user) so the email can lead with loss-aversion
+  // when a streak is actually live. 90-day window matches getStudyStreak;
+  // the day definition is the shared one in src/lib/study-day.ts.
   const userIds = users.map((u) => u.id);
   const since = new Date(now.getTime() - 90 * 86_400_000);
-  const [attempts, chats] = await Promise.all([
-    prisma.attempt.findMany({
-      where: {
-        userId: { in: userIds },
-        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
-        finishedAt: { gte: since },
-      },
-      select: { userId: true, finishedAt: true },
-    }),
-    prisma.chatSession.findMany({
-      where: { userId: { in: userIds }, createdAt: { gte: since } },
-      select: { userId: true, createdAt: true },
-    }),
-  ]);
-  const daysByUser = new Map<string, Set<number>>();
-  const add = (uid: string | null, d: Date | null) => {
-    if (!uid || !d) return;
-    if (!daysByUser.has(uid)) daysByUser.set(uid, new Set());
-    daysByUser.get(uid)!.add(istDay(d));
-  };
-  for (const a of attempts) add(a.userId, a.finishedAt);
-  for (const c of chats) add(c.userId, c.createdAt);
+  const daysByUser = await loadStudyDays(userIds, since);
   const todayIdx = istDay(now);
 
   // Students who already committed to a coach plan — they get the plain

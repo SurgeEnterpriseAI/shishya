@@ -15,7 +15,7 @@
 
 import Link from "next/link";
 import { BackLink } from "./BackLink";
-import { HeaderAuthControls } from "./HeaderAuthControls";
+import { HeaderAuthControls, TodayNavLink } from "./HeaderAuthControls";
 import { getDailyQuote } from "@/data/motivational-quotes";
 
 // English labels for the auth-aware right rail. We keep this static so
@@ -130,6 +130,10 @@ export function Header({ admin = false }: { admin?: boolean }) {
           className="border-t border-ink-100 bg-white/60"
         >
           <div className="container-prose flex h-9 items-center gap-4 overflow-x-auto whitespace-nowrap text-[13px] font-medium text-ink-600">
+            {/* Signed-in only, first so it is always on-screen on phones
+                (the row scrolls horizontally). Client island; renders
+                nothing for anonymous visitors and crawlers. */}
+            <TodayNavLink />
             <Link href="/exams/browse" className="hover:text-ink-900">All Exams</Link>
             <Link href="/exam-calendar" className="hover:text-ink-900">Exam Calendar</Link>
             <Link href="/live-test" className="hover:text-ink-900">Live Tests</Link>

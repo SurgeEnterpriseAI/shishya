@@ -26,6 +26,8 @@ import { generateMock } from "@/lib/ai";
 import { getStudentState } from "@/lib/db/student-state";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import type { GenerateMockRequest, QuestionRef } from "@/lib/ai/types";
+import { getSeenQuestions } from "@/lib/seen-questions";
+import { shapeCandidates } from "@/lib/question-pick";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5-20250929";
 
@@ -357,11 +359,14 @@ async function fetchAdaptivePool(examId: string, userId: string): Promise<Questi
     include: { topic: true },
     take: 500,
   });
-  void userId;
-  return qs.map((q) => ({
+  // Seen-exclusion (11 Sep 2026): the brief's set must not repeat questions
+  // the student met in the last 90 days while unseen ones exist.
+  const seen = (await getSeenQuestions(userId, examId)) ?? new Map();
+  const refs = qs.map((q) => ({
     id: q.id,
     topicId: q.topicId,
     topicCode: q.topic.code,
     difficulty: q.difficulty,
   }));
+  return shapeCandidates(refs, seen, 20);
 }

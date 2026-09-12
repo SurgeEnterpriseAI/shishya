@@ -5,6 +5,7 @@
 // also makes this page a powerful internal-linking hub for the 3,700+
 // notes pages. PUBLIC + cached.
 
+import { hasUsableNotes } from "@/lib/topic-notes";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -83,7 +84,7 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
         select: {
           code: true,
           name: true,
-          teachingNote: { select: { id: true } },
+          teachingNote: { select: { content: true } },
           children: { orderBy: { orderIdx: "asc" }, select: { code: true, name: true } },
         },
       },
@@ -180,7 +181,7 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
             <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {s.topics.map((t) => (
                 <li key={t.code} data-syllabus-topic={t.code} className="rounded-md border border-ink-200 bg-white p-3">
-                  {t.teachingNote ? (
+                  {hasUsableNotes(t.teachingNote?.content) ? (
                     <Link
                       href={`/exams/${exam.code}/topics/${t.code}`}
                       className="text-sm font-medium text-ink-900 hover:text-saffron-700 hover:underline"

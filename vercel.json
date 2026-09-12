@@ -57,7 +57,7 @@
     },
     {
       "path": "/api/cron/daily-five",
-      "schedule": "20 3 * * *"
+      "schedule": "0 3 * * *"
     },
     {
       "path": "/api/cron/daily-current-affairs",
@@ -141,7 +141,7 @@
     },
     {
       "path": "/api/cron/exam-day-after",
-      "schedule": "0 3 * * *"
+      "schedule": "40 2 * * *"
     },
     {
       "path": "/api/cron/result-day",

@@ -12,6 +12,7 @@
 // action (start today's 5) lives in the adjacent DailyFiveCard.
 
 import type { StudyStreak } from "@/lib/db/streak";
+import { streakState } from "@/lib/study-day";
 
 const DOW = ["S", "M", "T", "W", "T", "F", "S"];
 
@@ -23,8 +24,11 @@ export function StreakCard({
   /** 0-6 (Sun-Sat) IST day-of-week for "today", for labelling the dots. */
   todayDow: number;
 }) {
-  const { current, best, activeToday, last7, nextMilestone, toNextMilestone, hitMilestoneToday } = streak;
-  const atRisk = current > 0 && !activeToday; // studied through yesterday, not yet today
+  const { current, best, last7, nextMilestone, toNextMilestone, hitMilestoneToday } = streak;
+  // Same four-word state the results-page block uses (src/lib/study-day.ts),
+  // so the two surfaces can never disagree about "at risk" vs "safe".
+  const state = streakState(streak);
+  const atRisk = state === "at-risk"; // studied through yesterday, not yet today
 
   // Headline + subline vary by state so the card always has a pull.
   let headline: string;
@@ -38,7 +42,7 @@ export function StreakCard({
     headline = `🔥 ${current}-day streak at risk`;
     sub = `Practice today to keep it — 3 minutes is all it takes. Miss today and you're back to zero.`;
     tone = "risk";
-  } else if (current > 0) {
+  } else if (state === "kept" || state === "started") {
     headline = `🔥 ${current}-day streak`;
     sub = nextMilestone
       ? `You've studied today — safe. ${toNextMilestone} more ${toNextMilestone === 1 ? "day" : "days"} to your ${nextMilestone}-day badge.`

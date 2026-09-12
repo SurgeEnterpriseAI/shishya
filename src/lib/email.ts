@@ -625,7 +625,7 @@ export async function sendDailyFiveEmail(p: {
 Your Daily 5 is ready — 5 quick questions on ${weakText}. ${streakLineText}
 ${peerText}${p.examWeek ? `\n${p.examWeek.text}\n` : ""}${roll.text ? `\n${roll.text}\n` : ""}${p.liveTest ? `\n${p.liveTest.text}\n` : ""}
 
-Start now: https://shishya.in/dashboard
+Start now: https://shishya.in/today?utm_source=email&utm_medium=daily-five
 
 Small daily reps are how toppers are made. See you inside.
 — Shishya
@@ -644,7 +644,7 @@ ${
       ${esc(first)}, 5 quick questions on ${weakHtml} are waiting.
       ${streakLineHtml}
     </p>
-    <a href="https://shishya.in/dashboard"
+    <a href="https://shishya.in/today?utm_source=email&utm_medium=daily-five"
        style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">
       Start today's 5 →
     </a>
@@ -800,7 +800,7 @@ export async function sendEveningRescueEmail(p: {
 
 Your ${p.streakCurrent}-day streak is still alive — but only until midnight. One Daily 5 (~3 minutes) on your weakest ${p.examShort} topic saves it.
 ${p.liveTest ? `\n${p.liveTest.text}\n` : ""}
-Save it now: https://shishya.in/dashboard
+Save it now: https://shishya.in/today?utm_source=email&utm_medium=evening-rescue
 
 Miss tonight and it resets to zero. Toppers aren't smarter — they just don't skip.
 — Shishya
@@ -819,7 +819,7 @@ ${
       ${first}, you've shown up ${p.streakCurrent} days in a row. One <strong>3-minute Daily 5</strong> on your weakest
       <strong>${p.examShort}</strong> topic keeps the run alive. Miss tonight and it resets to zero.
     </p>
-    <a href="https://shishya.in/dashboard"
+    <a href="https://shishya.in/today?utm_source=email&utm_medium=evening-rescue"
        style="display:inline-block;background:#dc2626;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">
       Save my streak →
     </a>

@@ -1,15 +1,21 @@
 // Study streak — consecutive days with meaningful study activity.
 //
-// A day counts as "active" when the student submitted a mock attempt OR
-// opened a tutor chat session that day. Days are reckoned in IST (UTC+5:30)
-// — the audience is Indian students, and a streak that flips at 5:30 in the
-// evening because of UTC would feel broken.
+// WHAT counts as a study day is defined ONCE in src/lib/study-day.ts
+// (submitted attempt incl. live tests, tutor chat, descriptive attempt,
+// TopicStudyState.completedAt — never a bare page open) and loaded through
+// studyDaysFor(). This file owns only the streak MATH over those days.
+// Days are reckoned in IST (UTC+5:30) — the audience is Indian students,
+// and a streak that flips at 5:30 in the evening because of UTC would
+// feel broken.
 //
 // Pure read model: computed on demand from existing tables, no new schema.
 
-import { prisma } from "@/lib/db/prisma";
+import { istDay, studyDaysFor } from "@/lib/study-day";
 
-const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+// Re-exported so existing consumers (dashboard, crons, tests) keep one
+// import path; the definition lives with the study-day loader.
+export { istDay };
+
 const WINDOW_DAYS = 90; // streaks longer than this cap at 90 — plenty
 
 /** Streak milestones worth celebrating / racing toward. */
@@ -35,11 +41,6 @@ export interface StudyStreak {
   /** True when TODAY's activity just landed the streak exactly on a
    *  milestone — the moment to celebrate. */
   hitMilestoneToday: boolean;
-}
-
-/** IST calendar-day index for a timestamp (days since epoch, IST). */
-export function istDay(d: Date): number {
-  return Math.floor((d.getTime() + IST_OFFSET_MS) / 86_400_000);
 }
 
 /** Pure streak computation over a set of active day-indexes. Exported for tests. */
@@ -88,32 +89,10 @@ export function computeStreak(activeDays: Set<number>, today: number): StudyStre
 
 export async function getStudyStreak(userId: string): Promise<StudyStreak> {
   const since = new Date(Date.now() - WINDOW_DAYS * 86_400_000);
-
-  const [attempts, chats, descriptive] = await Promise.all([
-    prisma.attempt.findMany({
-      where: {
-        userId,
-        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
-        finishedAt: { gte: since },
-      },
-      select: { finishedAt: true },
-    }),
-    prisma.chatSession.findMany({
-      where: { userId, createdAt: { gte: since } },
-      select: { createdAt: true },
-    }),
-    // Descriptive-writing practice counts as a study day too — a student
-    // who wrote an essay was told they "hadn't studied" before (audit
-    // 18 Aug 2026).
-    prisma.descriptiveAttempt
-      .findMany({ where: { userId, createdAt: { gte: since } }, select: { createdAt: true } })
-      .catch(() => [] as { createdAt: Date }[]),
-  ]);
-
-  const activeDays = new Set<number>();
-  for (const a of attempts) if (a.finishedAt) activeDays.add(istDay(a.finishedAt));
-  for (const c of chats) activeDays.add(istDay(c.createdAt));
-  for (const d of descriptive) activeDays.add(istDay(d.createdAt));
-
+  // One loader, one definition (11 Sep 2026): the old typed
+  // descriptiveAttempt call here silently dropped essay days behind a
+  // .catch(() => []) on a stale generated client, and coach topic
+  // completions never counted at all.
+  const activeDays = await studyDaysFor(userId, since);
   return computeStreak(activeDays, istDay(new Date()));
 }

@@ -21,8 +21,14 @@ import { auth } from "@/lib/auth";
 import { getExamTheme } from "@/lib/exam-theme";
 import { BuilderForm } from "./BuilderForm";
 import { OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { getSeenCountByTopic } from "@/lib/seen-questions";
+import { SEEN_WINDOW_DAYS } from "@/lib/question-pick";
 
-export const revalidate = 3600;
+// Per-request: the form shows the signed-in student's own "seen N of M"
+// numbers per topic, which must never be cached across users. (auth()
+// already made this page dynamic; saying so explicitly keeps it that
+// way if the auth call ever moves.)
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
   const { code } = await params;
@@ -66,11 +72,22 @@ export default async function BuildMockPage({
     HAVING COUNT(q.id) >= 3
     ORDER BY s.weight DESC NULLS LAST, s.name, COUNT(q.id) DESC`.catch(() => []);
 
+  // Signed in: how many validated questions of each topic this student
+  // has had on screen (any mock they opened on this exam) in the last
+  // SEEN_WINDOW_DAYS days — one query — so the form can say "seen N of
+  // M" with real numbers. Anonymous → no seen data, no seen copy. The
+  // query returns null on a DB error: then seenKnown=false and the form
+  // hides every seen line rather than asserting "seen 0 of M".
+  const seenResult = session?.user?.id ? await getSeenCountByTopic(session.user.id, exam.id) : null;
+  const seenKnown = seenResult !== null;
+  const seenByTopic = seenResult ?? new Map<string, number>();
+
   const theme = getExamTheme(exam.category);
-  const subjects = new Map<string, { name: string; topics: { id: string; code: string; name: string; n: number }[] }>();
+  const subjects = new Map<string, { name: string; topics: { id: string; code: string; name: string; n: number; seen: number }[] }>();
   for (const r of rows) {
     const s = subjects.get(r.sname) ?? { name: r.sname, topics: [] };
-    s.topics.push({ id: r.tid, code: r.tcode, name: r.tname, n: Number(r.n) });
+    const n = Number(r.n);
+    s.topics.push({ id: r.tid, code: r.tcode, name: r.tname, n, seen: Math.min(n, seenByTopic.get(r.tid) ?? 0) });
     subjects.set(r.sname, s);
   }
   // Preselect from ?topics=code1,code2 (results page passes the
@@ -144,6 +161,8 @@ export default async function BuildMockPage({
             subjects={[...subjects.values()]}
             preselected={preIds}
             signedIn={!!session?.user?.id}
+            seenKnown={seenKnown}
+            windowDays={SEEN_WINDOW_DAYS}
           />
         )}
       </section>

@@ -107,6 +107,7 @@ export default async function MockPlayerPage({
       return (
         <ExpiredAttemptGate
           attemptId={inProgress.id}
+          userId={userId}
           answered={answered}
           total={mock.questionIds.length}
           examShort={mock.exam.shortName}
@@ -176,6 +177,7 @@ export default async function MockPlayerPage({
         negativeMark: mock.exam.negativeMark,
       }}
       attemptId={attempt.id}
+      userId={userId}
       startedAt={attempt.startedAt.toISOString()}
       questions={orderedQs}
       existingAnswers={(attempt.answers as any[]) ?? []}

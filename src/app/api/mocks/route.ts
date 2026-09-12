@@ -9,7 +9,28 @@ import { tryCatAdaptiveMock } from "@/lib/psychometrics";
 import { getStudentState } from "@/lib/db/student-state";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import { bad, notFound, ok, serverError, unauth, parseBody } from "@/lib/http";
-import type { GenerateMockRequest, QuestionRef } from "@/lib/ai/types";
+import { getSeenQuestions } from "@/lib/seen-questions";
+import {
+  SEEN_WINDOW_DAYS,
+  bankLine,
+  countRepeats,
+  dedupeById,
+  dedupeIds,
+  partitionBySeen,
+  pickWithSeenExclusion,
+  seenSummary,
+  shapeCandidates,
+  type BankStats,
+  type SeenMap,
+} from "@/lib/question-pick";
+import type { Difficulty, GenerateMockRequest, QuestionRef } from "@/lib/ai/types";
+
+/** Narrow-select cap on the validated pool fetched per creation. Seen
+ *  exclusion runs over this whole slice (the old code took 200/500 full
+ *  rows BEFORE filtering, so unseen questions past the cap were never
+ *  fetched). ids + topicId + difficulty + topic.code only — cheaper than
+ *  the old 500 rows with body/options/solution text. */
+const POOL_TAKE = 1000;
 
 const Body = z.object({
   examCode: z.string(),
@@ -34,7 +55,14 @@ export async function POST(req: Request) {
     if (!exam) return notFound("exam");
 
     // Build candidate question pool — only validated questions go to live mocks.
-    const pool = await fetchCandidatePool(exam.id, session.user.id, body.request);
+    // `pool` = what the generator may pick from (unseen first — see
+    // fetchCandidatePool); `full` = the whole validated scope, used for the
+    // post-generator top-up and the honest bank numbers.
+    const { candidates: pool, full, seen, bankSize, seenInBank } = await fetchCandidatePool(exam.id, session.user.id, body.request);
+    // `seen` is null when the seen query failed: pick as if nothing were
+    // seen (a DB blip must not fail the mock) but report NO bank numbers —
+    // an empty map would make the honest line say "seen 0 of M".
+    const seenForPick: SeenMap = seen ?? new Map();
     if (pool.length === 0) {
       return bad("No questions available yet for this configuration. Try a different topic or wait for content to be seeded.");
     }
@@ -71,6 +99,49 @@ export async function POST(req: Request) {
       return bad("Could not assemble a mock from available questions.");
     }
 
+    // ── Seen-exclusion, second half ──────────────────────────────────
+    // 1. Never the same question twice in one mock (the rule-based
+    //    DIAGNOSTIC/FULL assemblers match subjects by topic-code prefix
+    //    and can double-push when one subject's code prefixes another's).
+    // 2. If the generator came back short of the request (unseen-only
+    //    candidates lacked a subject/difficulty), top up from the full
+    //    scope: unseen first, then least-recently-seen. Exempt:
+    //      REVISION     — re-showing wrong answers IS the point.
+    //      USER_REQUEST — the LLM picked against the student's own
+    //                     instruction and wrote the title/rationale for
+    //                     THAT set; padding it from the exam-wide scope
+    //                     would put maths into a "Polity" paper. An
+    //                     honest smaller set beats a padded wrong one.
+    // 3. Report the real numbers: bank size, how many of it the student
+    //    has seen in the window, how many of THIS set repeat — only when
+    //    the seen query succeeded (bank = null otherwise; never a guess).
+    const isRevision = body.request.type === "REVISION";
+    const topUpExempt = isRevision || body.request.type === "USER_REQUEST";
+    const requested = "questionCount" in body.request ? body.request.questionCount : null;
+    let finalIds = dedupeIds(result.questionIds);
+    if (requested && finalIds.length < requested && !topUpExempt) {
+      const have = new Set(finalIds);
+      const { picked } = pickWithSeenExclusion(
+        full.filter((q) => !have.has(q.id)),
+        requested - finalIds.length,
+        seenForPick,
+      );
+      finalIds = finalIds.concat(picked.map((q) => q.id));
+    }
+    const { topicMix, difficultyMix } =
+      finalIds.length === result.questionIds.length
+        ? { topicMix: result.topicMix, difficultyMix: result.difficultyMix }
+        : mixesFor(finalIds, full);
+    const bank: BankStats | null =
+      isRevision || seen == null || seenInBank == null
+        ? null
+        : {
+            size: bankSize,
+            seen: seenInBank,
+            repeats: countRepeats(finalIds, seen),
+            windowDays: SEEN_WINDOW_DAYS,
+          };
+
     const mock = await prisma.mock.create({
       data: {
         userId: session.user.id,
@@ -79,12 +150,17 @@ export async function POST(req: Request) {
         title: result.title,
         config: {
           rationale: result.rationale,
-          topicMix: result.topicMix,
-          difficultyMix: result.difficultyMix,
+          topicMix,
+          difficultyMix,
           durationMin: result.durationMin,
           requestType: body.request.type,
+          // Persisted so the player / results page can show the same
+          // honest line later (every /api/mocks client auto-redirects).
+          // Spread into a literal: an interface has no index signature,
+          // which Prisma's InputJsonValue requires.
+          ...(bank ? { seen: { ...bank } } : {}),
         },
-        questionIds: result.questionIds,
+        questionIds: finalIds,
         generatedBy:
           body.request.type === "DIAGNOSTIC" ? "ai:diagnostic" : usedCat ? "cat:irt" : "ai",
         generationContext: { studentSnapshot: studentState as any },
@@ -97,9 +173,13 @@ export async function POST(req: Request) {
         title: mock.title,
         rationale: result.rationale,
         durationMin: result.durationMin,
-        questionCount: result.questionIds.length,
-        topicMix: result.topicMix,
-        difficultyMix: result.difficultyMix,
+        questionCount: finalIds.length,
+        topicMix,
+        difficultyMix,
+        // Additive: { size, seen, repeats, windowDays, line }. null for
+        // REVISION (all repeats by design). Existing clients read only
+        // mock.id.
+        bank: bank ? { ...bank, line: bankLine(bank) } : null,
       },
     });
   } catch (err: any) {
@@ -112,82 +192,140 @@ export async function POST(req: Request) {
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────
 
+interface CandidatePool {
+  /** What the generator / CAT engine may pick from: unseen first, topped
+   *  up with least-recently-seen only when unseen < floor. */
+  candidates: QuestionRef[];
+  /** The whole validated scope (topic / subject / exam), capped at POOL_TAKE
+   *  (plus up to POOL_TAKE unseen rows fetched directly when the cap hit). */
+  full: QuestionRef[];
+  /** questionId -> lastSeenAt for this user+exam in the window. NULL when
+   *  the seen query failed (pick without exclusion, report no numbers) and
+   *  for REVISION (no bank numbers by design). */
+  seen: SeenMap | null;
+  /** Exact validated count of the scope (== full.length unless the cap hit). */
+  bankSize: number;
+  /** Exact count of the scope the student has seen in the window — from the
+   *  DB when the cap hit, never from a sample. NULL whenever `seen` is. */
+  seenInBank: number | null;
+}
+
+const NARROW_SELECT = {
+  id: true,
+  topicId: true,
+  difficulty: true,
+  topic: { select: { code: true } },
+} as const;
+
 async function fetchCandidatePool(
   examId: string,
   userId: string,
   request: GenerateMockRequest
-): Promise<QuestionRef[]> {
+): Promise<CandidatePool> {
   const baseWhere = { examId, validated: true };
 
   // REVISION intentionally re-shows past wrong questions, so it must
   // NOT get the don't-repeat / escalation treatment — handled in its
   // own branch below before we compute the modifiers.
   if (request.type === "REVISION") {
-    return fetchRevisionPool(examId, userId, request);
+    const revision = await fetchRevisionPool(examId, userId, request);
+    return { candidates: revision, full: revision, seen: null, bankSize: revision.length, seenInBank: null };
   }
 
   // ── DEPTH LEVER 1 ────────────────────────────────────────────────
-  // Two signals computed once per request:
-  //   seenIds  — every question this user has already attempted on
-  //              this exam. Excluded from new mocks so returning users
-  //              never re-see the same Qs (until the pool is genuinely
-  //              exhausted, then we recycle).
+  // Two signals computed once per request (one query each):
+  //   seen     — every question this user has had on screen on this
+  //              exam in the last SEEN_WINDOW_DAYS days, with when.
+  //              Excluded from new mocks; when the unseen pool runs
+  //              short we fall back to the LEAST-recently-seen ones
+  //              (never a random recycle of the whole bank).
   //   isStrong — recent submitted attempts average > 70%. Such users
   //              get EASY questions dropped so the mock skews harder —
   //              the platform pushes them instead of coasting.
   // TOPIC requests that pin an explicit difficulty opt OUT of
   // escalation (the user picked the level).
-  const [seenIds, strongPerformer] = await Promise.all([
-    getSeenQuestionIds(examId, userId),
+  const [seen, strongPerformer] = await Promise.all([
+    getSeenQuestions(userId, examId),
     isStrongPerformer(examId, userId),
   ]);
+  // null = the seen query failed. Pick as if nothing were seen; the
+  // caller reports no bank numbers (see CandidatePool.seen).
+  const seenForPick: SeenMap = seen ?? new Map();
   const escalate =
     strongPerformer && !(request.type === "TOPIC" && request.difficulty);
 
+  let where: Record<string, unknown>;
   if (request.type === "TOPIC") {
     // Scope topic lookup to this exam — different exams can share topic codes.
     const topic = await prisma.topic.findFirst({
       where: { code: request.topicCode, subject: { examId } },
-      include: { children: true },
+      include: { children: { select: { id: true } } },
     });
-    if (!topic) return [];
+    if (!topic) return emptyPool(seen);
     const topicIds = [topic.id, ...topic.children.map((c) => c.id)];
-    const qs = await prisma.question.findMany({
-      where: {
-        ...baseWhere,
-        topicId: { in: topicIds },
-        ...(request.difficulty && { difficulty: request.difficulty }),
-      },
-      include: { topic: true },
-      take: 200,
-    });
-    return applyPoolModifiers(qs.map(toRef), {
-      seenIds,
-      escalate,
-      minKeep: request.questionCount,
-    });
+    where = {
+      ...baseWhere,
+      topicId: { in: topicIds },
+      ...(request.difficulty && { difficulty: request.difficulty }),
+    };
+  } else {
+    // DIAGNOSTIC / ADAPTIVE / SUBJECT / FULL / USER_REQUEST → broad pool
+    where = { ...baseWhere };
+    if (request.type === "SUBJECT") {
+      const subject = await prisma.subject.findFirst({
+        where: { examId, code: request.subjectCode },
+        include: { topics: { select: { id: true } } },
+      });
+      if (!subject) return emptyPool(seen);
+      where.topicId = { in: subject.topics.map((t) => t.id) };
+    }
   }
 
-  // DIAGNOSTIC / ADAPTIVE / SUBJECT / FULL / USER_REQUEST → broad pool
-  const where: any = { ...baseWhere };
-  if (request.type === "SUBJECT") {
-    const subject = await prisma.subject.findFirst({
-      where: { examId, code: request.subjectCode },
-      include: { topics: true },
-    });
-    if (!subject) return [];
-    where.topicId = { in: subject.topics.map((t) => t.id) };
-  }
-  const qs = await prisma.question.findMany({
-    where,
-    include: { topic: true },
-    take: 500,
-  });
+  const qs = await prisma.question.findMany({ where, select: NARROW_SELECT, take: POOL_TAKE });
+  let full = qs.map(toRef);
+  let bankSize = full.length;
+  let seenInBank: number | null = seen ? seenSummary(full, seen).seenInBank : null;
+
   // FULL has no explicit questionCount in the request; assume the
   // exam's full length is fine, fall back to 25 as a sensible floor
   // for the exhaustion check.
   const minKeep = "questionCount" in request ? request.questionCount : 25;
-  return applyPoolModifiers(qs.map(toRef), { seenIds, escalate, minKeep });
+
+  if (qs.length >= POOL_TAKE) {
+    // Cap hit (rare — most banks are well under POOL_TAKE): `full` is an
+    // arbitrary un-ordered sample of the scope, and two things must never
+    // come from a sample:
+    //   - the honest numbers — bank size AND seen-in-scope are counted in
+    //     the DB (seen ids are bounded by the student's own attempts in
+    //     the window, so the IN list is small);
+    //   - the unseen pool — if the sample's unseen slice is short of the
+    //     floor, fetch unseen rows directly (id NOT IN seen) so a repeat is
+    //     never served while unseen questions exist past the cap.
+    const seenIds = seen ? [...seen.keys()] : [];
+    const floor = Math.max(minKeep, 5);
+    const needUnseen = seen != null && seenIds.length > 0 && partitionBySeen(full, seen).unseen.length < floor;
+    const [total, seenCount, unseenRows] = await Promise.all([
+      prisma.question.count({ where }),
+      seen == null
+        ? Promise.resolve<number | null>(null)
+        : seenIds.length === 0
+          ? Promise.resolve<number | null>(0)
+          : prisma.question.count({ where: { ...where, id: { in: seenIds } } }),
+      needUnseen
+        ? prisma.question.findMany({ where: { ...where, id: { notIn: seenIds } }, select: NARROW_SELECT, take: POOL_TAKE })
+        : Promise.resolve([] as typeof qs),
+    ]);
+    bankSize = total;
+    seenInBank = seenCount;
+    if (unseenRows.length > 0) full = dedupeById([...unseenRows.map(toRef), ...full]);
+  }
+
+  const candidates = shapePool(full, { seen: seenForPick, escalate, minKeep });
+  return { candidates, full, seen, bankSize, seenInBank };
+}
+
+function emptyPool(seen: SeenMap | null): CandidatePool {
+  return { candidates: [], full: [], seen, bankSize: 0, seenInBank: seen ? 0 : null };
 }
 
 // REVISION = deliberately re-show past wrong questions. No don't-repeat,
@@ -219,30 +357,9 @@ async function fetchRevisionPool(
 
 // ─────────────────────────────────────────────────────────────────────
 // DEPTH LEVER 1 helpers — don't-repeat + difficulty escalation.
+// (The seen query itself lives in src/lib/seen-questions.ts; the pure
+// unseen-first / least-recently-seen logic in src/lib/question-pick.ts.)
 // ─────────────────────────────────────────────────────────────────────
-
-/** Every question id this user has already attempted on this exam.
- *  Pulled from the answers JSON of their submitted attempts (the
- *  questions they actually saw). Bounded to the most recent 60
- *  attempts so the set stays small for power users. */
-async function getSeenQuestionIds(examId: string, userId: string): Promise<Set<string>> {
-  const attempts = await prisma.attempt.findMany({
-    where: {
-      userId,
-      mock: { examId },
-      status: { in: ["SUBMITTED", "AUTO_SUBMITTED", "IN_PROGRESS"] },
-    },
-    orderBy: { startedAt: "desc" },
-    take: 60,
-    select: { answers: true },
-  });
-  const seen = new Set<string>();
-  for (const a of attempts) {
-    const ans = (a.answers as any[]) ?? [];
-    for (const x of ans) if (x?.questionId) seen.add(x.questionId);
-  }
-  return seen;
-}
 
 /** True when the user's recent submitted attempts on this exam average
  *  above the escalation threshold (70%). scorePct is stored 0-100.
@@ -267,18 +384,20 @@ async function isStrongPerformer(examId: string, userId: string): Promise<boolea
 
 /** Apply don't-repeat + escalation to a candidate pool, with graceful
  *  fallbacks so we never starve a mock:
- *    1. Drop already-seen questions. If that leaves < minKeep, the pool
- *       is exhausted → recycle (keep the seen ones).
- *    2. If escalate, drop EASY. If that leaves < minKeep, keep EASY
+ *    1. Keep only unseen questions. If that leaves < floor, top up with
+ *       the LEAST-recently-seen ones — exactly enough to reach floor,
+ *       so the generator cannot prefer a question seen last week over
+ *       one seen two months ago (the old code recycled the whole pool
+ *       here, which is where "Why repeatedly questions asked??" came from).
+ *    2. If escalate, drop EASY. If that leaves < floor, keep EASY
  *       (not enough hard content yet → don't starve). */
-function applyPoolModifiers(
+function shapePool(
   pool: QuestionRef[],
-  opts: { seenIds: Set<string>; escalate: boolean; minKeep: number },
+  opts: { seen: SeenMap; escalate: boolean; minKeep: number },
 ): QuestionRef[] {
   const floor = Math.max(opts.minKeep, 5);
 
-  let out = pool.filter((q) => !opts.seenIds.has(q.id));
-  if (out.length < floor) out = pool; // exhausted — recycle
+  let out = shapeCandidates(pool, opts.seen, floor);
 
   if (opts.escalate) {
     const harder = out.filter((q) => q.difficulty !== "EASY");
@@ -287,7 +406,22 @@ function applyPoolModifiers(
   return out;
 }
 
-function toRef(q: any): QuestionRef {
+/** Recompute topic / difficulty mixes after a post-generator top-up so
+ *  the stored config describes the set that was actually created. */
+function mixesFor(ids: string[], full: QuestionRef[]) {
+  const byId = new Map(full.map((q) => [q.id, q]));
+  const topicMix: Record<string, number> = {};
+  const difficultyMix: Record<Difficulty, number> = { EASY: 0, MEDIUM: 0, HARD: 0 };
+  for (const id of ids) {
+    const q = byId.get(id);
+    if (!q) continue;
+    topicMix[q.topicCode] = (topicMix[q.topicCode] ?? 0) + 1;
+    difficultyMix[q.difficulty] = (difficultyMix[q.difficulty] ?? 0) + 1;
+  }
+  return { topicMix, difficultyMix };
+}
+
+function toRef(q: { id: string; topicId: string; difficulty: Difficulty; topic: { code: string } }): QuestionRef {
   return {
     id: q.id,
     topicId: q.topicId,

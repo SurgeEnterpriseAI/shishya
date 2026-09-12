@@ -7,6 +7,25 @@
 // away (the /results page does its own queries) and the Claude round-
 // trip added 10–30s of staring at "Submitting…". The diagnostic
 // narrative is now generated on-demand from the results page.
+//
+// Batched submit (audit 11 Sep 2026). The body may carry every answer +
+// timing: `{ auto?, answers?: [{ questionId, chosen, timeSec, marked,
+// updatedAt }] }`. That payload is AUTHORITATIVE for what was chosen (the
+// device the student finished on wins over whatever partial autosaves
+// reached the DB), but it is never trusted for the grade — every answer is
+// re-graded here from the question's answerKey via scoreAttempt, and any
+// client-supplied `correct`/`marks`/score is discarded. Bare `{}` /
+// `{ auto: true }` bodies (ExpiredAttemptGate, older clients) still work
+// and grade whatever the DB holds.
+//
+// Idempotency without a schema change: the critical write is gated on
+// status = IN_PROGRESS (updateMany), so two concurrent submits — double
+// tap, second tab, a retry overtaking its original — grade exactly once.
+// A resubmit whose `chosen` per question matches the graded answers
+// returns the persisted result; a later submit that DIFFERS from what was
+// graded is rejected with 409 ATTEMPT_ALREADY_GRADED. Timings and review
+// marks never change a grade, so a payload that differs only there is the
+// same submission (see src/lib/attempts-submit.ts).
 
 // A 100-Q mock spans 10-20 topics; each WeaknessMap upsert is a
 // round-trip from the US Lambda to the Asia Neon DB. Even at 30s the
@@ -20,9 +39,53 @@ export const dynamic = "force-dynamic";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
-import { ok, notFound, serverError, unauth, forbidden } from "@/lib/http";
-import { scoreAttempt } from "@/lib/scoring";
+import { ok, bad, notFound, serverError, unauth, forbidden } from "@/lib/http";
 import { applyAttemptPsychometrics } from "@/lib/psychometrics";
+import {
+  SubmitBodySchema,
+  gradeSubmission,
+  samePayloadAsGraded,
+  type SubmitBody,
+} from "@/lib/attempts-submit";
+import type { AnswerRecord } from "@/lib/attempts-sync";
+
+import { ATTEMPT_ALREADY_GRADED } from "@/lib/attempts-sync";
+
+/** The persisted result of an attempt that is no longer IN_PROGRESS — or a
+ *  409 when the caller's payload contradicts what was graded. Shared by the
+ *  early already-submitted branch and the lost-a-race branch below. */
+function persistedResult(
+  attempt: {
+    id: string;
+    status: string;
+    answers: unknown;
+    scoreRaw: number | null;
+    scoreMax: number | null;
+    scorePct: number | null;
+    topicScores: unknown;
+    durationSec: number | null;
+    mock: { questionIds: string[] };
+  },
+  payload: SubmitBody["answers"],
+) {
+  const graded = attempt.status === "SUBMITTED" || attempt.status === "AUTO_SUBMITTED";
+  if (
+    graded &&
+    payload &&
+    !samePayloadAsGraded((attempt.answers as AnswerRecord[]) ?? [], payload, attempt.mock.questionIds)
+  ) {
+    return bad(ATTEMPT_ALREADY_GRADED, 409);
+  }
+  return ok({
+    attemptId: attempt.id,
+    scoreRaw: attempt.scoreRaw,
+    scoreMax: attempt.scoreMax,
+    scorePct: attempt.scorePct,
+    topicScores: attempt.topicScores,
+    durationSec: attempt.durationSec,
+    alreadySubmitted: true,
+  });
+}
 
 export async function POST(
   _req: Request,
@@ -37,10 +100,14 @@ export async function POST(
     // interstitial) is recorded as AUTO_SUBMITTED so the results page can
     // tell the student "time ran out — auto-submitted with N answered"
     // rather than presenting it as a chosen finish (audit 18 Aug 2026).
-    const auto = await _req
-      .json()
-      .then((b) => b?.auto === true)
-      .catch(() => false);
+    //
+    // Body may also carry the batched answers (see header). A missing or
+    // non-JSON body is the legacy bare submit.
+    const raw: unknown = await _req.json().catch(() => null);
+    const parsed = SubmitBodySchema.safeParse(raw && typeof raw === "object" ? raw : {});
+    if (!parsed.success) return bad(`Invalid body: ${parsed.error.message}`);
+    const auto = parsed.data.auto === true;
+    const payload = parsed.data.answers;
 
     const attempt = await prisma.attempt.findUnique({
       where: { id },
@@ -56,17 +123,10 @@ export async function POST(
     // flipped, but a side-effect (weakness upsert / progress event)
     // returned a 500. They retry and previously got "Attempt already
     // submitted" — now they get success and the client navigates to
-    // results.
+    // results. A payload that contradicts the graded answers gets a 409
+    // instead (persistedResult) — nothing is ever re-scored.
     if (attempt.status !== "IN_PROGRESS") {
-      return ok({
-        attemptId: id,
-        scoreRaw: attempt.scoreRaw,
-        scoreMax: attempt.scoreMax,
-        scorePct: attempt.scorePct,
-        topicScores: attempt.topicScores,
-        durationSec: attempt.durationSec,
-        alreadySubmitted: true,
-      });
+      return persistedResult(attempt, payload);
     }
 
     // ── Score ────────────────────────────────────────────────────────────
@@ -75,10 +135,14 @@ export async function POST(
       include: { topic: { select: { id: true, code: true, name: true, subjectId: true } } },
     });
     const exam = attempt.mock.exam;
-    const submittedAnswers = (attempt.answers as any[]) ?? [];
 
-    // Pure scoring computation. See src/lib/scoring.ts and tests/unit/scoring.test.ts.
-    const { scored, scoreRaw, scoreMax, scorePct, topicAgg, topicScores } = scoreAttempt({
+    // Pure scoring computation. The client payload (if any) replaces the
+    // autosaved rows question-by-question, then everything is graded from
+    // the answer key by scoreAttempt. See src/lib/attempts-submit.ts,
+    // src/lib/scoring.ts and tests/unit/mock-answers-submit.test.ts.
+    const { scored, scoreRaw, scoreMax, scorePct, topicAgg, topicScores, dropped } = gradeSubmission({
+      stored: (attempt.answers as unknown as AnswerRecord[]) ?? [],
+      payload,
       questionIds: attempt.mock.questionIds,
       questionsById: new Map(
         questions.map((q) => [
@@ -93,10 +157,15 @@ export async function POST(
           },
         ])
       ),
-      submittedAnswers,
       marksPerQ: exam.marksPerQ,
       negativeMark: exam.negativeMark,
     });
+    if (dropped.length > 0) {
+      console.warn("[submit] dropped payload answers for questions not in this mock", {
+        attemptId: id,
+        dropped,
+      });
+    }
 
     const finishedAt = new Date();
     const durationSec = Math.max(
@@ -143,8 +212,14 @@ export async function POST(
     // connection_limit=5 on the pool, splitting the critical write
     // from a Promise.all of best-effort writes lets the upserts run
     // 5-at-a-time → ~3 waves × 800ms ≈ 2.4s.
-    await prisma.attempt.update({
-      where: { id },
+    //
+    // Gated on status = IN_PROGRESS so an attempt is graded exactly once:
+    // a concurrent submit (double tap, second tab, a retry overtaking its
+    // original) both pass the status check above, but only one UPDATE
+    // matches. The loser re-reads and returns the winner's persisted
+    // result — or a 409 if its payload differs from what was graded.
+    const written = await prisma.attempt.updateMany({
+      where: { id, status: "IN_PROGRESS" },
       data: {
         status: auto ? "AUTO_SUBMITTED" : "SUBMITTED",
         finishedAt,
@@ -156,6 +231,14 @@ export async function POST(
         topicScores: topicScores as unknown as Prisma.InputJsonValue,
       },
     });
+    if (written.count === 0) {
+      const again = await prisma.attempt.findUnique({
+        where: { id },
+        include: { mock: { select: { questionIds: true } } },
+      });
+      if (!again) return notFound("attempt");
+      return persistedResult(again, payload);
+    }
 
     // ── BEST-EFFORT side-effects, parallelised through the pool ─────────
     try {

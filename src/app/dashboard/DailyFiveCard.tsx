@@ -42,7 +42,9 @@ export function DailyFiveCard({
           examCode,
           request: topicCode
             ? { type: "TOPIC", topicCode, questionCount: 5 }
-            : { type: "ADAPTIVE", questionCount: 5 },
+            // No weakest topic yet → rule-based baseline set (same as /today);
+            // ADAPTIVE would have spent a model call per new student.
+            : { type: "DIAGNOSTIC", questionCount: 5 },
         }),
       });
       const data = await res.json().catch(() => ({}));

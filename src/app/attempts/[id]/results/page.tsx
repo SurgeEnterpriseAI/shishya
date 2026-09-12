@@ -22,6 +22,18 @@ import { PeerProofLine } from "@/components/PeerProofLine";
 import { PulseAsk } from "@/components/PulseAsk";
 import { CoachNextTask } from "@/components/CoachNextTask";
 import { examPeerProof } from "@/lib/peer-proof";
+import { getStudyStreak } from "@/lib/db/streak";
+import { streakState } from "@/lib/study-day";
+import { findTodaysDailyFive, pickDailyFive, wouldGetDailyFiveMail } from "@/lib/study-day-five";
+import {
+  RESULTS_ICS,
+  RESULTS_OPEN_TODAY,
+  RESULTS_STREAK,
+  RESULTS_TOMORROW_BASELINE,
+  RESULTS_TOMORROW_MAIL,
+  RESULTS_TOMORROW_SELF,
+  RESULTS_TOMORROW_TOPIC,
+} from "@/lib/study-day-copy";
 
 export default async function ResultsPage({
   params,
@@ -150,6 +162,26 @@ export default async function ResultsPage({
         .$queryRaw<{ n: bigint }[]>`SELECT COUNT(*) n FROM "CoachPlan" WHERE "userId" = ${session.user.id}`
         .catch(() => [{ n: BigInt(0) }])
     )[0].n > BigInt(0);
+
+  // Tomorrow hook (11 Sep 2026): results is the most re-viewed surface and
+  // had no "come back tomorrow". Streak state from the ONE study-day
+  // definition (this attempt's finishedAt already counts), tomorrow's
+  // topic from the same picker /today uses, and the mail line only when
+  // the Daily-5 cron's own predicate says this student would be mailed.
+  // All best-effort: a failure hides the block, never breaks results.
+  const [streak, tomorrow, willMail, todaysFiveId] = await Promise.all([
+    getStudyStreak(session.user.id).catch(() => null),
+    pickDailyFive(session.user.id).catch(() => null),
+    wouldGetDailyFiveMail(session.user.id).catch(() => false),
+    findTodaysDailyFive(session.user.id).catch(() => null),
+  ]);
+  const streakTone = streak ? streakState(streak) : null;
+  // "Open today's 5 →" only when /today would DO something: nothing counted
+  // yet today (it resumes or builds the set), or the day is kept by other
+  // work (a full mock, a chat) and no 5-set exists yet (it builds one).
+  // When today's 5 already exists and today counts, /today would just land
+  // on that set's results — so no link, the streak line already says it.
+  const showTodayLink = !!streak && (!streak.activeToday || todaysFiveId == null);
   // rankBands fetched above in the parallel Promise.all.
 
   const topicScores = (attempt.topicScores as Record<string, any>) ?? {};
@@ -533,6 +565,45 @@ export default async function ResultsPage({
             examShortName={attempt.mock.exam.shortName}
             scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
           />
+        )}
+
+        {/* Streak + tomorrow (11 Sep 2026): the habit loop's closing line.
+            Streak words come from streakState(); "today counts" is only
+            said when activeToday is true (re-views days later show the
+            at-risk / none states instead). The mail sentence appears only
+            when the Daily-5 cron would actually mail this student; the
+            /today link only when /today would build or resume a set (see
+            showTodayLink). No countdown, no peer comparison. Below the
+            score cards, so the one-nudge-above-the-score rule is
+            untouched. */}
+        {streak && streakTone && (
+          <section className="mt-6 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+            <p className="text-sm font-semibold text-ink-900">
+              {streakTone === "kept"
+                ? streak.hitMilestoneToday
+                  ? RESULTS_STREAK.milestone(streak.current)
+                  : RESULTS_STREAK.kept(streak.current)
+                : streakTone === "started"
+                  ? RESULTS_STREAK.started
+                  : streakTone === "at-risk"
+                    ? RESULTS_STREAK.atRisk(streak.current)
+                    : RESULTS_STREAK.none}
+            </p>
+            <p className="mt-1 text-xs text-ink-700">
+              {tomorrow?.topicName ? RESULTS_TOMORROW_TOPIC(tomorrow.topicName) : RESULTS_TOMORROW_BASELINE}{" "}
+              {willMail ? RESULTS_TOMORROW_MAIL : RESULTS_TOMORROW_SELF}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+              {showTodayLink && (
+                <Link href="/today" className="font-semibold text-amber-800 underline-offset-2 hover:underline">
+                  {RESULTS_OPEN_TODAY}
+                </Link>
+              )}
+              <a href="/today/reminder.ics" className="text-ink-600 underline-offset-2 hover:underline">
+                📅 {RESULTS_ICS}
+              </a>
+            </div>
+          </section>
         )}
 
         {/* DEPTH LEVER 3 — on-demand generation. Targets the student's

@@ -13,6 +13,15 @@
 // an honest smaller-but-right paper beats a padded wrong one, so the
 // final count may be lower than asked when the pool genuinely lacks
 // questions; the response says how many.
+//
+// Unseen-first (11 Sep 2026): questions the student has had in ANY mock
+// they opened on this exam in the last SEEN_WINDOW_DAYS days are picked
+// only after the unseen pool is exhausted, least-recently-seen first,
+// never twice in one paper; the response says exactly how many repeat
+// (`bank`) so the builder page can show it before the student starts.
+// If the seen query fails we still build the paper (no exclusion) but
+// `bank` is null and nothing is persisted in config.seen — a "seen 0 of
+// M" we did not measure is not an honest number.
 
 import { z } from "zod";
 import { NextResponse } from "next/server";
@@ -20,6 +29,18 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
+import { getSeenQuestions } from "@/lib/seen-questions";
+import {
+  SEEN_WINDOW_DAYS,
+  bankLine,
+  countRepeats,
+  partitionBySeen,
+  pickTiered,
+  seenSummary,
+  shuffleWith,
+  type BankStats,
+  type SeenMap,
+} from "@/lib/question-pick";
 
 const Body = z.object({
   examCode: z.string().min(1).max(64),
@@ -27,14 +48,6 @@ const Body = z.object({
   count: z.union([z.literal(10), z.literal(25), z.literal(50)]),
   difficulty: z.enum(["MIXED", "EASY", "HARD"]),
 });
-
-function shuffle<T>(arr: T[]): T[] {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
 
 export async function POST(req: Request) {
   const session = await auth().catch(() => null);
@@ -64,31 +77,59 @@ export async function POST(req: Request) {
   const validIds = topics.map((t) => t.id);
   const diffFilter = difficulty === "MIXED" ? undefined : difficulty;
 
-  // Pull the candidate pool once (ids + topic + difficulty), sample in JS.
-  const pool = await prisma.question.findMany({
-    where: { examId: exam.id, topicId: { in: validIds }, validated: true },
-    select: { id: true, topicId: true, difficulty: true },
-  });
+  // Pull the candidate pool once (ids + topic + difficulty) and the
+  // student's seen map once (questionId -> lastSeenAt on this exam in
+  // the window); sample in JS.
+  const [pool, seen] = await Promise.all([
+    prisma.question.findMany({
+      where: { examId: exam.id, topicId: { in: validIds }, validated: true },
+      select: { id: true, topicId: true, difficulty: true },
+    }),
+    getSeenQuestions(userId, exam.id),
+  ]);
+  // seen === null → the seen query failed: sample as if nothing were
+  // seen, but report no numbers (see header).
+  const seenForPick: SeenMap = seen ?? new Map();
+  type Row = (typeof pool)[number];
   const strict = diffFilter ? pool.filter((q) => q.difficulty === diffFilter) : pool;
   const fallback = diffFilter ? pool.filter((q) => q.difficulty === "MEDIUM") : [];
 
-  // Even split across topics from the strict pool…
+  // Pass 1 — even split across topics, UNSEEN strict questions only.
   const per = Math.ceil(count / validIds.length);
-  const picked = new Set<string>();
+  const picked = new Map<string, Row>();
   for (const tid of validIds) {
-    const mine = shuffle(strict.filter((q) => q.topicId === tid).map((q) => q.id));
-    for (const id of mine.slice(0, per)) picked.add(id);
+    const { unseen } = partitionBySeen(strict.filter((q) => q.topicId === tid), seenForPick);
+    for (const q of shuffleWith(unseen).slice(0, per)) picked.set(q.id, q);
   }
-  // …then top up to `count` from the rest of the strict pool, then the
-  // MEDIUM fallback.
-  for (const q of shuffle([...strict, ...fallback])) {
-    if (picked.size >= count) break;
-    picked.add(q.id);
+  // Pass 2 — top up to `count`: unseen from the rest of the strict pool,
+  // then unseen MEDIUM fallback, then least-recently-seen strict, then
+  // least-recently-seen fallback. A thin topic never shrinks the paper,
+  // and a repeat is only ever the oldest one available.
+  if (picked.size < count) {
+    const rest = (qs: Row[]) => qs.filter((q) => !picked.has(q.id));
+    const { picked: extra } = pickTiered([rest(strict), rest(fallback)], count - picked.size, seenForPick);
+    for (const q of extra) picked.set(q.id, q);
   }
-  const questionIds = shuffle([...picked]).slice(0, count);
+  // Pass 1 can overshoot `count` (ceil per topic): trim unseen-first
+  // (was a random trim), then shuffle for presentation order.
+  const chosen = pickTiered([[...picked.values()]], count, seenForPick).picked;
+  const questionIds = shuffleWith(chosen).map((q) => q.id);
   if (questionIds.length < 5) {
     return NextResponse.json({ error: "not enough questions for this selection" }, { status: 422 });
   }
+
+  // Honest numbers for the response + config. `pool` is the whole
+  // validated bank of the chosen topics (all difficulties — the same
+  // number the builder page shows as "available"). null when the seen
+  // query failed — we then have no number to report.
+  const bank: BankStats | null = seen
+    ? {
+        size: seenSummary(pool, seen).bankSize,
+        seen: seenSummary(pool, seen).seenInBank,
+        repeats: countRepeats(questionIds, seen),
+        windowDays: SEEN_WINDOW_DAYS,
+      }
+    : null;
 
   const perQMin = exam.totalQuestions > 0 ? exam.durationMin / exam.totalQuestions : 1;
   const durationMin = Math.min(exam.durationMin, Math.max(10, Math.round(questionIds.length * perQMin)));
@@ -111,10 +152,18 @@ export async function POST(req: Request) {
         count: questionIds.length,
         requestedCount: count,
         durationMin,
+        ...(bank ? { seen: bank } : {}),
       } as object,
     },
     select: { id: true },
   });
 
-  return NextResponse.json({ id: mock.id, count: questionIds.length, durationMin });
+  return NextResponse.json({
+    id: mock.id,
+    count: questionIds.length,
+    durationMin,
+    // null when the seen query failed — the builder page then starts the
+    // mock straight away, exactly as it does for a set with no repeats.
+    bank: bank ? { ...bank, line: bankLine(bank) } : null,
+  });
 }

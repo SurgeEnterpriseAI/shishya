@@ -18,6 +18,8 @@ import { generateMock } from "./generator";
 import { getStudentState } from "@/lib/db/student-state";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import type { QuestionRef } from "./types";
+import { getSeenQuestions } from "@/lib/seen-questions";
+import { shapeCandidates } from "@/lib/question-pick";
 
 export interface AdaptiveQuizResult {
   warmupMockId: string;
@@ -135,6 +137,11 @@ export async function createAdaptiveQuiz(
     );
   }
 
+  // Seen-exclusion (11 Sep 2026): the generator gets unseen questions
+  // first and least-recently-seen ones only to reach the set size.
+  const seenWarm = (await getSeenQuestions(userId, exam.id)) ?? new Map();
+  const warmupCandidates = shapeCandidates(warmupPool, seenWarm, Math.min(10, warmupPool.length));
+
   const warmupResult = await generateMock({
     studentState,
     request: {
@@ -142,7 +149,7 @@ export async function createAdaptiveQuiz(
       topicCode: targetTopicCode!,
       questionCount: Math.min(10, warmupPool.length),
     },
-    availableQuestions: warmupPool,
+    availableQuestions: warmupCandidates,
     syllabus,
   });
 
@@ -229,7 +236,7 @@ async function fetchTopicPool(examId: string, topicCode: string): Promise<Questi
   const qs = await prisma.question.findMany({
     where: { examId, validated: true, topicId: { in: topicIds } },
     include: { topic: true },
-    take: 50,
+    take: 400,
   });
   return qs.map(toRef);
 }

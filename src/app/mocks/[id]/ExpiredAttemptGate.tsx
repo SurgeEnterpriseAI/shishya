@@ -8,6 +8,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { mirrorKey, readMirror } from "@/lib/attempts-sync";
 
 export function ExpiredAttemptGate({
   attemptId,
@@ -15,22 +16,37 @@ export function ExpiredAttemptGate({
   total,
   examShort,
   examCode,
+  userId,
 }: {
   attemptId: string;
   answered: number;
   total: number;
   examShort: string;
   examCode: string;
+  /** Same key segment the player used for its localStorage mirror. */
+  userId?: string | null;
 }) {
   const [busy, setBusy] = useState<null | "submit" | "discard">(null);
   const router = useRouter();
+
+  /** Answers the player kept on this device (audit 11 Sep 2026): without
+   *  them "submit what I have" after time-up scored only what had reached
+   *  the server. Same key as MockPlayer's mirror; missing or invalid → {}. */
+  function mirroredAnswers(): { answers?: unknown[] } {
+    try {
+      const m = readMirror(window.localStorage, mirrorKey(attemptId, userId ?? null), attemptId);
+      return Array.isArray(m) && m.length > 0 ? { answers: m } : {};
+    } catch {
+      return {};
+    }
+  }
 
   async function submitWhatIHave() {
     setBusy("submit");
     const r = await fetch(`/api/attempts/${attemptId}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ auto: true }),
+      body: JSON.stringify({ auto: true, ...mirroredAnswers() }),
     }).catch(() => null);
     if (r?.ok) router.push(`/attempts/${attemptId}/results`);
     else setBusy(null);

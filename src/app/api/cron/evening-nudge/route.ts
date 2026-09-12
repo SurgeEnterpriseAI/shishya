@@ -7,6 +7,12 @@
 // study anyway. Deliberately scarce (streak-holders only, not every
 // lapsed user) so it never reads as spam.
 //
+// Study days (11 Sep 2026) come from the ONE definition in
+// src/lib/study-day.ts — attempts incl. live tests, tutor chats,
+// descriptive attempts and coach topic completions. Before this, a
+// plan-holder whose streak was built on coach tasks never qualified.
+// The mail's CTA points at /today (build-or-resume in one hop).
+//
 // Auth: Bearer ${CRON_SECRET}. Daily 15:00 UTC per vercel.json.
 
 export const runtime = "nodejs";
@@ -17,6 +23,7 @@ import { prisma } from "@/lib/db/prisma";
 import { sendEveningRescueEmail } from "@/lib/email";
 import { optedOutUserIds } from "@/lib/email-optout";
 import { computeStreak, istDay } from "@/lib/db/streak";
+import { loadStudyDays } from "@/lib/study-day";
 import { liveTestEmailNotice } from "@/lib/live-test-today";
 
 const MAX_SENDS = 200;
@@ -33,37 +40,27 @@ export async function GET(req: Request) {
   const todayIdx = istDay(now);
 
   // Everyone with study activity in the last 2 days — the only people
-  // who can possibly hold a streak that's at risk tonight.
+  // who can possibly hold a streak that's at risk tonight. The four legs
+  // are the four study-day sources (src/lib/study-day.ts); a source
+  // missing here can never be rescued, whatever the streak says.
   const twoDaysAgo = new Date(now.getTime() - 2 * 86_400_000);
   const activeUserIds = await prisma.$queryRaw<{ userId: string }[]>`
     SELECT DISTINCT "userId" FROM (
       SELECT "userId" FROM "Attempt" WHERE "finishedAt" >= ${twoDaysAgo} AND "userId" IS NOT NULL
       UNION
       SELECT "userId" FROM "ChatSession" WHERE "createdAt" >= ${twoDaysAgo} AND "userId" IS NOT NULL
+      UNION
+      SELECT "userId" FROM "DescriptiveAttempt" WHERE "createdAt" >= ${twoDaysAgo} AND "userId" IS NOT NULL
+      UNION
+      SELECT "userId" FROM "TopicStudyState" WHERE "completedAt" >= ${twoDaysAgo} AND "userId" IS NOT NULL
     ) s
   `;
   const ids = activeUserIds.map((r) => r.userId);
   if (ids.length === 0) return Response.json({ ok: true, sent: 0, reason: "no recent activity" });
 
-  // Batch activity-day sets (2 queries, not 2 per user).
-  const [attempts, chats] = await Promise.all([
-    prisma.attempt.findMany({
-      where: { userId: { in: ids }, status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] }, finishedAt: { gte: since } },
-      select: { userId: true, finishedAt: true },
-    }),
-    prisma.chatSession.findMany({
-      where: { userId: { in: ids }, createdAt: { gte: since } },
-      select: { userId: true, createdAt: true },
-    }),
-  ]);
-  const daysByUser = new Map<string, Set<number>>();
-  const add = (uid: string | null, d: Date | null) => {
-    if (!uid || !d) return;
-    if (!daysByUser.has(uid)) daysByUser.set(uid, new Set());
-    daysByUser.get(uid)!.add(istDay(d));
-  };
-  for (const a of attempts) add(a.userId, a.finishedAt);
-  for (const c of chats) add(c.userId, c.createdAt);
+  // Batch activity-day sets — one UNION query for the whole candidate set,
+  // built on the shared study-day definition.
+  const daysByUser = await loadStudyDays(ids, since);
 
   // At-risk = streak ≥2 and NOT yet active today (dies at IST midnight).
   const atRisk: { userId: string; current: number }[] = [];
