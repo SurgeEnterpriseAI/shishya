@@ -7,6 +7,12 @@
 // screen via /api/mocks/[id]/translate or /api/attempts/[id]/translate.
 //
 // Used on the mock-taking player and the results review page.
+//
+// 12 Sep 2026: a pick here also writes User.preferredLang for signed-in
+// students (fire-and-forget POST /api/me/preferences) so the next mock's
+// language hint and the tutor follow it. It still does NOT touch the
+// shishya-lang UI cookie — site language and question language stay
+// decoupled, as the player intends. `persist={false}` opts out.
 
 import { locales, localeNames, type Locale } from "@/lib/i18n";
 
@@ -16,20 +22,35 @@ export function QuestionLangSwitcher({
   disabled,
   pending,
   label = "Question language",
+  persist = true,
 }: {
   current: Locale;
   onChange: (next: Locale) => void;
   disabled?: boolean;
   pending?: boolean;
   label?: string;
+  /** Write the pick to User.preferredLang (signed-in only; guests 401
+   *  harmlessly). Default true. */
+  persist?: boolean;
 }) {
+  function handleChange(next: Locale) {
+    if (persist) {
+      void fetch("/api/me/preferences", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ lang: next }),
+        keepalive: true,
+      }).catch(() => {});
+    }
+    onChange(next);
+  }
   return (
     <label className="relative inline-flex items-center gap-1.5">
       <span className="sr-only">{label}</span>
       <GlobeIcon />
       <select
         value={current}
-        onChange={(e) => onChange(e.target.value as Locale)}
+        onChange={(e) => handleChange(e.target.value as Locale)}
         disabled={disabled || pending}
         className="appearance-none rounded-md border border-ink-200 bg-white py-1.5 pl-7 pr-7 text-xs font-medium text-ink-800 hover:border-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-200 disabled:cursor-wait disabled:opacity-60"
         aria-label={label}

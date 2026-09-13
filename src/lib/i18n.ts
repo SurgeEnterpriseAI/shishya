@@ -257,7 +257,6 @@ export const dict = {
     "features.weakness.title": "Weakness map",
     "features.weakness.body": "Per-topic mastery score. See exactly which topics need tomorrow's hour, not a vague overall percentile.",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "Expert-curated mocks; Shishya picks the right one for you each time. Every next mock targets your weakest topics.",
     "features.progress.title": "Real progress tracker",
     "features.progress.body": "Topic-by-topic progress bars. Watch mastery climb week after week. Honest data — no fake streaks.",
     "features.tutor.title": "Shishya — your personal smart tutor",
@@ -342,6 +341,8 @@ export const dict = {
     "tracker.kind.ADMIT_CARD": "Admit card",
     "tracker.kind.EXAM": "Exam day",
     "tracker.kind.ANSWER_KEY": "Answer key",
+
+    "tracker.kind.QUESTION_PAPER": "Question paper (official)",
     "tracker.kind.RESULT": "Result",
     "tracker.kind.INTERVIEW": "Interview / DV / PET",
     "tracker.kind.OTHER": "Other",
@@ -410,7 +411,6 @@ export const dict = {
 
     // ── (legacy keys kept below for any pages still referencing them)
     "hero.badge": "Free forever · For every student in India",
-    "hero.h1.line1": "Expert-curated prep for India's",
     "hero.h1.line2": "top 10 entrance exams.",
     "hero.body":
       "Take a diagnostic mock. We map your weak spots. Subject experts curate every mock; Shishya picks the right one for you next. You improve. Repeat.",
@@ -716,6 +716,13 @@ export const dict = {
     "chat.diagnostic.hint": "10-question topic diagnostic — see if today's tutoring stuck before you take another full mock.",
 
     // ── lang switcher
+    // ── Student's language (12 Sep 2026): onboarding medium step + translated-question honesty label ──
+    "onb.lang.title": "Which language do you study in?",
+    "onb.lang.body": "Questions, mock hints and the tutor follow this. Change it anytime from the language menu.",
+    "onb.lang.suggested": "Suggested for {state}",
+    "onb.lang.note": "Translated questions are Shishya-translated — cross-check the English when in doubt.",
+    "quiz.translated.note": "Shishya-translated — cross-check the English.",
+    "quiz.seeIn": "See in {lang}",
     "lang.switch": "Language",
   },
 
@@ -820,7 +827,7 @@ export const dict = {
     "cutoff.land.title": "आपका स्कोर कहाँ पहुँचेगा?",
     "cutoff.land.body": "मुफ़्त {exam} मॉक दें: तुरंत स्कोर, यही रैंक मैपिंग और आपके कमज़ोर टॉपिक की पहचान। कोई कोचिंग फ़ीस नहीं।",
     "cutoff.land.cta": "मुफ़्त तैयारी शुरू करें →",
-    "brand.tagline": "भारत के शीर्ष प्रवेश परीक्षाओं की मुफ़्त, विशेषज्ञों द्वारा तैयार तैयारी। Shishya के सहयोग से।",
+    "brand.tagline": "भारत के शीर्ष प्रवेश परीक्षाओं की मुफ़्त तैयारी। Shishya के सहयोग से।",
 
     // ── new search-first landing
     "land.title": "आज आप कौन सी परीक्षा क्रैक करना चाहते हैं?",
@@ -892,7 +899,6 @@ export const dict = {
 
     // ── Feature pillars
     "features.title": "परीक्षा क्रैक करने के लिए सब कुछ — एक ही जगह",
-    "features.subtitle": "असली PYQs, विशेषज्ञों द्वारा तैयार किए गए ताज़ा मॉक, Shishya से कमज़ोर विषयों की पहचान, और एक प्रोग्रेस बार जो दिखाता है क्या ठीक करना है। सब मुफ़्त।",
     "features.pyq.title": "पिछले वर्षों के प्रश्न",
     "features.pyq.body": "हर परीक्षा के असली PYQs — वर्ष और विषय के अनुसार व्यवस्थित। वही सवाल जो असल में आते हैं।",
     "features.daily.title": "रोज़ नए मॉक",
@@ -900,7 +906,6 @@ export const dict = {
     "features.weakness.title": "कमज़ोरी का नक़्शा",
     "features.weakness.body": "विषयवार मास्टरी स्कोर। ठीक-ठीक देखें कौन से विषय पर कल का घंटा देना है — कोई अस्पष्ट परसेंटाइल नहीं।",
     "features.adaptive.title": "एडैप्टिव मॉक",
-    "features.adaptive.body": "विशेषज्ञों द्वारा तैयार मॉक; Shishya हर बार आपके लिए सही मॉक चुनता है। हर अगला मॉक आपके सबसे कमज़ोर विषयों पर केंद्रित होता है।",
     "features.progress.title": "असली प्रगति ट्रैकर",
     "features.progress.body": "विषयवार प्रोग्रेस बार। हफ़्ते-दर-हफ़्ते मास्टरी बढ़ती देखें। सच्चा डेटा — नक़ली स्ट्रीक नहीं।",
     "features.tutor.title": "शिष्या — आपका निजी स्मार्ट ट्यूटर",
@@ -981,6 +986,8 @@ export const dict = {
     "tracker.kind.ADMIT_CARD": "एडमिट कार्ड",
     "tracker.kind.EXAM": "परीक्षा का दिन",
     "tracker.kind.ANSWER_KEY": "आंसर की",
+
+    "tracker.kind.QUESTION_PAPER": "प्रश्न पत्र (आधिकारिक)",
     "tracker.kind.RESULT": "रिज़ल्ट",
     "tracker.kind.INTERVIEW": "इंटरव्यू / DV / PET",
     "tracker.kind.OTHER": "अन्य",
@@ -1347,6 +1354,13 @@ export const dict = {
     "chat.diagnostic.building": "डायग्नॉस्टिक तैयार हो रहा है",
     "chat.diagnostic.hint": "10-सवालों का टॉपिक डायग्नॉस्टिक — पूरा मॉक देने से पहले देखिए कि आज की कोचिंग कितनी असर हुई।",
 
+    // ── Student's language (12 Sep 2026): onboarding medium step + translated-question honesty label ──
+    "onb.lang.title": "आप किस भाषा में पढ़ते हैं?",
+    "onb.lang.body": "प्रश्न, मॉक संकेत और ट्यूटर इसी भाषा में मिलेंगे। भाषा मेनू से कभी भी बदलें।",
+    "onb.lang.suggested": "{state} के लिए सुझाव",
+    "onb.lang.note": "अनुवादित प्रश्न Shishya द्वारा अनुवादित हैं — संदेह हो तो अंग्रेज़ी से मिलाएँ।",
+    "quiz.translated.note": "Shishya द्वारा अनुवादित — अंग्रेज़ी से मिलाएँ।",
+    "quiz.seeIn": "{lang} में देखें",
     "lang.switch": "भाषा",
   },
 
@@ -1356,7 +1370,7 @@ export const dict = {
   // Other keys gracefully fall back to English via tk().
   // ─────────────────────────────────────────────────────────────────────
   bn: {
-    "brand.tagline": "ভারতের শীর্ষ প্রবেশিকা পরীক্ষার জন্য বিনামূল্যে, বিশেষজ্ঞ-নির্বাচিত প্রস্তুতি। Shishya দ্বারা সমর্থিত।",
+    "brand.tagline": "ভারতের শীর্ষ প্রবেশিকা পরীক্ষার জন্য বিনামূল্যে প্রস্তুতি। Shishya দ্বারা সমর্থিত।",
     "nav.signin": "Google দিয়ে সাইন ইন করুন",
     "nav.signin.short": "সাইন ইন",
     "nav.signout": "সাইন আউট",
@@ -1431,7 +1445,6 @@ export const dict = {
     "loop.s4.title": "৪. Shishya আপনার সাথে কথা বলে",
     "loop.s4.body": "যা খুশি জিজ্ঞাসা করুন — ধারণা, shortcut, আরও অনুশীলন। Shishya পরবর্তী mock বেছে নেয় এবং আপনি যেভাবে শেখেন সেভাবে শেখায়।",
     "features.title": "আপনার পরীক্ষায় সফল হওয়ার জন্য যা যা দরকার",
-    "features.subtitle": "প্রকৃত PYQ, প্রতিদিন নতুন বিশেষজ্ঞ-নির্বাচিত mock, Shishya-এর সাথে দুর্বল এলাকা শনাক্তকরণ এবং একটি progress bar যা দেখায় কী ঠিক করতে হবে। সব বিনামূল্যে।",
     "features.pyq.title": "আগের বছরের প্রশ্নপত্র",
     "features.pyq.body": "প্রতিটি পরীক্ষার জন্য প্রকৃত PYQ, বছর ও বিষয় অনুসারে সংগঠিত। যে প্রশ্নগুলো আসলে আসে সেগুলো অনুশীলন করুন।",
     "features.daily.title": "প্রতিদিন নতুন mock",
@@ -1439,7 +1452,6 @@ export const dict = {
     "features.weakness.title": "দুর্বলতার ম্যাপ",
     "features.weakness.body": "বিষয়ভিত্তিক দক্ষতার স্কোর। ঠিক কোন টপিকে আগামীকাল এক ঘণ্টা দিতে হবে তা দেখুন, অস্পষ্ট সামগ্রিক percentile নয়।",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "বিশেষজ্ঞ-নির্বাচিত mocks; Shishya প্রতিবার আপনার জন্য সঠিকটি বেছে নেয়। পরবর্তী প্রতিটি mock আপনার দুর্বলতম টপিকগুলিকে টার্গেট করে।",
     "features.progress.title": "প্রকৃত progress tracker",
     "features.progress.body": "টপিক-ভিত্তিক progress bars। সপ্তাহের পর সপ্তাহ দক্ষতা বৃদ্ধি দেখুন। সৎ ডেটা — কোনো নকল streaks নয়।",
     "features.tutor.title": "Shishya — আপনার ব্যক্তিগত স্মার্ট টিউটর",
@@ -1826,7 +1838,7 @@ export const dict = {
     "cutoff.land.title": "మీ స్కోరు ఎక్కడ నిలుస్తుంది?",
     "cutoff.land.body": "ఉచిత {exam} మాక్ రాయండి: వెంటనే స్కోరు, ఇదే ర్యాంక్ మ్యాపింగ్, మీ బలహీన టాపిక్‌ల గుర్తింపు. కోచింగ్ ఫీజు లేదు.",
     "cutoff.land.cta": "ఉచిత ప్రిపరేషన్ ప్రారంభించండి →",
-    "brand.tagline": "భారతదేశపు ప్రముఖ ప్రవేశ పరీక్షలకు ఉచిత, నిపుణుల క్యూరేటెడ్ తయారీ. Shishya మద్దతుతో.",
+    "brand.tagline": "భారతదేశపు ప్రముఖ ప్రవేశ పరీక్షలకు ఉచిత తయారీ. Shishya మద్దతుతో.",
     "nav.signin": "Google తో Sign in చేయండి",
     "nav.signin.short": "Sign in",
     "nav.signout": "Sign out",
@@ -1901,7 +1913,6 @@ export const dict = {
     "loop.s4.title": "4. Shishya మీతో చాట్ చేస్తుంది",
     "loop.s4.body": "ఏదైనా అడగండి — concepts, shortcuts, మరింత practice. Shishya తదుపరి mock ఎంచుకుంటుంది మరియు మీరు నేర్చుకునే విధానంలో నేర్పుతుంది.",
     "features.title": "మీ పరీక్షను క్రాక్ చేయడానికి అవసరమైనవన్నీ",
-    "features.subtitle": "నిజమైన PYQs, ప్రతిరోజు కొత్త నిపుణుల క్యూరేటెడ్ mocks, Shishya తో బలహీన-ప్రాంత గుర్తింపు, మరియు ఏమి సరిదిద్దాలో చూపించే progress bar. అన్నీ ఉచితం.",
     "features.pyq.title": "గత సంవత్సరం పేపర్లు",
     "features.pyq.body": "ప్రతి పరీక్షకు నిజమైన PYQs, సంవత్సరం మరియు టాపిక్ ద్వారా నిర్వహించబడినవి. నిజంగా వచ్చే ప్రశ్నలను ప్రాక్టీస్ చేయండి.",
     "features.daily.title": "ప్రతిరోజు కొత్త mocks",
@@ -1909,7 +1920,6 @@ export const dict = {
     "features.weakness.title": "బలహీనత మ్యాప్",
     "features.weakness.body": "టాపిక్-వారీగా నైపుణ్యం స్కోరు. రేపటి గంట ఏ టాపిక్‌లకు కావాలో స్పష్టంగా చూడండి, అస్పష్టమైన మొత్తం పర్సెంటైల్ కాదు.",
     "features.adaptive.title": "అడాప్టివ్ mocks",
-    "features.adaptive.body": "నిపుణులచే క్యూరేట్ చేసిన mocks; Shishya ప్రతిసారీ మీకు సరైనది ఎంచుకుంటుంది. ప్రతి తదుపరి mock మీ బలహీనమైన టాపిక్‌లను లక్ష్యంగా చేసుకుంటుంది.",
     "features.progress.title": "నిజమైన ప్రోగ్రెస్ ట్రాకర్",
     "features.progress.body": "టాపిక్-వారీగా ప్రోగ్రెస్ బార్లు. వారం వారం నైపుణ్యం పెరగడం చూడండి. నిజాయితీ డేటా — నకిలీ streaks లేవు.",
     "features.tutor.title": "Shishya — మీ వ్యక్తిగత స్మార్ట్ ట్యూటర్",
@@ -1986,6 +1996,8 @@ export const dict = {
     "tracker.kind.ADMIT_CARD": "అడ్మిట్ కార్డ్",
     "tracker.kind.EXAM": "పరీక్ష రోజు",
     "tracker.kind.ANSWER_KEY": "ఆన్సర్ కీ",
+
+    "tracker.kind.QUESTION_PAPER": "ప్రశ్నపత్రం (అధికారిక)",
     "tracker.kind.RESULT": "రిజల్ట్",
     "tracker.kind.INTERVIEW": "ఇంటర్వ్యూ / DV / PET",
     "tracker.kind.OTHER": "ఇతర",
@@ -2286,12 +2298,19 @@ export const dict = {
     "chat.diagnostic.cta": "నా అభివృద్ధిని పరీక్షించండి",
     "chat.diagnostic.building": "Diagnostic తయారు చేస్తోంది",
     "chat.diagnostic.hint": "10-ప్రశ్నల టాపిక్ diagnostic — మీరు మరో పూర్తి mock తీసుకునే ముందు నేటి tutoring అంటిపెట్టుకుందో లేదో చూడండి.",
+    // ── Student's language (12 Sep 2026): onboarding medium step + translated-question honesty label ──
+    "onb.lang.title": "మీరు ఏ భాషలో చదువుతారు?",
+    "onb.lang.body": "ప్రశ్నలు, మాక్ సూచనలు, ట్యూటర్ ఈ భాషలోనే ఉంటాయి. భాష మెనూ నుండి ఎప్పుడైనా మార్చవచ్చు.",
+    "onb.lang.suggested": "{state} కోసం సూచన",
+    "onb.lang.note": "అనువదించిన ప్రశ్నలు Shishya అనువాదం — సందేహం ఉంటే ఇంగ్లీష్‌తో సరిచూడండి.",
+    "quiz.translated.note": "Shishya అనువాదం — ఇంగ్లీష్‌తో సరిచూడండి.",
+    "quiz.seeIn": "{lang} లో చూడండి",
     "lang.switch": "భాష",
   },
 
   // Marathi (मराठी) — ~8.3Cr speakers (Maharashtra, Goa)
   mr: {
-    "brand.tagline": "भारतातील प्रमुख प्रवेश परीक्षांसाठी मोफत, तज्ञ-निवडलेली तयारी. Shishya च्या साथीने.",
+    "brand.tagline": "भारतातील प्रमुख प्रवेश परीक्षांसाठी मोफत तयारी. Shishya च्या साथीने.",
     "nav.signin": "Google सह साइन इन करा",
     "nav.signin.short": "साइन इन",
     "nav.signout": "साइन आउट",
@@ -2366,7 +2385,6 @@ export const dict = {
     "loop.s4.title": "४. Shishya तुमच्याशी बोलते",
     "loop.s4.body": "काहीही विचारा — संकल्पना, shortcuts, अधिक सराव. Shishya पुढील mock निवडते आणि तुम्ही ज्या पद्धतीने शिकता त्या पद्धतीने शिकवते.",
     "features.title": "तुमची परीक्षा क्रॅक करण्यासाठी आवश्यक ते सर्व",
-    "features.subtitle": "खरे PYQs, दररोज नवीन तज्ञ-निवडलेले mocks, Shishya सह कमकुवत-क्षेत्र शोध, आणि काय सुधारायचे ते दाखवणारी progress बार. सर्व मोफत.",
     "features.pyq.title": "मागील वर्षाचे प्रश्नपत्रिका",
     "features.pyq.body": "प्रत्येक परीक्षेसाठी खरे PYQs, वर्ष आणि विषयानुसार व्यवस्थित. प्रत्यक्षात येणारे प्रश्न सराव करा.",
     "features.daily.title": "दररोज नवीन mocks",
@@ -2374,7 +2392,6 @@ export const dict = {
     "features.weakness.title": "कमकुवतपणाचा नकाशा",
     "features.weakness.body": "प्रत्येक विषयावरील प्रभुत्व स्कोअर. उद्याच्या तासासाठी नेमके कोणते विषय लागतील ते पाहा, अस्पष्ट एकूण percentile नाही.",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "तज्ञांनी तयार केलेले mocks; Shishya प्रत्येक वेळी तुमच्यासाठी योग्य mock निवडतो. पुढचा प्रत्येक mock तुमच्या सर्वात कमकुवत विषयांवर लक्ष केंद्रित करतो.",
     "features.progress.title": "खरा progress tracker",
     "features.progress.body": "विषय-दर-विषय progress bars. आठवड्यादर आठवड्याला प्रभुत्व वाढताना पाहा. प्रामाणिक डेटा — खोटे streaks नाहीत.",
     "features.tutor.title": "Shishya — तुमचा वैयक्तिक smart tutor",
@@ -2657,12 +2674,19 @@ export const dict = {
     "chat.diagnostic.cta": "माझी सुधारणा test करा",
     "chat.diagnostic.building": "Diagnostic तयार होत आहे",
     "chat.diagnostic.hint": "10-प्रश्नांचा topic diagnostic — आजचे tutoring ठिकाणी राहिले का ते पाहा, दुसरा full mock घेण्यापूर्वी.",
+    // ── Student's language (12 Sep 2026): onboarding medium step + translated-question honesty label ──
+    "onb.lang.title": "तुम्ही कोणत्या भाषेत अभ्यास करता?",
+    "onb.lang.body": "प्रश्न, मॉक सूचना आणि ट्यूटर याच भाषेत मिळतील. भाषा मेनूमधून केव्हाही बदला.",
+    "onb.lang.suggested": "{state} साठी सुचवलेले",
+    "onb.lang.note": "अनुवादित प्रश्न Shishya ने अनुवादित केले आहेत — शंका असल्यास इंग्रजीशी पडताळा.",
+    "quiz.translated.note": "Shishya ने अनुवादित — इंग्रजीशी पडताळा.",
+    "quiz.seeIn": "{lang} मध्ये पहा",
     "lang.switch": "भाषा",
   },
 
   // Tamil (தமிழ்) — ~8Cr speakers (Tamil Nadu, Puducherry)
   ta: {
-    "brand.tagline": "இந்தியாவின் முக்கிய நுழைவுத் தேர்வுகளுக்கான இலவச, நிபுணர்கள் தேர்ந்தெடுத்த பயிற்சி. Shishya ஆல் ஆதரிக்கப்படுகிறது.",
+    "brand.tagline": "இந்தியாவின் முக்கிய நுழைவுத் தேர்வுகளுக்கான இலவச பயிற்சி. Shishya ஆல் ஆதரிக்கப்படுகிறது.",
     "nav.signin": "Google மூலம் உள்நுழைக",
     "nav.signin.short": "உள்நுழைக",
     "nav.signout": "வெளியேறு",
@@ -2737,7 +2761,6 @@ export const dict = {
     "loop.s4.title": "4. Shishya உங்களுடன் பேசுகிறது",
     "loop.s4.body": "எதையும் கேளுங்கள் — கருத்துகள், shortcuts, அதிக பயிற்சி. Shishya அடுத்த mock-ஐத் தேர்வு செய்து நீங்கள் கற்கும் விதத்தில் கற்பிக்கிறது.",
     "features.title": "உங்கள் தேர்வை வெற்றி பெற தேவையான அனைத்தும்",
-    "features.subtitle": "உண்மையான PYQs, ஒவ்வொரு நாளும் புதிய நிபுணர்கள் தேர்ந்தெடுத்த mocks, Shishya உடன் பலவீன-பகுதி கண்டறிதல், மற்றும் எதை சரிசெய்ய வேண்டும் என்று காட்டும் progress பட்டி. அனைத்தும் இலவசம்.",
     "features.pyq.title": "முந்தைய ஆண்டு தாள்கள்",
     "features.pyq.body": "ஒவ்வொரு தேர்விற்கும் உண்மையான PYQs, ஆண்டு மற்றும் topic வாரியாக ஒழுங்கமைக்கப்பட்டவை. உண்மையில் வரும் கேள்விகளைப் பயிற்சி செய்யுங்கள்.",
     "features.daily.title": "ஒவ்வொரு நாளும் புதிய mocks",
@@ -2745,7 +2768,6 @@ export const dict = {
     "features.weakness.title": "பலவீன பகுதிகள் வரைபடம்",
     "features.weakness.body": "தலைப்பு வாரியாக தேர்ச்சி மதிப்பெண். நாளைய ஒரு மணி நேரம் எந்தத் தலைப்புகளுக்குத் தேவை என்று தெளிவாகப் பாருங்கள், தெளிவற்ற ஒட்டுமொத்த percentile அல்ல.",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "நிபுணர்களால் தேர்ந்தெடுக்கப்பட்ட mocks; ஒவ்வொரு முறையும் Shishya உங்களுக்கு சரியானதைத் தேர்ந்தெடுக்கிறது. அடுத்த ஒவ்வொரு mock உங்கள் பலவீனமான தலைப்புகளை இலக்காகக் கொள்கிறது.",
     "features.progress.title": "உண்மையான முன்னேற்ற கண்காணிப்பு",
     "features.progress.body": "தலைப்பு வாரியான முன்னேற்ற பட்டைகள். வாரந்தோறும் தேர்ச்சி உயர்வதைப் பாருங்கள். நேர்மையான தரவு — போலியான streaks இல்லை.",
     "features.tutor.title": "Shishya — உங்கள் தனிப்பட்ட smart tutor",
@@ -3028,12 +3050,19 @@ export const dict = {
     "chat.diagnostic.cta": "என் முன்னேற்றத்தை சோதிக்க",
     "chat.diagnostic.building": "Diagnostic உருவாக்குகிறது",
     "chat.diagnostic.hint": "10-கேள்விகள் தலைப்பு diagnostic — இன்றைய பயிற்சி பதிந்ததா என்று பார்க்கவும், அடுத்த முழு mock எடுப்பதற்கு முன்.",
+    // ── Student's language (12 Sep 2026): onboarding medium step + translated-question honesty label ──
+    "onb.lang.title": "நீங்கள் எந்த மொழியில் படிக்கிறீர்கள்?",
+    "onb.lang.body": "கேள்விகள், மாக் குறிப்புகள் மற்றும் டியூட்டர் இந்த மொழியில் இருக்கும். மொழி மெனுவில் எப்போது வேண்டுமானாலும் மாற்றலாம்.",
+    "onb.lang.suggested": "{state}க்கான பரிந்துரை",
+    "onb.lang.note": "மொழிபெயர்க்கப்பட்ட கேள்விகள் Shishya மொழிபெயர்ப்பு — சந்தேகம் இருந்தால் ஆங்கிலத்துடன் சரிபார்க்கவும்.",
+    "quiz.translated.note": "Shishya மொழிபெயர்ப்பு — ஆங்கிலத்துடன் சரிபார்க்கவும்.",
+    "quiz.seeIn": "{lang} இல் பார்க்க",
     "lang.switch": "மொழி",
   },
 
   // Gujarati (ગુજરાતી) — ~5.6Cr speakers
   gu: {
-    "brand.tagline": "ભારતની ટોચની પ્રવેશ પરીક્ષાઓ માટે મફત, નિષ્ણાત-ક્યુરેટેડ તૈયારી. Shishya દ્વારા સપોર્ટેડ.",
+    "brand.tagline": "ભારતની ટોચની પ્રવેશ પરીક્ષાઓ માટે મફત તૈયારી. Shishya દ્વારા સપોર્ટેડ.",
     "nav.signin": "Google સાથે સાઇન ઇન કરો",
     "nav.signin.short": "સાઇન ઇન",
     "nav.signout": "સાઇન આઉટ",
@@ -3108,7 +3137,6 @@ export const dict = {
     "loop.s4.title": "4. Shishya તમારી સાથે ચેટ કરે છે",
     "loop.s4.body": "કંઈપણ પૂછો — કોન્સેપ્ટ્સ, શોર્ટકટ્સ, વધુ પ્રેક્ટિસ. Shishya આગળનો mock પસંદ કરે છે અને તમે શીખો છો તે રીતે શીખવે છે.",
     "features.title": "તમારી પરીક્ષા ક્રેક કરવા માટે જરૂરી દરેક વસ્તુ",
-    "features.subtitle": "વાસ્તવિક PYQ, દરરોજ નવા નિષ્ણાત-ક્યુરેટેડ mocks, Shishya સાથે નબળા-વિસ્તાર શોધ અને એક પ્રોગ્રેસ બાર જે શું સુધારવું તે બતાવે છે. બધું મફત.",
     "features.pyq.title": "અગાઉના વર્ષના પેપર્સ",
     "features.pyq.body": "દરેક પરીક્ષા માટે વાસ્તવિક PYQ, વર્ષ અને ટોપિક પ્રમાણે ગોઠવાયેલા. ખરેખર આવતા પ્રશ્નોની પ્રેક્ટિસ કરો.",
     "features.daily.title": "દરરોજ નવા mocks",
@@ -3116,7 +3144,6 @@ export const dict = {
     "features.weakness.title": "નબળાઈનો નકશો",
     "features.weakness.body": "દરેક ટોપિક પર નિપુણતાનો સ્કોર. કઈ ટોપિકને કાલના કલાકની જરૂર છે તે ચોક્કસ જુઓ, અસ્પષ્ટ એકંદર percentile નહીં.",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "નિષ્ણાતો દ્વારા પસંદ કરેલા mocks; Shishya દર વખતે તમારા માટે યોગ્ય mock પસંદ કરે છે. દરેક આગળનો mock તમારી સૌથી નબળી ટોપિકને લક્ષ્યમાં રાખે છે.",
     "features.progress.title": "વાસ્તવિક પ્રગતિ tracker",
     "features.progress.body": "દરેક ટોપિક માટે પ્રગતિ બાર. અઠવાડિયે પછી અઠવાડિયે નિપુણતા વધતી જુઓ. પ્રામાણિક ડેટા — નકલી streaks નહીં.",
     "features.tutor.title": "Shishya — તમારા અંગત smart tutor",
@@ -3399,12 +3426,19 @@ export const dict = {
     "chat.diagnostic.cta": "મારી પ્રગતિ ટેસ્ટ કરો",
     "chat.diagnostic.building": "Diagnostic બનાવી રહ્યા છીએ",
     "chat.diagnostic.hint": "10 પ્રશ્નોનું ટોપિક diagnostic — બીજી સંપૂર્ણ mock આપતા પહેલાં આજનું tutoring યાદ રહ્યું કે નહીં તે જુઓ.",
+    // ── Student's language (12 Sep 2026): onboarding medium step + translated-question honesty label ──
+    "onb.lang.title": "તમે કઈ ભાષામાં અભ્યાસ કરો છો?",
+    "onb.lang.body": "પ્રશ્નો, મોક સંકેતો અને ટ્યુટર આ ભાષામાં મળશે. ભાષા મેનૂમાંથી ગમે ત્યારે બદલો.",
+    "onb.lang.suggested": "{state} માટે સૂચન",
+    "onb.lang.note": "અનુવાદિત પ્રશ્નો Shishya દ્વારા અનુવાદિત છે — શંકા હોય તો અંગ્રેજી સાથે ચકાસો.",
+    "quiz.translated.note": "Shishya દ્વારા અનુવાદિત — અંગ્રેજી સાથે ચકાસો.",
+    "quiz.seeIn": "{lang} માં જુઓ",
     "lang.switch": "ભાષા",
   },
 
   // Kannada (ಕನ್ನಡ) — ~4.4Cr speakers (Karnataka)
   kn: {
-    "brand.tagline": "ಭಾರತದ ಪ್ರಮುಖ ಪ್ರವೇಶ ಪರೀಕ್ಷೆಗಳಿಗೆ ಉಚಿತ, ತಜ್ಞರ ಕ್ಯುರೇಟ್ ಮಾಡಿದ ತಯಾರಿ. Shishya ಬೆಂಬಲಿತ.",
+    "brand.tagline": "ಭಾರತದ ಪ್ರಮುಖ ಪ್ರವೇಶ ಪರೀಕ್ಷೆಗಳಿಗೆ ಉಚಿತ ತಯಾರಿ. Shishya ಬೆಂಬಲಿತ.",
     "nav.signin": "Google ಮೂಲಕ Sign in ಮಾಡಿ",
     "nav.signin.short": "Sign in",
     "nav.signout": "Sign out",
@@ -3479,7 +3513,6 @@ export const dict = {
     "loop.s4.title": "4. Shishya ನಿಮ್ಮೊಂದಿಗೆ chat ಮಾಡುತ್ತದೆ",
     "loop.s4.body": "ಏನು ಬೇಕಾದರೂ ಕೇಳಿ — concepts, shortcuts, ಹೆಚ್ಚಿನ practice. Shishya ಮುಂದಿನ mock ಆಯ್ಕೆ ಮಾಡುತ್ತದೆ ಮತ್ತು ನೀವು ಕಲಿಯುವ ರೀತಿಯಲ್ಲಿ ಕಲಿಸುತ್ತದೆ.",
     "features.title": "ನಿಮ್ಮ ಪರೀಕ್ಷೆ crack ಮಾಡಲು ಬೇಕಾದ ಎಲ್ಲವೂ",
-    "features.subtitle": "ನಿಜವಾದ PYQs, ಪ್ರತಿದಿನ ತಾಜಾ ತಜ್ಞರ-curated mocks, Shishya ಮೂಲಕ ದುರ್ಬಲ-ಪ್ರದೇಶ ಪತ್ತೆ, ಮತ್ತು ಏನು ಸರಿಪಡಿಸಬೇಕು ತೋರಿಸುವ progress bar. ಎಲ್ಲವೂ ಉಚಿತ.",
     "features.pyq.title": "ಹಿಂದಿನ ವರ್ಷದ ಪ್ರಶ್ನೆ ಪತ್ರಗಳು",
     "features.pyq.body": "ಪ್ರತಿ ಪರೀಕ್ಷೆಗೆ ನಿಜವಾದ PYQs, ವರ್ಷ ಮತ್ತು topic ಮೂಲಕ ಆಯೋಜಿಸಲಾಗಿದೆ. ನಿಜವಾಗಿ ಕಾಣಿಸಿಕೊಳ್ಳುವ ಪ್ರಶ್ನೆಗಳನ್ನು ಅಭ್ಯಾಸ ಮಾಡಿ.",
     "features.daily.title": "ಪ್ರತಿದಿನ ತಾಜಾ mocks",
@@ -3487,7 +3520,6 @@ export const dict = {
     "features.weakness.title": "ದೌರ್ಬಲ್ಯ ನಕ್ಷೆ",
     "features.weakness.body": "ಪ್ರತಿ ವಿಷಯದ ಪ್ರಾವೀಣ್ಯತೆ ಸ್ಕೋರ್. ಅಸ್ಪಷ್ಟ ಒಟ್ಟು ಶೇಕಡಾವಾರು ಅಲ್ಲ, ನಾಳೆಯ ಒಂದು ಗಂಟೆಗೆ ಯಾವ ವಿಷಯಗಳ ಅಗತ್ಯವಿದೆ ಎಂದು ನಿಖರವಾಗಿ ತಿಳಿಯಿರಿ.",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "ತಜ್ಞರು ಆಯ್ಕೆ ಮಾಡಿದ mocks; ಪ್ರತಿ ಬಾರಿ ನಿಮಗೆ ಸರಿಯಾದದ್ದನ್ನು Shishya ಆಯ್ಕೆ ಮಾಡುತ್ತದೆ. ಮುಂದಿನ ಪ್ರತಿ mock ನಿಮ್ಮ ದುರ್ಬಲ ವಿಷಯಗಳನ್ನು ಗುರಿಯಾಗಿಸುತ್ತದೆ.",
     "features.progress.title": "ನಿಜವಾದ ಪ್ರಗತಿ ಟ್ರ್ಯಾಕರ್",
     "features.progress.body": "ವಿಷಯದಿಂದ-ವಿಷಯಕ್ಕೆ ಪ್ರಗತಿ ಬಾರ್‌ಗಳು. ವಾರದಿಂದ ವಾರಕ್ಕೆ ಪ್ರಾವೀಣ್ಯತೆ ಏರುವುದನ್ನು ನೋಡಿ. ಪ್ರಾಮಾಣಿಕ ಡೇಟಾ — ನಕಲಿ streaks ಇಲ್ಲ.",
     "features.tutor.title": "Shishya — ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಸ್ಮಾರ್ಟ್ tutor",
@@ -3770,12 +3802,19 @@ export const dict = {
     "chat.diagnostic.cta": "ನನ್ನ ಸುಧಾರಣೆ ಪರೀಕ್ಷಿಸಿ",
     "chat.diagnostic.building": "Diagnostic ನಿರ್ಮಿಸುತ್ತಿದೆ",
     "chat.diagnostic.hint": "10-ಪ್ರಶ್ನೆಗಳ ವಿಷಯ diagnostic — ನೀವು ಇನ್ನೊಂದು ಪೂರ್ಣ mock ತೆಗೆದುಕೊಳ್ಳುವ ಮುನ್ನ ಇಂದಿನ tutoring ಅಂಟಿಕೊಂಡಿದೆಯೇ ಎಂದು ನೋಡಿ.",
+    // ── Student's language (12 Sep 2026): onboarding medium step + translated-question honesty label ──
+    "onb.lang.title": "ನೀವು ಯಾವ ಭಾಷೆಯಲ್ಲಿ ಓದುತ್ತೀರಿ?",
+    "onb.lang.body": "ಪ್ರಶ್ನೆಗಳು, ಮಾಕ್ ಸೂಚನೆಗಳು ಮತ್ತು ಟ್ಯೂಟರ್ ಇದೇ ಭಾಷೆಯಲ್ಲಿ ಇರುತ್ತವೆ. ಭಾಷಾ ಮೆನುವಿನಿಂದ ಯಾವಾಗ ಬೇಕಾದರೂ ಬದಲಾಯಿಸಿ.",
+    "onb.lang.suggested": "{state} ಗಾಗಿ ಸೂಚನೆ",
+    "onb.lang.note": "ಅನುವಾದಿತ ಪ್ರಶ್ನೆಗಳು Shishya ಅನುವಾದ — ಸಂದೇಹವಿದ್ದರೆ ಇಂಗ್ಲಿಷ್‌ನೊಂದಿಗೆ ಹೋಲಿಸಿ.",
+    "quiz.translated.note": "Shishya ಅನುವಾದ — ಇಂಗ್ಲಿಷ್‌ನೊಂದಿಗೆ ಹೋಲಿಸಿ.",
+    "quiz.seeIn": "{lang} ನಲ್ಲಿ ನೋಡಿ",
     "lang.switch": "ಭಾಷೆ",
   },
 
   // Malayalam (മലയാളം) — ~3.5Cr speakers (Kerala)
   ml: {
-    "brand.tagline": "ഇന്ത്യയിലെ പ്രധാന എൻട്രൻസ് പരീക്ഷകൾക്കുള്ള സൗജന്യ, വിദഗ്ധ-രൂപകൽപ്പന ചെയ്ത തയ്യാറെടുപ്പ്. Shishya സപ്പോർട്ട് ചെയ്യുന്നു.",
+    "brand.tagline": "ഇന്ത്യയിലെ പ്രധാന എൻട്രൻസ് പരീക്ഷകൾക്കുള്ള സൗജന്യ തയ്യാറെടുപ്പ്. Shishya സപ്പോർട്ട് ചെയ്യുന്നു.",
     "nav.signin": "Google ഉപയോഗിച്ച് സൈൻ ഇൻ ചെയ്യുക",
     "nav.signin.short": "സൈൻ ഇൻ",
     "nav.signout": "സൈൻ ഔട്ട്",
@@ -3850,7 +3889,6 @@ export const dict = {
     "loop.s4.title": "4. Shishya നിങ്ങളുമായി സംസാരിക്കുന്നു",
     "loop.s4.body": "എന്തും ചോദിക്കൂ — concepts, shortcuts, കൂടുതൽ practice. Shishya അടുത്ത mock തിരഞ്ഞെടുക്കുകയും നിങ്ങൾ പഠിക്കുന്ന രീതിയിൽ പഠിപ്പിക്കുകയും ചെയ്യുന്നു.",
     "features.title": "നിങ്ങളുടെ പരീക്ഷയിൽ വിജയിക്കാൻ ആവശ്യമായതെല്ലാം",
-    "features.subtitle": "യഥാർത്ഥ PYQs, എല്ലാ ദിവസവും വിദഗ്ധർ രൂപകൽപ്പന ചെയ്ത പുതിയ mocks, Shishya ഉള്ള ദുർബല-മേഖല കണ്ടെത്തൽ, എന്ത് ശരിയാക്കണമെന്ന് കാണിക്കുന്ന പുരോഗതി ബാർ. എല്ലാം സൗജന്യം.",
     "features.pyq.title": "Previous year papers",
     "features.pyq.body": "എല്ലാ പരീക്ഷകൾക്കുമുള്ള യഥാർത്ഥ PYQs, വർഷവും വിഷയവും അനുസരിച്ച് ക്രമീകരിച്ചിരിക്കുന്നു. യഥാർത്ഥത്തിൽ വരുന്ന ചോദ്യങ്ങൾ പരിശീലിക്കുക.",
     "features.daily.title": "എല്ലാ ദിവസവും പുതിയ mocks",
@@ -3858,7 +3896,6 @@ export const dict = {
     "features.weakness.title": "ദൗർബല്യ മാപ്പ്",
     "features.weakness.body": "വിഷയം തോറും മാസ്റ്ററി സ്കോർ. നാളത്തെ ഒരു മണിക്കൂർ ഏത് വിഷയങ്ങൾക്ക് വേണമെന്ന് കൃത്യമായി കാണാം, അവ്യക്തമായ ഒരു ഓവറാൾ പെർസെന്റൈലല്ല.",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "എക്‌സ്‌പേർട്ട് ക്യൂറേറ്റ് ചെയ്ത mocks; ഓരോ തവണയും നിങ്ങൾക്ക് ശരിയായത് Shishya തിരഞ്ഞെടുക്കുന്നു. അടുത്ത ഓരോ mock ഉം നിങ്ങളുടെ ഏറ്റവും ദുർബലമായ വിഷയങ്ങളെ ടാർഗെറ്റ് ചെയ്യുന്നു.",
     "features.progress.title": "യഥാർത്ഥ പുരോഗതി ട്രാക്കർ",
     "features.progress.body": "വിഷയം തോറും പുരോഗതി ബാറുകൾ. ആഴ്ചയും ആഴ്ചയും mastery കയറുന്നത് കാണാം. സത്യസന്ധമായ ഡാറ്റ — വ്യാജ streaks ഇല്ല.",
     "features.tutor.title": "Shishya — നിങ്ങളുടെ വ്യക്തിഗത സ്മാർട്ട് ട്യൂട്ടർ",
@@ -4146,7 +4183,7 @@ export const dict = {
 
   // Punjabi (ਪੰਜਾਬੀ) — ~3.3Cr speakers (Punjab)
   pa: {
-    "brand.tagline": "ਭਾਰਤ ਦੀਆਂ ਸਿਖਰਲੀਆਂ ਦਾਖਲਾ ਪ੍ਰੀਖਿਆਵਾਂ ਲਈ ਮੁਫ਼ਤ, ਮਾਹਿਰ-ਸੰਪਾਦਿਤ ਤਿਆਰੀ। Shishya ਦੁਆਰਾ ਸਮਰਥਿਤ।",
+    "brand.tagline": "ਭਾਰਤ ਦੀਆਂ ਸਿਖਰਲੀਆਂ ਦਾਖਲਾ ਪ੍ਰੀਖਿਆਵਾਂ ਲਈ ਮੁਫ਼ਤ ਤਿਆਰੀ। Shishya ਦੁਆਰਾ ਸਮਰਥਿਤ।",
     "nav.signin": "Google ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ",
     "nav.signin.short": "ਸਾਈਨ ਇਨ",
     "nav.signout": "ਸਾਈਨ ਆਉਟ",
@@ -4221,7 +4258,6 @@ export const dict = {
     "loop.s4.title": "4. Shishya ਤੁਹਾਡੇ ਨਾਲ ਗੱਲ ਕਰਦਾ ਹੈ",
     "loop.s4.body": "ਕੁਝ ਵੀ ਪੁੱਛੋ — ਸੰਕਲਪ, ਸ਼ਾਰਟਕੱਟ, ਹੋਰ ਅਭਿਆਸ। Shishya ਅਗਲਾ mock ਚੁਣਦਾ ਹੈ ਅਤੇ ਜਿਸ ਤਰੀਕੇ ਨਾਲ ਤੁਸੀਂ ਸਿੱਖਦੇ ਹੋ ਉਸੇ ਤਰੀਕੇ ਨਾਲ ਸਿਖਾਉਂਦਾ ਹੈ।",
     "features.title": "ਤੁਹਾਡੀ ਪ੍ਰੀਖਿਆ ਕਰੈਕ ਕਰਨ ਲਈ ਹਰ ਚੀਜ਼",
-    "features.subtitle": "ਅਸਲ PYQs, ਹਰ ਦਿਨ ਤਾਜ਼ੇ ਮਾਹਿਰ-ਸੰਪਾਦਿਤ mocks, Shishya ਨਾਲ ਕਮਜ਼ੋਰ-ਖੇਤਰ ਪਛਾਣ, ਅਤੇ ਇੱਕ ਤਰੱਕੀ ਬਾਰ ਜੋ ਦਿਖਾਉਂਦਾ ਹੈ ਕਿ ਕੀ ਠੀਕ ਕਰਨਾ ਹੈ। ਸਭ ਮੁਫ਼ਤ।",
     "features.pyq.title": "ਪਿਛਲੇ ਸਾਲ ਦੇ ਪੇਪਰ",
     "features.pyq.body": "ਹਰੇਕ ਪ੍ਰੀਖਿਆ ਲਈ ਅਸਲ PYQs, ਸਾਲ ਅਤੇ ਵਿਸ਼ੇ ਅਨੁਸਾਰ ਵਿਵਸਥਿਤ। ਉਹ ਸਵਾਲ ਅਭਿਆਸ ਕਰੋ ਜੋ ਅਸਲ ਵਿੱਚ ਆਉਂਦੇ ਹਨ।",
     "features.daily.title": "ਹਰ ਦਿਨ ਤਾਜ਼ੇ mocks",
@@ -4229,7 +4265,6 @@ export const dict = {
     "features.weakness.title": "ਕਮਜ਼ੋਰੀ ਨਕਸ਼ਾ",
     "features.weakness.body": "ਹਰ ਵਿਸ਼ੇ ਦਾ mastery ਸਕੋਰ। ਦੇਖੋ ਕਿ ਕੱਲ੍ਹ ਦੇ ਘੰਟੇ ਵਿੱਚ ਕਿਹੜੇ ਵਿਸ਼ਿਆਂ ਦੀ ਲੋੜ ਹੈ, ਨਾ ਕਿ ਸਿਰਫ਼ ਅਸਪਸ਼ਟ percentile।",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "ਮਾਹਿਰਾਂ ਵੱਲੋਂ curated mocks; Shishya ਹਰ ਵਾਰ ਤੁਹਾਡੇ ਲਈ ਸਹੀ mock ਚੁਣਦੀ ਹੈ। ਹਰ ਅਗਲੀ mock ਤੁਹਾਡੇ ਕਮਜ਼ੋਰ ਵਿਸ਼ਿਆਂ 'ਤੇ ਫੋਕਸ ਕਰਦੀ ਹੈ।",
     "features.progress.title": "ਅਸਲ progress tracker",
     "features.progress.body": "ਹਰ ਵਿਸ਼ੇ ਦੀ progress bar। ਹਫ਼ਤੇ-ਦਰ-ਹਫ਼ਤੇ mastery ਵਧਦੀ ਦੇਖੋ। ਈਮਾਨਦਾਰ ਡੇਟਾ — ਕੋਈ ਨਕਲੀ streaks ਨਹੀਂ।",
     "features.tutor.title": "Shishya — ਤੁਹਾਡਾ ਨਿੱਜੀ smart tutor",
@@ -4517,7 +4552,7 @@ export const dict = {
 
   // Urdu (اردو) — ~5Cr speakers · RTL script
   ur: {
-    "brand.tagline": "ہندوستان کے اہم داخلہ امتحانات کے لیے مفت، ماہرانہ تیاری۔ Shishya کی حمایت سے۔",
+    "brand.tagline": "ہندوستان کے اہم داخلہ امتحانات کے لیے مفت تیاری۔ Shishya کی حمایت سے۔",
     "nav.signin": "Google سے سائن ان کریں",
     "nav.signin.short": "سائن ان",
     "nav.signout": "سائن آؤٹ",
@@ -4592,7 +4627,6 @@ export const dict = {
     "loop.s4.title": "4. Shishya آپ سے بات کرتا ہے",
     "loop.s4.body": "کچھ بھی پوچھیں — concepts، shortcuts، مزید practice۔ Shishya اگلا mock چنتا ہے اور اسی طرح سکھاتا ہے جیسے آپ سیکھتے ہیں۔",
     "features.title": "آپ کے امتحان کو کریک کرنے کے لیے سب کچھ",
-    "features.subtitle": "اصلی PYQs، ہر روز تازہ ماہرانہ mocks، کمزور علاقوں کی تشخیص Shishya کے ساتھ، اور ایک progress bar جو دکھاتا ہے کیا ٹھیک کرنا ہے۔ سب مفت۔",
     "features.pyq.title": "گزشتہ سال کے پیپر",
     "features.pyq.body": "ہر امتحان کے لیے اصلی PYQs، سال اور topic کے لحاظ سے منظم۔ وہ سوالات practice کریں جو اصل میں آتے ہیں۔",
     "features.daily.title": "ہر روز تازہ mocks",
@@ -4600,7 +4634,6 @@ export const dict = {
     "features.weakness.title": "کمزوری کا نقشہ",
     "features.weakness.body": "ہر ٹاپک میں مہارت کا اسکور۔ بالکل دیکھیں کہ کل کا گھنٹہ کن ٹاپکس میں لگانا ہے، نہ کہ کوئی مبہم مجموعی percentile۔",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "ماہرین کی منتخب کردہ mocks؛ Shishya ہر بار آپ کے لیے صحیح mock چنتا ہے۔ ہر اگلا mock آپ کے کمزور ترین ٹاپکس کو نشانہ بناتا ہے۔",
     "features.progress.title": "حقیقی پیش رفت کا ٹریکر",
     "features.progress.body": "ٹاپک بہ ٹاپک پیش رفت کی بارز۔ ہفتہ بہ ہفتہ مہارت بڑھتے دیکھیں۔ ایمانداری سے ڈیٹا — کوئی جعلی streaks نہیں۔",
     "features.tutor.title": "Shishya — آپ کا ذاتی ذہین استاد",
@@ -4894,7 +4927,7 @@ export const dict = {
 
   // Odia (ଓଡ଼ିଆ) — Odisha
   or: {
-    "brand.tagline": "ଭାରତର ପ୍ରମୁଖ ପ୍ରବେଶିକା ପରୀକ୍ଷା ପାଇଁ ମାଗଣା, ବିଶେଷଜ୍ଞ-ସଂଗୃହୀତ ପ୍ରସ୍ତୁତି। Shishya ଦ୍ୱାରା ସମର୍ଥିତ।",
+    "brand.tagline": "ଭାରତର ପ୍ରମୁଖ ପ୍ରବେଶିକା ପରୀକ୍ଷା ପାଇଁ ମାଗଣା ପ୍ରସ୍ତୁତି। Shishya ଦ୍ୱାରା ସମର୍ଥିତ।",
     "nav.signin": "Google ସହିତ Sign in କରନ୍ତୁ",
     "nav.signin.short": "Sign in",
     "nav.signout": "Sign out",
@@ -4969,7 +5002,6 @@ export const dict = {
     "loop.s4.title": "୪. Shishya ଆପଣଙ୍କ ସହ କଥାବାର୍ତ୍ତା କରେ",
     "loop.s4.body": "କିଛି ବି ପଚାରନ୍ତୁ — ଧାରଣା, ସର୍ଟକଟ୍, ଅଧିକ ଅଭ୍ୟାସ। Shishya ପରବର୍ତ୍ତୀ mock ବାଛେ ଏବଂ ଆପଣ ଯେଉଁଭଳି ଶିଖନ୍ତି ସେହିଭଳି ଶିଖାଏ।",
     "features.title": "ଆପଣଙ୍କ ପରୀକ୍ଷାରେ ସଫଳ ହେବା ପାଇଁ ସବୁକିଛି",
-    "features.subtitle": "ବାସ୍ତବ PYQs, ପ୍ରତିଦିନ ନୂତନ ବିଶେଷଜ୍ଞ-ସଂଗୃହୀତ mocks, Shishya ସହ ଦୁର୍ବଳ-କ୍ଷେତ୍ର ଚିହ୍ନଟ, ଏବଂ ଗୋଟିଏ progress bar ଯାହା ଦେଖାଏ କ'ଣ ଠିକ୍ କରିବାକୁ ହେବ। ସବୁ ମାଗଣା।",
     "features.pyq.title": "ପୂର୍ବ ବର୍ଷର ପ୍ରଶ୍ନପତ୍ର",
     "features.pyq.body": "ପ୍ରତ୍ୟେକ ପରୀକ୍ଷା ପାଇଁ ବାସ୍ତବ PYQs, ବର୍ଷ ଓ ଟପିକ୍ ଅନୁଯାୟୀ ସଜାଯାଇଛି। ଯେଉଁ ପ୍ରଶ୍ନ ବାସ୍ତବରେ ଆସେ ସେଗୁଡ଼ିକ ଅଭ୍ୟାସ କରନ୍ତୁ।",
     "features.daily.title": "ପ୍ରତିଦିନ ନୂତନ mocks",
@@ -4977,7 +5009,6 @@ export const dict = {
     "features.weakness.title": "ଦୁର୍ବଳତା ମାନଚିତ୍ର",
     "features.weakness.body": "ପ୍ରତି-ବିଷୟ ଦକ୍ଷତା ସ୍କୋର। କେଉଁ ବିଷୟଗୁଡ଼ିକରେ ଆସନ୍ତାକାଲିର ଘଣ୍ଟା ଦରକାର ତାହା ସଠିକ୍ ଭାବରେ ଦେଖନ୍ତୁ, ଅସ୍ପଷ୍ଟ ସାମଗ୍ରିକ percentile ନୁହେଁ।",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "ବିଶେଷଜ୍ଞ-ନିର୍ବାଚିତ mocks; Shishya ପ୍ରତ୍ୟେକ ଥର ଆପଣଙ୍କ ପାଇଁ ସଠିକ୍ ଟି ବାଛନ୍ତି। ପ୍ରତ୍ୟେକ ପରବର୍ତ୍ତୀ mock ଆପଣଙ୍କର ସବୁଠୁ ଦୁର୍ବଳ ବିଷୟଗୁଡ଼ିକୁ ଲକ୍ଷ୍ୟ କରେ।",
     "features.progress.title": "ପ୍ରକୃତ ପ୍ରଗତି tracker",
     "features.progress.body": "ବିଷୟ-ପରେ-ବିଷୟ progress bars। ସପ୍ତାହ ପରେ ସପ୍ତାହ ଦକ୍ଷତା ବୃଦ୍ଧି ଦେଖନ୍ତୁ। ସତ୍ୟ ତଥ୍ୟ — କୌଣସି ନକଲି streaks ନାହିଁ।",
     "features.tutor.title": "Shishya — ଆପଣଙ୍କର ବ୍ୟକ୍ତିଗତ ସ୍ମାର୍ଟ tutor",
@@ -5265,7 +5296,7 @@ export const dict = {
 
   // Assamese (অসমীয়া) — Assam
   as: {
-    "brand.tagline": "ভাৰতৰ শীৰ্ষ প্ৰৱেশ পৰীক্ষাৰ বাবে বিনামূলীয়া, বিশেষজ্ঞ-কিউৰেটেড প্ৰস্তুতি। Shishya দ্বাৰা সমৰ্থিত।",
+    "brand.tagline": "ভাৰতৰ শীৰ্ষ প্ৰৱেশ পৰীক্ষাৰ বাবে বিনামূলীয়া প্ৰস্তুতি। Shishya দ্বাৰা সমৰ্থিত।",
     "nav.signin": "Google ৰ সৈতে Sign in কৰক",
     "nav.signin.short": "Sign in",
     "nav.signout": "Sign out",
@@ -5340,7 +5371,6 @@ export const dict = {
     "loop.s4.title": "৪. Shishya আপোনাৰ লগত chat কৰে",
     "loop.s4.body": "যিকোনো কথা সুধক — concept, shortcut, অধিক অনুশীলন। Shishya এ পৰৱৰ্তী mock বাছে আৰু আপুনি শিকা ধৰণেৰে শিকায়।",
     "features.title": "আপোনাৰ পৰীক্ষা ক্ৰেক কৰিবলৈ প্ৰয়োজনীয় সকলো",
-    "features.subtitle": "প্ৰকৃত PYQ, প্ৰতিদিনে নতুন বিশেষজ্ঞ-কিউৰেটেড mock, Shishya ৰ সৈতে দুৰ্বল-অঞ্চল চিনাক্তকৰণ, আৰু এটা progress bar যিয়ে কি ঠিক কৰিব লাগে দেখুৱায়। সকলো বিনামূলীয়া।",
     "features.pyq.title": "পূৰ্বৰ বছৰৰ প্ৰশ্নকাকত",
     "features.pyq.body": "প্ৰতিটো পৰীক্ষাৰ বাবে প্ৰকৃত PYQ, বছৰ আৰু topic অনুসৰি সংগঠিত। প্ৰকৃততে আহা প্ৰশ্নবোৰ অনুশীলন কৰক।",
     "features.daily.title": "প্ৰতিদিনে নতুন mock",
@@ -5348,7 +5378,6 @@ export const dict = {
     "features.weakness.title": "দুৰ্বলতাৰ মানচিত্ৰ",
     "features.weakness.body": "প্ৰতিটো বিষয়ৰ দক্ষতা স্ক‌'ৰ। ঠিক কোনবোৰ বিষয়ত কাইলৈৰ ঘণ্টাটো লাগিব সেয়া চাওক, অস্পষ্ট সামগ্ৰিক শতাংশ নহয়।",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "বিশেষজ্ঞই তৈয়াৰ কৰা mocks; Shishya য়ে প্ৰতিবাৰ আপোনাৰ বাবে উপযুক্ত mock বাছি দিয়ে। প্ৰতিটো mock আপোনাৰ দুৰ্বলতম বিষয়বোৰক লক্ষ্য কৰে।",
     "features.progress.title": "প্ৰকৃত উন্নতি tracker",
     "features.progress.body": "বিষয়ে বিষয়ে progress bars। সপ্তাহে সপ্তাহে দক্ষতা বৃদ্ধি পাই থকা চাওক। সৎ তথ্য — নকল streak নাই।",
     "features.tutor.title": "Shishya — আপোনাৰ ব্যক্তিগত স্মাৰ্ট শিক্ষক",
@@ -5636,7 +5665,7 @@ export const dict = {
 
   // Nepali (नेपाली) — Sikkim, Darjeeling region
   ne: {
-    "brand.tagline": "भारतका शीर्ष प्रवेश परीक्षाहरूका लागि नि:शुल्क, विशेषज्ञ-व्यवस्थित तयारी। Shishya द्वारा समर्थित।",
+    "brand.tagline": "भारतका शीर्ष प्रवेश परीक्षाहरूका लागि नि:शुल्क तयारी। Shishya द्वारा समर्थित।",
     "nav.signin": "Google सँग साइन इन गर्नुहोस्",
     "nav.signin.short": "साइन इन",
     "nav.signout": "साइन आउट",
@@ -5711,7 +5740,6 @@ export const dict = {
     "loop.s4.title": "4. Shishya तपाईंसँग chat गर्छ",
     "loop.s4.body": "जे पनि सोध्नुहोस् — concepts, shortcuts, थप practice। Shishya अर्को mock छान्छ र तपाईंले सिक्ने तरिकाले सिकाउँछ।",
     "features.title": "तपाईंको परीक्षा क्र्याक गर्न चाहिने सबै कुरा",
-    "features.subtitle": "वास्तविक PYQs, हरेक दिन नयाँ विशेषज्ञ-व्यवस्थित mocks, Shishya सँग कमजोर-क्षेत्र पहिचान, र के सुधार्ने देखाउने progress bar। सबै नि:शुल्क।",
     "features.pyq.title": "अघिल्लो वर्षका पेपरहरू",
     "features.pyq.body": "हरेक परीक्षाका लागि वास्तविक PYQs, वर्ष र topic अनुसार व्यवस्थित। वास्तवमा आउने प्रश्नहरू practice गर्नुहोस्।",
     "features.daily.title": "हरेक दिन नयाँ mocks",
@@ -5719,7 +5747,6 @@ export const dict = {
     "features.weakness.title": "कमजोरी नक्सा",
     "features.weakness.body": "प्रत्येक टपिकमा दक्षता स्कोर। भोलिको एक घण्टा कुन टपिकमा चाहिन्छ भन्ने स्पष्ट रूपमा हेर्नुहोस्, अस्पष्ट समग्र प्रतिशत होइन।",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "विशेषज्ञ-छनौट गरिएका mocks; Shishya ले प्रत्येक पटक तपाईंका लागि सही mock छान्छ। हरेक अर्को mock ले तपाईंको सबैभन्दा कमजोर टपिकलाई लक्षित गर्छ।",
     "features.progress.title": "वास्तविक प्रगति ट्र्याकर",
     "features.progress.body": "टपिक-दर-टपिक प्रगति बार। हप्ता-दर-हप्ता दक्षता बढेको हेर्नुहोस्। इमानदार डेटा — नक्कली streak होइन।",
     "features.tutor.title": "Shishya — तपाईंको व्यक्तिगत स्मार्ट ट्यूटर",
@@ -6006,7 +6033,7 @@ export const dict = {
 
   // Sanskrit (संस्कृतम्) — heritage / classical language
   sa: {
-    "brand.tagline": "भारतस्य शीर्षपरीक्षाणां कृते निःशुल्कं विशेषज्ञनिर्मितं साधनम्। Shishya समर्थितम्।",
+    "brand.tagline": "भारतस्य शीर्षपरीक्षाणां कृते निःशुल्कं साधनम्। Shishya समर्थितम्।",
     "nav.signin": "Google इत्यनेन प्रवेशः",
     "nav.signin.short": "प्रवेशः",
     "nav.signout": "निर्गमनम्",
@@ -6081,7 +6108,6 @@ export const dict = {
     "loop.s4.title": "४. Shishya भवता सह सम्भाषते",
     "loop.s4.body": "किमपि पृच्छतु — सिद्धान्तः, शार्टकट्स्, अधिकाभ्यासः। Shishya अग्रिमं mock चिनोति भवतः शैल्या पाठयति च।",
     "features.title": "परीक्षां जेतुं यत् किमपि आवश्यकं तत् सर्वम्",
-    "features.subtitle": "वास्तविकाः PYQs, प्रतिदिनं नूतनाः विशेषज्ञनिर्मिताः mocks, Shishya सह दुर्बलक्षेत्रपरीक्षणम्, प्रगतिदण्डः यः किं सुधारणीयम् इति दर्शयति। सर्वं निःशुल्कम्।",
     "features.pyq.title": "पूर्ववर्षीयाः प्रश्नपत्राणि",
     "features.pyq.body": "प्रत्येकस्य परीक्षायाः कृते वास्तविकाः PYQs, वर्षेण विषयेण च व्यवस्थिताः। यानि प्रश्नानि वस्तुतः आगच्छन्ति तानि अभ्यसतु।",
     "features.daily.title": "प्रतिदिनं नूतनाः mocks",
@@ -6089,7 +6115,6 @@ export const dict = {
     "features.weakness.title": "दुर्बलता-मानचित्रम्",
     "features.weakness.body": "प्रति-विषयं प्रवीणता-अङ्कः। श्वः कस्मै विषयाय घटिका आवश्यका इति यथार्थतः पश्यतु, न केवलं अस्पष्टं समग्र-शतांशम्।",
     "features.adaptive.title": "अनुकूलनशीलाः mock-परीक्षाः",
-    "features.adaptive.body": "विशेषज्ञैः सम्पादिताः mocks; Shishya प्रत्येकवारं भवते उचितं चिनोति। प्रत्येकं परवर्ती mock तव दुर्बलतमान् विषयान् लक्षीकरोति।",
     "features.progress.title": "यथार्थ-प्रगति-अनुगमनम्",
     "features.progress.body": "विषय-विषय-प्रगति-दण्डाः। सप्ताह-सप्ताह प्रवीणता वर्धमानं पश्यतु। ईमानदत्त-आँकडाः — न मिथ्या-streak-इत्यादीनि।",
     "features.tutor.title": "Shishya — तव व्यक्तिगत-बुद्धिमान्-गुरुः",
@@ -6377,7 +6402,7 @@ export const dict = {
 
   // Konkani (कोंकणी) — Goa, coastal Karnataka
   kok: {
-    "brand.tagline": "भारतांतल्या वयल्या प्रवेश परीक्षांखातीर मोफत, तज्ञांनी तयार केल्लें तयारी. Shishya न आदार.",
+    "brand.tagline": "भारतांतल्या वयल्या प्रवेश परीक्षांखातीर मोफत तयारी. Shishya न आदार.",
     "nav.signin": "Google वरवीं साइन इन करा",
     "nav.signin.short": "साइन इन",
     "nav.signout": "साइन आउट",
@@ -6452,7 +6477,6 @@ export const dict = {
     "loop.s4.title": "4. Shishya तुमचे लागीं बोलता",
     "loop.s4.body": "काय लेगीत विचारा — संकल्पना, shortcuts, चड सराव. Shishya पुढलो mock निवडटा आनी तुमी शिकतात तसो शिकयता.",
     "features.title": "तुमची परीक्षा क्रॅक करुंक सगळें जाय",
-    "features.subtitle": "खरे PYQs, दर दिसा नवे तज्ञांनी तयार केल्ले mocks, Shishya वरवीं कमकुवत क्षेत्र शोध, आनी कितें सुदारचें तें दाखोवपी progress bar. सगळें मोफत.",
     "features.pyq.title": "फाटल्या वर्साचे प्रश्नपत्र",
     "features.pyq.body": "दरेक परीक्षे खातीर खरे PYQs, वर्स आनी विशयान वेवस्थित. खरोखरीच येवपी प्रश्नांचो सराव करा.",
     "features.daily.title": "दर दिसा नवे mocks",
@@ -6460,7 +6484,6 @@ export const dict = {
     "features.weakness.title": "कमजोरीचो नकाशो",
     "features.weakness.body": "प्रत्येक विशयाचो निपुणताय स्कोर. फकत एकूण percentile न्हय, कालच्या तासाक कोणते विशय लागतात ते बरोबर पळयात.",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "तज्ञांनी निवडिल्ले mocks; Shishya तुमकां दर फावट बरोबर तो निवडटा. दरेक पुराय mock तुमच्या कमजोर विशयांचेर लक्ष दिता.",
     "features.progress.title": "खरी प्रगती tracker",
     "features.progress.body": "विशय-निशी progress bars. आठवड्यान आठवड्यान निपुणताय वाडटा ते पळयात. प्रामाणिक माहिती — खोटो streaks ना.",
     "features.tutor.title": "Shishya — तुमचो वैयक्तीक smart tutor",
@@ -6748,7 +6771,7 @@ export const dict = {
 
   // Manipuri / Meitei (মৈতৈলোন্) — Manipur (uses Bengali script for general use)
   mni: {
-    "brand.tagline": "ভাৰতৰ শীৰ্ষ প্ৰৱেশ পৰীক্ষাৰ বাবে বিনামূলীয়া, বিশেষজ্ঞ-কিউৰেটেড প্ৰস্তুতি। Shishya দ্বাৰা সমৰ্থিত।",
+    "brand.tagline": "ভাৰতৰ শীৰ্ষ প্ৰৱেশ পৰীক্ষাৰ বাবে বিনামূলীয়া প্ৰস্তুতি। Shishya দ্বাৰা সমৰ্থিত।",
     "nav.signin": "Google দ্বাৰা ছাইন ইন কৰক",
     "nav.signin.short": "ছাইন ইন",
     "nav.signout": "ছাইন আউট",
@@ -6823,7 +6846,6 @@ export const dict = {
     "loop.s4.title": "4. Shishya য়ে আপোনাৰ লগত চেট কৰে",
     "loop.s4.body": "যিকোনো কথা সোধক — ধাৰণা, shortcuts, অধিক অভ্যাস। Shishya য়ে পৰৱৰ্তী mock বাছে আৰু আপুনি যেনেকৈ শিকে তেনেকৈ শিকায়।",
     "features.title": "আপোনাৰ পৰীক্ষা ক্ৰেক কৰিবলৈ প্ৰয়োজনীয় সকলো",
-    "features.subtitle": "প্ৰকৃত PYQs, প্ৰতিদিনে তাজা বিশেষজ্ঞ-কিউৰেটেড mocks, Shishya দ্বাৰা দুৰ্বল-এলেকা চিনাক্তকৰণ, আৰু এটা progress bar য়ে কি ঠিক কৰিব লাগে দেখুৱায়। সকলো বিনামূলীয়া।",
     "features.pyq.title": "আগৰ বছৰৰ কাকতসমূহ",
     "features.pyq.body": "প্ৰতিটো পৰীক্ষাৰ বাবে প্ৰকৃত PYQs, বছৰ আৰু বিষয় অনুসৰি সংগঠিত। প্ৰকৃততে দেখা দিয়া প্ৰশ্নসমূহ অভ্যাস কৰক।",
     "features.daily.title": "প্ৰতিদিনে তাজা mocks",
@@ -6831,7 +6853,6 @@ export const dict = {
     "features.weakness.title": "ৱিকনেস মেপ",
     "features.weakness.body": "টপিক খুদিংগী মেস্তরী স্কোর। নোংম্বগী ওৱারোল পার্সেন্টাইল নত্তনা হায়রিবা টপিক্কী থোং ঙাইদবা মরাং কয়া পোৎচেল হায়বদু চানবীরো।",
     "features.adaptive.title": "এডাপ্তিভ mock তৌবা",
-    "features.adaptive.body": "এক্সপার্তনা খনখিবা mock; Shishya না নখোয়গীদমক চাবা mock থোইদোক্পা। মখা তানা তৌবা mock খুদিংনা নখোয়গী অসোইবা টপিক্তা ফোকহল্লি।",
     "features.progress.title": "অচুম্বা প্রোগ্রেস ত্রেকর",
     "features.progress.body": "টপিক-বাই-টপিক প্রোগ্রেস বার। নুমিৎ খুদিং ঙাইদনা মেস্তরী কাউবা য়েংবীরো। অচুম্বা দাতা — নকল স্ত্রীক নত্তে।",
     "features.tutor.title": "Shishya — নখোয়গী পর্সোনেল স্মার্ত তুতোর",
@@ -7119,7 +7140,7 @@ export const dict = {
 
   // Kashmiri (کٲشُر) — Kashmir, RTL
   ks: {
-    "brand.tagline": "ہِندوستُکیہ اہم داخلہ امتحانن ہنز مُفت، ماہِرن ہُند تیار کرنہ آمُت تیاری۔ Shishya سان سپورٹ۔",
+    "brand.tagline": "ہِندوستُکیہ اہم داخلہ امتحانن ہنز مُفت تیاری۔ Shishya سان سپورٹ۔",
     "nav.signin": "Google سٟتۍ سائن اِن کٔرِو",
     "nav.signin.short": "سائن اِن",
     "nav.signout": "سائن آؤٹ",
@@ -7194,7 +7215,6 @@ export const dict = {
     "loop.s4.title": "4. Shishya تُہنز سٟتۍ گفتگو کران",
     "loop.s4.body": "کٲنٛہہ تہٕ پُچھِو — تصورات، شارٹ کٹ، زیادٕ مشق۔ Shishya برونہہ mock ژٲران تہٕ ژھ تریقس سان سِکھاوان یُتھ تُہہ سیکھان چھِو۔",
     "features.title": "ہر چیٖز یُس تُہنز امتحان کریک کرنہ خٲطرہ ضرورت",
-    "features.subtitle": "اصل PYQ، روزانہ ماہِرن ہُند تازٕ mock، کمزور جاین ہُند پتہ لگاونُک Shishya سان، تہٕ پراگریس بار یُس وِنان کیا درست کرُن۔ سٲری مُفت۔",
     "features.pyq.title": "سابقہ ؤریہٕ کین کاغذ",
     "features.pyq.body": "ہر امتحانہ خٲطرہ اصل PYQ، ؤری تہٕ ٹاپِک مطابق منظم۔ تِم سوالن ہُند مشق کٔرِو یِم واقعی یِیان چھِ۔",
     "features.daily.title": "روزانہ تازٕ mock",
@@ -7202,7 +7222,6 @@ export const dict = {
     "features.weakness.title": "کمزوری نقشہ",
     "features.weakness.body": "موضوع وار مہارت سکور۔ بالکل دیکھ کہ کامہ موضوع ہنز صبح کین گھنٹن ضرورت چھ، نہ کانہہ مبہم مجموعی percentile۔",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "ماہرن ہند curated mocks؛ Shishya چھ تہند واستہ صحیح mock ژانان ہر لٹی۔ ہر اگلہ mock چھ تہند سب کھوتہ کمزور موضوع نشانہ بناوان۔",
     "features.progress.title": "اصل پیش رفت tracker",
     "features.progress.body": "موضوع وار progress bars۔ ہفتہ پتمہ ہفتہ مہارت بڑان ووچھ۔ ایمانداری ڈیٹا — کانہہ جعلی streaks نہ۔",
     "features.tutor.title": "Shishya — تہند ذاتی ذہین استاد",
@@ -7256,7 +7275,6 @@ export const dict = {
     "progress.demo.topicsImproved": "موضوع بہتر کرمت",
     "progress.demo.delta": "یہ ہفتہ",
     "hero.badge": "ہمیشہ مفت · ہندوستانس منز ہر طالب علم باپت",
-    "hero.h1.line1": "ماہرن ہند curated تیاری ہندوستان کین",
     "hero.h1.line2": "ٹاپ 10 entrance exams باپت۔",
     "hero.body": "اکھ diagnostic mock دیو۔ اسہ چھ تہندین کمزور جایہ نقشہ بناوان۔ موضوع ماہر چھ ہر mock curate کران؛ Shishya چھ تہند واستہ اگلہ صحیح mock ژانان۔ توہہ چھ بہتر گژھان۔ دوبارہ کر۔",
     "hero.body.bold": "کانہہ فیس نہ۔ کانہہ paywalls نہ۔",
@@ -7490,7 +7508,7 @@ export const dict = {
 
   // Sindhi (سنڌي) — Sindhi-speaking community, RTL
   sd: {
-    "brand.tagline": "هندستان جي اهم داخلا امتحانن لاءِ مفت، ماهرن جي چونڊيل تياري. Shishya جي مدد سان.",
+    "brand.tagline": "هندستان جي اهم داخلا امتحانن لاءِ مفت تياري. Shishya جي مدد سان.",
     "nav.signin": "Google سان سائن ان ڪريو",
     "nav.signin.short": "سائن ان",
     "nav.signout": "سائن آئوٽ",
@@ -7565,7 +7583,6 @@ export const dict = {
     "loop.s4.title": "4. Shishya توهان سان چيٽ ڪري ٿو",
     "loop.s4.body": "ڪجهه به پڇو — تصور، شارٽ ڪٽ، وڌيڪ مشق. Shishya ايندڙ mock چونڊي ٿو ۽ توهان جي سکڻ واري انداز ۾ سيکاري ٿو.",
     "features.title": "توهان جي امتحان کي پاس ڪرڻ لاءِ هر شيءِ",
-    "features.subtitle": "حقيقي PYQs، هر ڏينهن تازا ماهرن جي چونڊيل mocks، ڪمزور علائقن جي سڃاڻپ Shishya سان، ۽ هڪ پيش رفت بار جيڪو ڏيکاري ٿو ڇا درست ڪرڻ آهي. سڀ مفت.",
     "features.pyq.title": "گذريل سال جا پيپر",
     "features.pyq.body": "هر امتحان لاءِ حقيقي PYQs، سال ۽ موضوع جي لحاظ سان ترتيب ڏنل. انهن سوالن جي مشق ڪريو جيڪي حقيقت ۾ ايندا آهن.",
     "features.daily.title": "هر ڏينهن تازا mocks",
@@ -7573,7 +7590,6 @@ export const dict = {
     "features.weakness.title": "ڪمزوري جو نقشو",
     "features.weakness.body": "هر موضوع جي مهارت جو اسڪور. ڏسو ته ڪهڙن عنوانن کي سڀاڻي جي ڪلاڪ جي ضرورت آهي، نه رڳو هڪ مبهم مجموعي percentile.",
     "features.adaptive.title": "Adaptive mocks",
-    "features.adaptive.body": "ماهرن پاران تيار ڪيل mocks؛ Shishya توهان لاءِ هر ڀيري صحيح mock چونڊي ٿو. هر ايندڙ mock توهان جي ڪمزور عنوانن کي نشانو بڻائي ٿو.",
     "features.progress.title": "حقيقي پيش رفت ٽريڪر",
     "features.progress.body": "موضوع-وار پيش رفت بار. هفتي بعد هفتي مهارت کي وڌندي ڏسو. ايماندار ڊيٽا — ڪوبه جعلي streaks نه.",
     "features.tutor.title": "Shishya — توهان جو ذاتي سمارٽ استاد",
@@ -7627,7 +7643,6 @@ export const dict = {
     "progress.demo.topicsImproved": "موضوع بهتر ٿيا",
     "progress.demo.delta": "هي هفتو",
     "hero.badge": "هميشه لاءِ مفت · هندستان جي هر شاگرد لاءِ",
-    "hero.h1.line1": "هندستان جي لاءِ ماهرن پاران تيار ڪيل تياري",
     "hero.h1.line2": "مٿين 10 داخلا امتحانن جي.",
     "hero.body": "هڪ diagnostic mock ڏيو. اسان توهان جا ڪمزور هنڌ نقشي ڪندا آهيون. مضمون جا ماهر هر mock تيار ڪن ٿا؛ Shishya توهان لاءِ ايندڙ صحيح چونڊي ٿو. توهان بهتر ٿيندا آهيو. ورجايو.",
     "hero.body.bold": "ڪابه فيس ناهي. ڪابه paywall ناهي.",

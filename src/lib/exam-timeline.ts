@@ -93,9 +93,10 @@ const KIND_ORDER: Record<DateKind, number> = {
   ADMIT_CARD: 4,
   EXAM: 5,
   ANSWER_KEY: 6,
-  RESULT: 7,
-  INTERVIEW: 8,
-  OTHER: 9,
+  QUESTION_PAPER: 7,
+  RESULT: 8,
+  INTERVIEW: 9,
+  OTHER: 10,
 };
 
 export const KIND_ICON: Record<DateKind, string> = {
@@ -106,6 +107,7 @@ export const KIND_ICON: Record<DateKind, string> = {
   ADMIT_CARD: "🎫",
   EXAM: "🎯",
   ANSWER_KEY: "🔑",
+  QUESTION_PAPER: "📄",
   RESULT: "🏁",
   INTERVIEW: "🗣️",
   OTHER: "📌",

@@ -20,6 +20,7 @@
 import { Resend } from "resend";
 import { unsubFooterHtml, unsubApiUrl } from "./email-unsubscribe";
 import { tk } from "./i18n";
+import { mailFamily } from "./loops-readout";
 
 const apiKey = process.env.RESEND_API_KEY;
 const from = process.env.EMAIL_FROM ?? "Shishya <tutor@shishya.in>";
@@ -117,6 +118,15 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
     // we never had. Per-kind duplicate guards live in the crons.
   }
   try {
+    // Link measurement (13 Sep 2026): every shishya.in href in the body
+    // leaves tagged utm_source=email&utm_medium=<kind>&utm_campaign=<tag>,
+    // applied HERE once so every template and every external caller is
+    // covered without touching copy. utm_campaign is sanitised exactly
+    // like the Resend tag below, so it equals what the webhook echoes back.
+    const kind = mailFamily(payload.tag);
+    const campaign = (payload.tag ?? "email").replace(/[^A-Za-z0-9_-]/g, "-");
+    const bodyHtml = tagMailLinks(payload.html, kind, campaign);
+    const bodyText = payload.text ? tagMailText(payload.text, kind, campaign) : undefined;
     // Don't BCC the founder onto an email that IS already addressed to
     // them (growth report, teacher-request alerts) — avoids a duplicate.
     // Also no BCC on MARKETING mail (unsubUserId set): the BCC copy carried
@@ -131,11 +141,11 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
     // A per-list (bulk) unsubscribe takes precedence over the global one:
     // "stop THESE alerts" must not be the "stop ALL Shishya email" switch.
     const html = payload.bulk
-      ? payload.html +
+      ? bodyHtml +
         `<p style="font-size:11px;color:#94a3b8;margin:18px 0 0;font-family:system-ui,sans-serif;">You asked for these alerts on shishya.in. <a href="${payload.bulk.unsubscribeUrl}" style="color:#64748b;">Unsubscribe</a> any time.</p>`
       : payload.unsubUserId
-        ? payload.html + unsubFooterHtml(payload.unsubUserId)
-        : payload.html;
+        ? bodyHtml + unsubFooterHtml(payload.unsubUserId)
+        : bodyHtml;
     // One-click header points at the POST API (state change on POST only);
     // the body footer links to the confirm PAGE (no state change on GET).
     const headers = payload.bulk
@@ -154,7 +164,7 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
       to: payload.to,
       subject: payload.subject,
       html,
-      text: payload.text,
+      text: bodyText,
       bcc: bcc.length > 0 ? bcc : undefined,
       replyTo: payload.replyTo,
       headers,
@@ -1170,6 +1180,78 @@ function esc(s: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Mail-link measurement (13 Sep 2026). Until now only four templates
+// carried a utm (daily-five, evening-rescue, exam-eve, exam-day-after,
+// each hand-typed) and every other mail link arrived as "(direct)". The
+// helpers below run ONCE, centrally, inside sendEmail — every template
+// here and every external caller that builds its own html (mentor
+// sessions, batch join, live-test results, …) is tagged the same way, and
+// no copy is rewritten. Rules:
+//   • only http(s) links on shishya.in / www.shishya.in are touched;
+//     wa.me, ssc.gov.in, mailto:, tel: pass through byte-identical
+//   • .ics calendar files, /api/* and /unsubscribe stay bare — a tagged
+//     .ics is a different file to a calendar app, and an unsubscribe hit
+//     is not engagement
+//   • utm_* already on a link is REPLACED (searchParams.set), so the four
+//     hand-tagged templates end up with the same values + utm_campaign,
+//     never doubled; other params (verdict=EASY) and #hash survive
+//   • hrefs written through esc(url) carry &amp; — decode before parsing,
+//     re-encode only when the source attribute was entity-encoded
+// ─────────────────────────────────────────────────────────────────────
+
+const MAIL_HOSTS = new Set(["shishya.in", "www.shishya.in"]);
+
+function utmSlug(s: string): string {
+  return (
+    s
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 64) || "email"
+  );
+}
+
+/** Tag ONE href for a mail of `kind` (mail family) and `campaign` (Resend tag). */
+export function withMailUtm(href: string, kind: string, campaign: string = kind): string {
+  if (!/^https?:\/\//i.test(href)) return href;
+  let u: URL;
+  try {
+    u = new URL(href);
+  } catch {
+    return href;
+  }
+  if (!MAIL_HOSTS.has(u.hostname)) return href;
+  if (/\.ics$/i.test(u.pathname) || u.pathname.startsWith("/api/") || u.pathname.startsWith("/unsubscribe")) {
+    return href;
+  }
+  u.searchParams.set("utm_source", "email");
+  u.searchParams.set("utm_medium", utmSlug(kind));
+  u.searchParams.set("utm_campaign", utmSlug(campaign));
+  return u.toString();
+}
+
+/** Tag every double-quoted href="…" in an HTML body (the only form used here). */
+export function tagMailLinks(html: string, kind: string, campaign?: string): string {
+  return html.replace(/href="([^"]*)"/g, (whole, raw: string) => {
+    const enc = raw.includes("&amp;");
+    const decoded = raw.replace(/&amp;/g, "&");
+    const out = withMailUtm(decoded, kind, campaign);
+    if (out === decoded) return whole; // untouched links stay byte-identical
+    return `href="${enc ? out.replace(/&/g, "&amp;") : out}"`;
+  });
+}
+
+/** Tag bare URLs in a plain-text body; trailing punctuation is left outside the link. */
+export function tagMailText(text: string, kind: string, campaign?: string): string {
+  return text.replace(/https?:\/\/[^\s<>"'()]+/g, (m) => {
+    const trail = m.match(/[.,;:!?]+$/)?.[0] ?? "";
+    const core = trail ? m.slice(0, -trail.length) : m;
+    return withMailUtm(core, kind, campaign) + trail;
+  });
 }
 
 /** Personalised All-India Live Test invite — sent midweek to students

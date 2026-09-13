@@ -11,6 +11,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { AnonQuiz } from "@/lib/anon-quiz";
+import type { Locale } from "@/lib/i18n";
 import type { ExamWeekPhase } from "@/lib/exam-week";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { ExamAlertBox, type ExamAlertLabels, type ExamAlertWeekLabels } from "@/components/ExamAlertBox";
@@ -47,6 +48,23 @@ export interface AnonQuizCutoff {
   disclaimer: string;
 }
 
+/** Student's language (12 Sep 2026): cached QuestionTranslation rows for
+ *  this quiz in the page's locale, overlaid CLIENT-SIDE with the English
+ *  source kept, so "See in English" is one tap and never a fetch. The
+ *  server passes only rows that already exist (src/lib/anon-quiz-locale.ts)
+ *  — nothing in this component translates. Absent = English quiz, no
+ *  label. Every overlaid question carries the honesty note. */
+export interface AnonQuizTranslationPack {
+  locale: Locale;
+  /** Native name of the locale ("हिन्दी"), for the "See in {lang}" toggle. */
+  localeName: string;
+  byId: Record<string, { body: string; options: { key: string; text: string }[]; solution: string }>;
+  /** "Shishya-translated — cross-check the English." */
+  note: string;
+  /** "See in {lang}" */
+  seeIn: string;
+}
+
 // First-party analytics beacon (same shape as ShareExamButton) — the
 // WhatsApp share is counted as CTA_CLICKED cta 'share', surface 'anon-quiz'.
 function beacon(props: Record<string, unknown>) {
@@ -73,19 +91,42 @@ export function AnonQuizPlayer({
   quiz,
   examWeek,
   cutoff,
+  translation,
 }: {
   quiz: AnonQuiz;
   examWeek?: AnonQuizExamWeek;
   cutoff?: AnonQuizCutoff;
+  translation?: AnonQuizTranslationPack;
 }) {
   const qs = quiz.questions;
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [answers, setAnswers] = useState<{ key: string; correct: boolean }[]>([]);
   const [done, setDone] = useState(false);
+  // "See in English" — quiz-wide, instant, no fetch (the English source is
+  // always in `quiz`; the translation pack is an overlay).
+  const [englishMode, setEnglishMode] = useState(false);
 
   const q = qs[idx];
   const answered = picked !== null;
+
+  /** What the student sees for a question: the cached translation unless
+   *  they switched to English, else the English source. Options are
+   *  matched by key so a translated row can never re-letter the answer. */
+  function view(qq: AnonQuiz["questions"][number]) {
+    const tr = translation?.byId[qq.id];
+    if (!tr || englishMode) {
+      return { body: qq.body, options: qq.options, solution: qq.solution, translated: false, hasTranslation: !!tr };
+    }
+    return {
+      body: tr.body,
+      options: qq.options.map((o) => ({ key: o.key, text: tr.options.find((x) => x.key === o.key)?.text ?? o.text })),
+      solution: tr.solution,
+      translated: true,
+      hasTranslation: true,
+    };
+  }
+  const qv = view(q);
 
   function choose(key: string) {
     if (answered) return;
@@ -104,7 +145,7 @@ export function AnonQuizPlayer({
       try {
         const missed = qs
           .filter((_, i) => !nextAnswers[i]?.correct)
-          .map((qq) => qq.body.slice(0, 200));
+          .map((qq) => view(qq).body.slice(0, 200));
         localStorage.setItem(
           "shishya_anon_quiz",
           JSON.stringify({
@@ -162,7 +203,7 @@ export function AnonQuizPlayer({
     // Give the tutor the ACTUAL questions the student missed so it can
     // explain them, instead of a vague "the ones I got wrong" (audit
     // 18 Aug 2026).
-    const missedBodies = qs.filter((_, i) => !answers[i]?.correct).map((qq) => `• ${qq.body}`);
+    const missedBodies = qs.filter((_, i) => !answers[i]?.correct).map((qq) => `• ${view(qq).body}`);
     const tutorSeed =
       `I just took a quick ${quiz.scopeLabel} quiz for ${quiz.examShort} and scored ${score}/${qs.length}.` +
       (missedBodies.length
@@ -325,7 +366,7 @@ export function AnonQuizPlayer({
                 {a.correct ? "✓" : "✕"}
               </span>
               <span className="text-ink-600">Q{i + 1}</span>
-              <span className="line-clamp-1 text-ink-800">{qs[i].body}</span>
+              <span className="line-clamp-1 text-ink-800">{view(qs[i]).body}</span>
             </li>
           ))}
         </ul>
@@ -351,10 +392,37 @@ export function AnonQuizPlayer({
         />
       </div>
 
-      <p className="mt-4 text-base font-medium leading-relaxed text-ink-900">{q.body}</p>
+      <p className="mt-4 text-base font-medium leading-relaxed text-ink-900">{qv.body}</p>
+      {/* Honesty label beside every overlaid question, with English one
+          tap away; in English mode the same line offers the way back. */}
+      {translation && qv.hasTranslation && (
+        <p className="mt-1 text-[11px] text-ink-500">
+          {qv.translated ? (
+            <>
+              {translation.note}
+              {" · "}
+              <button
+                type="button"
+                onClick={() => setEnglishMode(true)}
+                className="underline underline-offset-2 hover:text-ink-800"
+              >
+                {translation.seeIn.replace("{lang}", "English")}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEnglishMode(false)}
+              className="underline underline-offset-2 hover:text-ink-800"
+            >
+              {translation.seeIn.replace("{lang}", translation.localeName)}
+            </button>
+          )}
+        </p>
+      )}
 
       <div className="mt-4 flex flex-col gap-2">
-        {q.options.map((o) => {
+        {qv.options.map((o) => {
           const isPicked = picked === o.key;
           const isAnswer = o.key === q.answerKey;
           let cls = "border-ink-200 bg-white hover:border-saffron-400";
@@ -383,7 +451,7 @@ export function AnonQuizPlayer({
           <p className="font-semibold text-ink-900">
             {picked === q.answerKey ? "Correct ✓" : `Answer: ${q.answerKey}`}
           </p>
-          {q.solution && <p className="mt-1 leading-relaxed">{q.solution}</p>}
+          {qv.solution && <p className="mt-1 leading-relaxed">{qv.solution}</p>}
         </div>
       )}
 

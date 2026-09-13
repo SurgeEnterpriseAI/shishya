@@ -38,6 +38,7 @@ import { LiveTestTodayBanner } from "@/components/LiveTestTodayBanner";
 import { SundayLiveTestBanner } from "@/components/SundayLiveTestBanner";
 import { EducatorCard } from "@/components/EducatorCard";
 import { FlashHint } from "@/components/FlashHint";
+import { FoundViaChip } from "@/components/FoundViaChip";
 
 export default async function DashboardPage() {
   try {
@@ -603,6 +604,10 @@ async function renderDashboard() {
             the user clicks "Got it ×" once. Sets expectations about
             how the platform is meant to be used. */}
         <TwoPathsCard />
+
+        {/* One-tap "How did you find Shishya?" — shown once to users ≤7 days old;
+            answers land as CTA_CLICKED {cta:'found-via'} and feed /admin/loops. */}
+        <FoundViaChip userId={userId} />
 
         {/* Enrollment hardening (retention data: 0% of never-enrolled users
             EVER return; ~20% of signups slip through without picking an

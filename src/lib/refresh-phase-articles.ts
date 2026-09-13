@@ -48,6 +48,7 @@ import { summarisePhase } from "@/lib/ai/phase-summariser";
 import { istDay, istHour, type ExamWeekPhase, type ExamWeekState } from "@/lib/exam-week";
 import { loadExamWeekExams } from "@/lib/exam-week-aeo";
 import { MIN_ARTICLE_SOURCES } from "@/lib/phase-article-quality";
+import { passesStrictArticleGate } from "@/lib/phase-article-strict-gate";
 import { phaseArticleUrl, SITE_ORIGIN, submitIndexNow } from "@/lib/indexnow";
 import type { ExamPhase } from "@prisma/client";
 
@@ -392,6 +393,26 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
       // for the same web search again.
       await recordAttempt(c.examId, c.phase, false, now);
       report.skipped.push({ examCode: c.examCode, phase: c.phase, reason: "no real article (kept previous)" });
+      if (existing) {
+        await prisma.examPhaseArticle.update({ where: { id: existing.id }, data: { lastScrapedAt: now } }).catch(() => {});
+      }
+      continue;
+    }
+    // Stricter body gate for exam-night pages (13 Sep 2026): /live and
+    // /reactions now lead with first-party content and render the article
+    // below it only when it is long, names the exam and carries no "we
+    // don't have reliable data" / "zero content" phrasing. A summary that
+    // fails is treated like no summary — attempt recorded (backoff),
+    // previous article kept, nothing written.
+    if (
+      (c.phase === "LIVE" || c.phase === "REACTIONS") &&
+      !passesStrictArticleGate(
+        { bodyMarkdown: summary.bodyMarkdown, sourcesScraped: summary.sourcesUsed },
+        { shortName: c.examShort, name: c.examName },
+      )
+    ) {
+      await recordAttempt(c.examId, c.phase, false, now);
+      report.skipped.push({ examCode: c.examCode, phase: c.phase, reason: "failed strict body gate (kept previous)" });
       if (existing) {
         await prisma.examPhaseArticle.update({ where: { id: existing.id }, data: { lastScrapedAt: now } }).catch(() => {});
       }

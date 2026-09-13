@@ -1,5 +1,5 @@
 // POST /api/chat — streaming chat with the AI tutor.
-// Body: { examCode, sessionId?, message }
+// Body: { examCode, sessionId?, message, lang? }
 //
 // Returns a Server-Sent Events stream:
 //   event: delta\ndata: <text chunk>\n\n
@@ -12,6 +12,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import { z } from "zod";
+import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { tutorStream } from "@/lib/ai";
@@ -19,6 +20,8 @@ import { getStudentState } from "@/lib/db/student-state";
 import { getStudentJourney } from "@/lib/db/student-journey";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
+import { locales } from "@/lib/i18n";
+import { langToReplyLanguage, resolvePreferredLocale } from "@/lib/preferred-lang";
 
 const Body = z
   .object({
@@ -37,6 +40,13 @@ const Body = z
       .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().min(1).max(8000) }))
       .max(40)
       .optional(),
+    // Explicit reply language for this turn (12 Sep 2026) — the "see
+    // English" ability: the client sends lang:"en" to get an English reply
+    // whatever the stored preference. A closed enum over the 19 i18n
+    // locales, never free text, because the value lands in the prompt
+    // line "Reply language: …". Absent → preferredLang (non-EN) > cookie
+    // > en, see src/lib/preferred-lang.ts.
+    lang: z.enum(locales as unknown as [string, ...string[]]).optional(),
   })
   .refine((b) => b.general === true || (typeof b.examCode === "string" && b.examCode.length > 0), {
     message: "examCode is required when general is not true",
@@ -187,6 +197,21 @@ export async function POST(req: Request) {
     };
   }
 
+  // Reply language (12 Sep 2026): explicit body.lang > stored non-EN
+  // preferredLang > shishya-lang cookie > en. Until this wave every turn —
+  // Devanagari input included — told the tutor "Reply language: EN",
+  // because the column defaulted to EN for everyone and the cookie was
+  // never read here. Enum code when the locale has one ("HI"), else the
+  // locale itself ("kok") — same contract as /api/explain.
+  const cookieLang = (await cookies()).get("shishya-lang")?.value ?? null;
+  const replyLanguage = langToReplyLanguage(
+    resolvePreferredLocale({
+      explicit: body.lang,
+      preferredLang: generalStudentState.preferredLang,
+      cookie: cookieLang,
+    }),
+  ) as any;
+
   // If the chat was opened from a study-notes page (topicCode in URL), grab
   // the topic record + a short slice of its notes. The tutor uses this as
   // a focus anchor so it teaches the topic the student is actively reading
@@ -241,7 +266,7 @@ export async function POST(req: Request) {
           // history is already normalised to {role, content}.
           history,
           userMessage: body.message,
-          language: generalStudentState.preferredLang,
+          language: replyLanguage,
           topicFocus: topicFocus ?? undefined,
           journey: journey ?? undefined,
           generalMode: isGeneral,

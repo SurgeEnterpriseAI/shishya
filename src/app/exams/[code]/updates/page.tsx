@@ -90,7 +90,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   // Lead with the answer (the date) so it survives SERP truncation; the
   // qualifier "(expected)" stays glued to an estimated date.
   const dateLead = nextExam
-    ? `${tt("tracker.kind.EXAM")} ${fmtDay(nextExam.date, urlLocale)}${nextExam.tier === "expected" ? ` (${tt("tracker.expected").toLowerCase()})` : ""} — `
+    ? `${tt("tracker.kind.EXAM")} ${fmtDay(nextExam.date, urlLocale)}${nextExam.tier !== "official" ? ` (${tt(nextExam.tier === "expected" ? "tracker.expected" : "tracker.reported").toLowerCase()})` : ""} — `
     : "";
   const title = `${exam.shortName} ${year} ${dateLead}${tt("tracker.title")} | Shishya`;
   const description = `${fill(tt("tracker.intro"), { exam: exam.shortName })} ${exam.name}.`.slice(0, 300);
@@ -225,7 +225,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   const shareRows = shareKinds.map((k) => {
     const row = upcomingOfKind(timeline, k) ?? latestOfKind(timeline, k);
     return row
-      ? `${kindLabel(k)}: ${fmtDay(row.date, locale)} (${t(`tracker.${row.tier}`).toLowerCase()})`
+      ? `${kindLabel(k)}: ${fmtDay(row.date, locale)} (${row.displayStatus === "passed-estimate" ? t("tracker.passedEstimate") : t(`tracker.${row.tier}`).toLowerCase()})`
       : `${kindLabel(k)}: ${t("tracker.notAnnounced").toLowerCase()}`;
   });
   const shareMessage = `${short} ${year} — ${t("tracker.keyDates")}: ${shareRows.join(" · ")} — ${t("tracker.title")}:`;

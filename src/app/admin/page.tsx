@@ -119,6 +119,12 @@ export default async function AdminHome() {
           >
             Demand heatmap
           </Link>
+          <Link
+            href="/admin/loops"
+            className="btn-secondary !py-2 !px-4 text-sm"
+          >
+            Loops — mail, shares, crawlers
+          </Link>
         </div>
       </section>
     </main>

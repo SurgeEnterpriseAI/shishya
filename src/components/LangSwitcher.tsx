@@ -61,6 +61,17 @@ export function LangSwitcher({ current }: { current: Locale }) {
   function setLocale(lc: Locale) {
     if (lc === cur) return;
     document.cookie = `${COOKIE}=${lc}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+    // 12 Sep 2026: signed-in members also get User.preferredLang written,
+    // so mocks, the tutor and their next device follow the choice. Fire
+    // and forget — a guest gets a harmless 401, an offline tab a swallowed
+    // rejection; the cookie path above never waits on it. (The header has
+    // no session context, hence the unconditional call.)
+    void fetch("/api/me/preferences", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ lang: lc }),
+      keepalive: true,
+    }).catch(() => {});
     setCur(lc);
     const m = (pathname ?? "").match(URL_LOCALE_RE);
     if (m) {

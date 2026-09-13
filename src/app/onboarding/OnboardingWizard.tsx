@@ -1,10 +1,13 @@
 "use client";
 
-// Onboarding wizard — 3 steps in a single client component.
+// Onboarding wizard — 4 steps in a single client component.
 //
 // Step 1: pick stage (radio cards).
 // Step 2: pick state (searchable select).
-// Step 3: pick prep targets (multi-select chips; pre-suggested from stage).
+// Step 3: confirm the medium (12 Sep 2026 — language chips, pre-selected
+//         from the state via suggestLangForState; one tap confirms; written
+//         to User.preferredLang + the shishya-lang cookie).
+// Step 4: pick prep targets (multi-select chips; pre-suggested from stage).
 //
 // Each step shows progress at the top, "Back" and "Next" controls at
 // the bottom. The final Submit posts to /api/me/onboarding-profile,
@@ -15,12 +18,39 @@
 // passes `prefill` with the persona's stage + suggested exam codes.
 // We then render a "These look right — start" 1-click banner at the
 // top of step 1; the user can confirm in one click or fall back to
-// the regular 3-step flow.
+// the regular 4-step flow.
 
 import { useMemo, useState, useTransition } from "react";
 import { contextualExamFilter } from "@/lib/exam-aliases";
 import { useRouter } from "next/navigation";
 import { STAGE_OPTIONS, statesForWizard } from "@/lib/onboarding-options";
+import {
+  isLanguageCode,
+  LANGUAGE_CODES,
+  languageToLocale,
+  suggestLangForState,
+  type LanguageCode,
+} from "@/lib/preferred-lang";
+import { languageName, STATES } from "@/lib/state-info";
+
+/** Copy for the language step, translated server-side (page.tsx) so the
+ *  step itself renders in the student's current UI language. */
+export interface LangStepCopy {
+  title: string;
+  body: string;
+  /** Contains "{state}". */
+  suggested: string;
+  note: string;
+}
+
+const LANG_COPY_EN: LangStepCopy = {
+  title: "Which language do you study in?",
+  body: "Questions, mock hints and the tutor follow this. Change it anytime from the language menu.",
+  suggested: "Suggested for {state}",
+  note: "Translated questions are Shishya-translated — cross-check the English when in doubt.",
+};
+
+const LANG_COOKIE = "shishya-lang";
 
 interface ExamLite {
   code: string;
@@ -43,6 +73,8 @@ export function OnboardingWizard({
   // Default is the DASHBOARD (23 Aug 2026): a signed-in user finishing or
   // skipping the wizard used to be dropped onto the anonymous homepage.
   redirectAfter = "/dashboard",
+  initialLang = null,
+  langCopy = LANG_COPY_EN,
 }: {
   exams: ExamLite[];
   prefill?: PersonaPrefill | null;
@@ -53,6 +85,11 @@ export function OnboardingWizard({
    * straight into the "Pick your first exam" hero.
    */
   redirectAfter?: string;
+  /** A language the student already signalled (stored non-EN
+   *  preferredLang, or a non-English cookie). Pre-selects step 3 and
+   *  suppresses the state-based suggestion. Null = suggest from state. */
+  initialLang?: string | null;
+  langCopy?: LangStepCopy;
 }) {
   const router = useRouter();
   const [stepIdx, setStepIdx] = useState(0);
@@ -61,6 +98,11 @@ export function OnboardingWizard({
   // useful for state-specific exams + scholarships).
   const [stage, setStage] = useState<string>(prefill?.stage ?? "");
   const [state, setState] = useState<string>("");
+  // Language step. `langTouched` = the student tapped a chip (or arrived
+  // with a real signal), so the state-based suggestion never overrides an
+  // explicit choice — including an explicit English.
+  const [lang, setLang] = useState<LanguageCode | "">(isLanguageCode(initialLang) ? initialLang : "");
+  const [langTouched, setLangTouched] = useState(isLanguageCode(initialLang));
   const [prepCodes, setPrepCodes] = useState<string[]>(prefill?.prepCodes ?? []);
   const [examQuery, setExamQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +143,13 @@ export function OnboardingWizard({
         if (opt) setPrepCodes(opt.suggestedPrepCodes);
       }
     }
-    setStepIdx((i) => Math.min(i + 1, 2));
+    if (stepIdx === 1 && !langTouched) {
+      // Leaving the state step: pre-select the medium from the state
+      // (MH → Marathi, AP/TS → Telugu, Hindi belt → Hindi, …). Only a
+      // suggestion — step 3 confirms it in one tap.
+      setLang(suggestLangForState(state));
+    }
+    setStepIdx((i) => Math.min(i + 1, 3));
   }
 
   function back() {
@@ -120,12 +168,23 @@ export function OnboardingWizard({
       const res = await fetch("/api/me/onboarding-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage, state, prepCodes }),
+        body: JSON.stringify({ stage, state, prepCodes, lang: lang || undefined }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError(data.error ?? `Save failed (${res.status})`);
         return;
+      }
+      // Mirror the confirmed medium into the UI cookie (same write as
+      // <LangSwitcher />). An explicit English writes "en" too — the
+      // stored EN is otherwise read as "unset" (src/lib/preferred-lang.ts),
+      // so this is what keeps an English chooser in English.
+      if (lang) {
+        try {
+          document.cookie = `${LANG_COOKIE}=${languageToLocale(lang) ?? "en"}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+        } catch {
+          /* non-DOM env */
+        }
       }
       // The consequent flow: they just told us their exam — the single
       // most valuable next step is turning it into a day-by-day plan.
@@ -157,7 +216,7 @@ export function OnboardingWizard({
 
   // 1-click confirm — fires only when a persona prefilled the form.
   // Writes the persona's stage + prep codes directly and skips the
-  // 3-step flow. Includes a small analytics ping to track which
+  // 4-step flow. Includes a small analytics ping to track which
   // personas convert here vs in the full wizard. The kind=CTA_CLICKED
   // is the generic ad-hoc event kind; the actual event subtype lives
   // in props so we don't need a schema migration to ship persona
@@ -235,7 +294,7 @@ export function OnboardingWizard({
 
       {/* Progress */}
       <div className="flex items-center gap-2">
-        {[0, 1, 2].map((i) => (
+        {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
             className={`h-1.5 flex-1 rounded-full transition-colors ${
@@ -244,7 +303,7 @@ export function OnboardingWizard({
           />
         ))}
       </div>
-      <p className="mt-2 text-[11px] text-ink-500">Step {stepIdx + 1} of 3</p>
+      <p className="mt-2 text-[11px] text-ink-500">Step {stepIdx + 1} of 4</p>
 
       <div className="mt-5">
         {stepIdx === 0 && (
@@ -254,6 +313,18 @@ export function OnboardingWizard({
           <Step2 state={state} setState={setState} options={allStates} />
         )}
         {stepIdx === 2 && (
+          <StepLang
+            lang={lang}
+            setLang={(v) => {
+              setLang(v);
+              setLangTouched(true);
+            }}
+            suggested={suggestLangForState(state)}
+            stateName={state ? STATES[state]?.name ?? "" : ""}
+            copy={langCopy}
+          />
+        )}
+        {stepIdx === 3 && (
           <Step3
             stage={stageOption?.label ?? "your stage"}
             prepCodes={prepCodes}
@@ -288,7 +359,7 @@ export function OnboardingWizard({
               Back
             </button>
           )}
-          {stepIdx < 2 ? (
+          {stepIdx < 3 ? (
             <button
               type="button"
               onClick={next}
@@ -378,6 +449,64 @@ function Step2({
           You can change this anytime in /me/settings.
         </p>
       )}
+    </>
+  );
+}
+
+// Step 3 — the medium. Chips over the ten storable languages, the
+// state's suggestion first and pre-selected; one tap changes it, "Continue"
+// confirms. English is a chip like any other — an explicit choice, never a
+// silent default.
+function StepLang({
+  lang,
+  setLang,
+  suggested,
+  stateName,
+  copy,
+}: {
+  lang: LanguageCode | "";
+  setLang: (v: LanguageCode) => void;
+  suggested: LanguageCode;
+  stateName: string;
+  copy: LangStepCopy;
+}) {
+  const ordered: LanguageCode[] = [suggested, ...LANGUAGE_CODES.filter((c) => c !== suggested)];
+  return (
+    <>
+      <h2 className="text-lg font-semibold text-ink-900">{copy.title}</h2>
+      <p className="mt-1 text-xs text-ink-600">{copy.body}</p>
+      {stateName && (
+        <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-ink-500">
+          {copy.suggested.replace("{state}", stateName)}
+        </p>
+      )}
+      <ul className={`${stateName ? "mt-2" : "mt-4"} grid grid-cols-2 gap-2 sm:grid-cols-3`}>
+        {ordered.map((code) => {
+          const active = lang === code;
+          const name = languageName(code);
+          return (
+            <li key={code}>
+              <button
+                type="button"
+                onClick={() => setLang(code)}
+                className={`flex w-full flex-col items-start rounded-lg border px-3 py-2 text-left transition-colors ${
+                  active
+                    ? "border-saffron-500 bg-saffron-50"
+                    : "border-ink-200 bg-white hover:border-saffron-400"
+                }`}
+                aria-pressed={active}
+                lang={code.toLowerCase()}
+              >
+                <span className="text-sm font-semibold text-ink-900">{name.native}</span>
+                {name.en !== name.native && (
+                  <span className="text-[11px] text-ink-600" lang="en">{name.en}</span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-3 text-[11px] text-ink-500">{copy.note}</p>
     </>
   );
 }

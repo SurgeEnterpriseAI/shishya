@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
+import { resolvePreferredLocale } from "@/lib/preferred-lang";
 import { MockPlayer } from "./MockPlayer";
 
 export default async function MockPlayerPage({
@@ -139,12 +140,15 @@ export default async function MockPlayerPage({
   // Now we KNOW we're rendering the player, so we need the questions.
   // Run the questions fetch in parallel with getT() — both are
   // independent and getT may do a User.preferredLang lookup.
-  const [questions, tt] = await Promise.all([
+  const [questions, tt, pref] = await Promise.all([
     prisma.question.findMany({
       where: { id: { in: mock.questionIds } },
       include: { topic: { select: { code: true, name: true } } },
     }),
     getT(),
+    // Student's language (12 Sep 2026): one PK read so a stored non-EN
+    // preferredLang beats the UI cookie for the in-mock language hint.
+    prisma.user.findUnique({ where: { id: userId }, select: { preferredLang: true } }).catch(() => null),
   ]);
   const byId = new Map(questions.map((q) => [q.id, q]));
   const orderedQs = mock.questionIds
@@ -181,7 +185,7 @@ export default async function MockPlayerPage({
       startedAt={attempt.startedAt.toISOString()}
       questions={orderedQs}
       existingAnswers={(attempt.answers as any[]) ?? []}
-      initialLocale={locale}
+      initialLocale={resolvePreferredLocale({ preferredLang: pref?.preferredLang, cookie: locale })}
       practice={
         // USER_REQUEST = the custom topic builder (1 Sep 2026) — a
         // self-built drill earns instant-feedback mode like other

@@ -21,7 +21,11 @@
     },
     {
       "path": "/api/cron/refresh-exam-data",
-      "schedule": "15 1 * * *"
+      "schedule": "15 1,7,13 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-exam-data/today-pm",
+      "schedule": "45 14 * * *"
     },
     {
       "path": "/api/cron/refresh-rank-bands",
@@ -33,7 +37,7 @@
     },
     {
       "path": "/api/cron/refresh-phase-articles",
-      "schedule": "30 1 * * *"
+      "schedule": "30 1,6 * * *"
     },
     {
       "path": "/api/cron/refresh-discussions",
@@ -78,10 +82,6 @@
     {
       "path": "/api/cron/indexnow-examweek",
       "schedule": "45 2 * * *"
-    },
-    {
-      "path": "/api/cron/refresh-phase-articles",
-      "schedule": "30 6 * * *"
     },
     {
       "path": "/api/cron/evening-nudge",
@@ -133,7 +133,7 @@
     },
     {
       "path": "/api/cron/exam-eve",
-      "schedule": "0 13 * * *"
+      "schedule": "0,45 13 * * *"
     },
     {
       "path": "/api/cron/exam-alerts",
@@ -146,18 +146,6 @@
     {
       "path": "/api/cron/result-day",
       "schedule": "15 4 * * *"
-    },
-    {
-      "path": "/api/cron/refresh-exam-data",
-      "schedule": "15 7 * * *"
-    },
-    {
-      "path": "/api/cron/refresh-exam-data",
-      "schedule": "15 13 * * *"
-    },
-    {
-      "path": "/api/cron/exam-eve",
-      "schedule": "45 13 * * *"
     },
     {
       "path": "/api/cron/exam-day-after",

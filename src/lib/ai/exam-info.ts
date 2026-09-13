@@ -14,7 +14,12 @@
 // 23 Aug 2026 (exam tracker): every date now also carries
 //   kind        — NOTIFICATION | APPLICATION_START | APPLICATION_END |
 //                 CORRECTION_WINDOW | ADMIT_CARD | EXAM | ANSWER_KEY |
-//                 RESULT | INTERVIEW | OTHER
+//                 QUESTION_PAPER | RESULT | INTERVIEW | OTHER
+//                 (QUESTION_PAPER, 13 Sep 2026: the conducting body's own
+//                 published paper / booklet for a stage already held —
+//                 stored ONLY when cited on the body's own host, so it is
+//                 official-tier by construction; never reported/expected —
+//                 see enforceQuestionPaperRule)
 //   date        — absolute YYYY-MM-DD when the model found/knows it
 //                 (daysFromNow is derived from it so older callers work)
 //   confidence  — "official" ONLY when dated by an official/reliable
@@ -28,6 +33,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { recordAiUsage } from "@/lib/ai/usage";
+import { isOfficialSource } from "@/lib/official-source";
 import { anthropic, MODEL } from "./client";
 
 export interface ExamInfoInput {
@@ -57,6 +63,7 @@ export type DateKind =
   | "ADMIT_CARD"
   | "EXAM"
   | "ANSWER_KEY"
+  | "QUESTION_PAPER"
   | "RESULT"
   | "INTERVIEW"
   | "OTHER";
@@ -69,6 +76,7 @@ export const DATE_KINDS: DateKind[] = [
   "ADMIT_CARD",
   "EXAM",
   "ANSWER_KEY",
+  "QUESTION_PAPER",
   "RESULT",
   "INTERVIEW",
   "OTHER",
@@ -104,8 +112,9 @@ RULES:
    Never present an estimate as official. Never invent vacancy counts or cut-off marks.
 1b. SOURCE QUALITY: for every "official" date, work hardest to cite the CONDUCTING BODY'S OWN website (their notice/PDF/press page — gov.in / nic.in / the official portal given in the input). Search it directly (e.g. site:ssc.gov.in). The platform labels conducting-body citations "OFFICIAL" and everything else (newspapers, testbook/adda247-style coaching portals) merely "reported" — so a coaching-site URL is strictly weaker evidence even for the same fact. Cite a secondary source only when the official page genuinely cannot be found, and prefer national newspapers over coaching portals.
 2. Prefer ABSOLUTE dates ("date": "YYYY-MM-DD") whenever you know them (official or expected). If only a rough window is known, still give your best single date and say "(expected)" in the label; put the window in "notes" ("usually mid-June to early July").
-3. Give each date a "kind" from exactly this list: NOTIFICATION, APPLICATION_START, APPLICATION_END, CORRECTION_WINDOW, ADMIT_CARD, EXAM, ANSWER_KEY, RESULT, INTERVIEW, OTHER. Set "isExamDay": true only on EXAM rows. Multi-stage exams (Tier 1/2, Prelims/Mains) get one EXAM row per stage with the stage in the label.
+3. Give each date a "kind" from exactly this list: NOTIFICATION, APPLICATION_START, APPLICATION_END, CORRECTION_WINDOW, ADMIT_CARD, EXAM, ANSWER_KEY, QUESTION_PAPER, RESULT, INTERVIEW, OTHER. Set "isExamDay": true only on EXAM rows. Multi-stage exams (Tier 1/2, Prelims/Mains) get one EXAM row per stage with the stage in the label.
 3b. ANSWER_KEY rows are the strictest of all: emit an ANSWER_KEY row ONLY when the conducting body has actually announced or published the answer key (provisional or final) for that stage and you can cite the URL in "source" with "confidence": "official". NEVER estimate an answer-key date from previous cycles, coaching-site guesses or "usually within a week" patterns — an estimated key date is worse than no row. When no key has been published for a stage, emit NO ANSWER_KEY row for it and instead append the exact line "no key published for this stage" to that EXAM row's "notes".
+3c. QUESTION_PAPER rows are equally strict: emit one ONLY when the conducting body has itself published the question paper / booklet for a stage that has ALREADY been held, on its OWN website (e.g. upsc.gov.in "Question Papers", the SSC / state PSC portal). "source" = that exact URL, "confidence": "official", "date" = the day it was published (the exam day when the page carries no date), label "Question paper — {stage}", "isExamDay": false. Never from coaching / news sites, never estimated, never for a stage not yet held. When the body has not published the paper, emit no row — the platform drops any QUESTION_PAPER row not cited on the body's own host.
 4. Cover the CURRENT cycle end to end: notification → application window → admit card → exam day(s) → answer key → result. Include recent past milestones (up to ~120 days back) so the tracker shows "done" steps, and upcoming ones up to ~18 months ahead when the next cycle's notification is expected.
 5. News: each item title MUST be exam-specific ("Tier 1 admit card window confirmed by SSC"), body 1-3 sentences, and "source" = the real URL when you found one (null otherwise). Recent (last 60 days) news only. If nothing genuinely new happened, return fewer items — never filler.
 6. If the exam is low-coverage and you don't have confident detail, return shorter arrays (1-2 news, 3-5 expected dates) rather than padding.
@@ -232,10 +241,35 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
 
   return {
     news,
-    dates: enforceAnswerKeyRule(dates),
+    dates: enforceQuestionPaperRule(enforceAnswerKeyRule(dates), input.officialUrl),
     inputTokens: response.usage.input_tokens,
     outputTokens: response.usage.output_tokens,
   };
+}
+
+/**
+ * Rule 3c, enforced in code (13 Sep 2026, exam-week machine): a
+ * QUESTION_PAPER row survives ONLY when it is "official" AND its cited
+ * URL sits on the conducting body's own host (src/lib/official-source.ts:
+ * the regulated gov.in / nic.in / ac.in families, the known commercial-TLD
+ * bodies, or the exam's own portal `officialUrl`). Everything else —
+ * coaching-site paper PDFs, news reports, estimates — is dropped, so a
+ * stored paper row is official-tier by construction and the tracker can
+ * label it "Question paper (official)" without a second check. Kept rows
+ * are never exam days and always say "question paper" in the label.
+ */
+export function enforceQuestionPaperRule(dates: ImportantDate[], officialUrl?: string | null): ImportantDate[] {
+  const out: ImportantDate[] = [];
+  for (const d of dates) {
+    if (d.kind !== "QUESTION_PAPER") {
+      out.push(d);
+      continue;
+    }
+    if (d.confidence !== "official" || !d.source || !isOfficialSource(d.source, officialUrl)) continue;
+    const label = /question paper/i.test(d.label) ? d.label : `Question paper — ${d.label}`;
+    out.push({ ...d, isExamDay: false, label: label.slice(0, 120) });
+  }
+  return out;
 }
 
 /** The notes line an EXAM row carries when no answer key has been
@@ -313,6 +347,9 @@ export function kindFromLabel(label: string, isExamDay = false): DateKind {
   const l = label.toLowerCase();
   if (isExamDay) return "EXAM";
   if (/answer key|response sheet|objection/.test(l)) return "ANSWER_KEY";
+  // Before the EXAM line below: "Question paper — Tier 1" contains "paper"
+  // and "tier" and would otherwise become an exam day (13 Sep 2026).
+  if (/question paper|question booklet|test booklet/.test(l)) return "QUESTION_PAPER";
   if (/admit card|hall ticket|call letter|e-admit/.test(l)) return "ADMIT_CARD";
   if (/result|merit list|scorecard|score card|final list|selection list|shortlist/.test(l)) return "RESULT";
   if (/interview|document verification|dv\b|pet\b|pst\b|medical|skill test|typing test|cpt\b|dest\b/.test(l)) return "INTERVIEW";

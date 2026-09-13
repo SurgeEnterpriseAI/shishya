@@ -26,9 +26,16 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
+import { localeNames } from "@/lib/i18n";
 import { clampAnonQuizCount, getAnonCutoffRows, getAnonQuiz, parseAnonQuizSet } from "@/lib/anon-quiz";
+import { cachedQuizTranslations } from "@/lib/anon-quiz-locale";
 import { categoryHeaderKey } from "@/lib/category-cutoff";
-import { AnonQuizPlayer, type AnonQuizCutoff, type AnonQuizExamWeek } from "@/components/AnonQuizPlayer";
+import {
+  AnonQuizPlayer,
+  type AnonQuizCutoff,
+  type AnonQuizExamWeek,
+  type AnonQuizTranslationPack,
+} from "@/components/AnonQuizPlayer";
 import { alertPhase, examAlertLabels, getExamWeekStateByCode } from "@/lib/exam-week-inputs";
 
 export const metadata: Metadata = { robots: { index: false, follow: true } };
@@ -46,13 +53,29 @@ export default async function ExamQuizPage({
   const count = clampAnonQuizCount(sp.n);
   const ids = parseAnonQuizSet(sp.set);
   const fromCutoff = (Array.isArray(sp.from) ? sp.from[0] : sp.from) === "cutoff";
-  const [quiz, examWeekState, { t }, session, cutoffRows] = await Promise.all([
+  const [quiz, examWeekState, { t, locale }, session, cutoffRows] = await Promise.all([
     getAnonQuiz({ examCode: code, count, ids }),
     getExamWeekStateByCode(code),
     getT(),
     auth().catch(() => null),
     fromCutoff ? getAnonCutoffRows(code) : Promise.resolve(null),
   ]);
+  // Student's language (12 Sep 2026): on a /hi or /te twin (or with a
+  // non-English cookie) overlay only the questions that ALREADY have a
+  // cached translation — one indexed SELECT, never the translator. The
+  // player labels each overlaid question "Shishya-translated — cross-check
+  // the English" and keeps English one tap away. Empty on "en".
+  const translatedById = quiz ? await cachedQuizTranslations(quiz, locale) : {};
+  const translation: AnonQuizTranslationPack | undefined =
+    quiz && Object.keys(translatedById).length > 0
+      ? {
+          locale,
+          localeName: localeNames[locale],
+          byId: translatedById,
+          note: t("quiz.translated.note"),
+          seeIn: t("quiz.seeIn"),
+        }
+      : undefined;
   const examWeek: AnonQuizExamWeek | undefined = quiz
     ? { phase: alertPhase(examWeekState), signedIn: !!session?.user?.id, ...examAlertLabels(t, quiz.examShort) }
     : undefined;
@@ -111,7 +134,7 @@ export default async function ExamQuizPage({
                 : `No signup needed. Answer ${n} real ${quiz.examShort} questions, get instant scoring and solutions, then unlock full mocks and your weak-topic map for free.`}
             </p>
             <div className="mt-6">
-              <AnonQuizPlayer quiz={quiz} examWeek={examWeek} cutoff={cutoff} />
+              <AnonQuizPlayer quiz={quiz} examWeek={examWeek} cutoff={cutoff} translation={translation} />
             </div>
           </>
         )}

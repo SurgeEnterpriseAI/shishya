@@ -240,6 +240,10 @@ export const config = {
     "/typing",
     "/descriptive",
     "/live-test",
+    // Score-share landings (13 Sep 2026): a friend arriving from a WhatsApp
+    // score share must set the attribution cookie so their signup carries
+    // utm_source=whatsapp&utm_medium=share on the SIGNUP row.
+    "/share/:path*",
     "/api/auth/signin/:path*",
   ],
 };

@@ -1,24 +1,29 @@
-// /onboarding — 30-second 3-question profile wizard.
+// /onboarding — 30-second 4-question profile wizard.
 //
 // Asked the first time a signed-in user lands on / or /dashboard. The
 // wizard captures:
 //
 //   1. Stage (Class 9-10 / Class 11-12 / UG / PG / Working / Other)
 //   2. State (Indian state code)
-//   3. Prep target (multi-select exam codes; pre-suggested based on stage)
+//   3. Language (12 Sep 2026 — the medium, pre-suggested from the state,
+//      confirmed in one tap; written to User.preferredLang)
+//   4. Prep target (multi-select exam codes; pre-suggested based on stage)
 //
 // Submission writes to User.onbStage / onbState / onbPrepCodes /
-// onbCompletedAt, then redirects to /. The homepage then renders a
-// personalised hub instead of the generic 7-tile landing.
+// onbCompletedAt (+ preferredLang), then redirects to /. The homepage then
+// renders a personalised hub instead of the generic 7-tile landing.
 //
 // Server component shell — client form below.
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { getT } from "@/lib/i18n-server";
+import { localeToLanguage } from "@/lib/preferred-lang";
 import { OnboardingWizard } from "./OnboardingWizard";
 import { findPersona } from "@/data/personas";
 
@@ -28,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 interface ExamRow { code: string; shortName: string; name: string; category: string }
-interface UserRow { onbCompletedAt: Date | null }
+interface UserRow { onbCompletedAt: Date | null; preferredLang: string | null }
 
 export default async function OnboardingPage({
   searchParams,
@@ -61,11 +66,14 @@ export default async function OnboardingPage({
   // before, so we err on the side of showing the wizard again
   // (mildly annoying for repeat users, but never blocks a signup).
   let onbCompletedAt: Date | null = null;
+  let preferredLang: string | null = null;
   try {
     const userRows = await prisma.$queryRaw<UserRow[]>`
-      SELECT "onbCompletedAt" FROM "User" WHERE "id" = ${session.user.id} LIMIT 1
+      SELECT "onbCompletedAt", "preferredLang"::text AS "preferredLang"
+      FROM "User" WHERE "id" = ${session.user.id} LIMIT 1
     `;
     onbCompletedAt = userRows[0]?.onbCompletedAt ?? null;
+    preferredLang = userRows[0]?.preferredLang ?? null;
   } catch (err) {
     console.error("[onboarding] user lookup failed, defaulting to not-completed:", err);
   }
@@ -114,6 +122,26 @@ export default async function OnboardingPage({
       }
     : null;
 
+  // Language step (12 Sep 2026). Pre-select from a real signal only: a
+  // stored non-EN preferredLang, else a non-English cookie (the /hi twin
+  // a searcher landed on). The default EN is "unset" (see
+  // src/lib/preferred-lang.ts), so with no signal the wizard suggests
+  // from the state instead. Step copy renders in the current UI locale.
+  const { t } = await getT();
+  const cookieLang = (await cookies()).get("shishya-lang")?.value ?? null;
+  const initialLang =
+    preferredLang && preferredLang !== "EN"
+      ? preferredLang
+      : cookieLang && cookieLang !== "en"
+        ? localeToLanguage(cookieLang)
+        : null;
+  const langCopy = {
+    title: t("onb.lang.title"),
+    body: t("onb.lang.body"),
+    suggested: t("onb.lang.suggested"),
+    note: t("onb.lang.note"),
+  };
+
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <Header />
@@ -133,7 +161,7 @@ export default async function OnboardingPage({
           </p>
         ) : (
           <p className="mt-2 max-w-2xl text-sm text-ink-700">
-            Three quick questions so we can show you the right content. Takes
+            Four quick questions so we can show you the right content. Takes
             about 30 seconds. You can skip and pick later from{" "}
             <Link href="/me/settings" className="text-saffron-700 underline">
               profile settings
@@ -142,7 +170,13 @@ export default async function OnboardingPage({
           </p>
         )}
 
-        <OnboardingWizard exams={exams} prefill={prefill} redirectAfter={redirectAfter} />
+        <OnboardingWizard
+          exams={exams}
+          prefill={prefill}
+          redirectAfter={redirectAfter}
+          initialLang={initialLang}
+          langCopy={langCopy}
+        />
       </section>
     </main>
   );
