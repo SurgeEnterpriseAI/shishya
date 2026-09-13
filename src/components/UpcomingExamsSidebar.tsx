@@ -24,6 +24,10 @@
 // phase article (📋 Checklist / 🔴 Live / 📊 Reactions) via
 // src/lib/exam-phase.ts, shared with the refresh-phase-articles cron.
 // Past-window rows keep a Reactions chip whenever the article exists.
+// The Checklist chip always deep-links /exams/{code}/checklist (13 Sep
+// 2026): that page is built from stored facts for every exam, so it is
+// never a placeholder. Live / Reactions still go to the hub without a
+// real article.
 
 import { useState } from "react";
 import Link from "next/link";
@@ -74,9 +78,12 @@ interface PhaseChip {
   color: string;
   /** Chip body — article snippet when available, else static teaser. */
   text: string;
-  /** Deep-link to the phase article ONLY when one exists; otherwise
-   *  the exam overview so the click never dead-ends. */
+  /** Deep-link to the phase page only when it has content — a real
+   *  article, or the checklist, which is built from stored facts for
+   *  every exam (13 Sep 2026); otherwise the exam overview so the click
+   *  never dead-ends. */
   href: string;
+  /** True when `href` deep-links the phase page (drives the → arrow). */
   hasArticle: boolean;
 }
 
@@ -84,12 +91,12 @@ const PHASE_CHIP_META: Record<ExamPhase, { icon: string; color: string; fallback
   CHECKLIST: {
     icon: "📋",
     color: "bg-amber-100 text-amber-900",
-    fallback: "Last-minute revision sheet — what to carry, topics to skim, time-table.",
+    fallback: "Last-minute checklist — what to carry, admit card, exam pattern, dates with their source tier.",
   },
   LIVE: {
     icon: "🔴",
     color: "bg-rose-100 text-rose-900",
-    fallback: "Live shift-by-shift difficulty + first answer-key trackers as they release.",
+    fallback: "Exam day — timings on the tracker; rate the paper on the exam page once your shift is over.",
   },
   REACTIONS: {
     icon: "📊",
@@ -106,17 +113,20 @@ function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
   if (phase) {
     const meta = PHASE_CHIP_META[phase];
     const snippet = event.phaseSnippet?.trim();
-    const hasArticle = Boolean(snippet);
+    // The checklist page always carries stored facts (what to carry,
+    // admit card, pattern, dated rows with tier) — link it with or
+    // without an article. Live / reactions need a real article.
+    const deepLink = Boolean(snippet) || phase === "CHECKLIST";
     return {
       phase,
       slug: PHASE_SLUG[phase],
       icon: meta.icon,
       color: meta.color,
       text: snippet || meta.fallback,
-      href: hasArticle
+      href: deepLink
         ? `/exams/${event.examCode}/${PHASE_SLUG[phase]}`
         : `/exams/${event.examCode}`,
-      hasArticle,
+      hasArticle: deepLink,
     };
   }
   // Outside the live phase windows (concluded day 4-7, or the Past

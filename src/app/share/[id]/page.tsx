@@ -88,7 +88,12 @@ export async function generateMetadata({
       title: headline,
       description: `Real Indian exam prep. Free mocks, PYQ, AI tutor.`,
     },
-    robots: { index: true, follow: true },
+    // A per-attempt landing is a social preview, never a search result
+    // (13 Sep 2026, index shape): thousands of near-identical "a friend
+    // scored X%" pages would only dilute the index Bing / ChatGPT ground on.
+    // The OG card still unfurls. robots.ts deliberately leaves /share/
+    // crawlable — a disallowed URL could never show this noindex.
+    robots: { index: false, follow: false },
   };
 }
 

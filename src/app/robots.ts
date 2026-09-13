@@ -13,6 +13,11 @@
 //   - /logout, /login (callback flows have state) — auth flows
 //   - /onboarding — wizard, no public value to crawlers
 //
+// NOT disallowed, on purpose: /share/ (per-attempt score landings). They
+// carry robots noindex,nofollow in their own metadata (13 Sep 2026); a
+// crawler has to fetch the page to see that, and a disallowed URL can
+// still be indexed bare from inbound WhatsApp / X links.
+//
 // Allow surfaces beneath /me that are public: /u/[handle] is in the
 // /u/ tree (NOT /me/), so it stays indexable for opted-in users.
 //
@@ -78,6 +83,7 @@ export default function robots(): MetadataRoute.Robots {
     "MistralAI-User",
     "YouBot",
   ];
+  const BURSTY_TRAINING_CRAWLERS = new Set(["ClaudeBot", "anthropic-ai", "Bytespider"]);
   return {
     rules: [
       {
@@ -87,7 +93,19 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: privatePaths,
       },
-      ...aiCrawlers.map((userAgent) => ({ userAgent, allow: "/", disallow: privatePaths })),
+      // Training crawlers that arrive in bursts get a crawl delay (13 Sep
+      // 2026: ClaudeBot fetched 32,636 pages on 11 Sep, ~5,000 per half hour
+      // between 07:00 and 12:30 IST, the same hours human page views ran
+      // 60-75% below the day before). 2 s still allows ~43k pages a day, more
+      // than any day seen, so only the burst is shaped. Search and
+      // live-answer fetchers (OAI-SearchBot, ChatGPT-User, Claude-SearchBot,
+      // Claude-User, Perplexity) are never delayed.
+      ...aiCrawlers.map((userAgent) => ({
+        userAgent,
+        allow: "/",
+        disallow: privatePaths,
+        ...(BURSTY_TRAINING_CRAWLERS.has(userAgent) ? { crawlDelay: 2 } : {}),
+      })),
       {
         // Common Crawl (feeds many LLM training sets — good for AI
         // visibility): allow public content, keep private paths out, be

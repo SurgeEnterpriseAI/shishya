@@ -49,15 +49,20 @@ export function submitIndexNow(urls: string[]): Promise<number> {
   return pingIndexNow(urls).catch(() => 0);
 }
 
-/** The exam-week URL set for one exam: hub, tracker, cutoff, plus the
- *  Hindi/Telugu twins that exist (hub + tracker — the cutoff page has no
- *  locale twin; see src/app/sitemap.ts localeTwinUrls). */
+/** The exam-week URL set for one exam: hub, tracker, cutoff, the
+ *  fact-built checklist / exam-day / after-the-paper pages (13 Sep 2026),
+ *  plus the Hindi/Telugu hub + tracker twins. Callers MUST pass the result
+ *  through gateTwinUrls (src/lib/twin-localisation.ts): a twin that is not
+ *  localised canonicalises to English and is never submitted. */
 export function examWeekUrls(code: string): string[] {
   const b = SITE_ORIGIN;
   return [
     `${b}/exams/${code}`,
     `${b}/exams/${code}/updates`,
     `${b}/exams/${code}/cutoff`,
+    `${b}/exams/${code}/checklist`,
+    `${b}/exams/${code}/live`,
+    `${b}/exams/${code}/reactions`,
     `${b}/hi/exams/${code}`,
     `${b}/te/exams/${code}`,
     `${b}/hi/exams/${code}/updates`,

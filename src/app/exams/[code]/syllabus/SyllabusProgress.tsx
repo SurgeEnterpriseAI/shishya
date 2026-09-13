@@ -9,6 +9,7 @@
 // Signed-out or JS-off: the plain list renders untouched.
 
 import { useEffect, useState } from "react";
+import { fetchSignedIn } from "@/lib/session-hint";
 
 type TState = { read: boolean; completed: boolean; mastery: number | null };
 
@@ -19,8 +20,9 @@ export function SyllabusProgress({ examCode, totalTopics }: { examCode: string; 
     let cancelled = false;
     (async () => {
       try {
-        const s = await fetch("/api/auth/session").then((r) => (r.ok ? r.json() : null));
-        if (cancelled || !s?.user) return;
+        // Hint-gated shared probe: a guest resolves false with no request.
+        const signedIn = await fetchSignedIn();
+        if (cancelled || signedIn !== true) return;
         const p = await fetch(`/api/me/topic-progress?exam=${encodeURIComponent(examCode)}`).then((r) =>
           r.ok ? r.json() : null,
         );

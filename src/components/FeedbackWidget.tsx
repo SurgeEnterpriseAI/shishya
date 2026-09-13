@@ -17,6 +17,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { apiPost } from "@/lib/api";
+import { fetchSignedIn } from "@/lib/session-hint";
 
 const AREAS = [
   "Mock tests",
@@ -73,12 +74,11 @@ export function FeedbackWidget({ signedIn: signedInProp }: { signedIn?: boolean 
   useEffect(() => {
     if (typeof signedInProp === "boolean") return; // caller resolved it
     let alive = true;
-    fetch("/api/auth/session", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (alive) setResolvedSignedIn(Boolean(data?.user?.id));
-      })
-      .catch(() => {});
+    // Shared, hint-gated probe (src/lib/session-hint.ts, 13 Sep 2026): a
+    // guest without the `shishya_in` hint resolves false with no request.
+    fetchSignedIn().then((v) => {
+      if (alive) setResolvedSignedIn(v === true);
+    });
     return () => {
       alive = false;
     };

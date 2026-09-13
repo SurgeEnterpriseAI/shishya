@@ -1,39 +1,44 @@
-// GET /api/cron/indexnow — re-submission of URLs to IndexNow (the shared
-// instant-indexing API behind Bing → Copilot + ChatGPT-search grounding,
-// and consumed by Perplexity's pipeline).
+// GET /api/cron/indexnow — IndexNow submissions (the shared instant-
+// indexing API behind Bing → Copilot + ChatGPT-search grounding, also
+// consumed by Perplexity's pipeline).
 //
-// Two scopes:
-//   sitemap  (default; weekly per vercel.json) — every sitemap URL. The
-//            original submission was a one-shot script; every page shipped
-//            since was never pushed. Idempotent — engines dedupe.
-//   examweek (6 Sep 2026 Exam Week Mode) — for every exam currently in
-//            phase week…post (typed exam-day row within ±7 days): hub,
-//            /updates, /cutoff, the hi/te twins, and any REAL phase-article
-//            URL. These pages change daily that week; weekly is too slow.
-//            The DAILY schedule lives on its own path,
-//            /api/cron/indexnow-examweek (Vercel cron paths with a query
-//            string are undocumented); ?scope=examweek here is for manual
-//            runs and shares the same helper (src/lib/indexnow-examweek.ts).
-//
-// Scope selection: ?scope=examweek, or — because Vercel sends the
-// triggering cron expression in x-vercel-cron-schedule and one path may
-// carry several schedules — any schedule WITHOUT a day-of-week restriction
-// (i.e. a daily one) is treated as examweek; the weekly one stays sitemap.
+// Scopes:
+//   news (default) — 13 Sep 2026, index shape. Until then this job pushed
+//            EVERY sitemap URL every Monday (~14k: 5.5k news permalinks,
+//            ~84% of them restatements, plus 1,154 hi/te twins, most of
+//            them an English body in a translated frame) into the index
+//            ChatGPT grounds its answers on. Now it submits only genuinely
+//            new news permalinks: rows CREATED since the previous scheduled
+//            run — window = this cron's own interval, read from
+//            x-vercel-cron-schedule, + 25% overlap; ?sinceHours=N for manual
+//            runs — that are not a near-duplicate (same story by headline,
+//            or ≥ 80% similar body) of an earlier row of the same exam
+//            (src/lib/news-dedupe.ts).
+//            No table remembers which URLs were sent and a schema change is
+//            out of scope, so "changed since the last submission" is the
+//            schedule window; the durable fix is a per-URL submission log.
+//            Everything else is discovered through the sitemap; the writers
+//            that mint result and phase-article URLs ping at creation.
+//   examweek — the exam-week URL set, localised twins only. Same handler as
+//            /api/cron/indexnow-examweek (the daily schedule); selected here
+//            only by ?scope=examweek. (The old sniffing that treated any
+//            daily schedule on this path as examweek is gone — this path can
+//            now run daily as the news scope.)
 // Auth: Bearer ${CRON_SECRET}.
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 export const dynamic = "force-dynamic";
 
-import { pingIndexNow } from "@/lib/indexnow";
-import { submitExamWeekIndexNow } from "@/lib/indexnow-examweek";
+import { prisma } from "@/lib/db/prisma";
+import { pingIndexNow, SITE_ORIGIN } from "@/lib/indexnow";
+import { indexNowWindowMs, selectFreshStories, STORY_LOOKBACK_DAYS, type StoryRow } from "@/lib/news-dedupe";
+import { GET as examWeekGET } from "../indexnow-examweek/route";
 
-const HOST = "shishya.in";
-
-function isWeeklySchedule(expr: string): boolean {
-  const fields = expr.trim().split(/\s+/);
-  return fields.length === 5 && fields[4] !== "*";
-}
+const DAY_MS = 86_400_000;
+const CHUNK = 10_000;
+const FRESH_CAP = 2_000;
+const EARLIER_CAP = 20_000;
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -43,22 +48,45 @@ export async function GET(req: Request) {
   }
 
   const url = new URL(req.url);
-  const schedule = req.headers.get("x-vercel-cron-schedule") ?? "";
-  const scope = url.searchParams.get("scope") ?? (schedule && !isWeeklySchedule(schedule) ? "examweek" : "sitemap");
+  if (url.searchParams.get("scope") === "examweek") return examWeekGET(req);
 
-  if (scope === "examweek") {
-    const report = await submitExamWeekIndexNow();
-    return Response.json(report, { status: report.ok ? 200 : 500 });
-  }
-
+  const windowMs = indexNowWindowMs(req.headers.get("x-vercel-cron-schedule"), url.searchParams.get("sinceHours"));
+  const since = new Date(Date.now() - windowMs);
+  const lookback = new Date(since.getTime() - STORY_LOOKBACK_DAYS * DAY_MS);
   try {
-    const xml = await (await fetch(`https://${HOST}/sitemap.xml`, { cache: "no-store" })).text();
-    const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-    if (urls.length === 0) return Response.json({ ok: false, error: "no urls parsed" }, { status: 500 });
-    const acceptedChunks = await pingIndexNow(urls);
-    const totalChunks = Math.ceil(urls.length / 10_000);
-    return Response.json({ ok: acceptedChunks === totalChunks, scope, urls: urls.length, acceptedChunks, totalChunks });
+    const fresh = await prisma.$queryRaw<(StoryRow & { code: string })[]>`
+      SELECT n.id, n."examId", n.title, LEFT(n.body, 600) AS body, n."createdAt", e.code
+      FROM "ExamNewsItem" n JOIN "Exam" e ON e.id = n."examId"
+      WHERE n."createdAt" >= ${since} AND n."archivedAt" IS NULL AND e.active = TRUE
+      ORDER BY n."createdAt" ASC LIMIT ${FRESH_CAP}`;
+    const examIds = [...new Set(fresh.map((r) => r.examId))];
+    // Earlier rows of the same exams, live or archived — the families a
+    // fresh row may merely restate.
+    const earlier =
+      examIds.length > 0
+        ? await prisma.$queryRaw<StoryRow[]>`
+            SELECT id, "examId", title, LEFT(body, 600) AS body, "createdAt"
+            FROM "ExamNewsItem"
+            WHERE "examId" = ANY(${examIds}::text[]) AND "createdAt" >= ${lookback} AND "createdAt" < ${since}
+            ORDER BY "createdAt" DESC LIMIT ${EARLIER_CAP}`
+        : [];
+    const { keep, nearDuplicate } = selectFreshStories(fresh, earlier);
+    const codeById = new Map(fresh.map((r) => [r.id, r.code]));
+    const urls = keep.map((id) => `${SITE_ORIGIN}/exams/${codeById.get(id)}/news/${id}`);
+    const acceptedChunks = urls.length ? await pingIndexNow(urls) : 0;
+    const totalChunks = Math.ceil(urls.length / CHUNK);
+    return Response.json({
+      ok: acceptedChunks === totalChunks,
+      scope: "news",
+      since: since.toISOString(),
+      windowHours: Math.round(windowMs / 360_000) / 10,
+      created: fresh.length,
+      submitted: urls.length,
+      nearDuplicates: nearDuplicate.length,
+      acceptedChunks,
+      totalChunks,
+    });
   } catch (err) {
-    return Response.json({ ok: false, scope, error: String((err as Error)?.message).slice(0, 200) }, { status: 500 });
+    return Response.json({ ok: false, scope: "news", error: String((err as Error)?.message).slice(0, 200) }, { status: 500 });
   }
 }

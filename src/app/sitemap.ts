@@ -115,8 +115,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
   // Exam tracker pages (23 Aug 2026) — "[exam] exam date / admit card /
   // result / notification" is the largest query class in this niche;
-  // every active exam has a tracker. Plus the Hindi/Telugu URL twins of
-  // the hub + tracker (self-canonical, hreflang-paired in page metadata).
+  // every active exam has a tracker. The Hindi/Telugu twins are listed
+  // separately below, only when localised (localeTwinUrls).
   const updatesUrls: MetadataRoute.Sitemap = exams.map((e) => ({
     url: `${base}/exams/${e.code}/updates`,
     changeFrequency: "daily" as const,
@@ -145,32 +145,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     }));
-  // Hindi/Telugu URL twins. The hub + tracker have had them since 23 Aug;
-  // the cutoff page and the score estimator declare hreflang alternates of
-  // their own (both render in the URL's language) but were English-only
-  // here, so Google had no way to discover the twins it was told exist.
-  // Cutoff: every active exam. Score estimator: the same ±30-day exam-day
-  // set as the English URL above — never a twin of a URL we don't list.
-  const localeTwinUrls: MetadataRoute.Sitemap = exams.flatMap((e) =>
-    (["hi", "te"] as const).flatMap((lc) => [
-      { url: `${base}/${lc}/exams/${e.code}`, lastModified: e.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 },
-      { url: `${base}/${lc}/exams/${e.code}/updates`, changeFrequency: "daily" as const, priority: 0.7 },
-      { url: `${base}/${lc}/exams/${e.code}/cutoff`, changeFrequency: "weekly" as const, priority: 0.65 },
-    ]),
-  );
-  localeTwinUrls.push(
-    ...estimatorExams.flatMap((e) =>
-      (["hi", "te"] as const).map((lc) => ({
-        url: `${base}/${lc}/exams/${e.code}/score-estimate`,
-        changeFrequency: "weekly" as const,
-        priority: 0.5,
-      })),
-    ),
-  );
-  localeTwinUrls.push(
-    { url: `${base}/hi/exam-calendar`, changeFrequency: "daily" as const, priority: 0.7 },
-    { url: `${base}/te/exam-calendar`, changeFrequency: "daily" as const, priority: 0.7 },
-  );
+  // Hindi/Telugu URL twins — ONLY the localised ones (13 Sep 2026, index
+  // shape). A twin is listed when the native-script share of its rendered
+  // body is ≥ 30% (src/lib/twin-localisation.ts) — the same verdict the
+  // page's canonical + hreflang use, so the sitemap never lists a twin that
+  // canonicalises to the English URL. Until then every active exam's hub,
+  // tracker and cutoff twin was listed (+ estimator + calendar = 1,154 URLs)
+  // although the hub twins were 91-93% English. Score estimator: the same
+  // ±30-day exam-day set as the English URL above. A failed measurement
+  // lists no twins — a smaller sitemap beats a wrong one.
+  const { loadTwinVerdicts, loadCalendarTwinVerdict } = await import("@/lib/twin-localisation");
+  const twinVerdicts = new Map((await loadTwinVerdicts("all").catch(() => [])).map((r) => [r.code, r.verdicts]));
+  const calendarTwins = await loadCalendarTwinVerdict().catch(() => ({ hi: false, te: false }));
+  const estimatorCodes = new Set(estimatorExams.map((e) => e.code));
+  const localeTwinUrls: MetadataRoute.Sitemap = exams.flatMap((e) => {
+    const v = twinVerdicts.get(e.code);
+    if (!v) return [];
+    return (["hi", "te"] as const).flatMap((lc) => [
+      ...(v.hub[lc] ? [{ url: `${base}/${lc}/exams/${e.code}`, lastModified: e.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 }] : []),
+      ...(v.updates[lc] ? [{ url: `${base}/${lc}/exams/${e.code}/updates`, changeFrequency: "daily" as const, priority: 0.7 }] : []),
+      ...(v.cutoff[lc] ? [{ url: `${base}/${lc}/exams/${e.code}/cutoff`, changeFrequency: "weekly" as const, priority: 0.65 }] : []),
+      ...(estimatorCodes.has(e.code) && v["score-estimate"][lc]
+        ? [{ url: `${base}/${lc}/exams/${e.code}/score-estimate`, changeFrequency: "weekly" as const, priority: 0.5 }]
+        : []),
+    ]);
+  });
+  for (const lc of ["hi", "te"] as const) {
+    if (calendarTwins[lc]) localeTwinUrls.push({ url: `${base}/${lc}/exam-calendar`, changeFrequency: "daily" as const, priority: 0.7 });
+  }
   // Daily current-affairs pages — every date that has content.
   const caDates = await prisma
     .$queryRaw<{ d: Date }[]>`SELECT DISTINCT date AS d FROM "CurrentAffair" ORDER BY date DESC LIMIT 400`
@@ -210,9 +212,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Per-news permalink. EVERY ExamNewsItem we've ever generated — both
   // active (archivedAt IS NULL) and archived (archivedAt IS NOT NULL).
   // Each gets its own NewsArticle JSON-LD page at /exams/[code]/news/[id].
-  // This is the BIG SEO multiplier: every cron tick produces ~5-10 news
-  // items per top-tier exam → the index grows by hundreds of long-tail
-  // keyword pages per week, no manual authoring required.
+  // 13 Sep 2026 (index shape): the writer no longer mints a permalink per
+  // restatement — a restated story updates its existing row in place
+  // (src/lib/news-dedupe.ts), so this family now grows only by genuinely
+  // new stories. Archived rows stay listed (noindex decision pending).
   const newsItems = await prisma.examNewsItem
     .findMany({
       where: { exam: { active: true } },
@@ -277,12 +280,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
     })
     .catch(() => []);
-  const phaseUrls: MetadataRoute.Sitemap = phaseArticles.map((a) => ({
-    url: `${base}/exams/${a.exam.code}/${a.slug}`,
-    lastModified: a.updatedAt,
-    // CHECKLIST + LIVE refresh frequently during the active window.
-    changeFrequency: "daily" as const,
-    priority: 0.7,
+  // /checklist is listed for every exam below (checklistUrls), so only the
+  // LIVE / REACTIONS article URLs come from here.
+  // One entry per URL (13 Sep 2026): an exam can hold more than one active
+  // row for a phase (two REACTIONS rows each for SSC CHSL and MHT CET), and
+  // the sitemap listed those URLs twice. Keep the newest row's date.
+  const phaseByUrl = new Map<string, MetadataRoute.Sitemap[number]>();
+  for (const a of phaseArticles) {
+    if (a.slug === "checklist") continue;
+    const url = `${base}/exams/${a.exam.code}/${a.slug}`;
+    const prev = phaseByUrl.get(url);
+    if (prev?.lastModified && new Date(prev.lastModified) >= a.updatedAt) continue;
+    // LIVE refreshes frequently during the active window.
+    phaseByUrl.set(url, { url, lastModified: a.updatedAt, changeFrequency: "daily" as const, priority: 0.7 });
+  }
+  const phaseUrls: MetadataRoute.Sitemap = [...phaseByUrl.values()];
+  // Exam-day + after-the-paper pages (13 Sep 2026) lead with first-party
+  // facts (src/lib/exam-night-facts.ts) whether or not an article exists —
+  // list both for every exam inside exam week, once.
+  const { loadExamWeekExams } = await import("@/lib/exam-week-aeo");
+  const weekCodes = (await loadExamWeekExams().catch(() => [])).map((e) => e.code);
+  const phaseListed = new Set(phaseUrls.map((u) => u.url));
+  for (const code of weekCodes) {
+    for (const slug of ["live", "reactions"]) {
+      const url = `${base}/exams/${code}/${slug}`;
+      if (phaseListed.has(url)) continue;
+      phaseListed.add(url);
+      phaseUrls.push({ url, changeFrequency: "daily" as const, priority: 0.7 });
+    }
+  }
+  // Last-minute checklist (13 Sep 2026) — built from stored facts for every
+  // exam (src/lib/exam-checklist.ts). SCHOOL_BOARD containers have no page.
+  const checklistExams = await prisma
+    .$queryRaw<{ code: string }[]>`SELECT code FROM "Exam" WHERE active = TRUE AND category::text <> 'SCHOOL_BOARD'`
+    .catch(() => [] as { code: string }[]);
+  const checklistUrls: MetadataRoute.Sitemap = checklistExams.map((e) => ({
+    url: `${base}/exams/${e.code}/checklist`,
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
   }));
 
   // Previous-year-paper landing pages — one URL per (exam, year) for which
@@ -374,6 +409,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/ask",
     "/jobs-map",
     "/mentors",
+    // Student feature requests + what the team built from them (13 Sep 2026).
+    "/ideas",
     "/educators",
     "/about",
     "/pricing",
@@ -558,6 +595,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...tricksUrls,
     ...guideUrls,
     ...updatesUrls,
+    ...checklistUrls,
     ...builderUrls,
     ...localeTwinUrls,
     ...currentAffairsUrls,

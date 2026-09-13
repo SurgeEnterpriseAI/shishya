@@ -57,6 +57,7 @@ import { VacancyExplorerSidebar, VacancyExplorerPanel } from "@/components/Vacan
 import { loadVacancyExplorer, type VacancyExplorer } from "@/lib/vacancy-explorer";
 import { loadTodaysLiveTests, loadUpcomingSunday, type UpcomingSunday } from "@/lib/live-test-today";
 import { LiveTestTodayBanner } from "@/components/LiveTestTodayBanner";
+import { ExamsTodayStrip } from "@/components/ExamsTodayStrip";
 import { SundayLiveTestBanner } from "@/components/SundayLiveTestBanner";
 import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
 import { resolvePhase, istDayNumber } from "@/lib/exam-phase";
@@ -633,6 +634,10 @@ export default async function ExamsPage({
           {/* Live-test awareness — renders only when tests are open/opening
               today; visible on every step so no visitor misses test day. */}
           <LiveTestTodayBanner data={liveToday} />
+
+          {/* Exams being held today (announced dates only; else this
+              week's next announced ones) — renders nothing otherwise. */}
+          <ExamsTodayStrip />
 
           {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} inspirationVideos={inspirationVideos} grinders={grinders} sundayLive={sundayLive} />}
           {step === "scope" && goal && (

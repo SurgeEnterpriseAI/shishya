@@ -3,6 +3,10 @@
 // Client island inside /ideas — handles the upvote toggle without a
 // full page reload. The server component renders the initial state
 // (count + my upvote status) and this card just delta-updates locally.
+//
+// Built ideas (13 Sep 2026) render the team's one-line "what we built"
+// with a link, and voting is closed on them: a vote cast after something
+// is built is not a request, and it would not reach the people told.
 
 import Link from "next/link";
 import { useState } from "react";
@@ -21,6 +25,16 @@ interface IdeaCardProps {
   upvotedByMe: boolean;
   canUpvote: boolean;
   createdAt: string;
+  /** Built: show the count without a vote button. */
+  votingClosed?: boolean;
+  /**
+   * Built with a ship record: what we built + where. `markedLabel` is the
+   * server-formatted "Marked built <date>" — the day it was marked, never
+   * claimed as the day it was built.
+   */
+  ship?: { note: string; link: string; markedLabel: string } | null;
+  /** Built without a ship record: the honest line shown instead of note + link. */
+  noRecordLine?: string;
 }
 
 function relTime(iso: string): string {
@@ -42,7 +56,7 @@ export function IdeaCard(props: IdeaCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   async function toggle() {
-    if (!props.canUpvote || busy) return;
+    if (!props.canUpvote || busy || props.votingClosed) return;
     setBusy(true);
     // Optimistic flip — revert on error.
     const wasMine = mine;
@@ -69,29 +83,46 @@ export function IdeaCard(props: IdeaCardProps) {
     : props.body.slice(0, 220).trimEnd() + "…";
 
   return (
-    <article className="flex gap-3 rounded-md border border-ink-200 bg-white p-4 hover:border-ink-300">
-      {/* Upvote */}
-      <button
-        type="button"
-        onClick={toggle}
-        disabled={!props.canUpvote || busy}
-        className={
-          mine
-            ? "flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-md border border-saffron-400 bg-saffron-100 text-saffron-900"
-            : "flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-md border border-ink-200 bg-white text-ink-700 hover:border-saffron-300 hover:bg-saffron-50"
-        }
-        aria-pressed={mine}
-        title={
-          props.canUpvote
-            ? mine
-              ? "Remove your upvote"
-              : "Upvote this idea"
-            : "Sign in to upvote"
-        }
-      >
-        <span aria-hidden className="text-sm">▲</span>
-        <span className="text-xs font-semibold tabular-nums">{count}</span>
-      </button>
+    <article
+      className={
+        props.votingClosed
+          ? "flex gap-3 rounded-md border border-emerald-200 bg-white p-4"
+          : "flex gap-3 rounded-md border border-ink-200 bg-white p-4 hover:border-ink-300"
+      }
+    >
+      {/* Upvote (or the closed count on a built idea) */}
+      {props.votingClosed ? (
+        <div
+          className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-md border border-ink-200 bg-ink-50 text-ink-500"
+          title="Voting is closed on built ideas"
+          aria-label={`${count} upvote${count === 1 ? "" : "s"}, voting closed`}
+        >
+          <span aria-hidden className="text-sm">▲</span>
+          <span className="text-xs font-semibold tabular-nums">{count}</span>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={toggle}
+          disabled={!props.canUpvote || busy}
+          className={
+            mine
+              ? "flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-md border border-saffron-400 bg-saffron-100 text-saffron-900"
+              : "flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-md border border-ink-200 bg-white text-ink-700 hover:border-saffron-300 hover:bg-saffron-50"
+          }
+          aria-pressed={mine}
+          title={
+            props.canUpvote
+              ? mine
+                ? "Remove your upvote"
+                : "Upvote this idea"
+              : "Sign in to upvote"
+          }
+        >
+          <span aria-hidden className="text-sm">▲</span>
+          <span className="text-xs font-semibold tabular-nums">{count}</span>
+        </button>
+      )}
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-2">
@@ -111,6 +142,26 @@ export function IdeaCard(props: IdeaCardProps) {
           >
             {expanded ? "Show less" : "Show more"}
           </button>
+        )}
+        {props.ship && (
+          <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50/60 px-3 py-2">
+            <p className="text-sm text-ink-800">
+              <span className="font-semibold">What we built:</span> {props.ship.note}
+            </p>
+            <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+              <Link
+                href={props.ship.link}
+                prefetch={false}
+                className="font-semibold text-emerald-700 hover:underline"
+              >
+                Open it →
+              </Link>
+              <span className="text-ink-500">{props.ship.markedLabel}</span>
+            </p>
+          </div>
+        )}
+        {!props.ship && props.noRecordLine && (
+          <p className="mt-2 text-xs text-ink-500">{props.noRecordLine}</p>
         )}
         <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-500">
           <span className="rounded bg-ink-100 px-1.5 py-0.5 font-medium text-ink-700">

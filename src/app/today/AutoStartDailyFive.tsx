@@ -10,18 +10,15 @@
 // as a 5-question DIAGNOSTIC baseline — still rule-based, still today's 5.
 // A ref guard (not a cancelled flag) makes the effect fire exactly once,
 // including under React strict-mode double effects in dev.
+//
+// Copy arrives as `labels` from the server page in the student's locale
+// (13 Sep 2026) — this island never imports the i18n dictionary.
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { DailyFiveRequest } from "@/lib/study-day-five";
-import {
-  TODAY_BUILDING,
-  TODAY_BUILDING_SUB,
-  TODAY_FAILED,
-  TODAY_FAILED_NETWORK,
-  TODAY_GO_DASHBOARD,
-} from "@/lib/study-day-copy";
+import { todayBuildingSub, type TodayLabels } from "@/lib/study-day-copy";
 
 export function AutoStartDailyFive({
   examCode,
@@ -29,6 +26,7 @@ export function AutoStartDailyFive({
   topicName,
   request,
   qs,
+  labels,
 }: {
   examCode: string;
   examShort: string;
@@ -36,6 +34,7 @@ export function AutoStartDailyFive({
   request: DailyFiveRequest;
   /** "?utm_source=…" or "" — forwarded onto /mocks/{id} for attribution. */
   qs: string;
+  labels: TodayLabels;
 }) {
   const router = useRouter();
   const started = useRef(false);
@@ -62,15 +61,15 @@ export function AutoStartDailyFive({
           ({ res, data } = await post({ type: "DIAGNOSTIC", questionCount: 5 }));
         }
         if (!res.ok || !data?.mock?.id) {
-          setFailed(data?.error ?? TODAY_FAILED);
+          setFailed(data?.error ?? labels.failed);
           return;
         }
         router.replace(`/mocks/${data.mock.id}${qs}`);
       } catch {
-        setFailed(TODAY_FAILED_NETWORK);
+        setFailed(labels.failedNetwork);
       }
     })();
-    // examCode/request/qs are fixed for the life of this page render.
+    // examCode/request/qs/labels are fixed for the life of this page render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -79,18 +78,18 @@ export function AutoStartDailyFive({
       className="rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-saffron-50 to-amber-50 p-6 text-center shadow-sm"
       aria-live="polite"
     >
-      <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">☀️ Today&apos;s 5</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">{labels.eyebrow}</p>
       {failed ? (
         <>
           <p className="mt-2 text-base font-bold text-ink-900">{failed}</p>
           <Link href="/dashboard" className="btn-primary mt-4 inline-block !py-2 !px-5 text-sm">
-            {TODAY_GO_DASHBOARD}
+            {labels.goDashboard}
           </Link>
         </>
       ) : (
         <>
-          <p className="mt-2 text-base font-bold text-ink-900">{TODAY_BUILDING}</p>
-          <p className="mt-1 text-sm text-ink-600">{TODAY_BUILDING_SUB(examShort, topicName)}</p>
+          <p className="mt-2 text-base font-bold text-ink-900">{labels.building}</p>
+          <p className="mt-1 text-sm text-ink-600">{todayBuildingSub(labels, examShort, topicName)}</p>
         </>
       )}
     </section>

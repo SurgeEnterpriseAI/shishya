@@ -1,9 +1,11 @@
 "use client";
 
 // Fires when the plan on screen is the deterministic FALLBACK (no
-// CoachDay row for today). That happens exactly when the 4 AM night-
-// brain skipped this student — they were inactive 7+ days (a comeback,
-// the moment that matters most) or the cron missed them. We ask the
+// CoachDay row for today, or — since 13 Sep 2026 — a stored row without
+// the coach's note, written when the model was unavailable at 4 AM). That
+// happens when the night-brain skipped this student — they were inactive
+// 7+ days (a comeback, the moment that matters most), the cron missed
+// them, or the model was down. We ask the
 // server to run the AI rebuild NOW, in the background, so the smart
 // re-triaged plan is ready by their next navigation — the founder rule:
 // whenever they return, the plan re-arranges around the days left so

@@ -25,6 +25,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { fetchSignedIn } from "@/lib/session-hint";
 
 // First-party analytics beacon (same shape as ShareExamButton) — the 401
 // path is counted so the audit can see how much mock intent the wall
@@ -136,14 +137,12 @@ export function StartMockButton({
     } catch {
       return;
     }
-    fetch("/api/auth/session", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((s) => {
-        if (s && (s as { user?: unknown }).user) void start("DIAGNOSTIC");
-      })
-      .catch(() => {
-        /* probe failed — leave the button to the student */
-      });
+    // Forced probe (never trusts a missing `shishya_in` hint): this URL only
+    // comes back from the 401 → /login path, so a casual guest never pays
+    // for it. null (probe failed) → leave the button to the student.
+    fetchSignedIn({ force: true }).then((v) => {
+      if (v === true) void start("DIAGNOSTIC");
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, examCode]);
 

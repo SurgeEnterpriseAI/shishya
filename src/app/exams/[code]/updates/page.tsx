@@ -16,7 +16,8 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
-import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale } from "@/lib/seo-locale";
+import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale, twinCanonical } from "@/lib/seo-locale";
+import { getTwinVerdict } from "@/lib/twin-localisation";
 import {
   KIND_ICON,
   buildTimeline,
@@ -97,10 +98,14 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   const path = `/exams/${exam.code}/updates`;
   const url = localizedUrl(path, urlLocale);
   const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
+  // Index shape (13 Sep 2026): a twin is self-canonical + hreflang-declared
+  // only when its rendered body is ≥ 30% native script; otherwise its
+  // canonical is the English tracker (src/lib/twin-localisation.ts).
+  const twins = await getTwinVerdict("updates", exam.id);
   return {
     title,
     description,
-    alternates: { canonical: url, languages: languageAlternates(path) },
+    alternates: { canonical: twinCanonical(path, urlLocale, twins), languages: languageAlternates(path, twins) },
     keywords: [
       `${exam.shortName} exam date ${year}`,
       `${exam.shortName} notification ${year}`,

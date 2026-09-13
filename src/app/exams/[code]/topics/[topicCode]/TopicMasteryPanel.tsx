@@ -11,6 +11,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchSignedIn } from "@/lib/session-hint";
 
 export function TopicMasteryPanel({
   examCode,
@@ -31,8 +32,9 @@ export function TopicMasteryPanel({
     let cancelled = false;
     (async () => {
       try {
-        const s = await fetch("/api/auth/session").then((r) => (r.ok ? r.json() : null));
-        if (cancelled || !s?.user) return;
+        // Hint-gated shared probe: a guest resolves false with no request.
+        const signedIn = await fetchSignedIn();
+        if (cancelled || signedIn !== true) return;
         setSignedIn(true);
         // Auto-stamp "read" — opening the notes IS studying; no extra tap.
         fetch("/api/me/topic-progress", {

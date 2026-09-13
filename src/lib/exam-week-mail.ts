@@ -15,7 +15,6 @@ import { tk, type Locale, type StringKey } from "@/lib/i18n";
 import { computeExamWeekState, dateWithTier, istDay, type ExamWeekState } from "@/lib/exam-week";
 import { applyShiftDay } from "@/lib/exam-week-student";
 import { buildTimeline, type SourceTier, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
-import { isRealArticle } from "@/lib/phase-article-quality";
 
 const DAY_MS = 86_400_000;
 const IST_OFFSET_MS = 330 * 60_000;
@@ -170,18 +169,16 @@ export function examEveDecision(rows: TimelineInput[], officialUrl: string | nul
 
 // ── Mail content pieces ───────────────────────────────────────────────
 
-/** /exams/{code}/checklist only when the live CHECKLIST article is REAL
- *  (isRealArticle: ≥2 cited sources AND not a placeholder body); otherwise
- *  the exam hub (never a thin or absent article). */
+/** /exams/{code}/checklist — since 13 Sep 2026 the page is built from stored
+ *  facts for every exam (src/lib/exam-checklist.ts), so it no longer waits
+ *  for a cited article. SCHOOL_BOARD containers have no checklist page, and
+ *  an unreadable exam row falls back to the hub. */
 export async function checklistLink(examId: string, code: string): Promise<{ url: string; isArticle: boolean }> {
   const hub = `https://shishya.in/exams/${code}`;
-  const rows = await prisma.$queryRaw<{ bodyMarkdown: string; sourcesScraped: unknown }[]>`
-    SELECT "bodyMarkdown", "sourcesScraped"
-    FROM "ExamPhaseArticle"
-    WHERE "examId" = ${examId} AND phase = 'CHECKLIST' AND "archivedAt" IS NULL
-    ORDER BY "lastUpdatedAt" DESC LIMIT 1`.catch(() => [] as { bodyMarkdown: string; sourcesScraped: unknown }[]);
-  const real = rows[0] ? isRealArticle(rows[0]) : false;
-  return real ? { url: `${hub}/checklist`, isArticle: true } : { url: hub, isArticle: false };
+  const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { category: true } }).catch(() => null);
+  return exam && String(exam.category).toUpperCase() !== "SCHOOL_BOARD"
+    ? { url: `${hub}/checklist`, isArticle: true }
+    : { url: hub, isArticle: false };
 }
 
 /** /mocks/{id} of the exam's system full-pattern paper when one exists,
@@ -311,8 +308,8 @@ export interface ExamWeekMailLine {
 /**
  * One English line for a mail whose addressed exam is in phase week / eve:
  * "Exam in N days (tier): checklist · full-length paper · no new topics
- * tonight". The checklist link is /exams/{code}/checklist only when the
- * article is REAL (isRealArticle), else the hub; the paper link is the
+ * tonight". The checklist link is /exams/{code}/checklist (checklistLink);
+ * the paper link is the
  * system full-pattern mock when one exists, else the hub. Null outside
  * week / eve.
  *

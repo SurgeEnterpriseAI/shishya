@@ -39,6 +39,7 @@ import { SundayLiveTestBanner } from "@/components/SundayLiveTestBanner";
 import { EducatorCard } from "@/components/EducatorCard";
 import { FlashHint } from "@/components/FlashHint";
 import { FoundViaChip } from "@/components/FoundViaChip";
+import { YouAskedWeBuilt } from "@/components/YouAskedWeBuilt";
 
 export default async function DashboardPage() {
   try {
@@ -608,6 +609,11 @@ async function renderDashboard() {
         {/* One-tap "How did you find Shishya?" — shown once to users ≤7 days old;
             answers land as CTA_CLICKED {cta:'found-via'} and feed /admin/loops. */}
         <FoundViaChip userId={userId} />
+
+        {/* You asked — we built it: ideas this student suggested, or upvoted
+            before they were built, marked built in the last 30 days. Renders
+            nothing otherwise (no generic marketing, no counts). */}
+        <YouAskedWeBuilt userId={userId} />
 
         {/* Enrollment hardening (retention data: 0% of never-enrolled users
             EVER return; ~20% of signups slip through without picking an

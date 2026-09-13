@@ -9,7 +9,8 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
-import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale } from "@/lib/seo-locale";
+import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale, twinCanonical } from "@/lib/seo-locale";
+import { getCalendarTwinVerdict } from "@/lib/twin-localisation";
 import { KIND_ICON, MATERIAL_NEWS_RE, buildTimeline, fmtDay, type DateKind, type TimelineRow } from "@/lib/exam-timeline";
 import { sourceTier } from "@/lib/official-source";
 import { istDayNumber } from "@/lib/exam-phase";
@@ -36,10 +37,14 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = tt("calendar.intro");
   const path = "/exam-calendar";
   const url = localizedUrl(path, urlLocale);
+  // Index shape (13 Sep 2026): a twin is self-canonical + hreflang-declared
+  // only when its rendered body is ≥ 30% native script; otherwise its
+  // canonical is the English calendar (src/lib/twin-localisation.ts).
+  const twins = await getCalendarTwinVerdict();
   return {
     title,
     description,
-    alternates: { canonical: url, languages: languageAlternates(path) },
+    alternates: { canonical: twinCanonical(path, urlLocale, twins), languages: languageAlternates(path, twins) },
     keywords: [
       `upcoming government exams ${year}`,
       `government exam calendar ${year}`,

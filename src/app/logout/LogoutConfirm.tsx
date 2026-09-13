@@ -7,6 +7,7 @@
 import { signOut } from "next-auth/react";
 import { useState } from "react";
 import Link from "next/link";
+import { clearSessionHint } from "@/lib/session-hint";
 
 export function LogoutConfirm({
   labels,
@@ -21,6 +22,9 @@ export function LogoutConfirm({
         disabled={pending}
         onClick={() => {
           setPending(true);
+          // Backup to the server's signOut event (src/lib/auth.ts): drop the
+          // signed-in hint now, so the next page's islands never probe.
+          clearSessionHint();
           signOut({ callbackUrl: "/" });
         }}
         className="btn-primary flex-1 disabled:opacity-60"

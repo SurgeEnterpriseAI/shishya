@@ -183,7 +183,12 @@ export async function GET() {
     }
     lines.push(`- Machine-readable context (preferred for LLMs): ${SITE}/exams/${e.code}/context.md`);
     lines.push(`- Hub (mocks, PYQs, news, dates): ${SITE}/exams/${e.code}`);
-    lines.push(`- Exam tracker — exam date, notification, admit card, answer key, result, cutoff (official vs expected, email alerts): ${SITE}/exams/${e.code}/updates · Hindi: ${SITE}/hi/exams/${e.code}/updates · Telugu: ${SITE}/te/exams/${e.code}/updates`);
+    // No hi/te suffix (13 Sep 2026, index shape): most tracker twins are
+    // English bodies that canonicalise here (src/lib/twin-localisation.ts).
+    lines.push(`- Exam tracker — exam date, notification, admit card, answer key, result, cutoff (official vs expected, email alerts): ${SITE}/exams/${e.code}/updates`);
+    if (e.category !== "SCHOOL_BOARD") {
+      lines.push(`- Last-minute exam checklist — exam-day timing with its source tier, what to carry, the marking scheme when one can be stated for the sitting: ${SITE}/exams/${e.code}/checklist`);
+    }
     lines.push(`- Custom topic-wise mock builder (pick topics, 10/25/50 Qs, difficulty; readable in Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages): ${SITE}/exams/${e.code}/build-mock`);
     if (fullPattern.has(e.code)) {
       lines.push(`- Full-length REAL-PATTERN mock: ${e.totalQuestions} questions · ${e.durationMin} min · sections in real order — the "Full-Length Mock (Real Pattern)" tile on ${SITE}/exams/${e.code}`);

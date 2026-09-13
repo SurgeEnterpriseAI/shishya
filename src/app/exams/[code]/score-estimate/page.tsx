@@ -39,7 +39,8 @@ import { markingSchemeVerdict, scoredCount } from "@/lib/marking-scheme";
 import { auth } from "@/lib/auth";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import type { StringKey } from "@/lib/i18n";
-import { languageAlternates, localizedPath, localizedUrl, ogLocale } from "@/lib/seo-locale";
+import { languageAlternates, localizedPath, localizedUrl, ogLocale, twinCanonical } from "@/lib/seo-locale";
+import { getTwinVerdict } from "@/lib/twin-localisation";
 import { computeExamWeekState, dateWithTier } from "@/lib/exam-week";
 import { buildTimeline, focusExamRow, type SourceTier, type TimelineRow } from "@/lib/exam-timeline";
 import { alertPhase, examAlertLabels, getExamWeekInputs, type ExamWeekInputs } from "@/lib/exam-week-inputs";
@@ -131,10 +132,14 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   // The per-exam social card (src/app/exams/[code]/opengraph-image.tsx) —
   // absolute so WhatsApp / Slack unfurl it whatever metadataBase says.
   const ogImage = `https://shishya.in/exams/${exam.code}/opengraph-image`;
+  // Index shape (13 Sep 2026): a twin is self-canonical + hreflang-declared
+  // only when its rendered body is ≥ 30% native script; otherwise its
+  // canonical is the English estimator (src/lib/twin-localisation.ts).
+  const twins = await getTwinVerdict("score-estimate", exam.id);
   return {
     title,
     description,
-    alternates: { canonical: url, languages: languageAlternates(path) },
+    alternates: { canonical: twinCanonical(path, urlLocale, twins), languages: languageAlternates(path, twins) },
     keywords: [
       `${short} score calculator`,
       `${short} marks calculator`,

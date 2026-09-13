@@ -168,6 +168,65 @@ export default async function MockPlayerPage({
   const config = mock.config as any;
   const { t, locale } = tt;
 
+  // Player labels. The save / submit-state strings (13 Sep 2026: autosave
+  // line, offline + retry notes, "answers kept on this device") travel in
+  // the same object so the student's language reaches them; MockPlayer
+  // reads them once its PlayerLabels interface gains these optional fields
+  // (MockPlayer.tsx was frozen this wave — see the build report). A
+  // variable rather than an inline literal, so the extra fields type-check
+  // against today's PlayerLabels. Templates keep {kept} {code} {n}.
+  const labels = {
+    qOf: t("player.q.of"),
+    mark: t("player.mark"),
+    marked: t("player.marked"),
+    prev: t("player.prev"),
+    saveNext: t("player.saveNext"),
+    reviewSubmit: t("player.reviewSubmit"),
+    submitMock: t("player.submitMock"),
+    sumAnswered: t("player.summary.answered"),
+    sumMarked: t("player.summary.marked"),
+    sumLeft: t("player.summary.left"),
+    confirmTitle: t("player.confirm.title"),
+    confirmBodyPrefix: t("player.confirm.body.prefix"),
+    confirmBodyOf: t("player.confirm.body.of"),
+    confirmBodyNote: t("player.confirm.body.note"),
+    confirmKeep: t("player.confirm.keep"),
+    confirmSubmit: t("player.confirm.submit"),
+    confirmSubmitting: t("player.confirm.submitting"),
+    submittingHint: t("player.submitting.hint"),
+    marksPerQ: t("exam.marks"),
+    negativeNone: t("exam.no.negative"),
+    // → <SaveStatus labels={mirrorOk ? labels.save : labels.saveNoMirror}>
+    save: {
+      saving: t("player.save.saving"),
+      saved: t("player.save.saved"),
+      offline: t("player.save.offline"),
+      retrying: t("player.save.retrying"),
+      error: t("player.save.error"),
+    },
+    saveNoMirror: {
+      offline: t("player.save.noMirror.offline"),
+      retrying: t("player.save.noMirror.retrying"),
+      error: t("player.save.noMirror.error"),
+    },
+    saveUnconfirmed: t("player.save.unconfirmed"),
+    saveNotWritable: t("player.save.notWritable"),
+    saveSigninExpired: t("player.save.signinExpired"),
+    saveFailed: t("player.save.failed"),
+    kept: t("player.kept"),
+    keptNoMirror: t("player.kept.noMirror"),
+    keptSentence: t("player.kept.sentence"),
+    keptSentenceNoMirror: t("player.kept.sentence.noMirror"),
+    submitOffline: t("player.submit.offline"),
+    submitOfflineNoMirror: t("player.submit.offline.noMirror"),
+    submitSigninExpired: t("player.submit.signinExpired"),
+    submitFailed: t("player.submit.failed"),
+    submitRetrying: t("player.submit.retrying"),
+    submitRetryingSlow: t("player.submit.retryingSlow"),
+    submitWaiting: t("player.submit.waiting"),
+    submitRetryNow: t("player.submit.retryNow"),
+  };
+
   return (
     <MockPlayer
       mock={{
@@ -193,28 +252,7 @@ export default async function MockPlayerPage({
         ["TOPIC", "SUBJECT", "REVISION", "ADAPTIVE", "USER_REQUEST"].includes(mock.type) &&
         mock.generatedBy !== "live-test"
       }
-      labels={{
-        qOf: t("player.q.of"),
-        mark: t("player.mark"),
-        marked: t("player.marked"),
-        prev: t("player.prev"),
-        saveNext: t("player.saveNext"),
-        reviewSubmit: t("player.reviewSubmit"),
-        submitMock: t("player.submitMock"),
-        sumAnswered: t("player.summary.answered"),
-        sumMarked: t("player.summary.marked"),
-        sumLeft: t("player.summary.left"),
-        confirmTitle: t("player.confirm.title"),
-        confirmBodyPrefix: t("player.confirm.body.prefix"),
-        confirmBodyOf: t("player.confirm.body.of"),
-        confirmBodyNote: t("player.confirm.body.note"),
-        confirmKeep: t("player.confirm.keep"),
-        confirmSubmit: t("player.confirm.submit"),
-        confirmSubmitting: t("player.confirm.submitting"),
-        submittingHint: t("player.submitting.hint"),
-        marksPerQ: t("exam.marks"),
-        negativeNone: t("exam.no.negative"),
-      }}
+      labels={labels}
     />
   );
 }

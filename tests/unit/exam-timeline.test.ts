@@ -219,3 +219,22 @@ describe("focusExamRow — next or just-held exam day", () => {
     expect(focusExamRow(buildTimeline([declaredResult], now))).toBeNull();
   });
 });
+
+// 13 Sep 2026: the hub Important Dates list renders raw rows, so the
+// answer-key guard is exported and shared with the hub cache loader.
+import { isUnannouncedAnswerKey } from "@/lib/exam-timeline";
+
+describe("isUnannouncedAnswerKey", () => {
+  const on = new Date("2026-06-02T00:00:00.000Z");
+  it("flags an untyped, unsourced row whose label reads as an answer key", () => {
+    expect(isUnannouncedAnswerKey({ label: "Final answer key release", isExamDay: false, kind: null, confidence: null, url: null })).toBe(true);
+    // and buildTimeline drops the same row
+    expect(buildTimeline([{ id: "x", label: "Final answer key release", date: on, isExamDay: false }], new Date("2026-09-13T06:00:00Z"))).toEqual([]);
+  });
+  it("keeps an official, cited answer key", () => {
+    expect(isUnannouncedAnswerKey({ label: "Provisional answer key released", isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://tgeapcet.nic.in/key.pdf" })).toBe(false);
+  });
+  it("never touches a result row, whatever its tier", () => {
+    expect(isUnannouncedAnswerKey({ label: "Result (expected)", isExamDay: false, kind: "RESULT", confidence: "expected", url: null })).toBe(false);
+  });
+});

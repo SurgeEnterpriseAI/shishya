@@ -8,6 +8,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./db/prisma";
 // Type-only: the runtime import stays inline in the event (no cycle).
 import type { SignupAttribution } from "./signup-attribution";
+import { SESSION_HINT_COOKIE, SESSION_HINT_MAX_AGE_S, SESSION_HINT_VALUE } from "./session-hint";
 
 declare module "next-auth" {
   interface Session {
@@ -53,6 +54,42 @@ export const authOptions: NextAuthOptions = {
   // hook for the SIGNUP analytics event — and, since 11 Sep 2026, for
   // signup attribution.
   events: {
+    // Signed-in hint (13 Sep 2026, phone-first speed): a non-httpOnly,
+    // PII-free `shishya_in=1` cookie so client islands can skip
+    // /api/auth/session for guests (3-4 calls per guest page before). It
+    // only says "a session probably exists" — the islands still ask the
+    // server before showing anything signed-in (src/lib/session-hint.ts).
+    // Both events run inside the /api/auth route handler, where Next merges
+    // cookies() writes onto NextAuth's response (the same scope the
+    // createUser attribution capture relies on). Never fatal.
+    async signIn() {
+      try {
+        const { cookies } = await import("next/headers");
+        (await cookies()).set(SESSION_HINT_COOKIE, SESSION_HINT_VALUE, {
+          path: "/",
+          maxAge: SESSION_HINT_MAX_AGE_S,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+          httpOnly: false,
+        });
+      } catch (err) {
+        console.error("[auth] session hint set failed (non-fatal):", err);
+      }
+    },
+    async signOut() {
+      try {
+        const { cookies } = await import("next/headers");
+        (await cookies()).set(SESSION_HINT_COOKIE, "", {
+          path: "/",
+          maxAge: 0,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+          httpOnly: false,
+        });
+      } catch (err) {
+        console.error("[auth] session hint clear failed (non-fatal):", err);
+      }
+    },
     async createUser({ user }) {
       // Signup attribution (11 Sep 2026 signup-leak audit). Capture used
       // to run only from /dashboard inside the cookie window, but every

@@ -8,8 +8,8 @@
 //   2. "Updated X min ago" badge (this is the trust signal — students
 //      land here from Google search for "UPSC Prelims difficulty 2026"
 //      and need to know the content is fresh)
-//   3. Markdown body (AI-generated + verified — sanitized via the
-//      same markdown pipeline the rest of the site uses)
+//   3. Markdown body (AI-generated from cited public sources — sanitized
+//      via the same markdown pipeline the rest of the site uses)
 //   4. Sources we read (footer transparency)
 //   5. ReactionButtons (👍 / 👎)
 //   6. ShareButtons (X / WhatsApp / Telegram / LinkedIn / FB / copy)
@@ -31,8 +31,24 @@
 //     us; otherwise the dated "{date} ({tier}) paper", or a neutral line
 //     when no typed exam day exists. The page routes build their <title>
 //     from the same helper, so metadata and body never disagree.
+//
+// Exam night (13 Sep 2026): /live and /reactions pass
+//   • `lead`        — the first-party ExamNightFacts block, rendered right
+//                     under the tagline, BEFORE any article
+//   • `articleGate` — "strict": the active row and the archived versions
+//                     must pass passesStrictArticleGate (an archived LIVE
+//                     body saying "we don't have reliable data yet" passed
+//                     the base gate, audit 11 Sep)
+//   • `hideEmpty`   — no empty-state paragraph: the lead block is the page
+//   • `summary`     — what the lead renders, so the tagline names only
+//                     that (its `article` flag is overridden here by the
+//                     row this render actually shows)
+// With a lead, the H1 is the page title and the article keeps its own
+// title as an H2 below the facts. /checklist passes none of these and
+// renders exactly as before.
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
@@ -40,8 +56,9 @@ import { ReactionButtons } from "./ReactionButtons";
 import { ShareButtons } from "./ShareButtons";
 import { renderMarkdown } from "@/lib/markdown";
 import { isRealArticle } from "@/lib/phase-article-quality";
+import { passesStrictArticleGate } from "@/lib/phase-article-strict-gate";
 import { getExamWeekInputs } from "@/lib/exam-week-inputs";
-import { examDayClaim, phaseArticleCopy } from "@/lib/phase-article-copy";
+import { examDayClaim, phaseArticleCopy, type ExamNightSummary } from "@/lib/phase-article-copy";
 import type { ExamPhase, ArticleReaction } from "@prisma/client";
 
 export interface PhaseSource {
@@ -63,9 +80,21 @@ const PHASE_SLUG: Record<ExamPhase, "checklist" | "live" | "reactions"> = {
 export async function PhaseArticleView({
   code,
   phase,
+  lead,
+  summary,
+  articleGate = "base",
+  hideEmpty = false,
 }: {
   code: string;
   phase: ExamPhase;
+  /** First-party block rendered under the tagline, before the article. */
+  lead?: ReactNode;
+  /** What `lead` renders — drives the summary-aware tagline. */
+  summary?: ExamNightSummary;
+  /** "strict" = passesStrictArticleGate (LIVE / REACTIONS); "base" = isRealArticle. */
+  articleGate?: "base" | "strict";
+  /** Render nothing (instead of the empty-state copy) when no article passes. */
+  hideEmpty?: boolean;
 }) {
   const exam = await prisma.exam.findUnique({
     where: { code },
@@ -107,11 +136,14 @@ export async function PhaseArticleView({
     auth().catch(() => null),
   ]);
 
-  // Quality gate: a row that is not REAL is treated as absent.
-  const article = activeRow && isRealArticle(activeRow) ? activeRow : null;
-  const archivedVersions = archivedRows.filter((v) => isRealArticle(v)).slice(0, 12);
+  // Quality gate: a row that is not REAL is treated as absent. On the
+  // exam-night routes the stricter body gate applies to every version.
+  const passes = (a: { bodyMarkdown: string; sourcesScraped: unknown }) =>
+    articleGate === "strict" ? passesStrictArticleGate(a, exam) : isRealArticle(a);
+  const article = activeRow && passes(activeRow) ? activeRow : null;
+  const archivedVersions = archivedRows.filter((v) => passes(v)).slice(0, 12);
   const claim = examDayClaim(inputs.rows, inputs.officialUrl);
-  const copy = phaseArticleCopy(phase, exam.shortName, claim);
+  const copy = phaseArticleCopy(phase, exam.shortName, claim, summary ? { ...summary, article: !!article } : undefined);
 
   const userId = session?.user?.id ?? null;
 
@@ -184,6 +216,12 @@ export async function PhaseArticleView({
     ],
   };
 
+  const articleBody = article ? (
+    <div className="prose prose-ink mt-4 max-w-none">
+      <div dangerouslySetInnerHTML={{ __html: renderMarkdown(article.bodyMarkdown) }} />
+    </div>
+  ) : null;
+
   return (
     <article className="container-prose py-10">
       {/* JSON-LD for Google rich-result eligibility */}
@@ -217,7 +255,7 @@ export async function PhaseArticleView({
         >
           {copy.badge}
         </span>
-        {article && (
+        {article && !lead && (
           <span className="inline-flex items-center gap-1 text-xs text-ink-500">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
             Updated {formatRelativeTime(article.lastUpdatedAt)}
@@ -227,20 +265,33 @@ export async function PhaseArticleView({
 
       {/* Title + tagline */}
       <h1 className="text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
-        {article?.title ?? copy.fallbackTitle}
+        {lead ? copy.fallbackTitle : (article?.title ?? copy.fallbackTitle)}
       </h1>
       <p className="mt-3 text-base text-ink-600">{copy.tagline}</p>
 
-      {/* Body — either rendered markdown or the empty-state placeholder */}
-      <div className="prose prose-ink mt-8 max-w-none">
-        {article ? (
-          <div
-            dangerouslySetInnerHTML={{ __html: renderMarkdown(article.bodyMarkdown) }}
-          />
-        ) : (
+      {/* First-party facts lead the exam-night pages. */}
+      {lead}
+
+      {/* Body — the article (below the lead when there is one), or the
+          empty-state placeholder unless the route hides it. */}
+      {lead ? (
+        article && (
+          <section className="mt-10">
+            <h2 className="text-2xl font-bold tracking-tight text-ink-900">{article.title}</h2>
+            <p className="mt-1 inline-flex items-center gap-1 text-xs text-ink-500">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+              Compiled from public student discussion · updated {formatRelativeTime(article.lastUpdatedAt)}
+            </p>
+            {articleBody}
+          </section>
+        )
+      ) : article ? (
+        <div className="mt-4">{articleBody}</div>
+      ) : hideEmpty ? null : (
+        <div className="prose prose-ink mt-8 max-w-none">
           <p className="text-ink-600">{copy.emptyBody}</p>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Reactions + share — only shown once the article exists.
           Empty-state articles get nothing to react to. */}

@@ -25,15 +25,7 @@ import { examPeerProof } from "@/lib/peer-proof";
 import { getStudyStreak } from "@/lib/db/streak";
 import { streakState } from "@/lib/study-day";
 import { findTodaysDailyFive, pickDailyFive, wouldGetDailyFiveMail } from "@/lib/study-day-five";
-import {
-  RESULTS_ICS,
-  RESULTS_OPEN_TODAY,
-  RESULTS_STREAK,
-  RESULTS_TOMORROW_BASELINE,
-  RESULTS_TOMORROW_MAIL,
-  RESULTS_TOMORROW_SELF,
-  RESULTS_TOMORROW_TOPIC,
-} from "@/lib/study-day-copy";
+import { resultsStudyDayCopy } from "@/lib/study-day-copy";
 
 export default async function ResultsPage({
   params,
@@ -84,6 +76,8 @@ export default async function ResultsPage({
     getT(),
   ]);
   const { t, locale } = tt;
+  // Streak + tomorrow lines in the page's locale (13 Sep 2026).
+  const studyDay = resultsStudyDayCopy(t);
   const qById = new Map(questions.map((q) => [q.id, q]));
 
   const answers = (attempt.answers as any[]) ?? [];
@@ -581,26 +575,26 @@ export default async function ResultsPage({
             <p className="text-sm font-semibold text-ink-900">
               {streakTone === "kept"
                 ? streak.hitMilestoneToday
-                  ? RESULTS_STREAK.milestone(streak.current)
-                  : RESULTS_STREAK.kept(streak.current)
+                  ? studyDay.streak.milestone(streak.current)
+                  : studyDay.streak.kept(streak.current)
                 : streakTone === "started"
-                  ? RESULTS_STREAK.started
+                  ? studyDay.streak.started
                   : streakTone === "at-risk"
-                    ? RESULTS_STREAK.atRisk(streak.current)
-                    : RESULTS_STREAK.none}
+                    ? studyDay.streak.atRisk(streak.current)
+                    : studyDay.streak.none}
             </p>
             <p className="mt-1 text-xs text-ink-700">
-              {tomorrow?.topicName ? RESULTS_TOMORROW_TOPIC(tomorrow.topicName) : RESULTS_TOMORROW_BASELINE}{" "}
-              {willMail ? RESULTS_TOMORROW_MAIL : RESULTS_TOMORROW_SELF}
+              {tomorrow?.topicName ? studyDay.tomorrowTopic(tomorrow.topicName) : studyDay.tomorrowBaseline}{" "}
+              {willMail ? studyDay.tomorrowMail : studyDay.tomorrowSelf}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
               {showTodayLink && (
                 <Link href="/today" className="font-semibold text-amber-800 underline-offset-2 hover:underline">
-                  {RESULTS_OPEN_TODAY}
+                  {studyDay.openToday}
                 </Link>
               )}
               <a href="/today/reminder.ics" className="text-ink-600 underline-offset-2 hover:underline">
-                📅 {RESULTS_ICS}
+                📅 {studyDay.ics}
               </a>
             </div>
           </section>

@@ -486,7 +486,10 @@ export async function computeCoachPlan(userId: string): Promise<ComputedPlan | n
     // Rows written before a topic lost/never had notes must not keep
     // pointing at the empty page — re-routed at render time.
     const tasks = remapStoredTasks(ctx, stored);
-    if (tasks.length) return toComputedPlan(ctx, tasks.slice(0, 4), day[0].note, true);
+    // A stored row with no note is the night-brain's deterministic fallback
+    // (writeDeterministicDay, model unavailable at 4 AM): show it, but still
+    // let CoachRebuildPing ask for the AI plan once the model is back.
+    if (tasks.length) return toComputedPlan(ctx, tasks.slice(0, 4), day[0].note, day[0].note != null);
   }
 
   // Deterministic fallback — the coach always shows up.
@@ -544,7 +547,7 @@ Rules:
 
 Respond with ONLY JSON: {"taskIds": ["..."], "note": "..."}`;
 
-export async function generateCoachDay(userId: string): Promise<"planned" | "skipped" | "failed"> {
+export async function generateCoachDay(userId: string): Promise<"planned" | "fallback" | "skipped" | "failed"> {
   const ctx = await loadPlanContext(userId);
   if (!ctx || ctx.daysLeft <= 0) return "skipped";
 
@@ -591,7 +594,7 @@ export async function generateCoachDay(userId: string): Promise<"planned" | "ski
       .map((id) => taskFromId(ctx, id))
       .filter((t): t is CoachTask => Boolean(t))
       .slice(0, 4);
-    if (!tasks.length) return "failed";
+    if (!tasks.length) return writeDeterministicDay(ctx);
     const note = typeof out.note === "string" ? out.note.slice(0, 400) : null;
 
     await prisma.$executeRaw`
@@ -602,7 +605,32 @@ export async function generateCoachDay(userId: string): Promise<"planned" | "ski
       DO UPDATE SET tasks = ${JSON.stringify(tasks)}::jsonb, note = ${note}`;
     return "planned";
   } catch {
-    return "failed"; // dashboard falls back to the deterministic plan
+    return writeDeterministicDay(ctx);
+  }
+}
+
+/** The night-brain could not plan (model unavailable, or no valid ids).
+ *  13 Sep 2026 RCA: on two API-credit outages no CoachDay row was written,
+ *  so the 7 AM coach-morning mail, which reads only stored rows, reached 2
+ *  plan-holders on 11 Sep and 0 on 13 Sep instead of ~55. Store the
+ *  deterministic plan the dashboard renders anyway, with no note (the note
+ *  is the coach's own voice, which only the model writes), and never over a
+ *  plan already written for today. */
+async function writeDeterministicDay(ctx: PlanContext): Promise<"fallback" | "failed"> {
+  const tasks = deterministicTaskIds(ctx)
+    .map((id) => taskFromId(ctx, id))
+    .filter((t): t is CoachTask => Boolean(t))
+    .slice(0, 4);
+  if (!tasks.length) return "failed";
+  try {
+    await prisma.$executeRaw`
+      INSERT INTO "CoachDay" (id, "userId", date, tasks, note, "createdAt")
+      VALUES (gen_random_uuid()::text, ${ctx.userId}, ${istToday()},
+              ${JSON.stringify(tasks)}::jsonb, NULL, NOW())
+      ON CONFLICT ("userId", date) DO NOTHING`;
+    return "fallback";
+  } catch {
+    return "failed";
   }
 }
 

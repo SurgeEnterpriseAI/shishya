@@ -13,6 +13,7 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
 import { computeExamWeekState, istDay } from "@/lib/exam-week";
+import { isUnannouncedAnswerKey } from "@/lib/exam-timeline";
 
 export const EXAM_CACHE_TTL = 600; // 10 minutes
 
@@ -62,7 +63,7 @@ export const getExamShared = unstable_cache(
     });
     if (!exam) return null;
 
-    const [validatedQuestionCount, newsItems, importantDates, pyqYears, systemMocks, examStats, rankBands, eligibility] =
+    const [validatedQuestionCount, newsItems, rawImportantDates, pyqYears, systemMocks, examStats, rankBands, eligibility] =
       await Promise.all([
         prisma.question.count({ where: { examId: exam.id, validated: true } }),
         // archivedAt IS NULL filter keeps the per-exam page showing
@@ -157,6 +158,9 @@ export const getExamShared = unstable_cache(
       ]);
 
     const officialUrl = eligibility?.officialUrl ?? null;
+    // Answer-key guard for the hub (13 Sep 2026): the hub renders these rows
+    // raw in its Important Dates list, so the timeline rule applies here too.
+    const importantDates = rawImportantDates.filter((r) => !isUnannouncedAnswerKey(r, officialUrl));
 
     return {
       exam,
@@ -178,7 +182,7 @@ export const getExamShared = unstable_cache(
       examWeek: computeExamWeekState(importantDates, officialUrl),
     };
   },
-  ["exam-shared-v3"],
+  ["exam-shared-v4"],
   { revalidate: EXAM_CACHE_TTL, tags: ["exam-shared"] },
 );
 

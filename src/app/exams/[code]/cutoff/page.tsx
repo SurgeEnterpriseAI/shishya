@@ -39,7 +39,8 @@ import { auth } from "@/lib/auth";
 import { getExamShared } from "@/lib/db/exam-cache";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import type { Locale, StringKey } from "@/lib/i18n";
-import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale } from "@/lib/seo-locale";
+import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale, twinCanonical } from "@/lib/seo-locale";
+import { getTwinVerdict } from "@/lib/twin-localisation";
 import { computeExamWeekState, dateWithTier, istDay, type ExamWeekPhase, type ExamWeekState } from "@/lib/exam-week";
 import type { SourceTier, TimelineRow } from "@/lib/exam-timeline";
 import { examAlertLabels, getExamWeekInputs } from "@/lib/exam-week-inputs";
@@ -201,7 +202,7 @@ export async function generateMetadata({
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
     where: { code },
-    select: { code: true, shortName: true, name: true },
+    select: { id: true, code: true, shortName: true, name: true },
   });
   if (!exam) return { title: "Exam cutoff — Shishya" };
   // Wave 2 serves the body in the URL's language but still emitted an
@@ -215,10 +216,14 @@ export async function generateMetadata({
   const path = `/exams/${exam.code}/cutoff`;
   const url = localizedUrl(path, urlLocale);
   const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
+  // Index shape (13 Sep 2026): a twin is self-canonical + hreflang-declared
+  // only when its rendered body is ≥ 30% native script; otherwise its
+  // canonical is the English cutoff page (src/lib/twin-localisation.ts).
+  const twins = await getTwinVerdict("cutoff", exam.id);
   return {
     title,
     description,
-    alternates: { canonical: url, languages: languageAlternates(path) },
+    alternates: { canonical: twinCanonical(path, urlLocale, twins), languages: languageAlternates(path, twins) },
     keywords: [
       `${exam.shortName} cutoff ${YEAR}`,
       `${exam.shortName} expected cutoff`,

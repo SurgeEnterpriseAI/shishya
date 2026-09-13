@@ -9,13 +9,14 @@
 // cacheable at the Vercel edge — TTFB drops from ~400ms (function
 // execution) to ~50ms (edge cache hit).
 //
-// Session is fetched from NextAuth's built-in /api/auth/session route
-// (no extra API surface required). Anonymous = no session cookie =
-// no extra fetch round-trip for those visitors.
+// Session comes from the shared, hint-gated probe in
+// src/lib/session-hint.ts (13 Sep 2026 phone-first audit: guests used to
+// fire 3-4 identical /api/auth/session calls per page). A visitor without
+// the PII-free `shishya_in` hint cookie resolves as signed-out with NO
+// request; a signed-in student's islands share ONE session call per page.
 //
-// The fetch is shared (fetchSignedIn) between this rail and the "Today"
-// link in the Primary nav row (TodayNavLink, 11 Sep 2026) so a page with
-// both still makes ONE session request. Header is on ~127 pages.
+// The "Today" link in the Primary nav row (TodayNavLink, 11 Sep 2026) uses
+// the same probe. Header is on ~127 pages.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -23,31 +24,14 @@ import { LangSwitcher } from "./LangSwitcher";
 import { NotificationBell } from "./NotificationBell";
 import { locales, type Locale } from "@/lib/i18n";
 import { NAV_TODAY, NAV_TODAY_TITLE } from "@/lib/study-day-copy";
+import { fetchSignedIn } from "@/lib/session-hint";
+
+// Re-exported so any import of fetchSignedIn from this file keeps working.
+// Resolves true (signed in) / false (guest) / null (probe failed).
+export { fetchSignedIn };
 
 interface SessionLite {
   signedIn: boolean;
-}
-
-// One in-flight /api/auth/session request per page, shared by every
-// header island mounted on it. Short TTL (not a forever cache) so a
-// client-side navigation a little later still re-checks, exactly like
-// the per-mount fetch did; sign-in / sign-out are full navigations and
-// reset module state anyway. Errors resolve to false and are not cached.
-const SESSION_TTL_MS = 10_000;
-let sessionCache: { at: number; p: Promise<boolean> } | null = null;
-
-export function fetchSignedIn(): Promise<boolean> {
-  const now = Date.now();
-  if (sessionCache && now - sessionCache.at < SESSION_TTL_MS) return sessionCache.p;
-  const p = fetch("/api/auth/session", { cache: "no-store" })
-    .then((r) => (r.ok ? r.json() : null))
-    .then((data) => Boolean(data?.user?.id))
-    .catch(() => {
-      sessionCache = null;
-      return false;
-    });
-  sessionCache = { at: now, p };
-  return p;
 }
 
 interface Labels {
@@ -70,8 +54,8 @@ export function HeaderAuthControls({
 
   useEffect(() => {
     let alive = true;
-    fetchSignedIn().then((signedIn) => {
-      if (alive) setSession({ signedIn });
+    fetchSignedIn().then((v) => {
+      if (alive) setSession({ signedIn: v === true });
     });
     return () => {
       alive = false;
@@ -129,7 +113,7 @@ export function TodayNavLink() {
   useEffect(() => {
     let alive = true;
     fetchSignedIn().then((v) => {
-      if (alive) setSignedIn(v);
+      if (alive) setSignedIn(v === true);
     });
     return () => {
       alive = false;

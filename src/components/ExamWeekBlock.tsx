@@ -52,7 +52,6 @@ import { buildTimeline, type SourceTier, type TimelineInput, type TimelineRow } 
 import { sourceTier } from "@/lib/official-source";
 import { getVerdictTally, publicTally, VERDICT_MIN_N } from "@/lib/exam-verdict";
 import { markingSchemeStatable } from "@/lib/marking-scheme";
-import { isRealArticle } from "@/lib/phase-article-quality";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { ExamVerdictPoll } from "@/components/ExamVerdictPoll";
 import { ShiftDayPicker } from "@/components/ShiftDayPicker";
@@ -232,30 +231,17 @@ export async function ExamWeekBlock({
 
   // ── week ────────────────────────────────────────────────────────────
   if (phase === "week") {
-    const [checklist, fullMock] = await Promise.all([
-      // Only a REAL checklist earns a link — the SAME gate the eve mail
-      // applies in checklistLink (src/lib/exam-week-mail.ts): isRealArticle
-      // = >= 2 distinct cited http(s) sources AND a body that is not a
-      // placeholder. A bare sourcesScraped.length counted entries without a
-      // URL and let hollow "check back later" bodies through, so on exam
-      // week the hub sent students to a page the mail deliberately refused
-      // to link (hollow phase articles are a live bug, 6 Sep 2026).
-      prisma.examPhaseArticle
-        .findFirst({
-          where: { examId: exam.id, phase: "CHECKLIST", archivedAt: null },
-          orderBy: { lastUpdatedAt: "desc" },
-          select: { bodyMarkdown: true, sourcesScraped: true },
-        })
-        .then((a) => !!a && isRealArticle(a))
-        .catch(() => false),
-      prisma.mock
-        .findFirst({
-          where: { examId: exam.id, userId: null, generatedBy: { startsWith: "system:full-pattern" } },
-          orderBy: { createdAt: "desc" },
-          select: { id: true },
-        })
-        .catch(() => null),
-    ]);
+    // The checklist link is unconditional since 13 Sep 2026: the page is
+    // built from stored facts for every exam (src/lib/exam-checklist.ts)
+    // instead of waiting for a cited article, and the eve mail links it the
+    // same way (checklistLink, src/lib/exam-week-mail.ts).
+    const fullMock = await prisma.mock
+      .findFirst({
+        where: { examId: exam.id, userId: null, generatedBy: { startsWith: "system:full-pattern" } },
+        orderBy: { createdAt: "desc" },
+        select: { id: true },
+      })
+      .catch(() => null);
     const seed = `My ${short} exam is in ${state.daysTo} days. What should I revise and what should I skip?`;
     return wrap(
       <>
@@ -266,11 +252,9 @@ export async function ExamWeekBlock({
           </span>
         </p>
         <div className="mt-2 flex flex-wrap gap-2">
-          {checklist && (
-            <Link href={p(`/exams/${exam.code}/checklist`)} className={linkCls}>
-              📋 {t("ew.week.checklist")}
-            </Link>
-          )}
+          <Link href={p(`/exams/${exam.code}/checklist`)} className={linkCls}>
+            📋 {t("ew.week.checklist")}
+          </Link>
           {fullMock && (
             <Link href={`/mocks/${fullMock.id}`} prefetch={false} className={linkCls}>
               📝 {t("ew.week.paper")}

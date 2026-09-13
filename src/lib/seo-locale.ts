@@ -16,6 +16,12 @@
 // shareable/searchable entry points.
 //
 // Only locales with enough dictionary coverage get URL twins for now.
+//
+// 13 Sep 2026 (index shape): "self-canonical, hreflang-paired" now holds
+// only for a twin whose rendered body is ≥ 30% native script
+// (src/lib/twin-localisation.ts → TwinVerdict below). A twin under that
+// canonicalises to the English URL and is left out of hreflang, the
+// sitemap and IndexNow; the URL itself keeps serving.
 
 import type { Locale } from "@/lib/i18n";
 
@@ -40,14 +46,31 @@ export function localizedUrl(path: string, locale: Locale | PageLocale): string 
   return `${SITE}${localizedPath(path, locale)}`;
 }
 
-/** Next.js `alternates.languages` block — reciprocal on every twin. */
-export function languageAlternates(path: string): Record<string, string> {
-  return {
-    "en-IN": `${SITE}${path}`,
-    "hi-IN": `${SITE}${localizedPath(path, "hi")}`,
-    "te-IN": `${SITE}${localizedPath(path, "te")}`,
-    "x-default": `${SITE}${path}`,
-  };
+/** Is each twin of a page genuinely localised? Measured by
+ *  src/lib/twin-localisation.ts (native-script share of the rendered body,
+ *  13 Sep 2026). A twin that is not stays reachable but is never declared:
+ *  no hreflang entry, canonical → the English URL. */
+export interface TwinVerdict {
+  hi: boolean;
+  te: boolean;
+}
+export const NO_TWINS: TwinVerdict = { hi: false, te: false };
+export const ALL_TWINS: TwinVerdict = { hi: true, te: true };
+
+/** Next.js `alternates.languages` block — reciprocal on every twin that is
+ *  localised (default: both, the pre-13 Sep behaviour). */
+export function languageAlternates(path: string, twins: TwinVerdict = ALL_TWINS): Record<string, string> {
+  const out: Record<string, string> = { "en-IN": `${SITE}${path}` };
+  if (twins.hi) out["hi-IN"] = `${SITE}${localizedPath(path, "hi")}`;
+  if (twins.te) out["te-IN"] = `${SITE}${localizedPath(path, "te")}`;
+  out["x-default"] = `${SITE}${path}`;
+  return out;
+}
+
+/** Canonical for a page rendered at `locale`: self for English and for a
+ *  localised twin; the English URL for a twin that is not localised. */
+export function twinCanonical(path: string, locale: Locale | PageLocale, twins: TwinVerdict): string {
+  return isUrlLocale(locale) && !twins[locale] ? `${SITE}${path}` : localizedUrl(path, locale);
 }
 
 export function ogLocale(locale: Locale | PageLocale): string {

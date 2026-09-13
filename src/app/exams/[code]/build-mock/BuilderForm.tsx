@@ -13,27 +13,69 @@
 // cron exists. `seenKnown` is false when the page's seen query failed:
 // every seen line is then hidden — "seen 0 of M" is only shown when it
 // was actually measured.
+//
+// Language (13 Sep 2026): every string arrives as `labels` from the server
+// page (build.* keys in src/lib/i18n.ts, en + hi + te) — templates keep
+// {seen} {total} {days} … and are filled here with the real numbers. Server
+// error messages from /api/mocks/custom are shown as sent.
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { fillTemplate } from "@/lib/i18n";
 
-// English copy lives here until the i18n owner adds the keys (listed in
-// the ship note: build.seen.line, build.seen.short, build.seen.exhausted,
-// build.built.repeats, build.built.start, build.built.change).
-const COPY = {
-  seenLine: (seen: number, total: number, days: number) =>
-    `You have seen ${seen} of the ${total} validated questions in this selection (any mock you opened in the last ${days} days counts).`,
-  seenShort: (unseen: number, setSize: number, repeats: number) =>
-    `Only ${unseen} unseen left — a ${setSize}-question set will repeat about ${repeats} you have already done, least-recently-seen first.`,
-  seenExhausted: (total: number, days: number) =>
-    `You have seen all ${total} questions in this selection in the last ${days} days. This set will repeat questions you have done (least-recently-seen first) — add more topics, or try a subject test on the exam page.`,
-  builtRepeats: (count: number, repeats: number, days: number, seen: number, size: number) =>
-    `Built: ${count} questions — ${repeats} of them you have seen in the last ${days} days (${seen} of the ${size} questions in this bank seen).`,
-  builtStart: "Start →",
-  builtChange: "Pick different topics instead",
-};
+export interface BuilderLabels {
+  /** {seen} {total} {days} */
+  seenLine: string;
+  /** {unseen} {size} {repeats} */
+  seenShort: string;
+  /** {total} {days} */
+  seenExhausted: string;
+  seenExamPage: string;
+  /** {seen} {n} {days} */
+  topicSeenTitle: string;
+  /** {new} {n} */
+  topicNewOf: string;
+  /** {count} {repeats} {days} {seen} {size} */
+  builtRepeats: string;
+  builtStart: string;
+  builtChange: string;
+  questions: string;
+  difficulty: string;
+  diffMixed: string;
+  diffEasy: string;
+  diffHard: string;
+  /** {topics} {n} */
+  availableOne: string;
+  /** {topics} {n} */
+  availableMany: string;
+  /** {count} */
+  fewer: string;
+  pickOne: string;
+  failed: string;
+  building: string;
+  start: string;
+  signin: string;
+  /** {n} = other Indian languages */
+  footer: string;
+}
+
+/** fillTemplate, but each filled value is rendered bold (the availability
+ *  line highlights its two numbers). */
+function fillBold(template: string, vars: Record<string, string | number>): ReactNode[] {
+  return template.split(/(\{\w+\})/g).map((part, i) => {
+    const m = /^\{(\w+)\}$/.exec(part);
+    if (m && Object.prototype.hasOwnProperty.call(vars, m[1])) {
+      return (
+        <span key={i} className="font-bold text-ink-900">
+          {vars[m[1]]}
+        </span>
+      );
+    }
+    return <Fragment key={i}>{part}</Fragment>;
+  });
+}
 
 interface TopicRow {
   id: string;
@@ -58,6 +100,7 @@ export function BuilderForm({
   signedIn,
   seenKnown,
   windowDays,
+  labels,
 }: {
   examCode: string;
   subjects: { name: string; topics: TopicRow[] }[];
@@ -66,6 +109,7 @@ export function BuilderForm({
   /** False when the per-topic seen query failed (or anonymous): no seen copy at all. */
   seenKnown: boolean;
   windowDays: number;
+  labels: BuilderLabels;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -104,7 +148,7 @@ export function BuilderForm({
 
   const submit = async () => {
     if (sel.size === 0) {
-      setErr("Pick at least one topic.");
+      setErr(labels.pickOne);
       return;
     }
     setBusy(true);
@@ -117,7 +161,7 @@ export function BuilderForm({
         body: JSON.stringify({ examCode, topicIds: [...sel], count, difficulty }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.id) throw new Error(data?.error ?? "Couldn't build the mock — try again.");
+      if (!res.ok || !data?.id) throw new Error(data?.error ?? labels.failed);
       // bank is null when the API's seen query failed (no numbers → no
       // interstitial, straight into the player).
       const bank = data.bank as Built["bank"] | null | undefined;
@@ -130,7 +174,7 @@ export function BuilderForm({
       }
       router.push(`/mocks/${data.id}`);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Couldn't build the mock — try again.");
+      setErr(e instanceof Error ? e.message : labels.failed);
       setBusy(false);
     }
   };
@@ -151,7 +195,11 @@ export function BuilderForm({
                       type="button"
                       onClick={() => toggle(t.id)}
                       aria-pressed={on}
-                      title={showSeen && t.seen > 0 ? `${t.seen} of ${t.n} seen in the last ${windowDays} days` : undefined}
+                      title={
+                        showSeen && t.seen > 0
+                          ? fillTemplate(labels.topicSeenTitle, { seen: t.seen, n: t.n, days: windowDays })
+                          : undefined
+                      }
                       className={
                         on
                           ? "rounded-full border border-saffron-500 bg-saffron-500 px-2.5 py-1 text-xs font-semibold text-white"
@@ -160,7 +208,10 @@ export function BuilderForm({
                     >
                       {t.name}{" "}
                       <span className={on ? "opacity-80" : "text-ink-400"}>
-                        · {showSeen && t.seen > 0 ? `${t.n - t.seen} new of ${t.n}` : t.n}
+                        ·{" "}
+                        {showSeen && t.seen > 0
+                          ? fillTemplate(labels.topicNewOf, { new: t.n - t.seen, n: t.n })
+                          : t.n}
                       </span>
                     </button>
                   );
@@ -172,7 +223,7 @@ export function BuilderForm({
 
         <aside className="space-y-3 lg:sticky lg:top-20 lg:self-start">
           <div className="rounded-xl border border-ink-200 bg-white p-4">
-            <p className="text-xs font-medium uppercase tracking-wider text-ink-500">Questions</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-ink-500">{labels.questions}</p>
             <div className="mt-2 flex gap-2">
               {([10, 25, 50] as const).map((c) => (
                 <button
@@ -193,7 +244,7 @@ export function BuilderForm({
                 </button>
               ))}
             </div>
-            <p className="mt-4 text-xs font-medium uppercase tracking-wider text-ink-500">Difficulty</p>
+            <p className="mt-4 text-xs font-medium uppercase tracking-wider text-ink-500">{labels.difficulty}</p>
             <div className="mt-2 flex gap-2">
               {(["MIXED", "EASY", "HARD"] as const).map((d) => (
                 <button
@@ -210,34 +261,38 @@ export function BuilderForm({
                       : "flex-1 rounded-md border border-ink-300 px-2 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-50"
                   }
                 >
-                  {d === "MIXED" ? "Mixed" : d === "EASY" ? "Easy" : "Hard"}
+                  {d === "MIXED" ? labels.diffMixed : d === "EASY" ? labels.diffEasy : labels.diffHard}
                 </button>
               ))}
             </div>
 
             <p className="mt-4 text-sm text-ink-700">
-              <span className="font-bold text-ink-900">{sel.size}</span> topic{sel.size === 1 ? "" : "s"} ·{" "}
-              <span className="font-bold text-ink-900">{available}</span> questions available
+              {fillBold(sel.size === 1 ? labels.availableOne : labels.availableMany, {
+                topics: sel.size,
+                n: available,
+              })}
             </p>
             {available > 0 && available < count && (
-              <p className="mt-1 text-xs text-amber-700">
-                Fewer than {count} in this selection — the mock will use what&apos;s there.
-              </p>
+              <p className="mt-1 text-xs text-amber-700">{fillTemplate(labels.fewer, { count })}</p>
             )}
 
             {/* Honest seen / unseen state — real per-topic counts, signed-in
                 AND measured only (showSeen): a failed seen query shows nothing. */}
             {showSeen && sel.size > 0 && available > 0 && (
-              <p className="mt-1 text-xs text-ink-600">{COPY.seenLine(seenTotal, available, windowDays)}</p>
+              <p className="mt-1 text-xs text-ink-600">
+                {fillTemplate(labels.seenLine, { seen: seenTotal, total: available, days: windowDays })}
+              </p>
             )}
             {showSeen && available > 0 && unseen > 0 && estRepeats > 0 && (
-              <p className="mt-1 text-xs text-amber-700">{COPY.seenShort(unseen, setSize, estRepeats)}</p>
+              <p className="mt-1 text-xs text-amber-700">
+                {fillTemplate(labels.seenShort, { unseen, size: setSize, repeats: estRepeats })}
+              </p>
             )}
             {showSeen && available > 0 && unseen === 0 && (
               <p className="mt-1 text-xs text-amber-700">
-                {COPY.seenExhausted(available, windowDays)}{" "}
+                {fillTemplate(labels.seenExhausted, { total: available, days: windowDays })}{" "}
                 <Link href={`/exams/${examCode}`} className="font-medium text-saffron-700 hover:underline">
-                  Exam page →
+                  {labels.seenExamPage}
                 </Link>
               </p>
             )}
@@ -245,17 +300,23 @@ export function BuilderForm({
             {built ? (
               <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3">
                 <p className="text-xs text-ink-800">
-                  {COPY.builtRepeats(built.count, built.bank.repeats, built.bank.windowDays, built.bank.seen, built.bank.size)}
+                  {fillTemplate(labels.builtRepeats, {
+                    count: built.count,
+                    repeats: built.bank.repeats,
+                    days: built.bank.windowDays,
+                    seen: built.bank.seen,
+                    size: built.bank.size,
+                  })}
                 </p>
                 <Link href={`/mocks/${built.id}`} className="btn-primary mt-3 block w-full text-center !py-2.5 text-sm">
-                  {COPY.builtStart}
+                  {labels.builtStart}
                 </Link>
                 <button
                   type="button"
                   onClick={() => setBuilt(null)}
                   className="mt-2 w-full text-center text-xs text-ink-500 hover:text-ink-800"
                 >
-                  {COPY.builtChange}
+                  {labels.builtChange}
                 </button>
               </div>
             ) : signedIn ? (
@@ -265,20 +326,19 @@ export function BuilderForm({
                 disabled={busy || sel.size === 0}
                 className="btn-primary mt-4 w-full !py-2.5 text-sm disabled:opacity-50"
               >
-                {busy ? "Building…" : "Build & start →"}
+                {busy ? labels.building : labels.start}
               </button>
             ) : (
               <Link
                 href={`/login?callbackUrl=${encodeURIComponent(pathname ?? `/exams/${examCode}/build-mock`)}`}
                 className="btn-primary mt-4 block w-full text-center !py-2.5 text-sm"
               >
-                Sign in free & build →
+                {labels.signin}
               </Link>
             )}
             {err && <p className="mt-2 text-xs text-red-600">{err}</p>}
             <p className="mt-3 text-xs text-ink-500">
-              Timed to the real exam&apos;s pace · full solutions after · readable in हिंदी + {OTHER_INDIAN_LANGUAGE_COUNT} languages inside
-              the test.
+              {fillTemplate(labels.footer, { n: OTHER_INDIAN_LANGUAGE_COUNT })}
             </p>
           </div>
         </aside>

@@ -1,6 +1,19 @@
 // Shared writer for generated exam news + important dates (23 Aug 2026).
-// Used by /api/cron/refresh-exam-data and scripts/backfill-exam-news.ts so
-// the two can't drift. Rules (all from the tracker honesty model):
+// Used by src/lib/exam-refresh-run.ts (the refresh-exam-data crons) and
+// scripts/backfill-exam-news.ts so the two can't drift. Rules (all from
+// the tracker honesty model):
+//   • News keeps ONE permalink per story (13 Sep 2026, index shape). A new
+//     generation that restates a live story UPDATES that row in place (word
+//     for word → no write at all); a restatement of a story archived within
+//     STORY_LOOKBACK_DAYS revives that row; only a genuinely new story
+//     creates a row; only live rows the new generation no longer carries
+//     are archived. Until then every run archived all live rows and
+//     re-created them — 5,518 news URLs, ~84% restatements, every one a new
+//     page for Bing. Matcher: src/lib/news-dedupe.ts. A WORDING-ONLY
+//     restatement (same status, same years / numbers / months) keeps its
+//     publishedAt and stored citation; a matched story whose status or
+//     stated facts changed keeps its permalink but is re-dated like a new
+//     row and carries only its own citation (review fix, 13 Sep 2026).
 //   • ARCHIVE, don't delete, prior generated rows — but only when the new
 //     generation actually returned rows of that type (an empty result must
 //     never wipe a populated timeline).
@@ -21,6 +34,8 @@ import type { PrismaClient } from "@prisma/client";
 import type { ExamInfoResult } from "@/lib/ai/exam-info";
 import { istDayNumber } from "@/lib/exam-phase";
 import { examWeekUrls, submitIndexNow } from "@/lib/indexnow";
+import { planNewsWrites, STORY_LOOKBACK_DAYS, type NewsWritePlan } from "@/lib/news-dedupe";
+import { gateTwinUrls, loadTwinVerdicts } from "@/lib/twin-localisation";
 
 export const GEN_SOURCE = "ai-generated:claude";
 const MS_PER_DAY = 86_400_000;
@@ -28,11 +43,24 @@ const MS_PER_DAY = 86_400_000;
 // this many days (either side) re-submits its hub / tracker / cutoff URLs
 // to IndexNow immediately — the weekly sitemap ping is too slow that week.
 const EXAM_WEEK_DAYS = 7;
+// Archived rows (newest first) a restated story may revive.
+const REVIVE_POOL = 200;
 
 type Db = Pick<PrismaClient, "examNewsItem" | "examImportantDate" | "exam">;
 
 export interface WriteResult {
+  /** Items the generation returned. */
   news: number;
+  /** New permalinks — genuinely new stories. */
+  newsCreated: number;
+  /** Existing permalinks updated in place (restatements, revived rows included). */
+  newsUpdated: number;
+  /** Of those, updates whose status or stated facts changed (re-dated, own citation only). */
+  newsRefreshed: number;
+  /** Restated word for word — nothing written. */
+  newsUnchanged: number;
+  /** Live rows archived because the new generation no longer carries them. */
+  newsArchived: number;
   dates: number;
   keptOfficial: number;
   /** True when the exam is inside its exam week and the URL set was
@@ -42,21 +70,33 @@ export interface WriteResult {
 
 export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult, now: Date = new Date()): Promise<WriteResult> {
   // ── news ────────────────────────────────────────────────────────────
+  let plan: NewsWritePlan | null = null;
   if (info.news.length > 0) {
-    await db.examNewsItem.updateMany({
-      where: { examId, source: GEN_SOURCE, archivedAt: null },
-      data: { archivedAt: now },
-    });
-    for (const n of info.news) {
-      await db.examNewsItem.create({
-        data: {
-          examId,
-          title: n.title,
-          body: n.body,
-          source: GEN_SOURCE,
-          url: n.source ?? null,
-          publishedAt: new Date(now.getTime() - n.daysAgo * MS_PER_DAY),
-        },
+    const select = { id: true, title: true, body: true, url: true, archivedAt: true } as const;
+    const [live, recentlyArchived] = await Promise.all([
+      db.examNewsItem.findMany({
+        where: { examId, source: GEN_SOURCE, archivedAt: null },
+        select,
+        orderBy: { publishedAt: "desc" },
+      }),
+      db.examNewsItem.findMany({
+        where: { examId, source: GEN_SOURCE, archivedAt: { gte: new Date(now.getTime() - STORY_LOOKBACK_DAYS * MS_PER_DAY) } },
+        select,
+        orderBy: { archivedAt: "desc" },
+        take: REVIVE_POOL,
+      }),
+    ]);
+    plan = planNewsWrites([...live, ...recentlyArchived], info.news, now);
+    for (const u of plan.update) {
+      await db.examNewsItem.update({ where: { id: u.id }, data: u.data });
+    }
+    for (const c of plan.create) {
+      await db.examNewsItem.create({ data: { examId, source: GEN_SOURCE, ...c } });
+    }
+    if (plan.archive.length > 0) {
+      await db.examNewsItem.updateMany({
+        where: { id: { in: plan.archive }, archivedAt: null },
+        data: { archivedAt: now },
       });
     }
   }
@@ -112,13 +152,17 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
   }
 
   // ── exam week → IndexNow ────────────────────────────────────────────
-  // Only when something was actually written, and only for an exam with a
-  // live TYPED exam-day row within ±7 days (legacy untyped rows never
-  // trigger). Fire-and-forget: the cron loop's next Claude call gives the
-  // ping time to complete; the daily ?scope=examweek IndexNow cron is the
+  // Only when the exam's pages actually changed — a new story, a story that
+  // came back or left, a story whose status or stated facts changed, or a
+  // new tracker generation; a wording-only restatement is not a change
+  // (13 Sep 2026) — and only for an exam with a live TYPED exam-day
+  // row within ±7 days (legacy untyped rows never trigger). Hindi / Telugu
+  // twins go only when localised (src/lib/twin-localisation.ts); a failed
+  // measurement withholds them. The daily indexnow-examweek cron is the
   // safety net for the last exam of a run.
   let indexNow = false;
-  if (info.news.length > 0 || info.dates.length > 0) {
+  const newsChanged = plan !== null && plan.create.length + plan.archive.length + plan.revived + plan.refreshed > 0;
+  if (newsChanged || info.dates.length > 0) {
     const todayIst = istDayNumber(now);
     const from = new Date((todayIst - EXAM_WEEK_DAYS) * MS_PER_DAY);
     const to = new Date((todayIst + EXAM_WEEK_DAYS + 1) * MS_PER_DAY);
@@ -134,10 +178,21 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
         indexNow = true;
         // Awaited (10 s cap inside submitIndexNow): a detached fetch can be
         // dropped when the cron's function returns right after the last exam.
-        await submitIndexNow(examWeekUrls(exam.code));
+        const twins = await loadTwinVerdicts([examId], now).catch(() => []);
+        await submitIndexNow(gateTwinUrls(examWeekUrls(exam.code), new Map(twins.map((t) => [t.code, t.verdicts]))));
       }
     }
   }
 
-  return { news: info.news.length, dates: info.dates.length, keptOfficial, indexNow };
+  return {
+    news: info.news.length,
+    newsCreated: plan?.create.length ?? 0,
+    newsUpdated: plan?.update.length ?? 0,
+    newsRefreshed: plan?.refreshed ?? 0,
+    newsUnchanged: plan?.unchanged.length ?? 0,
+    newsArchived: plan?.archive.length ?? 0,
+    dates: info.dates.length,
+    keptOfficial,
+    indexNow,
+  };
 }

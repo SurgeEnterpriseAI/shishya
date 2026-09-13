@@ -25,8 +25,12 @@
 //  - Lets the request through unchanged otherwise.
 
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
+import { SESSION_HINT_COOKIE, SESSION_HINT_MAX_AGE_S, SESSION_HINT_VALUE } from "@/lib/session-hint";
 
 const COOKIE = "shishya_attrib";
+// NextAuth v4 JWT session cookie (no custom cookie names in src/lib/auth.ts);
+// large tokens are chunked as .0, .1, …
+const SESSION_COOKIE_RE = /^(__Secure-)?next-auth\.session-token(\.\d+)?$/;
 
 // Known AI crawlers/fetchers, canonical-name first (order matters — the
 // first match wins, so more specific names precede their prefixes:
@@ -112,6 +116,28 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
     res = NextResponse.next({ request: { headers: reqHeaders } });
   } else {
     res = NextResponse.next();
+  }
+
+  // ── Signed-in hint sync (13 Sep 2026, phone-first) ──
+  // Client islands skip /api/auth/session when the non-httpOnly `shishya_in`
+  // hint is absent (src/lib/session-hint.ts). The hint can vanish while the
+  // session lives on (Safari and Brave cap script-written cookies at 7 days;
+  // a cookie clear; a sign-in from before the hint shipped), and a signed-in
+  // student would then look like a guest on public pages. Middleware can see
+  // the httpOnly NextAuth cookie, so it re-issues the hint. Presence only, no
+  // JWT decode: islands still ask the server before showing anything
+  // signed-in. It only ever SETS the hint, so a session-cookie rename can
+  // never turn a student into a guest — at worst the sync stops.
+  if (!req.cookies.get(SESSION_HINT_COOKIE)?.value && req.cookies.getAll().some((c) => SESSION_COOKIE_RE.test(c.name))) {
+    res.cookies.set({
+      name: SESSION_HINT_COOKIE,
+      value: SESSION_HINT_VALUE,
+      path: "/",
+      maxAge: SESSION_HINT_MAX_AGE_S,
+      sameSite: "lax",
+      secure: req.nextUrl.protocol === "https:",
+      httpOnly: false,
+    });
   }
 
   // ── AI-crawler observability (cheap: one regex pass, only on match) ──

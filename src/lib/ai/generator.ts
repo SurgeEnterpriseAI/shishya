@@ -193,15 +193,33 @@ Rules:
 - Mix difficulties; do not pick all HARD even if weak.
 - Exactly ${request.questionCount} unique ids from the pool. No invented ids.`;
 
-  const { response } = await callClaude({
-    feature: "mock-adaptive",
-    ref: syllabus.examCode,
-    system: systemBlocks,
-    messages: [{ role: "user", content: userPrompt }],
-    maxTokens: TOKEN_LIMITS.generator,
-  });
-
-  const parsed = safeParseJson(extractText(response));
+  let parsed: any;
+  try {
+    const { response } = await callClaude({
+      feature: "mock-adaptive",
+      ref: syllabus.examCode,
+      system: systemBlocks,
+      messages: [{ role: "user", content: userPrompt }],
+      maxTokens: TOKEN_LIMITS.generator,
+    });
+    parsed = safeParseJson(extractText(response));
+  } catch (err) {
+    // Model unavailable (13 Sep 2026 RCA: two API-credit outages, 11 Sep and
+    // 12-13 Sep, turned "Start mock" into the raw provider error for every
+    // student with < 20 recorded responses). The model only ever picks ids
+    // from this pool, so a difficulty-mixed pick from the same pool is a real
+    // mock — titled and explained as what it is, not as an adaptive one.
+    console.error("[generator] mock-adaptive: model unavailable, rule-based pick:", (err as Error)?.message);
+    const picked = pickByDifficulty(pool, request.questionCount, { EASY: 0.3, MEDIUM: 0.5, HARD: 0.2 });
+    return {
+      ...finalize(picked, {
+        title: `Practice Mock — ${syllabus.examShortName}`,
+        rationale: "A mixed-difficulty practice set, questions you haven't seen first.",
+        durationMin: request.durationMin ?? estimateDuration(picked.length),
+      }),
+      fallback: true,
+    } as GenerateMockOutput;
+  }
   // Validate ids exist in pool — drop invalids and top up if short
   const validIds = new Set(pool.map((q) => q.id));
   const cleanIds: string[] = (parsed.questionIds ?? []).filter((id: string) => validIds.has(id));
@@ -253,14 +271,28 @@ Return STRICT JSON:
 
 Only use ids from the pool.`;
 
-  const { response } = await callClaude({
-    feature: "mock-user-request",
-    ref: syllabus.examCode,
-    system: systemBlocks,
-    messages: [{ role: "user", content: userPrompt }],
-    maxTokens: TOKEN_LIMITS.generator,
-  });
-  const parsed = safeParseJson(extractText(response));
+  let parsed: any;
+  try {
+    const { response } = await callClaude({
+      feature: "mock-user-request",
+      ref: syllabus.examCode,
+      system: systemBlocks,
+      messages: [{ role: "user", content: userPrompt }],
+      maxTokens: TOKEN_LIMITS.generator,
+    });
+    parsed = safeParseJson(extractText(response));
+  } catch (err) {
+    // A free-form instruction needs the model to read it; a rule-based set
+    // titled after the instruction would be a false promise. Say so plainly
+    // (never the provider's error text) and point at what works right now.
+    console.error("[generator] mock-user-request: model unavailable:", (err as Error)?.message);
+    throw Object.assign(
+      new Error(
+        "Mocks built from your own instruction need our AI helper, which is unavailable for a few minutes. “Build my own mock” (pick topics and size) works right now.",
+      ),
+      { status: 503, friendly: true },
+    );
+  }
   const validIds = new Set(pool.map((q) => q.id));
   const cleanIds: string[] = (parsed.questionIds ?? []).filter((id: string) => validIds.has(id));
   const finalRefs = pool.filter((q) => cleanIds.includes(q.id));

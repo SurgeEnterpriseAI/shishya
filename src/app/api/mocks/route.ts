@@ -95,10 +95,6 @@ export async function POST(req: Request) {
       });
     }
 
-    if (result.questionIds.length === 0) {
-      return bad("Could not assemble a mock from available questions.");
-    }
-
     // ── Seen-exclusion, second half ──────────────────────────────────
     // 1. Never the same question twice in one mock (the rule-based
     //    DIAGNOSTIC/FULL assemblers match subjects by topic-code prefix
@@ -127,6 +123,13 @@ export async function POST(req: Request) {
         seenForPick,
       );
       finalIds = finalIds.concat(picked.map((q) => q.id));
+    }
+    // Checked AFTER the top-up (13 Sep 2026): a 5-question diagnostic on an
+    // exam with more than five subjects samples only the first five, and a
+    // student who had seen those got 0 unseen candidates — a hard error
+    // while unseen questions sat in the other subjects.
+    if (finalIds.length === 0) {
+      return bad("Could not assemble a mock from available questions.");
     }
     const { topicMix, difficultyMix } =
       finalIds.length === result.questionIds.length
@@ -162,7 +165,13 @@ export async function POST(req: Request) {
         },
         questionIds: finalIds,
         generatedBy:
-          body.request.type === "DIAGNOSTIC" ? "ai:diagnostic" : usedCat ? "cat:irt" : "ai",
+          body.request.type === "DIAGNOSTIC"
+            ? "ai:diagnostic"
+            : usedCat
+              ? "cat:irt"
+              : (result as { fallback?: boolean }).fallback
+                ? "rule:ai-unavailable"
+                : "ai",
         generationContext: { studentSnapshot: studentState as any },
       },
     });
@@ -183,6 +192,18 @@ export async function POST(req: Request) {
       },
     });
   } catch (err: any) {
+    // Our own friendly refusals carry their message. A model-provider error
+    // (the Anthropic SDK's APIError carries `headers` / `error`) must never
+    // reach a student verbatim — on 11-13 Sep "credit balance is too low" did,
+    // because it arrives with status 400.
+    if (err?.friendly) return Response.json({ error: err.message }, { status: err.status ?? 503 });
+    if (err?.headers !== undefined || err?.error?.type !== undefined) {
+      console.error("[mocks] model provider error:", err?.status, err?.message);
+      return Response.json(
+        { error: "Our AI helper is unavailable for a few minutes. A topic test or the diagnostic starts right away." },
+        { status: 503 },
+      );
+    }
     if (err?.status === 400) return bad(err.message);
     return serverError(err);
   }

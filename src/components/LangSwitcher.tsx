@@ -19,6 +19,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { locales, localeNames, isRtl, type Locale } from "@/lib/i18n";
+import { hasSessionHint } from "@/lib/session-hint";
 
 const COOKIE = "shishya-lang";
 const URL_LOCALE_RE = /^\/(hi|te)(\/.*)?$/;
@@ -63,15 +64,18 @@ export function LangSwitcher({ current }: { current: Locale }) {
     document.cookie = `${COOKIE}=${lc}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
     // 12 Sep 2026: signed-in members also get User.preferredLang written,
     // so mocks, the tutor and their next device follow the choice. Fire
-    // and forget — a guest gets a harmless 401, an offline tab a swallowed
-    // rejection; the cookie path above never waits on it. (The header has
-    // no session context, hence the unconditional call.)
-    void fetch("/api/me/preferences", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ lang: lc }),
-      keepalive: true,
-    }).catch(() => {});
+    // and forget — an offline tab gets a swallowed rejection; the cookie
+    // path above never waits on it. 13 Sep 2026: only when the `shishya_in`
+    // hint says a session exists (src/lib/session-hint.ts) — guests used
+    // to POST here and eat a 401 on every change.
+    if (hasSessionHint()) {
+      void fetch("/api/me/preferences", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ lang: lc }),
+        keepalive: true,
+      }).catch(() => {});
+    }
     setCur(lc);
     const m = (pathname ?? "").match(URL_LOCALE_RE);
     if (m) {

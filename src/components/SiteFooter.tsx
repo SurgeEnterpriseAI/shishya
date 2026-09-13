@@ -4,6 +4,11 @@
 // operating-entity line. Deliberately quiet: one row, small type.
 
 import Link from "next/link";
+// 13 Sep 2026 (phone-first): two client islands that must exist on every
+// page ride along with the footer — the once-only home-screen offer and
+// the field web-vitals beacon. Both render nothing most of the time.
+import { InstallOffer } from "./InstallOffer";
+import { WebVitals } from "./WebVitals";
 
 export function SiteFooter() {
   return (
@@ -27,6 +32,8 @@ export function SiteFooter() {
           <Link href="/contact" className="hover:text-ink-800">Contact</Link>
         </p>
       </div>
+      <InstallOffer />
+      <WebVitals />
     </footer>
   );
 }

@@ -19,10 +19,43 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
 import { getExamTheme } from "@/lib/exam-theme";
-import { BuilderForm } from "./BuilderForm";
+import { BuilderForm, type BuilderLabels } from "./BuilderForm";
 import { OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { getSeenCountByTopic } from "@/lib/seen-questions";
 import { SEEN_WINDOW_DAYS } from "@/lib/question-pick";
+import { getT } from "@/lib/i18n-server";
+import type { StringKey } from "@/lib/i18n";
+
+// The form's copy in the visitor's locale (13 Sep 2026): cookie / URL /
+// preferredLang via getT(). Not exported — a page file may only export
+// Next's own fields.
+function builderLabels(t: (key: StringKey) => string): BuilderLabels {
+  return {
+    seenLine: t("build.seen.line"),
+    seenShort: t("build.seen.short"),
+    seenExhausted: t("build.seen.exhausted"),
+    seenExamPage: t("build.seen.examPage"),
+    topicSeenTitle: t("build.topic.seenTitle"),
+    topicNewOf: t("build.topic.newOf"),
+    builtRepeats: t("build.built.repeats"),
+    builtStart: t("build.built.start"),
+    builtChange: t("build.built.change"),
+    questions: t("build.questions"),
+    difficulty: t("build.difficulty"),
+    diffMixed: t("build.diff.mixed"),
+    diffEasy: t("build.diff.easy"),
+    diffHard: t("build.diff.hard"),
+    availableOne: t("build.available.one"),
+    availableMany: t("build.available.many"),
+    fewer: t("build.fewer"),
+    pickOne: t("build.pickOne"),
+    failed: t("build.failed"),
+    building: t("build.building"),
+    start: t("build.start"),
+    signin: t("build.signin"),
+    footer: t("build.footer"),
+  };
+}
 
 // Per-request: the form shows the signed-in student's own "seen N of M"
 // numbers per topic, which must never be cached across users. (auth()
@@ -51,7 +84,7 @@ export default async function BuildMockPage({
   params: Promise<{ code: string }>;
   searchParams: Promise<{ topics?: string }>;
 }) {
-  const [{ code }, sp, session] = await Promise.all([params, searchParams, auth().catch(() => null)]);
+  const [{ code }, sp, session, tt] = await Promise.all([params, searchParams, auth().catch(() => null), getT()]);
   const exam = await prisma.exam.findUnique({
     where: { code },
     select: { id: true, code: true, shortName: true, name: true, active: true, category: true, durationMin: true, totalQuestions: true },
@@ -163,6 +196,7 @@ export default async function BuildMockPage({
             signedIn={!!session?.user?.id}
             seenKnown={seenKnown}
             windowDays={SEEN_WINDOW_DAYS}
+            labels={builderLabels(tt.t)}
           />
         )}
       </section>

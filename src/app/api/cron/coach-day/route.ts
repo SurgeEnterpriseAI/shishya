@@ -20,6 +20,7 @@ export async function GET(req: Request) {
 
   const userIds = await activePlanUserIds();
   let planned = 0;
+  let fallback = 0;
   let failed = 0;
   let skipped = 0;
   const started = Date.now();
@@ -28,8 +29,11 @@ export async function GET(req: Request) {
     if (Date.now() - started > (maxDuration - 30) * 1000) break;
     const r = await generateCoachDay(uid);
     if (r === "planned") planned++;
+    // Model unavailable: the deterministic plan was stored, so the 7 AM
+    // coach-morning mail still goes out (13 Sep 2026).
+    else if (r === "fallback") fallback++;
     else if (r === "failed") failed++;
     else skipped++;
   }
-  return Response.json({ ok: true, total: userIds.length, planned, failed, skipped });
+  return Response.json({ ok: true, total: userIds.length, planned, fallback, failed, skipped });
 }

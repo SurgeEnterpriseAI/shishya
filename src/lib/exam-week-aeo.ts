@@ -28,6 +28,7 @@ import { PASSED_ESTIMATE_TEXT, type TimelineRow } from "@/lib/exam-timeline";
 import { markingSchemeVerdict, type MarkingSchemeVerdict } from "@/lib/marking-scheme";
 import { sourceHostLabel } from "@/lib/official-source";
 import { getVerdictTallyRange, emptyTally, tallyLine, type VerdictTally } from "@/lib/exam-verdict-tally";
+import { VERDICT_MIN_N } from "@/lib/exam-verdict";
 import { examWeekUrls, phaseArticleUrl, SITE_ORIGIN } from "@/lib/indexnow";
 import { isRealArticle, realSourceCount } from "@/lib/phase-article-quality";
 
@@ -224,9 +225,10 @@ export async function loadExamWeekTally(ex: ExamWeekExam, now: Date = new Date()
 }
 
 /** URL set to submit to IndexNow for one exam in exam week: hub, tracker,
- *  cutoff, hi/te twins, plus any REAL phase-article URLs. */
+ *  cutoff, checklist / exam-day / after-the-paper pages, hi/te twins (the
+ *  caller gates them — gateTwinUrls), plus any REAL phase-article URL, once. */
 export function examWeekIndexNowUrls(ex: ExamWeekExam, articles: RealPhaseArticle[] = []): string[] {
-  return [...examWeekUrls(ex.code), ...articles.map((a) => phaseArticleUrl(ex.code, a.slug))];
+  return [...new Set([...examWeekUrls(ex.code), ...articles.map((a) => phaseArticleUrl(ex.code, a.slug))])];
 }
 
 // ── "## Exam week" block (context.md / llms-full.txt) ──────────────────
@@ -314,20 +316,30 @@ export function examWeekAeoLines(
   }
 
   L.push(`- Category-wise indicative cutoff (estimate from score bands, NOT official; the official cutoff comes with the result):${site}/exams/${ex.code}/cutoff`);
+  // No hi/te suffix (13 Sep 2026, index shape): most tracker twins are
+  // English bodies that canonicalise to this URL (src/lib/twin-localisation.ts).
   L.push(
-    `- Exam tracker (every milestone with its source tier, free email alerts for official answer key / result): ${site}/exams/${ex.code}/updates · Hindi: ${site}/hi/exams/${ex.code}/updates · Telugu: ${site}/te/exams/${ex.code}/updates`,
+    `- Exam tracker (every milestone with its source tier, free email alerts for official answer key / result): ${site}/exams/${ex.code}/updates`,
   );
-  for (const a of opts.articles ?? []) {
-    const what =
-      a.slug === "checklist"
-        ? "Last-minute checklist"
-        : a.slug === "live"
-          ? "Exam-day paper analysis (from public student discussion)"
-          : a.slug === "reactions"
-            ? "Student verdict & expected cutoff (from public student discussion)"
-            : a.title;
-    L.push(`- ${what} — ${a.sources} cited sources, updated ${a.lastUpdatedAt.toISOString().slice(0, 10)}: ${phaseArticleUrl(ex.code, a.slug)}`);
-  }
+  // The three exam-week pages lead with facts built from our own rows
+  // (13 Sep 2026: src/lib/exam-checklist.ts, src/lib/exam-night-facts.ts),
+  // so every exam-week exam gets them; a REAL public-discussion article on
+  // the same page adds its source count.
+  const articleNote = (slug: string): string => {
+    const a = (opts.articles ?? []).find((x) => x.slug === slug);
+    return a
+      ? ` — the page also carries an article compiled from public student discussion (${a.sources} cited sources, updated ${a.lastUpdatedAt.toISOString().slice(0, 10)})`
+      : "";
+  };
+  L.push(
+    `- Last-minute checklist (exam-day timing with its source tier, what to carry, the marking scheme only when one can be stated for this sitting)${articleNote("checklist")}: ${phaseArticleUrl(ex.code, "checklist")}`,
+  );
+  L.push(
+    `- Exam-day page (the exam day with its source tier, a one-tap "how was the paper?" rating once the paper has started on an announced day, answer-key / result status from the tracker)${articleNote("live")}: ${phaseArticleUrl(ex.code, "live")}`,
+  );
+  L.push(
+    `- After-the-paper page (self-reported difficulty ratings, counts shown only from ${VERDICT_MIN_N} ratings and never a cutoff prediction; answer-key / result status from the tracker)${articleNote("reactions")}: ${phaseArticleUrl(ex.code, "reactions")}`,
+  );
 
   // Marking scheme for THIS sitting (11 Sep 2026). The arithmetic and the
   // estimator link appear only when one scheme can be stated for the

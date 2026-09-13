@@ -151,6 +151,15 @@ export async function POST(req: Request) {
       },
     });
   } catch (err: any) {
+    // A model-provider error (Anthropic SDK APIError: `headers` / `error`)
+    // arrives with status 400 on a zero credit balance — never show its text.
+    if (err?.headers !== undefined || err?.error?.type !== undefined) {
+      console.error("[mocks/fresh] model provider error:", err?.status, err?.message);
+      return Response.json(
+        { error: "Fresh questions need our AI helper, which is unavailable for a few minutes. Topic tests from the question bank work right now." },
+        { status: 503 },
+      );
+    }
     if (err?.status === 400) return bad(err.message);
     return serverError(err);
   }

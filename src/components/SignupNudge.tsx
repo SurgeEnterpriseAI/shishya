@@ -24,8 +24,9 @@
 //     surface+action while the CTA report groups by props.cta — 386
 //     events collapsed into one "(none)" row.)
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { fetchSignedIn } from "@/lib/session-hint";
 
 const ACTIVE_SECONDS_NEEDED = 5 * 60;
 const MIN_PAGEVIEWS = 3;
@@ -56,6 +57,14 @@ function blockedPath(p: string): boolean {
 // sheet could sit over exam-hub UIs. Signed-in detection now probes
 // the session endpoint once; until it answers, we assume signed-in
 // (fail-closed: never nudge when unsure).
+//
+// 13 Sep 2026 (phone-first audit): the mount check is the shared,
+// hint-gated probe (src/lib/session-hint.ts) — a guest without the
+// non-httpOnly, PII-free `shishya_in` hint resolves anonymous with NO
+// request. A missing hint is not proof of being a guest (cookie reset, a
+// sign-in from before the hint shipped), so right before the card would
+// show we ask the server once more (force) and stay silent unless it
+// answers "guest". Never on page load; at most once per guest per day.
 
 function beacon(action: "shown" | "clicked" | "dismissed") {
   try {
@@ -80,12 +89,13 @@ export function SignupNudge() {
   const [show, setShow] = useState(false);
   // null = unknown (treat as signed-in; never nudge), true = anonymous.
   const [anon, setAnon] = useState<boolean | null>(null);
+  // A forced session check is in flight (the pre-show confirmation below).
+  const confirming = useRef(false);
 
   useEffect(() => {
-    fetch("/api/auth/session", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((s) => setAnon(!(s && (s as any).user)))
-      .catch(() => setAnon(null)); // probe failed → stay silent
+    // Shared, hint-gated probe: false = guest (no request without the
+    // hint), true = signed in, null = probe failed → stay silent.
+    fetchSignedIn().then((v) => setAnon(v === null ? null : !v));
   }, []);
 
   // If the card is up and the student navigates into a protected page
@@ -129,9 +139,27 @@ export function SignupNudge() {
           Number(sessionStorage.getItem(SS_VIEWS) ?? "0") >= MIN_PAGEVIEWS &&
           !blockedPath(location.pathname)
         ) {
-          localStorage.setItem(LS_LAST, today);
-          setShow(true);
-          beacon("shown");
+          // A missing hint is not proof of being a guest, so confirm with
+          // the server right before showing (force). Signed in or unsure →
+          // never nudge. At most one call per engaged guest per day.
+          if (confirming.current) return;
+          confirming.current = true;
+          fetchSignedIn({ force: true }).then((v) => {
+            confirming.current = false;
+            if (v !== false) {
+              setAnon(v === true ? false : null);
+              return;
+            }
+            if (document.hidden || blockedPath(location.pathname)) return;
+            try {
+              if (localStorage.getItem(LS_LAST) === today) return;
+              localStorage.setItem(LS_LAST, today);
+            } catch {
+              return;
+            }
+            setShow(true);
+            beacon("shown");
+          });
         }
       } catch {
         /* private mode — never nudge if we can't be polite about it */

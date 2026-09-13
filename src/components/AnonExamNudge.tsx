@@ -13,12 +13,15 @@
 // (/exams/CODE/quiz?n=10&from=cutoff — the existing anonymous quiz). The
 // sign-in ask moves to the quiz's result screen, after value.
 //
-// Session is checked CLIENT-side (/api/auth/session) so the host page
-// keeps its ISR caching — no server cookie read. Renders nothing until
-// the visitor is confirmed anonymous (signed-in users never see it,
+// Session is checked CLIENT-side so the host page keeps its ISR caching —
+// no server cookie read. Since 13 Sep 2026 that is the shared, hint-gated
+// probe (src/lib/session-hint.ts): a guest without the `shishya_in` hint
+// resolves at once with NO /api/auth/session request. Renders nothing until
+// the visitor is known not to be signed in (signed-in users never see it,
 // with no flash). Instrumented with shown/click beacons per surface.
 
 import { useEffect, useRef, useState } from "react";
+import { fetchSignedIn } from "@/lib/session-hint";
 
 function beacon(cta: string, extra?: Record<string, unknown>) {
   try {
@@ -71,14 +74,11 @@ export function AnonExamNudge({
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/auth/session")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((s) => {
-        if (!cancelled && !s?.user) setAnon(true);
-      })
-      .catch(() => {
-        if (!cancelled) setAnon(true);
-      });
+    // false (guest) or null (probe failed) both show the offer — fail-open,
+    // as before; only a confirmed session hides it.
+    fetchSignedIn().then((v) => {
+      if (!cancelled && v !== true) setAnon(true);
+    });
     return () => {
       cancelled = true;
     };

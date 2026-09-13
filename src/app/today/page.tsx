@@ -21,21 +21,29 @@
 // utm_* on the inbound link is forwarded onto /mocks/{id} so the email
 // channel stays visible in the analytics channel split (the client tracker
 // reads utm_* off the page URL; a server redirect would otherwise drop it).
+//
+// Language (13 Sep 2026): copy comes from getT() — the same locale the
+// mock player's labels use on the next screen — so a hi/te student sees
+// one language from /today straight into the mock.
 
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
+import { getT } from "@/lib/i18n-server";
 import { findTodaysDailyFive, pickDailyFive } from "@/lib/study-day-five";
-import { TODAY_PAGE_TITLE } from "@/lib/study-day-copy";
+import { todayLabels } from "@/lib/study-day-copy";
 import { AutoStartDailyFive } from "./AutoStartDailyFive";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: TODAY_PAGE_TITLE,
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return {
+    title: t("today.title"),
+    robots: { index: false, follow: false },
+  };
+}
 
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content"] as const;
 
@@ -71,6 +79,9 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const pick = await pickDailyFive(userId).catch(() => null);
   if (!pick) redirect("/dashboard");
 
+  // Only now that we render: the redirects above never pay for the locale.
+  const { t } = await getT();
+
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
@@ -81,6 +92,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           topicName={pick.topicName}
           request={pick.request}
           qs={qs}
+          labels={todayLabels(t)}
         />
       </section>
     </main>

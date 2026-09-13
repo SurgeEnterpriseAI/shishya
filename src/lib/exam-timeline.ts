@@ -129,6 +129,23 @@ export function resolveKind(r: { kind?: string | null; label: string; isExamDay:
   return resolveKindInfo(r).kind;
 }
 
+/** The citable URL of a tracker row: its url, else an http(s) source. */
+export function rowCitation(r: { url?: string | null; source?: string | null }): string | null {
+  return r.url && /^https?:\/\//i.test(r.url) ? r.url : r.source && /^https?:\/\//i.test(r.source) ? r.source : null;
+}
+
+/** An answer-key row (declared, or inferred from its label) that is not
+ *  announced, i.e. tier "expected". The one rule buildTimeline and the hub
+ *  Important Dates list share (13 Sep 2026: an untyped, unsourced "Final
+ *  answer key release" row was dropped from every timeline but rendered
+ *  raw on the TS EAMCET hub). */
+export function isUnannouncedAnswerKey(
+  r: { kind?: string | null; label: string; isExamDay: boolean; confidence?: string | null; url?: string | null; source?: string | null },
+  officialUrl?: string | null,
+): boolean {
+  return resolveKind(r) === "ANSWER_KEY" && sourceTier(r.confidence, rowCitation(r), officialUrl) === "expected";
+}
+
 export function isoDay(d: Date): string {
   // The stored value is midnight-UTC of the IST calendar day (repo-wide
   // convention) — format in UTC so the day never shifts.
@@ -155,7 +172,7 @@ export function buildTimeline(rows: TimelineInput[], now: Date = new Date(), off
   for (const r of rows) {
     const date = r.date instanceof Date ? r.date : new Date(r.date);
     const { kind, declared } = resolveKindInfo({ kind: r.kind, label: r.label, isExamDay: r.isExamDay });
-    const url = r.url && /^https?:\/\//i.test(r.url) ? r.url : r.source && /^https?:\/\//i.test(r.source) ? r.source : null;
+    const url = rowCitation(r);
     const tier = sourceTier(r.confidence, url, officialUrl);
     if (kind === "ANSWER_KEY" && tier === "expected") continue;
     const delta = istDayNumber(date) - today;

@@ -90,8 +90,13 @@ export async function generateMetadata({
   // URL locale (23 Aug 2026): /hi/exams/X and /te/exams/X are crawlable
   // twins — self-canonical, hreflang-paired, titled in that language.
   const { getUrlLocale } = await import("@/lib/i18n-server");
-  const { localizedUrl, languageAlternates, ogLocale } = await import("@/lib/seo-locale");
+  const { localizedUrl, languageAlternates, ogLocale, twinCanonical } = await import("@/lib/seo-locale");
+  const { getTwinVerdict } = await import("@/lib/twin-localisation");
   const urlLocale = await getUrlLocale();
+  // Index shape (13 Sep 2026): a twin is declared (self-canonical +
+  // hreflang) only when its rendered body is ≥ 30% native script — the hub
+  // twins measured 91-93% English. Otherwise canonical → the English URL.
+  const twins = await getTwinVerdict("hub", exam.id);
   const st = stateInfo(exam.state);
   const langs = exam.languages.length > 0 ? exam.languages : ["EN", "HI"];
   const year = new Date().getUTCFullYear();
@@ -194,8 +199,8 @@ export async function generateMetadata({
     title: locTitle,
     description: locDescription.slice(0, 300),
     alternates: {
-      canonical: url,
-      languages: languageAlternates(path),
+      canonical: twinCanonical(path, urlLocale, twins),
+      languages: languageAlternates(path, twins),
       // Machine-readable twin for AI crawlers/answer engines: the same
       // facts as clean markdown, a fraction of the tokens.
       types: { "text/markdown": `https://shishya.in${path}/context.md` },
@@ -1544,7 +1549,7 @@ export default async function ExamPage({
                       className="scroll-mt-24 syllabus-target"
                     >
                       <Link
-                        href={`/exams/${exam.code}/topics/${tp.code}`}
+                        href={`/exams/${exam.code}/topics/${tp.code}`} prefetch={false}
                         className="group block rounded-md border border-ink-200 bg-white px-3 py-2 text-sm text-ink-700 transition-colors hover:border-saffron-400 hover:bg-saffron-50/40"
                       >
                         <p className="font-medium text-ink-800 group-hover:text-saffron-800">{tp.name}</p>

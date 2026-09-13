@@ -37,6 +37,16 @@ const notoDevanagari = Noto_Sans_Devanagari({
   subsets: ["devanagari", "latin"],
   variable: "--font-noto-devanagari",
   display: "swap",
+  // 13 Sep 2026 (phone-first audit): this layout is static and cannot know
+  // the page locale, so the default preload put ~146 KB of <link
+  // rel=preload> Devanagari font on every English and Telugu page.
+  // preload:false keeps the self-hosted @font-face rules (unicode-range
+  // U+0900-097F…), so the file is fetched only when Devanagari text is
+  // actually rendered — the hi / mr pages — and never preloaded elsewhere.
+  // Until it arrives (display:swap) and on any device where it can't load,
+  // the tailwind `multi` / `hindi` stacks fall back to the system
+  // Devanagari font, so the text always renders.
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -44,6 +54,10 @@ export const metadata: Metadata = {
   description:
     "India's end-to-end free government exam preparation platform. Free mock tests, PYQ-pattern papers, study notes, live cutoffs and an AI tutor for 170+ government and entrance exams — UPSC, SSC, IBPS, RRB, all state PSCs, all TETs, JEE, NEET, GATE, CAT. 100% free, no paywall, no credit card. In English, Hindi and other Indian languages.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in"),
+  // Web app manifest (13 Sep 2026) — src/app/manifest.ts, served at
+  // /manifest.webmanifest. Next also auto-links the file; declaring it here
+  // keeps the <link rel="manifest"> explicit (one tag either way).
+  manifest: "/manifest.webmanifest",
   // Belt-and-suspenders: even though Next App Router auto-detects
   // app/icon.svg + app/apple-icon.svg, declaring them in metadata
   // guarantees the <link> tags are present in the rendered HTML
