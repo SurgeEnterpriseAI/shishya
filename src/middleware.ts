@@ -152,7 +152,11 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
     path === "/scholarships";
   const isLogin = path === "/login";
   const isOAuthEntry = path.startsWith("/api/auth/signin/");
-  if (!isHome && !isExamPage && !isSectionLanding && !isLogin && !isOAuthEntry) {
+  // Score-share landings (13 Sep 2026): a friend arriving from a WhatsApp
+  // share carries utm_source=whatsapp&utm_medium=share — record it like any
+  // other tagged landing so their signup is attributed to the share loop.
+  const isShareLanding = path.startsWith("/share/");
+  if (!isHome && !isExamPage && !isSectionLanding && !isLogin && !isOAuthEntry && !isShareLanding) {
     return res;
   }
 
