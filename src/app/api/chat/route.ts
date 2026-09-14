@@ -21,7 +21,7 @@ import { getStudentJourney } from "@/lib/db/student-journey";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 import { locales } from "@/lib/i18n";
-import { langToReplyLanguage, resolvePreferredLocale } from "@/lib/preferred-lang";
+import { detectLanguageRequest, langToReplyLanguage, resolvePreferredLocale, TUTOR_LANG_COOKIE } from "@/lib/preferred-lang";
 
 const Body = z
   .object({
@@ -203,10 +203,22 @@ export async function POST(req: Request) {
   // because the column defaulted to EN for everyone and the cookie was
   // never read here. Enum code when the locale has one ("HI"), else the
   // locale itself ("kok") — same contract as /api/explain.
-  const cookieLang = (await cookies()).get("shishya-lang")?.value ?? null;
+  //
+  // 15 Sep 2026: a language asked for in the message itself ("Marathi",
+  // "hindi me btao", "explain in telugu") is the most explicit choice of all
+  // (a student typing "Marathi" was told "I'll reply in English from now on").
+  // It is remembered for the tutor alone, in its own cookie, so the site's
+  // interface language does not change under the student.
+  const jar = await cookies();
+  const cookieLang = jar.get("shishya-lang")?.value ?? null;
+  const tutorLang = jar.get(TUTOR_LANG_COOKIE)?.value ?? null;
+  const requestedLang = detectLanguageRequest(body.message);
+  if (requestedLang) {
+    jar.set(TUTOR_LANG_COOKIE, requestedLang, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+  }
   const replyLanguage = langToReplyLanguage(
     resolvePreferredLocale({
-      explicit: body.lang,
+      explicit: requestedLang ?? body.lang ?? tutorLang,
       preferredLang: generalStudentState.preferredLang,
       cookie: cookieLang,
     }),

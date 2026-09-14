@@ -131,3 +131,66 @@ export function looksNativelyIn(text: string, locale: Locale): boolean {
   const latin = (text.match(/[A-Za-z]/g) ?? []).length;
   return script >= latin;
 }
+
+// ── Tutor language requests (15 Sep 2026) ────────────────────────────────
+// A student who types "Marathi", "hindi me btao" or "explain in telugu" is
+// asking the tutor to answer in that language. Nothing used to read the
+// message: the prompt said "Reply language: EN" and one such student got
+// "Got it! I'll reply in English from now on". Deliberately conservative — a
+// question ABOUT a language ("Hindi sandhi ke bhed", "Is Marathi compulsory
+// for MPSC?") is not a request. The choice is remembered for the tutor only,
+// in its own cookie, so the site's interface language never changes under
+// the student.
+
+export const TUTOR_LANG_COOKIE = "shishya-tutor-lang";
+
+const LANGUAGE_WORDS: ReadonlyArray<readonly [Locale, readonly string[]]> = [
+  ["en", ["english", "angrezi", "angreji", "अंग्रेजी", "अंग्रेज़ी", "ఇంగ్లీష్"]],
+  ["hi", ["hindi", "हिंदी", "हिन्दी", "హిందీ"]],
+  ["te", ["telugu", "తెలుగు"]],
+  ["ta", ["tamil", "தமிழ்"]],
+  ["kn", ["kannada", "ಕನ್ನಡ"]],
+  ["ml", ["malayalam", "മലയാളം"]],
+  ["mr", ["marathi", "मराठी"]],
+  ["bn", ["bengali", "bangla", "বাংলা"]],
+  ["gu", ["gujarati", "ગુજરાતી"]],
+  ["pa", ["punjabi", "ਪੰਜਾਬੀ"]],
+  ["or", ["odia", "oriya", "ଓଡ଼ିଆ"]],
+  ["ur", ["urdu", "اردو"]],
+  ["as", ["assamese", "অসমীয়া"]],
+  ["kok", ["konkani", "कोंकणी"]],
+  ["ne", ["nepali", "नेपाली"]],
+  ["sa", ["sanskrit", "संस्कृत", "संस्कृतम्"]],
+  ["sd", ["sindhi", "سنڌي"]],
+  ["ks", ["kashmiri", "کٲشُر"]],
+  ["mni", ["manipuri", "meitei", "মৈতৈলোন্"]],
+];
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// "in X" markers that follow the language word: Hinglish me/mein, Marathi
+// madhe/मध्ये/त, Telugu lo/లో, Kannada ದಲ್ಲಿ, Hindi में.
+const IN_MARKER = "(?:me|mein|mai|mei|madhe|madhye|mdhe|lo|में|मध्ये|त|లో|ದಲ್ಲಿ)";
+const POLITE = "(?:please|pls|plz|language|bhasha|bhasa|only|medium|me|mein)";
+const ASK_VERB =
+  "(?:btao|batao|bataiye|batayiye|samjhao|samjhaiye|samjhayiye|bolo|boliye|likho|jawab|answer|explain|cheppu|cheppandi|chepandi|sang|sanga|samjav|samjava|बताओ|बताइए|बताइये|समझाओ|समझाइए|सांगा|समजावून|చెప్పండి|చెప్పు|వివరించండి)";
+
+/** The language a tutor message explicitly asks for, or null. */
+export function detectLanguageRequest(message: string | null | undefined): Locale | null {
+  if (!message) return null;
+  const text = message.normalize("NFC").trim().toLowerCase().replace(/[.!?।,;:]+$/u, "").trim();
+  if (!text || text.length > 200) return null;
+  for (const [locale, words] of LANGUAGE_WORDS) {
+    for (const w of words) {
+      const lw = escapeRe(w);
+      // The whole message is the language: "marathi", "in marathi please", "hindi me", "తెలుగులో", "मराठीत".
+      if (new RegExp(`^(?:please\\s+|pls\\s+|plz\\s+)?(?:(?:in|into)\\s+)?${lw}(?:\\s*${IN_MARKER})?(?:\\s+${POLITE})?$`, "u").test(text)) return locale;
+      // A reply verb aimed at the language: "explain in marathi", "can you answer in telugu", "switch to english".
+      if (new RegExp(`(?:^|\\s)(?:reply|answer|explain|respond|speak|talk|write|tell|teach|continue|switch|chat|say|give)\\b[^.?!\\n]{0,30}?\\b(?:in|to|into)\\s+${lw}(?:\\s|$)`, "u").test(text)) return locale;
+      // Mixed-language asks: "hindi me btao", "telugu lo cheppandi", "marathi madhe sanga", "हिंदी में समझाओ".
+      if (new RegExp(`(?:^|\\s)${lw}\\s*${IN_MARKER}\\s+${ASK_VERB}(?:\\s|$)`, "u").test(text)) return locale;
+      // Leading "in X" before the question: "in hindi and bhakti to koi ras hai…", "in telugu: …".
+      if (new RegExp(`^(?:please\\s+)?in\\s+${lw}(?:\\s*[,:–—-]\\s*|\\s+(?:and|aur|also|pls|please)\\s+)`, "u").test(text)) return locale;
+    }
+  }
+  return null;
+}
