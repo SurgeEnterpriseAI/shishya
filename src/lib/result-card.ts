@@ -14,10 +14,12 @@
 //   • "All-India" only for the Sunday live test (one paper, one day, open to
 //     everyone). An exam-week rehearsal stays open for days: its rank is "of
 //     N who took this rehearsal", never All-India.
-//   • The name is the account's first name, and only in Latin script: the
-//     card font carries no Indic glyphs (the challenge card's rule), so a
-//     Devanagari or Telugu name would print as boxes. The card's words are
-//     English for the same reason; the buttons around it are translated.
+//   • The name is the account's first name, and only in Latin script, and the
+//     card's words are English: next/og (Satori) draws Devanagari and Telugu
+//     glyphs but does not shape them — conjuncts print with a visible virama
+//     and pre-base vowel signs land after the consonant (checked 14 Sep 2026:
+//     स्कोर, श्री and శ్రీనివాస్ all came out malformed), so Indic text would
+//     look broken on the image. The buttons around it are translated.
 
 import type { StringKey } from "@/lib/i18n";
 

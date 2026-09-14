@@ -2,9 +2,12 @@
 // (14 Sep 2026). Built like src/app/share/[id]/opengraph-image.tsx: Node
 // runtime, the DB read is .catch()'d, every text container is display:flex
 // and each line is one template string. The challenger's name appears only
-// if they typed it and it is in Latin script (the card font carries no
-// Indic glyphs; the page itself shows any script) — otherwise "Your
-// friend". A missing token renders the plain brand card.
+// if they typed it and it is in Latin script — otherwise "Your friend".
+// next/og (Satori) draws Devanagari and Telugu glyphs but does not shape
+// them (conjuncts print with a visible virama and pre-base vowel signs land
+// after the consonant — checked 14 Sep 2026), so an Indic name would look
+// broken; the page itself shows any script. A missing token renders the
+// plain brand card.
 
 import { ImageResponse } from "next/og";
 import { loadChallenge } from "@/lib/challenge-db";
