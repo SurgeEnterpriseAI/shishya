@@ -25,6 +25,8 @@ export interface UsageLike {
   output_tokens: number;
   cache_creation_input_tokens?: number | null;
   cache_read_input_tokens?: number | null;
+  // cache_creation_input_tokens split by TTL; a 1-hour write bills 2x base input.
+  cache_creation?: { ephemeral_5m_input_tokens?: number | null; ephemeral_1h_input_tokens?: number | null } | null;
   // Server-side tools (web_search) report their request count here.
   server_tool_use?: { web_search_requests?: number | null } | null;
 }
@@ -33,10 +35,13 @@ export function usageCostUsd(model: string, u: UsageLike): { cost: number; searc
   const tier = model.includes("haiku") ? "haiku" : model.includes("opus") ? "opus" : "sonnet";
   const p = PRICING[tier];
   const searches = Number(u.server_tool_use?.web_search_requests ?? 0) || 0;
+  const writes = u.cache_creation_input_tokens ?? 0;
+  const writes1h = Math.min(writes, Number(u.cache_creation?.ephemeral_1h_input_tokens ?? 0) || 0);
   const cost =
     (u.input_tokens / 1e6) * p.in +
     (u.output_tokens / 1e6) * p.out +
-    ((u.cache_creation_input_tokens ?? 0) / 1e6) * p.cacheW +
+    ((writes - writes1h) / 1e6) * p.cacheW +
+    (writes1h / 1e6) * p.in * 2 +
     ((u.cache_read_input_tokens ?? 0) / 1e6) * p.cacheR +
     searches * WEB_SEARCH_USD;
   return { cost, searches };

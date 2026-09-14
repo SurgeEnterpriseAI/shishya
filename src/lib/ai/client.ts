@@ -40,6 +40,18 @@ export function cachedSystem(...blocks: string[]) {
 }
 
 /**
+ * Like cachedSystem, but the first block keeps a 1-hour cache entry: for a
+ * prefix shared by requests that arrive 5-60 minutes apart. 1-hour writes
+ * bill 2x base input (5-minute: 1.25x), reads 0.1x, and the API refuses a
+ * 1-hour block after a 5-minute one, so it always leads. The installed SDK
+ * types only the 5-minute marker, hence the cast.
+ */
+export function cachedSystemHourFirst(first: string, ...rest: string[]) {
+  const hour = { type: "ephemeral", ttl: "1h" } as unknown as Anthropic.Messages.CacheControlEphemeral;
+  return [{ type: "text" as const, text: first, cache_control: hour }, ...cachedSystem(...rest)];
+}
+
+/**
  * Convenience wrapper around messages.create that:
  *  - sets model + max_tokens (model defaults to the standard tier; pass
  *    `model` to route a call to a faster/stronger tier — see ai/router.ts)

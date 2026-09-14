@@ -11,7 +11,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { recordAiUsage } from "@/lib/ai/usage";
-import { anthropic, MODEL, cachedSystem, TOKEN_LIMITS } from "./client";
+import { anthropic, MODEL, cachedSystemHourFirst, TOKEN_LIMITS } from "./client";
 import {
   PLATFORM_PERSONA,
   ANSWER_FORMAT_RULES,
@@ -78,9 +78,14 @@ export async function* tutorStream(
   const STATIC_PROMPT = generalMode
     ? `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\nThis chat is in GENERAL mode — exam-agnostic. The student wants help with cross-exam questions, career advice, study technique, or choosing an exam. You have no syllabus to reference and no student mastery data. Answer based on general knowledge of Indian entrance exams; ask one short clarifying question if a specific exam would change your answer. Stay within the scope rules above.${nudge}`
     : `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}${toolsOn ? `\n\n${TOOL_USE_GUIDE}` : nudge}`;
+  // The static prompt is the same for every exam, but quiet hours leave 5-60
+  // minutes between tutor calls (week to 14 Sep 2026: 95 of 540 signed-in and
+  // 114 of 246 signed-out calls), and each of those re-wrote it. It keeps a
+  // 1-hour entry; the per-exam syllabus stays on 5 minutes, where a 1-hour
+  // write would cost more than the extra hits it buys.
   const systemBlocks = generalMode
-    ? cachedSystem(STATIC_PROMPT)
-    : cachedSystem(STATIC_PROMPT, syllabusBlock(syllabus));
+    ? cachedSystemHourFirst(STATIC_PROMPT)
+    : cachedSystemHourFirst(STATIC_PROMPT, syllabusBlock(syllabus));
 
   const focusBlock = topicFocus
     ? `CURRENT FOCUS — the student opened this chat from the study-notes page for "${topicFocus.name}" (subject: ${topicFocus.subjectName}). Anchor your reply to this topic: use its terminology, examples, and formulas. Only diverge if the student explicitly asks to switch topics. When citing the topic, use the code \`${topicFocus.code}\`.
