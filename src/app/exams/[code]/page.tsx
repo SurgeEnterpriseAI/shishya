@@ -18,6 +18,8 @@ import { prisma } from "@/lib/db/prisma";
 import { getExamShared } from "@/lib/db/exam-cache";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import { computeExamWeekState } from "@/lib/exam-week";
+import { standingSitting } from "@/lib/score-sitting";
+import { getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { shiftDayIso } from "@/lib/exam-week-student";
 import { buildTimeline } from "@/lib/exam-timeline";
 import { ExamWeekBlock, type ExamWeekViewer } from "@/components/ExamWeekBlock";
@@ -261,6 +263,13 @@ export default async function ExamPage({
     examWeek.phase === "none"
       ? buildTimeline(importantDates, new Date(), officialUrl).find((r) => r.kind === "EXAM" && r.daysFromToday > 0) ?? null
       : null;
+
+  // Answer-key time (14 Sep 2026): the score calculator pill shows while a
+  // sitting is open for comparison. Read from the tracker inputs the
+  // calculator page and the score-entry API use, not importantDates: the
+  // hub's copy starts 10 days back, so an exam held weeks before its answer
+  // key would never count as held here.
+  const scoreSittingOpen = standingSitting(exam, await getExamWeekInputs(exam.id)) !== null;
 
   // Subject-wise test rows (gap-fill #1 — users asked for "25-question
   // English/GK/Computer tests" verbatim; the SUBJECT mock API existed but
@@ -705,6 +714,17 @@ export default async function ExamPage({
           >
             🎯 Expected cutoff
           </Link>
+          {/* Answer-key time (14 Sep 2026): while a sitting is open for
+              comparison — the exam window, or an official key under 45 days
+              old — and its marking scheme can be stated. */}
+          {scoreSittingOpen && (
+            <Link
+              href={`/exams/${exam.code}/score-estimate`}
+              className="rounded-full border border-saffron-400 bg-saffron-100 px-3 py-1 font-semibold text-saffron-900 hover:bg-saffron-200"
+            >
+              🧮 Score calculator
+            </Link>
+          )}
           <Link
             href={`/exams/${exam.code}/tricks`}
             className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"

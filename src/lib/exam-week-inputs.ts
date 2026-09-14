@@ -29,27 +29,31 @@ export interface ExamWeekInputs {
   officialUrl: string | null;
 }
 
-export const getExamWeekInputs = unstable_cache(
-  async (examId: string): Promise<ExamWeekInputs> => {
-    const [rows, elig] = await Promise.all([
-      prisma.examImportantDate
-        .findMany({
-          where: { examId, archivedAt: null },
-          orderBy: { date: "asc" },
-          take: 60,
-          select: { id: true, label: true, date: true, isExamDay: true, kind: true, confidence: true, url: true, notes: true, source: true },
-        })
-        .catch(() => [] as TimelineInput[]),
-      prisma
-        .$queryRaw<{ officialUrl: string | null }[]>`
-          SELECT "officialUrl" FROM "ExamEligibility" WHERE "examId" = ${examId} LIMIT 1`
-        .catch(() => [] as { officialUrl: string | null }[]),
-    ]);
-    return { rows, officialUrl: elig[0]?.officialUrl ?? null };
-  },
-  ["exam-week-inputs-v1"],
-  { revalidate: 900, tags: ["exam-shared"] },
-);
+/** The same read, uncached — for a caller whose own revalidate must not be
+ *  pulled down to this cache's 15 minutes (14 Sep 2026: the sitemap is ISR
+ *  24h, and a cached read inside it made Next regenerate it every 15). */
+export async function loadExamWeekInputs(examId: string): Promise<ExamWeekInputs> {
+  const [rows, elig] = await Promise.all([
+    prisma.examImportantDate
+      .findMany({
+        where: { examId, archivedAt: null },
+        orderBy: { date: "asc" },
+        take: 60,
+        select: { id: true, label: true, date: true, isExamDay: true, kind: true, confidence: true, url: true, notes: true, source: true },
+      })
+      .catch(() => [] as TimelineInput[]),
+    prisma
+      .$queryRaw<{ officialUrl: string | null }[]>`
+        SELECT "officialUrl" FROM "ExamEligibility" WHERE "examId" = ${examId} LIMIT 1`
+      .catch(() => [] as { officialUrl: string | null }[]),
+  ]);
+  return { rows, officialUrl: elig[0]?.officialUrl ?? null };
+}
+
+export const getExamWeekInputs = unstable_cache(loadExamWeekInputs, ["exam-week-inputs-v1"], {
+  revalidate: 900,
+  tags: ["exam-shared"],
+});
 
 /** Exam-week state for an exam id (one cache read). */
 export async function getExamWeekStateById(examId: string, now: Date = new Date()): Promise<ExamWeekState> {

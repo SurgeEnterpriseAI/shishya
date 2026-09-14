@@ -2192,6 +2192,30 @@ model ChallengeWatch {
   @@unique([challengeId, endpoint])
 }
 
+// Score estimates candidates chose to add on /exams/[code]/score-estimate
+// (14 Sep 2026): one row per browser per sitting ("2026-09-07|mains-exam"),
+// the score recomputed on the server from the counts under the exam's own
+// marking scheme. Anonymous — keyHash is the sha256 of a random key kept in
+// the browser, no user or analytics id. Positions are shown only from 30
+// entries (src/lib/score-standing.ts). Table created by
+// scripts/create-score-entry-table.ts; queried with raw SQL.
+model ScoreEntry {
+  id        String   @id @default(cuid())
+  examId    String
+  sitting   String
+  keyHash   String
+  attempted Int
+  correct   Int
+  wrong     Int
+  score     Float
+  maxMarks  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  @@unique([examId, sitting, keyHash])
+  @@index([examId, sitting, score])
+}
+
 // Published previous-cycle cutoffs (13 Sep 2026, reach program #1). A row
 // exists only if its marks figure was found verbatim in the published
 // document on the line that carries its category label

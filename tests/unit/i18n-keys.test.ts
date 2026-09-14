@@ -120,7 +120,27 @@ const FOUND_VIA = [
 // Challenge a friend + the anonymous quiz player (14 Sep 2026): en + hi + te.
 const CHALLENGE: readonly StringKey[] = [...CHALLENGE_I18N_KEYS, ...CHALLENGE_PUSH_I18N_KEYS, ...QUIZ_I18N_KEYS];
 
-const EVERY: readonly StringKey[] = [...NAV, ...TODAY, ...RESULTS, ...PLAYER, ...BUILD, ...FOUND_VIA, ...CHALLENGE];
+// Score calculator: share, "where do I stand?", published cutoffs (14 Sep 2026): en + hi + te.
+const SCORE = [
+  "ew.score.share.button",
+  "ew.score.share.text",
+  "ew.score.stand.title",
+  "ew.score.stand.body",
+  "ew.score.stand.fine",
+  "ew.score.stand.add",
+  "ew.score.stand.adding",
+  "ew.score.stand.added",
+  "ew.score.stand.count",
+  "ew.score.stand.position",
+  "ew.score.stand.caveat",
+  "ew.score.stand.already",
+  "ew.score.stand.error",
+  "ew.score.published.title",
+  "ew.score.published.note",
+  "ew.score.published.more",
+] as const satisfies readonly StringKey[];
+
+const EVERY: readonly StringKey[] = [...NAV, ...TODAY, ...RESULTS, ...PLAYER, ...BUILD, ...FOUND_VIA, ...CHALLENGE, ...SCORE];
 const REQUIRED_LOCALES: Locale[] = ["en", "hi", "te"];
 const REGIONAL_LOCALES: Locale[] = ["mr", "ta", "kn", "gu", "bn", "ml", "pa"];
 const REGIONAL_KEYS: readonly StringKey[] = [...NAV, ...RESULTS, ...PLAYER];

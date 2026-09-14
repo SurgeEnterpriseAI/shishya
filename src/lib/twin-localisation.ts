@@ -240,6 +240,11 @@ export const TWIN_RENDERED_KEYS: Record<Exclude<TwinSurface, "hub">, SurfaceSpec
       { oneOf: [[], ["tracker.officialSite"]] },
       // Answer key / result status + alert box: exam week, announced day only.
       { oneOf: [[], ["ew.post.key", "ew.post.result", "ew.post.notAnnounced", "ew.date.overdue", "tracker.alert.title", "tracker.alert.btn", "tracker.alert.body"]] },
+      // 14 Sep 2026 — "N candidates have added a score" (only while a sitting
+      // is open and someone has added one) and the pointer to published
+      // cutoffs (only for exams that have them): data states, credited 0.
+      { oneOf: [[], ["ew.score.stand.already"]] },
+      { oneOf: [[], ["ew.score.published.title", "ew.score.published.note", "ew.score.published.more"]] },
       "ew.post.cutoff",
       "tracker.title",
     ],
@@ -280,9 +285,11 @@ export const TWIN_CHROME: Record<TwinSurface, SurfaceChrome> = {
     literalLatin: 1648,
     when: { cutoffTable: { hi: { native: 29, latin: 0 }, te: { native: 31, latin: 0 } } },
   },
+  // Re-measured 14 Sep 2026: longer lead (score kept only if added), the
+  // "N candidates have added a score" line and the published-cutoffs pointer.
   "score-estimate": {
-    hi: { native: 252, latin: 43 },
-    te: { native: 297, latin: 43 },
+    hi: { native: 294, latin: 51 },
+    te: { native: 349, latin: 51 },
     literalLatin: 438,
     // markingSchemeVerdict's English refusal reason (longest measured: 148).
     libLatin: 180,

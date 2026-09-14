@@ -4,6 +4,8 @@
 
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db/prisma";
+import { loadExamWeekInputs } from "@/lib/exam-week-inputs";
+import { standingSitting } from "@/lib/score-sitting";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { COLLEGES, ALL_STREAMS } from "@/lib/colleges-data";
 import { BOARDS } from "@/lib/schooling-data";
@@ -75,14 +77,57 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Score estimator (6 Sep 2026, Exam Week Mode) — the marking-scheme
   // calculator at /exams/[code]/score-estimate exists for every active
   // exam but is only worth a crawl around exam day: emit it for exams with
-  // a TYPED exam-day row within ±30 days (untyped legacy rows never count).
-  const estimatorExams = await prisma
+  // a TYPED exam-day row within ±30 days (untyped legacy rows never count),
+  // or (14 Sep 2026) while a sitting is open for comparison after its answer
+  // key — answer-key time, often weeks after the exam, is when candidates
+  // count. That second set is exactly the page's own "where do I stand?"
+  // gate (standingSitting): an answer key on the conducting body's host
+  // (tier "official"; a row marked official but linked to a coaching or
+  // jobs site is "reported" and does not count), on or after the last held
+  // exam day, under 45 days old, on a paper whose marking scheme can be
+  // stated. The SQL only narrows the candidates; the tracker rows are read
+  // uncached so this route keeps its 24h revalidate.
+  const examDayEstimators = await prisma
     .$queryRaw<{ code: string }[]>`
       SELECT DISTINCT e.code FROM "Exam" e
       JOIN "ExamImportantDate" d ON d."examId" = e.id
-      WHERE e.active = TRUE AND d."archivedAt" IS NULL AND d.kind = 'EXAM'
-        AND d.date >= NOW() - INTERVAL '30 days' AND d.date <= NOW() + INTERVAL '30 days'
+      WHERE e.active = TRUE AND d."archivedAt" IS NULL
+        AND d.kind = 'EXAM' AND d.date >= NOW() - INTERVAL '30 days' AND d.date <= NOW() + INTERVAL '30 days'
     `.catch(() => [] as { code: string }[]);
+  const answerKeyCandidates = await prisma
+    .$queryRaw<{ id: string }[]>`
+      SELECT DISTINCT e.id FROM "Exam" e
+      JOIN "ExamImportantDate" d ON d."examId" = e.id
+      WHERE e.active = TRUE AND d."archivedAt" IS NULL
+        AND d.kind = 'ANSWER_KEY' AND d.confidence = 'official'
+        AND d.date >= NOW() - INTERVAL '45 days' AND d.date <= NOW()
+    `.catch(() => [] as { id: string }[]);
+  const answerKeyExams = answerKeyCandidates.length
+    ? await prisma.exam
+        .findMany({
+          where: { id: { in: answerKeyCandidates.map((r) => r.id) } },
+          select: {
+            id: true,
+            code: true,
+            shortName: true,
+            name: true,
+            active: true,
+            description: true,
+            totalQuestions: true,
+            scoredQuestions: true,
+            totalMarks: true,
+            marksPerQ: true,
+            negativeMark: true,
+          },
+        })
+        .catch(() => [])
+    : [];
+  const answerKeyOpen = (
+    await Promise.all(answerKeyExams.map(async (e) => (standingSitting(e, await loadExamWeekInputs(e.id)) ? e.code : null))).catch(
+      () => [] as (string | null)[],
+    )
+  ).filter((c): c is string => c !== null);
+  const estimatorExams = [...new Set([...examDayEstimators.map((e) => e.code), ...answerKeyOpen])].map((code) => ({ code }));
   const scoreEstimateUrls: MetadataRoute.Sitemap = estimatorExams.map((e) => ({
     url: `${base}/exams/${e.code}/score-estimate`,
     changeFrequency: "weekly" as const,
@@ -152,8 +197,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // canonicalises to the English URL. Until then every active exam's hub,
   // tracker and cutoff twin was listed (+ estimator + calendar = 1,154 URLs)
   // although the hub twins were 91-93% English. Score estimator: the same
-  // ±30-day exam-day set as the English URL above. A failed measurement
-  // lists no twins — a smaller sitemap beats a wrong one.
+  // set as the English URL above (exam day ±30 days, or a sitting open
+  // after its answer key). A failed measurement lists no twins — a smaller
+  // sitemap beats a wrong one.
   const { loadTwinVerdicts, loadCalendarTwinVerdict } = await import("@/lib/twin-localisation");
   const twinVerdicts = new Map((await loadTwinVerdicts("all").catch(() => [])).map((r) => [r.code, r.verdicts]));
   const calendarTwins = await loadCalendarTwinVerdict().catch(() => ({ hi: false, te: false }));

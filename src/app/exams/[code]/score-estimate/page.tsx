@@ -4,7 +4,7 @@
 // After the answer key a student wants one number: "how many marks did I
 // get?" This page is that arithmetic under the exam's own marking scheme
 // (Exam.marksPerQ / negativeMark / totalQuestions / totalMarks) — three
-// inputs, recomputed in the browser, nothing stored, no model call.
+// inputs, recomputed in the browser, no model call.
 //
 // Honesty gate (7 Sep 2026): Exam.marksPerQ is sometimes a WEIGHTED AVERAGE
 // across papers with different per-question marks, and then "+{marksPerQ}
@@ -20,31 +20,47 @@
 // printed Prelims arithmetic for a Mains paper. The verdict now also takes
 // the exam-day row this sitting belongs to (the exam-week focus row, else
 // the next / just-held exam day on the tracker) and refuses when its label
-// names a different stage from the exam's name.
+// names a different stage from the exam's name. The gate lives in
+// src/lib/score-sitting.ts, shared with the score-entry API.
+//
+// Answer-key day (14 Sep 2026): under a valid score the candidate can share
+// the estimate, and — only while a sitting is open for comparison (the exam
+// window, or an official key under 45 days old) — choose to add it
+// anonymously and see how many candidates scored higher and lower
+// (src/lib/score-standing.ts; nothing is sent unless they tap). Exams with
+// published cutoffs get a pointer to those tables on the cutoff page — a
+// pointer, not the tables: their text is English, and on the /hi and /te
+// twins it would change the native-script share src/lib/twin-localisation.ts
+// measures for this surface.
 //
 // Below it: the answer-key / result status straight from the tracker (every
 // date with its tier word, "not announced yet" when the tracker holds
 // nothing) and last cycle's category-wise indicative cutoff, labelled as
 // an estimate and never as a prediction. Served in English, Hindi (/hi/…)
 // and Telugu (/te/…) — same component, URL-driven locale, hreflang-paired.
-// Linked from the cutoff page's exam-week block (today-pm onwards); in the
-// sitemap (all three locales) for exams with a typed exam day within ±30 days.
+// Linked from the cutoff page's exam-week block (today-pm onwards) and the
+// exam hub while a sitting is open; in the sitemap (all three locales) for
+// exams with a typed exam day within ±30 days or a sitting open for
+// comparison after its official answer key (the same standingSitting gate).
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
-import { markingSchemeVerdict, scoredCount } from "@/lib/marking-scheme";
+import { scoredCount } from "@/lib/marking-scheme";
 import { auth } from "@/lib/auth";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import type { StringKey } from "@/lib/i18n";
 import { languageAlternates, localizedPath, localizedUrl, ogLocale, twinCanonical } from "@/lib/seo-locale";
 import { getTwinVerdict } from "@/lib/twin-localisation";
-import { computeExamWeekState, dateWithTier } from "@/lib/exam-week";
-import { buildTimeline, focusExamRow, type SourceTier, type TimelineRow } from "@/lib/exam-timeline";
-import { alertPhase, examAlertLabels, getExamWeekInputs, type ExamWeekInputs } from "@/lib/exam-week-inputs";
+import { dateWithTier } from "@/lib/exam-week";
+import type { SourceTier, TimelineRow } from "@/lib/exam-timeline";
+import { alertPhase, examAlertLabels, getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { categoryHeaderKey, parseCategoryCutoff } from "@/lib/category-cutoff";
+import { sittingVerdict, standingSitting } from "@/lib/score-sitting";
+import { sittingKey } from "@/lib/score-standing";
+import { standingCount } from "@/lib/score-standing-db";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
 import { inlineMd } from "@/components/NotesMarkdown";
@@ -91,24 +107,6 @@ async function loadExam(code: string) {
       negativeMark: true,
     },
   });
-}
-
-type ExamRow = NonNullable<Awaited<ReturnType<typeof loadExam>>>;
-
-/**
- * The sitting this page is about and whether ONE marking scheme can be
- * stated for it. The exam-day row is the exam-week focus row (inside the
- * ±7-day window) or else the next / just-held typed exam day on the
- * tracker; its label carries the stage ("Mains Exam") the verdict checks
- * against the exam's name ("… (Prelims)"). Shared by generateMetadata and
- * the page so the <title> can never promise a calculator the body refuses.
- */
-function sittingVerdict(exam: ExamRow, inputs: ExamWeekInputs, now: Date = new Date()) {
-  const state = computeExamWeekState(inputs.rows, inputs.officialUrl, now);
-  const typed = inputs.rows.filter((r) => typeof r.kind === "string" && r.kind.length > 0);
-  const sitting = state.focus ?? focusExamRow(buildTimeline(typed, now, inputs.officialUrl));
-  const verdict = markingSchemeVerdict(exam, { rowLabel: sitting?.label, rowDate: sitting?.date });
-  return { state, sitting, verdict };
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
@@ -165,7 +163,7 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
   const exam = await loadExam(code);
   if (!exam || !exam.active) notFound();
 
-  const [{ t: tRaw, locale }, urlLocale, session, inputs, catRows] = await Promise.all([
+  const [{ t: tRaw, locale }, urlLocale, session, inputs, catRows, publishedCount] = await Promise.all([
     getT(),
     getUrlLocale(),
     auth().catch(() => null),
@@ -174,6 +172,13 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
       .$queryRaw<{ content: string }[]>`
         SELECT content FROM "ExamCategoryCutoff" WHERE "examId" = ${exam.id} LIMIT 1`
       .catch(() => [] as { content: string }[]),
+    // Published previous-recruitment cutoffs (the cutoff page's #published
+    // tables) — only whether any exist, for the pointer below.
+    prisma
+      .$queryRaw<{ n: number }[]>`
+        SELECT COUNT(*)::int AS n FROM "OfficialCutoff" WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL`
+      .then((r) => Number(r[0]?.n ?? 0))
+      .catch(() => 0),
   ]);
   const t = tRaw as TFn;
   const short = exam.shortName;
@@ -188,6 +193,12 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
   const phase = alertPhase(state);
   const showStatus = phase !== "none";
   const cat = parseCategoryCutoff(catRows[0]?.content);
+
+  // "Where do I stand?" is offered only for the sitting candidates can
+  // compare right now, and only when the calculator itself is shown.
+  const open = statable ? standingSitting(exam, inputs) : null;
+  const openKey = open ? sittingKey(open.row) : null;
+  const addedSoFar = openKey ? await standingCount(exam.id, openKey) : 0;
 
   const path = `/exams/${exam.code}/score-estimate`;
   const url = localizedUrl(path, urlLocale);
@@ -284,6 +295,10 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
                    scores — the score can never exceed totalMarks or 100%. */
                 totalQuestions={scored}
                 totalMarks={exam.totalMarks}
+                examCode={exam.code}
+                examShort={short}
+                sharePath={p(path)}
+                standing={open ? { sitting: `${open.row.label} · ${dateWithTier(open.row, tierWord(open.row), locale)}` } : null}
                 labels={{
                   attempted: t("ew.score.attempted"),
                   correct: t("ew.score.correct"),
@@ -291,8 +306,25 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
                   result: t("ew.score.result"),
                   pct: t("ew.score.pct"),
                   invalid: t("ew.score.invalid"),
+                  shareButton: t("ew.score.share.button"),
+                  shareText: t("ew.score.share.text"),
+                  whatsapp: t("challenge.share.whatsapp"),
+                  copy: t("challenge.share.copy"),
+                  copied: t("challenge.share.copied"),
+                  more: t("challenge.share.more"),
+                  standTitle: t("ew.score.stand.title"),
+                  standBody: t("ew.score.stand.body"),
+                  standFine: t("ew.score.stand.fine"),
+                  standAdd: t("ew.score.stand.add"),
+                  standAdding: t("ew.score.stand.adding"),
+                  standAdded: t("ew.score.stand.added"),
+                  standCount: t("ew.score.stand.count"),
+                  standPosition: t("ew.score.stand.position"),
+                  standCaveat: t("ew.score.stand.caveat"),
+                  standError: t("ew.score.stand.error"),
                 }}
               />
+              {addedSoFar > 0 && <p className="mt-3 text-xs text-ink-600">{fill(t("ew.score.stand.already"), { n: addedSoFar })}</p>}
             </>
           ) : (
             <>
@@ -326,6 +358,22 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
               {noticeLink(state.result)}
             </li>
           </ul>
+        )}
+
+        {/* Published cutoffs from previous recruitments: a pointer to the
+            cutoff page's verified tables, with the reminder to check the
+            stage and marks scale before comparing an estimate with them. */}
+        {publishedCount > 0 && (
+          <section className="mt-6">
+            <h2 className="text-base font-semibold text-ink-900">{t("ew.score.published.title")}</h2>
+            <p className="mt-1 max-w-3xl text-xs text-ink-600">{t("ew.score.published.note")}</p>
+            <Link
+              href={`${p(`/exams/${exam.code}/cutoff`)}#published`}
+              className="mt-2 inline-block text-sm font-semibold text-saffron-700 hover:text-saffron-800"
+            >
+              {t("ew.score.published.more")}
+            </Link>
+          </section>
         )}
 
         {/* Last cycle's category table — an estimate from score bands,
