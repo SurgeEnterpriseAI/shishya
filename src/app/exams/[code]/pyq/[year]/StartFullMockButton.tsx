@@ -17,6 +17,11 @@
 // the user's intent to start *something*. Showing this before they've
 // clicked anything just adds friction. Showing it AFTER they've
 // landed in /mocks/[id] is too late (the timer starts).
+//
+// 15 Sep 2026: the dialog called every set over 20 questions "a full-length
+// timed mock", including PYQ-pattern years holding 20 of a 150-question
+// paper. It says "full-length" only when the set holds at least 80% of the
+// real paper (the year page's own rule).
 
 import Link from "next/link";
 import { useState } from "react";
@@ -26,6 +31,8 @@ interface Props {
   examCode: string;
   examShortName: string;
   totalQuestions: number;
+  /** The real paper's question count; 0 or absent when unknown. */
+  paperQuestions?: number;
   durationMin: number;
   hasSubmittedHistory: boolean;
   label: string;
@@ -36,11 +43,13 @@ export function StartFullMockButton({
   examCode,
   examShortName,
   totalQuestions,
+  paperQuestions = 0,
   durationMin,
   hasSubmittedHistory,
   label,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const fullLength = !(paperQuestions > 0) || totalQuestions >= 0.8 * paperQuestions;
 
   // Bypass the modal when the user knows what they're doing (already
   // taken at least one mock on this exam) or the mock is short.
@@ -86,8 +95,10 @@ export function StartFullMockButton({
               {totalQuestions} questions · {durationMin} minutes
             </h3>
             <p className="mt-2 text-sm text-ink-700">
-              This is a full-length timed mock. The clock starts when you click Start
-              and you can&apos;t pause it.
+              {fullLength
+                ? "This is a full-length timed mock."
+                : `This is a ${totalQuestions}-question timed set in the pattern of the ${paperQuestions}-question paper.`}{" "}
+              The clock starts when you click Start and you can&apos;t pause it.
             </p>
             <p className="mt-2 text-sm text-ink-700">
               If you&apos;ve never taken a {examShortName} mock here before, try a quick
@@ -108,7 +119,7 @@ export function StartFullMockButton({
                 prefetch={false}
                 className="btn-secondary block w-full text-center"
               >
-                Start the full {totalQuestions}-Q mock anyway
+                {fullLength ? `Start the full ${totalQuestions}-Q mock anyway` : `Start the ${totalQuestions}-question set anyway`}
               </Link>
               <button
                 type="button"

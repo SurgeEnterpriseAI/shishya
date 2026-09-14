@@ -173,13 +173,19 @@ export default async function PYQYearPage({
     let m = await prisma.mock.findFirst({
       where: { examId: exam.id, userId: null, generatedBy },
     });
+    // 15 Sep 2026: the title says what the set is — a full-length pattern
+    // paper, or N of the paper's M questions — and follows the count when a
+    // year is deepened (165 older titles still said "(Previous Year)").
+    const honestTitle = partial
+      ? `${exam.shortName} — ${yearNum} PYQ-pattern set (${questions.length} of ${exam.totalQuestions} questions)`
+      : `${exam.shortName} — ${yearNum} (PYQ Pattern)`;
     if (!m) {
       m = await prisma.mock.create({
         data: {
           examId: exam.id,
           userId: null,
           type: "FULL",
-          title: `${exam.shortName} — ${yearNum} (PYQ Pattern)`,
+          title: honestTitle,
           questionIds: questions.map((q) => q.id),
           generatedBy,
           config: {
@@ -190,11 +196,11 @@ export default async function PYQYearPage({
           } as any,
         },
       });
-    } else if (m.questionIds.length !== questions.length) {
+    } else if (m.questionIds.length !== questions.length || m.title !== honestTitle) {
       // Keep the mock in sync if PYQs were added/removed for this year.
       m = await prisma.mock.update({
         where: { id: m.id },
-        data: { questionIds: questions.map((q) => q.id) },
+        data: { questionIds: questions.map((q) => q.id), title: honestTitle },
       });
     }
     mock = m;
@@ -420,7 +426,9 @@ export default async function PYQYearPage({
                     are the paper's; this English line does not. */}
                 {userAttempt?.scorePct != null
                   ? `${t("exam.rank.bestScore")}: ${formatDisplayScorePct(userAttempt.scorePct)}`
-                  : `${t("exam.pyq.startBody")} ${modelled}.`}
+                  : exam.negativeMark > 0
+                  ? `${t("exam.pyq.startBody")} ${modelled}.`
+                  : `${modelled}.`}
               </p>
             </div>
             {userAttempt?.status === "IN_PROGRESS" ? (
@@ -435,6 +443,7 @@ export default async function PYQYearPage({
                 examCode={code}
                 examShortName={exam.shortName}
                 totalQuestions={questions.length}
+                paperQuestions={exam.totalQuestions}
                 durationMin={exam.durationMin}
                 hasSubmittedHistory={hasSubmittedHistory}
                 label={t("exam.pyq.startBtn")}

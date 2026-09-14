@@ -18,6 +18,9 @@
 // page (build.* keys in src/lib/i18n.ts, en + hi + te) — templates keep
 // {seen} {total} {days} … and are filled here with the real numbers. Server
 // error messages from /api/mocks/custom are shown as sent.
+//
+// PYQ mode (15 Sep 2026): `pyqOnly` — the page counted PYQ-pattern
+// questions only, so the POST asks the API for that same pool.
 
 import { Fragment, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -95,6 +98,7 @@ interface Built {
 
 export function BuilderForm({
   examCode,
+  pyqOnly = false,
   subjects,
   preselected,
   signedIn,
@@ -103,6 +107,8 @@ export function BuilderForm({
   labels,
 }: {
   examCode: string;
+  /** Counts and the built set are PYQ-pattern questions only (?pyq=1). */
+  pyqOnly?: boolean;
   subjects: { name: string; topics: TopicRow[] }[];
   preselected: string[];
   signedIn: boolean;
@@ -158,7 +164,7 @@ export function BuilderForm({
       const res = await fetch("/api/mocks/custom", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ examCode, topicIds: [...sel], count, difficulty }),
+        body: JSON.stringify({ examCode, topicIds: [...sel], count, difficulty, ...(pyqOnly ? { pyqOnly: true } : {}) }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.id) throw new Error(data?.error ?? labels.failed);
@@ -330,7 +336,7 @@ export function BuilderForm({
               </button>
             ) : (
               <Link
-                href={`/login?callbackUrl=${encodeURIComponent(pathname ?? `/exams/${examCode}/build-mock`)}`}
+                href={`/login?callbackUrl=${encodeURIComponent(`${pathname ?? `/exams/${examCode}/build-mock`}${pyqOnly ? "?pyq=1" : ""}`)}`}
                 className="btn-primary mt-4 block w-full text-center !py-2.5 text-sm"
               >
                 {labels.signin}

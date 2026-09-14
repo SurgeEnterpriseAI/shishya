@@ -101,7 +101,10 @@ export async function generateMetadata({
   // twins measured 91-93% English. Otherwise canonical → the English URL.
   const twins = await getTwinVerdict("hub", exam.id);
   const st = stateInfo(exam.state);
-  const langs = exam.languages.length > 0 ? exam.languages : ["EN", "HI"];
+  // Empty languages = the official notice does not state the question
+  // paper's language (KA_KSRP, 15 Sep 2026). The description then names only
+  // English, which is true of Shishya's own questions; the FAQ makes no claim.
+  const langs = exam.languages.length > 0 ? exam.languages : ["EN"];
   const year = new Date().getUTCFullYear();
 
   // Exam-date answer in the title/description — GSC (16 Aug 2026) found
@@ -491,7 +494,7 @@ export default async function ExamPage({
       url: "https://shishya.in",
     },
     educationalLevel: "Entrance Exam",
-    inLanguage: exam.languages ?? ["en"],
+    inLanguage: exam.languages.length > 0 ? exam.languages : ["en"],
     url: `https://shishya.in/exams/${exam.code}`,
     hasCourseInstance: {
       "@type": "CourseInstance",
@@ -577,11 +580,15 @@ export default async function ExamPage({
               : `No — ${exam.name} has no negative marking.`,
         },
       },
-      {
-        "@type": "Question",
-        name: `In which languages is ${exam.shortName} conducted?`,
-        acceptedAnswer: { "@type": "Answer", text: `${exam.name} is offered in: ${langList}.` },
-      },
+      ...(exam.languages.length > 0
+        ? [
+            {
+              "@type": "Question",
+              name: `In which languages is ${exam.shortName} conducted?`,
+              acceptedAnswer: { "@type": "Answer", text: `${exam.name} is offered in: ${langList}.` },
+            },
+          ]
+        : []),
       {
         "@type": "Question",
         name: `What is the expected cutoff for ${exam.shortName}?`,
@@ -1113,6 +1120,17 @@ export default async function ExamPage({
                   </li>
                 ))}
               </ul>
+              {/* Topic-wise PYQs (15 Sep 2026): students asked for "PYQ topic based" —
+                  the builder's PYQ-pattern mode draws a topic's questions from every year. */}
+              {pyqYears.reduce((a, r) => a + r._count, 0) >= 20 && (
+                <Link
+                  href={`/exams/${exam.code}/build-mock?pyq=1`}
+                  prefetch={false}
+                  className="mt-3 inline-block text-xs font-semibold text-saffron-700 hover:text-saffron-800"
+                >
+                  {t("exam.pyq.byTopic")}
+                </Link>
+              )}
             </>
           )}
         </section>
@@ -1185,7 +1203,9 @@ export default async function ExamPage({
                   <div className="flex items-baseline justify-between">
                     <p className="text-sm font-medium text-ink-900">{m.title}</p>
                     <span className="rounded-full border border-ink-200 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-ink-600">
-                      {m.type}
+                      {/* 15 Sep 2026: a "FULL" mock holding under 80% of the real paper
+                          (most PYQ-pattern years) is a set, not a full paper. */}
+                      {m.type === "FULL" && exam.totalQuestions > 0 && m.questionIds.length < 0.8 * exam.totalQuestions ? "SET" : m.type}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-ink-500">

@@ -22,6 +22,7 @@
 // mock (without exclusion), but they must report no bank numbers and
 // persist no config.seen; the build-mock page hides all seen copy.
 
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { SEEN_WINDOW_DAYS, type SeenMap } from "@/lib/question-pick";
 
@@ -59,11 +60,13 @@ export async function getSeenQuestions(
 
 /** Build-mock page: how many VALIDATED questions of each topic the student
  *  has seen in the window. topicId -> count. One query. NULL on DB error
- *  so the page hides the seen copy instead of asserting "seen 0 of M". */
+ *  so the page hides the seen copy instead of asserting "seen 0 of M".
+ *  pyqOnly (the builder's ?pyq=1 mode): PYQ-pattern questions only. */
 export async function getSeenCountByTopic(
   userId: string,
   examId: string,
   cutoff: Date = seenCutoff(),
+  opts: { pyqOnly?: boolean } = {},
 ): Promise<Map<string, number> | null> {
   try {
     const rows = await prisma.$queryRaw<{ topicId: string; seen: number | bigint }[]>`
@@ -71,7 +74,7 @@ export async function getSeenCountByTopic(
       FROM "Attempt" a
       JOIN "Mock" m ON m.id = a."mockId"
       CROSS JOIN LATERAL unnest(m."questionIds") AS u(qid)
-      JOIN "Question" q ON q.id = u.qid AND q.validated = TRUE
+      JOIN "Question" q ON q.id = u.qid AND q.validated = TRUE ${opts.pyqOnly ? Prisma.sql`AND q.source = 'PYQ'` : Prisma.empty}
       WHERE a."userId" = ${userId}
         AND m."examId" = ${examId}
         AND a."startedAt" >= ${cutoff}

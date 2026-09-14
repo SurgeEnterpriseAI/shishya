@@ -22,6 +22,10 @@
 // If the seen query fails we still build the paper (no exclusion) but
 // `bank` is null and nothing is persisted in config.seen — a "seen 0 of
 // M" we did not measure is not an honest number.
+//
+// PYQ mode (15 Sep 2026): pyqOnly draws only PYQ-pattern questions (source
+// PYQ, every year) — the builder's ?pyq=1 page counts the same pool, so its
+// "available" and `bank.size` agree. Students asked for "PYQ topic based".
 
 import { z } from "zod";
 import { NextResponse } from "next/server";
@@ -47,6 +51,7 @@ const Body = z.object({
   topicIds: z.array(z.string().min(1).max(40)).min(1).max(10),
   count: z.union([z.literal(10), z.literal(25), z.literal(50)]),
   difficulty: z.enum(["MIXED", "EASY", "HARD"]),
+  pyqOnly: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -59,7 +64,7 @@ export async function POST(req: Request) {
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "bad request" }, { status: 400 });
-  const { examCode, topicIds, count, difficulty } = parsed.data;
+  const { examCode, topicIds, count, difficulty, pyqOnly = false } = parsed.data;
 
   const exam = await prisma.exam.findUnique({
     where: { code: examCode },
@@ -82,7 +87,7 @@ export async function POST(req: Request) {
   // the window); sample in JS.
   const [pool, seen] = await Promise.all([
     prisma.question.findMany({
-      where: { examId: exam.id, topicId: { in: validIds }, validated: true },
+      where: { examId: exam.id, topicId: { in: validIds }, validated: true, ...(pyqOnly ? { source: "PYQ" as const } : {}) },
       select: { id: true, topicId: true, difficulty: true },
     }),
     getSeenQuestions(userId, exam.id),
@@ -135,7 +140,7 @@ export async function POST(req: Request) {
   const durationMin = Math.min(exam.durationMin, Math.max(10, Math.round(questionIds.length * perQMin)));
 
   const names = topics.map((t) => t.name);
-  const title = `${exam.shortName} — Custom: ${names.slice(0, 3).join(", ")}${names.length > 3 ? ` +${names.length - 3}` : ""}`;
+  const title = `${exam.shortName} — ${pyqOnly ? "PYQ-pattern practice" : "Custom"}: ${names.slice(0, 3).join(", ")}${names.length > 3 ? ` +${names.length - 3}` : ""}`;
 
   const mock = await prisma.mock.create({
     data: {
@@ -151,6 +156,7 @@ export async function POST(req: Request) {
         difficulty,
         count: questionIds.length,
         requestedCount: count,
+        ...(pyqOnly ? { pyqOnly: true } : {}),
         durationMin,
         ...(bank ? { seen: bank } : {}),
       } as object,

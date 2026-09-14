@@ -11,6 +11,11 @@
 // Deliberately NOT in the sitemap while the Google suppression
 // recovery runs (no new mass URL families) — discovery is via the exam
 // hub, results page and llms.txt.
+//
+// PYQ mode (15 Sep 2026): ?pyq=1 counts and draws only PYQ-pattern
+// questions (source PYQ, every year) per topic — students typed "PYQ topic
+// based". Same page and canonical; the mode switch shows when at least one
+// topic holds 3 or more of them.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -82,7 +87,7 @@ export default async function BuildMockPage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ topics?: string }>;
+  searchParams: Promise<{ topics?: string; pyq?: string }>;
 }) {
   const [{ code }, sp, session, tt] = await Promise.all([params, searchParams, auth().catch(() => null), getT()]);
   const exam = await prisma.exam.findUnique({
@@ -91,12 +96,16 @@ export default async function BuildMockPage({
   });
   if (!exam || !exam.active) notFound();
 
-  // Subjects → topics with validated-question counts. Topics under 3
-  // questions are hidden — a 2-question "topic mock" reads as broken.
-  const rows = await prisma.$queryRaw<
-    { sname: string; sweight: number | null; tid: string; tcode: string; tname: string; n: bigint }[]
+  const pyq = sp.pyq === "1";
+
+  // Subjects → topics with validated-question counts, all and PYQ-pattern
+  // only. Topics under 3 questions in the chosen mode are hidden — a
+  // 2-question "topic mock" reads as broken.
+  const allRows = await prisma.$queryRaw<
+    { sname: string; sweight: number | null; tid: string; tcode: string; tname: string; n: bigint; npyq: bigint }[]
   >`
-    SELECT s.name sname, s.weight sweight, t.id tid, t.code tcode, t.name tname, COUNT(q.id) n
+    SELECT s.name sname, s.weight sweight, t.id tid, t.code tcode, t.name tname, COUNT(q.id) n,
+           COUNT(q.id) FILTER (WHERE q.source = 'PYQ') npyq
     FROM "Subject" s
     JOIN "Topic" t ON t."subjectId" = s.id
     JOIN "Question" q ON q."topicId" = t.id AND q.validated = TRUE
@@ -104,6 +113,8 @@ export default async function BuildMockPage({
     GROUP BY 1, 2, 3, 4, 5
     HAVING COUNT(q.id) >= 3
     ORDER BY s.weight DESC NULLS LAST, s.name, COUNT(q.id) DESC`.catch(() => []);
+  const pyqAvailable = allRows.some((r) => Number(r.npyq) >= 3);
+  const rows = pyq ? allRows.filter((r) => Number(r.npyq) >= 3).map((r) => ({ ...r, n: r.npyq })) : allRows;
 
   // Signed in: how many validated questions of each topic this student
   // has had on screen (any mock they opened on this exam) in the last
@@ -111,7 +122,9 @@ export default async function BuildMockPage({
   // M" with real numbers. Anonymous → no seen data, no seen copy. The
   // query returns null on a DB error: then seenKnown=false and the form
   // hides every seen line rather than asserting "seen 0 of M".
-  const seenResult = session?.user?.id ? await getSeenCountByTopic(session.user.id, exam.id) : null;
+  const seenResult = session?.user?.id
+    ? await getSeenCountByTopic(session.user.id, exam.id, undefined, { pyqOnly: pyq })
+    : null;
   const seenKnown = seenResult !== null;
   const seenByTopic = seenResult ?? new Map<string, number>();
 
@@ -123,10 +136,20 @@ export default async function BuildMockPage({
     s.topics.push({ id: r.tid, code: r.tcode, name: r.tname, n, seen: Math.min(n, seenByTopic.get(r.tid) ?? 0) });
     subjects.set(r.sname, s);
   }
+  // PYQ mode re-ranks each subject's topics by their PYQ-pattern count.
+  for (const s of subjects.values()) s.topics.sort((a, b) => b.n - a.n);
   // Preselect from ?topics=code1,code2 (results page passes the
   // student's weakest topic codes).
   const pre = (sp.topics ?? "").split(",").filter(Boolean);
   const preIds = rows.filter((r) => pre.includes(r.tcode)).map((r) => r.tid);
+  // The mode switch keeps a ?topics= preselection.
+  const modeHref = (pyqMode: boolean) => {
+    const q = new URLSearchParams();
+    if (pyqMode) q.set("pyq", "1");
+    if (sp.topics) q.set("topics", sp.topics);
+    const s = q.toString();
+    return `/exams/${exam.code}/build-mock${s ? `?${s}` : ""}`;
+  };
 
   // Structured data: a free educational web app scoped to this exam, plus
   // breadcrumbs. Topic names are listed so answer engines can match
@@ -174,7 +197,7 @@ export default async function BuildMockPage({
           <Link href={`/exams/${exam.code}`} className="hover:text-ink-800">{exam.shortName}</Link> · Build your own mock
         </p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">
-          Build your own {exam.shortName} mock
+          {pyq ? `Topic-wise ${exam.shortName} PYQ-pattern practice` : `Build your own ${exam.shortName} mock`}
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
           Pick exactly the topics you want — today polity, tomorrow number system — choose the size and
@@ -182,7 +205,31 @@ export default async function BuildMockPage({
           Questions can be read in Hindi and {OTHER_INDIAN_LANGUAGE_COUNT} other languages inside the test.
         </p>
 
-        {subjects.size === 0 ? (
+        {(pyqAvailable || pyq) && (
+          <div className="mt-4 inline-flex rounded-lg border border-ink-200 bg-white p-0.5 text-xs font-semibold" role="group">
+            {[false, true].map((mode) => (
+              <Link
+                key={String(mode)}
+                href={modeHref(mode)}
+                prefetch={false}
+                aria-current={mode === pyq ? "page" : undefined}
+                className={mode === pyq ? "rounded-md bg-ink-900 px-3 py-1.5 text-white" : "rounded-md px-3 py-1.5 text-ink-700 hover:bg-ink-50"}
+              >
+                {tt.t(mode ? "build.mode.pyq" : "build.mode.all")}
+              </Link>
+            ))}
+          </div>
+        )}
+        {pyq && <p className="mt-2 max-w-3xl text-xs text-ink-600">{tt.t("build.pyq.note")}</p>}
+
+        {subjects.size === 0 && pyq ? (
+          <p className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-4 py-6 text-sm text-ink-500">
+            {tt.t("build.pyq.none")}{" "}
+            <Link href={modeHref(false)} className="font-medium text-saffron-700 hover:underline">
+              {tt.t("build.mode.all")} →
+            </Link>
+          </p>
+        ) : subjects.size === 0 ? (
           <p className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-4 py-6 text-sm text-ink-500">
             This exam&apos;s topic-tagged question bank is still being built — try the{" "}
             <Link href={`/exams/${exam.code}`} className="font-medium text-saffron-700 hover:underline">full mocks</Link>{" "}
@@ -191,6 +238,7 @@ export default async function BuildMockPage({
         ) : (
           <BuilderForm
             examCode={exam.code}
+            pyqOnly={pyq}
             subjects={[...subjects.values()]}
             preselected={preIds}
             signedIn={!!session?.user?.id}

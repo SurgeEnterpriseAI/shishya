@@ -158,7 +158,7 @@ export default async function StateIndexPage({
                 <p className="mt-2 line-clamp-2 text-xs text-ink-600">{e.description}</p>
                 <p className="mt-2 text-[11px] text-ink-500">
                   {e.totalQuestions} questions · {e.durationMin} min ·{" "}
-                  {languageList(e.languages)}
+                  {e.languages.length > 0 ? languageList(e.languages) : "language not stated"}
                 </p>
               </Link>
             </li>

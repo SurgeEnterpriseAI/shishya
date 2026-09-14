@@ -183,7 +183,7 @@ export async function GET() {
     const state = e.state ? ` · state: ${e.state}` : "";
     lines.push(`### ${e.shortName} — ${e.name}`);
     lines.push(
-      `- Pattern: ${e.totalQuestions} questions · ${e.totalMarks} marks · ${e.durationMin} min · ${neg}${state} · languages: ${(e.languages ?? []).join("/")}`,
+      `- Pattern: ${e.totalQuestions} questions · ${e.totalMarks} marks · ${e.durationMin} min · ${neg}${state} · languages: ${(e.languages ?? []).join("/") || "not stated in the official notice"}`,
     );
     const yrs = pyqByCode.get(e.code);
     if (yrs && yrs.length) {
