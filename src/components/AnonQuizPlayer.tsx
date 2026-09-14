@@ -7,17 +7,23 @@
 // sign in to save + take full mocks, or discuss the ones you missed with
 // the free AI tutor. Deliberately frictionless — the whole point is that a
 // signed-out visitor experiences the product before hitting any gate.
+//
+// Language (14 Sep 2026): the player's own words arrive as `labels` and
+// `challengeLabels` from the server page (src/lib/challenge-copy.ts), so a
+// Hindi or Telugu quiz or challenge speaks the reader's language around the
+// questions (which carry their own cached translations).
 
 import { useState } from "react";
 import Link from "next/link";
 import type { AnonQuiz } from "@/lib/anon-quiz";
-import type { Locale } from "@/lib/i18n";
+import { fillTemplate, type Locale } from "@/lib/i18n";
 import type { ExamWeekPhase } from "@/lib/exam-week";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { ExamAlertBox, type ExamAlertLabels, type ExamAlertWeekLabels } from "@/components/ExamAlertBox";
 import { ChallengeCard, ChallengeScores } from "@/components/ChallengeCard";
 import { inlineMd } from "@/components/NotesMarkdown";
 import { CHALLENGE_MIN_QUESTIONS } from "@/lib/challenge";
+import { quizDifficultyLabel, type ChallengeLabels, type QuizLabels } from "@/lib/challenge-copy";
 import { challengePlayerKey, rememberPlayedChallenge } from "@/lib/challenge-local";
 
 /** Exam Week Mode (6 Sep 2026): the server page that renders the player
@@ -86,13 +92,22 @@ export function AnonQuizPlayer({
   cutoff,
   translation,
   challenge,
+  labels,
+  challengeLabels,
+  locale,
 }: {
   quiz: AnonQuiz;
   examWeek?: AnonQuizExamWeek;
   cutoff?: AnonQuizCutoff;
   translation?: AnonQuizTranslationPack;
   challenge?: AnonQuizChallenge;
+  labels: QuizLabels;
+  challengeLabels: ChallengeLabels;
+  /** Page language — stored on a challenge made from this result. */
+  locale: string;
 }) {
+  const QL = labels;
+  const CL = challengeLabels;
   const qs = quiz.questions;
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
@@ -215,13 +230,7 @@ export function AnonQuizPlayer({
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || typeof j?.correct !== "number") {
-        setSendErr(
-          j?.self
-            ? "This is your own challenge — friends' scores appear on this page."
-            : typeof j?.error === "string"
-              ? j.error
-              : "Couldn't send your score — try again.",
-        );
+        setSendErr(j?.self ? CL["challenge.send.self"] : CL["challenge.send.error"]);
         return;
       }
       const theirs = Number(j.creatorCorrect);
@@ -229,7 +238,7 @@ export function AnonQuizPlayer({
       setCompare({ mine: j.correct, theirs });
       setDone(true);
     } catch {
-      setSendErr("Couldn't send your score — check your connection and try again.");
+      setSendErr(CL["challenge.send.errorNet"]);
     } finally {
       setSending(false);
     }
@@ -239,19 +248,23 @@ export function AnonQuizPlayer({
     const score = answers.filter((a) => a.correct).length;
     return (
       <div className="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">All {qs.length} done</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
+          {fillTemplate(CL["challenge.send.kicker"], { n: qs.length })}
+        </p>
         <p className="mt-1 text-4xl font-extrabold text-ink-900">
           {score}
           <span className="text-2xl text-ink-400">/{qs.length}</span>
         </p>
         <p className="mt-2 text-sm text-ink-700">
-          Send your score to {challenge.creatorName ?? "your friend"} to see both side by side?
+          {challenge.creatorName
+            ? fillTemplate(CL["challenge.send.ask"], { name: challenge.creatorName })
+            : CL["challenge.send.askFriend"]}
         </p>
         <p className="mt-1 text-xs text-ink-500">
-          They see only your score{playerName.trim() ? " and the name you type" : ""}.
+          {playerName.trim() ? CL["challenge.send.noteName"] : CL["challenge.send.note"]}
         </p>
         <label htmlFor="challenge-player-name" className="mt-4 block text-xs font-medium text-ink-700">
-          Your first name (optional)
+          {CL["challenge.card.name"]}
         </label>
         <input
           id="challenge-player-name"
@@ -269,7 +282,7 @@ export function AnonQuizPlayer({
             disabled={sending}
             className="inline-flex flex-1 items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300 disabled:opacity-60"
           >
-            {sending ? "Sending…" : "Send my score & compare →"}
+            {sending ? CL["challenge.send.sending"] : CL["challenge.send.send"]}
           </button>
           <button
             type="button"
@@ -277,7 +290,7 @@ export function AnonQuizPlayer({
             disabled={sending}
             className="inline-flex flex-1 items-center justify-center rounded-lg border border-ink-300 bg-white px-5 py-3 text-sm font-semibold text-ink-800 transition-colors hover:bg-ink-50 disabled:opacity-60"
           >
-            Keep it to myself
+            {CL["challenge.send.keep"]}
           </button>
         </div>
         {sendErr && <p className="mt-2 text-xs text-rose-700">{sendErr}</p>}
@@ -300,20 +313,18 @@ export function AnonQuizPlayer({
         : ` Give me the next things to study.`);
     const tutorHref = `/chat?examCode=${quiz.examCode}&seed=${encodeURIComponent(tutorSeed)}`;
     const good = pct >= 60;
-    const verdict = good
-      ? `Strong start on ${quiz.scopeLabel} — now go deeper.`
-      : `${quiz.scopeLabel} needs some work — that's exactly what Shishya's built for.`;
+    const verdict = fillTemplate(QL[good ? "quiz.strong" : "quiz.needsWork"], { scope: quiz.scopeLabel });
     const choices = answers.map((a) => a.key);
     return (
       <div className="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
         {compare && challenge ? (
           <>
-            <ChallengeScores mine={compare.mine} theirs={compare.theirs} total={qs.length} name={challenge.creatorName} />
+            <ChallengeScores mine={compare.mine} theirs={compare.theirs} total={qs.length} name={challenge.creatorName} labels={CL} />
             <p className="mt-3 text-sm text-ink-600">{verdict}</p>
           </>
         ) : (
           <>
-            <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">Your score</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">{QL["quiz.yourScore"]}</p>
             <p className="mt-1 text-4xl font-extrabold text-ink-900">
               {score}<span className="text-2xl text-ink-400">/{qs.length}</span>
             </p>
@@ -331,9 +342,7 @@ export function AnonQuizPlayer({
             <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">
               {cutoff.heading} · <span className="normal-case text-ink-600">{cutoff.tier}</span>
             </p>
-            <p className="mt-1 text-sm text-ink-800">
-              Your sample score: <span className="font-semibold">{pct}%</span> ({score}/{qs.length}).
-            </p>
+            <p className="mt-1 text-sm text-ink-800">{fillTemplate(QL["quiz.sample"], { pct, score, n: qs.length })}</p>
             <div className="mt-2 overflow-x-auto rounded-md border border-ink-200 bg-white">
               <table className="w-full text-sm">
                 <thead>
@@ -365,9 +374,7 @@ export function AnonQuizPlayer({
                 ))}
               </ul>
             )}
-            <p className="mt-2 text-xs font-medium text-ink-700">
-              This is a {qs.length}-question sample scored against last cycle&apos;s cutoff bands — not a prediction.
-            </p>
+            <p className="mt-2 text-xs font-medium text-ink-700">{fillTemplate(QL["quiz.sampleNote"], { n: qs.length })}</p>
             <p className="mt-1 text-xs text-ink-500">{cutoff.disclaimer}</p>
           </div>
         )}
@@ -377,13 +384,13 @@ export function AnonQuizPlayer({
             href={loginHref}
             className="inline-flex flex-1 items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300"
           >
-            Sign in free — take the full mock &amp; track your weak topics →
+            {QL["quiz.signIn"]}
           </Link>
           <Link
             href={tutorHref}
             className="inline-flex flex-1 items-center justify-center rounded-lg border border-ink-300 bg-white px-5 py-3 text-sm font-semibold text-ink-800 transition-colors hover:bg-ink-50"
           >
-            Ask Shishya to explain these
+            {QL["quiz.askTutor"]}
           </Link>
         </div>
 
@@ -391,9 +398,9 @@ export function AnonQuizPlayer({
             questions" WhatsApp replay link, which gave a friend no score to
             beat and told the sharer nothing back (0 taps in 14 days). A
             friend who played a challenge gets the same card for their own
-            friends — the chain. */}
-        {/* A topic with a small pool can serve fewer questions than a
-            challenge needs; the card would only end in a refusal there. */}
+            friends — the chain. A topic with a small pool can serve fewer
+            questions than a challenge needs; the card would only end in a
+            refusal there. */}
         {qs.length >= CHALLENGE_MIN_QUESTIONS && (
           <ChallengeCard
             from={
@@ -404,11 +411,9 @@ export function AnonQuizPlayer({
             examCode={quiz.examCode}
             examShort={quiz.examShort}
             surface={challenge ? "challenge" : quiz.topicCode ? "topic-quiz" : "anon-quiz"}
-            heading={
-              challenge
-                ? `Challenge your own friends with these ${qs.length} questions`
-                : `Challenge a friend with the same ${qs.length} questions`
-            }
+            heading={fillTemplate(CL[challenge ? "challenge.card.headingChain" : "challenge.card.headingQuiz"], { n: qs.length })}
+            labels={CL}
+            locale={locale}
           />
         )}
 
@@ -432,13 +437,13 @@ export function AnonQuizPlayer({
             here retains aspirants the signup CTA alone would lose. */}
         {!good && (
           <p className="mt-3 text-sm text-ink-600">
-            Feeling stuck?{" "}
+            {QL["quiz.stuck"]}{" "}
             <TalkToTeacher
               surface="exam"
               examCode={quiz.examCode}
               variant="link"
               contextLabel={`Scored ${score}/${qs.length} on a ${quiz.examShort} ${quiz.scopeLabel} quiz — need guidance`}
-              linkLabel="Talk to a real subject expert — free"
+              linkLabel={QL["quiz.expert"]}
             />
           </p>
         )}
@@ -467,10 +472,10 @@ export function AnonQuizPlayer({
     <div className="rounded-2xl border border-ink-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">
-          Question {idx + 1} of {qs.length}
+          {fillTemplate(QL["quiz.questionOf"], { i: idx + 1, n: qs.length })}
         </p>
         <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-medium text-ink-600">
-          {q.difficulty}
+          {quizDifficultyLabel(QL, q.difficulty)}
         </span>
       </div>
       {/* progress bar */}
@@ -538,7 +543,7 @@ export function AnonQuizPlayer({
       {answered && (
         <div className="mt-4 rounded-lg bg-ink-50 p-3 text-sm text-ink-700">
           <p className="font-semibold text-ink-900">
-            {picked === q.answerKey ? "Correct ✓" : `Answer: ${q.answerKey}`}
+            {picked === q.answerKey ? QL["quiz.correct"] : fillTemplate(QL["quiz.answer"], { key: q.answerKey })}
           </p>
           {qv.solution && <p className="mt-1 leading-relaxed">{qv.solution}</p>}
         </div>
@@ -551,7 +556,7 @@ export function AnonQuizPlayer({
           disabled={!answered}
           className="inline-flex items-center justify-center rounded-lg bg-ink-900 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-ink-800 focus:outline-none focus:ring-2 focus:ring-ink-400 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {idx + 1 >= qs.length ? "See my score →" : "Next question →"}
+          {idx + 1 >= qs.length ? QL["quiz.seeScore"] : QL["quiz.next"]}
         </button>
       </div>
     </div>

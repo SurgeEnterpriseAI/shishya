@@ -2151,6 +2151,7 @@ model Challenge {
   creatorName    String?
   creatorCorrect Int
   questionCount  Int
+  locale         String? // page language it was made in (en | hi | te …); a friend without a language cookie sees this one
   createdAt      DateTime  @default(now())
   expiresAt      DateTime
   lastEmailAt    DateTime?

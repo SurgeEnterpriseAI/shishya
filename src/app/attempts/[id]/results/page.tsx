@@ -12,6 +12,7 @@ import { ResultsReview } from "./ResultsReview";
 import { RankCard } from "@/components/RankCard";
 import { ShareScoreButton } from "./ShareScoreButton";
 import { ChallengeCard } from "@/components/ChallengeCard";
+import { challengeLabels } from "@/lib/challenge-copy";
 import { InviteFriendsCard } from "@/app/dashboard/InviteFriendsCard";
 import { FreshQuestionsButton } from "./FreshQuestionsButton";
 import { NextMockButton } from "./NextMockButton";
@@ -569,8 +570,10 @@ export default async function ResultsPage({
               examCode={attempt.mock.exam.code}
               examShort={attempt.mock.exam.shortName}
               surface="results"
-              heading="Challenge a friend with questions from this mock"
-              note="Up to 10 evenly spaced questions from this mock, with your score on them (skipped counts as not correct)."
+              heading={t("challenge.card.headingMock")}
+              note={t("challenge.card.noteMock")}
+              labels={challengeLabels(t)}
+              locale={locale}
             />
           </>
         )}

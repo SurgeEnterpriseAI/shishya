@@ -8,12 +8,16 @@
 // against the answer keys of the exam's validated MCQs — the pool the
 // anonymous quiz serves (src/lib/anon-quiz.ts) — never taken from the
 // browser's own tally.
+//
+// Language: a challenge stores the page language it was made in; the
+// challenger's phone notifications use it (the email stays English).
 
 import { createHash, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db/prisma";
 import { getAnonQuiz, type AnonQuiz } from "@/lib/anon-quiz";
 import { sendEmail } from "@/lib/email";
-import { isAllowedPushEndpoint } from "@/lib/push-alert-rules";
+import { fillTemplate, locales, tk, type Locale } from "@/lib/i18n";
+import { clipText, isAllowedPushEndpoint, type PushPayload } from "@/lib/push-alert-rules";
 import { pushConfigured, sendPush } from "@/lib/web-push";
 import {
   CHALLENGE_EMAIL_GAP_MS,
@@ -25,8 +29,6 @@ import {
   canNotifyAgain,
   challengeExpiresAt,
   challengePlayEmail,
-  challengePlayPushPayload,
-  challengeWatchWelcomePayload,
   gradeChoices,
   isChallengeExpired,
   mockSlice,
@@ -77,6 +79,7 @@ export interface LoadedChallenge {
   creatorName: string | null;
   creatorCorrect: number;
   questionCount: number;
+  locale: string | null;
   createdAt: Date;
   expiresAt: Date;
   lastEmailAt: Date | null;
@@ -89,7 +92,7 @@ export async function loadChallenge(token: string): Promise<LoadedChallenge | nu
     SELECT c.id, c."examId", e.code AS "examCode", e."shortName" AS "examShort", e.name AS "examName",
            e.category::text AS "examCategory", c.source, c."sourceRef", c."questionIds", c."creatorUserId",
            c."creatorAnonId", c."creatorKeyHash", c."creatorName", c."creatorCorrect", c."questionCount",
-           c."createdAt", c."expiresAt", c."lastEmailAt", c."lastPushAt"
+           c.locale, c."createdAt", c."expiresAt", c."lastEmailAt", c."lastPushAt"
     FROM "Challenge" c
     JOIN "Exam" e ON e.id = c."examId"
     WHERE c.id = ${token}
@@ -110,9 +113,9 @@ export async function challengeQuiz(ch: Pick<LoadedChallenge, "examCode" | "ques
 }
 
 export type CreateChallengeInput =
-  | { source: "quiz" | "topic"; examCode: string; questionIds: string[]; choices: Choice[]; name: string | null }
-  | { source: "challenge"; parentToken: string; choices: Choice[]; name: string | null }
-  | { source: "mock"; attemptId: string; name: string | null };
+  | { source: "quiz" | "topic"; examCode: string; questionIds: string[]; choices: Choice[]; name: string | null; locale: string | null }
+  | { source: "challenge"; parentToken: string; choices: Choice[]; name: string | null; locale: string | null }
+  | { source: "mock"; attemptId: string; name: string | null; locale: string | null };
 
 export type CreateChallengeResult =
   | {
@@ -211,9 +214,9 @@ export async function createChallenge(input: CreateChallengeInput, who: Challeng
     const token = newChallengeToken();
     const inserted = await prisma.$executeRaw`
       INSERT INTO "Challenge" (id, "examId", source, "sourceRef", "questionIds", "creatorUserId", "creatorAnonId",
-        "creatorKeyHash", "creatorName", "creatorCorrect", "questionCount", "createdAt", "expiresAt")
+        "creatorKeyHash", "creatorName", "creatorCorrect", "questionCount", locale, "createdAt", "expiresAt")
       VALUES (${token}, ${examId}, ${input.source}, ${sourceRef}, ${questionIds}, ${who.userId}, ${who.anonId},
-        ${keyHash}, ${input.name}, ${creatorCorrect}, ${questionIds.length}, ${now}, ${expiresAt})
+        ${keyHash}, ${input.name}, ${creatorCorrect}, ${questionIds.length}, ${input.locale}, ${now}, ${expiresAt})
       ON CONFLICT (id) DO NOTHING`;
     if (inserted === 1) {
       return {
@@ -287,6 +290,33 @@ async function claimSlot(id: string, column: "lastPushAt" | "lastEmailAt", gapMs
   return rows.length > 0;
 }
 
+function challengeLocale(v: string | null): Locale {
+  return v && (locales as readonly string[]).includes(v) ? (v as Locale) : "en";
+}
+
+/** "Ravi played your SSC GD challenge" — in the language the challenge was made in. */
+function playPush(ch: LoadedChallenge, latest: { name: string | null; correct: number }): PushPayload {
+  const loc = challengeLocale(ch.locale);
+  const vars = { name: latest.name ?? "", exam: ch.examShort, mine: latest.correct, theirs: ch.creatorCorrect, total: ch.questionCount };
+  return {
+    title: clipText(fillTemplate(tk(latest.name ? "challenge.push.title" : "challenge.push.titleFriend", loc), vars), 72),
+    body: clipText(fillTemplate(tk(latest.name ? "challenge.push.body" : "challenge.push.bodyFriend", loc), vars), 140),
+    url: `/c/${ch.id}?utm_source=push&utm_medium=challenge`,
+    tag: `challenge-${ch.id}`,
+  };
+}
+
+/** The one confirmation when a challenger turns on phone notifications. */
+function watchWelcomePush(ch: LoadedChallenge): PushPayload {
+  const loc = challengeLocale(ch.locale);
+  return {
+    title: clipText(fillTemplate(tk("challenge.push.welcomeTitle", loc), { exam: ch.examShort }), 72),
+    body: clipText(tk("challenge.push.welcomeBody", loc), 140),
+    url: `/c/${ch.id}?utm_source=push&utm_medium=challenge-welcome`,
+    tag: `challenge-${ch.id}`,
+  };
+}
+
 /**
  * Tell the challenger a friend played: one phone notification per 20 min
  * to each device they turned on, and — for a signed-in challenger — one
@@ -311,14 +341,7 @@ export async function notifyChallengeCreator(token: string): Promise<void> {
         SELECT id, endpoint, p256dh, auth FROM "ChallengeWatch"
         WHERE "challengeId" = ${ch.id} AND "unsubscribedAt" IS NULL`;
       if (watches.length > 0 && (await claimSlot(ch.id, "lastPushAt", CHALLENGE_PUSH_GAP_MS))) {
-        const payload = challengePlayPushPayload({
-          token: ch.id,
-          examShort: ch.examShort,
-          playerName: latest.name,
-          playerCorrect: latest.correct,
-          creatorCorrect: ch.creatorCorrect,
-          total: ch.questionCount,
-        });
+        const payload = playPush(ch, latest);
         for (const w of watches) {
           const outcome = await sendPush(w, payload);
           if (outcome === "gone") {
@@ -427,7 +450,7 @@ export async function addChallengeWatch(
     RETURNING (xmax = 0) AS fresh`;
   const fresh = rows[0]?.fresh === true;
   if (fresh) {
-    const outcome = await sendPush(sub, challengeWatchWelcomePayload({ token: ch.id, examShort: ch.examShort }));
+    const outcome = await sendPush(sub, watchWelcomePush(ch));
     if (outcome !== "sent") {
       await prisma.$executeRaw`
         UPDATE "ChallengeWatch" SET "unsubscribedAt" = NOW() WHERE "challengeId" = ${ch.id} AND endpoint = ${sub.endpoint}`.catch(() => {});

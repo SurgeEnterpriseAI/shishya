@@ -1,20 +1,22 @@
 // POST /api/challenge — make a Challenge a friend link (14 Sep 2026).
 //
 // Body, one of:
-//   { source: "quiz" | "topic", examCode, questionIds, choices, name? }  anon / topic quiz result
-//   { source: "challenge", parentToken, choices, name? }                 a friend's challenge result
-//   { source: "mock", attemptId, name? }                                 the signed-in student's own mock
+//   { source: "quiz" | "topic", examCode, questionIds, choices, name?, locale? }  anon / topic quiz result
+//   { source: "challenge", parentToken, choices, name?, locale? }                 a friend's challenge result
+//   { source: "mock", attemptId, name?, locale? }                                 the signed-in student's own mock
 // → { token, creatorKey, creatorCorrect, questionCount, examCode, examShort, fromMock }
 //
 // The creator key comes back once and is kept only in that browser (the
 // table stores its hash); it unlocks the challenge's scores. The score is
-// graded here — src/lib/challenge-db.ts.
+// graded here — src/lib/challenge-db.ts. `locale` is the page language the
+// card was shown in, so the friend's page opens in the same language.
 
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { CHALLENGE_TOKEN_RE, sanitizeChallengeName } from "@/lib/challenge";
 import { createChallenge, type CreateChallengeInput } from "@/lib/challenge-db";
+import { locales } from "@/lib/i18n";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 import { readAnalyticsAnonId } from "@/lib/signup-attribution";
 
@@ -42,12 +44,18 @@ function clientIp(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
-  let body: z.infer<typeof Body>;
+  let raw: unknown;
   try {
-    body = Body.parse(await req.json());
+    raw = await req.json();
   } catch {
     return NextResponse.json({ error: "invalid request" }, { status: 400 });
   }
+  const parsed = Body.safeParse(raw);
+  if (!parsed.success) return NextResponse.json({ error: "invalid request" }, { status: 400 });
+  const body = parsed.data;
+  const rawLocale = (raw as { locale?: unknown }).locale;
+  const locale = typeof rawLocale === "string" && (locales as readonly string[]).includes(rawLocale) ? rawLocale : null;
+
   const session = await auth().catch(() => null);
   const userId = session?.user?.id ?? null;
   const anonId = await readAnalyticsAnonId();
@@ -57,10 +65,10 @@ export async function POST(req: NextRequest) {
   const name = sanitizeChallengeName(body.name);
   const input: CreateChallengeInput =
     body.source === "mock"
-      ? { source: "mock", attemptId: body.attemptId, name }
+      ? { source: "mock", attemptId: body.attemptId, name, locale }
       : body.source === "challenge"
-        ? { source: "challenge", parentToken: body.parentToken, choices: body.choices, name }
-        : { source: body.source, examCode: body.examCode, questionIds: body.questionIds, choices: body.choices, name };
+        ? { source: "challenge", parentToken: body.parentToken, choices: body.choices, name, locale }
+        : { source: body.source, examCode: body.examCode, questionIds: body.questionIds, choices: body.choices, name, locale };
   try {
     const result = await createChallenge(input, { userId, anonId });
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });

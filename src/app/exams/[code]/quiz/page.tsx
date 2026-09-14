@@ -20,6 +20,9 @@
 //                  5" WhatsApp share); ids are validated server-side
 //                  against this exam and capped at 10.
 // Still client-graded, still noindex.
+//
+// 14 Sep 2026: the player's own words (and the challenge card on its result)
+// come from src/lib/challenge-copy.ts in the page's language.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -30,6 +33,7 @@ import { localeNames } from "@/lib/i18n";
 import { clampAnonQuizCount, getAnonCutoffRows, getAnonQuiz, parseAnonQuizSet } from "@/lib/anon-quiz";
 import { cachedQuizTranslations } from "@/lib/anon-quiz-locale";
 import { categoryHeaderKey } from "@/lib/category-cutoff";
+import { challengeLabels, quizLabels } from "@/lib/challenge-copy";
 import {
   AnonQuizPlayer,
   type AnonQuizCutoff,
@@ -134,7 +138,15 @@ export default async function ExamQuizPage({
                 : `No signup needed. Answer ${n} real ${quiz.examShort} questions, get instant scoring and solutions, then unlock full mocks and your weak-topic map for free.`}
             </p>
             <div className="mt-6">
-              <AnonQuizPlayer quiz={quiz} examWeek={examWeek} cutoff={cutoff} translation={translation} />
+              <AnonQuizPlayer
+                quiz={quiz}
+                examWeek={examWeek}
+                cutoff={cutoff}
+                translation={translation}
+                labels={quizLabels(t)}
+                challengeLabels={challengeLabels(t)}
+                locale={locale}
+              />
             </div>
           </>
         )}

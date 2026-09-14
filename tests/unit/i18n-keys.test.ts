@@ -26,6 +26,7 @@ import {
   todayBuildingSub,
   todayLabels,
 } from "@/lib/study-day-copy";
+import { CHALLENGE_I18N_KEYS, CHALLENGE_PUSH_I18N_KEYS, QUIZ_I18N_KEYS } from "@/lib/challenge-copy";
 
 const NAV = ["nav.today", "nav.today.title"] as const satisfies readonly StringKey[];
 
@@ -116,7 +117,10 @@ const FOUND_VIA = [
   "foundVia.other",
 ] as const satisfies readonly StringKey[];
 
-const EVERY: readonly StringKey[] = [...NAV, ...TODAY, ...RESULTS, ...PLAYER, ...BUILD, ...FOUND_VIA];
+// Challenge a friend + the anonymous quiz player (14 Sep 2026): en + hi + te.
+const CHALLENGE: readonly StringKey[] = [...CHALLENGE_I18N_KEYS, ...CHALLENGE_PUSH_I18N_KEYS, ...QUIZ_I18N_KEYS];
+
+const EVERY: readonly StringKey[] = [...NAV, ...TODAY, ...RESULTS, ...PLAYER, ...BUILD, ...FOUND_VIA, ...CHALLENGE];
 const REQUIRED_LOCALES: Locale[] = ["en", "hi", "te"];
 const REGIONAL_LOCALES: Locale[] = ["mr", "ta", "kn", "gu", "bn", "ml", "pa"];
 const REGIONAL_KEYS: readonly StringKey[] = [...NAV, ...RESULTS, ...PLAYER];

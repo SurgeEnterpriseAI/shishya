@@ -12,6 +12,9 @@
 // shared set, validated against the exam, capped at 10) — the same
 // contract as the exam-level quiz, so the "try the same 5" WhatsApp share
 // from a topic quiz lands back here.
+//
+// 14 Sep 2026: the player's own words (and the challenge card on its result)
+// come from src/lib/challenge-copy.ts in the page's language.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -19,6 +22,7 @@ import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { clampAnonQuizCount, getAnonQuiz, parseAnonQuizSet } from "@/lib/anon-quiz";
+import { challengeLabels, quizLabels } from "@/lib/challenge-copy";
 import { AnonQuizPlayer, type AnonQuizExamWeek } from "@/components/AnonQuizPlayer";
 import { alertPhase, examAlertLabels, getExamWeekStateByCode } from "@/lib/exam-week-inputs";
 
@@ -33,7 +37,7 @@ export default async function TopicQuizPage({
   searchParams: Promise<{ n?: string | string[]; set?: string | string[] }>;
 }) {
   const [{ code, topicCode }, sp] = await Promise.all([params, searchParams]);
-  const [quiz, examWeekState, { t }, session] = await Promise.all([
+  const [quiz, examWeekState, { t, locale }, session] = await Promise.all([
     getAnonQuiz({ examCode: code, topicCode, count: clampAnonQuizCount(sp.n), ids: parseAnonQuizSet(sp.set) }),
     getExamWeekStateByCode(code),
     getT(),
@@ -79,7 +83,13 @@ export default async function TopicQuizPage({
                 : `${quiz.questions.length} real ${quiz.examShort} questions on ${quiz.scopeLabel}. Instant scoring and solutions, no signup — see where you stand in a few minutes.`}
             </p>
             <div className="mt-6">
-              <AnonQuizPlayer quiz={quiz} examWeek={examWeek} />
+              <AnonQuizPlayer
+                quiz={quiz}
+                examWeek={examWeek}
+                labels={quizLabels(t)}
+                challengeLabels={challengeLabels(t)}
+                locale={locale}
+              />
             </div>
           </>
         )}

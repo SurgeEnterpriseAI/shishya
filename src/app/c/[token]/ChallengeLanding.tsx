@@ -7,13 +7,23 @@
 //   • a friend who already sent a score: both scores side by side;
 //   • anyone else: the challenge, then the questions in challenge mode.
 // localStorage is read after mount, so the server render is the intro.
+// Every string arrives as labels in the page's language (the visitor's own
+// language choice, else the language the challenge was made in).
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { AnonQuiz } from "@/lib/anon-quiz";
-import { AnonQuizPlayer } from "@/components/AnonQuizPlayer";
+import { fillTemplate } from "@/lib/i18n";
+import { AnonQuizPlayer, type AnonQuizTranslationPack } from "@/components/AnonQuizPlayer";
 import { ChallengeCard, ChallengeScores, ChallengeShare } from "@/components/ChallengeCard";
-import { challengeHeadline, challengeVerdict } from "@/lib/challenge";
+import { challengeVerdict } from "@/lib/challenge";
+import {
+  challengeAgo,
+  challengeDateLocale,
+  challengeHeadlineText,
+  type ChallengeLabels,
+  type QuizLabels,
+} from "@/lib/challenge-copy";
 import { madeChallengeKey, playedChallenge, type PlayedChallenge } from "@/lib/challenge-local";
 
 export interface ChallengeLandingData {
@@ -33,29 +43,28 @@ interface Play {
   at: string;
 }
 
-function ago(iso: string, now: number): string {
-  const mins = Math.max(0, Math.round((now - new Date(iso).getTime()) / 60_000));
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins} min ago`;
-  const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours} h ago`;
-  const days = Math.round(hours / 24);
-  return `${days} day${days === 1 ? "" : "s"} ago`;
-}
-
 export function ChallengeLanding({
   data,
   quiz,
   isCreatorSession,
+  labels,
+  quizLabels,
+  locale,
+  translation,
 }: {
   data: ChallengeLandingData;
   quiz: AnonQuiz;
   isCreatorSession: boolean;
+  labels: ChallengeLabels;
+  quizLabels: QuizLabels;
+  locale: string;
+  translation?: AnonQuizTranslationPack;
 }) {
+  const L = labels;
   const [mode, setMode] = useState<"intro" | "playing" | "creator" | "played">("intro");
   const [creatorKey, setCreatorKey] = useState<string | null>(null);
   const [plays, setPlays] = useState<Play[] | null>(null);
-  const [playsErr, setPlaysErr] = useState<string | null>(null);
+  const [playsFailed, setPlaysFailed] = useState(false);
   const [played, setPlayed] = useState<PlayedChallenge | null>(null);
   const n = data.questionCount;
 
@@ -67,10 +76,10 @@ export function ChallengeLanding({
       fetch(`/api/challenge/${data.token}/plays`, { headers: key ? { "x-challenge-key": key } : {}, cache: "no-store" })
         .then(async (res) => {
           const j = await res.json().catch(() => ({}));
-          if (!res.ok) throw new Error(typeof j?.error === "string" ? j.error : "Couldn't load the scores.");
+          if (!res.ok) throw new Error(String(res.status));
           setPlays(Array.isArray(j.plays) ? j.plays : []);
         })
-        .catch((e: unknown) => setPlaysErr(e instanceof Error ? e.message : "Couldn't load the scores."));
+        .catch(() => setPlaysFailed(true));
       return;
     }
     const p = playedChallenge(data.token);
@@ -84,6 +93,10 @@ export function ChallengeLanding({
     return (
       <AnonQuizPlayer
         quiz={quiz}
+        translation={translation}
+        labels={quizLabels}
+        challengeLabels={L}
+        locale={locale}
         challenge={{ token: data.token, creatorName: data.creatorName, creatorCorrect: data.creatorCorrect }}
       />
     );
@@ -94,38 +107,37 @@ export function ChallengeLanding({
     return (
       <>
         <div className="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">Your challenge · {data.examShort}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
+            {fillTemplate(L["challenge.creator.kicker"], { exam: data.examShort })}
+          </p>
           <h1 className="mt-1 text-2xl font-bold text-ink-900">
-            You scored {data.creatorCorrect}/{n}
-            {data.fromMock ? ` on ${n} questions from your mock` : ""}
+            {fillTemplate(L[data.fromMock ? "challenge.creator.h1Mock" : "challenge.creator.h1"], { correct: data.creatorCorrect, n })}
           </h1>
-          {playsErr ? (
-            <p className="mt-3 text-sm text-rose-700">{playsErr}</p>
+          {playsFailed ? (
+            <p className="mt-3 text-sm text-rose-700">{L["challenge.creator.error"]}</p>
           ) : plays === null ? (
-            <p className="mt-3 text-sm text-ink-500">Loading scores…</p>
+            <p className="mt-3 text-sm text-ink-500">{L["challenge.creator.loading"]}</p>
           ) : plays.length === 0 ? (
-            <p className="mt-3 text-sm text-ink-600">
-              No friend has sent a score yet. Share the link below — scores appear here as they arrive.
-            </p>
+            <p className="mt-3 text-sm text-ink-600">{L["challenge.creator.none"]}</p>
           ) : (
             <ul className="mt-4 divide-y divide-ink-100">
               {plays.map((p, i) => {
                 const v = challengeVerdict(p.correct, data.creatorCorrect);
                 return (
                   <li key={`${p.at}-${i}`} className="flex items-center justify-between gap-3 py-2 text-sm">
-                    <span className="min-w-0 truncate text-ink-800">{p.name ?? "A friend"}</span>
+                    <span className="min-w-0 truncate text-ink-800">{p.name ?? L["challenge.aFriend"]}</span>
                     <span className="flex shrink-0 items-center gap-3">
                       <span
                         className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                           v === "ahead" ? "bg-emerald-100 text-emerald-800" : v === "tied" ? "bg-ink-100 text-ink-700" : "bg-saffron-100 text-saffron-800"
                         }`}
                       >
-                        {v === "ahead" ? "ahead of you" : v === "tied" ? "tied" : "you're ahead"}
+                        {v === "ahead" ? L["challenge.chip.ahead"] : v === "tied" ? L["challenge.chip.tied"] : L["challenge.chip.behind"]}
                       </span>
                       <span className="font-semibold tabular-nums text-ink-900">
                         {p.correct}/{n}
                       </span>
-                      <span className="w-20 text-right text-xs text-ink-500">{ago(p.at, now)}</span>
+                      <span className="w-24 text-right text-xs text-ink-500">{challengeAgo(L, p.at, now)}</span>
                     </span>
                   </li>
                 );
@@ -133,8 +145,9 @@ export function ChallengeLanding({
             </ul>
           )}
           <p className="mt-3 text-[11px] text-ink-500">
-            Only friends who chose to send their score appear here. The link works until{" "}
-            {new Date(data.expiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "long" })}.
+            {fillTemplate(L["challenge.creator.footer"], {
+              date: new Date(data.expiresAt).toLocaleDateString(challengeDateLocale(locale), { day: "numeric", month: "long" }),
+            })}
           </p>
         </div>
         <div className="mt-4 rounded-xl border-2 border-saffron-300 bg-saffron-50/60 p-4 sm:p-5">
@@ -146,7 +159,8 @@ export function ChallengeLanding({
             correct={data.creatorCorrect}
             total={n}
             fromMock={data.fromMock}
-            title="Share it with more friends"
+            title={L["challenge.share.again"]}
+            labels={L}
             showScoresLink={false}
           />
         </div>
@@ -157,9 +171,9 @@ export function ChallengeLanding({
   if (mode === "played" && played) {
     return (
       <div className="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">You played this challenge</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">{L["challenge.played.kicker"]}</p>
         <div className="mt-3">
-          <ChallengeScores mine={played.correct} theirs={played.creatorCorrect} total={played.total} name={data.creatorName} />
+          <ChallengeScores mine={played.correct} theirs={played.creatorCorrect} total={played.total} name={data.creatorName} labels={L} />
         </div>
         {played.choices.length === n && (
           <ChallengeCard
@@ -167,7 +181,9 @@ export function ChallengeLanding({
             examCode={data.examCode}
             examShort={data.examShort}
             surface="challenge"
-            heading={`Challenge your own friends with these ${n} questions`}
+            heading={fillTemplate(L["challenge.card.headingChain"], { n })}
+            labels={L}
+            locale={locale}
           />
         )}
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -175,13 +191,13 @@ export function ChallengeLanding({
             href={`/login?callbackUrl=${encodeURIComponent(`/exams/${data.examCode}`)}`}
             className="inline-flex flex-1 items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
           >
-            Sign in free — full {data.examShort} mocks &amp; your weak topics →
+            {fillTemplate(L["challenge.played.signIn"], { exam: data.examShort })}
           </Link>
           <Link
             href={`/exams/${data.examCode}/quiz`}
             className="inline-flex flex-1 items-center justify-center rounded-lg border border-ink-300 bg-white px-5 py-3 text-sm font-semibold text-ink-800 transition-colors hover:bg-ink-50"
           >
-            Try a fresh {data.examShort} quiz
+            {fillTemplate(L["challenge.played.fresh"], { exam: data.examShort })}
           </Link>
         </div>
       </div>
@@ -190,27 +206,24 @@ export function ChallengeLanding({
 
   return (
     <div className="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm sm:p-8">
-      <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">Challenge · free · no sign-in</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">{L["challenge.intro.kicker"]}</p>
       <h1 className="mt-2 text-2xl font-bold leading-tight text-ink-900 sm:text-3xl">
-        {challengeHeadline({
+        {challengeHeadlineText(L, {
           name: data.creatorName,
           correct: data.creatorCorrect,
           total: n,
-          examShort: data.examShort,
+          exam: data.examShort,
           fromMock: data.fromMock,
-        })}{" "}
-        — can you beat it?
+        })}
       </h1>
-      <p className="mt-3 text-sm text-ink-600">
-        The same {n} questions in the same order, with instant scoring and the solution after each one.
-      </p>
-      <p className="mt-1 text-xs text-ink-500">When you finish, you choose whether to send your score to {data.creatorName ?? "your friend"}.</p>
+      <p className="mt-3 text-sm text-ink-600">{fillTemplate(L["challenge.intro.desc"], { n })}</p>
+      <p className="mt-1 text-xs text-ink-500">{L["challenge.intro.choice"]}</p>
       <button
         type="button"
         onClick={() => setMode("playing")}
         className="mt-5 inline-flex w-full items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-base font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300 sm:w-auto"
       >
-        Start the {n} questions →
+        {fillTemplate(L["challenge.intro.start"], { n })}
       </button>
     </div>
   );

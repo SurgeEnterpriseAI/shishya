@@ -26,6 +26,8 @@ async function main() {
     "lastEmailAt" TIMESTAMP(3),
     "lastPushAt" TIMESTAMP(3)
   )`);
+  // 14 Sep 2026 (Hindi / Telugu challenges): the page language it was made in.
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Challenge" ADD COLUMN IF NOT EXISTS "locale" TEXT`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Challenge_createdAt_idx" ON "Challenge"("createdAt")`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Challenge_creatorUserId_idx" ON "Challenge"("creatorUserId")`);
 
