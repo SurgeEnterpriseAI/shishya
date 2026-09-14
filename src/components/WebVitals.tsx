@@ -32,28 +32,27 @@
 // path is a ROUTE TEMPLATE (/attempts/[id]/results), never a raw path with
 // a student's record id in it.
 //
-// ── SWITCHED OFF (SAMPLE_RATE = 0) until two outside changes land ──────
-// Review, 13 Sep 2026. Turning it on alone would break two rules:
-//   1. PRIVACY. The route fingerprints every unidentified row (uaHash +
-//      monthly ipHash, api/analytics/route.ts) — "identified humans never
-//      get one" is load-bearing there. A cookie-less vitals row from a real
-//      student would carry an IP hash seconds after their identified
-//      PAGE_VIEW: a user↔IP join channel. Needs: route.ts skips uaHash and
-//      ipHash when kind === "CTA_CLICKED" && props.cta === "web-vitals"
-//      (which also keeps bot-scrub's non-PAGE_VIEW retag off these rows).
-//   2. HONEST NUMBERS. ~half of hard page loads would land as CTA_CLICKED
-//      and inflate /admin/analytics "Event counts by kind". Needs:
-//      lib/analytics.ts eventCountsByKind excludes cta = 'web-vitals'.
-// Plus a privacy-page line for page-speed measurements. Raise SAMPLE_RATE
-// to 0.5 in the SAME change as those — never before.
+// ── Switched on 14 Sep 2026 (SAMPLE_RATE 0 → 0.5) ──────────────────────
+// The 13 Sep review kept it off until two outside changes landed; both ship
+// in the same change:
+//   1. PRIVACY. api/analytics/route.ts fingerprints unidentified rows
+//      (uaHash + monthly ipHash). It now skips both for this beacon
+//      (isWebVitalsBeacon, src/lib/analytics-beacons.ts). Otherwise a vitals
+//      row from a real student would carry an IP hash seconds after their
+//      identified PAGE_VIEW — a user↔IP join channel — and bot-scrub's
+//      non-PAGE_VIEW retag would reach these rows.
+//   2. HONEST NUMBERS. lib/analytics.ts eventCountsByKind leaves these rows
+//      out, so "Event counts by kind" is not inflated by half of page loads.
+// The privacy page names the page-speed measurement. Readout:
+// scripts/web-vitals-report.ts (p75 per metric, touch vs mouse, per route).
 
 import { useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
+import { WEB_VITALS_CTA } from "@/lib/analytics-beacons";
 import { hasSessionHint, routeTemplatePath } from "@/lib/session-hint";
 
-/** Share of page loads that report. Rows are ~300 B, no model calls.
- *  0 = off — see the block above before raising it (target 0.5). */
-const SAMPLE_RATE = 0;
+/** Share of page loads that report. Rows are ~300 B, no model calls. */
+const SAMPLE_RATE = 0.5;
 
 interface LayoutShiftEntry extends PerformanceEntry {
   value: number;
@@ -166,7 +165,7 @@ export function WebVitals() {
         kind: "CTA_CLICKED",
         path,
         props: {
-          cta: "web-vitals",
+          cta: WEB_VITALS_CTA,
           lcp: lcp == null ? null : Math.round(lcp),
           cls: clsSeen ? Math.round(cls * 1000) / 1000 : 0,
           inp: inp == null ? null : Math.round(inp),

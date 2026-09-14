@@ -16,6 +16,7 @@ import { createHmac } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { recordEvent, type EventKind } from "@/lib/analytics";
+import { isWebVitalsBeacon } from "@/lib/analytics-beacons";
 
 export const runtime = "nodejs";
 
@@ -66,6 +67,11 @@ function classifyClient(ua: string | null): "browser" | "bot" {
 //   • Fingerprints are computed ONLY when the row carries no userId and
 //     no anonId — identified rows never get one, so no user↔IP linkage
 //     and no anon↔account join channel exists in the table.
+//   • The page-speed beacon never gets one either (14 Sep 2026). It is
+//     sent without cookies, so it is unidentified by design: a vitals row
+//     from a real student would otherwise carry an IP hash seconds after
+//     their identified PAGE_VIEW — the join channel the rule above exists
+//     to prevent (src/lib/analytics-beacons.ts).
 //   • The IP hash key is derived from NEXTAUTH_SECRET + the calendar
 //     month, so IP linkability is bounded to ~30 days: a sweep clusters
 //     within its month, but IP hashes can't be joined across months and
@@ -167,6 +173,9 @@ export async function POST(req: NextRequest) {
   const anonId =
     client === "bot" ? null : cookieAnon ?? (refHost !== null ? issuedAnon : null);
 
+  // A page-speed measurement, never a person: no fingerprints (see above).
+  const measurement = isWebVitalsBeacon(kind, body.props);
+
   await recordEvent({
     kind,
     userId: userId,
@@ -179,9 +188,10 @@ export async function POST(req: NextRequest) {
     refHost,
     client,
     // Unidentified rows only (see fingerprint block comment) — the
-    // stealth-sweep class always lands here; identified humans never do.
-    uaHash: !userId && !anonId ? fingerprint(req.headers.get("user-agent"), "ua") : null,
-    ipHash: !userId && !anonId ? fingerprint(clientIp(req), "ip") : null,
+    // stealth-sweep class always lands here; identified humans and
+    // page-speed rows never do.
+    uaHash: !userId && !anonId && !measurement ? fingerprint(req.headers.get("user-agent"), "ua") : null,
+    ipHash: !userId && !anonId && !measurement ? fingerprint(clientIp(req), "ip") : null,
   });
 
   const res = new NextResponse(null, { status: 204 });

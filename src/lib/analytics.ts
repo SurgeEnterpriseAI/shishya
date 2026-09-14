@@ -149,10 +149,14 @@ export interface KindCount {
 
 /** Total count per EventKind over last `days`. */
 export async function eventCountsByKind(days = 30): Promise<KindCount[]> {
+  // The page-speed beacon rides CTA_CLICKED with props.cta = 'web-vitals'
+  // (src/lib/analytics-beacons.ts): a measurement of half of all page loads,
+  // not a click, so it stays out of these counts.
   return prisma.$queryRaw<KindCount[]>`
     SELECT "kind"::text AS kind, COUNT(*)::bigint AS count
     FROM "AnalyticsEvent"
     WHERE "createdAt" >= NOW() - (${days} * INTERVAL '1 day')
+      AND NOT ("kind" = 'CTA_CLICKED'::"EventKind" AND COALESCE("props"->>'cta', '') = 'web-vitals')
     GROUP BY "kind"
     ORDER BY count DESC
   `;
