@@ -333,11 +333,12 @@ async function createSundayPapers(opensAt: Date, closesAt: Date): Promise<LiveTe
 }
 
 /** Rank of an attempt among first-submitted-attempts on a live-test
- *  mock. Returns null when the mock isn't a live test. */
+ *  mock. Returns null when the mock isn't a live test. `attemptId` is the
+ *  attempt that holds the rank (the student's first in-window attempt). */
 export async function liveTestRank(
   mockId: string,
   userId: string,
-): Promise<{ rank: number; of: number } | null> {
+): Promise<{ rank: number; of: number; attemptId: string } | null> {
   const lt = await prisma.$queryRaw<{ id: string; opensAt: Date; closesAt: Date }[]>`
     SELECT id, "opensAt", "closesAt" FROM "LiveTest" WHERE "mockId" = ${mockId} LIMIT 1`;
   if (!lt[0]) return null;
@@ -347,8 +348,8 @@ export async function liveTestRank(
   // after close, or a Monday resume-submit, must never rewrite the board
   // everyone was emailed on Sunday night (audit 18 Aug + review 22 Aug).
   const freeze = new Date(lt[0].closesAt.getTime() + 60 * 60_000);
-  const rows = await prisma.$queryRaw<{ userId: string; pct: number | null }[]>`
-    SELECT DISTINCT ON ("userId") "userId", "scorePct" AS pct
+  const rows = await prisma.$queryRaw<{ id: string; userId: string; pct: number | null }[]>`
+    SELECT DISTINCT ON ("userId") id, "userId", "scorePct" AS pct
     FROM "Attempt"
     WHERE "mockId" = ${mockId} AND status IN ('SUBMITTED', 'AUTO_SUBMITTED')
       AND "startedAt" >= ${lt[0].opensAt} AND "startedAt" <= ${lt[0].closesAt}
@@ -357,7 +358,7 @@ export async function liveTestRank(
   const mine = rows.find((r) => r.userId === userId);
   if (mine?.pct == null) return null;
   const better = rows.filter((r) => r.pct != null && r.pct! > mine.pct!).length;
-  return { rank: better + 1, of: rows.length };
+  return { rank: better + 1, of: rows.length, attemptId: mine.id };
 }
 
 /** Final leaderboard for a closed live test: every in-window participant

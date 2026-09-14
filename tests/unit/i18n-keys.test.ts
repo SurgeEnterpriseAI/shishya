@@ -27,6 +27,7 @@ import {
   todayLabels,
 } from "@/lib/study-day-copy";
 import { CHALLENGE_I18N_KEYS, CHALLENGE_PUSH_I18N_KEYS, QUIZ_I18N_KEYS } from "@/lib/challenge-copy";
+import { RESULT_CARD_I18N_KEYS } from "@/lib/result-card";
 
 const NAV = ["nav.today", "nav.today.title"] as const satisfies readonly StringKey[];
 
@@ -140,7 +141,7 @@ const SCORE = [
   "ew.score.published.more",
 ] as const satisfies readonly StringKey[];
 
-const EVERY: readonly StringKey[] = [...NAV, ...TODAY, ...RESULTS, ...PLAYER, ...BUILD, ...FOUND_VIA, ...CHALLENGE, ...SCORE];
+const EVERY: readonly StringKey[] = [...NAV, ...TODAY, ...RESULTS, ...PLAYER, ...BUILD, ...FOUND_VIA, ...CHALLENGE, ...SCORE, ...RESULT_CARD_I18N_KEYS];
 const REQUIRED_LOCALES: Locale[] = ["en", "hi", "te"];
 const REGIONAL_LOCALES: Locale[] = ["mr", "ta", "kn", "gu", "bn", "ml", "pa"];
 const REGIONAL_KEYS: readonly StringKey[] = [...NAV, ...RESULTS, ...PLAYER];

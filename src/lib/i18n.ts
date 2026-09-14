@@ -940,6 +940,15 @@ export const dict = {
     "ew.score.published.title": "Published cutoffs from previous recruitments",
     "ew.score.published.note": "Shishya's cutoff page lists them exactly as the conducting body published them. Check the stage and the marks scale before comparing with your estimate.",
     "ew.score.published.more": "See the published cutoff tables →",
+    // Result card (14 Sep 2026)
+    "results.card.title": "Your result card",
+    "results.card.body": "This score as a phone-size image for your WhatsApp Status or prep group.",
+    "results.card.share": "Share result card",
+    "results.card.preparing": "Making your card…",
+    "results.card.save": "Save image",
+    "results.card.saveHint": "This browser can't share images directly — save the card, then post it from your gallery.",
+    "results.card.error": "Couldn't make the card — try again.",
+    "results.card.text": "My {exam} mock result: {score}. Free mocks on Shishya — try one:\n{url}",
   },
 
   hi: {
@@ -1794,6 +1803,15 @@ export const dict = {
     "ew.score.published.title": "पिछली भर्तियों के प्रकाशित कटऑफ़",
     "ew.score.published.note": "Shishya के कटऑफ़ पेज पर ये वैसे ही दिए हैं जैसे भर्ती संस्था ने प्रकाशित किए। अपने अनुमान से तुलना करने से पहले चरण और अंकों का पैमाना देख लें।",
     "ew.score.published.more": "प्रकाशित कटऑफ़ तालिकाएँ देखें →",
+    // Result card (14 Sep 2026)
+    "results.card.title": "आपका रिज़ल्ट कार्ड",
+    "results.card.body": "यह स्कोर फ़ोन-साइज़ इमेज में — आपके WhatsApp स्टेटस या तैयारी ग्रुप के लिए।",
+    "results.card.share": "रिज़ल्ट कार्ड शेयर करें",
+    "results.card.preparing": "कार्ड बन रहा है…",
+    "results.card.save": "इमेज सेव करें",
+    "results.card.saveHint": "यह ब्राउज़र सीधे इमेज शेयर नहीं कर सकता — कार्ड सेव करें, फिर गैलरी से पोस्ट करें।",
+    "results.card.error": "कार्ड नहीं बन सका — फिर से कोशिश करें।",
+    "results.card.text": "मेरा {exam} मॉक रिज़ल्ट: {score}। Shishya पर मुफ़्त मॉक — आप भी दें:\n{url}",
   },
 
   // ─────────────────────────────────────────────────────────────────────
@@ -2992,6 +3010,15 @@ export const dict = {
     "ew.score.published.title": "గత నియామకాల ప్రచురిత కటాఫ్‌లు",
     "ew.score.published.note": "నిర్వహణ సంస్థ ప్రచురించినట్టే Shishya కటాఫ్ పేజీలో ఉన్నాయి. మీ అంచనాతో పోల్చే ముందు దశను, మార్కుల స్కేల్‌ను చూసుకోండి.",
     "ew.score.published.more": "ప్రచురిత కటాఫ్ పట్టికలు చూడండి →",
+    // Result card (14 Sep 2026)
+    "results.card.title": "మీ రిజల్ట్ కార్డ్",
+    "results.card.body": "ఈ స్కోర్ ఫోన్ సైజ్ ఇమేజ్‌గా — మీ WhatsApp స్టేటస్ లేదా ప్రిపరేషన్ గ్రూప్ కోసం.",
+    "results.card.share": "రిజల్ట్ కార్డ్ షేర్ చేయండి",
+    "results.card.preparing": "కార్డ్ తయారవుతోంది…",
+    "results.card.save": "ఇమేజ్ సేవ్ చేయండి",
+    "results.card.saveHint": "ఈ బ్రౌజర్ నేరుగా ఇమేజ్ షేర్ చేయలేదు — కార్డ్ సేవ్ చేసి, గ్యాలరీ నుంచి పోస్ట్ చేయండి.",
+    "results.card.error": "కార్డ్ తయారు కాలేదు — మళ్లీ ప్రయత్నించండి.",
+    "results.card.text": "నా {exam} మాక్ రిజల్ట్: {score}. Shishyaలో ఉచిత మాక్‌లు — మీరూ ఒకటి రాయండి:\n{url}",
   },
 
   // Marathi (मराठी) — ~8.3Cr speakers (Maharashtra, Goa)

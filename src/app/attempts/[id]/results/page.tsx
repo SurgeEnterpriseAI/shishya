@@ -11,6 +11,8 @@ import { getT } from "@/lib/i18n-server";
 import { ResultsReview } from "./ResultsReview";
 import { RankCard } from "@/components/RankCard";
 import { ShareScoreButton } from "./ShareScoreButton";
+import { ResultCardShare } from "@/components/ResultCardShare";
+import { resultCardLabels } from "@/lib/result-card";
 import { ChallengeCard } from "@/components/ChallengeCard";
 import { challengeLabels } from "@/lib/challenge-copy";
 import { InviteFriendsCard } from "@/app/dashboard/InviteFriendsCard";
@@ -144,10 +146,15 @@ export default async function ResultsPage({
 
   // All-India Live Test rank — only for live-test mocks; rank among
   // each user's FIRST submitted attempt (re-attempts don't re-rank).
-  const airRank =
+  // 14 Sep 2026: shown only on the attempt that holds it (a later practice
+  // run of the paper has a different score), and a rehearsal (open for days,
+  // not one shared day) is never called All-India.
+  const liveRank =
     attempt.mock.generatedBy === "live-test"
       ? await liveTestRank(attempt.mock.id, session.user.id).catch(() => null)
       : null;
+  const airRank = liveRank && liveRank.attemptId === attempt.id ? liveRank : null;
+  const isRehearsal = (attempt.mock.config as { rehearsal?: unknown } | null)?.rehearsal === true;
 
   const peerProof = await examPeerProof(attempt.mock.examId, session.user.id).catch(() => null);
 
@@ -396,12 +403,19 @@ export default async function ResultsPage({
             comparison IS the product. Rank + cohort size only; no names. */}
         {airRank && (
           <div className="mt-6 rounded-xl border-2 border-saffron-400 bg-gradient-to-r from-saffron-50 via-amber-50 to-saffron-50 p-4 text-center">
-            <p className="text-lg font-bold text-saffron-800">
-              🇮🇳 All-India Rank #{airRank.rank}{" "}
-              <span className="text-sm font-semibold text-ink-600">of {airRank.of} across India</span>
-            </p>
+            {isRehearsal ? (
+              <p className="text-lg font-bold text-saffron-800">
+                Rank #{airRank.rank}{" "}
+                <span className="text-sm font-semibold text-ink-600">of {airRank.of} who took this rehearsal</span>
+              </p>
+            ) : (
+              <p className="text-lg font-bold text-saffron-800">
+                🇮🇳 All-India Rank #{airRank.rank}{" "}
+                <span className="text-sm font-semibold text-ink-600">of {airRank.of} across India</span>
+              </p>
+            )}
             <p className="mt-0.5 text-sm text-ink-700">
-              Same paper, same day, whole country.{" "}
+              {isRehearsal ? "Same paper for everyone who takes it before it closes." : "Same paper, same day, whole country."}{" "}
               <Link href="/live-test" className="font-semibold text-saffron-700 hover:underline">
                 Next live test →
               </Link>
@@ -561,6 +575,16 @@ export default async function ResultsPage({
               examCode={attempt.mock.exam.code}
               examShortName={attempt.mock.exam.shortName}
               scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
+            />
+            {/* Result card (14 Sep 2026): this result as a phone-size image for
+                WhatsApp Status; a rank only where src/lib/result-card.ts
+                allows one. */}
+            <ResultCardShare
+              attemptId={attempt.id}
+              examCode={attempt.mock.exam.code}
+              examShort={attempt.mock.exam.shortName}
+              scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
+              labels={resultCardLabels(t)}
             />
             {/* Challenge a friend (14 Sep 2026): the SAME questions with this
                 score to beat — evenly spaced questions from the mock, scored
