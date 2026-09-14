@@ -868,6 +868,7 @@ const REGION_ALIASES: Record<string, string> = {
   orissa: "Odisha",
   pondicherry: "Puducherry",
   uttaranchal: "Uttarakhand",
+  uttrakhand: "Uttarakhand", // how SSC's CT GD 2024 final result prints it
 };
 const withoutAnd = (s: string) => (s ?? "").replace(/\band\b/gi, " ");
 const REGION_BY_KEY = new Map<string, string>([
@@ -878,6 +879,40 @@ const REGION_BY_KEY = new Map<string, string>([
 /** The state / UT a printed region names, in one spelling; null for anything else (an RRB zone, a CCA). */
 export function canonicalRegion(printed: string): string | null {
   return REGION_BY_KEY.get(labelKey(printed ?? "")) ?? REGION_BY_KEY.get(labelKey(withoutAnd(printed))) ?? null;
+}
+
+const nameWords = (s: string) => (s ?? "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean);
+
+/** The one state / UT a cut-short region cell can be: its first word(s) ("Madhya", "West")
+ *  or its first line broken inside the first word, six letters or more ("Chhattisga",
+ *  "Uttarakhan"). Null when none or more than one fits ("Uttar" is Uttar Pradesh, never
+ *  Uttarakhand; "Goa CGST" is not Goa). */
+function stateFromFragment(printed: string): string | null {
+  const words = nameWords(printed);
+  if (words.length === 0) return null;
+  const fits = STATES_AND_UTS.filter((name) => {
+    const full = nameWords(name);
+    if (words.length < full.length && words.every((w, i) => w === full[i])) return true;
+    return words.length === 1 && words[0].length >= 6 && full[0].startsWith(words[0]) && full[0] !== words[0];
+  });
+  return fits.length === 1 ? fits[0] : null;
+}
+
+/** Cut-short state names to complete within ONE document's rows (14 Sep 2026). A wrapped
+ *  state cell can reach the grid as its first line only; SSC GD stored 46 rows as "Madhya",
+ *  "Chhattisga", "West"… Only a state-wise document qualifies (at least 80% of its region
+ *  cells already a state / UT in full), so a zone printed "West" in a zone-wise table is
+ *  never read as West Bengal. Returns printed → state for the fragments that complete. */
+export function completeStateFragments(regions: readonly string[]): Map<string, string> {
+  const named = regions.map((r) => (r ?? "").trim()).filter(Boolean);
+  const fixes = new Map<string, string>();
+  if (named.length === 0 || named.filter((r) => canonicalRegion(r) === r).length / named.length < 0.8) return fixes;
+  for (const r of new Set(named)) {
+    if (canonicalRegion(r)) continue;
+    const state = stateFromFragment(r);
+    if (state) fixes.set(r, state);
+  }
+  return fixes;
 }
 
 /** How a category column is headed on the page. Documents print one

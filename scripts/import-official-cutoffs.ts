@@ -47,6 +47,7 @@ import {
   type CutoffCandidate,
   type CutoffGrid,
   type CutoffSourceIndex,
+  completeStateFragments,
   type CutoffVerdict,
   type GridVerdict,
 } from "../src/lib/official-cutoffs";
@@ -314,6 +315,21 @@ async function main() {
       } else {
         failTotal++;
         console.log(`   FAIL ${label} = ${row.marks}: ${verdict.reasons.join("; ")}`);
+      }
+    }
+    // A wrapped state cell can reach the grid as its first line only ("Madhya", "Chhattisga";
+    // 46 SSC GD rows on 14 Sep 2026). Complete it per document, and only in a state-wise one.
+    const bySource = new Map<string, Passed[]>();
+    for (const p of passed) {
+      const list = bySource.get(p.src.id) ?? [];
+      list.push(p);
+      bySource.set(p.src.id, list);
+    }
+    for (const group of bySource.values()) {
+      for (const [from, to] of completeStateFragments(group.map((p) => p.row.region ?? ""))) {
+        const hits = group.filter((p) => (p.row.region ?? "").trim() === from);
+        for (const p of hits) p.row = { ...p.row, region: to };
+        console.log(`   region "${from}" completed to "${to}" (${hits.length} rows, source ${group[0].src.id})`);
       }
     }
     const { kept, dropped } = settleCollisions(passed);

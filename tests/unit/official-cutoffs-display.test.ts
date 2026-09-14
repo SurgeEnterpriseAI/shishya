@@ -4,7 +4,7 @@
 // Run: npx vitest run tests/unit/official-cutoffs-display.test.ts
 
 import { describe, it, expect } from "vitest";
-import { canonicalRegion, displayCategoryLabel, groupCutoffTables, type OfficialCutoffRow } from "@/lib/official-cutoffs";
+import { canonicalRegion, completeStateFragments, displayCategoryLabel, groupCutoffTables, type OfficialCutoffRow } from "@/lib/official-cutoffs";
 
 const stored = (over: Partial<OfficialCutoffRow>): OfficialCutoffRow => ({
   cycle: "CEN 01/2024",
@@ -57,6 +57,7 @@ describe("canonicalRegion", () => {
     expect(canonicalRegion("Andaman & Nicobar")).toBe("Andaman and Nicobar Islands");
     expect(canonicalRegion("ANDAMAN AND NICOBAR ISLANDS")).toBe("Andaman and Nicobar Islands");
     expect(canonicalRegion("Orissa")).toBe("Odisha");
+    expect(canonicalRegion("UTTRAKHAND")).toBe("Uttarakhand");
   });
 
   it("leaves anything that is not a whole state or UT name alone", () => {
@@ -65,6 +66,34 @@ describe("canonicalRegion", () => {
     expect(canonicalRegion("RRB Ahmedabad")).toBeNull();
     expect(canonicalRegion("Goa CGST")).toBeNull();
     expect(canonicalRegion("")).toBeNull();
+  });
+});
+
+describe("completeStateFragments", () => {
+  // One state-wise document: every state in full, several rows each (like SSC CT GD's final results).
+  const states = ["Bihar", "Assam", "Kerala", "Odisha", "Punjab", "Goa", "Delhi", "Sikkim", "Madhya Pradesh", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andhra Pradesh", "Chhattisgarh", "Maharashtra", "Chandigarh"];
+  const rows = [...states, ...states, ...states];
+
+  it("completes a state name cut short in its cell to the one state it can be", () => {
+    const fixes = completeStateFragments([...rows, "Madhya", "Chhattisga", "Uttarakhan", "Uttar", "West", "ANDHRA", "Maharasht", "Chandigar"]);
+    expect(Object.fromEntries(fixes)).toEqual({
+      Madhya: "Madhya Pradesh",
+      Chhattisga: "Chhattisgarh",
+      Uttarakhan: "Uttarakhand",
+      Uttar: "Uttar Pradesh",
+      West: "West Bengal",
+      ANDHRA: "Andhra Pradesh",
+      Maharasht: "Maharashtra",
+      Chandigar: "Chandigarh",
+    });
+  });
+
+  it("never completes anything in a zone-wise document", () => {
+    expect(completeStateFragments(["RRB Ajmer", "RRB Kolkata", "RRB Mumbai", "West", "Madhya"]).size).toBe(0);
+  });
+
+  it("leaves a cell that is not the start of exactly one state name as printed", () => {
+    expect(completeStateFragments([...rows, "Goa CGST", "Raj", "Hyderabad-Karnataka (371J)"]).size).toBe(0);
   });
 });
 
