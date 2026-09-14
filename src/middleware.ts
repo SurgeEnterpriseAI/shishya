@@ -61,6 +61,29 @@ const AI_BOTS: [string, RegExp][] = [
   ["YouBot", /YouBot/i],
 ];
 
+// Crawler-facing files outside the page routes (14 Sep 2026): whether an AI
+// engine ever reads llms.txt / llms-full.txt, robots.txt or the sitemap was
+// invisible — none of them passed through this middleware. They are now
+// logged and nothing else: the response is always the untouched
+// pass-through, even if logging throws (a 5xx robots.txt reads to Google as
+// "crawl nothing").
+const OBSERVE_ONLY = new Set(["/llms.txt", "/llms-full.txt", "/robots.txt", "/sitemap.xml"]);
+
+/** Fire-and-forget BotVisit row for a known AI crawler / fetcher. */
+function logAiBot(req: NextRequest, event: NextFetchEvent, path: string): void {
+  const ua = req.headers.get("user-agent") ?? "";
+  if (!ua) return;
+  const hit = AI_BOTS.find(([, rx]) => rx.test(ua));
+  if (!hit) return;
+  event.waitUntil(
+    fetch(new URL("/api/ops/bot-hit", req.url), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ bot: hit[0], path }),
+    }).catch(() => {}),
+  );
+}
+
 // URL locales for SEO (23 Aug 2026): /hi/<path> and /te/<path> are
 // crawlable twins of the English pages. We REWRITE them to the real
 // route (no redirect — the URL stays in the address bar and in Google's
@@ -79,6 +102,15 @@ const TWIN_PUBLIC_RE =
 
 export function middleware(req: NextRequest, event: NextFetchEvent): NextResponse {
   const rawPath = req.nextUrl.pathname;
+  if (OBSERVE_ONLY.has(rawPath)) {
+    try {
+      logAiBot(req, event, rawPath);
+    } catch {
+      /* logging must never change what a crawler receives */
+    }
+    return NextResponse.next();
+  }
+
   const localeMatch = rawPath.match(/^\/(hi|te)(\/.*)?$/);
   let res: NextResponse;
   let path = rawPath;
@@ -141,19 +173,7 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
   }
 
   // ── AI-crawler observability (cheap: one regex pass, only on match) ──
-  const ua = req.headers.get("user-agent") ?? "";
-  if (ua) {
-    const hit = AI_BOTS.find(([, rx]) => rx.test(ua));
-    if (hit) {
-      event.waitUntil(
-        fetch(new URL("/api/ops/bot-hit", req.url), {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ bot: hit[0], path }),
-        }).catch(() => {}),
-      );
-    }
-  }
+  logAiBot(req, event, path);
 
   // We intercept several classes of request to make sure NO student
   // reaches sign-in without us first seeing where they came from:
@@ -275,5 +295,10 @@ export const config = {
     // utm_source=whatsapp&utm_medium=share on the SIGNUP row.
     "/share/:path*",
     "/api/auth/signin/:path*",
+    // Crawler-facing files — logged only (OBSERVE_ONLY above, 14 Sep 2026).
+    "/llms.txt",
+    "/llms-full.txt",
+    "/robots.txt",
+    "/sitemap.xml",
   ],
 };

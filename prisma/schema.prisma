@@ -2110,6 +2110,61 @@ model ExamAlert {
   @@index([userId])
 }
 
+// Exam alerts on the phone (13 Sep 2026, reach program #3): one browser
+// push subscription per device per exam. No account needed — the endpoint
+// is the device's identity. Same material changes and cadence caps as
+// ExamAlert (sent by /api/cron/exam-alerts); 404/410 from the push service
+// or 5 failed deliveries in a row retire the row. Rules and allowed push
+// services: src/lib/push-alert-rules.ts. Queried with raw SQL.
+model ExamPushAlert {
+  id             String    @id @default(cuid())
+  examId         String
+  endpoint       String
+  p256dh         String
+  auth           String
+  userId         String?
+  createdAt      DateTime  @default(now())
+  unsubscribedAt DateTime?
+  lastNotifiedAt DateTime?
+  failCount      Int       @default(0)
+
+  @@unique([endpoint, examId])
+  @@index([examId, unsubscribedAt])
+}
+
+// Published previous-cycle cutoffs (13 Sep 2026, reach program #1). A row
+// exists only if its marks figure was found verbatim in the published
+// document on the line that carries its category label
+// (scripts/import-official-cutoffs.ts re-downloads every source; rules in
+// src/lib/official-cutoffs.ts). Marks are kept as printed (string), so no
+// decimal is ever rounded away. Shown on /exams/[code]/cutoff with the
+// publisher, the link and the source tier. Queried with raw SQL.
+model OfficialCutoff {
+  id            String    @id @default(cuid())
+  examId        String
+  cycle         String // "2024", "CEN 01/2019" — as the document names it
+  stage         String // "Final selection", "CBT 1 shortlisting for CBT 2"
+  post          String    @default("")
+  region        String    @default("") // RRB zone / state when the table splits by it
+  gender        String    @default("")
+  category      String // UR | EWS | OBC | SC | ST | ESM | PWD | OTHER
+  categoryLabel String // exactly as printed
+  marks         String // exactly as printed (ASCII digits)
+  maxMarks      String    @default("")
+  scoreType     String    @default("")
+  sourceUrl     String
+  sourceTitle   String    @default("")
+  publisher     String    @default("")
+  publishedOn   DateTime? @db.Date
+  evidence      String    @db.Text // the verbatim line(s) the figure was verified on
+  verifiedAt    DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  archivedAt    DateTime?
+
+  @@unique([examId, cycle, stage, post, region, gender, categoryLabel])
+  @@index([examId, archivedAt])
+}
+
 // Demand mining (1 Sep 2026): free-form user text (tutor chat, PulseAsk
 // notes, teacher requests, /ideas) is classified daily by one Claude
 // call into a controlled vocabulary of demand clusters; /admin/demand

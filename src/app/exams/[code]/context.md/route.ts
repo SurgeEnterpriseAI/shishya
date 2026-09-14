@@ -266,6 +266,31 @@ export async function GET(
     }
   }
 
+  // Published previous-recruitment cutoffs (13 Sep 2026) lead the cutoff
+  // section: every figure verified verbatim in its document, printed with
+  // its tier word and the link (src/lib/official-cutoffs.ts).
+  {
+    const { cutoffContextLines, groupCutoffTables } = await import("@/lib/official-cutoffs");
+    const { sourceTier } = await import("@/lib/official-source");
+    const publishedRows = await prisma
+      .$queryRaw<import("@/lib/official-cutoffs").OfficialCutoffRow[]>`
+        SELECT cycle, stage, post, region, gender, category, "categoryLabel", marks, "maxMarks", "scoreType",
+               "sourceUrl", "sourceTitle", publisher, "publishedOn"
+        FROM "OfficialCutoff" WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL`
+      .catch(() => [] as import("@/lib/official-cutoffs").OfficialCutoffRow[]);
+    const officialPortal = elig[0]?.officialUrl ?? null;
+    const lines = cutoffContextLines(groupCutoffTables(publishedRows), (url) =>
+      sourceTier("official", url, officialPortal) === "official" ? "official" : "reported",
+    );
+    if (lines.length) {
+      L.push("## Published cutoffs from previous recruitments");
+      L.push("Copied figure for figure from the published document. Cite the tier word and the link with any figure.");
+      L.push(...lines);
+      L.push(`Full tables with sources: ${SITE}/exams/${exam.code}/cutoff#published`);
+      L.push("");
+    }
+  }
+
   if (cutoff[0]?.content) {
     L.push("## Expected cutoffs (category-wise)");
     L.push(cutoff[0].content.trim().slice(0, 2500));

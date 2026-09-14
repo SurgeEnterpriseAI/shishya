@@ -12,13 +12,14 @@ export default function PrivacyPage() {
   return (
     <main className="container-prose max-w-3xl py-10 text-sm leading-relaxed text-ink-700">
       <h1 className="text-2xl font-bold text-ink-900">Privacy Policy</h1>
-      <p className="mt-1 text-xs text-ink-500">Last updated: 16 August 2026</p>
+      <p className="mt-1 text-xs text-ink-500">Last updated: 13 September 2026</p>
 
       <h2 className="mt-6 text-base font-bold text-ink-900">What we collect</h2>
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li><b>Account:</b> name and email from Google sign-in. We never see or store passwords.</li>
         <li><b>Preparation activity:</b> test attempts and scores, topics studied, tutor questions, coach-plan settings — the data that powers your reports, packs and plans.</li>
         <li><b>Usage analytics:</b> pages viewed, with a first-party cookie identifier. Automated crawlers are tagged and excluded from human metrics.</li>
+        <li><b>Phone alerts (only if you turn them on):</b> the push-notification address your browser creates for this device, and the exam you chose to follow. Used only to send that exam&apos;s alerts; switch them off in your browser&apos;s site settings for shishya.in.</li>
         <li><b>Payments (mentor sessions only):</b> handled entirely by our payment partner; we never see or store card/UPI details.</li>
       </ul>
 
@@ -26,6 +27,7 @@ export default function PrivacyPage() {
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li>To run your personal features: weakness maps, daily coach plans, status reports, study packs, week-over-week comparisons.</li>
         <li>To send preparation emails (daily practice, reminders, exam-eve wishes). Every email can be ignored without losing access; write to us to stop them entirely.</li>
+        <li>To send the exam alerts you asked for — by email, or as a notification on your phone — only when something real changes for that exam.</li>
         <li>To improve the platform with aggregate, de-identified statistics.</li>
       </ul>
 

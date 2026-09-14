@@ -421,6 +421,12 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
               done: t("tracker.alert.done"),
               invalid: t("tracker.alert.invalid"),
               err: t("tracker.alert.err"),
+              push: {
+                cta: t("tracker.alert.push"),
+                done: t("tracker.alert.pushDone"),
+                denied: t("tracker.alert.pushDenied"),
+                err: t("tracker.alert.pushErr"),
+              },
             }}
           />
         </div>

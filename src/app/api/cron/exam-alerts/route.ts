@@ -19,6 +19,13 @@
 // admit-card corrections, shift timings and the answer key all land in
 // that week, and a 7-day cap would hold them until they are useless) —
 // and ≤400 sends/run.
+//
+// Phone notifications (13 Sep 2026, reach program #3): the same changes go
+// to ExamPushAlert devices (web push) under the same caps, as ONE
+// notification per device per run — title = the newest change, body = its
+// detail, tap → the tracker, where every date carries its source tier.
+// Email and push never depend on each other: a missing push table or VAPID
+// configuration only switches push off.
 // Auth: Bearer ${CRON_SECRET}.  ?dry=1 → compute, don't send.
 
 export const runtime = "nodejs";
@@ -31,8 +38,13 @@ import { alertUnsubApiUrl, alertUnsubUrl } from "@/lib/exam-alerts";
 import { MATERIAL_NEWS_RE, buildTimeline, fmtDay, stageOf } from "@/lib/exam-timeline";
 import { computeExamWeekState } from "@/lib/exam-week";
 import { sourceTier } from "@/lib/official-source";
+import { examAlertPushPayload } from "@/lib/push-alert-rules";
+import { pushConfigured, sendPush } from "@/lib/web-push";
 
 const MAX_SENDS = 400;
+const MAX_PUSH_SENDS = 1000;
+/** Consecutive failed deliveries (not 404/410) before a device is retired. */
+const PUSH_MAX_FAILS = 5;
 const RESEND_DAYS = 7;
 /** Resend cap while any exam day of the window is within ±5 days. */
 const EXAM_WEEK_RESEND_DAYS = 2;
@@ -41,6 +53,7 @@ const EXAM_WEEK_RESEND_DAYS = 2;
 const LOOKBACK_H = RESEND_DAYS * 24 + 26;
 
 type Change = { title: string; detail?: string | null; url?: string | null; linkLabel?: string; at: Date };
+type ExamRow = { id: string; code: string; short: string; name: string; officialUrl: string | null };
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -53,21 +66,48 @@ export async function GET(req: Request) {
   const now = new Date();
   const since = new Date(now.getTime() - LOOKBACK_H * 3600_000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 86_400_000);
+  const pushOn = pushConfigured();
 
   // Exams that have at least one live subscriber. officialUrl widens the
   // gold source tier to conducting bodies on commercial TLDs (NABARD,
   // LIC, …) so their own notices are never mailed as "press reports".
-  const examRows = await prisma.$queryRaw<{ id: string; code: string; short: string; name: string; officialUrl: string | null }[]>`
+  const emailExamRows = await prisma.$queryRaw<ExamRow[]>`
     SELECT DISTINCT e.id, e.code, e."shortName" AS short, e.name, el."officialUrl"
     FROM "ExamAlert" a JOIN "Exam" e ON e.id = a."examId"
     LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
-    WHERE a."unsubscribedAt" IS NULL AND e.active = TRUE`.catch(() => []);
+    WHERE a."unsubscribedAt" IS NULL AND e.active = TRUE`.catch(() => [] as ExamRow[]);
+  // Exams followed only on phones join the same loop (their email query
+  // simply finds nobody). A failing push query never touches email.
+  const pushExamIds = pushOn
+    ? await prisma.$queryRaw<{ examId: string }[]>`
+        SELECT DISTINCT "examId" FROM "ExamPushAlert" WHERE "unsubscribedAt" IS NULL`.catch(() => [] as { examId: string }[])
+    : [];
+  const emailIds = new Set(emailExamRows.map((e) => e.id));
+  const pushOnlyIds = pushExamIds.map((r) => r.examId).filter((id) => !emailIds.has(id));
+  const pushOnlyRows =
+    pushOnlyIds.length > 0
+      ? await prisma.$queryRaw<ExamRow[]>`
+          SELECT e.id, e.code, e."shortName" AS short, e.name, el."officialUrl"
+          FROM "Exam" e LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
+          WHERE e.id = ANY(${pushOnlyIds}::text[]) AND e.active = TRUE`.catch(() => [] as ExamRow[])
+      : [];
+  const examRows = [...emailExamRows, ...pushOnlyRows];
 
-  const report: Array<{ code: string; subscribers: number; changes: number; sent: number; held: number; examWeek: boolean }> = [];
+  const report: Array<{
+    code: string;
+    subscribers: number;
+    changes: number;
+    sent: number;
+    held: number;
+    examWeek: boolean;
+    pushSent: number;
+    pushGone: number;
+  }> = [];
   let totalSent = 0;
+  let totalPushSent = 0;
 
   for (const ex of examRows) {
-    if (totalSent >= MAX_SENDS) break;
+    if (totalSent >= MAX_SENDS && totalPushSent >= MAX_PUSH_SENDS) break;
     if (Date.now() - started > (maxDuration - 30) * 1000) break;
 
     const changes: Change[] = [];
@@ -142,6 +182,7 @@ export async function GET(req: Request) {
     const week = computeExamWeekState(live, ex.officialUrl, now);
     const examWeek = week.windowDays.some((r) => Math.abs(r.daysFromToday) <= 5);
     const resendDays = examWeek ? EXAM_WEEK_RESEND_DAYS : RESEND_DAYS;
+    const capBefore = new Date(now.getTime() - resendDays * 86_400_000);
     // Any ANNOUNCED exam day (official or reported tier) within 3 days
     // deserves the reminder — only estimates are excluded.
     if (nextExam && nextExam.tier !== "expected" && nextExam.daysFromToday >= 0 && nextExam.daysFromToday <= 3 && changes.length < 4) {
@@ -158,15 +199,18 @@ export async function GET(req: Request) {
     }
 
     if (changes.length === 0) {
-      report.push({ code: ex.code, subscribers: 0, changes: 0, sent: 0, held: 0, examWeek });
+      report.push({ code: ex.code, subscribers: 0, changes: 0, sent: 0, held: 0, examWeek, pushSent: 0, pushGone: 0 });
       continue;
     }
 
-    const subs = await prisma.$queryRaw<{ id: string; email: string; userId: string | null; lastNotifiedAt: Date | null }[]>`
-      SELECT id, email, "userId", "lastNotifiedAt" FROM "ExamAlert"
-      WHERE "examId" = ${ex.id} AND "unsubscribedAt" IS NULL
-        AND ("lastNotifiedAt" IS NULL OR "lastNotifiedAt" < ${new Date(now.getTime() - resendDays * 86_400_000)})
-      LIMIT ${MAX_SENDS}`.catch(() => []);
+    const subs =
+      totalSent < MAX_SENDS
+        ? await prisma.$queryRaw<{ id: string; email: string; userId: string | null; lastNotifiedAt: Date | null }[]>`
+            SELECT id, email, "userId", "lastNotifiedAt" FROM "ExamAlert"
+            WHERE "examId" = ${ex.id} AND "unsubscribedAt" IS NULL
+              AND ("lastNotifiedAt" IS NULL OR "lastNotifiedAt" < ${capBefore})
+            LIMIT ${MAX_SENDS}`.catch(() => [])
+        : [];
 
     let sent = 0;
     let held = 0;
@@ -201,8 +245,44 @@ export async function GET(req: Request) {
         held++;
       }
     }
-    report.push({ code: ex.code, subscribers: subs.length, changes: changes.length, sent, held, examWeek });
+
+    // Phone notifications: same changes, same cap, one per device.
+    let pushSent = 0;
+    let pushGone = 0;
+    if (pushOn && totalPushSent < MAX_PUSH_SENDS) {
+      const devices = await prisma.$queryRaw<{ id: string; endpoint: string; p256dh: string; auth: string; lastNotifiedAt: Date | null }[]>`
+        SELECT id, endpoint, p256dh, auth, "lastNotifiedAt" FROM "ExamPushAlert"
+        WHERE "examId" = ${ex.id} AND "unsubscribedAt" IS NULL
+          AND ("lastNotifiedAt" IS NULL OR "lastNotifiedAt" < ${capBefore})
+        LIMIT ${MAX_PUSH_SENDS}`.catch(() => []);
+      for (const d of devices) {
+        if (totalPushSent >= MAX_PUSH_SENDS) break;
+        const mine = d.lastNotifiedAt ? changes.filter((c) => c.at > new Date(d.lastNotifiedAt as Date)) : changes;
+        if (mine.length === 0) continue;
+        if (dry) {
+          pushSent++;
+          continue;
+        }
+        const outcome = await sendPush(d, examAlertPushPayload({ examCode: ex.code, examShort: ex.short, changes: mine }));
+        if (outcome === "sent") {
+          pushSent++;
+          totalPushSent++;
+          await prisma.$executeRaw`
+            UPDATE "ExamPushAlert" SET "lastNotifiedAt" = NOW(), "failCount" = 0 WHERE id = ${d.id}`.catch(() => {});
+        } else if (outcome === "gone") {
+          pushGone++;
+          await prisma.$executeRaw`UPDATE "ExamPushAlert" SET "unsubscribedAt" = NOW() WHERE id = ${d.id}`.catch(() => {});
+        } else {
+          await prisma.$executeRaw`
+            UPDATE "ExamPushAlert"
+            SET "failCount" = "failCount" + 1,
+                "unsubscribedAt" = CASE WHEN "failCount" + 1 >= ${PUSH_MAX_FAILS} THEN NOW() ELSE NULL END
+            WHERE id = ${d.id}`.catch(() => {});
+        }
+      }
+    }
+    report.push({ code: ex.code, subscribers: subs.length, changes: changes.length, sent, held, examWeek, pushSent, pushGone });
   }
 
-  return Response.json({ ok: true, dry, exams: examRows.length, totalSent, elapsedMs: Date.now() - started, report });
+  return Response.json({ ok: true, dry, pushOn, exams: examRows.length, totalSent, totalPushSent, elapsedMs: Date.now() - started, report });
 }

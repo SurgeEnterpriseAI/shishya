@@ -155,6 +155,16 @@ export async function GET() {
       GROUP BY e.code
     `.catch(() => [] as { code: string; years: number[] }[]);
   const pyqByCode = new Map(pyqYears.map((r) => [r.code, r.years]));
+  // Exams holding published previous cutoffs (13 Sep 2026) — the cutoff page
+  // shows them with the source document and the tier word.
+  const publishedCutoffCodes = new Set(
+    (
+      await prisma
+        .$queryRaw<{ code: string }[]>`
+          SELECT DISTINCT e.code FROM "OfficialCutoff" o JOIN "Exam" e ON e.id = o."examId" WHERE o."archivedAt" IS NULL`
+        .catch(() => [] as { code: string }[])
+    ).map((r) => r.code),
+  );
 
   let currentCategory = "";
   for (const e of exams) {
@@ -188,6 +198,9 @@ export async function GET() {
     lines.push(`- Exam tracker — exam date, notification, admit card, answer key, result, cutoff (official vs expected, email alerts): ${SITE}/exams/${e.code}/updates`);
     if (e.category !== "SCHOOL_BOARD") {
       lines.push(`- Last-minute exam checklist — exam-day timing with its source tier, what to carry, the marking scheme when one can be stated for the sitting: ${SITE}/exams/${e.code}/checklist`);
+    }
+    if (publishedCutoffCodes.has(e.code)) {
+      lines.push(`- Published previous cutoffs, copied from the source document, each with its link and source tier (official / reported): ${SITE}/exams/${e.code}/cutoff#published`);
     }
     lines.push(`- Custom topic-wise mock builder (pick topics, 10/25/50 Qs, difficulty; readable in Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages): ${SITE}/exams/${e.code}/build-mock`);
     if (fullPattern.has(e.code)) {

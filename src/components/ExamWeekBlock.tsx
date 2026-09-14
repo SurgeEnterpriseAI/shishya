@@ -193,6 +193,12 @@ export async function ExamWeekBlock({
             done: mode === "key" ? t("ew.alert.done") : t("tracker.alert.done"),
             invalid: t("tracker.alert.invalid"),
             err: t("tracker.alert.err"),
+            push: {
+              cta: t("tracker.alert.push"),
+              done: t("tracker.alert.pushDone"),
+              denied: t("tracker.alert.pushDenied"),
+              err: t("tracker.alert.pushErr"),
+            },
           }}
         />
       </div>

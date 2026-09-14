@@ -94,6 +94,13 @@ export function examAlertLabels(
       done: t("tracker.alert.done"),
       invalid: t("tracker.alert.invalid"),
       err: t("tracker.alert.err"),
+      // Phone notifications (13 Sep 2026, reach program #3).
+      push: {
+        cta: t("tracker.alert.push"),
+        done: t("tracker.alert.pushDone"),
+        denied: t("tracker.alert.pushDenied"),
+        err: t("tracker.alert.pushErr"),
+      },
     },
     weekLabels: { cta: t("ew.alert.cta"), done: t("ew.alert.done") },
     note: t("tracker.alert.body"),

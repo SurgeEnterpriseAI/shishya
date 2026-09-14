@@ -45,6 +45,8 @@ import { computeExamWeekState, dateWithTier, istDay, type ExamWeekPhase, type Ex
 import type { SourceTier, TimelineRow } from "@/lib/exam-timeline";
 import { examAlertLabels, getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { categoryHeaderKey, parseCategoryCutoff } from "@/lib/category-cutoff";
+import { cutoffCategoryRowsHtml, cutoffRowsHtml, groupCutoffTables, type CutoffSource, type OfficialCutoffRow } from "@/lib/official-cutoffs";
+import { sourceTier } from "@/lib/official-source";
 import { markingSchemeStatable } from "@/lib/marking-scheme";
 import { ExamVerdictPoll } from "@/components/ExamVerdictPoll";
 import { ShareExamButton } from "@/components/ShareExamButton";
@@ -64,6 +66,14 @@ export const revalidate = 900;
 const YEAR = new Date().getFullYear();
 
 type TFn = (key: StringKey) => string;
+
+const hostOf = (url: string) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+};
 
 const TIER_KEY: Record<SourceTier, StringKey> = {
   official: "ew.tier.official",
@@ -230,6 +240,7 @@ export async function generateMetadata({
       `${exam.shortName} cutoff marks`,
       `${exam.shortName} safe score`,
       `${exam.shortName} rank predictor`,
+      `${exam.shortName} previous year cutoff`,
     ],
     // Explicit og:image — a child segment's openGraph block replaces the
     // parent's, so /exams/[code]/opengraph-image was not inherited here.
@@ -259,7 +270,7 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
   });
   if (!exam || !exam.active) notFound();
 
-  const [bands, { rows: dateRows, officialUrl }, catRows, { t: tRaw, locale }, urlLocale] = await Promise.all([
+  const [bands, { rows: dateRows, officialUrl }, catRows, { t: tRaw, locale }, urlLocale, publishedRows] = await Promise.all([
     prisma.examRankBand.findMany({
       where: { examId: exam.id, archivedAt: null },
       orderBy: { orderIdx: "asc" },
@@ -284,11 +295,21 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
       `.catch(() => [] as { content: string }[]),
     getT(),
     getUrlLocale(),
+    // Published previous-recruitment cutoffs (13 Sep 2026): only rows whose
+    // figure was verified verbatim in the published document
+    // (scripts/import-official-cutoffs.ts). Raw SQL, like the table above.
+    prisma
+      .$queryRaw<OfficialCutoffRow[]>`
+        SELECT cycle, stage, post, region, gender, category, "categoryLabel", marks, "maxMarks", "scoreType",
+               "sourceUrl", "sourceTitle", publisher, "publishedOn"
+        FROM "OfficialCutoff" WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL
+      `.catch(() => [] as OfficialCutoffRow[]),
   ]);
   if (bands.length === 0) notFound();
   const t = tRaw as TFn;
   const p = (rel: string) => localizedPath(rel, urlLocale);
   const short = exam.shortName;
+  const published = groupCutoffTables(publishedRows);
 
   const ew = computeExamWeekState(dateRows, officialUrl);
   const view = CUTOFF_PHASES.has(ew.phase) && ew.tier !== "expected" ? await loadExamWeekView(exam, ew, t, locale) : null;
@@ -414,6 +435,95 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
                 note={view.alert.note}
               />
             </div>
+          </section>
+        )}
+
+        {/* Published cutoffs first (13 Sep 2026): the figure a searcher
+            wants is the one the conducting body published. One table per
+            cycle + stage; its rows are what the figures split by (zone /
+            state, post), and every figure keeps its document link and tier
+            word (official = the conducting body's own site; anything else =
+            reported). The latest, smallest table opens when it is short; long
+            state- and post-wise lists fold, still in the HTML for readers and
+            crawlers.
+            Never mixed with the indicative estimates below. */}
+        {published.length > 0 && (
+          <section id="published" className="mt-6 scroll-mt-24">
+            <h2 className="text-base font-semibold text-ink-900">{fill(t("cutoff.published.title"), { exam: short })}</h2>
+            <p className="mt-1 max-w-3xl text-xs text-ink-600">{t("cutoff.published.note")}</p>
+            {published.map((tb, i) => {
+              const tiers: SourceTier[] = tb.sources.map((s) => (sourceTier("official", s.url, officialUrl) === "official" ? "official" : "reported"));
+              const oneTier = tiers.every((x) => x === tiers[0]);
+              const perRow = tb.sources.length > 1;
+              const simple = tb.rows.length === 1 && tb.rows[0].label === "";
+              const rowHead = [tb.splitBy.region ? t("cutoff.published.region") : "", tb.splitBy.post ? t("cutoff.published.post") : ""]
+                .filter(Boolean)
+                .join(" · ");
+              const scale = [tb.scoreType, tb.maxMarks ? fill(t("cutoff.published.outOf"), { max: tb.maxMarks }) : ""].filter(Boolean).join(" · ");
+              const docLink = (s: CutoffSource, full: boolean) => (
+                <a href={s.url} target="_blank" rel="noopener nofollow" className="font-medium text-saffron-800 underline">
+                  {s.publisher || hostOf(s.url)}
+                  {full && s.title ? ` — ${s.title}` : ""} ↗
+                </a>
+              );
+              return (
+                // Only a short headline table opens by itself; a 300-row
+                // state-wise list stays folded behind its summary line.
+                <details key={tb.key} open={i === 0 && tb.rows.length <= 60} className="mt-3 rounded-lg border border-ink-200 bg-white">
+                  <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-ink-800">
+                    {[tb.cycle, tb.stage, tb.post, tb.region, tb.gender].filter(Boolean).join(" · ")}
+                    {!simple && <span className="ml-1 font-normal text-ink-500">({tb.rows.length})</span>}
+                  </summary>
+                  <div className="overflow-x-auto border-t border-ink-200">
+                    <table className="w-full text-sm [&_td]:px-3 [&_td]:py-1.5 [&_td]:tabular-nums [&_td]:text-ink-700 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:text-ink-800 [&_tbody_tr]:border-b [&_tbody_tr]:border-ink-100">
+                      {simple ? (
+                        <>
+                          <thead>
+                            <tr className="border-b border-ink-200 bg-ink-50/60">
+                              <th>{t("cutoff.published.category")}</th>
+                              <th>{t("cutoff.published.marks")}</th>
+                            </tr>
+                          </thead>
+                          {/* Rows as one HTML string (cutoffRowsHtml, 14 Sep 2026): a
+                              300-row table as React elements costs its size again,
+                              several times over, in the RSC payload. Escaped there. */}
+                          <tbody dangerouslySetInnerHTML={{ __html: cutoffCategoryRowsHtml(tb) }} />
+                        </>
+                      ) : (
+                        <>
+                          <thead>
+                            <tr className="border-b border-ink-200 bg-ink-50/60">
+                              <th>{rowHead || t("cutoff.published.source")}</th>
+                              {tb.categories.map((c) => (
+                                <th key={c}>{c}</th>
+                              ))}
+                              {perRow && <th>{t("cutoff.published.source")}</th>}
+                            </tr>
+                          </thead>
+                          <tbody
+                            dangerouslySetInnerHTML={{
+                              __html: cutoffRowsHtml(tb, {
+                                sourceColumn: perRow,
+                                sourceText: (s) => tb.sources[s].publisher || hostOf(tb.sources[s].url),
+                                sourceSuffix: (s) => (oneTier ? "" : ` (${t(TIER_KEY[tiers[s]])})`),
+                                linkClass: "font-medium text-saffron-800 underline",
+                              }),
+                            }}
+                          />
+                        </>
+                      )}
+                    </table>
+                  </div>
+                  <p className="px-3 py-2 text-xs text-ink-600">
+                    {scale}
+                    {scale ? " · " : ""}
+                    {t("cutoff.published.source")}
+                    {oneTier ? ` (${t(TIER_KEY[tiers[0]])})` : ""}:{" "}
+                    {perRow ? t("cutoff.published.perRow") : docLink(tb.sources[0], true)}
+                  </p>
+                </details>
+              );
+            })}
           </section>
         )}
 
