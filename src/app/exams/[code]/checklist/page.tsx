@@ -80,9 +80,11 @@ const loadChecklistFacts = unstable_cache(
         marksPerQ: true,
         negativeMark: true,
         languages: true,
+        active: true,
       },
     });
-    if (!exam) return null;
+    // Inactive = seeded ahead of its question bank; not public yet.
+    if (!exam || !exam.active) return null;
     const [subjects, eligibility, fullMock, tricks] = await Promise.all([
       prisma.subject
         .findMany({ where: { examId: exam.id }, orderBy: { orderIdx: "asc" }, select: { name: true, weight: true } })
@@ -108,7 +110,7 @@ const loadChecklistFacts = unstable_cache(
       hasTricks: !!tricks,
     };
   },
-  ["exam-checklist-facts-v1"],
+  ["exam-checklist-facts-v2"],
   { revalidate: 900, tags: ["exam-shared"] },
 );
 

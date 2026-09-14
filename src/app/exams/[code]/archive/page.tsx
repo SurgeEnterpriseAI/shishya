@@ -47,9 +47,10 @@ export default async function ArchivePage({
 
   const exam = await prisma.exam.findUnique({
     where: { code },
-    select: { id: true, code: true, name: true, shortName: true, category: true },
+    select: { id: true, code: true, name: true, shortName: true, category: true, active: true },
   });
-  if (!exam) notFound();
+  // Inactive = seeded ahead of its question bank; not public yet.
+  if (!exam || !exam.active) notFound();
 
   const theme = getExamTheme(exam.category);
 

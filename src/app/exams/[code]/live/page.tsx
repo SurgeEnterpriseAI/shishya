@@ -77,7 +77,8 @@ export default async function LivePage({
 }) {
   const { code } = await params;
   const exam = await loadExamNightExam(code);
-  if (!exam) notFound();
+  // Inactive = seeded ahead of its question bank; not public yet.
+  if (!exam || !exam.active) notFound();
   const [{ t: tRaw, locale }, session] = await Promise.all([getT(), auth().catch(() => null)]);
   const t = tRaw as TFn;
   const facts = await loadExamNightFacts(exam, "LIVE", {

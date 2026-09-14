@@ -97,7 +97,8 @@ export default async function TopicPage({
   const { t } = await getT();
 
   const exam = await prisma.exam.findUnique({ where: { code } });
-  if (!exam) notFound();
+  // Inactive = seeded ahead of its question bank; not public yet.
+  if (!exam || !exam.active) notFound();
 
   const topic = await prisma.topic.findFirst({
     where: { code: topicCode, subject: { examId: exam.id } },

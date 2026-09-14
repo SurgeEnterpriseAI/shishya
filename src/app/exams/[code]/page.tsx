@@ -86,7 +86,7 @@ export async function generateMetadata({
   // Same cached payload the page renders from (exam + tracker rows +
   // official portal) — one cache hit instead of a separate exam query.
   const shared = await getExamShared(code);
-  if (!shared) return { title: "Exam not found — Shishya" };
+  if (!shared || !shared.exam.active) return { title: "Exam not found — Shishya" };
   const { exam, importantDates, officialUrl } = shared;
 
   const { stateInfo, languageList, languageName } = await import("@/lib/state-info");
@@ -243,7 +243,10 @@ export default async function ExamPage({
   // gets it from Next's data cache. Drops a hot /exams/[code] TTFB from
   // ~2-3s to ~50-200ms.
   const shared = await getExamShared(code);
-  if (!shared) notFound();
+  // An inactive exam is seeded ahead of its verified question bank (MP_RAEO,
+  // KA_KSRP on 15 Sep 2026). Its hub would promise free mock tests that do
+  // not exist yet, so it is not public until it is activated.
+  if (!shared || !shared.exam.active) notFound();
   const {
     exam,
     validatedQuestionCount,

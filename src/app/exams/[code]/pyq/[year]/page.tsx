@@ -120,7 +120,8 @@ export default async function PYQYearPage({
   const { t } = await getT();
 
   const exam = await prisma.exam.findUnique({ where: { code } });
-  if (!exam) notFound();
+  // Inactive = seeded ahead of its question bank; not public yet.
+  if (!exam || !exam.active) notFound();
 
   const questions = await prisma.question.findMany({
     where: { examId: exam.id, source: "PYQ", pyqYear: yearNum, validated: true },
