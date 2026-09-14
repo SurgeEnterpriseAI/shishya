@@ -29,6 +29,8 @@ import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { drillScope, DRILL_MOCK_TYPE } from "@/lib/coach-plan";
+import { getSeenQuestions } from "@/lib/seen-questions";
+import { pickTiered, shuffleWith } from "@/lib/question-pick";
 
 const EXAM_RE = /^[A-Z0-9_]{2,40}$/;
 const TOPIC_RE = /^[A-Za-z0-9_.\-]{1,80}$/;
@@ -118,20 +120,13 @@ export async function GET(req: Request) {
     const d = drillScope({ qDrill: c.t, qSubject: c.s }, c.e);
     if (!d) return go(req, `/exams/${exam.code}`);
 
-    // Questions already seen in the student's recent submitted attempts
-    // on this exam go last, so a repeat drill shows fresh ones while the
-    // pool has them.
-    const recent = await prisma.attempt.findMany({
-      where: { userId, mock: { examId: exam.id }, status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] } },
-      orderBy: { startedAt: "desc" },
-      take: 20,
-      select: { answers: true },
-    });
-    const seen = new Set<string>();
-    for (const a of recent) {
-      for (const x of (a.answers as any[]) ?? []) if (x?.questionId) seen.add(String(x.questionId));
-    }
-    const seenIds = [...seen];
+    // Unseen first, then least-recently-seen (15 Sep 2026): "seen" is every
+    // question of every mock this student opened on the exam in the last
+    // SEEN_WINDOW_DAYS days — getSeenQuestions, the rule every other picker
+    // uses. It was the answers of the last 20 SUBMITTED attempts, so an
+    // opened-but-abandoned set, or anything older than 20 attempts, came
+    // back as fresh. A failed seen query picks without exclusion.
+    const seen = (await getSeenQuestions(userId, exam.id)) ?? new Map<string, number>();
 
     const scopeSql =
       d.scope === "topic"
@@ -139,15 +134,11 @@ export async function GET(req: Request) {
         : d.scope === "subject"
           ? Prisma.sql`AND tt."subjectId" = ${topic.subject.id}`
           : Prisma.empty;
-    const orderSql = seenIds.length
-      ? Prisma.sql`(q.id = ANY(${seenIds})) ASC, random()`
-      : Prisma.sql`random()`;
-    const picked = await prisma.$queryRaw<{ id: string }[]>`
+    const pool = await prisma.$queryRaw<{ id: string }[]>`
       SELECT q.id FROM "Question" q JOIN "Topic" tt ON tt.id = q."topicId"
       WHERE q."examId" = ${exam.id} AND q.validated = TRUE AND q.type = 'MCQ' ${scopeSql}
-      ORDER BY ${orderSql}
-      LIMIT ${d.n}`;
-    const questionIds = picked.map((q) => q.id);
+      LIMIT 5000`;
+    const questionIds = shuffleWith(pickTiered([pool], d.n, seen).picked).map((q) => q.id);
     if (questionIds.length === 0) return go(req, `/exams/${exam.code}`);
     const n = questionIds.length;
 

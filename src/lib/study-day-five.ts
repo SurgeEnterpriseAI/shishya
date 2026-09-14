@@ -4,8 +4,14 @@
 // pickDailyFive() is the dashboard's DailyFiveCard picker, lifted verbatim
 // (src/app/dashboard/page.tsx: weaknessMap take 30 by lastSeenAt, keep
 // attemptsCount ≥ 3, lowest masteryScore wins; otherwise the newest active
-// enrollment). The dashboard should import this instead of its own copy —
-// that edit is outside this build's partition and is listed in the report.
+// enrollment). The dashboard imports it (15 Sep 2026), so the card, /today
+// and the results page's "tomorrow" line name the same topic.
+//
+// Rotation (15 Sep 2026): the weakest topic wins only while it still holds
+// 5 validated questions the student has not had on screen in the seen
+// window; otherwise the next weakest topic that does (chooseDailyFiveTopic).
+// Students were served the same thin topic's few questions every morning.
+// `rotated` tells the copy not to call such a topic "your weakest".
 //
 // Zero-LLM by construction: TOPIC and DIAGNOSTIC requests are rule-based
 // in src/lib/ai/generator.ts (pickByDifficulty over the validated pool).
@@ -16,8 +22,12 @@
 
 import { prisma } from "@/lib/db/prisma";
 import { istDay, istDayStartUtc } from "@/lib/study-day";
+import { seenCutoff } from "@/lib/seen-questions";
 
 export const DAILY_FIVE_COUNT = 5;
+
+/** How many of the weakest topics rotation may choose from. */
+export const ROTATION_DEPTH = 5;
 
 /** The body POST /api/mocks receives as `request` for today's 5. */
 export type DailyFiveRequest =
@@ -30,7 +40,76 @@ export interface DailyFivePick {
   /** Null when no topic has ≥ 3 attempts yet — request is then DIAGNOSTIC. */
   topicCode: string | null;
   topicName: string | null;
+  /** True when a weaker topic had run out of unseen questions and this one —
+   *  the next weakest with fresh questions — was picked. Copy must then not
+   *  call it "your weakest topic". */
+  rotated: boolean;
   request: DailyFiveRequest;
+}
+
+export interface TopicFreshness {
+  /** Validated questions in the topic and its child topics. */
+  total: number;
+  /** Of those, not on this student's screen inside the seen window. */
+  unseen: number;
+}
+
+/**
+ * Today's topic from the weakest-first list. The weakest topic keeps the day
+ * while it holds DAILY_FIVE_COUNT unseen questions; otherwise the next of the
+ * ROTATION_DEPTH weakest that does. If none does, the one with the most
+ * unseen questions (ties go to the weaker). If all are exhausted, or
+ * freshness is unknown (null — a DB error), it's the weakest, as before, and
+ * /api/mocks serves its least-recently-seen questions.
+ */
+export function chooseDailyFiveTopic<T extends { topicId: string }>(
+  weakestFirst: readonly T[],
+  fresh: ReadonlyMap<string, TopicFreshness> | null,
+): { pick: T; rotated: boolean } | null {
+  if (weakestFirst.length === 0) return null;
+  const head = weakestFirst[0];
+  if (!fresh) return { pick: head, rotated: false };
+  const pool = weakestFirst.slice(0, ROTATION_DEPTH);
+  const unseen = (w: T) => fresh.get(w.topicId)?.unseen ?? 0;
+  const enough = pool.find((w) => unseen(w) >= DAILY_FIVE_COUNT);
+  if (enough) return { pick: enough, rotated: enough !== head };
+  let best = head;
+  for (const w of pool) if (unseen(w) > unseen(best)) best = w;
+  return { pick: best, rotated: best !== head };
+}
+
+/** Validated questions per topic — with its child topics, the scope
+ *  /api/mocks gives a TOPIC set — and how many the student has not had on
+ *  screen in the seen window (any opened attempt, the getSeenQuestions rule).
+ *  One query. Null on a DB error: no rotation, never a guess. */
+async function topicFreshness(userId: string, topicIds: string[]): Promise<Map<string, TopicFreshness> | null> {
+  if (topicIds.length === 0) return new Map();
+  try {
+    const rows = await prisma.$queryRaw<{ topicId: string; total: number; unseen: number }[]>`
+      WITH scope AS (
+        SELECT t.id AS root, t.id AS tid FROM "Topic" t WHERE t.id = ANY(${topicIds})
+        UNION ALL
+        SELECT c."parentId" AS root, c.id AS tid FROM "Topic" c WHERE c."parentId" = ANY(${topicIds})
+      ),
+      seen AS (
+        SELECT DISTINCT u.qid
+        FROM "Attempt" a
+        JOIN "Mock" m ON m.id = a."mockId"
+        CROSS JOIN LATERAL unnest(m."questionIds") AS u(qid)
+        WHERE a."userId" = ${userId} AND a."startedAt" >= ${seenCutoff()}
+      )
+      SELECT s.root AS "topicId",
+             COUNT(q.id)::int AS total,
+             (COUNT(q.id) FILTER (WHERE se.qid IS NULL))::int AS unseen
+      FROM scope s
+      JOIN "Question" q ON q."topicId" = s.tid AND q.validated = TRUE
+      LEFT JOIN seen se ON se.qid = q.id
+      GROUP BY s.root`;
+    return new Map(rows.map((r) => [r.topicId, { total: Number(r.total), unseen: Number(r.unseen) }]));
+  } catch (err) {
+    console.error("[daily-five] topic freshness failed — weakest topic, no rotation:", err);
+    return null;
+  }
 }
 
 /** Same selection as the dashboard's Daily 5 card. Null = not enrolled anywhere. */
@@ -45,17 +124,23 @@ export async function pickDailyFive(userId: string): Promise<DailyFivePick | nul
     take: 30,
   });
   // Noise filter identical to the dashboard: only topics with ≥ 3 attempts.
-  const weakest = weakness
+  const ranked = weakness
     .filter((w) => w.attemptsCount >= 3)
-    .sort((a, b) => a.masteryScore - b.masteryScore)[0];
-  if (weakest) {
-    return {
-      examCode: weakest.exam.code,
-      examShort: weakest.exam.shortName,
-      topicCode: weakest.topic.code,
-      topicName: weakest.topic.name,
-      request: { type: "TOPIC", topicCode: weakest.topic.code, questionCount: DAILY_FIVE_COUNT },
-    };
+    .sort((a, b) => a.masteryScore - b.masteryScore);
+  if (ranked.length > 0) {
+    const fresh = await topicFreshness(userId, ranked.slice(0, ROTATION_DEPTH).map((w) => w.topicId));
+    const chosen = chooseDailyFiveTopic(ranked, fresh);
+    if (chosen) {
+      const w = chosen.pick;
+      return {
+        examCode: w.exam.code,
+        examShort: w.exam.shortName,
+        topicCode: w.topic.code,
+        topicName: w.topic.name,
+        rotated: chosen.rotated,
+        request: { type: "TOPIC", topicCode: w.topic.code, questionCount: DAILY_FIVE_COUNT },
+      };
+    }
   }
 
   const enrollment = await prisma.enrollment.findFirst({
@@ -69,6 +154,7 @@ export async function pickDailyFive(userId: string): Promise<DailyFivePick | nul
     examShort: enrollment.exam.shortName,
     topicCode: null,
     topicName: null,
+    rotated: false,
     request: { type: "DIAGNOSTIC", questionCount: DAILY_FIVE_COUNT },
   };
 }

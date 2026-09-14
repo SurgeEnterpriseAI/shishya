@@ -19,6 +19,7 @@ import { captureSignupAttribution } from "@/lib/signup-attribution";
 import { getDueRevisions } from "@/lib/db/revision-due";
 import { getStudyStreak, type StudyStreak } from "@/lib/db/streak";
 import { DailyFiveCard } from "./DailyFiveCard";
+import { pickDailyFive } from "@/lib/study-day-five";
 import { StreakCard } from "./StreakCard";
 import { MissionCard } from "./MissionCard";
 import { ExamWeekLines, type ExamWeekLine } from "./ExamWeekLines";
@@ -160,7 +161,7 @@ async function renderDashboard() {
   const showOnboarding = !onboardedAt;
   void onbCompletedAt;
 
-  const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs, dueRevisions, streak] =
+  const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs, dueRevisions, streak, dailyPick] =
     await Promise.all([
       getDashboardExams(),
       prisma.enrollment.findMany({
@@ -231,6 +232,8 @@ async function renderDashboard() {
             nextMilestone: 3, toNextMilestone: 3, hitMilestoneToday: false,
           }) satisfies StudyStreak,
       ),
+      // Today's 5 topic from the one picker /today uses (rotation included).
+      pickDailyFive(userId).catch(() => null),
     ]);
 
   // Pick today's brief for the recommended-exam slot. Prefer the brief
@@ -512,6 +515,12 @@ async function renderDashboard() {
   const totalChatSessions = chatRecent.length;
 
   const enrolledIds = new Set(enrollments.map((e) => e.examId));
+  // The picker below hides exams the student already has, so a search for
+  // one of them used to read as "nothing found" (15 Sep 2026: a JEE Advanced
+  // student typed "advance"). It gets them to point back at.
+  const enrolledPickerExams = allExams
+    .filter((e) => enrolledIds.has(e.id))
+    .map((e) => ({ code: e.code, name: e.name, shortName: e.shortName }));
   const otherExamCards: ExamCard[] = allExams
     .filter((e) => !enrolledIds.has(e.id))
     .map((e) => ({
@@ -742,10 +751,11 @@ async function renderDashboard() {
             topic first; adaptive fallback until mastery data exists. */}
         {enrollments.length > 0 && (
           <DailyFiveCard
-            examCode={weakest3[0]?.exam.code ?? recommendedExam?.code ?? enrollments[0].exam.code}
-            examShort={weakest3[0]?.exam.shortName ?? recommendedExam?.short ?? enrollments[0].exam.shortName}
-            topicCode={weakest3[0]?.topic.code ?? null}
-            topicName={weakest3[0]?.topic.name ?? null}
+            examCode={(dailyPick?.topicCode ? dailyPick.examCode : null) ?? weakest3[0]?.exam.code ?? recommendedExam?.code ?? enrollments[0].exam.code}
+            examShort={(dailyPick?.topicCode ? dailyPick.examShort : null) ?? weakest3[0]?.exam.shortName ?? recommendedExam?.short ?? enrollments[0].exam.shortName}
+            topicCode={dailyPick ? dailyPick.topicCode : (weakest3[0]?.topic.code ?? null)}
+            topicName={dailyPick ? dailyPick.topicName : (weakest3[0]?.topic.name ?? null)}
+            rotated={dailyPick?.rotated ?? false}
             streakCurrent={streak.current}
             activeToday={streak.activeToday}
           />
@@ -1103,6 +1113,7 @@ async function renderDashboard() {
             <div className="mt-4">
               <ExamPicker
                 exams={otherExamCards}
+                enrolled={enrolledPickerExams}
                 states={stateInfo}
                 featured={featuredSections}
                 signedIn={true}

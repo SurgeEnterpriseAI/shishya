@@ -67,6 +67,7 @@ export const STUDY_DAY_I18N_KEYS = [
   "results.streak.atRisk",
   "results.streak.none",
   "results.tomorrow.topic",
+  "results.tomorrow.topicFresh",
   "results.tomorrow.baseline",
   "results.tomorrow.mail",
   "results.tomorrow.self",
@@ -123,6 +124,8 @@ export function resultsStudyDayCopy(t: Translate) {
       none: t("results.streak.none"),
     },
     tomorrowTopic: (topicName: string): string => fillTemplate(t("results.tomorrow.topic"), { topic: topicName }),
+    /** The picker rotated past a weaker topic with no unseen questions left (DailyFivePick.rotated). */
+    tomorrowTopicFresh: (topicName: string): string => fillTemplate(t("results.tomorrow.topicFresh"), { topic: topicName }),
     tomorrowBaseline: t("results.tomorrow.baseline"),
     /** Shown only when wouldGetDailyFiveMail() is true. */
     tomorrowMail: t("results.tomorrow.mail"),

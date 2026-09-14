@@ -626,8 +626,8 @@ export async function sendDailyFiveEmail(p: {
   const peerHtml = p.peers
     ? `<p style="font-size:13px;line-height:1.6;margin:12px 0 0;color:#334155;">🔥 <strong>${p.peers.students} aspirants</strong> put in ${p.peers.sets} practice sets on Shishya yesterday. Your turn.</p>`
     : "";
-  const weakText = p.examShort ? `your weakest ${p.examShort} topic` : "your weakest topic";
-  const weakHtml = exam ? `your weakest <strong>${exam}</strong> topic` : "your weakest topic";
+  const weakText = p.examShort ? `one of your weakest ${p.examShort} topics` : "one of your weakest topics";
+  const weakHtml = exam ? `one of your weakest <strong>${exam}</strong> topics` : "one of your weakest topics";
   const coachTarget = p.examShort ? `your ${p.examShort} exam` : "your exam date";
 
   const text = `${first},
@@ -808,7 +808,7 @@ export async function sendEveningRescueEmail(p: {
   const subject = `🔥 ${first}, your ${p.streakCurrent}-day streak ends at midnight`;
   const text = `${first},
 
-Your ${p.streakCurrent}-day streak is still alive — but only until midnight. One Daily 5 (~3 minutes) on your weakest ${p.examShort} topic saves it.
+Your ${p.streakCurrent}-day streak is still alive — but only until midnight. One Daily 5 (~3 minutes) on one of your weakest ${p.examShort} topics saves it.
 ${p.liveTest ? `\n${p.liveTest.text}\n` : ""}
 Save it now: https://shishya.in/today?utm_source=email&utm_medium=evening-rescue
 
@@ -826,8 +826,8 @@ ${
   <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
     <div style="font-weight:700;font-size:18px;">🔥 ${p.streakCurrent}-day streak — ends at midnight</div>
     <p style="font-size:14px;line-height:1.6;margin:14px 0;">
-      ${first}, you've shown up ${p.streakCurrent} days in a row. One <strong>3-minute Daily 5</strong> on your weakest
-      <strong>${p.examShort}</strong> topic keeps the run alive. Miss tonight and it resets to zero.
+      ${first}, you've shown up ${p.streakCurrent} days in a row. One <strong>3-minute Daily 5</strong> on one of your weakest
+      <strong>${p.examShort}</strong> topics keeps the run alive. Miss tonight and it resets to zero.
     </p>
     <a href="https://shishya.in/today?utm_source=email&utm_medium=evening-rescue"
        style="display:inline-block;background:#dc2626;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">

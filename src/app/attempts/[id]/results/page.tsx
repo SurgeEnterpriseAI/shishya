@@ -625,7 +625,11 @@ export default async function ResultsPage({
                     : studyDay.streak.none}
             </p>
             <p className="mt-1 text-xs text-ink-700">
-              {tomorrow?.topicName ? studyDay.tomorrowTopic(tomorrow.topicName) : studyDay.tomorrowBaseline}{" "}
+              {tomorrow?.topicName
+                ? tomorrow.rotated
+                  ? studyDay.tomorrowTopicFresh(tomorrow.topicName)
+                  : studyDay.tomorrowTopic(tomorrow.topicName)
+                : studyDay.tomorrowBaseline}{" "}
               {willMail ? studyDay.tomorrowMail : studyDay.tomorrowSelf}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">

@@ -46,6 +46,12 @@ export interface CuratedSection {
   totalCount: number;
 }
 
+export interface EnrolledExam {
+  code: string;
+  name: string;
+  shortName: string;
+}
+
 interface Labels {
   searchPlaceholder: string;
   searchLabel: string;
@@ -69,12 +75,16 @@ interface Labels {
 
 export function ExamPicker({
   exams,
+  enrolled = [],
   states,
   featured,
   labels,
   signedIn,
 }: {
   exams: ExamCard[];
+  /** Exams the student already has — hidden from `exams`, but a search for
+   *  one of them must point back at it instead of reading as a miss. */
+  enrolled?: EnrolledExam[];
   states?: StateInfo[];
   featured?: CuratedSection[];
   labels: Labels;
@@ -293,7 +303,7 @@ export function ExamPicker({
 
       {/* ── Filtered result grid (when chip / search / state-picked) ─── */}
       {showCurated || showStateGrid ? null : filtered.length === 0 ? (
-        <ExamPickerMiss query={q} exams={exams} labels={labels} signedIn={signedIn} />
+        <ExamPickerMiss query={q} exams={exams} enrolled={enrolled} labels={labels} signedIn={signedIn} />
       ) : (
         <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((e) => (
@@ -415,20 +425,31 @@ function formatVolume(n: number): string {
 function ExamPickerMiss({
   query,
   exams,
+  enrolled,
   labels,
   signedIn,
 }: {
   query: string;
   exams: ExamCard[];
+  enrolled: EnrolledExam[];
   labels: Labels;
   signedIn: boolean;
 }) {
   const near = useMemo(() => nearestExams(query, exams, 4), [query, exams]);
   const logged = useRef<Set<string>>(new Set());
   const key = query.trim().toLowerCase();
+  // 15 Sep 2026: the search matched an exam the student already has (hidden
+  // from this list) — say so, and don't log it as a miss.
+  const mine = useMemo(
+    () =>
+      key.length < 3
+        ? []
+        : enrolled.filter((e) => `${e.name} ${e.shortName} ${e.code.replace(/_/g, " ")}`.toLowerCase().includes(key)),
+    [key, enrolled],
+  );
 
   useEffect(() => {
-    if (key.length < 3) return;
+    if (key.length < 3 || mine.length > 0) return;
     const id = window.setTimeout(() => {
       if (logged.current.has(key)) return;
       logged.current.add(key);
@@ -443,7 +464,7 @@ function ExamPickerMiss({
       }
     }, 900);
     return () => window.clearTimeout(id);
-  }, [key, near]);
+  }, [key, near, mine.length]);
 
   function tellUs() {
     window.dispatchEvent(
@@ -455,6 +476,19 @@ function ExamPickerMiss({
 
   return (
     <div className="mx-auto mt-10 max-w-2xl">
+      {mine.length > 0 && (
+        <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-center text-sm text-ink-800">
+          Already one of your exams:{" "}
+          {mine.map((e, i) => (
+            <span key={e.code}>
+              {i > 0 ? " · " : ""}
+              <Link href={`/exams/${e.code}`} prefetch={false} className="font-semibold text-saffron-700 hover:text-saffron-800">
+                {e.shortName} →
+              </Link>
+            </span>
+          ))}
+        </div>
+      )}
       {near.length > 0 ? (
         <>
           <p className="text-center text-sm text-ink-600">

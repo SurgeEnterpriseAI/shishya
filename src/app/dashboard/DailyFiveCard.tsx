@@ -15,6 +15,8 @@ interface Props {
   examShort: string;
   topicCode?: string | null;
   topicName?: string | null;
+  /** The picker skipped a weaker topic whose unseen questions ran out. */
+  rotated?: boolean;
   streakCurrent: number;
   activeToday: boolean;
 }
@@ -24,6 +26,7 @@ export function DailyFiveCard({
   examShort,
   topicCode,
   topicName,
+  rotated = false,
   streakCurrent,
   activeToday,
 }: Props) {
@@ -73,7 +76,7 @@ export function DailyFiveCard({
               : `5 quick questions for ${examShort}`}
           </p>
           <p className="mt-1 text-xs text-ink-600">
-            ~3 minutes on your weakest area.{" "}
+            {rotated ? "~3 minutes on one of your weakest topics — questions you haven't seen yet." : "~3 minutes on your weakest area."}{" "}
             {streakCurrent > 0
               ? activeToday
                 ? `🔥 ${streakCurrent}-day streak — already active today, make it count.`
