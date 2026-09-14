@@ -201,7 +201,8 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
   // Score-share landings (13 Sep 2026): a friend arriving from a WhatsApp
   // share carries utm_source=whatsapp&utm_medium=share — record it like any
   // other tagged landing so their signup is attributed to the share loop.
-  const isShareLanding = path.startsWith("/share/");
+  // Challenge links (/c/{token}, 14 Sep 2026) are the same kind of landing.
+  const isShareLanding = path.startsWith("/share/") || path.startsWith("/c/");
   if (!isHome && !isExamPage && !isSectionLanding && !isLogin && !isOAuthEntry && !isShareLanding) {
     return res;
   }
@@ -294,6 +295,8 @@ export const config = {
     // score share must set the attribution cookie so their signup carries
     // utm_source=whatsapp&utm_medium=share on the SIGNUP row.
     "/share/:path*",
+    // Challenge links (14 Sep 2026) — same attribution as a score share.
+    "/c/:path*",
     "/api/auth/signin/:path*",
     // Crawler-facing files — logged only (OBSERVE_ONLY above, 14 Sep 2026).
     "/llms.txt",

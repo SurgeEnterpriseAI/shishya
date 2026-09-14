@@ -56,6 +56,7 @@ export const LOGGED_SEND_FAMILIES: ReadonlySet<string> = new Set([
   "exam-eve",
   "exam-day-after",
   "result-day",
+  "challenge-play",
 ]);
 
 /** Answers the "How did you find Shishya?" chip can record (FoundViaChipClient). */
@@ -393,4 +394,72 @@ export async function botVisits(days: number): Promise<BotDayRow[] | null> {
     FROM "BotVisit"
     WHERE "at" >= NOW() - (${days} * INTERVAL '1 day')
     GROUP BY 1, 2`.catch(fail("botVisits"));
+}
+
+export interface ChallengeFunnel {
+  /** Challenge links made in the window, and by where they were made. */
+  made: number;
+  fromQuiz: number;
+  fromMock: number;
+  /** Made from a friend's challenge result (the chain). */
+  chained: number;
+  /** Distinct makers: signed-in user, else analytics id, else browser key. */
+  makers: number;
+  /** PAGE_VIEW rows on /c/ pages, and distinct identified visitors. */
+  landingViews: number;
+  landingVisitors: number;
+  /** Scores friends chose to send (a kept-private play leaves no row). */
+  plays: number;
+  players: number;
+  /** SIGNUP rows whose landing carried utm_campaign=challenge. */
+  signups: number;
+}
+
+/** Challenge a friend (14 Sep 2026): links made → challenge page views →
+ *  scores sent → links made in turn → signups. Null when any read fails,
+ *  including before scripts/create-challenge-tables.ts has run. */
+export async function challengeFunnel(days: number): Promise<ChallengeFunnel | null> {
+  const p = await db();
+  try {
+    const [c] = await p.$queryRaw<{ made: number; fromQuiz: number; fromMock: number; chained: number; makers: number }[]>`
+      SELECT COUNT(*)::int AS made,
+        COUNT(*) FILTER (WHERE source IN ('quiz', 'topic'))::int AS "fromQuiz",
+        COUNT(*) FILTER (WHERE source = 'mock')::int AS "fromMock",
+        COUNT(*) FILTER (WHERE source = 'challenge')::int AS chained,
+        COUNT(DISTINCT COALESCE("creatorUserId", "creatorAnonId", "creatorKeyHash"))::int AS makers
+      FROM "Challenge"
+      WHERE "createdAt" >= NOW() - (${days} * INTERVAL '1 day')`;
+    const [v] = await p.$queryRaw<{ views: number; visitors: number }[]>`
+      SELECT COUNT(*)::int AS views, COUNT(DISTINCT COALESCE("userId", "anonId"))::int AS visitors
+      FROM "AnalyticsEvent"
+      WHERE kind = 'PAGE_VIEW'::"EventKind"
+        AND path LIKE '/c/%'
+        AND client IS DISTINCT FROM 'bot'
+        AND "createdAt" >= NOW() - (${days} * INTERVAL '1 day')`;
+    const [pl] = await p.$queryRaw<{ plays: number; players: number }[]>`
+      SELECT COUNT(*)::int AS plays,
+        COUNT(DISTINCT COALESCE("playerUserId", "playerAnonId", "playerKeyHash"))::int AS players
+      FROM "ChallengePlay"
+      WHERE "createdAt" >= NOW() - (${days} * INTERVAL '1 day')`;
+    const [s] = await p.$queryRaw<{ n: number }[]>`
+      SELECT COUNT(*)::int AS n FROM "AnalyticsEvent"
+      WHERE kind = 'SIGNUP'::"EventKind"
+        AND "utmCampaign" = 'challenge'
+        AND "createdAt" >= NOW() - (${days} * INTERVAL '1 day')`;
+    return {
+      made: Number(c?.made ?? 0),
+      fromQuiz: Number(c?.fromQuiz ?? 0),
+      fromMock: Number(c?.fromMock ?? 0),
+      chained: Number(c?.chained ?? 0),
+      makers: Number(c?.makers ?? 0),
+      landingViews: Number(v?.views ?? 0),
+      landingVisitors: Number(v?.visitors ?? 0),
+      plays: Number(pl?.plays ?? 0),
+      players: Number(pl?.players ?? 0),
+      signups: Number(s?.n ?? 0),
+    };
+  } catch (err) {
+    console.error("[loops] challengeFunnel failed:", err);
+    return null;
+  }
 }

@@ -15,7 +15,10 @@ import type { Locale } from "@/lib/i18n";
 import type { ExamWeekPhase } from "@/lib/exam-week";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { ExamAlertBox, type ExamAlertLabels, type ExamAlertWeekLabels } from "@/components/ExamAlertBox";
+import { ChallengeCard, ChallengeScores } from "@/components/ChallengeCard";
 import { inlineMd } from "@/components/NotesMarkdown";
+import { CHALLENGE_MIN_QUESTIONS } from "@/lib/challenge";
+import { challengePlayerKey, rememberPlayedChallenge } from "@/lib/challenge-local";
 
 /** Exam Week Mode (6 Sep 2026): the server page that renders the player
  *  computes the exam's phase (computeExamWeekState) and passes the
@@ -65,26 +68,16 @@ export interface AnonQuizTranslationPack {
   seeIn: string;
 }
 
-// First-party analytics beacon (same shape as ShareExamButton) — the
-// WhatsApp share is counted as CTA_CLICKED cta 'share', surface 'anon-quiz'.
-function beacon(props: Record<string, unknown>) {
-  try {
-    navigator.sendBeacon?.(
-      "/api/analytics",
-      new Blob(
-        [
-          JSON.stringify({
-            kind: "CTA_CLICKED",
-            path: typeof location !== "undefined" ? location.pathname : "/",
-            props,
-          }),
-        ],
-        { type: "application/json" },
-      ),
-    );
-  } catch {
-    /* analytics is best-effort */
-  }
+/** Challenge a friend (14 Sep 2026): this quiz IS a friend's challenge
+ *  (/c/{token}). After the last question the player sees their score and
+ *  chooses whether to send it to the challenger (graded again on the
+ *  server); the result then leads with both scores side by side and offers
+ *  the same questions to their own friends. Absent = the plain quiz, whose
+ *  result offers the challenge card. */
+export interface AnonQuizChallenge {
+  token: string;
+  creatorName: string | null;
+  creatorCorrect: number;
 }
 
 export function AnonQuizPlayer({
@@ -92,17 +85,26 @@ export function AnonQuizPlayer({
   examWeek,
   cutoff,
   translation,
+  challenge,
 }: {
   quiz: AnonQuiz;
   examWeek?: AnonQuizExamWeek;
   cutoff?: AnonQuizCutoff;
   translation?: AnonQuizTranslationPack;
+  challenge?: AnonQuizChallenge;
 }) {
   const qs = quiz.questions;
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [answers, setAnswers] = useState<{ key: string; correct: boolean }[]>([]);
   const [done, setDone] = useState(false);
+  // Challenge mode: the "send my score?" step between the last question and
+  // the result, and the server-graded comparison once the score is sent.
+  const [askToSend, setAskToSend] = useState(false);
+  const [playerName, setPlayerName] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendErr, setSendErr] = useState<string | null>(null);
+  const [compare, setCompare] = useState<{ mine: number; theirs: number } | null>(null);
   // "See in English" — quiz-wide, instant, no fetch (the English source is
   // always in `quiz`; the translation pack is an overlay).
   const [englishMode, setEnglishMode] = useState(false);
@@ -137,7 +139,9 @@ export function AnonQuizPlayer({
     const nextAnswers = [...answers, { key: picked as string, correct }];
     setAnswers(nextAnswers);
     if (idx + 1 >= qs.length) {
-      setDone(true);
+      // A challenge first asks whether to send the score to the challenger.
+      if (challenge) setAskToSend(true);
+      else setDone(true);
       // Preserve the guest result across the signup wall (audit 18 Aug
       // 2026) — the CTA promises to "track your weak topics", so stash
       // score + the questions they missed. A post-signup recall on the
@@ -181,6 +185,8 @@ export function AnonQuizPlayer({
                   // arrivals from the plain hub quiz.
                   replay: quiz.replay,
                   fromCutoff: !!cutoff,
+                  // 14 Sep 2026: a friend playing a challenge link.
+                  challenge: !!challenge,
                 },
               }),
             ],
@@ -194,6 +200,89 @@ export function AnonQuizPlayer({
       setIdx(idx + 1);
       setPicked(null);
     }
+  }
+
+  async function sendScore() {
+    if (!challenge) return;
+    setSending(true);
+    setSendErr(null);
+    const choices = answers.map((a) => a.key);
+    try {
+      const res = await fetch(`/api/challenge/${challenge.token}/play`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ playerKey: challengePlayerKey(), choices, name: playerName }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || typeof j?.correct !== "number") {
+        setSendErr(
+          j?.self
+            ? "This is your own challenge — friends' scores appear on this page."
+            : typeof j?.error === "string"
+              ? j.error
+              : "Couldn't send your score — try again.",
+        );
+        return;
+      }
+      const theirs = Number(j.creatorCorrect);
+      rememberPlayedChallenge(challenge.token, { correct: j.correct, total: Number(j.total) || qs.length, creatorCorrect: theirs, choices });
+      setCompare({ mine: j.correct, theirs });
+      setDone(true);
+    } catch {
+      setSendErr("Couldn't send your score — check your connection and try again.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (askToSend && !done && challenge) {
+    const score = answers.filter((a) => a.correct).length;
+    return (
+      <div className="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">All {qs.length} done</p>
+        <p className="mt-1 text-4xl font-extrabold text-ink-900">
+          {score}
+          <span className="text-2xl text-ink-400">/{qs.length}</span>
+        </p>
+        <p className="mt-2 text-sm text-ink-700">
+          Send your score to {challenge.creatorName ?? "your friend"} to see both side by side?
+        </p>
+        <p className="mt-1 text-xs text-ink-500">
+          They see only your score{playerName.trim() ? " and the name you type" : ""}.
+        </p>
+        <label htmlFor="challenge-player-name" className="mt-4 block text-xs font-medium text-ink-700">
+          Your first name (optional)
+        </label>
+        <input
+          id="challenge-player-name"
+          type="text"
+          value={playerName}
+          onChange={(e) => setPlayerName(e.target.value)}
+          maxLength={24}
+          autoComplete="given-name"
+          className="mt-1 w-full rounded-lg border border-ink-300 bg-white px-3 py-2.5 text-sm text-ink-900 focus:border-saffron-400 focus:outline-none focus:ring-2 focus:ring-saffron-200 sm:max-w-xs"
+        />
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={sendScore}
+            disabled={sending}
+            className="inline-flex flex-1 items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300 disabled:opacity-60"
+          >
+            {sending ? "Sending…" : "Send my score & compare →"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setDone(true)}
+            disabled={sending}
+            className="inline-flex flex-1 items-center justify-center rounded-lg border border-ink-300 bg-white px-5 py-3 text-sm font-semibold text-ink-800 transition-colors hover:bg-ink-50 disabled:opacity-60"
+          >
+            Keep it to myself
+          </button>
+        </div>
+        {sendErr && <p className="mt-2 text-xs text-rose-700">{sendErr}</p>}
+      </div>
+    );
   }
 
   if (done) {
@@ -211,31 +300,26 @@ export function AnonQuizPlayer({
         : ` Give me the next things to study.`);
     const tutorHref = `/chat?examCode=${quiz.examCode}&seed=${encodeURIComponent(tutorSeed)}`;
     const good = pct >= 60;
-    // "Same N questions" challenge (11 Sep 2026): a replay link to THESE
-    // questions in THIS order (?set=), built here rather than via
-    // src/lib/share-url.ts (in flight elsewhere). The path is the page
-    // the student is on (exam or topic quiz, /hi and /te twins included),
-    // so a shared topic quiz lands back on the topic quiz. No counters,
-    // no urgency — just the score and the link.
-    const origin = typeof location !== "undefined" ? location.origin : "https://shishya.in";
-    const pathnameNow =
-      typeof location !== "undefined" ? location.pathname : `/exams/${quiz.examCode}/quiz`;
-    const shareUrl =
-      `${origin}${pathnameNow}?set=${qs.map((qq) => qq.id).join(",")}` +
-      `&utm_source=whatsapp&utm_medium=share&utm_campaign=anon-quiz&utm_content=${encodeURIComponent(quiz.examCode)}`;
-    const shareText = `I got ${score}/${qs.length} on these ${quiz.examShort} questions — try the same ${qs.length}:\n${shareUrl}`;
-    const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    const verdict = good
+      ? `Strong start on ${quiz.scopeLabel} — now go deeper.`
+      : `${quiz.scopeLabel} needs some work — that's exactly what Shishya's built for.`;
+    const choices = answers.map((a) => a.key);
     return (
       <div className="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">Your score</p>
-        <p className="mt-1 text-4xl font-extrabold text-ink-900">
-          {score}<span className="text-2xl text-ink-400">/{qs.length}</span>
-        </p>
-        <p className="mt-1 text-sm text-ink-600">
-          {good
-            ? `Strong start on ${quiz.scopeLabel} — now go deeper.`
-            : `${quiz.scopeLabel} needs some work — that's exactly what Shishya's built for.`}
-        </p>
+        {compare && challenge ? (
+          <>
+            <ChallengeScores mine={compare.mine} theirs={compare.theirs} total={qs.length} name={challenge.creatorName} />
+            <p className="mt-3 text-sm text-ink-600">{verdict}</p>
+          </>
+        ) : (
+          <>
+            <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">Your score</p>
+            <p className="mt-1 text-4xl font-extrabold text-ink-900">
+              {score}<span className="text-2xl text-ink-400">/{qs.length}</span>
+            </p>
+            <p className="mt-1 text-sm text-ink-600">{verdict}</p>
+          </>
+        )}
 
         {/* Cutoff-page arrivals: the rows they came from, right under the
             score. The figures keep their tier word and the cutoff page's
@@ -303,25 +387,30 @@ export function AnonQuizPlayer({
           </Link>
         </div>
 
-        {/* Same-questions challenge: one tap to a WhatsApp group with the
-            score and a replay link. Indian aspirants organise prep in
-            WhatsApp groups; a peer opening the same 5 is the cheapest
-            honest growth loop this page has. */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-ink-600">Challenge a friend with the same {qs.length}:</span>
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => beacon({ cta: "share", surface: "anon-quiz", via: "whatsapp", exam: quiz.examCode, score, total: qs.length })}
-            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-            </svg>
-            WhatsApp
-          </a>
-        </div>
+        {/* Challenge a friend (14 Sep 2026): replaces the 11 Sep "same N
+            questions" WhatsApp replay link, which gave a friend no score to
+            beat and told the sharer nothing back (0 taps in 14 days). A
+            friend who played a challenge gets the same card for their own
+            friends — the chain. */}
+        {/* A topic with a small pool can serve fewer questions than a
+            challenge needs; the card would only end in a refusal there. */}
+        {qs.length >= CHALLENGE_MIN_QUESTIONS && (
+          <ChallengeCard
+            from={
+              challenge
+                ? { source: "challenge", parentToken: challenge.token, choices }
+                : { source: quiz.topicCode ? "topic" : "quiz", questionIds: qs.map((qq) => qq.id), choices }
+            }
+            examCode={quiz.examCode}
+            examShort={quiz.examShort}
+            surface={challenge ? "challenge" : quiz.topicCode ? "topic-quiz" : "anon-quiz"}
+            heading={
+              challenge
+                ? `Challenge your own friends with these ${qs.length} questions`
+                : `Challenge a friend with the same ${qs.length} questions`
+            }
+          />
+        )}
 
         {/* Exam week: the guest is here because the exam is days away or
             just happened — one tap for the answer-key / result email. */}

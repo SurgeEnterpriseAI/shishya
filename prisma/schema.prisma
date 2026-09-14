@@ -2132,6 +2132,65 @@ model ExamPushAlert {
   @@index([examId, unsubscribedAt])
 }
 
+// Challenge a friend (14 Sep 2026): a link to the SAME questions with the
+// challenger's score to beat (/c/{id}). Made from a quiz result, a mock
+// result (evenly spaced questions from the mock) or a friend's own
+// challenge result. Scores are graded on the server; a name is stored only
+// if typed; the link stops working at expiresAt (30 days). Rules:
+// src/lib/challenge.ts. Tables created by scripts/create-challenge-tables.ts;
+// queried with raw SQL.
+model Challenge {
+  id             String    @id // the public token
+  examId         String
+  source         String // quiz | topic | mock | challenge
+  sourceRef      String? // attempt id (mock) or parent token (challenge)
+  questionIds    String[]
+  creatorUserId  String?
+  creatorAnonId  String?
+  creatorKeyHash String // sha256 of the secret kept in the creator's browser
+  creatorName    String?
+  creatorCorrect Int
+  questionCount  Int
+  createdAt      DateTime  @default(now())
+  expiresAt      DateTime
+  lastEmailAt    DateTime?
+  lastPushAt     DateTime?
+
+  @@index([createdAt])
+  @@index([creatorUserId])
+}
+
+// One friend's play of a challenge — one per browser (playerKeyHash).
+model ChallengePlay {
+  id            String   @id @default(cuid())
+  challengeId   String
+  playerUserId  String?
+  playerAnonId  String?
+  playerKeyHash String
+  playerName    String?
+  choices       Json // one option key (or null) per question, in order
+  correct       Int
+  createdAt     DateTime @default(now())
+
+  @@unique([challengeId, playerKeyHash])
+  @@index([challengeId, createdAt])
+}
+
+// A challenger's phone, notified when a friend plays (web push; same allowed
+// push services as ExamPushAlert).
+model ChallengeWatch {
+  id             String    @id @default(cuid())
+  challengeId    String
+  endpoint       String
+  p256dh         String
+  auth           String
+  createdAt      DateTime  @default(now())
+  unsubscribedAt DateTime?
+  failCount      Int       @default(0)
+
+  @@unique([challengeId, endpoint])
+}
+
 // Published previous-cycle cutoffs (13 Sep 2026, reach program #1). A row
 // exists only if its marks figure was found verbatim in the published
 // document on the line that carries its category label

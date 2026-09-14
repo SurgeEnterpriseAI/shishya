@@ -24,6 +24,7 @@ import {
   LOGGED_SEND_FAMILIES,
   activeUsers,
   botVisits,
+  challengeFunnel,
   foldFunnel,
   foundVia,
   istDayList,
@@ -77,6 +78,7 @@ export default async function AdminLoopsPage({ searchParams }: { searchParams: P
   const allSignups = await totalSignups(days);
   const chip = await foundVia(FOUND_VIA_WINDOW_D);
   const bots = await botVisits(days);
+  const challenge = await challengeFunnel(days);
   const active = await activeUsers(days); // heaviest — last, alone
 
   // ── A. mail funnel ──
@@ -411,8 +413,40 @@ export default async function AdminLoopsPage({ searchParams }: { searchParams: P
           )}
         </Section>
 
+        {/* ── E ── */}
+        <Section
+          title="Challenge a friend"
+          subtitle="Links to the same questions with a score to beat: links made → challenge page views → scores friends sent → links they made in turn → signups tagged utm_campaign=challenge."
+        >
+          {challenge === null ? (
+            <CouldNotLoad what="the challenge funnel (Challenge / ChallengePlay)" />
+          ) : (
+            <div className="mt-3 overflow-x-auto rounded-lg border border-ink-200 bg-white">
+              <table className="w-full text-xs">
+                <tbody>
+                  {(
+                    [
+                      ["Challenge links made", challenge.made, `from a quiz ${num(challenge.fromQuiz)} · from a mock ${num(challenge.fromMock)} · from a friend's challenge ${num(challenge.chained)}`],
+                      ["People who made one", challenge.makers, "signed-in user, else analytics id, else browser key"],
+                      ["Challenge page views", challenge.landingViews, `${num(challenge.landingVisitors)} identified visitors (a WhatsApp lander's first page is unidentified)`],
+                      ["Scores friends sent", challenge.plays, `${num(challenge.players)} players · ${challenge.made ? (challenge.plays / challenge.made).toFixed(2) : "–"} per link made · a score kept private leaves no row`],
+                      ["Signups tagged utm_campaign=challenge", challenge.signups, ""],
+                    ] as [string, number, string][]
+                  ).map(([label, n, detail]) => (
+                    <tr key={label} className="border-t border-ink-100 first:border-0">
+                      <td className="px-3 py-2 text-ink-800">{label}</td>
+                      <td className="px-3 py-2 text-right font-semibold tabular-nums">{num(n)}</td>
+                      <td className="px-3 py-2 text-ink-500">{detail}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Section>
+
         <p className="mt-10 text-[11px] text-ink-500">
-          Tables read: EmailTouch, AnalyticsEvent, User.signupReferrerHost, BotVisit. No vendor script, no cache; every number is computed when this page is opened. Nothing here is shown publicly.
+          Tables read: EmailTouch, AnalyticsEvent, User.signupReferrerHost, BotVisit, Challenge, ChallengePlay. No vendor script, no cache; every number is computed when this page is opened. Nothing here is shown publicly.
         </p>
       </section>
     </main>

@@ -27,6 +27,8 @@ const limits = {
   mentor:  { limit: 3,  windowSec: 86_400 },     // mentor applications per identity per day
   examAlert: { limit: 10, windowSec: 86_400 },   // exam-tracker alert subscriptions per IP / per email per day
   verdict: { limit: 12, windowSec: 3_600 },      // exam-day verdict poll taps per identity per hour (vote + section + re-votes)
+  challenge: { limit: 20, windowSec: 3_600 },    // challenge links made per identity / IP per hour
+  challengePlay: { limit: 40, windowSec: 3_600 }, // challenge plays + phone sign-ups per IP per hour
 } as const;
 
 export type LimitName = keyof typeof limits;

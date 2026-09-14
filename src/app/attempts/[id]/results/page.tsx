@@ -11,6 +11,7 @@ import { getT } from "@/lib/i18n-server";
 import { ResultsReview } from "./ResultsReview";
 import { RankCard } from "@/components/RankCard";
 import { ShareScoreButton } from "./ShareScoreButton";
+import { ChallengeCard } from "@/components/ChallengeCard";
 import { InviteFriendsCard } from "@/app/dashboard/InviteFriendsCard";
 import { FreshQuestionsButton } from "./FreshQuestionsButton";
 import { NextMockButton } from "./NextMockButton";
@@ -553,12 +554,25 @@ export default async function ResultsPage({
             ShareScoreButton component for the wa.me + Web Share +
             Copy fallback chain. */}
         {attempt.finishedAt && (
-          <ShareScoreButton
-            attemptId={attempt.id}
-            examCode={attempt.mock.exam.code}
-            examShortName={attempt.mock.exam.shortName}
-            scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
-          />
+          <>
+            <ShareScoreButton
+              attemptId={attempt.id}
+              examCode={attempt.mock.exam.code}
+              examShortName={attempt.mock.exam.shortName}
+              scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
+            />
+            {/* Challenge a friend (14 Sep 2026): the SAME questions with this
+                score to beat — evenly spaced questions from the mock, scored
+                from this attempt (skipped counts as not correct). */}
+            <ChallengeCard
+              from={{ source: "mock", attemptId: attempt.id }}
+              examCode={attempt.mock.exam.code}
+              examShort={attempt.mock.exam.shortName}
+              surface="results"
+              heading="Challenge a friend with questions from this mock"
+              note="Up to 10 evenly spaced questions from this mock, with your score on them (skipped counts as not correct)."
+            />
+          </>
         )}
 
         {/* Streak + tomorrow (11 Sep 2026): the habit loop's closing line.
