@@ -24,6 +24,7 @@
 //   --avoid-recent <n>       load N most-recent Q bodies per topic and ask Claude to avoid (default 50)
 //   --dry-run                print first batch JSON; don't save to DB
 //   --no-ai                  use offline stub generator (for plumbing tests, no API spend)
+//   --language <EN|HI>       HI writes stems, options and solutions in Hindi (General Hindi topics)
 
 import Anthropic from "@anthropic-ai/sdk";
 import { PrismaClient, Difficulty, QuestionSource, Language } from "@prisma/client";
@@ -47,6 +48,7 @@ interface CliArgs {
   retry: number;
   verify: boolean;
   autoValidate: boolean;
+  language: "EN" | "HI";
 }
 
 interface GeneratedQuestion {
@@ -75,7 +77,7 @@ const PRICE_CACHE_READ_PER_M = 0.3;
 // CLI
 // ─────────────────────────────────────────────────────────────────────────
 function parseArgs(argv: string[]): CliArgs {
-  const args: any = { all: false, count: 20, batchSize: 10, avoidRecent: 50, dryRun: false, noAi: false, retry: 1, verify: false, autoValidate: false };
+  const args: any = { all: false, count: 20, batchSize: 10, avoidRecent: 50, dryRun: false, noAi: false, retry: 1, verify: false, autoValidate: false, language: "EN" };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     const next = () => argv[++i];
@@ -93,6 +95,7 @@ function parseArgs(argv: string[]): CliArgs {
       case "--no-ai": args.noAi = true; break;
       case "--verify": args.verify = true; break;
       case "--auto-validate": args.autoValidate = true; break;
+      case "--language": args.language = next() === "HI" ? "HI" : "EN"; break;
       case "--help": case "-h": printHelpAndExit();
       default:
         if (a.startsWith("--")) console.warn(`(warn) unknown flag: ${a}`);
@@ -162,6 +165,12 @@ const SYSTEM_PERSONA = `You write high-quality multiple-choice questions for Ind
 You never invent claims about specific exam years or answer keys from real exams.
 You never produce harmful, biased, or controversial content.`;
 
+// --language HI (15 Sep 2026): General Hindi is asked in Hindi (MP RAEO Part A).
+const LANGUAGE_HI_BLOCK = `
+# Language
+Write every question stem, option and solution in Hindi (Devanagari script), as a Hindi-medium paper of this exam prints them. This overrides the plain-English instruction.
+`;
+
 const OUTPUT_SCHEMA = `Return STRICT JSON — a single array, no markdown, no commentary:
 
 [
@@ -211,6 +220,7 @@ async function generateBatch(
     avoidBlock: string;
     count: number;
     difficultyTargets: Record<Difficulty, number>;
+    language?: "EN" | "HI";
   }
 ): Promise<{ questions: GeneratedQuestion[]; rawText: string }> {
   const userPrompt = `Generate exactly ${args.count} questions on this topic.
@@ -220,7 +230,7 @@ async function generateBatch(
 - Topic name: **${args.topic.name}**
 - Topic code: \`${args.topic.code}\`
 ${args.topic.description ? `- Description: ${args.topic.description}` : ""}
-
+${args.language === "HI" ? LANGUAGE_HI_BLOCK : ""}
 # Difficulty distribution
 - EASY: ${args.difficultyTargets.EASY}
 - MEDIUM: ${args.difficultyTargets.MEDIUM}
@@ -446,6 +456,7 @@ async function main() {
                 avoidBlock,
                 count: want,
                 difficultyTargets: batchTargets,
+                language: args.language,
               });
               batch = result.questions;
               lastErr = null;
@@ -593,7 +604,7 @@ async function saveQuestions(
         options: q.options,
         answerKey: q.answerKey,
         solution: q.solution,
-        language: "EN" as Language,
+        language: questionLanguage(q.body),
         source: "AI_GENERATED" as QuestionSource,
         validated: false,
         tags: q.tags,
@@ -601,6 +612,15 @@ async function saveQuestions(
       },
     });
   }
+}
+
+// A question written mostly in Devanagari (General Hindi topics — MP RAEO,
+// 15 Sep 2026) is stored as HI, so the in-test translator never "translates"
+// Hindi into Hindi. Everything else stays EN, as before.
+function questionLanguage(body: string): Language {
+  const latin = body.match(/[A-Za-z]/g)?.length ?? 0;
+  const devanagari = body.match(/[ऀ-ॿ]/g)?.length ?? 0;
+  return devanagari > 0 && devanagari >= latin ? ("HI" as Language) : ("EN" as Language);
 }
 
 // Save questions that passed the verification firewall, with full provenance.
@@ -626,7 +646,7 @@ async function saveVerifiedQuestions(
         options: fq.candidate.options,
         answerKey: fq.finalAnswerKey,
         solution: fq.candidate.solution,
-        language: "EN" as Language,
+        language: questionLanguage(fq.candidate.body),
         source: "AI_GENERATED" as QuestionSource,
         validated,
         validatedBy: validated ? "factory-v1:auto" : null,

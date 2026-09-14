@@ -27,7 +27,7 @@ function renderProblem(q: CandidateQuestion): string {
 /** Solve one candidate N times independently and aggregate. */
 export async function solveBlind(
   q: CandidateQuestion,
-  opts: { runs: number; onCost?: (stats: CallStats) => void },
+  opts: { runs: number; onCost?: (stats: CallStats) => void; feature?: string; ref?: string | null },
 ): Promise<SolveResult> {
   const model = modelFor("solve");
   const problem = renderProblem(q);
@@ -51,6 +51,8 @@ export async function solveBlind(
       maxTokens: 1200,
       system: [{ type: "text", text: SOLVER_SYSTEM }],
       messages: [{ role: "user", content: `${problem}\n\nApproach for this attempt: ${directive}` }],
+      feature: opts.feature,
+      ref: opts.ref,
     });
     opts.onCost?.(stats);
     void estimateCostUsd; // cost is aggregated by the caller via onCost

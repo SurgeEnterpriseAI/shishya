@@ -63,7 +63,7 @@ Adjudicate. Return JSON only.`;
 export async function verify(
   q: CandidateQuestion,
   solve: SolveResult,
-  opts: { onCost?: (stats: CallStats) => void },
+  opts: { onCost?: (stats: CallStats) => void; feature?: string; ref?: string | null },
 ): Promise<VerifyVerdict> {
   const model = modelFor("verify");
   const { response, stats } = await callClaude({
@@ -71,6 +71,8 @@ export async function verify(
     maxTokens: 1000,
     system: [{ type: "text", text: VERIFIER_SYSTEM }],
     messages: [{ role: "user", content: renderAudit(q, solve) }],
+    feature: opts.feature,
+    ref: opts.ref,
   });
   opts.onCost?.(stats);
 
