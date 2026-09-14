@@ -299,6 +299,22 @@ export async function GET(
     L.push("");
   }
 
+  // Official previous-year papers (14 Sep 2026): the conducting body's own
+  // files, verified by scripts/import-official-papers.ts. Shishya's year-wise
+  // sets are pattern practice, never the paper, so the section says which is which.
+  {
+    const { loadOfficialPapers } = await import("@/lib/official-papers-db");
+    const { paperContextLines } = await import("@/lib/official-papers");
+    const lines = paperContextLines(await loadOfficialPapers(exam.id));
+    if (lines.length) {
+      L.push("## Official previous-year papers and answer keys");
+      L.push("Published by the conducting body on its own site; each line links its file. Shishya's own year-wise PYQ sets are practice questions freshly worded in that year's pattern, not these papers.");
+      L.push(...lines);
+      L.push(`On the exam hub: ${SITE}/exams/${exam.code}#official-papers`);
+      L.push("");
+    }
+  }
+
   L.push("## Free resources on Shishya for this exam");
   L.push(`- Exam hub (mocks, PYQs, news, dates): ${SITE}/exams/${exam.code}`);
   L.push(`- Custom topic-wise mock builder — pick any syllabus topics, 10/25/50 questions, difficulty; timed, scored, solutions; readable in Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages: ${SITE}/exams/${exam.code}/build-mock`);

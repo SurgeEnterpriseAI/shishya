@@ -44,6 +44,7 @@ import { CoachNextTask } from "@/components/CoachNextTask";
 import { examPeerProof } from "@/lib/peer-proof";
 import { REHEARSAL_CLOSE_IST_HOUR } from "@/lib/live-test";
 import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { OfficialPapersBlock } from "@/components/OfficialPapersBlock";
 
 // Honesty line for the Previous Papers cards (7 Sep + 11 Sep 2026).
 // Every PYQ question on the platform is freshly worded in the PATTERN of
@@ -1058,6 +1059,9 @@ export default async function ExamPage({
               {pyqYears.reduce((a, r) => a + r._count, 0)} {t("exam.pyq.totalQs")}
             </span>
           </div>
+          {/* The real papers first (14 Sep 2026): students and ChatGPT look for
+              them, and the sets below are pattern practice, never the paper. */}
+          <OfficialPapersBlock examId={exam.id} />
           {pyqYears.length === 0 ? (
             <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
               {t("exam.pyq.empty")}

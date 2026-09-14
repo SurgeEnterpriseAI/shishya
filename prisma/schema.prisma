@@ -2165,6 +2165,37 @@ model OfficialCutoff {
   @@index([examId, archivedAt])
 }
 
+// Official previous-year papers (14 Sep 2026). Question papers and answer
+// keys a conducting body publishes on its own site, LINKED (never copied).
+// A row exists only if scripts/import-official-papers.ts downloaded the
+// file (%PDF), found it on an official host and linked from the body's
+// listing page, and found its year beside that link or on the file's first
+// page. kind "listing page" = the body lists its papers on that page but
+// the files open only from it (session-bound links); url is the page then.
+// Shown on the exam hub (#official-papers) and each /pyq/[year] page.
+// Queried with raw SQL.
+model OfficialPaper {
+  id           String    @id @default(cuid())
+  examId       String
+  year         String // "2024", "2024-25": as the listing / document names it
+  paper        String // paper name exactly as printed
+  kind         String // question paper | question paper with answer key | answer key | listing page
+  language     String    @default("")
+  url          String // the body's own PDF (or listing page)
+  listingUrl   String    @default("")
+  publisher    String
+  bytes        Int       @default(0)
+  pages        Int       @default(0)
+  scan         Boolean   @default(false)
+  yearEvidence String    @db.Text // where the year was found: beside the link, or page-1 text
+  verifiedAt   DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  archivedAt   DateTime?
+
+  @@unique([examId, url])
+  @@index([examId, archivedAt])
+}
+
 // Demand mining (1 Sep 2026): free-form user text (tutor chat, PulseAsk
 // notes, teacher requests, /ideas) is classified daily by one Claude
 // call into a controlled vocabulary of demand clusters; /admin/demand

@@ -152,6 +152,15 @@ export default async function PYQYearPage({
   const partial = isPartialPaper(questions.length, exam.totalQuestions);
   const counts = { n: questions.length, m: exam.totalQuestions, year: yearNum };
   const modelled = `${questions.length} PYQ-pattern questions modelled on the ${yearNum} paper (which had ${exam.totalQuestions})`;
+  // The original paper, when the conducting body publishes it (14 Sep 2026):
+  // linked to the body's own file, never reproduced (src/lib/official-papers.ts).
+  const { loadOfficialPapers } = await import("@/lib/official-papers-db");
+  const { formatPdfSize, papersForYear } = await import("@/lib/official-papers");
+  const officialForYear = papersForYear(await loadOfficialPapers(exam.id), yearNum);
+  const officialPaper = officialForYear.find((r) => r.kind !== "answer key") ?? officialForYear[0] ?? null;
+  const officialPaperNote = officialPaper
+    ? ` The original ${yearNum} paper is published by ${officialPaper.publisher}: ${officialPaper.url}`
+    : "";
 
   // Signed-in only: find-or-create the system Mock + the user's attempt
   // state. Anonymous visitors (and crawlers) get a read-only landing — no
@@ -275,7 +284,7 @@ export default async function PYQYearPage({
         name: `Are these the actual ${exam.shortName} ${yearNum} paper questions?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `No. They are PYQ-pattern questions modelled on the ${exam.shortName} ${yearNum} paper — freshly worded practice questions in the same pattern, not the original questions, which Shishya does not reproduce. The page shows how many questions it holds (${questions.length}) against the real paper's length (${exam.totalQuestions}).`,
+          text: `No. They are PYQ-pattern questions modelled on the ${exam.shortName} ${yearNum} paper — freshly worded practice questions in the same pattern, not the original questions, which Shishya does not reproduce. The page shows how many questions it holds (${questions.length}) against the real paper's length (${exam.totalQuestions}).${officialPaperNote}`,
         },
       },
       {
@@ -329,6 +338,33 @@ export default async function PYQYearPage({
           Every question here is freshly worded in the pattern of the {yearNum} paper — same topics, style and
           difficulty — not the original questions, which Shishya does not reproduce.
         </p>
+        {officialForYear.length > 0 && (
+          <div id="official-paper" className="mt-3 max-w-3xl rounded-md border border-ink-200 bg-white p-3">
+            <p className="text-sm font-semibold text-ink-900">
+              The original {yearNum} paper, as {officialForYear[0].publisher} published it
+            </p>
+            <ul className="mt-1 space-y-1">
+              {officialForYear.map((r) => (
+                <li key={r.url} className="text-sm leading-snug">
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener nofollow"
+                    className="break-words font-medium text-saffron-800 underline underline-offset-2 hover:text-saffron-900"
+                  >
+                    {r.paper} ↗
+                  </a>
+                  <span className="text-xs text-ink-500">
+                    {[r.kind, r.language, r.scan ? "scanned PDF" : "PDF", formatPdfSize(r.bytes)]
+                      .filter(Boolean)
+                      .map((s) => ` · ${s}`)
+                      .join("")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="mt-4">
           <ShareExamButton

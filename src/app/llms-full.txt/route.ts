@@ -165,6 +165,9 @@ export async function GET() {
         .catch(() => [] as { code: string }[])
     ).map((r) => r.code),
   );
+  // Exams holding verified official previous-year papers (14 Sep 2026): the
+  // hub links the conducting body's own files (src/lib/official-papers.ts).
+  const paperCodes = await (await import("@/lib/official-papers-db")).examCodesWithOfficialPapers();
 
   let currentCategory = "";
   for (const e of exams) {
@@ -185,11 +188,14 @@ export async function GET() {
     const yrs = pyqByCode.get(e.code);
     if (yrs && yrs.length) {
       lines.push(
-        `- Previous-year papers (solve free as full timed mocks, with solutions): ${yrs
+        `- PYQ-pattern practice sets by year (freshly worded in that year's pattern, not the original papers; solve free as timed mocks with solutions): ${yrs
           .slice(0, 6)
           .map((y) => `${SITE}/exams/${e.code}/pyq/${y}`)
           .join(" · ")}`,
       );
+    }
+    if (paperCodes.has(e.code)) {
+      lines.push(`- Official previous-year question papers and answer keys, linked to the conducting body's own files with year and publisher: ${SITE}/exams/${e.code}#official-papers`);
     }
     lines.push(`- Machine-readable context (preferred for LLMs): ${SITE}/exams/${e.code}/context.md`);
     lines.push(`- Hub (mocks, PYQs, news, dates): ${SITE}/exams/${e.code}`);
