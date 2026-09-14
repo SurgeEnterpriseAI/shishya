@@ -2609,3 +2609,28 @@ model TeacherRequestNote {
 
   @@index([requestId, createdAt])
 }
+
+// Study groups (14 Sep 2026): friends' weekly board of study days and
+// questions practised. Raw-SQL tables (scripts/create-study-group-tables.ts);
+// read through src/lib/study-group-db.ts.
+model StudyGroup {
+  id          String    @id
+  token       String    @unique
+  name        String
+  ownerUserId String
+  createdAt   DateTime  @default(now())
+  archivedAt  DateTime?
+
+  @@index([ownerUserId])
+}
+
+model StudyGroupMember {
+  id       String    @id
+  groupId  String
+  userId   String
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime?
+
+  @@unique([groupId, userId])
+  @@index([userId, leftAt])
+}

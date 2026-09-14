@@ -202,7 +202,8 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
   // share carries utm_source=whatsapp&utm_medium=share — record it like any
   // other tagged landing so their signup is attributed to the share loop.
   // Challenge links (/c/{token}, 14 Sep 2026) are the same kind of landing.
-  const isShareLanding = path.startsWith("/share/") || path.startsWith("/c/");
+  // Study group invites (/g/{token}, 14 Sep 2026) too.
+  const isShareLanding = path.startsWith("/share/") || path.startsWith("/c/") || path.startsWith("/g/");
   if (!isHome && !isExamPage && !isSectionLanding && !isLogin && !isOAuthEntry && !isShareLanding) {
     return res;
   }
@@ -297,6 +298,8 @@ export const config = {
     "/share/:path*",
     // Challenge links (14 Sep 2026) — same attribution as a score share.
     "/c/:path*",
+    // Study group invites (14 Sep 2026) — same attribution as a challenge link.
+    "/g/:path*",
     "/api/auth/signin/:path*",
     // Crawler-facing files — logged only (OBSERVE_ONLY above, 14 Sep 2026).
     "/llms.txt",

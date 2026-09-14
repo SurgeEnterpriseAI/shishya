@@ -32,6 +32,9 @@ import { PeerProofLine } from "@/components/PeerProofLine";
 import { examPeerProof } from "@/lib/peer-proof";
 import { CoachPlanView } from "@/app/coach/CoachPlanView";
 import { InviteFriendsCard } from "./InviteFriendsCard";
+import { StudyGroupsCard } from "@/components/StudyGroupsCard";
+import { loadStudyGroupBoards } from "@/lib/study-group-db";
+import { studyGroupLabels, USER_MAX_GROUPS } from "@/lib/study-group";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { loadTodaysLiveTests, loadUpcomingSunday } from "@/lib/live-test-today";
 import { LiveTestTodayBanner } from "@/components/LiveTestTodayBanner";
@@ -562,6 +565,11 @@ async function renderDashboard() {
     defence:        t("land.tag.defence"),
   };
 
+  // Study groups (14 Sep 2026): the viewer's groups with this week's board.
+  // Best-effort — a failure shows the make-a-group card, never a broken dashboard.
+  const studyGroups = await loadStudyGroupBoards(userId).catch(() => []);
+  const studyGroupCopy = studyGroupLabels(t);
+
   // IST day-of-week (0=Sun) for labelling the streak card's dot calendar.
   const istTodayDow = new Date(Date.now() + 5.5 * 3600_000).getUTCDay();
 
@@ -639,6 +647,13 @@ async function renderDashboard() {
             into the one-tap action that keeps it. */}
         {enrollments.length > 0 && (
           <StreakCard streak={streak} todayDow={istTodayDow} />
+        )}
+
+        {/* Study groups (14 Sep 2026): friends' weekly board, right under the
+            streak it counts the same days as. Without a group, the card to
+            make one sits at the bottom next to "invite friends". */}
+        {studyGroups.length > 0 && (
+          <StudyGroupsCard boards={studyGroups} labels={studyGroupCopy} canCreate={studyGroups.length < USER_MAX_GROUPS} />
         )}
 
         {/* Cohort proof — the daily reminder that they're not grinding
@@ -1132,6 +1147,8 @@ async function renderDashboard() {
             Become a mentor →
           </span>
         </a>
+
+        {studyGroups.length === 0 && <StudyGroupsCard boards={[]} labels={studyGroupCopy} canCreate />}
 
         {/* Word-of-mouth loop — a gentle invite at the bottom of the
             dashboard. Turns an engaged user into a recruiter; how

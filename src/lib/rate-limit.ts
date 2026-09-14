@@ -30,6 +30,8 @@ const limits = {
   challenge: { limit: 20, windowSec: 3_600 },    // challenge links made per identity / IP per hour
   challengePlay: { limit: 40, windowSec: 3_600 }, // challenge plays + phone sign-ups per IP per hour
   scoreEntry: { limit: 20, windowSec: 3_600 },   // score estimates added to a sitting's list per IP per hour
+  studyGroup: { limit: 5, windowSec: 3_600 },    // study groups made per user per hour
+  studyGroupJoin: { limit: 30, windowSec: 3_600 }, // study-group joins + leaves per user per hour
 } as const;
 
 export type LimitName = keyof typeof limits;
