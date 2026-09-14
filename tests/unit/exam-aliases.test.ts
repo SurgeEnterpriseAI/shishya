@@ -50,6 +50,12 @@ describe("alias bridge — post names students actually type", () => {
     ["havaldar", "SSC_MTS"],
     ["crpf", "SSC_GD"],
     ["gd constable", "SSC_GD"],
+    // 15 Sep 2026 search misses, now exams of their own.
+    ["ksrp", "KA_KSRP"],
+    ["srpc", "KA_KSRP"],
+    ["mpreao", "MP_RAEO"],
+    ["raeo", "MP_RAEO"],
+    ["krishi vistar adhikari", "MP_RAEO"],
   ];
   for (const [query, code] of cases) {
     it(`"${query}" reaches ${code}`, () => {

@@ -302,6 +302,13 @@ const ALIASES: Record<string, AliasHit> = {
 
   "gazetted probationer": { codes: ["KA_KPSC_KAS"] },
 
+  // KSRP (15 Sep 2026): "ksrp" was a search miss on 12 Sep. SRPC is the
+  // notification's own designation; KSISF posts share the Kalyana Karnataka test.
+  ksrp: { codes: ["KA_KSRP"] },
+  srpc: { codes: ["KA_KSRP"] },
+  "special reserve police": { codes: ["KA_KSRP"] },
+  ksisf: { codes: ["KA_KSRP"] },
+
   "10th level": { codes: ["KL_KPSC_LDC"] },
 
   "law school admission test": { codes: ["LSAT_INDIA"] },
@@ -336,6 +343,15 @@ const ALIASES: Record<string, AliasHit> = {
 
   arakshak: { codes: ["MP_POLICE_PC"] },
   "आरक्षक": { codes: ["MP_POLICE_PC"] },
+
+  // MP RAEO (15 Sep 2026): a student searched "mpreao", "reao", "mpre" on
+  // 11 Sep and found nothing. The 2026 post is Krishi Vistar Adhikari.
+  raeo: { codes: ["MP_RAEO"] },
+  reao: { codes: ["MP_RAEO"] },
+  mpraeo: { codes: ["MP_RAEO"] },
+  mpreao: { codes: ["MP_RAEO"] },
+  "krishi vistar": { codes: ["MP_RAEO"] },
+  "कृषि विस्तार": { codes: ["MP_RAEO"] },
 
   mptet: { codes: ["MP_TET"] },
   "samvida shikshak": { codes: ["MP_TET"] },

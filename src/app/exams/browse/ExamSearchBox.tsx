@@ -1,29 +1,37 @@
 "use client";
 
-// Search box for the /exams catalog. Tiny client component: updates the
-// `?q=` URL param as the user types (debounced 250ms) so the server
+// Search box for the /exams/browse catalog. Tiny client component: updates
+// the `?q=` URL param as the user types (debounced 250ms) so the server
 // re-renders the filtered list. We keep this client-side specifically
 // because the rest of the page is a server component — this is the only
 // piece that needs interactivity, and even it works without JS (form
 // submit falls back to a regular GET).
+//
+// 15 Sep 2026: it used to write `/exams?q=…`. /exams is a permanent redirect
+// to the homepage that drops `q`, and the debounce also fired once on mount,
+// so opening /exams/browse sent visitors to the homepage about a quarter of a
+// second later. It now stays on its own path and only navigates when the
+// text actually changes.
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export function ExamSearchBox({ placeholder }: { placeholder: string }) {
   const router = useRouter();
+  const pathname = usePathname();
   const sp = useSearchParams();
   const [value, setValue] = useState(sp.get("q") ?? "");
 
   // Debounced push to URL — avoids hammering the server on every keystroke.
   useEffect(() => {
+    const trimmed = value.trim();
+    if (trimmed === (sp.get("q") ?? "").trim()) return;
     const t = setTimeout(() => {
       const next = new URLSearchParams(sp.toString());
-      const trimmed = value.trim();
       if (trimmed) next.set("q", trimmed);
       else next.delete("q");
       const qs = next.toString();
-      router.replace(qs ? `/exams?${qs}` : "/exams", { scroll: false });
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     }, 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -31,7 +39,7 @@ export function ExamSearchBox({ placeholder }: { placeholder: string }) {
 
   return (
     <form
-      action="/exams"
+      action={pathname}
       method="GET"
       className="relative flex items-center"
       onSubmit={(e) => {
