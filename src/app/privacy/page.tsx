@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       <h2 className="mt-6 text-base font-bold text-ink-900">What we collect</h2>
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li><b>Account:</b> name and email from Google sign-in. We never see or store passwords.</li>
-        <li><b>Preparation activity:</b> test attempts and scores, topics studied, tutor questions, coach-plan settings — the data that powers your reports, packs and plans.</li>
+        <li><b>Preparation activity:</b> test attempts and scores, topics studied, tutor questions, coach-plan settings — the data that powers your reports, packs and plans. What students ask the tutor (signed in or not, with emails and phone numbers removed) is also read in aggregate to decide which content and features to build next.</li>
         <li><b>Usage analytics:</b> pages viewed, with a first-party cookie identifier. Automated crawlers are tagged and excluded from human metrics.</li>
         <li><b>Page speed (about half of page loads):</b> how quickly the page loaded and responded, the connection type (such as 4G), whether the device has a touch screen, the page language, whether you were signed in, and the page&apos;s address pattern (never a record id). It is sent without cookies and stored without your account, a device identifier or your IP address.</li>
         <li><b>Phone alerts (only if you turn them on):</b> the push-notification address your browser creates for this device, and the exam you chose to follow. Used only to send that exam&apos;s alerts; switch them off in your browser&apos;s site settings for shishya.in.</li>

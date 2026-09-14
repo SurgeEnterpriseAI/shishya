@@ -1,9 +1,10 @@
 // Demand mining (1 Sep 2026) — turns free-form user text into the
 // /admin/demand heatmap the founder builds features from.
 //
-// Sources (free-form ONLY — seeded chat prompts are our phrasing, and
+// Sources (free-form ONLY — prefilled tutor prompts are our phrasing, and
 // CTA taps are already measured by analytics + PulseAsk chips):
-//   • ChatMessage role=USER, minus known seed templates
+//   • ChatMessage role=USER (signed-in tutor), minus Shishya's own prompts
+//   • AnonTutorLog (signed-out tutor), minus Shishya's own prompts
 //   • PulseFeedback free text (chips excluded — counted at /admin/pulse)
 //   • TeacherRequest messages (minus tap beacons)
 //   • FeatureRequest bodies (/ideas board)
@@ -14,12 +15,21 @@
 // rows, deduped forever on (source, sourceId). Weekly consolidation
 // merges near-duplicate clusters and writes a "build next" digest.
 //
+// 15 Sep 2026 fixes: the prompt filter (src/lib/tutor-templates.ts) now knows
+// every prefilled prompt — the old 11 prefixes missed 16 templates, so some
+// clusters were built from our own buttons; signed-out tutor messages are
+// read (they were never mined); a one-word ask such as "Marathi" is long
+// enough to count (the floor was 8 characters); templates are filtered
+// BEFORE the cap; and a truncated or failed classifier reply is split and
+// retried or logged instead of silently writing nothing.
+//
 // Cost: tens of free-form items/day → one Sonnet call ≈ pennies.
 
 import type { PrismaClient } from "@prisma/client";
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropic, MODEL } from "@/lib/ai/client";
 import { recordAiUsage } from "@/lib/ai/usage";
+import { isOurTutorPrompt } from "@/lib/tutor-templates";
 
 // Fixed taxonomy — the heatmap's row groups. The model must pick one
 // per signal; "other" is the escape hatch we review weekly.
@@ -37,25 +47,8 @@ export const DEMAND_CATEGORIES = [
   "other",
 ] as const;
 
-// Chat messages that START with one of these are our own prefilled
-// seeds (results page, topic pages, PYQ pages, dashboards) — the
-// student tapped a button we wrote, so the words aren't theirs.
-const SEED_PREFIXES = [
-  "I just took a ",
-  "I just finished a ",
-  "On my last ",
-  "I'm solving the ",
-  "I'm studying ",
-  "I'm weak in ",
-  "Teach me ",
-  "Walk me through the ",
-  "Pick up where we left off",
-  "Make me a 30-minute study plan",
-  "Quiz me on ",
-];
-
 export interface DemandItem {
-  source: "chat" | "pulse" | "teacher" | "ideas";
+  source: "chat" | "guest-chat" | "pulse" | "teacher" | "ideas";
   sourceId: string;
   text: string;
   examCode: string | null;
@@ -72,8 +65,11 @@ export function scrub(text: string): string {
     .trim();
 }
 
-function isSeeded(text: string): boolean {
-  return SEED_PREFIXES.some((p) => text.startsWith(p));
+function gatherFailed(what: string) {
+  return (err: unknown) => {
+    console.error(`[demand-mine] gathering ${what} failed:`, (err as Error)?.message);
+    return [] as never[];
+  };
 }
 
 /** Gather free-form items in [since, until). Queries run SEQUENTIALLY —
@@ -92,18 +88,29 @@ export async function gatherItems(
     JOIN "ChatSession" s ON s.id = m."sessionId"
     LEFT JOIN "Exam" e ON e.id = s."examId"
     WHERE m.role = 'USER' AND m."createdAt" >= ${since} AND m."createdAt" < ${until}
-      AND LENGTH(m.content) BETWEEN 8 AND 2000
-    ORDER BY m."createdAt" DESC LIMIT ${cap}`.catch(() => []);
+      AND LENGTH(m.content) BETWEEN 4 AND 2000
+    ORDER BY m."createdAt" DESC LIMIT ${cap * 3}`.catch(gatherFailed("tutor messages"));
   for (const r of chat) {
     const t = r.content.trim();
-    if (isSeeded(t)) continue;
+    if (isOurTutorPrompt(t)) continue;
     items.push({ source: "chat", sourceId: r.id, text: scrub(t).slice(0, 300), examCode: r.examCode, saidAt: r.createdAt });
+  }
+
+  const guest = await db.$queryRaw<{ id: string; content: string; createdAt: Date; examCode: string | null }[]>`
+    SELECT id, "userMessage" AS content, "createdAt", "examCode" FROM "AnonTutorLog"
+    WHERE "createdAt" >= ${since} AND "createdAt" < ${until}
+      AND LENGTH("userMessage") BETWEEN 4 AND 2000
+    ORDER BY "createdAt" DESC LIMIT ${cap * 3}`.catch(gatherFailed("signed-out tutor messages"));
+  for (const r of guest) {
+    const t = r.content.trim();
+    if (isOurTutorPrompt(t)) continue;
+    items.push({ source: "guest-chat", sourceId: r.id, text: scrub(t).slice(0, 300), examCode: r.examCode, saidAt: r.createdAt });
   }
 
   const pulse = await db.$queryRaw<{ id: string; text: string; examCode: string | null; createdAt: Date }[]>`
     SELECT id, text, "examCode", "createdAt" FROM "PulseFeedback"
     WHERE text IS NOT NULL AND "createdAt" >= ${since} AND "createdAt" < ${until}
-    ORDER BY "createdAt" DESC LIMIT 100`.catch(() => []);
+    ORDER BY "createdAt" DESC LIMIT 100`.catch(gatherFailed("pulse notes"));
   for (const r of pulse) {
     items.push({ source: "pulse", sourceId: r.id, text: scrub(r.text).slice(0, 300), examCode: r.examCode, saidAt: r.createdAt });
   }
@@ -112,8 +119,8 @@ export async function gatherItems(
     SELECT id, message, "examCode", "createdAt" FROM "TeacherRequest"
     WHERE "createdAt" >= ${since} AND "createdAt" < ${until}
       AND message NOT LIKE '[WHATSAPP tap]%' AND message NOT LIKE '[CALL tap]%'
-      AND LENGTH(message) >= 8
-    ORDER BY "createdAt" DESC LIMIT 100`.catch(() => []);
+      AND LENGTH(message) >= 4
+    ORDER BY "createdAt" DESC LIMIT 100`.catch(gatherFailed("teacher requests"));
   for (const r of teacher) {
     items.push({ source: "teacher", sourceId: r.id, text: scrub(r.message).slice(0, 300), examCode: r.examCode, saidAt: r.createdAt });
   }
@@ -121,7 +128,7 @@ export async function gatherItems(
   const ideas = await db.$queryRaw<{ id: string; title: string; body: string; examCode: string | null; createdAt: Date }[]>`
     SELECT id, title, body, "examCode", "createdAt" FROM "FeatureRequest"
     WHERE "createdAt" >= ${since} AND "createdAt" < ${until}
-    ORDER BY "createdAt" DESC LIMIT 50`.catch(() => []);
+    ORDER BY "createdAt" DESC LIMIT 50`.catch(gatherFailed("ideas"));
   for (const r of ideas) {
     items.push({ source: "ideas", sourceId: r.id, text: scrub(`${r.title}. ${r.body}`).slice(0, 300), examCode: r.examCode, saidAt: r.createdAt });
   }
@@ -132,7 +139,7 @@ export async function gatherItems(
 const SYSTEM = `You classify what Indian government-exam aspirants are ASKING FOR on a free prep platform (Shishya). Input: numbered user texts (tutor chat, feedback notes, requests). Output: STRICT JSON only.
 
 For each item decide:
-- "demand": true only if the text expresses a want/need/gap/complaint the platform could act on (a feature, more content, better info, help). Pure study questions ("what is Article 356?"), greetings, answers to the tutor, and gibberish are demand:false.
+- "demand": true only if the text expresses a want/need/gap/complaint the platform could act on (a feature, more content, better info, help, a language). Pure study questions ("what is Article 356?"), greetings, answers to the tutor ("b", "Q1 answer is A"), and gibberish are demand:false. A bare language name ("Marathi", "in hindi") IS demand: the student wants that language.
 - "cluster": REUSE an existing cluster key from the vocabulary whenever the need is the same — invent "new:<slug>" ONLY when nothing fits. Slugs: kebab-case, 2-4 words, describing the NEED not the exam (e.g. "full-pyq-papers", "topic-wise-mocks", "pdf-downloads").
 - "label": short human label for new clusters only (e.g. "Full PYQ papers").
 - "category": exactly one of ${JSON.stringify(DEMAND_CATEGORIES)}.
@@ -157,28 +164,43 @@ export interface MineResult {
   demands: number;
   newClusters: number;
   inserted: number;
+  /** Classifier batches that failed even after splitting. */
+  errors: number;
 }
 
-/** Classify a window of items and persist signals. */
-export async function mineDemand(db: PrismaClient, since: Date, until: Date): Promise<MineResult> {
-  const items = await gatherItems(db, since, until);
-  const out: MineResult = { scanned: items.length, demands: 0, newClusters: 0, inserted: 0 };
-  if (items.length === 0) return out;
+function parseResults(text: string): Verdict[] | null {
+  let parsed: { results?: Verdict[] } | null = null;
+  try {
+    parsed = JSON.parse(text.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, ""));
+  } catch {
+    const f = text.indexOf("{");
+    const l = text.lastIndexOf("}");
+    if (f >= 0 && l > f) {
+      try {
+        parsed = JSON.parse(text.slice(f, l + 1));
+      } catch {}
+    }
+  }
+  return Array.isArray(parsed?.results) ? parsed!.results : null;
+}
 
-  const vocab = await db.$queryRaw<{ key: string; label: string; category: string }[]>`
-    SELECT key, label, category FROM "DemandCluster" WHERE status = 'active' ORDER BY key`.catch(() => []);
-  const vocabLine = vocab.map((v) => `${v.key}: ${v.label} (${v.category})`).join("\n") || "(none yet)";
-
-  const BATCH = 120;
-  for (let start = 0; start < items.length; start += BATCH) {
-    const batch = items.slice(start, start + BATCH);
-    const user = `EXISTING CLUSTER VOCABULARY (reuse first):\n${vocabLine}\n\nITEMS:\n${batch
-      .map((it, i) => `${i}. [${it.source}${it.examCode ? "/" + it.examCode : ""}] ${it.text}`)
-      .join("\n")}`;
-
+/** Classify one batch. A reply cut off at the token limit, or one that does
+ *  not parse, is split in half and retried; a single item that still fails is
+ *  given up on (and counted). Returns verdicts with `i` relative to `batch`. */
+async function classify(
+  batch: DemandItem[],
+  vocabLine: string,
+  onError: (why: string) => void,
+): Promise<{ verdict: Verdict; item: DemandItem }[]> {
+  const user = `EXISTING CLUSTER VOCABULARY (reuse first):\n${vocabLine}\n\nITEMS:\n${batch
+    .map((it, i) => `${i}. [${it.source}${it.examCode ? "/" + it.examCode : ""}] ${it.text}`)
+    .join("\n")}`;
+  let results: Verdict[] | null = null;
+  let why = "";
+  try {
     const resp = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 4000,
+      max_tokens: 8000,
       system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: user }],
     });
@@ -188,23 +210,47 @@ export async function mineDemand(db: PrismaClient, since: Date, until: Date): Pr
       .map((b) => b.text)
       .join("\n")
       .trim();
-    let parsed: { results?: Verdict[] } | null = null;
-    try {
-      parsed = JSON.parse(text.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, ""));
-    } catch {
-      const f = text.indexOf("{");
-      const l = text.lastIndexOf("}");
-      if (f >= 0 && l > f) {
-        try {
-          parsed = JSON.parse(text.slice(f, l + 1));
-        } catch {}
-      }
+    if (resp.stop_reason === "max_tokens") why = "reply cut off at the token limit";
+    else {
+      results = parseResults(text);
+      if (!results) why = "reply did not parse";
     }
-    if (!parsed?.results) continue;
+  } catch (err) {
+    why = `model call failed: ${(err as Error)?.message ?? err}`;
+  }
+  if (results) {
+    return results
+      .filter((v) => Number.isInteger(v.i) && v.i >= 0 && v.i < batch.length)
+      .map((v) => ({ verdict: v, item: batch[v.i] }));
+  }
+  if (batch.length > 1) {
+    const mid = Math.ceil(batch.length / 2);
+    return [...(await classify(batch.slice(0, mid), vocabLine, onError)), ...(await classify(batch.slice(mid), vocabLine, onError))];
+  }
+  onError(why);
+  return [];
+}
 
-    for (const v of parsed.results) {
-      if (!v.demand || !Number.isInteger(v.i) || v.i < 0 || v.i >= batch.length) continue;
-      const it = batch[v.i];
+/** Classify a window of items and persist signals. */
+export async function mineDemand(db: PrismaClient, since: Date, until: Date): Promise<MineResult> {
+  const items = await gatherItems(db, since, until);
+  const out: MineResult = { scanned: items.length, demands: 0, newClusters: 0, inserted: 0, errors: 0 };
+  if (items.length === 0) return out;
+
+  const vocab = await db.$queryRaw<{ key: string; label: string; category: string }[]>`
+    SELECT key, label, category FROM "DemandCluster" WHERE status = 'active' ORDER BY key`.catch(gatherFailed("cluster vocabulary"));
+  const vocabLine = vocab.map((v) => `${v.key}: ${v.label} (${v.category})`).join("\n") || "(none yet)";
+
+  const BATCH = 120;
+  for (let start = 0; start < items.length; start += BATCH) {
+    const batch = items.slice(start, start + BATCH);
+    const verdicts = await classify(batch, vocabLine, (why) => {
+      out.errors++;
+      console.error(`[demand-mine] classifier gave up on an item: ${why}`);
+    });
+
+    for (const { verdict: v, item: it } of verdicts) {
+      if (!v.demand) continue;
       const rawKey = String(v.cluster ?? "").toLowerCase();
       const isNew = rawKey.startsWith("new:");
       const key = (isNew ? rawKey.slice(4) : rawKey).replace(/[^a-z0-9-]/g, "").slice(0, 48);
@@ -213,27 +259,32 @@ export async function mineDemand(db: PrismaClient, since: Date, until: Date): Pr
       const label = (v.label ?? key.replace(/-/g, " ")).slice(0, 80);
       const lang = ["en", "hi", "te", "other"].includes(v.lang ?? "") ? (v.lang as string) : null;
 
-      // Upsert the cluster (a "new:" key the vocab already has just reuses it).
-      const upserted = await db.$executeRaw`
-        INSERT INTO "DemandCluster" (key, label, category, status, "firstSeen", "lastSeen")
-        VALUES (${key}, ${label}, ${category}, 'active', NOW(), NOW())
-        ON CONFLICT (key) DO UPDATE SET "lastSeen" = NOW()`;
-      if (isNew && upserted === 1) out.newClusters++;
+      try {
+        // Upsert the cluster (a "new:" key the vocab already has just reuses it).
+        const upserted = await db.$executeRaw`
+          INSERT INTO "DemandCluster" (key, label, category, status, "firstSeen", "lastSeen")
+          VALUES (${key}, ${label}, ${category}, 'active', NOW(), NOW())
+          ON CONFLICT (key) DO UPDATE SET "lastSeen" = NOW()`;
+        if (isNew && upserted === 1) out.newClusters++;
 
-      // Resolve merged clusters to their survivor so late signals never
-      // resurrect a merged key.
-      const target = await db.$queryRaw<{ key: string; category: string }[]>`
-        SELECT COALESCE(NULLIF(status,'active'), 'active') AS status, COALESCE("mergedInto", key) AS key, category
-        FROM "DemandCluster" WHERE key = ${key} LIMIT 1`.catch(() => [] as any[]);
-      const finalKey = target[0]?.key ?? key;
-      const finalCat = target[0]?.category ?? category;
+        // Resolve merged clusters to their survivor so late signals never
+        // resurrect a merged key.
+        const target = await db.$queryRaw<{ key: string; category: string }[]>`
+          SELECT COALESCE(NULLIF(status,'active'), 'active') AS status, COALESCE("mergedInto", key) AS key, category
+          FROM "DemandCluster" WHERE key = ${key} LIMIT 1`.catch(() => [] as any[]);
+        const finalKey = target[0]?.key ?? key;
+        const finalCat = target[0]?.category ?? category;
 
-      const ins = await db.$executeRaw`
-        INSERT INTO "DemandSignal" (id, "clusterKey", category, source, "sourceId", "examCode", language, quote, "saidAt", "createdAt")
-        VALUES (${crypto.randomUUID()}, ${finalKey}, ${finalCat}, ${it.source}, ${it.sourceId}, ${it.examCode}, ${lang}, ${it.text.slice(0, 200)}, ${it.saidAt}, NOW())
-        ON CONFLICT (source, "sourceId") DO NOTHING`;
-      out.inserted += ins;
-      out.demands++;
+        const ins = await db.$executeRaw`
+          INSERT INTO "DemandSignal" (id, "clusterKey", category, source, "sourceId", "examCode", language, quote, "saidAt", "createdAt")
+          VALUES (${crypto.randomUUID()}, ${finalKey}, ${finalCat}, ${it.source}, ${it.sourceId}, ${it.examCode}, ${lang}, ${it.text.slice(0, 200)}, ${it.saidAt}, NOW())
+          ON CONFLICT (source, "sourceId") DO NOTHING`;
+        out.inserted += ins;
+        out.demands++;
+      } catch (err) {
+        out.errors++;
+        console.error(`[demand-mine] writing a signal failed:`, (err as Error)?.message);
+      }
     }
   }
   return out;
