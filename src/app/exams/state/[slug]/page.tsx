@@ -61,7 +61,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title,
     description: description.slice(0, 300),
-    alternates: { canonical: url },
+    alternates: { canonical: url, types: { "text/markdown": `${url}/context.md` } },
     keywords: [
       `${st.name} government exams ${year}`,
       `${st.name} govt exams`,

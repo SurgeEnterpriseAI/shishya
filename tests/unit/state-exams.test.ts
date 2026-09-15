@@ -1,8 +1,8 @@
-// State directory helpers (15 Sep 2026, SEO/AEO wave 1). Pure — no DB.
+// State directory helpers (15 Sep 2026, SEO/AEO waves 1–2). Pure — no DB.
 // Run with: npx vitest run tests/unit/state-exams.test.ts
 
 import { describe, expect, it } from "vitest";
-import { examTypeOf, formatDay, stateFaq, statePortals, type StateDate, type StateExam } from "@/lib/state-exams";
+import { examTypeOf, formatDay, stateContextMarkdown, stateFaq, statePortals, type StateDate, type StateExam } from "@/lib/state-exams";
 
 const exam = (code: string, shortName: string, name: string, officialUrl: string | null = null, officialName: string | null = null): StateExam => ({
   code,
@@ -82,5 +82,34 @@ describe("stateFaq — every answer is a fact from the rows", () => {
 
   it("formats the calendar day itself", () => {
     expect(formatDay("2026-09-17")).toBe("17 Sept 2026");
+  });
+});
+
+describe("stateContextMarkdown — the state's brief for AI crawlers", () => {
+  const exams = [
+    exam("KA_POLICE_PC", "KSP Constable", "Karnataka State Police Constable (KSP)", "https://ksp.karnataka.gov.in/info-3/Recruitment/en", "Karnataka State Police — Recruitment"),
+    exam("KA_KPSC_KAS", "KPSC KAS", "Karnataka Administrative Service (KAS) Prelims", "https://kpsc.kar.nic.in", "Karnataka Public Service Commission"),
+  ];
+  const entry = { code: "KA", slug: "karnataka", name: "Karnataka", nativeName: "ಕರ್ನಾಟಕ", hindiName: "कर्नाटक", exams };
+
+  it("lists exams by type with their URLs, announced dates with source, portals and the FAQ", () => {
+    const md = stateContextMarkdown(
+      entry,
+      [{ examCode: "KA_KPSC_KAS", examShort: "KPSC KAS", label: "Prelims", kind: "EXAM", day: "2026-11-15", tier: "reported", url: "https://example.org/kas" }],
+      120,
+      "2026-09-15",
+    );
+    expect(md.startsWith("# Karnataka government exams — Shishya context file")).toBe(true);
+    expect(md).toContain("data as of 2026-09-15 (IST)");
+    expect(md).toContain("### PSC\n- KPSC KAS — Karnataka Administrative Service (KAS) Prelims: https://shishya.in/exams/KA_KPSC_KAS (context: https://shishya.in/exams/KA_KPSC_KAS/context.md)");
+    expect(md).toContain("### Police\n- KSP Constable");
+    expect(md).toContain("- 2026-11-15 — KPSC KAS: Prelims (reported, source: https://example.org/kas)");
+    expect(md).toContain("## Where to apply (official websites)\n- Karnataka State Police — Recruitment: https://ksp.karnataka.gov.in/info-3/Recruitment/en");
+    expect(md).toContain("### When is the next Karnataka government exam?\nKPSC KAS: Prelims on 15 Nov 2026 (reported");
+  });
+
+  it("says no date is announced rather than inventing one", () => {
+    const md = stateContextMarkdown(entry, [], 120, "2026-09-15");
+    expect(md).toContain("- None announced on Shishya's tracker for the next 120 days.");
   });
 });

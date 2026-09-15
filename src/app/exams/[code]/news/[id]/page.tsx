@@ -26,6 +26,8 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { getExamTheme } from "@/lib/exam-theme";
+import { getT } from "@/lib/i18n-server";
+import { StateExamsLink } from "@/components/StateExamsLink";
 
 interface RouteParams {
   code: string;
@@ -99,11 +101,13 @@ export default async function NewsPermalinkPage({
           name: true,
           shortName: true,
           category: true,
+          state: true,
         },
       },
     },
   });
   if (!row || row.exam.code !== code) notFound();
+  const { t } = await getT();
 
   const theme = getExamTheme(row.exam.category);
   const isArchived = row.archivedAt !== null;
@@ -205,6 +209,7 @@ export default async function NewsPermalinkPage({
         <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-ink-900 sm:text-3xl">
           {row.title}
         </h1>
+        <StateExamsLink state={row.exam.state} label={t("exam.state.more")} />
 
         <p className="mt-2 text-xs text-ink-500">
           Published{" "}

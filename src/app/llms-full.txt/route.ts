@@ -106,7 +106,7 @@ export async function GET() {
     lines.push(`> Each state page lists the exams Shishya covers there, dates announced by the conducting body or reported with a source, and where to apply: ${SITE}/exams/state`);
     lines.push("");
     for (const s of stateDirectory) {
-      lines.push(`### ${s.name} — ${SITE}/exams/state/${s.slug}`);
+      lines.push(`### ${s.name} — ${SITE}/exams/state/${s.slug} (context file: ${SITE}/exams/state/${s.slug}/context.md)`);
       for (const e of s.exams) lines.push(`- ${e.shortName} — ${e.name} (${e.type}): ${SITE}/exams/${e.code}`);
       lines.push("");
     }

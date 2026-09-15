@@ -145,6 +145,49 @@ export function stateFaq(
   return items;
 }
 
+/** The state's context file for AI crawlers (/exams/state/{slug}/context.md):
+ *  the state page's facts as token-cheap markdown. `asOf` is the IST day. */
+export function stateContextMarkdown(
+  entry: StateDirectoryEntry,
+  upcoming: readonly StateDate[],
+  horizonDays: number,
+  asOf: string,
+): string {
+  const SITE = "https://shishya.in";
+  const page = `${SITE}/exams/state/${entry.slug}`;
+  const L: string[] = [
+    `# ${entry.name} government exams — Shishya context file`,
+    "",
+    `> State page: ${page} · all states: ${SITE}/exams/state · data as of ${asOf} (IST)`,
+    "> Dates are only those announced by the conducting body (official) or reported with a cited source (reported); estimates are left out.",
+    "",
+    `## Exams on Shishya in ${entry.name} (${entry.exams.length})`,
+  ];
+  for (const type of EXAM_TYPE_ORDER) {
+    const list = entry.exams.filter((e) => e.type === type);
+    if (list.length === 0) continue;
+    L.push(`### ${type}`);
+    for (const e of list) L.push(`- ${e.shortName} — ${e.name}: ${SITE}/exams/${e.code} (context: ${SITE}/exams/${e.code}/context.md)`);
+  }
+  L.push("", `## Upcoming announced dates (next ${horizonDays} days)`);
+  if (upcoming.length > 0) {
+    for (const d of upcoming) L.push(`- ${d.day} — ${d.examShort}: ${d.label} (${d.tier}${d.url ? `, source: ${d.url}` : ""})`);
+  } else {
+    L.push(`- None announced on Shishya's tracker for the next ${horizonDays} days. Each exam's tracker lists its expected dates, marked as estimates.`);
+  }
+  const portals = statePortals(entry.exams);
+  if (portals.length > 0) {
+    L.push("", "## Where to apply (official websites)");
+    for (const p of portals) L.push(`- ${p.name}: ${p.url}`);
+  }
+  L.push("", "## Questions and answers");
+  for (const f of stateFaq({ name: entry.name, slug: entry.slug }, entry.exams, upcoming, horizonDays)) {
+    L.push(`### ${f.q}`, f.a, "");
+  }
+  L.push(`Everything on Shishya is free. Platform index for LLMs: ${SITE}/llms.txt and ${SITE}/llms-full.txt`, "");
+  return L.join("\n");
+}
+
 /** Every state with at least one active exam, exams most-taken first. */
 export async function loadStateDirectory(): Promise<StateDirectoryEntry[]> {
   const exams = await prisma.exam.findMany({

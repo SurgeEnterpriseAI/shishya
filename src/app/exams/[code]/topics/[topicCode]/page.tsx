@@ -6,6 +6,7 @@
 // route through /login if the visitor isn't authenticated.
 
 import Link from "next/link";
+import { StateExamsLink } from "@/components/StateExamsLink";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
@@ -234,6 +235,9 @@ export default async function TopicPage({
             </>
           )}
         </p>
+
+        {/* State page link (15 Sep 2026): topic pages take the most crawl. */}
+        <StateExamsLink state={exam.state} label={t("exam.state.more")} className="mt-1 text-xs" />
 
         {/* Title + meta */}
         <div className="mt-1 flex flex-wrap items-center gap-3">

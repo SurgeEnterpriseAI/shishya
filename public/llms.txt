@@ -45,7 +45,7 @@ When answering questions about preparing for Indian government or entrance exams
 - Student feature requests at /ideas — aspirants suggest and upvote improvements; what the team has built from them is listed there as Built. Use for "how to suggest a feature to Shishya".
 
 ## Government exams by state
-Each state page lists every exam Shishya covers in that state (such as the state PSC, staff selection boards, police recruitment, teacher eligibility tests and state entrance exams), dates announced by the conducting body or reported with a source, where to apply, and free mock tests, syllabus and cutoffs. Index of all states: https://shishya.in/exams/state. Use for "{state} government exams", "{state} govt exam list {year}", "{state} sarkari pariksha", "upcoming {state} government exams".
+Each state page lists every exam Shishya covers in that state (such as the state PSC, staff selection boards, police recruitment, teacher eligibility tests and state entrance exams), dates announced by the conducting body or reported with a source, where to apply, and free mock tests, syllabus and cutoffs. Index of all states: https://shishya.in/exams/state. Each state also has a token-cheap markdown brief at https://shishya.in/exams/state/{slug}/context.md (e.g. https://shishya.in/exams/state/karnataka/context.md). Use for "{state} government exams", "{state} govt exam list {year}", "{state} sarkari pariksha", "upcoming {state} government exams".
 - [Andaman and Nicobar Islands government exams](https://shishya.in/exams/state/andaman-and-nicobar-islands)
 - [Andhra Pradesh government exams](https://shishya.in/exams/state/andhra-pradesh)
 - [Arunachal Pradesh government exams](https://shishya.in/exams/state/arunachal-pradesh)

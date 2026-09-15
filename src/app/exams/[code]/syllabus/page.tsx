@@ -7,6 +7,8 @@
 
 import { hasUsableNotes } from "@/lib/topic-notes";
 import Link from "next/link";
+import { getT } from "@/lib/i18n-server";
+import { StateExamsLink } from "@/components/StateExamsLink";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
@@ -67,7 +69,7 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
     where: { code },
-    select: { id: true, code: true, shortName: true, name: true, active: true },
+    select: { id: true, code: true, shortName: true, name: true, active: true, state: true },
   });
   if (!exam || !exam.active) notFound();
 
@@ -91,6 +93,7 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
     },
   });
   if (subjects.length === 0) notFound();
+  const { t: tr } = await getT();
 
   const topicCount = subjects.reduce(
     (a, s) => a + s.topics.reduce((b, t) => b + 1 + t.children.length, 0),
@@ -139,6 +142,7 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
           The complete {exam.name} syllabus: {subjects.length} subjects, {topicCount} topics. Every
           topic links to free study notes, practice questions and topic-wise quizzes.
         </p>
+        <StateExamsLink state={exam.state} label={tr("exam.state.more")} />
 
         <div className="mt-4">
           <ShareExamButton
