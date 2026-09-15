@@ -403,8 +403,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .map((e) => e.state)
       .filter((s): s is string => Boolean(s) && (s as string) in STATES),
   );
+  // lastModified = the newest exam update in the state (15 Sep 2026).
+  const stateLastMod = new Map<string, Date>();
+  for (const e of exams) {
+    if (!e.state) continue;
+    const prev = stateLastMod.get(e.state);
+    if (!prev || e.updatedAt > prev) stateLastMod.set(e.state, e.updatedAt);
+  }
   const stateUrls: MetadataRoute.Sitemap = Array.from(statesWithExams).map((code) => ({
     url: `${base}/exams/state/${stateSlug(code)}`,
+    lastModified: stateLastMod.get(code),
     changeFrequency: "weekly" as const,
     priority: 0.85,
   }));
@@ -443,6 +451,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/scholarships",
     // "/exams" is a permanent redirect to "/" — never list a redirect.
     "/exams/browse",
+    // Government exams by state — the index every state page hangs under (15 Sep 2026).
+    "/exams/state",
     "/current-affairs",
     "/find-your-exam",
     "/typing",

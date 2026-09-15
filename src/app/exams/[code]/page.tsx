@@ -7,6 +7,7 @@
 // map, Recent attempts) are gated behind a Sign-in CTA so we keep the
 // auth model clean without blocking the crawler.
 
+import { fillTemplate } from "@/lib/i18n";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -522,7 +523,10 @@ export default async function ExamPage({
   const { stateSlug } = await import("@/lib/state-info");
   const breadcrumbItems: Array<Record<string, unknown>> = [
     { "@type": "ListItem", position: 1, name: "Home", item: "https://shishya.in" },
-    { "@type": "ListItem", position: 2, name: "Exams", item: "https://shishya.in/exams" },
+    // /exams redirects to / — point at pages that exist (15 Sep 2026).
+    stateInfo2
+      ? { "@type": "ListItem", position: 2, name: "Exams by state", item: "https://shishya.in/exams/state" }
+      : { "@type": "ListItem", position: 2, name: "All exams", item: "https://shishya.in/exams/browse" },
   ];
   if (stateInfo2) {
     breadcrumbItems.push({
@@ -664,7 +668,16 @@ export default async function ExamPage({
       <section className="container-prose py-10">
         <AnonQuizRecall examCode={exam.code} />
         <p className="text-xs text-ink-500">
-          <Link href="/dashboard" className="hover:text-ink-800">{t("nav.dashboard")}</Link> · {t("nav.exams")} · {exam.shortName}
+          <Link href="/dashboard" className="hover:text-ink-800">{t("nav.dashboard")}</Link> · {t("nav.exams")} ·{" "}
+          {stateInfo2 && (
+            <>
+              <Link href={`/exams/state/${stateSlug(stateInfo2.code)}`} prefetch={false} className="hover:text-ink-800">
+                {fillTemplate(t("exam.state.crumb"), { state: stateInfo2.name })}
+              </Link>{" "}
+              ·{" "}
+            </>
+          )}
+          {exam.shortName}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {/* Category badge — pill above the title that mirrors the
@@ -681,6 +694,15 @@ export default async function ExamPage({
         <h1 className="mt-2 text-3xl font-bold text-ink-900">{exam.shortName}</h1>
         <p className="mt-1 text-sm text-ink-600">{exam.name}</p>
         <p className="mt-4 max-w-3xl text-sm text-ink-700">{exam.description}</p>
+        {/* The state page link (15 Sep 2026): hubs named their state only in
+            JSON-LD, so crawlers barely reached the state pages. */}
+        {stateInfo2 && (
+          <p className="mt-2 text-sm">
+            <Link href={`/exams/state/${stateSlug(stateInfo2.code)}`} prefetch={false} className="font-medium text-saffron-700 hover:underline">
+              {fillTemplate(t("exam.state.more"), { state: stateInfo2.name })}
+            </Link>
+          </p>
+        )}
 
         <div className="mt-4 flex flex-wrap gap-3 text-xs text-ink-600">
           {/* Exam-day countdown — only while the exam is MORE than a week

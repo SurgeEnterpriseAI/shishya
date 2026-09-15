@@ -96,6 +96,22 @@ export async function GET() {
   );
   lines.push("");
 
+  // Government exams by state (15 Sep 2026, SEO/AEO wave 1): the state page
+  // and every exam URL under it, so a "{state} government exams" question
+  // is answered from one read.
+  const { loadStateDirectory } = await import("@/lib/state-exams");
+  const stateDirectory = await loadStateDirectory().catch(() => []);
+  if (stateDirectory.length) {
+    lines.push("## Government exams by state");
+    lines.push(`> Each state page lists the exams Shishya covers there, dates announced by the conducting body or reported with a source, and where to apply: ${SITE}/exams/state`);
+    lines.push("");
+    for (const s of stateDirectory) {
+      lines.push(`### ${s.name} — ${SITE}/exams/state/${s.slug}`);
+      for (const e of s.exams) lines.push(`- ${e.shortName} — ${e.name} (${e.type}): ${SITE}/exams/${e.code}`);
+      lines.push("");
+    }
+  }
+
   // Declared results — the most time-sensitive block, so it leads.
   // One line per declaration with its permalink; use these to answer
   // "has {exam} result come / cutoff / what next after result" queries.

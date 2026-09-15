@@ -118,6 +118,9 @@ const BUILD = [
 // PYQ honesty + topic-wise PYQs (15 Sep 2026).
 const PYQ_HUB = ["exam.pyq.byTopic", "exam.pyq.empty"] as const satisfies readonly StringKey[];
 
+// Exam hub → state page links (15 Sep 2026, SEO/AEO wave 1).
+const STATE_HUB = ["exam.state.more", "exam.state.crumb"] as const satisfies readonly StringKey[];
+
 const FOUND_VIA = [
   "foundVia.title",
   "foundVia.sub",
@@ -150,7 +153,7 @@ const SCORE = [
   "ew.score.published.more",
 ] as const satisfies readonly StringKey[];
 
-const EVERY: readonly StringKey[] = [...NAV, ...TODAY, ...RESULTS, ...PLAYER, ...BUILD, ...PYQ_HUB, ...FOUND_VIA, ...CHALLENGE, ...SCORE, ...RESULT_CARD_I18N_KEYS, ...STUDY_GROUP_I18N_KEYS];
+const EVERY: readonly StringKey[] = [...NAV, ...TODAY, ...RESULTS, ...PLAYER, ...BUILD, ...PYQ_HUB, ...STATE_HUB, ...FOUND_VIA, ...CHALLENGE, ...SCORE, ...RESULT_CARD_I18N_KEYS, ...STUDY_GROUP_I18N_KEYS];
 const REQUIRED_LOCALES: Locale[] = ["en", "hi", "te"];
 const REGIONAL_LOCALES: Locale[] = ["mr", "ta", "kn", "gu", "bn", "ml", "pa"];
 const REGIONAL_KEYS: readonly StringKey[] = [...NAV, ...RESULTS, ...PLAYER];

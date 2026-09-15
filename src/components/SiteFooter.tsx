@@ -23,6 +23,7 @@ export function SiteFooter() {
               page passes crawl equity to the tracker surface — the
               counter-move for the Google slump. */}
           <Link href="/exam-calendar" className="hover:text-ink-800">Exam calendar</Link>
+          <Link href="/exams/state" className="hover:text-ink-800">Exams by state</Link>
           <Link href="/about" className="hover:text-ink-800">About</Link>
           <Link href="/editorial-policy" className="hover:text-ink-800">Editorial policy</Link>
           <Link href="/pricing" className="hover:text-ink-800">Pricing</Link>

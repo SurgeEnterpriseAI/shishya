@@ -16,7 +16,7 @@
 // already loaded by the parent. No client JS needed.
 
 import Link from "next/link";
-import { STATES } from "@/lib/state-info";
+import { STATES, stateSlug } from "@/lib/state-info";
 import { STAGE_OPTIONS } from "@/lib/onboarding-options";
 
 export interface PersonalisedHubProps {
@@ -183,17 +183,16 @@ export function PersonalisedHub({
             Pinned for {stateInfo.name}
           </h2>
           <p className="mt-1 text-xs text-ink-500">
-            State-specific entrance and government exams for {stateInfo.name}.
+            Government exams for {stateInfo.name} on Shishya.
           </p>
           <div className="mt-4 max-w-lg">
             <Link
-              href={`/exams/state/${stateInfo.code.toLowerCase()}`}
+              href={`/exams/state/${stateSlug(stateInfo.code)}`}
               className="block rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400"
             >
-              <p className="text-sm font-semibold text-ink-900">{stateInfo.name} entrance exams</p>
+              <p className="text-sm font-semibold text-ink-900">{stateInfo.name} government exams</p>
               <p className="mt-1 text-xs text-ink-600">
-                State CETs, PSC, TET, Police, Polytechnic and other{" "}
-                {stateInfo.name}-specific exams.
+                Every {stateInfo.name} exam on Shishya, with announced dates and free mock tests.
               </p>
             </Link>
           </div>
