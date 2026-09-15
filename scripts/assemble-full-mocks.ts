@@ -18,12 +18,21 @@
 // right size is skipped, so re-running after the question bank grows
 // only fills in newly-qualified exams.
 //
-//   npx tsx --env-file=.env.local scripts/assemble-full-mocks.ts [--dry]
+//   npx tsx --env-file=.env.local scripts/assemble-full-mocks.ts [--dry] [--only CODE[,CODE]]
+//
+// --only (15 Sep 2026) limits the run to the named exams, inactive ones
+// included: assemble a new exam's paper before activating it, without
+// touching every other active exam whose pool has grown.
 
 import { prisma } from "../src/lib/db/prisma";
 
 const GENERATED_BY = "system:full-pattern-v1";
 const dry = process.argv.includes("--dry");
+const onlyIdx = process.argv.indexOf("--only");
+const only =
+  onlyIdx >= 0
+    ? process.argv[onlyIdx + 1].split(",").map((c) => c.trim().toUpperCase()).filter((c) => /^[A-Z0-9_]+$/.test(c))
+    : null;
 
 function shuffle<T>(arr: T[]): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -39,7 +48,8 @@ async function main() {
   >(`
     SELECT e.id, e.code, e."shortName", e."totalQuestions" tq, e."durationMin" dur,
       (SELECT COUNT(*)::int FROM "Question" q WHERE q."examId"=e.id AND q.validated=TRUE) pool
-    FROM "Exam" e WHERE e.active=TRUE AND e."totalQuestions" > 0`);
+    FROM "Exam" e
+    WHERE ${only ? `e.code IN (${only.map((c) => `'${c}'`).join(",")})` : "e.active=TRUE"} AND e."totalQuestions" > 0`);
 
   let created = 0, skipped = 0;
   for (const ex of exams) {
