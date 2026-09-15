@@ -93,7 +93,7 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
     },
   });
   if (subjects.length === 0) notFound();
-  const { t: tr } = await getT();
+  const { t: tr, locale } = await getT();
 
   const topicCount = subjects.reduce(
     (a, s) => a + s.topics.reduce((b, t) => b + 1 + t.children.length, 0),
@@ -142,7 +142,7 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
           The complete {exam.name} syllabus: {subjects.length} subjects, {topicCount} topics. Every
           topic links to free study notes, practice questions and topic-wise quizzes.
         </p>
-        <StateExamsLink state={exam.state} label={tr("exam.state.more")} />
+        <StateExamsLink state={exam.state} label={tr("exam.state.more")} locale={locale} />
 
         <div className="mt-4">
           <ShareExamButton

@@ -55,6 +55,7 @@ import { AnonExamNudge } from "@/components/AnonExamNudge";
 import { CoachEntry } from "@/components/CoachEntry";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
+import { StateExamsLink } from "@/components/StateExamsLink";
 import { inlineMd } from "@/components/NotesMarkdown";
 
 // 900: the exam-week boundaries (D-1 in, D+7 out) must show up within 15
@@ -262,7 +263,7 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
   const exam = await prisma.exam.findUnique({
     where: { code },
     select: {
-      id: true, code: true, shortName: true, name: true, active: true,
+      id: true, code: true, shortName: true, name: true, active: true, state: true,
       // The marking-scheme test decides whether the estimator pill is a real
       // destination for this exam or a page that refuses (see below).
       totalMarks: true, totalQuestions: true, scoredQuestions: true, marksPerQ: true, description: true,
@@ -381,6 +382,12 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
         {/* Language twins — real links for humans AND the crawl graph, the
             same pair the hreflang block in generateMetadata declares. */}
         <LangTwinLinks path={path} current={urlLocale} />
+        {/* State page link (15 Sep 2026, SEO wave 3) — English URL only: the /hi and
+            /te twins are measured by src/lib/twin-localisation.ts, which does not
+            count this line. */}
+        {urlLocale === "en" && (
+          <StateExamsLink state={exam.state} label={t("exam.state.more")} locale={locale} />
+        )}
 
         {/* Exam-week block (D-1 .. D+7): the answer the exam-day lander
             came for — when the official cutoff arrives — before the

@@ -13,6 +13,8 @@ import { NotesMarkdown } from "@/components/NotesMarkdown";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { CoachEntry } from "@/components/CoachEntry";
+import { getT } from "@/lib/i18n-server";
+import { StateExamsLink } from "@/components/StateExamsLink";
 
 export const revalidate = 3600;
 
@@ -66,7 +68,7 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
     where: { code },
-    select: { id: true, code: true, shortName: true, name: true, active: true },
+    select: { id: true, code: true, shortName: true, name: true, active: true, state: true },
   });
   if (!exam || !exam.active) notFound();
 
@@ -78,6 +80,7 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
     `.catch(() => [] as { content: string; faq: { q: string; a: string }[] | null }[]);
   const guideMd = rows[0]?.content;
   if (!guideMd) notFound();
+  const { t, locale } = await getT();
   const faq = Array.isArray(rows[0]?.faq) ? rows[0]!.faq! : [];
 
   const url = `https://shishya.in/exams/${exam.code}/guide`;
@@ -138,6 +141,7 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
           study plan, how tough it actually is, and what the job pays. Everything you need is free
           on Shishya — no coaching fees.
         </p>
+        <StateExamsLink state={exam.state} label={t("exam.state.more")} locale={locale} />
 
         <div className="mt-4">
           <ShareExamButton

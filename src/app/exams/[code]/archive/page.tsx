@@ -18,6 +18,8 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { getExamTheme } from "@/lib/exam-theme";
+import { getT } from "@/lib/i18n-server";
+import { StateExamsLink } from "@/components/StateExamsLink";
 
 export async function generateMetadata({
   params,
@@ -47,12 +49,13 @@ export default async function ArchivePage({
 
   const exam = await prisma.exam.findUnique({
     where: { code },
-    select: { id: true, code: true, name: true, shortName: true, category: true, active: true },
+    select: { id: true, code: true, name: true, shortName: true, category: true, active: true, state: true },
   });
   // Inactive = seeded ahead of its question bank; not public yet.
   if (!exam || !exam.active) notFound();
 
   const theme = getExamTheme(exam.category);
+  const { t, locale } = await getT();
 
   // Pull EVERY archived row (caps for sanity — 200 each is way more
   // than any single exam has accumulated, and per-row cost is tiny).
@@ -145,6 +148,7 @@ export default async function ArchivePage({
           on the main exam page; this archive preserves what each
           previous cycle officially announced.
         </p>
+        <StateExamsLink state={exam.state} label={t("exam.state.more")} locale={locale} />
 
         {news.length === 0 && dates.length === 0 ? (
           <div className="mt-10 rounded-md border border-dashed border-ink-300 bg-white px-4 py-8 text-center text-sm text-ink-500">

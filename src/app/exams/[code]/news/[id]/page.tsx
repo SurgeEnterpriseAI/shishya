@@ -107,7 +107,7 @@ export default async function NewsPermalinkPage({
     },
   });
   if (!row || row.exam.code !== code) notFound();
-  const { t } = await getT();
+  const { t, locale } = await getT();
 
   const theme = getExamTheme(row.exam.category);
   const isArchived = row.archivedAt !== null;
@@ -209,7 +209,7 @@ export default async function NewsPermalinkPage({
         <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-ink-900 sm:text-3xl">
           {row.title}
         </h1>
-        <StateExamsLink state={row.exam.state} label={t("exam.state.more")} />
+        <StateExamsLink state={row.exam.state} label={t("exam.state.more")} locale={locale} />
 
         <p className="mt-2 text-xs text-ink-500">
           Published{" "}

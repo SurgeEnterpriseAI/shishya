@@ -37,6 +37,7 @@ import { ExamWeekBlock, type ExamWeekViewer } from "@/components/ExamWeekBlock";
 import { PulseAsk } from "@/components/PulseAsk";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
+import { StateExamsLink } from "@/components/StateExamsLink";
 
 /** JSON-LD safe for inline <script>: a "</script>" inside a model- or
  *  web-derived label must not break out of the block. */
@@ -333,6 +334,12 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
 
         {/* Language twins — real links for humans AND the crawl graph. */}
         <LangTwinLinks path={path} current={urlLocale} />
+        {/* State page link (15 Sep 2026, SEO wave 3) — English URL only: the /hi and
+            /te twins are measured by src/lib/twin-localisation.ts, which does not
+            count this line. */}
+        {urlLocale === "en" && (
+          <StateExamsLink state={exam.state} label={t("exam.state.more")} locale={locale} />
+        )}
 
         {/* Status strip */}
         <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">

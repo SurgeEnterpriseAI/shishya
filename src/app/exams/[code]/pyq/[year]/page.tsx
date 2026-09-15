@@ -18,6 +18,7 @@ import { formatDisplayScorePct } from "@/lib/scoring";
 import { StartFullMockButton } from "./StartFullMockButton";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { PulseAsk } from "@/components/PulseAsk";
+import { StateExamsLink } from "@/components/StateExamsLink";
 
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
@@ -117,7 +118,7 @@ export default async function PYQYearPage({
   const { code, year } = await params;
   const yearNum = parseInt(year, 10);
   if (!Number.isFinite(yearNum)) notFound();
-  const { t } = await getT();
+  const { t, locale } = await getT();
 
   const exam = await prisma.exam.findUnique({ where: { code } });
   // Inactive = seeded ahead of its question bank; not public yet.
@@ -345,6 +346,7 @@ export default async function PYQYearPage({
           Every question here is freshly worded in the pattern of the {yearNum} paper — same topics, style and
           difficulty — not the original questions, which Shishya does not reproduce.
         </p>
+        <StateExamsLink state={exam.state} label={t("exam.state.more")} locale={locale} />
         {officialForYear.length > 0 && (
           <div id="official-paper" className="mt-3 max-w-3xl rounded-md border border-ink-200 bg-white p-3">
             <p className="text-sm font-semibold text-ink-900">

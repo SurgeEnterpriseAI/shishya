@@ -63,6 +63,7 @@ import { sittingKey } from "@/lib/score-standing";
 import { standingCount } from "@/lib/score-standing-db";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
+import { StateExamsLink } from "@/components/StateExamsLink";
 import { inlineMd } from "@/components/NotesMarkdown";
 import { ScoreEstimator } from "./ScoreEstimator";
 
@@ -99,6 +100,7 @@ async function loadExam(code: string) {
       shortName: true,
       name: true,
       active: true,
+      state: true,
       description: true,
       totalQuestions: true,
       scoredQuestions: true,
@@ -273,6 +275,12 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
 
         {/* Language twins — real links for humans AND the crawl graph. */}
         <LangTwinLinks path={path} current={urlLocale} />
+        {/* State page link (15 Sep 2026, SEO wave 3) — English URL only: the /hi and
+            /te twins are measured by src/lib/twin-localisation.ts, which does not
+            count this line. */}
+        {urlLocale === "en" && (
+          <StateExamsLink state={exam.state} label={t("exam.state.more")} locale={locale} />
+        )}
 
         {/* The calculator: marking scheme line + three inputs. When the
             scheme cannot be stated honestly (mixed papers / not every

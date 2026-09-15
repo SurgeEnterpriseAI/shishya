@@ -237,7 +237,7 @@ export default async function TopicPage({
         </p>
 
         {/* State page link (15 Sep 2026): topic pages take the most crawl. */}
-        <StateExamsLink state={exam.state} label={t("exam.state.more")} className="mt-1 text-xs" />
+        <StateExamsLink state={exam.state} label={t("exam.state.more")} locale={locale} className="mt-1 text-xs" />
 
         {/* Title + meta */}
         <div className="mt-1 flex flex-wrap items-center gap-3">

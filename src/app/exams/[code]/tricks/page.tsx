@@ -11,6 +11,8 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { NotesMarkdown } from "@/components/NotesMarkdown";
 import { ShareExamButton } from "@/components/ShareExamButton";
+import { getT } from "@/lib/i18n-server";
+import { StateExamsLink } from "@/components/StateExamsLink";
 
 export const revalidate = 3600;
 
@@ -63,7 +65,7 @@ export default async function TricksPage({ params }: { params: Promise<{ code: s
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
     where: { code },
-    select: { id: true, code: true, shortName: true, name: true, active: true },
+    select: { id: true, code: true, shortName: true, name: true, active: true, state: true },
   });
   if (!exam || !exam.active) notFound();
 
@@ -75,6 +77,7 @@ export default async function TricksPage({ params }: { params: Promise<{ code: s
     `.catch(() => [] as { content: string }[]);
   const tricksMd = rows[0]?.content;
   if (!tricksMd) notFound();
+  const { t, locale } = await getT();
 
   const url = `https://shishya.in/exams/${exam.code}/tricks`;
   const jsonLd = {
@@ -118,6 +121,7 @@ export default async function TricksPage({ params }: { params: Promise<{ code: s
           Subject-wise short tricks and memory hacks for {exam.name}. Each one is meant to be used
           in the exam hall — read it, then lock it in with a quick practice question.
         </p>
+        <StateExamsLink state={exam.state} label={t("exam.state.more")} locale={locale} />
 
         <div className="mt-4">
           <ShareExamButton

@@ -35,6 +35,7 @@ import { istDay } from "@/lib/exam-week";
 import { markingSchemeVerdict } from "@/lib/marking-scheme";
 import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
 import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { stateInfo, stateSlug } from "@/lib/state-info";
 
 export const revalidate = 3600; // hourly — the exam-week block flips phase within a day
 
@@ -147,6 +148,12 @@ export async function GET(
   L.push(
     `> Machine-readable context for ${exam.name}, maintained by Shishya (${SITE}) — India's end-to-end free government exam preparation platform. All facts below are free to cite; link back to ${SITE}/exams/${exam.code}. Human page: ${SITE}/exams/${exam.code}`,
   );
+  // The exam's state (15 Sep 2026, SEO wave 3): its state page and state brief.
+  const examState = stateInfo(exam.state);
+  if (examState) {
+    const statePage = `${SITE}/exams/state/${stateSlug(examState.code)}`;
+    L.push(`> ${examState.name} government exams on Shishya: ${statePage} (state brief: ${statePage}/context.md)`);
+  }
   L.push("");
 
   L.push("## Exam pattern");
