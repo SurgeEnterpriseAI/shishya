@@ -48,7 +48,8 @@ export async function solveBlind(
     const directive = RUN_DIRECTIVES[i % RUN_DIRECTIVES.length];
     const { response, stats } = await callClaude({
       model,
-      maxTokens: 1200,
+      // 2000 (15 Sep 2026): 1200 cut long reasoning off mid-JSON.
+      maxTokens: 2000,
       system: [{ type: "text", text: SOLVER_SYSTEM }],
       messages: [{ role: "user", content: `${problem}\n\nApproach for this attempt: ${directive}` }],
       feature: opts.feature,

@@ -68,7 +68,8 @@ export async function verify(
   const model = modelFor("verify");
   const { response, stats } = await callClaude({
     model,
-    maxTokens: 1000,
+    // 1600 (15 Sep 2026): 1000 cut long rationales off mid-JSON.
+    maxTokens: 1600,
     system: [{ type: "text", text: VERIFIER_SYSTEM }],
     messages: [{ role: "user", content: renderAudit(q, solve) }],
     feature: opts.feature,

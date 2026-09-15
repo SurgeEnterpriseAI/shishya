@@ -96,6 +96,8 @@ export interface FactoryRunStats {
   accepted: number;
   needsReview: number;
   rejected: number;
+  /** Candidates dropped because a solver/verifier reply could not be used (counted in rejected too). */
+  errors: number;
   costUsd: number;
   byVerdict: Record<Verdict, number>;
 }

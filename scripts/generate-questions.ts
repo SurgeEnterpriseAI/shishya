@@ -528,7 +528,7 @@ async function main() {
         );
         const v = result.stats.byVerdict;
         console.log(
-          `   firewall: ${result.stats.accepted} accept · ${result.stats.needsReview} review · ${result.stats.rejected} reject ` +
+          `   firewall: ${result.stats.accepted} accept · ${result.stats.needsReview} review · ${result.stats.rejected} reject (${result.stats.errors} unusable replies) ` +
             `(verdicts CORRECT:${v.CORRECT} MISMATCH:${v.MISMATCH} AMBIGUOUS:${v.AMBIGUOUS} FLAWED:${v.FLAWED}) ` +
             `~$${result.stats.costUsd.toFixed(4)}`,
         );

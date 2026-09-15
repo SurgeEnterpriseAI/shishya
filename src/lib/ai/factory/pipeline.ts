@@ -29,6 +29,7 @@ function emptyStats(): FactoryRunStats {
     accepted: 0,
     needsReview: 0,
     rejected: 0,
+    errors: 0,
     costUsd: 0,
     byVerdict: { CORRECT: 0, MISMATCH: 0, AMBIGUOUS: 0, FLAWED: 0 },
   };
@@ -59,10 +60,25 @@ export async function verifyCandidates(
   const decisions: VerifyResult["decisions"] = [];
 
   for (const candidate of candidates) {
-    // 1) blind solve (self-consistency)
-    const solve = await solveBlind(candidate, { runs: cfg.solveRuns, onCost });
-    // 2) adjudicate
-    const v = await verify(candidate, solve, { onCost });
+    // 1) blind solve (self-consistency), 2) adjudicate. One unusable model
+    // reply (JSON cut off at max_tokens) used to throw out of this loop and
+    // lose the whole batch — 15 Sep 2026 two topics lost 20 and 25 candidates.
+    // It now drops only that candidate. Credit and auth failures still stop
+    // the run: every later call would fail the same way.
+    let solve: Awaited<ReturnType<typeof solveBlind>>;
+    let v: Awaited<ReturnType<typeof verify>>;
+    try {
+      solve = await solveBlind(candidate, { runs: cfg.solveRuns, onCost });
+      v = await verify(candidate, solve, { onCost });
+    } catch (err) {
+      const message = String((err as Error)?.message ?? err);
+      if (/credit balance|authentication|invalid x-api-key|permission/i.test(message)) throw err;
+      stats.errors += 1;
+      stats.rejected += 1;
+      console.warn(`[factory] candidate dropped after an unusable model reply: ${message.slice(0, 160)}`);
+      decisions.push({ candidate, question: null, decision: "ERROR" });
+      continue;
+    }
     stats.byVerdict[v.verdict as Verdict] += 1;
     // 3) gate
     const g = gate(solve, v, cfg);
