@@ -21,7 +21,7 @@ import { getStudentJourney } from "@/lib/db/student-journey";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 import { locales } from "@/lib/i18n";
-import { detectLanguageRequest, langToReplyLanguage, resolvePreferredLocale, TUTOR_LANG_COOKIE } from "@/lib/preferred-lang";
+import { detectLanguageRequest, langToReplyLanguage, resolvePreferredLocale, TUTOR_LANG_COOKIE, tutorMessageFor } from "@/lib/preferred-lang";
 
 const Body = z
   .object({
@@ -277,7 +277,9 @@ export async function POST(req: Request) {
           },
           // history is already normalised to {role, content}.
           history,
-          userMessage: body.message,
+          // A bare language name after an answer means "say that again in X"
+          // (stored as typed; only the model sees the explicit request).
+          userMessage: tutorMessageFor(body.message, history.some((t) => t.role === "assistant")),
           language: replyLanguage,
           topicFocus: topicFocus ?? undefined,
           journey: journey ?? undefined,

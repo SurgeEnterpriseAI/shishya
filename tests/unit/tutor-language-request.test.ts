@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectLanguageRequest } from "@/lib/preferred-lang";
+import { bareLanguageRequest, detectLanguageRequest, tutorMessageFor } from "@/lib/preferred-lang";
 
 describe("detectLanguageRequest — a language the student asks the tutor for", () => {
   it("bare names and short directives", () => {
@@ -17,6 +17,8 @@ describe("detectLanguageRequest — a language the student asks the tutor for", 
     expect(detectLanguageRequest("Please reply in Telugu from now on")).toBe("te");
     expect(detectLanguageRequest("switch to english")).toBe("en");
     expect(detectLanguageRequest("Explain this question in Tamil")).toBe("ta");
+    expect(detectLanguageRequest("Explain Article 32 in Telugu, briefly")).toBe("te");
+    expect(detectLanguageRequest("answer in hindi, please")).toBe("hi");
   });
 
   it("mixed-language asks", () => {
@@ -34,5 +36,20 @@ describe("detectLanguageRequest — a language the student asks the tutor for", 
     expect(detectLanguageRequest("Muje division ke short trick shikho")).toBeNull();
     expect(detectLanguageRequest("")).toBeNull();
     expect(detectLanguageRequest(null)).toBeNull();
+  });
+});
+
+describe("bareLanguageRequest / tutorMessageFor — a bare language name after an answer", () => {
+  it("only a whole-message language is bare", () => {
+    expect(bareLanguageRequest("Marathi")).toBe("mr");
+    expect(bareLanguageRequest("hindi me")).toBe("hi");
+    expect(bareLanguageRequest("Explain Article 32 in Telugu")).toBeNull();
+    expect(bareLanguageRequest("Hindi me btao")).toBeNull();
+  });
+
+  it("rewrites only when there is an answer to repeat", () => {
+    expect(tutorMessageFor("Marathi", true)).toBe("Please give your previous answer again, in full, in Marathi.");
+    expect(tutorMessageFor("Marathi", false)).toBe("Marathi");
+    expect(tutorMessageFor("Explain Article 32 in Telugu", true)).toBe("Explain Article 32 in Telugu");
   });
 });

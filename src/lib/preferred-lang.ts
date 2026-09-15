@@ -175,7 +175,7 @@ const ASK_VERB =
   "(?:btao|batao|bataiye|batayiye|samjhao|samjhaiye|samjhayiye|bolo|boliye|likho|jawab|answer|explain|cheppu|cheppandi|chepandi|sang|sanga|samjav|samjava|बताओ|बताइए|बताइये|समझाओ|समझाइए|सांगा|समजावून|చెప్పండి|చెప్పు|వివరించండి)";
 
 /** The language a tutor message explicitly asks for, or null. */
-export function detectLanguageRequest(message: string | null | undefined): Locale | null {
+function matchLanguageRequest(message: string | null | undefined): { locale: Locale; bare: boolean } | null {
   if (!message) return null;
   const text = message.normalize("NFC").trim().toLowerCase().replace(/[.!?।,;:]+$/u, "").trim();
   if (!text || text.length > 200) return null;
@@ -183,14 +183,38 @@ export function detectLanguageRequest(message: string | null | undefined): Local
     for (const w of words) {
       const lw = escapeRe(w);
       // The whole message is the language: "marathi", "in marathi please", "hindi me", "తెలుగులో", "मराठीत".
-      if (new RegExp(`^(?:please\\s+|pls\\s+|plz\\s+)?(?:(?:in|into)\\s+)?${lw}(?:\\s*${IN_MARKER})?(?:\\s+${POLITE})?$`, "u").test(text)) return locale;
+      if (new RegExp(`^(?:please\\s+|pls\\s+|plz\\s+)?(?:(?:in|into)\\s+)?${lw}(?:\\s*${IN_MARKER})?(?:\\s+${POLITE})?$`, "u").test(text)) return { locale, bare: true };
       // A reply verb aimed at the language: "explain in marathi", "can you answer in telugu", "switch to english".
-      if (new RegExp(`(?:^|\\s)(?:reply|answer|explain|respond|speak|talk|write|tell|teach|continue|switch|chat|say|give)\\b[^.?!\\n]{0,30}?\\b(?:in|to|into)\\s+${lw}(?:\\s|$)`, "u").test(text)) return locale;
+      if (new RegExp(`(?:^|\\s)(?:reply|answer|explain|respond|speak|talk|write|tell|teach|continue|switch|chat|say|give)\\b[^.?!\\n]{0,30}?\\b(?:in|to|into)\\s+${lw}(?:[\\s,.;:!?।]|$)`, "u").test(text)) return { locale, bare: false };
       // Mixed-language asks: "hindi me btao", "telugu lo cheppandi", "marathi madhe sanga", "हिंदी में समझाओ".
-      if (new RegExp(`(?:^|\\s)${lw}\\s*${IN_MARKER}\\s+${ASK_VERB}(?:\\s|$)`, "u").test(text)) return locale;
+      if (new RegExp(`(?:^|\\s)${lw}\\s*${IN_MARKER}\\s+${ASK_VERB}(?:[\\s,.;:!?।]|$)`, "u").test(text)) return { locale, bare: false };
       // Leading "in X" before the question: "in hindi and bhakti to koi ras hai…", "in telugu: …".
-      if (new RegExp(`^(?:please\\s+)?in\\s+${lw}(?:\\s*[,:–—-]\\s*|\\s+(?:and|aur|also|pls|please)\\s+)`, "u").test(text)) return locale;
+      if (new RegExp(`^(?:please\\s+)?in\\s+${lw}(?:\\s*[,:–—-]\\s*|\\s+(?:and|aur|also|pls|please)\\s+)`, "u").test(text)) return { locale, bare: false };
     }
   }
   return null;
+}
+
+/** The language a tutor message explicitly asks for, or null. */
+export function detectLanguageRequest(message: string | null | undefined): Locale | null {
+  return matchLanguageRequest(message)?.locale ?? null;
+}
+
+/** The language when the message is ONLY a language ("Marathi", "hindi me",
+ *  "తెలుగులో"). After an answer it means: say that again in this language. */
+export function bareLanguageRequest(message: string | null | undefined): Locale | null {
+  const m = matchLanguageRequest(message);
+  return m?.bare ? m.locale : null;
+}
+
+/** What the tutor model receives for a student message (15 Sep 2026, checked
+ *  live): a bare language name after an answer got a fresh greeting, so it
+ *  becomes an explicit request to give the previous answer again in that
+ *  language. Everything else passes through unchanged; the stored chat keeps
+ *  the student's own words. */
+export function tutorMessageFor(message: string, hasPriorAnswer: boolean): string {
+  const bare = hasPriorAnswer ? bareLanguageRequest(message) : null;
+  if (!bare) return message;
+  const word = LANGUAGE_WORDS.find(([l]) => l === bare)?.[1][0] ?? bare;
+  return `Please give your previous answer again, in full, in ${word.charAt(0).toUpperCase()}${word.slice(1)}.`;
 }
