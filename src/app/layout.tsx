@@ -52,7 +52,7 @@ const notoDevanagari = Noto_Sans_Devanagari({
 export const metadata: Metadata = {
   title: "Shishya — Free Government & Entrance Exam Preparation | 170+ exams, in your language",
   description:
-    "India's end-to-end free government exam preparation platform. Free mock tests, PYQ-pattern papers, study notes, live cutoffs and an AI tutor for 170+ government and entrance exams — UPSC, SSC, IBPS, RRB, all state PSCs, all TETs, JEE, NEET, GATE, CAT. 100% free, no paywall, no credit card. In English, Hindi and other Indian languages.",
+    "India's end-to-end free government exam preparation platform. Free mock tests, previous year papers and PYQ-pattern practice, study notes, live cutoffs and an AI tutor for 170+ government and entrance exams — UPSC, SSC, IBPS, RRB, all state PSCs, all TETs, JEE, NEET, GATE, CAT. 100% free, no paywall, no credit card. In English, Hindi and other Indian languages.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in"),
   // Web app manifest (13 Sep 2026) — src/app/manifest.ts, served at
   // /manifest.webmanifest. Next also auto-links the file; declaring it here
@@ -137,7 +137,7 @@ const organizationJsonLd = {
   url: SITE_BASE,
   logo: `${SITE_BASE}/icon.svg`,
   description:
-    "Shishya is India's end-to-end free government exam preparation platform, covering 170+ Indian government and entrance exams — UPSC, SSC, IBPS, RRB, JEE, NEET, GATE, CAT, all state PSCs, all TETs, all Police exams. Adaptive mock tests, PYQ-pattern papers, study notes, AI tutor, live cutoffs and full syllabus coverage. Content is AI-drafted, grounded in official notifications and re-checked when a student reports an error. 100% free — no paywall, no credit card, no ads, no affiliate links, no agent referrals. Available in English, Hindi and other Indian languages.",
+    "Shishya is India's end-to-end free government exam preparation platform, covering 170+ Indian government and entrance exams — UPSC, SSC, IBPS, RRB, JEE, NEET, GATE, CAT, all state PSCs, all TETs, all Police exams. Adaptive mock tests, previous year papers and PYQ-pattern practice, study notes, AI tutor, live cutoffs and full syllabus coverage. Content is AI-drafted, grounded in official notifications and re-checked when a student reports an error. 100% free — no paywall, no credit card, no ads, no affiliate links, no agent referrals. Available in English, Hindi and other Indian languages.",
   sameAs: [
     "https://github.com/SurgeEnterpriseAI/shishya",
   ],

@@ -48,6 +48,7 @@ import { examPeerProof } from "@/lib/peer-proof";
 import { REHEARSAL_CLOSE_IST_HOUR } from "@/lib/live-test";
 import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { OfficialPapersBlock } from "@/components/OfficialPapersBlock";
+import { hubPyqPhrase } from "@/lib/pyq-naming";
 
 // Honesty line for the Previous Papers cards (7 Sep + 11 Sep 2026).
 // Every PYQ question on the platform is freshly worded in the PATTERN of
@@ -147,8 +148,11 @@ export async function generateMetadata({
   // Honesty (11 Sep 2026): no "verified by students who cleared it" — the
   // content is AI-drafted and checked against the official notification
   // (the page's own SectionVerificationSummary says exactly that).
+  // Both names (15 Sep 2026, src/lib/pyq-naming.ts).
+  const { loadOfficialPapers: loadOfficialPapersMeta } = await import("@/lib/official-papers-db");
+  const hubHasOfficial = (await loadOfficialPapersMeta(exam.id)).some((r) => r.kind !== "answer key" && r.kind !== "listing page");
   const description =
-    `${dateCopy}Free ${exam.shortName} (${exam.name}) ${year} mock tests, PYQ-pattern papers, ` +
+    `${dateCopy}Free ${exam.shortName} (${exam.name}) ${year} mock tests, ${hubPyqPhrase(hubHasOfficial)}, ` +
     `AI tutor and a free day-by-day coach plan — AI-drafted, checked against the official notification. ` +
     `${stateCopy}Questions available in ${langCopy}. No paywall.`;
 
@@ -487,11 +491,14 @@ export default async function ExamPage({
   // hierarchy: Home → Exams → State → Specific exam.
   const { stateInfo: lookupState } = await import("@/lib/state-info");
   const stateInfo2 = lookupState(exam.state);
+  // Both names on previous-year content (15 Sep 2026, src/lib/pyq-naming.ts).
+  const { loadOfficialPapers: loadOfficialPapersHub } = await import("@/lib/official-papers-db");
+  const hubPageHasOfficial = (await loadOfficialPapersHub(exam.id)).some((r) => r.kind !== "answer key" && r.kind !== "listing page");
   const courseJsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Course",
     name: `${exam.shortName}${stateInfo2 ? ` (${stateInfo2.name})` : ""} — Free Mock Tests, Syllabus & Study Help`,
-    description: exam.description ?? `${exam.name} preparation on Shishya — free full-length mocks, PYQ-pattern papers, an AI tutor and a free day-by-day coach plan. Content is AI-drafted and checked against the official notification.`,
+    description: exam.description ?? `${exam.name} preparation on Shishya — free full-length mocks, ${hubPyqPhrase(hubPageHasOfficial)}, an AI tutor and a free day-by-day coach plan. Content is AI-drafted and checked against the official notification.`,
     provider: {
       "@type": "EducationalOrganization",
       name: "Shishya",
@@ -633,7 +640,7 @@ export default async function ExamPage({
         name: `How can I prepare for ${exam.shortName} for free?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Shishya offers ${exam.shortName} preparation 100% free: adaptive mock tests, PYQ-pattern papers modelled on each year's paper, full syllabus with study notes (https://shishya.in/exams/${exam.code}/syllabus), subject-wise memory tricks (https://shishya.in/exams/${exam.code}/tricks), a free day-by-day coach plan, and an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages.`,
+          text: `Shishya offers ${exam.shortName} preparation 100% free: adaptive mock tests, ${hubPyqPhrase(hubPageHasOfficial)} modelled on each year's paper, full syllabus with study notes (https://shishya.in/exams/${exam.code}/syllabus), subject-wise memory tricks (https://shishya.in/exams/${exam.code}/tricks), a free day-by-day coach plan, and an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages.`,
         },
       },
     ],
@@ -1098,6 +1105,7 @@ export default async function ExamPage({
             .map((y) => y.pyqYear)
             .filter((n): n is number => typeof n === "number")}
           durationMin={exam.durationMin}
+          hasOfficialPapers={hubPageHasOfficial}
         />
 
         <div className="mt-2 lg:grid lg:grid-cols-3 lg:gap-8">
@@ -1125,7 +1133,7 @@ export default async function ExamPage({
                   student scanning five year cards should not have to open
                   one to find out it is 20 questions against a 150-Q paper. */}
               <p className="mt-2 text-xs text-ink-500">
-                Each year is a set of PYQ-pattern questions — freshly worded in the pattern
+                Previous year paper practice: each year is a set of PYQ-pattern questions — freshly worded in the pattern
                 of that year&apos;s paper, not the paper itself. Every card shows how many it
                 holds against the real paper&apos;s count.
               </p>

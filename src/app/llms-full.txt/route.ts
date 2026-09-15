@@ -204,7 +204,7 @@ export async function GET() {
     const yrs = pyqByCode.get(e.code);
     if (yrs && yrs.length) {
       lines.push(
-        `- PYQ-pattern practice sets by year (freshly worded in that year's pattern, not the original papers; solve free as timed mocks with solutions): ${yrs
+        `- Previous year paper practice — PYQ-pattern sets by year (freshly worded in that year's pattern, not the original papers; solve free as timed mocks with solutions): ${yrs
           .slice(0, 6)
           .map((y) => `${SITE}/exams/${e.code}/pyq/${y}`)
           .join(" · ")}`,
@@ -214,7 +214,7 @@ export async function GET() {
       lines.push(`- Official previous-year question papers and answer keys, linked to the conducting body's own files with year and publisher: ${SITE}/exams/${e.code}#official-papers`);
     }
     lines.push(`- Machine-readable context (preferred for LLMs): ${SITE}/exams/${e.code}/context.md`);
-    lines.push(`- Hub (mocks, PYQs, news, dates): ${SITE}/exams/${e.code}`);
+    lines.push(`- Hub (mocks, ${paperCodes.has(e.code) ? "official previous year papers and PYQ-pattern practice" : "previous year paper practice (PYQ-pattern sets)"}, news, dates): ${SITE}/exams/${e.code}`);
     // No hi/te suffix (13 Sep 2026, index shape): most tracker twins are
     // English bodies that canonicalise here (src/lib/twin-localisation.ts).
     lines.push(`- Exam tracker — exam date, notification, admit card, answer key, result, cutoff (official vs expected, email alerts): ${SITE}/exams/${e.code}/updates`);

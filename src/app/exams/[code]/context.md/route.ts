@@ -306,13 +306,16 @@ export async function GET(
     L.push("");
   }
 
+  let hasOfficialQuestionPapersCtx = false;
   // Official previous-year papers (14 Sep 2026): the conducting body's own
   // files, verified by scripts/import-official-papers.ts. Shishya's year-wise
   // sets are pattern practice, never the paper, so the section says which is which.
   {
     const { loadOfficialPapers } = await import("@/lib/official-papers-db");
     const { paperContextLines } = await import("@/lib/official-papers");
-    const lines = paperContextLines(await loadOfficialPapers(exam.id));
+    const officialRowsCtx = await loadOfficialPapers(exam.id);
+    hasOfficialQuestionPapersCtx = officialRowsCtx.some((r) => r.kind !== "answer key" && r.kind !== "listing page");
+    const lines = paperContextLines(officialRowsCtx);
     if (lines.length) {
       L.push("## Official previous-year papers and answer keys");
       L.push("Published by the conducting body on its own site; each line links its file. Shishya's own year-wise PYQ sets are practice questions freshly worded in that year's pattern, not these papers.");
@@ -323,7 +326,7 @@ export async function GET(
   }
 
   L.push("## Free resources on Shishya for this exam");
-  L.push(`- Exam hub (mocks, PYQs, news, dates): ${SITE}/exams/${exam.code}`);
+  L.push(`- Exam hub (mocks, ${hasOfficialQuestionPapersCtx ? "official previous year papers and PYQ-pattern practice" : "previous year paper practice (PYQ-pattern sets)"}, news, dates): ${SITE}/exams/${exam.code}`);
   L.push(`- Custom topic-wise mock builder — pick any syllabus topics, 10/25/50 questions, difficulty; timed, scored, solutions; readable in Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages: ${SITE}/exams/${exam.code}/build-mock`);
   if (fullPattern) {
     L.push(`- Full-length REAL-PATTERN mock (${exam.totalQuestions} questions · ${exam.durationMin} min · sections in real order): the "Full-Length Mock (Real Pattern)" tile on ${SITE}/exams/${exam.code}`);

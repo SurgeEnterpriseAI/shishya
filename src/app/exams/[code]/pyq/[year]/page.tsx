@@ -19,6 +19,7 @@ import { StartFullMockButton } from "./StartFullMockButton";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { PulseAsk } from "@/components/PulseAsk";
 import { StateExamsLink } from "@/components/StateExamsLink";
+import { pyqYearDescription, pyqYearH1, pyqYearHeadline } from "@/lib/pyq-naming";
 
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
@@ -76,11 +77,22 @@ export async function generateMetadata({
   const title = partial
     ? `${exam.shortName} ${year} Previous Year Questions (PYQ) — ${held} of ${exam.totalQuestions}, Solve Free | Shishya`
     : `${exam.shortName} ${year} Previous Year Questions (PYQ) — Full-Length Pattern Paper, Solve Free | Shishya`;
-  const description =
-    `${held} PYQ-pattern questions modelled on the ${exam.shortName} (${exam.name}) ${year} paper (which had ` +
-    `${exam.totalQuestions}) — freshly worded in that paper's pattern, not the original questions. ` +
-    (partial ? "Solve this set free" : "Solve it free as a full-length timed mock") +
-    ` on Shishya with instant scoring, solutions and topic-wise analysis. No coaching fees, in your language.`;
+  // Both names (15 Sep 2026, src/lib/pyq-naming.ts): the search phrase
+  // "previous year paper" plus the honest label; the official paper is named
+  // only where the conducting body published one and we link it.
+  const { loadOfficialPapers: loadOfficialPapersMeta } = await import("@/lib/official-papers-db");
+  const { papersForYear: papersForYearMeta } = await import("@/lib/official-papers");
+  const officialMeta =
+    papersForYearMeta(await loadOfficialPapersMeta(exam.id), yearNum).find((r) => r.kind !== "answer key") ?? null;
+  const description = pyqYearDescription({
+    short: exam.shortName,
+    name: exam.name,
+    year: yearNum,
+    held,
+    total: exam.totalQuestions,
+    partial,
+    officialPublisher: officialMeta?.publisher ?? null,
+  });
   const url = `https://shishya.in/exams/${exam.code}/pyq/${year}`;
   // The per-exam social card (src/app/exams/[code]/opengraph-image.tsx).
   const ogImage = `https://shishya.in/exams/${exam.code}/opengraph-image`;
@@ -90,7 +102,9 @@ export async function generateMetadata({
     alternates: { canonical: url },
     keywords: [
       `${exam.shortName} ${year} question paper`,
+      `${exam.shortName} ${year} previous year question paper`,
       `${exam.shortName} PYQ ${year}`,
+      `${exam.shortName} PYQ-pattern practice`,
       `${exam.shortName} previous year paper`,
       `${exam.shortName} ${year} paper with solutions`,
       `${exam.shortName} old papers`,
@@ -160,6 +174,8 @@ export default async function PYQYearPage({
   const { formatPdfSize, papersForYear } = await import("@/lib/official-papers");
   const officialForYear = papersForYear(await loadOfficialPapers(exam.id), yearNum);
   const officialPaper = officialForYear.find((r) => r.kind !== "answer key") ?? officialForYear[0] ?? null;
+  // A real question paper (not only an answer key) for this year.
+  const hasOfficialQuestionPaper = officialForYear.some((r) => r.kind !== "answer key");
   const officialPaperNote = officialPaper
     ? ` The original ${yearNum} paper is published by ${officialPaper.publisher}: ${officialPaper.url}`
     : "";
@@ -242,11 +258,24 @@ export default async function PYQYearPage({
   const pyqJsonLd = {
     "@context": "https://schema.org",
     "@type": ["Article", "LearningResource"],
-    headline: partial
-      ? `${exam.shortName} ${yearNum} PYQ-Pattern Questions (${questions.length} of ${exam.totalQuestions})`
-      : `${exam.shortName} ${yearNum} PYQ-Pattern Paper (${questions.length} questions)`,
-    name: `${exam.shortName} ${yearNum} PYQ`,
-    description: `${questions.length} PYQ-pattern questions modelled on the ${exam.name} ${yearNum} paper (which had ${exam.totalQuestions}) — freshly worded in that paper's pattern, not the original questions. Solve ${partial ? "this set" : "it as a full-length timed mock"} free with instant scoring and solutions.`,
+    headline: pyqYearHeadline({
+      short: exam.shortName,
+      year: yearNum,
+      held: questions.length,
+      total: exam.totalQuestions,
+      partial,
+      hasOfficialPaper: hasOfficialQuestionPaper,
+    }),
+    name: `${exam.shortName} ${yearNum} PYQ — previous year paper practice`,
+    description: pyqYearDescription({
+      short: exam.shortName,
+      name: exam.name,
+      year: yearNum,
+      held: questions.length,
+      total: exam.totalQuestions,
+      partial,
+      officialPublisher: hasOfficialQuestionPaper ? officialPaper?.publisher ?? null : null,
+    }),
     url: pageUrl,
     inLanguage: "en-IN",
     isAccessibleForFree: true,
@@ -278,13 +307,14 @@ export default async function PYQYearPage({
     mainEntity: [
       {
         "@type": "Question",
-        name: `Where can I solve ${exam.shortName} ${yearNum} previous year questions free online?`,
+        name: `Where can I solve the ${exam.shortName} ${yearNum} previous year paper (PYQ) free online?`,
         acceptedAnswer: {
           "@type": "Answer",
           text:
             `At ${pageUrl} you can solve ${exam.shortName} ${modelled} free. Shishya does not reproduce the original paper: every question is freshly worded in that year's pattern — same topics, style and difficulty, new wording and numbers` +
             (partial ? `, and this set covers ${questions.length} of the paper's ${exam.totalQuestions} questions, not the whole paper` : ", at the real paper's full length") +
-            `. They run as a timed mock with instant scoring, step-by-step solutions and topic-wise weak-area analysis. No fee and no coaching enrolment needed.`,
+            `. They run as a timed mock with instant scoring, step-by-step solutions and topic-wise weak-area analysis. No fee and no coaching enrolment needed.` +
+            officialPaperNote,
         },
       },
       {
@@ -333,7 +363,7 @@ export default async function PYQYearPage({
         <p className="text-xs text-ink-500">
           <Link href={`/exams/${code}`} className="hover:text-ink-800">{exam.shortName}</Link> · {t("exam.pyq.title")} · {yearNum}
         </p>
-        <h1 className="mt-1 text-3xl font-bold text-ink-900">{exam.shortName} — {yearNum}</h1>
+        <h1 className="mt-1 text-3xl font-bold text-ink-900">{pyqYearH1(exam.shortName, yearNum, hasOfficialQuestionPaper)}</h1>
         <p className="mt-1 text-sm text-ink-600">
           {/* "20 PYQ-pattern questions modelled on the 2023 paper (which
               had 150) · 60 minutes" — the student knows exactly what they

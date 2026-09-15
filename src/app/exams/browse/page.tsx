@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "All Entrance Exams in India — Search by State, Exam, Language | Shishya",
     description:
-      `Search and filter ${scope} across India by state, exam name, language, or category. Free mock tests, PYQ-pattern papers, AI tutor and a free day-by-day coach plan — AI-drafted, checked against the official notification. SSC, UPSC, IBPS, RRB, NEET, JEE, GATE, CAT, all state PSCs, all TETs, all Police exams.`,
+      `Search and filter ${scope} across India by state, exam name, language, or category. Free mock tests, previous year papers and PYQ-pattern practice, AI tutor and a free day-by-day coach plan — AI-drafted, checked against the official notification. SSC, UPSC, IBPS, RRB, NEET, JEE, GATE, CAT, all state PSCs, all TETs, all Police exams.`,
     alternates: { canonical: "https://shishya.in/exams/browse" },
     keywords: [
       "entrance exams india",

@@ -86,7 +86,7 @@ export async function generateMetadata({
   const examScope = examCount ? `${examCount} government and entrance exams` : "every government and entrance exam";
   let title = "Shishya — Free exam prep for India's government & entrance exams";
   let description =
-    `India's end-to-end free government exam preparation platform — ${examScope}. Tell us what you're preparing for — govt jobs, banking, civil services, engineering, medical — and we'll show you the national and state-level options. Free mocks, PYQ-pattern papers, study notes and AI tutor in every Indian language. 100% free, no credit card.`;
+    `India's end-to-end free government exam preparation platform — ${examScope}. Tell us what you're preparing for — govt jobs, banking, civil services, engineering, medical — and we'll show you the national and state-level options. Free mocks, previous year papers and PYQ-pattern practice, study notes and AI tutor in every Indian language. 100% free, no credit card.`;
 
   if (goal && !scope) {
     title = `${goal.label} entrance exams in India — Shishya`;

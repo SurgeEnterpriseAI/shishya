@@ -25,7 +25,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Shishya — Free Government Exam Prep",
     short_name: "Shishya",
     description:
-      "Free mock tests, PYQ-pattern practice, study notes and an AI tutor for Indian government and entrance exams.",
+      "Free mock tests, previous year papers and PYQ-pattern practice, study notes and an AI tutor for Indian government and entrance exams.",
     start_url: "/?utm_source=pwa",
     scope: "/",
     display: "standalone",

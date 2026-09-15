@@ -29,6 +29,7 @@ export function ExamFaq({
   questionCount,
   pyqYears,
   durationMin,
+  hasOfficialPapers = false,
 }: {
   examShortName: string;
   examName: string;
@@ -36,6 +37,8 @@ export function ExamFaq({
   /** Distinct PYQ years we have validated questions for. */
   pyqYears: number[];
   durationMin?: number | null;
+  /** The conducting body's own question papers are linked on the hub (official-papers-db). */
+  hasOfficialPapers?: boolean;
 }) {
   const faqs: FaqItem[] = [];
 
@@ -60,7 +63,12 @@ export function ExamFaq({
         : `${sorted[0]}`;
     faqs.push({
       q: `Are ${examShortName} previous year question papers available?`,
-      a: `Yes. Shishya has free ${examShortName} PYQ-pattern papers covering ${range} (${pyqYears.length} ${pyqYears.length === 1 ? "year" : "years"}) — questions freshly worded in the pattern of each year's paper, not the paper itself; each year's page shows how many questions it holds against the real paper's count. Each is a timed practice set with full solutions.`,
+      // Both names (15 Sep 2026): the official papers where the conducting
+      // body published them, and the PYQ-pattern practice sets, each named
+      // for what it is.
+      a: hasOfficialPapers
+        ? `Yes. The official ${examShortName} previous year papers the conducting body published are linked on this page, and Shishya has free PYQ-pattern practice papers covering ${range} (${pyqYears.length} ${pyqYears.length === 1 ? "year" : "years"}) — questions freshly worded in the pattern of each year's paper, not the paper itself; each year's page shows how many questions it holds against the real paper's count. Each is a timed practice set with full solutions.`
+        : `Shishya has free ${examShortName} previous year paper practice: PYQ-pattern papers covering ${range} (${pyqYears.length} ${pyqYears.length === 1 ? "year" : "years"}) — questions freshly worded in the pattern of each year's paper, not the paper itself; each year's page shows how many questions it holds against the real paper's count. Each is a timed practice set with full solutions.`,
     });
   }
 
