@@ -191,16 +191,33 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
     // Past tabs to empty as the cron does its job. Live rows stay the
     // only source for today/future (archived future rows are replaced
     // cycles); past buckets take both, deduped below preferring live.
-    const rowsRaw = await prisma.examImportantDate.findMany({
-      where: {
-        date: { gte: from },
-        exam: { active: true },
-        OR: [{ archivedAt: null }, { isExamDay: true }],
-      },
-      orderBy: { date: "asc" },
-      take: 800, // over-fetch — bucketed + deduped + capped below
-      include: { exam: { select: { id: true, code: true, shortName: true, eligibility: { select: { officialUrl: true } } } } },
-    });
+    //
+    // Two reads, each with its own cap (15 Sep 2026). The single
+    // oldest-first read capped at 800 filled the cap with 60 days of past
+    // rows — mostly archived exam-day copies — before it reached today:
+    // 2,686 rows matched, the 800th was dated 10 Sep, and Upcoming said
+    // "No upcoming dates announced." with 579 live future rows stored.
+    // Past and today/future are fetched apart so the past can never
+    // starve the future again.
+    const todayStartUtc = new Date(nowDay * 86_400_000 - 5.5 * 3_600_000);
+    const [pastRows, futureRows] = await Promise.all([
+      // Past: exam days only (classify drops past non-exam-day rows),
+      // live and archived, newest first.
+      prisma.examImportantDate.findMany({
+        where: { date: { gte: from, lt: todayStartUtc }, exam: { active: true }, isExamDay: true },
+        orderBy: { date: "desc" },
+        take: 800,
+        include: { exam: { select: { id: true, code: true, shortName: true, eligibility: { select: { officialUrl: true } } } } },
+      }),
+      // Today/future: live rows only, soonest first.
+      prisma.examImportantDate.findMany({
+        where: { date: { gte: todayStartUtc }, exam: { active: true }, archivedAt: null },
+        orderBy: { date: "asc" },
+        take: 400,
+        include: { exam: { select: { id: true, code: true, shortName: true, eligibility: { select: { officialUrl: true } } } } },
+      }),
+    ]);
+    const rowsRaw = [...pastRows.reverse(), ...futureRows];
     type RawRow = (typeof rowsRaw)[number];
     const classify = (r: RawRow): Exclude<CalendarBucket, "results"> | null => {
       const dDay = istDayNumber(r.date);
@@ -338,7 +355,8 @@ const loadUpcomingEvents = unstable_cache(
   loadUpcomingEventsRaw,
   // v7: `official` tightened to gold source tier (conducting-body domain).
   // v8: `isExamDay` only for announced rows; `expectedExamDay` + `tier` added.
-  ["home-upcoming-v8"],
+  // v9: past and today/future read apart (the 800-row cap hid every future date).
+  ["home-upcoming-v9"],
   { revalidate: 300, tags: ["exam-dates"] },
 );
 
