@@ -359,13 +359,19 @@ export async function POST(req: Request) {
         // something human.
         console.error("[chat] tutor stream failed:", err);
         const raw = String(err?.message ?? err);
+        // An outage must not end a new student's first session (16 Sep 2026:
+        // signups during the 11-13 Sep credit outages came back at half the
+        // usual rate). The practice pages need no AI, so name one.
+        const practice = examCodeForChat
+          ? ` Meanwhile you can still practise without the tutor: free questions and mocks at https://shishya.in/exams/${examCodeForChat}`
+          : " Meanwhile you can still practise without the tutor: pick your exam at https://shishya.in/exams and take a free quiz or mock.";
         const friendly = /credit balance|billing|invalid_request_error/i.test(raw)
-          ? "Shishya's tutor is briefly unavailable — the team has been alerted. Please try again in a little while."
+          ? `Shishya's tutor is briefly unavailable. Please try again in a little while.${practice}`
           : /overloaded|rate.?limit|429|529/i.test(raw)
             ? "Shishya is helping a lot of students right now — please try again in a minute."
             : "Something went wrong on our side — please try sending that again.";
         controller.enqueue(
-          encoder.encode(`event: error\ndata: ${JSON.stringify({ error: friendly })}\n\n`)
+          encoder.encode(`event: error\ndata: ${JSON.stringify({ error: friendly, next: examCodeForChat ? `/exams/${examCodeForChat}` : "/exams" })}\n\n`)
         );
       } finally {
         controller.close();
