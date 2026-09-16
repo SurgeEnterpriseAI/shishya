@@ -9,6 +9,7 @@
 // at hard limits below so we never explode the budget.
 
 import { prisma } from "./prisma";
+import { istDayNumber } from "@/lib/exam-phase";
 
 const MAX_THREADS = 5;            // how many recent sessions to surface
 const MAX_TOPICS = 8;             // how many distinct topics to list
@@ -36,10 +37,8 @@ export async function getStudentJourney(
   examCode: string,
 ): Promise<StudentJourney> {
   const since = new Date(Date.now() - JOURNEY_WINDOW_DAYS * 24 * 60 * 60 * 1000);
-  const todayUtc = (() => {
-    const d = new Date();
-    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  })();
+  // The daily brief's key: the IST day (midnight UTC of that calendar day).
+  const todayUtc = new Date(istDayNumber(new Date()) * 86_400_000);
 
   const exam = await prisma.exam.findUnique({
     where: { code: examCode },

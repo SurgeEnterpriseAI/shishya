@@ -121,7 +121,7 @@ export default async function PublicProfile({
     JOIN "Fact" f ON f."id" = v."factId"
     WHERE v."userId" = ${user.id}
       AND v."actionType" = 'VERIFY'
-      AND v."resolutionStatus" <> 'REJECTED'
+      AND v."resolutionStatus"::text <> 'DISMISSED'
     GROUP BY f."section"
     ORDER BY count DESC
   `;

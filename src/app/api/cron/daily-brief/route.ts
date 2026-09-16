@@ -21,6 +21,7 @@ export const dynamic = "force-dynamic";
 
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
+import { istDayNumber } from "@/lib/exam-phase";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { generateMock } from "@/lib/ai";
 import { getStudentState } from "@/lib/db/student-state";
@@ -57,9 +58,12 @@ function spendUsd(s: Stats) {
   );
 }
 
+// The IST day students see, stored as midnight UTC of that calendar day
+// (repo convention). The 20:30 UTC run writes the IST day that has just
+// begun, which is the day the dashboard and tutor look up (16 Sep 2026: the
+// UTC key matched only until 05:30 IST, so no brief was ever seen).
 function todayUtcMidnight(): Date {
-  const d = new Date();
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  return new Date(istDayNumber(new Date()) * 86_400_000);
 }
 
 export async function GET(req: Request) {

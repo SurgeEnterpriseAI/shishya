@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { isCurrentUserAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/db/prisma";
+import { istDayNumber } from "@/lib/exam-phase";
 import { getDashboardExams } from "@/lib/db/exam-cache";
 import { getT } from "@/lib/i18n-server";
 import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
@@ -95,11 +96,9 @@ async function renderDashboard() {
   await captureSignupAttribution(userId).catch(() => {});
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  // Today's brief is keyed on UTC midnight — same key the cron uses
-  const todayUtc = (() => {
-    const d = new Date();
-    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  })();
+  // Today's brief is keyed on the IST day (midnight UTC of that calendar
+  // day) — same key the cron uses.
+  const todayUtc = new Date(istDayNumber(new Date()) * 86_400_000);
 
   // The dashboard runs 6 expensive Prisma queries. With the bumped
   // connection_limit=5 in the pooled DATABASE_URL these can safely run
