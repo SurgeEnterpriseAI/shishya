@@ -4,6 +4,7 @@
 
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db/prisma";
+import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
 import { loadExamWeekInputs } from "@/lib/exam-week-inputs";
 import { standingSitting } from "@/lib/score-sitting";
 import { STATES, stateSlug } from "@/lib/state-info";
@@ -264,7 +265,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // new stories. Archived rows stay listed (noindex decision pending).
   const newsItems = await prisma.examNewsItem
     .findMany({
-      where: { exam: { active: true } },
+      where: { exam: { active: true }, OR: [{ source: null }, { source: { not: SUPPRESSED_SOURCE } }] },
       select: {
         id: true,
         publishedAt: true,

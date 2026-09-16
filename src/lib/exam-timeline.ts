@@ -113,6 +113,20 @@ export const KIND_ICON: Record<DateKind, string> = {
   OTHER: "📌",
 };
 
+/** Provenance tag for a GENERATED tracker row or news item a human archived
+ *  because it was wrong (16 Sep 2026: MP RAEO "exam September 15-17" and
+ *  "2,784 vacancies", an expected answer-key date stored as OTHER, UPSC CSE
+ *  rows filed under LA_LPSC). Plain archiving is not enough — the refresh
+ *  writer re-creates every generated date row and revives an archived story
+ *  it restates. src/lib/exam-data-writer.ts drops anything matching a
+ *  suppressed row; the archive page, news permalinks and sitemap never show
+ *  one. Starts with "ai-generated" so provenance checks still read it as
+ *  generated. */
+export const SUPPRESSED_SOURCE = "ai-generated:claude:suppressed";
+
+/** A label that names an answer key ("Answer key (expected)", "answer-keys out"). */
+export const ANSWER_KEY_LABEL = /answer[\s-]*keys?\b/i;
+
 /** Resolve a row's kind AND say where it came from: `declared` means the
  *  row's own kind column held it, otherwise it was inferred from the
  *  label (ExamImportantDate.kind is NULL on legacy rows). */
@@ -121,6 +135,10 @@ export function resolveKindInfo(r: { kind?: string | null; label: string; isExam
   declared: boolean;
 } {
   const k = (r.kind ?? "").toUpperCase();
+  // A generated "Answer key (expected)" row stored as OTHER (16 Sep 2026,
+  // MP RAEO, 5 Oct) slipped past every answer-key rule, which match the
+  // kind only. Its label decides.
+  if (k === "OTHER" && ANSWER_KEY_LABEL.test(r.label)) return { kind: "ANSWER_KEY", declared: true };
   if (k && k in KIND_ORDER) return { kind: k as DateKind, declared: true };
   return { kind: kindFromLabel(r.label, r.isExamDay), declared: false };
 }

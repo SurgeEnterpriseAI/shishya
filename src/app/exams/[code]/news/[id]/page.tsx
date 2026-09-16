@@ -27,6 +27,7 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { getExamTheme } from "@/lib/exam-theme";
 import { getT } from "@/lib/i18n-server";
+import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
 import { StateExamsLink } from "@/components/StateExamsLink";
 
 interface RouteParams {
@@ -46,7 +47,7 @@ export async function generateMetadata({
       exam: { select: { code: true, name: true, shortName: true } },
     },
   });
-  if (!row || row.exam.code !== code) {
+  if (!row || row.exam.code !== code || row.source === SUPPRESSED_SOURCE) {
     return { title: "Notification not found — Shishya" };
   }
 
@@ -106,7 +107,8 @@ export default async function NewsPermalinkPage({
       },
     },
   });
-  if (!row || row.exam.code !== code) notFound();
+  // A story a human suppressed as wrong is gone, not archived history.
+  if (!row || row.exam.code !== code || row.source === SUPPRESSED_SOURCE) notFound();
   const { t, locale } = await getT();
 
   const theme = getExamTheme(row.exam.category);

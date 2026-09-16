@@ -19,6 +19,7 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { getExamTheme } from "@/lib/exam-theme";
 import { getT } from "@/lib/i18n-server";
+import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
 import { StateExamsLink } from "@/components/StateExamsLink";
 
 export async function generateMetadata({
@@ -61,12 +62,12 @@ export default async function ArchivePage({
   // than any single exam has accumulated, and per-row cost is tiny).
   const [news, dates] = await Promise.all([
     prisma.examNewsItem.findMany({
-      where: { examId: exam.id, archivedAt: { not: null } },
+      where: { examId: exam.id, archivedAt: { not: null }, OR: [{ source: null }, { source: { not: SUPPRESSED_SOURCE } }] },
       orderBy: { publishedAt: "desc" },
       take: 200,
     }),
     prisma.examImportantDate.findMany({
-      where: { examId: exam.id, archivedAt: { not: null } },
+      where: { examId: exam.id, archivedAt: { not: null }, OR: [{ source: null }, { source: { not: SUPPRESSED_SOURCE } }] },
       orderBy: { date: "desc" },
       take: 200,
     }),

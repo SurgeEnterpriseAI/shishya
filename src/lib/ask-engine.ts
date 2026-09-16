@@ -16,6 +16,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
 import { anthropic, MODEL, cachedSystem } from "@/lib/ai/client";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
@@ -137,7 +138,7 @@ async function getExamDetails(input: { code: string }) {
   const [dates, results] = await Promise.all([
     prisma.$queryRaw<any[]>`
       SELECT label, date FROM "ExamImportantDate"
-      WHERE "examId" = ${e.id} AND date > NOW() - INTERVAL '30 days'
+      WHERE "examId" = ${e.id} AND "archivedAt" IS NULL AND date > NOW() - INTERVAL '30 days'
       ORDER BY date ASC LIMIT 6`,
     prisma.$queryRaw<any[]>`
       SELECT stage, headline, "declaredOn" FROM "ExamResult"
@@ -177,7 +178,7 @@ async function searchContent(input: { query: string }) {
     prisma.$queryRaw<any[]>`
       SELECT e.code, n.title, LEFT(n.body, 400) AS excerpt, n."publishedAt"
       FROM "ExamNewsItem" n JOIN "Exam" e ON e.id = n."examId"
-      WHERE (n.title ILIKE ${q} OR n.body ILIKE ${q})
+      WHERE (n.title ILIKE ${q} OR n.body ILIKE ${q}) AND n.source IS DISTINCT FROM ${SUPPRESSED_SOURCE}
       ORDER BY n."publishedAt" DESC LIMIT 4`,
   ]);
   return {

@@ -11,6 +11,7 @@ function fakeDb(rows: Row[]) {
   const db = {
     examNewsItem: {
       findMany: async ({ where }: any) =>
+        where.source === "ai-generated:claude:suppressed" ? [] :
         rows.filter((r) => (where.archivedAt === null ? r.archivedAt === null : r.archivedAt !== null && r.archivedAt >= where.archivedAt.gte)),
       create: async (args: any) => (calls.create.push(args), {}),
       update: async (args: any) => (calls.update.push(args), {}),

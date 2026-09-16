@@ -125,7 +125,7 @@ async function examOptions(userId: string | null): Promise<ExamOption[]> {
   const dates = await prisma.$queryRaw<{ code: string; d: Date }[]>`
     SELECT DISTINCT ON (e.code) e.code, i.date AS d
     FROM "ExamImportantDate" i JOIN "Exam" e ON e.id = i."examId"
-    WHERE i."isExamDay" = TRUE AND i.date > NOW()
+    WHERE i."isExamDay" = TRUE AND i."archivedAt" IS NULL AND i.date > NOW()
     ORDER BY e.code, i.date ASC`;
   const dateByCode = new Map(dates.map((x) => [x.code, x.d.toISOString().slice(0, 10)]));
   return rows.map((r) => ({

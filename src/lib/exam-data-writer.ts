@@ -29,15 +29,38 @@
 //     18:30–24:00 UTC window.
 //   • News carries the cited URL in `url`; `source` stays the provenance
 //     tag the cron keys staleness/archival on.
+//   • A human beats the generator (16 Sep 2026). A generated story or
+//     date matching one a human SUPPRESSED (archived as wrong, source
+//     SUPPRESSED_SOURCE) is dropped, never re-created or revived. A
+//     generated milestone near a curated row of the same kind (source not
+//     generated — e.g. official-research rows read from the notice PDF) is
+//     dropped: the curated row is the answer for that cycle. An "answer
+//     key" row stored as OTHER is an ANSWER_KEY row and needs an official
+//     citation like any other key date.
 
 import type { PrismaClient } from "@prisma/client";
-import type { ExamInfoResult } from "@/lib/ai/exam-info";
+import type { DateKind, ExamInfoResult } from "@/lib/ai/exam-info";
+import { ANSWER_KEY_LABEL, SUPPRESSED_SOURCE, resolveKind } from "@/lib/exam-timeline";
 import { istDayNumber } from "@/lib/exam-phase";
 import { examWeekUrls, submitIndexNow } from "@/lib/indexnow";
-import { planNewsWrites, STORY_LOOKBACK_DAYS, type NewsWritePlan } from "@/lib/news-dedupe";
+import { planNewsWrites, sameStory, storyFeatures, STORY_LOOKBACK_DAYS, type NewsWritePlan } from "@/lib/news-dedupe";
 import { gateTwinUrls, loadTwinVerdicts } from "@/lib/twin-localisation";
 
 export const GEN_SOURCE = "ai-generated:claude";
+export { SUPPRESSED_SOURCE };
+// How close (days, either side) a generated milestone may sit to a curated
+// row of the same kind before the curated row wins. EXAM stays tight so a
+// later stage (Mains months after Prelims) is still written.
+const CHANGE_NOTICE = /postpon|reschedul|revis|defer|corrigend|extend|new date|preponed/i;
+const CURATED_WINDOW_DAYS: Partial<Record<DateKind, number>> = {
+  NOTIFICATION: 60,
+  APPLICATION_START: 60,
+  APPLICATION_END: 60,
+  ADMIT_CARD: 21,
+  EXAM: 21,
+  ANSWER_KEY: 30,
+  RESULT: 30,
+};
 const MS_PER_DAY = 86_400_000;
 // Exam Week Mode (6 Sep 2026): a write for an exam whose exam day is within
 // this many days (either side) re-submits its hub / tracker / cutoff URLs
@@ -63,6 +86,10 @@ export interface WriteResult {
   newsArchived: number;
   dates: number;
   keptOfficial: number;
+  /** Generated stories dropped because they restate a suppressed one. */
+  newsSuppressed: number;
+  /** Generated dates dropped: suppressed, beside a curated row, or an uncited answer key. */
+  datesDropped: number;
   /** True when the exam is inside its exam week and the URL set was
    *  handed to IndexNow (fire-and-forget; acceptance is not awaited). */
   indexNow?: boolean;
@@ -71,9 +98,10 @@ export interface WriteResult {
 export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult, now: Date = new Date()): Promise<WriteResult> {
   // ── news ────────────────────────────────────────────────────────────
   let plan: NewsWritePlan | null = null;
+  let newsSuppressed = 0;
   if (info.news.length > 0) {
     const select = { id: true, title: true, body: true, url: true, archivedAt: true } as const;
-    const [live, recentlyArchived] = await Promise.all([
+    const [live, recentlyArchived, suppressed] = await Promise.all([
       db.examNewsItem.findMany({
         where: { examId, source: GEN_SOURCE, archivedAt: null },
         select,
@@ -85,42 +113,101 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
         orderBy: { archivedAt: "desc" },
         take: REVIVE_POOL,
       }),
+      db.examNewsItem.findMany({ where: { examId, source: SUPPRESSED_SOURCE }, select: { title: true }, take: REVIVE_POOL }),
     ]);
-    plan = planNewsWrites([...live, ...recentlyArchived], info.news, now);
-    for (const u of plan.update) {
-      await db.examNewsItem.update({ where: { id: u.id }, data: u.data });
-    }
-    for (const c of plan.create) {
-      await db.examNewsItem.create({ data: { examId, source: GEN_SOURCE, ...c } });
-    }
-    if (plan.archive.length > 0) {
-      await db.examNewsItem.updateMany({
-        where: { id: { in: plan.archive }, archivedAt: null },
-        data: { archivedAt: now },
-      });
+    // A restatement is suppressed only when it repeats every stated fact of
+    // the suppressed headline (its numbers, months, years): an undated
+    // "exam date postponed" may be a real new postponement.
+    const suppressedStories = suppressed.map((s) => storyFeatures(s.title));
+    const repeatsSuppressed = (title: string) => {
+      const f = storyFeatures(title);
+      return suppressedStories.some(
+        (s) => sameStory(s, f) && [...s.details].every((x) => f.details.has(x)) && [...s.years].every((y) => f.years.has(y)),
+      );
+    };
+    const incomingNews = info.news.filter((n) => !repeatsSuppressed(n.title));
+    newsSuppressed = info.news.length - incomingNews.length;
+    // Nothing left to write → nothing to archive either (an empty
+    // generation must never wipe the live stories).
+    if (incomingNews.length > 0) {
+      plan = planNewsWrites([...live, ...recentlyArchived], incomingNews, now);
+      for (const u of plan.update) {
+        await db.examNewsItem.update({ where: { id: u.id }, data: u.data });
+      }
+      for (const c of plan.create) {
+        await db.examNewsItem.create({ data: { examId, source: GEN_SOURCE, ...c } });
+      }
+      if (plan.archive.length > 0) {
+        await db.examNewsItem.updateMany({
+          where: { id: { in: plan.archive }, archivedAt: null },
+          data: { archivedAt: now },
+        });
+      }
     }
   }
 
   // ── dates ───────────────────────────────────────────────────────────
   let keptOfficial = 0;
+  let datesDropped = 0;
+  let datesWritten = false;
   if (info.dates.length > 0) {
     const todayIst = istDayNumber(now);
-    const incoming = info.dates.map((d) => {
+    const [curated, suppressedDates] = await Promise.all([
+      // Curated = a human-verified OFFICIAL row with a kind (the 15 official-
+      // research rows today) — not the untyped seed rows from launch.
+      db.examImportantDate.findMany({
+        where: {
+          examId,
+          archivedAt: null,
+          confidence: "official",
+          kind: { not: null },
+          OR: [{ source: null }, { NOT: { source: { startsWith: "ai-generated" } } }],
+        },
+        select: { kind: true, label: true, date: true, isExamDay: true },
+      }),
+      db.examImportantDate.findMany({
+        where: { examId, source: SUPPRESSED_SOURCE },
+        select: { kind: true, label: true, date: true, isExamDay: true },
+      }),
+    ]);
+    const dayKey = (kind: string, date: Date) => `${kind}|${date.toISOString().slice(0, 10)}`;
+    const dayNo = (date: Date) => Math.floor(date.getTime() / MS_PER_DAY);
+    const suppressedKeys = new Set(suppressedDates.map((s) => dayKey(resolveKind(s), s.date)));
+    const generated = info.dates.map((d) => {
       const date = d.date ? new Date(`${d.date}T00:00:00Z`) : new Date((todayIst + d.daysFromNow) * MS_PER_DAY);
-      return { d, date, key: `${d.kind}|${date.toISOString().slice(0, 10)}` };
+      const kind: DateKind = d.kind === "OTHER" && ANSWER_KEY_LABEL.test(d.label) ? "ANSWER_KEY" : d.kind;
+      return { d, kind, date, key: dayKey(kind, date) };
     });
+    const incoming = generated.filter(({ d, kind, date, key }) => {
+      if (kind === "ANSWER_KEY" && !(d.confidence === "official" && d.source)) return false;
+      if (suppressedKeys.has(key)) return false;
+      const window = CURATED_WINDOW_DAYS[kind];
+      if (window === undefined) return true;
+      const near = curated.filter((c) => resolveKind(c) === kind && Math.abs(dayNo(c.date) - dayNo(date)) <= window);
+      if (near.length === 0) return true;
+      // An officially cited change must get through: a postponement or
+      // corrigendum notice, or a cited date later than every curated row of
+      // that kind. A same-day or earlier generated copy (the 15 Sep MP RAEO
+      // rows) is still dropped.
+      if (d.confidence === "official" && d.source) {
+        if (CHANGE_NOTICE.test(`${d.label} ${d.notes ?? ""}`)) return true;
+        if (near.every((c) => dayNo(date) > dayNo(c.date))) return true;
+      }
+      return false;
+    });
+    datesDropped = generated.length - incoming.length;
     const incomingOfficialKeys = new Set(incoming.filter((x) => x.d.confidence === "official").map((x) => x.key));
 
     // Prior official rows the new run did NOT re-confirm as official stay live.
     const prior = await db.examImportantDate.findMany({
       where: { examId, source: GEN_SOURCE, archivedAt: null },
-      select: { id: true, kind: true, date: true, confidence: true, url: true },
+      select: { id: true, kind: true, label: true, date: true, confidence: true, url: true },
     });
     const keepIds: string[] = [];
     const keptKeys = new Set<string>();
     for (const p of prior) {
       if (p.confidence !== "official" || !p.url || !p.kind) continue;
-      const key = `${p.kind}|${p.date.toISOString().slice(0, 10)}`;
+      const key = dayKey(p.kind === "OTHER" && ANSWER_KEY_LABEL.test(p.label) ? "ANSWER_KEY" : p.kind, p.date);
       if (!incomingOfficialKeys.has(key)) {
         keepIds.push(p.id);
         keptKeys.add(key);
@@ -128,6 +215,9 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
     }
     keptOfficial = keepIds.length;
 
+    // Everything the run returned was dropped → keep the live generation.
+    if (incoming.length > 0) {
+    datesWritten = true;
     await db.examImportantDate.updateMany({
       where: { examId, source: GEN_SOURCE, archivedAt: null, ...(keepIds.length ? { id: { notIn: keepIds } } : {}) },
       data: { archivedAt: now },
@@ -143,11 +233,14 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
           isExamDay: d.isExamDay,
           notes: d.notes,
           source: GEN_SOURCE,
+          // The stored kind stays as generated: readers resolve an answer-key
+          // label on OTHER, and exam-alerts compares stored kinds.
           kind: d.kind,
           confidence: d.confidence,
           url: d.source ?? null,
         },
       });
+    }
     }
   }
 
@@ -162,7 +255,7 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
   // safety net for the last exam of a run.
   let indexNow = false;
   const newsChanged = plan !== null && plan.create.length + plan.archive.length + plan.revived + plan.refreshed > 0;
-  if (newsChanged || info.dates.length > 0) {
+  if (newsChanged || datesWritten) {
     const todayIst = istDayNumber(now);
     const from = new Date((todayIst - EXAM_WEEK_DAYS) * MS_PER_DAY);
     const to = new Date((todayIst + EXAM_WEEK_DAYS + 1) * MS_PER_DAY);
@@ -193,6 +286,8 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
     newsArchived: plan?.archive.length ?? 0,
     dates: info.dates.length,
     keptOfficial,
+    newsSuppressed,
+    datesDropped,
     indexNow,
   };
 }

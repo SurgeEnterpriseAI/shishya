@@ -71,7 +71,7 @@ export async function buildStudent360(
       exam
         ? prisma.$queryRaw<any[]>`
             SELECT MIN(d.date) AS next FROM "ExamImportantDate" d
-            WHERE d."examId" = ${exam.eid} AND d."isExamDay" = TRUE AND d.date > now()`
+            WHERE d."examId" = ${exam.eid} AND d."isExamDay" = TRUE AND d."archivedAt" IS NULL AND d.date > now()`
         : Promise.resolve([]),
       prisma.$queryRaw<any[]>`
         SELECT cp."dailyMinutes",

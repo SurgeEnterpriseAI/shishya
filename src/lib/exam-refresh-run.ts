@@ -56,6 +56,9 @@ export interface ExamRefreshLogEntry {
   lane?: ExamWeekPhase;
   news?: number;
   dates?: number;
+  /** Generated rows the writer dropped (suppressed, beside a curated row, uncited answer key). */
+  datesDropped?: number;
+  newsSuppressed?: number;
   err?: string;
 }
 
@@ -176,7 +179,7 @@ export async function runExamDataRefresh(opts: ExamRefreshRunOptions = {}): Prom
       // not re-confirm, stores absolute dates at midnight UTC, persists
       // cited URLs. Students can still browse history via the archive page.
       const w = await writeExamInfo(prisma, exam.id, info);
-      log.push({ code: exam.code, ok: true, lane: laneEntry?.phase, news: w.news, dates: w.dates });
+      log.push({ code: exam.code, ok: true, lane: laneEntry?.phase, news: w.news, dates: w.dates, datesDropped: w.datesDropped, newsSuppressed: w.newsSuppressed });
     } catch (err) {
       log.push({ code: exam.code, ok: false, lane: laneEntry?.phase, err: (err as Error).message });
     }

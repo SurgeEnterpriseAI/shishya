@@ -30,6 +30,7 @@
 // visitor drills down.
 
 import type { Metadata } from "next";
+import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { auth } from "@/lib/auth";
@@ -204,7 +205,8 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
       // Past: exam days only (classify drops past non-exam-day rows),
       // live and archived, newest first.
       prisma.examImportantDate.findMany({
-        where: { date: { gte: from, lt: todayStartUtc }, exam: { active: true }, isExamDay: true },
+        // Suppressed rows (a human archived them as wrong) are not history.
+        where: { date: { gte: from, lt: todayStartUtc }, exam: { active: true }, isExamDay: true, OR: [{ source: null }, { source: { not: SUPPRESSED_SOURCE } }] },
         orderBy: { date: "desc" },
         take: 800,
         include: { exam: { select: { id: true, code: true, shortName: true, eligibility: { select: { officialUrl: true } } } } },
@@ -356,7 +358,7 @@ const loadUpcomingEvents = unstable_cache(
   // v7: `official` tightened to gold source tier (conducting-body domain).
   // v8: `isExamDay` only for announced rows; `expectedExamDay` + `tier` added.
   // v9: past and today/future read apart (the 800-row cap hid every future date).
-  ["home-upcoming-v9"],
+  ["home-upcoming-v10"],
   { revalidate: 300, tags: ["exam-dates"] },
 );
 
