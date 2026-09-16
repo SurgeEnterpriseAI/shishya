@@ -109,12 +109,15 @@ describe("poll + exam day — announced days only, tier word always", () => {
     expect(f.summary.tally).toBe(false);
   });
 
-  it("before the first shift only 'all the best'; from the shift's start the morning poll", () => {
+  it("before the first sitting ends only 'all the best'; from its end the morning poll", () => {
     const rows = [examRow("ex", "2026-09-13", { notes: "Shift 1: 10:00 AM to 11:00 AM" })];
     const early = buildExamNightFacts(input({ rows }), fmt(ist("2026-09-13", 9, 30)));
     expect(early.poll).toBeNull();
     expect(early.pollPending).toBe(true);
-    const later = buildExamNightFacts(input({ rows }), fmt(ist("2026-09-13", 10, 30)));
+    const during = buildExamNightFacts(input({ rows }), fmt(ist("2026-09-13", 10, 30)));
+    expect(during.poll).toBeNull();
+    expect(during.pollPending).toBe(true);
+    const later = buildExamNightFacts(input({ rows }), fmt(ist("2026-09-13", 11)));
     expect(later.poll?.morning).toBe(true);
     expect(later.pollPending).toBe(false);
   });

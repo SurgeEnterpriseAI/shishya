@@ -504,6 +504,89 @@ describe("examChecklistMeta", () => {
   });
 });
 
+// ── 16 Sep 2026: every sitting of the day, open-ended start rows ──────────
+
+const KSRP: ChecklistExam = {
+  ...SSC_CGL,
+  code: "KA_KSRP",
+  name: "Karnataka KSRP / KSISF / IRB Special Reserve Police Constable",
+  shortName: "KA KSRP",
+  category: "STATE_LEVEL",
+  languages: [],
+};
+const KEA_URL = "https://cetonline.karnataka.gov.in";
+const ksrpMorning: TimelineInput = {
+  id: "cmu1n5l6d005bhfwbmcxt8izx",
+  label: "Written test — outside Kalyana Karnataka (1,455 posts), 10:30–12:00",
+  date: d("2026-09-20"),
+  isExamDay: true,
+  kind: "EXAM",
+  confidence: "official",
+  url: "https://cetonline.karnataka.gov.in/keawebentry456/kisrpc2026/ksrpnkkkannada.pdf",
+  notes: null,
+};
+const ksrpAfternoon: TimelineInput = {
+  ...ksrpMorning,
+  id: "cmu1n5l7z005dhfwby22wojft",
+  label: "Written test — Kalyana Karnataka (KSRP, KSISF, IRB; 859 posts), 15:00–16:30",
+  url: "https://cetonline.karnataka.gov.in/keawebentry456/kiskk2026/KSRP_KK_3-5_SCHDkannada.pdf",
+};
+const ksrpReportedCopy: TimelineInput = {
+  ...ksrpMorning,
+  id: "cmu2p8pl00045ov8iob363eyv",
+  label: "Written exam — KSRP/KSISF/IRB",
+  url: "https://www.karmasandhan.com/ksrp-police-constable-recruitment-2026/",
+};
+
+describe("buildExamChecklist — every sitting of the exam day (KSRP, 20 Sep 2026)", () => {
+  it("lists both official sittings, earliest first, on the eve and on the day, whatever the row order", () => {
+    for (const rows of [
+      [ksrpAfternoon, ksrpMorning, ksrpReportedCopy],
+      [ksrpReportedCopy, ksrpMorning, ksrpAfternoon],
+    ]) {
+      for (const now of [ist("2026-09-19", 18, 30), ist("2026-09-20", 8)]) {
+        const c = buildExamChecklist({ exam: KSRP, subjects: [], rows, officialUrl: KEA_URL, now });
+        expect(c.examDay?.label).toBe(ksrpMorning.label);
+        expect(c.sittings.map((s) => s.label)).toEqual([ksrpMorning.label, ksrpAfternoon.label]);
+        expect(c.sittings.every((s) => s.dated.endsWith("(official)"))).toBe(true);
+      }
+    }
+  });
+
+  it("a single-sitting exam has one sitting (the page keeps its 'Tracker row' line)", () => {
+    const c = buildExamChecklist({ exam: SSC_CGL, subjects: [], rows: [examOfficial], officialUrl: SSC_URL, now: NOW });
+    expect(c.sittings).toHaveLength(1);
+  });
+});
+
+describe("buildExamChecklist — open-ended start row (MP RAEO, 17 Sep 2026)", () => {
+  const RAEO: ChecklistExam = { ...SSC_CGL, code: "MP_RAEO", name: "MP Krishi Vistar Adhikari", shortName: "MP RAEO", category: "STATE_LEVEL" };
+  const raeoExam: TimelineInput = {
+    id: "cmu1n5jyf003yhfwbwi7kmt7n",
+    label: "Online exam begins — shifts 09:00–12:00 and 14:30–17:30 (end date not announced)",
+    date: d("2026-09-17"),
+    isExamDay: true,
+    kind: "EXAM",
+    confidence: "official",
+    url: "https://esb.mp.gov.in/rulebooks/RB_2026/Group2_SG1_2026_ExamDateExtended_Rulebookpage_1_28__31072026.pdf",
+    notes: null,
+  };
+
+  it("the morning after says the exam began and the end date is not announced — never 'the paper was held'", () => {
+    const c = buildExamChecklist({ exam: RAEO, subjects: [], rows: [raeoExam], officialUrl: "https://esb.mp.gov.in", now: ist("2026-09-18", 9) });
+    expect(c.phase).toBe("window");
+    expect(c.state.openEnded).toBe(true);
+    expect(c.window).toBeNull();
+    expect(c.examDayLine).toMatch(/^Exam began 17 \S+ \(official\); end date not announced — your shift day is on your admit card\.$/);
+    expect(c.examDayLine).not.toContain("held");
+  });
+
+  it("exam day itself still reads 'Exam today'", () => {
+    const c = buildExamChecklist({ exam: RAEO, subjects: [], rows: [raeoExam], officialUrl: "https://esb.mp.gov.in", now: ist("2026-09-17", 9) });
+    expect(c.examDayLine).toMatch(/^Exam today, 17 \S+ \(official\)\.$/);
+  });
+});
+
 // ── Homepage strip ─────────────────────────────────────────────────────────
 
 const strip = (over: Partial<StripRowInput>): StripRowInput => ({
@@ -565,15 +648,29 @@ describe("pickExamsStrip — announced exam days only", () => {
     expect(s).toEqual({ mode: "none", items: [], more: 0 });
   });
 
-  it("the 'how was it?' prompt opens at the first shift's start, noon without timings, always from 18:00", () => {
+  it("the 'how was it?' prompt opens when the first sitting ends, noon without timings, always from 18:00", () => {
+    // 16 Sep 2026: the end of the first sitting, not its start.
     const timed = strip({ notes: "Paper I 10:00 AM to 12:30 PM" });
-    expect(pickExamsStrip([timed], ist("2026-09-13", 9, 30)).items[0].pollOpen).toBe(false);
-    expect(pickExamsStrip([timed], ist("2026-09-13", 10, 30)).items[0].pollOpen).toBe(true);
+    expect(pickExamsStrip([timed], ist("2026-09-13", 10, 30)).items[0].pollOpen).toBe(false);
+    expect(pickExamsStrip([timed], ist("2026-09-13", 12, 30)).items[0].pollOpen).toBe(true);
+    const startOnly = strip({ notes: "Shift 1 from 10:00 AM" });
+    expect(pickExamsStrip([startOnly], ist("2026-09-13", 9, 30)).items[0].pollOpen).toBe(false);
+    expect(pickExamsStrip([startOnly], ist("2026-09-13", 10, 30)).items[0].pollOpen).toBe(true);
     const untimed = strip({});
     expect(pickExamsStrip([untimed], ist("2026-09-13", 11, 59)).items[0].pollOpen).toBe(false);
     expect(pickExamsStrip([untimed], ist("2026-09-13", 12)).items[0].pollOpen).toBe(true);
     const evening = strip({ notes: "Shift 7:00 PM to 9:00 PM" });
     expect(pickExamsStrip([evening], ist("2026-09-13", 18)).items[0].pollOpen).toBe(true);
+  });
+
+  it("two official rows of one exam on one day: the earlier sitting, whatever the row order (16 Sep 2026)", () => {
+    const morning = strip({ id: "z-morning", label: "Written test — 10:30–12:00" });
+    const afternoon = strip({ id: "a-afternoon", label: "Written test — 15:00–16:30" });
+    expect(pickExamsStrip([afternoon, morning], ist("2026-09-13", 9)).items.map((i) => i.id)).toEqual(["z-morning"]);
+    expect(pickExamsStrip([morning, afternoon], ist("2026-09-13", 9)).items.map((i) => i.id)).toEqual(["z-morning"]);
+    const untimedB = strip({ id: "b" });
+    const untimedA = strip({ id: "a" });
+    expect(pickExamsStrip([untimedB, untimedA], ist("2026-09-13", 9)).items.map((i) => i.id)).toEqual(["a"]);
   });
 
   it("caps the list and counts the rest", () => {

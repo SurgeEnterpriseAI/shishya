@@ -4,8 +4,10 @@
 // rows — no model calls.
 //
 // Order (what an exam-night lander came for, first):
-//   1. the exam day (or window) with its tier word; "all the best" before
-//      the first shift has plausibly started
+//   1. the exam day (or window) with its tier word — and its stage when the
+//      day is another stage than the exam's record ("Exam day (Mains)"),
+//      and "end date not announced" for an open-ended start row (16 Sep
+//      2026); "all the best" before the first sitting is over
 //   2. the "how was the paper?" poll — announced days only; the poll prints
 //      its own tally from n >= 10, or "be among the first", and its share
 //      line; the hardest-section votes only from the floor
@@ -114,10 +116,17 @@ export function ExamNightFacts({
     >
       {/* 1. The exam day / window, with its tier word. */}
       {facts.window ? (
-        <p className="text-sm font-bold text-ink-900">🎯 {fill(t("ew.window.title"), facts.window)}</p>
+        <p className="text-sm font-bold text-ink-900">
+          {/* Another stage's window names that stage, as the exam-day line
+              does (16 Sep 2026: "APSC CCE Mains — Exam window: 9 Oct to
+              11 Oct (reported)" on the Prelims-named exam's page). */}
+          🎯 {facts.examDayStage ? `${short} ${facts.examDayStage} — ` : ""}
+          {fill(t("ew.window.title"), facts.window)}
+        </p>
       ) : facts.examDay ? (
         <p className="text-sm font-bold text-ink-900">
-          🎯 {short} — {t("tracker.kind.EXAM")}: {facts.examDay.dated}
+          🎯 {short} — {t("tracker.kind.EXAM")}
+          {facts.examDayStage ? ` (${facts.examDayStage})` : ""}: {facts.examDay.dated}
           <span className="font-normal">{notice(facts.examDay)}</span>
         </p>
       ) : (
@@ -127,6 +136,11 @@ export function ExamNightFacts({
             {t("tracker.title")} →
           </Link>
         </p>
+      )}
+      {/* Open-ended start row (MP RAEO, 16 Sep 2026): no end date to print.
+          English until an i18n key exists for it. */}
+      {facts.state.openEnded && facts.announced && (
+        <p className="mt-1 text-xs text-ink-700">End date not announced on the tracker — your shift day is on your admit card.</p>
       )}
       {facts.state.phase === "window" && facts.poll && <p className="mt-1 text-xs text-ink-700">{t("ew.window.tip")}</p>}
       {facts.pollPending && <p className="mt-1 text-sm text-ink-800">{t("ew.today.am")}</p>}

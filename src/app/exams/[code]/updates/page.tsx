@@ -38,6 +38,7 @@ import { PulseAsk } from "@/components/PulseAsk";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
 import { StateExamsLink } from "@/components/StateExamsLink";
+import { examPageGates } from "@/lib/exam-page-gates";
 
 /** JSON-LD safe for inline <script>: a "</script>" inside a model- or
  *  web-derived label must not break out of the block. */
@@ -143,7 +144,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   const userId = session?.user?.id ?? null;
   const signedIn = !!userId;
 
-  const [{ timeline, rows: trackerRows }, news, results, elig, pyqCount, dataTs, enrollment] = await Promise.all([
+  const [{ timeline, rows: trackerRows }, news, results, elig, pyqCount, dataTs, enrollment, gates] = await Promise.all([
     loadTimeline(exam.id),
     prisma.examNewsItem
       .findMany({ where: { examId: exam.id, archivedAt: null }, orderBy: { publishedAt: "desc" }, take: 8 })
@@ -179,6 +180,9 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
           .findUnique({ where: { userId_examId: { userId, examId: exam.id } }, select: { shiftDate: true } })
           .catch(() => null)
       : Promise.resolve(null),
+    // Which sub-pages render (16 Sep 2026) — the cutoff card links /cutoff
+    // only where it has bands; a failed read keeps the link (GATES_OPEN).
+    examPageGates(exam.code),
   ]);
   const dataUpdatedAt = dataTs[0]?.t ? new Date(dataTs[0].t) : null;
   const viewer: ExamWeekViewer | null = userId ? { enrolled: !!enrollment, shiftDay: shiftDayIso(enrollment?.shiftDate) } : null;
@@ -357,7 +361,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
             the ±7-day window. The page's own alert box below stays the
             capture surface, so the block's compact one is switched off. */}
         <ExamWeekBlock
-          exam={{ id: exam.id, code: exam.code, shortName: short, category: exam.category, state: exam.state }}
+          exam={{ id: exam.id, code: exam.code, shortName: short, category: exam.category, state: exam.state, name: exam.name }}
           rows={trackerRows}
           officialUrl={officialUrl}
           locale={locale}
@@ -543,12 +547,16 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
           </section>
         )}
 
-        {/* Cutoff + official site */}
+        {/* Cutoff + official site. The cutoff card only where /cutoff
+            renders — MP RAEO and KA KSRP have no rank bands, and the card
+            sent their tracker visitors to a 404 (16 Sep 2026). */}
         <section className="mt-8 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-ink-200 bg-white p-4">
-            <p className="text-sm font-semibold text-ink-900">🎯 {t("tracker.cutoff")}</p>
-            <Link href={p(`/exams/${exam.code}/cutoff`)} className="mt-1 block text-sm font-medium text-saffron-700 hover:text-saffron-800">{t("tracker.cutoff.link")}</Link>
-          </div>
+          {gates.cutoff && (
+            <div className="rounded-xl border border-ink-200 bg-white p-4">
+              <p className="text-sm font-semibold text-ink-900">🎯 {t("tracker.cutoff")}</p>
+              <Link href={p(`/exams/${exam.code}/cutoff`)} className="mt-1 block text-sm font-medium text-saffron-700 hover:text-saffron-800">{t("tracker.cutoff.link")}</Link>
+            </div>
+          )}
           <div className="rounded-xl border border-ink-200 bg-white p-4">
             <p className="text-sm font-semibold text-ink-900">🏛️ {t("tracker.officialSite")}</p>
             {officialUrl ? (

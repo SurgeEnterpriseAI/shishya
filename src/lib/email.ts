@@ -1523,11 +1523,16 @@ export async function sendExamDayAfterEmail(p: {
   /** Does the tracker hold an ANSWER_KEY row on/after the exam day? Decides
    *  whether the alert line promises the key or the result (11 Sep 2026). */
   answerKeyAnnounced?: boolean;
-  /** markingSchemeStatable(exam) — only then the score-estimator link. */
+  /** sittingVerdict(exam, rows) is ok — only then the score-estimator link. */
   canEstimate?: boolean;
+  /** /exams/{code}/cutoff renders (rank bands exist — examPageGates). The
+   *  link is printed only when this is true (16 Sep 2026: MP RAEO and KA
+   *  KSRP have no bands, and the page 404s); omitted = no link. */
+  hasCutoffPage?: boolean;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const hub = `https://shishya.in/exams/${p.examCode}`;
+  const cutoffUrl = p.hasCutoffPage === true ? `${hub}/cutoff` : null;
   const subject = `${first}, how did the ${p.examShort} paper go?`;
   const utm = "utm_source=email&utm_medium=exam-day-after";
   const verdictUrl = (v: "EASY" | "MODERATE" | "TOUGH") => `${hub}?verdict=${v}&${utm}`;
@@ -1566,8 +1571,7 @@ What happens next, from the ${p.examShort} tracker:
 • ${p.answerKeyLine}
 • ${p.resultLine}
 • ${alertLine}: ${alertUrl}
-${estimateUrl ? `• Estimate your score when the key is out: ${estimateUrl}\n` : ""}• ${tk("ew.post.cutoff")}: ${hub}/cutoff
-Full tracker: ${hub}/updates
+${estimateUrl ? `• Estimate your score when the key is out: ${estimateUrl}\n` : ""}${cutoffUrl ? `• ${tk("ew.post.cutoff")}: ${cutoffUrl}\n` : ""}Full tracker: ${hub}/updates
 ${nextLine ? `\n${nextLine}: https://shishya.in/exams/${p.nextExam?.code}\n${inviteLine}\n` : ""}
 Whatever the paper felt like, the next step is the same one — keep the routine going.
 — Shishya (free, always)
@@ -1595,10 +1599,9 @@ Whatever the paper felt like, the next step is the same one — keep the routine
       <p style="font-size:13px;line-height:1.8;margin:0;color:#334155;">
         🔑 ${esc(p.answerKeyLine)}<br/>
         🏁 ${esc(p.resultLine)}<br/>
-        🔔 <a href="${alertUrl}" style="color:#b45309;font-weight:600;">${esc(alertLine)} →</a><br/>${
-          estimateUrl ? `\n        🧮 <a href="${estimateUrl}" style="color:#b45309;font-weight:600;">Estimate your score when the key is out →</a><br/>` : ""
-        }
-        🎯 <a href="${hub}/cutoff" style="color:#b45309;font-weight:600;">${esc(tk("ew.post.cutoff"))} →</a>
+        🔔 <a href="${alertUrl}" style="color:#b45309;font-weight:600;">${esc(alertLine)} →</a>${
+          estimateUrl ? `<br/>\n        🧮 <a href="${estimateUrl}" style="color:#b45309;font-weight:600;">Estimate your score when the key is out →</a>` : ""
+        }${cutoffUrl ? `<br/>\n        🎯 <a href="${cutoffUrl}" style="color:#b45309;font-weight:600;">${esc(tk("ew.post.cutoff"))} →</a>` : ""}
       </p>
       <p style="font-size:12px;margin:6px 0 0;"><a href="${hub}/updates" style="color:#b45309;">Full tracker →</a></p>
     </div>
@@ -1654,9 +1657,14 @@ export async function sendResultDayEmail(p: {
    *  is what the cron's NOT EXISTS check reads. Keyed on the result DAY so a
    *  Tier-2 / next-cycle result still reaches a student who got the last one. */
   guardTag: string;
+  /** /exams/{code}/cutoff renders (rank bands exist — examPageGates). The
+   *  "Either way" cutoff line is printed only when this is true (16 Sep
+   *  2026); omitted = no line, never a link to a 404. */
+  hasCutoffPage?: boolean;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const hub = `https://shishya.in/exams/${p.examCode}`;
+  const cutoffUrl = p.hasCutoffPage === true ? `${hub}/cutoff` : null;
   const subject = `${first}, ${p.examShort} result day: ${p.resultWhen}`;
   const nextStageText = p.nextStage
     ? `Next stage: ${p.nextStage.label} — ${p.nextStage.when}`
@@ -1677,9 +1685,7 @@ If you cleared:
 If not this time:
 • ${nextExamText}${p.nextExam ? ` — https://shishya.in/exams/${p.nextExam.code}` : ""}
 • Your practice history, weak-area map and mistake notebook carry over: https://shishya.in/dashboard
-
-Either way: ${tk("ew.post.cutoff")} — ${hub}/cutoff (the official cutoff is in the notice above; ours is indicative).
-
+${cutoffUrl ? `\nEither way: ${tk("ew.post.cutoff")} — ${cutoffUrl} (the official cutoff is in the notice above; ours is indicative).\n` : ""}
 One result does not measure you. Selection lists change every year; the routine you built does not.
 — Shishya (free, always)
 
@@ -1708,7 +1714,11 @@ One result does not measure you. Selection lists change every year; the routine 
         📓 Your practice history, weak-area map and mistake notebook carry over — <a href="https://shishya.in/dashboard" style="color:#b45309;font-weight:600;">dashboard →</a>
       </p>
     </div>
-    <p style="font-size:12px;line-height:1.6;margin:14px 0 0;color:#334155;">Either way: <a href="${hub}/cutoff" style="color:#b45309;font-weight:600;">${esc(tk("ew.post.cutoff"))} →</a> — the official cutoff is in the notice above; ours is indicative.</p>
+    ${
+      cutoffUrl
+        ? `<p style="font-size:12px;line-height:1.6;margin:14px 0 0;color:#334155;">Either way: <a href="${cutoffUrl}" style="color:#b45309;font-weight:600;">${esc(tk("ew.post.cutoff"))} →</a> — the official cutoff is in the notice above; ours is indicative.</p>`
+        : ""
+    }
     <p style="font-size:13px;line-height:1.6;margin:14px 0 0;color:#334155;">One result does not measure you. Selection lists change every year; the routine you built does not.</p>
     <p style="font-size:12px;color:#64748b;margin:16px 0 0;">— Shishya, free always</p>
   </div>

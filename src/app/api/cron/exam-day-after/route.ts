@@ -35,7 +35,9 @@
 //     (the hub block preselects the chip and posts it);
 //   • answer-key / result rows from the tracker WITH their tier word, or
 //     "not announced yet" — never a guessed date;
-//   • "what score qualifies" → /exams/{code}/cutoff;
+//   • "what score qualifies" → /exams/{code}/cutoff, only when that page
+//     renders (rank bands exist — examPageGates, 16 Sep 2026; MP RAEO and
+//     KA KSRP have none, and a mail must never link a 404);
 //   • the next exam in the same category + state 7–60 days out (the
 //     student's own enrollments first), with its tier.
 // Auth: Bearer ${CRON_SECRET}.  ?dry=1 → compute the recipient list per
@@ -51,7 +53,8 @@ import { sendExamDayAfterEmail } from "@/lib/email";
 import { computeExamWeekState, istDay } from "@/lib/exam-week";
 import { shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline } from "@/lib/exam-timeline";
-import { markingSchemeStatable } from "@/lib/marking-scheme";
+import { sittingVerdict } from "@/lib/score-sitting";
+import { loadExamPageGates, type ExamPageGates } from "@/lib/exam-page-gates";
 import {
   examEveDecision,
   examRowOnDay,
@@ -205,6 +208,13 @@ export async function GET(req: Request) {
     targets.push({ bundle, why: "shift-day" });
   }
 
+  // Which sub-pages render. A failed read links NO cutoff page (a mail
+  // cannot take a 404 back), unlike rendered pages, which fall back open.
+  const gates = await loadExamPageGates().catch((err) => {
+    console.error("[exam-day-after] page gates failed", err);
+    return new Map<string, ExamPageGates>();
+  });
+
   const report: { code: string; why: string; users: number; sent: number; next: string | null }[] = [];
   const mailed = new Set<string>();
   const trackCache = new Map<string, NextExam[]>();
@@ -242,15 +252,28 @@ export async function GET(req: Request) {
     const answerKeyRow = rowOnOrAfter(timeline, "ANSWER_KEY", yesterday);
     const answerKeyLine = statusLine("ew.post.key", answerKeyRow);
     const resultLine = statusLine("ew.post.result", rowOnOrAfter(timeline, "RESULT", yesterday));
-    // Estimator link only when the exam's marking scheme can be stated
-    // (markingSchemeStatable) — one read per exam, never per student.
+    // Estimator link only when the exam's marking scheme can be stated for
+    // THIS sitting — one read per exam, never per student. Row-aware since
+    // 16 Sep 2026: sittingVerdict is the check /score-estimate itself runs
+    // (stage rule + per-exam list), so the mail never links a page that
+    // refuses the sitting (SBI PO Mains on its Prelims record, 13 Sep).
     const canEstimate = await prisma.exam
       .findUnique({
         where: { id: meta.examId },
-        select: { totalQuestions: true, scoredQuestions: true, totalMarks: true, marksPerQ: true, description: true },
+        select: {
+          code: true,
+          name: true,
+          shortName: true,
+          totalQuestions: true,
+          scoredQuestions: true,
+          totalMarks: true,
+          marksPerQ: true,
+          description: true,
+        },
       })
-      .then((e) => !!e && markingSchemeStatable(e))
+      .then((e) => !!e && sittingVerdict(e, { rows, officialUrl: meta.officialUrl }, now).verdict.ok)
       .catch(() => false);
+    const hasCutoffPage = gates.get(meta.code)?.cutoff === true;
 
     const tk = trackKey(meta);
     let candidates = trackCache.get(tk);
@@ -363,6 +386,7 @@ export async function GET(req: Request) {
           nextExam: next ? { code: next.code, short: next.short, date: plainDay(next.row.date), tier: tierWord(next.row.tier) } : null,
           answerKeyAnnounced: !!answerKeyRow,
           canEstimate,
+          hasCutoffPage,
         }).catch(() => false);
         if (ok) {
           sent++;

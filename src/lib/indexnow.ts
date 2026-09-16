@@ -9,6 +9,8 @@
 // so the exam-data writer, the phase-article cron and the daily
 // ?scope=examweek cron submit the exam-week URL set directly.
 
+import type { ExamPageGates } from "@/lib/exam-page-gates";
+
 const INDEXNOW_HOST = "shishya.in";
 export const INDEXNOW_KEY = "7e0b8421fc95cdb98187e2b89a6e2437";
 export const SITE_ORIGIN = `https://${INDEXNOW_HOST}`;
@@ -53,13 +55,16 @@ export function submitIndexNow(urls: string[]): Promise<number> {
  *  fact-built checklist / exam-day / after-the-paper pages (13 Sep 2026),
  *  plus the Hindi/Telugu hub + tracker twins. Callers MUST pass the result
  *  through gateTwinUrls (src/lib/twin-localisation.ts): a twin that is not
- *  localised canonicalises to English and is never submitted. */
-export function examWeekUrls(code: string): string[] {
+ *  localised canonicalises to English and is never submitted.
+ *  /cutoff only when the page renders (16 Sep 2026, src/lib/exam-page-gates.ts):
+ *  MP_RAEO/cutoff and KA_KSRP/cutoff (no rank bands, 404) were in this set
+ *  for their whole exam week. Callers on a failed gate read pass GATES_CLOSED. */
+export function examWeekUrls(code: string, gates: Pick<ExamPageGates, "cutoff">): string[] {
   const b = SITE_ORIGIN;
   return [
     `${b}/exams/${code}`,
     `${b}/exams/${code}/updates`,
-    `${b}/exams/${code}/cutoff`,
+    ...(gates.cutoff ? [`${b}/exams/${code}/cutoff`] : []),
     `${b}/exams/${code}/checklist`,
     `${b}/exams/${code}/live`,
     `${b}/exams/${code}/reactions`,

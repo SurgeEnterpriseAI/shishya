@@ -33,8 +33,8 @@ import { getT, tFor } from "@/lib/i18n-server";
 import type { StringKey } from "@/lib/i18n";
 import type { SourceTier } from "@/lib/exam-timeline";
 import { getExamWeekInputs } from "@/lib/exam-week-inputs";
-import { loadExamNightExam, loadExamNightFacts } from "@/lib/exam-night-facts";
-import { examDayClaim, phaseArticleMeta } from "@/lib/phase-article-copy";
+import { loadExamNightExam, loadExamNightFacts, stageAwarePhaseMeta } from "@/lib/exam-night-facts";
+import { examDayClaim } from "@/lib/phase-article-copy";
 
 type TFn = (key: StringKey) => string;
 
@@ -55,7 +55,11 @@ export async function generateMetadata({
       locale: "en",
     }),
   ]);
-  const meta = phaseArticleMeta("LIVE", exam, examDayClaim(inputs.rows, inputs.officialUrl), facts.summary);
+  // Stage-aware (16 Sep 2026): a focus row of another stage keeps its date
+  // but names that stage ("21 Aug (official) Mains paper"), never this
+  // exam's own stage; "today" / "held" drop only when the short name is a
+  // stage ("UPSC Prelims"), and the description re-stages the full name.
+  const meta = stageAwarePhaseMeta("LIVE", exam, examDayClaim(inputs.rows, inputs.officialUrl), facts.summary);
   const url = `https://shishya.in/exams/${code}/live`;
   return {
     title: meta.title,

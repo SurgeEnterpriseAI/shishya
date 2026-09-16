@@ -54,10 +54,10 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { sendExamEveEmail } from "@/lib/email";
 import { getDailyQuote } from "@/data/motivational-quotes";
-import { computeExamWeekState, istDay } from "@/lib/exam-week";
+import { admitNotesAreReporting, computeExamWeekState, istDay } from "@/lib/exam-week";
 import { shiftDayIso, shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline, latestOfKind, type TimelineRow } from "@/lib/exam-timeline";
-import { markingSchemeStatable } from "@/lib/marking-scheme";
+import { sittingVerdict } from "@/lib/score-sitting";
 import {
   checklistLink,
   acceptedPlanDays,
@@ -89,7 +89,7 @@ interface EveContent {
   checklistIsArticle: boolean;
   admitCard: { label: string; when: string; url: string | null; notes: string | null } | null;
   nextDates: { label: string; when: string }[];
-  /** markingSchemeStatable(exam) → the mail may link the score estimator. */
+  /** sittingVerdict(exam, rows) is ok → the mail may link the score estimator. */
   canEstimate: boolean;
 }
 
@@ -104,7 +104,16 @@ async function buildContent(
     prisma.exam
       .findUnique({
         where: { id: meta.examId },
-        select: { totalQuestions: true, scoredQuestions: true, totalMarks: true, marksPerQ: true, description: true },
+        select: {
+          code: true,
+          name: true,
+          shortName: true,
+          totalQuestions: true,
+          scoredQuestions: true,
+          totalMarks: true,
+          marksPerQ: true,
+          description: true,
+        },
       })
       .catch(() => null),
   ]);
@@ -112,10 +121,17 @@ async function buildContent(
   // Reporting instructions live in the row's notes; without them the line
   // describes the admit-card RELEASE date ("Admit card: 5 Sep (official)")
   // — the template picks ew.eve.admit vs ew.eve.admitCard exactly like
-  // ExamWeekBlock does.
+  // ExamWeekBlock does. Notes count only when they read as reporting
+  // instructions (admitNotesAreReporting, 16 Sep 2026: "Test admit card
+  // available for download from MPESB portal" is a release note).
   const admitCard =
     admit && admit.tier === "official"
-      ? { label: admit.label, when: whenWithTier(admit), url: admit.url, notes: admit.notes?.trim() || null }
+      ? {
+          label: admit.label,
+          when: whenWithTier(admit),
+          url: admit.url,
+          notes: admitNotesAreReporting(admit.notes) ? admit.notes!.trim() : null,
+        }
       : null;
   const nextDates = nextTrackerRows(timeline, eve.day, eve.windowIds, 2).map((r) => ({
     label: r.label,
@@ -131,7 +147,10 @@ async function buildContent(
     checklistIsArticle: checklist.isArticle,
     admitCard,
     nextDates,
-    canEstimate: !!marking && markingSchemeStatable(marking),
+    // Row-aware (16 Sep 2026): the same sittingVerdict /score-estimate runs —
+    // the stage rule and the per-exam list — so the mail never links a page
+    // that refuses this sitting (SBI PO Mains on its Prelims record).
+    canEstimate: !!marking && sittingVerdict(marking, { rows: bundle.rows, officialUrl: meta.officialUrl }).verdict.ok,
   };
 }
 

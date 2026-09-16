@@ -9,8 +9,8 @@
 // when it clears passesStrictArticleGate:
 //
 //   • the "how was the paper?" poll — only on an ANNOUNCED (official /
-//     reported) exam day, from the first shift (examDayPollOpen) on exam
-//     day, that night, inside a window and in the post week
+//     reported) exam day, once the first sitting is over (examDayPollOpen)
+//     on exam day, that night, inside a window and in the post week
 //   • the tally — counts only from n >= VERDICT_MIN_N (publicTally); below
 //     the floor nothing but n leaves the server, and the poll itself prints
 //     "be among the first"
@@ -23,7 +23,9 @@
 //   • the indicative /cutoff page link, labelled "estimate, not official",
 //     only when that page renders (rank bands exist)
 //   • the PYQ-pattern link ("modelled on", never "real questions"), the
-//     full-length pattern paper, the next stage with its tier, the alert box
+//     full-length pattern paper (only when the sitting is the stored
+//     pattern's stage — fullPaperFitsSitting, 16 Sep 2026), the next stage
+//     with its tier, the alert box
 //
 // No "last declared cutoff" line (review, 13 Sep 2026). The only per-result
 // cutoff text we hold is ExamResult.cutoffNote, which the results extractor
@@ -53,6 +55,7 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import {
+  alertCopyPhase,
   computeExamWeekState,
   examDayPollOpen,
   type ExamWeekPhase,
@@ -67,10 +70,23 @@ import {
   type TimelineRow,
 } from "@/lib/exam-timeline";
 import { getVerdictTally, publicTally, VERDICT_MIN_N, type VerdictTally } from "@/lib/exam-verdict";
-import { markingSchemeStatable } from "@/lib/marking-scheme";
+import {
+  declaredStages,
+  fullPaperFitsSitting,
+  markingSchemeStatable,
+  sittingExamName,
+  sittingStageLabel,
+} from "@/lib/marking-scheme";
 import { passesStrictArticleGate } from "@/lib/phase-article-strict-gate";
 import { alertPhase, getExamWeekInputs } from "@/lib/exam-week-inputs";
-import { datedWithTier, rowDayLabel, type ExamNightSummary } from "@/lib/phase-article-copy";
+import {
+  datedWithTier,
+  phaseArticleMeta,
+  rowDayLabel,
+  type ExamDayClaim,
+  type ExamNightSummary,
+  type PhaseArticleMeta,
+} from "@/lib/phase-article-copy";
 
 export type ExamNightPhase = "LIVE" | "REACTIONS";
 
@@ -142,10 +158,14 @@ export interface ExamNightFactsView {
   announced: boolean;
   /** The exam-day row in focus (exam-week focus, else the next / last typed exam day). */
   examDay: DatedFact | null;
+  /** The stage the exam day IS when it differs from the stage the exam's
+   *  record describes ("Mains" on UPSC Prelims' 21 Aug row), else null —
+   *  printed next to the date so the day never reads as this page's stage. */
+  examDayStage: string | null;
   /** Multi-day window: from / to day labels and the tier text. Null when
    *  either end is a passed estimate (the exam-day line renders instead). */
   window: { from: string; to: string; tier: string } | null;
-  /** Exam day, before the first shift has plausibly started: "all the best" only. */
+  /** Exam day, before the first sitting is over: "all the best" only. */
   pollPending: boolean;
   /** The poll mounts: IST day key + the dated label for its share line. */
   poll: { examDate: string; examDayLabel: string; morning: boolean } | null;
@@ -168,8 +188,11 @@ export interface ExamNightFactsView {
   /** The indicative /cutoff page link renders (labelled estimate, not official). */
   hasCutoffPage: boolean;
   pyq: { year: number; count: number; total: number } | null;
+  /** The system full-pattern paper — null when the sitting in focus is
+   *  another stage than the stored pattern (fullPaperFitsSitting). */
   fullMockId: string | null;
-  /** Phase the alert box may act on (expected days never get key copy). */
+  /** Phase the alert box may act on (expected days never get key copy; an
+   *  open-ended window gets the post week's key copy — alertCopyPhase). */
   alertPhase: ExamWeekPhase;
   /** What the page renders, for the tagline / metadata. */
   summary: ExamNightSummary;
@@ -187,7 +210,7 @@ function dayDiff(fromDay: string, toDay: string): number {
 
 /**
  * May the poll mount now, and for which day? Mirrors ExamWeekBlock: never
- * on an expected-tier day; on exam day from the first shift's start
+ * on an expected-tier day; on exam day once the first sitting is over
  * (examDayPollOpen); that night, inside a multi-day window and in the
  * post week. Null otherwise.
  */
@@ -309,6 +332,7 @@ export function buildExamNightFacts(input: ExamNightInput, fmt: ExamNightFormat)
     state,
     announced,
     examDay: anchor ? fact(anchor) : null,
+    examDayStage: anchor ? sittingStageLabel(exam, anchor.label) : null,
     window: windowView,
     pollPending,
     poll,
@@ -324,8 +348,11 @@ export function buildExamNightFacts(input: ExamNightInput, fmt: ExamNightFormat)
     estimator,
     hasCutoffPage,
     pyq,
-    fullMockId: input.fullMockId,
-    alertPhase: alertPhase(state),
+    // The real-pattern paper follows the STORED pattern: not for a sitting
+    // of another stage (16 Sep 2026: /exams/LA_LPSC/live, UPSC_PRELIMS and
+    // IBPS_PO offered the Prelims paper for a Mains row, in every phase).
+    fullMockId: input.fullMockId && fullPaperFitsSitting(exam, anchor) ? input.fullMockId : null,
+    alertPhase: alertCopyPhase(alertPhase(state), state),
     summary: {
       poll: !!poll,
       tally: tallyShown,
@@ -342,15 +369,67 @@ export function buildExamNightFacts(input: ExamNightInput, fmt: ExamNightFormat)
 
 /** WhatsApp / copy text for the block's share control — names only what
  *  the page renders, and never a cutoff. English, like ShareExamButton's
- *  own chrome. */
-export function examNightShareMessage(examShort: string, facts: Pick<ExamNightFactsView, "examDay" | "summary">): string {
+ *  own chrome. The date carries the sitting's stage when it is another
+ *  stage's day, as the block does (16 Sep 2026: "UPSC Prelims (21 Aug
+ *  (official) Mains)", not a bare Mains date under a Prelims name). */
+export function examNightShareMessage(
+  examShort: string,
+  facts: Pick<ExamNightFactsView, "examDay" | "summary"> & Partial<Pick<ExamNightFactsView, "examDayStage">>,
+): string {
   const s = facts.summary;
   const parts: string[] = [];
   if (s.poll) parts.push("rate the paper in one tap, no login");
   if (s.keyStatus) parts.push("answer-key status from the tracker");
   if (parts.length === 0) parts.push("every exam date with its source tier, and free alerts");
-  const when = facts.examDay ? ` (${facts.examDay.dated})` : "";
+  const when = facts.examDay ? ` (${facts.examDay.dated}${facts.examDayStage ? ` ${facts.examDayStage}` : ""})` : "";
   return `${examShort}${when}: ${parts.join(", ")} — free on Shishya:`;
+}
+
+/**
+ * The /live and /reactions <title> / description claim, stage-aware (16 Sep
+ * 2026). examDayClaim names the exam-week focus row's date as "the {exam}
+ * paper", so /exams/UPSC_PRELIMS/live read "UPSC Prelims exam day — 21 Aug
+ * (official) paper" while 21 Aug is "Mains exam begins", and IBPS PO's 4 Oct
+ * row is Mains too. When the row's stage differs from the exam record's, the
+ * date keeps its tier word and gains the row's stage ("21 Aug (official)
+ * Mains"). The "today" / "held" claims drop only when the SHORT name itself
+ * names a stage ("UPSC Prelims" is neither being held nor done on a Mains
+ * day). A short name without one ("IBPS PO", "MPSC Rajyaseva") is true of
+ * the Mains day as well, so "IBPS PO exam today" stays (review, 16 Sep 2026).
+ */
+export function stageAwareClaim(
+  exam: { code?: string | null; name?: string | null; shortName?: string | null },
+  claim: ExamDayClaim,
+): ExamDayClaim {
+  const stage = claim.row ? sittingStageLabel(exam, claim.row.label) : null;
+  if (!stage) return claim;
+  const dated = claim.dated ? `${claim.dated} ${stage}` : null;
+  if (declaredStages(exam.shortName).size === 0) return { ...claim, dated };
+  return { ...claim, dated, live: false, held: false };
+}
+
+/**
+ * The /live and /reactions <title> / description, stage-aware (16 Sep 2026).
+ * Title and og from stageAwareClaim. The description names the exam in
+ * FULL, and Exam.name carries the record's stage ("IBPS Probationary
+ * Officer (Prelims)"), so on another stage's day it gets the re-staged name
+ * and the plain date: "IBPS Probationary Officer (Mains) is being held
+ * today, 4 Oct (reported)" — never "(Prelims) is being held today", never
+ * "Mains" twice.
+ */
+export function stageAwarePhaseMeta(
+  phase: "LIVE" | "REACTIONS",
+  exam: { code?: string | null; name: string; shortName: string },
+  claim: ExamDayClaim,
+  summary: ExamNightSummary,
+): PhaseArticleMeta {
+  const staged = stageAwareClaim(exam, claim);
+  const meta = phaseArticleMeta(phase, exam, staged, summary);
+  if (staged === claim || !claim.row) return meta;
+  const name = sittingExamName(exam, claim.row.label);
+  if (!name || name === exam.name) return meta;
+  const described = phaseArticleMeta(phase, { shortName: exam.shortName, name }, { ...staged, dated: claim.dated }, summary);
+  return { ...meta, description: described.description };
 }
 
 // ── DB loader ─────────────────────────────────────────────────────────

@@ -4,6 +4,14 @@
 // DB, with subject weights and a link to every topic's study notes — which
 // also makes this page a powerful internal-linking hub for the 3,700+
 // notes pages. PUBLIC + cached.
+//
+// 16 Sep 2026: only topics WITH notes are links (hasUsableNotes), and the
+// title, description, intro, JSON-LD and share text say "study notes" only
+// when at least one topic here links to them — 127 of the 168 exams with a
+// syllabus had no notes while the title promised "Free Study Notes" (MP_RAEO,
+// KA_KSRP). "Topic-wise mock tests" only when the builder has a topic
+// (src/lib/exam-page-gates.ts). The no-notes title says "with Weightage"
+// only when a subject weightage is printed. Copy: src/lib/page-gates-copy.ts.
 
 import { hasUsableNotes } from "@/lib/topic-notes";
 import Link from "next/link";
@@ -17,6 +25,8 @@ import { ShareExamButton } from "@/components/ShareExamButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { SyllabusProgress } from "./SyllabusProgress";
 import { CoachEntry } from "@/components/CoachEntry";
+import { examPageGates } from "@/lib/exam-page-gates";
+import { syllabusPageCopy } from "@/lib/page-gates-copy";
 
 export const revalidate = 3600;
 
@@ -30,26 +40,24 @@ export async function generateMetadata({
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
     where: { code },
-    select: { code: true, shortName: true, name: true },
+    select: { id: true, code: true, shortName: true, name: true },
   });
   if (!exam) return { title: "Exam syllabus — Shishya" };
-  const title = `${exam.shortName} Syllabus ${YEAR} — Complete Topic List with Free Study Notes | Shishya`;
-  const description =
-    `Complete ${exam.shortName} (${exam.name}) syllabus ${YEAR}: every subject and topic with weightage, ` +
-    `free study notes, practice questions and mock tests for each topic. No coaching fees, in your language.`;
+  const [tree, gates] = await Promise.all([loadSyllabusTree(exam.id), examPageGates(exam.code)]);
+  const { title, description, keywords } = syllabusPageCopy({
+    examShort: exam.shortName,
+    examName: exam.name,
+    year: YEAR,
+    ...syllabusCounts(tree),
+    buildMock: gates.buildMock,
+  });
   const url = `https://shishya.in/exams/${exam.code}/syllabus`;
   const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
   return {
     title,
     description,
     alternates: { canonical: url },
-    keywords: [
-      `${exam.shortName} syllabus ${YEAR}`,
-      `${exam.shortName} syllabus topics`,
-      `${exam.shortName} subject wise syllabus`,
-      `${exam.shortName} syllabus with weightage`,
-      `${exam.shortName} study notes`,
-    ],
+    keywords,
     // Explicit og:image — a child segment's openGraph block replaces the
     // parent's, so /exams/[code]/opengraph-image was not inherited here.
     openGraph: {
@@ -65,16 +73,11 @@ export async function generateMetadata({
   };
 }
 
-export default async function SyllabusPage({ params }: { params: Promise<{ code: string }> }) {
-  const { code } = await params;
-  const exam = await prisma.exam.findUnique({
-    where: { code },
-    select: { id: true, code: true, shortName: true, name: true, active: true, state: true },
-  });
-  if (!exam || !exam.active) notFound();
-
-  const subjects = await prisma.subject.findMany({
-    where: { examId: exam.id },
+// Subject → top-level topics (with notes content for the link rule) →
+// sub-topic names. Shared by generateMetadata and the page.
+function loadSyllabusTree(examId: string) {
+  return prisma.subject.findMany({
+    where: { examId },
     orderBy: { orderIdx: "asc" },
     select: {
       code: true,
@@ -92,20 +95,40 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
       },
     },
   });
+}
+
+function syllabusCounts(subjects: Awaited<ReturnType<typeof loadSyllabusTree>>) {
+  return {
+    subjects: subjects.length,
+    topicCount: subjects.reduce((a, s) => a + s.topics.reduce((b, t) => b + 1 + t.children.length, 0), 0),
+    linkedTopics: subjects.reduce((a, s) => a + s.topics.filter((t) => hasUsableNotes(t.teachingNote?.content)).length, 0),
+    // The page prints "weightage ×N" only for weight > 1 (below).
+    weightageShown: subjects.some((s) => s.weight > 1),
+  };
+}
+
+export default async function SyllabusPage({ params }: { params: Promise<{ code: string }> }) {
+  const { code } = await params;
+  const exam = await prisma.exam.findUnique({
+    where: { code },
+    select: { id: true, code: true, shortName: true, name: true, active: true, state: true },
+  });
+  if (!exam || !exam.active) notFound();
+
+  const [subjects, gates] = await Promise.all([loadSyllabusTree(exam.id), examPageGates(exam.code)]);
   if (subjects.length === 0) notFound();
   const { t: tr, locale } = await getT();
 
-  const topicCount = subjects.reduce(
-    (a, s) => a + s.topics.reduce((b, t) => b + 1 + t.children.length, 0),
-    0,
-  );
+  const counts = syllabusCounts(subjects);
+  const topicCount = counts.topicCount;
+  const copy = syllabusPageCopy({ examShort: exam.shortName, examName: exam.name, year: YEAR, ...counts, buildMock: gates.buildMock });
 
   const url = `https://shishya.in/exams/${exam.code}/syllabus`;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: `${exam.shortName} Syllabus ${YEAR} — Complete Topic List`,
-    description: `Full ${exam.name} syllabus: ${subjects.length} subjects, ${topicCount} topics, each with free study notes and practice.`,
+    description: copy.jsonLdDescription,
     url,
     inLanguage: "en-IN",
     isAccessibleForFree: true,
@@ -139,15 +162,22 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
           {exam.shortName} Syllabus {YEAR} — every subject &amp; topic
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
-          The complete {exam.name} syllabus: {subjects.length} subjects, {topicCount} topics. Every
-          topic links to free study notes, practice questions and topic-wise quizzes.
+          {copy.intro}
+          {gates.buildMock && (
+            <>
+              {" "}
+              <Link href={`/exams/${exam.code}/build-mock`} className="font-medium text-saffron-700 hover:underline">
+                Practise by topic in a topic-wise mock →
+              </Link>
+            </>
+          )}
         </p>
         <StateExamsLink state={exam.state} label={tr("exam.state.more")} locale={locale} />
 
         <div className="mt-4">
           <ShareExamButton
             url={url}
-            message={`Complete ${exam.shortName} syllabus ${YEAR} — every topic with free study notes & practice (Shishya):`}
+            message={copy.shareMessage}
             surface="syllabus"
             exam={exam.code}
           />

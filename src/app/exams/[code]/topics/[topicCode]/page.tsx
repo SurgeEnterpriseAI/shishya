@@ -4,6 +4,11 @@
 // RRB NTPC" or "Indian History for UPSC" land directly on rich study
 // notes. Practice questions + Ask Shishya remain interactive — they
 // route through /login if the visitor isn't authenticated.
+//
+// 16 Sep 2026: the title and keywords say "Notes" only when the topic has
+// notes (hasUsableNotes), and a topic with no notes and no checked question
+// is noindex — MP_RAEO and KA_KSRP had 9 such topics titled "Notes, Practice
+// & Study Help", indexable, with an empty body (src/lib/page-gates-copy.ts).
 
 import Link from "next/link";
 import { StateExamsLink } from "@/components/StateExamsLink";
@@ -21,6 +26,8 @@ import { InlineTopicQuestion } from "./InlineTopicQuestion";
 import { TopicMasteryPanel } from "./TopicMasteryPanel";
 import { CoachNextTask } from "@/components/CoachNextTask";
 import { StudyTogether } from "./StudyTogether";
+import { hasUsableNotes } from "@/lib/topic-notes";
+import { topicPageMeta } from "@/lib/page-gates-copy";
 
 // Public SEO page; data barely changes (notes regen weekly via cron).
 // Revalidate every 10 min so a content update propagates without
@@ -42,24 +49,38 @@ export async function generateMetadata({
     prisma.topic.findFirst({
       where: { code: topicCode, subject: { exam: { code } } },
       select: {
+        id: true,
         name: true,
         description: true,
         code: true,
+        teachingNote: { select: { content: true } },
+        children: { select: { id: true } },
         noteTranslations: { where: { locale: "hi" }, select: { id: true } },
       },
     }),
   ]);
   if (!exam || !topic) return { title: "Topic not found — Shishya" };
   const hasHindi = topic.noteTranslations.length > 0;
-  const title = `${topic.name} for ${exam.shortName} — Notes, Practice & Study Help | Shishya`;
-  const description =
-    `Free ${topic.name} study notes for ${exam.shortName} preparation. ` +
-    `Concepts, formulas, common mistakes, practice questions, and Ask Shishya ` +
-    `when you need help on this topic. ${topic.description ?? ""}`.slice(0, 300);
+  // Validated questions on the topic + its sub-topics — the same set the
+  // page's practice block and topic quiz draw from. A failed count keeps
+  // the page indexable but claims no practice questions in the copy.
+  const validatedQuestions = await prisma.question
+    .count({ where: { validated: true, topicId: { in: [topic.id, ...topic.children.map((c) => c.id)] } } })
+    .catch(() => null);
+  const meta = topicPageMeta({
+    topicName: topic.name,
+    examShort: exam.shortName,
+    topicDescription: topic.description,
+    hasNotes: hasUsableNotes(topic.teachingNote?.content),
+    validatedQuestions: validatedQuestions ?? 0,
+  });
+  const { title, description, keywords } = meta;
+  const index = validatedQuestions === null || meta.index;
   const url = `https://shishya.in/exams/${exam.code}/topics/${topic.code}`;
   return {
     title,
     description,
+    ...(index ? {} : { robots: { index: false, follow: true } }),
     alternates: {
       canonical: url,
       // hreflang pairing with the Hindi twin when it exists (gap-fill #3).
@@ -67,14 +88,7 @@ export async function generateMetadata({
         ? { languages: { "en-IN": url, "hi-IN": `${url}/hi`, "x-default": url } }
         : {}),
     },
-    keywords: [
-      `${topic.name} ${exam.shortName}`,
-      `${topic.name} notes`,
-      `${topic.name} formulas`,
-      `${topic.name} practice questions`,
-      `${exam.shortName} ${topic.name} preparation`,
-      `${exam.shortName} ${topic.name} pyq`,
-    ],
+    keywords,
     openGraph: {
       title,
       description,
@@ -286,9 +300,12 @@ export default async function TopicPage({
             loop before they bounce (~20s dwell). Signed-in readers get a real
             persisted TOPIC mock (one tap); signed-out readers get the
             anonymous taste quiz (no login) which converts on its results
-            screen. Only shown when the topic actually has questions. */}
+            screen. Only shown when the topic actually has questions. The
+            signed-in button builds a 5-question mock, so it shows only when
+            5 exist; otherwise everyone gets the no-signup quiz, whose copy
+            names no count it cannot keep (16 Sep 2026). */}
         {practiceQs.length >= 1 &&
-          (userId ? (
+          (userId && practiceQs.length >= 5 ? (
             <TopicQuizButton
               examCode={code}
               topicCode={topic.code}
@@ -301,14 +318,16 @@ export default async function TopicPage({
                 <div>
                   <p className="text-sm font-bold text-ink-900">Test yourself on {topic.name}</p>
                   <p className="mt-0.5 text-xs text-ink-600">
-                    5 real {exam.shortName} questions with instant answers — no signup, ~3 minutes.
+                    {practiceQs.length >= 5
+                      ? `5 real ${exam.shortName} questions with instant answers — no signup, ~3 minutes.`
+                      : `Real ${exam.shortName} questions on this topic with instant answers — no signup.`}
                   </p>
                 </div>
                 <Link
                   href={`/exams/${code}/topics/${topic.code}/quiz`}
                   className="inline-flex shrink-0 items-center justify-center rounded-lg bg-saffron-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300"
                 >
-                  Take the 5-question quiz →
+                  {practiceQs.length >= 5 ? "Take the 5-question quiz →" : "Take the quick quiz →"}
                 </Link>
               </div>
             </div>

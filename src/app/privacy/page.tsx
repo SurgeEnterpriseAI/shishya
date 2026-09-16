@@ -6,6 +6,8 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy — Shishya",
   description: "How Shishya (shishya.in) collects, uses and protects aspirant data.",
+  // Self canonical (16 Sep 2026): one of 7 sitemap landings the crawl found without one.
+  alternates: { canonical: "https://shishya.in/privacy" },
 };
 
 export default function PrivacyPage() {

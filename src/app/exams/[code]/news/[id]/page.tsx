@@ -19,6 +19,15 @@
 // 404 path: when an item id is unknown OR (archivedAt is set AND
 // the row is older than a configurable retention window), we 404.
 // Today retention is "forever" — archive grows monotonically.
+//
+// Funnel card (16 Sep 2026): the "Expected cutoffs" and "Syllabus" links
+// appear only when that page renders (src/lib/exam-page-gates.ts, cached
+// 10 min — one read shared by every permalink). The 345 sitemap permalinks
+// of the 12 exams with no syllabus, and every MP_RAEO / KA_KSRP permalink,
+// linked a 404. A failed gate read keeps the links, as before. The link
+// label and the meta description say "study notes" only for an exam with
+// notes (src/lib/page-gates-notes.ts) — 127 of the 168 syllabus exams have
+// none, and the syllabus page says so. A failed notes read claims none.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -29,6 +38,9 @@ import { getExamTheme } from "@/lib/exam-theme";
 import { getT } from "@/lib/i18n-server";
 import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
 import { StateExamsLink } from "@/components/StateExamsLink";
+import { examPageGates } from "@/lib/exam-page-gates";
+import { examHasNotes } from "@/lib/page-gates-notes";
+import { newsPermalinkCopy } from "@/lib/page-gates-copy";
 
 interface RouteParams {
   code: string;
@@ -58,7 +70,8 @@ export async function generateMetadata({
   // everything here is free.
   const title = `${row.title} — ${row.exam.shortName} | Shishya`;
   const bodyLead = row.body.slice(0, 140).replace(/\s+/g, " ").replace(/\s+\S*$/, "").trim();
-  const description = `${bodyLead}… Free ${row.exam.shortName} mock tests, PYQs & study notes on Shishya.`;
+  const { descriptionTail } = newsPermalinkCopy(row.exam.shortName, await examHasNotes(row.exam.code));
+  const description = `${bodyLead}… ${descriptionTail}`;
 
   return {
     title,
@@ -109,7 +122,11 @@ export default async function NewsPermalinkPage({
   });
   // A story a human suppressed as wrong is gone, not archived history.
   if (!row || row.exam.code !== code || row.source === SUPPRESSED_SOURCE) notFound();
-  const { t, locale } = await getT();
+  const [{ t, locale }, gates, hasNotes] = await Promise.all([
+    getT(),
+    examPageGates(row.exam.code),
+    examHasNotes(row.exam.code),
+  ]);
 
   const theme = getExamTheme(row.exam.category);
   const isArchived = row.archivedAt !== null;
@@ -289,18 +306,22 @@ export default async function NewsPermalinkPage({
             >
               Exam date, admit card & result tracker
             </Link>
-            <Link
-              href={`/exams/${row.exam.code}/cutoff`}
-              className="rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-700 transition-colors hover:border-saffron-400"
-            >
-              Expected cutoffs
-            </Link>
-            <Link
-              href={`/exams/${row.exam.code}/syllabus`}
-              className="rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-700 transition-colors hover:border-saffron-400"
-            >
-              Syllabus & study notes
-            </Link>
+            {gates.cutoff && (
+              <Link
+                href={`/exams/${row.exam.code}/cutoff`}
+                className="rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-700 transition-colors hover:border-saffron-400"
+              >
+                Expected cutoffs
+              </Link>
+            )}
+            {gates.syllabus && (
+              <Link
+                href={`/exams/${row.exam.code}/syllabus`}
+                className="rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-700 transition-colors hover:border-saffron-400"
+              >
+                {newsPermalinkCopy(row.exam.shortName, hasNotes).syllabusLabel}
+              </Link>
+            )}
           </div>
         </div>
       </section>

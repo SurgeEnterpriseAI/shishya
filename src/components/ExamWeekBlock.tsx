@@ -12,14 +12,14 @@
 //   eve       tomorrow's date (tier) + the no-new-topics tip + reporting
 //             line when the tracker holds an OFFICIAL admit-card row,
 //             plus the same .ics link + alert box
-//   today-am  good luck; once the first shift has plausibly started
-//             (examDayPollOpen: the EXAM row's own timing, else noon IST)
+//   today-am  good luck; once the first sitting is over (examDayPollOpen:
+//             the end of the EXAM row's first time range, else noon IST)
 //             the poll joins it as "Done with your paper? Tell us how it
 //             was" — NDA ends 16:30, SBI PO Mains is a morning sitting,
 //             and the fixed 18:00 gate asked hours too late
 //   today-pm  "How was the paper?" poll + tally, the answer-key alert box
 //             ("not announced yet — one email when it is") and, only when
-//             markingSchemeStatable(exam), the score-estimator link
+//             sittingVerdict(exam, rows) is ok, the score-estimator link
 //   window    window dates (tier) + shift tip + poll + tally
 //   post      answer key / result (tracker dates with tier, or "not
 //             announced yet" — never guessed), cutoff link, estimator link
@@ -39,6 +39,21 @@
 // result dates come only from the tracker; the tally is counts from
 // n >= 10 and is never called a prediction; no per-student model calls —
 // everything here is a deterministic DB read.
+//
+// 16 Sep 2026 (MP RAEO / KSRP exam week):
+//   • every sitting of the focus day is listed (sittingsOn) — KSRP's
+//     10:30–12:00 and 15:00–16:30 official sittings, not whichever row
+//     came first
+//   • an open-ended start row (state.openEnded) reads "exam began {date};
+//     end date not announced" instead of an invented window end, and keeps
+//     what the post week carried: the answer-key / result status lines and
+//     the answer-key alert box (review: RAEO's hub lost both for the week)
+//   • the real-pattern paper chip hides when the sitting is another stage
+//     (fullPaperFitsSitting — the checklist's rule); the estimator link uses
+//     the row-aware sittingVerdict the /score-estimate page itself uses
+//   • the post-phase cutoff link renders only when /cutoff does
+//     (examPageGates); "Reporting:" only for notes that read as reporting
+//     instructions; no second ↗ after strings that already carry one
 
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -46,12 +61,22 @@ import { prisma } from "@/lib/db/prisma";
 import { tFor } from "@/lib/i18n-server";
 import type { Locale, StringKey } from "@/lib/i18n";
 import { localizedPath, localizedUrl, type PageLocale } from "@/lib/seo-locale";
-import { computeExamWeekState, dateWithTier, examDayPollOpen, istDay } from "@/lib/exam-week";
+import {
+  admitNotesAreReporting,
+  alertCopyPhase,
+  computeExamWeekState,
+  dateWithTier,
+  examDayPollOpen,
+  istDay,
+  sittingsOn,
+} from "@/lib/exam-week";
 import { applyShiftDay, shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline, type SourceTier, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
 import { sourceTier } from "@/lib/official-source";
 import { getVerdictTally, publicTally, VERDICT_MIN_N } from "@/lib/exam-verdict";
-import { markingSchemeStatable } from "@/lib/marking-scheme";
+import { fullPaperFitsSitting } from "@/lib/marking-scheme";
+import { sittingVerdict } from "@/lib/score-sitting";
+import { examPageGates } from "@/lib/exam-page-gates";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { ExamVerdictPoll } from "@/components/ExamVerdictPoll";
 import { ShiftDayPicker } from "@/components/ShiftDayPicker";
@@ -75,7 +100,11 @@ function dayLabel(date: Date, locale: string): string {
 }
 
 export interface ExamWeekBlockProps {
-  exam: { id: string; code: string; shortName: string; category: string; state: string | null };
+  /** `name` (Exam.name) carries the stage the stored pattern describes
+   *  ("SBI Probationary Officer (Prelims)") for the full-paper chip's stage
+   *  check. Optional while callers catch up: when omitted, the block reads
+   *  it itself in the week phase (one small query). */
+  exam: { id: string; code: string; shortName: string; category: string; state: string | null; name?: string | null };
   /** ExamImportantDate rows, archived rows already excluded. Dates may be
    *  ISO strings (unstable_cache hits) — buildTimeline coerces. */
   rows: TimelineInput[];
@@ -178,7 +207,7 @@ export async function ExamWeekBlock({
           examCode={exam.code}
           signedIn={signedIn}
           compact
-          phase={mode === "key" ? phase : undefined}
+          phase={mode === "key" ? alertCopyPhase(phase, state) : undefined}
           weekLabels={
             mode === "key"
               ? { cta: state.answerKey ? t("ew.alert.cta") : t("ew.alert.key"), done: t("ew.alert.done") }
@@ -226,6 +255,21 @@ export async function ExamWeekBlock({
       />
     ) : null;
 
+  // Every sitting of the focus day, when there is more than one (KSRP,
+  // 20 Sep 2026: two official sittings in different regions and hours).
+  // Row labels are tracker text, printed verbatim with the day's tier.
+  const sittings = sittingsOn(state.windowDays, state.focusDay);
+  const sittingsList =
+    sittings.length > 1 ? (
+      <ul className="mt-1 space-y-0.5 text-xs text-ink-700">
+        {sittings.map((r) => (
+          <li key={r.id}>
+            🕘 {r.label} ({tierWord(r.tier)})
+          </li>
+        ))}
+      </ul>
+    ) : null;
+
   const wrap = (children: ReactNode) => (
     <section
       aria-label={`${short} — ${t("tracker.title")}`}
@@ -241,13 +285,26 @@ export async function ExamWeekBlock({
     // built from stored facts for every exam (src/lib/exam-checklist.ts)
     // instead of waiting for a cited article, and the eve mail links it the
     // same way (checklistLink, src/lib/exam-week-mail.ts).
-    const fullMock = await prisma.mock
-      .findFirst({
-        where: { examId: exam.id, userId: null, generatedBy: { startsWith: "system:full-pattern" } },
-        orderBy: { createdAt: "desc" },
-        select: { id: true },
-      })
-      .catch(() => null);
+    // The system full-pattern paper follows the STORED pattern: hidden when
+    // the sitting in focus is another stage (16 Sep 2026: LA_LPSC's Prelims
+    // paper was offered for an 18 Sep "Mains" row while /checklist hid it).
+    // exam.name carries the stage; read it when the caller did not pass it.
+    const [fullMock, examName] = await Promise.all([
+      prisma.mock
+        .findFirst({
+          where: { examId: exam.id, userId: null, generatedBy: { startsWith: "system:full-pattern" } },
+          orderBy: { createdAt: "desc" },
+          select: { id: true },
+        })
+        .catch(() => null),
+      exam.name !== undefined
+        ? Promise.resolve(exam.name)
+        : prisma.exam
+            .findUnique({ where: { id: exam.id }, select: { name: true } })
+            .then((e) => e?.name ?? null)
+            .catch(() => null),
+    ]);
+    const paperFits = fullPaperFitsSitting({ code: exam.code, name: examName, shortName: exam.shortName }, focus);
     const seed = `My ${short} exam is in ${state.daysTo} days. What should I revise and what should I skip?`;
     return wrap(
       <>
@@ -257,11 +314,12 @@ export async function ExamWeekBlock({
             {fill(t("ew.week.days"), { n: state.daysTo ?? 0 })}
           </span>
         </p>
+        {sittingsList}
         <div className="mt-2 flex flex-wrap gap-2">
           <Link href={p(`/exams/${exam.code}/checklist`)} className={linkCls}>
             📋 {t("ew.week.checklist")}
           </Link>
-          {fullMock && (
+          {fullMock && paperFits && (
             <Link href={`/mocks/${fullMock.id}`} prefetch={false} className={linkCls}>
               📝 {t("ew.week.paper")}
             </Link>
@@ -283,7 +341,10 @@ export async function ExamWeekBlock({
     const admit = timeline.filter((r) => r.kind === "ADMIT_CARD" && r.tier === "official").pop() ?? null;
     // Reporting instructions live in the row's notes; without them the line
     // describes the admit-card RELEASE date, so it gets the admit-card label.
-    const admitNotes = admit?.notes?.trim() || null;
+    // Notes count as reporting instructions only when they read as such
+    // (16 Sep 2026: "Test admit card available for download from MPESB
+    // portal" was printed as "Reporting: …").
+    const admitNotes = admit && admitNotesAreReporting(admit.notes) ? admit.notes!.trim() : null;
     const admitText = admit ? admitNotes || dateWithTier(admit, tierWord(admit.tier), locale) : null;
     const admitKey = admitNotes ? "ew.eve.admit" : "ew.eve.admitCard";
     return wrap(
@@ -291,6 +352,7 @@ export async function ExamWeekBlock({
         <p className="text-sm font-bold text-ink-900">
           🎯 {fill(t("ew.eve.title"), { date: dayLabel(focus.date, locale), tier: tierWord(tier) })}
         </p>
+        {sittingsList}
         <p className="mt-1 text-sm text-ink-800">{t("ew.eve.tip")}</p>
         {admit && admitText && (
           <p className="mt-1 text-xs text-ink-700">
@@ -304,7 +366,7 @@ export async function ExamWeekBlock({
                   rel="nofollow noopener noreferrer"
                   className="font-semibold text-saffron-700 hover:text-saffron-800"
                 >
-                  {t("tracker.officialNotice")} ↗
+                  {t("tracker.officialNotice")}
                 </a>
               </>
             )}
@@ -318,8 +380,8 @@ export async function ExamWeekBlock({
   }
 
   // ── today, before 18:00 IST ─────────────────────────────────────────
-  // "All the best" alone until the first shift has plausibly started
-  // (the EXAM row's own timing, else noon IST); from then the poll joins
+  // "All the best" alone until the first sitting is over (the end of the
+  // EXAM row's first time range, else noon IST); from then the poll joins
   // it. The announced-tier gate above already keeps an "expected" day
   // out of here, so the question is only ever asked about a paper that
   // was announced for today.
@@ -328,6 +390,7 @@ export async function ExamWeekBlock({
     return wrap(
       <>
         <p className="text-sm font-bold text-ink-900">🎯 {t("ew.today.am")}</p>
+        {sittingsList}
         {picker}
       </>,
     );
@@ -336,9 +399,12 @@ export async function ExamWeekBlock({
   // Poll phases share the tally + section chips. The tally handed to the
   // client is the PUBLIC one (only n below the floor) — the RSC payload
   // is readable by anyone. The marking-scheme read decides whether the
-  // score-estimator link may appear at all (markingSchemeStatable — a
-  // false negative is a wrong score in a student's hands on exam night).
-  const [tally, subjects, statable] = await Promise.all([
+  // score-estimator link may appear at all — a false negative is a wrong
+  // score in a student's hands on exam night. Row-aware since 16 Sep 2026:
+  // sittingVerdict is the check /score-estimate itself runs (stage rule +
+  // per-exam list), so the hub never links a page that refuses this sitting
+  // (SBI PO Mains on its Prelims record, 12-13 Sep).
+  const [tally, subjects, statable, gates] = await Promise.all([
     getVerdictTally(exam.id, state.focusDay).then(publicTally),
     prisma.subject
       .findMany({ where: { examId: exam.id }, orderBy: { orderIdx: "asc" }, select: { name: true }, take: 6 })
@@ -348,11 +414,23 @@ export async function ExamWeekBlock({
       ? prisma.exam
           .findUnique({
             where: { id: exam.id },
-            select: { totalQuestions: true, scoredQuestions: true, totalMarks: true, marksPerQ: true, description: true },
+            select: {
+              code: true,
+              name: true,
+              shortName: true,
+              totalQuestions: true,
+              scoredQuestions: true,
+              totalMarks: true,
+              marksPerQ: true,
+              description: true,
+            },
           })
-          .then((e) => !!e && markingSchemeStatable(e))
+          .then((e) => !!e && sittingVerdict(e, { rows, officialUrl }, now).verdict.ok)
           .catch(() => false)
       : Promise.resolve(false),
+    // /cutoff 404s without rank bands (MP RAEO, KA KSRP): link it only when
+    // it renders. A failed gate read keeps the link (GATES_OPEN).
+    phase === "post" ? examPageGates(exam.code) : Promise.resolve(null),
   ]);
   const poll = (
     <ExamVerdictPoll
@@ -380,18 +458,63 @@ export async function ExamWeekBlock({
     return wrap(
       <>
         <p className="text-sm font-bold text-ink-900">🎯 {t("ew.today.am")}</p>
+        {sittingsList}
         {picker}
         {poll}
       </>,
     );
   }
 
+  // Answer-key / result status from the tracker (dates with tier, or "not
+  // announced yet" — never guessed): the post week and an open-ended window.
+  const keyText = state.answerKey
+    ? dateWithTier(state.answerKey, tierWord(state.answerKey.tier), locale)
+    : t("ew.post.notAnnounced");
+  const resultText = state.result
+    ? dateWithTier(state.result, tierWord(state.result.tier), locale)
+    : t("ew.post.notAnnounced");
+  const noticeLink = (r: TimelineRow | null) =>
+    r?.url ? (
+      <>
+        {" "}
+        <a href={r.url} target="_blank" rel="nofollow noopener noreferrer" className="font-semibold text-saffron-700 hover:text-saffron-800">
+          {r.official ? t("tracker.officialNotice") : t("tracker.source")}
+        </a>
+      </>
+    ) : null;
+  const keyStatus = (
+    <ul className="mt-1 space-y-0.5 text-sm text-ink-800">
+      <li>
+        🔑 {fill(t("ew.post.key"), { text: keyText })}
+        {noticeLink(state.answerKey)}
+      </li>
+      <li>
+        📊 {fill(t("ew.post.result"), { text: resultText })}
+        {noticeLink(state.result)}
+      </li>
+    </ul>
+  );
+
   // ── exam night / inside a multi-day window ──────────────────────────
   if (phase === "today-pm" || phase === "window") {
     const end = state.windowEnd ?? focus;
     return wrap(
       <>
-        {phase === "window" && (
+        {phase === "today-pm" && sittingsList}
+        {phase === "window" && state.openEnded && (
+          // Open-ended start row (MP RAEO, 16 Sep 2026): the tracker holds a
+          // start and says the end is not announced, so no "to" date is
+          // printed. English until an i18n key exists for it.
+          <>
+            <p className="text-sm font-bold text-ink-900">
+              🎯 {short}: exam began{" "}
+              {dateWithTier(state.windowDays[0] ?? focus, tierWord((state.windowDays[0] ?? focus).tier), locale)}; end date
+              not announced — your shift day is on your admit card.
+            </p>
+            <p className="mt-1 text-xs text-ink-700">{t("ew.window.tip")}</p>
+          </>
+        )}
+        {phase === "window" && !state.openEnded && (
           <>
             <p className="text-sm font-bold text-ink-900">
               🎯{" "}
@@ -416,45 +539,32 @@ export async function ExamWeekBlock({
             {alertBox("key")}
           </>
         )}
+        {/* Open-ended: a paper has been sat, so the week keeps the post
+            block's key / result lines and the answer-key alert box (16 Sep
+            2026, review) — without the "is done" title. */}
+        {phase === "window" && state.openEnded && (
+          <div className="mt-2 border-t border-saffron-200 pt-2">
+            {keyStatus}
+            {alertBox("key")}
+          </div>
+        )}
       </>,
     );
   }
 
   // ── post: 1..7 days after the (last) exam day ───────────────────────
   const nextInTrack = await loadNextInTrack(exam, now).catch(() => null);
-  const keyText = state.answerKey
-    ? dateWithTier(state.answerKey, tierWord(state.answerKey.tier), locale)
-    : t("ew.post.notAnnounced");
-  const resultText = state.result
-    ? dateWithTier(state.result, tierWord(state.result.tier), locale)
-    : t("ew.post.notAnnounced");
-  const noticeLink = (r: TimelineRow | null) =>
-    r?.url ? (
-      <>
-        {" "}
-        <a href={r.url} target="_blank" rel="nofollow noopener noreferrer" className="font-semibold text-saffron-700 hover:text-saffron-800">
-          {r.official ? t("tracker.officialNotice") : t("tracker.source")} ↗
-        </a>
-      </>
-    ) : null;
 
   return wrap(
     <>
       <p className="text-sm font-bold text-ink-900">🏁 {fill(t("ew.post.title"), { exam: short })}</p>
-      <ul className="mt-1 space-y-0.5 text-sm text-ink-800">
-        <li>
-          🔑 {fill(t("ew.post.key"), { text: keyText })}
-          {noticeLink(state.answerKey)}
-        </li>
-        <li>
-          📊 {fill(t("ew.post.result"), { text: resultText })}
-          {noticeLink(state.result)}
-        </li>
-      </ul>
+      {keyStatus}
       <div className="mt-2 flex flex-wrap gap-2">
-        <Link href={p(`/exams/${exam.code}/cutoff`)} className={linkCls}>
-          🎯 {t("ew.post.cutoff")}
-        </Link>
+        {(gates?.cutoff ?? true) && (
+          <Link href={p(`/exams/${exam.code}/cutoff`)} className={linkCls}>
+            🎯 {t("ew.post.cutoff")}
+          </Link>
+        )}
         {estimatorLink}
         {weakTopicCode && (
           <Link href={`/exams/${exam.code}/topics/${encodeURIComponent(weakTopicCode)}/quiz`} prefetch={false} className={linkCls}>

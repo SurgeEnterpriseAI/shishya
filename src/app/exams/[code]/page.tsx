@@ -24,7 +24,7 @@ import { getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { shiftDayIso } from "@/lib/exam-week-student";
 import { buildTimeline } from "@/lib/exam-timeline";
 import { ExamWeekBlock, type ExamWeekViewer } from "@/components/ExamWeekBlock";
-import { StartMockButton } from "./StartMockButton";
+import { HubSignInLink, StartMockButton } from "./StartMockButton";
 import { PageTour } from "@/components/PageTour";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { computeScoreBoost } from "@/lib/focus-topics";
@@ -49,6 +49,8 @@ import { REHEARSAL_CLOSE_IST_HOUR } from "@/lib/live-test";
 import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { OfficialPapersBlock } from "@/components/OfficialPapersBlock";
 import { hubPyqPhrase } from "@/lib/pyq-naming";
+import { examPageGates } from "@/lib/exam-page-gates";
+import { heldDescriptionLead, heldTitleLead, hubDateLead, revisionDescriptionLead, revisionTitleLead } from "@/lib/hub-title";
 
 // Honesty line for the Previous Papers cards (7 Sep + 11 Sep 2026).
 // Every PYQ question on the platform is freshly worded in the PATTERN of
@@ -120,10 +122,22 @@ export async function generateMetadata({
   // 15 Jan 2027 (expected)" while the tracker's own news says Tier 1
   // dates are awaited), and a passed estimate is worse still. With no
   // announced row the true answer to the query is "not announced yet".
+  //
+  // Held exams (16 Sep 2026, src/lib/hub-title.ts): with no announced day
+  // ahead, an announced written exam held in the last 60 days leads instead
+  // ("Exam Held 6 Sept 2026 (reported), Next Exam Date Not Announced Yet,")
+  // — IOQM, CDS and NEET PG said "Exam Date Not Announced Yet" days after
+  // their exam, the weeks students search for the answer key and result.
+  // Conflicting rows: when the next day has a same-stage announced row on
+  // another day (MPSC Group C Prelims 27 Sep beside "revised" 25 Oct),
+  // neither date is stated — "Exam Date Under Revision,".
   const timeline = buildTimeline(importantDates, new Date(), officialUrl);
-  const announced =
-    timeline.find((r) => r.kind === "EXAM" && r.daysFromToday >= 0 && r.tier !== "expected") ?? null;
+  const dateLead = hubDateLead(timeline, exam, new Map(importantDates.map((r) => [r.id, r.createdAt] as const)));
+  const announced = dateLead.kind === "announced" ? dateLead.row : null;
+  const held = dateLead.kind === "held" ? dateLead : null;
+  const revision = dateLead.kind === "revision";
   const tierWord = tFor(urlLocale);
+  const heldTier = held && held.row.tier !== "official" ? tierWord("ew.tier.reported") : null;
   const nextDate = announced
     ? announced.date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) +
       (announced.tier === "official" ? "" : ` (${tierWord("ew.tier.reported")})`)
@@ -135,7 +149,11 @@ export async function generateMetadata({
   // "Tamil Nadu TET 2026" / "Bihar Police mock test"-style searches),
   // and the exam-date answer when known.
   const stateBit = st ? ` (${st.name})` : "";
-  const dateBit = nextDate ? `Exam Date ${nextDate}, ` : "Exam Date Not Announced Yet, ";
+  const dateBit = held
+    ? `${heldTitleLead("en", held, heldTier)}, `
+    : revision
+      ? `${revisionTitleLead("en")}, `
+      : nextDate ? `Exam Date ${nextDate}, ` : "Exam Date Not Announced Yet, ";
   const title = `${exam.shortName}${stateBit} ${year} — ${dateBit}Free Mock Tests, PYQ | Shishya`;
 
   // Description — packs in: the date answer first (zero-click queries),
@@ -144,7 +162,11 @@ export async function generateMetadata({
   // so Google doesn't truncate.
   const langCopy = languageList(langs);
   const stateCopy = st ? `${st.name} (${st.nativeName} / ${st.hindiName}). ` : "";
-  const dateCopy = `${exam.shortName} exam date: ${nextDate ?? notAnnounced}. `;
+  const dateCopy = held
+    ? heldDescriptionLead("en", exam.shortName, held, heldTier)
+    : revision
+      ? revisionDescriptionLead("en", exam.shortName)
+      : `${exam.shortName} exam date: ${nextDate ?? notAnnounced}. `;
   // Honesty (11 Sep 2026): no "verified by students who cleared it" — the
   // content is AI-drafted and checked against the official notification
   // (the page's own SectionVerificationSummary says exactly that).
@@ -196,15 +218,15 @@ export async function generateMetadata({
   // intent words are in the language the URL promises.
   const locTitle =
     urlLocale === "hi"
-      ? `${exam.shortName}${stateBit} ${year} — परीक्षा तिथि ${nextDate ?? notAnnounced}, मुफ़्त मॉक टेस्ट, पिछले साल के पेपर | Shishya`
+      ? `${exam.shortName}${stateBit} ${year} — ${held ? heldTitleLead("hi", held, heldTier) : revision ? revisionTitleLead("hi") : `परीक्षा तिथि ${nextDate ?? notAnnounced}`}, मुफ़्त मॉक टेस्ट, पिछले साल के पेपर | Shishya`
       : urlLocale === "te"
-        ? `${exam.shortName}${stateBit} ${year} — పరీక్ష తేదీ ${nextDate ?? notAnnounced}, ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు | Shishya`
+        ? `${exam.shortName}${stateBit} ${year} — ${held ? heldTitleLead("te", held, heldTier) : revision ? revisionTitleLead("te") : `పరీక్ష తేదీ ${nextDate ?? notAnnounced}`}, ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు | Shishya`
         : title;
   const locDescription =
     urlLocale === "hi"
-      ? `${exam.shortName} परीक्षा तिथि: ${nextDate ?? notAnnounced}. ${exam.shortName} (${exam.name}) ${year} के मुफ़्त मॉक टेस्ट, पिछले साल के पेपर, सिलेबस, कटऑफ़ और AI ट्यूटर — हिंदी में। ${stateCopy}कोई पेवॉल नहीं।`
+      ? `${held ? heldDescriptionLead("hi", exam.shortName, held, heldTier) : revision ? revisionDescriptionLead("hi", exam.shortName) : `${exam.shortName} परीक्षा तिथि: ${nextDate ?? notAnnounced}. `}${exam.shortName} (${exam.name}) ${year} के मुफ़्त मॉक टेस्ट, पिछले साल के पेपर, सिलेबस, कटऑफ़ और AI ट्यूटर — हिंदी में। ${stateCopy}कोई पेवॉल नहीं।`
       : urlLocale === "te"
-        ? `${exam.shortName} పరీక్ష తేదీ: ${nextDate ?? notAnnounced}. ${exam.shortName} (${exam.name}) ${year} ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు, సిలబస్, కటాఫ్, AI ట్యూటర్ — తెలుగులో. ${stateCopy}పేవాల్ లేదు.`
+        ? `${held ? heldDescriptionLead("te", exam.shortName, held, heldTier) : revision ? revisionDescriptionLead("te", exam.shortName) : `${exam.shortName} పరీక్ష తేదీ: ${nextDate ?? notAnnounced}. `}${exam.shortName} (${exam.name}) ${year} ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు, సిలబస్, కటాఫ్, AI ట్యూటర్ — తెలుగులో. ${stateCopy}పేవాల్ లేదు.`
         : description;
   return {
     title: locTitle,
@@ -281,6 +303,13 @@ export default async function ExamPage({
   // hub's copy starts 10 days back, so an exam held weeks before its answer
   // key would never count as held here.
   const scoreSittingOpen = standingSitting(exam, await getExamWeekInputs(exam.id)) !== null;
+
+  // Sub-page gates (16 Sep 2026, src/lib/exam-page-gates.ts): /cutoff,
+  // /tricks and /guide 404 for MP RAEO and KA KSRP, /syllabus 404s and
+  // /build-mock is empty for the 12 exams with no subjects — all were linked
+  // from every hub. Pills, FAQ answers and builder links now name only the
+  // pages that render; a failed gate read keeps every link (GATES_OPEN).
+  const gates = await examPageGates(exam.code);
 
   // Subject-wise test rows (gap-fill #1 — users asked for "25-question
   // English/GK/Computer tests" verbatim; the SUBJECT mock API existed but
@@ -603,14 +632,19 @@ export default async function ExamPage({
             },
           ]
         : []),
-      {
-        "@type": "Question",
-        name: `What is the expected cutoff for ${exam.shortName}?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: `Cutoffs change every cycle with paper difficulty and vacancies. Shishya maintains indicative score-to-rank bands and category-wise (General/EWS/OBC/SC/ST) expected cutoffs at https://shishya.in/exams/${exam.code}/cutoff.`,
-        },
-      },
+      // Only where the /cutoff page has bands to show (16 Sep 2026).
+      ...(gates.cutoff
+        ? [
+            {
+              "@type": "Question",
+              name: `What is the expected cutoff for ${exam.shortName}?`,
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: `Cutoffs change every cycle with paper difficulty and vacancies. Shishya maintains indicative score-to-rank bands and category-wise (General/EWS/OBC/SC/ST) expected cutoffs at https://shishya.in/exams/${exam.code}/cutoff.`,
+              },
+            },
+          ]
+        : []),
       // Full-length real-pattern paper + topic builder (1 Sep 2026) —
       // both answer literal student queries ("full mock in real
       // pattern", "topic wise mock test"). Real-pattern line only when
@@ -627,20 +661,25 @@ export default async function ExamPage({
             },
           ]
         : []),
-      {
-        "@type": "Question",
-        name: `Can I build a topic-wise ${exam.shortName} mock test?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: `Yes — pick any topics from the ${exam.shortName} syllabus, choose 10, 25 or 50 questions and the difficulty, and attempt it as a timed mock with solutions and weak-topic analysis, free, at https://shishya.in/exams/${exam.code}/build-mock. Questions can be read in Hindi and ${OTHER_INDIAN_LANGUAGE_COUNT} other Indian languages inside the test.`,
-        },
-      },
+      // Only where a topic holds enough validated questions to build from.
+      ...(gates.buildMock
+        ? [
+            {
+              "@type": "Question",
+              name: `Can I build a topic-wise ${exam.shortName} mock test?`,
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: `Yes — pick any topics from the ${exam.shortName} syllabus, choose 10, 25 or 50 questions and the difficulty, and attempt it as a timed mock with solutions and weak-topic analysis, free, at https://shishya.in/exams/${exam.code}/build-mock. Questions can be read in Hindi and ${OTHER_INDIAN_LANGUAGE_COUNT} other Indian languages inside the test.`,
+              },
+            },
+          ]
+        : []),
       {
         "@type": "Question",
         name: `How can I prepare for ${exam.shortName} for free?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Shishya offers ${exam.shortName} preparation 100% free: adaptive mock tests, ${hubPyqPhrase(hubPageHasOfficial)} modelled on each year's paper, full syllabus with study notes (https://shishya.in/exams/${exam.code}/syllabus), subject-wise memory tricks (https://shishya.in/exams/${exam.code}/tricks), a free day-by-day coach plan, and an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages.`,
+          text: `Shishya offers ${exam.shortName} preparation 100% free: adaptive mock tests, ${hubPyqPhrase(hubPageHasOfficial)} modelled on each year's paper, ${gates.syllabus ? `full syllabus with study notes (https://shishya.in/exams/${exam.code}/syllabus), ` : ""}${gates.tricks ? `subject-wise memory tricks (https://shishya.in/exams/${exam.code}/tricks), ` : ""}a free day-by-day coach plan, and an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages.`,
         },
       },
     ],
@@ -734,25 +773,30 @@ export default async function ExamPage({
             {t("exam.negative")}: {exam.negativeMark === 0 ? t("exam.no.negative") : `−${formatNegativeMark(exam.negativeMark)}`}
           </span>
           {/* Deep links to the dedicated SEO landings — also internal-link
-              equity for the "[exam] syllabus/cutoff" pages. */}
+              equity for the "[exam] syllabus/cutoff" pages. Each sub-page
+              pill only where that page renders (gates, 16 Sep 2026). */}
           <Link
             href={`/exams/${exam.code}/updates`}
             className="rounded-full border border-saffron-400 bg-saffron-100 px-3 py-1 font-semibold text-saffron-900 hover:bg-saffron-200"
           >
             {t("tracker.pill")}
           </Link>
-          <Link
-            href={`/exams/${exam.code}/syllabus`}
-            className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
-          >
-            📋 Full syllabus
-          </Link>
-          <Link
-            href={`/exams/${exam.code}/cutoff`}
-            className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
-          >
-            🎯 Expected cutoff
-          </Link>
+          {gates.syllabus && (
+            <Link
+              href={`/exams/${exam.code}/syllabus`}
+              className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
+            >
+              📋 Full syllabus
+            </Link>
+          )}
+          {gates.cutoff && (
+            <Link
+              href={`/exams/${exam.code}/cutoff`}
+              className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
+            >
+              🎯 Expected cutoff
+            </Link>
+          )}
           {/* Answer-key time (14 Sep 2026): while a sitting is open for
               comparison — the exam window, or an official key under 45 days
               old — and its marking scheme can be stated. */}
@@ -764,18 +808,22 @@ export default async function ExamPage({
               🧮 Score calculator
             </Link>
           )}
-          <Link
-            href={`/exams/${exam.code}/tricks`}
-            className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
-          >
-            🧠 Tricks &amp; mnemonics
-          </Link>
-          <Link
-            href={`/exams/${exam.code}/guide`}
-            className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
-          >
-            📖 How to crack it
-          </Link>
+          {gates.tricks && (
+            <Link
+              href={`/exams/${exam.code}/tricks`}
+              className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
+            >
+              🧠 Tricks &amp; mnemonics
+            </Link>
+          )}
+          {gates.guide && (
+            <Link
+              href={`/exams/${exam.code}/guide`}
+              className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
+            >
+              📖 How to crack it
+            </Link>
+          )}
           <Link
             href="/revision"
             className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
@@ -808,7 +856,7 @@ export default async function ExamPage({
             weakness map we already loaded. */}
         {examWeek.phase !== "none" && (
           <ExamWeekBlock
-            exam={{ id: exam.id, code: exam.code, shortName: exam.shortName, category: exam.category, state: exam.state }}
+            exam={{ id: exam.id, code: exam.code, shortName: exam.shortName, category: exam.category, state: exam.state, name: exam.name }}
             rows={importantDates}
             officialUrl={officialUrl}
             locale={locale}
@@ -962,12 +1010,16 @@ export default async function ExamPage({
               official notification. All free, no credit card.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <Link
+              {/* Click beacon (16 Sep 2026): the one hub CTA that sent no
+                  CTA_CLICKED, so its volume could only be guessed from
+                  /login views. Same <a>: href, class and text unchanged. */}
+              <HubSignInLink
+                examCode={exam.code}
                 href={`/login?callbackUrl=${encodeURIComponent(`/coach?exam=${exam.code}`)}`}
                 className="btn-primary inline-block !py-2 !px-4 text-sm"
               >
                 Sign in free — build my plan →
-              </Link>
+              </HubSignInLink>
               {/* Lever #2 — anonymous 5-question diagnostic. Lets a signed-out
                   visitor experience the mock loop before the login gate (44%
                   bail there). Was a text link — got ~zero organic clicks, so
@@ -1072,13 +1124,15 @@ export default async function ExamPage({
               the first; the line answers the second (the player has
               translated questions since July — students just never
               found the picker). */}
-          <p className="mt-3 text-xs text-ink-600">
-            🧩{" "}
-            <Link href={`/exams/${exam.code}/build-mock`} className="font-semibold text-saffron-700 hover:underline">
-              Build your own mock — pick exact topics →
-            </Link>{" "}
-            <span className="text-ink-500">· every mock readable in हिंदी + {OTHER_INDIAN_LANGUAGE_COUNT} languages inside the test</span>
-          </p>
+          {gates.buildMock && (
+            <p className="mt-3 text-xs text-ink-600">
+              🧩{" "}
+              <Link href={`/exams/${exam.code}/build-mock`} className="font-semibold text-saffron-700 hover:underline">
+                Build your own mock — pick exact topics →
+              </Link>{" "}
+              <span className="text-ink-500">· every mock readable in हिंदी + {OTHER_INDIAN_LANGUAGE_COUNT} languages inside the test</span>
+            </p>
+          )}
         </div>
 
         {/* ── Deep content (eligibility / cutoffs / paper analysis / salary)
@@ -1155,7 +1209,7 @@ export default async function ExamPage({
               </ul>
               {/* Topic-wise PYQs (15 Sep 2026): students asked for "PYQ topic based" —
                   the builder's PYQ-pattern mode draws a topic's questions from every year. */}
-              {pyqYears.reduce((a, r) => a + r._count, 0) >= 20 && (
+              {gates.buildMock && pyqYears.reduce((a, r) => a + r._count, 0) >= 20 && (
                 <Link
                   href={`/exams/${exam.code}/build-mock?pyq=1`}
                   prefetch={false}

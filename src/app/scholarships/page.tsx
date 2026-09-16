@@ -15,6 +15,8 @@ export const metadata = {
   title: "Free scholarships for Indian students · Shishya",
   description:
     "Curated catalogue of central, state and private scholarships every Indian student can apply for — by state, category, level, and exam. Free forever.",
+  // Self canonical (16 Sep 2026): one of 7 sitemap landings the crawl found without one.
+  alternates: { canonical: "https://shishya.in/scholarships" },
 };
 
 export const revalidate = 3600; // refresh static cache every hour

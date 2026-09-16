@@ -17,6 +17,7 @@ import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
 import { CAREERS } from "@/data/careers";
 import { allBranchPaths } from "@/data/college-details";
 import { PERSONAS } from "@/data/personas";
+import { GATES_CLOSED, loadExamPageGates, type ExamPageGates } from "@/lib/exam-page-gates";
 
 export const revalidate = 86_400; // 24h
 
@@ -55,6 +56,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
     .catch(() => []);
 
+  // Which exam sub-pages render (16 Sep 2026, src/lib/exam-page-gates.ts) —
+  // /cutoff, /syllabus, /tricks, /guide and /build-mock are listed only for
+  // exams whose page does not 404 / render empty. A failed read lists none of
+  // them (GATES_CLOSED): a smaller sitemap beats one full of 404s.
+  const pageGates = await loadExamPageGates().catch(() => new Map<string, ExamPageGates>());
+  const gate = (code: string): ExamPageGates => pageGates.get(code) ?? GATES_CLOSED;
+
   const examUrls: MetadataRoute.Sitemap = exams.map((e) => ({
     url: `${base}/exams/${e.code}`,
     lastModified: e.updatedAt,
@@ -64,17 +72,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Per-exam cutoff + syllabus landings — the two highest-volume query
   // patterns ("[exam] cutoff 2026", "[exam] syllabus 2026") we now own a
-  // dedicated page for. Every active exam has rank bands + a syllabus tree.
-  const cutoffUrls: MetadataRoute.Sitemap = exams.map((e) => ({
-    url: `${base}/exams/${e.code}/cutoff`,
-    changeFrequency: "weekly" as const,
-    priority: 0.75,
-  }));
-  const syllabusUrls: MetadataRoute.Sitemap = exams.map((e) => ({
-    url: `${base}/exams/${e.code}/syllabus`,
-    changeFrequency: "monthly" as const,
-    priority: 0.75,
-  }));
+  // dedicated page for. NOT every active exam has them (16 Sep 2026): the
+  // cutoff page needs live rank bands (MP_RAEO and KA_KSRP have none) and
+  // the syllabus page a Subject row (12 exams have none) — both 404
+  // otherwise, and all 14 were sitemap URLs.
+  const cutoffUrls: MetadataRoute.Sitemap = exams
+    .filter((e) => gate(e.code).cutoff)
+    .map((e) => ({
+      url: `${base}/exams/${e.code}/cutoff`,
+      changeFrequency: "weekly" as const,
+      priority: 0.75,
+    }));
+  const syllabusUrls: MetadataRoute.Sitemap = exams
+    .filter((e) => gate(e.code).syllabus)
+    .map((e) => ({
+      url: `${base}/exams/${e.code}/syllabus`,
+      changeFrequency: "monthly" as const,
+      priority: 0.75,
+    }));
   // Score estimator (6 Sep 2026, Exam Week Mode) — the marking-scheme
   // calculator at /exams/[code]/score-estimate exists for every active
   // exam but is only worth a crawl around exam day: emit it for exams with
@@ -136,25 +151,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
   // Tricks & mnemonics landings — only exams that actually have generated
   // content (the page 404s otherwise, so the sitemap must not lead there).
-  const tricksExams = await prisma
-    .$queryRaw<{ code: string }[]>`
-      SELECT e.code FROM "Exam" e
-      JOIN "ExamTricks" t ON t."examId" = e.id
-      WHERE e.active = TRUE
-    `.catch(() => [] as { code: string }[]);
-  const tricksUrls: MetadataRoute.Sitemap = tricksExams.map((e) => ({
+  // The rule now lives in exam-page-gates (a row WITH content, 16 Sep 2026).
+  const tricksUrls: MetadataRoute.Sitemap = exams.filter((e) => gate(e.code).tricks).map((e) => ({
     url: `${base}/exams/${e.code}/tricks`,
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
   // "How to crack [exam]" guides — only exams with generated content.
-  const guideExams = await prisma
-    .$queryRaw<{ code: string }[]>`
-      SELECT e.code FROM "Exam" e
-      JOIN "ExamGuide" g ON g."examId" = e.id
-      WHERE e.active = TRUE
-    `.catch(() => [] as { code: string }[]);
-  const guideUrls: MetadataRoute.Sitemap = guideExams.map((e) => ({
+  const guideUrls: MetadataRoute.Sitemap = exams.filter((e) => gate(e.code).guide).map((e) => ({
     url: `${base}/exams/${e.code}/guide`,
     changeFrequency: "monthly" as const,
     priority: 0.75,
@@ -172,20 +176,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // a real query class and each page carries unique content (that
   // exam's topic list with live question counts). Only exams whose bank
   // has at least one buildable topic (≥3 validated questions) — an
-  // empty builder must never be a sitemap URL.
-  const buildable = new Set(
-    (
-      await prisma
-        .$queryRaw<{ code: string }[]>`
-          SELECT DISTINCT e.code FROM "Exam" e
-          JOIN "Subject" s ON s."examId" = e.id JOIN "Topic" t ON t."subjectId" = s.id
-          JOIN "Question" q ON q."topicId" = t.id AND q.validated = TRUE
-          WHERE e.active = TRUE GROUP BY e.code, t.id HAVING COUNT(q.id) >= 3`
-        .catch(() => [] as { code: string }[])
-    ).map((r) => r.code),
-  );
+  // empty builder must never be a sitemap URL. (The buildable rule moved to
+  // exam-page-gates on 16 Sep 2026, where the page's noindex reads it too.)
   const builderUrls: MetadataRoute.Sitemap = exams
-    .filter((e) => buildable.has(e.code))
+    .filter((e) => gate(e.code).buildMock)
     .map((e) => ({
       url: `${base}/exams/${e.code}/build-mock`,
       changeFrequency: "weekly" as const,
@@ -211,7 +205,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return (["hi", "te"] as const).flatMap((lc) => [
       ...(v.hub[lc] ? [{ url: `${base}/${lc}/exams/${e.code}`, lastModified: e.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 }] : []),
       ...(v.updates[lc] ? [{ url: `${base}/${lc}/exams/${e.code}/updates`, changeFrequency: "daily" as const, priority: 0.7 }] : []),
-      ...(v.cutoff[lc] ? [{ url: `${base}/${lc}/exams/${e.code}/cutoff`, changeFrequency: "weekly" as const, priority: 0.65 }] : []),
+      ...(gate(e.code).cutoff && v.cutoff[lc] ? [{ url: `${base}/${lc}/exams/${e.code}/cutoff`, changeFrequency: "weekly" as const, priority: 0.65 }] : []),
       ...(estimatorCodes.has(e.code) && v["score-estimate"][lc]
         ? [{ url: `${base}/${lc}/exams/${e.code}/score-estimate`, changeFrequency: "weekly" as const, priority: 0.5 }]
         : []),

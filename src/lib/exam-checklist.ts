@@ -57,9 +57,11 @@ import {
 } from "@/lib/exam-timeline";
 import {
   computeExamWeekState,
+  firstShiftEndIst,
   firstShiftStartIst,
   istDay,
   istHour,
+  sittingsOn,
   POLL_DEFAULT_OPEN_IST_HOUR,
   TODAY_PM_IST_HOUR,
   type ExamWeekPhase,
@@ -311,6 +313,10 @@ export interface ExamChecklist {
   examDay: ChecklistDate | null;
   /** One sentence about the exam day, tier word included; null when no typed exam day. */
   examDayLine: string | null;
+  /** Every sitting on the exam day at its best tier (sittingsOn), earliest
+   *  first — two for KSRP on 20 Sep 2026. The page lists them all when
+   *  there is more than one, instead of the single focus row. */
+  sittings: ChecklistDate[];
   /** Days to the exam day when it is ahead, else null. */
   daysTo: number | null;
   /** Multi-day window: "12 Sep to 25 Sep (official)". */
@@ -414,8 +420,10 @@ export function buildExamChecklist(input: ChecklistInput): ExamChecklist {
   const examDay = date(examRow);
   const firstDay = state.windowDays[0] ?? examRow;
   const lastDay = state.windowEnd ?? examRow;
+  // An open-ended window (a start row whose end date is not announced,
+  // 16 Sep 2026) has no "to" date to print.
   const windowText =
-    state.windowDays.length > 1 && firstDay && lastDay
+    !state.openEnded && state.windowDays.length > 1 && firstDay && lastDay
       ? `${dayText(firstDay.date, now, locale)} to ${dayText(lastDay.date, now, locale)} (${
           firstDay.tier === lastDay.tier ? tierWord(lastDay.tier) : `${tierWord(firstDay.tier)} / ${tierWord(lastDay.tier)}`
         })`
@@ -434,6 +442,10 @@ export function buildExamChecklist(input: ChecklistInput): ExamChecklist {
       examDayLine = `Exam tomorrow, ${d}.`;
     } else if ((state.phase === "today-am" || state.phase === "today-pm") && announced) {
       examDayLine = `Exam today, ${d}.`;
+    } else if (state.phase === "window" && state.openEnded && announced && firstDay) {
+      // MP RAEO, 18 Sep 2026: never "The paper was held on 17 Sept" while
+      // later shifts may still be running.
+      examDayLine = `Exam began ${toDate(firstDay, tierWord, now, locale).dated}; end date not announced — your shift day is on your admit card.`;
     } else if (state.phase === "window" && announced && windowText) {
       examDayLine = `Exam window: ${windowText}. Your shift day is on your admit card.`;
     } else if (state.phase === "post" && announced) {
@@ -525,6 +537,7 @@ export function buildExamChecklist(input: ChecklistInput): ExamChecklist {
     phase: state.phase,
     examDay,
     examDayLine,
+    sittings: examRow ? sittingsOn(timeline, istDay(examRow.date)).map((r) => toDate(r, tierWord, now, locale)) : [],
     daysTo,
     window: windowText,
     examNotes,
@@ -625,7 +638,7 @@ export interface StripItem {
   /** "13 Sep (official)". */
   dated: string;
   daysTo: number;
-  /** Exam day only: the first shift has plausibly started ("how was it?"). */
+  /** Exam day only: the first sitting is over ("how was it?"). */
   pollOpen: boolean;
 }
 
@@ -645,6 +658,7 @@ export function pickExamsStrip(rows: StripRowInput[], now: Date = new Date(), ma
   const today = istDay(now);
   const hour = istHour(now) + new Date(now.getTime() + IST_OFFSET_MS).getUTCMinutes() / 60;
   const best = new Map<string, StripItem>();
+  const prevStart = new Map<string, number | null>();
   for (const r of rows) {
     if ((r.kind ?? "").trim().toUpperCase() !== "EXAM") continue;
     const date = r.date instanceof Date ? r.date : new Date(r.date);
@@ -655,7 +669,8 @@ export function pickExamsStrip(rows: StripRowInput[], now: Date = new Date(), ma
     const day = istDay(date);
     const daysTo = dayDiff(today, day);
     if (daysTo < 0 || daysTo > STRIP_WEEK_DAYS) continue;
-    const start = firstShiftStartIst(`${r.label ?? ""}\n${r.notes ?? ""}`);
+    const rowText = `${r.label ?? ""}\n${r.notes ?? ""}`;
+    const start = firstShiftStartIst(rowText);
     const item: StripItem = {
       id: r.id,
       examCode: r.examCode,
@@ -665,11 +680,26 @@ export function pickExamsStrip(rows: StripRowInput[], now: Date = new Date(), ma
       tier,
       dated: `${dayText(date, now, "en")} (${TIER_WORD_EN[tier]})`,
       daysTo,
-      pollOpen: daysTo === 0 && (hour >= TODAY_PM_IST_HOUR || hour >= (start ?? POLL_DEFAULT_OPEN_IST_HOUR)),
+      // From the end of the first sitting (16 Sep 2026), as examDayPollOpen.
+      pollOpen: daysTo === 0 && (hour >= TODAY_PM_IST_HOUR || hour >= (firstShiftEndIst(rowText) ?? POLL_DEFAULT_OPEN_IST_HOUR)),
     };
     const key = `${r.examCode}:${day}`;
     const prev = best.get(key);
-    if (!prev || (prev.tier === "reported" && tier === "official")) best.set(key, item);
+    // One item per exam per day: the better tier, then the earlier first
+    // shift, then id — never the loader's row order (16 Sep 2026).
+    const better =
+      !prev ||
+      (prev.tier !== tier
+        ? tier === "official"
+        : (() => {
+            const ps = prevStart.get(key) ?? null;
+            if (ps !== start) return start !== null && (ps === null || start < ps);
+            return r.id < prev.id;
+          })());
+    if (better) {
+      best.set(key, item);
+      prevStart.set(key, start);
+    }
   }
   const all = [...best.values()];
   const todayItems = all.filter((i) => i.daysTo === 0);

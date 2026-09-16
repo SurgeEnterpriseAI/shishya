@@ -27,8 +27,22 @@
 // −120 days to +365 days through buildTimeline (so the expected-answer-key
 // guard applies here too), each with its tier word, "was expected — not
 // confirmed" on passed estimates, and a data-updated line.
+//
+// Pages that render (16 Sep 2026): the /cutoff, /syllabus, /tricks, /guide
+// and /build-mock links — and the exam-week cutoff line — are printed only
+// when src/lib/exam-page-gates.ts says the page renders; a failed gate read
+// prints none of them. MP_RAEO's file linked /cutoff, /tricks and /guide —
+// all 404 — the day before its exam. "Study notes" only when a topic has
+// notes (MP_RAEO has none). The age line
+// prints the exam's OWN stored relaxation, never the central "OBC +3, SC/ST
+// +5" rule it used to print for all 140 exams with an age limit (112 of them
+// state exams; MP_RAEO's rule book says 45 for MP-domicile categories).
 
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { GATES_CLOSED, loadExamPageGates } from "@/lib/exam-page-gates";
+import { ageEligibilityLine, relatedExamLines } from "@/lib/page-gates-copy";
+import { usableNotesSql } from "@/lib/topic-notes";
 import { sourceHostLabel } from "@/lib/official-source";
 import { buildTimeline, focusExamRow, PASSED_ESTIMATE_TEXT, type TimelineRow } from "@/lib/exam-timeline";
 import { istDay } from "@/lib/exam-week";
@@ -83,8 +97,8 @@ export async function GET(
   const [elig, cutoff, dates, results, news] = await Promise.all([
     prisma
       .$queryRaw<
-        { minAge: number | null; maxAge: number | null; educationNote: string | null; vacanciesApprox: number | null; officialUrl: string | null; officialName: string | null; eligibilityNote: string | null }[]
-      >`SELECT "minAge", "maxAge", "educationNote", "vacanciesApprox", "officialUrl", "officialName", "eligibilityNote"
+        { minAge: number | null; maxAge: number | null; ageRelaxation: string | null; educationNote: string | null; vacanciesApprox: number | null; officialUrl: string | null; officialName: string | null; eligibilityNote: string | null }[]
+      >`SELECT "minAge", "maxAge", "ageRelaxation", "educationNote", "vacanciesApprox", "officialUrl", "officialName", "eligibilityNote"
         FROM "ExamEligibility" WHERE "examId" = ${exam.id} LIMIT 1`
       .catch(() => []),
     prisma
@@ -122,6 +136,18 @@ export async function GET(
       SELECT COUNT(*) n FROM "Mock" WHERE "examId" = ${exam.id} AND "generatedBy" = 'system:full-pattern-v1'`
     .then((r) => Number(r[0]?.n ?? 0) > 0)
     .catch(() => false);
+  // Which sub-pages render — a failed read links none (machine surface).
+  const gateMap = await loadExamPageGates().catch(() => null);
+  const gates = gateMap?.get(exam.code) ?? GATES_CLOSED;
+  // Any topic of this exam with usable study notes? A failed read says no.
+  const hasNotes = await prisma
+    .$queryRaw<{ ok: boolean }[]>`
+      SELECT EXISTS (
+        SELECT 1 FROM "TopicTeachingNote" n JOIN "Topic" t ON t.id = n."topicId" JOIN "Subject" s ON s.id = t."subjectId"
+        WHERE s."examId" = ${exam.id} AND ${usableNotesSql(Prisma.sql`n.content`)}
+      ) AS ok`
+    .then((r) => r[0]?.ok === true)
+    .catch(() => false);
 
   const e = elig[0];
   const now = new Date();
@@ -154,6 +180,8 @@ export async function GET(
     const statePage = `${SITE}/exams/state/${stateSlug(examState.code)}`;
     L.push(`> ${examState.name} government exams on Shishya: ${statePage} (state brief: ${statePage}/context.md)`);
   }
+  // A recruitment of this board with its own exam page (16 Sep 2026, raeo.11).
+  L.push(...relatedExamLines(exam.code, (c) => gateMap?.has(c) ?? false, SITE));
   L.push("");
 
   L.push("## Exam pattern");
@@ -180,8 +208,8 @@ export async function GET(
 
   if (e) {
     L.push("## Eligibility & vacancies");
-    if (e.minAge != null || e.maxAge != null)
-      L.push(`- Age: ${e.minAge ?? "?"}–${e.maxAge ?? "?"} years (before category relaxation: OBC +3, SC/ST +5)`);
+    const age = ageEligibilityLine(e.minAge, e.maxAge, e.ageRelaxation);
+    if (age) L.push(`- ${age}`);
     if (e.educationNote) L.push(`- Education: ${e.educationNote}`);
     if (e.vacanciesApprox != null)
       L.push(`- Approximate annual vacancies: ${e.vacanciesApprox.toLocaleString("en-IN")}`);
@@ -237,7 +265,7 @@ export async function GET(
       loadExamWeekTally(weekExam),
     ]);
     L.push("## Exam week");
-    L.push(...examWeekAeoLines(weekExam, { articles: articles.get(weekExam.id) ?? [], tally, site: SITE }));
+    L.push(...examWeekAeoLines(weekExam, { articles: articles.get(weekExam.id) ?? [], tally, site: SITE, cutoffPage: gates.cutoff }));
     L.push(`- Calendar file (.ics): the exam day(s), answer key and result dates the tracker holds, each with its tier word — missing dates are omitted, never invented: ${SITE}/exams/${exam.code}/exam-week.ics`);
     L.push("");
   }
@@ -293,7 +321,7 @@ export async function GET(
       L.push("## Published cutoffs from previous recruitments");
       L.push("Copied figure for figure from the published document. Cite the tier word and the link with any figure.");
       L.push(...lines);
-      L.push(`Full tables with sources: ${SITE}/exams/${exam.code}/cutoff#published`);
+      if (gates.cutoff) L.push(`Full tables with sources: ${SITE}/exams/${exam.code}/cutoff#published`);
       L.push("");
     }
   }
@@ -302,8 +330,10 @@ export async function GET(
     L.push("## Expected cutoffs (category-wise)");
     L.push(cutoff[0].content.trim().slice(0, 2500));
     L.push("");
-    L.push(`Full cutoff page: ${SITE}/exams/${exam.code}/cutoff`);
-    L.push("");
+    if (gates.cutoff) {
+      L.push(`Full cutoff page: ${SITE}/exams/${exam.code}/cutoff`);
+      L.push("");
+    }
   }
 
   let hasOfficialQuestionPapersCtx = false;
@@ -327,16 +357,24 @@ export async function GET(
 
   L.push("## Free resources on Shishya for this exam");
   L.push(`- Exam hub (mocks, ${hasOfficialQuestionPapersCtx ? "official previous year papers and PYQ-pattern practice" : "previous year paper practice (PYQ-pattern sets)"}, news, dates): ${SITE}/exams/${exam.code}`);
-  L.push(`- Custom topic-wise mock builder — pick any syllabus topics, 10/25/50 questions, difficulty; timed, scored, solutions; readable in Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages: ${SITE}/exams/${exam.code}/build-mock`);
+  if (gates.buildMock) {
+    L.push(`- Custom topic-wise mock builder — pick any syllabus topics, 10/25/50 questions, difficulty; timed, scored, solutions; readable in Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages: ${SITE}/exams/${exam.code}/build-mock`);
+  }
   if (fullPattern) {
     L.push(`- Full-length REAL-PATTERN mock (${exam.totalQuestions} questions · ${exam.durationMin} min · sections in real order): the "Full-Length Mock (Real Pattern)" tile on ${SITE}/exams/${exam.code}`);
   }
   L.push(`- Date/admit-card/result tracker + free email alerts: ${SITE}/exams/${exam.code}/updates`);
   L.push(`- All-India exam calendar (next 120 days): ${SITE}/exam-calendar`);
-  L.push(`- Full syllabus + free study notes: ${SITE}/exams/${exam.code}/syllabus`);
-  L.push(`- Category-wise expected cutoffs: ${SITE}/exams/${exam.code}/cutoff`);
-  L.push(`- Memory tricks & mnemonics: ${SITE}/exams/${exam.code}/tricks`);
-  L.push(`- How to crack it (strategy guide): ${SITE}/exams/${exam.code}/guide`);
+  if (gates.syllabus) {
+    L.push(
+      hasNotes
+        ? `- Full syllabus + free study notes: ${SITE}/exams/${exam.code}/syllabus`
+        : `- Full syllabus (every subject and topic; study notes not published yet): ${SITE}/exams/${exam.code}/syllabus`,
+    );
+  }
+  if (gates.cutoff) L.push(`- Category-wise expected cutoffs: ${SITE}/exams/${exam.code}/cutoff`);
+  if (gates.tricks) L.push(`- Memory tricks & mnemonics: ${SITE}/exams/${exam.code}/tricks`);
+  if (gates.guide) L.push(`- How to crack it (strategy guide): ${SITE}/exams/${exam.code}/guide`);
   L.push(`- Free day-by-day study plan (personal coach): ${SITE}/coach`);
   L.push(`- Free AI tutor (${INDIAN_LANGUAGE_COUNT} Indian languages, no login): ${SITE}/chat`);
   L.push("");

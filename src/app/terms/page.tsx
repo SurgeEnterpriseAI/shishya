@@ -8,6 +8,8 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Terms of Service — Shishya",
   description: "Terms of service for Shishya (shishya.in) — free exam preparation, with optional paid mentor sessions.",
+  // Self canonical (16 Sep 2026): one of 7 sitemap landings the crawl found without one.
+  alternates: { canonical: "https://shishya.in/terms" },
 };
 
 export default function TermsPage() {

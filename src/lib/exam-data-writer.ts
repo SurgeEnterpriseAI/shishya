@@ -272,7 +272,11 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
         // Awaited (10 s cap inside submitIndexNow): a detached fetch can be
         // dropped when the cron's function returns right after the last exam.
         const twins = await loadTwinVerdicts([examId], now).catch(() => []);
-        await submitIndexNow(gateTwinUrls(examWeekUrls(exam.code), new Map(twins.map((t) => [t.code, t.verdicts]))));
+        // /cutoff only when the page renders; a failed gate read withholds it
+        // (16 Sep 2026, src/lib/exam-page-gates.ts).
+        const { examPageGates, GATES_CLOSED } = await import("@/lib/exam-page-gates");
+        const pageGates = await examPageGates(exam.code, GATES_CLOSED);
+        await submitIndexNow(gateTwinUrls(examWeekUrls(exam.code, pageGates), new Map(twins.map((t) => [t.code, t.verdicts]))));
       }
     }
   }

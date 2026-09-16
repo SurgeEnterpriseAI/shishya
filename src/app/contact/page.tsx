@@ -6,6 +6,8 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Contact — Shishya",
   description: "Contact Shishya / Surge Software Solutions Pvt Ltd.",
+  // Self canonical (16 Sep 2026): one of 7 sitemap landings the crawl found without one.
+  alternates: { canonical: "https://shishya.in/contact" },
 };
 
 export default function ContactPage() {

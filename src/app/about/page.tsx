@@ -8,6 +8,8 @@ import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 export const metadata: Metadata = {
   title: "About — Shishya",
   description: "Shishya is India's free, AI-first exam-preparation platform, built by Surge Software Solutions Pvt Ltd.",
+  // Self canonical (16 Sep 2026): one of 7 sitemap landings the crawl found without one.
+  alternates: { canonical: "https://shishya.in/about" },
 };
 
 export default function AboutPage() {

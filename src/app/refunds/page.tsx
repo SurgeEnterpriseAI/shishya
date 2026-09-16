@@ -7,6 +7,8 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Refund & Cancellation Policy — Shishya",
   description: "Refunds and cancellations for Shishya mentor sessions (the platform itself is free).",
+  // Self canonical (16 Sep 2026): one of 7 sitemap landings the crawl found without one.
+  alternates: { canonical: "https://shishya.in/refunds" },
 };
 
 export default function RefundsPage() {

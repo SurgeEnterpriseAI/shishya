@@ -38,6 +38,7 @@ import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
 import { tFor } from "@/lib/i18n-server";
 import { alertPhase, examAlertLabels, getExamWeekInputs } from "@/lib/exam-week-inputs";
+import { alertCopyPhase } from "@/lib/exam-week";
 import {
   buildExamChecklist,
   examChecklistMeta,
@@ -49,6 +50,7 @@ import {
   type ExamChecklist,
 } from "@/lib/exam-checklist";
 import { isRealArticle } from "@/lib/phase-article-quality";
+import { examPageGates } from "@/lib/exam-page-gates";
 import { renderMarkdown } from "@/lib/markdown";
 
 interface ChecklistFacts {
@@ -192,7 +194,9 @@ export default async function ChecklistPage({
   const short = exam.shortName;
   const t = tFor("en");
 
-  const [session, articleRow] = await Promise.all([
+  // /cutoff 404s without rank bands (MP RAEO, KA KSRP — 16 Sep 2026): the
+  // link renders only when the page does. A failed gate read keeps it.
+  const [session, articleRow, gates] = await Promise.all([
     auth().catch(() => null),
     prisma.examPhaseArticle
       .findFirst({
@@ -201,6 +205,7 @@ export default async function ChecklistPage({
         select: { id: true, title: true, bodyMarkdown: true, summarySnippet: true, sourcesScraped: true, createdAt: true, lastUpdatedAt: true },
       })
       .catch(() => null),
+    examPageGates(exam.code),
   ]);
   const signedIn = !!session?.user;
   const userId = session?.user?.id ?? null;
@@ -305,7 +310,24 @@ export default async function ChecklistPage({
                 {c.examDayLine}
                 <NoticeLink row={c.examDay} />
               </p>
-              <p className="mt-0.5 text-xs text-ink-600">Tracker row: {c.examDay.label}</p>
+              {c.sittings.length > 1 ? (
+                // Every sitting of the day (16 Sep 2026): KSRP holds two
+                // official sittings on 20 Sep in different regions and hours,
+                // and the single "Tracker row" line showed one of them.
+                <>
+                  <p className="mt-0.5 text-xs text-ink-600">Sittings on this day, tracker rows:</p>
+                  <ul className="mt-0.5 space-y-0.5 text-xs text-ink-700">
+                    {c.sittings.map((s, i) => (
+                      <li key={i}>
+                        🕘 {s.label} — {s.dated}
+                        <NoticeLink row={s} />
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="mt-0.5 text-xs text-ink-600">Tracker row: {c.examDay.label}</p>
+              )}
             </>
           ) : (
             <p className="mt-1 text-sm text-ink-800">
@@ -461,9 +483,12 @@ export default async function ChecklistPage({
             <Link href={`/exams/${exam.code}/updates`} className={linkCls}>
               🗓️ All {short} dates
             </Link>
-            <Link href={`/exams/${exam.code}/syllabus`} className={linkCls}>
-              📚 Syllabus
-            </Link>
+            {/* /syllabus 404s for exams with no subjects (12 on 16 Sep 2026). */}
+            {gates.syllabus && (
+              <Link href={`/exams/${exam.code}/syllabus`} className={linkCls}>
+                📚 Syllabus
+              </Link>
+            )}
             {/* The system full-pattern paper follows the STORED pattern — hidden
                 when the sitting in focus is another stage (SBI PO Mains on a
                 Prelims record), so the page never contradicts its own warning. */}
@@ -477,9 +502,11 @@ export default async function ChecklistPage({
                 🧠 Memory tricks
               </Link>
             )}
-            <Link href={`/exams/${exam.code}/cutoff`} className={linkCls}>
-              🎯 {t("ew.post.cutoff")}
-            </Link>
+            {gates.cutoff && (
+              <Link href={`/exams/${exam.code}/cutoff`} className={linkCls}>
+                🎯 {t("ew.post.cutoff")}
+              </Link>
+            )}
             <a href={`/exams/${exam.code}/exam-week.ics`} rel="nofollow" className={linkCls}>
               📅 {t("ew.ics.dates")}
             </a>
@@ -492,7 +519,7 @@ export default async function ChecklistPage({
             examCode={exam.code}
             signedIn={signedIn}
             compact
-            phase={alertPhase(c.state)}
+            phase={alertCopyPhase(alertPhase(c.state), c.state)}
             weekLabels={alert.weekLabels}
             labels={alert.labels}
           />

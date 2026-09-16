@@ -16,6 +16,14 @@
 // questions (source PYQ, every year) per topic — students typed "PYQ topic
 // based". Same page and canonical; the mode switch shows when at least one
 // topic holds 3 or more of them.
+//
+// Empty builder (16 Sep 2026): an exam with no topic holding 3 validated
+// questions (the sitemap's "buildable" rule, src/lib/exam-page-gates.ts) is
+// noindex, carries no WebApplication JSON-LD ("any of 0 syllabus topics"), and
+// says plainly that no topic has enough questions yet. The 12 exams with no
+// questions (NEET_PG, NIFT …) were indexable empty builders linked from
+// llms-full.txt and context.md, whose empty state sent students to "the full
+// mocks" of a bank with no questions.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -30,6 +38,7 @@ import { getSeenCountByTopic } from "@/lib/seen-questions";
 import { SEEN_WINDOW_DAYS } from "@/lib/question-pick";
 import { getT } from "@/lib/i18n-server";
 import type { StringKey } from "@/lib/i18n";
+import { BUILDABLE_TOPIC_MIN, examPageGates } from "@/lib/exam-page-gates";
 
 // The form's copy in the visitor's locale (13 Sep 2026): cookie / URL /
 // preferredLang via getT(). Not exported — a page file may only export
@@ -72,11 +81,16 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   const { code } = await params;
   const exam = await prisma.exam.findUnique({ where: { code }, select: { shortName: true, name: true } });
   if (!exam) return { title: "Build a mock — Shishya" };
+  // A failed gate read keeps the page indexable (GATES_OPEN), as before.
+  const buildable = (await examPageGates(code)).buildMock;
   const title = `${exam.shortName} topic-wise mock test builder — pick your topics, free | Shishya`;
-  const description = `Build your own ${exam.name} mock: choose exact topics (polity, number system, anything), size and difficulty. Instant scoring, solutions, Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages. Free.`;
+  const description = buildable
+    ? `Build your own ${exam.name} mock: choose exact topics (polity, number system, anything), size and difficulty. Instant scoring, solutions, Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages. Free.`
+    : `${exam.name} topic-wise mock builder: no topic of this exam has enough checked questions for a topic mock yet.`;
   return {
     title,
     description,
+    ...(buildable ? {} : { robots: { index: false, follow: true } }),
     alternates: { canonical: `https://shishya.in/exams/${code}/build-mock` },
     openGraph: { title, description, url: `https://shishya.in/exams/${code}/build-mock`, siteName: "Shishya", locale: "en_IN", type: "website" },
   };
@@ -101,7 +115,7 @@ export default async function BuildMockPage({
   // Subjects → topics with validated-question counts, all and PYQ-pattern
   // only. Topics under 3 questions in the chosen mode are hidden — a
   // 2-question "topic mock" reads as broken.
-  const allRows = await prisma.$queryRaw<
+  const rowsRead = await prisma.$queryRaw<
     { sname: string; sweight: number | null; tid: string; tcode: string; tname: string; n: bigint; npyq: bigint }[]
   >`
     SELECT s.name sname, s.weight sweight, t.id tid, t.code tcode, t.name tname, COUNT(q.id) n,
@@ -112,7 +126,10 @@ export default async function BuildMockPage({
     WHERE s."examId" = ${exam.id}
     GROUP BY 1, 2, 3, 4, 5
     HAVING COUNT(q.id) >= 3
-    ORDER BY s.weight DESC NULLS LAST, s.name, COUNT(q.id) DESC`.catch(() => []);
+    ORDER BY s.weight DESC NULLS LAST, s.name, COUNT(q.id) DESC`.catch(() => null);
+  // A failed read is not "no topic has enough questions" (16 Sep 2026).
+  const rowsFailed = rowsRead === null;
+  const allRows = rowsRead ?? [];
   const pyqAvailable = allRows.some((r) => Number(r.npyq) >= 3);
   const rows = pyq ? allRows.filter((r) => Number(r.npyq) >= 3).map((r) => ({ ...r, n: r.npyq })) : allRows;
 
@@ -156,8 +173,9 @@ export default async function BuildMockPage({
   // "[exam] [topic] mock test" queries to this page.
   const pageUrl = `https://shishya.in/exams/${exam.code}/build-mock`;
   const topicNames = [...subjects.values()].flatMap((s) => s.topics.map((t) => t.name));
+  const empty = allRows.length === 0;
   const jsonLd = [
-    {
+    ...(empty ? [] : [{
       "@context": "https://schema.org",
       "@type": "WebApplication",
       name: `${exam.shortName} topic-wise mock test builder`,
@@ -171,7 +189,7 @@ export default async function BuildMockPage({
       about: { "@type": "Course", name: exam.name, url: `https://shishya.in/exams/${exam.code}` },
       featureList: topicNames.slice(0, 40),
       publisher: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
-    },
+    }]),
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
@@ -199,11 +217,13 @@ export default async function BuildMockPage({
         <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">
           {pyq ? `Topic-wise ${exam.shortName} PYQ-pattern practice` : `Build your own ${exam.shortName} mock`}
         </h1>
-        <p className="mt-2 max-w-3xl text-sm text-ink-700">
-          Pick exactly the topics you want — today polity, tomorrow number system — choose the size and
-          difficulty, and attempt it like any mock: timed, scored, full solutions, weak-topic analysis.
-          Questions can be read in Hindi and {OTHER_INDIAN_LANGUAGE_COUNT} other languages inside the test.
-        </p>
+        {!empty && (
+          <p className="mt-2 max-w-3xl text-sm text-ink-700">
+            Pick exactly the topics you want — today polity, tomorrow number system — choose the size and
+            difficulty, and attempt it like any mock: timed, scored, full solutions, weak-topic analysis.
+            Questions can be read in Hindi and {OTHER_INDIAN_LANGUAGE_COUNT} other languages inside the test.
+          </p>
+        )}
 
         {(pyqAvailable || pyq) && (
           <div className="mt-4 inline-flex rounded-lg border border-ink-200 bg-white p-0.5 text-xs font-semibold" role="group">
@@ -229,11 +249,15 @@ export default async function BuildMockPage({
               {tt.t("build.mode.all")} →
             </Link>
           </p>
+        ) : subjects.size === 0 && rowsFailed ? (
+          <p className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-4 py-6 text-sm text-ink-500">
+            The topic list couldn&apos;t be loaded just now — please refresh the page.
+          </p>
         ) : subjects.size === 0 ? (
           <p className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-4 py-6 text-sm text-ink-500">
-            This exam&apos;s topic-tagged question bank is still being built — try the{" "}
-            <Link href={`/exams/${exam.code}`} className="font-medium text-saffron-700 hover:underline">full mocks</Link>{" "}
-            meanwhile.
+            No {exam.shortName} topic has {BUILDABLE_TOPIC_MIN} or more checked questions yet, so a topic-wise mock can&apos;t be
+            built for this exam. Dates, notifications and results are on the{" "}
+            <Link href={`/exams/${exam.code}`} className="font-medium text-saffron-700 hover:underline">{exam.shortName} exam page</Link>.
           </p>
         ) : (
           <BuilderForm

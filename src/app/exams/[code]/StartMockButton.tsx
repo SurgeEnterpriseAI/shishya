@@ -23,7 +23,8 @@
 // asked for starts by itself, once (sessionStorage guard — never a loop).
 // Same pattern as SubjectTestButton / CustomMockBuilder.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchSignedIn } from "@/lib/session-hint";
 
@@ -48,6 +49,29 @@ function beacon(cta: string, extra?: Record<string, unknown>) {
   } catch {
     /* analytics is best-effort */
   }
+}
+
+/** The signed-out hub banner's "Sign in free — build my plan" link (16 Sep
+ *  2026). It was the one hub CTA with no CTA_CLICKED, so the /coach
+ *  callback's volume could only be guessed from /login views. Renders the
+ *  same <a> the server page did — href, class and text passed through —
+ *  and beacons on click (sendBeacon survives the navigation). */
+export function HubSignInLink({
+  examCode,
+  href,
+  className,
+  children,
+}: {
+  examCode: string;
+  href: string;
+  className: string;
+  children: ReactNode;
+}) {
+  return (
+    <Link href={href} className={className} onClick={() => beacon("hub-signin-coach", { surface: "hub-banner", examCode })}>
+      {children}
+    </Link>
+  );
 }
 
 interface Labels {

@@ -99,6 +99,9 @@ const KIND_ORDER: Record<DateKind, number> = {
   OTHER: 10,
 };
 
+/** Tie-break between rows on the same day: the better-sourced row first. */
+const TIER_ORDER: Record<SourceTier, number> = { official: 0, reported: 1, expected: 2 };
+
 export const KIND_ICON: Record<DateKind, string> = {
   NOTIFICATION: "📢",
   APPLICATION_START: "📝",
@@ -219,7 +222,18 @@ export function buildTimeline(rows: TimelineInput[], now: Date = new Date(), off
       daysFromToday: delta,
     });
   }
-  out.sort((a, b) => a.date.getTime() - b.date.getTime() || KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
+  // Same-date, same-kind rows (16 Sep 2026): best tier first, then id, so
+  // the order no longer depends on the loader (the cron's ORDER BY date and
+  // the hub's orderBy date put MP RAEO's two 17 Sep exam rows in opposite
+  // orders). src/lib/exam-week.ts examRowOrder adds the first-shift time
+  // for exam-day picks.
+  out.sort(
+    (a, b) =>
+      a.date.getTime() - b.date.getTime() ||
+      KIND_ORDER[a.kind] - KIND_ORDER[b.kind] ||
+      TIER_ORDER[a.tier] - TIER_ORDER[b.tier] ||
+      (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+  );
   return out;
 }
 
@@ -299,10 +313,18 @@ export function upcomingOfKind(timeline: TimelineRow[], kind: DateKind): Timelin
   return rowsOfKind(timeline, kind).find((r) => r.status !== "done" && !outcomeBeforeAnyExam(timeline, r)) ?? null;
 }
 
-/** Latest row of a kind regardless of status. */
+/** Latest row of a kind regardless of status — and, among the rows on that
+ *  latest IST day, the best tier (official > reported > expected), then id
+ *  (16 Sep 2026: an expected AI copy of MP RAEO's official application
+ *  rows, and a "reported" KSRP copy, won the key-date cards by row order). */
 export function latestOfKind(timeline: TimelineRow[], kind: DateKind): TimelineRow | null {
   const rows = rowsOfKind(timeline, kind).filter((r) => !outcomeBeforeAnyExam(timeline, r));
-  return rows.length ? rows[rows.length - 1] : null;
+  if (rows.length === 0) return null;
+  const lastDay = rows.reduce((max, r) => (r.day > max ? r.day : max), rows[0].day);
+  const onLastDay = rows
+    .filter((r) => r.day === lastDay)
+    .sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier] || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  return onLastDay[0];
 }
 
 export function fmtDay(d: Date, locale: "en" | "hi" | "te" | string = "en", withWeekday = false): string {

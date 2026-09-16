@@ -58,6 +58,7 @@ import { renderMarkdown } from "@/lib/markdown";
 import { isRealArticle } from "@/lib/phase-article-quality";
 import { passesStrictArticleGate } from "@/lib/phase-article-strict-gate";
 import { getExamWeekInputs } from "@/lib/exam-week-inputs";
+import { stageAwareClaim } from "@/lib/exam-night-facts";
 import { examDayClaim, phaseArticleCopy, type ExamNightSummary } from "@/lib/phase-article-copy";
 import type { ExamPhase, ArticleReaction } from "@prisma/client";
 
@@ -142,7 +143,9 @@ export async function PhaseArticleView({
     articleGate === "strict" ? passesStrictArticleGate(a, exam) : isRealArticle(a);
   const article = activeRow && passes(activeRow) ? activeRow : null;
   const archivedVersions = archivedRows.filter((v) => passes(v)).slice(0, 12);
-  const claim = examDayClaim(inputs.rows, inputs.officialUrl);
+  // Stage-aware like the <title> (16 Sep 2026): on another stage's day the
+  // claim names that stage and drops "today" / "held" for a staged short name.
+  const claim = stageAwareClaim(exam, examDayClaim(inputs.rows, inputs.officialUrl));
   const copy = phaseArticleCopy(phase, exam.shortName, claim, summary ? { ...summary, article: !!article } : undefined);
 
   const userId = session?.user?.id ?? null;

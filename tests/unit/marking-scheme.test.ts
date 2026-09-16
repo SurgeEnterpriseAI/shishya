@@ -11,6 +11,9 @@
 import { describe, it, expect } from "vitest";
 import {
   declaredStages,
+  fullPaperFitsSitting,
+  sittingExamName,
+  sittingStageLabel,
   markingSchemeStatable,
   markingSchemeVerdict,
   scoredCount,
@@ -155,5 +158,46 @@ describe("numeric rules 1–3 (unchanged behaviour)", () => {
 
   it("missing numbers refuse rather than divide by nothing", () => {
     expect(markingSchemeStatable({ totalQuestions: 0, scoredQuestions: null, totalMarks: 0, marksPerQ: 0, description: "" })).toBe(false);
+  });
+});
+
+describe("fullPaperFitsSitting / sittingStageLabel — the stage check behind every real-pattern paper link (16 Sep 2026)", () => {
+  it("SBI PO (Prelims record) + a 'Mains exam (Phase II)' row: the paper does not fit, and the sitting is named", () => {
+    const row = { label: "Mains exam (Phase II)", date: "2026-09-12T00:00:00.000Z" };
+    expect(fullPaperFitsSitting(SBI_PO, row)).toBe(false);
+    expect(sittingStageLabel(SBI_PO, row.label)).toBe("Mains / Phase 2");
+    expect(sittingStageLabel(SBI_PO, "Mains Exam")).toBe("Mains");
+  });
+
+  it("UPSC Prelims record + 'Mains exam begins' row does not fit; a Prelims row fits", () => {
+    const upsc = { code: "UPSC_PRELIMS", name: "UPSC Civil Services Examination — Prelims", shortName: "UPSC Prelims" };
+    expect(fullPaperFitsSitting(upsc, { label: "Mains exam begins" })).toBe(false);
+    expect(sittingStageLabel(upsc, "Mains exam begins")).toBe("Mains");
+    expect(fullPaperFitsSitting(upsc, { label: "Prelims exam" })).toBe(true);
+    expect(sittingStageLabel(upsc, "Prelims exam")).toBeNull();
+  });
+
+  it("fits whenever either side is silent: no row, a stage-less row, a stage-less exam name", () => {
+    expect(fullPaperFitsSitting(SBI_PO, null)).toBe(true);
+    expect(fullPaperFitsSitting(SBI_PO, undefined)).toBe(true);
+    expect(fullPaperFitsSitting(SBI_PO, { label: "Online exam — shift 1" })).toBe(true);
+    expect(fullPaperFitsSitting({ code: "MP_RAEO", name: "MP Krishi Vistar Adhikari", shortName: "MP RAEO" }, { label: "Mains" })).toBe(true);
+    expect(sittingStageLabel({ name: "IBPS Clerk" }, "Mains Exam")).toBeNull();
+  });
+
+  it("sittingExamName re-stages the full name only for a sitting of another stage", () => {
+    const ibps = { code: "IBPS_PO", name: "IBPS Probationary Officer (Prelims)", shortName: "IBPS PO" };
+    expect(sittingExamName(ibps, "Mains exam")).toBe("IBPS Probationary Officer (Mains)");
+    expect(sittingExamName(ibps, "Prelims exam (Day 1)")).toBe("IBPS Probationary Officer (Prelims)");
+    expect(sittingExamName(ibps, "Online exam")).toBe("IBPS Probationary Officer (Prelims)");
+    expect(sittingExamName({ name: "IBPS Clerk" }, "Mains exam")).toBe("IBPS Clerk");
+    expect(sittingExamName({ name: "MPSC Rajyaseva (State Service) Prelims" }, "Mains exam - Day 2")).toBe(
+      "MPSC Rajyaseva (State Service) Mains",
+    );
+  });
+
+  it("agrees with the estimator's stage rule", () => {
+    const row = { label: "Mains Exam", date: "2026-09-12T00:00:00.000Z" };
+    expect(fullPaperFitsSitting(SBI_PO, row)).toBe(markingSchemeStatable(SBI_PO, { rowLabel: row.label, rowDate: row.date }));
   });
 });

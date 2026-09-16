@@ -12,9 +12,10 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { tk, type Locale, type StringKey } from "@/lib/i18n";
-import { computeExamWeekState, dateWithTier, istDay, type ExamWeekState } from "@/lib/exam-week";
+import { computeExamWeekState, dateWithTier, examRowOrder, isOpenEndedRow, istDay, type ExamWeekState } from "@/lib/exam-week";
 import { applyShiftDay } from "@/lib/exam-week-student";
 import { buildTimeline, type SourceTier, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
+import { fullPaperFitsSitting } from "@/lib/marking-scheme";
 
 const DAY_MS = 86_400_000;
 const IST_OFFSET_MS = 330 * 60_000;
@@ -79,6 +80,9 @@ export interface ExamMeta {
   examId: string;
   code: string;
   short: string;
+  /** Exam.name — carries the stage the stored pattern describes ("SBI
+   *  Probationary Officer (Prelims)"), for fullPaperFitsSitting. */
+  name: string;
   category: string;
   state: string | null;
   officialUrl: string | null;
@@ -89,13 +93,15 @@ export interface ExamBundle {
   rows: DateRow[];
 }
 
-/** Active exams + ALL their live tracker rows, keyed by exam id. */
+/** Active exams + ALL their live tracker rows, keyed by exam id. Rows come
+ *  back by date then id (16 Sep 2026) — the row picks themselves are
+ *  order-independent (examRowOrder), this only keeps the payload stable. */
 export async function loadExamBundles(examIds: string[]): Promise<Map<string, ExamBundle>> {
   const out = new Map<string, ExamBundle>();
   const ids = Array.from(new Set(examIds)).filter(Boolean);
   if (ids.length === 0) return out;
   const metas = await prisma.$queryRaw<ExamMeta[]>`
-    SELECT e.id AS "examId", e.code, e."shortName" AS short, e.category::text AS category, e.state, el."officialUrl"
+    SELECT e.id AS "examId", e.code, e."shortName" AS short, e.name, e.category::text AS category, e.state, el."officialUrl"
     FROM "Exam" e
     LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
     WHERE e.active = TRUE AND e.id IN (${Prisma.join(ids)})`.catch((err) => {
@@ -108,7 +114,7 @@ export async function loadExamBundles(examIds: string[]): Promise<Map<string, Ex
     SELECT id, "examId", label, date, "isExamDay", kind, confidence, url, source, notes
     FROM "ExamImportantDate"
     WHERE "archivedAt" IS NULL AND "examId" IN (${Prisma.join(Array.from(out.keys()))})
-    ORDER BY date ASC`.catch((err) => {
+    ORDER BY date ASC, id ASC`.catch((err) => {
     console.error("[exam-week-mail] tracker rows failed", err);
     return [] as DateRow[];
   });
@@ -218,18 +224,28 @@ export function examDoneState(
   const typed = rows.filter((r) => typeof r.kind === "string" && r.kind.length > 0);
   const examDays = buildTimeline(typed, now, officialUrl)
     .filter((r) => r.kind === "EXAM")
-    .map((r) => ({ row: r, day: istDay(r.date) }))
-    .sort((a, b) => a.day.localeCompare(b.day));
+    .sort(examRowOrder)
+    .map((r) => ({ row: r, day: istDay(r.date) }));
   const NOT_DONE: ExamDoneState = { done: false, lastDay: null, daysSince: null };
   if (examDays.length === 0) return NOT_DONE;
   const today = istDay(now);
   const future = examDays.filter((e) => e.day >= today && dayDiff(today, e.day) <= lookahead);
   if (future.length > 0) return NOT_DONE;
   const past = examDays.filter((e) => e.day < today);
-  const last = past[past.length - 1];
+  // Best row of the latest past day (examRowOrder puts it first on its day).
+  const lastPastDay = past.length ? past[past.length - 1].day : null;
+  const last = past.find((e) => e.day === lastPastDay);
   if (!last || last.row.tier === "expected") return NOT_DONE;
   const daysSince = dayDiff(last.day, today);
   if (daysSince > lookback) return NOT_DONE;
+  // An announced start row whose end date is not announced (MP RAEO, 17 Sep
+  // 2026) is not a finished exam in the week after it — the same rule the
+  // state machine applies (ExamWeekState.openEnded), so a routine mail does
+  // not roll a student over to the next exam while shifts may still run.
+  const OPEN_END_DAYS = 7;
+  if (daysSince <= OPEN_END_DAYS && past.some((e) => e.day === last.day && e.row.tier !== "expected" && isOpenEndedRow(e.row))) {
+    return NOT_DONE;
+  }
   return { done: true, lastDay: last.row, daysSince };
 }
 
@@ -329,7 +345,15 @@ export async function examWeekMailLine(
   const state = applyShiftDay(computeExamWeekState(rows, meta.officialUrl, now), studentDay, now);
   if ((state.phase !== "week" && state.phase !== "eve") || !state.focus || state.daysTo == null || !state.focusDay) return null;
   const tier = state.focus.tier;
-  const [checklist, paper] = await Promise.all([checklistLink(meta.examId, meta.code), fullPaperLink(meta.examId, meta.code)]);
+  // The real-pattern paper only when the sitting is the stored pattern's
+  // stage (16 Sep 2026): IBPS PO, MPSC Rajyaseva, GPSC Class 1-2 and MZ PSC
+  // students were about to get the Prelims paper in their Mains run-up. The
+  // hub fallback prints "practice on the hub".
+  const paperFits = fullPaperFitsSitting({ code: meta.code, name: meta.name, shortName: meta.short }, state.focus);
+  const [checklist, paper] = await Promise.all([
+    checklistLink(meta.examId, meta.code),
+    paperFits ? fullPaperLink(meta.examId, meta.code) : Promise.resolve({ url: `https://shishya.in/exams/${meta.code}`, isMock: false }),
+  ]);
   const when = state.daysTo === 1 ? "tomorrow" : `in ${state.daysTo} days`;
   const head = `${meta.short} exam ${when}, ${whenWithTier(state.focus)}`;
   const checklistLabel = checklist.isArticle ? "last-minute checklist" : `${meta.short} hub`;
@@ -387,10 +411,12 @@ export function rowOnOrAfter(timeline: TimelineRow[], kind: TimelineRow["kind"],
   return timeline.find((r) => r.kind === kind && istDay(r.date) >= fromDay) ?? null;
 }
 
-/** Best-tier exam-day row on a given IST day, if any. */
+/** Best exam-day row on a given IST day, if any — tier, then the earliest
+ *  first shift, then id (examRowOrder, 16 Sep 2026), so the eve / day-after
+ *  mails name the same sitting the hub and the checklist do. */
 export function examRowOnDay(timeline: TimelineRow[], day: string): TimelineRow | null {
   const hits = timeline.filter((r) => r.kind === "EXAM" && istDay(r.date) === day);
-  hits.sort((a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier]);
+  hits.sort(examRowOrder);
   return hits[0] ?? null;
 }
 

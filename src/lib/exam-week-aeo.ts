@@ -20,6 +20,10 @@
 //     row in focus (11 Sep 2026) — SBI PO's stored row is the Prelims
 //     pattern while its 12 Sep sitting is Mains; CDS scores its papers
 //     unequally. For those the block says "not stated" and why.
+//   • the cutoff line and the IndexNow /cutoff URL only when the cutoff page
+//     renders (16 Sep 2026, src/lib/exam-page-gates.ts): MP_RAEO and KA_KSRP
+//     have no rank bands, and the block told answer engines "indicative
+//     cutoff (estimate from score bands)" with a link to a 404.
 // No model calls anywhere in this file.
 
 import { prisma } from "@/lib/db/prisma";
@@ -31,6 +35,7 @@ import { getVerdictTallyRange, emptyTally, tallyLine, type VerdictTally } from "
 import { VERDICT_MIN_N } from "@/lib/exam-verdict";
 import { examWeekUrls, phaseArticleUrl, SITE_ORIGIN } from "@/lib/indexnow";
 import { isRealArticle, realSourceCount } from "@/lib/phase-article-quality";
+import type { ExamPageGates } from "@/lib/exam-page-gates";
 
 /** The Exam row's marking numbers — what markingSchemeVerdict judges. */
 export interface ExamWeekScheme {
@@ -225,10 +230,15 @@ export async function loadExamWeekTally(ex: ExamWeekExam, now: Date = new Date()
 }
 
 /** URL set to submit to IndexNow for one exam in exam week: hub, tracker,
- *  cutoff, checklist / exam-day / after-the-paper pages, hi/te twins (the
- *  caller gates them — gateTwinUrls), plus any REAL phase-article URL, once. */
-export function examWeekIndexNowUrls(ex: ExamWeekExam, articles: RealPhaseArticle[] = []): string[] {
-  return [...new Set([...examWeekUrls(ex.code), ...articles.map((a) => phaseArticleUrl(ex.code, a.slug))])];
+ *  cutoff (only when `gates.cutoff` — the page 404s without rank bands),
+ *  checklist / exam-day / after-the-paper pages, hi/te twins (the caller
+ *  gates them — gateTwinUrls), plus any REAL phase-article URL, once. */
+export function examWeekIndexNowUrls(
+  ex: ExamWeekExam,
+  articles: RealPhaseArticle[],
+  gates: Pick<ExamPageGates, "cutoff">,
+): string[] {
+  return [...new Set([...examWeekUrls(ex.code, gates), ...articles.map((a) => phaseArticleUrl(ex.code, a.slug))])];
 }
 
 // ── "## Exam week" block (context.md / llms-full.txt) ──────────────────
@@ -249,10 +259,13 @@ const NOT_ANNOUNCED = "not announced yet — the conducting body has not publish
 /**
  * Body lines of the "## Exam week" block for one exam (the caller adds the
  * heading). English only — consumed by machine-readable files, not pages.
+ * `cutoffPage`: the exam's /cutoff renders (exam-page-gates `cutoff`); the
+ * cutoff line is printed only when it is exactly `true`, so a caller that
+ * does not know (or whose gate read failed) prints no link to a 404.
  */
 export function examWeekAeoLines(
   ex: ExamWeekExam,
-  opts: { articles?: RealPhaseArticle[]; tally?: VerdictTally | null; now?: Date; site?: string } = {},
+  opts: { articles?: RealPhaseArticle[]; tally?: VerdictTally | null; now?: Date; site?: string; cutoffPage?: boolean } = {},
 ): string[] {
   const s = ex.state;
   const site = opts.site ?? SITE_ORIGIN;
@@ -286,7 +299,13 @@ export function examWeekAeoLines(
       );
       break;
     case "window":
-      L.push(`- Status: multi-day exam window in progress — ${dateTier(first)} to ${dateTier(last)}; today is inside the window`);
+      // An open-ended window (16 Sep 2026, MP RAEO): the start is announced,
+      // the end is not — never print a from-to range or "inside the window".
+      L.push(
+        s.openEnded
+          ? `- Status: exam began ${dateTier(first)}; the conducting body has not announced the end date — later shifts may still be running`
+          : `- Status: multi-day exam window in progress — ${dateTier(first)} to ${dateTier(last)}; today is inside the window`,
+      );
       break;
     case "post": {
       const ago = Math.max(1, Math.round((Date.parse(today + "T00:00:00Z") - Date.parse(last.day + "T00:00:00Z")) / DAY_MS));
@@ -315,7 +334,9 @@ export function examWeekAeoLines(
     if (secs.length) L.push(`- Hardest section (self-reported): ${secs.map((x) => `${x.label} (${x.n})`).join(", ")}`);
   }
 
-  L.push(`- Category-wise indicative cutoff (estimate from score bands, NOT official; the official cutoff comes with the result):${site}/exams/${ex.code}/cutoff`);
+  if (opts.cutoffPage === true) {
+    L.push(`- Category-wise indicative cutoff (estimate from score bands, NOT official; the official cutoff comes with the result):${site}/exams/${ex.code}/cutoff`);
+  }
   // No hi/te suffix (13 Sep 2026, index shape): most tracker twins are
   // English bodies that canonicalise to this URL (src/lib/twin-localisation.ts).
   L.push(

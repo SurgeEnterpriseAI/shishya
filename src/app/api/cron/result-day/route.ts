@@ -31,7 +31,8 @@
 //                  state, 7–60 days out, their own enrollments first),
 //                  with its date + tier word
 // plus the conducting body's notice (the result row's URL), the cutoff
-// page and the tracker. Unsubscribe footer via the send layer.
+// page (only when it renders — examPageGates, 16 Sep 2026; a failed gate
+// read links none) and the tracker. Unsubscribe footer via the send layer.
 // Limits: MAX 400 sends per run, 240 s time guard. ?dry=1 → the
 // per-exam recipient counts, nothing sent. Auth: Bearer ${CRON_SECRET}.
 
@@ -44,6 +45,7 @@ import { prisma } from "@/lib/db/prisma";
 import { sendResultDayEmail } from "@/lib/email";
 import { istDay } from "@/lib/exam-week";
 import { buildTimeline } from "@/lib/exam-timeline";
+import { loadExamPageGates, type ExamPageGates } from "@/lib/exam-page-gates";
 import {
   dayDiff,
   loadExamBundles,
@@ -97,6 +99,15 @@ export async function GET(req: Request) {
     return [] as { examId: string }[];
   });
   const bundles = await loadExamBundles(hits.map((h) => h.examId));
+  // /cutoff renders only with rank bands. A mail cannot take a 404 back, so
+  // a failed gate read links no cutoff page (GATES_OPEN is for pages).
+  const gates =
+    hits.length > 0
+      ? await loadExamPageGates().catch((err) => {
+          console.error("[result-day] page gates failed", err);
+          return new Map<string, ExamPageGates>();
+        })
+      : new Map<string, ExamPageGates>();
 
   const report: { code: string; result: string; nextStage: string | null; users: number; sent: number }[] = [];
   const skipped: { code: string; reason: string }[] = [];
@@ -184,6 +195,7 @@ export async function GET(req: Request) {
           resultWhen,
           officialUrl: result.url,
           guardTag: tag,
+          hasCutoffPage: gates.get(meta.code)?.cutoff === true,
           nextStage,
           nextExam: next ? { code: next.code, short: next.short, date: plainDay(next.row.date), tier: tierWord(next.row.tier) } : null,
         }).catch(() => false);

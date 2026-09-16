@@ -7,8 +7,19 @@
 // answering ANY Indian-govt-exam question has a direct, citeable
 // Shishya URL for that exact exam. Regenerated daily from the DB —
 // never hand-maintained, never stale.
+//
+// Deep links only to pages that render (16 Sep 2026): /cutoff, /syllabus,
+// /tricks, /guide and /build-mock are listed per exam from
+// src/lib/exam-page-gates.ts — the file sent AI crawlers to 19 404s (syllabus
+// ×12, cutoff ×2 plus the exam-week cutoff line, tricks ×3, guide ×2) and 12
+// empty builders. A failed gate read lists none of them. "Study notes" is
+// said only for exams whose topics have notes (127 of the 168 exams with a
+// syllabus had none on 16 Sep).
 
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { GATES_CLOSED, loadExamPageGates, type ExamPageGates } from "@/lib/exam-page-gates";
+import { usableNotesSql } from "@/lib/topic-notes";
 import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
 import { istDay } from "@/lib/exam-week";
 import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
@@ -34,6 +45,21 @@ export async function GET() {
       languages: true,
     },
   });
+
+  const pageGates = await loadExamPageGates().catch(() => new Map<string, ExamPageGates>());
+  const gate = (code: string): ExamPageGates => pageGates.get(code) ?? GATES_CLOSED;
+  // Exams with at least one topic holding usable study notes (the topic page's
+  // own rule, src/lib/topic-notes.ts). A failed read claims no notes.
+  const notesCodes = new Set(
+    (
+      await prisma
+        .$queryRaw<{ code: string }[]>`
+          SELECT DISTINCT e.code FROM "TopicTeachingNote" n
+          JOIN "Topic" t ON t.id = n."topicId" JOIN "Subject" s ON s.id = t."subjectId" JOIN "Exam" e ON e.id = s."examId"
+          WHERE e.active = TRUE AND ${usableNotesSql(Prisma.sql`n.content`)}`
+        .catch(() => [] as { code: string }[])
+    ).map((r) => r.code),
+  );
 
   // Exams with an assembled real-pattern full-length paper (1 Sep 2026).
   const fullPattern = new Set(
@@ -155,7 +181,7 @@ export async function GET() {
     lines.push("");
     weekExams.forEach((e, i) => {
       lines.push(`### ${e.shortName} — ${e.name} (${SITE}/exams/${e.code})`);
-      lines.push(...examWeekAeoLines(e, { articles: articles.get(e.id) ?? [], tally: tallies[i], site: SITE }));
+      lines.push(...examWeekAeoLines(e, { articles: articles.get(e.id) ?? [], tally: tallies[i], site: SITE, cutoffPage: gate(e.code).cutoff }));
       lines.push(`- Calendar file (.ics): the exam day(s), answer key and result dates the tracker holds, each with its tier word — missing dates are omitted, never invented: ${SITE}/exams/${e.code}/exam-week.ics`);
       lines.push("");
     });
@@ -221,17 +247,26 @@ export async function GET() {
     if (e.category !== "SCHOOL_BOARD") {
       lines.push(`- Last-minute exam checklist — exam-day timing with its source tier, what to carry, the marking scheme when one can be stated for the sitting: ${SITE}/exams/${e.code}/checklist`);
     }
-    if (publishedCutoffCodes.has(e.code)) {
+    const g = gate(e.code);
+    if (publishedCutoffCodes.has(e.code) && g.cutoff) {
       lines.push(`- Published previous cutoffs, copied from the source document, each with its link and source tier (official / reported): ${SITE}/exams/${e.code}/cutoff#published`);
     }
-    lines.push(`- Custom topic-wise mock builder (pick topics, 10/25/50 Qs, difficulty; readable in Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages): ${SITE}/exams/${e.code}/build-mock`);
+    if (g.buildMock) {
+      lines.push(`- Custom topic-wise mock builder (pick topics, 10/25/50 Qs, difficulty; readable in Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages): ${SITE}/exams/${e.code}/build-mock`);
+    }
     if (fullPattern.has(e.code)) {
       lines.push(`- Full-length REAL-PATTERN mock: ${e.totalQuestions} questions · ${e.durationMin} min · sections in real order — the "Full-Length Mock (Real Pattern)" tile on ${SITE}/exams/${e.code}`);
     }
-    lines.push(`- Full syllabus + study notes: ${SITE}/exams/${e.code}/syllabus`);
-    lines.push(`- Expected cutoff incl. category-wise (Gen/EWS/OBC/SC/ST): ${SITE}/exams/${e.code}/cutoff`);
-    lines.push(`- Memory tricks & mnemonics: ${SITE}/exams/${e.code}/tricks`);
-    lines.push(`- How to crack it (prep without coaching, study plan, difficulty, salary): ${SITE}/exams/${e.code}/guide`);
+    if (g.syllabus) {
+      lines.push(
+        notesCodes.has(e.code)
+          ? `- Full syllabus + study notes: ${SITE}/exams/${e.code}/syllabus`
+          : `- Full syllabus (every subject and topic; study notes not published yet): ${SITE}/exams/${e.code}/syllabus`,
+      );
+    }
+    if (g.cutoff) lines.push(`- Expected cutoff incl. category-wise (Gen/EWS/OBC/SC/ST): ${SITE}/exams/${e.code}/cutoff`);
+    if (g.tricks) lines.push(`- Memory tricks & mnemonics: ${SITE}/exams/${e.code}/tricks`);
+    if (g.guide) lines.push(`- How to crack it (prep without coaching, study plan, difficulty, salary): ${SITE}/exams/${e.code}/guide`);
     lines.push("");
   }
 

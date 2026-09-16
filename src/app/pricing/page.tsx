@@ -8,6 +8,8 @@ import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 export const metadata: Metadata = {
   title: "Pricing — Shishya",
   description: "Shishya is free for aspirants. The only optional paid service is a mentor session: first free, then ₹9 per session inclusive of GST.",
+  // Self canonical (16 Sep 2026): one of 7 sitemap landings the crawl found without one.
+  alternates: { canonical: "https://shishya.in/pricing" },
 };
 
 // FAQPage JSON-LD: this is the schema AI engines and Google quote when

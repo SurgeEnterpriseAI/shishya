@@ -28,15 +28,19 @@ export const EXAM_CACHE_TTL = 600; // 10 minutes
 async function loadHubDates(examId: string) {
   const cutoff = new Date(`${istDay(new Date())}T00:00:00.000Z`);
   cutoff.setUTCDate(cutoff.getUTCDate() - 10);
+  // Ties on date are broken by id (16 Sep 2026): the hub, the cron and the
+  // checklist read the same rows in different orders and named different
+  // same-day sittings. The exam-week picks are order-independent now
+  // (examRowOrder); this keeps the hub's Important Dates list stable too.
   const [past, recent] = await Promise.all([
     prisma.examImportantDate.findMany({
       where: { examId, archivedAt: null, date: { lt: cutoff } },
-      orderBy: { date: "desc" },
+      orderBy: [{ date: "desc" }, { id: "desc" }],
       take: 3,
     }),
     prisma.examImportantDate.findMany({
       where: { examId, archivedAt: null, date: { gte: cutoff } },
-      orderBy: { date: "asc" },
+      orderBy: [{ date: "asc" }, { id: "asc" }],
       take: 27,
     }),
   ]);

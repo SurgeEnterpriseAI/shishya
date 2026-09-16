@@ -15,6 +15,9 @@
 // exam-week exam were pushed to Bing whether they were Hindi pages or an
 // English body in a translated frame. A failed measurement withholds the
 // twins, never the English URLs.
+// /cutoff only for exams whose cutoff page renders (16 Sep 2026,
+// src/lib/exam-page-gates.ts); a failed gate read withholds every /cutoff —
+// MP_RAEO/cutoff and KA_KSRP/cutoff (no rank bands, 404) were in the daily set.
 // Auth: Bearer ${CRON_SECRET}.
 
 export const runtime = "nodejs";
@@ -24,6 +27,7 @@ export const dynamic = "force-dynamic";
 import { pingIndexNow } from "@/lib/indexnow";
 import { examWeekIndexNowUrls, loadExamWeekExams, loadRealPhaseArticles } from "@/lib/exam-week-aeo";
 import { gateTwinUrls, loadTwinVerdicts, type ExamTwinRow } from "@/lib/twin-localisation";
+import { GATES_CLOSED, loadExamPageGates } from "@/lib/exam-page-gates";
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -36,11 +40,12 @@ export async function GET(req: Request) {
   try {
     const exams = await loadExamWeekExams({ now });
     const ids = exams.map((e) => e.id);
-    const [articles, twins] = await Promise.all([
+    const [articles, twins, gates] = await Promise.all([
       loadRealPhaseArticles(ids),
       ids.length > 0 ? loadTwinVerdicts(ids, now).catch((): ExamTwinRow[] => []) : Promise.resolve<ExamTwinRow[]>([]),
+      loadExamPageGates().catch(() => null),
     ]);
-    const candidates = exams.flatMap((e) => examWeekIndexNowUrls(e, articles.get(e.id) ?? []));
+    const candidates = exams.flatMap((e) => examWeekIndexNowUrls(e, articles.get(e.id) ?? [], gates?.get(e.code) ?? GATES_CLOSED));
     const urls = gateTwinUrls(candidates, new Map(twins.map((t) => [t.code, t.verdicts])));
     const acceptedChunks = urls.length ? await pingIndexNow(urls) : 0;
     return Response.json({

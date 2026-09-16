@@ -199,6 +199,56 @@ export function stageMismatchReason(
   return `The stored pattern is the ${stored} paper${figures}; the ${when ? `${when} sitting` : "sitting in question"} ${sittingClause}, so one per-question mark cannot be stated.`;
 }
 
+/**
+ * Does the exam's system full-length pattern paper fit the sitting in
+ * question? It follows the STORED pattern, so it does not when rule 4 finds
+ * a stage mismatch (16 Sep 2026: LA_LPSC / UPSC_PRELIMS / IBPS_PO offered
+ * the Prelims paper for a Mains row on the hub, /live, /reactions and the
+ * exam-week mail line while /checklist hid it). The one check every
+ * "Full-length paper, real pattern" link asks. `row` is the exam-day row
+ * in focus; with no row there is nothing to contradict, so it fits.
+ */
+export function fullPaperFitsSitting(
+  exam: { code?: string | null; name?: string | null; shortName?: string | null },
+  row: { label: string; date?: Date | string | null } | null | undefined,
+): boolean {
+  return !stageMismatchReason(exam, row?.label, row?.date);
+}
+
+/**
+ * The stage a mismatched sitting IS ("Mains"), for copy that names the
+ * sitting's date on a page titled for another stage — "UPSC Prelims exam
+ * day — 21 Aug (official) Mains paper", never "… 21 Aug (official) paper".
+ * Null when the stages agree or either side is silent.
+ */
+export function sittingStageLabel(
+  exam: { code?: string | null; name?: string | null; shortName?: string | null },
+  rowLabel: string | null | undefined,
+): string | null {
+  if (!stageMismatchReason(exam, rowLabel)) return null;
+  return [...declaredStages(rowLabel)].map(stageLabel).join(" / ") || null;
+}
+
+/**
+ * The exam's full name with its stage words swapped for the sitting's
+ * stage ("IBPS Probationary Officer (Prelims)" on a "Mains exam" row →
+ * "IBPS Probationary Officer (Mains)"), for copy that names the exam in
+ * full next to a sitting of another stage (16 Sep 2026). The name as it is
+ * when the stages agree, either side is silent, or the name itself names
+ * no stage.
+ */
+export function sittingExamName(
+  exam: { code?: string | null; name?: string | null; shortName?: string | null },
+  rowLabel: string | null | undefined,
+): string | null {
+  const name = exam.name ?? null;
+  const stage = sittingStageLabel(exam, rowLabel);
+  if (!name || !stage) return name;
+  let out = name;
+  for (const s of STAGE_WORDS) out = out.replace(new RegExp(s.re.source, "gi"), stage);
+  return out;
+}
+
 /** 2 → "2", 0.25 → "0.25", 1.33 → "1.33". */
 function num(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0$/, "");
