@@ -497,6 +497,10 @@ export function parseHubTitle(title: string): TitleParse {
   const m = en ?? hi ?? te;
   if (!m) return { kind: "unknown", raw: title };
   const body = m[1].trim();
+  // "Exam Date Under Revision" (src/lib/hub-title.ts revisionTitleLead):
+  // two announced same-stage rows disagree, so the title states no date.
+  // It is a deliberate lead, not a parse failure (17 Sep 2026).
+  if (/under revision|संशोधनाधीन|సవరణలో ఉంది/i.test(body)) return { kind: "not-announced", raw: title };
   if (/not announced yet|अभी घोषित नहीं|ఇంకా ప్రకటించలేదు/i.test(body)) {
     for (const re of HELD_TITLE_RES) {
       const h = re.exec(title);

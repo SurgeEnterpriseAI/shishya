@@ -391,3 +391,17 @@ describe("source scan — no forbidden trust phrase or stale count ships", () =>
     expect(hits).toEqual([]);
   });
 });
+
+describe("parseHubTitle — under-revision lead", () => {
+  it("reads the revision lead as a stated non-date, not a parse failure", () => {
+    for (const t of [
+      "MPSC Group C (Maharashtra) 2026 — Exam Date Under Revision, Free Mock Tests, PYQ | Shishya",
+      "MPSC Group C 2026 — परीक्षा तिथि संशोधनाधीन, मुफ़्त मॉक टेस्ट | Shishya",
+      "MPSC Group C 2026 — పరీక్ష తేదీ సవరణలో ఉంది, ఉచిత మాక్ టెస్టులు | Shishya",
+    ]) {
+      const p = parseHubTitle(t);
+      expect(p.kind).toBe("not-announced");
+      expect("held" in p && p.held).toBeFalsy();
+    }
+  });
+});
