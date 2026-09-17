@@ -4,9 +4,16 @@
 //
 // Copy rules (product soul): the plan is a service, never an audit.
 // "Rebuilt for you" — never "you missed". Triage is strategy, not loss.
+//
+// Done ticks (16 Sep 2026): `done` comes from src/lib/coach-done.ts — the
+// same flags the CoachNextTask breadcrumb reads. A done task keeps its link
+// and reads "Done"; an open one still says "Start →" (never "missed"). The
+// "N/M done" count is only shown when a tick is possible for every task
+// (not on exam day or after the exam).
 
 import Link from "next/link";
 import type { ComputedPlan } from "@/lib/coach-plan";
+import { showsDoneCount } from "@/lib/coach-done";
 import { CoachRebuildPing } from "@/components/CoachRebuildPing";
 import { PulseAsk } from "@/components/PulseAsk";
 
@@ -18,7 +25,31 @@ const KIND_ICON: Record<string, string> = {
   mock: "📝",
 };
 
-export function CoachPlanView({ plan, full = false }: { plan: ComputedPlan; full?: boolean }) {
+// The task list's own words, so a Hindi or Telugu reader never gets "पूरा"
+// on one row and "Start →" on the next (review, 16 Sep 2026). Task labels
+// come from src/lib/coach-plan.ts and are English-only.
+const COPY = {
+  en: { plan: "Today's plan ({hrs})", long: "3+ hrs", mid: "1–2 hrs", short: "under 1 hr", start: "Start →", done: "Done", count: "{n}/{m} done" },
+  hi: { plan: "आज की योजना ({hrs})", long: "3+ घंटे", mid: "1–2 घंटे", short: "1 घंटे से कम", start: "शुरू करें →", done: "पूरा", count: "{n}/{m} पूरे" },
+  te: { plan: "ఈరోజు ప్లాన్ ({hrs})", long: "3+ గంటలు", mid: "1–2 గంటలు", short: "1 గంట లోపు", start: "ప్రారంభించండి →", done: "పూర్తైంది", count: "{n}/{m} పూర్తి" },
+} as const;
+
+export function CoachPlanView({
+  plan,
+  full = false,
+  done = null,
+  locale = "en",
+}: {
+  plan: ComputedPlan;
+  full?: boolean;
+  /** Per-task done flags, same order as plan.todayTasks (null = unknown: no ticks, no count). */
+  done?: boolean[] | null;
+  locale?: string;
+}) {
+  const copy = locale === "hi" ? COPY.hi : locale === "te" ? COPY.te : COPY.en;
+  const flags = done && done.length === plan.todayTasks.length ? done : null;
+  const doneCount = flags ? flags.filter(Boolean).length : 0;
+  const showCount = !!flags && plan.todayTasks.length > 0 && showsDoneCount(plan.phase);
   const pct = plan.progress.total
     ? Math.round((plan.progress.covered / plan.progress.total) * 100)
     : 0;
@@ -77,23 +108,38 @@ export function CoachPlanView({ plan, full = false }: { plan: ComputedPlan; full
 
       {/* Today's tasks */}
       <p className="mt-4 text-xs font-bold uppercase tracking-wider text-ink-500">
-        Today&apos;s plan ({plan.dailyMinutes >= 180 ? "3+ hrs" : plan.dailyMinutes >= 90 ? "1–2 hrs" : "under 1 hr"})
+        {copy.plan.replace("{hrs}", plan.dailyMinutes >= 180 ? copy.long : plan.dailyMinutes >= 90 ? copy.mid : copy.short)}
+        {showCount && (
+          <span className={doneCount === plan.todayTasks.length ? "text-emerald-700" : undefined}>
+            {" · "}
+            {copy.count.replace("{n}", String(doneCount)).replace("{m}", String(plan.todayTasks.length))}
+          </span>
+        )}
       </p>
       <ul className="mt-2 space-y-2">
-        {plan.todayTasks.map((t, i) => (
-          <li key={i}>
-            <Link
-              href={t.href}
-              className="flex items-center justify-between gap-3 rounded-lg border border-ink-200 bg-white px-4 py-2.5 transition-colors hover:border-saffron-400"
-            >
-              <span className="min-w-0 text-sm text-ink-800">
-                <span aria-hidden className="mr-2">{KIND_ICON[t.kind] ?? "•"}</span>
-                {t.label}
-              </span>
-              <span className="shrink-0 text-sm font-bold text-saffron-700">Start →</span>
-            </Link>
-          </li>
-        ))}
+        {plan.todayTasks.map((t, i) => {
+          const isDone = flags?.[i] === true;
+          return (
+            <li key={i}>
+              <Link
+                href={t.href}
+                className={`flex items-center justify-between gap-3 rounded-lg border px-4 py-2.5 transition-colors ${
+                  isDone ? "border-emerald-200 bg-emerald-50/60 hover:border-emerald-300" : "border-ink-200 bg-white hover:border-saffron-400"
+                }`}
+              >
+                <span className={`min-w-0 text-sm ${isDone ? "text-ink-500 line-through" : "text-ink-800"}`}>
+                  <span aria-hidden className="mr-2">{isDone ? "✓" : KIND_ICON[t.kind] ?? "•"}</span>
+                  {t.label}
+                </span>
+                {isDone ? (
+                  <span className="shrink-0 text-sm font-bold text-emerald-700">{copy.done}</span>
+                ) : (
+                  <span className="shrink-0 text-sm font-bold text-saffron-700">{copy.start}</span>
+                )}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
 
       {/* Transparent triage */}

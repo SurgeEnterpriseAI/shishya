@@ -31,6 +31,7 @@ import {
   challengePlayEmail,
   gradeChoices,
   isChallengeExpired,
+  isSameMockSlice,
   mockSlice,
   newChallengeKey,
   newChallengeToken,
@@ -115,20 +116,37 @@ export async function challengeQuiz(ch: Pick<LoadedChallenge, "examCode" | "ques
 export type CreateChallengeInput =
   | { source: "quiz" | "topic"; examCode: string; questionIds: string[]; choices: Choice[]; name: string | null; locale: string | null }
   | { source: "challenge"; parentToken: string; choices: Choice[]; name: string | null; locale: string | null }
-  | { source: "mock"; attemptId: string; name: string | null; locale: string | null };
+  | {
+      source: "mock";
+      attemptId: string;
+      name: string | null;
+      locale: string | null;
+      /** Hand back the maker's existing link for this attempt instead of a new
+       *  row. Only POST /api/challenge (the maker's own tap) sets it: a direct
+       *  library call — a verify script acting as some student — always gets
+       *  its own new row, so its cleanup can never delete their real link. */
+      reuseExisting?: boolean;
+    };
 
 export type CreateChallengeResult =
   | {
       ok: true;
       token: string;
-      creatorKey: string;
+      /** Null when an existing mock challenge came back (`reused`): its key
+       *  was handed out once already, and the signed-in maker manages it by
+       *  session. */
+      creatorKey: string | null;
       creatorCorrect: number;
       questionCount: number;
       examCode: string;
       examShort: string;
       fromMock: boolean;
+      reused: boolean;
     }
   | Fail;
+
+/** An existing mock challenge is handed back only while it has at least this long left (16 Sep 2026). */
+const MOCK_REUSE_MIN_LIFE_MS = 24 * 60 * 60 * 1000;
 
 export async function createChallenge(input: CreateChallengeInput, who: ChallengeWho): Promise<CreateChallengeResult> {
   let examId: string;
@@ -174,6 +192,38 @@ export async function createChallenge(input: CreateChallengeInput, who: Challeng
     // As the results page showed it: a skipped question is not correct.
     creatorCorrect = slice.filter((id) => answers.get(id)?.correct === true).length;
     sourceRef = input.attemptId;
+
+    // One link per attempt (16 Sep 2026): a reload + tap used to add a new
+    // row each time, splitting friends' scores across links. Hand back the
+    // maker's newest unexpired link for this attempt when it still holds
+    // exactly today's slice (a changed question pool makes a fresh link).
+    const existing = input.reuseExisting
+      ? await prisma.$queryRaw<{ id: string; questionIds: string[]; creatorCorrect: number; creatorName: string | null }[]>`
+          SELECT id, "questionIds", "creatorCorrect", "creatorName" FROM "Challenge"
+          WHERE source = 'mock' AND "sourceRef" = ${input.attemptId} AND "creatorUserId" = ${who.userId}
+            AND "expiresAt" > ${new Date(Date.now() + MOCK_REUSE_MIN_LIFE_MS)}
+          ORDER BY "createdAt" DESC
+          LIMIT 1`
+      : [];
+    const prev = existing[0];
+    if (prev && isSameMockSlice(prev.questionIds, slice)) {
+      // The name is exactly what this tap sent — a cleared field clears it —
+      // so friends see what the card's fine print just said they would.
+      if (input.name !== prev.creatorName) {
+        await prisma.$executeRaw`UPDATE "Challenge" SET "creatorName" = ${input.name} WHERE id = ${prev.id}`;
+      }
+      return {
+        ok: true,
+        token: prev.id,
+        creatorKey: null,
+        creatorCorrect: Number(prev.creatorCorrect),
+        questionCount: slice.length,
+        examCode,
+        examShort,
+        fromMock: true,
+        reused: true,
+      };
+    }
   } else {
     let setExamCode: string;
     let ids: string[];
@@ -228,6 +278,7 @@ export async function createChallenge(input: CreateChallengeInput, who: Challeng
         examCode,
         examShort,
         fromMock: input.source === "mock",
+        reused: false,
       };
     }
   }

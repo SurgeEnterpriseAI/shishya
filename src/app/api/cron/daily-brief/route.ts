@@ -10,6 +10,14 @@
 //
 // Idempotent per-day: re-running on the same calendar day refreshes the
 // existing brief (upserts on (userId, examId, briefDate)).
+//
+// Model unavailable (16 Sep 2026): outage nights (12, 14 Sep) wrote no brief
+// at all and kept retrying the model for every queued student. The first
+// failed call now flips the run to rule briefs: a note built from stored
+// facts only (src/lib/brief-fallback.ts: weakest topics on record, last
+// score, next announced exam day with its tier word), no practice set, and NO further
+// model calls this run — neither the note nor the adaptive-mock build.
+// inputs.source says which path wrote the brief ("ai" | "rule:ai-unavailable").
 
 // Cron job that walks every enrollment + calls Claude per user-exam. We
 // stay at 300s (Vercel Pro plan ceiling); the cron itself processes users
@@ -29,6 +37,9 @@ import { getSyllabusContext } from "@/lib/db/syllabus";
 import type { GenerateMockRequest, QuestionRef } from "@/lib/ai/types";
 import { getSeenQuestions } from "@/lib/seen-questions";
 import { shapeCandidates } from "@/lib/question-pick";
+import { briefSittingName, buildFallbackBrief, rankWeakTopics, RULE_BRIEF_SOURCE, type BriefFacts } from "@/lib/brief-fallback";
+import { buildTimeline } from "@/lib/exam-timeline";
+import { hubDateLead } from "@/lib/hub-title";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5-20250929";
 
@@ -126,7 +137,7 @@ export async function GET(req: Request) {
     await prisma.enrollment.findMany({
       where: { active: true, userId: { in: [...lastActive.keys()] } },
       include: {
-        exam: { select: { id: true, code: true, shortName: true } },
+        exam: { select: { id: true, code: true, shortName: true, name: true } },
         user: {
           select: {
             id: true,
@@ -145,6 +156,19 @@ export async function GET(req: Request) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
   const TIME_BUDGET_MS = 240_000;
+  // Set by the first failed model call; every later enrollment this run gets
+  // a rule brief with no model call (16 Sep 2026).
+  let aiDown = false;
+  let ruleBriefs = 0;
+  const nextExamCache = new Map<string, Promise<BriefFacts["nextExam"]>>();
+  const nextExamFor = (exam: NextExamExam) => {
+    let p = nextExamCache.get(exam.id);
+    if (!p) {
+      p = loadNextExamDay(exam);
+      nextExamCache.set(exam.id, p);
+    }
+    return p;
+  };
 
   for (const enr of enrollments) {
     if (spendUsd(stats) >= TOTAL_BUDGET_USD) break;
@@ -161,15 +185,18 @@ export async function GET(req: Request) {
     const before = spendUsd(stats);
 
     try {
-      // Snapshot inputs for the brief
-      const [weakness, recentChats, recentAttempts] = await Promise.all([
+      // Snapshot inputs for the brief (tutor chats feed only the model prompt)
+      const [weaknessRows, recentChats, recentAttempts] = await Promise.all([
+        // Every topic with ≥ 2 questions, ranked below on the running record
+        // (correctCount of attemptsCount). masteryScore is only the LAST
+        // set's accuracy on the topic — each submit overwrites it while the
+        // counts add up — so it never ranks or words the note (review,
+        // 16 Sep 2026).
         prisma.weaknessMap.findMany({
           where: { userId: enr.userId, examId: enr.examId, attemptsCount: { gte: 2 } },
-          include: { topic: { select: { code: true, name: true } } },
-          orderBy: { masteryScore: "asc" },
-          take: 6,
+          select: { attemptsCount: true, correctCount: true, topic: { select: { code: true, name: true } } },
         }),
-        prisma.chatSession.findMany({
+        aiDown ? [] : prisma.chatSession.findMany({
           where: { userId: enr.userId, examId: enr.examId },
           orderBy: { updatedAt: "desc" },
           take: 3,
@@ -194,6 +221,15 @@ export async function GET(req: Request) {
         }),
       ]);
 
+      const weakness = rankWeakTopics(
+        weaknessRows.map((w) => ({
+          code: w.topic.code,
+          name: w.topic.name,
+          attemptsCount: w.attemptsCount,
+          correctCount: w.correctCount,
+        })),
+      ).slice(0, 6);
+
       // Extract topics asked about from chat tool_use traces
       const topicsAskedAbout = new Set<string>();
       for (const s of recentChats) {
@@ -209,7 +245,8 @@ export async function GET(req: Request) {
       // ── Reflection (one Claude call) ────────────────────────────────
       const weaknessLines = weakness.length
         ? weakness.slice(0, 4).map(
-            (w) => `- ${w.topic.name} (mastery ${Math.round(w.masteryScore * 100)}%, ${w.attemptsCount} attempts)`
+            (w) =>
+              `- ${w.name} (${w.correctCount} of ${w.attemptsCount} questions right on record, ${Math.round((100 * w.correctCount) / w.attemptsCount)}%)`
           ).join("\n")
         : "(no mastery data yet — student is just starting out)";
       const askedLine = topicsAskedAbout.size
@@ -231,82 +268,117 @@ Tone: warm but direct. Refer to specific topics by name. Suggest one concrete ac
 
 Output ONLY the note, no quotes, no formatting markers.`;
 
-      const response = await client.messages.create({
-        model: MODEL,
-        max_tokens: 300,
-        system: "You are Shishya, an AI tutor for Indian competitive exam students. You write tight, personal daily notes that respect the student's time.",
-        messages: [{ role: "user", content: userPrompt }],
-      });
-      stats.in += response.usage.input_tokens;
-      stats.out += response.usage.output_tokens;
-      stats.cacheW += response.usage.cache_creation_input_tokens ?? 0;
-      stats.cacheR += response.usage.cache_read_input_tokens ?? 0;
-      recordAiUsage("daily-brief", response, { model: MODEL, ref: enr.exam.code });
+      let aiReflection = "";
+      if (!aiDown) {
+        try {
+          const response = await client.messages.create({
+            model: MODEL,
+            max_tokens: 300,
+            system: "You are Shishya, an AI tutor for Indian competitive exam students. You write tight, personal daily notes that respect the student's time.",
+            messages: [{ role: "user", content: userPrompt }],
+          });
+          stats.in += response.usage.input_tokens;
+          stats.out += response.usage.output_tokens;
+          stats.cacheW += response.usage.cache_creation_input_tokens ?? 0;
+          stats.cacheR += response.usage.cache_read_input_tokens ?? 0;
+          recordAiUsage("daily-brief", response, { model: MODEL, ref: enr.exam.code });
+          aiReflection = response.content
+            .filter((b): b is Anthropic.TextBlock => b.type === "text")
+            .map((b) => b.text).join("\n").trim();
+        } catch (err) {
+          // Outage, credits, overload: no more model calls this run.
+          aiDown = true;
+          console.warn(`[daily-brief] model call failed at user=${enr.userId} exam=${enr.exam.code}; rule briefs for the rest of this run:`, err);
+        }
+      }
+      // A note from the model only when it wrote one; otherwise (model down,
+      // or an empty / too-short reply) the rule note and no model-built set.
+      const modelOk = aiReflection.length >= 30;
 
-      const reflection = response.content
-        .filter((b): b is Anthropic.TextBlock => b.type === "text")
-        .map((b) => b.text).join("\n").trim();
-
-      if (!reflection || reflection.length < 30) continue;
+      const baseInputs = {
+        weakest: weakness.map((w) => w.code),
+        asked: [...topicsAskedAbout],
+        scores: recentAttempts.map((a) => a.scorePct),
+      };
 
       // Per-user spend check (after reflection call)
-      if (spendUsd(stats) - before >= PER_USER_BUDGET_USD) {
+      if (modelOk && spendUsd(stats) - before >= PER_USER_BUDGET_USD) {
         // Persist reflection-only brief and move on
-        await upsertBrief(enr.userId, enr.examId, briefDate, reflection, null, {
-          weakest: weakness.map((w) => w.topic.code),
-          asked: [...topicsAskedAbout],
-          scores: recentAttempts.map((a) => a.scorePct),
-        }, stats);
+        await upsertBrief(enr.userId, enr.examId, briefDate, aiReflection, null, { ...baseInputs, source: "ai" }, stats);
         continue;
       }
 
       // ── Adaptive mock (uses existing generator) ─────────────────────
+      // Model path only: generateMock calls the model too, so a rule brief
+      // is reflection-only (1,416 brief sets since May had 0 attempts).
       let mockId: string | null = null;
-      try {
-        const studentState = await getStudentState(enr.userId, enr.exam.code);
-        const syllabus = await getSyllabusContext(enr.exam.code);
-        const pool = await fetchAdaptivePool(enr.examId, enr.userId);
-        if (pool.length >= 5) {
-          const req: GenerateMockRequest = {
-            type: "ADAPTIVE",
-            questionCount: Math.min(20, pool.length),
-          };
-          const result = await generateMock({
-            studentState, request: req, availableQuestions: pool, syllabus,
-          });
-          if (result.questionIds.length > 0) {
-            const created = await prisma.mock.create({
-              data: {
-                userId: enr.userId,
-                examId: enr.examId,
-                type: "ADAPTIVE",
-                title: `${enr.exam.shortName} — Today's Adaptive Mock`,
-                config: {
-                  rationale: result.rationale,
-                  topicMix: result.topicMix,
-                  difficultyMix: result.difficultyMix,
-                  durationMin: result.durationMin,
-                  requestType: "ADAPTIVE",
-                  briefDate: briefDate.toISOString().slice(0, 10),
-                } as any,
-                questionIds: result.questionIds,
-                generatedBy: "cron:daily-brief",
-                generationContext: { studentSnapshot: studentState as any },
-              },
+      if (modelOk) {
+        try {
+          const studentState = await getStudentState(enr.userId, enr.exam.code);
+          const syllabus = await getSyllabusContext(enr.exam.code);
+          const pool = await fetchAdaptivePool(enr.examId, enr.userId);
+          if (pool.length >= 5) {
+            const req: GenerateMockRequest = {
+              type: "ADAPTIVE",
+              questionCount: Math.min(20, pool.length),
+            };
+            const result = await generateMock({
+              studentState, request: req, availableQuestions: pool, syllabus,
             });
-            mockId = created.id;
-            stats.mocksCreated += 1;
+            if (result.questionIds.length > 0) {
+              const created = await prisma.mock.create({
+                data: {
+                  userId: enr.userId,
+                  examId: enr.examId,
+                  type: "ADAPTIVE",
+                  title: `${enr.exam.shortName} — Today's Adaptive Mock`,
+                  config: {
+                    rationale: result.rationale,
+                    topicMix: result.topicMix,
+                    difficultyMix: result.difficultyMix,
+                    durationMin: result.durationMin,
+                    requestType: "ADAPTIVE",
+                    briefDate: briefDate.toISOString().slice(0, 10),
+                  } as any,
+                  questionIds: result.questionIds,
+                  generatedBy: "cron:daily-brief",
+                  generationContext: { studentSnapshot: studentState as any },
+                },
+              });
+              mockId = created.id;
+              stats.mocksCreated += 1;
+            }
           }
+        } catch (err) {
+          console.warn(`[daily-brief] mock build failed for user=${enr.userId} exam=${enr.exam.code}:`, err);
         }
-      } catch (err) {
-        console.warn(`[daily-brief] mock build failed for user=${enr.userId} exam=${enr.exam.code}:`, err);
       }
 
-      await upsertBrief(enr.userId, enr.examId, briefDate, reflection, mockId, {
-        weakest: weakness.map((w) => w.topic.code),
-        asked: [...topicsAskedAbout],
-        scores: recentAttempts.map((a) => a.scorePct),
+      if (modelOk) {
+        await upsertBrief(enr.userId, enr.examId, briefDate, aiReflection, mockId, { ...baseInputs, source: "ai" }, stats);
+        continue;
+      }
+
+      // ── Rule brief: stored facts only (src/lib/brief-fallback.ts) ────
+      // The English note is what the tutor's journey reads; the dashboard
+      // re-renders `facts` in the reader's language with today's coach task.
+      const facts: BriefFacts = {
+        examShort: enr.exam.shortName,
+        weakest: weakness.slice(0, 3).map((w) => ({
+          name: w.name,
+          attemptsCount: w.attemptsCount,
+          correctCount: w.correctCount,
+        })),
+        lastScorePct: recentAttempts[0]?.scorePct ?? null,
+        nextExam: await nextExamFor(enr.exam),
+      };
+      const ruleNote = buildFallbackBrief(facts, { hasMock: false, now: new Date() }, "en");
+      await upsertBrief(enr.userId, enr.examId, briefDate, ruleNote, null, {
+        ...baseInputs,
+        source: RULE_BRIEF_SOURCE,
+        facts,
       }, stats);
+      ruleBriefs += 1;
     } catch (err) {
       console.warn(`[daily-brief] failed user=${enr.userId} exam=${enr.exam.code}:`, err);
     }
@@ -323,6 +395,8 @@ Output ONLY the note, no quotes, no formatting markers.`;
     briefsCreated: stats.briefsCreated,
     briefsUpdated: stats.briefsUpdated,
     mocksCreated: stats.mocksCreated,
+    ruleBriefs,
+    aiDown,
     spendUsd: spendUsd(stats).toFixed(4),
     tokens: { in: stats.in, out: stats.out, cacheW: stats.cacheW, cacheR: stats.cacheR },
   });
@@ -351,6 +425,46 @@ async function upsertBrief(
       data: { userId, examId, briefDate, reflection, mockId, inputs },
     });
     stats.briefsCreated += 1;
+  }
+}
+
+type NextExamExam = { id: string; code: string; shortName: string; name: string };
+
+/** The exam's next exam day on the tracker, with its tier (rule briefs,
+ *  16 Sep 2026). Typed live rows only — the same filter the exam-week state
+ *  applies. The day is the hub title's (src/lib/hub-title.ts hubDateLead):
+ *  the next ANNOUNCED exam day, and none while a same-stage announced row
+ *  contradicts it ("Exam Date Under Revision" — MPSC Group C 27 Sep beside
+ *  a revised 25 Oct) or when only an estimate lies ahead, so the brief never
+ *  states a date the hub withholds (review, 16 Sep 2026). A row of another
+ *  stage than the exam's record carries its sitting name ("IBPS PO Mains").
+ *  Null on no such day or a failed read: the note has no date sentence. */
+async function loadNextExamDay(exam: NextExamExam): Promise<BriefFacts["nextExam"]> {
+  try {
+    const rows = await prisma.$queryRaw<
+      {
+        id: string; label: string; date: Date; isExamDay: boolean; kind: string | null;
+        confidence: string | null; url: string | null; source: string | null; notes: string | null;
+        createdAt: Date; officialUrl: string | null;
+      }[]
+    >`
+      SELECT d.id, d.label, d.date, d."isExamDay", d.kind, d.confidence, d.url, d.source, d.notes,
+             d."createdAt", el."officialUrl"
+      FROM "ExamImportantDate" d
+      LEFT JOIN "ExamEligibility" el ON el."examId" = d."examId"
+      WHERE d."examId" = ${exam.id} AND d."archivedAt" IS NULL AND d.kind IS NOT NULL AND d.kind <> ''
+      ORDER BY d.date ASC, d.id ASC`;
+    if (rows.length === 0) return null;
+    const timeline = buildTimeline(rows, new Date(), rows[0].officialUrl);
+    const lead = hubDateLead(timeline, exam, new Map(rows.map((r) => [r.id, r.createdAt] as const)));
+    if (lead.kind !== "announced") return null;
+    return {
+      date: lead.row.date.toISOString(),
+      tier: lead.row.tier,
+      sitting: briefSittingName(exam, lead.row.label),
+    };
+  } catch {
+    return null;
   }
 }
 

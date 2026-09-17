@@ -5,6 +5,7 @@
 
 import Link from "next/link";
 import { scholarshipsForExam, type Scholarship } from "@/data/scholarships";
+import { scholarshipAmountHead } from "@/lib/scholarship-amount";
 
 export function ScholarshipsForExamSection({
   examCode,
@@ -61,7 +62,7 @@ export function ScholarshipsForExamSection({
             >
               <p className="text-xs font-semibold text-ink-900">{s.name}</p>
               <p className="mt-0.5 text-[11px] text-ink-600">
-                <span className="font-medium text-ink-800">{s.amount.split(/[.,]/)[0]}</span>
+                <span className="font-medium text-ink-800">{scholarshipAmountHead(s.amount)}</span>
                 <span className="mx-1.5 text-ink-300">·</span>
                 <span className="text-ink-500">{s.awardingBody}</span>
               </p>

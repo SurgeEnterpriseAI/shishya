@@ -11,7 +11,8 @@
 //
 // Each step shows progress at the top, "Back" and "Next" controls at
 // the bottom. The final Submit posts to /api/me/onboarding-profile,
-// then router.push('/') to the personalised homepage.
+// then router.push to the coach intake (an exam was picked) or to
+// redirectAfter (/dashboard) — never the anonymous homepage.
 //
 // Persona-aware shortcut: when the user lands on /onboarding?p=<slug>
 // (via the homepage persona tiles or a /for/[persona] CTA), the page
@@ -79,10 +80,9 @@ export function OnboardingWizard({
   exams: ExamLite[];
   prefill?: PersonaPrefill | null;
   /**
-   * Where to send the user once they finish the wizard. Defaults
-   * to "/" (the personalised homepage), but the /dashboard gate
-   * passes "/dashboard" so a fresh signup completes the loop
-   * straight into the "Pick your first exam" hero.
+   * Where to send the user once they skip or finish the wizard without
+   * picking an exam. /dashboard (the page passes it too, 16 Sep 2026), so
+   * a fresh signup lands on the "Pick your first exam" hero.
    */
   redirectAfter?: string;
   /** A language the student already signalled (stored non-EN

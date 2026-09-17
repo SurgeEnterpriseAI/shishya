@@ -68,7 +68,7 @@ export default async function DiscussionsList() {
       <header className="border-b border-ink-200/50 bg-white/80 backdrop-blur">
         <div className="container-prose flex h-16 items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-saffron-500 text-lg font-bold text-white">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-saffron-500 font-sans text-lg font-bold text-white">
               शि
             </span>
             <span className="text-lg font-semibold tracking-tight text-ink-900">Shishya</span>

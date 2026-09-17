@@ -19,7 +19,7 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { getExamTheme } from "@/lib/exam-theme";
 import { getT } from "@/lib/i18n-server";
-import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
+import { SUPPRESSED_SOURCE, isUnannouncedAnswerKey } from "@/lib/exam-timeline";
 import { StateExamsLink } from "@/components/StateExamsLink";
 
 export async function generateMetadata({
@@ -60,7 +60,7 @@ export default async function ArchivePage({
 
   // Pull EVERY archived row (caps for sanity — 200 each is way more
   // than any single exam has accumulated, and per-row cost is tiny).
-  const [news, dates] = await Promise.all([
+  const [news, archivedDates, eligibility] = await Promise.all([
     prisma.examNewsItem.findMany({
       where: { examId: exam.id, archivedAt: { not: null }, OR: [{ source: null }, { source: { not: SUPPRESSED_SOURCE } }] },
       orderBy: { publishedAt: "desc" },
@@ -71,7 +71,20 @@ export default async function ArchivePage({
       orderBy: { date: "desc" },
       take: 200,
     }),
+    // Conducting-body portal — widens the official tier exactly as the
+    // tracker and the hub do (src/lib/official-source.ts).
+    prisma.examEligibility
+      .findUnique({ where: { examId: exam.id }, select: { officialUrl: true } })
+      .catch(() => null),
   ]);
+  // Founder rule (16 Sep 2026): an expected answer-key date is never shown,
+  // archived or not — /exams/MP_MPESB/archive listed "Answer key (expected)"
+  // rows. isUnannouncedAnswerKey is the one test the tracker, the hub and
+  // context.md already share: a row typed as an answer key, or whose label
+  // names one, with no announced source (tier expected). Every other archived
+  // row stays.
+  const officialUrl = eligibility?.officialUrl ?? null;
+  const dates = archivedDates.filter((d) => !isUnannouncedAnswerKey(d, officialUrl));
 
   // AEO: the archive is the long-tail landing for "[exam] previous year
   // notifications / postponement history" — ItemList of the per-news

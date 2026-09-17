@@ -7,15 +7,20 @@
 // answer-key date on a page, and a score page that printed a marking
 // scheme next to its own refusal. All five were found by hand. This file
 // makes each of them a machine check so they cannot return silently:
-//   * scripts/truth-lint.ts (CLI) and /api/cron/truth-lint (nightly) run
-//     the fetch-based checks over prod / a local server;
+//   * scripts/truth-lint.ts (CLI) and /api/cron/truth-lint (manual — not
+//     scheduled in vercel.json, founder rule: no monitoring crons) run the
+//     fetch-based checks over prod / a local server;
 //   * tests/unit/truth-lint.test.ts runs the phrase check over the source
 //     tree in CI (string literals + JSX text only, never comments).
 //
-// Rules of this file: NO imports (vitest, tsx and the cron route all load
-// it as-is; it must never pull prisma or the i18n dictionary into a
-// script). Every check is a pure function over strings + `now`; the only
-// I/O is `runTruthLint`, which takes fetch as a parameter.
+// Rules of this file: ONE import — the hub title decision in
+// src/lib/hub-title.ts, which has no runtime imports of its own (its only
+// import is a type) — so vitest, tsx and the cron route still load it
+// as-is and it never pulls prisma or the i18n dictionary into a script.
+// The checker and the hub page run the same decision, so they cannot
+// disagree about "Exam Held" (16 Sep 2026). Every check is a pure function
+// over strings + `now`; the only I/O is `runTruthLint`, which takes fetch
+// as a parameter.
 //
 // The wire grammars the parsers rely on (verified against prod on 13 Sep
 // 2026 — if a surface changes its markup the parser must emit a "parse"
@@ -24,19 +29,27 @@
 //     "- YYYY-MM-DD — {label}[ (exam day)] — OFFICIAL, notice: …"
 //     "- YYYY-MM-DD — {label} — REPORTED (announced; via host): …"
 //     "- YYYY-MM-DD — {label} — expected[ — was expected — not confirmed][ — in N days| — today]"
+//   context.md header (same route): "# {name} ({shortName}) — Shishya exam context"
 //   hub <title> (src/app/exams/[code]/page.tsx generateMetadata):
 //     "… — Exam Date 25 Sept 2026, …" | "… — Exam Date 3 May 2026 (reported), …" |
-//     "… — Exam Date Not Announced Yet, …"   (hi: "परीक्षा तिथि …", te: "పరీక్ష తేదీ …")
+//     "… — Exam Date Not Announced Yet, …"   (hi: "परीक्षा तिथि …", te: "పరీక్ష తేదీ …") |
+//     "… — [Prelims |Mains ]Exam Held 6 Sept 2026 (reported), Next Exam Date Not Announced Yet, …"
+//       (hi: "परीक्षा 6 Sept 2026 को हुई (रिपोर्टेड), अगली परीक्षा तिथि …",
+//        te: "పరీక్ష 6 Sept 2026న జరిగింది (నివేదిత), తదుపరి పరీక్ష తేదీ …"; src/lib/hub-title.ts)
 //   updates table row (src/app/exams/[code]/updates/page.tsx):
-//     <td>label…</td><td><span class="font-medium">Fri, 25 Sept, 2026</span>
+//     <td>label…[<p class="mt-0.5 text-xs text-ink-500">notes</p>]</td>
+//     <td><span class="font-medium">Fri, 25 Sept, 2026</span>
 //       <span class="ml-2"><span class="… bg-amber-100 …">Expected</span></span></td>
 //     <td …>Done | was expected — not confirmed | in 7 days | Today</td>
 //     tier is classified by CSS class (emerald = official, sky = reported,
 //     amber = expected) so the hi/te twins parse identically.
 //   hub Important Dates <li>: <p class="text-sm font-medium text-ink-900">label</p>
 //     … <p class="mt-1 text-xs text-ink-500">Fri, 25 Sept, 2026</p>  (no tier!)
+//     [<p class="mt-1.5 text-xs text-ink-600">notes</p>]
 //   score-estimate: "Marking: +2 per correct, …" (ew.score.marking) versus the
 //     refusal sentences of src/lib/marking-scheme.ts / ew.score.mixed.title.
+
+import { HELD_WINDOW_DAYS, hubDateLead, type HubTitleExam } from "./hub-title";
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -97,6 +110,10 @@ export interface TitleParse {
   date?: string;
   /** Tier word printed with the date (null = bare). */
   tier?: Tier | null;
+  /** Hub only (16 Sep 2026): the "Exam Held {date}[ (reported)], Next Exam
+   *  Date Not Announced Yet" lead. `kind` stays "not-announced" — the next
+   *  exam date is still not announced. */
+  held?: { date: string; tier: Tier | null };
   raw: string;
 }
 
@@ -107,12 +124,16 @@ export interface UpdatesRow {
   date: string | null;
   tier: Tier | null;
   status: string;
+  /** Tracker table rows: the notes line under the label (null = none shown). */
+  notes?: string | null;
 }
 
 export interface HubDateItem {
   label: string;
   dateText: string;
   date: string | null;
+  /** The notes line under the date (null = none shown). */
+  notes?: string | null;
 }
 
 // ── Forbidden phrases (check a) ──────────────────────────────────────────
@@ -461,6 +482,13 @@ export function parseContextScheme(md: string): ContextScheme {
 
 // ── Page parsers ─────────────────────────────────────────────────────────
 
+// The held lead of src/lib/hub-title.ts heldTitleLead (en / hi / te).
+const HELD_TITLE_RES: RegExp[] = [
+  /Exam (?:Held|Began|Ended) (\d{1,2} [^\s,()]+ \d{4})(?: \(([^)]+)\))?, Next Exam Date Not Announced Yet/,
+  /परीक्षा (\d{1,2} [^\s,()]+ \d{4}) को (?:हुई|शुरू हुई|समाप्त हुई)(?: \(([^)]+)\))?, अगली परीक्षा तिथि/,
+  /పరీక్ష (\d{1,2} [^\s,()]+ \d{4})న (?:జరిగింది|ప్రారంభమైంది|ముగిసింది)(?: \(([^)]+)\))?, తదుపరి పరీక్ష తేదీ/,
+];
+
 /** Hub <title> → the exam-date claim it makes. */
 export function parseHubTitle(title: string): TitleParse {
   const en = /Exam Date (Not Announced Yet|[^,|]+?),/i.exec(title);
@@ -469,7 +497,18 @@ export function parseHubTitle(title: string): TitleParse {
   const m = en ?? hi ?? te;
   if (!m) return { kind: "unknown", raw: title };
   const body = m[1].trim();
-  if (/not announced yet|अभी घोषित नहीं|ఇంకా ప్రకటించలేదు/i.test(body)) return { kind: "not-announced", raw: title };
+  if (/not announced yet|अभी घोषित नहीं|ఇంకా ప్రకటించలేదు/i.test(body)) {
+    for (const re of HELD_TITLE_RES) {
+      const h = re.exec(title);
+      if (!h) continue;
+      const heldDate = parseLooseDate(h[1]);
+      const heldTier = tierFromWord(h[2]);
+      // An unreadable date or tier word is a parse warning, never a pass.
+      if (!heldDate || (h[2] && !heldTier)) return { kind: "unknown", raw: title };
+      return { kind: "not-announced", held: { date: heldDate, tier: heldTier }, raw: title };
+    }
+    return { kind: "not-announced", raw: title };
+  }
   const date = parseLooseDate(body);
   if (!date) return { kind: "unknown", raw: title };
   const tw = /\(([^)]+)\)/.exec(body);
@@ -512,12 +551,18 @@ export function parseUpdatesRows(html: string): { rows: UpdatesRow[]; cards: Upd
       if (cells.length < 3) continue;
       const dateSpan = /<span class="font-medium">([\s\S]*?)<\/span>/.exec(cells[1]);
       const dateText = textOf(dateSpan ? dateSpan[1] : cells[1]);
+      const notes = /<p class="mt-0\.5 text-xs text-ink-500">([\s\S]*?)<\/p>/.exec(cells[0]);
+      // A <p> we don't recognise means the markup moved: the notes are
+      // UNSEEN (undefined), never "none" — buildNotesIndex then skips the
+      // row and the held-exam rules stay quiet instead of guessing.
+      const notesUnseen = !notes && /<p[\s>]/.test(cells[0]);
       rows.push({
         label: labelText(cells[0]),
         dateText,
         date: parseLooseDate(dateText),
         tier: tierFromClass(cells[1]),
         status: textOf(cells[2]),
+        notes: notesUnseen ? undefined : notes ? textOf(notes[1]) || null : null,
       });
     }
   }
@@ -553,7 +598,12 @@ export function parseHubDates(html: string): HubDateItem[] {
     const dateText = textOf(date[1]);
     const parsed = parseLooseDate(dateText);
     if (!parsed) continue;
-    out.push({ label: labelText(label[1]), dateText, date: parsed });
+    const notes = /<p class="mt-1\.5 text-xs text-ink-600">([\s\S]*?)<\/p>/.exec(m[1]);
+    // Same rule as the tracker: an unknown <p> beside the label and date
+    // lines means the notes are unseen, not absent.
+    const others = (m[1].match(/<p[\s>]/g) ?? []).length;
+    const notesUnseen = !notes && others > 2;
+    out.push({ label: labelText(label[1]), dateText, date: parsed, notes: notesUnseen ? undefined : notes ? textOf(notes[1]) || null : null });
   }
   return out;
 }
@@ -587,11 +637,19 @@ export interface TitleDateInput {
   todayIst: string;
   url: string;
   page: "hub" | "updates";
+  /** Hub only: the exam's names (context.md header) — turns on the
+   *  held-exam rule. Omitted → that rule is skipped. */
+  exam?: HubTitleExam | null;
+  /** Notes printed beside the tracker / hub rows (buildNotesIndex). */
+  notes?: NotesIndex;
 }
 
 /** (c) the title's exam date must be an announced exam-day row of the same
  *  exam (context.md is the machine-readable twin of the same DB rows);
- *  "Not Announced" must be true; a bare date must be official. */
+ *  "Not Announced" must be true; a bare date must be official; a held
+ *  lead must name an announced exam day with its tier word; and "Not
+ *  Announced Yet" with no held lead must not hide an exam the hub title
+ *  decision says was held. */
 export function checkTitleDate(input: TitleDateInput): Finding[] {
   const { title, contextRows, todayIst, url, page } = input;
   const out: Finding[] = [];
@@ -610,7 +668,32 @@ export function checkTitleDate(input: TitleDateInput): Finding[] {
         detail: `title says Not Announced but context.md lists an announced exam day ${announcedFuture[0].day} (${announcedFuture[0].tier}: "${announcedFuture[0].label}")`,
         snippet: title.raw,
       });
+      return out;
     }
+    if (title.held) {
+      // "Exam Held 6 Sept 2026 (reported)" — the held day must be an
+      // announced exam-day row, and one of that day's rows must carry the
+      // printed tier (the page picks the best-tier row naming the whole
+      // exam, which need not be the day's best row).
+      const held = title.held;
+      const heldRows = examRows.filter((r) => r.day === held.date && r.tier !== "expected");
+      const claimed = held.tier ?? "official";
+      if (!heldRows.length) {
+        out.push({ check: "title-date", severity: "fail", url, detail: `title says the exam was held ${held.date} but context.md has no announced exam-day row that day`, snippet: title.raw });
+      } else if (!heldRows.some((r) => r.tier === claimed)) {
+        out.push({
+          check: "title-date",
+          severity: "fail",
+          url,
+          detail: `title prints held ${held.date} ${held.tier ? `(${held.tier})` : "bare (= official)"} but context.md has it ${heldRows[0].tier}`,
+          snippet: title.raw,
+        });
+      } else if (page === "hub" && input.exam) {
+        out.push(...checkHeldLeadBacked({ title, contextRows, todayIst, url, exam: input.exam, notes: input.notes ?? new Map() }));
+      }
+      return out;
+    }
+    if (page === "hub" && input.exam) out.push(...checkHeldExamHidden({ title, contextRows, todayIst, url, exam: input.exam, notes: input.notes ?? new Map() }));
     return out;
   }
   const date = title.date!;
@@ -618,6 +701,10 @@ export function checkTitleDate(input: TitleDateInput): Finding[] {
   const announcedSameDay = sameDay.filter((r) => r.tier !== "expected");
   if (page === "updates" && title.tier === "expected") {
     // The tracker title may lead with an estimate as long as it says so.
+    // Past context.md's +365-day window the row cannot be listed there, so
+    // no row that day is not cache skew (16 Sep 2026: NL_NPSC's 15 Nov 2027
+    // estimate warned on every run).
+    if (date > addDays(todayIst, 365)) return out;
     if (!sameDay.length) {
       out.push({ check: "title-date", severity: "warn", url, detail: `title leads with expected exam day ${date} but context.md has no exam-day row that day (cache skew?)`, snippet: title.raw });
     } else if (announcedSameDay.length) {
@@ -665,6 +752,164 @@ export function checkTitleDate(input: TitleDateInput): Finding[] {
   return out;
 }
 
+// ── (c2) a held exam hidden behind "Not Announced Yet" ──────────────────
+
+/** A row of the hub title decision — exam-timeline's TimelineRow, named
+ *  through hub-title so this file needs no second import. */
+type LeadRow = Parameters<typeof hubDateLead>[0][number];
+
+/** Notes printed beside tracker / hub rows, by rowKey. Absent = not seen. */
+export type NotesIndex = ReadonlyMap<string, string | null>;
+
+/** "# {name} ({shortName}) — Shishya exam context" → the names the hub
+ *  title decision reads (own-name tokens, other-exam acronyms). */
+export function examNamesFromContext(md: string, code: string): HubTitleExam | null {
+  // The short name may carry one level of brackets: "APPSC (AR)", "CS Foundation (CSEET)".
+  const m = /^# (.+) \(((?:[^()]|\([^()]*\))+)\) — Shishya exam context[ \t]*$/m.exec(md);
+  return m ? { code, name: m[1].trim(), shortName: m[2].trim() } : null;
+}
+
+/** IST day + label, whitespace-collapsed and lower-cased, with any leading
+ *  icon dropped (the hub prints the exam theme's emoji before an exam-day
+ *  label; the tracker's kind icon is aria-hidden and already gone). */
+export function rowKey(day: string, label: string): string {
+  return `${day}|${label.replace(/^[^\p{L}\p{N}(]+/u, "").replace(/\s+/g, " ").trim().toLowerCase()}`;
+}
+
+/** The notes line each tracker / hub row prints. A key two rows print
+ *  different notes for is left out (unknown), never guessed. */
+export function buildNotesIndex(rows: { date: string | null; label: string; notes?: string | null }[]): Map<string, string | null> {
+  const seen = new Map<string, Set<string>>();
+  for (const r of rows) {
+    if (!r.date || r.notes === undefined) continue;
+    const k = rowKey(r.date, r.label);
+    const set = seen.get(k) ?? new Set<string>();
+    set.add(r.notes ?? "");
+    seen.set(k, set);
+  }
+  const out = new Map<string, string | null>();
+  for (const [k, v] of seen) if (v.size === 1) out.set(k, [...v][0] || null);
+  return out;
+}
+
+// Notes that trip every notes veto of hubDateLead: called off
+// (isCalledOff), a multi-day window with no day number (heldVerb → null,
+// notesWindowOmitsDay).
+const VETO_NOTES = "postponed — over multiple days";
+
+/** context.md rows as the decision's rows. context.md prints the timeline
+ *  in buildTimeline order (date, kind, tier), which the decision relies on;
+ *  "(exam day)" is kind EXAM. Notes come from `notes`; a row whose notes
+ *  were not seen gets `unseenNotes` (null = assume none). */
+export function leadRowsFromContext(rows: ContextRow[], todayIst: string, notes: NotesIndex, unseenNotes: string | null = null): LeadRow[] {
+  const today = Date.parse(todayIst + "T00:00:00Z");
+  return rows.map((r, i): LeadRow => {
+    const date = new Date(r.day + "T00:00:00.000Z");
+    const daysFromToday = Math.round((date.getTime() - today) / 86_400_000);
+    const status: LeadRow["status"] = daysFromToday < 0 ? "done" : daysFromToday === 0 ? "today" : "upcoming";
+    const passedEstimate = status === "done" && r.tier === "expected";
+    const key = rowKey(r.day, r.label);
+    return {
+      id: `context.md:${i}:${r.line}`,
+      kind: r.examDay ? "EXAM" : "OTHER",
+      kindDeclared: true,
+      label: r.label,
+      date,
+      day: r.day,
+      isExamDay: r.examDay,
+      official: r.tier === "official",
+      tier: r.tier,
+      url: null,
+      notes: notes.has(key) ? notes.get(key)! : unseenNotes,
+      status,
+      passedEstimate,
+      displayStatus: passedEstimate ? "passed-estimate" : status,
+      daysFromToday,
+    };
+  });
+}
+
+export interface HeldExamInput {
+  title: TitleParse;
+  contextRows: ContextRow[];
+  todayIst: string;
+  url: string;
+  exam: HubTitleExam;
+  notes: NotesIndex;
+}
+
+/** (c2) FAIL when the hub title says "Exam Date Not Announced Yet" with no
+ *  held lead while src/lib/hub-title.ts hubDateLead — the decision the
+ *  page itself runs — leads with an announced exam day held within
+ *  HELD_WINDOW_DAYS (16 Sep 2026: 28 hubs, IOQM 6 Sep, CDS 13 Sep, said
+ *  "Not Announced Yet" after their exam; the old check failed only on an
+ *  announced FUTURE day).
+ *
+ *  Inputs the checker cannot see only ever make it quieter: without row
+ *  write times more same-stage rows count as conflicts (a veto), and notes
+ *  the tracker / hub did not print are tried both ways — none, and notes
+ *  that trip every notes veto. Only a lead both runs agree on is a FAIL;
+ *  when unseen notes could decide it, a warn says so. */
+export function checkHeldExamHidden(input: HeldExamInput): Finding[] {
+  const { title, contextRows, todayIst, url, exam, notes } = input;
+  if (title.kind !== "not-announced" || title.held) return [];
+  const lead = hubDateLead(leadRowsFromContext(contextRows, todayIst, notes, null), exam);
+  if (lead.kind !== "held") return [];
+  const strict = hubDateLead(leadRowsFromContext(contextRows, todayIst, notes, VETO_NOTES), exam);
+  const r = lead.row;
+  if (strict.kind !== "held" || strict.row.id !== r.id) {
+    return [
+      {
+        check: "title-date",
+        severity: "warn",
+        url,
+        detail: `title says Not Announced Yet; context.md has an announced exam day ${r.day} (${r.tier}: "${r.label}") that may lead "Exam Held" — its notes are not shown on the tracker or hub, so unverifiable`,
+        snippet: title.raw,
+      },
+    ];
+  }
+  return [
+    {
+      check: "title-date",
+      severity: "fail",
+      url,
+      detail: `title says Exam Date Not Announced Yet but the tracker has an announced exam day ${r.day} (${r.tier}: "${r.label}") within the last ${HELD_WINDOW_DAYS} days — the hub title decision (src/lib/hub-title.ts) leads with it as held`,
+      snippet: title.raw,
+    },
+  ];
+}
+
+/** The other direction: a held lead the same decision, run over every
+ *  context.md row, does not give. The hub page decides over its cached
+ *  rows (3 before the last 10 days + 27), so an older row that vetoes the
+ *  held date can fall outside them (16 Sep 2026 replay: AP TET "Exam last
+ *  day" 21 Aug beside "CBT conducted from August 5-16" — src/lib/hub-title.ts
+ *  names exactly this case as "no held date"). FAIL only when the checker
+ *  saw the notes of every announced past exam-day row and the decision still
+ *  says otherwise with no row counted as a conflict (write times unknown →
+ *  every row treated as one refresh); anything less stays quiet. */
+export function checkHeldLeadBacked(input: HeldExamInput): Finding[] {
+  const { title, contextRows, todayIst, url, exam, notes } = input;
+  const held = title.held;
+  if (title.kind !== "not-announced" || !held) return [];
+  const rows = leadRowsFromContext(contextRows, todayIst, notes, null);
+  const pastAnnounced = rows.filter((r) => r.kind === "EXAM" && r.tier !== "expected" && r.daysFromToday < 0);
+  if (!pastAnnounced.every((r) => notes.has(rowKey(r.day, r.label)))) return [];
+  const oneRefresh = new Map(rows.map((r) => [r.id, "2026-01-01T00:00:00.000Z"] as const));
+  const lead = hubDateLead(rows, exam, oneRefresh);
+  if (lead.kind === "held" && lead.row.day === held.date) return [];
+  const gives = lead.kind === "held" ? `held ${lead.row.day} ("${lead.row.label}")` : lead.kind === "none" ? "no held date" : lead.kind;
+  return [
+    {
+      check: "title-date",
+      severity: "fail",
+      url,
+      detail: `title says the exam was held ${held.date}, but the hub title decision (src/lib/hub-title.ts) over every context.md row gives ${gives} — the hub decided on a partial row set`,
+      snippet: title.raw,
+    },
+  ];
+}
+
 export const ANSWER_KEY_RE = /answer[\s-]*key|उत्तर[\s-]*कुंजी|आंसर[\s-]*की|ఆన్సర్[\s-]*కీ/i;
 
 export interface AnswerKeyInput {
@@ -673,6 +918,8 @@ export interface AnswerKeyInput {
   updatesRows: UpdatesRow[];
   updatesCards: UpdatesRow[];
   hubDates: HubDateItem[];
+  /** False when context.md could not be fetched: hub cross-checks that need it are skipped. */
+  contextLoaded?: boolean;
   /** Every fetched text of the exam, for the "Answer key: … (expected)" wire forms. */
   texts: { url: string; text: string }[];
   todayIst: string;
@@ -726,8 +973,21 @@ export function checkAnswerKey(input: AnswerKeyInput): Finding[] {
       out.push({ check: "answer-key", severity: "fail", url: hubUrl, detail: `hub Important Dates shows "${d.label}" (${d.dateText})` });
       continue;
     }
+    // Without context.md there is nothing to cross-check against.
+    if (input.contextLoaded === false) continue;
     if (!d.date || d.date < from || d.date > to) {
-      out.push({ check: "answer-key", severity: "warn", url: hubUrl, detail: `hub answer-key row "${d.label}" (${d.dateText}) is outside context.md's window — tier unverifiable` });
+      // Outside context.md's −120/+365-day window the tracker table still
+      // prints the row with its tier badge (16 Sep 2026: 13 warns on old,
+      // announced keys — AP_ICET, KA_KARTET — hid real ones). The same
+      // label that day decides; else any answer-key row that day.
+      const sameDay = d.date ? input.updatesRows.filter((r) => r.date === d.date && ANSWER_KEY_RE.test(r.label)) : [];
+      const sameLabel = sameDay.filter((r) => rowKey(r.date!, r.label) === rowKey(d.date!, d.label));
+      const pool = sameLabel.length ? sameLabel : sameDay;
+      if (pool.some((r) => r.tier === "expected")) {
+        out.push({ check: "answer-key", severity: "fail", url: hubUrl, detail: `hub answer-key row "${d.label}" (${d.dateText}) is Expected on the tracker` });
+      } else if (!pool.some((r) => r.tier === "official" || r.tier === "reported")) {
+        out.push({ check: "answer-key", severity: "warn", url: hubUrl, detail: `hub answer-key row "${d.label}" (${d.dateText}) is outside context.md's window and not on the tracker — tier unverifiable` });
+      }
       continue;
     }
     const backed = input.contextRows.some((r) => r.day === d.date && r.tier !== "expected" && ANSWER_KEY_RE.test(r.label));
@@ -850,6 +1110,8 @@ export interface ExamBundle {
   score: string | null;
   contextUrl: string;
   context: string | null;
+  /** False when context.md could not be fetched: the cross-checks that need it are skipped. */
+  contextLoaded?: boolean;
   /** Optional /hi and /te twins of hub + updates. */
   twins?: { url: string; kind: "hub" | "updates"; html: string }[];
 }
@@ -890,17 +1152,53 @@ export function runChecksForExam(b: ExamBundle, ctx: CheckContext): Finding[] {
     out.push({ check: "parse", severity: "warn", url: b.contextUrl, detail: "context.md has a Key dates section but no row parsed (line grammar changed?)" });
   }
 
-  // (c) titles
   const hubPages: { url: string; html: string }[] = b.hub ? [{ url: b.hubUrl, html: b.hub }] : [];
   const updPages: { url: string; html: string }[] = b.updates ? [{ url: b.updatesUrl, html: b.updates }] : [];
   for (const t of b.twins ?? []) (t.kind === "hub" ? hubPages : updPages).push({ url: t.url, html: t.html });
+
+  // (b) + (d) rows
+  let updatesRows: UpdatesRow[] = [];
+  let updatesCards: UpdatesRow[] = [];
+  const trackerRows: UpdatesRow[] = [];
+  for (const p of updPages) {
+    const parsed = parseUpdatesRows(p.html);
+    trackerRows.push(...parsed.rows);
+    if (parsed.hasTable && parsed.rows.length === 0) {
+      out.push({ check: "parse", severity: "warn", url: p.url, detail: "tracker table present but no row parsed (markup changed?)" });
+    }
+    out.push(...checkPassedExpected(parsed.rows, p.url, "tracker row"));
+    out.push(...checkPassedExpected(parsed.cards, p.url, "key-date card"));
+    if (p.url === b.updatesUrl) {
+      updatesRows = parsed.rows;
+      updatesCards = parsed.cards;
+    } else {
+      // The hi / te trackers render the same rows (16 Sep 2026): an
+      // expected answer key only there would otherwise never be reported.
+      out.push(
+        ...checkAnswerKey({ url: b.contextUrl, contextRows: [], updatesRows: parsed.rows, updatesCards: parsed.cards, hubDates: [], texts: [], todayIst, updatesUrl: p.url }),
+      );
+    }
+  }
+  // No context.md, no hub cross-check (16 Sep 2026): with no context rows
+  // every hub answer-key row read as unbacked — a false FAIL for GA_GPSC
+  // when its context.md timed out. The fetch warn already reports it.
+  // The hub's own "(expected)" label check needs no context.md (review,
+  // 17 Sep 2026); only the window and backed-by cross-checks do.
+  const hubDates = b.hub ? parseHubDates(b.hub) : [];
+
+  // (c) titles
+  const exam = b.context ? examNamesFromContext(b.context, b.code) : null;
+  if (b.context && !exam && hubPages.length) {
+    out.push({ check: "parse", severity: "warn", url: b.contextUrl, detail: "context.md header did not parse — held-exam title rule skipped" });
+  }
+  const notes = buildNotesIndex([...trackerRows, ...hubDates]);
   for (const p of hubPages) {
     const title = parseTitle(p.html);
     if (!title) {
       out.push({ check: "parse", severity: "warn", url: p.url, detail: "hub page has no <title>" });
       continue;
     }
-    if (b.context) out.push(...checkTitleDate({ title: parseHubTitle(title), contextRows, todayIst, url: p.url, page: "hub" }));
+    if (b.context) out.push(...checkTitleDate({ title: parseHubTitle(title), contextRows, todayIst, url: p.url, page: "hub", exam, notes }));
   }
   for (const p of updPages) {
     const title = parseTitle(p.html);
@@ -910,22 +1208,6 @@ export function runChecksForExam(b: ExamBundle, ctx: CheckContext): Finding[] {
     }
   }
 
-  // (b) + (d) rows
-  let updatesRows: UpdatesRow[] = [];
-  let updatesCards: UpdatesRow[] = [];
-  for (const p of updPages) {
-    const parsed = parseUpdatesRows(p.html);
-    if (parsed.hasTable && parsed.rows.length === 0) {
-      out.push({ check: "parse", severity: "warn", url: p.url, detail: "tracker table present but no row parsed (markup changed?)" });
-    }
-    out.push(...checkPassedExpected(parsed.rows, p.url, "tracker row"));
-    out.push(...checkPassedExpected(parsed.cards, p.url, "key-date card"));
-    if (p.url === b.updatesUrl) {
-      updatesRows = parsed.rows;
-      updatesCards = parsed.cards;
-    }
-  }
-  const hubDates = b.hub ? parseHubDates(b.hub) : [];
   out.push(
     ...checkAnswerKey({
       url: b.contextUrl,
@@ -933,6 +1215,7 @@ export function runChecksForExam(b: ExamBundle, ctx: CheckContext): Finding[] {
       updatesRows,
       updatesCards,
       hubDates,
+      contextLoaded: b.context != null,
       texts,
       todayIst,
       updatesUrl: b.updatesUrl,
@@ -1116,14 +1399,19 @@ export async function runTruthLint(opts: RunOptions): Promise<RunReport> {
         continue;
       }
       const p = `/exams/${code}`;
+      const hub = await get(p);
+      // A /cutoff 404 is a finding only while the hub still links the page
+      // (16 Sep 2026: src/lib/exam-page-gates.ts unlinks it for exams with no
+      // rank bands — MP_RAEO, KA_KSRP — and every run warned on both).
+      const cutoffLinked = hub == null || hub.includes(`${p}/cutoff`);
       const bundle: ExamBundle = {
         code,
         hubUrl: base + p,
-        hub: await get(p),
+        hub,
         updatesUrl: base + p + "/updates",
         updates: await get(p + "/updates"),
         cutoffUrl: base + p + "/cutoff",
-        cutoff: await get(p + "/cutoff"),
+        cutoff: await get(p + "/cutoff", { optional404: !cutoffLinked }),
         scoreUrl: base + p + "/score-estimate",
         score: await get(p + "/score-estimate", { optional404: true }),
         contextUrl: base + p + "/context.md",

@@ -44,7 +44,7 @@ export default function GlobalError({
   return (
     <main className="flex min-h-screen items-center justify-center bg-saffron-50/30 px-6 py-12">
       <div className="mx-auto max-w-md text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron-500 text-2xl font-bold text-white">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron-500 font-sans text-2xl font-bold text-white">
           शि
         </div>
         <h1 className="mt-6 text-2xl font-bold tracking-tight text-ink-900 sm:text-3xl">

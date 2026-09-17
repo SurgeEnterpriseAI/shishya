@@ -3,7 +3,8 @@
 //
 // Checks live in src/lib/truth-lint.ts (forbidden trust phrases, stale
 // exam / language counts, passed estimates shown as Done, hub titles that
-// lead with a date the timeline does not announce, expected answer-key
+// lead with a date the timeline does not announce or say "Not Announced
+// Yet" right after an announced exam was held, expected answer-key
 // rows, estimator schemes printed beside their own refusal, bare cutoff
 // numbers in FAQ JSON-LD).
 //

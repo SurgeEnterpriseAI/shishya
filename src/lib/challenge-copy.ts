@@ -27,6 +27,7 @@ export const CHALLENGE_I18N_KEYS = [
   "challenge.card.fine",
   "challenge.card.fineName",
   "challenge.card.error",
+  "challenge.card.notEnough", // a 422 from a mock with too few playable questions (16 Sep 2026)
   "challenge.card.errorNet",
   "challenge.share.ready",
   "challenge.share.again",

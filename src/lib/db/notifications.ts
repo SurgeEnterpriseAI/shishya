@@ -18,7 +18,11 @@ export type NotificationType =
   | "BADGE_PROMOTED"
   | "FLAG_VALIDATED"
   | "SUGGESTION_ACCEPTED"
-  | "ADMIN_MESSAGE";
+  | "ADMIN_MESSAGE"
+  // A friend joined a study group this user made (16 Sep 2026). The DB enum
+  // value comes from scripts/create-study-group-notify.ts; until it has run,
+  // the insert fails and returns false (src/lib/study-group-db.ts falls back).
+  | "STUDY_GROUP_JOINED";
 
 export interface NotificationRow {
   id: string;
@@ -49,9 +53,10 @@ interface CreateInput {
  *
  * Never throws on dedup collision; logs and swallows on other DB errors
  * so that a notification failure doesn't roll back the user-facing
- * action that triggered it.
+ * action that triggered it. Returns false only when the insert errored
+ * (a dedup no-op is true) — 16 Sep 2026, so a caller can fall back.
  */
-export async function createNotification(input: CreateInput): Promise<void> {
+export async function createNotification(input: CreateInput): Promise<boolean> {
   try {
     await prisma.$executeRaw`
       INSERT INTO "Notification" ("id", "userId", "type", "title", "body", "link", "dedupKey", "createdAt")
@@ -67,8 +72,10 @@ export async function createNotification(input: CreateInput): Promise<void> {
       )
       ON CONFLICT ("userId", "dedupKey") DO NOTHING
     `;
+    return true;
   } catch (err) {
     console.error("[notifications] insert failed (non-fatal):", err);
+    return false;
   }
 }
 

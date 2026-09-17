@@ -1438,6 +1438,9 @@ enum NotificationType {
 
   // Misc
   ADMIN_MESSAGE // free-form admin-issued notification
+
+  // Study groups (17 Sep 2026)
+  STUDY_GROUP_JOINED // a friend joined a group you made
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -2620,8 +2623,28 @@ model StudyGroup {
   ownerUserId String
   createdAt   DateTime  @default(now())
   archivedAt  DateTime?
+  // Per-group notification caps for "a friend joined" (17 Sep 2026):
+  // one phone notification per 20 min, one email per 6 h, claimed
+  // atomically like Challenge does.
+  lastPushAt  DateTime?
+  lastEmailAt DateTime?
 
   @@index([ownerUserId])
+}
+
+// Devices the group MAKER turned on for "a friend joined your group"
+// (17 Sep 2026) — a copy of ChallengeWatch.
+model StudyGroupWatch {
+  id             String    @id @default(cuid())
+  groupId        String
+  endpoint       String
+  p256dh         String
+  auth           String
+  createdAt      DateTime  @default(now())
+  unsubscribedAt DateTime?
+  failCount      Int       @default(0)
+
+  @@unique([groupId, endpoint])
 }
 
 model StudyGroupMember {

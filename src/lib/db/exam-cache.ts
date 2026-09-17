@@ -47,6 +47,22 @@ async function loadHubDates(examId: string) {
   return [...past.reverse(), ...recent];
 }
 
+/** Every live tracker row in the window the tracker and context.md use
+ *  (-120 d to +365 d), uncapped. The hub TITLE's held / under-revision
+ *  decision reads these: loadHubDates caps its list, and a dropped older
+ *  sitting turned an ended window into a single "Exam Ended" date. */
+async function loadTitleDates(examId: string) {
+  const today = new Date(`${istDay(new Date())}T00:00:00.000Z`);
+  const from = new Date(today);
+  from.setUTCDate(from.getUTCDate() - 120);
+  const to = new Date(today);
+  to.setUTCDate(to.getUTCDate() + 365);
+  return prisma.examImportantDate.findMany({
+    where: { examId, archivedAt: null, date: { gte: from, lte: to } },
+    orderBy: [{ date: "asc" }, { id: "asc" }],
+  });
+}
+
 /** Shared exam payload — safe to cache across all users. */
 export const getExamShared = unstable_cache(
   async (code: string) => {
@@ -67,7 +83,7 @@ export const getExamShared = unstable_cache(
     });
     if (!exam) return null;
 
-    const [validatedQuestionCount, newsItems, rawImportantDates, pyqYears, systemMocks, examStats, rankBands, eligibility] =
+    const [validatedQuestionCount, newsItems, rawImportantDates, rawTitleDates, pyqYears, systemMocks, examStats, rankBands, eligibility] =
       await Promise.all([
         prisma.question.count({ where: { examId: exam.id, validated: true } }),
         // archivedAt IS NULL filter keeps the per-exam page showing
@@ -81,6 +97,7 @@ export const getExamShared = unstable_cache(
           take: 5,
         }),
         loadHubDates(exam.id),
+        loadTitleDates(exam.id),
         prisma.question.groupBy({
           by: ["pyqYear"],
           where: { examId: exam.id, source: "PYQ", pyqYear: { not: null } },
@@ -165,12 +182,15 @@ export const getExamShared = unstable_cache(
     // Answer-key guard for the hub (13 Sep 2026): the hub renders these rows
     // raw in its Important Dates list, so the timeline rule applies here too.
     const importantDates = rawImportantDates.filter((r) => !isUnannouncedAnswerKey(r, officialUrl));
+    const titleDates = rawTitleDates.filter((r) => !isUnannouncedAnswerKey(r, officialUrl));
 
     return {
       exam,
       validatedQuestionCount,
       newsItems,
       importantDates,
+      /** Uncapped -120/+365 rows — the hub title's date decision only. */
+      titleDates,
       pyqYears,
       systemMocks,
       examStats,

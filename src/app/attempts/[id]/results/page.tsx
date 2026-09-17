@@ -15,6 +15,7 @@ import { ResultCardShare } from "@/components/ResultCardShare";
 import { resultCardLabels } from "@/lib/result-card";
 import { ChallengeCard } from "@/components/ChallengeCard";
 import { challengeLabels } from "@/lib/challenge-copy";
+import { mockChallengeEligible } from "@/lib/challenge";
 import { InviteFriendsCard } from "@/app/dashboard/InviteFriendsCard";
 import { FreshQuestionsButton } from "./FreshQuestionsButton";
 import { NextMockButton } from "./NextMockButton";
@@ -48,7 +49,7 @@ export default async function ResultsPage({
     include: {
       mock: {
         include: {
-          exam: { select: { code: true, shortName: true } },
+          exam: { select: { code: true, shortName: true, active: true } },
         },
       },
     },
@@ -83,6 +84,16 @@ export default async function ResultsPage({
   // Streak + tomorrow lines in the page's locale (13 Sep 2026).
   const studyDay = resultsStudyDayCopy(t);
   const qById = new Map(questions.map((q) => [q.id, q]));
+  // Challenge a friend (16 Sep 2026): the card only where a link can be made —
+  // the same rule createChallenge applies (the exam's validated MCQs, at
+  // least CHALLENGE_MIN_QUESTIONS of them, exam active). 185 of 1,216 attempts
+  // in the 14 days to 16 Sep showed a button that could only ever fail.
+  const challengeEligible = mockChallengeEligible({
+    examActive: attempt.mock.exam.active,
+    examId: attempt.mock.examId,
+    questionIds: attempt.mock.questionIds,
+    byId: qById,
+  });
 
   const answers = (attempt.answers as any[]) ?? [];
   const answersByQid = new Map(answers.map((a) => [a.questionId, a]));
@@ -588,17 +599,20 @@ export default async function ResultsPage({
             />
             {/* Challenge a friend (14 Sep 2026): the SAME questions with this
                 score to beat — evenly spaced questions from the mock, scored
-                from this attempt (skipped counts as not correct). */}
-            <ChallengeCard
-              from={{ source: "mock", attemptId: attempt.id }}
-              examCode={attempt.mock.exam.code}
-              examShort={attempt.mock.exam.shortName}
-              surface="results"
-              heading={t("challenge.card.headingMock")}
-              note={t("challenge.card.noteMock")}
-              labels={challengeLabels(t)}
-              locale={locale}
-            />
+                from this attempt (skipped counts as not correct). Shown only
+                when this mock can make a link (16 Sep 2026). */}
+            {challengeEligible && (
+              <ChallengeCard
+                from={{ source: "mock", attemptId: attempt.id }}
+                examCode={attempt.mock.exam.code}
+                examShort={attempt.mock.exam.shortName}
+                surface="results"
+                heading={t("challenge.card.headingMock")}
+                note={t("challenge.card.noteMock")}
+                labels={challengeLabels(t)}
+                locale={locale}
+              />
+            )}
           </>
         )}
 

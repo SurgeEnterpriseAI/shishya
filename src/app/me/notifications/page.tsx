@@ -29,6 +29,7 @@ const TYPE_LABEL: Record<string, string> = {
   FLAG_VALIDATED:        "Flag validated",
   SUGGESTION_ACCEPTED:   "Suggestion accepted",
   ADMIN_MESSAGE:         "From the team",
+  STUDY_GROUP_JOINED:    "Study group",
 };
 
 const TYPE_COLOR: Record<string, string> = {
@@ -42,7 +43,16 @@ const TYPE_COLOR: Record<string, string> = {
   FLAG_VALIDATED:        "border-emerald-300 bg-emerald-50 text-emerald-800",
   SUGGESTION_ACCEPTED:   "border-emerald-300 bg-emerald-50 text-emerald-800",
   ADMIN_MESSAGE:         "border-ink-300 bg-ink-50 text-ink-800",
+  STUDY_GROUP_JOINED:    "border-saffron-300 bg-saffron-50 text-saffron-800",
 };
+
+// A friend joined your study group (16 Sep 2026). Until
+// scripts/create-study-group-notify.ts adds STUDY_GROUP_JOINED to the enum,
+// those rows are stored as ADMIN_MESSAGE with an "sg-join:" dedupKey — they
+// are not from the team, so the key decides the label.
+function labelType(n: { type: string; dedupKey: string | null }): string {
+  return n.dedupKey?.startsWith("sg-join:") ? "STUDY_GROUP_JOINED" : n.type;
+}
 
 export default async function NotificationsPage() {
   const session = await auth();
@@ -72,8 +82,9 @@ export default async function NotificationsPage() {
           <ul className="mt-6 divide-y divide-ink-100 overflow-hidden rounded-lg border border-ink-200 bg-white">
             {rows.map((n) => {
               const wasUnread = n.readAt === null;
-              const label = TYPE_LABEL[n.type] ?? n.type;
-              const color = TYPE_COLOR[n.type] ?? "border-ink-300 bg-ink-50 text-ink-800";
+              const type = labelType(n);
+              const label = TYPE_LABEL[type] ?? type;
+              const color = TYPE_COLOR[type] ?? "border-ink-300 bg-ink-50 text-ink-800";
               return (
                 <li key={n.id} className={`px-4 py-3 ${wasUnread ? "bg-saffron-50/30" : ""}`}>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">

@@ -809,7 +809,7 @@ export function MockPlayer({
       <header className="sticky top-0 z-10 border-b border-ink-200 bg-white">
         <div className="container-prose flex h-14 items-center justify-between gap-3">
           <Link href="/dashboard" className="flex items-center gap-2 text-sm">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-saffron-500 text-xs font-bold text-white">
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-saffron-500 font-sans text-xs font-bold text-white">
               शि
             </span>
             <span className="hidden font-semibold text-ink-900 sm:inline">{mock.examShort}</span>

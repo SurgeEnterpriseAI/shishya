@@ -35,6 +35,22 @@ interface Props {
   onClose: () => void;
 }
 
+// Confirmation copy (16 Sep 2026). A FLAG or SUGGEST_UPDATE is stored as a
+// PENDING Verification and nothing reviews it on a clock: the admin audit
+// queue (/admin/verification-audits) samples VERIFY rows only and there is
+// no AI adjudicator (founder hold). The old lines promised "An admin will
+// review within 24 hours" and "We'll notify you when it's reviewed", so the
+// copy now says only what is true. English only: this panel renders on
+// /colleges and /schooling, which have no /hi or /te twins
+// (src/middleware.ts TWIN_PUBLIC_RE).
+const COPY = {
+  en: {
+    verified: "Thank you. Your verification helps other students.",
+    flagged: "Flag recorded. It stays open until an admin reviews it — there is no set review time.",
+    suggested: "Suggestion recorded. It stays open until an admin reviews it — there is no set review time.",
+  },
+} as const;
+
 const STATUS_LABEL: Record<FactDisplay["status"], string> = {
   NONE:         "Not yet verified",
   AI:           "AI-verified",
@@ -72,13 +88,7 @@ export function VerificationPanel({ fact, signedIn, onClose }: Props) {
         setError(j.error || j.message || `HTTP ${res.status}`);
         return;
       }
-      setSuccess(
-        actionType === "VERIFY"
-          ? "Thank you. Your verification helps other students."
-          : actionType === "FLAG"
-          ? "Flag recorded. An admin will review within 24 hours."
-          : "Suggestion submitted. We'll notify you when it's reviewed.",
-      );
+      setSuccess(actionType === "VERIFY" ? COPY.en.verified : actionType === "FLAG" ? COPY.en.flagged : COPY.en.suggested);
     } catch (e: any) {
       setError(e?.message || "Network error");
     } finally {

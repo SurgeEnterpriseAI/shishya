@@ -1731,3 +1731,79 @@ One result does not measure you. Selection lists change every year; the routine 
 function fillVars(s: string, vars: Record<string, string | number>): string {
   return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// Lapse day 4-6 nudge (16 Sep 2026). Who gets it and when lives in
+// src/lib/lapse-nudge.ts; the cron (src/app/api/cron/lapse-nudge/route.ts,
+// not scheduled — founder decision) writes the 'lapse-d4' guard row after a
+// send. Template only, no model call. Never guilt: no backlog, no "you
+// missed"; only facts the cron holds (days since last seen, the exam the
+// mail may name via resolveMailExam, a live coach plan's own days left).
+// ─────────────────────────────────────────────────────────────────────
+
+export interface LapseNudgeProps {
+  name: string | null;
+  /** Exam the mail may name; null = generic (no exam name anywhere). */
+  examShort: string | null;
+  /** Whole days since the student was last seen. */
+  daysGone: number;
+  /** Days to the exam of a live coach plan on that same exam (omit otherwise). */
+  coachDaysLeft?: number | null;
+  /** Set when the enrolled exam is over: "Your X is done. Next: Y on date (tier)". */
+  rollover?: MailRollover | null;
+}
+
+export function renderLapseNudgeEmail(p: LapseNudgeProps): { subject: string; html: string; text: string } {
+  const first = (p.name ?? "").split(" ")[0] || "Aspirant";
+  const exam = p.examShort ? esc(p.examShort) : null;
+  const days = Math.max(0, Math.floor(p.daysGone));
+  const roll = rolloverBlock(p.rollover);
+  const hasCoach = typeof p.coachDaysLeft === "number" && p.coachDaysLeft > 0 && !!p.examShort;
+
+  const subject = p.examShort
+    ? `${first}, 5 questions to get your ${p.examShort} prep moving again`
+    : `${first}, 5 questions to get your prep moving again`;
+  const coachText = hasCoach
+    ? `
+Your coach has already rebuilt your ${p.examShort} plan for the ${p.coachDaysLeft} days left: https://shishya.in/coach
+`
+    : "";
+  const coachHtml = hasCoach
+    ? `<p style="font-size:13px;line-height:1.6;margin:14px 0 0;color:#334155;">🧭 Your coach has already rebuilt your <strong>${exam}</strong> plan for the ${p.coachDaysLeft} days left — <a href="https://shishya.in/coach" style="color:#c2410c;font-weight:600;text-decoration:none;">open today's plan →</a></p>`
+    : "";
+
+  const text = `${first},
+
+It's been about ${days} days — no catching up needed. Today's Daily 5 is one tap away: 5 questions, about 3 minutes.
+
+Start: https://shishya.in/today
+${coachText}${roll.text ? `
+${roll.text}
+` : ""}
+— Shishya (free, always)`;
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-weight:700;font-size:18px;">${exam ? `⚡ 5 questions for your ${exam} prep` : "⚡ 5 questions to pick your prep back up"}</div>
+    <p style="font-size:14px;line-height:1.6;margin:14px 0;">
+      ${esc(first)}, it's been about ${days} days — no catching up needed.
+      Today's Daily 5 is one tap away: <strong>5 questions, about 3 minutes.</strong>
+    </p>
+    <a href="https://shishya.in/today"
+       style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">
+      Start today's 5 →
+    </a>
+    ${coachHtml}
+    ${roll.html}
+    <p style="font-size:12px;color:#64748b;margin:18px 0 0;">— Shishya, free always</p>
+  </div>
+</body></html>`;
+  return { subject, html, text };
+}
+
+export async function sendLapseNudgeEmail(p: LapseNudgeProps & { to: string; userId: string }): Promise<boolean> {
+  const { subject, html, text } = renderLapseNudgeEmail(p);
+  return sendEmail({ to: p.to, subject, html, text, tag: "lapse-d4", unsubUserId: p.userId });
+}

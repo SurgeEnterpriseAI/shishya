@@ -39,6 +39,8 @@ export const MAIL_FAMILY_ORDER: readonly string[] = [
   "result-day",
   "exam-alert",
   "demand-shipped",
+  "challenge-play",
+  "study-group-join", // a friend joined the maker's study group (16 Sep 2026)
 ];
 
 /** Mail kinds that carry `unsubUserId` and therefore leave a 'sent:' row in
@@ -57,6 +59,7 @@ export const LOGGED_SEND_FAMILIES: ReadonlySet<string> = new Set([
   "exam-day-after",
   "result-day",
   "challenge-play",
+  "study-group-join", // sendEmail with unsubUserId (src/lib/study-group-db.ts, 16 Sep 2026)
 ]);
 
 /** Answers the "How did you find Shishya?" chip can record (FoundViaChipClient). */

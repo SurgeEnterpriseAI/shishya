@@ -6,9 +6,19 @@
 // one-field form to make one. Rows come from the server
 // (src/lib/study-group-db.ts). Beacons CTA_CLICKED cta study-group-create |
 // share (surface study-group) | study-group-leave.
+//
+// 16 Sep 2026: the group's maker gets "tell me on this phone when a friend
+// joins" (beacon study-group-watch) once the server says it can work
+// (board.watchReady), and the card sends one study-group-card-seen beacon
+// {empty, surface: "card"} per mount once half of it (or half the screen,
+// for a long board) is in view — "0 groups made" was unreadable without it
+// (never scrolled to vs seen and passed over). The dashboard's one-line
+// opener (src/app/dashboard/StudyGroupNudge.tsx) sends its own seen {surface:
+// "dashboard"} and open beacons, so the card it opens should pass seenBeacon={false}.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PushWatchButton } from "@/components/ChallengeCard";
 import type { BoardRow, StudyGroupLabels } from "@/lib/study-group";
 import { shareUrl, type ShareChannel } from "@/lib/share-url";
 
@@ -16,6 +26,10 @@ export interface StudyGroupBoardView {
   token: string;
   name: string;
   rows: BoardRow[];
+  /** The viewer made this group. */
+  isOwner?: boolean;
+  /** Phone notifications for this group can be turned on now (src/lib/study-group-db.ts). */
+  watchReady?: boolean;
 }
 
 function fill(s: string, vars: Record<string, string | number>): string {
@@ -200,6 +214,19 @@ function Board({ board, labels }: { board: StudyGroupBoardView; labels: StudyGro
       </div>
       {board.rows.length === 1 && <p className="mt-2 text-xs text-ink-600">{labels.alone}</p>}
       <InviteRow board={board} labels={labels} />
+      {board.isOwner && board.watchReady && (
+        <PushWatchButton
+          url={`/api/study-groups/${board.token}/watch`}
+          cta="study-group-watch"
+          labels={{
+            button: labels.watchButton,
+            busy: labels.watchBusy,
+            on: labels.watchOn,
+            denied: labels.watchDenied,
+            error: labels.watchError,
+          }}
+        />
+      )}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-[11px] text-ink-500">{labels.note}</p>
         <button type="button" onClick={leave} disabled={leaving} className="text-xs text-ink-500 underline-offset-2 hover:underline disabled:opacity-60">
@@ -214,16 +241,48 @@ export function StudyGroupsCard({
   boards,
   labels,
   canCreate,
+  seenBeacon = true,
 }: {
   boards: StudyGroupBoardView[];
   labels: StudyGroupLabels;
   canCreate: boolean;
+  /** Send the study-group-card-seen impression. False where the opener already counted it. */
+  seenBeacon?: boolean;
 }) {
   const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
+  const ref = useRef<HTMLElement>(null);
+  const empty = boards.length === 0;
+
+  // Impression: once per mount, when half the card is in view — or half the
+  // screen, for a board taller than two screens. isIntersecting alone is true
+  // for any sliver (the observer also reports on observe()), so measure.
+  useEffect(() => {
+    const el = ref.current;
+    if (!seenBeacon || !el || typeof IntersectionObserver === "undefined") return;
+    let sent = false;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (sent) return;
+        const inView = entries.some((e) => {
+          const screen = e.rootBounds?.height ?? window.innerHeight;
+          return e.isIntersecting && e.intersectionRect.height >= Math.min(e.boundingClientRect.height, screen) * 0.5;
+        });
+        if (!inView) return;
+        sent = true;
+        io.disconnect();
+        beacon({ cta: "study-group-card-seen", empty, surface: "card" });
+      },
+      // 5% steps: a board many screens tall still reports as it scrolls by.
+      { threshold: Array.from({ length: 21 }, (_, i) => i / 20) },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one impression per mount
+  }, []);
 
   return (
-    <section id="study-groups" className="mt-6 scroll-mt-20 rounded-xl border border-saffron-200 bg-saffron-50/40 p-5">
+    <section ref={ref} id="study-groups" className="mt-6 scroll-mt-20 rounded-xl border border-saffron-200 bg-saffron-50/40 p-5">
       <p className="text-base font-bold text-ink-900">👥 {labels.title}</p>
       {boards.length === 0 ? (
         <>

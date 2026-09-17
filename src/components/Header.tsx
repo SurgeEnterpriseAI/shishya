@@ -50,7 +50,11 @@ export function Header({ admin = false }: { admin?: boolean }) {
         {/* Left: brand + back-link. */}
         <div className="flex shrink-0 items-center gap-3">
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-saffron-500 text-lg font-bold text-white">
+            {/* font-sans (16 Sep 2026): under the body's font-multi stack these
+                two letters were one reason English pages fetched the 121 KB Noto
+                Sans Devanagari web font; the device's own Devanagari font draws
+                the logo instead. Same class on the other "शि" logo marks. */}
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-saffron-500 font-sans text-lg font-bold text-white">
               शि
             </span>
             <span className="text-lg font-semibold tracking-tight text-ink-900">Shishya</span>

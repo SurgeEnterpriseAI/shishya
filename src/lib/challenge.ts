@@ -102,6 +102,37 @@ export function mockSlice<T>(eligible: readonly T[], max = CHALLENGE_MAX_QUESTIO
   return Array.from({ length: max }, (_, i) => eligible[Math.floor((i * eligible.length) / max)]);
 }
 
+/** A mock's questions a friend can be served, in mock order: the exam's
+ *  validated MCQs (the anonymous quiz pool) — the same rule createChallenge
+ *  applies in SQL. Missing ids are skipped. (16 Sep 2026) */
+export function playableMockIds(
+  questionIds: readonly string[],
+  byId: ReadonlyMap<string, { examId: string; validated: boolean; type: string }>,
+  examId: string,
+): string[] {
+  return questionIds.filter((id) => {
+    const q = byId.get(id);
+    return !!q && q.examId === examId && q.validated && q.type === "MCQ";
+  });
+}
+
+/** Can this finished mock make a challenge? The results page shows the card
+ *  only then — below CHALLENGE_MIN_QUESTIONS playable questions every tap
+ *  was refused (185 of 1,216 attempts in the 14 days to 16 Sep 2026). */
+export function mockChallengeEligible(p: {
+  examActive: boolean;
+  examId: string;
+  questionIds: readonly string[];
+  byId: ReadonlyMap<string, { examId: string; validated: boolean; type: string }>;
+}): boolean {
+  return p.examActive && mockSlice(playableMockIds(p.questionIds, p.byId, p.examId)) !== null;
+}
+
+/** Same questions in the same order — an existing mock challenge is reused only then. */
+export function isSameMockSlice(stored: readonly string[] | null | undefined, slice: readonly string[]): boolean {
+  return !!stored && stored.length === slice.length && stored.every((id, i) => id === slice[i]);
+}
+
 export function challengeExpiresAt(createdAt: Date): Date {
   return new Date(createdAt.getTime() + CHALLENGE_TTL_DAYS * 24 * 60 * 60 * 1000);
 }

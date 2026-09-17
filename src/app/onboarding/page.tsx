@@ -10,8 +10,9 @@
 //   4. Prep target (multi-select exam codes; pre-suggested based on stage)
 //
 // Submission writes to User.onbStage / onbState / onbPrepCodes /
-// onbCompletedAt (+ preferredLang), then redirects to /. The homepage then
-// renders a personalised hub instead of the generic 7-tile landing.
+// onbCompletedAt (+ preferredLang), then goes to the coach intake (an exam
+// was picked) or /dashboard (skipped, or no exam picked — 16 Sep 2026: that
+// used to land a signed-in student on the anonymous homepage).
 //
 // Server component shell — client form below.
 
@@ -47,12 +48,13 @@ export default async function OnboardingPage({
   // the homepage or a /for/[persona] CTA. Lets us pre-fill the wizard
   // and offer a 1-click confirm path.
   const persona = sp.p ? findPersona(sp.p) : undefined;
-  // ?next=dashboard arrives when the dashboard's onboarding gate
-  // bounced the user here. After finishing the wizard we send them
-  // straight back to /dashboard (where the new "Pick your first
-  // exam" hero is waiting), not to / (which would put them back
-  // through the funnel they already used).
-  const redirectAfter = sp.next === "dashboard" ? "/dashboard" : "/";
+  // Finishing without an exam, skipping, or re-opening a completed wizard
+  // all go to /dashboard (16 Sep 2026). The default used to be "/" unless
+  // ?next=dashboard — and nothing links with that flag, so both skips in
+  // the 14 days to 16 Sep landed on the anonymous homepage. The dashboard's
+  // "pick your exam" hero is the next step for a signed-in student.
+  // (?next= is still accepted in the URL and ignored.)
+  const redirectAfter = "/dashboard";
 
   // If already completed AND this isn't an explicit rerun, send them
   // home (or to the requested next page). Re-running is opt-in via

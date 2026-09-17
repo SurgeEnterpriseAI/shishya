@@ -26,6 +26,8 @@ import { MissionCard } from "./MissionCard";
 import { ExamWeekLines, type ExamWeekLine } from "./ExamWeekLines";
 import { Prisma } from "@prisma/client";
 import { computeCoachPlan } from "@/lib/coach-plan";
+import { coachTaskDoneFlags, showsDoneCount } from "@/lib/coach-done";
+import { briefLang, buildFallbackBrief, storedBriefFacts } from "@/lib/brief-fallback";
 import { computeExamWeekState, dateWithTier, examDayPollOpen } from "@/lib/exam-week";
 import { applyShiftDay, examDone, shiftDayIso } from "@/lib/exam-week-student";
 import type { SourceTier } from "@/lib/exam-timeline";
@@ -35,6 +37,8 @@ import { examPeerProof } from "@/lib/peer-proof";
 import { CoachPlanView } from "@/app/coach/CoachPlanView";
 import { InviteFriendsCard } from "./InviteFriendsCard";
 import { StudyGroupsCard } from "@/components/StudyGroupsCard";
+import { StudyGroupNudge } from "./StudyGroupNudge";
+import { JoinedBanner } from "./JoinedBanner";
 import { loadStudyGroupBoards } from "@/lib/study-group-db";
 import { studyGroupLabels, USER_MAX_GROUPS } from "@/lib/study-group";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
@@ -46,9 +50,13 @@ import { FlashHint } from "@/components/FlashHint";
 import { FoundViaChip } from "@/components/FoundViaChip";
 import { YouAskedWeBuilt } from "@/components/YouAskedWeBuilt";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ joined?: string }>;
+}) {
   try {
-    return await renderDashboard();
+    return await renderDashboard(searchParams);
   } catch (err) {
     // NEXT_REDIRECT + NEXT_NOT_FOUND are how Next.js implements redirect()
     // and notFound() — they throw special signals that the framework
@@ -68,7 +76,8 @@ export default async function DashboardPage() {
   }
 }
 
-async function renderDashboard() {
+async function renderDashboard(searchParams: Promise<{ joined?: string }>) {
+  const sp = await searchParams;
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/dashboard");
 
@@ -278,7 +287,23 @@ async function renderDashboard() {
 
   // If today's brief exists for the recommended exam, prefer it (the cron
   // already wrote a personalised reflection + pre-built adaptive mock).
-  const todaysBrief = recommendedExam ? briefByExamId.get(recommendedExam.examId) ?? null : null;
+  // Otherwise (16 Sep 2026) the brief of any exam the student is still
+  // enrolled in: the cron briefs one enrollment at a time, so the
+  // recommended exam is often not the briefed one, and the card used to show
+  // no brief at all. The card's exam name and button follow the brief.
+  const enrolledExamById = new Map(enrollments.map((e) => [e.examId, e.exam]));
+  const todaysBrief =
+    (recommendedExam ? briefByExamId.get(recommendedExam.examId) : undefined) ??
+    dailyBriefs
+      .filter((b) => enrolledExamById.has(b.examId))
+      .sort((a, b) => Number(!!b.mockId) - Number(!!a.mockId) || b.createdAt.getTime() - a.createdAt.getTime())[0] ??
+    null;
+  const briefExam = todaysBrief ? enrolledExamById.get(todaysBrief.examId) ?? null : null;
+  const briefCardExam = briefExam
+    ? { code: briefExam.code, short: briefExam.shortName }
+    : recommendedExam
+      ? { code: recommendedExam.code, short: recommendedExam.short }
+      : null;
 
   // ── Mission card data (identity + urgency + progress) ────────────────
   // Primary exam = same precedence the Daily-5 uses. Three cheap queries:
@@ -416,6 +441,46 @@ async function renderDashboard() {
 
   // Personal Coach — computed fresh on every load (the morning rebuild).
   const coachPlan = await computeCoachPlan(userId).catch(() => null);
+  // Ticks on the strip (16 Sep 2026): the same flags as /coach and the
+  // breadcrumb (src/lib/coach-done.ts). A failed read shows no ticks.
+  const coachDone = coachPlan ? await coachTaskDoneFlags(userId, coachPlan.todayTasks).catch(() => null) : null;
+
+  // A brief written without the model (src/lib/brief-fallback.ts) is re-
+  // rendered from its stored facts in the reader's language, with the next
+  // open coach task for that exam. A model-written note shows as stored.
+  // Coach task labels are English-only (src/lib/coach-plan.ts), so a Hindi
+  // or Telugu note names no task and keeps its own action line instead of
+  // "आज का कोच टास्क: Daily 5 — keep the streak" (review, 16 Sep 2026).
+  const briefFacts = todaysBrief ? storedBriefFacts(todaysBrief.inputs) : null;
+  const briefNextTask =
+    briefFacts &&
+    briefLang(locale) === "en" &&
+    coachPlan &&
+    coachDone &&
+    briefCardExam &&
+    coachPlan.examCode === briefCardExam.code &&
+    showsDoneCount(coachPlan.phase)
+      ? coachPlan.todayTasks.find((_, i) => !coachDone[i]) ?? null
+      : null;
+  const briefNote =
+    todaysBrief && briefFacts
+      ? buildFallbackBrief(briefFacts, { hasMock: !!todaysBrief.mockId, coachTask: briefNextTask?.label ?? null }, briefLang(locale))
+      : todaysBrief?.reflection || null;
+
+  // ?joined=1 from JoinBatchButton — confirm only a join that just happened
+  // (the last 15 minutes; a re-join stamps enrolledAt too). The flag stays in
+  // the tab's history, so an older ACTIVE enrollment would re-announce "You
+  // joined" on every reload or hand-typed ?joined=1 (review, 16 Sep 2026).
+  const joinedBatch =
+    sp?.joined === "1"
+      ? await prisma.batchEnrollment
+          .findFirst({
+            where: { userId, status: "ACTIVE", enrolledAt: { gte: new Date(Date.now() - 15 * 60_000) } },
+            orderBy: { enrolledAt: "desc" },
+            select: { batch: { select: { name: true } } },
+          })
+          .catch(() => null)
+      : null;
 
   // Cohort proof for their main exam — belonging on the surface they
   // open every day ("you and 12 others studied today").
@@ -612,6 +677,8 @@ async function renderDashboard() {
           <SundayLiveTestBanner data={await loadUpcomingSunday()} signedIn />
         </div>
 
+        {joinedBatch && <JoinedBanner batchName={joinedBatch.batch.name} locale={locale} />}
+
         {/* From your educator — batch assignments + doubt channel.
             Renders only for students enrolled in an educator's batch
             (the B2B layer); everyone else sees nothing. */}
@@ -658,10 +725,14 @@ async function renderDashboard() {
         )}
 
         {/* Study groups (14 Sep 2026): friends' weekly board, right under the
-            streak it counts the same days as. Without a group, the card to
-            make one sits at the bottom next to "invite friends". */}
-        {studyGroups.length > 0 && (
+            streak it counts the same days as. Without a group (16 Sep 2026)
+            an enrolled student gets ONE line here linking to the make-a-group
+            card, which stays at the bottom — a full card here would push the
+            coach plan and the Daily 5 down on a phone. */}
+        {studyGroups.length > 0 ? (
           <StudyGroupsCard boards={studyGroups} labels={studyGroupCopy} canCreate={studyGroups.length < USER_MAX_GROUPS} />
+        ) : (
+          enrollments.length > 0 && <StudyGroupNudge labels={studyGroupCopy} locale={locale} />
         )}
 
         {/* Cohort proof — the daily reminder that they're not grinding
@@ -679,7 +750,7 @@ async function renderDashboard() {
             card — same slot, richer promise: today's rebuilt plan. */}
         {coachPlan ? (
           <>
-            <CoachPlanView plan={coachPlan} />
+            <CoachPlanView plan={coachPlan} done={coachDone} locale={locale} />
             <Link
               href="/me/report"
               className="mt-2 block text-right text-xs font-medium text-saffron-700 hover:text-saffron-800"
@@ -920,14 +991,15 @@ async function renderDashboard() {
                     {t("dash.loop.recommended.title")}
                   </p>
                   <p className="mt-2 text-base font-semibold text-ink-900">
-                    {recommendedExam.short}
+                    {briefCardExam?.short ?? recommendedExam.short}
                   </p>
-                  {todaysBrief?.reflection ? (
+                  {briefNote ? (
                     // Personalised note from Shishya, written overnight by the
-                    // cron. Falls through to the static body if the cron
-                    // hasn't run yet for this user.
+                    // cron (by the model, or from stored facts when the model
+                    // was unavailable). Falls through to the static body if
+                    // the cron hasn't run yet for this user.
                     <p className="mt-2 text-xs italic leading-relaxed text-ink-700">
-                      &ldquo;{todaysBrief.reflection}&rdquo;
+                      &ldquo;{briefNote}&rdquo;
                     </p>
                   ) : (
                     <p className="mt-1 text-xs text-ink-600">
@@ -940,7 +1012,7 @@ async function renderDashboard() {
                     href={
                       todaysBrief?.mockId
                         ? `/mocks/${todaysBrief.mockId}`
-                        : `/exams/${recommendedExam.code}`
+                        : `/exams/${briefCardExam?.code ?? recommendedExam.code}`
                     }
                     prefetch={false}
                     className="btn-primary mt-3 !py-1.5 !px-3 text-xs"
@@ -1158,6 +1230,9 @@ async function renderDashboard() {
           </span>
         </a>
 
+        {/* No group yet: the make-a-group card (#study-groups) stays down
+            here for everyone; enrolled students also get the one-line link
+            to it under the streak (viral.3 corrected fix, 16 Sep 2026). */}
         {studyGroups.length === 0 && <StudyGroupsCard boards={[]} labels={studyGroupCopy} canCreate />}
 
         {/* Word-of-mouth loop — a gentle invite at the bottom of the

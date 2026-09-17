@@ -15,6 +15,12 @@
 // Every string arrives as `labels` from the server page (src/lib/challenge-
 // copy.ts), and the page language is stored on the challenge, so a friend
 // opening the link lands in the same language.
+//
+// 16 Sep 2026: a mock with too few playable questions answers 422 and the
+// card says so (challenge.card.notEnough) instead of "try again" — a retry
+// can never work. That wording is for mocks only; a quiz / chain 422 keeps
+// the generic error. A repeat tap on the same mock gets the SAME link back
+// (reused, no creator key: the signed-in maker manages it by session).
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -46,7 +52,8 @@ export type ChallengeFrom =
 
 interface Made {
   token: string;
-  creatorKey: string;
+  /** Null for a reused mock link — its key went to the browser that made it. */
+  creatorKey: string | null;
   creatorCorrect: number;
   questionCount: number;
   examShort: string;
@@ -96,20 +103,21 @@ export function ChallengeCard({
         body: JSON.stringify(body),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok || typeof j?.token !== "string" || typeof j?.creatorKey !== "string") {
-        setErr(L["challenge.card.error"]);
+      const reused = res.ok && j?.reused === true && j?.fromMock === true && j?.creatorKey === null;
+      if (!res.ok || typeof j?.token !== "string" || (typeof j?.creatorKey !== "string" && !reused)) {
+        setErr(res.status === 422 && from.source === "mock" ? L["challenge.card.notEnough"] : L["challenge.card.error"]);
         return;
       }
-      rememberMadeChallenge(j.token, j.creatorKey);
+      if (typeof j.creatorKey === "string") rememberMadeChallenge(j.token, j.creatorKey);
       setMade({
         token: j.token,
-        creatorKey: j.creatorKey,
+        creatorKey: typeof j.creatorKey === "string" ? j.creatorKey : null,
         creatorCorrect: Number(j.creatorCorrect),
         questionCount: Number(j.questionCount),
         examShort: typeof j.examShort === "string" ? j.examShort : examShort,
         fromMock: j.fromMock === true,
       });
-      beacon({ cta: "challenge-create", surface, source: from.source, exam: examCode, lang: locale });
+      beacon({ cta: "challenge-create", surface, source: from.source, exam: examCode, lang: locale, ...(reused ? { reused: true } : {}) });
     } catch {
       setErr(L["challenge.card.errorNet"]);
     } finally {
@@ -287,6 +295,38 @@ export function ChallengeWatchButton({
   labels: ChallengeLabels;
 }) {
   const L = labels;
+  return (
+    <PushWatchButton
+      url={`/api/challenge/${token}/watch`}
+      headers={creatorKey ? { "x-challenge-key": creatorKey } : undefined}
+      cta="challenge-watch"
+      labels={{
+        button: L["challenge.watch.button"],
+        busy: L["challenge.watch.busy"],
+        on: L["challenge.watch.on"],
+        denied: L["challenge.watch.denied"],
+        error: L["challenge.watch.error"],
+      }}
+    />
+  );
+}
+
+/** One device's phone-notification sign-up to a watch route — the challenge
+ *  above and the study-group maker's "tell me when a friend joins"
+ *  (src/components/StudyGroupsCard.tsx, 16 Sep 2026). Hidden where web push
+ *  isn't available. */
+export function PushWatchButton({
+  url,
+  headers,
+  cta,
+  labels,
+}: {
+  url: string;
+  headers?: Record<string, string>;
+  /** CTA_CLICKED beacon sent once the route accepted the device. */
+  cta: string;
+  labels: { button: string; busy: string; on: string; denied: string; error: string };
+}) {
   const [supported, setSupported] = useState(false);
   const [state, setState] = useState<"idle" | "busy" | "on" | "denied" | "error">("idle");
   useEffect(() => {
@@ -301,9 +341,9 @@ export function ChallengeWatchButton({
       return;
     }
     try {
-      const res = await fetch(`/api/challenge/${token}/watch`, {
+      const res = await fetch(url, {
         method: "POST",
-        headers: { "content-type": "application/json", ...(creatorKey ? { "x-challenge-key": creatorKey } : {}) },
+        headers: { "content-type": "application/json", ...(headers ?? {}) },
         body: JSON.stringify({ subscription: sub.subscription }),
       });
       if (!res.ok) {
@@ -311,7 +351,7 @@ export function ChallengeWatchButton({
         return;
       }
       setState("on");
-      beacon({ cta: "challenge-watch" });
+      beacon({ cta });
     } catch {
       setState("error");
     }
@@ -319,10 +359,10 @@ export function ChallengeWatchButton({
 
   if (!supported) return null;
   if (state === "on") {
-    return <p className="mt-3 text-xs font-medium text-emerald-700">{L["challenge.watch.on"]}</p>;
+    return <p className="mt-3 text-xs font-medium text-emerald-700">{labels.on}</p>;
   }
   if (state === "denied") {
-    return <p className="mt-3 text-xs text-ink-600">{L["challenge.watch.denied"]}</p>;
+    return <p className="mt-3 text-xs text-ink-600">{labels.denied}</p>;
   }
   return (
     <div className="mt-3">
@@ -333,9 +373,9 @@ export function ChallengeWatchButton({
         className="inline-flex items-center gap-1.5 rounded-lg border border-ink-300 bg-white px-3 py-2 text-xs font-semibold text-ink-800 transition-colors hover:bg-ink-50 disabled:opacity-60"
       >
         <span aria-hidden>📱</span>
-        {state === "busy" ? L["challenge.watch.busy"] : L["challenge.watch.button"]}
+        {state === "busy" ? labels.busy : labels.button}
       </button>
-      {state === "error" && <p className="mt-1 text-xs text-rose-700">{L["challenge.watch.error"]}</p>}
+      {state === "error" && <p className="mt-1 text-xs text-rose-700">{labels.error}</p>}
     </div>
   );
 }

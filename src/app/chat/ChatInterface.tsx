@@ -2,6 +2,17 @@
 
 // Client-side chat — consumes Server-Sent Events from POST /api/chat.
 // Maintains a simple in-memory message log; persistence is handled server-side.
+//
+// Guest → account (16 Sep 2026): when a guest taps "Save this conversation —
+// sign in, free", the chat (last 12 exchanges) is kept in localStorage
+// (GUEST_CHAT_KEY) for 30 minutes. When the same browser opens the same chat
+// signed in within that window, it is posted once to /api/chat/import, which
+// saves only the turns the server itself logged for this browser as a new
+// conversation of the signed-in student; the saved turns are shown and the
+// chat continues in that conversation. The key is removed after the attempt.
+// Nothing is kept without that tap: a guest who just leaves must not have
+// the chat land in whichever account signs in next on a shared phone or a
+// cyber-café PC (review, 16 Sep 2026).
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -46,6 +57,26 @@ function prettyTool(name?: string): string {
     case "start_adaptive_quiz": return "Building your quiz (warmup + full mock)…";
     case "find_scholarships": return "Finding scholarships you qualify for…";
     default: return name ? `Calling ${name}…` : "Thinking…";
+  }
+}
+
+const GUEST_CHAT_KEY = "shishya_guest_chat";
+/** How long after the save tap the sign-in may pick the chat up. */
+const GUEST_CHAT_TTL_MS = 30 * 60_000;
+const GUEST_CHAT_MAX_TURNS = 24;
+
+const SAVE_COPY = {
+  en: { saved: "Your guest conversation is saved to your account." },
+  hi: { saved: "आपकी गेस्ट बातचीत आपके अकाउंट में सेव हो गई है।" },
+  te: { saved: "మీ గెస్ట్ సంభాషణ మీ అకౌంట్‌లో సేవ్ అయింది." },
+} as const;
+
+function uiLang(): "en" | "hi" | "te" {
+  try {
+    const m = document.cookie.match(/(?:^|;\s*)shishya-lang=([^;]+)/);
+    return m?.[1] === "hi" || m?.[1] === "te" ? m[1] : "en";
+  } catch {
+    return "en";
   }
 }
 
@@ -100,6 +131,7 @@ export function ChatInterface({
   const [actions, setActions] = useState<{ kind: string; topicCode?: string; reason: string }[]>([]);
   const [toolStatus, setToolStatus] = useState<string | null>(null);
   const [creatingDiag, setCreatingDiag] = useState(false);
+  const [importedNote, setImportedNote] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -144,6 +176,81 @@ export function ChatInterface({
     recog.start();
   }
 
+  // Guest tapped "Save this conversation": keep the finished turns so the
+  // sign-in can save them (see header). Only complete user→assistant
+  // exchanges; a turn too long for the import route is left out.
+  function keepGuestChatForSignIn() {
+    const turns = messages
+      .filter((m) => m.content.trim() && m.content.length <= 8000)
+      .map((m) => ({ role: m.role, content: m.content }));
+    if (turns.length && turns[turns.length - 1].role === "user") turns.pop();
+    let tail = turns.slice(-GUEST_CHAT_MAX_TURNS);
+    if (tail[0]?.role === "assistant") tail = tail.slice(1);
+    if (!tail.some((t) => t.role === "assistant")) return;
+    try {
+      localStorage.setItem(GUEST_CHAT_KEY, JSON.stringify({ v: 1, examCode: examCode ?? null, savedAt: Date.now(), turns: tail }));
+    } catch {
+      /* storage blocked — the chat still works, it just isn't carried over */
+    }
+  }
+
+  // Signed in: a guest chat from this browser for this same chat → save it once.
+  const importTriedRef = useRef(false);
+  // Set by send(): once the student has sent a turn, a late import is saved
+  // server-side but not swapped into the screen.
+  const sentRef = useRef(false);
+  useEffect(() => {
+    if (guestSignInHref || importTriedRef.current) return;
+    importTriedRef.current = true;
+    let saved: { v?: number; examCode?: string | null; savedAt?: number; turns?: { role: string; content: string }[] } | null = null;
+    try {
+      saved = JSON.parse(localStorage.getItem(GUEST_CHAT_KEY) ?? "null");
+    } catch {
+      return;
+    }
+    if (!saved || saved.v !== 1 || !Array.isArray(saved.turns) || typeof saved.savedAt !== "number") return;
+    const drop = () => {
+      try {
+        localStorage.removeItem(GUEST_CHAT_KEY);
+      } catch {
+        /* ignore */
+      }
+    };
+    if (Date.now() - saved.savedAt > GUEST_CHAT_TTL_MS) return drop();
+    // Another chat (other exam, or general) keeps the key for its own page.
+    if ((saved.examCode ?? null) !== (examCode ?? null)) return;
+    // A seeded chat starts its own turn right away; don't race it.
+    if (initialSeed && initialSeed.trim()) return;
+    fetch("/api/chat/import", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ examCode: examCode ?? null, turns: saved.turns.slice(-GUEST_CHAT_MAX_TURNS) }),
+    })
+      .then(async (res) => {
+        if (res.status === 429 || res.status >= 500) return; // try again on a later visit
+        drop();
+        const j = res.ok ? await res.json().catch(() => null) : null;
+        const turns = Array.isArray(j?.turns) ? (j.turns as { role: string; content: string }[]) : [];
+        if (typeof j?.sessionId !== "string" || turns.length === 0) return;
+        if (!sentRef.current) {
+          setMessages(
+            turns.map((t, i) => ({
+              id: `g-${i}`,
+              role: t.role === "assistant" ? ("assistant" as const) : ("user" as const),
+              content: t.content,
+            })),
+          );
+          setSessionId(j.sessionId);
+        }
+        setImportedNote(SAVE_COPY[uiLang()].saved);
+        beacon({ cta: "chat-guest-imported", surface: "chat", examCode, pairs: Math.floor(turns.length / 2) });
+      })
+      .catch(() => {
+        /* network: the key stays for the next visit */
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // When the user lands here from a topic page (e.g. clicked "Open Shishya
   // tutor" on Number System), auto-fire the seed prompt so the tutor starts
   // teaching immediately instead of showing a blank chat.
@@ -159,6 +266,8 @@ export function ChatInterface({
 
   async function send(text: string) {
     if (!text.trim() || busy) return;
+    sentRef.current = true;
+    setImportedNote(null);
     // Snapshot prior turns BEFORE we append the new message. Sent in the
     // request body so anonymous (signed-out) chats — which aren't stored
     // server-side — still get multi-turn context. Signed-in chats ignore
@@ -395,17 +504,26 @@ export function ChatInterface({
           </div>
         ))}
 
+        {importedNote && (
+          <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">✓ {importedNote}</p>
+        )}
+
         {/* Guest save card — after the second completed reply the guest has
             seen the tutor work; this is the one moment the sign-in ask is
             earned. Plain link, no timer, no counter; the callback brings
-            them straight back to this exam's chat. */}
+            them straight back to this chat (general chats to /chat?general=1,
+            the page that can pick the saved conversation up), where the
+            conversation is saved (16 Sep 2026 — it used to be lost). */}
         {guestSignInHref && !busy && messages.filter((m) => m.role === "assistant" && m.content).length >= 2 && (
           <div className="rounded-md border border-saffron-200 bg-saffron-50/60 px-3 py-2">
             <p className="text-xs text-ink-700">
               Save this conversation and let the tutor see your mock mistakes —{" "}
               <a
-                href={guestSignInHref}
-                onClick={() => beacon({ cta: "chat-guest-save", surface: "chat", examCode })}
+                href={examCode == null ? `/login?callbackUrl=${encodeURIComponent("/chat?general=1")}` : guestSignInHref}
+                onClick={() => {
+                  keepGuestChatForSignIn();
+                  beacon({ cta: "chat-guest-save", surface: "chat", examCode });
+                }}
                 className="font-semibold text-saffron-700 hover:underline"
               >
                 sign in, free

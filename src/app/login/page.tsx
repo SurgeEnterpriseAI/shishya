@@ -79,7 +79,7 @@ export default async function LoginPage({
     <main className="min-h-screen bg-saffron-50/30 flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-lg border border-ink-200 bg-white p-8 shadow-sm">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-saffron-500 text-lg font-bold text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-saffron-500 font-sans text-lg font-bold text-white">
             शि
           </span>
           <span className="text-lg font-semibold tracking-tight text-ink-900">Shishya</span>

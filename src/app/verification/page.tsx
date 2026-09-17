@@ -47,8 +47,8 @@ export default function VerificationExplainerPage() {
           professionals from our community confirm what they know
           personally. The badge next to each fact shows what's been
           verified, when, and by whom. If something looks wrong to you,
-          click the badge and tell us. Every flag is reviewed. Every
-          correction is acknowledged.
+          click the badge and tell us. Every flag reaches the team and
+          stays open until someone reviews it.
         </p>
         <p className="mt-3 max-w-3xl text-sm text-ink-600">
           The students who help us keep Shishya accurate earn recognition
@@ -132,8 +132,8 @@ export default function VerificationExplainerPage() {
             </div>
             <p className="mt-2 text-xs text-ink-600">
               Multiple users have flagged this as incorrect, or AI
-              verification keeps failing. An admin is reviewing within
-              24 hours. Don't rely on this fact yet.
+              verification keeps failing. It is with the team for review —
+              there is no set review time. Don't rely on this fact yet.
             </p>
           </li>
         </ul>

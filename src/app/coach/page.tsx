@@ -19,6 +19,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { Header } from "@/components/Header";
 import { computeCoachPlan } from "@/lib/coach-plan";
+import { coachTaskDoneFlags } from "@/lib/coach-done";
 import { CoachIntake, type CoachRollover, type ExamOption } from "./CoachIntake";
 import { CoachPlanView } from "./CoachPlanView";
 
@@ -166,7 +167,14 @@ export default async function CoachPage({
     ? [preselected, ...allOptions.filter((o) => o.code !== preselected.code)]
     : allOptions;
 
-  const { t } = await getT();
+  const { t, locale } = await getT();
+  // Ticks on today's tasks (16 Sep 2026) — the breadcrumb's own definition
+  // (src/lib/coach-done.ts). Only when the plan view renders; a failed read
+  // shows no ticks rather than a wrong one.
+  const planDone =
+    userId && plan && sp.edit !== "1" && !rolloverData
+      ? await coachTaskDoneFlags(userId, plan.todayTasks).catch(() => null)
+      : null;
   const rollover: CoachRollover | null = rolloverData
     ? {
         title: fill(t("ew.coach.postexam.title"), { exam: rolloverData.from.short }),
@@ -321,7 +329,7 @@ export default async function CoachPage({
 
         {userId && plan && sp.edit !== "1" && !rolloverData && (
           <>
-            <CoachPlanView plan={plan} full />
+            <CoachPlanView plan={plan} full done={planDone} locale={locale} />
             <p className="mt-4 text-xs text-ink-500">
               Exam date or daily time changed?{" "}
               <Link href="/coach?edit=1" className="font-medium text-saffron-700 hover:underline">

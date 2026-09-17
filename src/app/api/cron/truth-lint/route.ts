@@ -1,10 +1,12 @@
-// GET /api/cron/truth-lint — nightly honesty scan of the public site
+// GET /api/cron/truth-lint — on-demand honesty scan of the public site
 // (13 Sep 2026). Runs src/lib/truth-lint.ts over every active exam's hub,
 // tracker, cutoff, score-estimate and context.md plus /, /llms.txt and
 // /llms-full.txt, and notifies the admins in-app when anything fails:
 // forbidden trust phrases, stale counts, passed estimates shown as Done,
-// title dates without their tier word, expected answer keys, estimator
-// schemes beside their own refusal, bare cutoff numbers in FAQ JSON-LD.
+// title dates without their tier word, hub titles saying "Not Announced
+// Yet" after an announced exam held in the last 60 days, expected answer
+// keys, estimator schemes beside their own refusal, bare cutoff numbers in
+// FAQ JSON-LD.
 //
 // It scans the LIVE site (TRUTH_LINT_BASE, default https://shishya.in) —
 // never NEXT_PUBLIC_APP_URL, which is localhost in development. A scan
@@ -14,7 +16,11 @@
 // Read-only against the site (plain GETs with the ShishyaTruthLint UA);
 // the only write is one Notification per admin per IST day when it fails.
 // `?dry=1` returns the report without notifying.
-// Auth: Bearer ${CRON_SECRET}. Schedule: vercel.json "30 21 * * *" (03:00 IST).
+// Auth: Bearer ${CRON_SECRET}. NOT scheduled: vercel.json has no entry for
+// this route (f1f8e4b; founder rule, 13 Sep 2026: no monitoring crons), so
+// it runs only when called — curl with the Bearer header (add ?dry=1), or
+// run the same checks locally: npx tsx scripts/truth-lint.ts --all.
+// (Comment corrected 16 Sep 2026; it used to claim a 03:00 IST schedule.)
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -56,7 +62,7 @@ export async function GET(req: Request) {
     concurrency: 6,
     timeoutMs: 20_000,
     // Leave headroom under maxDuration; exams not started by then are
-    // reported as skipped (truncated: true) and scanned the next night.
+    // reported as skipped (truncated: true) — scan them with the CLI.
     budgetMs: 230_000,
     languageCounts: { indian: INDIAN_LANGUAGE_COUNT, other: OTHER_INDIAN_LANGUAGE_COUNT },
   });

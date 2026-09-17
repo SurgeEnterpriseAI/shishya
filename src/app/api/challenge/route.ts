@@ -4,7 +4,13 @@
 //   { source: "quiz" | "topic", examCode, questionIds, choices, name?, locale? }  anon / topic quiz result
 //   { source: "challenge", parentToken, choices, name?, locale? }                 a friend's challenge result
 //   { source: "mock", attemptId, name?, locale? }                                 the signed-in student's own mock
-// → { token, creatorKey, creatorCorrect, questionCount, examCode, examShort, fromMock }
+// → { token, creatorKey, creatorCorrect, questionCount, examCode, examShort, fromMock, reused }
+//
+// A mock link is made once per attempt (16 Sep 2026): a repeat tap returns
+// the same token with reused: true and creatorKey: null — the signed-in maker
+// manages it by session; the name is the one this tap sent. A refused create (422: too few playable questions,
+// and every other status from 422 up) is logged with its status and source
+// only, so failed taps are countable.
 //
 // The creator key comes back once and is kept only in that browser (the
 // table stores its hash); it unlocks the challenge's scores. The score is
@@ -65,13 +71,16 @@ export async function POST(req: NextRequest) {
   const name = sanitizeChallengeName(body.name);
   const input: CreateChallengeInput =
     body.source === "mock"
-      ? { source: "mock", attemptId: body.attemptId, name, locale }
+      ? { source: "mock", attemptId: body.attemptId, name, locale, reuseExisting: true }
       : body.source === "challenge"
         ? { source: "challenge", parentToken: body.parentToken, choices: body.choices, name, locale }
         : { source: body.source, examCode: body.examCode, questionIds: body.questionIds, choices: body.choices, name, locale };
   try {
     const result = await createChallenge(input, { userId, anonId });
-    if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+    if (!result.ok) {
+      if (result.status >= 422) console.warn("[challenge] create refused", result.status, input.source);
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
     const { ok: _ok, ...made } = result;
     return NextResponse.json(made, { headers: { "cache-control": "no-store" } });
   } catch (err) {

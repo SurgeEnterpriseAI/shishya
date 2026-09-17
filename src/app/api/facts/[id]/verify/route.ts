@@ -30,6 +30,7 @@ import { prisma } from "@/lib/db/prisma";
 import { bad, ok, parseBody, serverError, unauth } from "@/lib/http";
 import { recordEvent } from "@/lib/analytics";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
+import { sendEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -202,6 +203,34 @@ export async function POST(
     }
     if (nextStatus !== f.status) {
       await prisma.$executeRaw`UPDATE "Fact" SET "status" = ${nextStatus}::"FactStatus" WHERE "id" = ${factId}`;
+    }
+
+    // A flag or a suggested correction has to reach a human: nothing
+    // lists them (the admin audit queue samples VERIFY rows only) and
+    // there is no AI adjudicator. Best-effort mail to the team, never
+    // blocking the student's response.
+    if (body.actionType !== "VERIFY") {
+      const notifyTo =
+        process.env.TEACHER_REQUEST_NOTIFY_EMAIL ??
+        (process.env.ADMIN_EMAILS ?? "")
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean)[0] ??
+        null;
+      if (notifyTo) {
+        const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const lines = [
+          `<p><strong>${body.actionType === "FLAG" ? "Fact flagged" : "Correction suggested"}</strong> by user ${esc(userId)}</p>`,
+          `<p>Fact: ${esc(factId)} — status now ${esc(nextStatus)} (flags ${f.flagCount + (body.actionType === "FLAG" ? 1 : 0)})</p>`,
+          body.notes ? `<p>Notes: ${esc(body.notes)}</p>` : "",
+          body.proposedValue ? `<p>Proposed value: ${esc(body.proposedValue)}</p>` : "",
+        ].filter(Boolean);
+        void sendEmail({
+          to: notifyTo,
+          subject: `Shishya: ${body.actionType === "FLAG" ? "fact flagged" : "correction suggested"} (${factId})`,
+          html: lines.join("\n"),
+        }).catch(() => {});
+      }
     }
 
     // Analytics — fire-and-forget. Captures the action type + the

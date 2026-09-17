@@ -91,7 +91,7 @@ export async function generateMetadata({
   // official portal) — one cache hit instead of a separate exam query.
   const shared = await getExamShared(code);
   if (!shared || !shared.exam.active) return { title: "Exam not found — Shishya" };
-  const { exam, importantDates, officialUrl } = shared;
+  const { exam, importantDates, titleDates, officialUrl } = shared;
 
   const { stateInfo, languageList, languageName } = await import("@/lib/state-info");
   // URL locale (23 Aug 2026): /hi/exams/X and /te/exams/X are crawlable
@@ -131,8 +131,12 @@ export async function generateMetadata({
   // Conflicting rows: when the next day has a same-stage announced row on
   // another day (MPSC Group C Prelims 27 Sep beside "revised" 25 Oct),
   // neither date is stated — "Exam Date Under Revision,".
-  const timeline = buildTimeline(importantDates, new Date(), officialUrl);
-  const dateLead = hubDateLead(timeline, exam, new Map(importantDates.map((r) => [r.id, r.createdAt] as const)));
+  // titleDates, not the capped Important Dates list: a sitting dropped by
+  // the cap turned AP TET's ended window into "Exam Ended 21 Aug 2026"
+  // (17 Sep 2026). Over every live row the rule states no date instead.
+  const titleRows = titleDates.length > 0 ? titleDates : importantDates;
+  const timeline = buildTimeline(titleRows, new Date(), officialUrl);
+  const dateLead = hubDateLead(timeline, exam, new Map(titleRows.map((r) => [r.id, r.createdAt] as const)));
   const announced = dateLead.kind === "announced" ? dateLead.row : null;
   const held = dateLead.kind === "held" ? dateLead : null;
   const revision = dateLead.kind === "revision";

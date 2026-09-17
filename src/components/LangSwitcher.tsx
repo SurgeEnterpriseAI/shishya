@@ -96,7 +96,7 @@ export function LangSwitcher({ current }: { current: Locale }) {
         value={cur}
         onChange={(e) => setLocale(e.target.value as Locale)}
         disabled={pending}
-        className="appearance-none rounded-md border border-ink-200 bg-white py-1.5 pl-7 pr-7 text-xs font-medium text-ink-800 hover:border-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-200 disabled:opacity-60"
+        className="appearance-none font-sans rounded-md border border-ink-200 bg-white py-1.5 pl-7 pr-7 text-xs font-medium text-ink-800 hover:border-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-200 disabled:opacity-60"
         aria-label="Select language"
       >
         {locales.map((lc) => (
