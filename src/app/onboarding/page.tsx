@@ -14,6 +14,11 @@
 // was picked) or /dashboard (skipped, or no exam picked — 16 Sep 2026: that
 // used to land a signed-in student on the anonymous homepage).
 //
+// From a results page (18 Sep 2026): the setup card links here with
+// ?from=results&attempt=<id>, and finishing or skipping goes BACK to that
+// result. The path is built from a checked attempt id
+// (src/lib/results-next-step.ts), never read from the URL as a path.
+//
 // Server component shell — client form below.
 
 import Link from "next/link";
@@ -27,6 +32,7 @@ import { getT } from "@/lib/i18n-server";
 import { localeToLanguage } from "@/lib/preferred-lang";
 import { OnboardingWizard } from "./OnboardingWizard";
 import { findPersona } from "@/data/personas";
+import { resultsReturnPath } from "@/lib/results-next-step";
 
 export const metadata: Metadata = {
   title: "Welcome to Shishya — 30-second setup",
@@ -38,7 +44,7 @@ interface UserRow { onbCompletedAt: Date | null; preferredLang: string | null }
 
 export default async function OnboardingPage({
   searchParams,
-}: { searchParams: Promise<{ rerun?: string; p?: string; next?: string }> }) {
+}: { searchParams: Promise<{ rerun?: string; p?: string; next?: string; from?: string; attempt?: string }> }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/onboarding");
 
@@ -54,7 +60,10 @@ export default async function OnboardingPage({
   // the 14 days to 16 Sep landed on the anonymous homepage. The dashboard's
   // "pick your exam" hero is the next step for a signed-in student.
   // (?next= is still accepted in the URL and ignored.)
-  const redirectAfter = "/dashboard";
+  // A student sent here by the results page's setup card goes back to that
+  // result instead (null for anything that is not a plain attempt id).
+  const returnTo = resultsReturnPath(sp.from, sp.attempt);
+  const redirectAfter = returnTo ?? "/dashboard";
 
   // If already completed AND this isn't an explicit rerun, send them
   // home (or to the requested next page). Re-running is opt-in via
@@ -144,6 +153,12 @@ export default async function OnboardingPage({
     note: t("onb.lang.note"),
     // "Step {n} of 4" under the progress bar (16 Sep 2026).
     step: t("onb.step"),
+    // Sub-lines of the stage, state and exam steps (18 Sep 2026): the results
+    // page's setup card now sends students here, and the old English lines
+    // promised state scholarships and a personalised dashboard no code builds.
+    stageSub: t("onb.step1.sub"),
+    stateSub: t("onb.step2.sub"),
+    examsSub: t("onb.step4.sub"),
   };
   // The intro sentence carries the settings link in its middle; the key
   // marks the spot with {settings} so each language can place it naturally.
@@ -180,6 +195,7 @@ export default async function OnboardingPage({
           exams={exams}
           prefill={prefill}
           redirectAfter={redirectAfter}
+          returnTo={returnTo}
           initialLang={initialLang}
           langCopy={langCopy}
         />

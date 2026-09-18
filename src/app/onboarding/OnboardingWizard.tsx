@@ -46,6 +46,13 @@ export interface LangStepCopy {
    *  English literal on a wizard whose language step was already
    *  translated). Optional, so a caller without it still gets English. */
   step?: string;
+  /** Sub-lines under the stage, state and exam step headings (18 Sep 2026).
+   *  Each says only what the answer does today: the stage suggests exams, the
+   *  state suggests a language, the ticked exams become Enrollments (dashboard
+   *  + emails). Optional, English fallback below. */
+  stageSub?: string;
+  stateSub?: string;
+  examsSub?: string;
 }
 
 const LANG_COPY_EN: LangStepCopy = {
@@ -54,6 +61,10 @@ const LANG_COPY_EN: LangStepCopy = {
   suggested: "Suggested for {state}",
   note: "Translated questions are Shishya-translated — cross-check the English when in doubt.",
   step: "Step {n} of 4",
+  stageSub: "We use this to suggest exams on the last step.",
+  stateSub: "Optional. Today it is used to suggest a language on the next step.",
+  examsSub:
+    "Some exams may already be ticked from your stage. Keep the ones you are preparing for and untick the rest. The ticked exams are added to your dashboard and to the emails Shishya sends you.",
 };
 
 const LANG_COOKIE = "shishya-lang";
@@ -79,6 +90,7 @@ export function OnboardingWizard({
   // Default is the DASHBOARD (23 Aug 2026): a signed-in user finishing or
   // skipping the wizard used to be dropped onto the anonymous homepage.
   redirectAfter = "/dashboard",
+  returnTo = null,
   initialLang = null,
   langCopy = LANG_COPY_EN,
 }: {
@@ -90,6 +102,11 @@ export function OnboardingWizard({
    * a fresh signup lands on the "Pick your first exam" hero.
    */
   redirectAfter?: string;
+  /** The results page the student came from (18 Sep 2026) — a path the
+   *  server built from a checked attempt id. When set, finishing goes back
+   *  there (with ?setup=done) instead of on to the coach intake; the result
+   *  page carries the coach entry itself. */
+  returnTo?: string | null;
   /** A language the student already signalled (stored non-EN
    *  preferredLang, or a non-English cookie). Pre-selects step 3 and
    *  suppresses the state-based suggestion. Null = suggest from state. */
@@ -145,7 +162,11 @@ export function OnboardingWizard({
       // Pre-populate prep codes from suggested set the first time.
       if (prepCodes.length === 0) {
         const opt = STAGE_OPTIONS.find((s) => s.value === stage);
-        if (opt) setPrepCodes(opt.suggestedPrepCodes);
+        // Only codes that have a chip on the last step (18 Sep 2026): a
+        // suggested code outside the page's exam list was ticked invisibly —
+        // counted in "N exams selected" and, if active, enrolled — with no
+        // chip to untick it (NSEJS for Class 9–10).
+        if (opt) setPrepCodes(opt.suggestedPrepCodes.filter((c) => exams.some((e) => e.code === c)));
       }
     }
     if (stepIdx === 1 && !langTouched) {
@@ -196,7 +217,9 @@ export function OnboardingWizard({
       // The coach intake opens pre-filled with their first pick (exam +
       // official date), so it's ~15 seconds from here. Skipping is one
       // tap (header nav) — no trap.
-      if (prepCodes.length > 0) {
+      if (returnTo) {
+        router.push(`${returnTo}?setup=done`);
+      } else if (prepCodes.length > 0) {
         router.push(`/coach?exam=${encodeURIComponent(prepCodes[0])}`);
       } else {
         router.push(redirectAfter);
@@ -314,10 +337,10 @@ export function OnboardingWizard({
 
       <div className="mt-5">
         {stepIdx === 0 && (
-          <Step1 stage={stage} setStage={setStage} />
+          <Step1 stage={stage} setStage={setStage} sub={langCopy.stageSub ?? LANG_COPY_EN.stageSub ?? ""} />
         )}
         {stepIdx === 1 && (
-          <Step2 state={state} setState={setState} options={allStates} />
+          <Step2 state={state} setState={setState} options={allStates} sub={langCopy.stateSub ?? LANG_COPY_EN.stateSub ?? ""} />
         )}
         {stepIdx === 2 && (
           <StepLang
@@ -340,6 +363,7 @@ export function OnboardingWizard({
             setExamQuery={setExamQuery}
             suggestedExams={suggestedExams}
             filteredExams={filteredExams}
+            sub={langCopy.examsSub ?? LANG_COPY_EN.examsSub ?? ""}
           />
         )}
       </div>
@@ -393,13 +417,11 @@ export function OnboardingWizard({
 
 // ── Step renderers ──────────────────────────────────────────────────────
 
-function Step1({ stage, setStage }: { stage: string; setStage: (v: string) => void }) {
+function Step1({ stage, setStage, sub }: { stage: string; setStage: (v: string) => void; sub: string }) {
   return (
     <>
       <h2 className="text-lg font-semibold text-ink-900">Where are you right now?</h2>
-      <p className="mt-1 text-xs text-ink-600">
-        We use this to surface the right kind of content first.
-      </p>
+      <p className="mt-1 text-xs text-ink-600">{sub}</p>
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {STAGE_OPTIONS.map((opt) => {
           const active = stage === opt.value;
@@ -430,17 +452,17 @@ function Step2({
   state,
   setState,
   options,
+  sub,
 }: {
   state: string;
   setState: (v: string) => void;
   options: Array<{ value: string; label: string }>;
+  sub: string;
 }) {
   return (
     <>
       <h2 className="text-lg font-semibold text-ink-900">Which state are you in?</h2>
-      <p className="mt-1 text-xs text-ink-600">
-        We'll surface your state's scholarships, board exam info, and any state-level exams. Optional — skip if you'd rather not say.
-      </p>
+      <p className="mt-1 text-xs text-ink-600">{sub}</p>
       <select
         value={state}
         onChange={(e) => setState(e.target.value)}
@@ -526,6 +548,7 @@ function Step3({
   setExamQuery,
   suggestedExams,
   filteredExams,
+  sub,
 }: {
   stage: string;
   prepCodes: string[];
@@ -534,15 +557,14 @@ function Step3({
   setExamQuery: (q: string) => void;
   suggestedExams: ExamLite[];
   filteredExams: ExamLite[];
+  sub: string;
 }) {
   const showSuggested = examQuery.trim() === "" && suggestedExams.length > 0;
   const showList = examQuery.trim() !== "" ? filteredExams : filteredExams.slice(0, 30);
   return (
     <>
       <h2 className="text-lg font-semibold text-ink-900">What are you preparing for?</h2>
-      <p className="mt-1 text-xs text-ink-600">
-        Pick any exams you're targeting. Selections become your personalised dashboard. Skip if you're just exploring.
-      </p>
+      <p className="mt-1 text-xs text-ink-600">{sub}</p>
 
       {showSuggested && (
         <div className="mt-4">

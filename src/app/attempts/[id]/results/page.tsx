@@ -33,15 +33,22 @@ import { getStudyStreak } from "@/lib/db/streak";
 import { streakState } from "@/lib/study-day";
 import { findTodaysDailyFive, pickDailyFive, wouldGetDailyFiveMail } from "@/lib/study-day-five";
 import { resultsStudyDayCopy } from "@/lib/study-day-copy";
+import { ResultsCtaLink } from "./ResultsCtaLink";
+import { resultsNextStep, setupHref } from "@/lib/results-next-step";
+import { askTutorText, resultsNextStepCopy } from "@/lib/results-next-step-copy";
 
 export default async function ResultsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ setup?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   const { id } = await params;
+  // ?setup=done — the setup wizard handing the student back to this result.
+  const cameBackFromSetup = (await searchParams)?.setup === "done";
 
   // Fetch attempt first (cheap, 1 row). Once we know it's submitted +
   // belongs to this user, fan out the heavy reads (100 questions, rank
@@ -149,16 +156,19 @@ export default async function ResultsPage({
     attempt.scorePct > prevBest.scorePct;
   const isFirstMock = prevBest == null;
 
-  // One-time setup nudge (23 Aug 2026): the onboarding wizard had 8
-  // completions EVER because nothing routed new users to it. The moment
-  // after a first mock is when "which exams/state are you aiming for?"
-  // makes sense — it personalises the hub, state exams and emails. Shown
-  // only while onbCompletedAt is null and within their first 3 mocks.
-  const onbRow = await prisma.$queryRaw<{ done: boolean; n: bigint }[]>`
+  // Setup offer (23 Aug 2026; a card under the score since 18 Sep 2026): the
+  // moment after a first mock is when "which exams are you aiming for?" makes
+  // sense. Offered while onbCompletedAt is null and within the first 3
+  // finished attempts. `earlier` = attempts finished before THIS one, so
+  // "first-ever attempt" stays true when the page is opened again later.
+  // The rules live in src/lib/results-next-step.ts.
+  const thisFinishedAt = attempt.finishedAt ?? new Date();
+  const onbRow = await prisma.$queryRaw<{ done: boolean; n: bigint; earlier: bigint }[]>`
     SELECT (u."onbCompletedAt" IS NOT NULL) AS done,
-      (SELECT COUNT(*) FROM "Attempt" a WHERE a."userId" = u.id AND a.status IN ('SUBMITTED','AUTO_SUBMITTED')) AS n
-    FROM "User" u WHERE u.id = ${session.user.id}`.catch(() => [] as { done: boolean; n: bigint }[]);
-  const showSetup = !!onbRow[0] && !onbRow[0].done && Number(onbRow[0].n) <= 3;
+      (SELECT COUNT(*) FROM "Attempt" a WHERE a."userId" = u.id AND a.status IN ('SUBMITTED','AUTO_SUBMITTED')) AS n,
+      (SELECT COUNT(*) FROM "Attempt" a WHERE a."userId" = u.id AND a.status IN ('SUBMITTED','AUTO_SUBMITTED')
+         AND a.id <> ${attempt.id} AND a."finishedAt" < ${thisFinishedAt}) AS earlier
+    FROM "User" u WHERE u.id = ${session.user.id}`.catch(() => [] as { done: boolean; n: bigint; earlier: bigint }[]);
 
   // All-India Live Test rank — only for live-test mocks; rank among
   // each user's FIRST submitted attempt (re-attempts don't re-rank).
@@ -247,16 +257,65 @@ export default async function ResultsPage({
     (spiralRows[0]?.n ?? 0) >= 3 &&
     (spiralRows[0]?.low ?? 0) >= 3;
   const negativeGuesses = wrongCount;
-  // Non-intrusion rule: at most ONE nudge above the score. When a
-  // low-score intervention (spiral / soft-landing) owns the page, the
-  // setup card waits for a later mock; the spiral block already links
-  // the report, so the report card hides under it too.
+  // Non-intrusion rule: at most ONE nudge above the score. The spiral block
+  // already links the report, so the report card hides under it. (The setup
+  // offer left the space above the score on 18 Sep 2026 — it is a card under
+  // the score now, so a low-score block no longer has to hide it.)
   const softLanding = !isSpiral && (attempt.scorePct ?? 0) < 30 && topicArr.length > 0;
-  const intervention = isSpiral || softLanding;
 
   // Challenge card placement (18 Sep 2026): first under the score when the
   // score is one a student would dare a friend with.
   const challengeFirst = challengeEligible && !!attempt.finishedAt && (attempt.scorePct ?? 0) >= 40;
+
+  // Next steps under the score (18 Sep 2026). On a student's FIRST-EVER
+  // finished attempt the AI-tutor card comes straight after the score, then
+  // the setup card, then the challenge and invite cards; every later attempt
+  // keeps the 18 Sep order (challenge card first on 40%+). Why: the results
+  // page is where new accounts meet the tutor (91 of 157 first questions came
+  // from "Explain my mistakes", 1-10 Sep), and the setup wizard had no door
+  // at all (2 of 295 new accounts opened it).
+  const next = resultsNextStep({
+    setupDone: onbRow[0] ? onbRow[0].done : null,
+    submittedAttempts: onbRow[0] ? Number(onbRow[0].n) : Number.NaN,
+    earlierAttempts: onbRow[0] ? Number(onbRow[0].earlier) : null,
+    wrongCount,
+    challengeFirst,
+  });
+  const nextCopy = resultsNextStepCopy(locale);
+  const tutorBeaconProps = {
+    exam: attempt.mock.exam.code,
+    first: next.firstEver,
+    order: next.challengeSlot,
+  };
+  const challengeCard = (
+    <ChallengeCard
+      from={{ source: "mock", attemptId: attempt.id }}
+      examCode={attempt.mock.exam.code}
+      examShort={attempt.mock.exam.shortName}
+      surface="results"
+      heading={t("challenge.card.headingMock")}
+      note={t("challenge.card.noteMock")}
+      labels={challengeLabels(t)}
+      locale={locale}
+    />
+  );
+  // Invite at the EARNED moment (11 Sep 2026): a new personal best or a first
+  // baseline is when "study with me" is true rather than a sales line. First
+  // person, the student's own number only, utm-tagged link, no incentive, no
+  // counter. The two moments are mutually exclusive (first mock ⇒ no previous
+  // best). Above the score, except on a first-ever attempt, where it follows
+  // the tutor and setup cards (18 Sep 2026: 1 tap in its first 7 days there).
+  const inviteCard =
+    isPersonalBest || isFirstMock ? (
+      <InviteFriendsCard
+        examShort={attempt.mock.exam.shortName}
+        examCode={attempt.mock.exam.code}
+        firstName={session.user.name?.split(" ")[0] ?? null}
+        moment={isPersonalBest ? "personal-best" : "first-mock"}
+        scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
+        locale={locale}
+      />
+    ) : null;
 
   return (
     <main className="min-h-screen bg-ink-50/40">
@@ -295,14 +354,13 @@ export default async function ResultsPage({
         </div>
         )}
 
-        {showSetup && !intervention && (
-          <div className="mt-3 rounded-lg border border-ink-200 bg-white px-3 py-2.5 text-xs text-ink-700">
-            <span className="font-semibold text-ink-900">20-second setup:</span> tell Shishya your
-            target exams, state and stage — your hub, state exams and emails get personalised.{" "}
-            <Link href="/onboarding?from=results" className="font-semibold text-saffron-700 underline-offset-2 hover:underline">
-              Set it up →
-            </Link>
-          </div>
+        {/* Back from the setup wizard (18 Sep 2026): say it was saved — the
+            only sign otherwise is that the setup card is gone. Said only when
+            the account really is set up. */}
+        {cameBackFromSetup && onbRow[0]?.done && (
+          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-900">
+            ✓ {nextCopy.setupSaved}
+          </p>
         )}
 
         {/* Score-spiral intervention — 3+ tests today all under 35%.
@@ -466,21 +524,10 @@ export default async function ResultsPage({
             </p>
           </div>
         )}
-        {/* Invite at the EARNED moment (11 Sep 2026): a new personal best or
-            a first baseline is when "study with me" is true rather than a
-            sales line. First person, the student's own number only,
-            utm-tagged link, no incentive, no counter. The two moments are
-            mutually exclusive (first mock ⇒ no previous best). */}
-        {(isPersonalBest || isFirstMock) && (
-          <InviteFriendsCard
-            examShort={attempt.mock.exam.shortName}
-            examCode={attempt.mock.exam.code}
-            firstName={session.user.name?.split(" ")[0] ?? null}
-            moment={isPersonalBest ? "personal-best" : "first-mock"}
-            scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
-            locale={locale}
-          />
-        )}
+        {/* Invite card (see inviteCard above): here on a personal best or a
+            first mock of this exam — but under the tutor card on a student's
+            first-ever attempt. */}
+        {!next.inviteBelowTutor && inviteCard}
 
         {/* Belonging, right after the score: they didn't just take a
             test, they joined today's cohort of people doing the work. */}
@@ -538,19 +585,10 @@ export default async function ResultsPage({
             attempts finish a day, yet 6 links were made in 4 days and none was
             opened — on a phone the card sat about four screens below the
             score. With 40%+ it comes first; a weaker score keeps the
-            mistakes card first and the challenge card in its old place. */}
-        {challengeFirst && (
-          <ChallengeCard
-            from={{ source: "mock", attemptId: attempt.id }}
-            examCode={attempt.mock.exam.code}
-            examShort={attempt.mock.exam.shortName}
-            surface="results"
-            heading={t("challenge.card.headingMock")}
-            note={t("challenge.card.noteMock")}
-            labels={challengeLabels(t)}
-            locale={locale}
-          />
-        )}
+            mistakes card first and the challenge card in its old place.
+            A first-ever attempt meets the AI tutor first (challengeSlot
+            "after-tutor", below). */}
+        {next.challengeSlot === "before-tutor" && challengeCard}
 
         {/* Lever #3 — "Review your mistakes with Shishya". The highest-intent
             tutor moment on the whole site: they just saw what they got wrong.
@@ -572,15 +610,34 @@ export default async function ResultsPage({
                   and how to nail it next time.
                 </p>
               </div>
-              <Link
+              <ResultsCtaLink
                 href={`/chat?examCode=${attempt.mock.exam.code}&seed=${encodeURIComponent(mistakeSeed)}`}
-                prefetch={false}
+                cta="results-tutor-first"
+                props={{ ...tutorBeaconProps, variant: "mistakes" }}
                 className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-300"
               >
                 Explain my mistakes →
-              </Link>
+              </ResultsCtaLink>
             </div>
           </div>
+        )}
+
+        {/* Nothing answered wrong (18 Sep 2026): there is no mistake to
+            explain, so the AI tutor is offered in one plain line — no seed,
+            the student asks their own question. About 1 in 9 first attempts
+            (26 of 239) had no tutor offer here at all. */}
+        {next.tutor === "ask" && (
+          <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-sm text-ink-800">
+            {askTutorText(locale, attempt.mock.exam.shortName)}{" "}
+            <ResultsCtaLink
+              href={`/chat?examCode=${attempt.mock.exam.code}`}
+              cta="results-tutor-first"
+              props={{ ...tutorBeaconProps, variant: "ask" }}
+              className="font-semibold text-emerald-700 underline-offset-2 hover:underline"
+            >
+              {nextCopy.askLink}
+            </ResultsCtaLink>
+          </p>
         )}
 
         {/* Human-connection pilot — the escalation from AI to a real teacher,
@@ -600,6 +657,38 @@ export default async function ResultsPage({
             />
           </div>
         )}
+
+        {/* Setup card (18 Sep 2026) — replaces the one-line strip that sat
+            above the score: of 239 new accounts that saw a result un-set-up
+            (1-17 Sep), 1 opened the wizard. Under the score and the tutor
+            card, one button, and the wizard brings the student back here
+            (src/lib/results-next-step.ts builds the return path). The
+            sentence says only what the answers change today — see
+            src/lib/results-next-step-copy.ts. No popup, no counter. */}
+        {next.showSetupCard && (
+          <section className="mt-6 rounded-xl border border-saffron-200 bg-white p-5">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-semibold text-ink-900">{nextCopy.setupHeading}</p>
+                <p className="mt-1 text-sm text-ink-600">{nextCopy.setupBody}</p>
+                <p className="mt-1 text-xs text-ink-500">{nextCopy.setupNote}</p>
+              </div>
+              <ResultsCtaLink
+                href={setupHref(attempt.id)}
+                cta="results-setup-card"
+                props={{ exam: attempt.mock.exam.code, first: next.firstEver, attempts: Number(onbRow[0]?.n ?? 0) }}
+                className="inline-flex shrink-0 items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300"
+              >
+                {nextCopy.setupButton}
+              </ResultsCtaLink>
+            </div>
+          </section>
+        )}
+
+        {/* First-ever attempt: the challenge and invite cards follow the
+            tutor and setup cards instead of leading the page. */}
+        {next.challengeSlot === "after-tutor" && challengeCard}
+        {next.inviteBelowTutor && inviteCard}
 
         {/* Share-to-WhatsApp viral loop. Surfaced HIGH on the page
             (right after score, before rank ladder) so the moment
@@ -631,18 +720,7 @@ export default async function ResultsPage({
                 score to beat — evenly spaced questions from the mock, scored
                 from this attempt (skipped counts as not correct). Shown only
                 when this mock can make a link (16 Sep 2026). */}
-            {challengeEligible && !challengeFirst && (
-              <ChallengeCard
-                from={{ source: "mock", attemptId: attempt.id }}
-                examCode={attempt.mock.exam.code}
-                examShort={attempt.mock.exam.shortName}
-                surface="results"
-                heading={t("challenge.card.headingMock")}
-                note={t("challenge.card.noteMock")}
-                labels={challengeLabels(t)}
-                locale={locale}
-              />
-            )}
+            {challengeEligible && !challengeFirst && challengeCard}
           </>
         )}
 

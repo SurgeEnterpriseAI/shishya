@@ -1219,6 +1219,10 @@ export const dict = {
     "onb.intro": "Four quick questions so we can show you the right content. Takes about 30 seconds. You can skip and pick later from {settings}.",
     "onb.intro.settings": "profile settings",
     "onb.step": "Step {n} of 4",
+    // Wizard step sub-lines (18 Sep 2026): each says only what the answer does today.
+    "onb.step1.sub": "We use this to suggest exams on the last step.",
+    "onb.step2.sub": "Optional. Today it is used to suggest a language on the next step.",
+    "onb.step4.sub": "Some exams may already be ticked from your stage. Keep the ones you are preparing for and untick the rest. The ticked exams are added to your dashboard and to the emails Shishya sends you.",
   },
 
   hi: {
@@ -2342,6 +2346,9 @@ export const dict = {
     "onb.intro": "चार छोटे सवाल, ताकि हम आपको सही कंटेंट दिखा सकें। क़रीब 30 सेकंड लगेंगे। चाहें तो छोड़ दें और बाद में {settings} से चुन लें।",
     "onb.intro.settings": "प्रोफ़ाइल सेटिंग्स",
     "onb.step": "चरण {n} / 4",
+    "onb.step1.sub": "इससे हम आख़िरी चरण में परीक्षाएँ सुझाते हैं।",
+    "onb.step2.sub": "वैकल्पिक। अभी इसका उपयोग अगले चरण में भाषा सुझाने के लिए होता है।",
+    "onb.step4.sub": "आपके स्तर के आधार पर कुछ परीक्षाएँ पहले से चुनी हो सकती हैं। जिनकी तैयारी कर रहे हैं उन्हें रखें, बाकी हटा दें। चुनी हुई परीक्षाएँ आपके डैशबोर्ड में और Shishya के भेजे ईमेल में जुड़ जाएँगी।",
   },
 
   // ─────────────────────────────────────────────────────────────────────
@@ -3809,6 +3816,9 @@ export const dict = {
     "onb.intro": "మీకు సరైన కంటెంట్ చూపించడానికి నాలుగు చిన్న ప్రశ్నలు. సుమారు 30 సెకన్లు పడుతుంది. కావాలంటే వదిలేసి, తర్వాత {settings} నుంచి ఎంచుకోవచ్చు.",
     "onb.intro.settings": "ప్రొఫైల్ సెట్టింగ్స్",
     "onb.step": "దశ {n} / 4",
+    "onb.step1.sub": "దీని ఆధారంగా చివరి దశలో పరీక్షలను సూచిస్తాం.",
+    "onb.step2.sub": "ఐచ్ఛికం. ప్రస్తుతం తర్వాతి దశలో భాషను సూచించడానికి దీన్ని వాడతాం.",
+    "onb.step4.sub": "మీ దశను బట్టి కొన్ని పరీక్షలు ముందే ఎంపికై ఉండవచ్చు. మీరు సిద్ధమవుతున్న వాటిని ఉంచి, మిగతావి తీసేయండి. ఎంపిక చేసిన పరీక్షలు మీ డాష్‌బోర్డ్‌లోకి, Shishya పంపే ఈమెయిల్స్‌లోకి చేరతాయి.",
   },
 
   // Marathi (मराठी) — ~8.3Cr speakers (Maharashtra, Goa)
