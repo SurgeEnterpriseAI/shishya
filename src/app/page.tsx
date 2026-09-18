@@ -656,8 +656,11 @@ export default async function ExamsPage({
           <LiveTestTodayBanner data={liveToday} />
 
           {/* Exams being held today (announced dates only; else this
-              week's next announced ones) — renders nothing otherwise. */}
-          <ExamsTodayStrip />
+              week's next announced ones) — renders nothing otherwise. On
+              the goals step it sits with the week's event, below the two
+              decision cards (founder, 18 Sep 2026); the other steps keep
+              it here at the top. */}
+          {step !== "goals" && <ExamsTodayStrip />}
 
           {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} inspirationVideos={inspirationVideos} grinders={grinders} sundayLive={sundayLive} />}
           {step === "scope" && goal && (
@@ -1001,9 +1004,13 @@ function StepGoals({
           )}
         </div>
 
-        {/* Sunday's All-India Live Tests — placed below the vacancy
-            finder and coach cards (founder call): the two decision
-            banners come first, then the week's event. */}
+        {/* The week's events — placed below the vacancy finder and coach
+            cards (founder call): the two decision banners come first, then
+            this week's exam days (announced dates only) and Sunday's
+            All-India Live Tests. */}
+        <div className="mt-6">
+          <ExamsTodayStrip />
+        </div>
         <div className="mt-6">
           <SundayLiveTestBanner data={sundayLive} signedIn={signedIn} />
         </div>
