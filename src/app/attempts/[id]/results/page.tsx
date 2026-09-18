@@ -254,6 +254,10 @@ export default async function ResultsPage({
   const softLanding = !isSpiral && (attempt.scorePct ?? 0) < 30 && topicArr.length > 0;
   const intervention = isSpiral || softLanding;
 
+  // Challenge card placement (18 Sep 2026): first under the score when the
+  // score is one a student would dare a friend with.
+  const challengeFirst = challengeEligible && !!attempt.finishedAt && (attempt.scorePct ?? 0) >= 40;
+
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
@@ -530,6 +534,24 @@ export default async function ResultsPage({
           />
         </div>
 
+        {/* Challenge a friend, straight after the score (18 Sep 2026): 87
+            attempts finish a day, yet 6 links were made in 4 days and none was
+            opened — on a phone the card sat about four screens below the
+            score. With 40%+ it comes first; a weaker score keeps the
+            mistakes card first and the challenge card in its old place. */}
+        {challengeFirst && (
+          <ChallengeCard
+            from={{ source: "mock", attemptId: attempt.id }}
+            examCode={attempt.mock.exam.code}
+            examShort={attempt.mock.exam.shortName}
+            surface="results"
+            heading={t("challenge.card.headingMock")}
+            note={t("challenge.card.noteMock")}
+            labels={challengeLabels(t)}
+            locale={locale}
+          />
+        )}
+
         {/* Lever #3 — "Review your mistakes with Shishya". The highest-intent
             tutor moment on the whole site: they just saw what they got wrong.
             Placed right under the score so it's the first thing they can act
@@ -609,7 +631,7 @@ export default async function ResultsPage({
                 score to beat — evenly spaced questions from the mock, scored
                 from this attempt (skipped counts as not correct). Shown only
                 when this mock can make a link (16 Sep 2026). */}
-            {challengeEligible && (
+            {challengeEligible && !challengeFirst && (
               <ChallengeCard
                 from={{ source: "mock", attemptId: attempt.id }}
                 examCode={attempt.mock.exam.code}
