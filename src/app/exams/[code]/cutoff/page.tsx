@@ -616,6 +616,7 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
           headline={fill(t("cutoff.nudge.title"), { exam: short })}
           body={t("cutoff.nudge.body")}
           cta={t("cutoff.nudge.cta")}
+          signInLabel={t("cutoff.nudge.signin")}
           surface="cutoff-nudge"
         />
 

@@ -13,6 +13,12 @@
 // (/exams/CODE/quiz?n=10&from=cutoff — the existing anonymous quiz). The
 // sign-in ask moves to the quiz's result screen, after value.
 //
+// 18 Sep 2026: the quiz stays the main offer, but with no sign-in link at
+// all the cutoff -> /login path went from 1.2 people a day to 0. A quiet
+// second link under the button brings the direct route back (its own
+// beacon: {surface}-signin-click). It returns to the exam page, where the
+// mocks are.
+//
 // Session is checked CLIENT-side so the host page keeps its ISR caching —
 // no server cookie read. Since 13 Sep 2026 that is the shared, hint-gated
 // probe (src/lib/session-hint.ts): a guest without the `shishya_in` hint
@@ -50,12 +56,14 @@ function beacon(cta: string, extra?: Record<string, unknown>) {
 // component was English-only, which it no longer is.
 const QUIZ_BODY = "Answer 10 questions in this exam's pattern and see your score next to these category cutoffs — no account needed.";
 const QUIZ_CTA = "Try 10 questions — see where you stand, no sign-in →";
+const SIGN_IN_LABEL = "or sign in free for full mocks with your scores saved →";
 
 export function AnonExamNudge({
   examCode,
   headline,
   body,
   cta,
+  signInLabel,
   surface,
 }: {
   examCode: string;
@@ -66,6 +74,8 @@ export function AnonExamNudge({
   body?: string;
   /** Localised button label (i18n cutoff.nudge.cta). */
   cta?: string;
+  /** Localised secondary sign-in link (i18n cutoff.nudge.signin). */
+  signInLabel?: string;
   /** Analytics surface tag, e.g. "cutoff-nudge". */
   surface: string;
 }) {
@@ -101,13 +111,23 @@ export function AnonExamNudge({
       <p className="text-sm text-ink-700">
         <span className="font-semibold text-ink-900">{headline}</span> {body || QUIZ_BODY}
       </p>
-      <a
-        href={href}
-        onClick={() => beacon(`${surface}-click`, { surface, examCode, target: "anon-quiz" })}
-        className="inline-flex shrink-0 items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700"
-      >
-        {cta || QUIZ_CTA}
-      </a>
+      <div className="flex shrink-0 flex-col items-start gap-1.5 sm:items-end">
+        <a
+          href={href}
+          onClick={() => beacon(`${surface}-click`, { surface, examCode, target: "anon-quiz" })}
+          className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700"
+        >
+          {cta || QUIZ_CTA}
+        </a>
+        <a
+          href={`/login?callbackUrl=${encodeURIComponent(`/exams/${examCode}`)}`}
+          rel="nofollow"
+          onClick={() => beacon(`${surface}-signin-click`, { surface, examCode, target: "login" })}
+          className="text-xs font-medium text-emerald-800 underline underline-offset-2 hover:text-emerald-900"
+        >
+          {signInLabel || SIGN_IN_LABEL}
+        </a>
+      </div>
     </div>
   );
 }
