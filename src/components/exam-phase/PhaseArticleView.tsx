@@ -46,6 +46,13 @@
 // With a lead, the H1 is the page title and the article keeps its own
 // title as an H2 below the facts. /checklist passes none of these and
 // renders exactly as before.
+//
+// Language (16 Sep 2026): the view reads the reader's language itself
+// (getT — URL prefix, then cookie, then preferredLang) and renders its own
+// chrome and the phase-article-copy sentences in it, so /hi and /te readers
+// of /live and /reactions no longer get an English frame around the
+// translated facts block. JSON-LD and the routes' <title> stay English:
+// the canonical of these routes is the English URL.
 
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -59,6 +66,8 @@ import { isRealArticle } from "@/lib/phase-article-quality";
 import { passesStrictArticleGate } from "@/lib/phase-article-strict-gate";
 import { getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { stageAwareClaim } from "@/lib/exam-night-facts";
+import { fillTemplate, type StringKey } from "@/lib/i18n";
+import { getT } from "@/lib/i18n-server";
 import { examDayClaim, phaseArticleCopy, type ExamNightSummary } from "@/lib/phase-article-copy";
 import type { ExamPhase, ArticleReaction } from "@prisma/client";
 
@@ -103,7 +112,7 @@ export async function PhaseArticleView({
   });
   if (!exam) notFound();
 
-  const [activeRow, archivedRows, inputs, session] = await Promise.all([
+  const [activeRow, archivedRows, inputs, session, { t, locale }] = await Promise.all([
     // Active (current) version — archivedAt IS NULL. findFirst because
     // the (examId, phase) unique was replaced by version history; there
     // can be many archived rows + one active row.
@@ -135,6 +144,7 @@ export async function PhaseArticleView({
     // Tracker rows + official portal (15-min cache) for the honest copy.
     getExamWeekInputs(exam.id),
     auth().catch(() => null),
+    getT(),
   ]);
 
   // Quality gate: a row that is not REAL is treated as absent. On the
@@ -145,8 +155,8 @@ export async function PhaseArticleView({
   const archivedVersions = archivedRows.filter((v) => passes(v)).slice(0, 12);
   // Stage-aware like the <title> (16 Sep 2026): on another stage's day the
   // claim names that stage and drops "today" / "held" for a staged short name.
-  const claim = stageAwareClaim(exam, examDayClaim(inputs.rows, inputs.officialUrl));
-  const copy = phaseArticleCopy(phase, exam.shortName, claim, summary ? { ...summary, article: !!article } : undefined);
+  const claim = stageAwareClaim(exam, examDayClaim(inputs.rows, inputs.officialUrl, new Date(), { t, locale }));
+  const copy = phaseArticleCopy(phase, exam.shortName, claim, summary ? { ...summary, article: !!article } : undefined, t);
 
   const userId = session?.user?.id ?? null;
 
@@ -182,6 +192,7 @@ export async function PhaseArticleView({
   // content to mark up. Highest leverage during the T-7 → T+3 window when
   // these pages spike in search ("<exam> checklist", "<exam> cutoff").
   const phaseUrl = `https://shishya.in/exams/${exam.code}/${PHASE_SLUG[phase]}`;
+  // English in JSON-LD; the visible breadcrumb uses copy.crumb.
   const phaseLabel = copy.label;
   const articleJsonLd = article
     ? {
@@ -239,16 +250,16 @@ export async function PhaseArticleView({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       {/* Breadcrumb */}
-      <nav className="mb-6 flex flex-wrap items-center gap-1.5 text-xs text-ink-500" aria-label="Breadcrumb">
+      <nav className="mb-6 flex flex-wrap items-center gap-1.5 text-xs text-ink-500" aria-label={t("chk.crumb.aria")}>
         <Link href="/" className="font-medium text-saffron-700 hover:underline">
-          All exams
+          {t("chk.crumb.all")}
         </Link>
         <span aria-hidden>›</span>
         <Link href={`/exams/${exam.code}`} className="font-medium text-saffron-700 hover:underline">
           {exam.shortName}
         </Link>
         <span aria-hidden>›</span>
-        <span className="font-medium text-ink-700">{phaseLabel}</span>
+        <span className="font-medium text-ink-700">{copy.crumb}</span>
       </nav>
 
       {/* Phase badge + freshness */}
@@ -261,7 +272,7 @@ export async function PhaseArticleView({
         {article && !lead && (
           <span className="inline-flex items-center gap-1 text-xs text-ink-500">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-            Updated {formatRelativeTime(article.lastUpdatedAt)}
+            {fillTemplate(t("phase.updated"), { when: formatRelativeTime(article.lastUpdatedAt, t) })}
           </span>
         )}
       </div>
@@ -283,7 +294,7 @@ export async function PhaseArticleView({
             <h2 className="text-2xl font-bold tracking-tight text-ink-900">{article.title}</h2>
             <p className="mt-1 inline-flex items-center gap-1 text-xs text-ink-500">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-              Compiled from public student discussion · updated {formatRelativeTime(article.lastUpdatedAt)}
+              {fillTemplate(t("phase.article.compiled"), { when: formatRelativeTime(article.lastUpdatedAt, t) })}
             </p>
             {articleBody}
           </section>
@@ -318,7 +329,7 @@ export async function PhaseArticleView({
       {article && sources.length > 0 && (
         <section className="mt-8 rounded-lg border border-ink-100 bg-ink-50/40 p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">
-            Sources we read
+            {t("chk.article.sources")}
           </p>
           <ul className="mt-2 space-y-1 text-xs text-ink-700">
             {sources.map((src) => (
@@ -346,11 +357,10 @@ export async function PhaseArticleView({
       {archivedVersions.length > 0 && (
         <section className="mt-10">
           <h2 className="text-base font-semibold text-ink-800">
-            Previous updates ({archivedVersions.length})
+            {fillTemplate(t("phase.prev.h2"), { n: archivedVersions.length })}
           </h2>
           <p className="mt-1 text-xs text-ink-500">
-            Earlier versions of this {phaseLabel.toLowerCase()},
-            archived as the page refreshed. Tap to expand.
+            {fillTemplate(t("phase.prev.sub"), { label: copy.crumb.toLowerCase() })}
           </p>
           <div className="mt-3 space-y-2">
             {archivedVersions.map((v) => (
@@ -371,7 +381,7 @@ export async function PhaseArticleView({
                   </span>
                   <span className="shrink-0 text-[11px] text-ink-400">
                     {v.archivedAt
-                      ? new Date(v.archivedAt).toLocaleDateString("en-IN", {
+                      ? new Date(v.archivedAt).toLocaleDateString(locale === "hi" ? "hi-IN" : locale === "te" ? "te-IN" : "en-IN", {
                           day: "numeric",
                           month: "short",
                           year: "numeric",
@@ -395,17 +405,14 @@ export async function PhaseArticleView({
           this exam. Stage-2 will create per-article threads. */}
       <section className="mt-10 rounded-xl border border-ink-200 bg-saffron-50/40 p-5">
         <h3 className="text-base font-semibold text-ink-900">
-          Talk to other {exam.shortName} candidates
+          {fillTemplate(t("phase.disc.h2"), { exam: exam.shortName })}
         </h3>
-        <p className="mt-1 text-sm text-ink-600">
-          Comments, what-did-you-get threads, doubts, score estimates — scoped
-          to this exam. Shishya&apos;s own starter questions and AI replies are labelled.
-        </p>
+        <p className="mt-1 text-sm text-ink-600">{t("phase.disc.body")}</p>
         <Link
           href={`/discussions?examCode=${exam.code}`}
           className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-saffron-700 hover:underline"
         >
-          Open {exam.shortName} discussions
+          {fillTemplate(t("phase.disc.cta"), { exam: exam.shortName })}
           <span aria-hidden>→</span>
         </Link>
       </section>
@@ -415,14 +422,15 @@ export async function PhaseArticleView({
 
 // Lightweight "5 min ago / 2 h ago / 3 d ago" formatter — duplicated
 // here to keep this component server-rendered without pulling in the
-// (client) relative-time formatter from lib/relative-time.
-function formatRelativeTime(date: Date): string {
+// (client) relative-time formatter from lib/relative-time. In the reader's
+// language since 16 Sep 2026 (chk.rel.* — shared with the checklist page).
+function formatRelativeTime(date: Date, t: (key: StringKey) => string): string {
   const ms = Date.now() - date.getTime();
   const min = Math.round(ms / 60_000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min} min ago`;
+  if (min < 1) return t("chk.rel.now");
+  if (min < 60) return fillTemplate(t("chk.rel.min"), { n: min });
   const hr = Math.round(min / 60);
-  if (hr < 24) return `${hr} h ago`;
+  if (hr < 24) return fillTemplate(t("chk.rel.hour"), { n: hr });
   const d = Math.round(hr / 24);
-  return `${d} d ago`;
+  return fillTemplate(t("chk.rel.day"), { n: d });
 }

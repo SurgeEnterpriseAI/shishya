@@ -25,8 +25,9 @@
 // is never printed as a declared or official figure. See
 // src/lib/exam-night-facts.ts.
 //
-// Labels come from the page's getT() so the poll speaks the reader's
-// language; the handful of lines with no i18n key yet are English.
+// Labels come from the page's getT() so the block speaks the reader's
+// language — every line of it since 16 Sep 2026 (ew.night.* and
+// phase.noTypedDateOf), including the message the share control sends.
 
 import Link from "next/link";
 import type { Locale, StringKey } from "@/lib/i18n";
@@ -106,7 +107,7 @@ export function ExamNightFacts({
   const pyqLabel = facts.pyq
     ? facts.pyq.total > 0
       ? fill(t("exam.pyq.partialLine"), { n: facts.pyq.count, year: facts.pyq.year, m: facts.pyq.total })
-      : `${facts.pyq.count} PYQ-pattern questions modelled on the ${facts.pyq.year} paper`
+      : fill(t("ew.night.pyqFallback"), { n: facts.pyq.count, year: facts.pyq.year })
     : null;
 
   return (
@@ -131,16 +132,15 @@ export function ExamNightFacts({
         </p>
       ) : (
         <p className="text-sm font-bold text-ink-900">
-          🎯 No typed {short} exam date is on our tracker yet.{" "}
+          🎯 {fill(t("phase.noTypedDateOf"), { exam: short })}{" "}
           <Link href={`/exams/${code}/updates`} className={aCls}>
             {t("tracker.title")} →
           </Link>
         </p>
       )}
-      {/* Open-ended start row (MP RAEO, 16 Sep 2026): no end date to print.
-          English until an i18n key exists for it. */}
+      {/* Open-ended start row (MP RAEO, 16 Sep 2026): no end date to print. */}
       {facts.state.openEnded && facts.announced && (
-        <p className="mt-1 text-xs text-ink-700">End date not announced on the tracker — your shift day is on your admit card.</p>
+        <p className="mt-1 text-xs text-ink-700">{t("ew.night.openEnded")}</p>
       )}
       {facts.state.phase === "window" && facts.poll && <p className="mt-1 text-xs text-ink-700">{t("ew.window.tip")}</p>}
       {facts.pollPending && <p className="mt-1 text-sm text-ink-800">{t("ew.today.am")}</p>}
@@ -163,7 +163,7 @@ export function ExamNightFacts({
       )}
       {facts.hardestSections.length > 0 && (
         <p className="mt-1 text-xs text-ink-700">
-          Hardest section (self-reported, not a prediction):{" "}
+          {t("ew.night.hardest")}{" "}
           {facts.hardestSections.map((x) => `${x.label} (${x.n})`).join(", ")}
         </p>
       )}
@@ -187,7 +187,7 @@ export function ExamNightFacts({
           ))}
           {facts.nextStage && (
             <li>
-              ➡️ Next stage: {facts.nextStage.label} — {facts.nextStage.dated}
+              ➡️ {t("ew.night.nextStage")} {facts.nextStage.label} — {facts.nextStage.dated}
               {notice(facts.nextStage)}
             </li>
           )}
@@ -243,7 +243,7 @@ export function ExamNightFacts({
         />
       </div>
       <div className="mt-3" lang={locale === "en" ? undefined : "en"}>
-        <ShareExamButton url={pageUrl} message={examNightShareMessage(short, facts)} surface={slug} exam={code} />
+        <ShareExamButton url={pageUrl} message={examNightShareMessage(short, facts, t)} surface={slug} exam={code} />
       </div>
     </section>
   );

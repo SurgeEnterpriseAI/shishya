@@ -46,6 +46,7 @@
 // "Exams today" strip (src/components/ExamsTodayStrip.tsx): announced
 // (official / reported) EXAM rows only, today first, else this week.
 
+import { fillTemplate, tk, type StringKey } from "@/lib/i18n";
 import {
   buildTimeline,
   focusExamRow,
@@ -67,7 +68,13 @@ import {
   type ExamWeekPhase,
   type ExamWeekState,
 } from "@/lib/exam-week";
-import { markingSchemeVerdict, scoredCount, stageMismatchReason } from "@/lib/marking-scheme";
+import {
+  markingSchemeVerdict,
+  scoredCount,
+  stageMismatchDetail,
+  stageMismatchReason,
+  type MarkingReason,
+} from "@/lib/marking-scheme";
 import { sourceTier } from "@/lib/official-source";
 
 const IST_OFFSET_MS = 330 * 60_000;
@@ -77,6 +84,12 @@ const ADMIT_LOOKBACK_DAYS = 60;
 /** Exam days more than this apart are different stages (same as exam-week.ts). */
 const STAGE_GAP_DAYS = 14;
 const NOTE_MAX_CHARS = 400;
+
+/** How a caller turns a dictionary key into a sentence. English by
+ *  default, so every existing caller (the meta builder, llms-full.txt, the
+ *  exam-eve mail) keeps the exact sentences it printed before 16 Sep 2026. */
+export type ChecklistT = (key: StringKey) => string;
+export const EN_T: ChecklistT = (key) => tk(key, "en");
 
 /** English tier words — identical to i18n ew.tier.* (en). */
 export const TIER_WORD_EN: Readonly<Record<SourceTier, string>> = {
@@ -102,7 +115,10 @@ export const LANGUAGE_NAMES: Readonly<Record<string, string>> = {
 // ── What to carry ────────────────────────────────────────────────────────
 
 export interface CarryItem {
+  /** English sentence — the source of truth, and what every English
+   *  surface prints. `key` carries the same sentence for hi / te. */
   text: string;
+  key: StringKey;
   /** false = true of every exam hall we cover; true = varies by conducting
    *  body, so the text itself sends the student to their admit card /
    *  call letter / notice. */
@@ -113,52 +129,64 @@ export interface CarryItem {
 const CARRY_CORE: readonly CarryItem[] = [
   {
     text: "Admit card (hall ticket / call letter), printed — the instructions printed on it override anything on this page",
+    key: "chk.carry.admitCard",
     check: false,
   },
   {
     text: "Original photo ID with the same name as your admit card (Aadhaar, PAN, voter ID, passport or driving licence — your admit card lists which it accepts); a photocopy alone is not enough",
+    key: "chk.carry.photoId",
     check: false,
   },
   {
     text: "Leave your phone, smartwatch, earphones and other electronic gadgets at home or outside — they are not allowed in the exam hall, and do not count on a cloakroom at the centre",
+    key: "chk.carry.noElectronics",
     check: false,
   },
   {
     text: "Reporting time and gate-closing time are printed on your admit card — late entry is refused, so plan to reach well before",
+    key: "chk.carry.reporting",
     check: false,
   },
 ];
 
 const PHOTO_CHECK: CarryItem = {
   text: "Passport-size photographs, if your admit card asks for them — use the same photo you uploaded in the application",
+  key: "chk.carry.photos",
   check: true,
 };
 const PEN_OMR: CarryItem = {
   text: "Pen: an offline OMR sheet needs a ballpoint pen of the colour your admit card names (usually black); computer-based tests generally give you a pen and rough sheet at the centre — check your admit card",
+  key: "chk.carry.penOmr",
   check: true,
 };
 const PEN_CBT: CarryItem = {
   text: "Pen and rough sheet: computer-based tests generally provide them at the centre — carry your own only if your admit card says so",
+  key: "chk.carry.penCbt",
   check: true,
 };
 const WATER_CHECK: CarryItem = {
   text: "Transparent water bottle, sanitiser or a simple wrist watch: allowed at some exams and banned at others — check your admit card before you pack",
+  key: "chk.carry.water",
   check: true,
 };
 const PWD_CHECK: CarryItem = {
   text: "Using a scribe or compensatory time? Carry the certificate and the scribe's own photo ID in the format your admit card or notice asks for",
+  key: "chk.carry.pwd",
   check: true,
 };
 const SELF_DECLARATION: CarryItem = {
   text: "If your admit card has a self-declaration / undertaking page, fill it in and paste your photograph before you reach the centre — check your admit card",
+  key: "chk.carry.selfDeclaration",
   check: true,
 };
 const DRESS_CHECK: CarryItem = {
   text: "Dress code: some entrance exams publish one (medical entrance notices usually do) — follow the rules printed on your admit card",
+  key: "chk.carry.dress",
   check: true,
 };
 const BANK_CALL_LETTER: CarryItem = {
   text: "Banking call letters usually ask for a photograph pasted on the call letter and a photocopy of your photo ID along with the original — do exactly what your call letter says",
+  key: "chk.carry.bankCallLetter",
   check: true,
 };
 /** School-held olympiads (SOF, Silverzone, NSTSE) are often sat at the
@@ -167,22 +195,27 @@ const BANK_CALL_LETTER: CarryItem = {
 const CARRY_OLYMPIAD: readonly CarryItem[] = [
   {
     text: "Admit card or centre letter, if your olympiad issues one — many olympiads held at your own school do not; check your school notice",
+    key: "chk.carry.oly.admitCard",
     check: true,
   },
   {
     text: "Identity proof: a school identity card or the photo ID your admit card or school notice names — ask the school if unsure",
+    key: "chk.carry.oly.id",
     check: true,
   },
   {
     text: "Phones, smartwatches and calculators are generally not allowed in the exam room — follow your admit card or school notice",
+    key: "chk.carry.oly.noElectronics",
     check: true,
   },
   {
     text: "Reporting time: it is on your admit card or school notice — reach before it",
+    key: "chk.carry.oly.reporting",
     check: true,
   },
   {
     text: "Pen or pencil: the OMR sheet's instructions say which (ballpoint pen or HB pencil) — check your admit card or school notice",
+    key: "chk.carry.oly.pen",
     check: true,
   },
 ];
@@ -249,6 +282,12 @@ export interface ChecklistInput {
   now?: Date;
   /** Localised tier word; defaults to English. */
   tierWord?: (tier: SourceTier) => string;
+  /** Translator for every sentence this module builds (16 Sep 2026).
+   *  Defaults to English, so the meta builder and every machine surface
+   *  keep the exact wording they printed before. */
+  t?: ChecklistT;
+  /** Localised PASSED_ESTIMATE_TEXT ("was expected — not confirmed"). */
+  passedText?: string;
   locale?: string;
 }
 
@@ -370,13 +409,19 @@ function isTyped(r: TimelineInput): boolean {
   return typeof r.kind === "string" && r.kind.trim().length > 0;
 }
 
-function toDate(row: TimelineRow, tierWord: (t: SourceTier) => string, now: Date, locale: string): ChecklistDate {
+function toDate(
+  row: TimelineRow,
+  tierWord: (t: SourceTier) => string,
+  now: Date,
+  locale: string,
+  passedText: string = PASSED_ESTIMATE_TEXT,
+): ChecklistDate {
   const day = dayText(row.date, now, locale);
   return {
     kind: row.kind,
     label: row.label,
     day: istDay(row.date),
-    dated: row.passedEstimate ? `${day} — ${PASSED_ESTIMATE_TEXT}` : `${day} (${tierWord(row.tier)})`,
+    dated: row.passedEstimate ? `${day} — ${passedText}` : `${day} (${tierWord(row.tier)})`,
     tier: row.tier,
     passedEstimate: row.passedEstimate,
     daysFromToday: row.daysFromToday,
@@ -404,16 +449,52 @@ export function checklistSections(subjects: ChecklistSubject[], scored: number |
   return subs.map((s) => ({ name: s.name, questions: areCounts ? s.weight : null }));
 }
 
+/** A marking-scheme refusal in the caller's language. The list inside
+ *  mark.parts and the "{day} sitting" clause are rebuilt from their own
+ *  keys, so no English fragment survives into a hi / te sentence. Pass the
+ *  locale too (16 Sep 2026) and the sitting's day is formatted in it — the
+ *  same UTC day marking-scheme's shortDay prints, so the fact never moves;
+ *  English keeps shortDay's own string. */
+export function markingReasonText(
+  reason: MarkingReason | null | undefined,
+  t: ChecklistT,
+  locale: string = "en",
+): string | null {
+  if (!reason) return null;
+  const vars: Record<string, string | number> = { ...reason.vars };
+  if (locale !== "en" && typeof vars.dayIso === "string") {
+    vars.day = new Date(vars.dayIso).toLocaleDateString(localeTag(locale), {
+      day: "numeric",
+      month: "short",
+      timeZone: "UTC",
+    });
+  }
+  if (reason.key === "mark.parts" && typeof vars.partNumbers === "string") {
+    vars.parts = vars.partNumbers
+      .split(",")
+      .filter(Boolean)
+      .map((n) => fillTemplate(t("mark.parts.item"), { n }))
+      .join(", ");
+  }
+  if (reason.key.startsWith("mark.stage.")) {
+    vars.when = vars.day ? fillTemplate(t("mark.stage.when"), { day: vars.day }) : t("mark.stage.whenUnknown");
+    if (typeof vars.noteKey === "string") vars.note = t(vars.noteKey as StringKey);
+  }
+  return fillTemplate(t(reason.key), vars);
+}
+
 export function buildExamChecklist(input: ChecklistInput): ExamChecklist {
   const now = input.now ?? new Date();
   const locale = input.locale ?? "en";
-  const tierWord = input.tierWord ?? ((t: SourceTier) => TIER_WORD_EN[t]);
+  const t = input.t ?? EN_T;
+  const passedText = input.passedText ?? PASSED_ESTIMATE_TEXT;
+  const tierWord = input.tierWord ?? ((tier: SourceTier) => TIER_WORD_EN[tier]);
   const { exam } = input;
 
   const typed = input.rows.filter(isTyped);
   const timeline = buildTimeline(typed, now, input.officialUrl);
   const state = computeExamWeekState(typed, input.officialUrl, now);
-  const date = (r: TimelineRow | null | undefined) => (r ? toDate(r, tierWord, now, locale) : null);
+  const date = (r: TimelineRow | null | undefined) => (r ? toDate(r, tierWord, now, locale, passedText) : null);
 
   // ── Exam day ──────────────────────────────────────────────────────────
   const examRow = state.focus ?? focusExamRow(timeline);
@@ -424,9 +505,18 @@ export function buildExamChecklist(input: ChecklistInput): ExamChecklist {
   // 16 Sep 2026) has no "to" date to print.
   const windowText =
     !state.openEnded && state.windowDays.length > 1 && firstDay && lastDay
-      ? `${dayText(firstDay.date, now, locale)} to ${dayText(lastDay.date, now, locale)} (${
-          firstDay.tier === lastDay.tier ? tierWord(lastDay.tier) : `${tierWord(firstDay.tier)} / ${tierWord(lastDay.tier)}`
-        })`
+      ? firstDay.tier === lastDay.tier
+        ? fillTemplate(t("chk.window.same"), {
+            from: dayText(firstDay.date, now, locale),
+            to: dayText(lastDay.date, now, locale),
+            tier: tierWord(lastDay.tier),
+          })
+        : fillTemplate(t("chk.window.mixed"), {
+            from: dayText(firstDay.date, now, locale),
+            to: dayText(lastDay.date, now, locale),
+            tierA: tierWord(firstDay.tier),
+            tierB: tierWord(lastDay.tier),
+          })
       : null;
   const daysTo = examDay && examDay.daysFromToday > 0 ? examDay.daysFromToday : null;
   const announced = !!examDay && examDay.tier !== "expected";
@@ -435,25 +525,32 @@ export function buildExamChecklist(input: ChecklistInput): ExamChecklist {
   if (examDay) {
     const d = examDay.dated;
     if (examDay.passedEstimate) {
-      examDayLine = `Exam day: ${d}. No date has been announced since — check the official portal.`;
+      examDayLine = fillTemplate(t("chk.day.passed"), { d });
     } else if (state.phase === "week") {
-      examDayLine = `Exam on ${d} — ${daysTo} days to go.`;
+      examDayLine = fillTemplate(t("chk.day.week"), { d, n: daysTo ?? 0 });
     } else if (state.phase === "eve") {
-      examDayLine = `Exam tomorrow, ${d}.`;
+      examDayLine = fillTemplate(t("chk.day.eve"), { d });
     } else if ((state.phase === "today-am" || state.phase === "today-pm") && announced) {
-      examDayLine = `Exam today, ${d}.`;
+      examDayLine = fillTemplate(t("chk.day.today"), { d });
     } else if (state.phase === "window" && state.openEnded && announced && firstDay) {
       // MP RAEO, 18 Sep 2026: never "The paper was held on 17 Sept" while
       // later shifts may still be running.
-      examDayLine = `Exam began ${toDate(firstDay, tierWord, now, locale).dated}; end date not announced — your shift day is on your admit card.`;
+      examDayLine = fillTemplate(t("chk.day.openWindow"), {
+        d: toDate(firstDay, tierWord, now, locale, passedText).dated,
+      });
     } else if (state.phase === "window" && announced && windowText) {
-      examDayLine = `Exam window: ${windowText}. Your shift day is on your admit card.`;
+      examDayLine = fillTemplate(t("chk.day.window"), { window: windowText });
     } else if (state.phase === "post" && announced) {
-      examDayLine = `The paper was held on ${d}.`;
+      examDayLine = fillTemplate(t("chk.day.post"), { d });
     } else if (examDay.daysFromToday >= 0) {
-      examDayLine = examDay.daysFromToday === 0 ? `Exam day: ${d}.` : `Next exam day: ${d}${daysTo ? ` — ${daysTo} days to go` : ""}.`;
+      examDayLine =
+        examDay.daysFromToday === 0
+          ? fillTemplate(t("chk.day.is"), { d })
+          : daysTo
+            ? fillTemplate(t("chk.day.next"), { d, n: daysTo })
+            : fillTemplate(t("chk.day.nextPlain"), { d });
     } else {
-      examDayLine = `Most recent exam day on our tracker: ${d}.`;
+      examDayLine = fillTemplate(t("chk.day.recent"), { d });
     }
   }
 
@@ -465,7 +562,7 @@ export function buildExamChecklist(input: ChecklistInput): ExamChecklist {
     const text = r.notes!.trim().slice(0, NOTE_MAX_CHARS);
     if (seenNotes.has(text)) continue;
     seenNotes.add(text);
-    examNotes.push({ dated: toDate(r, tierWord, now, locale).dated, tier: r.tier, text });
+    examNotes.push({ dated: toDate(r, tierWord, now, locale, passedText).dated, tier: r.tier, text });
     if (examNotes.length >= 3) break;
   }
 
@@ -503,9 +600,10 @@ export function buildExamChecklist(input: ChecklistInput): ExamChecklist {
   const verdict = markingSchemeVerdict(schemeInput, rowOpts);
   const neg = Number(exam.negativeMark ?? 0);
   const marking = verdict.ok
-    ? `+${num(exam.marksPerQ)} per correct answer, ${
-        neg > 0 ? `−${num(neg)} per wrong answer` : "no negative mark on our records — confirm it in the official notice"
-      }`
+    ? fillTemplate(t("chk.marking.line"), {
+        m: num(exam.marksPerQ),
+        neg: neg > 0 ? fillTemplate(t("chk.marking.neg"), { n: num(neg) }) : t("chk.marking.noNeg"),
+      })
     : null;
 
   const pattern: ChecklistPattern = {
@@ -515,8 +613,10 @@ export function buildExamChecklist(input: ChecklistInput): ExamChecklist {
     totalMarks: exam.totalMarks > 0 ? exam.totalMarks : null,
     durationMin: exam.durationMin != null && exam.durationMin > 0 ? exam.durationMin : null,
     marking,
-    markingNote: verdict.ok ? null : verdict.reason,
-    stageMismatch: stageMismatchReason(schemeInput, rowOpts.rowLabel, rowOpts.rowDate),
+    markingNote: verdict.ok ? null : markingReasonText(verdict.detail, t, locale) ?? verdict.reason,
+    stageMismatch:
+      markingReasonText(stageMismatchDetail(schemeInput, rowOpts.rowLabel, rowOpts.rowDate), t, locale) ??
+      stageMismatchReason(schemeInput, rowOpts.rowLabel, rowOpts.rowDate),
     description: exam.description?.trim() || null,
   };
 
@@ -537,7 +637,9 @@ export function buildExamChecklist(input: ChecklistInput): ExamChecklist {
     phase: state.phase,
     examDay,
     examDayLine,
-    sittings: examRow ? sittingsOn(timeline, istDay(examRow.date)).map((r) => toDate(r, tierWord, now, locale)) : [],
+    sittings: examRow
+      ? sittingsOn(timeline, istDay(examRow.date)).map((r) => toDate(r, tierWord, now, locale, passedText))
+      : [],
     daysTo,
     window: windowText,
     examNotes,
@@ -554,12 +656,19 @@ export function buildExamChecklist(input: ChecklistInput): ExamChecklist {
   };
 }
 
-/** One-line pattern summary: "100 questions, 200 marks, 60 minutes". */
-export function patternSummary(p: ChecklistPattern): string | null {
+/** One-line pattern summary: "100 questions, 200 marks, 60 minutes".
+ *  English unless the caller passes a translator (16 Sep 2026). */
+export function patternSummary(p: ChecklistPattern, t: ChecklistT = EN_T): string | null {
   const parts: string[] = [];
-  if (p.questions != null) parts.push(`${p.questions} questions${p.scoredQuestions != null ? ` (${p.scoredQuestions} scored)` : ""}`);
-  if (p.totalMarks != null) parts.push(`${num(p.totalMarks)} marks`);
-  if (p.durationMin != null) parts.push(`${p.durationMin} minutes`);
+  if (p.questions != null) {
+    parts.push(
+      p.scoredQuestions != null
+        ? fillTemplate(t("chk.pattern.qScored"), { n: p.questions, scored: p.scoredQuestions })
+        : fillTemplate(t("chk.pattern.q"), { n: p.questions }),
+    );
+  }
+  if (p.totalMarks != null) parts.push(fillTemplate(t("chk.pattern.marks"), { n: num(p.totalMarks) }));
+  if (p.durationMin != null) parts.push(fillTemplate(t("chk.pattern.minutes"), { n: p.durationMin }));
   return parts.length ? parts.join(", ") : null;
 }
 

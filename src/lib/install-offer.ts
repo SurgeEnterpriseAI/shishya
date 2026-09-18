@@ -17,7 +17,16 @@
 //     can never cover its buttons — and because it is on top, it must never
 //     open over (or stay over) another sheet's controls: it steps aside.
 //
-// No DOM access at import — unit-tested in tests/unit/install-offer.test.ts.
+// Language (16 Sep 2026): the bar was English on every page, including for
+// a student reading the site in Hindi or Telugu. INSTALL_OFFER_BY_LOCALE is
+// a dict-free map (en, hi, te) — the component is a client island on every
+// page and must not pull the dictionary into the shared bundle, the same
+// reason NAV_TODAY_BY_LOCALE exists in src/lib/study-day-copy.ts. The
+// language comes from the URL prefix (/hi, /te), else the `shishya-lang`
+// cookie, else English — the order the server uses.
+//
+// No DOM access at import — unit-tested in tests/unit/install-offer.test.ts
+// and tests/unit/i18n-a-core.test.ts.
 
 /** localStorage: "shown" | "dismissed" | "accepted" — any value = never again. */
 export const INSTALL_OFFER_KEY = "shishya_install_offer";
@@ -28,6 +37,45 @@ export const VISIT_COUNTED_KEY = "shishya_visit_counted";
 export const MIN_VISITS = 2;
 
 export const INSTALL_OFFER_COPY = "Add Shishya to your home screen — opens in one tap, no app store";
+
+export interface InstallOfferCopy {
+  /** The one sentence of the bar. No number, no urgency, in any language. */
+  body: string;
+  /** aria-label of the region. */
+  aria: string;
+  add: string;
+  dismiss: string;
+}
+
+export type InstallOfferLocale = "en" | "hi" | "te";
+
+export const INSTALL_OFFER_BY_LOCALE: Readonly<Record<InstallOfferLocale, InstallOfferCopy>> = {
+  en: { body: INSTALL_OFFER_COPY, aria: "Install Shishya", add: "Add", dismiss: "No thanks" },
+  hi: {
+    body: "Shishya को अपनी होम स्क्रीन पर जोड़ें — एक टैप में खुलता है, ऐप स्टोर की ज़रूरत नहीं",
+    aria: "Shishya इंस्टॉल करें",
+    add: "जोड़ें",
+    dismiss: "नहीं, धन्यवाद",
+  },
+  te: {
+    body: "Shishyaను మీ హోమ్ స్క్రీన్‌కు జోడించండి — ఒక్క ట్యాప్‌తో తెరుచుకుంటుంది, యాప్ స్టోర్ అవసరం లేదు",
+    aria: "Shishya ఇన్‌స్టాల్ చేయండి",
+    add: "జోడించండి",
+    dismiss: "వద్దు, ధన్యవాదాలు",
+  },
+};
+
+/** Which language the bar speaks: the URL prefix first (/hi/..., /te/...),
+ *  then the `shishya-lang` cookie out of a document.cookie string, else
+ *  English. Any other locale (the regional ones) falls back to English
+ *  until it has its own entry above. Pure — the component passes the
+ *  pathname and document.cookie. */
+export function installOfferLocale(path: string | null | undefined, cookie: string | null | undefined): InstallOfferLocale {
+  const fromUrl = /^\/(hi|te)(?:\/|$)/.exec(path || "/")?.[1];
+  if (fromUrl === "hi" || fromUrl === "te") return fromUrl;
+  const fromCookie = /(?:^|;\s*)shishya-lang=([^;]+)/.exec(cookie || "")?.[1];
+  return fromCookie === "hi" || fromCookie === "te" ? fromCookie : "en";
+}
 
 export type OfferState = "shown" | "dismissed" | "accepted" | null;
 

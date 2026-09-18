@@ -18,6 +18,7 @@
 import Link from "next/link";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { STAGE_OPTIONS } from "@/lib/onboarding-options";
+import { fillState, stateCopy, stateDisplayName } from "@/lib/state-exams-copy";
 
 export interface PersonalisedHubProps {
   /** From User.onbStage. Null = wizard skipped (we still render fallback). */
@@ -30,6 +31,9 @@ export interface PersonalisedHubProps {
   prepExams: Array<{ code: string; shortName: string; name: string; category: string }>;
   /** User's display name; trims to first name for friendliness. */
   displayName: string | null;
+  /** The page body's language (getT().locale) for the state card — English
+   *  when absent (16 Sep 2026, src/lib/state-exams-copy.ts). */
+  locale?: string;
 }
 
 const STAGE_LANE: Record<string, {
@@ -112,11 +116,16 @@ export function PersonalisedHub({
   prepCodes,
   prepExams,
   displayName,
+  locale,
 }: PersonalisedHubProps) {
   const firstName = displayName ? displayName.split(" ")[0] : "there";
   const stageInfo = stage && STAGE_LANE[stage] ? STAGE_LANE[stage] : STAGE_LANE.OTHER;
   const stageLabel = STAGE_OPTIONS.find((s) => s.value === stage)?.label ?? "your journey";
   const stateInfo = state ? STATES[state] ?? null : null;
+  // State card copy (16 Sep 2026): the state's name in the reader's script
+  // where Shishya holds it, the same rule the /exams/state pages use.
+  const SC = stateCopy(locale);
+  const stateLabel = stateInfo ? stateDisplayName(stateInfo, locale) : "";
 
   return (
     <section className="container-prose pt-12 pb-8 sm:pt-16">
@@ -180,19 +189,19 @@ export function PersonalisedHub({
       {stateInfo && (
         <div className="mt-12">
           <h2 className="text-base font-semibold text-ink-900">
-            Pinned for {stateInfo.name}
+            {fillState(SC.hubPinned, { state: stateLabel })}
           </h2>
           <p className="mt-1 text-xs text-ink-500">
-            Government exams for {stateInfo.name} on Shishya.
+            {fillState(SC.hubStateLine, { state: stateLabel })}
           </p>
           <div className="mt-4 max-w-lg">
             <Link
               href={`/exams/state/${stateSlug(stateInfo.code)}`}
               className="block rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400"
             >
-              <p className="text-sm font-semibold text-ink-900">{stateInfo.name} government exams</p>
+              <p className="text-sm font-semibold text-ink-900">{fillState(SC.hubCardTitle, { state: stateLabel })}</p>
               <p className="mt-1 text-xs text-ink-600">
-                Every {stateInfo.name} exam on Shishya, with announced dates and free mock tests.
+                {fillState(SC.hubCardBody, { state: stateLabel })}
               </p>
             </Link>
           </div>

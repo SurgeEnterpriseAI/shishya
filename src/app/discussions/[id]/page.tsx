@@ -10,6 +10,7 @@ import { formatRelative } from "@/lib/relative-time";
 import { ReplyForm } from "./ReplyForm";
 import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
 import { isSyntheticHandle } from "@/data/synthetic-handles";
+import { discussionLabelsCopy } from "@/lib/discussion-labels-copy";
 
 export const revalidate = 0; // always fresh on direct page load
 
@@ -36,7 +37,7 @@ export default async function DiscussionPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [{ t }, session] = await Promise.all([getT(), auth().catch(() => null)]);
+  const [{ t, locale }, session] = await Promise.all([getT(), auth().catch(() => null)]);
 
   const thread = await prisma.discussion.findUnique({
     where: { id },
@@ -71,6 +72,13 @@ export default async function DiscussionPage({
   };
   const myUserId = session?.user?.id ?? null;
   const youLabel = t("disc.thread.you");
+  // The four disclosure labels in the reader's language (16 Sep 2026). They
+  // say exactly what the 11 Sep 2026 fix made them say — a seed thread is
+  // Shishya's own starter question, an authorless reply is the AI and not a
+  // student — in hi and te too. The structured data below keeps its English
+  // author names: that is one stable machine answer per URL, and a crawler
+  // sends no cookie, so the indexed text is unchanged.
+  const D = discussionLabelsCopy(locale);
 
   // AEO: DiscussionForumPosting is the schema Google's forum rich
   // results + answer engines read for community threads. First message
@@ -137,12 +145,12 @@ export default async function DiscussionPage({
             )}
             {thread.pinned && (
               <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                Pinned
+                {D.pinned}
               </span>
             )}
             {thread.locked && (
               <span className="rounded bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-800">
-                Locked
+                {D.locked}
               </span>
             )}
             {/* Disclosure (11 Sep 2026 audit): seed threads are Shishya's
@@ -150,13 +158,13 @@ export default async function DiscussionPage({
                 student names as authorName — never show those. */}
             {thread.isSeed && (
               <span className="rounded bg-saffron-50 px-2 py-0.5 text-xs font-medium text-saffron-800 ring-1 ring-saffron-200">
-                Starter question · Shishya
+                {D.starter}
               </span>
             )}
           </div>
           <h1 className="mt-2 text-2xl font-bold text-ink-900 sm:text-3xl">{thread.title}</h1>
           <p className="mt-2 flex flex-wrap items-baseline gap-1.5 text-xs text-ink-500">
-            <span className="font-medium text-ink-700">{thread.isSeed ? "Shishya" : (thread.authorName ?? "Anonymous")}</span>
+            <span className="font-medium text-ink-700">{thread.isSeed ? "Shishya" : (thread.authorName ?? D.anonymous)}</span>
             {thread.authorId && <UserBadge level={badgeByAuthor.get(thread.authorId)} />}
             <span className="text-ink-300">·</span>
             <span>{formatRelative(thread.createdAt, relLabels, now)}</span>
@@ -182,7 +190,7 @@ export default async function DiscussionPage({
               m.authorName === "Shishya AI" ||
               m.authorName === "Shishya" ||
               isSyntheticHandle(m.authorName);
-            const displayName = isShishya ? "Shishya AI" : (m.authorName ?? "Anonymous");
+            const displayName = isShishya ? D.shishyaAi : (m.authorName ?? D.anonymous);
             return (
               <li
                 key={m.id}
@@ -201,7 +209,7 @@ export default async function DiscussionPage({
                     {isYou && <span className="text-xs font-normal text-emerald-700">({youLabel})</span>}
                     {isShishya && (
                       <span className="rounded bg-saffron-50 px-1.5 py-0.5 text-[10px] font-medium text-saffron-800 ring-1 ring-saffron-200">
-                        AI reply · not a student
+                        {D.aiReply}
                       </span>
                     )}
                   </p>

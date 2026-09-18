@@ -170,11 +170,9 @@ export default async function MockPlayerPage({
 
   // Player labels. The save / submit-state strings (13 Sep 2026: autosave
   // line, offline + retry notes, "answers kept on this device") travel in
-  // the same object so the student's language reaches them; MockPlayer
-  // reads them once its PlayerLabels interface gains these optional fields
-  // (MockPlayer.tsx was frozen this wave — see the build report). A
-  // variable rather than an inline literal, so the extra fields type-check
-  // against today's PlayerLabels. Templates keep {kept} {code} {n}.
+  // the same object so the student's language reaches them. MockPlayer now
+  // reads every one of them (16 Sep 2026) — it no longer holds any English
+  // save / submit literal. Templates keep {kept} {code} {n}.
   const labels = {
     qOf: t("player.q.of"),
     mark: t("player.mark"),
@@ -196,6 +194,8 @@ export default async function MockPlayerPage({
     submittingHint: t("player.submitting.hint"),
     marksPerQ: t("exam.marks"),
     negativeNone: t("exam.no.negative"),
+    confirmUnsyncedOne: t("player.confirm.unsynced.one"),
+    confirmUnsyncedMany: t("player.confirm.unsynced.many"),
     // → <SaveStatus labels={mirrorOk ? labels.save : labels.saveNoMirror}>
     save: {
       saving: t("player.save.saving"),
@@ -225,6 +225,7 @@ export default async function MockPlayerPage({
     submitRetryingSlow: t("player.submit.retryingSlow"),
     submitWaiting: t("player.submit.waiting"),
     submitRetryNow: t("player.submit.retryNow"),
+    submitAgain: t("player.submit.again"),
   };
 
   return (

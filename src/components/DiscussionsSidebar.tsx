@@ -46,6 +46,10 @@ interface Labels {
   liveOnline: string;
   liveInMock: string;
   liveTodaysMocks: string;
+  /** "Starter question · Shishya" — the disclosure on Shishya's own seeded
+   *  threads (16 Sep 2026). Optional so the existing caller keeps working;
+   *  English when it is not passed. */
+  starter?: string;
 }
 
 const POLL_MS = 30_000;
@@ -323,7 +327,7 @@ function ThreadList({
                     social proof, which the founder rules forbid. */}
                 {t.isSeed && (
                   <span className="mr-1.5 rounded bg-saffron-50 px-1 py-0.5 text-[10px] font-medium text-saffron-800 ring-1 ring-saffron-200">
-                    Starter question · Shishya
+                    {labels.starter ?? "Starter question · Shishya"}
                   </span>
                 )}
                 <span className="font-medium text-ink-700">

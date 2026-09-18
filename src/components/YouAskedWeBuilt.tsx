@@ -14,15 +14,18 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
 import { ShareExamButton } from "@/components/ShareExamButton";
-import {
-  BUILT_FOR_YOU_DAYS,
-  builtForYouHeading,
-  builtForYouShareMessage,
-  markedBuiltLabel,
-  selectBuiltForYou,
-} from "@/lib/feature-requests";
+import { BUILT_FOR_YOU_DAYS, selectBuiltForYou } from "@/lib/feature-requests";
+import { getLocale } from "@/lib/i18n-server";
+import { builtForYouCopy, builtForYouHeadingFor, builtForYouShareFor, markedBuiltFor } from "@/lib/ideas-copy";
 
-export async function YouAskedWeBuilt({ userId }: { userId: string }) {
+export async function YouAskedWeBuilt({
+  userId,
+  locale: pageLocale,
+}: {
+  userId: string;
+  /** The dashboard's locale when it passes one (16 Sep 2026); resolved here otherwise. */
+  locale?: string;
+}) {
   const now = new Date();
   // updatedAt is always >= the ship moment (the ship write sets it), so
   // this is a safe superset of "built in the last 30 days".
@@ -61,7 +64,12 @@ export async function YouAskedWeBuilt({ userId }: { userId: string }) {
   );
   if (items.length === 0) return null;
 
-  const heading = `💡 ${builtForYouHeading(items.map((i) => i.role))}`;
+  // The block's words in the student's language (16 Sep 2026). The locale is
+  // read only once the block is known to render, so a dashboard with nothing
+  // to show pays nothing. The hedge in "marked built" survives translation.
+  const locale = pageLocale ?? (await getLocale());
+  const L = builtForYouCopy(locale);
+  const heading = `💡 ${builtForYouHeadingFor(locale, items.map((i) => i.role))}`;
 
   return (
     <section className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
@@ -70,20 +78,20 @@ export async function YouAskedWeBuilt({ userId }: { userId: string }) {
         {items.map((i) => (
           <li key={i.id} className="rounded-lg border border-emerald-100 bg-white p-3">
             <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-700">
-              {i.role === "asked" ? "You suggested" : "You upvoted"} · {markedBuiltLabel(i.shippedAt, { capital: false })}
+              {i.role === "asked" ? L.youSuggested : L.youUpvoted} · {markedBuiltFor(locale, i.shippedAt, { capital: false })}
             </p>
             <p className="mt-0.5 text-sm font-semibold text-ink-900">{i.title}</p>
             <p className="mt-1 text-sm text-ink-700">
-              <span className="font-medium">What we built:</span> {i.note}
+              <span className="font-medium">{L.whatWeBuilt}</span> {i.note}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
               <Link href={i.link} prefetch={false} className="text-sm font-bold text-emerald-700 hover:text-emerald-800">
-                Open it →
+                {L.openIt}
               </Link>
               <ShareExamButton
                 url={i.link}
-                message={builtForYouShareMessage(i.role, i.title)}
-                label="Tell your prep group:"
+                message={builtForYouShareFor(locale, i.role, i.title)}
+                label={L.tellGroup}
                 surface="you-asked-we-built"
               />
             </div>

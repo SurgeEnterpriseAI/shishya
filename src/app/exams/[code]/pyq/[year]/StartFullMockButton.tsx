@@ -22,9 +22,20 @@
 // timed mock", including PYQ-pattern years holding 20 of a 150-question
 // paper. It says "full-length" only when the set holds at least 80% of the
 // real paper (the year page's own rule).
+//
+// Language (16 Sep 2026): the dialog takes the year page's `locale` when it
+// is passed and otherwise reads the shishya-lang cookie after mount — its
+// server caller is outside this partition, and the dialog only ever opens on
+// a click, long after mount, so nothing is repainted under the student. The
+// "in the pattern of the N-question paper" hedge is kept in every language;
+// the warmup seed stays English because the tutor matches on its wording to
+// fire start_adaptive_quiz.
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { fillTemplate } from "@/lib/i18n";
+import { clientUiLocale, type CopyLocale } from "@/lib/ui-locale-copy";
+import { fullMockCopy } from "@/lib/quiz-entry-copy";
 
 interface Props {
   mockId: string;
@@ -36,6 +47,9 @@ interface Props {
   durationMin: number;
   hasSubmittedHistory: boolean;
   label: string;
+  /** The page's locale when the server already has one (16 Sep 2026);
+   *  without it the dialog reads the shishya-lang cookie after mount. */
+  locale?: string;
 }
 
 export function StartFullMockButton({
@@ -47,8 +61,14 @@ export function StartFullMockButton({
   durationMin,
   hasSubmittedHistory,
   label,
+  locale,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [cookieLocale, setCookieLocale] = useState<CopyLocale>("en");
+  useEffect(() => {
+    if (locale == null) setCookieLocale(clientUiLocale());
+  }, [locale]);
+  const C = fullMockCopy(locale ?? cookieLocale);
   const fullLength = !(paperQuestions > 0) || totalQuestions >= 0.8 * paperQuestions;
 
   // Bypass the modal when the user knows what they're doing (already
@@ -84,26 +104,24 @@ export function StartFullMockButton({
           <button
             type="button"
             onClick={() => setOpen(false)}
-            aria-label="Close"
+            aria-label={C.close}
             className="absolute inset-0 bg-ink-900/55"
           />
           <div className="relative w-full max-w-md rounded-xl border border-saffron-200 bg-white p-6 shadow-2xl">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">
-              Heads up
+              {C.headsUp}
             </p>
             <h3 id="full-mock-confirm-title" className="mt-1 text-lg font-semibold text-ink-900">
-              {totalQuestions} questions · {durationMin} minutes
+              {fillTemplate(C.qMin, { q: totalQuestions, m: durationMin })}
             </h3>
             <p className="mt-2 text-sm text-ink-700">
               {fullLength
-                ? "This is a full-length timed mock."
-                : `This is a ${totalQuestions}-question timed set in the pattern of the ${paperQuestions}-question paper.`}{" "}
-              The clock starts when you click Start and you can&apos;t pause it.
+                ? C.fullLength
+                : fillTemplate(C.patternSet, { q: totalQuestions, paper: paperQuestions })}{" "}
+              {C.clockNote}
             </p>
             <p className="mt-2 text-sm text-ink-700">
-              If you&apos;ve never taken a {examShortName} mock here before, try a quick
-              10-question warmup first — Shishya picks your weakest topic,
-              adapts to you, and gets you ready for the full mock.
+              {fillTemplate(C.warmupNote, { exam: examShortName })}
             </p>
 
             <div className="mt-5 flex flex-col gap-2">
@@ -112,21 +130,21 @@ export function StartFullMockButton({
                 prefetch={false}
                 className="btn-primary block w-full text-center"
               >
-                Take a 10-Q warmup first →
+                {C.warmupCta}
               </Link>
               <Link
                 href={`/mocks/${mockId}`}
                 prefetch={false}
                 className="btn-secondary block w-full text-center"
               >
-                {fullLength ? `Start the full ${totalQuestions}-Q mock anyway` : `Start the ${totalQuestions}-question set anyway`}
+                {fillTemplate(fullLength ? C.startFull : C.startSet, { q: totalQuestions })}
               </Link>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 className="mt-1 text-xs text-ink-500 hover:text-ink-800"
               >
-                Cancel
+                {C.cancel}
               </button>
             </div>
           </div>

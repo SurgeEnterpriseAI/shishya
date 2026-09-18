@@ -34,6 +34,13 @@ import Link from "next/link";
 import { resolvePhase, PHASE_SLUG, istDayNumber } from "@/lib/exam-phase";
 import type { ExamPhase } from "@prisma/client";
 import type { SourceTier } from "@/lib/official-source";
+// 16 Sep 2026: this is a client island, so the home page passes the labels in
+// as plain strings (calendarRailLabels in src/lib/home-strip-copy.ts). Only
+// the English default is imported here, from its own small file, so the
+// Hindi and Telugu copy never enters this bundle. "(expected)" / "was
+// expected — not confirmed" keep their force in every language: an estimate
+// is never shown as a date.
+import { CALENDAR_RAIL_EN, type CalendarRailLabels } from "@/lib/calendar-rail-copy";
 
 export type CalendarBucket = "concluded" | "upcoming" | "past";
 
@@ -87,31 +94,22 @@ interface PhaseChip {
   hasArticle: boolean;
 }
 
-const PHASE_CHIP_META: Record<ExamPhase, { icon: string; color: string; fallback: string }> = {
-  CHECKLIST: {
-    icon: "📋",
-    color: "bg-amber-100 text-amber-900",
-    fallback: "Last-minute checklist — what to carry, admit card, exam pattern, dates with their source tier.",
-  },
-  LIVE: {
-    icon: "🔴",
-    color: "bg-rose-100 text-rose-900",
-    fallback: "Exam day — timings on the tracker; rate the paper on the exam page once your shift is over.",
-  },
-  REACTIONS: {
-    icon: "📊",
-    color: "bg-sky-100 text-sky-900",
-    fallback: "Student verdict and answer-key status, once students have rated the paper.",
-  },
+const PHASE_CHIP_COLOR: Record<ExamPhase, { icon: string; color: string }> = {
+  CHECKLIST: { icon: "📋", color: "bg-amber-100 text-amber-900" },
+  LIVE: { icon: "🔴", color: "bg-rose-100 text-rose-900" },
+  REACTIONS: { icon: "📊", color: "bg-sky-100 text-sky-900" },
 };
 
-function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
+const chipFallback = (L: CalendarRailLabels, phase: ExamPhase): string =>
+  phase === "CHECKLIST" ? L.chipChecklist : phase === "LIVE" ? L.chipLive : L.chipReactions;
+
+function phaseChipFor(event: UpcomingEvent, L: CalendarRailLabels): PhaseChip | null {
   // Only flag actual exam-day rows. "Application opens" etc. shouldn't
   // get phase chips even if they fall close to today's date.
   if (!event.isExamDay) return null;
   const phase = resolvePhase(new Date(event.date));
   if (phase) {
-    const meta = PHASE_CHIP_META[phase];
+    const meta = PHASE_CHIP_COLOR[phase];
     const snippet = event.phaseSnippet?.trim();
     // The checklist page always carries stored facts (what to carry,
     // admit card, pattern, dated rows with tier) — link it with or
@@ -122,7 +120,7 @@ function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
       slug: PHASE_SLUG[phase],
       icon: meta.icon,
       color: meta.color,
-      text: snippet || meta.fallback,
+      text: snippet || chipFallback(L, phase),
       href: deepLink
         ? `/exams/${event.examCode}/${PHASE_SLUG[phase]}`
         : `/exams/${event.examCode}`,
@@ -134,7 +132,7 @@ function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
   // verdict/cutoff analysis stays valuable long after the 3-day window.
   const bucket = event.bucket ?? "upcoming";
   if (bucket !== "upcoming" && event.phaseSnippet?.trim()) {
-    const meta = PHASE_CHIP_META.REACTIONS;
+    const meta = PHASE_CHIP_COLOR.REACTIONS;
     return {
       phase: "REACTIONS",
       slug: "reactions",
@@ -148,22 +146,27 @@ function phaseChipFor(event: UpcomingEvent): PhaseChip | null {
   return null;
 }
 
-const TABS: { key: CalendarBucket; label: string; empty: string }[] = [
-  { key: "concluded", label: "Concluded", empty: "No exams concluded in the last 7 days." },
-  { key: "upcoming", label: "Upcoming", empty: "No upcoming dates announced." },
-  { key: "past", label: "Past", empty: "Older exam analyses will appear here." },
+const tabsFor = (L: CalendarRailLabels): { key: CalendarBucket; label: string; empty: string }[] => [
+  { key: "concluded", label: L.tabConcluded, empty: L.emptyConcluded },
+  { key: "upcoming", label: L.tabUpcoming, empty: L.emptyUpcoming },
+  { key: "past", label: L.tabPast, empty: L.emptyPast },
 ];
 
 export function UpcomingExamsSidebar({
   events,
   defaultTab,
   side = "left",
+  labels,
 }: {
   events: UpcomingEvent[];
   defaultTab?: CalendarBucket;
   /** Which fixed rail to anchor to. "right" flips the border side. */
   side?: "left" | "right";
+  /** Strings in the page's language; English when the page passes none. */
+  labels?: CalendarRailLabels;
 }) {
+  const L = labels ?? CALENDAR_RAIL_EN;
+  const TABS = tabsFor(L);
   const buckets: Record<CalendarBucket, UpcomingEvent[]> = {
     concluded: [],
     upcoming: [],
@@ -182,22 +185,22 @@ export function UpcomingExamsSidebar({
       className={`fixed bottom-0 top-[101px] z-20 hidden w-80 flex-col border-ink-200 bg-white shadow-sm lg:flex ${
         side === "right" ? "right-0 border-l" : "left-0 border-r"
       }`}
-      aria-label="Exam calendar"
+      aria-label={L.heading}
     >
       <div className="border-b border-ink-200 bg-ink-50/40 px-4 pt-3">
         <div className="flex items-start justify-between gap-2">
           <h3 className="flex items-center gap-1.5 text-sm font-semibold text-ink-900">
             <span className="inline-block h-2 w-2 rounded-full bg-saffron-500" aria-hidden />
-            Exam calendar
+            {L.heading}
           </h3>
           <Link
             href="/exams"
             className="shrink-0 rounded-md border border-ink-300 bg-white px-2 py-1 text-[11px] font-medium text-ink-700 hover:bg-ink-100"
           >
-            All
+            {L.all}
           </Link>
         </div>
-        <div role="tablist" aria-label="Exam calendar sections" className="-mb-px mt-2 flex gap-1">
+        <div role="tablist" aria-label={L.sections} className="-mb-px mt-2 flex gap-1">
           {TABS.map((t) => {
             const active = tab === t.key;
             const n = buckets[t.key].length;
@@ -249,7 +252,7 @@ export function UpcomingExamsSidebar({
             ) : (
               <ul className="flex-1 divide-y divide-ink-100 overflow-y-auto">
                 {list.map((e) => {
-                  const chip = phaseChipFor(e);
+                  const chip = phaseChipFor(e, L);
                   const isToday = e.isExamDay && istDayNumber(new Date(e.date)) === todayIst;
                   return (
                     <li key={e.id} className={e.isExamDay ? "bg-saffron-50/40" : ""}>
@@ -274,18 +277,18 @@ export function UpcomingExamsSidebar({
                         <p className="mt-0.5 line-clamp-2 text-[11px] text-ink-600">
                           {isToday && t.key === "upcoming" ? (
                             <span className="mr-1.5 rounded bg-rose-100 px-1 py-0.5 text-[10px] font-semibold text-rose-800">
-                              🔴 TODAY
+                              🔴 {L.today}
                             </span>
                           ) : e.isExamDay ? (
                             <span className="mr-1.5 rounded bg-saffron-200 px-1 py-0.5 text-[10px] font-medium text-saffron-900">
-                              EXAM DAY
+                              {L.examDay}
                             </span>
                           ) : e.expectedExamDay ? (
                             /* An estimate is never an exam day: it says so,
                                and once the date has passed it says it was
                                never confirmed. */
                             <span className="mr-1.5 rounded bg-ink-100 px-1 py-0.5 text-[10px] font-medium text-ink-600">
-                              {istDayNumber(new Date(e.date)) < todayIst ? "was expected — not confirmed" : "(expected)"}
+                              {istDayNumber(new Date(e.date)) < todayIst ? L.wasExpected : L.expected}
                             </span>
                           ) : null}
                           {e.label}
@@ -318,7 +321,7 @@ export function UpcomingExamsSidebar({
           href="/exam-calendar"
           className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
         >
-          Browse all exam dates →
+          {L.browseAll}
         </Link>
       </div>
     </aside>

@@ -66,9 +66,25 @@ const GUEST_CHAT_TTL_MS = 30 * 60_000;
 const GUEST_CHAT_MAX_TURNS = 24;
 
 const SAVE_COPY = {
-  en: { saved: "Your guest conversation is saved to your account." },
-  hi: { saved: "आपकी गेस्ट बातचीत आपके अकाउंट में सेव हो गई है।" },
-  te: { saved: "మీ గెస్ట్ సంభాషణ మీ అకౌంట్‌లో సేవ్ అయింది." },
+  en: {
+    saved: "Your guest conversation is saved to your account.",
+    // The nudge is split around the sign-in link (16 Sep 2026, i18n.10).
+    nudge: "Save this conversation and let the tutor see your mock mistakes — ",
+    nudgeLink: "sign in, free",
+    nudgeEnd: ".",
+  },
+  hi: {
+    saved: "आपकी गेस्ट बातचीत आपके अकाउंट में सेव हो गई है।",
+    nudge: "इस बातचीत को सेव करें और ट्यूटर को अपनी मॉक की गलतियाँ देखने दें — ",
+    nudgeLink: "साइन इन करें, मुफ़्त",
+    nudgeEnd: "।",
+  },
+  te: {
+    saved: "మీ గెస్ట్ సంభాషణ మీ అకౌంట్‌లో సేవ్ అయింది.",
+    nudge: "ఈ సంభాషణను సేవ్ చేసి, మీ మాక్ తప్పులను ట్యూటర్ చూడనివ్వండి — ",
+    nudgeLink: "సైన్ ఇన్ చేయండి, ఉచితం",
+    nudgeEnd: ".",
+  },
 } as const;
 
 function uiLang(): "en" | "hi" | "te" {
@@ -132,6 +148,14 @@ export function ChatInterface({
   const [toolStatus, setToolStatus] = useState<string | null>(null);
   const [creatingDiag, setCreatingDiag] = useState(false);
   const [importedNote, setImportedNote] = useState<string | null>(null);
+  // This island's own lines in the site UI language (16 Sep 2026). Read after
+  // mount — the server cannot see the shishya-lang cookie, and the guest save
+  // nudge only appears after two completed tutor replies, so nothing is ever
+  // repainted under the reader.
+  const [navLang, setNavLang] = useState<"en" | "hi" | "te">("en");
+  useEffect(() => {
+    setNavLang(uiLang());
+  }, []);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -517,7 +541,7 @@ export function ChatInterface({
         {guestSignInHref && !busy && messages.filter((m) => m.role === "assistant" && m.content).length >= 2 && (
           <div className="rounded-md border border-saffron-200 bg-saffron-50/60 px-3 py-2">
             <p className="text-xs text-ink-700">
-              Save this conversation and let the tutor see your mock mistakes —{" "}
+              {SAVE_COPY[navLang].nudge}
               <a
                 href={examCode == null ? `/login?callbackUrl=${encodeURIComponent("/chat?general=1")}` : guestSignInHref}
                 onClick={() => {
@@ -526,9 +550,9 @@ export function ChatInterface({
                 }}
                 className="font-semibold text-saffron-700 hover:underline"
               >
-                sign in, free
+                {SAVE_COPY[navLang].nudgeLink}
               </a>
-              .
+              {SAVE_COPY[navLang].nudgeEnd}
             </p>
           </div>
         )}

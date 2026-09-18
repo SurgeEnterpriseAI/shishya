@@ -16,14 +16,20 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
 import {
-  BUILT_WITHOUT_RECORD_LINE,
   OPEN_BOARD_STATUSES,
-  PUBLIC_STATUS_LABEL,
   STATUS_TONE,
   isFeatureRequestStatus,
-  markedBuiltLabel,
   splitIdeasBoard,
 } from "@/lib/feature-requests";
+import { getT } from "@/lib/i18n-server";
+import { fillTemplate } from "@/lib/i18n";
+import {
+  builtWithoutRecordFor,
+  ideaCardCopy,
+  ideaStatusLabelFor,
+  ideasPageCopy,
+  markedBuiltFor,
+} from "@/lib/ideas-copy";
 import { IdeaCard } from "./IdeaCard";
 
 export const dynamic = "force-dynamic";
@@ -64,6 +70,13 @@ export default async function IdeasPage({
 }) {
   const session = await auth();
   const userId = session?.user?.id ?? null;
+  // The board's own words in the reader's language (16 Sep 2026). /ideas is
+  // not a /hi or /te twin, so the locale is the one getT() resolves from the
+  // shishya-lang cookie or User.preferredLang; the page title, description
+  // and the area values stay English. English output is unchanged.
+  const { locale } = await getT();
+  const C = ideasPageCopy(locale);
+  const cardLabels = ideaCardCopy(locale);
   const { area } = await searchParams;
   const areaFilter = area && (AREAS as readonly string[]).includes(area) ? { area } : {};
 
@@ -94,7 +107,7 @@ export default async function IdeasPage({
       )
     : new Set<string>();
 
-  const labelFor = (s: string) => (isFeatureRequestStatus(s) ? PUBLIC_STATUS_LABEL[s] : PUBLIC_STATUS_LABEL.OPEN);
+  const labelFor = (s: string) => ideaStatusLabelFor(locale, s);
   const toneFor = (s: string) => (isFeatureRequestStatus(s) ? STATUS_TONE[s] : STATUS_TONE.OPEN);
 
   return (
@@ -102,13 +115,13 @@ export default async function IdeasPage({
       <Header />
       <section className="container-prose py-8">
         <p className="text-xs text-ink-500">
-          <Link href="/" className="hover:text-ink-800">Home</Link> · Ideas
+          <Link href="/" className="hover:text-ink-800">{C.home}</Link> · {C.crumb}
         </p>
-        <h1 className="mt-1 text-2xl font-bold text-ink-900">Ideas board</h1>
+        <h1 className="mt-1 text-2xl font-bold text-ink-900">{C.h1}</h1>
         <p className="mt-2 max-w-2xl text-sm text-ink-600">
-          What students asked us to build — what is built so far, and what is still open.
-          Upvote the open ones you want next, or click the{" "}
-          <span className="font-medium">💡 Suggest a feature</span> pill on any page to add your own.
+          {C.introBefore}
+          <span className="font-medium">{C.pill}</span>
+          {C.introAfter}
         </p>
 
         {/* Area filters */}
@@ -121,7 +134,7 @@ export default async function IdeasPage({
                 : "rounded-full border border-ink-200 bg-white px-3 py-1 text-xs font-medium text-ink-700 hover:bg-ink-50"
             }
           >
-            All
+            {C.all}
           </Link>
           {AREAS.map((a) => (
             <Link
@@ -140,17 +153,15 @@ export default async function IdeasPage({
 
         {built.length === 0 && open.length === 0 ? (
           <p className="mt-10 rounded-md border border-dashed border-ink-300 bg-white p-6 text-center text-sm text-ink-500">
-            No ideas in this area yet. Be the first to suggest one — click the
-            pill at the bottom-right of any page.
+            {C.emptyBoard}
           </p>
         ) : (
           <>
             {built.length > 0 && (
               <section className="mt-8" aria-labelledby="ideas-built">
-                <h2 id="ideas-built" className="text-base font-semibold text-ink-900">Built</h2>
+                <h2 id="ideas-built" className="text-base font-semibold text-ink-900">{C.builtHeading}</h2>
                 <p className="mt-1 text-xs text-ink-600">
-                  Ideas the Shishya team has marked built. The date is the day it was marked, not
-                  necessarily the day it went live.
+                  {C.builtNote}
                 </p>
                 <ul className="mt-3 space-y-3">
                   {built.map(({ row, ship }) => (
@@ -168,9 +179,10 @@ export default async function IdeasPage({
                         upvotedByMe={false}
                         canUpvote={false}
                         votingClosed
-                        ship={ship ? { note: ship.note, link: ship.link, markedLabel: markedBuiltLabel(ship.shippedAt) } : null}
-                        noRecordLine={ship ? undefined : BUILT_WITHOUT_RECORD_LINE}
+                        ship={ship ? { note: ship.note, link: ship.link, markedLabel: markedBuiltFor(locale, ship.shippedAt) } : null}
+                        noRecordLine={ship ? undefined : builtWithoutRecordFor(locale)}
                         createdAt={row.createdAt.toISOString()}
+                        labels={cardLabels}
                       />
                     </li>
                   ))}
@@ -179,13 +191,13 @@ export default async function IdeasPage({
             )}
 
             <section className="mt-8" aria-labelledby="ideas-open">
-              <h2 id="ideas-open" className="text-base font-semibold text-ink-900">Still open</h2>
+              <h2 id="ideas-open" className="text-base font-semibold text-ink-900">{C.openHeading}</h2>
               <p className="mt-1 text-xs text-ink-600">
-                {userId ? "Upvote the ones you want built next." : "Sign in to upvote the ones you want built next."}
+                {userId ? C.upvoteHint : C.upvoteHintSignedOut}
               </p>
               {open.length === 0 ? (
                 <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white p-4 text-center text-sm text-ink-500">
-                  No open ideas in this area. Suggest one from the pill at the bottom-right of any page.
+                  {C.emptyOpen}
                 </p>
               ) : (
                 <ul className="mt-3 space-y-3">
@@ -204,6 +216,7 @@ export default async function IdeasPage({
                         upvotedByMe={myUpvotes.has(r.id)}
                         canUpvote={!!userId}
                         createdAt={r.createdAt.toISOString()}
+                        labels={cardLabels}
                       />
                     </li>
                   ))}
@@ -214,7 +227,7 @@ export default async function IdeasPage({
         )}
 
         <p className="mt-10 text-center text-xs text-ink-400">
-          {built.length} built · {open.length} open shown.
+          {fillTemplate(C.footer, { built: built.length, open: open.length })}
         </p>
       </section>
     </main>

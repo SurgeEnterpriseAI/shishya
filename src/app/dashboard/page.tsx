@@ -696,7 +696,7 @@ async function renderDashboard(searchParams: Promise<{ joined?: string }>) {
         {/* You asked — we built it: ideas this student suggested, or upvoted
             before they were built, marked built in the last 30 days. Renders
             nothing otherwise (no generic marketing, no counts). */}
-        <YouAskedWeBuilt userId={userId} />
+        <YouAskedWeBuilt locale={locale} userId={userId} />
 
         {/* Enrollment hardening (retention data: 0% of never-enrolled users
             EVER return; ~20% of signups slip through without picking an
@@ -820,7 +820,7 @@ async function renderDashboard(searchParams: Promise<{ joined?: string }>) {
             stuck at 14%; this is the daily reason-to-return). Weakest
             topic first; adaptive fallback until mastery data exists. */}
         {enrollments.length > 0 && (
-          <DailyFiveCard
+          <DailyFiveCard locale={locale}
             examCode={(dailyPick?.topicCode ? dailyPick.examCode : null) ?? weakest3[0]?.exam.code ?? recommendedExam?.code ?? enrollments[0].exam.code}
             examShort={(dailyPick?.topicCode ? dailyPick.examShort : null) ?? weakest3[0]?.exam.shortName ?? recommendedExam?.short ?? enrollments[0].exam.shortName}
             topicCode={dailyPick ? dailyPick.topicCode : (weakest3[0]?.topic.code ?? null)}
@@ -1182,7 +1182,7 @@ async function renderDashboard(searchParams: Promise<{ joined?: string }>) {
           <section className="mt-10" data-onboard="explore">
             <h2 className="text-base font-semibold text-ink-800">{t("dash.explore")}</h2>
             <div className="mt-4">
-              <ExamPicker
+              <ExamPicker locale={locale}
                 exams={otherExamCards}
                 enrolled={enrolledPickerExams}
                 states={stateInfo}
@@ -1239,7 +1239,7 @@ async function renderDashboard(searchParams: Promise<{ joined?: string }>) {
             dashboard. Turns an engaged user into a recruiter; how
             "Shishya = govt exams" spreads through WhatsApp prep groups. */}
         {enrollments.length > 0 && (
-          <InviteFriendsCard
+          <InviteFriendsCard locale={locale}
             examShort={weakest3[0]?.exam.shortName ?? recommendedExam?.short ?? enrollments[0].exam.shortName}
             examCode={weakest3[0]?.exam.code ?? recommendedExam?.code ?? enrollments[0].exam.code}
             firstName={session.user.name?.split(" ")[0] ?? null}

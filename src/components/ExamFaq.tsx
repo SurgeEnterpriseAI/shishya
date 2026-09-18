@@ -17,6 +17,13 @@
 // syllabus/notification, admin-validated before going live, and
 // re-checked when a student reports one. PYQ sets are PYQ-pattern
 // (freshly worded in that year's pattern), never "the paper".
+//
+// 16 Sep 2026: the four answers follow the reader's language on the /hi and
+// /te hub twins (src/lib/exam-hub-copy.ts). The visible accordion and the
+// FAQPage JSON-LD are still built from the SAME data, so they can never
+// disagree; English output is unchanged.
+
+import { examHubCopy, fillHub, hubDuration } from "@/lib/exam-hub-copy";
 
 interface FaqItem {
   q: string;
@@ -30,6 +37,7 @@ export function ExamFaq({
   pyqYears,
   durationMin,
   hasOfficialPapers = false,
+  locale,
 }: {
   examShortName: string;
   examName: string;
@@ -39,19 +47,22 @@ export function ExamFaq({
   durationMin?: number | null;
   /** The conducting body's own question papers are linked on the hub (official-papers-db). */
   hasOfficialPapers?: boolean;
+  /** The hub body's language (getT().locale). Defaults to English. */
+  locale?: string;
 }) {
+  const C = examHubCopy(locale);
   const faqs: FaqItem[] = [];
 
   // Always true — Shishya is free; the question pipeline is stated as it is.
   faqs.push({
-    q: `Is Shishya free for ${examShortName} preparation?`,
-    a: `Yes. Every ${examShortName} mock test, PYQ-pattern paper and study tool on Shishya is completely free — no subscription and no credit card. Questions are AI-generated, grounded in the official syllabus and notification, validated by Shishya's admin team before they go live, and re-checked whenever a student reports one.`,
+    q: fillHub(C.faqFreeQ, { short: examShortName }),
+    a: fillHub(C.faqFreeA, { short: examShortName }),
   });
 
   if (questionCount > 0) {
     faqs.push({
-      q: `How many ${examShortName} practice questions does Shishya have?`,
-      a: `Shishya has ${questionCount.toLocaleString("en-IN")} admin-validated ${examShortName} practice questions (AI-generated and source-grounded; any question a student reports is re-checked), available as adaptive mock tests with a worked solution for every question.`,
+      q: fillHub(C.faqCountQ, { short: examShortName }),
+      a: fillHub(C.faqCountA, { count: questionCount.toLocaleString("en-IN"), short: examShortName }),
     });
   }
 
@@ -62,26 +73,23 @@ export function ExamFaq({
         ? `${sorted[sorted.length - 1]}–${sorted[0]}`
         : `${sorted[0]}`;
     faqs.push({
-      q: `Are ${examShortName} previous year question papers available?`,
+      q: fillHub(C.faqPyqQ, { short: examShortName }),
       // Both names (15 Sep 2026): the official papers where the conducting
       // body published them, and the PYQ-pattern practice sets, each named
       // for what it is.
-      a: hasOfficialPapers
-        ? `Yes. The official ${examShortName} previous year papers the conducting body published are linked on this page, and Shishya has free PYQ-pattern practice papers covering ${range} (${pyqYears.length} ${pyqYears.length === 1 ? "year" : "years"}) — questions freshly worded in the pattern of each year's paper, not the paper itself; each year's page shows how many questions it holds against the real paper's count. Each is a timed practice set with full solutions.`
-        : `Shishya has free ${examShortName} previous year paper practice: PYQ-pattern papers covering ${range} (${pyqYears.length} ${pyqYears.length === 1 ? "year" : "years"}) — questions freshly worded in the pattern of each year's paper, not the paper itself; each year's page shows how many questions it holds against the real paper's count. Each is a timed practice set with full solutions.`,
+      a: fillHub(hasOfficialPapers ? C.faqPyqOfficialA : C.faqPyqA, {
+        short: examShortName,
+        range,
+        n: pyqYears.length,
+        yearWord: pyqYears.length === 1 ? C.faqYearOne : C.faqYearMany,
+      }),
     });
   }
 
   if (durationMin && durationMin > 0) {
-    const h = Math.floor(durationMin / 60);
-    const m = durationMin % 60;
-    const dur =
-      h > 0
-        ? `${h} hour${h > 1 ? "s" : ""}${m ? ` ${m} minutes` : ""}`
-        : `${m} minutes`;
     faqs.push({
-      q: `How long is the ${examShortName} exam?`,
-      a: `The ${examName} (${examShortName}) runs for ${dur}. Shishya's mock tests mirror this duration so you can practise under real exam-time pressure.`,
+      q: fillHub(C.faqLengthQ, { short: examShortName }),
+      a: fillHub(C.faqLengthA, { name: examName, short: examShortName, dur: hubDuration(C, durationMin) }),
     });
   }
 
@@ -109,7 +117,7 @@ export function ExamFaq({
         id="exam-faq-heading"
         className="text-base font-semibold text-ink-800"
       >
-        {examShortName} — Frequently asked questions
+        {fillHub(C.faqHeading, { short: examShortName })}
       </h2>
       <div className="mt-3 space-y-2">
         {faqs.map((f, i) => (

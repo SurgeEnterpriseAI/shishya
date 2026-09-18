@@ -31,10 +31,22 @@
 // to come (founder rule, 11 Sep 2026). A row in another calendar year, or
 // more than 60 days behind us, carries its year ("14 Sept 2025 (official)")
 // so last cycle's sitting never reads as this year's paper.
+//
+// Language (16 Sep 2026): the BODY copy — badge, H1, tagline, "On this
+// page" list, empty state — follows the reader: phaseArticleCopy and
+// examDayClaim take an optional translator (phase.* keys, en + hi + te).
+// Without one they return the exact English sentences they always did, and
+// phaseArticleMeta never takes one: the <title> and description of /live
+// and /reactions stay English on purpose (their canonical is the English
+// URL). tests/unit/i18n-phase-copy.test.ts pins the English byte for byte.
 
 import { computeExamWeekState } from "@/lib/exam-week";
 import { buildTimeline, type SourceTier, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
-import { tk, type StringKey } from "@/lib/i18n";
+import { fillTemplate, tk, type StringKey } from "@/lib/i18n";
+
+/** How a caller turns a dictionary key into a sentence. English by default. */
+export type PhaseCopyT = (key: StringKey) => string;
+const EN_T: PhaseCopyT = (key) => tk(key, "en");
 
 const TIER_KEY: Record<SourceTier, StringKey> = {
   official: "ew.tier.official",
@@ -91,7 +103,16 @@ export interface ExamDayClaim {
   runUp: boolean;
 }
 
-export function examDayClaim(rows: TimelineInput[], officialUrl: string | null, now: Date = new Date()): ExamDayClaim {
+/** `lang` localises the tier word and the day label inside `dated`
+ *  ("13 सित॰ (आधिकारिक)"); omitted — as generateMetadata omits it — the
+ *  claim is English, byte for byte. */
+export function examDayClaim(
+  rows: TimelineInput[],
+  officialUrl: string | null,
+  now: Date = new Date(),
+  lang?: { t: PhaseCopyT; locale: string },
+): ExamDayClaim {
+  const t = lang?.t ?? EN_T;
   const typed = rows.filter((r) => typeof r.kind === "string" && r.kind.length > 0);
   const state = computeExamWeekState(typed, officialUrl, now);
   let row = state.focus;
@@ -102,7 +123,7 @@ export function examDayClaim(rows: TimelineInput[], officialUrl: string | null, 
   const announced = state.tier != null && state.tier !== "expected";
   return {
     row,
-    dated: row ? datedWithTier(row, tk(TIER_KEY[row.tier]), tk("tracker.passedEstimate")) : null,
+    dated: row ? datedWithTier(row, t(TIER_KEY[row.tier]), t("tracker.passedEstimate"), lang?.locale ?? "en") : null,
     // "window" is deliberately in NEITHER claim (review, 6 Sep): a window is
     // any chain of typed exam days ≤14 days apart, so a window day is a day
     // with NO sitting — "{exam} is happening today" is false, and "{exam} is
@@ -141,31 +162,25 @@ export interface ExamNightSummary {
   article: boolean;
 }
 
-function listJoin(parts: string[]): string {
+function listJoin(parts: string[], and: string = "and"): string {
   if (parts.length <= 1) return parts.join("");
-  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+  return `${parts.slice(0, -1).join(", ")} ${and} ${parts[parts.length - 1]}`;
 }
 
-/** Long-form list of what the page holds, for the tagline / descriptions. */
-function onThisPage(phase: "LIVE" | "REACTIONS", sm: ExamNightSummary): string[] {
+/** Long-form list of what the page holds, for the tagline / descriptions.
+ *  The English values of phase.holds.* are the phrases this function used to
+ *  hold as literals (16 Sep 2026); the meta builder calls it without `t`. */
+function onThisPage(phase: "LIVE" | "REACTIONS", sm: ExamNightSummary, t: PhaseCopyT = EN_T): string[] {
   const parts: string[] = [];
-  if (sm.poll) {
-    parts.push(sm.tally ? "rate the paper in one tap (no login) and see how other students rated it" : "rate the paper in one tap (no login)");
-  }
-  if (sm.keyStatus) parts.push("answer-key and result status from the tracker, every date with its source tier");
-  if (sm.questionPaper) parts.push("the official question paper");
-  if (sm.cutoffEstimate) parts.push("an indicative cutoff estimate (not official)");
-  if (sm.estimator) parts.push("a score estimator for when the answer key is out");
-  if (sm.nextStage) parts.push("the next stage's date");
-  if (sm.pyq) parts.push("PYQ-pattern practice");
-  if (sm.article) {
-    parts.push(
-      phase === "LIVE"
-        ? "difficulty and shift-by-shift notes compiled from public student discussion"
-        : "student consensus compiled from public discussion after the paper",
-    );
-  }
-  parts.push("free email alerts");
+  if (sm.poll) parts.push(sm.tally ? t("phase.holds.pollTally") : t("phase.holds.poll"));
+  if (sm.keyStatus) parts.push(t("phase.holds.keyStatus"));
+  if (sm.questionPaper) parts.push(t("phase.holds.questionPaper"));
+  if (sm.cutoffEstimate) parts.push(t("phase.holds.cutoff"));
+  if (sm.estimator) parts.push(t("phase.holds.estimator"));
+  if (sm.nextStage) parts.push(t("phase.holds.nextStage"));
+  if (sm.pyq) parts.push(t("phase.holds.pyq"));
+  if (sm.article) parts.push(phase === "LIVE" ? t("phase.holds.articleLive") : t("phase.holds.articleReact"));
+  parts.push(t("phase.holds.alerts"));
   return parts;
 }
 
@@ -184,8 +199,12 @@ export interface PhaseArticleCopy {
   /** Pill text; only LIVE swaps it ("Live — exam day" is itself a claim). */
   badge: string;
   badgeColor: string;
-  /** Stable section name for breadcrumbs / JSON-LD (never phase-dependent). */
+  /** Stable ENGLISH section name for JSON-LD (never phase-dependent, never
+   *  translated — the routes' canonical is the English URL). */
   label: string;
+  /** The same section name in the reader's language, for the visible
+   *  breadcrumb. Equal to `label` in English. */
+  crumb: string;
   /** Under the H1. */
   tagline: string;
   /** H1 when no real article exists. */
@@ -199,73 +218,95 @@ export function phaseArticleCopy(
   examShort: string,
   claim: ExamDayClaim,
   summary?: ExamNightSummary,
+  /** The reader's language; English when omitted. Pass the SAME translator
+   *  to examDayClaim, so `claim.dated` carries the matching tier word. */
+  t: PhaseCopyT = EN_T,
 ): PhaseArticleCopy {
   const s = examShort;
-  const paper = claim.dated ? `the ${s} paper on ${claim.dated}` : `${s}`;
-  if (summary && (phase === "LIVE" || phase === "REACTIONS")) return examNightCopy(phase, s, claim, summary);
+  const dated = claim.dated ?? "";
+  const f = (key: StringKey, vars: Record<string, string | number> = {}) => fillTemplate(t(key), { exam: s, dated, ...vars });
+  const paper = claim.dated ? f("phase.paperOn") : `${s}`;
+  if (summary && (phase === "LIVE" || phase === "REACTIONS")) return examNightCopy(phase, s, claim, summary, t);
   if (phase === "LIVE") {
     return {
-      badge: claim.live ? "🔴 Live — exam day" : "📝 Exam-day analysis",
+      badge: claim.live ? t("phase.badge.live") : t("phase.badge.examDayAnalysis"),
       badgeColor: claim.live ? "bg-rose-100 text-rose-900 border-rose-300" : "bg-ink-100 text-ink-800 border-ink-300",
       label: "Live — exam day",
+      crumb: t("phase.label.live"),
       tagline: claim.live
-        ? `${s} is happening today. Live difficulty and shift-by-shift analysis, compiled from public student discussion (Reddit, news, YouTube comments) during the exam window.`
-        : `Exam-day coverage for ${paper}: difficulty and shift-by-shift analysis, compiled from public student discussion during the exam window.${claim.dated ? "" : " No typed exam date is on our tracker yet."}`,
-      fallbackTitle: claim.live ? `${s} — live exam-day analysis` : `${s} — exam-day analysis${claim.dated ? ` (${claim.dated} paper)` : ""}`,
-      emptyBody: `Live coverage for ${s} appears once students step out of the centre and real reactions exist in public discussion — first impressions, difficulty signals, section-wise complaints. Nothing is published before that, and never from fewer than two cited sources.`,
+        ? f("phase.live.tagline.today")
+        : `${f("phase.live.tagline.dated", { paper })}${claim.dated ? "" : ` ${t("phase.noTypedDate")}`}`,
+      fallbackTitle: claim.live ? f("phase.live.title.today") : claim.dated ? f("phase.live.title.dated") : f("phase.live.title.plain"),
+      emptyBody: f("phase.live.empty"),
     };
   }
   if (phase === "REACTIONS") {
     return {
-      badge: "📊 Post-exam reactions",
+      badge: t("phase.badge.reactions"),
       badgeColor: "bg-sky-100 text-sky-900 border-sky-300",
       label: "Post-exam reactions",
-      tagline: claim.held
-        ? `${s} is done — here's the verdict. Student consensus on difficulty, expected cutoff, answer-key analysis and "did you get Q-34?" threads.`
-        : `Post-exam reactions for ${paper}: student consensus on difficulty, expected cutoff and answer-key analysis, compiled from public discussion after the paper.`,
-      fallbackTitle: claim.held ? `${s} — post-exam reactions` : `${s} — post-exam reactions${claim.dated ? ` (${claim.dated} paper)` : ""}`,
-      emptyBody: `Post-exam analysis for ${s} is compiled from public student discussion after the paper — expected cutoff, difficulty breakdown, answer-key analysis. It appears here once real reactions exist (at least two cited sources), not before.`,
+      crumb: t("phase.label.reactions"),
+      tagline: claim.held ? f("phase.react.tagline.held") : f("phase.react.tagline.dated", { paper }),
+      fallbackTitle: !claim.held && claim.dated ? f("phase.react.title.dated") : f("phase.react.title.plain"),
+      emptyBody: f("phase.react.empty"),
     };
   }
   return {
-    badge: "📋 Last-minute checklist",
+    badge: t("chk.badge"),
     badgeColor: "bg-amber-100 text-amber-900 border-amber-300",
     label: "Last-minute checklist",
-    tagline: claim.runUp && claim.dated
-      ? `${s} is on ${claim.dated}. Here's the cheat-sheet to revise — what to carry, last-mile topics, formulae, mock targets.`
-      : `Last-minute checklist for ${paper} — what to carry, last-mile topics, formulae, mock targets.`,
-    fallbackTitle: `${s} — last-minute checklist${claim.dated ? ` (exam ${claim.dated})` : ""}`,
-    emptyBody: `We're putting together the last-minute checklist for ${s}. Check back closer to the exam date — we compile it from the official notice and past papers as the date nears.`,
+    crumb: t("chk.crumb.self"),
+    tagline: claim.runUp && claim.dated ? f("phase.chk.tagline.dated") : f("phase.chk.tagline.plain", { paper }),
+    fallbackTitle: claim.dated ? f("phase.chk.title.dated") : f("chk.h1"),
+    emptyBody: f("phase.chk.empty"),
   };
 }
 
 /** Exam-night copy: the lead sentence is the claim (today / held / dated),
  *  the rest names only what the page renders. */
-function examNightCopy(phase: "LIVE" | "REACTIONS", s: string, claim: ExamDayClaim, sm: ExamNightSummary): PhaseArticleCopy {
-  const noDate = `No typed ${s} exam date is on our tracker yet.`;
-  const holds = `On this page: ${listJoin(onThisPage(phase, sm))}.`;
+function examNightCopy(
+  phase: "LIVE" | "REACTIONS",
+  s: string,
+  claim: ExamDayClaim,
+  sm: ExamNightSummary,
+  t: PhaseCopyT = EN_T,
+): PhaseArticleCopy {
+  const dated = claim.dated ?? "";
+  const f = (key: StringKey) => fillTemplate(t(key), { exam: s, dated });
+  const noDate = f("phase.noTypedDateOf");
+  const holds = fillTemplate(t("phase.onThisPage"), { list: listJoin(onThisPage(phase, sm, t), t("phase.listAnd")) });
   // With nothing above the article but the facts block, the empty state is
   // not rendered on these routes (hideEmpty); this text is only a fallback.
-  const emptyBody = `The write-up compiled from public student discussion appears here once it cites at least two real sources and names the ${s} paper.`;
+  const emptyBody = f("phase.night.empty");
   if (phase === "LIVE") {
-    const lead = claim.live ? `${s} is happening today, ${claim.dated}.` : claim.dated ? `The ${s} paper on ${claim.dated}.` : noDate;
+    const lead = claim.live ? f("phase.night.live.today") : claim.dated ? f("phase.night.paperOn") : noDate;
     return {
-      badge: claim.live ? "🔴 Live — exam day" : "📝 Exam day",
+      badge: claim.live ? t("phase.badge.live") : t("phase.badge.examDay"),
       badgeColor: claim.live ? "bg-rose-100 text-rose-900 border-rose-300" : "bg-ink-100 text-ink-800 border-ink-300",
       label: "Live — exam day",
+      crumb: t("phase.label.live"),
       tagline: `${lead} ${holds}`,
-      fallbackTitle: claim.live ? `${s} — exam day today` : `${s} — exam day${claim.dated ? ` (${claim.dated} paper)` : ""}`,
+      fallbackTitle: claim.live
+        ? f("phase.night.live.titleToday")
+        : claim.dated
+          ? f("phase.night.live.titleDated")
+          : f("phase.night.live.titlePlain"),
       emptyBody,
     };
   }
   const reacts = sm.poll || sm.tally || sm.article;
-  const lead = claim.held ? `The ${s} paper on ${claim.dated} has been held.` : claim.dated ? `The ${s} paper on ${claim.dated}.` : noDate;
+  const lead = claim.held ? f("phase.night.react.held") : claim.dated ? f("phase.night.paperOn") : noDate;
   return {
-    badge: reacts ? "📊 Post-exam reactions" : "📊 After the paper",
+    badge: reacts ? t("phase.badge.reactions") : t("phase.badge.afterPaper"),
     badgeColor: "bg-sky-100 text-sky-900 border-sky-300",
     label: "Post-exam reactions",
+    crumb: t("phase.label.reactions"),
     tagline: `${lead} ${holds}`,
-    fallbackTitle: claim.held ? `${s} — after the ${claim.dated} paper` : `${s} — after the paper${claim.dated ? ` (${claim.dated} paper)` : ""}`,
+    fallbackTitle: claim.held
+      ? f("phase.night.react.titleHeld")
+      : claim.dated
+        ? f("phase.night.react.titleDated")
+        : f("phase.night.react.titlePlain"),
     emptyBody,
   };
 }

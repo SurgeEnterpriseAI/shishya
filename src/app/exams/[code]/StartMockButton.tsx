@@ -27,6 +27,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchSignedIn } from "@/lib/session-hint";
+import { clientUiLocale, type CopyLocale } from "@/lib/ui-locale-copy";
+import { mockStartCopy } from "@/lib/quiz-entry-copy";
 
 // First-party analytics beacon (same shape as ShareExamButton) — the 401
 // path is counted so the audit can see how much mock intent the wall
@@ -94,10 +96,14 @@ export function StartMockButton({
   examCode,
   hasHistory,
   labels,
+  locale,
 }: {
   examCode: string;
   hasHistory: boolean;
   labels: Labels;
+  /** The hub page's locale when it passes one (16 Sep 2026); without it
+   *  the two error lines follow the shishya-lang cookie, read after mount. */
+  locale?: string;
 }) {
   const router = useRouter();
   // The hub page renders per request (it reads the session), so this needs
@@ -108,6 +114,15 @@ export function StartMockButton({
   const [err, setErr] = useState<string | null>(null);
   // Default to 10 questions — the previous instant-15 was the wall.
   const [count, setCount] = useState<number>(10);
+  // The two error lines in the student's language (16 Sep 2026). The hub
+  // page passes its `locale`; until it does (it is outside this partition)
+  // the cookie is read here after mount. Both lines only ever appear after a
+  // click, and the API's own error string still wins when it sends one.
+  const [cookieLocale, setCookieLocale] = useState<CopyLocale>("en");
+  useEffect(() => {
+    if (locale == null) setCookieLocale(clientUiLocale());
+  }, [locale]);
+  const errCopy = mockStartCopy(locale ?? cookieLocale);
 
   async function start(kind: "DIAGNOSTIC" | "ADAPTIVE", n?: number) {
     setErr(null);
@@ -134,13 +149,13 @@ export function StartMockButton({
       }
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.mock?.id) {
-        setErr(data?.error ?? "Could not start mock");
+        setErr(data?.error ?? errCopy.errStart);
         setBusy(false);
         return;
       }
       router.push(`/mocks/${data.mock.id}`);
     } catch {
-      setErr("Network hiccup — try again.");
+      setErr(errCopy.errNetwork);
       setBusy(false);
     }
   }

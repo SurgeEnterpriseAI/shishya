@@ -3,6 +3,16 @@
 // page: "how to prepare for [exam] without coaching", "[exam] study
 // plan", "is [exam] tough", "[exam] salary". Data: ExamGuide (one
 // AI-curated markdown doc + parsed FAQ). PUBLIC + cached.
+//
+// Cache pilot (16 Sep 2026): this page and /tricks are the first exam pages
+// to render statically (ISR; the effective window is 10 minutes, see
+// generateStaticParams below). No cookies(), headers(), auth() or
+// getT() anywhere in the render — the language comes from the URL, and the
+// /hi and /te twins are src/app/(cache-pilot)/[lang]/exams/[code]/guide.
+// Because the render is cached, a failed content read THROWS (never a
+// cached 404), and the /syllabus link, the mock line and the daily-plan
+// (coach) lines follow src/lib/exam-page-gates.ts like every other exam
+// surface.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -13,10 +23,38 @@ import { NotesMarkdown } from "@/components/NotesMarkdown";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { CoachEntry } from "@/components/CoachEntry";
-import { getT } from "@/lib/i18n-server";
+import { tFor } from "@/lib/i18n-server";
+import { pilotPageLocale } from "@/lib/cache-pilot-routes";
+import { examPageGates } from "@/lib/exam-page-gates";
 import { StateExamsLink } from "@/components/StateExamsLink";
 
 export const revalidate = 3600;
+
+// Safety net (16 Sep 2026, cache pilot). Because the route is ISR, a
+// request-scoped call that slips into this render tree later (cookies(),
+// headers(), auth(), getT()) would not quietly make the page dynamic again:
+// in production Next throws "Page changed from static to dynamic at runtime"
+// — HTTP 500 on every guide and tricks URL — while `next dev` and
+// `next build` stay green (nothing is rendered at build time). With
+// force-static those calls return empty values instead: the render is the
+// anonymous English one, it stays cacheable, and no cookie- or
+// session-dependent content can ever reach the cached HTML.
+// tests/unit/cache-pilot-routes.test.ts is what flags such a call.
+export const dynamic = "force-static";
+
+// Cache pilot (16 Sep 2026): a dynamic route with no generateStaticParams is
+// rendered on every request, so the revalidate above never took effect and
+// each hit was a full render against Neon (Cache-Control: private,
+// no-store). An empty list renders each code on its first visit and serves
+// it from the ISR cache (one hour at most; the page-gates read in the render
+// is cached for 10 minutes and Next takes the shortest window it sees, so
+// the effective window is 10 minutes). The language comes from the URL
+// (the /hi and /te twins are the [lang] routes in src/app/(cache-pilot)),
+// never from the cookie or the session, so the cached HTML is the same for
+// every visitor — see src/lib/cache-pilot-routes.ts.
+export function generateStaticParams() {
+  return [];
+}
 
 const YEAR = new Date().getFullYear();
 
@@ -64,8 +102,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function GuidePage({ params }: { params: Promise<{ code: string }> }) {
-  const { code } = await params;
+export default async function GuidePage({ params }: { params: Promise<{ code: string; lang?: string }> }) {
+  const { code, lang } = await params;
+  // The body's language is the URL's: none for /exams/…, hi / te for the
+  // twins. Anything else is not a twin prefix.
+  const locale = pilotPageLocale(lang);
+  if (!locale) notFound();
   const exam = await prisma.exam.findUnique({
     where: { code },
     select: { id: true, code: true, shortName: true, name: true, active: true, state: true },
@@ -74,13 +116,29 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
 
   // Raw SQL keeps this independent of client typegen (same pattern as
   // cutoff/tricks) — ships before/without a client regen.
-  const rows = await prisma
-    .$queryRaw<{ content: string; faq: { q: string; a: string }[] | null }[]>`
+  // No catch on this read (16 Sep 2026, cache pilot): the render is cached,
+  // so a swallowed DB error would become notFound() and the 404 would be
+  // stored for the whole URL, replacing a good copy. A failed read throws
+  // instead — Next keeps serving the last good page and never caches the
+  // failure — and notFound() is only for a read that found no guide. That
+  // 404 is stored like any render: see "What a stored copy means for a NEW
+  // guide/tricks row" in src/lib/cache-pilot-routes.ts.
+  // Gates (16 Sep 2026, src/lib/exam-page-gates.ts): the /syllabus button
+  // and the mock line below appear only where that page / a question bank
+  // exists; a failed gate read keeps both (GATES_OPEN), it never throws.
+  // The daily-plan lines (CoachEntry and the closing sentence) follow the
+  // syllabus gate too: the coach builds each day from the exam's topics
+  // (src/lib/coach-plan.ts), and the 12 active exams with no Subject rows
+  // have none — their plan would hold nothing but the Daily-5 slot.
+  const [rows, gates] = await Promise.all([
+    prisma.$queryRaw<{ content: string; faq: { q: string; a: string }[] | null }[]>`
       SELECT content, faq FROM "ExamGuide" WHERE "examId" = ${exam.id} LIMIT 1
-    `.catch(() => [] as { content: string; faq: { q: string; a: string }[] | null }[]);
+    `,
+    examPageGates(exam.code),
+  ]);
   const guideMd = rows[0]?.content;
   if (!guideMd) notFound();
-  const { t, locale } = await getT();
+  const t = tFor(locale);
   const faq = Array.isArray(rows[0]?.faq) ? rows[0]!.faq! : [];
 
   const url = `https://shishya.in/exams/${exam.code}/guide`;
@@ -175,25 +233,29 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
         </p>
 
         {/* Reading strategy is the easy half; the coach turns it into
-            the daily execution that actually crack exams. */}
-        <CoachEntry examCode={exam.code} examShort={exam.shortName} variant="guide" />
+            the daily execution that actually crack exams. Only where the
+            exam has topics to plan from (16 Sep 2026). */}
+        {gates.syllabus && <CoachEntry examCode={exam.code} examShort={exam.shortName} variant="guide" />}
 
         <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
           <p className="text-base font-bold text-ink-900">Start your {exam.shortName} prep now — free</p>
           <p className="mt-1 text-sm text-ink-600">
-            Take a free mock, get your weak topics, and follow a daily plan. No coaching fees, in
-            your language.
+            {gates.buildMock
+              ? "Take a free mock, get your weak topics, and follow a daily plan. No coaching fees, in your language."
+              : "No coaching fees."}
           </p>
           <div className="mt-3 flex flex-wrap gap-3">
             <Link href={`/exams/${exam.code}`} className="btn-primary !py-2 !px-4 text-sm">
               Start free preparation →
             </Link>
-            <Link
-              href={`/exams/${exam.code}/syllabus`}
-              className="inline-flex items-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 hover:bg-saffron-50"
-            >
-              See the full syllabus →
-            </Link>
+            {gates.syllabus && (
+              <Link
+                href={`/exams/${exam.code}/syllabus`}
+                className="inline-flex items-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 hover:bg-saffron-50"
+              >
+                See the full syllabus →
+              </Link>
+            )}
           </div>
         </div>
       </section>

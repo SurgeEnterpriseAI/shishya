@@ -11,10 +11,12 @@
 //   5. Weakness map        → per-topic mastery surfaces
 //   6. AI tutor            → ask Shishya anything
 //
-// All six are pure markup — no client logic. They live in a server
-// component so they're SEO-indexable and add zero JS weight.
+// Pure markup — no client logic. They live in a server component so
+// they're SEO-indexable and add zero JS weight. Five cards render (flow 1
+// is the goal picker above them), so the heading names no count (16 Sep 2026).
 
 import Link from "next/link";
+import { homeStripCopy, type HomeStripCopy } from "@/lib/home-strip-copy";
 
 interface CardSpec {
   icon: string;
@@ -25,45 +27,21 @@ interface CardSpec {
   href: string;
 }
 
-const CARDS: CardSpec[] = [
-  {
-    icon: "🎓",
-    title: "Your personal coach",
-    body:
-      "A day-by-day plan to your exam date, rebuilt every morning around what you actually did. Miss a day and it re-organises — no backlog, no guilt.",
-    href: "/coach",
-  },
-  {
-    icon: "📚",
-    title: "Previous year papers",
-    body:
-      "PYQ-pattern papers for every exam — questions modelled on each year's paper, organised by year and topic. Practise the pattern that actually appears.",
-    href: "/dashboard",
-  },
-  {
-    icon: "⚙️",
-    title: "Adaptive mocks",
-    body:
-      "Each next mock targets the topics you got wrong last time. Less time on what you've already mastered, more on what's blocking your score.",
-    href: "/dashboard",
-  },
-  {
-    icon: "📊",
-    title: "Weakness map",
-    body:
-      "Per-topic mastery score that updates with every attempt. See exactly which 3 topics deserve tomorrow's hour — no vague percentile.",
-    href: "/dashboard",
-  },
-  {
-    icon: "💬",
-    title: "AI tutor on tap",
-    body:
-      "Ask Shishya anything — knows your syllabus, your weak topics and every mock you've taken. Answers in English or your language.",
-    href: "/chat",
-  },
+// 16 Sep 2026: the card copy comes from src/lib/home-strip-copy.ts so the /hi
+// and /te twins of "/" read in the visitor's language. English is unchanged,
+// and the PYQ card keeps saying "PYQ-pattern … modelled on each year's paper"
+// in every locale.
+const cardsFor = (C: HomeStripCopy): CardSpec[] => [
+  { icon: "🎓", title: C.featCoachTitle, body: C.featCoachBody, href: "/coach" },
+  { icon: "📚", title: C.featPyqTitle, body: C.featPyqBody, href: "/dashboard" },
+  { icon: "⚙️", title: C.featAdaptiveTitle, body: C.featAdaptiveBody, href: "/dashboard" },
+  { icon: "📊", title: C.featWeaknessTitle, body: C.featWeaknessBody, href: "/dashboard" },
+  { icon: "💬", title: C.featTutorTitle, body: C.featTutorBody, href: "/chat" },
 ];
 
-export function HomeFeatureCards({ signedIn }: { signedIn: boolean }) {
+export function HomeFeatureCards({ signedIn, locale }: { signedIn: boolean; locale?: string }) {
+  const C = homeStripCopy(locale);
+  const CARDS = cardsFor(C);
   // For signed-out visitors the dashboard/chat hrefs are gated, so
   // bounce them through /login with a callbackUrl. Keeps the funnel
   // honest — no broken clicks.
@@ -74,18 +52,15 @@ export function HomeFeatureCards({ signedIn }: { signedIn: boolean }) {
     <section className="mt-20" aria-labelledby="how-shishya-helps">
       <div className="text-center">
         <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
-          How Shishya helps you crack it
+          {C.featKicker}
         </p>
         <h2
           id="how-shishya-helps"
           className="mt-2 text-2xl font-bold tracking-tight text-ink-900 sm:text-3xl"
         >
-          The six tools you'll actually use
+          {C.featHeading}
         </h2>
-        <p className="mx-auto mt-2 max-w-2xl text-sm text-ink-600">
-          Every prep step a serious aspirant needs, on one free platform —
-          curated for your exam, in your language.
-        </p>
+        <p className="mx-auto mt-2 max-w-2xl text-sm text-ink-600">{C.featSub}</p>
       </div>
 
       {/* Same column math as the goal grid above: lg has 640px of

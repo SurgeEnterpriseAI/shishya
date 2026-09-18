@@ -142,17 +142,22 @@ export default async function OnboardingPage({
     body: t("onb.lang.body"),
     suggested: t("onb.lang.suggested"),
     note: t("onb.lang.note"),
+    // "Step {n} of 4" under the progress bar (16 Sep 2026).
+    step: t("onb.step"),
   };
+  // The intro sentence carries the settings link in its middle; the key
+  // marks the spot with {settings} so each language can place it naturally.
+  const [introBefore, introAfter = ""] = (t("onb.intro") as string).split("{settings}");
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
-          <Link href="/" className="hover:text-ink-800">Home</Link> · Welcome
+          <Link href="/" className="hover:text-ink-800">{t("onb.crumb.home")}</Link> · {t("onb.crumb.welcome")}
         </p>
         <h1 className="mt-2 text-3xl font-bold text-ink-900">
-          Welcome to Shishya 👋
+          {t("onb.h1")}
         </h1>
         {prefill ? (
           <p className="mt-2 max-w-2xl text-sm text-ink-700">
@@ -163,12 +168,11 @@ export default async function OnboardingPage({
           </p>
         ) : (
           <p className="mt-2 max-w-2xl text-sm text-ink-700">
-            Four quick questions so we can show you the right content. Takes
-            about 30 seconds. You can skip and pick later from{" "}
+            {introBefore}
             <Link href="/me/settings" className="text-saffron-700 underline">
-              profile settings
+              {t("onb.intro.settings")}
             </Link>
-            .
+            {introAfter}
           </p>
         )}
 

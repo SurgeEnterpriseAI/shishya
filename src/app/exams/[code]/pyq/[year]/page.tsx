@@ -20,6 +20,7 @@ import { ShareExamButton } from "@/components/ShareExamButton";
 import { PulseAsk } from "@/components/PulseAsk";
 import { StateExamsLink } from "@/components/StateExamsLink";
 import { pyqYearDescription, pyqYearH1, pyqYearHeadline } from "@/lib/pyq-naming";
+import { fillPyq, pyqCopyLocale, pyqYearCopy } from "@/lib/pyq-year-copy";
 
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
@@ -133,6 +134,13 @@ export default async function PYQYearPage({
   const yearNum = parseInt(year, 10);
   if (!Number.isFinite(yearNum)) notFound();
   const { t, locale } = await getT();
+  // 16 Sep 2026: the body of this twin (/hi, /te) now carries the 15 Sep
+  // both-names wording in the reader's language, with the same honesty —
+  // "previous year paper" + "PYQ-pattern", the N-of-M depth, and "not the
+  // original questions". generateMetadata stays English: this page
+  // canonicalises every locale to the English URL.
+  const lc = pyqCopyLocale(locale);
+  const P = pyqYearCopy(lc);
 
   const exam = await prisma.exam.findUnique({ where: { code } });
   // Inactive = seeded ahead of its question bank; not public yet.
@@ -150,7 +158,7 @@ export default async function PYQYearPage({
         <Header />
         <section className="container-prose py-10">
           <p className="text-xs text-ink-500">
-            <Link href={`/exams/${code}`} className="hover:text-ink-800">{exam.shortName}</Link> · PYQ · {yearNum}
+            <Link href={`/exams/${code}`} className="hover:text-ink-800">{exam.shortName}</Link> · {P.crumb} · {yearNum}
           </p>
           <h1 className="mt-1 text-2xl font-bold text-ink-900">{exam.shortName} — {yearNum}</h1>
           <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
@@ -167,13 +175,20 @@ export default async function PYQYearPage({
   // `modelled` is the one sentence every surface on this page uses.
   const partial = isPartialPaper(questions.length, exam.totalQuestions);
   const counts = { n: questions.length, m: exam.totalQuestions, year: yearNum };
-  const modelled = `${questions.length} PYQ-pattern questions modelled on the ${yearNum} paper (which had ${exam.totalQuestions})`;
+  const modelled = fillPyq(P.modelled, { n: questions.length, year: yearNum, m: exam.totalQuestions });
+  // The structured data below stays English in every locale (inLanguage
+  // "en-IN", canonical → the English URL), so its sentence is built from the
+  // English copy — a Hindi clause inside an English FAQ answer is noise to
+  // an answer engine (16 Sep 2026).
+  const modelledEn = fillPyq(pyqYearCopy("en").modelled, { n: questions.length, year: yearNum, m: exam.totalQuestions });
   // The original paper, when the conducting body publishes it (14 Sep 2026):
   // linked to the body's own file, never reproduced (src/lib/official-papers.ts).
   const { loadOfficialPapers } = await import("@/lib/official-papers-db");
   const { formatPdfSize, papersForYear } = await import("@/lib/official-papers");
   const officialForYear = papersForYear(await loadOfficialPapers(exam.id), yearNum);
   const officialPaper = officialForYear.find((r) => r.kind !== "answer key") ?? officialForYear[0] ?? null;
+  // "Ask Shishya — your free AI tutor — …", split at the first "Shishya".
+  const tutorBodyParts = fillPyq(P.tutorBody, { short: exam.shortName, year: yearNum }).split("Shishya");
   // A real question paper (not only an answer key) for this year.
   const hasOfficialQuestionPaper = officialForYear.some((r) => r.kind !== "answer key");
   const officialPaperNote = officialPaper
@@ -311,7 +326,7 @@ export default async function PYQYearPage({
         acceptedAnswer: {
           "@type": "Answer",
           text:
-            `At ${pageUrl} you can solve ${exam.shortName} ${modelled} free. Shishya does not reproduce the original paper: every question is freshly worded in that year's pattern — same topics, style and difficulty, new wording and numbers` +
+            `At ${pageUrl} you can solve ${exam.shortName} ${modelledEn} free. Shishya does not reproduce the original paper: every question is freshly worded in that year's pattern — same topics, style and difficulty, new wording and numbers` +
             (partial ? `, and this set covers ${questions.length} of the paper's ${exam.totalQuestions} questions, not the whole paper` : ", at the real paper's full length") +
             `. They run as a timed mock with instant scoring, step-by-step solutions and topic-wise weak-area analysis. No fee and no coaching enrolment needed.` +
             officialPaperNote,
@@ -363,24 +378,22 @@ export default async function PYQYearPage({
         <p className="text-xs text-ink-500">
           <Link href={`/exams/${code}`} className="hover:text-ink-800">{exam.shortName}</Link> · {t("exam.pyq.title")} · {yearNum}
         </p>
-        <h1 className="mt-1 text-3xl font-bold text-ink-900">{pyqYearH1(exam.shortName, yearNum, hasOfficialQuestionPaper)}</h1>
+        <h1 className="mt-1 text-3xl font-bold text-ink-900">{pyqYearH1(exam.shortName, yearNum, hasOfficialQuestionPaper, lc)}</h1>
         <p className="mt-1 text-sm text-ink-600">
           {/* "20 PYQ-pattern questions modelled on the 2023 paper (which
               had 150) · 60 minutes" — the student knows exactly what they
-              are getting before they start. English on every locale: the
-              i18n line (exam.pyq.partialLine) still says "previous-year
-              questions", which is the claim this page must not make. */}
+              are getting before they start. Built from pyq-year-copy.ts in
+              every locale (16 Sep 2026), never from the i18n line
+              exam.pyq.partialLine, which still says "previous-year
+              questions" — the claim this page must not make. */}
           {modelled} · {exam.durationMin} {t("exam.minutes")}
         </p>
-        <p className="mt-2 max-w-3xl text-xs text-ink-500">
-          Every question here is freshly worded in the pattern of the {yearNum} paper — same topics, style and
-          difficulty — not the original questions, which Shishya does not reproduce.
-        </p>
+        <p className="mt-2 max-w-3xl text-xs text-ink-500">{fillPyq(P.freshNote, { year: yearNum })}</p>
         <StateExamsLink state={exam.state} label={t("exam.state.more")} locale={locale} />
         {officialForYear.length > 0 && (
           <div id="official-paper" className="mt-3 max-w-3xl rounded-md border border-ink-200 bg-white p-3">
             <p className="text-sm font-semibold text-ink-900">
-              The original {yearNum} paper, as {officialForYear[0].publisher} published it
+              {fillPyq(P.officialHeading, { year: yearNum, publisher: officialForYear[0].publisher })}
             </p>
             <ul className="mt-1 space-y-1">
               {officialForYear.map((r) => (
@@ -394,7 +407,7 @@ export default async function PYQYearPage({
                     {r.paper} ↗
                   </a>
                   <span className="text-xs text-ink-500">
-                    {[r.kind, r.language, r.scan ? "scanned PDF" : "PDF", formatPdfSize(r.bytes)]
+                    {[r.kind, r.language, r.scan ? P.scannedPdf : P.pdf, formatPdfSize(r.bytes)]
                       .filter(Boolean)
                       .map((s) => ` · ${s}`)
                       .join("")}
@@ -408,7 +421,7 @@ export default async function PYQYearPage({
         <div className="mt-4">
           <ShareExamButton
             url={`https://shishya.in/exams/${code}/pyq/${yearNum}`}
-            message={`${exam.shortName} ${yearNum}: ${modelled} — solve them free on Shishya, ${partial ? "instant score" : "full-length timed mock, instant score"}:`}
+            message={fillPyq(partial ? P.sharePartial : P.shareFull, { short: exam.shortName, year: yearNum, modelled })}
             surface="pyq"
           />
         </div>
@@ -421,25 +434,23 @@ export default async function PYQYearPage({
               <div>
                 <p className="text-sm font-semibold text-ink-900">
                   {partial
-                    ? `Solve these ${questions.length} ${yearNum}-pattern questions as a timed mock — free`
-                    : `Solve this ${yearNum}-pattern paper as a full-length timed mock — free`}
+                    ? fillPyq(P.ctaPartial, { n: questions.length, year: yearNum })
+                    : fillPyq(P.ctaFull, { year: yearNum })}
                 </p>
-                <p className="mt-0.5 text-xs text-ink-500">
-                  {modelled} · instant scoring · topic-wise analysis. Sign in free to attempt and track your progress.
-                </p>
+                <p className="mt-0.5 text-xs text-ink-500">{fillPyq(P.ctaBody, { modelled })}</p>
               </div>
               <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
                 <Link
                   href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}`}
                   className="btn-primary text-center"
                 >
-                  Sign in free &amp; start →
+                  {P.ctaSignIn}
                 </Link>
                 <Link
                   href={`/exams/${code}/quiz`}
                   className="text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"
                 >
-                  or try a 5-question quiz first — no signup
+                  {P.ctaQuiz}
                 </Link>
               </div>
             </div>
@@ -456,7 +467,8 @@ export default async function PYQYearPage({
               <p className="mt-0.5 text-xs text-ink-500">
                 {/* The i18n bodies (exam.pyq.startBodyPartial: "This set is
                     {n} of the paper's {m} questions") claim the questions
-                    are the paper's; this English line does not. */}
+                    are the paper's; `modelled` (pyq-year-copy.ts, every
+                    locale) does not. */}
                 {userAttempt?.scorePct != null
                   ? `${t("exam.rank.bestScore")}: ${formatDisplayScorePct(userAttempt.scorePct)}`
                   : exam.negativeMark > 0
@@ -471,7 +483,7 @@ export default async function PYQYearPage({
                 {t("exam.pyq.resumeBtn")}
               </Link>
             ) : (
-              <StartFullMockButton
+              <StartFullMockButton locale={locale}
                 mockId={mock.id}
                 examCode={code}
                 examShortName={exam.shortName}
@@ -502,21 +514,22 @@ export default async function PYQYearPage({
             looking at a real past paper. prefetch=false so the header-link
             prefetch inflation we just fixed isn't reintroduced here. */}
         <div className="mt-6 rounded-md border border-saffron-200 bg-saffron-50/60 p-5">
-          <p className="text-sm font-semibold text-ink-900">
-            Stuck on a question from this set?
-          </p>
+          <p className="text-sm font-semibold text-ink-900">{P.tutorHeading}</p>
           <p className="mt-1 text-sm text-ink-600">
-            Ask <strong>Shishya</strong> — your free AI tutor — to explain any {exam.shortName}{" "}
-            {yearNum}-pattern question, concept, or shortcut, step by step, in your language.
+            {/* "Shishya" stays bold, as it was: the sentence is split at the
+                product name, which is Latin in every locale. */}
+            {tutorBodyParts[0]}
+            {tutorBodyParts.length > 1 && <strong>Shishya</strong>}
+            {tutorBodyParts.slice(1).join("Shishya")}
           </p>
           <Link
             rel="nofollow" href={`/chat?examCode=${code}&seed=${encodeURIComponent(
-              `I'm solving PYQ-pattern questions modelled on the ${exam.shortName} ${yearNum} paper. Explain the questions and concepts I'm stuck on, step by step.`,
+              fillPyq(P.tutorSeed, { short: exam.shortName, year: yearNum }),
             )}`}
             prefetch={false}
             className="btn-primary mt-4 !py-2 !px-4 text-sm"
           >
-            Ask Shishya about this set →
+            {P.tutorButton}
           </Link>
         </div>
 
@@ -544,8 +557,8 @@ export default async function PYQYearPage({
           <PulseAsk
             surface="pyq"
             promptKey={`pyq-${exam.code}-${yearNum}`}
-            prompt={`Want a full-length ${exam.shortName} ${yearNum}-pattern paper? This page has ${questions.length} pattern questions; the real paper had ${exam.totalQuestions}.`}
-            chips={["Yes, need the full-length paper", "This sampler is enough"]}
+            prompt={fillPyq(P.pulsePrompt, { short: exam.shortName, year: yearNum, n: questions.length, m: exam.totalQuestions })}
+            chips={[P.pulseYes, P.pulseEnough]}
             signedIn={!!userId}
             examCode={exam.code}
           />

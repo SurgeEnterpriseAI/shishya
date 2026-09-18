@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { getT } from "@/lib/i18n-server";
+import { fillTemplate } from "@/lib/i18n";
 import { getExamCatalog } from "@/lib/db/exam-cache";
 import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 
@@ -61,19 +62,34 @@ export default async function LoginPage({
   const isMock = /\/mocks\//.test(cb) || /\/pyq\//.test(cb) || (!!examCode && /\/(quiz|topics)\b/.test(cb));
   const isCoach = /\/coach/.test(cb);
   const isReturn = /\/(me\/report|live-test|mentor)/.test(cb);
+  // Every sentence on this page is a dictionary key since 16 Sep 2026
+  // (login.intent.*, login.bullets.*, login.escape.*): the page already
+  // called getT(), yet a Hindi or Telugu student sent here from a gated
+  // mock read an English wall. English is unchanged, word for word.
+  const examLabel = examCode ? examCode.replace(/_/g, " ") : null;
   const intent = isMock || examCode
-    ? { h1: examCode ? `Your ${examCode.replace(/_/g, " ")} mock is one tap away` : "Your mock is one tap away", body: "Sign in with Google once (5 seconds, no password) and it opens straight away — with your score, weak topics and rank saved." }
+    ? {
+        h1: examLabel ? fillTemplate(t("login.intent.mock.h1Exam"), { exam: examLabel }) : t("login.intent.mock.h1"),
+        body: t("login.intent.mock.body"),
+      }
     : isCoach
-      ? { h1: "Your free day-by-day plan, one tap away", body: "The coach needs an account only to remember your progress and rebuild your plan every morning. Google sign-in, 5 seconds." }
+      ? { h1: t("login.intent.coach.h1"), body: t("login.intent.coach.body") }
       : isReturn
-        ? { h1: "Welcome back", body: "Sign in to continue where you left off — your mocks, plan and report are all still here." }
+        ? { h1: t("login.intent.return.h1"), body: t("login.intent.return.body") }
         : null;
   // Default (bare /login): the concrete offer, localised via i18n. The
-  // English string carries an "{n} exams" clause that is filled from
-  // the catalogue count and dropped when the count is unavailable.
-  const defaultBody = examCount > 0
-    ? t("login.body").replace(/\{n\}/g, String(examCount))
-    : t("login.body").replace(/\s*—\s*for any of \{n\} exams/, "");
+  // sentence carries an "{n} exams" clause filled from the catalogue
+  // count; when the count is unavailable login.body.noCount is the same
+  // sentence without that clause (the old regex strip only understood the
+  // English wording, so a hi / te reader would have seen a bare "{n}").
+  // A locale whose login.body has no {n} (the older one-liner the regional
+  // languages still carry) is printed as it is.
+  const bodyTemplate: string = t("login.body");
+  const defaultBody = !bodyTemplate.includes("{n}")
+    ? bodyTemplate
+    : examCount > 0
+      ? fillTemplate(bodyTemplate, { n: examCount })
+      : t("login.body.noCount");
 
   return (
     <main className="min-h-screen bg-saffron-50/30 flex items-center justify-center p-4">
@@ -92,7 +108,7 @@ export default async function LoginPage({
             href={`/exams/${examCode}/quiz`}
             className="mt-3 block rounded-lg border border-saffron-300 bg-saffron-50 px-3 py-2 text-center text-sm font-semibold text-saffron-800 hover:bg-saffron-100"
           >
-            Not ready to sign in? Try 5 {examCode.replace(/_/g, " ")} questions first — no login →
+            {fillTemplate(t("login.tryFirst"), { exam: examCode.replace(/_/g, " ") })}
           </Link>
         )}
 
@@ -103,13 +119,12 @@ export default async function LoginPage({
             suggestion: optimize the /login entry experience.) */}
         <div className="mt-6 rounded-lg bg-saffron-50 p-4 text-left ring-1 ring-saffron-100">
           <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
-            Free · No credit card · {INDIAN_LANGUAGE_COUNT} Indian languages
+            {fillTemplate(t("login.freeLine"), { n: INDIAN_LANGUAGE_COUNT })}
           </p>
           <ul className="mt-2 space-y-1.5 text-sm text-ink-700">
-            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> A free day-by-day plan to exam day, rebuilt every morning</li>
-            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> Full-length mocks — your scores, weak topics and rank saved</li>
-            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> PYQ-pattern papers — questions modelled on each year&apos;s paper, by topic</li>
-            <li className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> Ask Shishya — your AI tutor for every exam · one email on result day</li>
+            {(["login.bullets.1", "login.bullets.2", "login.bullets.3", "login.bullets.4"] as const).map((key) => (
+              <li key={key} className="flex gap-2"><span aria-hidden className="text-saffron-500">✓</span> {t(key)}</li>
+            ))}
           </ul>
         </div>
 
@@ -120,16 +135,16 @@ export default async function LoginPage({
             without an account, so a stranger can find out what Shishya
             is before being asked to trust it. */}
         <div className="mt-6 border-t border-ink-100 pt-4">
-          <p className="text-sm font-medium text-ink-800">First time here? Look around first — no account needed.</p>
+          <p className="text-sm font-medium text-ink-800">{t("login.firstTime")}</p>
           <div className="mt-3 flex flex-col gap-2">
             <Link href="/" className="rounded-lg border border-ink-200 px-3 py-2 text-sm font-medium text-ink-800 transition-colors hover:border-saffron-400 hover:bg-saffron-50">
-              Browse every exam &amp; free mock tests →
+              {t("login.escape.browse")}
             </Link>
             <Link href="/ask" className="rounded-lg border border-ink-200 px-3 py-2 text-sm font-medium text-ink-800 transition-colors hover:border-saffron-400 hover:bg-saffron-50">
-              Ask Shishya a question — free, no sign-in →
+              {t("login.escape.ask")}
             </Link>
             <Link href="/find-your-exam" className="rounded-lg border border-ink-200 px-3 py-2 text-sm font-medium text-ink-800 transition-colors hover:border-saffron-400 hover:bg-saffron-50">
-              Not sure which exam suits you? Find out →
+              {t("login.escape.find")}
             </Link>
           </div>
         </div>

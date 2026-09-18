@@ -36,7 +36,7 @@ import {
   type AnswerRecord,
   type StorageLike,
 } from "@/lib/attempts-sync";
-import type { Locale } from "@/lib/i18n";
+import { fillTemplate, type Locale } from "@/lib/i18n";
 
 function safeStorage(): StorageLike | null {
   try {
@@ -52,18 +52,13 @@ const ATTEMPT_NOT_WRITABLE = "ATTEMPT_NOT_WRITABLE";
 const ATTEMPT_ALREADY_GRADED = "ATTEMPT_ALREADY_GRADED";
 /** Timed submit retries (capped backoff) before we wait for 'online' / a tap. */
 const MAX_TIMED_SUBMIT_RETRIES = 5;
-const OFFLINE_SUBMIT_NOTE =
-  "No connection — your answers are kept on this device. We'll submit as soon as you're back online.";
-const OFFLINE_SUBMIT_NOTE_NO_MIRROR =
-  "No connection — and this device could not keep a copy of your answers. Keep this tab open; we'll submit as soon as you're back online.";
 /** Once the timed retries are spent, keep trying every 30 s (plus 'online' / a tap). */
 const SLOW_RETRY_MS = 30_000;
-/** SaveStatus labels when localStorage refused the mirror (private mode, quota). */
-const NO_MIRROR_LABELS = {
-  offline: "offline — this device could not keep a copy; keep this tab open until it syncs",
-  retrying: "couldn't reach the server — this device could not keep a copy; keep this tab open, retrying",
-  error: "this attempt can no longer be saved on the server — and this device could not keep a copy; keep this tab open",
-};
+// 16 Sep 2026: the offline-submit notes, the no-mirror SaveStatus labels and
+// every save / submit sentence below used to be English literals here. They
+// now arrive on `labels` in the student's language (player.save.* /
+// player.kept* / player.submit.*, built in /mocks/[id]/page.tsx), so a hi or
+// te student no longer drops into English the moment the network blinks.
 
 interface QuestionVm {
   id: string;
@@ -107,6 +102,30 @@ interface PlayerLabels {
   submittingHint: string;
   marksPerQ: string;
   negativeNone: string;
+  /** "{n} answer(s) not yet confirmed" inside the confirm box. */
+  confirmUnsyncedOne: string;
+  confirmUnsyncedMany: string;
+  /** SaveStatus: normal set, and the set used when the device mirror failed. */
+  save: Record<"saving" | "saved" | "offline" | "retrying" | "error", string>;
+  saveNoMirror: Record<"offline" | "retrying" | "error", string>;
+  saveUnconfirmed: string;
+  saveNotWritable: string;
+  saveSigninExpired: string;
+  saveFailed: string;
+  /** Honesty pair — the device kept a copy, or it could not. */
+  kept: string;
+  keptNoMirror: string;
+  keptSentence: string;
+  keptSentenceNoMirror: string;
+  submitOffline: string;
+  submitOfflineNoMirror: string;
+  submitSigninExpired: string;
+  submitFailed: string;
+  submitRetrying: string;
+  submitRetryingSlow: string;
+  submitWaiting: string;
+  submitRetryNow: string;
+  submitAgain: string;
 }
 
 /** questionId, chosen, timeSec, marked, updatedAt? — see attempts-sync. */
@@ -361,8 +380,8 @@ export function MockPlayer({
     }
     return ok;
   };
-  const kept = () => (mirrorOkRef.current ? "answers kept on this device" : "this device could not keep a copy — keep this tab open");
-  const Kept = () => (mirrorOkRef.current ? "Your answers are kept on this device" : "This device could not keep a copy of your answers — keep this tab open");
+  const kept = () => (mirrorOkRef.current ? labels.kept : labels.keptNoMirror);
+  const Kept = () => (mirrorOkRef.current ? labels.keptSentence : labels.keptSentenceNoMirror);
   const unmountedRef = useRef(false);
   const submittingRef = useRef(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
@@ -437,10 +456,10 @@ export function MockPlayer({
         const code = json?.error ?? `HTTP ${res.status}`;
         setSaveMessage(
           code === ATTEMPT_NOT_WRITABLE
-            ? `this attempt can no longer be saved on the server (it may have been submitted or closed) — ${kept()}`
+            ? fillTemplate(labels.saveNotWritable, { kept: kept() })
             : res.status === 401
-              ? `your sign-in expired — ${kept()}; sign in again in a new tab, then continue`
-              : `could not save (${code}) — ${kept()}`,
+              ? fillTemplate(labels.saveSigninExpired, { kept: kept() })
+              : fillTemplate(labels.saveFailed, { code, kept: kept() }),
         );
         outcome = "fatal";
       }
@@ -674,9 +693,27 @@ export function MockPlayer({
         // control back — the confirm dialog shows the message.
         setError(
           res.status === 401
-            ? `Your sign-in expired. ${Kept()} — sign in again in a new tab, then submit.`
-            : `Could not submit (${code}). ${Kept()}.`,
+            ? fillTemplate(labels.submitSigninExpired, { kept: Kept() })
+            : fillTemplate(labels.submitFailed, { code: code ?? `HTTP ${res.status}`, kept: Kept() }),
         );
+        // These failures were never logged, so how often a student hits one
+        // could not be measured (flow audit 16 Sep 2026). One best-effort
+        // beacon, same shape as the other CTA beacons; no answer data.
+        try {
+          navigator.sendBeacon?.(
+            "/api/analytics",
+            new Blob(
+              [JSON.stringify({
+                kind: "CTA_CLICKED",
+                path: location.pathname,
+                props: { cta: "mock-submit-4xx", surface: "mock-player", code: code ?? `HTTP ${res.status}`, auto },
+              })],
+              { type: "application/json" },
+            ),
+          );
+        } catch {
+          /* best-effort */
+        }
         submittingRef.current = false;
         setSubmitting(false);
         setConfirmOpen(true);
@@ -695,10 +732,10 @@ export function MockPlayer({
       const timed = tries <= MAX_TIMED_SUBMIT_RETRIES;
       setSubmitNote(
         offline
-          ? (mirrorOkRef.current ? OFFLINE_SUBMIT_NOTE : OFFLINE_SUBMIT_NOTE_NO_MIRROR)
+          ? (mirrorOkRef.current ? labels.submitOffline : labels.submitOfflineNoMirror)
           : timed
-            ? `Couldn't reach the server — ${kept()}. Retrying.`
-            : `Still can't reach the server — ${kept()}. Retrying every 30 seconds and the moment your connection is back — or tap Retry now.`,
+            ? fillTemplate(labels.submitRetrying, { kept: kept() })
+            : fillTemplate(labels.submitRetryingSlow, { kept: kept() }),
       );
       setSubmitWaiting(true);
       await waitForRetry(timed ? backoffMs(tries, 1000, 30000, 0.2) : SLOW_RETRY_MS);
@@ -788,7 +825,7 @@ export function MockPlayer({
             <span className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-saffron-200 border-t-saffron-500" />
           )}
           <p className="text-base font-semibold text-ink-900">
-            {submitWaiting ? "Not submitted yet" : labels.confirmSubmitting}
+            {submitWaiting ? labels.submitWaiting : labels.confirmSubmitting}
           </p>
           <p className="max-w-xs text-center text-xs text-ink-500">
             {submitNote ?? labels.submittingHint}
@@ -799,7 +836,7 @@ export function MockPlayer({
               onClick={() => retryNowRef.current?.()}
               className="btn-secondary !py-2 !px-4 text-sm"
             >
-              Retry now
+              {labels.submitRetryNow}
             </button>
           )}
         </div>
@@ -835,6 +872,29 @@ export function MockPlayer({
         </div>
         {translateErr && (
           <p className="container-prose pb-1 text-[11px] text-rose-700">{translateErr}</p>
+        )}
+        {/* Submit failed for a reason no retry can fix (flow audit 16 Sep 2026).
+            The message used to live only inside the confirm box, so tapping
+            "Keep practising" hid it until the student tapped Submit again —
+            a 401 after a sign-in expiry looked like nothing had happened.
+            It now stays pinned with the top bar (inside the sticky header,
+            so it can never slide under it) until the next submit attempt
+            clears it, with the way back to the confirm box next to it. */}
+        {error && !confirmOpen && !submitting && (
+          <div className="border-t border-rose-200 bg-rose-50">
+            <div className="container-prose flex flex-wrap items-center justify-between gap-2 py-2">
+              <p role="alert" className="min-w-0 flex-1 text-xs text-rose-800">
+                {error}
+              </p>
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(true)}
+                className="btn-secondary shrink-0 !py-1.5 !px-3 text-xs"
+              >
+                {labels.submitAgain}
+              </button>
+            </div>
+          </div>
         )}
       </header>
 
@@ -1006,7 +1066,14 @@ export function MockPlayer({
               <span className="font-medium text-ink-800">{markedCount}</span> {labels.sumMarked} ·{" "}
               <span className="font-medium text-ink-800">{questions.length - answeredCount}</span> {labels.sumLeft}
             </p>
-            <SaveStatus state={saveState} unsynced={unsynced} message={saveMessage} labels={mirrorOk ? undefined : NO_MIRROR_LABELS} className="mt-1" />
+            <SaveStatus
+              state={saveState}
+              unsynced={unsynced}
+              message={saveMessage}
+              labels={mirrorOk ? labels.save : { ...labels.save, ...labels.saveNoMirror }}
+              unconfirmedLabel={labels.saveUnconfirmed}
+              className="mt-1"
+            />
             <div className="mt-3 grid grid-cols-6 gap-1.5 sm:grid-cols-8 lg:grid-cols-5">
               {questions.map((qq, i) => {
                 const a = answers.get(qq.id);
@@ -1064,8 +1131,7 @@ export function MockPlayer({
             </p>
             {unsynced > 0 && !submitting && (
               <p className="mt-2 text-xs text-ink-600">
-                {unsynced} {unsynced === 1 ? "answer is" : "answers are"} not yet confirmed by the server — they
-                will be sent with your submission.
+                {fillTemplate(unsynced === 1 ? labels.confirmUnsyncedOne : labels.confirmUnsyncedMany, { n: unsynced })}
               </p>
             )}
             {error && <p className="mt-3 text-xs text-rose-700">{error}</p>}

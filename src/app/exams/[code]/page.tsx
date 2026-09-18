@@ -49,6 +49,7 @@ import { REHEARSAL_CLOSE_IST_HOUR } from "@/lib/live-test";
 import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { OfficialPapersBlock } from "@/components/OfficialPapersBlock";
 import { hubPyqPhrase } from "@/lib/pyq-naming";
+import { examHubCopy, fillHub, type ExamHubCopy } from "@/lib/exam-hub-copy";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { heldDescriptionLead, heldTitleLead, hubDateLead, revisionDescriptionLead, revisionTitleLead } from "@/lib/hub-title";
 
@@ -58,12 +59,15 @@ import { heldDescriptionLead, heldTitleLead, hubDateLead, revisionDescriptionLea
 // paper, so no card may read "Take paper" / "real questions". The line
 // keeps the "N of M" depth framing (534 of 587 exam-years on prod hold
 // under half a real paper) against the real paper's question count.
-function pyqSetLine(held: number, year: number | null, totalQuestions: number): string {
-  const paper = year ? `the ${year} paper` : "that year's paper";
+// 16 Sep 2026: the same sentence in the reader's language on the /hi and /te
+// twins (src/lib/exam-hub-copy.ts) — the "PYQ-pattern" label and the N-of-M
+// depth travel with it. English is unchanged.
+function pyqSetLine(C: ExamHubCopy, held: number, year: number | null, totalQuestions: number): string {
+  const paper = year ? fillHub(C.pyqPaperYear, { year }) : C.pyqPaperThat;
   // totalQuestions <= 0 → real paper size unknown; claim nothing about it.
   return totalQuestions > 0
-    ? `${held} PYQ-pattern questions modelled on ${paper} (which had ${totalQuestions})`
-    : `${held} PYQ-pattern questions modelled on ${paper}`;
+    ? fillHub(C.pyqSet, { held, paper, total: totalQuestions })
+    : fillHub(C.pyqSetNoTotal, { held, paper });
 }
 // "6:00 pm" from an IST hour constant — the rehearsal close time comes
 // from src/lib/live-test.ts, never a typed number.
@@ -268,6 +272,9 @@ export default async function ExamPage({
   const userId = session?.user?.id ?? null;
   const { code } = await params;
   const [{ locale, t }, urlLocale] = await Promise.all([getT(), getUrlLocale()]);
+  // 16 Sep 2026: hub copy changed in the 11-16 Sep waves, in the reader’s
+  // language on the /hi and /te twins (src/lib/exam-hub-copy.ts).
+  const H = examHubCopy(locale);
 
   // Shared payload — cached by unstable_cache for EXAM_CACHE_TTL seconds.
   // First request after a content change pays the DB cost; everyone else
@@ -809,7 +816,7 @@ export default async function ExamPage({
               href={`/exams/${exam.code}/score-estimate`}
               className="rounded-full border border-saffron-400 bg-saffron-100 px-3 py-1 font-semibold text-saffron-900 hover:bg-saffron-200"
             >
-              🧮 Score calculator
+              🧮 {H.scoreCalc}
             </Link>
           )}
           {gates.tricks && (
@@ -908,10 +915,8 @@ export default async function ExamPage({
               <p className="text-sm font-bold text-ink-900">
                 {liveTest.rehearsal ? (
                   <>
-                    🇮🇳 Exam-week rehearsal —{" "}
-                    {liveTest.open
-                      ? `open now, closes ${rehearsalCloseIst} IST on exam eve`
-                      : `opens soon, closes ${rehearsalCloseIst} IST on exam eve`}
+                    🇮🇳 {H.rehearsalKicker} —{" "}
+                    {fillHub(liveTest.open ? H.rehearsalOpen : H.rehearsalSoon, { time: rehearsalCloseIst })}
                   </>
                 ) : (
                   <>
@@ -1005,13 +1010,11 @@ export default async function ExamPage({
         {!userId && (
           <div className={`mt-6 rounded-md border p-5 ${theme.borderAccent} ${theme.heroTint}`}>
             <p className="text-sm font-semibold text-ink-900">
-              Get your free day-by-day {exam.shortName} plan to exam day — rebuilt every morning.
+              {fillHub(H.coachTitle, { short: exam.shortName })}
             </p>
             <p className="mt-1 text-sm text-ink-700">
-              Scores and rank saved. One email when the result is out. Plus free
-              full-length mocks, PYQ-pattern papers and Ask <strong>Shishya</strong>{" "}
-              when you&apos;re stuck. Content is AI-drafted and checked against the
-              official notification. All free, no credit card.
+              {H.coachBodyA}<strong>Shishya</strong>{" "}
+              {H.coachBodyB}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               {/* Click beacon (16 Sep 2026): the one hub CTA that sent no
@@ -1022,7 +1025,7 @@ export default async function ExamPage({
                 href={`/login?callbackUrl=${encodeURIComponent(`/coach?exam=${exam.code}`)}`}
                 className="btn-primary inline-block !py-2 !px-4 text-sm"
               >
-                Sign in free — build my plan →
+                {H.coachButton}
               </HubSignInLink>
               {/* Lever #2 — anonymous 5-question diagnostic. Lets a signed-out
                   visitor experience the mock loop before the login gate (44%
@@ -1101,7 +1104,7 @@ export default async function ExamPage({
                     {t("nav.tutor")}
                   </Link>
                   <span data-tour="exam-start-mock">
-                    <StartMockButton
+                    <StartMockButton locale={locale}
                       examCode={exam.code}
                       hasHistory={isEnrolled && recent.length > 0}
                       labels={{
@@ -1132,9 +1135,9 @@ export default async function ExamPage({
             <p className="mt-3 text-xs text-ink-600">
               🧩{" "}
               <Link href={`/exams/${exam.code}/build-mock`} className="font-semibold text-saffron-700 hover:underline">
-                Build your own mock — pick exact topics →
+                {H.buildMock}
               </Link>{" "}
-              <span className="text-ink-500">· every mock readable in हिंदी + {OTHER_INDIAN_LANGUAGE_COUNT} languages inside the test</span>
+              <span className="text-ink-500">{fillHub(H.langLine, { n: OTHER_INDIAN_LANGUAGE_COUNT })}</span>
             </p>
           )}
         </div>
@@ -1164,6 +1167,7 @@ export default async function ExamPage({
             .filter((n): n is number => typeof n === "number")}
           durationMin={exam.durationMin}
           hasOfficialPapers={hubPageHasOfficial}
+          locale={locale}
         />
 
         <div className="mt-2 lg:grid lg:grid-cols-3 lg:gap-8">
@@ -1190,17 +1194,13 @@ export default async function ExamPage({
                   question is freshly worded in that year's pattern, and a
                   student scanning five year cards should not have to open
                   one to find out it is 20 questions against a 150-Q paper. */}
-              <p className="mt-2 text-xs text-ink-500">
-                Previous year paper practice: each year is a set of PYQ-pattern questions — freshly worded in the pattern
-                of that year&apos;s paper, not the paper itself. Every card shows how many it
-                holds against the real paper&apos;s count.
-              </p>
+              <p className="mt-2 text-xs text-ink-500">{H.pyqNote}</p>
               <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                 {pyqYears.map((y) => (
                   <li key={y.pyqYear ?? 0} className="rounded-md border border-ink-200 bg-white p-3">
                     <p className="text-lg font-semibold text-ink-900">{y.pyqYear}</p>
                     <p className="mt-0.5 text-xs text-ink-500">
-                      {pyqSetLine(y._count, y.pyqYear, exam.totalQuestions)}
+                      {pyqSetLine(H, y._count, y.pyqYear, exam.totalQuestions)}
                     </p>
                     <Link
                       href={`/exams/${exam.code}/pyq/${y.pyqYear}`}

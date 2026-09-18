@@ -22,14 +22,21 @@
 // shape as SignupNudge, so the CTA report groups it. action "yielded" = the
 // bar was taken away without the student choosing (blocked page / another
 // sheet), so "shown" never reads as "seen and ignored". No service worker.
+//
+// Language (16 Sep 2026): the bar speaks the reader's language — URL
+// prefix, else the shishya-lang cookie — from the dict-free
+// INSTALL_OFFER_BY_LOCALE map. It is read at render time, which is safe
+// here: the bar never renders on the server or in the first client render
+// (phase starts "waiting"), so there is no hydration text to mismatch.
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
-  INSTALL_OFFER_COPY,
+  INSTALL_OFFER_BY_LOCALE,
   INSTALL_OFFER_KEY,
   VISITS_KEY,
   VISIT_COUNTED_KEY,
+  installOfferLocale,
   installOfferMustYield,
   isAndroidBrowserUA,
   nextVisitCount,
@@ -60,6 +67,15 @@ function beacon(action: Action) {
     );
   } catch {
     /* best-effort */
+  }
+}
+
+/** document.cookie, or "" where it cannot be read (sandboxed frames). */
+function readCookies(): string {
+  try {
+    return document.cookie;
+  } catch {
+    return "";
   }
 }
 
@@ -225,30 +241,32 @@ export function InstallOffer() {
     setPhase("done");
   }
 
+  const copy = INSTALL_OFFER_BY_LOCALE[installOfferLocale(pathname, readCookies())];
+
   return (
     <div
       role="region"
-      aria-label="Install Shishya"
+      aria-label={copy.aria}
       className="fixed inset-x-0 bottom-0 z-[45] px-3 pb-safe print:hidden"
     >
       <div className="mx-auto flex max-w-md items-center gap-3 rounded-xl border border-saffron-300 bg-white p-3 shadow-lg">
         {/* The installed icon itself (a PNG, so no Devanagari font fetch). */}
         <img src="/icons/icon-192.png" alt="" width={36} height={36} className="h-9 w-9 shrink-0 rounded-md" />
-        <p className="min-w-0 flex-1 text-sm text-ink-800">{INSTALL_OFFER_COPY}</p>
+        <p className="min-w-0 flex-1 text-sm text-ink-800">{copy.body}</p>
         <div className="flex shrink-0 flex-col items-end gap-1">
           <button
             type="button"
             onClick={() => void add()}
             className="rounded-lg bg-saffron-500 px-3 py-1.5 text-sm font-bold text-white hover:bg-saffron-600"
           >
-            Add
+            {copy.add}
           </button>
           <button
             type="button"
             onClick={noThanks}
             className="text-xs font-medium text-ink-500 hover:text-ink-700"
           >
-            No thanks
+            {copy.dismiss}
           </button>
         </div>
       </div>

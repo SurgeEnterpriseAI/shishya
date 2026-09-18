@@ -37,7 +37,8 @@ import { OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { getSeenCountByTopic } from "@/lib/seen-questions";
 import { SEEN_WINDOW_DAYS } from "@/lib/question-pick";
 import { getT } from "@/lib/i18n-server";
-import type { StringKey } from "@/lib/i18n";
+import { fillTemplate, type StringKey } from "@/lib/i18n";
+import { buildMockCopy } from "@/lib/quiz-entry-copy";
 import { BUILDABLE_TOPIC_MIN, examPageGates } from "@/lib/exam-page-gates";
 
 // The form's copy in the visitor's locale (13 Sep 2026): cookie / URL /
@@ -200,6 +201,13 @@ export default async function BuildMockPage({
       ],
     },
   ];
+  // The page's visible words in the reader's language (16 Sep 2026). The
+  // <title>, description, canonical and the JSON-LD above stay English: they
+  // are one stable answer per URL, and a crawler carries no cookie, so the
+  // indexed text is unchanged. "PYQ-pattern" keeps "pattern" in every
+  // language — these are questions built to the years' pattern, not the
+  // original questions.
+  const C = buildMockCopy(tt.locale);
   const jsonLdText = (d: object) =>
     JSON.stringify(d).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
 
@@ -212,16 +220,14 @@ export default async function BuildMockPage({
       <Header />
       <section className="container-prose py-8 sm:py-10">
         <p className="text-xs text-ink-500">
-          <Link href={`/exams/${exam.code}`} className="hover:text-ink-800">{exam.shortName}</Link> · Build your own mock
+          <Link href={`/exams/${exam.code}`} className="hover:text-ink-800">{exam.shortName}</Link> · {C.crumb}
         </p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">
-          {pyq ? `Topic-wise ${exam.shortName} PYQ-pattern practice` : `Build your own ${exam.shortName} mock`}
+          {fillTemplate(pyq ? C.h1Pyq : C.h1, { exam: exam.shortName })}
         </h1>
         {!empty && (
           <p className="mt-2 max-w-3xl text-sm text-ink-700">
-            Pick exactly the topics you want — today polity, tomorrow number system — choose the size and
-            difficulty, and attempt it like any mock: timed, scored, full solutions, weak-topic analysis.
-            Questions can be read in Hindi and {OTHER_INDIAN_LANGUAGE_COUNT} other languages inside the test.
+            {fillTemplate(C.intro, { n: OTHER_INDIAN_LANGUAGE_COUNT })}
           </p>
         )}
 
@@ -251,13 +257,13 @@ export default async function BuildMockPage({
           </p>
         ) : subjects.size === 0 && rowsFailed ? (
           <p className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-4 py-6 text-sm text-ink-500">
-            The topic list couldn&apos;t be loaded just now — please refresh the page.
+            {C.loadFailed}
           </p>
         ) : subjects.size === 0 ? (
           <p className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-4 py-6 text-sm text-ink-500">
-            No {exam.shortName} topic has {BUILDABLE_TOPIC_MIN} or more checked questions yet, so a topic-wise mock can&apos;t be
-            built for this exam. Dates, notifications and results are on the{" "}
-            <Link href={`/exams/${exam.code}`} className="font-medium text-saffron-700 hover:underline">{exam.shortName} exam page</Link>.
+            {fillTemplate(C.emptyBefore, { exam: exam.shortName, min: BUILDABLE_TOPIC_MIN })}
+            <Link href={`/exams/${exam.code}`} className="font-medium text-saffron-700 hover:underline">{fillTemplate(C.emptyLink, { exam: exam.shortName })}</Link>
+            {C.emptyAfter}
           </p>
         ) : (
           <BuilderForm

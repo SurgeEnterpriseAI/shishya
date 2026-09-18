@@ -7,6 +7,7 @@ import { getT } from "@/lib/i18n-server";
 import { formatRelative } from "@/lib/relative-time";
 import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
+import { discussionLabelsCopy } from "@/lib/discussion-labels-copy";
 
 export const revalidate = 30;
 
@@ -18,7 +19,10 @@ export const metadata = {
 };
 
 export default async function DiscussionsList() {
-  const [{ t }, session] = await Promise.all([getT(), auth().catch(() => null)]);
+  const [{ t, locale }, session] = await Promise.all([getT(), auth().catch(() => null)]);
+  // The seed-thread disclosure and the no-name fallback in the reader's
+  // language (16 Sep 2026); the page metadata and JSON-LD stay English.
+  const D = discussionLabelsCopy(locale);
 
   const threads = await prisma.discussion.findMany({
     orderBy: [{ pinned: "desc" }, { lastActivityAt: "desc" }],
@@ -104,7 +108,7 @@ export default async function DiscussionsList() {
                     <div className="flex flex-wrap items-baseline gap-2">
                       {th.pinned && (
                         <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-800">
-                          Pinned
+                          {D.pinned}
                         </span>
                       )}
                       {th.exam && (
@@ -116,13 +120,13 @@ export default async function DiscussionsList() {
                           Shishya's starter questions, labelled as such. */}
                       {th.isSeed && (
                         <span className="rounded bg-saffron-50 px-1.5 py-0.5 text-[10px] font-medium text-saffron-800 ring-1 ring-saffron-200">
-                          Starter question · Shishya
+                          {D.starter}
                         </span>
                       )}
                       <h2 className="truncate text-sm font-semibold text-ink-900 sm:text-base">{th.title}</h2>
                     </div>
                     <p className="mt-1 flex flex-wrap items-baseline gap-1.5 text-xs text-ink-500">
-                      <span>{th.isSeed ? "Shishya" : (th.authorName ?? "Anonymous")}</span>
+                      <span>{th.isSeed ? "Shishya" : (th.authorName ?? D.anonymous)}</span>
                       {th.authorId && (
                         <UserBadge level={badgeByAuthor.get(th.authorId)} compact />
                       )}

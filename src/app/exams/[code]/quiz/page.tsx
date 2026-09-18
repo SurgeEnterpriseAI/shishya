@@ -29,11 +29,12 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
-import { localeNames } from "@/lib/i18n";
+import { fillTemplate, localeNames } from "@/lib/i18n";
 import { clampAnonQuizCount, getAnonCutoffRows, getAnonQuiz, parseAnonQuizSet } from "@/lib/anon-quiz";
 import { cachedQuizTranslations } from "@/lib/anon-quiz-locale";
 import { categoryHeaderKey } from "@/lib/category-cutoff";
 import { challengeLabels, quizLabels } from "@/lib/challenge-copy";
+import { examQuizCopy } from "@/lib/quiz-entry-copy";
 import {
   AnonQuizPlayer,
   type AnonQuizCutoff,
@@ -105,6 +106,9 @@ export default async function ExamQuizPage({
         }
       : undefined;
   const n = quiz?.questions.length ?? count;
+  // The page's own words in the same locale as the player's (16 Sep 2026).
+  // This route is noindex, so nothing here is a search surface.
+  const C = examQuizCopy(locale);
 
   return (
     <main className="min-h-screen bg-ink-50/40">
@@ -114,28 +118,28 @@ export default async function ExamQuizPage({
           <Link href={`/exams/${code}`} className="hover:text-ink-800">
             {quiz?.examShort ?? code}
           </Link>{" "}
-          · Free quiz
+          · {C.crumb}
         </p>
 
         {!quiz ? (
           <div className="mt-6 rounded-md border border-dashed border-ink-300 bg-white px-5 py-6">
-            <p className="text-sm font-medium text-ink-800">No quiz questions here yet.</p>
+            <p className="text-sm font-medium text-ink-800">{C.none}</p>
             <Link
               href={`/exams/${code}`}
               className="mt-3 inline-block text-sm font-medium text-saffron-700 hover:text-saffron-800"
             >
-              Explore {code} on Shishya →
+              {fillTemplate(C.explore, { code })}
             </Link>
           </div>
         ) : (
           <>
             <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">
-              {quiz.examShort} — free {n}-question quiz
+              {fillTemplate(C.h1, { exam: quiz.examShort, n })}
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-ink-600">
               {quiz.replay
-                ? `Same ${n} questions as the link you opened, in the same order — no signup, instant scoring and solutions.`
-                : `No signup needed. Answer ${n} real ${quiz.examShort} questions, get instant scoring and solutions, then unlock full mocks and your weak-topic map for free.`}
+                ? fillTemplate(C.replay, { n })
+                : fillTemplate(C.fresh, { n, exam: quiz.examShort })}
             </p>
             <div className="mt-6">
               <AnonQuizPlayer

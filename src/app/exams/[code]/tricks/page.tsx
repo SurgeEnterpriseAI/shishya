@@ -3,6 +3,14 @@
 // queries, and this is the content aspirants screenshot and forward in
 // Telegram/WhatsApp groups. Data: ExamTricks (one AI-curated markdown
 // block per exam, "## Subject" sections + bullet tricks). PUBLIC + cached.
+//
+// Cache pilot (16 Sep 2026): this page and /guide are the first exam pages
+// to render statically (ISR; the effective window is 10 minutes, see
+// generateStaticParams below). No cookies(), headers(), auth() or
+// getT() anywhere in the render — the language comes from the URL, and the
+// /hi and /te twins are src/app/(cache-pilot)/[lang]/exams/[code]/tricks.
+// Because the render is cached, a failed content read THROWS (never a
+// cached 404), and the mock / quiz lines follow src/lib/exam-page-gates.ts.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -11,10 +19,38 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { NotesMarkdown } from "@/components/NotesMarkdown";
 import { ShareExamButton } from "@/components/ShareExamButton";
-import { getT } from "@/lib/i18n-server";
+import { tFor } from "@/lib/i18n-server";
+import { pilotPageLocale } from "@/lib/cache-pilot-routes";
+import { examPageGates } from "@/lib/exam-page-gates";
 import { StateExamsLink } from "@/components/StateExamsLink";
 
 export const revalidate = 3600;
+
+// Safety net (16 Sep 2026, cache pilot). Because the route is ISR, a
+// request-scoped call that slips into this render tree later (cookies(),
+// headers(), auth(), getT()) would not quietly make the page dynamic again:
+// in production Next throws "Page changed from static to dynamic at runtime"
+// — HTTP 500 on every guide and tricks URL — while `next dev` and
+// `next build` stay green (nothing is rendered at build time). With
+// force-static those calls return empty values instead: the render is the
+// anonymous English one, it stays cacheable, and no cookie- or
+// session-dependent content can ever reach the cached HTML.
+// tests/unit/cache-pilot-routes.test.ts is what flags such a call.
+export const dynamic = "force-static";
+
+// Cache pilot (16 Sep 2026): a dynamic route with no generateStaticParams is
+// rendered on every request, so the revalidate above never took effect and
+// each hit was a full render against Neon (Cache-Control: private,
+// no-store). An empty list renders each code on its first visit and serves
+// it from the ISR cache (one hour at most; the page-gates read in the render
+// is cached for 10 minutes and Next takes the shortest window it sees, so
+// the effective window is 10 minutes). The language comes from the URL
+// (the /hi and /te twins are the [lang] routes in src/app/(cache-pilot)),
+// never from the cookie or the session, so the cached HTML is the same for
+// every visitor — see src/lib/cache-pilot-routes.ts.
+export function generateStaticParams() {
+  return [];
+}
 
 const YEAR = new Date().getFullYear();
 
@@ -30,9 +66,12 @@ export async function generateMetadata({
   });
   if (!exam) return { title: "Exam tricks — Shishya" };
   const title = `${exam.shortName} Tricks & Mnemonics ${YEAR} — Short Tricks That Save Minutes | Shishya`;
+  // The "free mock" sentence only where the exam has a question bank
+  // (16 Sep 2026, src/lib/exam-page-gates.ts) — 12 active exams have none.
+  const gates = await examPageGates(exam.code);
   const description =
     `${exam.shortName} (${exam.name}) short tricks, mnemonics and memory hacks — subject-wise, ` +
-    `exam-tested, free. Practice each trick immediately with a free mock.`;
+    `exam-tested, free.${gates.buildMock ? " Practice each trick immediately with a free mock." : ""}`;
   const url = `https://shishya.in/exams/${exam.code}/tricks`;
   const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
   return {
@@ -61,8 +100,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function TricksPage({ params }: { params: Promise<{ code: string }> }) {
-  const { code } = await params;
+export default async function TricksPage({ params }: { params: Promise<{ code: string; lang?: string }> }) {
+  const { code, lang } = await params;
+  // The body's language is the URL's: none for /exams/…, hi / te for the
+  // twins. Anything else is not a twin prefix.
+  const locale = pilotPageLocale(lang);
+  if (!locale) notFound();
   const exam = await prisma.exam.findUnique({
     where: { code },
     select: { id: true, code: true, shortName: true, name: true, active: true, state: true },
@@ -71,13 +114,25 @@ export default async function TricksPage({ params }: { params: Promise<{ code: s
 
   // Raw SQL keeps this independent of client typegen (same reason as the
   // category-cutoff fetch): the page ships before/without a client regen.
-  const rows = await prisma
-    .$queryRaw<{ content: string }[]>`
+  // No catch on this read (16 Sep 2026, cache pilot): the render is cached,
+  // so a swallowed DB error would become notFound() and the 404 would be
+  // stored for the whole URL, replacing a good copy. A failed read throws
+  // instead — Next keeps serving the last good page and never caches the
+  // failure — and notFound() is only for a read that found no tricks. That
+  // 404 is stored like any render: see "What a stored copy means for a NEW
+  // guide/tricks row" in src/lib/cache-pilot-routes.ts.
+  // Gates (16 Sep 2026, src/lib/exam-page-gates.ts): the "free mock" line
+  // and the quiz button appear only where the exam has a question bank; a
+  // failed gate read keeps both (GATES_OPEN), it never throws.
+  const [rows, gates] = await Promise.all([
+    prisma.$queryRaw<{ content: string }[]>`
       SELECT content FROM "ExamTricks" WHERE "examId" = ${exam.id} LIMIT 1
-    `.catch(() => [] as { content: string }[]);
+    `,
+    examPageGates(exam.code),
+  ]);
   const tricksMd = rows[0]?.content;
   if (!tricksMd) notFound();
-  const { t, locale } = await getT();
+  const t = tFor(locale);
 
   const url = `https://shishya.in/exams/${exam.code}/tricks`;
   const jsonLd = {
@@ -143,20 +198,24 @@ export default async function TricksPage({ params }: { params: Promise<{ code: s
 
         <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
           <p className="text-base font-bold text-ink-900">Tricks stick when you USE them</p>
-          <p className="mt-1 text-sm text-ink-600">
-            Take a free {exam.shortName} mock right now — apply these tricks under the clock and
-            see your speed jump. No signup needed to try a 5-question quiz.
-          </p>
+          {gates.buildMock && (
+            <p className="mt-1 text-sm text-ink-600">
+              Take a free {exam.shortName} mock right now — apply these tricks under the clock and
+              see your speed jump. No signup needed to try a 5-question quiz.
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap gap-3">
             <Link href={`/exams/${exam.code}`} className="btn-primary !py-2 !px-4 text-sm">
               Start free preparation →
             </Link>
-            <Link
-              href={`/exams/${exam.code}/quiz`}
-              className="inline-flex items-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 hover:bg-saffron-50"
-            >
-              5-question quiz — no signup →
-            </Link>
+            {gates.buildMock && (
+              <Link
+                href={`/exams/${exam.code}/quiz`}
+                className="inline-flex items-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 hover:bg-saffron-50"
+              >
+                5-question quiz — no signup →
+              </Link>
+            )}
           </div>
         </div>
       </section>

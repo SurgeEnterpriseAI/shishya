@@ -21,18 +21,42 @@
 // share-landing) and forwards the inbound channel (utm_source) so the
 // quiz visit keeps its WhatsApp / Telegram origin. Canonical stays bare.
 //
+// LANGUAGE (16 Sep 2026)
+// /share is not a locale twin, so there is no URL locale. The body asks
+// getLocale() — the call <Header /> on this page and the quiz behind the CTA
+// both make (shishya-lang cookie, else User.preferredLang) — so header, body
+// and quiz agree. A friend with no language of their own (first visit,
+// signed out) follows the link instead: a share sent in Hindi or Telugu
+// carries ?lang=hi|te (src/lib/share-landing-copy.ts), the hand-off
+// /c/[token] makes from the challenger's locale. Their own choice always
+// wins over the link. In hi/te the CTA opens the quiz's /hi|/te twin, where
+// the middleware sets the friend's language cookie if they have none, so the
+// quiz and the next clicks stay in that language. The metadata, the OG card
+// and the Twitter card stay English on purpose: the preview is rendered for
+// a social crawler that carries no cookie and no account, and the page is
+// noindex with a bare canonical, so a translated title would reach nobody.
+//
 // Sister file in this directory:
 //   opengraph-image.tsx — the dynamic OG card embedded in WhatsApp
 //                          previews (built via next/og ImageResponse)
 
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { getExamTheme } from "@/lib/exam-theme";
 import { formatDisplayScorePct } from "@/lib/scoring";
-import { locales } from "@/lib/i18n";
+import { fillTemplate, locales } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
+import {
+  resolveShareLandingLocale,
+  shareLandingCopy,
+  shareLinkLocale,
+  shareQuizPath,
+  SHARE_LANG_PARAM,
+} from "@/lib/share-landing-copy";
 import { isShareChannel, sharePath } from "@/lib/share-url";
 
 interface RouteParams {
@@ -42,6 +66,19 @@ interface RouteParams {
 function firstNameOf(name: string | null | undefined): string | null {
   const first = name?.trim().split(/\s+/)[0];
   return first ? first : null;
+}
+
+/** The visitor's own language (getLocale(), as the Header and the quiz use),
+ *  else the language the share was sent in, else en. Best-effort — a failed
+ *  read falls through; the landing never fails over a language lookup. */
+async function visitorLocale(linkLang: ReturnType<typeof shareLinkLocale>): Promise<string> {
+  const [own, cookie] = await Promise.all([
+    getLocale().catch(() => "en"),
+    cookies()
+      .then((c) => c.get("shishya-lang")?.value ?? null)
+      .catch(() => null),
+  ]);
+  return resolveShareLandingLocale({ own, cookie, link: linkLang });
 }
 
 export async function generateMetadata({
@@ -105,7 +142,7 @@ export default async function SharePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  const [attempt, activeExams] = await Promise.all([
+  const [attempt, activeExams, locale] = await Promise.all([
     prisma.attempt.findUnique({
       where: { id },
       select: {
@@ -130,6 +167,8 @@ export default async function SharePage({
     // Honest count at render time — the old "all 163 exams" was a number
     // frozen in copy while the catalogue kept growing.
     prisma.exam.count({ where: { active: true } }).catch(() => null),
+    // The visitor's own language, else the one the share was sent in.
+    visitorLocale(shareLinkLocale(sp[SHARE_LANG_PARAM])),
   ]);
   if (!attempt || !attempt.mock) notFound();
 
@@ -142,12 +181,13 @@ export default async function SharePage({
   // Keep the inbound channel on the CTA (a WhatsApp arrival stays a
   // WhatsApp arrival on the quiz); a bare link counts as a copied one.
   const inbound = Array.isArray(sp.utm_source) ? sp.utm_source[0] : sp.utm_source;
-  const quizHref = sharePath(`/exams/${exam.code}/quiz`, {
+  const quizHref = sharePath(shareQuizPath(exam.code, locale), {
     surface: "share-landing",
     channel: isShareChannel(inbound) ? inbound : "copy",
     exam: exam.code,
   });
   const languageCount = locales.length; // English + the scheduled Indian languages the translator serves
+  const C = shareLandingCopy(locale);
 
   return (
     <main className={`min-h-screen ${theme.pageBg}`}>
@@ -164,28 +204,29 @@ export default async function SharePage({
           {showScore ? (
             <>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink-900 sm:text-5xl">
-                {firstName} scored{" "}
+                {fillTemplate(C.scoredBefore, { name: firstName ?? "" })}
                 <span className="text-saffron-600">{score}</span>
+                {C.scoredAfter}
               </h1>
               <p className="mt-2 text-base text-ink-700 sm:text-lg">
-                on a{" "}
+                {C.onMockBefore}
                 <Link href={`/exams/${exam.code}`} className="font-semibold text-ink-900 hover:underline">
                   {exam.shortName}
-                </Link>{" "}
-                mock at Shishya
+                </Link>
+                {C.onMockAfter}
               </p>
             </>
           ) : (
             <>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink-900 sm:text-5xl">
-                A friend sent you a{" "}
+                {C.sentBefore}
                 <Link href={`/exams/${exam.code}`} className="text-saffron-600 hover:underline">
                   {exam.shortName}
-                </Link>{" "}
-                mock
+                </Link>
+                {C.sentAfter}
               </h1>
               <p className="mt-2 text-base text-ink-700 sm:text-lg">
-                from Shishya — free mocks, previous-year papers and exam dates for {exam.name}
+                {fillTemplate(C.fromShishya, { exam: exam.name })}
               </p>
             </>
           )}
@@ -201,32 +242,31 @@ export default async function SharePage({
 
           <div className="mx-auto mt-10 max-w-md rounded-2xl border-2 border-saffron-300 bg-white p-6 shadow-md sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
-              Free · no sign-in
+              {C.freeNoSignIn}
             </p>
             <h2 className="mt-2 text-xl font-bold text-ink-900">
               {showScore
-                ? `Your friend scored ${score} — check your own 5 questions`
-                : `Check your own 5 ${exam.shortName} questions`}
+                ? fillTemplate(C.ctaHeadingScore, { score })
+                : fillTemplate(C.ctaHeadingPlain, { exam: exam.shortName })}
             </h2>
             <p className="mt-2 text-sm text-ink-600">
-              About 90 seconds: 5 {exam.shortName}-level questions, graded instantly, with the
-              answers. No account, no app.
+              {fillTemplate(C.ctaSub, { exam: exam.shortName })}
             </p>
             <Link
               href={quizHref}
               prefetch={false}
               className="mt-5 inline-flex w-full items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-base font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
             >
-              Try 5 {exam.shortName} questions — no sign-in →
+              {fillTemplate(C.ctaButton, { exam: exam.shortName })}
             </Link>
             <p className="mt-3 text-[11px] text-ink-500">
-              Free · No credit card · {languageCount} languages
+              {fillTemplate(C.fineprint, { n: languageCount })}
             </p>
           </div>
 
           <p className="mt-10 text-xs text-ink-500">
             <Link href="/" className="font-medium text-saffron-700 hover:underline">
-              {activeExams ? `Explore all ${activeExams} exams →` : "Explore all exams →"}
+              {activeExams ? fillTemplate(C.exploreCount, { n: activeExams }) : C.exploreAll}
             </Link>
           </p>
         </div>

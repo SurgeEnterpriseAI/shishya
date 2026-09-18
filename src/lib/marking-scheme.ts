@@ -57,6 +57,18 @@
 // negative is a wrong score in a student's hands the evening of the exam.
 // So this errs towards not stating.
 
+import type { StringKey } from "@/lib/i18n";
+
+/** A refusal sentence as a dictionary key plus its variables (16 Sep 2026).
+ *  `reason` below stays the English sentence — byte-identical to what every
+ *  existing caller printed — and this is the same sentence for a surface that
+ *  renders in the student's language (the checklist twin). The import above
+ *  is type-only, so this module stays dict-free for client bundles. */
+export interface MarkingReason {
+  key: StringKey;
+  vars: Record<string, string | number>;
+}
+
 export interface MarkingSchemeInput {
   totalQuestions: number;
   scoredQuestions: number | null;
@@ -86,6 +98,11 @@ export interface MarkingSchemeVerdict {
   /** Student-facing English sentence saying WHY the scheme cannot be
    *  stated; null when ok. Surfaces print it instead of a scheme. */
   reason: string | null;
+  /** The same sentence as key + vars, for localised surfaces. Absent when
+   *  ok, so the `{ ok: true, reason: null }` shape callers and tests already
+   *  compare against is unchanged. tests/unit/i18n-checklist.test.ts pins
+   *  every detail against its English `reason`. */
+  detail?: MarkingReason | null;
 }
 
 /**
@@ -96,6 +113,11 @@ export interface MarkingSchemeVerdict {
  */
 export const UNEQUAL_PAPER_EXAMS: Readonly<Record<string, string>> = {
   CDS: "CDS papers score unequally — English and GK: 120 questions for 100 marks each; Maths: 100 for 100 — one per-question mark cannot be stated.",
+};
+
+/** The dictionary key carrying each UNEQUAL_PAPER_EXAMS sentence (16 Sep 2026). */
+export const UNEQUAL_PAPER_EXAM_KEYS: Readonly<Record<string, StringKey>> = {
+  CDS: "mark.unequal.CDS",
 };
 
 /**
@@ -110,6 +132,12 @@ export const UNEQUAL_PAPER_EXAMS: Readonly<Record<string, string>> = {
  */
 export const SITTING_NOTES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   SBI_PO: { mains: "200 marks across 4 sections with unequal per-question marks" },
+};
+
+/** The dictionary key carrying each SITTING_NOTES clause (16 Sep 2026), so a
+ *  hi / te refusal does not end in an English clause. Same shape as above. */
+export const SITTING_NOTE_KEYS: Readonly<Record<string, Readonly<Record<string, StringKey>>>> = {
+  SBI_PO: { mains: "mark.sitting.SBI_PO.mains" },
 };
 
 /** Questions that actually count towards totalMarks. */
@@ -199,6 +227,54 @@ export function stageMismatchReason(
   return `The stored pattern is the ${stored} paper${figures}; the ${when ? `${when} sitting` : "sitting in question"} ${sittingClause}, so one per-question mark cannot be stated.`;
 }
 
+/** The same refusal as stageMismatchReason, as key + vars (16 Sep 2026), so
+ *  the checklist twin can print it in the student's language. Four shapes:
+ *  with or without the stored pattern's figures, and with or without a
+ *  verified SITTING_NOTES line about what the sitting IS. */
+export function stageMismatchDetail(
+  exam: { code?: string | null; name?: string | null; shortName?: string | null; totalQuestions?: number; totalMarks?: number },
+  rowLabel: string | null | undefined,
+  rowDate?: Date | string | null,
+): MarkingReason | null {
+  if (!stageMismatchReason(exam, rowLabel, rowDate)) return null;
+  const named = declaredStages(exam.name);
+  for (const k of declaredStages(exam.shortName)) named.add(k);
+  const rowKeys = [...declaredStages(rowLabel)];
+  const stored = [...named].map(stageLabel).join(" / ");
+  const sitting = rowKeys.map(stageLabel).join(" / ");
+  const day = shortDay(rowDate);
+  const hasFigures = !!(exam.totalQuestions && exam.totalMarks);
+  const code = (exam.code ?? "").toUpperCase();
+  const noteStage = rowKeys.find((k) => SITTING_NOTES[code]?.[k]);
+  const note = noteStage ? SITTING_NOTES[code][noteStage] : undefined;
+  const noteKey = noteStage ? SITTING_NOTE_KEYS[code]?.[noteStage] : undefined;
+  const key: StringKey = note
+    ? hasFigures
+      ? "mark.stage.note"
+      : "mark.stage.note.noFigures"
+    : hasFigures
+      ? "mark.stage.plain"
+      : "mark.stage.plain.noFigures";
+  return {
+    key,
+    vars: {
+      stored,
+      sitting,
+      // "12 Sept" when the row's date is known; the caller wraps it with
+      // mark.stage.when / mark.stage.whenUnknown.
+      day: day ?? "",
+      // The same instant, unformatted (16 Sep 2026), so a hi / te caller can
+      // print the day in its own language instead of the en-IN "12 Sept".
+      ...(day ? { dayIso: new Date(rowDate as Date | string).toISOString() } : {}),
+      ...(hasFigures ? { q: exam.totalQuestions!, marks: num(exam.totalMarks!) } : {}),
+      // `note` is the English clause; `noteKey` names its dictionary key so a
+      // localised caller can swap it (exam-checklist's markingReasonText).
+      ...(note ? { note } : {}),
+      ...(noteKey ? { noteKey } : {}),
+    },
+  };
+}
+
 /**
  * Does the exam's system full-length pattern paper fit the sitting in
  * question? It follows the STORED pattern, so it does not when rule 4 finds
@@ -262,26 +338,32 @@ function num(n: number): string {
 export function markingSchemeVerdict(exam: MarkingSchemeInput, opts: MarkingSchemeOptions = {}): MarkingSchemeVerdict {
   const { totalQuestions: q, totalMarks: total, marksPerQ: m } = exam;
   const short = exam.shortName || exam.name || "this exam";
-  const no = (reason: string): MarkingSchemeVerdict => ({ ok: false, reason });
+  const no = (reason: string, detail: MarkingReason): MarkingSchemeVerdict => ({ ok: false, reason, detail });
 
   // 4 — the sitting is a different stage from the stored pattern. Checked
   // first: it is the most specific thing we can say, and it is the one
   // that bites on exam night (SBI PO Mains on a Prelims row).
   const stage = stageMismatchReason(exam, opts.rowLabel, opts.rowDate);
-  if (stage) return no(stage);
+  if (stage) return no(stage, stageMismatchDetail(exam, opts.rowLabel, opts.rowDate)!);
 
   // 5 — exams we know score unequally although the row is self-consistent.
   const code = (exam.code ?? "").toUpperCase();
-  if (code && UNEQUAL_PAPER_EXAMS[code]) return no(UNEQUAL_PAPER_EXAMS[code]);
+  if (code && UNEQUAL_PAPER_EXAMS[code]) {
+    return no(UNEQUAL_PAPER_EXAMS[code], { key: UNEQUAL_PAPER_EXAM_KEYS[code], vars: {} });
+  }
 
   if (!(m > 0) || !(q > 0) || !(total > 0)) {
-    return no(`The ${short} marking scheme is not on our records — take it from the official notice.`);
+    return no(`The ${short} marking scheme is not on our records — take it from the official notice.`, {
+      key: "mark.none",
+      vars: { short },
+    });
   }
   // 1 — a value a notice could print: halves, thirds, quarters (0.02 slack
   // for 4/3 stored as "1.33"). Anything else is an average of its papers.
   if (![1, 2, 3, 4].some((d) => Math.abs(m * d - Math.round(m * d)) < 0.02)) {
     return no(
       `On our records ${short} carries ${num(m)} marks per question, which is an average across papers that score differently — one per-question mark cannot be stated.`,
+      { key: "mark.average", vars: { short, m: num(m) } },
     );
   }
   // 2 — full marks under the printed scheme must be the printed total, over
@@ -290,6 +372,7 @@ export function markingSchemeVerdict(exam: MarkingSchemeInput, opts: MarkingSche
   if (Math.abs(m * scored - total) > Math.max(1, total * 0.005)) {
     return no(
       `On our records +${num(m)} per question over ${scored} scored questions does not add up to the paper's ${num(total)} marks — different papers or sections of ${short} score differently.`,
+      { key: "mark.mismatchTotal", vars: { short, m: num(m), scored, total: num(total) } },
     );
   }
   // 3 — part totals the exam's own description lists.
@@ -299,8 +382,14 @@ export function markingSchemeVerdict(exam: MarkingSchemeInput, opts: MarkingSche
       .filter((n) => n > 0 && n < total),
   );
   if (partTotals.size >= 2) {
-    const parts = [...partTotals].sort((a, b) => a - b).map((n) => `${n} marks`).join(", ");
-    return no(`The ${short} pattern lists parts with different totals (${parts}) — the papers do not score alike, so one per-question mark cannot be stated.`);
+    const partNumbers = [...partTotals].sort((a, b) => a - b);
+    const parts = partNumbers.map((n) => `${n} marks`).join(", ");
+    return no(
+      `The ${short} pattern lists parts with different totals (${parts}) — the papers do not score alike, so one per-question mark cannot be stated.`,
+      // `partNumbers` lets a localised caller rebuild the list with
+      // mark.parts.item instead of printing the English "N marks".
+      { key: "mark.parts", vars: { short, parts, partNumbers: partNumbers.join(",") } },
+    );
   }
   return { ok: true, reason: null };
 }

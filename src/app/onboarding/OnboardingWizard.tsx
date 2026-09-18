@@ -42,6 +42,10 @@ export interface LangStepCopy {
   /** Contains "{state}". */
   suggested: string;
   note: string;
+  /** Progress line under the bar; contains "{n}" (16 Sep 2026 — it was an
+   *  English literal on a wizard whose language step was already
+   *  translated). Optional, so a caller without it still gets English. */
+  step?: string;
 }
 
 const LANG_COPY_EN: LangStepCopy = {
@@ -49,6 +53,7 @@ const LANG_COPY_EN: LangStepCopy = {
   body: "Questions, mock hints and the tutor follow this. Change it anytime from the language menu.",
   suggested: "Suggested for {state}",
   note: "Translated questions are Shishya-translated — cross-check the English when in doubt.",
+  step: "Step {n} of 4",
 };
 
 const LANG_COOKIE = "shishya-lang";
@@ -303,7 +308,9 @@ export function OnboardingWizard({
           />
         ))}
       </div>
-      <p className="mt-2 text-[11px] text-ink-500">Step {stepIdx + 1} of 4</p>
+      <p className="mt-2 text-[11px] text-ink-500">
+        {(langCopy.step ?? LANG_COPY_EN.step ?? "").replace("{n}", String(stepIdx + 1))}
+      </p>
 
       <div className="mt-5">
         {stepIdx === 0 && (

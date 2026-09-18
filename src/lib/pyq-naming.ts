@@ -12,6 +12,8 @@
 // Pure functions, no DB; the pages pass in whether an official question paper
 // exists for the exam / year (src/lib/official-papers-db.ts).
 
+import { fillPyq, pyqYearCopy, type PyqCopyLocale } from "@/lib/pyq-year-copy";
+
 export interface PyqYearNaming {
   short: string;
   name: string;
@@ -48,11 +50,19 @@ export function pyqYearDescription(o: PyqYearNaming): string {
   );
 }
 
-/** Visible H1 of a PYQ year page. */
-export function pyqYearH1(short: string, year: number | string, hasOfficialPaper: boolean): string {
-  return hasOfficialPaper
-    ? `${short} ${year} previous year paper · official paper and PYQ-pattern practice`
-    : `${short} ${year} previous year paper practice · PYQ-pattern set`;
+/** Visible H1 of a PYQ year page. Localised for the /hi and /te twins
+ *  (16 Sep 2026) — the copy carries both names and the "not the original
+ *  questions" force in every language. English is the default and unchanged;
+ *  the metadata helpers above stay English because the page canonicalises
+ *  every locale to the English URL. */
+export function pyqYearH1(
+  short: string,
+  year: number | string,
+  hasOfficialPaper: boolean,
+  locale: PyqCopyLocale = "en",
+): string {
+  const C = pyqYearCopy(locale);
+  return fillPyq(hasOfficialPaper ? C.h1Official : C.h1Practice, { short, year });
 }
 
 /** JSON-LD headline of a PYQ year page. */

@@ -22,7 +22,13 @@
 // The CHECKLIST phase article, when a REAL one exists (isRealArticle: two
 // cited sources, not a placeholder), renders below as an optional extra.
 //
-// English-only page: canonical only, no hreflang twins.
+// Canonical is always the English URL — this route is not one of the
+// measured twin surfaces (src/lib/twin-localisation.ts), so it emits no
+// hreflang block and the metadata below stays English for every URL.
+// The BODY is rendered in the reader's language (16 Sep 2026): getT()
+// honours the /hi | /te URL prefix, then the cookie, then preferredLang,
+// so a Hindi reader who follows the language switcher or an exam-eve mail
+// link no longer lands on an English checklist.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -36,7 +42,8 @@ import { ReactionButtons } from "@/components/exam-phase/ReactionButtons";
 import { ShareButtons } from "@/components/exam-phase/ShareButtons";
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
-import { tFor } from "@/lib/i18n-server";
+import { getT } from "@/lib/i18n-server";
+import { fillTemplate, type StringKey } from "@/lib/i18n";
 import { alertPhase, examAlertLabels, getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { alertCopyPhase } from "@/lib/exam-week";
 import {
@@ -44,8 +51,10 @@ import {
   examChecklistMeta,
   hasChecklist,
   patternSummary,
+  type ChecklistT,
   type ChecklistDate,
   type ChecklistExam,
+  type ChecklistInput,
   type ChecklistSubject,
   type ExamChecklist,
 } from "@/lib/exam-checklist";
@@ -116,11 +125,27 @@ const loadChecklistFacts = unstable_cache(
   { revalidate: 900, tags: ["exam-shared"] },
 );
 
-async function loadChecklist(code: string, now: Date): Promise<{ facts: ChecklistFacts; checklist: ExamChecklist } | null> {
+/** `lang` localises the sentences the checklist builder assembles (the
+ *  exam-day line, the window, the marking line, the marking-scheme reason)
+ *  and the tier word inside every date. Omitted — as generateMetadata omits
+ *  it — everything stays English, byte for byte. */
+async function loadChecklist(
+  code: string,
+  now: Date,
+  lang?: { t: ChecklistT; locale: string },
+): Promise<{ facts: ChecklistFacts; checklist: ExamChecklist } | null> {
   const facts = await loadChecklistFacts(code).catch(() => null);
   // SCHOOL_BOARD (Board, Class) containers are not exams: no checklist page.
   if (!facts || !hasChecklist(facts.exam.category)) return null;
   const inputs = await getExamWeekInputs(facts.exam.id).catch(() => ({ rows: [], officialUrl: null }));
+  const localised: Partial<ChecklistInput> = lang
+    ? {
+        t: lang.t,
+        locale: lang.locale,
+        tierWord: (tier) => lang.t(`ew.tier.${tier}` as StringKey),
+        passedText: lang.t("tracker.passedEstimate"),
+      }
+    : {};
   const checklist = buildExamChecklist({
     exam: facts.exam,
     subjects: facts.subjects,
@@ -128,6 +153,7 @@ async function loadChecklist(code: string, now: Date): Promise<{ facts: Checklis
     officialUrl: inputs.officialUrl ?? facts.officialUrl,
     officialName: facts.officialName,
     now,
+    ...localised,
   });
   return { facts, checklist };
 }
@@ -157,7 +183,7 @@ export async function generateMetadata({
   };
 }
 
-function NoticeLink({ row }: { row: ChecklistDate }) {
+function NoticeLink({ row, t }: { row: ChecklistDate; t: (key: StringKey) => string }) {
   if (!row.url) return null;
   return (
     <>
@@ -168,7 +194,7 @@ function NoticeLink({ row }: { row: ChecklistDate }) {
         rel="nofollow noopener noreferrer"
         className="font-semibold text-saffron-700 hover:text-saffron-800"
       >
-        {row.official ? "Official notice ↗" : "Source ↗"}
+        {row.official ? t("chk.notice.official") : t("chk.notice.source")}
       </a>
     </>
   );
@@ -187,12 +213,12 @@ export default async function ChecklistPage({
 }) {
   const { code } = await params;
   const now = new Date();
-  const loaded = await loadChecklist(code, now);
+  const { t, locale } = await getT();
+  const loaded = await loadChecklist(code, now, { t, locale });
   if (!loaded) notFound();
   const { facts, checklist: c } = loaded;
   const { exam } = facts;
   const short = exam.shortName;
-  const t = tFor("en");
 
   // /cutoff 404s without rank bands (MP RAEO, KA KSRP — 16 Sep 2026): the
   // link renders only when the page does. A failed gate read keeps it.
@@ -228,10 +254,12 @@ export default async function ChecklistPage({
   );
 
   const pageUrl = `https://shishya.in/exams/${exam.code}/checklist`;
-  const summary = patternSummary(c.pattern);
+  const summary = patternSummary(c.pattern, t);
   const alert = examAlertLabels(t, short);
   const upcomingDated = c.examDay && !c.examDay.passedEstimate && c.examDay.daysFromToday >= 0 ? c.examDay.dated : null;
-  const shareMessage = `${short}${upcomingDated ? ` exam ${upcomingDated}` : ""}: last-minute checklist — what to carry, admit card, pattern, every date with its source tier. Free:`;
+  const shareMessage = upcomingDated
+    ? fillTemplate(t("chk.share.dated"), { exam: short, date: upcomingDated })
+    : fillTemplate(t("chk.share"), { exam: short });
 
   const linkCls =
     "inline-flex items-center gap-1 rounded-full border border-saffron-300 bg-white px-3 py-1 text-xs font-semibold text-saffron-800 hover:bg-saffron-100";
@@ -278,63 +306,66 @@ export default async function ChecklistPage({
       )}
       <Header />
       <article className="container-prose py-10">
-        <nav className="mb-6 flex flex-wrap items-center gap-1.5 text-xs text-ink-500" aria-label="Breadcrumb">
+        <nav className="mb-6 flex flex-wrap items-center gap-1.5 text-xs text-ink-500" aria-label={t("chk.crumb.aria")}>
           <Link href="/" className="font-medium text-saffron-700 hover:underline">
-            All exams
+            {t("chk.crumb.all")}
           </Link>
           <span aria-hidden>›</span>
           <Link href={`/exams/${exam.code}`} className="font-medium text-saffron-700 hover:underline">
             {short}
           </Link>
           <span aria-hidden>›</span>
-          <span className="font-medium text-ink-700">Last-minute checklist</span>
+          <span className="font-medium text-ink-700">{t("chk.crumb.self")}</span>
         </nav>
 
         <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-900">
-          📋 Last-minute checklist
+          {t("chk.badge")}
         </span>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">{short} — last-minute checklist</h1>
+        <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
+          {fillTemplate(t("chk.h1"), { exam: short })}
+        </h1>
         <p className="mt-3 text-base text-ink-600">
-          Built from the {exam.name} records on our exam tracker. Every date carries its source tier:{" "}
-          <strong>official</strong> (the conducting body&apos;s own site), <strong>reported</strong> (a secondary source —
-          verify it) or <strong>expected</strong> (a typical-cycle estimate, not an announcement). Your admit card and the
-          official notice always win.
+          {fillTemplate(t("chk.intro.lead"), { name: exam.name })}{" "}
+          <strong>{t("ew.tier.official")}</strong> {t("chk.intro.official")} <strong>{t("ew.tier.reported")}</strong>{" "}
+          {t("chk.intro.reported")} {t("chk.intro.or")} <strong>{t("ew.tier.expected")}</strong>{" "}
+          {t("chk.intro.expected")} {t("chk.intro.tail")}
         </p>
 
         {/* 1 — Exam day */}
         <section className="mt-6 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 px-5 py-4">
-          <h2 className={h2Cls}>🎯 Exam day</h2>
+          <h2 className={h2Cls}>{t("chk.examDay.h2")}</h2>
           {c.examDayLine && c.examDay ? (
             <>
               <p className="mt-1 text-sm font-semibold text-ink-900">
                 {c.examDayLine}
-                <NoticeLink row={c.examDay} />
+                <NoticeLink row={c.examDay} t={t} />
               </p>
               {c.sittings.length > 1 ? (
                 // Every sitting of the day (16 Sep 2026): KSRP holds two
                 // official sittings on 20 Sep in different regions and hours,
                 // and the single "Tracker row" line showed one of them.
                 <>
-                  <p className="mt-0.5 text-xs text-ink-600">Sittings on this day, tracker rows:</p>
+                  <p className="mt-0.5 text-xs text-ink-600">{t("chk.sittings.label")}</p>
                   <ul className="mt-0.5 space-y-0.5 text-xs text-ink-700">
                     {c.sittings.map((s, i) => (
                       <li key={i}>
                         🕘 {s.label} — {s.dated}
-                        <NoticeLink row={s} />
+                        <NoticeLink row={s} t={t} />
                       </li>
                     ))}
                   </ul>
                 </>
               ) : (
-                <p className="mt-0.5 text-xs text-ink-600">Tracker row: {c.examDay.label}</p>
+                <p className="mt-0.5 text-xs text-ink-600">
+                  {fillTemplate(t("chk.trackerRow"), { label: c.examDay.label })}
+                </p>
               )}
             </>
           ) : (
             <p className="mt-1 text-sm text-ink-800">
-              No {short} exam date is on our tracker yet — it appears here, with its source tier, once the conducting body
-              announces it.{" "}
+              {fillTemplate(t("chk.noDate"), { exam: short })}{" "}
               <Link href={`/exams/${exam.code}/updates`} className="font-semibold text-saffron-700 hover:text-saffron-800">
-                Follow the tracker →
+                {t("chk.followTracker")}
               </Link>
             </p>
           )}
@@ -342,7 +373,10 @@ export default async function ChecklistPage({
             <ul className="mt-2 space-y-1 text-sm text-ink-800">
               {c.examNotes.map((n, i) => (
                 <li key={i}>
-                  🕘 <span className="text-xs font-semibold text-ink-600">Timings / reporting, tracker row for {n.dated}:</span>{" "}
+                  🕘{" "}
+                  <span className="text-xs font-semibold text-ink-600">
+                    {fillTemplate(t("chk.timings"), { dated: n.dated })}
+                  </span>{" "}
                   {n.text}
                 </li>
               ))}
@@ -352,61 +386,67 @@ export default async function ChecklistPage({
 
         {/* 2 — What to carry */}
         <section className={cardCls}>
-          <h2 className={h2Cls}>🎒 What to carry</h2>
+          <h2 className={h2Cls}>{t("chk.carry.h2")}</h2>
           <ul className="mt-2 space-y-1.5 text-sm text-ink-800">
             {c.carry.map((item) => (
-              <li key={item.text} className="flex gap-2">
+              <li key={item.key} className="flex gap-2">
                 <span aria-hidden className="shrink-0">
                   {item.check ? "🔎" : "✅"}
                 </span>
-                <span>{item.text}</span>
+                <span>{t(item.key)}</span>
               </li>
             ))}
           </ul>
           <p className="mt-3 text-xs text-ink-500">
-            {c.carry.some((item) => !item.check) ? "✅ true of every exam hall · " : ""}🔎 varies by exam — check your
-            admit card or notice. The night before: no new topics, and sleep.
+            {c.carry.some((item) => !item.check) ? t("chk.carry.universal") : ""}
+            {t("chk.carry.note")}
           </p>
         </section>
 
         {/* 3 — Admit card */}
         <section className={cardCls}>
-          <h2 className={h2Cls}>🎫 Admit card</h2>
+          <h2 className={h2Cls}>{t("chk.admit.h2")}</h2>
           {c.admitCard ? (
             <>
               <p className="mt-1 text-sm text-ink-800">
                 {c.admitCard.label}: <span className="font-semibold">{c.admitCard.dated}</span>
-                <NoticeLink row={c.admitCard} />
+                <NoticeLink row={c.admitCard} t={t} />
               </p>
-              {c.admitCard.notes && <p className="mt-1 text-sm text-ink-700">From the tracker row: {c.admitCard.notes}</p>}
+              {c.admitCard.notes && (
+                <p className="mt-1 text-sm text-ink-700">
+                  {fillTemplate(t("chk.admit.notes"), { notes: c.admitCard.notes })}
+                </p>
+              )}
             </>
           ) : (
             <p className="mt-1 text-sm text-ink-800">
-              Admit card: not announced yet on our tracker. It is published on{" "}
+              {t("chk.admit.none")}{" "}
               {c.portal ? (
                 <a href={c.portal.url} target="_blank" rel="nofollow noopener noreferrer" className="font-semibold text-saffron-700 hover:text-saffron-800">
                   {c.portal.name} ↗
                 </a>
               ) : (
-                "the conducting body's official website"
+                t("chk.admit.none.fallback")
               )}
-              .
+              {t("chk.sentenceEnd")}
             </p>
           )}
         </section>
 
         {/* 4 — Pattern */}
         <section className={cardCls}>
-          <h2 className={h2Cls}>📝 Exam pattern on our records</h2>
+          <h2 className={h2Cls}>{t("chk.pattern.h2")}</h2>
           <p className="mt-0.5 text-xs text-ink-500">{c.pattern.paper}</p>
           {c.pattern.stageMismatch && (
             <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">⚠️ {c.pattern.stageMismatch}</p>
           )}
           {summary && <p className="mt-2 text-sm font-semibold text-ink-900">{summary}</p>}
           {c.pattern.marking ? (
-            <p className="mt-1 text-sm text-ink-800">Marking: {c.pattern.marking}</p>
+            <p className="mt-1 text-sm text-ink-800">{fillTemplate(t("chk.pattern.marking"), { text: c.pattern.marking })}</p>
           ) : c.pattern.markingNote && !c.pattern.stageMismatch ? (
-            <p className="mt-1 text-sm text-ink-700">Marking: {c.pattern.markingNote}</p>
+            <p className="mt-1 text-sm text-ink-700">
+              {fillTemplate(t("chk.pattern.marking"), { text: c.pattern.markingNote })}
+            </p>
           ) : null}
           {c.sections.length > 0 && (
             <>
@@ -414,55 +454,58 @@ export default async function ChecklistPage({
                   otherwise names only — relative syllabus weights are
                   estimates, never the paper's weightage. */}
               <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-ink-500">
-                {c.sectionsAreCounts ? "Sections" : "Subjects on our syllabus"}
+                {c.sectionsAreCounts ? t("chk.pattern.sections") : t("chk.pattern.subjects")}
               </p>
               <ol className="mt-1 list-decimal space-y-0.5 pl-5 text-sm text-ink-800">
                 {c.sections.map((s, i) => (
                   <li key={i}>
                     {s.name}
-                    {s.questions != null ? ` — ${s.questions} questions` : ""}
+                    {s.questions != null ? ` — ${fillTemplate(t("chk.pattern.q"), { n: s.questions })}` : ""}
                   </li>
                 ))}
               </ol>
             </>
           )}
           <p className="mt-3 text-sm text-ink-700">
-            Languages: {c.languages.length > 0 ? c.languages.join(", ") : "not on our records — check the official notice"}
+            {fillTemplate(t("chk.languages"), {
+              list: c.languages.length > 0 ? c.languages.join(", ") : t("chk.languages.none"),
+            })}
           </p>
           {c.pattern.description && <p className="mt-2 text-sm text-ink-600">{c.pattern.description}</p>}
-          <p className="mt-2 text-xs text-ink-500">Patterns can change between cycles — this cycle&apos;s official notice is final.</p>
+          <p className="mt-2 text-xs text-ink-500">{t("chk.patternChange")}</p>
         </section>
 
         {/* 5 — After the paper */}
         <section className={cardCls}>
-          <h2 className={h2Cls}>🔑 After the paper</h2>
+          <h2 className={h2Cls}>{t("chk.after.h2")}</h2>
           <ul className="mt-1 space-y-1 text-sm text-ink-800">
             <li>
-              Answer key:{" "}
+              {t("chk.after.answerKey")}{" "}
               {c.answerKey ? (
                 <>
                   <span className="font-semibold">{c.answerKey.dated}</span>
-                  <NoticeLink row={c.answerKey} />
+                  <NoticeLink row={c.answerKey} t={t} />
                 </>
               ) : (
-                "not announced yet"
+                t("chk.notAnnounced")
               )}
             </li>
             <li>
-              Result:{" "}
+              {t("chk.after.result")}{" "}
               {c.result ? (
                 <>
                   <span className="font-semibold">{c.result.dated}</span>
-                  <NoticeLink row={c.result} />
+                  <NoticeLink row={c.result} t={t} />
                 </>
               ) : (
-                "not announced yet"
+                t("chk.notAnnounced")
               )}
             </li>
             {c.nextStage && (
               <li>
-                Next stage — {c.nextStage.label}: <span className="font-semibold">{c.nextStage.dated}</span>
-                <NoticeLink row={c.nextStage} />
+                {fillTemplate(t("chk.after.nextStage"), { label: c.nextStage.label })}{" "}
+                <span className="font-semibold">{c.nextStage.dated}</span>
+                <NoticeLink row={c.nextStage} t={t} />
               </li>
             )}
           </ul>
@@ -470,10 +513,10 @@ export default async function ChecklistPage({
 
         {/* 6 — Official portal + useful links */}
         <section className={cardCls}>
-          <h2 className={h2Cls}>🔗 Official portal and useful links</h2>
+          <h2 className={h2Cls}>{t("chk.links.h2")}</h2>
           {c.portal && (
             <p className="mt-1 text-sm text-ink-800">
-              Official portal:{" "}
+              {t("chk.portal")}{" "}
               <a href={c.portal.url} target="_blank" rel="nofollow noopener noreferrer" className="font-semibold text-saffron-700 hover:text-saffron-800">
                 {c.portal.name} ↗
               </a>
@@ -481,12 +524,12 @@ export default async function ChecklistPage({
           )}
           <div className="mt-3 flex flex-wrap gap-2">
             <Link href={`/exams/${exam.code}/updates`} className={linkCls}>
-              🗓️ All {short} dates
+              {fillTemplate(t("chk.link.dates"), { exam: short })}
             </Link>
             {/* /syllabus 404s for exams with no subjects (12 on 16 Sep 2026). */}
             {gates.syllabus && (
               <Link href={`/exams/${exam.code}/syllabus`} className={linkCls}>
-                📚 Syllabus
+                {t("chk.link.syllabus")}
               </Link>
             )}
             {/* The system full-pattern paper follows the STORED pattern — hidden
@@ -499,7 +542,7 @@ export default async function ChecklistPage({
             )}
             {facts.hasTricks && (
               <Link href={`/exams/${exam.code}/tricks`} className={linkCls}>
-                🧠 Memory tricks
+                {t("chk.link.tricks")}
               </Link>
             )}
             {gates.cutoff && (
@@ -531,10 +574,9 @@ export default async function ChecklistPage({
         {/* 8 — Optional: the compiled article, only when it is REAL */}
         {article && (
           <section className="mt-10">
-            <h2 className="text-xl font-bold text-ink-900">Revision notes from public sources</h2>
+            <h2 className="text-xl font-bold text-ink-900">{t("chk.article.h2")}</h2>
             <p className="mt-1 text-xs text-ink-500">
-              Compiled from public student discussion, with the sources listed below · updated{" "}
-              {formatRelativeTime(article.lastUpdatedAt, now)}
+              {fillTemplate(t("chk.article.sub"), { when: formatRelativeTime(article.lastUpdatedAt, now, t) })}
             </p>
             <h3 className="mt-4 text-lg font-semibold text-ink-900">{article.title}</h3>
             <div className="prose prose-ink mt-4 max-w-none" dangerouslySetInnerHTML={{ __html: renderMarkdown(article.bodyMarkdown) }} />
@@ -544,7 +586,7 @@ export default async function ChecklistPage({
             </div>
             {sources.length > 0 && (
               <div className="mt-6 rounded-lg border border-ink-100 bg-ink-50/40 p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">Sources we read</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">{t("chk.article.sources")}</p>
                 <ul className="mt-2 space-y-1 text-xs text-ink-700">
                   {sources.map((src) => (
                     <li key={src.url}>
@@ -561,16 +603,13 @@ export default async function ChecklistPage({
         )}
 
         <section className="mt-10 rounded-xl border border-ink-200 bg-saffron-50/40 p-5">
-          <h2 className="text-base font-semibold text-ink-900">Talk to other {short} candidates</h2>
-          <p className="mt-1 text-sm text-ink-600">
-            Doubts, what-did-you-get threads and score estimates — scoped to this exam. Shishya&apos;s own starter questions
-            and AI replies are labelled.
-          </p>
+          <h2 className="text-base font-semibold text-ink-900">{fillTemplate(t("chk.disc.h2"), { exam: short })}</h2>
+          <p className="mt-1 text-sm text-ink-600">{t("chk.disc.body")}</p>
           <Link
             href={`/discussions?examCode=${exam.code}`}
             className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-saffron-700 hover:underline"
           >
-            Open {short} discussions <span aria-hidden>→</span>
+            {fillTemplate(t("chk.disc.cta"), { exam: short })} <span aria-hidden>→</span>
           </Link>
         </section>
       </article>
@@ -578,13 +617,13 @@ export default async function ChecklistPage({
   );
 }
 
-/** "5 min ago / 2 h ago / 3 d ago" — server-rendered. */
-function formatRelativeTime(date: Date | string, now: Date): string {
+/** "5 min ago / 2 h ago / 3 d ago" — server-rendered, in the reader's language. */
+function formatRelativeTime(date: Date | string, now: Date, t: (key: StringKey) => string): string {
   const ms = now.getTime() - new Date(date).getTime();
   const min = Math.round(ms / 60_000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min} min ago`;
+  if (min < 1) return t("chk.rel.now");
+  if (min < 60) return fillTemplate(t("chk.rel.min"), { n: min });
   const hr = Math.round(min / 60);
-  if (hr < 24) return `${hr} h ago`;
-  return `${Math.round(hr / 24)} d ago`;
+  if (hr < 24) return fillTemplate(t("chk.rel.hour"), { n: hr });
+  return fillTemplate(t("chk.rel.day"), { n: Math.round(hr / 24) });
 }

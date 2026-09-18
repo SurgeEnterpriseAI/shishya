@@ -12,6 +12,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { contextualExamFilter } from "@/lib/exam-aliases";
 import { nearestExams } from "@/lib/exam-nearest";
+import { clientUiLocale, type CopyLocale } from "@/lib/ui-locale-copy";
+import { examPickerCopy } from "@/lib/quiz-entry-copy";
 
 export interface ExamCard {
   code: string;
@@ -80,6 +82,7 @@ export function ExamPicker({
   featured,
   labels,
   signedIn,
+  locale,
 }: {
   exams: ExamCard[];
   /** Exams the student already has — hidden from `exams`, but a search for
@@ -89,6 +92,9 @@ export function ExamPicker({
   featured?: CuratedSection[];
   labels: Labels;
   signedIn: boolean;
+  /** The page's locale when the server already has one (16 Sep 2026); the
+   *  one line `labels` does not carry follows it, else the cookie after mount. */
+  locale?: string;
 }) {
   const [q, setQ] = useState("");
   const [tag, setTag] = useState<string | null>(null);
@@ -303,7 +309,7 @@ export function ExamPicker({
 
       {/* ── Filtered result grid (when chip / search / state-picked) ─── */}
       {showCurated || showStateGrid ? null : filtered.length === 0 ? (
-        <ExamPickerMiss query={q} exams={exams} enrolled={enrolled} labels={labels} signedIn={signedIn} />
+        <ExamPickerMiss query={q} exams={exams} enrolled={enrolled} labels={labels} signedIn={signedIn} locale={locale} />
       ) : (
         <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((e) => (
@@ -428,12 +434,14 @@ function ExamPickerMiss({
   enrolled,
   labels,
   signedIn,
+  locale,
 }: {
   query: string;
   exams: ExamCard[];
   enrolled: EnrolledExam[];
   labels: Labels;
   signedIn: boolean;
+  locale?: string;
 }) {
   const near = useMemo(() => nearestExams(query, exams, 4), [query, exams]);
   const logged = useRef<Set<string>>(new Set());
@@ -466,6 +474,18 @@ function ExamPickerMiss({
     return () => window.clearTimeout(id);
   }, [key, near, mine.length]);
 
+  // "Already one of your exams:" in the student's language (16 Sep 2026).
+  // Every other label here arrives through `labels`, built by the page; this
+  // one line has no key yet, so it follows the page's `locale` and, until the
+  // page passes one (it is outside this partition), the cookie read after
+  // mount. tellUs() keeps writing its English sentence: that text is stored
+  // feedback the team reads, not interface copy.
+  const [cookieLocale, setCookieLocale] = useState<CopyLocale>("en");
+  useEffect(() => {
+    if (locale == null) setCookieLocale(clientUiLocale());
+  }, [locale]);
+  const pickerCopy = examPickerCopy(locale ?? cookieLocale);
+
   function tellUs() {
     window.dispatchEvent(
       new CustomEvent("shishya:feedback", {
@@ -478,7 +498,7 @@ function ExamPickerMiss({
     <div className="mx-auto mt-10 max-w-2xl">
       {mine.length > 0 && (
         <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-center text-sm text-ink-800">
-          Already one of your exams:{" "}
+          {pickerCopy.alreadyYours}{" "}
           {mine.map((e, i) => (
             <span key={e.code}>
               {i > 0 ? " · " : ""}

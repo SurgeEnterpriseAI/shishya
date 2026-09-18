@@ -70,6 +70,7 @@ import {
   type TimelineRow,
 } from "@/lib/exam-timeline";
 import { getVerdictTally, publicTally, VERDICT_MIN_N, type VerdictTally } from "@/lib/exam-verdict";
+import { fillTemplate, tk, type StringKey } from "@/lib/i18n";
 import {
   declaredStages,
   fullPaperFitsSitting,
@@ -368,21 +369,26 @@ export function buildExamNightFacts(input: ExamNightInput, fmt: ExamNightFormat)
 }
 
 /** WhatsApp / copy text for the block's share control — names only what
- *  the page renders, and never a cutoff. English, like ShareExamButton's
- *  own chrome. The date carries the sitting's stage when it is another
+ *  the page renders, and never a cutoff. English unless the caller passes
+ *  the reader's translator (16 Sep 2026: a Hindi reader's forward to a
+ *  Hindi group was an English sentence); ShareExamButton's own chrome is
+ *  still English. The date carries the sitting's stage when it is another
  *  stage's day, as the block does (16 Sep 2026: "UPSC Prelims (21 Aug
  *  (official) Mains)", not a bare Mains date under a Prelims name). */
 export function examNightShareMessage(
   examShort: string,
   facts: Pick<ExamNightFactsView, "examDay" | "summary"> & Partial<Pick<ExamNightFactsView, "examDayStage">>,
+  t: (key: StringKey) => string = (key) => tk(key, "en"),
 ): string {
   const s = facts.summary;
   const parts: string[] = [];
-  if (s.poll) parts.push("rate the paper in one tap, no login");
-  if (s.keyStatus) parts.push("answer-key status from the tracker");
-  if (parts.length === 0) parts.push("every exam date with its source tier, and free alerts");
-  const when = facts.examDay ? ` (${facts.examDay.dated}${facts.examDayStage ? ` ${facts.examDayStage}` : ""})` : "";
-  return `${examShort}${when}: ${parts.join(", ")} — free on Shishya:`;
+  if (s.poll) parts.push(t("ew.night.share.poll"));
+  if (s.keyStatus) parts.push(t("ew.night.share.key"));
+  if (parts.length === 0) parts.push(t("ew.night.share.default"));
+  const joined = parts.join(", ");
+  if (!facts.examDay) return fillTemplate(t("ew.night.share.line"), { exam: examShort, parts: joined });
+  const when = `${facts.examDay.dated}${facts.examDayStage ? ` ${facts.examDayStage}` : ""}`;
+  return fillTemplate(t("ew.night.share.lineDated"), { exam: examShort, when, parts: joined });
 }
 
 /**

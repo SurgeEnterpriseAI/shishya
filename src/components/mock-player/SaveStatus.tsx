@@ -5,6 +5,13 @@
 // percentage, no "almost there". The counts are real (size of the dirty
 // set), and "saved" is only shown after the server acknowledged the exact
 // versions this device sent.
+//
+// 16 Sep 2026: every string here is now supplied by the caller in the
+// student's language (player.save.* / player.save.unconfirmed, built in
+// /mocks/[id]/page.tsx). DEFAULT_LABELS and DEFAULT_UNCONFIRMED stay only
+// as the English fallback for a caller that passes nothing.
+
+import { fillTemplate } from "@/lib/i18n";
 
 export type SaveState = "idle" | "saving" | "saved" | "offline" | "retrying" | "error";
 
@@ -15,6 +22,9 @@ const DEFAULT_LABELS: Record<Exclude<SaveState, "idle">, string> = {
   retrying: "couldn't reach the server — answers kept on this device, retrying",
   error: "this attempt can no longer be saved on the server — answers kept on this device",
 };
+
+/** `{n}` = answers this device changed that the server has not confirmed. */
+const DEFAULT_UNCONFIRMED = "{n} not yet confirmed";
 
 const TONE: Record<Exclude<SaveState, "idle">, string> = {
   saving: "text-ink-500",
@@ -29,6 +39,7 @@ export function SaveStatus({
   unsynced,
   message,
   labels,
+  unconfirmedLabel,
   className,
 }: {
   state: SaveState;
@@ -37,6 +48,8 @@ export function SaveStatus({
   /** For `error`: the server's own message, shown verbatim when given. */
   message?: string | null;
   labels?: Partial<Record<Exclude<SaveState, "idle">, string>>;
+  /** Template for the tail count, `{n}` = unsynced. English when omitted. */
+  unconfirmedLabel?: string;
   className?: string;
 }) {
   if (state === "idle" && unsynced === 0) return null;
@@ -46,7 +59,10 @@ export function SaveStatus({
       : state === "error" && message
         ? message
         : (labels?.[state] ?? DEFAULT_LABELS[state]);
-  const tail = unsynced > 0 && state !== "saving" ? ` · ${unsynced} not yet confirmed` : "";
+  const tail =
+    unsynced > 0 && state !== "saving"
+      ? ` · ${fillTemplate(unconfirmedLabel ?? DEFAULT_UNCONFIRMED, { n: unsynced })}`
+      : "";
   return (
     <p
       role="status"

@@ -36,6 +36,7 @@ import { unstable_cache } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
+import { calendarRailLabels, fillHome, homeStripCopy, type HomeStripCopy } from "@/lib/home-strip-copy";
 import { Header } from "@/components/Header";
 import type { ExamCard } from "@/components/ExamPicker";
 import { computeExamTags } from "@/lib/exam-tags";
@@ -443,7 +444,11 @@ export default async function ExamsPage({
   searchParams: Promise<{ g?: string; s?: string; st?: string }>;
 }) {
   const sp = await searchParams;
-  const { t } = await getT();
+  const { t, locale } = await getT();
+  // 16 Sep 2026: the strips and rails of "/" read in the visitor's language on
+  // the /hi and /te twins (src/lib/home-strip-copy.ts). generateMetadata above
+  // is untouched — "/" canonicalises to https://shishya.in/ in every locale.
+  const H = homeStripCopy(locale);
 
   const [signedIn, exams, calendar, vacancy, portalStats, inspirationVideos, grinders, liveToday, sundayLive] =
     await Promise.all([
@@ -585,7 +590,7 @@ export default async function ExamsPage({
           is now the vacancy explorer). Concluded / Upcoming / Past with
           verdict-cutoff chips. Discussions moved off the homepage — still
           at /discussions. */}
-      <UpcomingExamsSidebar events={upcomingEvents} defaultTab={calendar.defaultTab} side="right" />
+      <UpcomingExamsSidebar events={upcomingEvents} defaultTab={calendar.defaultTab} side="right" labels={calendarRailLabels(locale)} />
 
       {/* Floating chat-router: bottom-left FAB that asks "What are you
           looking for?" and POSTs the answer to /api/chat-route. Claude
@@ -662,7 +667,7 @@ export default async function ExamsPage({
               it here at the top. */}
           {step !== "goals" && <ExamsTodayStrip />}
 
-          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} inspirationVideos={inspirationVideos} grinders={grinders} sundayLive={sundayLive} />}
+          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} inspirationVideos={inspirationVideos} grinders={grinders} sundayLive={sundayLive} locale={locale} />}
           {step === "scope" && goal && (
             <StepScope
               goal={goal}
@@ -685,14 +690,12 @@ export default async function ExamsPage({
           {!signedIn && step !== "goals" && (
             <div className="mt-14 text-center">
               <Link href="/login?callbackUrl=%2Fdashboard" className="btn-primary">
-                Free sign-up — start prepping
+                {H.signupCta}
               </Link>
               {/* Audit 11 Sep 2026: was "Verified by students who've cleared
                   the same path" — unbacked. Say what the account actually
                   gives (the same offer bare /login makes). */}
-              <p className="mt-2 text-xs text-ink-500">
-                Free day-by-day plan to exam day · scores and rank saved · one email on result day · in your language
-              </p>
+              <p className="mt-2 text-xs text-ink-500">{H.signupLine}</p>
             </div>
           )}
 
@@ -722,7 +725,7 @@ export default async function ExamsPage({
           )}
           {/* Mobile: vacancy explorer (above) + exam calendar. Discussions
               moved off the homepage — still at /discussions. */}
-          <MobileInlineRails events={upcomingEvents} threads={[]} />
+          <MobileInlineRails events={upcomingEvents} threads={[]} copy={H} />
         </section>
       </div>
     </main>
@@ -737,9 +740,12 @@ export default async function ExamsPage({
 function MobileInlineRails({
   events,
   threads,
+  copy,
 }: {
   events: UpcomingEvent[];
   threads: ThreadItem[];
+  /** Strings in the page's language (16 Sep 2026). */
+  copy: HomeStripCopy;
 }) {
   // The horizontal strip only carries the fresh windows — just-concluded
   // (answer-key rush) first, then upcoming. The Past tab is a desktop-
@@ -753,9 +759,9 @@ function MobileInlineRails({
           <div className="flex items-baseline justify-between">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">
               <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-saffron-500 align-middle" aria-hidden />
-              Exam calendar
+              {copy.calendarKicker}
             </p>
-            <span className="text-[10px] text-ink-400">{stripEvents.length} dates</span>
+            <span className="text-[10px] text-ink-400">{fillHome(copy.datesCount, { n: stripEvents.length })}</span>
           </div>
           <ul className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
             {stripEvents.slice(0, 12).map((e) => (
@@ -787,7 +793,7 @@ function MobileInlineRails({
                     )}
                     {e.expectedExamDay && (
                       <span className="ml-1.5 rounded bg-ink-100 px-1 py-0.5 text-[9px] font-medium text-ink-600">
-                        {e.bucket === "concluded" || e.bucket === "past" ? "was expected — not confirmed" : "(expected)"}
+                        {e.bucket === "concluded" || e.bucket === "past" ? copy.rail.wasExpected : copy.rail.expected}
                       </span>
                     )}
                   </p>
@@ -834,11 +840,11 @@ function MobileInlineRails({
                         questions, never shown as student posts. */}
                     {th.isSeed && (
                       <span className="mr-1.5 rounded bg-saffron-50 px-1 py-0.5 text-[10px] font-medium text-saffron-800 ring-1 ring-saffron-200">
-                        Starter question · Shishya
+                        {copy.starterQuestion}
                       </span>
                     )}
                     <span className="font-medium text-ink-700">
-                      {th.messageCount} {th.messageCount === 1 ? "reply" : "replies"}
+                      {th.messageCount} {th.messageCount === 1 ? copy.replyOne : copy.replyMany}
                     </span>
                   </p>
                 </Link>
@@ -863,6 +869,7 @@ function StepGoals({
   inspirationVideos,
   grinders,
   sundayLive,
+  locale,
 }: {
   exams: ExamCard[];
   t: (key: SectionTitleKey) => string;
@@ -872,6 +879,8 @@ function StepGoals({
   inspirationVideos: InspoVideo[];
   sundayLive: UpcomingSunday | null;
   grinders: GrinderEntry[];
+  /** The page body language, for the stats band and the feature cards. */
+  locale: string;
 }) {
   // 27 May 2026 funnel telemetry — 96 signups, 0 mock attempts in
   // last 24h. The page leads visitors into a goal funnel but never
@@ -1015,7 +1024,7 @@ function StepGoals({
           <SundayLiveTestBanner data={sundayLive} signedIn={signedIn} />
         </div>
 
-        <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} />
+        <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} locale={locale} />
 
         {/* Wall of Grinders — placed here deliberately: the stats band
             proves the platform is real, this proves it's ALIVE, and the
@@ -1132,7 +1141,7 @@ function StepGoals({
           helps, not just WHAT it asks for. Each card is a Link
           into the dashboard / signed-out users get bounced
           through /login first. */}
-      <HomeFeatureCards signedIn={signedIn} />
+      <HomeFeatureCards signedIn={signedIn} locale={locale} />
 
       {/* Inspiration carousel — topper success stories. Moved to the
           bottom (was above the finder card) after engagement data showed

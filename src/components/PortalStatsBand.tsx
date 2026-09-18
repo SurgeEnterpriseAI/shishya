@@ -4,6 +4,7 @@
 // complementing the LIVE activity strip which shows real-time traffic.
 
 import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { homeStripCopy } from "@/lib/home-strip-copy";
 
 interface Stat {
   value: string;
@@ -15,22 +16,28 @@ export function PortalStatsBand({
   examCount,
   questions,
   notes,
+  locale,
 }: {
   examCount: string; // live DB count, or "170+" when the count is unavailable
   questions: string; // pre-rounded, e.g. "30,000+"
   notes: string; // e.g. "3,700+"
+  /** The home page's language (getT().locale). Defaults to English. */
+  locale?: string;
 }) {
+  // 16 Sep 2026: labels in the reader's language on the / twins. The numbers
+  // themselves stay as the page computed them — nothing is rounded up here.
+  const C = homeStripCopy(locale);
   const stats: Stat[] = [
-    { icon: "🎯", value: examCount, label: "Govt & entrance exams" },
-    { icon: "📝", value: questions, label: "Practice questions" },
-    { icon: "📖", value: notes, label: "Free study notes" },
-    { icon: "🗣️", value: String(INDIAN_LANGUAGE_COUNT), label: "Indian languages" },
-    { icon: "🆓", value: "₹0", label: "Always free" },
+    { icon: "🎯", value: examCount, label: C.statExams },
+    { icon: "📝", value: questions, label: C.statQuestions },
+    { icon: "📖", value: notes, label: C.statNotes },
+    { icon: "🗣️", value: String(INDIAN_LANGUAGE_COUNT), label: C.statLanguages },
+    { icon: "🆓", value: "₹0", label: C.statFree },
   ];
   return (
     <div>
       <p className="text-center text-[11px] font-semibold uppercase tracking-wider text-ink-400">
-        Everything you need to crack it — in one free place
+        {C.statsKicker}
       </p>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
         {stats.map((s) => (

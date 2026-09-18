@@ -15,6 +15,7 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { buildTimeline } from "@/lib/exam-timeline";
+import { fillState, stateCopy, type StateCopyLocale } from "@/lib/state-exams-copy";
 
 export type ExamType = "PSC" | "Staff selection" | "Police" | "Teaching" | "Entrance" | "Other";
 
@@ -103,43 +104,62 @@ export function statePortals(exams: readonly StateExam[]): { name: string; url: 
   return out;
 }
 
-const listNames = (items: string[]): string =>
-  items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+const listNames = (items: string[], and = "and"): string =>
+  items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} ${and} ${items[items.length - 1]}`;
 
 /** The state page's FAQ — visible on the page and in its FAQPage JSON-LD.
  *  Every answer is a fact from the rows passed in; an item whose fact is
- *  missing is left out rather than guessed. */
+ *  missing is left out rather than guessed.
+ *  `state.name` is the name in the reader's script (stateDisplayName) and
+ *  `locale` picks the sentences (16 Sep 2026). Both default to English, so
+ *  the context file and the English page are unchanged. */
 export function stateFaq(
   state: { name: string; slug: string },
   exams: readonly StateExam[],
   upcoming: readonly StateDate[],
   horizonDays: number,
+  locale: StateCopyLocale = "en",
 ): FaqItem[] {
+  const C = stateCopy(locale);
   const items: FaqItem[] = [];
   if (exams.length > 0) {
     const shown = exams.slice(0, 12).map((e) => (e.shortName === e.name ? e.shortName : `${e.shortName} (${e.name})`));
-    const more = exams.length > 12 ? `, and ${exams.length - 12} more` : "";
+    const more = exams.length > 12 ? fillState(C.faqWhichMore, { n: exams.length - 12 }) : "";
     items.push({
-      q: `Which ${state.name} government exams can I prepare for on Shishya?`,
-      a: `Shishya has ${exams.length} ${state.name} exam ${exams.length === 1 ? "page" : "pages"}: ${shown.join("; ")}${more}. Each is free, with mock tests, the syllabus, cutoffs and an exam tracker: https://shishya.in/exams/state/${state.slug}`,
+      q: fillState(C.faqWhichQ, { state: state.name }),
+      a: fillState(C.faqWhichA, {
+        n: exams.length,
+        state: state.name,
+        pageWord: exams.length === 1 ? C.examPageOne : C.examPageMany,
+        list: shown.join("; "),
+        more,
+        url: `https://shishya.in/exams/state/${state.slug}`,
+      }),
     });
   }
 
   const nextExams = upcoming.filter((d) => d.kind === "EXAM" && (d.tier === "official" || d.tier === "reported")).slice(0, 3);
   items.push({
-    q: `When is the next ${state.name} government exam?`,
+    q: fillState(C.faqNextQ, { state: state.name }),
     a: nextExams.length
       ? nextExams
-          .map((d) => `${d.examShort}: ${d.label} on ${formatDay(d.day)} (${d.tier === "official" ? "official — the conducting body's notice" : "reported — announced, cited via a secondary source"})`)
-          .join(". ") + "."
-      : `No ${state.name} exam date on Shishya's tracker has been announced for the next ${horizonDays} days. Each exam's tracker page lists its expected dates, marked as estimates.`,
+          .map((d) =>
+            fillState(C.faqNextRow, {
+              exam: d.examShort,
+              label: d.label,
+              date: formatDay(d.day),
+              tier: d.tier === "official" ? C.tierOfficialLong : C.tierReportedLong,
+            }),
+          )
+          .join(`${C.sentenceEnd} `) + C.sentenceEnd
+      : fillState(C.faqNextNone, { state: state.name, days: horizonDays }),
   });
 
   const portals = statePortals(exams);
   if (portals.length > 0) {
     items.push({
-      q: `Where do I apply for ${state.name} government exams?`,
-      a: `Apply only on the conducting body's own website: ${listNames(portals.slice(0, 6).map((p) => `${p.name} (${p.url})`))}.`,
+      q: fillState(C.faqApplyQ, { state: state.name }),
+      a: fillState(C.faqApplyA, { list: listNames(portals.slice(0, 6).map((p) => `${p.name} (${p.url})`), C.listAnd) }),
     });
   }
   return items;
@@ -233,7 +253,11 @@ export const getStateDirectory = unstable_cache(loadStateDirectory, ["state-dire
 
 /** Announced (official / reported) upcoming tracker rows for a state's exams,
  *  soonest first. Estimates never appear here. */
-export async function loadStateUpcoming(exams: readonly StateExam[], horizonDays: number, now: Date = new Date()): Promise<StateDate[]> {
+export async function loadStateUpcoming(
+  exams: readonly Pick<StateExam, "code" | "shortName" | "officialUrl">[],
+  horizonDays: number,
+  now: Date = new Date(),
+): Promise<StateDate[]> {
   if (exams.length === 0) return [];
   const byCode = new Map(exams.map((e) => [e.code, e]));
   const rows = await prisma.examImportantDate.findMany({
@@ -259,3 +283,42 @@ export async function loadStateUpcoming(exams: readonly StateExam[], horizonDays
   }
   return out.sort((a, b) => a.day.localeCompare(b.day)).slice(0, 12);
 }
+
+// The state page's two DB reads, cached hourly and busted with the exam
+// catalog (16 Sep 2026). The page is ISR, so on its own it reads once per
+// state per hour; the cache is for the day its /hi and /te twins are cached
+// routes of their own — three copies of a state then share one read instead
+// of making three. A failed read throws, so it is never cached; the page
+// falls back to an empty list for that render.
+//
+// Both read the state's exams by `state` directly. They must NOT call
+// getStateDirectory(): an unstable_cache called inside another one skips its
+// cache (Next 15 bypasses nested entries), so every miss here would re-run
+// the whole directory query.
+
+/** loadStateUpcoming for one state's active exams. */
+export const getStateUpcoming = unstable_cache(
+  async (stateCode: string, horizonDays: number): Promise<StateDate[]> => {
+    const exams = await prisma.exam.findMany({
+      where: { active: true, state: stateCode },
+      select: { code: true, shortName: true, eligibility: { select: { officialUrl: true } } },
+    });
+    return loadStateUpcoming(
+      exams.map((e) => ({ code: e.code, shortName: e.shortName, officialUrl: e.eligibility?.officialUrl ?? null })),
+      horizonDays,
+    );
+  },
+  ["state-upcoming-v2"],
+  { revalidate: 3600, tags: ["exam-catalog"] },
+);
+
+/** Card facts (pattern, description) of one state's active exams. */
+export const getStateExamCards = unstable_cache(
+  async (stateCode: string) =>
+    prisma.exam.findMany({
+      where: { active: true, state: stateCode },
+      select: { code: true, description: true, totalQuestions: true, durationMin: true, languages: true },
+    }),
+  ["state-exam-cards-v2"],
+  { revalidate: 3600, tags: ["exam-catalog"] },
+);

@@ -41,13 +41,13 @@ function beacon(cta: string, extra?: Record<string, unknown>) {
   }
 }
 
-// English only for now: the copy is the audit's, and i18n.ts is owned
-// elsewhere — see the report for the hi/te keys to add
-// (cutoff.nudge.quizBody / cutoff.nudge.quizCta), after which these two
-// lines should come back in through props like `headline` does.
-// English fallbacks; the cutoff page passes the localised i18n strings
-// (cutoff.nudge.body / cutoff.nudge.cta, rewritten 11 Sep 2026 for the
-// no-sign-in quiz) through `body` / `cta`.
+// Language (checked 16 Sep 2026): the keys exist and the only caller uses
+// them — /exams/[code]/cutoff passes t("cutoff.nudge.body") and
+// t("cutoff.nudge.cta") (en, hi, te in src/lib/i18n.ts) through `body` and
+// `cta`, exactly as `headline` is passed. The two constants below are the
+// last-resort fallback for a caller that passes neither; they are never what
+// a hi/te reader sees on /cutoff today. The earlier note here claimed this
+// component was English-only, which it no longer is.
 const QUIZ_BODY = "Answer 10 questions in this exam's pattern and see your score next to these category cutoffs — no account needed.";
 const QUIZ_CTA = "Try 10 questions — see where you stand, no sign-in →";
 

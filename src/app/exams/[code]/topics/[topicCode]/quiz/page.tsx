@@ -23,6 +23,8 @@ import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { clampAnonQuizCount, getAnonQuiz, parseAnonQuizSet } from "@/lib/anon-quiz";
 import { challengeLabels, quizLabels } from "@/lib/challenge-copy";
+import { fillTemplate } from "@/lib/i18n";
+import { topicQuizCopy } from "@/lib/quiz-entry-copy";
 import { AnonQuizPlayer, type AnonQuizExamWeek } from "@/components/AnonQuizPlayer";
 import { alertPhase, examAlertLabels, getExamWeekStateByCode } from "@/lib/exam-week-inputs";
 
@@ -46,6 +48,9 @@ export default async function TopicQuizPage({
   const examWeek: AnonQuizExamWeek | undefined = quiz
     ? { phase: alertPhase(examWeekState), signedIn: !!session?.user?.id, ...examAlertLabels(t, quiz.examShort) }
     : undefined;
+  // The page's own words in the same locale as the player's (16 Sep 2026).
+  // This route is noindex, so nothing here is a search surface.
+  const C = topicQuizCopy(locale);
 
   return (
     <main className="min-h-screen bg-ink-50/40">
@@ -57,30 +62,30 @@ export default async function TopicQuizPage({
           </Link>{" "}
           ·{" "}
           <Link href={`/exams/${code}/topics/${topicCode}`} className="hover:text-ink-800">
-            {quiz?.scopeLabel ?? "Topic"}
+            {quiz?.scopeLabel ?? C.topicFallback}
           </Link>{" "}
-          · Quiz
+          · {C.crumb}
         </p>
 
         {!quiz ? (
           <div className="mt-6 rounded-md border border-dashed border-ink-300 bg-white px-5 py-6">
-            <p className="text-sm font-medium text-ink-800">No questions for this topic yet.</p>
+            <p className="text-sm font-medium text-ink-800">{C.none}</p>
             <Link
               href={`/exams/${code}/topics/${topicCode}`}
               className="mt-3 inline-block text-sm font-medium text-saffron-700 hover:text-saffron-800"
             >
-              ← Back to the notes
+              {C.back}
             </Link>
           </div>
         ) : (
           <>
             <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">
-              {quiz.scopeLabel} — quick quiz
+              {fillTemplate(C.h1, { scope: quiz.scopeLabel })}
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-ink-600">
               {quiz.replay
-                ? `Same ${quiz.questions.length} questions as the link you opened, in the same order. Instant scoring and solutions, no signup.`
-                : `${quiz.questions.length} real ${quiz.examShort} questions on ${quiz.scopeLabel}. Instant scoring and solutions, no signup — see where you stand in a few minutes.`}
+                ? fillTemplate(C.replay, { n: quiz.questions.length })
+                : fillTemplate(C.fresh, { n: quiz.questions.length, exam: quiz.examShort, scope: quiz.scopeLabel })}
             </p>
             <div className="mt-6">
               <AnonQuizPlayer

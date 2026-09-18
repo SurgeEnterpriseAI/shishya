@@ -26,6 +26,8 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { istDay } from "@/lib/exam-week";
 import { pickExamsStrip, type StripRowInput } from "@/lib/exam-checklist";
+import { getT } from "@/lib/i18n-server";
+import { fillHome, homeStripCopy } from "@/lib/home-strip-copy";
 
 const DAY_MS = 86_400_000;
 
@@ -77,6 +79,11 @@ const loadStripRows = unstable_cache(
 );
 
 export async function ExamsTodayStrip() {
+  // 16 Sep 2026: the strip follows the reader's language on the / twins.
+  // "Announced dates only · every date with its source tier" is the honesty
+  // line here and it is translated with the same force.
+  const { locale } = await getT();
+  const C = homeStripCopy(locale);
   const now = new Date();
   const rows = await loadStripRows(istDay(now)).catch((err) => {
     console.error("[shishya/ExamsTodayStrip] load failed:", err);
@@ -90,14 +97,14 @@ export async function ExamsTodayStrip() {
 
   return (
     <section
-      aria-label={today ? "Exams today" : "Exams this week"}
+      aria-label={today ? C.examsToday : C.examsThisWeek}
       className="mb-5 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 px-4 py-3 shadow-sm"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <p className="text-xs font-bold uppercase tracking-wider text-saffron-800">
-          🎯 {today ? "Exams today" : "Exams this week"}
+          🎯 {today ? C.examsToday : C.examsThisWeek}
         </p>
-        <p className="text-[11px] text-ink-500">Announced dates only · every date with its source tier</p>
+        <p className="text-[11px] text-ink-500">{C.announcedOnly}</p>
       </div>
       <ul className="mt-1.5 divide-y divide-saffron-200/70">
         {strip.items.map((i) => (
@@ -107,15 +114,15 @@ export async function ExamsTodayStrip() {
             </Link>
             <span className="min-w-0 flex-1 text-ink-700">
               {i.label} · {i.dated}
-              {!today && <span className="text-ink-500"> · {i.daysTo === 1 ? "tomorrow" : `in ${i.daysTo} days`}</span>}
+              {!today && <span className="text-ink-500"> · {i.daysTo === 1 ? C.tomorrow : fillHome(C.inDays, { n: i.daysTo })}</span>}
             </span>
             {today && i.pollOpen ? (
               <Link href={`/exams/${i.examCode}`} className={pill}>
-                Done with your paper? Tell us how it was →
+                {C.pollPill}
               </Link>
             ) : (
               <Link href={`/exams/${i.examCode}/checklist`} className={pill}>
-                📋 {today ? "Timings & what to carry" : "Checklist"} →
+                📋 {today ? C.checklistToday : C.checklistWeek} →
               </Link>
             )}
           </li>
@@ -123,7 +130,7 @@ export async function ExamsTodayStrip() {
       </ul>
       {strip.more > 0 && (
         <Link href="/exam-calendar" className="mt-1 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800">
-          +{strip.more} more on the exam calendar →
+          {fillHome(C.moreOnCalendar, { n: strip.more })}
         </Link>
       )}
     </section>

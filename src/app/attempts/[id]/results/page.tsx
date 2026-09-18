@@ -11,6 +11,8 @@ import { getT } from "@/lib/i18n-server";
 import { ResultsReview } from "./ResultsReview";
 import { RankCard } from "@/components/RankCard";
 import { ShareScoreButton } from "./ShareScoreButton";
+import { rankBlockCopy, shareScoreCopy } from "@/lib/dashboard-cards-copy";
+import { fillTemplate } from "@/lib/i18n";
 import { ResultCardShare } from "@/components/ResultCardShare";
 import { resultCardLabels } from "@/lib/result-card";
 import { ChallengeCard } from "@/components/ChallengeCard";
@@ -83,6 +85,9 @@ export default async function ResultsPage({
   const { t, locale } = tt;
   // Streak + tomorrow lines in the page's locale (13 Sep 2026).
   const studyDay = resultsStudyDayCopy(t);
+  // All-India rank block in the same locale (16 Sep 2026) — the rank is
+  // always printed WITH what it is out of, in every language.
+  const rankCopy = rankBlockCopy(locale);
   const qById = new Map(questions.map((q) => [q.id, q]));
   // Challenge a friend (16 Sep 2026): the card only where a link can be made —
   // the same rule createChallenge applies (the exam's validated MCQs, at
@@ -416,19 +421,19 @@ export default async function ResultsPage({
           <div className="mt-6 rounded-xl border-2 border-saffron-400 bg-gradient-to-r from-saffron-50 via-amber-50 to-saffron-50 p-4 text-center">
             {isRehearsal ? (
               <p className="text-lg font-bold text-saffron-800">
-                Rank #{airRank.rank}{" "}
-                <span className="text-sm font-semibold text-ink-600">of {airRank.of} who took this rehearsal</span>
+                {fillTemplate(rankCopy.rehearsalRank, { rank: airRank.rank })}{" "}
+                <span className="text-sm font-semibold text-ink-600">{fillTemplate(rankCopy.rehearsalOf, { of: airRank.of })}</span>
               </p>
             ) : (
               <p className="text-lg font-bold text-saffron-800">
-                🇮🇳 All-India Rank #{airRank.rank}{" "}
-                <span className="text-sm font-semibold text-ink-600">of {airRank.of} across India</span>
+                {fillTemplate(rankCopy.airRank, { rank: airRank.rank })}{" "}
+                <span className="text-sm font-semibold text-ink-600">{fillTemplate(rankCopy.airOf, { of: airRank.of })}</span>
               </p>
             )}
             <p className="mt-0.5 text-sm text-ink-700">
-              {isRehearsal ? "Same paper for everyone who takes it before it closes." : "Same paper, same day, whole country."}{" "}
+              {isRehearsal ? rankCopy.rehearsalNote : rankCopy.airNote}{" "}
               <Link href="/live-test" className="font-semibold text-saffron-700 hover:underline">
-                Next live test →
+                {rankCopy.nextLive}
               </Link>
             </p>
           </div>
@@ -469,6 +474,7 @@ export default async function ResultsPage({
             firstName={session.user.name?.split(" ")[0] ?? null}
             moment={isPersonalBest ? "personal-best" : "first-mock"}
             scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
+            locale={locale}
           />
         )}
 
@@ -586,6 +592,8 @@ export default async function ResultsPage({
               examCode={attempt.mock.exam.code}
               examShortName={attempt.mock.exam.shortName}
               scoreDisplay={formatDisplayScorePct(attempt.scorePct)}
+              labels={shareScoreCopy(locale)}
+              locale={locale}
             />
             {/* Result card (14 Sep 2026): this result as a phone-size image for
                 WhatsApp Status; a rank only where src/lib/result-card.ts

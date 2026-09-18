@@ -26,6 +26,7 @@
 
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 import { SESSION_HINT_COOKIE, SESSION_HINT_MAX_AGE_S, SESSION_HINT_VALUE } from "@/lib/session-hint";
+import { isCachePilotTwin } from "@/lib/cache-pilot-routes";
 
 const COOKIE = "shishya_attrib";
 // NextAuth v4 JWT session cookie (no custom cookie names in src/lib/auth.ts);
@@ -90,6 +91,9 @@ function logAiBot(req: NextRequest, event: NextFetchEvent, path: string): void {
 // index) and stamp x-shishya-lang so getLocale() renders that language.
 // We also set the language cookie so the visitor's NEXT click (which
 // goes to an un-prefixed internal link) stays in the same language.
+// Exception (16 Sep 2026, cache pilot): the /guide and /tricks twins are
+// real [lang] routes and pass through un-rewritten — see
+// src/lib/cache-pilot-routes.ts. The cookie rule below still applies.
 const URL_LOCALES = new Set(["hi", "te"]);
 const LANG_HEADER = "x-shishya-lang";
 const LANG_COOKIE = "shishya-lang";
@@ -122,11 +126,26 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
       plain.pathname = path;
       return NextResponse.redirect(plain, 307);
     }
-    const url = req.nextUrl.clone();
-    url.pathname = path;
-    const reqHeaders = new Headers(req.headers);
-    reqHeaders.set(LANG_HEADER, lang);
-    res = NextResponse.rewrite(url, { request: { headers: reqHeaders } });
+    if (isCachePilotTwin(rawPath)) {
+      // Cache pilot (16 Sep 2026): the /guide and /tricks twins are real
+      // routes — src/app/(cache-pilot)/[lang]/… — that read the language
+      // from the URL segment, so they can be ISR-cached. No rewrite and no
+      // language header: the request reaches that route as-is (a spoofed
+      // header is still dropped, as on the un-prefixed paths below).
+      if (req.headers.has(LANG_HEADER)) {
+        const reqHeaders = new Headers(req.headers);
+        reqHeaders.delete(LANG_HEADER);
+        res = NextResponse.next({ request: { headers: reqHeaders } });
+      } else {
+        res = NextResponse.next();
+      }
+    } else {
+      const url = req.nextUrl.clone();
+      url.pathname = path;
+      const reqHeaders = new Headers(req.headers);
+      reqHeaders.set(LANG_HEADER, lang);
+      res = NextResponse.rewrite(url, { request: { headers: reqHeaders } });
+    }
     // Set the language cookie ONLY when the visitor has none (a Hindi
     // searcher landing cold stays in Hindi on the next click) — never
     // overwrite an explicit choice, and never on a Link PREFETCH (review

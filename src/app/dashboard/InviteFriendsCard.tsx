@@ -16,17 +16,30 @@
 // Reuses ShareExamButton so the WhatsApp/copy/native-share plumbing,
 // utm tags and analytics are shared. Server component wrapper; the
 // button is client.
+//
+// Language (16 Sep 2026): the card speaks the student's own language, so the
+// line they forward to their WhatsApp group is one they would write. A
+// caller that already resolved a locale passes it in (the results page
+// does); otherwise the card resolves it itself. A Hindi or Telugu invite
+// links the exam hub's /hi|/te twin (or the /hi|/te home) so the friend lands
+// in the language of the message; the English link is unchanged. Nothing else
+// changes — the message still carries only the student's own number and
+// promises nothing.
 
 import { ShareExamButton } from "@/components/ShareExamButton";
+import { getLocale } from "@/lib/i18n-server";
+import { inviteCopy, inviteMessage } from "@/lib/dashboard-cards-copy";
+import { asCopyLocale } from "@/lib/ui-locale-copy";
 
 export type InviteMoment = "personal-best" | "first-mock";
 
-export function InviteFriendsCard({
+export async function InviteFriendsCard({
   examShort,
   examCode,
   firstName,
   moment,
   scoreDisplay,
+  locale,
 }: {
   examShort: string | null;
   examCode: string | null;
@@ -35,28 +48,28 @@ export function InviteFriendsCard({
   moment?: InviteMoment;
   /** The student's own formatted score, quoted in the earned-moment message. */
   scoreDisplay?: string | null;
+  /** The page's locale when it already has one; resolved here otherwise. */
+  locale?: string;
 }) {
+  const lang = locale ?? (await getLocale());
+  const C = inviteCopy(lang);
   // Land the friend on the relevant exam hub (or home) — a page that
   // immediately shows free mocks/PYQs/syllabus for that exam.
-  const url = examCode ? `https://shishya.in/exams/${examCode}` : "https://shishya.in";
-  const who = firstName ? `${firstName} here — ` : "";
-  const free = "free mock tests, previous-year papers & an AI tutor in your own language";
-  const message =
-    moment === "personal-best" && examShort
-      ? `${who}I just hit my personal best${scoreDisplay ? ` (${scoreDisplay})` : ""} on a ${examShort} mock on Shishya — ${free}. Study with me:`
-      : moment === "first-mock" && examShort
-        ? `${who}I just took my first ${examShort} mock on Shishya — ${free}. Take yours and let's compare:`
-        : examShort
-          ? `${who}I'm prepping for ${examShort} free on Shishya — ${free}, all free. Study with me:`
-          : `${who}I'm prepping on Shishya — ${free} for government exams. Study with me:`;
+  // hi/te: the same page's locale twin — both the hub and the home have one
+  // (middleware TWIN_PUBLIC_RE), and a friend with no language cookie keeps
+  // that language on the next click.
+  const copyLang = asCopyLocale(lang);
+  const site = copyLang === "en" ? "https://shishya.in" : `https://shishya.in/${copyLang}`;
+  const url = examCode ? `${site}/exams/${examCode}` : site;
+  const message = inviteMessage(lang, { firstName, examShort, moment, scoreDisplay });
 
-  const heading = moment ? "📣 Bring your batch along" : "📣 Prep is easier with your batch";
+  const heading = moment ? C.headingMoment : C.headingDefault;
   const body =
     moment === "personal-best"
-      ? "A good day to invite a friend or your WhatsApp study group — they get the same free mocks, papers and tutor. No signup wall to try."
+      ? C.bodyPersonalBest
       : moment === "first-mock"
-        ? "Baseline set — invite a friend or your WhatsApp study group to take theirs. Same free mocks, papers and tutor; no signup wall to try."
-        : "Invite a friend or your WhatsApp study group — everyone gets the same free mocks, papers and tutor. No signup wall to try.";
+        ? C.bodyFirstMock
+        : C.bodyDefault;
 
   return (
     <section className={`${moment ? "mt-4" : "mt-10"} rounded-xl border border-ink-200 bg-white p-5`}>
@@ -69,7 +82,7 @@ export function InviteFriendsCard({
           <ShareExamButton
             url={url}
             message={message}
-            label="Invite:"
+            label={C.shareLabel}
             surface={moment ? "invite-results" : "invite"}
             exam={examCode}
           />

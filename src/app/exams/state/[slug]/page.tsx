@@ -12,6 +12,17 @@
 // exist, announced upcoming dates (official / reported only), where to apply
 // (the exams' own official portals), and an FAQ that matches its FAQPage
 // JSON-LD. Hourly ISR — the page used to be frozen at build time.
+//
+// 16 Sep 2026: the body is written in en / hi / te (src/lib/state-exams-copy.ts)
+// and its language is the URL's — an optional `lang` route param, never
+// getT(). getT() reads cookies and headers, which would turn these
+// prerendered, CDN-cached pages (X-Nextjs-Prerender: 1) into per-request
+// renders for every visitor and crawler — for twins that still canonicalise
+// to the English URL. This route has no `lang` param, so it renders English
+// exactly as before; the Hindi and Telugu bodies switch on when a cached
+// [lang] twin route passes `lang` (the /guide and /tricks pattern in
+// src/lib/cache-pilot-routes.ts). Until then /hi and /te serve this page's
+// English copy, as they have since 15 Sep.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -22,12 +33,15 @@ import {
   EXAM_TYPE_ORDER,
   formatDay,
   getStateDirectory,
-  loadStateUpcoming,
+  getStateExamCards,
+  getStateUpcoming,
   stateFaq,
   statePortals,
   type ExamType,
 } from "@/lib/state-exams";
-import { prisma } from "@/lib/db/prisma";
+import { tFor } from "@/lib/i18n-server";
+import { isUrlLocale } from "@/lib/seo-locale";
+import { fillState, stateCopy, stateCopyLocale, stateDisplayName, stateOtherNames, type StateCopyLocale } from "@/lib/state-exams-copy";
 
 export const revalidate = 3600;
 
@@ -37,9 +51,12 @@ export async function generateStaticParams() {
   return Object.keys(STATES).map((code) => ({ slug: stateSlug(code) }));
 }
 
-/** A language other than English the state's students read, for "readable in …". */
-function readableIn(languages: string[]): string {
-  return languageName(languages.find((l) => l !== "EN") ?? "HI").en;
+/** A language other than English the state's students read, for "readable in …".
+ *  Named in English for the metadata and the English body, in its own script
+ *  inside a Hindi or Telugu sentence (16 Sep 2026). */
+function readableIn(languages: string[], lc: StateCopyLocale = "en"): string {
+  const n = languageName(languages.find((l) => l !== "EN") ?? "HI");
+  return lc === "en" ? n.en : n.native;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -77,32 +94,36 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function StateExamsPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default async function StateExamsPage({ params }: { params: Promise<{ slug: string; lang?: string }> }) {
+  const { slug, lang } = await params;
   const code = stateCodeFromSlug(slug);
   if (!code) notFound();
   const st = STATES[code];
+  // 16 Sep 2026: the body's language is the URL's (see the file header) —
+  // none on this route, hi / te from a [lang] twin route; anything else is
+  // not a twin prefix. No cookies(), headers() or getT() here: the render
+  // stays static and ISR-cached. generateMetadata above is deliberately
+  // untouched: every locale canonicalises to the English URL, so the title
+  // stays one stable answer per URL.
+  if (lang !== undefined && !isUrlLocale(lang)) notFound();
+  const lc = stateCopyLocale(lang);
+  const t = tFor(lc);
+  const C = stateCopy(lc);
+  const stateName = stateDisplayName(st, lc);
   const entry = (await getStateDirectory().catch(() => [])).find((s) => s.code === code);
   if (!entry || entry.exams.length === 0) notFound();
 
   const exams = entry.exams;
   const year = new Date().getUTCFullYear();
-  // Card facts (pattern, description) are read fresh; the directory carries names and types.
-  const details = new Map(
-    (
-      await prisma.exam
-        .findMany({
-          where: { code: { in: exams.map((e) => e.code) } },
-          select: { code: true, description: true, totalQuestions: true, durationMin: true, languages: true },
-        })
-        .catch(() => [])
-    ).map((d) => [d.code, d]),
-  );
-  const upcoming = await loadStateUpcoming(exams, HORIZON_DAYS).catch(() => []);
-  const faq = stateFaq({ name: st.name, slug }, exams, upcoming, HORIZON_DAYS);
+  // Card facts (pattern, description) and the announced dates: cached hourly
+  // in src/lib/state-exams.ts (16 Sep 2026), so the language copies of a
+  // state share one read. The directory carries names and types.
+  const details = new Map((await getStateExamCards(code).catch(() => [])).map((d) => [d.code, d]));
+  const upcoming = await getStateUpcoming(code, HORIZON_DAYS).catch(() => []);
+  const faq = stateFaq({ name: stateName, slug }, exams, upcoming, HORIZON_DAYS, lc);
   const portals = statePortals(exams);
   const groups = EXAM_TYPE_ORDER.map((type) => ({ type, list: exams.filter((e) => e.type === type) })).filter((g) => g.list.length > 0);
-  const typeNames = groups.map((g) => g.type).filter((t) => t !== "Other");
+  const typeNames = groups.map((g) => g.type).filter((ty) => ty !== "Other").map((ty) => C.typeShort[ty]);
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
@@ -125,7 +146,14 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
     mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
   };
   const jsonLd = (d: object) => JSON.stringify(d).replace(/</g, "\\u003c");
-  const typeLabel = (t: ExamType) => (t === "Other" ? "Other exams" : `${t} exams`);
+  const typeLabel = (ty: ExamType) => C.types[ty];
+  // An exam card's paper languages: the English list as before; each language
+  // in its own script on the Hindi and Telugu pages.
+  const langsOf = (codes: string[]): string => {
+    if (lc === "en") return languageList(codes);
+    const names = codes.map((c) => languageName(c).native);
+    return names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} ${C.listAnd} ${names[names.length - 1]}`;
+  };
 
   return (
     <main className="min-h-screen bg-ink-50/40">
@@ -135,22 +163,22 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
-          <Link href="/" className="hover:text-ink-800">Home</Link> ·{" "}
-          <Link href="/exams/state" className="hover:text-ink-800">Exams by state</Link> · {st.name}
+          <Link href="/" className="hover:text-ink-800">{C.home}</Link> ·{" "}
+          <Link href="/exams/state" className="hover:text-ink-800">{C.examsByState}</Link> · {stateName}
         </p>
         <h1 className="mt-1 text-3xl font-bold text-ink-900">
-          {st.name} Government Exams {year}
+          {fillState(C.h1, { state: stateName, year })}
         </h1>
-        <p className="mt-1 text-lg text-ink-600">
-          {st.nativeName === st.hindiName ? st.hindiName : `${st.nativeName} · ${st.hindiName}`}
-        </p>
+        <p className="mt-1 text-lg text-ink-600">{stateOtherNames(st, lc)}</p>
 
         <p className="mt-4 max-w-3xl text-sm text-ink-700">
-          Shishya has {exams.length} {st.name} exam {exams.length === 1 ? "page" : "pages"}
-          {typeNames.length ? ` — ${typeNames.join(", ")}` : ""}. Each is free: mock tests in the real
-          pattern, the syllabus, cutoffs and an exam tracker that labels every date official, reported or
-          expected. Questions are in English and can be read in {readableIn(st.languages)} and other
-          Indian languages inside any test.
+          {fillState(C.intro, {
+            n: exams.length,
+            state: stateName,
+            pageWord: exams.length === 1 ? C.examPageOne : C.examPageMany,
+            types: typeNames.length ? ` — ${typeNames.join(", ")}` : "",
+            lang: readableIn(st.languages, lc),
+          })}
         </p>
 
         {groups.map((g) => (
@@ -170,8 +198,11 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
                       {d?.description && <p className="mt-2 line-clamp-2 text-xs text-ink-600">{d.description}</p>}
                       {d && (
                         <p className="mt-2 text-[11px] text-ink-500">
-                          {d.totalQuestions} questions · {d.durationMin} min ·{" "}
-                          {d.languages.length > 0 ? languageList(d.languages) : "language not stated"}
+                          {fillState(C.cardMeta, {
+                            n: d.totalQuestions,
+                            min: d.durationMin,
+                            langs: d.languages.length > 0 ? langsOf(d.languages) : C.langNotStated,
+                          })}
                         </p>
                       )}
                     </Link>
@@ -183,7 +214,7 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
         ))}
 
         <div className="mt-10 rounded-lg border border-ink-200 bg-white p-5">
-          <h2 className="text-lg font-semibold text-ink-900">Upcoming announced dates</h2>
+          <h2 className="text-lg font-semibold text-ink-900">{C.upcomingHeading}</h2>
           {upcoming.length > 0 ? (
             <ul className="mt-3 divide-y divide-ink-100 text-sm">
               {upcoming.map((d, i) => (
@@ -194,26 +225,23 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
                   </Link>
                   <span className="text-ink-700">{d.label}</span>
                   <span className={d.tier === "official" ? "rounded bg-amber-100 px-1.5 text-[11px] text-amber-900" : "rounded bg-ink-100 px-1.5 text-[11px] text-ink-700"}>
-                    {d.tier}
+                    {d.tier === "official" ? t("ew.tier.official") : t("ew.tier.reported")}
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
             <p className="mt-2 text-sm text-ink-600">
-              No {st.name} date on Shishya&apos;s tracker is announced for the next {HORIZON_DAYS} days. Each
-              exam&apos;s tracker page lists its expected dates, marked as estimates.
+              {fillState(C.noneAnnounced, { state: stateName, days: HORIZON_DAYS })}
             </p>
           )}
-          <p className="mt-3 text-xs text-ink-500">
-            Official = the conducting body&apos;s own notice · reported = announced, cited via a secondary source.
-          </p>
+          <p className="mt-3 text-xs text-ink-500">{C.tierLegend}</p>
         </div>
 
         {portals.length > 0 && (
           <div className="mt-6 rounded-lg border border-ink-200 bg-white p-5">
-            <h2 className="text-lg font-semibold text-ink-900">Where to apply</h2>
-            <p className="mt-1 text-sm text-ink-600">Apply only on the conducting body&apos;s own website.</p>
+            <h2 className="text-lg font-semibold text-ink-900">{C.applyHeading}</h2>
+            <p className="mt-1 text-sm text-ink-600">{C.applyNote}</p>
             <ul className="mt-3 space-y-1 text-sm">
               {portals.map((p) => (
                 <li key={p.host}>
@@ -228,7 +256,7 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
         )}
 
         <div className="mt-6 rounded-lg border border-ink-200 bg-white p-5">
-          <h2 className="text-lg font-semibold text-ink-900">Questions students ask</h2>
+          <h2 className="text-lg font-semibold text-ink-900">{C.faqHeading}</h2>
           <dl className="mt-3 space-y-4 text-sm">
             {faq.map((f) => (
               <div key={f.q}>
@@ -240,10 +268,10 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
         </div>
 
         <p className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm">
-          <Link href="/exams/state" className="font-medium text-saffron-700 hover:underline">All states</Link>
-          <Link href="/exam-calendar" className="font-medium text-saffron-700 hover:underline">Exam calendar</Link>
-          <Link href="/find-your-exam" className="font-medium text-saffron-700 hover:underline">Which exam suits me?</Link>
-          <Link href="/jobs-map" className="font-medium text-saffron-700 hover:underline">Government jobs map</Link>
+          <Link href="/exams/state" className="font-medium text-saffron-700 hover:underline">{C.allStates}</Link>
+          <Link href="/exam-calendar" className="font-medium text-saffron-700 hover:underline">{C.examCalendar}</Link>
+          <Link href="/find-your-exam" className="font-medium text-saffron-700 hover:underline">{C.findExam}</Link>
+          <Link href="/jobs-map" className="font-medium text-saffron-700 hover:underline">{C.jobsMap}</Link>
         </p>
       </section>
     </main>

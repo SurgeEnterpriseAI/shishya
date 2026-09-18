@@ -4,11 +4,21 @@
 // territory with at least one active exam, its exam count and first exams.
 // Before this page the state pages' breadcrumb pointed at /exams (a redirect
 // to /) and nothing listed all states in one crawlable place.
+//
+// 16 Sep 2026: the body is written in en / hi / te and its language is the
+// URL's (an optional `lang` route param), never getT() — this page is
+// prerendered and CDN-cached, and a cookie/header read would make it a
+// per-request render for everyone. This route has no `lang` param, so it is
+// English as before; see src/app/exams/state/[slug]/page.tsx.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { getStateDirectory } from "@/lib/state-exams";
+import { notFound } from "next/navigation";
+import { isUrlLocale } from "@/lib/seo-locale";
+import { fillState, stateCopy, stateCopyLocale, stateDisplayName, stateOtherNames } from "@/lib/state-exams-copy";
+import { STATES } from "@/lib/state-info";
 
 export const revalidate = 3600;
 
@@ -28,10 +38,27 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function StatesIndexPage() {
+export default async function StatesIndexPage({ params }: { params?: Promise<{ lang?: string }> }) {
+  const lang = (await params)?.lang;
+  // hi / te only from a [lang] twin route; anything else is not a twin prefix.
+  if (lang !== undefined && !isUrlLocale(lang)) notFound();
   const dir = await getStateDirectory().catch(() => []);
   const year = new Date().getUTCFullYear();
   const examCount = dir.reduce((a, s) => a + s.exams.length, 0);
+  // 16 Sep 2026: body in the URL's language (file header). generateMetadata
+  // stays English — this page canonicalises to the English URL for every
+  // locale.
+  const lc = stateCopyLocale(lang);
+  const C = stateCopy(lc);
+  const nameOf = (s: { code: string; name: string }) => {
+    const st = STATES[s.code];
+    return st ? stateDisplayName(st, lc) : s.name;
+  };
+  const otherNamesOf = (s: { code: string; nativeName: string; hindiName: string }) => {
+    const st = STATES[s.code];
+    if (st) return stateOtherNames(st, lc);
+    return s.nativeName === s.hindiName ? s.hindiName : `${s.nativeName} · ${s.hindiName}`;
+  };
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
@@ -61,13 +88,11 @@ export default async function StatesIndexPage() {
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
-          <Link href="/" className="hover:text-ink-800">Home</Link> · Exams by state
+          <Link href="/" className="hover:text-ink-800">{C.home}</Link> · {C.examsByState}
         </p>
-        <h1 className="mt-1 text-3xl font-bold text-ink-900">Government Exams by State {year}</h1>
+        <h1 className="mt-1 text-3xl font-bold text-ink-900">{fillState(C.indexH1, { year })}</h1>
         <p className="mt-3 max-w-3xl text-sm text-ink-700">
-          {examCount} state government exams across {dir.length} states and union territories. Each state page
-          lists its exams on Shishya, dates announced by the conducting body or reported with a source, where to
-          apply, and free mock tests, syllabus and cutoffs for every exam.
+          {fillState(C.indexIntro, { examCount, stateCount: dir.length })}
         </p>
 
         <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -77,10 +102,10 @@ export default async function StatesIndexPage() {
                 href={`/exams/state/${s.slug}`}
                 className="block h-full rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400 hover:bg-saffron-50/40"
               >
-                <h2 className="text-sm font-semibold text-ink-900">{s.name}</h2>
-                <p className="text-xs text-ink-500">{s.nativeName === s.hindiName ? s.hindiName : `${s.nativeName} · ${s.hindiName}`}</p>
+                <h2 className="text-sm font-semibold text-ink-900">{nameOf(s)}</h2>
+                <p className="text-xs text-ink-500">{otherNamesOf(s)}</p>
                 <p className="mt-2 text-xs text-ink-700">
-                  {s.exams.length} {s.exams.length === 1 ? "exam" : "exams"}: {s.exams.slice(0, 3).map((e) => e.shortName).join(", ")}
+                  {s.exams.length} {s.exams.length === 1 ? C.indexExamOne : C.indexExamMany}: {s.exams.slice(0, 3).map((e) => e.shortName).join(", ")}
                   {s.exams.length > 3 ? "…" : ""}
                 </p>
               </Link>
@@ -89,10 +114,10 @@ export default async function StatesIndexPage() {
         </ul>
 
         <p className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm">
-          <Link href="/exam-calendar" className="font-medium text-saffron-700 hover:underline">Exam calendar</Link>
-          <Link href="/exams/browse" className="font-medium text-saffron-700 hover:underline">Browse all exams</Link>
-          <Link href="/find-your-exam" className="font-medium text-saffron-700 hover:underline">Which exam suits me?</Link>
-          <Link href="/jobs-map" className="font-medium text-saffron-700 hover:underline">Government jobs map</Link>
+          <Link href="/exam-calendar" className="font-medium text-saffron-700 hover:underline">{C.examCalendar}</Link>
+          <Link href="/exams/browse" className="font-medium text-saffron-700 hover:underline">{C.browseAll}</Link>
+          <Link href="/find-your-exam" className="font-medium text-saffron-700 hover:underline">{C.findExam}</Link>
+          <Link href="/jobs-map" className="font-medium text-saffron-700 hover:underline">{C.jobsMap}</Link>
         </p>
       </section>
     </main>

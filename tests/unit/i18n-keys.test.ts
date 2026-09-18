@@ -85,6 +85,16 @@ const PLAYER = [
   "player.submit.retryNow",
 ] as const satisfies readonly StringKey[];
 
+// Wave 3 (16 Sep 2026): the last English literals left in MockPlayer — the
+// "not yet confirmed" line inside the confirm box and the "Submit again"
+// button on the new sticky 4xx banner. en + hi + te only, like every other
+// wave-3 key; the 7 regional locales carry the older PLAYER family.
+const PLAYER_W3 = [
+  "player.confirm.unsynced.one",
+  "player.confirm.unsynced.many",
+  "player.submit.again",
+] as const satisfies readonly StringKey[];
+
 const BUILD = [
   "build.seen.line",
   "build.seen.short",
@@ -153,7 +163,7 @@ const SCORE = [
   "ew.score.published.more",
 ] as const satisfies readonly StringKey[];
 
-const EVERY: readonly StringKey[] = [...NAV, ...TODAY, ...RESULTS, ...PLAYER, ...BUILD, ...PYQ_HUB, ...STATE_HUB, ...FOUND_VIA, ...CHALLENGE, ...SCORE, ...RESULT_CARD_I18N_KEYS, ...STUDY_GROUP_I18N_KEYS];
+const EVERY: readonly StringKey[] = [...NAV, ...TODAY, ...RESULTS, ...PLAYER, ...PLAYER_W3, ...BUILD, ...PYQ_HUB, ...STATE_HUB, ...FOUND_VIA, ...CHALLENGE, ...SCORE, ...RESULT_CARD_I18N_KEYS, ...STUDY_GROUP_I18N_KEYS];
 const REQUIRED_LOCALES: Locale[] = ["en", "hi", "te"];
 const REGIONAL_LOCALES: Locale[] = ["mr", "ta", "kn", "gu", "bn", "ml", "pa"];
 const REGIONAL_KEYS: readonly StringKey[] = [...NAV, ...RESULTS, ...PLAYER];
