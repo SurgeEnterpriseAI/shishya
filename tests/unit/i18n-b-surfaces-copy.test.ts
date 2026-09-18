@@ -184,10 +184,10 @@ describe("English output is unchanged", () => {
     expect(hubDuration(H, 150)).toBe("2 hours 30 minutes");
     expect(hubDuration(H, 45)).toBe("45 minutes");
     expect(fillHub(H.coachTitle, { short: "SSC CGL" })).toBe(
-      "Get your free day-by-day SSC CGL plan to exam day — rebuilt every morning.",
+      "Free SSC CGL mock tests and previous year paper practice — start now.",
     );
     expect(H.coachBodyA + "Shishya " + H.coachBodyB).toBe(
-      "Scores and rank saved. One email when the result is out. Plus free full-length mocks, PYQ-pattern papers and Ask Shishya when you're stuck. Content is AI-drafted and checked against the official notification. All free, no credit card.",
+      "Full-length mocks with instant scoring and solutions, PYQ-pattern papers, topic-wise tests and Ask Shishya when you're stuck. Your scores, rank and a free day-by-day plan are saved to your account. All free, no credit card. Content is AI-drafted and checked against the official notification.",
     );
     expect(fillHub(H.langLine, { n: 9 })).toBe("· every mock readable in हिंदी + 9 languages inside the test");
   });

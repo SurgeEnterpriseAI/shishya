@@ -70,7 +70,7 @@ export function HubSignInLink({
   children: ReactNode;
 }) {
   return (
-    <Link href={href} className={className} onClick={() => beacon("hub-signin-coach", { surface: "hub-banner", examCode })}>
+    <Link href={href} className={className} onClick={() => beacon("hub-signin-practice", { surface: "hub-banner", examCode })}>
       {children}
     </Link>
   );

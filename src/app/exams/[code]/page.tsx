@@ -1005,8 +1005,13 @@ export default async function ExamPage({
             plan is what converts — coach landers bounce 8%), in CoachEntry's
             own words; no "expert-curated" / "verified by students who
             cleared" — content is AI-drafted and checked against the official
-            notification. The CTA's callback is the coach intake so /login
-            greets them with the plan, not a mock. */}
+            notification.
+            18 Sep 2026: the 11 Sep coach-plan pitch ("build my plan",
+            callback /coach) cost sign-ins — hub -> /login within 30 min went
+            49% -> 40% -> 31% — because a visitor who asked for mocks or
+            previous year papers was offered a plan. The box leads with
+            practice again, the plan is one of the things the account saves,
+            and sign-in returns to this exam page where the mocks are. */}
         {!userId && (
           <div className={`mt-6 rounded-md border p-5 ${theme.borderAccent} ${theme.heroTint}`}>
             <p className="text-sm font-semibold text-ink-900">
@@ -1022,7 +1027,7 @@ export default async function ExamPage({
                   /login views. Same <a>: href, class and text unchanged. */}
               <HubSignInLink
                 examCode={exam.code}
-                href={`/login?callbackUrl=${encodeURIComponent(`/coach?exam=${exam.code}`)}`}
+                href={`/login?callbackUrl=${encodeURIComponent(`/exams/${exam.code}`)}`}
                 className="btn-primary inline-block !py-2 !px-4 text-sm"
               >
                 {H.coachButton}
