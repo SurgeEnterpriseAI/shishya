@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string }>;
+  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }) {
   const session = await auth();
   if (session?.user) redirect("/dashboard");
@@ -102,6 +102,14 @@ export default async function LoginPage({
         </Link>
         <h1 className="mt-6 text-2xl font-bold text-ink-900">{intent?.h1 ?? t("login.h1")}</h1>
         <p className="mt-2 text-sm text-ink-600">{intent?.body ?? defaultBody}</p>
+        {/* A failed Google sign-in returns here with ?error=… (18 Sep 2026):
+            say so in one plain line instead of showing the page as if nothing
+            happened. */}
+        {sp.error && (
+          <p role="alert" className="mb-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            {t("login.error")}
+          </p>
+        )}
         <GoogleSignInButton callbackUrl={cb} label={t("login.continue")} />
         {examCode && (
           <Link

@@ -168,10 +168,19 @@ export async function POST(req: NextRequest) {
   //     was invisible. Crawlers essentially never send a Referer, so
   //     this stays crawler-proof: a cookie-less sweep with no referrer
   //     still creates no identities, no matter how many pages it hits.
-  //   • browser, no cookie, no referrer (direct first hit) → identity
-  //     still begins on the second event (conservative, as before).
+  //   • browser, no cookie, no referrer, but a utm_source on the landing
+  //     URL → also counted from the first hit (18 Sep 2026). ChatGPT's
+  //     apps open links with utm_source=chatgpt.com and NO Referer, so
+  //     ~40 real visitors a day who read one page and left were nobody,
+  //     and every hub → /login rate was computed without them. The tag is
+  //     only read by a browser that ran our script on a tagged link; a
+  //     cookie-less sweep of plain URLs still creates no identities.
+  //     SERIES BREAK: "people" rises by about 40 a day from this deploy.
+  //   • browser, no cookie, no referrer, no tag (direct first hit) →
+  //     identity still begins on the second event (conservative, as before).
+  const tagged = typeof body.utmSource === "string" && body.utmSource.trim() !== "";
   const anonId =
-    client === "bot" ? null : cookieAnon ?? (refHost !== null ? issuedAnon : null);
+    client === "bot" ? null : cookieAnon ?? (refHost !== null || tagged ? issuedAnon : null);
 
   // A page-speed measurement, never a person: no fingerprints (see above).
   const measurement = isWebVitalsBeacon(kind, body.props);

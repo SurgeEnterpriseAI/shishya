@@ -135,7 +135,11 @@ export function AnalyticsTracker() {
     lastFiredRef.current = fullKey;
     const props =
       pathname === "/login"
-        ? { callbackFamily: loginCallbackFamily(searchParams?.get("callbackUrl")) }
+        ? {
+            callbackFamily: loginCallbackFamily(searchParams?.get("callbackUrl")),
+            // A failed Google sign-in comes back as /login?error=… — count it.
+            ...(searchParams?.get("error") ? { error: (searchParams.get("error") ?? "").slice(0, 40) } : {}),
+          }
         : undefined;
     void send("PAGE_VIEW", pathname, props, utm);
   }, [pathname, searchParams]);

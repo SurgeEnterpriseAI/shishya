@@ -488,6 +488,7 @@ export const dict = {
     "login.h1": "Sign in to start",
     "login.body": "A free day-by-day plan to exam day, your mock scores and rank saved, and one email when the result is out — for any of {n} exams. Google sign-in only. No passwords. No spam.",
     "login.continue": "Continue with Google",
+    "login.error": "Google sign-in did not complete. Nothing was saved — please try again.",
     "login.smallprint":
       "By continuing, you agree to use this platform responsibly. Your email is the only thing we read from your Google account.",
 
@@ -1630,6 +1631,7 @@ export const dict = {
     "login.h1": "शुरू करने के लिए साइन इन करें",
     "login.body": "परीक्षा के दिन तक का मुफ़्त दिन-ब-दिन प्लान, आपके मॉक स्कोर और रैंक सेव, और रिज़ल्ट आने पर एक ईमेल — {n} परीक्षाओं में से किसी के लिए भी। सिर्फ़ Google साइन-इन। कोई पासवर्ड नहीं। कोई स्पैम नहीं।",
     "login.continue": "Google से जारी रखें",
+    "login.error": "Google साइन इन पूरा नहीं हुआ। कुछ भी सेव नहीं हुआ — कृपया दोबारा कोशिश करें।",
     "login.smallprint":
       "जारी रखकर, आप इस मंच का ज़िम्मेदारी से उपयोग करने के लिए सहमत हैं। हम आपके Google खाते से केवल आपका ईमेल पढ़ते हैं।",
 
@@ -3140,6 +3142,7 @@ export const dict = {
     "login.h1": "ప్రారంభించడానికి sign in చేయండి",
     "login.body": "పరీక్ష రోజు వరకు ఉచిత రోజువారీ ప్లాన్, మీ మాక్ స్కోర్లు, ర్యాంక్ సేవ్ అవుతాయి, ఫలితం వచ్చినప్పుడు ఒక ఈమెయిల్ — {n} పరీక్షల్లో దేనికైనా. Google sign-in మాత్రమే. పాస్‌వర్డ్‌లు లేవు. స్పామ్ లేదు.",
     "login.continue": "Google తో కొనసాగించండి",
+    "login.error": "Google సైన్ ఇన్ పూర్తి కాలేదు. ఏదీ సేవ్ కాలేదు — దయచేసి మళ్లీ ప్రయత్నించండి.",
     "login.smallprint": "కొనసాగించడం ద్వారా, మీరు ఈ platform ను బాధ్యతగా ఉపయోగిస్తానని అంగీకరిస్తున్నారు. మీ Google ఖాతా నుండి మేము చదివేది మీ email మాత్రమే.",
     "logout.h1": "Shishya నుండి sign out అవ్వాలా?",
     "logout.body": "మీరు sign in అయ్యారు",
