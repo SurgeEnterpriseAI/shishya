@@ -139,27 +139,27 @@ export function Header({ admin = false }: { admin?: boolean }) {
           algorithm looks for (clear nav, descriptive anchors, stable
           across the site). Plain text anchors on purpose: the anchor text
           is what a sitelink displays.
-          20 Sep 2026 (founder): the row is a LIGHT saffron bar (the first
-          version, saffron-600 with white text, was too heavy) and the links
-          are spread across its whole width. Dark saffron text on saffron-100
-          keeps the 13 px links easy to read. */}
+          20 Sep 2026 (founder): the row is a bar in the exact orange of the
+          Ask button (saffron-500, #f97316 — his call after saffron-600 read
+          as too heavy), white bold links like that button's label, spread
+          across the whole width. */}
       {!admin && (
         <nav
           aria-label="Primary"
-          className="border-t border-saffron-200 bg-saffron-100"
+          className="border-t border-saffron-500 bg-saffron-500"
         >
-          <div className="container-prose flex h-9 items-center justify-between gap-4 overflow-x-auto whitespace-nowrap text-[13px] font-semibold text-saffron-900">
+          <div className="container-prose flex h-9 items-center justify-between gap-4 overflow-x-auto whitespace-nowrap text-[13px] font-bold text-white">
             {/* Signed-in only, first so it is always on-screen on phones
                 (the row scrolls horizontally). Client island; renders
                 nothing for anonymous visitors and crawlers. */}
             <TodayNavLink />
-            <Link href="/exams/browse" className="hover:text-saffron-600">All Exams</Link>
-            <Link href="/exam-calendar" className="hover:text-saffron-600">Exam Calendar</Link>
-            <Link href="/live-test" className="hover:text-saffron-600">Live Tests</Link>
-            <Link href="/find-your-exam" className="hover:text-saffron-600">Find Your Exam</Link>
-            <Link href="/current-affairs" className="hidden hover:text-saffron-600 sm:inline">Current Affairs</Link>
-            <Link href="/mentors" className="hidden hover:text-saffron-600 sm:inline">Mentors</Link>
-            <Link href="/pricing" className="hidden hover:text-saffron-600 sm:inline">Pricing</Link>
+            <Link href="/exams/browse" className="hover:text-saffron-100">All Exams</Link>
+            <Link href="/exam-calendar" className="hover:text-saffron-100">Exam Calendar</Link>
+            <Link href="/live-test" className="hover:text-saffron-100">Live Tests</Link>
+            <Link href="/find-your-exam" className="hover:text-saffron-100">Find Your Exam</Link>
+            <Link href="/current-affairs" className="hidden hover:text-saffron-100 sm:inline">Current Affairs</Link>
+            <Link href="/mentors" className="hidden hover:text-saffron-100 sm:inline">Mentors</Link>
+            <Link href="/pricing" className="hidden hover:text-saffron-100 sm:inline">Pricing</Link>
           </div>
         </nav>
       )}
