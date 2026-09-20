@@ -213,7 +213,7 @@ export function VacancyExplorerSidebar({ data, signedIn }: { data: VData; signed
   if (data.examCount === 0) return null;
   return (
     <aside
-      className="fixed bottom-0 left-0 top-[101px] z-20 hidden w-80 flex-col border-r-2 border-saffron-500 bg-white shadow-sm lg:flex"
+      className="fixed bottom-0 left-0 top-[101px] z-20 hidden w-80 flex-col border-r-4 border-saffron-500 bg-white shadow-sm lg:flex"
       aria-label="Live government vacancies"
     >
       <div className="flex items-center justify-between gap-2 border-b border-ink-200 bg-ink-50/40 px-4 py-3">

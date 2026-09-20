@@ -183,7 +183,7 @@ export function UpcomingExamsSidebar({
   return (
     <aside
       className={`fixed bottom-0 top-[101px] z-20 hidden w-80 flex-col border-saffron-500 bg-white shadow-sm lg:flex ${
-        side === "right" ? "right-0 border-l-2" : "left-0 border-r-2"
+        side === "right" ? "right-0 border-l-4" : "left-0 border-r-4"
       }`}
       aria-label={L.heading}
     >
