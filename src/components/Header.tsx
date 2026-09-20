@@ -43,6 +43,10 @@ export function Header({ admin = false }: { admin?: boolean }) {
   // every visitor sees the same quote within a day, swaps at midnight.
   // Skip on admin pages — too playful for an admin chrome.
   const quote = admin ? null : getDailyQuote();
+  // The middle column is about 370 px wide at every xl+ width (the container
+  // is max-w-7xl). Measured 20 Sep 2026: up to ~95 characters fit on two
+  // 13 px lines; the longest quotes (119 with the author) need 12 px type.
+  const longQuote = quote ? (quote.text + (quote.author ? ` — ${quote.author}` : "")).length > 95 : false;
 
   return (
     <header className="border-b border-ink-200/50 bg-white/80 backdrop-blur">
@@ -71,18 +75,25 @@ export function Header({ admin = false }: { admin?: boolean }) {
             (Aug 2026), so below xl the middle can't fit a readable
             sentence — it was clipping mid-word against the nav. Show
             the quote only from xl up, where it has honest room;
-            min-w-0 + mr-3 make the flex truncation correct and keep a
-            gap from the nav even at tight xl widths. */}
+            min-w-0 + mr-3 keep a gap from the nav even at tight xl widths.
+            20 Sep 2026: one line with truncate cut the bilingual quotes
+            mid-word ("… accomplished by ef…"); the quote now wraps to two
+            balanced lines inside the 64 px header — the longest of the 42
+            quotes (119 characters) fits at the narrowest xl width. */}
         {quote && (
           <p
-            className="ml-4 mr-3 hidden min-w-0 flex-1 truncate text-center text-sm italic text-ink-500 xl:block"
+            className={`ml-4 mr-3 hidden min-w-0 flex-1 text-balance text-center italic text-ink-500 xl:block ${longQuote ? "text-xs leading-tight" : "text-[13px] leading-snug"}`}
             title={quote.author ? `${quote.text} — ${quote.author}` : quote.text}
           >
-            <span className="mr-1.5 text-saffron-500" aria-hidden>✦</span>
-            <span className="font-medium text-ink-700">{quote.text}</span>
-            {quote.author && (
-              <span className="ml-2 text-ink-400">— {quote.author}</span>
-            )}
+            {/* The two-line cap sits on an inner span: on the <p> its display
+                value would fight "hidden" / "xl:block". */}
+            <span className={longQuote ? "line-clamp-3" : "line-clamp-2"}>
+              <span className="mr-1.5 text-saffron-500" aria-hidden>✦</span>
+              <span className="font-medium text-ink-700">{quote.text}</span>
+              {quote.author && (
+                <span className="ml-2 text-ink-400">— {quote.author}</span>
+              )}
+            </span>
           </p>
         )}
 
