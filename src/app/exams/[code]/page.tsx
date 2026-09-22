@@ -878,6 +878,61 @@ export default async function ExamPage({
           />
         )}
 
+        {/* Sign-in CTA banner for unauthenticated visitors. Crawlers see
+            this; search-arriving students see exactly what they get for free.
+            Border + background take their colour from the per-category theme
+            so the CTA feels native to the exam track (blue for engineering,
+            green for medical, etc) rather than a generic saffron pop-out.
+            Audit 11 Sep 2026: sells the concrete account value (the coach
+            plan is what converts — coach landers bounce 8%), in CoachEntry's
+            own words; no "expert-curated" / "verified by students who
+            cleared" — content is AI-drafted and checked against the official
+            notification.
+            18 Sep 2026: the 11 Sep coach-plan pitch ("build my plan",
+            callback /coach) cost sign-ins — hub -> /login within 30 min went
+            49% -> 40% -> 31% — because a visitor who asked for mocks or
+            previous year papers was offered a plan. The box leads with
+            practice again, the plan is one of the things the account saves,
+            and sign-in returns to this exam page where the mocks are.
+            22 Sep 2026: the read of that fix (n=145 ChatGPT hub guests, old
+            identity rule) put hub -> /login within 30 min back at 52% (was
+            40%), so the next lever queued by the 18 Sep synthesis ships: the
+            box moves up from the 7th block to right after the chips, on the
+            first or second phone screen. */}
+        {!userId && (
+          <div className={`mt-6 rounded-md border p-5 ${theme.borderAccent} ${theme.heroTint}`}>
+            <p className="text-sm font-semibold text-ink-900">
+              {fillHub(H.coachTitle, { short: exam.shortName })}
+            </p>
+            <p className="mt-1 text-sm text-ink-700">
+              {H.coachBodyA}<strong>Shishya</strong>{" "}
+              {H.coachBodyB}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              {/* Click beacon (16 Sep 2026): the one hub CTA that sent no
+                  CTA_CLICKED, so its volume could only be guessed from
+                  /login views. Same <a>: href, class and text unchanged. */}
+              <HubSignInLink
+                examCode={exam.code}
+                href={`/login?callbackUrl=${encodeURIComponent(`/exams/${exam.code}`)}`}
+                className="btn-primary inline-block !py-2 !px-4 text-sm"
+              >
+                {H.coachButton}
+              </HubSignInLink>
+              {/* Lever #2 — anonymous 5-question diagnostic. Lets a signed-out
+                  visitor experience the mock loop before the login gate (44%
+                  bail there). Was a text link — got ~zero organic clicks, so
+                  it's a proper button with equal visual weight now. */}
+              <Link
+                href={`/exams/${exam.code}/quiz`}
+                className="inline-flex items-center justify-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 transition-colors hover:bg-saffron-50"
+              >
+                Try a free 5-question quiz — no signup →
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Coach entry — the exam hub is where most organic visitors
             actually land (not the homepage), so this is the coach's
             highest-intent door. Hidden for students who already have a
@@ -996,58 +1051,9 @@ export default async function ExamPage({
           refreshCadence="weekly"
         />
 
-        {/* Sign-in CTA banner for unauthenticated visitors. Crawlers see
-            this; search-arriving students see exactly what they get for free.
-            Border + background take their colour from the per-category theme
-            so the CTA feels native to the exam track (blue for engineering,
-            green for medical, etc) rather than a generic saffron pop-out.
-            Audit 11 Sep 2026: sells the concrete account value (the coach
-            plan is what converts — coach landers bounce 8%), in CoachEntry's
-            own words; no "expert-curated" / "verified by students who
-            cleared" — content is AI-drafted and checked against the official
-            notification.
-            18 Sep 2026: the 11 Sep coach-plan pitch ("build my plan",
-            callback /coach) cost sign-ins — hub -> /login within 30 min went
-            49% -> 40% -> 31% — because a visitor who asked for mocks or
-            previous year papers was offered a plan. The box leads with
-            practice again, the plan is one of the things the account saves,
-            and sign-in returns to this exam page where the mocks are. */}
-        {!userId && (
-          <div className={`mt-6 rounded-md border p-5 ${theme.borderAccent} ${theme.heroTint}`}>
-            <p className="text-sm font-semibold text-ink-900">
-              {fillHub(H.coachTitle, { short: exam.shortName })}
-            </p>
-            <p className="mt-1 text-sm text-ink-700">
-              {H.coachBodyA}<strong>Shishya</strong>{" "}
-              {H.coachBodyB}
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              {/* Click beacon (16 Sep 2026): the one hub CTA that sent no
-                  CTA_CLICKED, so its volume could only be guessed from
-                  /login views. Same <a>: href, class and text unchanged. */}
-              <HubSignInLink
-                examCode={exam.code}
-                href={`/login?callbackUrl=${encodeURIComponent(`/exams/${exam.code}`)}`}
-                className="btn-primary inline-block !py-2 !px-4 text-sm"
-              >
-                {H.coachButton}
-              </HubSignInLink>
-              {/* Lever #2 — anonymous 5-question diagnostic. Lets a signed-out
-                  visitor experience the mock loop before the login gate (44%
-                  bail there). Was a text link — got ~zero organic clicks, so
-                  it's a proper button with equal visual weight now. */}
-              <Link
-                href={`/exams/${exam.code}/quiz`}
-                className="inline-flex items-center justify-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 transition-colors hover:bg-saffron-50"
-              >
-                Try a free 5-question quiz — no signup →
-              </Link>
-            </div>
-          </div>
-        )}
-
         {/* "Try one question" hook — converts anonymous SEO traffic.
-            Shown to signed-out visitors directly below the sign-in CTA:
+            Shown to signed-out visitors (the sign-in box itself moved up
+            to the chips on 22 Sep 2026; this stays after the source line):
             answer one real question free, see the worked solution, then
             sign in to continue. Only renders when we found a sample. */}
         {!userId && sampleQuestion && (
