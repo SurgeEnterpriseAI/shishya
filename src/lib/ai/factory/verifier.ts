@@ -5,11 +5,21 @@
 // scratch (the solver did that) but to *adjudicate*: is there exactly one
 // correct option? Is it the generator's key? Is the item sound enough to put in
 // front of a student? It runs on the strong tier (see router.ts) at temp 0.
+//
+// Shape (22 Sep 2026): buildVerifyRequest() and parseVerifyVerdict() are
+// pure, so the same request can go through messages.create (verify, below)
+// or through the Message Batches API at half price
+// (scripts/verify-question-bank.ts via src/lib/ai/batch.ts). verify is the
+// live path and sends exactly what the builder returns.
 
-import { callClaude, extractText, parseJson, type CallStats } from "../client";
+import type Anthropic from "@anthropic-ai/sdk";
+import { callClaude, extractText, parseJson, type CallStats, type MessageParams } from "../client";
 import { modelFor } from "../router";
 import type { CandidateQuestion, SolveResult, VerifyVerdict } from "./types";
 import type { Difficulty } from "../types";
+
+/** Ledger label for examiner verdicts when the caller passes none; workload-neutral, see solver.ts SOLVE_FEATURE. */
+export const VERIFY_FEATURE = "factory-verify";
 
 const VERIFIER_SYSTEM = `You are a senior subject-matter examiner auditing a multiple-choice question before it is shown to students preparing for Indian competitive exams. Be strict: a wrong answer key that reaches a student destroys trust.
 
@@ -60,24 +70,34 @@ ${sampleReasoning}
 Adjudicate. Return JSON only.`;
 }
 
-export async function verify(
+/**
+ * The messages.create body of one adjudication, identical for the live path
+ * and a batch request. The prompt quotes the first two solve runs in order,
+ * so a caller that collected runs out of order must sort them first.
+ */
+export function buildVerifyRequest(
   q: CandidateQuestion,
   solve: SolveResult,
-  opts: { onCost?: (stats: CallStats) => void; feature?: string; ref?: string | null },
-): Promise<VerifyVerdict> {
-  const model = modelFor("verify");
-  const { response, stats } = await callClaude({
-    model,
+  opts: { model?: string } = {},
+): MessageParams {
+  return {
+    model: opts.model ?? modelFor("verify"),
     // 1600 (15 Sep 2026): 1000 cut long rationales off mid-JSON.
-    maxTokens: 1600,
+    max_tokens: 1600,
     system: [{ type: "text", text: VERIFIER_SYSTEM }],
     messages: [{ role: "user", content: renderAudit(q, solve) }],
-    feature: opts.feature,
-    ref: opts.ref,
-  });
-  opts.onCost?.(stats);
+  };
+}
 
-  const parsed = parseJson<Partial<VerifyVerdict>>(extractText(response));
+/**
+ * One examiner reply → VerifyVerdict. Tolerant of missing or off-list
+ * fields (verdict falls to FLAWED, difficulty to the candidate's label,
+ * an unknown correctKey to null), but a reply that is not JSON at all
+ * throws — the live path's callers retry or drop the candidate on that,
+ * and the batch path retries the request once.
+ */
+export function parseVerifyVerdict(message: Anthropic.Messages.Message, q: CandidateQuestion): VerifyVerdict {
+  const parsed = parseJson<Partial<VerifyVerdict>>(extractText(message));
   const verdict = ["CORRECT", "MISMATCH", "AMBIGUOUS", "FLAWED"].includes(String(parsed.verdict))
     ? (parsed.verdict as VerifyVerdict["verdict"])
     : "FLAWED";
@@ -95,6 +115,25 @@ export async function verify(
     rationale: String(parsed.rationale ?? "").trim() || "No rationale provided.",
     issues: Array.isArray(parsed.issues) ? parsed.issues.map(String) : [],
   };
+}
+
+export async function verify(
+  q: CandidateQuestion,
+  solve: SolveResult,
+  opts: { onCost?: (stats: CallStats) => void; feature?: string; ref?: string | null },
+): Promise<VerifyVerdict> {
+  const params = buildVerifyRequest(q, solve);
+  const { response, stats } = await callClaude({
+    model: params.model,
+    maxTokens: params.max_tokens,
+    system: params.system,
+    messages: params.messages,
+    feature: opts.feature ?? VERIFY_FEATURE,
+    ref: opts.ref,
+  });
+  opts.onCost?.(stats);
+
+  return parseVerifyVerdict(response, q);
 }
 
 function clamp01(n: number): number {

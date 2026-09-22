@@ -51,13 +51,7 @@ export function cachedSystemHourFirst(first: string, ...rest: string[]) {
   return [{ type: "text" as const, text: first, cache_control: hour }, ...cachedSystem(...rest)];
 }
 
-/**
- * Convenience wrapper around messages.create that:
- *  - sets model + max_tokens (model defaults to the standard tier; pass
- *    `model` to route a call to a faster/stronger tier — see ai/router.ts)
- *  - records latency + cache stats for observability
- */
-export async function callClaude(opts: {
+export interface CallClaudeOpts {
   system: Anthropic.Messages.TextBlockParam[];
   messages: Anthropic.Messages.MessageParam[];
   maxTokens: number;
@@ -70,11 +64,22 @@ export async function callClaude(opts: {
   feature?: string;
   /** Optional reference for the ledger row (exam code, user id …). */
   ref?: string | null;
-}) {
-  const model = opts.model ?? MODEL;
-  const start = Date.now();
-  const params = {
-    model,
+}
+
+/** A messages.create body whose system prompt is the block array every Shishya call site sends. */
+export type MessageParams = Anthropic.Messages.MessageCreateParamsNonStreaming & {
+  system: Anthropic.Messages.TextBlockParam[];
+};
+
+/**
+ * The exact messages.create body callClaude sends for these options. Pure
+ * and exported (22 Sep 2026) so a request builder for the Message Batches
+ * API can be tested against it: a batch request carrying this object is
+ * byte-for-byte the request the live path would have made.
+ */
+export function messageParamsFor(opts: CallClaudeOpts): MessageParams {
+  return {
+    model: opts.model ?? MODEL,
     max_tokens: opts.maxTokens,
     system: opts.system,
     messages: opts.messages,
@@ -82,6 +87,18 @@ export async function callClaude(opts: {
     ...(opts.tools && { tools: opts.tools }),
     ...(opts.toolChoice && { tool_choice: opts.toolChoice }),
   };
+}
+
+/**
+ * Convenience wrapper around messages.create that:
+ *  - sets model + max_tokens (model defaults to the standard tier; pass
+ *    `model` to route a call to a faster/stronger tier — see ai/router.ts)
+ *  - records latency + cache stats for observability
+ */
+export async function callClaude(opts: CallClaudeOpts) {
+  const start = Date.now();
+  const params = messageParamsFor(opts);
+  const model = params.model;
   let response: Anthropic.Messages.Message;
   try {
     response = await anthropic.messages.create(params);

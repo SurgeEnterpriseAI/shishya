@@ -20,6 +20,14 @@ export const PRICING: Record<string, { in: number; out: number; cacheW: number; 
 };
 export const WEB_SEARCH_USD = 0.01;
 
+/**
+ * Message Batches API price factor (22 Sep 2026): every token of a batch
+ * result — input, output, cache write, cache read — bills at 50% of the
+ * list price. Callers that ledger a batch result pass { batch: true } so the
+ * row carries what the batch actually cost, not the synchronous price.
+ */
+export const BATCH_PRICE_FACTOR = 0.5;
+
 export interface UsageLike {
   input_tokens: number;
   output_tokens: number;
@@ -47,6 +55,51 @@ export function usageCostUsd(model: string, u: UsageLike): { cost: number; searc
   return { cost, searches };
 }
 
+export interface RecordAiUsageOpts {
+  ref?: string | null;
+  model?: string;
+  latencyMs?: number;
+  /**
+   * The response came back from the Message Batches API (22 Sep 2026): the
+   * row's costUsd is the list price × BATCH_PRICE_FACTOR. Existing callers
+   * never set it, so their rows are unchanged.
+   */
+  batch?: boolean;
+}
+
+/** The AiUsage row for one response, and the cost it carries. Null when there is no usage to log. */
+function usageRow(feature: string, response: { usage: UsageLike; model?: string }, opts: RecordAiUsageOpts) {
+  const model = opts.model ?? response.model ?? "unknown";
+  const u = response.usage;
+  if (!u) return null;
+  const priced = usageCostUsd(model, u);
+  const cost = opts.batch ? priced.cost * BATCH_PRICE_FACTOR : priced.cost;
+  return {
+    cost,
+    data: {
+      feature: feature.slice(0, 60),
+      ref: opts.ref ? String(opts.ref).slice(0, 120) : null,
+      model: model.slice(0, 80),
+      inputTokens: u.input_tokens ?? 0,
+      outputTokens: u.output_tokens ?? 0,
+      cacheWriteTokens: u.cache_creation_input_tokens ?? 0,
+      cacheReadTokens: u.cache_read_input_tokens ?? 0,
+      webSearches: priced.searches,
+      costUsd: cost,
+      latencyMs: opts.latencyMs ?? null,
+    },
+  };
+}
+
+function insertUsageRow(feature: string, data: NonNullable<ReturnType<typeof usageRow>>["data"]): Promise<void> {
+  return prisma.aiUsage
+    .create({ data })
+    .then(() => undefined)
+    .catch((err: unknown) => {
+      console.warn(`[ai-usage] log failed for ${feature}: ${String((err as Error)?.message).slice(0, 120)}`);
+    });
+}
+
 /**
  * Log one model response. Never throws, never awaited by callers (returns
  * the estimated cost synchronously for callers that keep a running total).
@@ -54,33 +107,12 @@ export function usageCostUsd(model: string, u: UsageLike): { cost: number; searc
 export function recordAiUsage(
   feature: string,
   response: { usage: UsageLike; model?: string },
-  opts: { ref?: string | null; model?: string; latencyMs?: number } = {},
+  opts: RecordAiUsageOpts = {},
 ): number {
   try {
-    const model = opts.model ?? response.model ?? "unknown";
-    const u = response.usage;
-    if (!u) return 0;
-    const { cost, searches } = usageCostUsd(model, u);
-    const run = () =>
-      prisma.aiUsage
-        .create({
-          data: {
-            feature: feature.slice(0, 60),
-            ref: opts.ref ? String(opts.ref).slice(0, 120) : null,
-            model: model.slice(0, 80),
-            inputTokens: u.input_tokens ?? 0,
-            outputTokens: u.output_tokens ?? 0,
-            cacheWriteTokens: u.cache_creation_input_tokens ?? 0,
-            cacheReadTokens: u.cache_read_input_tokens ?? 0,
-            webSearches: searches,
-            costUsd: cost,
-            latencyMs: opts.latencyMs ?? null,
-          },
-        })
-        .then(() => undefined)
-        .catch((err: unknown) => {
-          console.warn(`[ai-usage] log failed for ${feature}: ${String((err as Error)?.message).slice(0, 120)}`);
-        });
+    const row = usageRow(feature, response, opts);
+    if (!row) return 0;
+    const run = () => insertUsageRow(feature, row.data);
     // Inside a request/cron scope, after() keeps the Vercel function alive
     // until the insert lands (a plain fire-and-forget can be frozen with
     // the response on short routes like /api/ask). Outside a request scope
@@ -90,7 +122,31 @@ export function recordAiUsage(
     } catch {
       void run();
     }
-    return cost;
+    return row.cost;
+  } catch (err) {
+    console.warn(`[ai-usage] skipped for ${feature}: ${String((err as Error)?.message).slice(0, 120)}`);
+    return 0;
+  }
+}
+
+/**
+ * Same row as recordAiUsage, but resolves once the insert has landed (it
+ * still never rejects). For bulk collectors (22 Sep 2026): a batch of
+ * 10,000 results arrives in seconds, and 10,000 fire-and-forget inserts
+ * would queue past Prisma's 10-second pool timeout and be dropped with
+ * P2024, losing the ledger for the run. A collector awaits these a few at
+ * a time instead.
+ */
+export async function recordAiUsageAwaited(
+  feature: string,
+  response: { usage: UsageLike; model?: string },
+  opts: RecordAiUsageOpts = {},
+): Promise<number> {
+  try {
+    const row = usageRow(feature, response, opts);
+    if (!row) return 0;
+    await insertUsageRow(feature, row.data);
+    return row.cost;
   } catch (err) {
     console.warn(`[ai-usage] skipped for ${feature}: ${String((err as Error)?.message).slice(0, 120)}`);
     return 0;
