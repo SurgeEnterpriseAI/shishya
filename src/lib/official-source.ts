@@ -31,6 +31,12 @@ const OFFICIAL_HOSTS = [
   "ibps.in", // banking recruitment body
   "rbi.org.in", // RBI recruitment
   "sbi.co.in", // SBI careers
+  // 23 Sep 2026: both bodies moved and their old domains now redirect -
+  // sbi.co.in -> sbi.bank.in (RBI's .bank.in rule for banks), tslprb.in ->
+  // tgprb.in (the Telangana board renamed TGPRB). Their notices on the new
+  // domains were labelled "reported" on SBI Clerk, SBI PO and TS Police PC.
+  "sbi.bank.in",
+  "tgprb.in",
   "cdac.in", // AFCAT + several govt CBTs run on cdac.in subdomains
   "isro.gov.in",
 ];
