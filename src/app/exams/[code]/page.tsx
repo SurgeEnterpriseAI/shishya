@@ -23,6 +23,7 @@ import { standingSitting } from "@/lib/score-sitting";
 import { getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { shiftDayIso } from "@/lib/exam-week-student";
 import { buildTimeline } from "@/lib/exam-timeline";
+import { passedEstimateLine, passedEstimateView } from "@/lib/official-source";
 import { ExamWeekBlock, type ExamWeekViewer } from "@/components/ExamWeekBlock";
 import { HubSignInLink, StartMockButton } from "./StartMockButton";
 import { PageTour } from "@/components/PageTour";
@@ -307,6 +308,21 @@ export default async function ExamPage({
     examWeek.phase === "none"
       ? buildTimeline(importantDates, new Date(), officialUrl).find((r) => r.kind === "EXAM" && r.daysFromToday > 0) ?? null
       : null;
+
+  // Passed estimates (24 Sep 2026, src/lib/official-source.ts): an EXPECTED
+  // date that has gone by is printed as "No official date yet — the expected
+  // notification date has passed" — or, where announced rows say it may have
+  // gone ahead, "The expected admit card date has passed — check the official
+  // website" — never as the date (AP_APPSC_GROUP1 listed "Notification
+  // release · 15 Aug 2026" into late September), and is left out when an
+  // announced row of the same event (same kind, close in date, same stage)
+  // is on the tracker. Judged against every live row (titleDates), not only
+  // the capped list, so an announced row beyond the cap still counts.
+  const hubDateNow = new Date();
+  const hubDateRows = buildTimeline(importantDates, hubDateNow, officialUrl);
+  const hubDateRef = shared.titleDates.length > 0 ? buildTimeline(shared.titleDates, hubDateNow, officialUrl) : hubDateRows;
+  const hubDateView = new Map(hubDateRows.map((r) => [r.id, { view: passedEstimateView(r, hubDateRef, hubDateNow), kind: r.kind }] as const));
+  const hubDates = importantDates.filter((d) => hubDateView.get(d.id)?.view !== "omit");
 
   // Answer-key time (14 Sep 2026): the score calculator pill shows while a
   // sitting is open for comparison. Read from the tracker inputs the
@@ -1595,7 +1611,7 @@ export default async function ExamPage({
             {/* Important Dates */}
             <div>
               <h2 className="text-base font-semibold text-ink-800">{t("timeline.dates.title")}</h2>
-              {importantDates.length === 0 ? (
+              {hubDates.length === 0 ? (
                 <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
                   {t("timeline.dates.empty")}
                 </p>
@@ -1605,9 +1621,10 @@ export default async function ExamPage({
                       27 from 10 days ago onward) so the exam day is never
                       missing; the hub column shows the first 12 and the
                       tracker pill above holds the full list. */}
-                  {importantDates.slice(0, 12).map((d) => {
+                  {hubDates.slice(0, 12).map((d) => {
                     // Same Date deserialisation guard as newsItems above.
                     const dateObj = new Date(d.date as unknown as string | Date);
+                    const est = hubDateView.get(d.id);
                     const days = Math.ceil((dateObj.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
                     const passed = days < 0;
                     let when: string;
@@ -1636,7 +1653,9 @@ export default async function ExamPage({
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-ink-500">
-                          {dateObj.toLocaleDateString("en-IN", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
+                          {est && (est.view === "line" || est.view === "unsure")
+                            ? passedEstimateLine(est.kind, locale, est.view)
+                            : dateObj.toLocaleDateString("en-IN", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
                         </p>
                         {d.notes && <p className="mt-1.5 text-xs text-ink-600">{d.notes}</p>}
                       </li>

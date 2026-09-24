@@ -72,7 +72,7 @@ import {
 } from "@/lib/exam-week";
 import { applyShiftDay, shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline, type SourceTier, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
-import { sourceTier } from "@/lib/official-source";
+import { passedEstimateLine, passedEstimateView, sourceTier, supersedingRow } from "@/lib/official-source";
 import { getVerdictTally, publicTally, VERDICT_MIN_N } from "@/lib/exam-verdict";
 import { fullPaperFitsSitting } from "@/lib/marking-scheme";
 import { sittingVerdict } from "@/lib/score-sitting";
@@ -470,9 +470,20 @@ export async function ExamWeekBlock({
   const keyText = state.answerKey
     ? dateWithTier(state.answerKey, tierWord(state.answerKey.tier), locale)
     : t("ew.post.notAnnounced");
-  const resultText = state.result
-    ? dateWithTier(state.result, tierWord(state.result.tier), locale)
-    : t("ew.post.notAnnounced");
+  // Passed estimates (24 Sep 2026, src/lib/official-source.ts): a result
+  // estimate whose day has gone by is never printed as a date — it reads "No
+  // official date yet — the expected result date has passed" (or "The
+  // expected result date has passed — check the official website" where
+  // announced rows say it may have come out), or gives way to the announced
+  // result row of the same event that supersedes it.
+  const resultTimeline = state.result?.passedEstimate ? buildTimeline(rows, now, officialUrl) : [];
+  const resultView = state.result ? passedEstimateView(state.result, resultTimeline, now) : "date";
+  const resultRow = resultView === "omit" && state.result ? supersedingRow(state.result, resultTimeline, now) : state.result;
+  const resultText = !resultRow
+    ? t("ew.post.notAnnounced")
+    : resultView === "line" || resultView === "unsure"
+      ? passedEstimateLine("RESULT", locale, resultView)
+      : dateWithTier(resultRow, tierWord(resultRow.tier), locale);
   const noticeLink = (r: TimelineRow | null) =>
     r?.url ? (
       <>
@@ -490,7 +501,7 @@ export async function ExamWeekBlock({
       </li>
       <li>
         📊 {fill(t("ew.post.result"), { text: resultText })}
-        {noticeLink(state.result)}
+        {noticeLink(resultRow)}
       </li>
     </ul>
   );

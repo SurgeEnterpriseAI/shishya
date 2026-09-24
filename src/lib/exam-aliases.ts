@@ -499,7 +499,22 @@ const ALIASES: Record<string, AliasHit> = {
   tgpsc: { codes: ["TS_TSPSC_GROUP1", "TS_TSPSC_GROUP2", "TS_TSPSC_GROUP3", "TS_TSPSC_GROUP4"] },
 
   "group 4": { codes: ["TS_TSPSC_GROUP4", "TN_TNPSC_GROUP4"] },
-  "junior assistant": { codes: ["TS_TSPSC_GROUP4", "TN_TNPSC_GROUP4"] },
+  // Junior Assistant (24 Sep 2026): 5 students asked /ask for the UKSSSC
+  // Junior Assistant post — some by its Hindi name, Kanishth Sahayak — and 4
+  // of them needed the web fallback: this alias knew only the Telangana and
+  // Tamil Nadu Group IV exams. A code is listed only where the exam's own
+  // catalogue row (Exam.description) names the post: UKSSSC "Uttarakhand
+  // Group C posts (VDO, Patwari, Junior Asst)", APPSC Group III "Panchayat
+  // Secretary / Junior Assistant", JKSSB "J&K Group C / Junior Assistant /
+  // Naib Tehsildar". The Hindi name goes to UKSSSC alone, the one
+  // Hindi-medium board whose row names the post (RSMSSB and UPSSSC mention it
+  // only in tracker rows and news).
+  "junior assistant": { codes: ["TS_TSPSC_GROUP4", "TN_TNPSC_GROUP4", "UK_UKSSSC", "AP_APPSC_GROUP3", "JK_JKSSB"] },
+  "junior asst": { codes: ["TS_TSPSC_GROUP4", "TN_TNPSC_GROUP4", "UK_UKSSSC", "AP_APPSC_GROUP3", "JK_JKSSB"] },
+  "kanishth sahayak": { codes: ["UK_UKSSSC"] },
+  "kanishtha sahayak": { codes: ["UK_UKSSSC"] },
+  "kanisth sahayak": { codes: ["UK_UKSSSC"] },
+  "कनिष्ठ सहायक": { codes: ["UK_UKSSSC"] },
 
   "b.des": { codes: ["UCEED", "NID_DAT", "NIFT"] },
   bdes: { codes: ["UCEED", "NID_DAT", "NIFT"] },

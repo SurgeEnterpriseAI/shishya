@@ -27,6 +27,16 @@
 // −120 days to +365 days through buildTimeline (so the expected-answer-key
 // guard applies here too), each with its tier word, "was expected — not
 // confirmed" on passed estimates, and a data-updated line.
+// Passed estimates (24 Sep 2026, src/lib/official-source.ts): an expected
+// date that has gone by is no longer listed with a date at all — answer
+// engines read "2026-08-15 — Notification release — expected — was expected
+// — not confirmed" back to students as the notification date (APPSC Group
+// 1, AP Police). Those rows move to an undated "Passed estimates" list,
+// each with its line — "No official date yet — …", or "The expected … date
+// has passed — check the official website" where announced rows say the
+// milestone may have gone ahead (the list never says nothing was announced:
+// AR APPSC's prelims admit card went by before a prelims held 6 Sep); one an
+// announced row of the same event supersedes is dropped.
 //
 // Pages that render (16 Sep 2026): the /cutoff, /syllabus, /tricks, /guide
 // and /build-mock links — and the exam-week cutoff line — are printed only
@@ -43,8 +53,8 @@ import { prisma } from "@/lib/db/prisma";
 import { GATES_CLOSED, loadExamPageGates } from "@/lib/exam-page-gates";
 import { ageEligibilityLine, relatedExamLines } from "@/lib/page-gates-copy";
 import { usableNotesSql } from "@/lib/topic-notes";
-import { sourceHostLabel } from "@/lib/official-source";
-import { buildTimeline, focusExamRow, PASSED_ESTIMATE_TEXT, type TimelineRow } from "@/lib/exam-timeline";
+import { passedEstimateLine, passedEstimateView, sourceHostLabel } from "@/lib/official-source";
+import { buildTimeline, focusExamRow, type TimelineRow } from "@/lib/exam-timeline";
 import { istDay } from "@/lib/exam-week";
 import { markingSchemeVerdict } from "@/lib/marking-scheme";
 import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
@@ -225,31 +235,48 @@ export async function GET(
     // estimate from previous cycles. LLMs citing these dates MUST carry
     // the label — that is the whole trust contract. A passed estimate
     // (11 Sep 2026) is marked so it is never read as a concluded event.
-    L.push(
-      `## Key dates — every tracker row from 120 days back to 365 days ahead (OFFICIAL = conducting body's notice linked · REPORTED = announced, secondary source cited · expected = estimate from previous cycles, NOT announced · "${PASSED_ESTIMATE_TEXT}" = the estimated date has passed and nothing was announced; do not treat it as having happened)`,
-    );
+    //
+    // Passed estimates (24 Sep 2026): never dated here — see the file note.
+    const views = timeline.map((r) => ({ r, view: passedEstimateView(r, timeline, now) }));
+    const dated = views.filter((v) => v.view === "date").map((v) => v.r);
+    const undated = views.filter((v) => v.view === "line" || v.view === "unsure");
     const tag = (r: TimelineRow) =>
       r.tier === "official"
         ? `OFFICIAL, notice: ${r.url}`
         : r.tier === "reported"
           ? `REPORTED (announced; via ${sourceHostLabel(r.url ?? "")}): ${r.url}`
-          : r.passedEstimate
-            ? `expected — ${PASSED_ESTIMATE_TEXT}`
-            : "expected";
+          : "expected";
     const when = (r: TimelineRow) => (r.status === "today" ? " — today" : r.status === "upcoming" ? ` — in ${r.daysFromToday} days` : "");
-    for (const r of timeline) {
-      L.push(`- ${r.day} — ${r.label}${r.isExamDay ? " (exam day)" : ""} — ${tag(r)}${when(r)}`);
-    }
     // Data-updated line: when the newest listed row was added, when the
     // refresh cron last looked at this exam, and when this file was built.
     const newest = dates.reduce<Date | null>((m, d) => (d.createdAt && (!m || d.createdAt > m) ? d.createdAt : m), null);
-    L.push(
+    const footer = [
       `- Data updated: latest tracker row added ${newest ? newest.toISOString().slice(0, 10) : "unknown"}` +
         `${exam.refreshAttemptedAt ? ` · last refresh check ${exam.refreshAttemptedAt.toISOString().slice(0, 10)}` : ""}` +
         ` · this file generated ${istDay(now)} (IST)`,
-    );
-    L.push(`- Live tracker (all milestones, alerts): ${SITE}/exams/${exam.code}/updates`);
-    L.push("");
+      `- Live tracker (all milestones, alerts): ${SITE}/exams/${exam.code}/updates`,
+    ];
+    // The Key dates heading only over dated rows: truth-lint reads a Key
+    // dates section with no dated row as a changed grammar
+    // (src/lib/truth-lint.ts). The footer closes whichever list comes first.
+    if (dated.length) {
+      L.push(
+        `## Key dates — every tracker row from 120 days back to 365 days ahead (OFFICIAL = conducting body's notice linked · REPORTED = announced, secondary source cited · expected = estimate from previous cycles, NOT announced; an estimate whose date has passed is not listed here)`,
+      );
+      for (const r of dated) {
+        L.push(`- ${r.day} — ${r.label}${r.isExamDay ? " (exam day)" : ""} — ${tag(r)}${when(r)}`);
+      }
+      L.push(...footer);
+      L.push("");
+    }
+    if (undated.length) {
+      L.push(
+        `## Passed estimates — the estimated date has gone by and no announced date for these milestones is on the tracker (no date is stated; cite none, and do not say whether the milestone has happened — check the official website)`,
+      );
+      for (const { r, view } of undated) L.push(`- ${r.label} — ${passedEstimateLine(r.kind, "en", view === "unsure" ? "unsure" : "line")}`);
+      if (!dated.length) L.push(...footer);
+      L.push("");
+    }
   }
 
   // Exam Week Mode (6 Sep 2026): present only while a TYPED exam-day row

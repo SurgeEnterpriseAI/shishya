@@ -23,6 +23,7 @@ import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { resolveAliases } from "@/lib/exam-aliases";
 import { GATES_CLOSED, examPageGates } from "@/lib/exam-page-gates";
 import { askAgeSummary } from "@/lib/page-gates-copy";
+import { sourceTier } from "@/lib/official-source";
 
 // ── Tool definitions ─────────────────────────────────────────────────
 
@@ -141,7 +142,7 @@ async function getExamDetails(input: { code: string }) {
   // (16 Sep 2026, src/lib/exam-page-gates.ts).
   const [dates, results, gates] = await Promise.all([
     prisma.$queryRaw<any[]>`
-      SELECT label, date FROM "ExamImportantDate"
+      SELECT label, date, confidence, url FROM "ExamImportantDate"
       WHERE "examId" = ${e.id} AND "archivedAt" IS NULL AND date > NOW() - INTERVAL '30 days'
       ORDER BY date ASC LIMIT 6`,
     prisma.$queryRaw<any[]>`
@@ -164,7 +165,19 @@ async function getExamDetails(input: { code: string }) {
       official: e.officialUrl ? `${e.officialName ?? ""} ${e.officialUrl}` : e.officialName,
       cutoffGuidance: e.cutoff ? String(e.cutoff).slice(0, 1200) : null,
     },
-    upcomingDates: dates.map((d) => `${d.date.toISOString().slice(0, 10)}: ${d.label}`),
+    // 24 Sep 2026: each date carries its tier (same rule as the tracker), and a
+    // passed estimate is dropped — it was never announced and its day is gone.
+    upcomingDates: dates.flatMap((d) => {
+      const tier = sourceTier(d.confidence, d.url, e.officialUrl);
+      if (tier === "expected" && d.date.getTime() < Date.now()) return [];
+      const tag =
+        tier === "official"
+          ? "OFFICIAL (announced by the conducting body)"
+          : tier === "reported"
+            ? "REPORTED by a secondary source, not yet on the official site"
+            : "EXPECTED — Shishya's estimate, NOT announced; never state it as the date";
+      return [`${d.date.toISOString().slice(0, 10)}: ${d.label} [${tag}]`];
+    }),
     recentResults: results.map((r) => `${r.declaredOn.toISOString().slice(0, 10)}: ${r.stage} — ${r.headline}`),
     links: {
       hub: `https://shishya.in/exams/${e.code}`,

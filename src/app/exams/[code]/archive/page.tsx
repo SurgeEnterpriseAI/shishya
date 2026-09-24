@@ -19,7 +19,8 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { getExamTheme } from "@/lib/exam-theme";
 import { getT } from "@/lib/i18n-server";
-import { SUPPRESSED_SOURCE, isUnannouncedAnswerKey } from "@/lib/exam-timeline";
+import { SUPPRESSED_SOURCE, isUnannouncedAnswerKey, rowCitation } from "@/lib/exam-timeline";
+import { isPassedEstimate, sourceTier } from "@/lib/official-source";
 import { StateExamsLink } from "@/components/StateExamsLink";
 
 export async function generateMetadata({
@@ -84,7 +85,15 @@ export default async function ArchivePage({
   // names one, with no announced source (tier expected). Every other archived
   // row stays.
   const officialUrl = eligibility?.officialUrl ?? null;
-  const dates = archivedDates.filter((d) => !isUnannouncedAnswerKey(d, officialUrl));
+  // Passed estimates (24 Sep 2026, src/lib/official-source.ts): an archived
+  // EXPECTED row whose day has gone by was a guess nobody announced, not a
+  // past cycle's date, so the archive leaves it out instead of printing it
+  // ("Junior Assistant admit card release (expected) 19 Aug" on UKSSSC).
+  const dates = archivedDates.filter(
+    (d) =>
+      !isUnannouncedAnswerKey(d, officialUrl) &&
+      !isPassedEstimate({ tier: sourceTier(d.confidence, rowCitation(d), officialUrl), date: d.date }),
+  );
 
   // AEO: the archive is the long-tail landing for "[exam] previous year
   // notifications / postponement history" — ItemList of the per-news

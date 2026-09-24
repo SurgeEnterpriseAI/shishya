@@ -39,6 +39,7 @@ import { ShareExamButton } from "@/components/ShareExamButton";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
 import { StateExamsLink } from "@/components/StateExamsLink";
 import { examPageGates } from "@/lib/exam-page-gates";
+import { passedEstimateLine, passedEstimateView } from "@/lib/official-source";
 
 /** JSON-LD safe for inline <script>: a "</script>" inside a model- or
  *  web-derived label must not break out of the block. */
@@ -188,7 +189,24 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   const viewer: ExamWeekViewer | null = userId ? { enrolled: !!enrollment, shiftDay: shiftDayIso(enrollment?.shiftDate) } : null;
 
   const year = cycleYear(timeline);
-  const { next, last, nextExam } = stageOf(timeline);
+  const { next, nextExam } = stageOf(timeline);
+  // Passed estimates (24 Sep 2026, src/lib/official-source.ts): an EXPECTED
+  // date that has gone by is never printed as a date. One an announced row
+  // of the same event settles (same kind, close in date, same stage) is left
+  // out of the cards, the FAQ, the share text and the table; the rest print
+  // a line in the date's place — "No official date yet — the expected
+  // notification date has passed" (AP Group 1's "Notification release 15
+  // Aug" and UK TET's "Admit card release 20 Sep" still read as dates on 24
+  // Sep), or, where announced rows say the milestone may have gone ahead
+  // (AR APPSC's prelims held 6 Sep after a passed admit-card estimate), "The
+  // expected admit card date has passed — check the official website". An
+  // older cycle's row never answers for a pending event (JKPSC's "CCE 2025
+  // notification" for the 2026 FAQ). The "Last:" pill names something that
+  // happened, never an estimate that went by.
+  const peView = new Map(timeline.map((r) => [r.id, passedEstimateView(r, timeline)] as const));
+  const shown = timeline.filter((r) => peView.get(r.id) !== "omit");
+  const peLine = (r: TimelineRow) => passedEstimateLine(r.kind, locale, peView.get(r.id) === "unsure" ? "unsure" : "line");
+  const last = [...timeline].reverse().find((r) => r.status === "done" && !r.passedEstimate) ?? null;
   const officialUrl = elig[0]?.officialUrl ?? null;
   const officialName = elig[0]?.officialName ?? null;
   // The same phase the hub's block renders — re-keyed on the student's
@@ -215,7 +233,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   const kindLabel = (k: DateKind) => t(`tracker.kind.${k}`);
   const statusLabel = (r: TimelineRow) =>
     r.displayStatus === "passed-estimate"
-      ? t("tracker.passedEstimate")
+      ? peLine(r)
       : r.status === "done"
       ? t("tracker.done")
       : r.status === "today"
@@ -223,7 +241,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
         : fill(t("tracker.inDays"), { n: r.daysFromToday });
 
   // Key-dates strip: one card per key kind (upcoming first, else latest).
-  const keyCards = KEY_KINDS.map((k) => ({ kind: k, row: upcomingOfKind(timeline, k) ?? latestOfKind(timeline, k) }));
+  const keyCards = KEY_KINDS.map((k) => ({ kind: k, row: upcomingOfKind(shown, k) ?? latestOfKind(shown, k) }));
 
   // WhatsApp share text (11 Sep 2026): the dated rows THEMSELVES, each
   // with its tier word, instead of a generic "one page" line — the forward
@@ -233,21 +251,25 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   // day: exam · admit card · result. After it: exam · answer key · result.
   const shareKinds: DateKind[] = nextExam ? ["EXAM", "ADMIT_CARD", "RESULT"] : ["EXAM", "ANSWER_KEY", "RESULT"];
   const shareRows = shareKinds.map((k) => {
-    const row = upcomingOfKind(timeline, k) ?? latestOfKind(timeline, k);
+    const row = upcomingOfKind(shown, k) ?? latestOfKind(shown, k);
     return row
-      ? `${kindLabel(k)}: ${fmtDay(row.date, locale)} (${row.displayStatus === "passed-estimate" ? t("tracker.passedEstimate") : t(`tracker.${row.tier}`).toLowerCase()})`
+      ? row.passedEstimate
+        ? `${kindLabel(k)}: ${peLine(row)}`
+        : `${kindLabel(k)}: ${fmtDay(row.date, locale)} (${t(`tracker.${row.tier}`).toLowerCase()})`
       : `${kindLabel(k)}: ${t("tracker.notAnnounced").toLowerCase()}`;
   });
   const shareMessage = `${short} ${year} — ${t("tracker.keyDates")}: ${shareRows.join(" · ")} — ${t("tracker.title")}:`;
 
   // FAQ — generated from the data, never from imagination.
   const faqFor = (qKey: string, kind: DateKind) => {
-    const row = upcomingOfKind(timeline, kind) ?? latestOfKind(timeline, kind);
+    const row = upcomingOfKind(shown, kind) ?? latestOfKind(shown, kind);
     const q = fill(t(qKey), { exam: short, year });
     let a: string;
     if (!row) a = t("tracker.faq.a.unknown");
-    else if (row.status === "done")
-      a = fill(t(row.tier === "expected" ? "tracker.faq.a.doneExpected" : "tracker.faq.a.done"), { label: row.label, date: fmtDay(row.date, locale) });
+    // A passed estimate answers with the honest line, never "was expected
+    // around {date}" (24 Sep 2026) — the FAQ is also this page's JSON-LD.
+    else if (row.passedEstimate) a = `${peLine(row)}.`;
+    else if (row.status === "done") a = fill(t("tracker.faq.a.done"), { label: row.label, date: fmtDay(row.date, locale) });
     else if (row.tier === "official") a = fill(t("tracker.faq.a.official"), { label: row.label, date: fmtDay(row.date, locale) });
     else if (row.tier === "reported") a = fill(t("tracker.faq.a.reported"), { label: row.label, date: fmtDay(row.date, locale) });
     else a = fill(t("tracker.faq.a.expected"), { label: row.label, date: fmtDay(row.date, locale) });
@@ -387,10 +409,14 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
                   </p>
                   {row ? (
                     <>
-                      <p className="mt-1 text-sm font-bold text-ink-900">{fmtDay(row.date, locale)}</p>
+                      {row.passedEstimate ? (
+                        <p className="mt-1 text-sm text-ink-700">{peLine(row)}</p>
+                      ) : (
+                        <p className="mt-1 text-sm font-bold text-ink-900">{fmtDay(row.date, locale)}</p>
+                      )}
                       <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-ink-600">
                         {badge(row)}
-                        <span>{statusLabel(row)}</span>
+                        {!row.passedEstimate && <span>{statusLabel(row)}</span>}
                       </p>
                       {row.url && (
                         <a href={row.url} target="_blank" rel="noopener noreferrer" className="mt-1 block text-xs font-medium text-saffron-700 hover:text-saffron-800">
@@ -467,7 +493,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
                   </tr>
                 </thead>
                 <tbody>
-                  {timeline.map((r) => (
+                  {shown.map((r) => (
                     <tr key={r.id} className={`border-t border-ink-100 ${r.status === "today" ? "bg-saffron-50" : r.status === "done" ? "text-ink-500" : ""}`}>
                       <td className="px-3 py-2">
                         <span className="mr-1" aria-hidden>{KIND_ICON[r.kind]}</span>
@@ -480,10 +506,10 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
                         )}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2">
-                        <span className="font-medium">{fmtDay(r.date, locale, true)}</span>
+                        <span className="font-medium">{r.passedEstimate ? "—" : fmtDay(r.date, locale, true)}</span>
                         <span className="ml-2">{badge(r)}</span>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2 text-xs">{statusLabel(r)}</td>
+                      <td className={`${r.passedEstimate ? "min-w-[12rem]" : "whitespace-nowrap"} px-3 py-2 text-xs`}>{statusLabel(r)}</td>
                     </tr>
                   ))}
                 </tbody>

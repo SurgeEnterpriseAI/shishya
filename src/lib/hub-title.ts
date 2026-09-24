@@ -136,6 +136,16 @@ export function sameStage(a: string, b: string): boolean {
   return subset(ka.content, kb.content) || subset(kb.content, ka.content);
 }
 
+/** The stage markers of one label — the half of sameStage's key that tells
+ *  sittings apart: "prelims" / "mains", "end" for a window's last day, test
+ *  types ("@pet", "@interview") and numbered parts ("tier 1", "phase 2",
+ *  "part 2"). src/lib/official-source.ts passedEstimateView (24 Sep 2026)
+ *  compares these across kinds, where labels share no other words ("Prelims
+ *  admit card (expected)" vs "APPSC CCE Prelims Exam"). */
+export function stageMarkers(label: string): Set<string> {
+  return new Set(stageKey(label).disc);
+}
+
 function createdMs(createdAt: CreatedAt | undefined, id: string): number | null {
   const v = createdAt?.get(id);
   if (!v) return null;

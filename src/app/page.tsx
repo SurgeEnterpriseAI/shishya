@@ -40,7 +40,7 @@ import { calendarRailLabels, fillHome, homeStripCopy, type HomeStripCopy } from 
 import { Header } from "@/components/Header";
 import type { ExamCard } from "@/components/ExamPicker";
 import { computeExamTags } from "@/lib/exam-tags";
-import { sourceTier } from "@/lib/official-source";
+import { isPassedEstimate, sourceTier } from "@/lib/official-source";
 import { type ThreadItem } from "@/components/DiscussionsSidebar";
 import { LiveCountersStrip } from "@/components/LiveCounters";
 import { HomeSearch } from "@/components/HomeSearch";
@@ -233,6 +233,11 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
         return resolvePhase(r.date, now) === "REACTIONS" ? "concluded" : "upcoming";
       }
       if (!r.isExamDay) return null; // past non-exam-day = noise
+      // Passed estimates (24 Sep 2026, src/lib/official-source.ts): an
+      // EXPECTED exam day that went by is not an exam that ran — nothing was
+      // announced — so it leaves the Concluded / Past tabs instead of sitting
+      // there with its date and a "was expected" chip.
+      if (isPassedEstimate({ tier: sourceTier(r.confidence, r.url, r.exam.eligibility?.officialUrl), date: r.date }, now)) return null;
       return nowDay - dDay <= 7 ? "concluded" : "past";
     };
     const byBucket: Record<Exclude<CalendarBucket, "results">, RawRow[]> = { concluded: [], upcoming: [], past: [] };
@@ -346,9 +351,10 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
     // The static list cites no URL per row, so under the source-tier
     // model its exam days are estimates: rendered "(expected)", never
     // pilled as exam days.
-    const events = getFallbackEvents().map((e) =>
-      e.isExamDay ? { ...e, isExamDay: false, expectedExamDay: true, tier: "expected" as const } : e,
-    );
+    const events = getFallbackEvents()
+      .map((e) => (e.isExamDay ? { ...e, isExamDay: false, expectedExamDay: true, tier: "expected" as const } : e))
+      // Same passed-estimate rule as the live loader (24 Sep 2026).
+      .filter((e) => !(e.expectedExamDay && isPassedEstimate({ tier: "expected", date: e.date })));
     return { events, defaultTab: "upcoming" as CalendarBucket };
   }
 }
