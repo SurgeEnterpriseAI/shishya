@@ -203,7 +203,8 @@ export const examsSeed = [
     totalQuestions: 80,
     totalMarks: 160,
     marksPerQ: 2,
-    negativeMark: 0.5,
+    // SSC CTGD 2026 notice (01.12.2025) para 12.1: 0.25 per wrong answer.
+    negativeMark: 0.25,
     languages: ["EN", "HI", "TE", "TA", "KN", "ML", "MR", "BN", "GU", "PA"] as const,
     candidatesPerYear: 5_500_000,
   },

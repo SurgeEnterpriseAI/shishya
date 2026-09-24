@@ -1,6 +1,6 @@
 // SSC GD Constable CBE — full syllabus tree.
 // 4 sections × 20 questions × 2 marks = 160 marks in 60 minutes.
-// Negative marking: 0.50 per wrong answer.
+// Negative marking: 0.25 per wrong answer (SSC CTGD 2026 notice, 01.12.2025, para 12.1).
 // Difficulty level: Matriculation (10th).
 // Source: ssc.gov.in GD Constable notification (5 Sep 2024) + Careerpower/Adda247 cross-check.
 //

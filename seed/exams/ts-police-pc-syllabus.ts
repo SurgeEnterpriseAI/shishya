@@ -1,6 +1,7 @@
 // Telangana Police Constable (TSLPRB / TGPRB) Preliminary Written Test — full syllabus tree.
 // Conducted by Telangana State Level Police Recruitment Board.
-// Preliminary Written Test: 200 MCQs in 3 hours, 200 marks. No negative marking.
+// Preliminary Written Test: 200 MCQs in 3 hours, 200 marks. Negative marking: 20% of a question's marks per wrong
+// answer (TGPRB Rc 189/2026, 29 Jul 2026, para 16(A) note 3).
 // Two objective papers: Reasoning/Mental Ability and General Studies (combined as PWT).
 // Source: tgprb.in (formerly tslprb.in) PC notification + careerpower/Adda247 cross-check.
 //

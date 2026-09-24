@@ -38,7 +38,9 @@ export const stateExamsSeed = [
     languages: ["EN", "TA"] as const, candidatesPerYear: 1_500_000 },
   { code: "TN_TNPSC_GROUP4", state: "TN", name: "TNPSC Group IV", shortName: "TNPSC Group IV",
     description: "TNPSC Group IV — VAO + Junior Assistant + Typist combined exam. 200 MCQs in 3 hours covering GS, Aptitude, and General Tamil.",
-    durationMin: 180, totalQuestions: 200, totalMarks: 300, marksPerQ: 1.5, negativeMark: 1 / 3,
+    // TNPSC Notfn 07/2025 + Addendum 7A/2025 para 1.10.2: no deduction for a wrong answer
+    // (a blank answer loses 0.5, which this field can't express).
+    durationMin: 180, totalQuestions: 200, totalMarks: 300, marksPerQ: 1.5, negativeMark: 0,
     languages: ["EN", "TA"] as const, candidatesPerYear: 2_500_000 },
   // ── Karnataka ──────────────────────────────────────────────────────────
   { code: "KA_KPSC_KAS", state: "KA", name: "Karnataka Administrative Service (KAS) Prelims", shortName: "KPSC KAS",
@@ -434,7 +436,8 @@ export const stateExamsSeed = [
     languages: ["EN", "PA"] as const, candidatesPerYear: 350_000 },
   { code: "TS_POLICE_PC", state: "TS", name: "Telangana Police Constable (TSLPRB)", shortName: "TS Police PC",
     description: "TSLPRB — Telangana State Level Police Recruitment. 200 MCQs in 3 hours.",
-    durationMin: 180, totalQuestions: 200, totalMarks: 200, marksPerQ: 1, negativeMark: 0,
+    // TGPRB Rc 189/2026 (29 Jul 2026) para 16(A) note 3: 20% of full marks per wrong answer.
+    durationMin: 180, totalQuestions: 200, totalMarks: 200, marksPerQ: 1, negativeMark: 0.2,
     languages: ["EN", "TE"] as const, candidatesPerYear: 600_000 },
   { code: "AP_POLICE_PC", state: "AP", name: "AP Police Constable (APSLPRB)", shortName: "AP Police PC",
     description: "APSLPRB — AP State Level Police Recruitment Board Constable. 200 MCQs in 3 hours.",
