@@ -9,6 +9,7 @@ import { getT } from "@/lib/i18n-server";
 import { ChatInterface } from "./ChatInterface";
 import { ExamSwitcher } from "./ExamSwitcher";
 import { ChatOpenedBeacon } from "@/components/ChatOpenedBeacon";
+import { attemptSeedScope } from "@/lib/chat-seed-once";
 
 export default async function ChatPage({
   searchParams,
@@ -337,6 +338,21 @@ export default async function ChatPage({
     }
   }
 
+  // A seeded chat's once-per-tab key includes the student's latest attempt
+  // (24 Sep 2026 review): the same seed text after another attempt — a second
+  // results page with the same wrong count and topics, "Quiz me…" again after
+  // taking that quiz — sends by itself instead of waiting as a repeat. One
+  // indexed row, and only when a seed is present.
+  const seedScope = sp.seed
+    ? attemptSeedScope(
+        await prisma.attempt.findFirst({
+          where: { userId: session.user.id },
+          orderBy: { startedAt: "desc" },
+          select: { id: true, finishedAt: true },
+        }),
+      )
+    : null;
+
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
@@ -362,6 +378,7 @@ export default async function ChatPage({
           examCode={examCode}
           topicFocus={topicFocus}
           initialSeed={sp.seed ?? null}
+          seedScope={seedScope}
           labels={{
             placeholder: t("chat.placeholder"),
             send: t("chat.send"),

@@ -1,9 +1,16 @@
 // POST /api/chat — streaming chat with the AI tutor.
-// Body: { examCode, sessionId?, message, lang? }
+// Body: { examCode, sessionId?, message, lang?, retry?, turnId? }
 //
 // Returns a Server-Sent Events stream:
+//   event: meta\ndata: {"sessionId":"..."}\n\n
 //   event: delta\ndata: <text chunk>\n\n
 //   event: done\ndata: {"messageId":"...","actions":[...]}\n\n
+//   event: error\ndata: {"error":"<friendly text>","next":"/exams/..."}\n\n
+// A signed-in turn that was already answered is replayed from the stored
+// reply over the same events (done carries replayed: true) — see
+// src/lib/chat-turn-dedupe.ts (24 Sep 2026). A turn whose row another run
+// is still answering waits for that reply (up to 45 s; then an error event
+// asks the student to Retry in a moment).
 
 // Tool-use loops + long Anthropic streams need more than the default 10s. We
 // keep this on Node runtime (not edge) because Prisma engines need it.
@@ -20,6 +27,20 @@ import { getStudentState } from "@/lib/db/student-state";
 import { getStudentJourney } from "@/lib/db/student-journey";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
+import { classifyClient } from "@/lib/client-class";
+import {
+  decideTurn,
+  replayFrames,
+  REPLAY_WINDOW_MS,
+  sameTurnText,
+  settleWait,
+  userTurnMeta,
+  WAIT_FOR_ANSWER_MS,
+  WAIT_POLL_MS,
+  type StoredTurn,
+  type TurnDecision,
+  type UserTurnMeta,
+} from "@/lib/chat-turn-dedupe";
 import { locales } from "@/lib/i18n";
 import { detectLanguageRequest, langToReplyLanguage, resolvePreferredLocale, TUTOR_LANG_COOKIE, tutorMessageFor } from "@/lib/preferred-lang";
 
@@ -47,6 +68,14 @@ const Body = z
     // line "Reply language: …". Absent → preferredLang (non-EN) > cookie
     // > en, see src/lib/preferred-lang.ts.
     lang: z.enum(locales as unknown as [string, ...string[]]).optional(),
+    // The student pressed "Retry" on a turn that got no reply (24 Sep 2026).
+    // Lets a signed-in conversation replay a reply that was stored but never
+    // reached the screen; see src/lib/chat-turn-dedupe.ts.
+    retry: z.boolean().optional(),
+    // The client's id for this turn, the same on a Retry of it (24 Sep 2026
+    // review). Stored on the signed-in USER row, so a Retry replays only the
+    // reply to the turn that failed, never an earlier turn with the same text.
+    turnId: z.string().min(1).max(64).optional(),
   })
   .refine((b) => b.general === true || (typeof b.examCode === "string" && b.examCode.length > 0), {
     message: "examCode is required when general is not true",
@@ -59,7 +88,49 @@ function clientIp(req: Request): string {
   return req.headers.get("x-real-ip")?.trim() || "unknown";
 }
 
+const SSE_HEADERS = {
+  "content-type": "text/event-stream; charset=utf-8",
+  "cache-control": "no-cache, no-transform",
+  "x-accel-buffering": "no",
+};
+
+/** The signed-in USER row this request stored or re-sent, and the metadata written on it. */
+interface TurnRow {
+  id: string | null;
+  meta: UserTurnMeta;
+}
+
+/**
+ * Marks a signed-in turn failed (24 Sep 2026 review). An unanswered row with
+ * no mark is taken to be still in flight for up to 5½ minutes, and a Retry
+ * waits on it; with the mark, a Retry re-sends it at once. Best-effort.
+ */
+async function markTurnFailed(turn: TurnRow): Promise<void> {
+  if (!turn.id) return;
+  try {
+    await prisma.chatMessage.update({
+      where: { id: turn.id },
+      data: { metadata: { ...turn.meta, failedAt: Date.now() } },
+    });
+  } catch (err) {
+    console.error("[chat] could not mark the failed turn:", err);
+  }
+}
+
 export async function POST(req: Request) {
+  // A turn that throws after its USER row is stored (a DB timeout while the
+  // context loads, before the stream starts) is marked failed too, so its
+  // Retry is not left waiting on a run that no longer exists.
+  const turn: TurnRow = { id: null, meta: {} };
+  try {
+    return await handleChat(req, turn);
+  } catch (err) {
+    await markTurnFailed(turn);
+    throw err;
+  }
+}
+
+async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
   const session = await auth();
   // Ungated: the AI tutor is open to signed-out visitors too. `userId` is
   // null for anonymous callers; every account-dependent step below
@@ -72,6 +143,18 @@ export async function POST(req: Request) {
   const anonId = userId
     ? null
     : (req.headers.get("cookie") || "").match(/(?:^|;\s*)shishya_anon=([^;]+)/)?.[1] ?? null;
+
+  // Crawlers off the guest tutor (24 Sep 2026). JS-running bots load the
+  // /chat?seed=… links and the seed auto-fired a guest turn for them: ~188
+  // guest-tutor AI replies in September went to crawlers. Signed-out only,
+  // and before the rate limiter, DB and model: a signed-in student is never
+  // judged by their user-agent.
+  if (!userId && classifyClient(req.headers.get("user-agent")) === "bot") {
+    return new Response(JSON.stringify({ error: "unavailable" }), {
+      status: 403,
+      headers: { "content-type": "application/json" },
+    });
+  }
 
   // Rate limit before any DB work. By user when signed in, else by a coarse
   // IP key so open tutor access can't be abused to burn Anthropic credits.
@@ -120,7 +203,123 @@ export async function POST(req: Request) {
     userId && body.sessionId
       ? await prisma.chatSession.findUnique({ where: { id: body.sessionId } })
       : null;
-  if (userId && (!chatSession || chatSession.userId !== userId)) {
+  if (chatSession && chatSession.userId !== userId) chatSession = null;
+
+  // The LAST 30 turns of a conversation, oldest-first. (Was asc/take 30 =
+  // the FIRST 30 turns of the session: long sessions lost their recent
+  // turns and re-sent the same stale head every time.)
+  const lastTurns = async (sessionId: string) =>
+    (
+      await prisma.chatMessage.findMany({
+        where: { sessionId },
+        orderBy: { createdAt: "desc" },
+        take: 30, // cap context
+      })
+    ).reverse();
+  let rows = userId && chatSession ? await lastTurns(chatSession.id) : [];
+
+  // Duplicate and failed turns (24 Sep 2026) — signed-in only, decided
+  // before anything is written; rules and September numbers in
+  // src/lib/chat-turn-dedupe.ts. A conversation the client named is judged
+  // on its own latest USER row; a fresh chat on the student's latest message
+  // of the last 10 minutes in a conversation of the same exam scope.
+  // Review, same day: a fresh-chat repeat is not replayed when an attempt was
+  // started or finished since it was sent — the stored reply would describe
+  // the student's older record (24 of 308 would-be replays in Aug–Sep).
+  let decision: TurnDecision = { kind: "new" };
+  if (userId) {
+    let latestUser: StoredTurn | null = null;
+    let next: StoredTurn | null = null;
+    let stateChanged = false;
+    if (chatSession) {
+      const i = rows.map((r) => r.role).lastIndexOf("USER");
+      if (i >= 0) {
+        latestUser = rows[i];
+        next = rows[i + 1] ?? null;
+      }
+    } else {
+      const recent = await prisma.chatMessage.findFirst({
+        where: {
+          role: "USER",
+          createdAt: { gte: new Date(Date.now() - REPLAY_WINDOW_MS) },
+          session: { userId, examId: exam?.id ?? null },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      if (recent && sameTurnText(recent.content, body.message)) {
+        latestUser = recent;
+        const since = recent.createdAt;
+        [next, stateChanged] = await Promise.all([
+          prisma.chatMessage.findFirst({
+            where: { sessionId: recent.sessionId, createdAt: { gt: since } },
+            orderBy: { createdAt: "asc" },
+          }),
+          prisma.attempt
+            .findFirst({
+              where: { userId, OR: [{ startedAt: { gt: since } }, { finishedAt: { gt: since } }] },
+              select: { id: true },
+            })
+            .then((a) => a != null),
+        ]);
+      }
+    }
+    decision = decideTurn({
+      message: body.message,
+      continuing: chatSession != null,
+      retry: body.retry === true,
+      turnId: body.turnId ?? null,
+      stateChanged,
+      latestUser,
+      next,
+    });
+  }
+
+  // Another run may still be answering that very row: the student's
+  // connection dropped mid-answer (the server carries on and stores the
+  // reply) and they pressed Retry, or a second tab re-sent the seed. Wait for
+  // that reply instead of paying the model twice and storing two replies
+  // (24 Sep 2026 review). The student sees "Thinking…" meanwhile.
+  if (decision.kind === "wait") {
+    const waitingOn = decision.userRowId;
+    const deadline = Date.now() + WAIT_FOR_ANSWER_MS;
+    while (decision.kind === "wait" && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, WAIT_POLL_MS));
+      const row = await prisma.chatMessage.findUnique({ where: { id: waitingOn } });
+      const after = row
+        ? await prisma.chatMessage.findFirst({
+            where: { sessionId: row.sessionId, createdAt: { gt: row.createdAt } },
+            orderBy: { createdAt: "asc" },
+          })
+        : null;
+      decision = settleWait(row, after, Date.now());
+    }
+    if (decision.kind === "wait") {
+      // No meta frame: the chat stays where it was, and Retry asks again.
+      const error = "Your earlier message is still being answered. Tap Retry again in a moment to see the reply.";
+      return new Response(
+        `event: error\ndata: ${JSON.stringify({ error, next: examCodeForChat ? `/exams/${examCodeForChat}` : "/exams" })}\n\n`,
+        { headers: SSE_HEADERS },
+      );
+    }
+    // The conversation may have moved on while this turn waited.
+    if (chatSession) rows = await lastTurns(chatSession.id);
+  }
+
+  // Already answered: the stored reply again, over the same events — no
+  // model call, nothing written, and the chat carries on in that conversation.
+  if (decision.kind === "replay") {
+    return new Response(replayFrames(decision.sessionId, decision.reply).join(""), {
+      headers: SSE_HEADERS,
+    });
+  }
+  // A failed turn sent again from a fresh chat: continue in its conversation.
+  if (decision.kind === "reuse" && chatSession?.id !== decision.sessionId) {
+    chatSession = await prisma.chatSession.findUnique({ where: { id: decision.sessionId } });
+    rows = chatSession ? await lastTurns(chatSession.id) : [];
+  }
+  const reusedRowId = decision.kind === "reuse" && chatSession ? decision.userRowId : null;
+
+  if (userId && !chatSession) {
     chatSession = await prisma.chatSession.create({
       data: {
         userId,
@@ -133,35 +332,45 @@ export async function POST(req: Request) {
 
   // History — normalised to {role, content}. From the DB for signed-in
   // users; from the client body for anonymous ones (their turns aren't
-  // persisted, so the client replays its last few for multi-turn).
+  // persisted, so the client replays its last few for multi-turn). A reused
+  // USER row is this turn's own message, so it stays out of the history.
   const history: { role: "user" | "assistant"; content: string }[] =
     userId && chatSession
-      ? (
-          await prisma.chatMessage.findMany({
-            where: { sessionId: chatSession.id },
-            // The LAST 30 turns, oldest-first. (Was asc/take 30 = the FIRST
-            // 30 turns of the session: long sessions lost their recent
-            // turns and re-sent the same stale head every time.)
-            orderBy: { createdAt: "desc" },
-            take: 30, // cap context
-          })
-        )
-          .reverse()
+      ? rows
+          .filter((m) => m.id !== reusedRowId)
           .map((m) => ({
-          role: m.role === "USER" ? ("user" as const) : ("assistant" as const),
-          content: m.content,
-        }))
+            role: m.role === "USER" ? ("user" as const) : ("assistant" as const),
+            content: m.content,
+          }))
       : (body.history ?? []).slice(-12);
   // The Messages API requires the first turn to be a user turn. A failed
   // reply leaves an unpaired USER row, so a 30-newest window can start on
   // an ASSISTANT row — trim leading assistant turns.
   while (history.length && history[0].role === "assistant") history.shift();
 
-  // Persist the user's message (signed-in only).
+  // Persist the user's message (signed-in only) — unless this turn reuses
+  // the stored row of a failed attempt at the same message. The row carries
+  // the client's turnId (a Retry is matched by it); a reused row is stamped
+  // answeringAt and loses its failed mark, so a second Retry during this run
+  // waits for it instead of starting another (24 Sep 2026 review).
   if (userId && chatSession) {
-    await prisma.chatMessage.create({
-      data: { sessionId: chatSession.id, role: "USER", content: body.message },
-    });
+    if (reusedRowId) {
+      const turnId = body.turnId ?? userTurnMeta(rows.find((r) => r.id === reusedRowId)?.metadata).turnId;
+      turn.id = reusedRowId;
+      turn.meta = { ...(turnId ? { turnId } : {}), answeringAt: Date.now() };
+      await prisma.chatMessage.update({ where: { id: reusedRowId }, data: { metadata: { ...turn.meta } } });
+    } else {
+      turn.meta = body.turnId ? { turnId: body.turnId } : {};
+      const created = await prisma.chatMessage.create({
+        data: {
+          sessionId: chatSession.id,
+          role: "USER",
+          content: body.message,
+          ...(body.turnId ? { metadata: { turnId: body.turnId } } : {}),
+        },
+      });
+      turn.id = created.id;
+    }
   }
 
   // Exam-scoped context. The syllabus loads for EVERYONE with an exam so
@@ -259,11 +468,23 @@ export async function POST(req: Request) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
+      // A student who leaves mid-answer cancels this stream, and enqueue then
+      // throws — which aborted the turn before its reply was stored (one more
+      // "no reply" row, and the next load paid for the answer again). Frames
+      // for a reader that has gone are dropped; the turn still finishes and
+      // is stored (24 Sep 2026).
+      const emit = (frame: string) => {
+        try {
+          controller.enqueue(encoder.encode(frame));
+        } catch {
+          /* reader gone */
+        }
+      };
+      let full = "";
+      let anonLogged = false;
       try {
         // Header line so the client knows the session id
-        controller.enqueue(
-          encoder.encode(`event: meta\ndata: ${JSON.stringify({ sessionId: sessionIdOut })}\n\n`)
-        );
+        emit(`event: meta\ndata: ${JSON.stringify({ sessionId: sessionIdOut })}\n\n`);
 
         const ai = tutorStream({
           studentState: generalStudentState,
@@ -294,20 +515,15 @@ export async function POST(req: Request) {
               : undefined,
         });
 
-        let full = "";
         let actions: any = undefined;
         const toolCalls: any[] = [];
         for await (const chunk of ai) {
           if ("delta" in chunk) {
             full += chunk.delta;
-            controller.enqueue(
-              encoder.encode(`event: delta\ndata: ${JSON.stringify(chunk.delta)}\n\n`)
-            );
+            emit(`event: delta\ndata: ${JSON.stringify(chunk.delta)}\n\n`);
           } else if ("tool" in chunk) {
             toolCalls.push(chunk.tool);
-            controller.enqueue(
-              encoder.encode(`event: tool\ndata: ${JSON.stringify(chunk.tool)}\n\n`)
-            );
+            emit(`event: tool\ndata: ${JSON.stringify(chunk.tool)}\n\n`);
           } else if ("done" in chunk) {
             actions = chunk.done.suggestedActions;
           }
@@ -328,6 +544,7 @@ export async function POST(req: Request) {
         } else if (!userId) {
           // Anonymous tutor turn — log it (pseudonymous anonId, capped text)
           // so the ungated-tutor experience is analysable. Best-effort.
+          anonLogged = true;
           try {
             await prisma.anonTutorLog.create({
               data: {
@@ -343,14 +560,12 @@ export async function POST(req: Request) {
           }
         }
 
-        controller.enqueue(
-          encoder.encode(
-            `event: done\ndata: ${JSON.stringify({
-              messageId,
-              actions: actions ?? [],
-              toolCalls,
-            })}\n\n`
-          )
+        emit(
+          `event: done\ndata: ${JSON.stringify({
+            messageId,
+            actions: actions ?? [],
+            toolCalls,
+          })}\n\n`
         );
       } catch (err: any) {
         // Never leak upstream internals (API billing/limits errors etc.) to
@@ -370,11 +585,36 @@ export async function POST(req: Request) {
           : /overloaded|rate.?limit|429|529/i.test(raw)
             ? "Shishya is helping a lot of students right now — please try again in a minute."
             : "Something went wrong on our side — please try sending that again.";
-        controller.enqueue(
-          encoder.encode(`event: error\ndata: ${JSON.stringify({ error: friendly, next: examCodeForChat ? `/exams/${examCodeForChat}` : "/exams" })}\n\n`)
-        );
+        // Signed-in: mark the USER row failed BEFORE the student sees the
+        // error, so a quick Retry re-sends it rather than waiting on it as if
+        // this run were still answering (24 Sep 2026 review).
+        if (userId) await markTurnFailed(turn);
+        emit(`event: error\ndata: ${JSON.stringify({ error: friendly, next: examCodeForChat ? `/exams/${examCodeForChat}` : "/exams" })}\n\n`);
+        // A failed guest turn is logged too, with no reply (24 Sep 2026) —
+        // failed guest asks used to vanish, so guest failures could not be
+        // counted. Same best-effort rule as a successful turn; the student sees
+        // the error first.
+        if (!userId && !anonLogged) {
+          try {
+            await prisma.anonTutorLog.create({
+              data: {
+                anonId,
+                examCode: examCodeForChat ?? null,
+                userMessage: body.message.slice(0, 2000),
+                reply: full ? full.slice(0, 1500) : null,
+                replyChars: full.length,
+              },
+            });
+          } catch (logErr) {
+            console.error("[chat] anon tutor log failed:", logErr);
+          }
+        }
       } finally {
-        controller.close();
+        try {
+          controller.close();
+        } catch {
+          /* already closed by a reader that left */
+        }
       }
     },
   });

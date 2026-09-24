@@ -126,9 +126,10 @@ export async function computeGrowthMetrics(now = new Date()): Promise<GrowthMetr
   ]);
 
   // Free (anon) tutor engagement this week — grouped into conversations by
-  // the pseudonymous anon cookie.
+  // the pseudonymous anon cookie. 24 Sep 2026: failed guest turns are now
+  // logged with reply null so outages are measurable; they are not engagement.
   const anonTutor = await prisma.anonTutorLog.findMany({
-    where: { createdAt: { gte: thisFrom, lt: now } },
+    where: { createdAt: { gte: thisFrom, lt: now }, reply: { not: null } },
     select: { anonId: true },
   });
   const convCounts = new Map<string, number>();

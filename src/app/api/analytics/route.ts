@@ -17,6 +17,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { recordEvent, type EventKind } from "@/lib/analytics";
 import { isWebVitalsBeacon } from "@/lib/analytics-beacons";
+import { classifyClient } from "@/lib/client-class";
 
 export const runtime = "nodejs";
 
@@ -49,13 +50,9 @@ const ANON_MAX_AGE_S = 30 * 24 * 3600;
 //     crawler with a spoofed browser UA can therefore never create an
 //     identity, no matter how many pages it sweeps.
 //   • Browser UA + cookie → identified, business as usual.
-const BOT_UA =
-  /bot|crawl|spider|slurp|headless|phantomjs|puppeteer|playwright|selenium|scrapy|curl|wget|python-requests|python-httpx|aiohttp|axios|node-fetch|okhttp|java\/|go-http|libwww|lighthouse|pagespeed|gtmetrix|ahrefs|semrush|mj12|dotbot|petalbot|bytespider|dataforseo|screaming.?frog|netcraft|facebookexternalhit|preview|monitoring|uptime|pingdom|statuscake/i;
-
-function classifyClient(ua: string | null): "browser" | "bot" {
-  if (!ua || ua.trim().length < 15) return "bot"; // empty/stub UA — no real browser sends this
-  return BOT_UA.test(ua) ? "bot" : "browser";
-}
+// The UA verdict (classifyClient, BOT_UA) lives in src/lib/client-class.ts
+// since 24 Sep 2026, unchanged — /api/chat uses it to keep crawlers off the
+// guest tutor.
 
 // ── Forensic fingerprints (18 Aug 2026) ──────────────────────────────
 // A stealth crawler (clean browser UA, no cookie, no referrer) is

@@ -24,6 +24,12 @@ import {
 } from "./prompts";
 import type { TutorInput, TutorOutput } from "./types";
 import { tutorTools, executeTool, type ToolContext } from "./tools";
+import { siteFeaturesBlock } from "./site-facts";
+import { buildTutorExamFacts, examFactsBlock } from "./exam-facts";
+
+// What Shishya actually offers (24 Sep 2026) — exam-agnostic, rendered once,
+// so it is part of the shared 1-hour prefix and byte-identical for everyone.
+const SITE_FEATURES = siteFeaturesBlock();
 
 // Tool-use turns were capped at 4 but a typical mock-results follow-up
 // chained 3 sequential tool calls before answering — each ~3-5s
@@ -50,6 +56,78 @@ Each tool call adds ~5 seconds of latency the student is staring at "Thinking…
 
 When find_questions_on_topic returns a question, present it WITHOUT the answer first. Let the student attempt; only reveal the solution after they respond.`;
 
+/**
+ * The tutor's system blocks, in cache order. Pure (no model call) and
+ * exported so tests and scripts can print the exact prompt.
+ *
+ *   1. STATIC_PROMPT — persona, scope, safety, format, the site-features
+ *      list, then the tool guide / sign-in nudge / general-mode note. Same
+ *      bytes for every exam and student within a mode: 1-hour cache.
+ *   2. syllabusBlock — per exam, 5-minute cache (as before).
+ *   3. examFactsBlock (24 Sep 2026) — per exam: pattern, announced tracker
+ *      dates, which pages exist. Its own 5-minute segment AFTER the
+ *      syllabus, so a date change never re-writes the syllabus segment and
+ *      nothing per-exam touches the shared prefix. Absent when the facts
+ *      read failed. 3 cache_control blocks, under the API's cap of 4.
+ *
+ * The facts are built HERE, for `now` (review fix, 24 Sep 2026): the source
+ * rides in getSyllabusContext's unstable_cache entry, which Next serves
+ * stale after a quiet spell, so "today" and past/upcoming must not be
+ * baked into it. The block still caches: it only changes when the rows or
+ * the IST day do.
+ */
+export function tutorSystemBlocks(args: {
+  syllabus: TutorInput["syllabus"];
+  generalMode?: boolean;
+  toolsOn: boolean;
+  now?: Date;
+}) {
+  const { syllabus, generalMode, toolsOn } = args;
+  // Anthropic caps `cache_control` blocks at 4 per request. Combine the
+  // small static blocks (persona + safety + format + features + tools) into
+  // one cached block; the cache key is unchanged for warm-cache hits as
+  // long as those constants don't change between requests.
+  // Tools are only wired when we have an exam-scoped ctx (signed-in
+  // student). Anonymous / general chats have no ctx, so drop the
+  // tool-use guide rather than advertise tools the model can't call.
+  // Signed-out (tools-off) tutor can't pull real questions/mocks/mastery —
+  // so it gets the sign-in nudge to convert "give me questions" moments.
+  const nudge = toolsOn ? "" : `\n\n${SIGNIN_NUDGE}`;
+  // SCOPE_RULES go in EVERY mode — the tutor must stay an exam-prep tutor
+  // whether the chat is exam-scoped, general, or anonymous. It is not a
+  // general-purpose assistant. SITE_FEATURES too (24 Sep 2026): a guest or
+  // general-mode student asking "is there an app?" gets the same truth.
+  const STATIC_PROMPT = generalMode
+    ? `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${SITE_FEATURES}\n\nThis chat is in GENERAL mode — exam-agnostic. The student wants help with cross-exam questions, career advice, study technique, or choosing an exam. You have no syllabus to reference and no student mastery data. Answer based on general knowledge of Indian entrance exams; ask one short clarifying question if a specific exam would change your answer. Stay within the scope rules above.${nudge}`
+    : `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${SITE_FEATURES}${toolsOn ? `\n\n${TOOL_USE_GUIDE}` : nudge}`;
+  // The static prompt is the same for every exam, but quiet hours leave 5-60
+  // minutes between tutor calls (week to 14 Sep 2026: 95 of 540 signed-in and
+  // 114 of 246 signed-out calls), and each of those re-wrote it. It keeps a
+  // 1-hour entry; the per-exam syllabus stays on 5 minutes, where a 1-hour
+  // write would cost more than the extra hits it buys.
+  if (generalMode) return cachedSystemHourFirst(STATIC_PROMPT);
+  const source = syllabus.examFacts;
+  let factsText: string | null = null;
+  if (source) {
+    try {
+      const facts = buildTutorExamFacts({ ...source, now: args.now ?? new Date() });
+      factsText = examFactsBlock(facts, { code: syllabus.examCode, name: syllabus.examName });
+    } catch (err) {
+      // Never fail a chat over the facts: answer as before, without them.
+      console.warn(`[tutor] exam facts build failed for ${syllabus.examCode}:`, (err as Error)?.message ?? err);
+    }
+  }
+  const syllabusText = syllabusBlock(
+    syllabus,
+    factsText != null && source
+      ? { buildMock: source.pages ? source.pages.buildMock : null, fullPatternMock: source.fullPatternMock }
+      : {},
+  );
+  return factsText != null
+    ? cachedSystemHourFirst(STATIC_PROMPT, syllabusText, factsText)
+    : cachedSystemHourFirst(STATIC_PROMPT, syllabusText);
+}
+
 /** Streaming version — yields {delta} for text chunks, {tool} for tool events, {done} when complete. */
 export async function* tutorStream(
   input: TutorInput & { ctx?: ToolContext }
@@ -58,34 +136,9 @@ export async function* tutorStream(
   | { tool: { name: string; args: any; ok: boolean; ms: number } }
   | { done: TutorOutput }
 > {
-  const { studentState, syllabus, history, userMessage, language, topicFocus, journey, generalMode, ctx } = input;
+  const { studentState, history, userMessage, language, topicFocus, journey, generalMode, ctx } = input;
 
-  // Anthropic caps `cache_control` blocks at 4 per request. Combine the 4
-  // small static blocks (persona + safety + format + tools) into one cached
-  // block; keep syllabus as its own cached block. That's 2 blocks, well
-  // under the limit, and the cache key is unchanged for warm-cache hits as
-  // long as the four constants don't change between requests.
-  // Tools are only wired when we have an exam-scoped ctx (signed-in
-  // student). Anonymous / general chats have no ctx, so drop the
-  // tool-use guide rather than advertise tools the model can't call.
-  const toolsOn = Boolean(ctx);
-  // Signed-out (tools-off) tutor can't pull real questions/mocks/mastery —
-  // so it gets the sign-in nudge to convert "give me questions" moments.
-  const nudge = toolsOn ? "" : `\n\n${SIGNIN_NUDGE}`;
-  // SCOPE_RULES go in EVERY mode — the tutor must stay an exam-prep tutor
-  // whether the chat is exam-scoped, general, or anonymous. It is not a
-  // general-purpose assistant.
-  const STATIC_PROMPT = generalMode
-    ? `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\nThis chat is in GENERAL mode — exam-agnostic. The student wants help with cross-exam questions, career advice, study technique, or choosing an exam. You have no syllabus to reference and no student mastery data. Answer based on general knowledge of Indian entrance exams; ask one short clarifying question if a specific exam would change your answer. Stay within the scope rules above.${nudge}`
-    : `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}${toolsOn ? `\n\n${TOOL_USE_GUIDE}` : nudge}`;
-  // The static prompt is the same for every exam, but quiet hours leave 5-60
-  // minutes between tutor calls (week to 14 Sep 2026: 95 of 540 signed-in and
-  // 114 of 246 signed-out calls), and each of those re-wrote it. It keeps a
-  // 1-hour entry; the per-exam syllabus stays on 5 minutes, where a 1-hour
-  // write would cost more than the extra hits it buys.
-  const systemBlocks = generalMode
-    ? cachedSystemHourFirst(STATIC_PROMPT)
-    : cachedSystemHourFirst(STATIC_PROMPT, syllabusBlock(syllabus));
+  const systemBlocks = tutorSystemBlocks({ syllabus: input.syllabus, generalMode, toolsOn: Boolean(ctx) });
 
   const focusBlock = topicFocus
     ? `CURRENT FOCUS — the student opened this chat from the study-notes page for "${topicFocus.name}" (subject: ${topicFocus.subjectName}). Anchor your reply to this topic: use its terminology, examples, and formulas. Only diverge if the student explicitly asks to switch topics. When citing the topic, use the code \`${topicFocus.code}\`.

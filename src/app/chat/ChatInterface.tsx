@@ -13,16 +13,31 @@
 // Nothing is kept without that tap: a guest who just leaves must not have
 // the chat land in whichever account signs in next on a shared phone or a
 // cyber-café PC (review, 16 Sep 2026).
+//
+// Seeds and failed turns (24 Sep 2026, September data read): a /chat?seed=…
+// prompt auto-sends once per tab in 30 minutes and leaves the URL once used
+// (src/lib/chat-seed-once.ts) — it used to re-send on every reload, back or
+// reopened tab. A turn whose reply never arrived shows "Not answered —
+// Retry", which re-sends the same text in place (209 of 1,166 signed-in
+// messages got no reply in September, mostly in the 19/21/22 Sep outages).
+// Every turn carries a turnId and its Retry sends the same one, so the
+// server replays only the reply to that turn, never an earlier answer to the
+// same text ("B" twice in a quiz) — review, same day.
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
+import { markSeedFired, seedFingerprint, stripSeedParam, wasSeedFiredRecently } from "@/lib/chat-seed-once";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  /** The reply never arrived (error, outage, dropped stream) — the bubble offers Retry. */
+  failed?: boolean;
+  /** User turns: this turn's id, sent again by its Retry so the server knows which turn failed. */
+  turnId?: string;
 }
 
 interface ChatLabels {
@@ -87,6 +102,35 @@ const SAVE_COPY = {
   },
 } as const;
 
+// A turn with no reply, a seed held back, and the guest tutor declining a
+// browser it takes for a crawler (24 Sep 2026). The last is signed-out only:
+// signed-in students are never judged by their user-agent.
+const TURN_COPY = {
+  en: {
+    notAnswered: "Not answered",
+    retry: "Retry",
+    seedHeld: "You asked this here a little while ago, so it was not sent again. Send it when you want to.",
+    unavailable: "The guest tutor isn't available in this browser. Sign in (free) to use the tutor.",
+  },
+  hi: {
+    notAnswered: "जवाब नहीं आया",
+    retry: "फिर से भेजें",
+    seedHeld: "आपने यह यहाँ कुछ देर पहले पूछा था, इसलिए इसे दोबारा नहीं भेजा गया। जब चाहें, भेज दें।",
+    unavailable: "इस ब्राउज़र में गेस्ट ट्यूटर उपलब्ध नहीं है। ट्यूटर के लिए साइन इन करें (मुफ़्त)।",
+  },
+  te: {
+    notAnswered: "సమాధానం రాలేదు",
+    retry: "మళ్లీ పంపండి",
+    seedHeld: "మీరు ఇది ఇక్కడ కొద్దిసేపటి క్రితం అడిగారు, కాబట్టి మళ్లీ పంపలేదు. కావాలనుకున్నప్పుడు పంపండి.",
+    unavailable: "ఈ బ్రౌజర్‌లో గెస్ట్ ట్యూటర్ అందుబాటులో లేదు. ట్యూటర్ కోసం సైన్ ఇన్ చేయండి (ఉచితం).",
+  },
+} as const;
+
+/** A turn's id (24 Sep 2026 review) — unique enough per browser; never shown. */
+function newTurnId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function uiLang(): "en" | "hi" | "te" {
   try {
     const m = document.cookie.match(/(?:^|;\s*)shishya-lang=([^;]+)/);
@@ -121,6 +165,7 @@ export function ChatInterface({
   examCode,
   topicFocus,
   initialSeed,
+  seedScope,
   labels,
   guestSignInHref,
 }: {
@@ -131,6 +176,10 @@ export function ChatInterface({
   examCode: string | null;
   topicFocus?: TopicFocus | null;
   initialSeed?: string | null;
+  /** Signed-in: the student's latest attempt as this page rendered it — part
+   *  of the seed's once-per-tab key, so the same seed text after another
+   *  attempt still sends by itself (chat-seed-once.ts, 24 Sep 2026 review). */
+  seedScope?: string | null;
   labels: ChatLabels;
   /** Guest (signed-out) chats only: the /login URL whose callback returns
    *  to this chat. When set, an inline save-this-conversation card appears
@@ -278,32 +327,96 @@ export function ChatInterface({
   // When the user lands here from a topic page (e.g. clicked "Open Shishya
   // tutor" on Number System), auto-fire the seed prompt so the tutor starts
   // teaching immediately instead of showing a blank chat.
+  //
+  // 24 Sep 2026: once, not on every mount (src/lib/chat-seed-once.ts). The
+  // seed param leaves the URL as soon as it is used, so a reload does not
+  // carry it; a repeat mount of the same seed (same text, exam and topic)
+  // within 30 minutes in this tab — a back-navigation, a restored tab — puts
+  // the prompt in the input box unsent. So does an automated browser
+  // (navigator.webdriver): JS-running crawlers fired ~188 guest replies in
+  // September. There is no way to reopen a stored conversation on this page,
+  // so a held seed is the honest fallback; for a signed-in student, sending
+  // it within 10 minutes replays the stored reply (chat-turn-dedupe.ts) —
+  // unless an attempt since then makes that reply describe an older record.
+  // A signed-in student's key includes their latest attempt (seedScope), so
+  // the same text after another attempt is not held at all.
   const seedFiredRef = useRef(false);
+  const [seedHeld, setSeedHeld] = useState(false);
   useEffect(() => {
     if (seedFiredRef.current) return;
-    if (initialSeed && initialSeed.trim()) {
-      seedFiredRef.current = true;
-      void send(initialSeed.trim());
+    const seed = initialSeed?.trim();
+    if (!seed) return;
+    seedFiredRef.current = true;
+    try {
+      const stripped = stripSeedParam(window.location.href);
+      if (stripped) window.history.replaceState(window.history.state, "", stripped);
+    } catch {
+      /* the URL keeps its seed; the once-per-tab check below still holds */
     }
+    let automated = false;
+    try {
+      automated = navigator.webdriver === true;
+    } catch {
+      /* treat as a person */
+    }
+    let store: Storage | null = null;
+    try {
+      store = window.sessionStorage;
+    } catch {
+      /* storage blocked — the seed sends, as before */
+    }
+    const fp = seedFingerprint(seed, examCode, topicFocus?.code ?? null, seedScope);
+    if (automated || wasSeedFiredRecently(store, fp)) {
+      setInput(seed);
+      if (!automated) setSeedHeld(true);
+      return;
+    }
+    markSeedFired(store, fp);
+    void send(seed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSeed]);
 
-  async function send(text: string) {
+  // The reply never arrived: the empty bubble becomes "Not answered — Retry".
+  function markLastReplyFailed() {
+    setMessages((m) => {
+      const last = m[m.length - 1];
+      if (last?.role !== "assistant" || last.content) return m;
+      return [...m.slice(0, -1), { ...last, failed: true }];
+    });
+  }
+
+  // "Retry" on the last turn: the same text again, in place (24 Sep 2026).
+  // A signed-in retry reuses the stored question row instead of adding a
+  // second one, and gets the stored reply if one was saved after all — the
+  // same turnId tells the server which turn this is.
+  function retryLastTurn() {
+    const last = messages[messages.length - 1];
+    const prev = messages[messages.length - 2];
+    if (busy || !last?.failed || prev?.role !== "user") return;
+    beacon({ cta: "chat-retry", surface: "chat", examCode });
+    void send(prev.content, { retry: true, turnId: prev.turnId });
+  }
+
+  async function send(text: string, opts: { retry?: boolean; turnId?: string } = {}) {
     if (!text.trim() || busy) return;
     sentRef.current = true;
     setImportedNote(null);
+    setSeedHeld(false);
     // Snapshot prior turns BEFORE we append the new message. Sent in the
     // request body so anonymous (signed-out) chats — which aren't stored
     // server-side — still get multi-turn context. Signed-in chats ignore
-    // this and use their DB-persisted history.
-    const priorHistory = messages
+    // this and use their DB-persisted history. A retry re-sends the failed
+    // turn in place: that turn (the last user bubble and its empty reply)
+    // stays out of the snapshot, and only its reply bubble is replaced.
+    const priorHistory = (opts.retry ? messages.slice(0, -2) : messages)
       .filter((m) => m.content.trim())
       .slice(-12)
       .map((m) => ({ role: m.role, content: m.content }));
-    const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: text };
+    const turnId = opts.turnId ?? newTurnId();
+    const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: text, turnId };
     const placeholder: Message = { id: `a-${Date.now()}`, role: "assistant", content: "" };
-    setMessages((m) => [...m, userMsg, placeholder]);
-    setInput("");
+    setMessages((m) => (opts.retry ? [...m.slice(0, -1), placeholder] : [...m, userMsg, placeholder]));
+    if (!opts.retry) setInput("");
     setBusy(true);
     setError(null);
     setActions([]);
@@ -320,19 +433,28 @@ export function ChatInterface({
           message: text,
           topicCode: topicFocus?.code ?? undefined,
           history: priorHistory,
+          retry: opts.retry ? true : undefined,
+          turnId,
         }),
       });
       if (!res.ok || !res.body) {
         let detail = "";
+        let code: unknown = null;
         try {
           const j = await res.json();
+          code = j?.error;
           detail = j?.error ? ` — ${j.error}` : "";
         } catch {}
+        // The guest tutor declined this browser as a crawler (24 Sep 2026).
+        if (res.status === 403 && code === "unavailable") throw new Error(TURN_COPY[uiLang()].unavailable);
         throw new Error(`Chat failed (${res.status})${detail}`);
       }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = "";
+      // A done or error event arrived. A stream that just stops (a dropped
+      // connection) leaves the turn unanswered, and it is shown as such.
+      let settled = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -372,12 +494,15 @@ export function ChatInterface({
               setToolStatus(prettyTool(parsed?.name));
             } catch {}
           } else if (event === "done") {
+            settled = true;
             try {
               const parsed = JSON.parse(data);
               if (Array.isArray(parsed?.actions) && parsed.actions.length) setActions(parsed.actions);
               setToolStatus(null);
             } catch {}
           } else if (event === "error") {
+            settled = true;
+            markLastReplyFailed();
             try {
               const parsed = JSON.parse(data);
               setError(parsed?.error ?? "Chat stream error");
@@ -387,9 +512,12 @@ export function ChatInterface({
           }
         }
       }
+      if (!settled) markLastReplyFailed();
     } catch (e: any) {
+      markLastReplyFailed();
       setError(e.message ?? "Chat failed");
     } finally {
+      setToolStatus(null);
       setBusy(false);
     }
   }
@@ -503,7 +631,7 @@ export function ChatInterface({
           </div>
         )}
 
-        {messages.map((m) => (
+        {messages.map((m, i) => (
           <div
             key={m.id}
             className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
@@ -512,18 +640,38 @@ export function ChatInterface({
               className={
                 m.role === "user"
                   ? "max-w-prose rounded-lg bg-saffron-500 px-4 py-2 text-sm text-white whitespace-pre-line"
-                  : "max-w-prose rounded-lg bg-ink-100 px-4 py-3 text-sm text-ink-900"
+                  : m.failed && !m.content
+                    ? "max-w-prose rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+                    : "max-w-prose rounded-lg bg-ink-100 px-4 py-3 text-sm text-ink-900"
               }
             >
               {m.content ? (
                 m.role === "assistant"
                   ? <ChatMarkdown text={m.content} />
                   : m.content
-              ) : (
-                m.role === "assistant"
-                  ? <span className="text-ink-500">{toolStatus ?? labels.thinking}</span>
-                  : null
-              )}
+              ) : m.role === "assistant" ? (
+                m.failed ? (
+                  // Only the latest turn can be retried in place.
+                  <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                    <span>{TURN_COPY[navLang].notAnswered}</span>
+                    {i === messages.length - 1 && messages[i - 1]?.role === "user" && (
+                      <>
+                        <span aria-hidden="true">—</span>
+                        <button
+                          type="button"
+                          onClick={retryLastTurn}
+                          disabled={busy}
+                          className="rounded-md border border-rose-300 bg-white px-2.5 py-0.5 text-xs font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-60"
+                        >
+                          {TURN_COPY[navLang].retry}
+                        </button>
+                      </>
+                    )}
+                  </span>
+                ) : (
+                  <span className="text-ink-500">{toolStatus ?? labels.thinking}</span>
+                )
+              ) : null}
             </div>
           </div>
         ))}
@@ -595,6 +743,14 @@ export function ChatInterface({
           </div>
         )}
       </div>
+
+      {/* A seed this tab already sent a little while ago waits in the input
+          box (24 Sep 2026) — say why it did not send by itself. */}
+      {seedHeld && !busy && (
+        <p className="border-t border-ink-200 bg-ink-50 px-3 py-2 text-xs text-ink-600">
+          {TURN_COPY[navLang].seedHeld}
+        </p>
+      )}
 
       {/* Composer */}
       <form

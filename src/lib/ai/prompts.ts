@@ -47,6 +47,12 @@ Rules: only when they actually want to practise; never pushy; at most one nudge 
 /**
  * Compose a syllabus block for cache_control. We render the syllabus as
  * structured text so Claude can reason about it directly.
+ *
+ * `opts` (24 Sep 2026, tutor only): what this exam actually has. The mock
+ * line used to send every student to the builder and the "Full-Length Mock
+ * (Real Pattern)" tile, including on exams with no buildable topic or no
+ * full-length paper. A value of `false` swaps in the honest sentence;
+ * omitted (every other caller) leaves the block byte-identical.
  */
 export function syllabusBlock(args: {
   examCode: string;
@@ -62,7 +68,7 @@ export function syllabusBlock(args: {
       subtopics?: Array<{ code: string; name: string; description?: string }>;
     }>;
   }>;
-}): string {
+}, opts: { buildMock?: boolean | null; fullPatternMock?: boolean | null } = {}): string {
   const lines: string[] = [];
   lines.push(`# Syllabus — ${args.examName} (${args.examCode})`);
   for (const subject of args.subjects) {
@@ -83,8 +89,18 @@ export function syllabusBlock(args: {
   // geography mock test" / "mock in which maths + polity" typed into
   // this chat. The builder exists now — the tutor's job is to hand over
   // the pre-filled link, not to improvise questions inline.
+  // 24 Sep 2026: the builder link and the full-length tile only where they
+  // exist for this exam (opts from the tutor's exam facts).
+  const builderSentence =
+    opts.buildMock === false
+      ? `Shishya's mock builder has no topic with enough questions for this exam yet, so do NOT give a builder link: say so in one short line and point to the mocks on https://shishya.in/exams/${args.examCode}.`
+      : `Reply in one or two short lines and give this exact pre-filled link — [Build your <topics> mock →](https://shishya.in/exams/${args.examCode}/build-mock?topics=CODE1,CODE2) — using the exact topic codes from the syllabus above (up to 6 codes; for a whole subject use that subject's topic codes). The builder lets them pick size and difficulty, times it to the real exam, scores it and shows solutions, and can be read in Hindi and ${OTHER_INDIAN_LANGUAGE_COUNT} other languages.`;
+  const fullLengthSentence =
+    opts.fullPatternMock === false
+      ? `If they ask for a FULL-LENGTH real-pattern paper instead, say plainly that Shishya has not built one for this exam yet and point to the mocks on https://shishya.in/exams/${args.examCode}.`
+      : `If they ask for a FULL-LENGTH real-pattern paper instead, link https://shishya.in/exams/${args.examCode} and point to the "Full-Length Mock (Real Pattern)" tile.`;
   lines.push(
-    `\nMOCK REQUESTS: when the student asks for a mock / test / quiz / practice paper on one or more SPECIFIC topics or a subject (e.g. "geography mock test", "test me on number system and ratio", "polity questions paper"), do NOT write questions in the chat and do NOT start a warmup on some other topic. Reply in one or two short lines and give this exact pre-filled link — [Build your <topics> mock →](https://shishya.in/exams/${args.examCode}/build-mock?topics=CODE1,CODE2) — using the exact topic codes from the syllabus above (up to 6 codes; for a whole subject use that subject's topic codes). The builder lets them pick size and difficulty, times it to the real exam, scores it and shows solutions, and can be read in Hindi and ${OTHER_INDIAN_LANGUAGE_COUNT} other languages. If they ask for a FULL-LENGTH real-pattern paper instead, link https://shishya.in/exams/${args.examCode} and point to the "Full-Length Mock (Real Pattern)" tile. Only a generic "quiz me" with no topic named should go to the adaptive warmup.`,
+    `\nMOCK REQUESTS: when the student asks for a mock / test / quiz / practice paper on one or more SPECIFIC topics or a subject (e.g. "geography mock test", "test me on number system and ratio", "polity questions paper"), do NOT write questions in the chat and do NOT start a warmup on some other topic. ${builderSentence} ${fullLengthSentence} Only a generic "quiz me" with no topic named should go to the adaptive warmup.`,
   );
   return lines.join("\n");
 }
