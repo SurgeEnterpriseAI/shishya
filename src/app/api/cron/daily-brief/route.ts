@@ -35,8 +35,9 @@ import { generateMock } from "@/lib/ai";
 import { getStudentState } from "@/lib/db/student-state";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import type { GenerateMockRequest, QuestionRef } from "@/lib/ai/types";
-import { getSeenQuestions } from "@/lib/seen-questions";
+import { getSeenHistory } from "@/lib/answered-questions";
 import { shapeCandidates } from "@/lib/question-pick";
+import { WITHDRAWN_TAG } from "@/lib/question-withdrawn";
 import { briefSittingName, buildFallbackBrief, rankWeakTopics, RULE_BRIEF_SOURCE, type BriefFacts } from "@/lib/brief-fallback";
 import { buildTimeline } from "@/lib/exam-timeline";
 import { hubDateLead } from "@/lib/hub-title";
@@ -471,15 +472,20 @@ async function loadNextExamDay(exam: NextExamExam): Promise<BriefFacts["nextExam
 async function fetchAdaptivePool(examId: string, userId: string): Promise<QuestionRef[]> {
   // Same logic as /api/mocks ADAPTIVE path: validated questions for this
   // exam, broad pool. The generator picks the topic mix from the
-  // student's weakness map.
+  // student's weakness map. 25 Sep 2026: withdrawn questions (tag
+  // "rejected") never enter the pool, as in /api/mocks since batch 2a.
   const qs = await prisma.question.findMany({
-    where: { examId, validated: true },
+    where: { examId, validated: true, NOT: { tags: { has: WITHDRAWN_TAG } } },
     include: { topic: true },
     take: 500,
   });
   // Seen-exclusion (11 Sep 2026): the brief's set must not repeat questions
   // the student met in the last 90 days while unseen ones exist.
-  const seen = (await getSeenQuestions(userId, examId)) ?? new Map();
+  // 25 Sep 2026: seen = ANSWERED (getSeenHistory). Never-shown questions
+  // first, then shown-but-unanswered, then answered — a question left on
+  // screen in an abandoned mock is not a repeat. Null (failed read) picks
+  // without exclusion.
+  const seen = (await getSeenHistory(userId, examId)) ?? new Map<string, number>();
   const refs = qs.map((q) => ({
     id: q.id,
     topicId: q.topicId,

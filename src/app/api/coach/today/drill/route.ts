@@ -29,8 +29,9 @@ import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { drillScope, DRILL_MOCK_TYPE } from "@/lib/coach-plan";
-import { getSeenQuestions } from "@/lib/seen-questions";
-import { pickTiered, shuffleWith } from "@/lib/question-pick";
+import { getSeenHistory } from "@/lib/answered-questions";
+import { pickTiered, shuffleWith, type SeenInput } from "@/lib/question-pick";
+import { WITHDRAWN_TAG } from "@/lib/question-withdrawn";
 
 const EXAM_RE = /^[A-Z0-9_]{2,40}$/;
 const TOPIC_RE = /^[A-Za-z0-9_.\-]{1,80}$/;
@@ -109,13 +110,18 @@ export async function GET(req: Request) {
 
     // Pool sizes in one pass — the same validated-MCQ rule the planner
     // counts with, so the label the student clicked and the set they get
-    // agree.
+    // agree. 25 Sep 2026: withdrawn questions (tag "rejected") are left out
+    // of the counts and the pool alike, so the scope is chosen on what can
+    // really be served. A withdrawn row is validated=false (admin Reject,
+    // the data fixes), so the planner's count is the same in practice; the
+    // title always states the size actually picked.
     const counts = await prisma.$queryRaw<{ t: number; s: number; e: number }[]>`
       SELECT (COUNT(*) FILTER (WHERE q."topicId" = ANY(${topicIds})))::int AS t,
              (COUNT(*) FILTER (WHERE tt."subjectId" = ${topic.subject.id}))::int AS s,
              COUNT(*)::int AS e
       FROM "Question" q JOIN "Topic" tt ON tt.id = q."topicId"
-      WHERE q."examId" = ${exam.id} AND q.validated = TRUE AND q.type = 'MCQ'`;
+      WHERE q."examId" = ${exam.id} AND q.validated = TRUE AND q.type = 'MCQ'
+        AND NOT (${WITHDRAWN_TAG} = ANY(q.tags))`;
     const c = counts[0] ?? { t: 0, s: 0, e: 0 };
     const d = drillScope({ qDrill: c.t, qSubject: c.s }, c.e);
     if (!d) return go(req, `/exams/${exam.code}`);
@@ -126,7 +132,12 @@ export async function GET(req: Request) {
     // uses. It was the answers of the last 20 SUBMITTED attempts, so an
     // opened-but-abandoned set, or anything older than 20 attempts, came
     // back as fresh. A failed seen query picks without exclusion.
-    const seen = (await getSeenQuestions(userId, exam.id)) ?? new Map<string, number>();
+    // 25 Sep 2026: seen = ANSWERED (getSeenHistory, the rule /api/mocks and
+    // the builder use since batch 2a). A question that was only on screen
+    // in an opened mock is not a repeat: never-shown questions first, then
+    // shown-but-unanswered (least-recently-shown), then answered (oldest
+    // first).
+    const seen: SeenInput = (await getSeenHistory(userId, exam.id)) ?? new Map<string, number>();
 
     const scopeSql =
       d.scope === "topic"
@@ -136,7 +147,8 @@ export async function GET(req: Request) {
           : Prisma.empty;
     const pool = await prisma.$queryRaw<{ id: string }[]>`
       SELECT q.id FROM "Question" q JOIN "Topic" tt ON tt.id = q."topicId"
-      WHERE q."examId" = ${exam.id} AND q.validated = TRUE AND q.type = 'MCQ' ${scopeSql}
+      WHERE q."examId" = ${exam.id} AND q.validated = TRUE AND q.type = 'MCQ'
+        AND NOT (${WITHDRAWN_TAG} = ANY(q.tags)) ${scopeSql}
       LIMIT 5000`;
     const questionIds = shuffleWith(pickTiered([pool], d.n, seen).picked).map((q) => q.id);
     if (questionIds.length === 0) return go(req, `/exams/${exam.code}`);

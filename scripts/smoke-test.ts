@@ -25,6 +25,7 @@ import { generateMock } from "../src/lib/ai";
 import { getStudentState } from "../src/lib/db/student-state";
 import { getSyllabusContext } from "../src/lib/db/syllabus";
 import { scoreAttempt } from "../src/lib/scoring";
+import { BULK_VALIDATABLE, WITHDRAWN_TAG } from "../src/lib/question-withdrawn";
 
 const KEEP_DATA = process.argv.includes("--keep-data");
 const TEST_EMAIL = `smoke-test-${Date.now()}@shishya.test`;
@@ -75,16 +76,22 @@ async function main() {
     if (!exam) throw new Error("Run `npm run seed:all` first.");
     assert(exam.subjects.length === 4, "SSC_CGL has 4 subjects");
 
-    const validatedCount = await prisma.question.count({
-      where: { examId: exam.id, validated: true },
-    });
+    // 25 Sep 2026: withdrawn questions (tag "rejected") are never counted or
+    // served here, and the top-up below flips only never-reviewed pending
+    // rows (BULK_VALIDATABLE, src/lib/question-withdrawn.ts) — it used to
+    // flip EVERY unvalidated SSC_CGL row, withdrawn, pulled and
+    // answer-check-failed ones included, on whatever DB DATABASE_URL points at.
+    const servable = { examId: exam.id, validated: true, NOT: { tags: { has: WITHDRAWN_TAG } } };
+    const validatedCount = await prisma.question.count({ where: servable });
     if (validatedCount < 12) {
       console.log(
-        `\n  (info) only ${validatedCount} validated Qs — temporarily flipping all SSC_CGL Qs to validated for the smoke test`
+        `\n  (info) only ${validatedCount} validated Qs — flipping never-reviewed pending SSC_CGL Qs to validated for the smoke test`
       );
-      // For smoke test, stamp every SSC CGL Q as validated. We restore at end.
+      // For smoke test, stamp the never-reviewed pending SSC CGL Qs as
+      // validated. NOT restored at the end (the old comment said it was;
+      // nothing ever did) — run this against a scratch DB, never production.
       await prisma.question.updateMany({
-        where: { examId: exam.id, validated: false },
+        where: { examId: exam.id, ...BULK_VALIDATABLE },
         data: { validated: true },
       });
     }
@@ -105,7 +112,7 @@ async function main() {
     const studentState = await getStudentState(user.id, EXAM_CODE);
     const syllabus = await getSyllabusContext(EXAM_CODE);
     const candidates = await prisma.question.findMany({
-      where: { examId: exam.id, validated: true },
+      where: servable,
       include: { topic: true },
       take: 500,
     });

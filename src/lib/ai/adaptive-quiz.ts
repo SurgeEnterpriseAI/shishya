@@ -18,8 +18,9 @@ import { generateMock } from "./generator";
 import { getStudentState } from "@/lib/db/student-state";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import type { QuestionRef } from "./types";
-import { getSeenQuestions } from "@/lib/seen-questions";
+import { getSeenHistory } from "@/lib/answered-questions";
 import { shapeCandidates } from "@/lib/question-pick";
+import { WITHDRAWN_TAG } from "@/lib/question-withdrawn";
 
 export interface AdaptiveQuizResult {
   warmupMockId: string;
@@ -139,7 +140,12 @@ export async function createAdaptiveQuiz(
 
   // Seen-exclusion (11 Sep 2026): the generator gets unseen questions
   // first and least-recently-seen ones only to reach the set size.
-  const seenWarm = (await getSeenQuestions(userId, exam.id)) ?? new Map();
+  // 25 Sep 2026: seen = ANSWERED (getSeenHistory), the rule /api/mocks and
+  // the builder moved to in batch 2a. A question merely on screen in a mock
+  // left at question 1 is no longer "seen": never-shown questions go first,
+  // then shown-but-unanswered, then answered (oldest first). A failed
+  // history read (null) picks without exclusion.
+  const seenWarm = (await getSeenHistory(userId, exam.id)) ?? new Map<string, number>();
   const warmupCandidates = shapeCandidates(warmupPool, seenWarm, Math.min(10, warmupPool.length));
 
   const warmupResult = await generateMock({
@@ -224,6 +230,11 @@ export async function createAdaptiveQuiz(
 // ─────────────────────────────────────────────────────────────────────────
 // Pool fetchers — kept narrow so we don't blow the LLM context with
 // thousands of question stubs.
+//
+// 25 Sep 2026: every pool also drops withdrawn questions (tag "rejected",
+// src/lib/question-withdrawn.ts) — the same guard /api/mocks and the
+// builder got in batch 2a — so a question pulled for a wrong key can never
+// reach a warmup even if a row were ever left validated.
 // ─────────────────────────────────────────────────────────────────────────
 
 async function fetchTopicPool(examId: string, topicCode: string): Promise<QuestionRef[]> {
@@ -234,7 +245,7 @@ async function fetchTopicPool(examId: string, topicCode: string): Promise<Questi
   if (!topic) return [];
   const topicIds = [topic.id, ...topic.children.map((c) => c.id)];
   const qs = await prisma.question.findMany({
-    where: { examId, validated: true, topicId: { in: topicIds } },
+    where: { examId, validated: true, NOT: { tags: { has: WITHDRAWN_TAG } }, topicId: { in: topicIds } },
     include: { topic: true },
     take: 400,
   });
@@ -251,7 +262,7 @@ async function fetchAdaptivePool(
   // validated pool. Keeps the LLM context small (target ~200 items).
   const weakFirst = weakTopicIds.length
     ? await prisma.question.findMany({
-        where: { examId, validated: true, topicId: { in: weakTopicIds } },
+        where: { examId, validated: true, NOT: { tags: { has: WITHDRAWN_TAG } }, topicId: { in: weakTopicIds } },
         include: { topic: true },
         take: 120,
       })
@@ -260,6 +271,7 @@ async function fetchAdaptivePool(
     where: {
       examId,
       validated: true,
+      NOT: { tags: { has: WITHDRAWN_TAG } },
       ...(weakTopicIds.length ? { topicId: { notIn: weakTopicIds } } : {}),
     },
     include: { topic: true },

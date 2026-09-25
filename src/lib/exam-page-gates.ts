@@ -13,9 +13,13 @@
 //   /syllabus   at least one Subject                    (syllabus/page.tsx notFound)
 //   /buildMock  a topic with >= 3 validated questions   (the page renders empty
 //               otherwise — the sitemap's long-standing "buildable" rule)
+//               25 Sep 2026: withdrawn questions (tag "rejected") do not
+//               count — the builder's pools drop them since batch 2a, so a
+//               topic held up only by withdrawn rows cannot build.
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
+import { WITHDRAWN_TAG } from "@/lib/question-withdrawn";
 
 export interface ExamPageGates {
   cutoff: boolean;
@@ -47,6 +51,7 @@ async function readGates(): Promise<GateRow[]> {
       EXISTS (
         SELECT 1 FROM "Question" q
         WHERE q."examId" = e.id AND q.validated = TRUE
+          AND NOT (${WITHDRAWN_TAG} = ANY(q.tags))
         GROUP BY q."topicId" HAVING COUNT(*) >= ${BUILDABLE_TOPIC_MIN}
       ) AS "buildMock"
     FROM "Exam" e

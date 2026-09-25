@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { isCurrentUserAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/db/prisma";
+import { BULK_HELD_BACK, BULK_VALIDATABLE } from "@/lib/question-withdrawn";
 import { BulkValidateButton } from "./BulkValidateButton";
 
 interface SearchParams {
@@ -37,7 +38,7 @@ export default async function AdminQuestionList({
   if (sp.q) where.body = { contains: sp.q, mode: "insensitive" };
 
   const page = Math.max(1, parseInt(sp.page ?? "1", 10));
-  const [items, total, exams, unvalidatedCount] = await Promise.all([
+  const [items, total, exams, pendingCount, heldBackCount] = await Promise.all([
     prisma.question.findMany({
       where,
       include: {
@@ -50,8 +51,15 @@ export default async function AdminQuestionList({
     }),
     prisma.question.count({ where }),
     prisma.exam.findMany({ select: { code: true, shortName: true }, orderBy: { code: "asc" } }),
-    // Count of unvalidated rows matching the same filter (for bulk-validate button)
-    prisma.question.count({ where: { ...where, validated: false } }),
+    // Rows a bulk validate may flip for the same filter (the bulk-validate
+    // route's own rule), and the unvalidated rows it holds back.
+    // 25 Sep 2026: "pending" counted every unvalidated row, so withdrawn,
+    // pulled and answer-check-failed questions (131 of 5,919 on 25 Sep) were offered
+    // to the Bulk validate dialog as if they were waiting for review.
+    // BULK_VALIDATABLE / BULK_HELD_BACK set `validated`, so the page's own
+    // validated filter never narrows these two counts.
+    prisma.question.count({ where: { ...where, ...BULK_VALIDATABLE } }),
+    prisma.question.count({ where: { ...where, ...BULK_HELD_BACK } }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -75,9 +83,16 @@ export default async function AdminQuestionList({
             </p>
             <h1 className="text-xl font-semibold text-ink-900">
               {total.toLocaleString("en-IN")} questions
-              {unvalidatedCount > 0 && (
+              {(pendingCount > 0 || heldBackCount > 0) && (
                 <span className="ml-2 text-sm font-normal text-amber-700">
-                  ({unvalidatedCount.toLocaleString("en-IN")} pending)
+                  ({pendingCount.toLocaleString("en-IN")} pending
+                  {heldBackCount > 0 && (
+                    <span title="Withdrawn, previously pulled or answer-check-failed. Bulk validate leaves these alone; validate one at a time in the editor.">
+                      {" · "}
+                      {heldBackCount.toLocaleString("en-IN")} held back
+                    </span>
+                  )}
+                  )
                 </span>
               )}
             </h1>
@@ -89,7 +104,8 @@ export default async function AdminQuestionList({
               source: sp.source,
               q: sp.q,
             }}
-            unvalidatedCount={unvalidatedCount}
+            pendingCount={pendingCount}
+            heldBackCount={heldBackCount}
           />
         </div>
 

@@ -15,8 +15,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
 import { createAdaptiveQuiz } from "./adaptive-quiz";
-import { getSeenQuestions } from "@/lib/seen-questions";
+import { getSeenHistory } from "@/lib/answered-questions";
 import { pickWithSeenExclusion } from "@/lib/question-pick";
+import { WITHDRAWN_TAG } from "@/lib/question-withdrawn";
 import { warmupReplyWithSize } from "@/lib/mock-fill";
 import { SCHOLARSHIPS, scholarshipsForExam, type Scholarship } from "@/data/scholarships";
 
@@ -353,14 +354,19 @@ async function findQuestionsOnTopic(
   }
   const topicIds = [topic.id, ...topic.children.map((c) => c.id)];
 
-  const where: any = { examId: exam.id, validated: true, topicId: { in: topicIds } };
+  // 25 Sep 2026: withdrawn questions (tag "rejected") are never handed to
+  // the tutor to show a student, as in /api/mocks since batch 2a.
+  const where: any = { examId: exam.id, validated: true, NOT: { tags: { has: WITHDRAWN_TAG } }, topicId: { in: topicIds } };
   if (difficulty && ["EASY", "MEDIUM", "HARD"].includes(difficulty)) {
     where.difficulty = difficulty;
   }
 
   // Seen-exclusion (11 Sep 2026): `orderBy id asc, take limit` handed every
   // student the identical first N forever. Fetch a pool, pick unseen first.
-  const seen = (await getSeenQuestions(ctx.userId, exam.id)) ?? new Map();
+  // 25 Sep 2026: seen = ANSWERED (getSeenHistory): never-shown first, then
+  // shown-but-unanswered, then answered (oldest first). Null (failed read)
+  // picks without exclusion.
+  const seen = (await getSeenHistory(ctx.userId, exam.id)) ?? new Map<string, number>();
   const pool = await prisma.question.findMany({
     where,
     take: 400,

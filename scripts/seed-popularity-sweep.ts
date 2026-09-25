@@ -35,7 +35,8 @@
 //   - All exam metadata + syllabi seeded (run seed/exams/seed-all.ts first)
 
 import Anthropic from "@anthropic-ai/sdk";
-import { PrismaClient, Difficulty, QuestionSource, MockType } from "@prisma/client";
+import { PrismaClient, Difficulty, QuestionSource, MockType, Prisma } from "@prisma/client";
+import { BULK_VALIDATABLE, WITHDRAWN_TAG } from "../src/lib/question-withdrawn";
 
 // Anthropic pricing (USD per 1M tokens). Rough — replace if rates change.
 const PRICE_INPUT_PER_M = 3.0;
@@ -143,8 +144,15 @@ async function main() {
       continue;
     }
 
-    const baseWhere: any = { examId: exam.id };
-    if (!args.includeUnvalidated) baseWhere.validated = true;
+    // 25 Sep 2026: the mock pool never holds a withdrawn question (tag
+    // "rejected"), and --include-unvalidated (the default) draws only on
+    // never-reviewed pending rows (BULK_VALIDATABLE,
+    // src/lib/question-withdrawn.ts) besides validated ones. It used to take
+    // EVERY row of the exam, so withdrawn, pulled and answer-check-failed
+    // questions could be assembled into a system full mock.
+    const baseWhere: Prisma.QuestionWhereInput = args.includeUnvalidated
+      ? { examId: exam.id, OR: [{ validated: true, NOT: { tags: { has: WITHDRAWN_TAG } } }, BULK_VALIDATABLE] }
+      : { examId: exam.id, validated: true, NOT: { tags: { has: WITHDRAWN_TAG } } };
     const poolHave = await prisma.question.count({ where: baseWhere });
     const poolTarget = Math.ceil(args.poolMultiplier * exam.totalQuestions);
     const perTopicTarget = Math.max(1, Math.ceil(poolTarget / allTopics.length));
