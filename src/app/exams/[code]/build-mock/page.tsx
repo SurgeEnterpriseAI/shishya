@@ -35,6 +35,14 @@
 // "Seen" is now ANSWERED (src/lib/answered-questions.ts), per topic and
 // difficulty, and the seen lines come from src/lib/builder-fill-copy.ts
 // because the old build.seen.* strings say "any mock you opened counts".
+//
+// Guest quiz under the sign-in (25 Sep 2026): 183 signed-out people opened
+// this page in 11-24 Sep and 131 never signed in. The form's sign-in button
+// is untouched; BELOW the builder a signed-out visitor now also gets the
+// exam's 5-question guest quiz (the one /exams/[code]/quiz serves), whose
+// result screen signs in and comes back here (src/components/GuestQuizGate).
+// Signed-in visitors, crawlers' view of the form and the JSON-LD are
+// unchanged; the quiz is read only for a guest and only when the form shows.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -53,6 +61,10 @@ import { getT } from "@/lib/i18n-server";
 import { fillTemplate, type StringKey } from "@/lib/i18n";
 import { buildMockCopy } from "@/lib/quiz-entry-copy";
 import { BUILDABLE_TOPIC_MIN, examPageGates } from "@/lib/exam-page-gates";
+import { loadGuestQuizEmbed } from "@/lib/guest-quiz-embed";
+import { buildGateCallbackPath } from "@/lib/mock-gate";
+import { mockGateCopy } from "@/lib/mock-gate-copy";
+import { GuestQuizGate } from "@/components/GuestQuizGate";
 
 // The form's copy in the visitor's locale (13 Sep 2026): cookie / URL /
 // preferredLang via getT(). Not exported — a page file may only export
@@ -128,7 +140,7 @@ export default async function BuildMockPage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ topics?: string; pyq?: string }>;
+  searchParams: Promise<{ topics?: string; pyq?: string; utm_source?: string; utm_medium?: string; utm_campaign?: string }>;
 }) {
   const [{ code }, sp, session, tt] = await Promise.all([params, searchParams, auth().catch(() => null), getT()]);
   const exam = await prisma.exam.findUnique({
@@ -138,6 +150,10 @@ export default async function BuildMockPage({
   if (!exam || !exam.active) notFound();
 
   const pyq = sp.pyq === "1";
+  const signedIn = !!session?.user?.id;
+  // Guest only: the exam's guest quiz, read alongside the topic counts. A
+  // failed read is null and the page is exactly as before.
+  const guestQuizP = signedIn ? Promise.resolve(null) : loadGuestQuizEmbed(exam.code, tt.t, tt.locale).catch(() => null);
 
   // Subjects → topics with validated-question counts, all and PYQ-pattern
   // only, each split by difficulty (25 Sep 2026) so the form can count what
@@ -190,6 +206,7 @@ export default async function BuildMockPage({
     ? await getAnsweredCountByTopic(session.user.id, exam.id, undefined, { pyqOnly: pyq })
     : null;
   const seenKnown = seenResult !== null;
+  const guestQuiz = await guestQuizP;
   const seenByTopic = seenResult ?? new Map<string, DiffCounts>();
 
   const theme = getExamTheme(exam.category);
@@ -265,6 +282,7 @@ export default async function BuildMockPage({
   // language — these are questions built to the years' pattern, not the
   // original questions.
   const C = buildMockCopy(tt.locale);
+  const GC = mockGateCopy(tt.locale);
   const jsonLdText = (d: object) =>
     JSON.stringify(d).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
 
@@ -328,11 +346,33 @@ export default async function BuildMockPage({
             pyqOnly={pyq}
             subjects={[...subjects.values()]}
             preselected={preIds}
-            signedIn={!!session?.user?.id}
+            signedIn={signedIn}
             seenKnown={seenKnown}
             windowDays={SEEN_WINDOW_DAYS}
             labels={builderLabels(tt.t, builderFillCopy(tt.locale))}
           />
+        )}
+        {/* Secondary, under the builder and its sign-in button: only for a
+            guest, and only when the form (and so that button) is on screen. */}
+        {!signedIn && subjects.size > 0 && guestQuiz && (
+          <div className="max-w-3xl">
+            <GuestQuizGate
+              quiz={guestQuiz.quiz}
+              translation={guestQuiz.translation}
+              labels={guestQuiz.labels}
+              challengeLabels={guestQuiz.challengeLabels}
+              locale={guestQuiz.locale}
+              copy={{
+                heading: GC.quizHeading,
+                line: GC.quizLine,
+                start: GC.quizStart,
+                endSignIn: GC.buildQuizEndSignIn,
+              }}
+              signInCallbackUrl={buildGateCallbackPath(exam.code, pyq, sp)}
+              beacons={{ start: "build-gate-quiz-start", done: "build-gate-quiz-done", signin: "build-gate-signin-click" }}
+              beaconProps={{ examCode: exam.code }}
+            />
+          </div>
         )}
       </section>
     </main>

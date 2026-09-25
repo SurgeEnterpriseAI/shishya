@@ -1,13 +1,30 @@
 // /mocks/:id — mock test player wrapper.
 // Server component: gates auth, loads mock, then hands off to client player.
 
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { resolvePreferredLocale } from "@/lib/preferred-lang";
-import { loginRedirectPath } from "@/lib/login-return";
+import {
+  gateCallbackPath,
+  gateLoginRedirectPath,
+  isFromSignin,
+  mockDurationMin,
+  mockPathAfterChoice,
+  shouldOfferShortOrFull,
+} from "@/lib/mock-gate";
+import { mockGateCopy } from "@/lib/mock-gate-copy";
+import { loadGuestQuizEmbed } from "@/lib/guest-quiz-embed";
+import { mockStartCopy } from "@/lib/quiz-entry-copy";
+import { Header } from "@/components/Header";
 import { MockPlayer } from "./MockPlayer";
+
+// 25 Sep 2026: a guest now gets a real page here (the sign-in gate) instead
+// of a redirect, so the page says noindex itself, like /login — on top of
+// robots.txt's Disallow: /mocks/.
+export const metadata: Metadata = { robots: { index: false, follow: true } };
 
 export default async function MockPlayerPage({
   params,
@@ -16,7 +33,7 @@ export default async function MockPlayerPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { id } = await params;
+  const [{ id }, sp] = await Promise.all([params, searchParams]);
   const session = await auth();
   // The gate keeps the mock intent (11 Sep 2026 signup-leak audit). Every
   // mock card on an exam hub and the exam-week "Full-length paper" link land
@@ -27,7 +44,52 @@ export default async function MockPlayerPage({
   // mock itself. 25 Sep 2026: an email's utm_source/medium/campaign ride
   // along inside the callback (only those three, checked; see
   // src/lib/login-return.ts) so the return after sign-in counts as email.
-  if (!session?.user?.id) redirect(loginRedirectPath(`/mocks/${id}`, await searchParams));
+  //
+  // Sign-in gate (25 Sep 2026). The bounce is now a page ON this URL: the
+  // mock's exam, title and real size / timer, the /login page's Google
+  // button first (callback = this mock + from=signin + those utm tags), and
+  // below it the exam's 5-question guest quiz for anyone not ready to sign
+  // in (MockGate.tsx; src/lib/mock-gate.ts has the why and the numbers).
+  // An unknown id is a 404 straight away (it was one after sign-in). A
+  // student-built mock (userId set) still bounces to /login — a guest may
+  // not see another student's set — with from=signin in the callback too.
+  if (!session?.user?.id) {
+    const [guestMock, { t, locale }] = await Promise.all([
+      prisma.mock.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          title: true,
+          userId: true,
+          questionIds: true,
+          config: true,
+          exam: { select: { code: true, shortName: true } },
+        },
+      }),
+      getT(),
+    ]);
+    if (!guestMock) notFound();
+    if (guestMock.userId) redirect(gateLoginRedirectPath(guestMock.id, sp));
+    const [guestQuiz, { MockGate }] = await Promise.all([
+      loadGuestQuizEmbed(guestMock.exam.code, t, locale),
+      import("./MockGate"),
+    ]);
+    return (
+      <MockGate
+        mockId={guestMock.id}
+        title={guestMock.title}
+        examCode={guestMock.exam.code}
+        examShort={guestMock.exam.shortName}
+        questionCount={guestMock.questionIds.length}
+        durationMin={mockDurationMin(guestMock.config)}
+        callbackUrl={gateCallbackPath(guestMock.id, sp)}
+        signInLabel={t("login.continue")}
+        freeLine={t("login.freeLine")}
+        copy={mockGateCopy(locale)}
+        guestQuiz={guestQuiz}
+      />
+    );
+  }
   const userId = session.user.id;
 
   // Lookup mock + attempt state IN PARALLEL. Critically, we DO NOT
@@ -137,6 +199,43 @@ export default async function MockPlayerPage({
       update: {},
       create: { userId, examId: mock.examId },
     });
+    // Full paper or warm up first? (25 Sep 2026) Only for the return from
+    // Google sign-in (?from=signin, set by the gate and the private-mock
+    // bounce above) to a paper-length mock with nothing in progress — not a
+    // live test. September: 41 first attempts started on load after /login
+    // finished 54% (20% left at 0 answers); the hub's short diagnostic
+    // finishes 84-87%. Nothing is created here: "full" comes back to this
+    // URL without from=signin and takes the path below exactly as before;
+    // "short" starts the hub's own 5-question diagnostic. The student is
+    // already enrolled (above), as the old start-on-load path did.
+    if (
+      shouldOfferShortOrFull({
+        fromSignin: isFromSignin(sp),
+        questionCount: mock.questionIds.length,
+        hasInProgress: inProgress != null,
+        isLiveTest: mock.generatedBy === "live-test",
+      })
+    ) {
+      const [{ locale }, { ShortOrFullChoice }] = await Promise.all([getT(), import("./ShortOrFullChoice")]);
+      return (
+        <main className="min-h-screen bg-ink-50/40">
+          <Header />
+          <section className="container-prose py-6 sm:py-10">
+            <ShortOrFullChoice
+              mockId={mock.id}
+              title={mock.title}
+              examCode={mock.exam.code}
+              examShort={mock.exam.shortName}
+              questionCount={mock.questionIds.length}
+              durationMin={mockDurationMin(mock.config)}
+              fullHref={mockPathAfterChoice(mock.id, sp)}
+              copy={mockGateCopy(locale)}
+              errCopy={mockStartCopy(locale)}
+            />
+          </section>
+        </main>
+      );
+    }
     attempt = await prisma.attempt.create({
       data: { mockId: mock.id, userId, status: "IN_PROGRESS", answers: [] },
     });

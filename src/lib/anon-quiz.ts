@@ -132,7 +132,9 @@ export async function getAnonQuiz(opts: {
   let replay = false;
   if (wanted.length > 0) {
     const found = await prisma.question.findMany({
-      where: { examId: exam.id, id: { in: wanted }, validated: true, type: "MCQ" },
+      // 25 Sep 2026: withdrawn questions (tag "rejected") never reach a guest —
+      // the mock gate now shows this quiz to every signed-out mock visitor.
+      where: { examId: exam.id, id: { in: wanted }, validated: true, type: "MCQ", NOT: { tags: { has: "rejected" } } },
       select,
     });
     const byId = new Map(found.map((q) => [q.id, q]));
@@ -146,6 +148,7 @@ export async function getAnonQuiz(opts: {
         examId: exam.id,
         validated: true,
         type: "MCQ",
+        NOT: { tags: { has: "rejected" } },
         ...(topicIds ? { topicId: { in: topicIds } } : {}),
       },
       select,

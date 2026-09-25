@@ -13,7 +13,7 @@
 // Hindi or Telugu quiz or challenge speaks the reader's language around the
 // questions (which carry their own cached translations).
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { AnonQuiz } from "@/lib/anon-quiz";
 import { fillTemplate, type Locale } from "@/lib/i18n";
@@ -95,6 +95,8 @@ export function AnonQuizPlayer({
   labels,
   challengeLabels,
   locale,
+  signInSlot,
+  onFinish,
 }: {
   quiz: AnonQuiz;
   examWeek?: AnonQuizExamWeek;
@@ -105,6 +107,14 @@ export function AnonQuizPlayer({
   challengeLabels: ChallengeLabels;
   /** Page language — stored on a challenge made from this result. */
   locale: string;
+  /** Mock gate (25 Sep 2026): replaces the result screen's /login link to
+   *  the exam hub — the signed-out /mocks/[id] and /build-mock pages pass a
+   *  Google sign-in button that returns to the page the guest came from.
+   *  Absent = the link, as before. */
+  signInSlot?: ReactNode;
+  /** Called once when the last answer is in, with the score — the gate's
+   *  quiz-done beacon. Absent = nothing extra fires. */
+  onFinish?: (score: number, total: number) => void;
 }) {
   const QL = labels;
   const CL = challengeLabels;
@@ -180,6 +190,11 @@ export function AnonQuizPlayer({
         );
       } catch {
         /* localStorage may be unavailable (private mode) — non-fatal */
+      }
+      try {
+        onFinish?.(nextAnswers.filter((a) => a.correct).length, qs.length);
+      } catch {
+        /* a caller's beacon must never block the result */
       }
       // Fire-and-forget completion signal so the funnel report sees it.
       try {
@@ -380,12 +395,16 @@ export function AnonQuizPlayer({
         )}
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-          <Link
-            href={loginHref}
-            className="inline-flex flex-1 items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300"
-          >
-            {QL["quiz.signIn"]}
-          </Link>
+          {signInSlot ? (
+            <div className="flex flex-1 flex-col">{signInSlot}</div>
+          ) : (
+            <Link
+              href={loginHref}
+              className="inline-flex flex-1 items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300"
+            >
+              {QL["quiz.signIn"]}
+            </Link>
+          )}
           <Link
             href={tutorHref}
             className="inline-flex flex-1 items-center justify-center rounded-lg border border-ink-300 bg-white px-5 py-3 text-sm font-semibold text-ink-800 transition-colors hover:bg-ink-50"

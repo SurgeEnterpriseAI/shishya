@@ -223,7 +223,13 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
   // Challenge links (/c/{token}, 14 Sep 2026) are the same kind of landing.
   // Study group invites (/g/{token}, 14 Sep 2026) too.
   const isShareLanding = path.startsWith("/share/") || path.startsWith("/c/") || path.startsWith("/g/");
-  if (!isHome && !isExamPage && !isSectionLanding && !isLogin && !isOAuthEntry && !isShareLanding) {
+  // 25 Sep 2026: a signed-out /mocks/{id} now shows a sign-in gate instead of
+  // redirecting to /login, so a guest who lands straight on a mock link (from
+  // ChatGPT, an email) never passes /login. Record that landing here; the
+  // branch below still only writes the cookie for utm tags or an outside
+  // referrer, so internal hub-to-mock clicks don't take the first-visit slot.
+  const isMockLanding = path.startsWith("/mocks/");
+  if (!isHome && !isExamPage && !isSectionLanding && !isLogin && !isOAuthEntry && !isShareLanding && !isMockLanding) {
     return res;
   }
 
@@ -291,6 +297,7 @@ export const config = {
     "/te/:path*",
     "/exam-calendar",
     "/login",
+    "/mocks/:path*",
     "/exams/:path*",
     "/schooling",
     "/colleges",
