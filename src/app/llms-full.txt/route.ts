@@ -18,6 +18,7 @@
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL, REAL_EXAM_SQL, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { GATES_CLOSED, loadExamPageGates, type ExamPageGates } from "@/lib/exam-page-gates";
 import { usableNotesSql } from "@/lib/topic-notes";
 import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
@@ -29,8 +30,10 @@ export const revalidate = 3600; // hourly — the exam-week block flips phase wi
 const SITE = "https://shishya.in";
 
 export async function GET() {
+  // 25 Sep 2026: real exams only, in every block below — school class
+  // containers stay off llms-full.txt until the school pages go indexable.
   const exams = await prisma.exam.findMany({
-    where: { active: true },
+    where: REAL_EXAM_WHERE,
     orderBy: [{ category: "asc" }, { shortName: "asc" }],
     select: {
       code: true,
@@ -56,7 +59,7 @@ export async function GET() {
         .$queryRaw<{ code: string }[]>`
           SELECT DISTINCT e.code FROM "TopicTeachingNote" n
           JOIN "Topic" t ON t.id = n."topicId" JOIN "Subject" s ON s.id = t."subjectId" JOIN "Exam" e ON e.id = s."examId"
-          WHERE e.active = TRUE AND ${usableNotesSql(Prisma.sql`n.content`)}`
+          WHERE ${REAL_EXAM_SQL} AND ${usableNotesSql(Prisma.sql`n.content`)}`
         .catch(() => [] as { code: string }[])
     ).map((r) => r.code),
   );
@@ -67,7 +70,7 @@ export async function GET() {
       await prisma
         .$queryRaw<{ code: string }[]>`
           SELECT DISTINCT e.code FROM "Mock" m JOIN "Exam" e ON e.id = m."examId"
-          WHERE m."generatedBy" = 'system:full-pattern-v1'`
+          WHERE m."generatedBy" = 'system:full-pattern-v1' AND ${NOT_SCHOOL_SQL}`
         .catch(() => [] as { code: string }[])
     ).map((r) => r.code),
   );
@@ -145,7 +148,7 @@ export async function GET() {
     .$queryRaw<{ id: string; stage: string; declaredOn: Date; code: string; short: string }[]>`
       SELECT r.id, r.stage, r."declaredOn", e.code, e."shortName" AS short
       FROM "ExamResult" r JOIN "Exam" e ON e.id = r."examId"
-      WHERE r.stage <> '__not_a_result__' AND r."declaredOn" > NOW() - INTERVAL '60 days'
+      WHERE r.stage <> '__not_a_result__' AND r."declaredOn" > NOW() - INTERVAL '60 days' AND ${NOT_SCHOOL_SQL}
       ORDER BY r."declaredOn" DESC LIMIT 50
     `.catch(() => [] as { id: string; stage: string; declaredOn: Date; code: string; short: string }[]);
   if (results.length) {
@@ -193,7 +196,7 @@ export async function GET() {
     .$queryRaw<{ code: string; years: number[] }[]>`
       SELECT e.code, ARRAY_AGG(DISTINCT q."pyqYear" ORDER BY q."pyqYear" DESC) AS years
       FROM "Question" q JOIN "Exam" e ON e.id = q."examId"
-      WHERE q."pyqYear" IS NOT NULL AND q.source = 'PYQ' AND q.validated = TRUE
+      WHERE q."pyqYear" IS NOT NULL AND q.source = 'PYQ' AND q.validated = TRUE AND ${NOT_SCHOOL_SQL}
       GROUP BY e.code
     `.catch(() => [] as { code: string; years: number[] }[]);
   const pyqByCode = new Map(pyqYears.map((r) => [r.code, r.years]));
@@ -203,7 +206,7 @@ export async function GET() {
     (
       await prisma
         .$queryRaw<{ code: string }[]>`
-          SELECT DISTINCT e.code FROM "OfficialCutoff" o JOIN "Exam" e ON e.id = o."examId" WHERE o."archivedAt" IS NULL`
+          SELECT DISTINCT e.code FROM "OfficialCutoff" o JOIN "Exam" e ON e.id = o."examId" WHERE o."archivedAt" IS NULL AND ${NOT_SCHOOL_SQL}`
         .catch(() => [] as { code: string }[])
     ).map((r) => r.code),
   );
@@ -274,7 +277,9 @@ export async function GET() {
   lines.push(`- Upcoming government exams calendar (next 120 days, official vs expected dates, latest notifications): ${SITE}/exam-calendar`);
   lines.push(`- Scholarships for Indian students: ${SITE}/scholarships`);
   lines.push(`- Colleges (cutoffs, placements, ITI/diploma): ${SITE}/colleges`);
-  lines.push(`- Schooling boards & streams: ${SITE}/schooling`);
+  // 26 Sep 2026: the Schooling line left with the sitemap entries — the
+  // section is noindex while it is built hidden (SCHOOLING_ROBOTS), so it
+  // stays off llms-full.txt until school content passes the content gate.
   lines.push(`- Careers & government jobs: ${SITE}/jobs`);
   lines.push(`- Study abroad: ${SITE}/worldwide`);
   lines.push(`- Aspirant discussions: ${SITE}/discussions`);

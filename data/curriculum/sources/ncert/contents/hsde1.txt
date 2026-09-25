@@ -1,0 +1,8 @@
+# NCERT contents evidence — hsde1 — Deepakam (index class 8, Sanskrit)
+# source: https://ncert.nic.in/textbook/pdf/hsde1ps.pdf
+# fetched: 2026-09-25T23:14:46+05:30  sha256: 7741674f9f7ff276a2105e755564905127a24f9a4a0555fa8045122b155f4256  bytes: 8895531
+# contents pages of the PDF: none found of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 44491d6db68983dad4b12d586983d82d0ac36c358cc71947b7fb25664e864671);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

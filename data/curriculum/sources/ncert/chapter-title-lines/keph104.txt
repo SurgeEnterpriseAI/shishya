@@ -1,0 +1,4 @@
+# first 3 text lines of https://ncert.nic.in/textbook/pdf/keph104.pdf (fetched 2026-09-25T23:24:45+05:30, sha256 8a5df412b53d86040d73ec589ddc98ae23201c420973c7b910e1acca85d234ef)
+CHAPTER FOUR
+LAWS OF MOTION
+4.1  INTRODUCTION

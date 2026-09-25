@@ -1,0 +1,39 @@
+# NCERT contents evidence — lefa1 — An Introduction to Indian Art Part-II (index class 12, Fine Art)
+# source: https://ncert.nic.in/textbook/pdf/lefa1ps.pdf
+# fetched: 2026-09-25T23:15:44+05:30  sha256: e2f9976261e0a8a82ddb081ddb05674b1dad2dd58c82bfecd2b21223cf9454b8  bytes: 3943053
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 8a207c78b670f0c720fa6252a93307d72f696944c323df9cd680fb7d2d7b5008);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lefa1#1 title [pdftotext p11] next=number
+  1. The Manuscript Painting Tradition
++ 1
++ 2. The Rajasthani Schools of Painting
+@lefa1#2 title [pdftotext p11] next=number
+  2. The Rajasthani Schools of Painting
++ 10
++ 3. The Mughal School of Miniature Painting
+@lefa1#3 title [pdftotext p11] next=number
+  3. The Mughal School of Miniature Painting
++ 35
++ 4. The Deccani Schools of Painting
+@lefa1#4 title [pdftotext p11] next=number
+  4. The Deccani Schools of Painting
++ 55
++ 5. The Pahari Schools of Painting
+@lefa1#5 title [pdftotext p11] next=number
+  5. The Pahari Schools of Painting
++ 67
++ 6. The Bengal School and Cultural Nationalism
+@lefa1#6 title [pdftotext p11] next=number
+  6. The Bengal School and Cultural Nationalism
++ 85
++ 7. The Modern Indian Art
+@lefa1#7 title [pdftotext p11] next=number
+  7. The Modern Indian Art
++ 99
++ 8. The Living Art Traditions of India
+@lefa1#8 title [pdftotext p11] next=boilerplate
+  8. The Living Art Traditions of India
++ 127
++ Glossary			 Bibliography

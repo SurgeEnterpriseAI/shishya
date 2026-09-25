@@ -1,0 +1,8 @@
+# NCERT contents evidence — ludh1 — Dhanak (index class 12, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/ludh1ps.pdf
+# fetched: 2026-09-25T23:15:41+05:30  sha256: e98cad54a49cd60a6f6256e9258247ed9548b9064baafe3991a4a0b1803d256b  bytes: 2228193
+# contents pages of the PDF: none found of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 3c6150178f7bdc3e9f2bcbd79a8b7e42d533f9062582b08188c2d6fd080b6c1c);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

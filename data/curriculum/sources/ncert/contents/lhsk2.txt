@@ -1,0 +1,8 @@
+# NCERT contents evidence — lhsk2 — Shaswati (index class 12, Sanskrit)
+# source: https://ncert.nic.in/textbook/pdf/lhsk2ps.pdf
+# fetched: 2026-09-25T23:15:29+05:30  sha256: 9c72158e907cc9844eb192a3eadaea55e4353fd74fab756051f7092a0fc055e5  bytes: 1469301
+# contents pages of the PDF: none found of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 b71896e1d9dff5e4807db4dd8583276c4650e2d411fb9b8710c95b1a700abd30);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

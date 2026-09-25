@@ -1,0 +1,59 @@
+# NCERT contents evidence — hecu1 — Curiosity (index class 8, Science)
+# source: https://ncert.nic.in/textbook/pdf/hecu1ps.pdf
+# fetched: 2026-09-25T23:14:45+05:30  sha256: cf752771b28a3328bf37ec768907ed0f46d2a2507a77803222b435c651830955  bytes: 3676711
+# contents pages of the PDF: 19 of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 8edde113b6c1e2a628e228d72b7d22469c0c5321c1168fc5183e695c276beb96);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@hecu1#1 title [pdftotext p19] next=number
+  Exploring the Investigative World of Science
++ 01
++ Chapter 2
+@hecu1#2 title [pdftotext p19] next=number
+  The Invisible Living World: Beyond Our Naked Eye
++ 08
++ Chapter 3
+@hecu1#3 title [pdftotext p19] next=number
+  Health: The Ultimate Treasure
++ 28
++ Chapter 4
+@hecu1#4 title [pdftotext p19] next=number
+  Electricity: Magnetic and Heating Effects
++ 46
++ Chapter 5
+@hecu1#5 title [pdftotext p19] next=number
+  Exploring Forces
++ 62
++ Chapter 6
+@hecu1#6 title [pdftotext p19] next=number
+  Pressure, Winds, Storms, and Cyclones
++ 80
++ Chapter 7
+@hecu1#7 title [pdftotext p19] next=number
+  Particulate Nature of Matter
++ 98
++ Chapter 8
+@hecu1#8 title [pdftotext p19] next=number
+  Nature of Matter: Elements, Compounds, and Mixtures
++ 116
++ Chapter 9
+@hecu1#9 title [pdftotext p19] next=number
+  The Amazing World of Solutes, Solvents, and Solutions
++ 134
++ Chapter 10 Light: Mirrors and Lenses152
+@hecu1#10 title [pdftotext p19] next=number
+  Chapter 10 Light: Mirrors and Lenses152
++ Chapter 11
++ Keeping Time with the Skies
+@hecu1#11 title [pdftotext p19] next=number
+  Keeping Time with the Skies
++ 170
++ Chapter 12
+@hecu1#12 title [pdftotext p19] next=number
+  How Nature Works in Harmony
++ 190
++ Chapter 13
+@hecu1#13 title [pdftotext p19] next=page
+  Our Home: Earth, a Unique Life Sustaining Planet
++ 210
++ Reprint 2026-27

@@ -1,0 +1,126 @@
+{
+ "fetchedAt": "2026-09-25T22:50:00+05:30",
+ "note": "Official pages fetched 25 Sep 2026 (curl, HTTP 200 unless listed under dead). cbseCurriculum2026_27 = the per-subject syllabus PDF links on https://cbseacademic.nic.in/curriculum_2027.html, by section (Class IX / Class X / XI-XII), for the subjects the /schooling pages show; each PDF fetched 200 the same day. The CBSE Hindi Course-A PDF names Kshitij Bhag-2 + Kritika Bhag-2, Course-B names Sparsh Bhag-2 + Sanchayan Bhag-2, English Core names Hornbill + Snapshots (XI) and Flamingo + Vistas (XII), English Language and Literature (X) names First Flight + Footprints Without Feet.",
+ "cbseCurriculum2026_27": {
+  "page": "https://cbseacademic.nic.in/curriculum_2027.html",
+  "pageSha256": "440e46de66410b58d654aa31055e2d824f32eb551acb3c01c08c1dbd8b1de339",
+  "sections": {
+   "IX": {
+    "English": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/English_LL_SecP1IX_2026-27.pdf",
+    "Hindi": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Hindi_SecP1IX_2026-27.pdf",
+    "Mathematics": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Maths_SecP1IX_2026-27.pdf",
+    "Science": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/ScienceSt_SecP1_2026-27.pdf",
+    "Social Science": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/SocialScience_SecP1IX_2026-27.pdf",
+    "Computer Applications": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Computer_Applications_SecP1IX_2026-27.pdf"
+   },
+   "X": {
+    "English - Language and Literature": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/English_LL_SecP1_2026-27.pdf",
+    "Hindi Course-A": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Hindi_A_SecP1_2026-27.pdf",
+    "Hindi Course-B": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Hindi_B_SecP1_2026-27.pdf",
+    "Mathematics": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Maths_SecP1X_2026-27.pdf",
+    "Science": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Science_SecP1_2026-27.pdf",
+    "Social Science": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/SocialScience_SecP1X_2026-27.pdf",
+    "Computer Applications": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Computer_Applications_SecP1X_2026-27.pdf"
+   },
+   "XI-XII": {
+    "English Core": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/English_core_SecP2_2026-27.pdf",
+    "Accountancy": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Accountancy_SecP2_2026-27.pdf",
+    "Biology": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Biology_SecP2_2026-27.pdf",
+    "Business Studies": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/BusinessStudies_SecP2_2026-27.pdf",
+    "Chemistry": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Chemistry_SecP2_2026-27.pdf",
+    "Economics": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Economics_SecP2_2026-27.pdf",
+    "Geography": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Geography_SecP2_2026-27.pdf",
+    "History": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/History_SecP2_2026-27.pdf",
+    "Mathematics": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Maths_SecP2_2026-27.pdf",
+    "Physics": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Physics_SecP2_2026-27.pdf",
+    "Political Science": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/PoliticalScience_SecP2_2026-27.pdf"
+   }
+  }
+ },
+ "prescribedBooks": {
+  "X/Hindi Course-A": [
+   "Kshitij-2",
+   "Kritika"
+  ],
+  "X/Hindi Course-B": [
+   "Sparsh",
+   "Sanchayan Bhag-2"
+  ],
+  "X/English - Language and Literature": [
+   "First Flight",
+   "Foot Prints Without feet Supp. Reader"
+  ],
+  "XI/English Core": [
+   "Hornbill",
+   "Snapshots Suppl.Reader English"
+  ],
+  "XII/English Core": [
+   "Flamingo",
+   "Vistas"
+  ]
+ },
+ "checked200": [
+  {
+   "url": "https://cbseacademic.nic.in/curriculum_2027.html",
+   "title": "CBSE | Academics Unit : Curriculum/Syllabus"
+  },
+  {
+   "url": "https://cbseacademic.nic.in/",
+   "title": "CBSE | Central Board of Secondary Education : Academics"
+  },
+  {
+   "url": "https://cbseacademic.nic.in/SQP_CLASSX_2026-27.html",
+   "title": "CBSE | Academics Unit - Class X 2026-2027 SQP and MS"
+  },
+  {
+   "url": "https://cbseacademic.nic.in/SQP_CLASSXII_2026-27.html",
+   "title": "CBSE | Academics Unit - Class XII 2026-2027 SQP and MS"
+  },
+  {
+   "url": "https://www.cbse.gov.in",
+   "title": "CBSE - Central Board of Secondary Education"
+  },
+  {
+   "url": "https://cisce.org/regulations-and-syllabuses-icse/",
+   "title": "Regulations and Syllabuses ICSE – CISCE"
+  },
+  {
+   "url": "https://cisce.org/regulations-and-syllabuses-isc/",
+   "title": "Regulations and Syllabuses ISC – CISCE"
+  },
+  {
+   "url": "https://cisce.org/icse-specimen-question-papers/",
+   "title": "ICSE Specimen Question Papers – CISCE"
+  },
+  {
+   "url": "https://cisce.org/isc-specimen-question-papers/",
+   "title": "ISC Specimen Question Papers – CISCE"
+  },
+  {
+   "url": "https://www.cisce.org",
+   "title": "CISCE home (redirects to https://cisce.org/)"
+  },
+  {
+   "url": "https://cisce.org/",
+   "title": "CISCE home"
+  },
+  {
+   "url": "https://ncert.nic.in/textbook.php",
+   "title": "NCERT textbook index"
+  }
+ ],
+ "dead": [
+  {
+   "url": "https://www.cbse.gov.in/cbsenew/SQP.html",
+   "status": 404
+  },
+  {
+   "url": "https://cisce.org/curriculum.aspx",
+   "status": 404
+  },
+  {
+   "url": "https://cisce.org/specimen-question-papers.aspx",
+   "status": 404
+  }
+ ]
+}

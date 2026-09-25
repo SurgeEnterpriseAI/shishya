@@ -159,7 +159,13 @@ export const SITE_FEATURES: readonly SiteFeature[] = [
   { path: "/jobs", name: "Jobs & careers", what: "government job catalogue, internships, resume and interview prep — information, not a job board" },
   { path: "/colleges", name: "Colleges", what: "NIRF-ranked colleges by stream and state" },
   { path: "/careers", name: "Careers", what: "career paths with entry routes and salary bands" },
-  { path: "/schooling", name: "Schooling", what: "school boards with official syllabus and sample-paper links" },
+  // 26 Sep 2026: 14 of the 20 boards link only their website; syllabus
+  // links exist for 6 and sample-paper links for 3 (src/lib/schooling-data.ts).
+  {
+    path: "/schooling",
+    name: "Schooling",
+    what: "links to each school board's official website; syllabus links for CBSE, CISCE, NIOS, IB, Cambridge and Tamil Nadu; sample-paper links for CBSE, CISCE and NIOS",
+  },
   { path: "/worldwide", name: "Study abroad", what: "countries, universities, test prep and loans" },
   {
     path: "/aptitude",

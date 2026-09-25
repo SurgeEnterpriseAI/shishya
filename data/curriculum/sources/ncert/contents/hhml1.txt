@@ -1,0 +1,8 @@
+# NCERT contents evidence — hhml1 — Malhar (index class 8, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/hhml1ps.pdf
+# fetched: 2026-09-25T23:14:41+05:30  sha256: d1ca0c96d5346847622e6b7ec3439413d4ced74091d16a4b75512868b37254e7  bytes: 4613258
+# contents pages of the PDF: none found of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 0dd8409b325e2f0e66941f7ed4f99e30bfaed3d9e3d6396981c5f7b171de4a14);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

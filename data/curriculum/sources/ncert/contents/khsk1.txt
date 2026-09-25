@@ -1,0 +1,8 @@
+# NCERT contents evidence — khsk1 — Bhaswati (index class 11, Sanskrit)
+# source: https://ncert.nic.in/textbook/pdf/khsk1ps.pdf
+# fetched: 2026-09-25T23:15:09+05:30  sha256: 1b6271b923ede0aaf4e1a7965a9b887044f2f9b8cf100160525a5999076c6bd9  bytes: 3272543
+# contents pages of the PDF: none found of 40
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 64ded825e84be2810524ad59eb9f95c53bfb4cc857541365426f718f5c4ace05);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

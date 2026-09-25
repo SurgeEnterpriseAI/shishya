@@ -1,0 +1,27 @@
+# NCERT contents evidence — jess4 — Democratic Politics (index class 10, Social Science)
+# source: https://ncert.nic.in/textbook/pdf/jess4ps.pdf
+# fetched: 2026-09-25T23:15:04+05:30  sha256: c4808f2cde54910812bc324560f62149654caa4bda282c64b3965451905ff22f  bytes: 2115669
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 892facd5a61876e95fadbef30901cc18eca4ab4b1109f09675c184f539b6ca2a);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@jess4#1 title [pdftotext p13] next=number
+  Power-sharing
++ 1
++ Chapter 2
+@jess4#2 title [pdftotext p13] next=number
+  Federalism
++ 13
++ Unit II
+@jess4#3 title [pdftotext p13] next=number
+  Gender, Religion and Caste
++ 29
++ Unit III
+@jess4#4 title [pdftotext p13] next=number
+  Political Parties
++ 46
++ Unit IV
+@jess4#5 title [pdftotext p13] next=page
+  Outcomes of Democracy
++ 63
++ xiii

@@ -1,0 +1,43 @@
+# NCERT contents evidence — fekb1 — Kaushal Bodh (index class 6, Vocational Education)
+# source: https://ncert.nic.in/textbook/pdf/fekb1ps.pdf
+# fetched: 2026-09-25T23:14:30+05:30  sha256: df6eb7c2532ee37b7013e0554a80462affb7010b23b1330186fa8158684ed015  bytes: 3707704
+# contents pages of the PDF: 27 of 28
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 ae6d379076870209fbfba373377efe1e7d3f225357e839910c08b6303d0aeffe);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@fekb1#1 title [pdftotext p27] next=number
+  Project 1: School Kitchen Garden
++ 3
++ Project 2: Biodiversity Register
+@fekb1#1:section section [pdftotext p27] next=number
+  Part 1: Work with Life Forms
++ 1
++ Project 1: School Kitchen Garden
+@fekb1#2 title [pdftotext p27] next=number
+  Project 2: Biodiversity Register
++ 34
++ Part 2: Work with Machines and Materials
+@fekb1#3 title [pdftotext p27] next=number
+  Project 3: Maker Skills
++ 57
++ Project 4: Animation and Games
+@fekb1#3:section section [pdftotext p27] next=number
+  Part 2: Work with Machines and Materials
++ 55
++ Project 3: Maker Skills
+@fekb1#4 title [pdftotext p27] next=number
+  Project 4: Animation and Games
++ 81
++ Part 3: Work in Human Services
+@fekb1#5 title [pdftotext p27] next=number
+  Project 5: School Museum
++ 105
++ Project 6: Cooking without Fire
+@fekb1#5:section section [pdftotext p27] next=number
+  Part 3: Work in Human Services
++ 103
++ Project 5: School Museum
+@fekb1#6 title [pdftotext p27] next=boilerplate
+  Project 6: Cooking without Fire
++ 125
++ Annexure 1: Project Template

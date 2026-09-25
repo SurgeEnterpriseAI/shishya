@@ -1,0 +1,626 @@
+{
+ "curriculum": "NCERT",
+ "indexClassValue": 13,
+ "classes": [
+  11,
+  12
+ ],
+ "classLabel": "Class XI & XII Combined",
+ "source": {
+  "indexUrl": "https://ncert.nic.in/textbook.php",
+  "snapshot": "data/curriculum/sources/ncert/textbook-php-2026-09-25.html",
+  "snapshotSha256": "f22b184dce0e02298d571a49ea768dd0809c146c540a77f6f23fdfbdc0c4ec29",
+  "fetchedOn": "2026-09-25"
+ },
+ "subjects": [
+  {
+   "name": "Hindi",
+   "code": "HINDI",
+   "books": [
+    {
+     "code": "kham1",
+     "title": "Abhivyakti Aur Madhyam",
+     "language": "hi",
+     "indexValue": "textbook.php?kham1=0-16",
+     "bookUrl": "https://ncert.nic.in/textbook.php?kham1=0-16",
+     "indexChapterCount": 16,
+     "listedChapterCount": 16,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/kham1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/kham1ps.pdf",
+      "sha256": "1c3708e72fac3bc473b22c945ecc04e400d0669c3663741b0ee75080ad655d02",
+      "fetchedAt": "2026-09-25T23:15:47+05:30",
+      "printedSession": "2025-26",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/kham1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham113.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham114.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham115.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kham116.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Sanskrit",
+   "code": "SANSKRIT",
+   "books": [
+    {
+     "code": "klss1",
+     "title": "Sanskrit Sahitya parichay",
+     "language": "sa",
+     "indexValue": "textbook.php?klss1=0-12",
+     "bookUrl": "https://ncert.nic.in/textbook.php?klss1=0-12",
+     "indexChapterCount": 12,
+     "listedChapterCount": 12,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/klss1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/klss1ps.pdf",
+      "sha256": "1b8b80ef2cc12f75cea98e5749e13557b4e77495a8950e02a1fea67fc104befa",
+      "fetchedAt": "2026-09-25T23:15:48+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/klss1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/klss101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/klss102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/klss103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/klss104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/klss105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/klss106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/klss107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/klss108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/klss109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/klss110.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/klss111.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/klss112.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Urdu",
+   "code": "URDU",
+   "books": [
+    {
+     "code": "kuza1",
+     "title": "Zuban-O-Adab ki Tareekh",
+     "language": "ur",
+     "indexValue": "textbook.php?kuza1=0-23",
+     "bookUrl": "https://ncert.nic.in/textbook.php?kuza1=0-23",
+     "indexChapterCount": 23,
+     "listedChapterCount": 23,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/kuza1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/kuza1ps.pdf",
+      "sha256": "96bb9d451e793aa4d0e94848941deeb1906237ab62c280121da29e502e3b8810",
+      "fetchedAt": "2026-09-25T23:15:49+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/kuza1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza113.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza114.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza115.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza116.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza117.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 18,
+       "pdfSeq": 18,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza118.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 19,
+       "pdfSeq": 19,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza119.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 20,
+       "pdfSeq": 20,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza120.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 21,
+       "pdfSeq": 21,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza121.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 22,
+       "pdfSeq": 22,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza122.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 23,
+       "pdfSeq": 23,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuza123.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "juuq1",
+     "title": "Urdu Qwaid aur Insha",
+     "language": "ur",
+     "indexValue": "textbook.php?juuq1=0-24",
+     "bookUrl": "https://ncert.nic.in/textbook.php?juuq1=0-24",
+     "indexChapterCount": 24,
+     "listedChapterCount": 24,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/juuq1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/juuq1ps.pdf",
+      "sha256": "dea47d4e6530cb24aa48402557d02e2a73a47f3cba1b32979a31764b53ee1098",
+      "fetchedAt": "2026-09-25T23:15:50+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/juuq1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq101.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq102.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq103.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq104.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq105.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq106.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq107.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq108.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq109.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq110.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq111.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq112.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq113.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq114.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq115.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq116.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq117.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 18,
+       "pdfSeq": 18,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq118.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 19,
+       "pdfSeq": 19,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq119.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 20,
+       "pdfSeq": 20,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq120.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 21,
+       "pdfSeq": 21,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq121.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 22,
+       "pdfSeq": 22,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq122.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 23,
+       "pdfSeq": 23,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq123.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages); the chapter PDF also returned HTTP 404 on 2026-09-25"
+      },
+      {
+       "seq": 24,
+       "pdfSeq": 24,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juuq124.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages); the chapter PDF also returned HTTP 404 on 2026-09-25"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "kuiz1",
+     "title": "Izhar Aur Zara-e-Izhar",
+     "language": "ur",
+     "indexValue": "textbook.php?kuiz1=0-4",
+     "bookUrl": "https://ncert.nic.in/textbook.php?kuiz1=0-4",
+     "indexChapterCount": 4,
+     "listedChapterCount": 4,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/kuiz1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/kuiz1ps.pdf",
+      "sha256": "92a1a82789b0e2c82cbecc697fededebdbcaa857afe1f6ffb97ee446a3845441",
+      "fetchedAt": "2026-09-25T23:15:51+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/kuiz1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuiz101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuiz102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuiz103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/kuiz104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  }
+ ],
+ "counts": {
+  "subjects": 3,
+  "books": 5,
+  "chapters": 0,
+  "unresolvedChapters": 79,
+  "editions": 0
+ }
+}

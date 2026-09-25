@@ -1,0 +1,39 @@
+# NCERT contents evidence — jess3 — India and the Contemporary World-II (index class 10, Social Science)
+# source: https://ncert.nic.in/textbook/pdf/jess3ps.pdf
+# fetched: 2026-09-25T23:15:04+05:30  sha256: d871b4c8c86ca614afc8d5b222bec05f7cef1dad27d3722bec0975583c911598  bytes: 1952381
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 415c962dd95a55d38cddcfa243c43aaa4b3620e402ee9f8d42632e6bbf84f3b9);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@jess3#1 title [pdftotext p11] next=number
+  I. The Rise of Nationalism in Europe
++ 3
++ II. Nationalism in India
+@jess3#1:section section [pdftotext p11] next=number
+  Section I: Events and Processes
++ I. The Rise of Nationalism in Europe
++ 3
+@jess3#2 title [pdftotext p11] next=number
+  II. Nationalism in India
++ 29
++ Section II: Livelihoods, Economies and Societies
+@jess3#3 title [pdftotext p11] next=number
+  III. The Making of a Global World
++ 53
++ IV. The Age of Industrialisation
+@jess3#3:section section [pdftotext p11] next=number
+  Section II: Livelihoods, Economies and Societies
++ III. The Making of a Global World
++ 53
+@jess3#4 title [pdftotext p11] next=number
+  IV. The Age of Industrialisation
++ 79
++ Section III: Everyday Life, Culture and Politics
+@jess3#5 title [pdftotext p11] next=page
+  V. Print Culture and the Modern World
++ 105
++ xi
+@jess3#5:section section [pdftotext p11] next=number
+  Section III: Everyday Life, Culture and Politics
++ V. Print Culture and the Modern World
++ 105

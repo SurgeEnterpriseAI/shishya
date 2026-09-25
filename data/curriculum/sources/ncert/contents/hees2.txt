@@ -1,0 +1,39 @@
+# NCERT contents evidence — hees2 — Exploring Society India and Beyond Part-II (index class 8, Social Science)
+# source: https://ncert.nic.in/textbook/pdf/hees2ps.pdf
+# fetched: 2026-09-25T23:14:46+05:30  sha256: a15fbefbd6b55383b7b7a0cd2731c3ccedf7bd7584efafe2640ecfc48aa380ad  bytes: 6887941
+# contents pages of the PDF: 17 of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 db701141ddb190f64b652c20b8b6c9e0e484dda57c5f99418975bfdc2cfc0e46);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@hees2#1 title [pdftotext p17] next=number
+  Chapter 1 World Geography: Some Glimpses
++ 1
++ Theme B — Tapestry of the Past
+@hees2#2 title [pdftotext p17] next=number
+  Chapter 2 India’s Long Road to Independence
++ 35
++ Theme C — Our Cultural Heritage and Knowledge Traditions
+@hees2#3 title [pdftotext p17] next=number
+  Chapter 3 A Journey Through Indian Architecture
++ 85
++ Theme D — Governance and Democracy
+@hees2#4 title [pdftotext p17] next=number
+  Chapter 4 The Role of the Judiciary in Our Society
++ 125
++ Chapter 5 Citizenship: Rights and Duties
+@hees2#5 title [pdftotext p17] next=number
+  Chapter 5 Citizenship: Rights and Duties
++ 143
++ Theme E — Economic Life Around Us
+@hees2#6 title [pdftotext p17] next=number
+  Chapter 6 Dynamics of Population
++ 167
++ Chapter 7 India’s Urban Landscape191
+@hees2#7 title [pdftotext p17] next=number
+  Chapter 7 India’s Urban Landscape191
++ Chapter 8 Cultural Currents: 13th to 17th Centuries
++ 215
+@hees2#8 title [pdftotext p17] next=boilerplate
+  Chapter 8 Cultural Currents: 13th to 17th Centuries
++ 215
++ Glossary252

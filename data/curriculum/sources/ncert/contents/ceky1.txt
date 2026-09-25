@@ -1,0 +1,35 @@
+# NCERT contents evidence — ceky1 — Khel Yoga (index class 3, Physical Education and Well Being)
+# source: https://ncert.nic.in/textbook/pdf/ceky1ps.pdf
+# fetched: 2026-09-25T23:14:17+05:30  sha256: c5cf973cac85d11cde7ba97a1fed48088fa3e854ff74167a4136c232de2cf940  bytes: 2232191
+# contents pages of the PDF: 17 of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 30be5193e65c7ad09a626713f4f1b8dab4e1f49f895c33406cb7781852462a2b);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@ceky1#1 title [pdftotext p17] next=number
+  Chapter 1: Throwing and Catching
++ 2
++ Chapter 2: Kicking and Receiving
+@ceky1#2 title [pdftotext p17] next=number
+  Chapter 2: Kicking and Receiving
++ 12
++ Chapter 3: Strike the Ball
+@ceky1#3 title [pdftotext p17] next=number
+  Chapter 3: Strike the Ball
++ 21
++ Chapter 4: Little Steps
+@ceky1#4 title [pdftotext p17] next=number
+  Chapter 4: Little Steps
++ 30
++ Unit 2 — Our Games
+@ceky1#5 title [pdftotext p17] next=number
+  Chapter 5: Local and Traditional Games
++ 46
++ Unit 3 — Yoga
+@ceky1#6 title [pdftotext p17] next=number
+  Chapter 6: Yoga for Daily Life
++ 70
++ Chapter 7: Yogic Practices (Yoga Sadhana)
+@ceky1#7 title [pdftotext p17] next=boilerplate
+  Chapter 7: Yogic Practices (Yoga Sadhana)
++ 85
++ Session Structure and Suggestive

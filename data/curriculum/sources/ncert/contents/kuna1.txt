@@ -1,0 +1,8 @@
+# NCERT contents evidence — kuna1 — Nai Awaz (index class 11, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/kuna1ps.pdf
+# fetched: 2026-09-25T23:15:19+05:30  sha256: 27eff2538a37efb1953a8f1543cfcd9ae58bb37ab75db524413c2f153a5669a3  bytes: 2409345
+# contents pages of the PDF: none found of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 cc8e72dee31411b3079908d56037bbce46de1714f925ba2b778838a2442f5bbd);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

@@ -1,0 +1,27 @@
+# NCERT contents evidence — kesy1 — Introducing Sociology (index class 11, Sociology)
+# source: https://ncert.nic.in/textbook/pdf/kesy1ps.pdf
+# fetched: 2026-09-25T23:15:15+05:30  sha256: 13704fabf9b456e70856c3c4406e34ec78398a4e88c3b222d33d8efe5aa05a68  bytes: 1300699
+# contents pages of the PDF: 9 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 b290838ce9d65cb3434d6a2e9237a7735a65c0ad207f8f1a91981d1d145492b9);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kesy1#1 title [pdftotext p9] next=number
+  1. SOCIOLOGY AND SOCIETY
++ 1
++ 2. TERMS, CONCEPTS AND THEIR USE IN SOCIOLOGY
+@kesy1#2 title [pdftotext p9] next=number
+  2. TERMS, CONCEPTS AND THEIR USE IN SOCIOLOGY
++ 24
++ 3. UNDERSTANDING SOCIAL INSTITUTIONS
+@kesy1#3 title [pdftotext p9] next=number
+  3. UNDERSTANDING SOCIAL INSTITUTIONS
++ 40
++ 4. CULTURE AND SOCIALISATION
+@kesy1#4 title [pdftotext p9] next=number
+  4. CULTURE AND SOCIALISATION
++ 63
++ 5. DOING SOCIOLOGY: RESEARCH METHODS
+@kesy1#5 title [pdftotext p9] next=page
+  5. DOING SOCIOLOGY: RESEARCH METHODS
++ 82
++ Reprint 2026-27

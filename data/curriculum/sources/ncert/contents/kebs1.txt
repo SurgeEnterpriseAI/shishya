@@ -1,0 +1,59 @@
+# NCERT contents evidence — kebs1 — Business Studies (index class 11, Business Studies)
+# source: https://ncert.nic.in/textbook/pdf/kebs1ps.pdf
+# fetched: 2026-09-25T23:15:19+05:30  sha256: bea38b84a79193a46db20424112ce16b1afeb09ead8a168b66bb4070df9a0d36  bytes: 1005516
+# contents pages of the PDF: 9 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 95d6de8188530ac6958b243d397b1f938591fd7e850eac0887ce695462741c9c);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kebs1#1 title [pdftotext p9] next=number
+  Chapter 1		 Business, Trade and Commerce
++ Chapter 2
++ Forms of Business Organisation
+@kebs1#1:section section [pdftotext p9] next=number
+  Part I Foundations of Business
++ Chapter 1		 Business, Trade and Commerce
++ Chapter 2
+@kebs1#2 title [pdftotext p9] next=number
+  Forms of Business Organisation
++ Chapter 3		 Private, Public and Global Enterprises
++ Chapter 4		 Business Services
+@kebs1#3 title [pdftotext p9] next=number
+  Chapter 3		 Private, Public and Global Enterprises
++ Chapter 4		 Business Services
++ Chapter 5		 Emerging Modes of Business
+@kebs1#4 title [pdftotext p9] next=number
+  Chapter 4		 Business Services
++ Chapter 5		 Emerging Modes of Business
++ Chapter 6		 Social Responsibilities of Business and Business Ethics
+@kebs1#5 title [pdftotext p9] next=number
+  Chapter 5		 Emerging Modes of Business
++ Chapter 6		 Social Responsibilities of Business and Business Ethics
++ Part II Corporate Organisation, Finance and Trade
+@kebs1#6 title [pdftotext p9] next=number
+  Chapter 6		 Social Responsibilities of Business and Business Ethics
++ Part II Corporate Organisation, Finance and Trade
++ Chapter 7		 Formation of a Company
+@kebs1#7 title [pdftotext p9] next=number
+  Chapter 7		 Formation of a Company
++ Chapter 8		 Sources of Business Finance
++ Chapter 9		 MSME and Business Entrepreneurship
+@kebs1#7:section section [pdftotext p9] next=number
+  Part II Corporate Organisation, Finance and Trade
++ Chapter 7		 Formation of a Company
++ Chapter 8		 Sources of Business Finance
+@kebs1#8 title [pdftotext p9] next=number
+  Chapter 8		 Sources of Business Finance
++ Chapter 9		 MSME and Business Entrepreneurship
++ Chapter 10		 Internal Trade
+@kebs1#9 title [pdftotext p9] next=number
+  Chapter 9		 MSME and Business Entrepreneurship
++ Chapter 10		 Internal Trade
++ Chapter 11		 International Business
+@kebs1#10 title [pdftotext p9] next=number
+  Chapter 10		 Internal Trade
++ Chapter 11		 International Business
++ Form No. INC-1 Application for reservation of Name
+@kebs1#11 title [pdftotext p9] next=boilerplate
+  Chapter 11		 International Business
++ Form No. INC-1 Application for reservation of Name
++ iii viii

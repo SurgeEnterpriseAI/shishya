@@ -1,0 +1,8 @@
+# NCERT contents evidence — lhan1 — Antral Bhag 2 (index class 12, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/lhan1ps.pdf
+# fetched: 2026-09-25T23:15:31+05:30  sha256: ceec33fdfe2a0a81d2258510be4880fe510e9af2fec56ded7933ee5c88832367  bytes: 2079602
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 9b4d567d9f46ad1b7c4be74329e05a120a986f8a733c6cdc6ea1f3c72ed71c79);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

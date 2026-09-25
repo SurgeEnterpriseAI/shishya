@@ -1,0 +1,8 @@
+# NCERT contents evidence — juge1 — Gulzar-e-Urdu (index class 10, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/juge1ps.pdf
+# fetched: 2026-09-25T23:15:06+05:30  sha256: d242715beebac7b567857838d12537c83d25f5a7ce2f9e908cc7236276bb14cf  bytes: 3219293
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 c2ca44f97836e7fce23769f07310e835813a9db8a334fbaca6d25dd30a867649);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

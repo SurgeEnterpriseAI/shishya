@@ -1,0 +1,47 @@
+# NCERT contents evidence — eeev1 — Our Wonderous World (index class 5, The World Around Us)
+# source: https://ncert.nic.in/textbook/pdf/eeev1ps.pdf
+# fetched: 2026-09-25T23:14:26+05:30  sha256: d53885920c708eec72ef340bfb554504edd99a4c927f625192d9e8d1bd386a7a  bytes: 2914002
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 13817f6556b02f56d971389c8347c97c830d4115bc0977c331a5e4d2a6b6653d);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@eeev1#1 title [pdftotext p15] next=number
+  Chapter 1: Water — The Essence of Life
++ 3
++ Chapter 2: Journey of a River
+@eeev1#2 title [pdftotext p15] next=number
+  Chapter 2: Journey of a River
++ 21
++ Unit 2: Health and Well-being
+@eeev1#3 title [pdftotext p15] next=number
+  Chapter 3: The Mystery of Food
++ 40
++ Chapter 4: Our School — A Happy Place
+@eeev1#4 title [pdftotext p15] next=number
+  Chapter 4: Our School — A Happy Place
++ 55
++ Unit 3: Incredible India
+@eeev1#5 title [pdftotext p15] next=number
+  Chapter 5: Our Vibrant Country
++ 75
++ Chapter 6: Some Unique Places
+@eeev1#6 title [pdftotext p15] next=number
+  Chapter 6: Some Unique Places
++ 94
++ Unit 4: Things Around Us
+@eeev1#7 title [pdftotext p15] next=number
+  Chapter 7: Energy — How Things Work
++ 114
++ Chapter 8: Clothes — How Things are Made 131
+@eeev1#8 title [pdftotext p15] next=number
+  Chapter 8: Clothes — How Things are Made 131
++ Unit 5: Our Amazing Planet
++ Chapter 9: Rhythms of Nature
+@eeev1#9 title [pdftotext p15] next=number
+  Chapter 9: Rhythms of Nature
++ 147
++ Chapter 10: Earth — Our Shared Home
+@eeev1#10 title [pdftotext p15] next=page
+  Chapter 10: Earth — Our Shared Home
++ 161
++ 

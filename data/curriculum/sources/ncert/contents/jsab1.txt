@@ -1,0 +1,8 @@
+# NCERT contents evidence — jsab1 — Abhyaswaan Bhav-II (index class 10, Sanskrit)
+# source: https://ncert.nic.in/textbook/pdf/jsab1ps.pdf
+# fetched: 2026-09-25T23:15:06+05:30  sha256: 221dc94e577234c890132ae48e9ff16ed1e7fb0c9287e1b6d41741c629e356d2  bytes: 1597414
+# contents pages of the PDF: none found of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 a1e7d969d706ae90a7fffac231dfc18b32df7b666dce3b07570deaa2c857e3d0);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

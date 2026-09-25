@@ -1,0 +1,8 @@
+# NCERT contents evidence — luga1 — Gulistan-e- Adab (index class 12, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/luga1ps.pdf
+# fetched: 2026-09-25T23:15:41+05:30  sha256: 5a09915606fda982e0006ac9fc9d221f0fc96fc9548c59c464de1eb65b678d0d  bytes: 2750752
+# contents pages of the PDF: none found of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 3415fef1c5004ce23c7b21a94ea9cfc69ae7fb14b9d6920b6e7ad6968d5f887a);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

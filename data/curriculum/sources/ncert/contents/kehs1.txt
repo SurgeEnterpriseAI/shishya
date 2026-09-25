@@ -1,0 +1,51 @@
+# NCERT contents evidence — kehs1 — Themes in World History (index class 11, History)
+# source: https://ncert.nic.in/textbook/pdf/kehs1ps.pdf
+# fetched: 2026-09-25T23:15:19+05:30  sha256: 5ec8cf86c3a3c77f204be19e49714b8b4244087b5fc520ba654e27032795d824  bytes: 6700629
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 a89b1d3fb2eb62216898751175003e44ee823449be780a46a3c5708bfb7698c8);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kehs1#1 title [pymupdf p11] next=number
+  Theme 1: Writing and City Life ..... 9
++ Section II EMPIRES
++ Introduction ..... 30
+@kehs1#1:section section [pymupdf p11] next=boilerplate
+  Section I EARLY SOCIETIES
++ Introduction ..... 2
++ Timeline I (6 MYA TO 1 BCE) ..... 5
+@kehs1#2 title [pymupdf p11] next=number
+  Theme 2: An Empire Across Three Continents ..... 38
++ Theme 3: Nomadic Empires ..... 58
++ Section III CHANGING TRADITIONS
+@kehs1#2:section section [pymupdf p11] next=boilerplate
+  Section II EMPIRES
++ Introduction ..... 30
++ Timeline II (C. 100 BCE TO 1300 CE) ..... 34
+@kehs1#3 title [pymupdf p11] next=number
+  Theme 3: Nomadic Empires ..... 58
++ Section III CHANGING TRADITIONS
++ Introduction ..... 78
+@kehs1#4 title [pymupdf p11] next=number
+  Theme 4: The Three Orders..... 86
++ Theme 5: Changing Cultural Traditions..... 106
++ Section IV TOWARDS MODERNISATION
+@kehs1#4:section section [pymupdf p11] next=boilerplate
+  Section III CHANGING TRADITIONS
++ Introduction ..... 78
++ Timeline III (C. 1300 TO 1700) ..... 82
+@kehs1#5 title [pymupdf p11] next=number
+  Theme 5: Changing Cultural Traditions..... 106
++ Section IV TOWARDS MODERNISATION
++ Introduction ..... 124
+@kehs1#6 title [pymupdf p11] next=number
+  Theme 6: Displacing Indigenous Peoples ..... 135
++ Theme 7: Paths to Modernisation ..... 153
++ Conclusion..... 182
+@kehs1#6:section section [pymupdf p11] next=boilerplate
+  Section IV TOWARDS MODERNISATION
++ Introduction ..... 124
++ Timeline IV (C. 1700 TO 2000)..... 128
+@kehs1#7 title [pdftotext p11] next=boilerplate
+~ e 6: Displacing Indigenous Peoples ..... 135 Theme 7: Paths to Modernisation ..... 153
++ Conclusion ..... 182 Suggested Reading ..... 185
++ Reprint 2026-27

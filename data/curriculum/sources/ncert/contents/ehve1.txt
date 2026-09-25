@@ -1,0 +1,8 @@
+# NCERT contents evidence — ehve1 — Veena (index class 5, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/ehve1ps.pdf
+# fetched: 2026-09-25T23:14:23+05:30  sha256: c3c5bbafb6d52df9c367a77ad4b95924e16f939c528ae42d309bbc2cf80f3d47  bytes: 6411262
+# contents pages of the PDF: none found of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 504f7b48932bdb8f13e608cea2160e28f3ad92b1324473325c2bb1a3c7afeb86);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

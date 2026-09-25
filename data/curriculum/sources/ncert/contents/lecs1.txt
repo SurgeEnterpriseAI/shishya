@@ -1,0 +1,59 @@
+# NCERT contents evidence — lecs1 — Computer Science (index class 12, Computer Science)
+# source: https://ncert.nic.in/textbook/pdf/lecs1ps.pdf
+# fetched: 2026-09-25T23:15:44+05:30  sha256: 81e004d02e9d14265377788799cbe3b8c073ab6e8796c891164d4f74e3994e0c  bytes: 1359494
+# contents pages of the PDF: 9,10,11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 c30cc9e2a881e9a8a624f5a613023ade2556221b33e4734c828a9e44a550730d);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lecs1#1 title [pdftotext p9] next=number
+  Chapter 1 Exception Handling in Python
++ 1
++ 1.1 Introduction
+@lecs1#2 title [pdftotext p9] next=number
+  Chapter 2 File Handling in Python
++ 19
++ 2.1 Introduction to Files
+@lecs1#3 title [pdftotext p9] next=number
+  Chapter 3 Stack
++ 39
++ 3.1 Introduction
+@lecs1#4 title [pdftotext p9] next=number
+  Chapter 4 Queue
++ 53
++ 4.1 Introduction to Queue
+@lecs1#5 title [pdftotext p10] next=number
+  Chapter 5 Sorting
++ 5.1 Introduction 5.2 Bubble Sort 5.3 Selection Sort 5.4 Insertion Sort 5.5 Time Complexity of Algorithms
++ Chapter 6 Searching
+@lecs1#6 title [pdftotext p10] next=number
+  Chapter 6 Searching
++ 6.1 Introduction 6.2 Linear Search 6.3 Binary Search 6.4 Search by Hashing
++ Chapter 7 Understanding Data
+@lecs1#7 title [pdftotext p10] next=number
+  Chapter 7 Understanding Data
++ 7.1 Introduction to Data 7.2 Data Collection 7.3 Data Storage 7.4 Data Processing 7.5 Statistical Techniques for Data Processing
++ Chapter 8 Database Concepts
+@lecs1#8 title [pdftotext p10] next=number
+  Chapter 8 Database Concepts
++ 8.1 Introduction 8.2 File System 8.3 Database Management System 8.4 Relational Data Model 8.5 Keys in a Relational Database
++ 56 59 61
+@lecs1#9 title [pdftotext p10] next=number
+  Chapter 9 Structured Query Language (SQL)
++ 9.1 Introduction 9.2 Structured Query Language (SQL) 9.3 Data Types and Constraints in MySQL 9.4 SQL for Data Definition 9.5 SQL for Data Manipulation 9.6 SQL f
++ 131
+@lecs1#10 title [pdftotext p11] next=number
+  Chapter 10 Computer Networks
++ 181
++ 10.1 Introduction to Computer Networks
+@lecs1#11 title [pdftotext p11] next=number
+  Chapter 11 Data Communication
++ 11.1 Concept of Communication 11.2 Components of data Communication 11.3 Measuring Capacity of Communication Media 11.4 Types of Data Communication 11.5 Switchi
++ 203
+@lecs1#12 title [pdftotext p11] next=number
+  Chapter 12 Security Aspects
++ 12.1 Threats and Prevention 12.2 Malware 12.3 Antivirus 12.4 Spam 12.5 HTTP vs HTTPS 12.6 Firewall 12.7 Cookies 12.8 Hackers and Crackers 12.9 Network Security 
++ 223
+@lecs1#13 title [pdftotext p11] next=number
+  Chapter 13 Project Based Learning
++ 13.1 Introduction 13.2 Approaches for Solving Projects 13.3 Teamwork
++ 13.4 Project Descriptions

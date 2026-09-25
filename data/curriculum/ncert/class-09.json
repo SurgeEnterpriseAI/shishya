@@ -1,0 +1,1451 @@
+{
+ "curriculum": "NCERT",
+ "indexClassValue": 9,
+ "classes": [
+  9
+ ],
+ "classLabel": "Class IX",
+ "source": {
+  "indexUrl": "https://ncert.nic.in/textbook.php",
+  "snapshot": "data/curriculum/sources/ncert/textbook-php-2026-09-25.html",
+  "snapshotSha256": "f22b184dce0e02298d571a49ea768dd0809c146c540a77f6f23fdfbdc0c4ec29",
+  "fetchedOn": "2026-09-25"
+ },
+ "subjects": [
+  {
+   "name": "English",
+   "code": "ENGLISH",
+   "books": [
+    {
+     "code": "iebe1",
+     "title": "Kaveri",
+     "language": "en",
+     "indexValue": "textbook.php?iebe1=0-8",
+     "bookUrl": "https://ncert.nic.in/textbook.php?iebe1=0-8",
+     "indexChapterCount": 8,
+     "listedChapterCount": 8,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/iebe1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/iebe1ps.pdf",
+      "sha256": "bacfd4a9157aaf4c3f639fa577365657fadd4b28e67f4bf01e6a4a06d7ac7b08",
+      "fetchedAt": "2026-09-25T23:14:49+05:30",
+      "printedSession": null,
+      "firstEdition": "January 2026",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/iebe1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iebe101.pdf",
+       "number": "1",
+       "kind": "lesson",
+       "title": "How I Taught My Grandmother to Read",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Bharat Our Land",
+         "page": "23"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iebe102.pdf",
+       "number": "2",
+       "kind": "lesson",
+       "title": "The Pot Maker",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Gifts of Grace: Honouring Our Vocations",
+         "page": "57"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iebe103.pdf",
+       "number": "3",
+       "kind": "lesson",
+       "title": "Winds of Change",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Canvas of Soil",
+         "page": "86"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iebe104.pdf",
+       "number": "4",
+       "kind": "lesson",
+       "title": "Vitamin-M",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "I Cannot Remember My Mother",
+         "page": "126"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iebe105.pdf",
+       "number": "5",
+       "kind": "lesson",
+       "title": "The World of Limitless Possibilities",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Nine Gold Medals",
+         "page": "156"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iebe106.pdf",
+       "number": "6",
+       "kind": "lesson",
+       "title": "Twin Melodies",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "A Friend Found in Music",
+         "page": "194"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iebe107.pdf",
+       "number": "7",
+       "kind": "lesson",
+       "title": "Carrier of Words",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Words",
+         "page": "220"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iebe108.pdf",
+       "number": "8",
+       "kind": "lesson",
+       "title": "Follow That Dream",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Believe in Yourself",
+         "page": "245"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Hindi",
+   "code": "HINDI",
+   "books": [
+    {
+     "code": "ihga1",
+     "title": "Ganga",
+     "language": "hi",
+     "indexValue": "textbook.php?ihga1=0-12",
+     "bookUrl": "https://ncert.nic.in/textbook.php?ihga1=0-12",
+     "indexChapterCount": 12,
+     "listedChapterCount": 12,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/ihga1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/ihga1ps.pdf",
+      "sha256": "dd0ffc29120c850955aab67b22d51ea84442ff32ceeab837df4ccd66ff403867",
+      "fetchedAt": "2026-09-25T23:14:50+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/ihga1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihga101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihga102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihga103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihga104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihga105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihga106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihga107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihga108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihga109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihga110.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihga111.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihga112.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Sanskrit",
+   "code": "SANSKRIT",
+   "books": [
+    {
+     "code": "ihsh1",
+     "title": "Sharada",
+     "language": "sa",
+     "indexValue": "textbook.php?ihsh1=0-16",
+     "bookUrl": "https://ncert.nic.in/textbook.php?ihsh1=0-16",
+     "indexChapterCount": 16,
+     "listedChapterCount": 16,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/ihsh1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/ihsh1ps.pdf",
+      "sha256": "9a5024a6f65107f4fc1343d97405b3dd8fcf0bbdf7ae53ae751d59ad26de8dbf",
+      "fetchedAt": "2026-09-25T23:14:53+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/ihsh1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh110.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh111.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh112.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh113.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh114.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh115.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ihsh116.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "isanskritr21",
+     "title": "Risikulya(R2)",
+     "language": "sa",
+     "indexValue": "textbook.php?isanskritr21=0-10",
+     "bookUrl": "https://ncert.nic.in/textbook.php?isanskritr21=0-10",
+     "indexChapterCount": 10,
+     "listedChapterCount": 10,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/isanskritr21dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/isanskritr21ps.pdf",
+      "sha256": "dd038f308877fce7b15da2f0339ce05ebeac37d740c8e8179572707e9d4ca76b",
+      "fetchedAt": "2026-09-25T23:15:00+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/isanskritr21.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/isanskritr2101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/isanskritr2102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/isanskritr2103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/isanskritr2104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/isanskritr2105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/isanskritr2106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/isanskritr2107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/isanskritr2108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/isanskritr2109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/isanskritr2110.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Mathematics",
+   "code": "MATHEMATICS",
+   "books": [
+    {
+     "code": "iemh1",
+     "title": "Ganita Manjari",
+     "language": "en",
+     "indexValue": "textbook.php?iemh1=0-8",
+     "bookUrl": "https://ncert.nic.in/textbook.php?iemh1=0-8",
+     "indexChapterCount": 8,
+     "listedChapterCount": 8,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/iemh1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/iemh1ps.pdf",
+      "sha256": "e2e2f01f4ccba8fd5d9dbe7a48af89d882e3518e4e889ca139805b76cf43aca9",
+      "fetchedAt": "2026-09-25T23:14:51+05:30",
+      "printedSession": null,
+      "firstEdition": "April 2026",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/iemh1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemh101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Orienting Yourself: The Use of Coordinates",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemh102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Introduction to Linear Polynomials",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemh103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "The World of Numbers",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemh104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Exploring Algebraic Identities",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemh105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "I’m Up and Down, and Round and Round",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemh106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Measuring Space: Perimeter and Area",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemh107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "The Mathematics of Maybe: Introduction to Probability",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemh108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Predicting What Comes Next: Exploring Sequences and Progressions",
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "ihmh1",
+       "title": "Ganita Manjari (Hindi)",
+       "language": "hi",
+       "languageFrom": "title",
+       "chapterCount": 8,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ihmh1=0-8"
+      },
+      {
+       "code": "iumh1",
+       "title": "Ganit Manjari (Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 8,
+       "bookUrl": "https://ncert.nic.in/textbook.php?iumh1=0-8"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Science",
+   "code": "SCIENCE",
+   "books": [
+    {
+     "code": "iesc1",
+     "title": "Exploration",
+     "language": "en",
+     "indexValue": "textbook.php?iesc1=0-13",
+     "bookUrl": "https://ncert.nic.in/textbook.php?iesc1=0-13",
+     "indexChapterCount": 13,
+     "listedChapterCount": 13,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/iesc1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/iesc1ps.pdf",
+      "sha256": "6dfb484cc05eeea3886bd4db603b81e19c6b5e146d4a77a9a60a55cf12b2cdee",
+      "fetchedAt": "2026-09-25T23:14:53+05:30",
+      "printedSession": null,
+      "firstEdition": "April 2026",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/iesc1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Exploration: Entering the World of Secondary Science",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Cell: The Building Block of Life",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Tissues in Action",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Describing Motion Around Us",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Exploring Mixtures and their Separation",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "How Forces Affect Motion",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Work, Energy, and Simple Machines",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Journey Inside the Atom",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Atomic Foundations of Matter",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Sound Waves: Characteristics and Applications",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Reproduction: How Life Continues",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Patterns in Life: Diversity and Classification",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iesc113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Earth as a System: Energy, Matter, and Life",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "ihsc1",
+       "title": "Anveshan",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ihsc1=0-13"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Social Science",
+   "code": "SOCIAL_SCIENCE",
+   "books": [
+    {
+     "code": "iest1",
+     "title": "Understanding Society India and Beyond PART-I",
+     "language": "en",
+     "indexValue": "textbook.php?iest1=0-9",
+     "bookUrl": "https://ncert.nic.in/textbook.php?iest1=0-9",
+     "indexChapterCount": 9,
+     "listedChapterCount": 9,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/iest1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/iest1ps.pdf",
+      "sha256": "513a4c83675e10755e784e09728ae171b38826a6aee6cdb48f460cbec95ae25e",
+      "fetchedAt": "2026-09-25T23:14:58+05:30",
+      "printedSession": null,
+      "firstEdition": "June 2026",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/iest1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iest101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Understanding Social Science",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iest102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Shaping of the Earth’s Surface",
+       "section": "Geography",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iest103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Atmosphere and Climate",
+       "section": "Geography",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iest104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Early Humans and Beginning of Civilisation",
+       "section": "History",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iest105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "State and Society up to 1000 CE",
+       "section": "History",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iest106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Democracy",
+       "section": "Political Science",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iest107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Elections",
+       "section": "Political Science",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iest108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Building Blocks in Economics: The Problem of Choice",
+       "section": "Economics",
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iest109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "The Price Puzzle: What Drives the Market",
+       "section": "Economics",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Arts",
+   "code": "ARTS",
+   "books": [
+    {
+     "code": "iemr1",
+     "title": "Madhurima",
+     "language": "en",
+     "indexValue": "textbook.php?iemr1=0-17",
+     "bookUrl": "https://ncert.nic.in/textbook.php?iemr1=0-17",
+     "indexChapterCount": 17,
+     "listedChapterCount": 17,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/iemr1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/iemr1ps.pdf",
+      "sha256": "7b2b5a7a1041779b09aea3a06e2fa4abbd9030e66c59942e3d0c2639b1c61463",
+      "fetchedAt": "2026-09-25T23:14:55+05:30",
+      "printedSession": null,
+      "firstEdition": "April 2026",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/iemr1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Introduction to the History of Arts",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "The Stage Is Yours",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Symbols and Metaphors on Stage",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Creativity in Light and Sound",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "From Vision to Performance: Direction and Acting",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Music and Us",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "The Science of Music",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Rāga and Tāla",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Music Travels Around the World",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Components of Dance",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Dance as Visual Storytelling",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Cultural Connections Through Dance",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Dance Choreography",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr114.pdf",
+       "number": "14",
+       "kind": "chapter",
+       "title": "Exploring the Fundamentals of Visual Arts",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr115.pdf",
+       "number": "15",
+       "kind": "chapter",
+       "title": "Mediums and Techniques in Visual Art",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr116.pdf",
+       "number": "16",
+       "kind": "chapter",
+       "title": "Visual Composition",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iemr117.pdf",
+       "number": "17",
+       "kind": "chapter",
+       "title": "Branches of Visual Arts",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Urdu",
+   "code": "URDU",
+   "books": [
+    {
+     "code": "iuju1",
+     "title": "Jamuna",
+     "language": "ur",
+     "indexValue": "textbook.php?iuju1=0-15",
+     "bookUrl": "https://ncert.nic.in/textbook.php?iuju1=0-15",
+     "indexChapterCount": 15,
+     "listedChapterCount": 15,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/iuju1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/iuju1ps.pdf",
+      "sha256": "1e932b086219e4f1dddd3a08c83c4fbb0d421b89ecd3c7879f991d184f19c166",
+      "fetchedAt": "2026-09-25T23:14:58+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/iuju1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju101.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju102.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju103.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju104.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju105.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju106.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju107.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju108.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju109.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju110.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju111.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju112.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju113.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju114.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iuju115.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Physical Education and Well Being",
+   "code": "PHYSICAL_EDUCATION_AND_WELL_BEING",
+   "books": [
+    {
+     "code": "iehp1",
+     "title": "Khel Praveen",
+     "language": "en",
+     "indexValue": "textbook.php?iehp1=0-6",
+     "bookUrl": "https://ncert.nic.in/textbook.php?iehp1=0-6",
+     "indexChapterCount": 6,
+     "listedChapterCount": 6,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/iehp1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/iehp1ps.pdf",
+      "sha256": "5c9beb28bd8d5b19c3d2c3dbe4ac0ede6de906e6215b9759ec8423900ebce292",
+      "fetchedAt": "2026-09-25T23:14:59+05:30",
+      "printedSession": null,
+      "firstEdition": "April 2026",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/iehp1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iehp101.pdf",
+       "number": "1",
+       "kind": "unit",
+       "title": "Evolution of Physical Education and Well-being",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iehp102.pdf",
+       "number": "2",
+       "kind": "unit",
+       "title": "Science and Sports",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iehp103.pdf",
+       "number": "3",
+       "kind": "unit",
+       "title": "Olympism",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iehp104.pdf",
+       "number": "4",
+       "kind": "unit",
+       "title": "Sports for All",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iehp105.pdf",
+       "number": "5",
+       "kind": "unit",
+       "title": "Sports",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iehp106.pdf",
+       "number": "6",
+       "kind": "unit",
+       "title": "Yoga for Holistic Health and Personal Excellence",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "ICT",
+   "code": "ICT",
+   "books": [],
+   "notYetPublished": [
+    {
+     "title": "Coming Soon",
+     "indexValue": ""
+    }
+   ]
+  },
+  {
+   "name": "Skill Education",
+   "code": "SKILL_EDUCATION",
+   "books": [
+    {
+     "code": "iekv1",
+     "title": "Kaushal Vikas",
+     "language": "en",
+     "indexValue": "textbook.php?iekv1=0-12",
+     "bookUrl": "https://ncert.nic.in/textbook.php?iekv1=0-12",
+     "indexChapterCount": 12,
+     "listedChapterCount": 12,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/iekv1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/iekv1ps.pdf",
+      "sha256": "4ed2a96fffe74f6d7b3b3eba41470ce14211106a1ff0cfe9df1f457d48292617",
+      "fetchedAt": "2026-09-25T23:15:01+05:30",
+      "printedSession": null,
+      "firstEdition": "April 2026",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/iekv1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iekv101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Introduction to Agricultural Practices",
+       "section": "Work with Life Forms",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iekv102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Rooftop Gardening",
+       "section": "Work with Life Forms",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iekv103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Precision Farming",
+       "section": "Work with Life Forms",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iekv104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Additional Vocations",
+       "section": "Work with Life Forms",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iekv105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Shaping Materials",
+       "section": "Work with Machines and Materials",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iekv106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Construction",
+       "section": "Work with Machines and Materials",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iekv107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Apparel",
+       "section": "Work with Machines and Materials",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iekv108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Additional Vocations",
+       "section": "Work with Machines and Materials",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iekv109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Personal and Lifestyle Services",
+       "section": "Work in Human Services",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iekv110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Healthcare",
+       "section": "Work in Human Services",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iekv111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Tourism",
+       "section": "Work in Human Services",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/iekv112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Additional Vocations",
+       "section": "Work in Human Services",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  }
+ ],
+ "counts": {
+  "subjects": 11,
+  "books": 11,
+  "chapters": 73,
+  "unresolvedChapters": 53,
+  "editions": 3
+ }
+}

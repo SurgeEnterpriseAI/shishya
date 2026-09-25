@@ -1,0 +1,4 @@
+# first 3 text lines of https://ncert.nic.in/textbook/pdf/keph103.pdf (fetched 2026-09-25T23:24:44+05:30, sha256 7619da28a2e58c099426fe256a966383a8d7da6e23c69deee42b62481aecd355)
+CHAPTER THREE
+MOTION IN A PLANE
+3.1  INTRODUCTION

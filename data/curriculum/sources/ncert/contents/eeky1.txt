@@ -1,0 +1,19 @@
+# NCERT contents evidence — eeky1 — Khel Yoga (index class 5, Physical Education and Well Being)
+# source: https://ncert.nic.in/textbook/pdf/eeky1ps.pdf
+# fetched: 2026-09-25T23:14:24+05:30  sha256: fea08713c31003e1c57f0813e1551d67cce63a7883e99c5029879000db9d9c17  bytes: 4562078
+# contents pages of the PDF: 17 of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 e95cf76d29e22a2310857e0bb393c7e5ca16ecad09c9bf87c899bffeda2f6e89);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@eeky1#1 title [pdftotext p17] next=number
+  Unit 1 — Basic Motor Movements
++ Chapter 1: Throwing and Catching
++ 10
+@eeky1#2 title [pymupdf p17] next=number
+  Unit 2 — Our Games
++ Chapter 5: Local and Traditional Games
++ 72
+@eeky1#3 title [pdftotext p17] next=number
+  Unit 3 — Yoga
++ Chapter 6: Yoga for Daily Life
++ 102

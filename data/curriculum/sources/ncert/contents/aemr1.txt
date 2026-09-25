@@ -1,0 +1,61 @@
+# NCERT contents evidence — aemr1 — Mridang (index class 1, English)
+# source: https://ncert.nic.in/textbook/pdf/aemr1ps.pdf
+# fetched: 2026-09-25T23:14:11+05:30  sha256: 2d1815dd2829dd5955d1362b9bf6f8b79bd2f5f6b7f9dab77c05535f00ce586f  bytes: 6322092
+# contents pages of the PDF: 13,14 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 4bf97786809cbd96e4c00009d59a58aa07349a09c1e411ed6d832fd42b0ff333);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@aemr1#1 title [pymupdf p13] next=known
+  Two Little Hands	 01
++ Greetings
++ 15
+@aemr1#1:section section [pymupdf p13] next=known
+  Unit 1: My Family and Me
++ Two Little Hands	 01
++ Greetings
+@aemr1#2 title [pdftotext p13] next=number
+  Unit 1: My Family and Me Two Little Hands 01 Greetings		 15
++ Unit 2: Life Around Us
++ Picture Time
+@aemr1#3 title [pdftotext p13] next=known
+  Picture Time
++ 47
++ The Cap-seller
+@aemr1#3:section section [pdftotext p13] next=known
+  Unit 2: Life Around Us
++ Picture Time
++ 47
+@aemr1#4 title [pdftotext p13] next=known
+  The Cap-seller
+  54
+  and the Monkeys
++ A Farm
++ 75
+@aemr1#5 title [pdftotext p13] next=page
+  A Farm
++ 75
++ Reprint 2026-27
+@aemr1#6 title [pdftotext p14] next=known
+  Fun with Pictures 84
++ The Food we Eat
++ 98
+@aemr1#6:section section [pdftotext p14] next=known
+  Unit 3: Food
++ Fun with Pictures 84
++ The Food we Eat
+@aemr1#7 title [pdftotext p14] next=number
+  The Food we Eat
++ 98
++ Unit 4: Seasons
+@aemr1#8 title [pdftotext p14] next=known
+  The Four Seasons
++ 106
++ Anandi’s Rainbow
+@aemr1#8:section section [pdftotext p14] next=known
+  Unit 4: Seasons
++ The Four Seasons
++ 106
+@aemr1#9 title [pdftotext p14] next=page
+  Anandi’s Rainbow
++ 115
++ xiv

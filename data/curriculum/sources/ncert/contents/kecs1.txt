@@ -1,0 +1,51 @@
+# NCERT contents evidence — kecs1 — Computer Science (index class 11, Computer Science)
+# source: https://ncert.nic.in/textbook/pdf/kecs1ps.pdf
+# fetched: 2026-09-25T23:15:22+05:30  sha256: 1d30c3264fdd351c249e57f2e704268f6e411c33739b2231e79d8ce90325227c  bytes: 2424016
+# contents pages of the PDF: 9,10,11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 7dba57dfcf66ea4fc6b3d139ec53376a64c53ed0b177c4ea0dd19daa6b80c83d);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kecs1#1 title [pdftotext p9] next=number
+  Chapter 1 : Computer System
++ 1
++ 1.1 Introduction to Computer System
+@kecs1#2 title [pdftotext p9] next=number
+  Chapter 2 : Encoding Schemes and Number System
++ 27
++ 2.1 Introduction
+@kecs1#3 title [pdftotext p9] next=number
+  Chapter 3 : Emerging Trends
++ 45
++ 3.1 Introduction
+@kecs1#4 title [pdftotext p9] next=number
+  Chapter 4 : Introduction to Problem Solving
++ 61
++ 4.1 Introduction
+@kecs1#5 title [pdftotext p10] next=number
+  Chapter 5 : Getting Started with Python
++ 5.1 Introduction to Python 5.2 Python Keywords 5.3 Identifiers 5.4 Variables 5.5 Comments 5.6 Everything is an Object 5.7 Data Types 5.8 Operators 5.9 Expressio
++ Chapter 6 : Flow of Control
+@kecs1#6 title [pdftotext p9] next=number
+  4.5 Flow of Control
++ 70
++ 4.6 Verifying Algorithms
+@kecs1#7 title [pdftotext p10] next=number
+  Chapter 7 : Functions
++ 7.1 Introduction 7.2 Functions 7.3 User Defined Functions 7.4 Scope of a Variable 7.5 Python Standard Library
++ Chapter 8 : Strings
+@kecs1#8 title [pdftotext p10] next=number
+  Chapter 8 : Strings
++ 8.1 Introduction 8.2 Strings 8.3 String Operations 8.4 Traversing a String 8.5 String Methods and Built-in Functions 8.6 Handling Strings
++ 80 81
+@kecs1#9 title [pdftotext p11] next=number
+  Chapter 9 : Lists
++ 9.1 Introduction to List 9.2 List Operations 9.3 Traversing a List 9.4 List Methods and Built-in Functions 9.5 Nested Lists 9.6 Copying Lists 9.7 List as Argume
++ Chapter 10 : Tuples and Dictionaries
+@kecs1#10 title [pdftotext p11] next=number
+  Chapter 10 : Tuples and Dictionaries
++ 10.1 Introduction to Tuples 10.2 Tuple Operations 10.3 Tuple Methods and Built-in Functions 10.4 Tuple Assignment 10.5 Nested Tuples 10.6 Tuple Handling 10.7 In
++ Chapter 11 : Societal Impact
+@kecs1#11 title [pdftotext p11] next=number
+  Chapter 11 : Societal Impact
++ 11.1 Introduction 11.2 Digital Footprints 11.3 Digital Society and Netizen 11.4 Data Protection 11.5 Cyber Crime 11.6 Indian Information Technology Act (IT Act)
++ 189

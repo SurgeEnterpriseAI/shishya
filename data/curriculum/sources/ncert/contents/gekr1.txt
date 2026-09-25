@@ -1,0 +1,87 @@
+# NCERT contents evidence — gekr1 — Kriti (index class 7, Arts)
+# source: https://ncert.nic.in/textbook/pdf/gekr1ps.pdf
+# fetched: 2026-09-25T23:14:38+05:30  sha256: c79ef5ec350d6ef57d02be417f88b6dc546241930aa80f8726d58b03d126f8d5  bytes: 8805716
+# contents pages of the PDF: 19,20 of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 504bb6f341a007a2bf20467803f3941c2bcd214db2f8f8881bb72bf2aeb7e1ef);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@gekr1#1 title [pdftotext p19] next=number
+  1. Understanding Emotions
++ 4
++ 2. Say More without Speech — Mime
+@gekr1#2 title [pdftotext p19] next=number
+  2. Say More without Speech — Mime
++ 20
++ 3. Let’s Design — Stage Technicals 2
+@gekr1#3 title [pdftotext p19] next=number
+  3. Let’s Design — Stage Technicals 2
++ 30
++ 4. Story of India’s Storytelling Tradition
+@gekr1#4 title [pdftotext p19] next=known
+  4. Story of India’s Storytelling Tradition
++ 46
++ Music
+@gekr1#5 title [pdftotext p19] next=number
+  5. Making Music
++ 60
++ 6. Music, Emotions and Creativity
+@gekr1#6 title [pdftotext p19] next=number
+  6. Music, Emotions and Creativity
++ 66
++ 7. Ragas and Talas/Taal
+@gekr1#7 title [pdftotext p19] next=number
+  7. Ragas and Talas/Taal
++ 73
++ 8. The Music of the People
+@gekr1#8 title [pdftotext p19] next=number
+  8. The Music of the People
++ 86
++ 9. Performance
+@gekr1#9 title [pdftotext p19] next=page
+  9. Performance
++ 98
++ Reprint 2026-27
+@gekr1#10 title [pdftotext p20] next=number
+  10. Dance and Sculpture
++ 109
++ 11. Dance Vocabulary and Techniques
+@gekr1#11 title [pdftotext p20] next=number
+  11. Dance Vocabulary and Techniques
++ 119
++ 12. Dance, You and Creativity
+@gekr1#12 title [pdftotext p20] next=number
+  12. Dance, You and Creativity
++ 133
++ 13. Personalities
+@gekr1#13 title [pdftotext p20] next=number
+  13. Personalities
++ 140
++ 14. Natya
+@gekr1#14 title [pdftotext p20] next=boilerplate
+  14. Natya
++ 143
++ Visual Arts
+@gekr1#15 title [pdftotext p20] next=number
+  15. Objects in Icons and Symbols
++ 155
++ 16. Nature’s Palette
+@gekr1#16 title [pdftotext p20] next=number
+  16. Nature’s Palette
++ 166
++ 17. How You Feel
+@gekr1#17 title [pdftotext p20] next=number
+  17. How You Feel
++ 176
++ 18. Textiles and Traditions
+@gekr1#18 title [pdftotext p20] next=number
+  18. Textiles and Traditions
++ 186
++ 19. The Art of Calligraphy
+@gekr1#19 title [pdftotext p20] next=number
+  19. The Art of Calligraphy
++ 194
++ 20. Integration of All Art Forms — Sculptures Come Alive!
+@gekr1#20 title [pdftotext p20] next=page
+  20. Integration of All Art Forms — Sculptures Come Alive!
++ 204
++ Reprint 2026-27

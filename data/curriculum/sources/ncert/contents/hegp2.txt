@@ -1,0 +1,35 @@
+# NCERT contents evidence — hegp2 — Ganita Prakash Part-II (index class 8, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/hegp2ps.pdf
+# fetched: 2026-09-25T23:14:43+05:30  sha256: c5f4d86252edb391401831f279ab5f2065ecb2f2d0631607aa4044e5a0d74cc8  bytes: 5503192
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 0a4f9a428c38a4e70deac31b7f8081335065101ab7acde4103c38516c4683b09);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@hegp2#1 title [pdftotext p15] next=number
+  Fractions in Disguise
++ 1
++ Chapter 2
+@hegp2#2 title [pdftotext p15] next=number
+  The Baudhayana-Pythagoras Theorem
++ 33
++ Chapter 3
+@hegp2#3 title [pdftotext p15] next=number
+  Proportional Reasoning-2
++ 55
++ Chapter 4
+@hegp2#4 title [pdftotext p15] next=number
+  Exploring Some Geometric Themes
++ 70
++ Chapter 5
+@hegp2#5 title [pdftotext p15] next=number
+  Tales by Dots and Lines
++ 103
++ Chapter 6
+@hegp2#6 title [pdftotext p15] next=number
+  Algebra Play
++ 135
++ Chapter 7
+@hegp2#7 title [pdftotext p15] next=boilerplate
+  Area
++ 148
++ Learning Material Sheets

@@ -3,15 +3,17 @@
 // Each quiz is keyed by (boardSlug:classNum:subjectSlug:chapterSlug).
 // 5 multiple-choice questions per chapter with explanations.
 //
-// Day-1 coverage: a handful of representative chapters from the highest-
-// stakes subjects (Class 10 Math + Science, Class 12 Physics + Chemistry
-// + Math + Biology). Other chapters render the honest "quiz being
-// authored" stub on their chapter page. This grows organically as
-// content is authored.
+// Coverage: 33 chapters of CBSE Class 10 / 11 / 12 (165 MCQs).
 //
-// Questions are written by hand (not LLM-generated) to ensure NCERT
-// alignment. Future versions will use the AI generator (lib/ai/notes.ts)
-// to draft, then human-review against the NCERT chapter PDF.
+// 25 Sep 2026: NOT SERVED. These were added in the 19-20 May 2026 build
+// (commits 4936777, 8e66a26). The old header said "written by hand (not
+// LLM-generated)"; nothing records who or what wrote them, and none has an
+// answer-check record (they live only in this file, never went through the
+// question factory's blind solves). The school content rule is that nothing
+// goes live before its answer is checked, so chapter pages show
+// "coming soon" instead (SCHOOL_QUIZZES_ANSWER_CHECKED below). The plan is
+// to move them into Question rows, run the verify batch, and retire this
+// file; flip the flag only after a checked copy exists.
 
 export interface QuizQuestion {
   id: string;
@@ -28,6 +30,12 @@ export interface ChapterQuiz {
   key: string;          // "cbse:10:mathematics:real-numbers"
   questions: QuizQuestion[];
 }
+
+/**
+ * 25 Sep 2026: false = chapter pages never render these quizzes. Pinned by
+ * tests/unit/schooling-honesty.test.ts; see the header for why.
+ */
+export const SCHOOL_QUIZZES_ANSWER_CHECKED: boolean = false;
 
 export function quizKey(boardSlug: string, classNum: number, subjectSlug: string, chapterSlug: string): string {
   return `${boardSlug}:${classNum}:${subjectSlug}:${chapterSlug}`;

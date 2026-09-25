@@ -1,0 +1,36 @@
+# NCERT contents evidence — lehs2 — Themes in Indian History-II (index class 12, History)
+# source: https://ncert.nic.in/textbook/pdf/lehs2ps.pdf
+# fetched: 2026-09-25T23:15:41+05:30  sha256: 3b48ddd67f66a77aba801255e648a171c49705bd0033a99351e7096aee3991ae  bytes: 7210704
+# contents pages of the PDF: 13 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 6b8146c09d4ac3d1d21aee46a28fad9ce13a59b3e11a129ef94ef49832d3c612);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lehs2#1 title [pymupdf p13] next=known
+  THROUGH THE EYES OF TRAVELLERS
++ 115
++ Perceptions of Society
+@lehs2#1:subtitle subtitle [pymupdf p13] next=sub-entry
+  Perceptions of Society
++ (c. tenth to seventeenth century)
++ THEME SIX
+@lehs2#2 title [pymupdf p13] next=known
+  BHAKTI-SUFI TRADITIONS
++ 140
++ Changes in Religious Beliefs
+@lehs2#2:subtitle subtitle [pymupdf p13] next=sub-entry
+  Changes in Religious Beliefs
+  and Devotional Texts
++ (c. eighth to eighteenth century)
++ THEME SEVEN
+@lehs2#3 title [pymupdf p13] next=sub-entry
+  AN IMPERIAL CAPITAL: VIJAYANAGARA
++ 170
++ (c. fourteenth to sixteenth century)
+@lehs2#4 title [pymupdf p13] next=known
+  PEASANTS, ZAMINDARS AND THE STATE
++ 196
++ Agrarian Society and the Mughal Empire
+@lehs2#4:subtitle subtitle [pymupdf p13] next=sub-entry
+  Agrarian Society and the Mughal Empire
++ (c. sixteenth-seventeenth centuries)
++ * Part III will follow

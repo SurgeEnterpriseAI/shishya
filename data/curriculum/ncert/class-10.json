@@ -1,0 +1,2463 @@
+{
+ "curriculum": "NCERT",
+ "indexClassValue": 10,
+ "classes": [
+  10
+ ],
+ "classLabel": "Class X",
+ "source": {
+  "indexUrl": "https://ncert.nic.in/textbook.php",
+  "snapshot": "data/curriculum/sources/ncert/textbook-php-2026-09-25.html",
+  "snapshotSha256": "f22b184dce0e02298d571a49ea768dd0809c146c540a77f6f23fdfbdc0c4ec29",
+  "fetchedOn": "2026-09-25"
+ },
+ "subjects": [
+  {
+   "name": "Mathematics",
+   "code": "MATHEMATICS",
+   "books": [
+    {
+     "code": "jemh1",
+     "title": "Mathematics",
+     "language": "en",
+     "indexValue": "textbook.php?jemh1=0-14",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jemh1=0-14",
+     "indexChapterCount": 14,
+     "listedChapterCount": 14,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jemh1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jemh1ps.pdf",
+      "sha256": "62867d1b27b42e110948ee1301446a15e89ed386e04bb5b29dc6e301fa679f94",
+      "fetchedAt": "2026-09-25T23:15:00+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "December 2006",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jemh1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Real Numbers",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Polynomials",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Pair of Linear Equations in Two Variables",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Quadratic Equations",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Arithmetic Progressions",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Triangles",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Coordinate Geometry",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Introduction to Trigonometry",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Some Applications of Trigonometry",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Circles",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Areas Related to Circles",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Surface Areas and Volumes",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Statistics",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jemh114.pdf",
+       "number": "14",
+       "kind": "chapter",
+       "title": "Probability",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "jhmh1",
+       "title": "Ganit",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?jhmh1=0-14"
+      },
+      {
+       "code": "jumh1",
+       "title": "Riyazi",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?jumh1=0-15"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Science",
+   "code": "SCIENCE",
+   "books": [
+    {
+     "code": "jesc1",
+     "title": "Science",
+     "language": "en",
+     "indexValue": "textbook.php?jesc1=0-13",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jesc1=0-13",
+     "indexChapterCount": 13,
+     "listedChapterCount": 13,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jesc1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jesc1ps.pdf",
+      "sha256": "cf2a2afb28bd01b4518dbd7e9517b8a9b4a85c989bf3a047cd96d1a8408fdcb0",
+      "fetchedAt": "2026-09-25T23:15:01+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "December 2006",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jesc1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Chemical Reactions and Equations",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Acids, Bases and Salts",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Metals and Non-metals",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Carbon and its Compounds",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Life Processes",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Control and Coordination",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "How do Organisms Reproduce?",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Heredity",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Light – Reflection and Refraction",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "The Human Eye and the Colourful World",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Electricity",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Magnetic Effects of Electric Current",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jesc113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Our Environment",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "jhsc1",
+       "title": "Vigyan",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?jhsc1=0-13"
+      },
+      {
+       "code": "jusc1",
+       "title": "Science(Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 16,
+       "bookUrl": "https://ncert.nic.in/textbook.php?jusc1=0-16"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Hindi",
+   "code": "HINDI",
+   "books": [
+    {
+     "code": "jhks1",
+     "title": "Kshitij-2",
+     "language": "hi",
+     "indexValue": "textbook.php?jhks1=0-12",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jhks1=0-12",
+     "indexChapterCount": 12,
+     "listedChapterCount": 12,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jhks1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jhks1ps.pdf",
+      "sha256": "0b2da8e54e52d0261a3ace0675ecacc712b213673dbd770b1b6773a5ba24b2d6",
+      "fetchedAt": "2026-09-25T23:15:01+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jhks1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhks101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhks102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhks103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhks104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhks105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhks106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhks107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhks108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhks109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhks110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhks111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhks112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "jhsp1",
+     "title": "Sparsh",
+     "language": "hi",
+     "indexValue": "textbook.php?jhsp1=0-14",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jhsp1=0-14",
+     "indexChapterCount": 14,
+     "listedChapterCount": 14,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jhsp1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jhsp1ps.pdf",
+      "sha256": "7b02d35bd5272afb76ccb1ac9de9e296ddb6bfe09106172b40114568c0455467",
+      "fetchedAt": "2026-09-25T23:15:02+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jhsp1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp113.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsp114.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "jhsy1",
+     "title": "Sanchayan Bhag-2",
+     "language": "hi",
+     "indexValue": "textbook.php?jhsy1=0-3",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jhsy1=0-3",
+     "indexChapterCount": 3,
+     "listedChapterCount": 3,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jhsy1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jhsy1ps.pdf",
+      "sha256": "5c9c3ff7c3531dedbbaad9f476913bdf3320728d1feb1a8d1d2178ea7b3c9aa7",
+      "fetchedAt": "2026-09-25T23:15:02+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jhsy1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsy101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsy102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsy103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "jhkr1",
+     "title": "Kritika",
+     "language": "hi",
+     "indexValue": "textbook.php?jhkr1=0-3",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jhkr1=0-3",
+     "indexChapterCount": 3,
+     "listedChapterCount": 3,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jhkr1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jhkr1ps.pdf",
+      "sha256": "c15911f0061ffa617714953c0ea3d75ed9928d6ac5209b97e9ef4a87a743586f",
+      "fetchedAt": "2026-09-25T23:15:02+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jhkr1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhkr101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhkr102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhkr103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Social Science",
+   "code": "SOCIAL_SCIENCE",
+   "books": [
+    {
+     "code": "jess1",
+     "title": "Contemporary India",
+     "language": "en",
+     "indexValue": "textbook.php?jess1=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jess1=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jess1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jess1ps.pdf",
+      "sha256": "49863325d9e0be6339eccbbd1a8604dd1e7ef3c3f3d6d279d42449da68296eca",
+      "fetchedAt": "2026-09-25T23:15:03+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "January 2006",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jess1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Resources and Development",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Forest and Wildlife Resources",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Water Resources",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Agriculture",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Minerals and Energy Resources",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Manufacturing Industries",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Lifelines of National Economy",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "jhss1",
+       "title": "Samkalin Bharat",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?jhss1=0-7"
+      },
+      {
+       "code": "juss1",
+       "title": "Aasri Hindustan-II",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?juss1=0-7"
+      }
+     ]
+    },
+    {
+     "code": "jess2",
+     "title": "Understanding Economic Development",
+     "language": "en",
+     "indexValue": "textbook.php?jess2=0-5",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jess2=0-5",
+     "indexChapterCount": 5,
+     "listedChapterCount": 5,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jess2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jess2ps.pdf",
+      "sha256": "40b5dcd81c747ecd1030a7bd28105963a7e13a5da615e5a37ab1e9d1101039da",
+      "fetchedAt": "2026-09-25T23:15:03+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "December 2006",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jess2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess201.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "DEVELOPMENT",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess202.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "SECTORS OF THE INDIAN ECONOMY",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess203.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "MONEY AND CREDIT",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess204.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "GLOBALISATION AND THE INDIAN ECONOMY",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess205.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "CONSUMER RIGHTS",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "jhss2",
+       "title": "Arthik Vikas ki Samajh",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?jhss2=0-5"
+      },
+      {
+       "code": "juss2",
+       "title": "Maashi Taraqqui Ki Samajh",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?juss2=0-5"
+      }
+     ]
+    },
+    {
+     "code": "jess3",
+     "title": "India and the Contemporary World-II",
+     "language": "en",
+     "indexValue": "textbook.php?jess3=0-5",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jess3=0-5",
+     "indexChapterCount": 5,
+     "listedChapterCount": 5,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jess3dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jess3ps.pdf",
+      "sha256": "d871b4c8c86ca614afc8d5b222bec05f7cef1dad27d3722bec0975583c911598",
+      "fetchedAt": "2026-09-25T23:15:04+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "March 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jess3.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess301.pdf",
+       "number": "I",
+       "kind": "chapter",
+       "title": "The Rise of Nationalism in Europe",
+       "section": "Section I: Events and Processes",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess302.pdf",
+       "number": "II",
+       "kind": "chapter",
+       "title": "Nationalism in India",
+       "section": "Section I: Events and Processes",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess303.pdf",
+       "number": "III",
+       "kind": "chapter",
+       "title": "The Making of a Global World",
+       "section": "Section II: Livelihoods, Economies and Societies",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess304.pdf",
+       "number": "IV",
+       "kind": "chapter",
+       "title": "The Age of Industrialisation",
+       "section": "Section II: Livelihoods, Economies and Societies",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess305.pdf",
+       "number": "V",
+       "kind": "chapter",
+       "title": "Print Culture and the Modern World",
+       "section": "Section III: Everyday Life, Culture and Politics",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "jhss3",
+       "title": "Bharat Aur Samakalin Vishav-2",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?jhss3=0-5"
+      },
+      {
+       "code": "juss3",
+       "title": "Hindustan Aur Asri Duniya",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?juss3=0-5"
+      }
+     ]
+    },
+    {
+     "code": "jess4",
+     "title": "Democratic Politics",
+     "language": "en",
+     "indexValue": "textbook.php?jess4=0-5",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jess4=0-5",
+     "indexChapterCount": 5,
+     "listedChapterCount": 5,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jess4dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jess4ps.pdf",
+      "sha256": "c4808f2cde54910812bc324560f62149654caa4bda282c64b3965451905ff22f",
+      "fetchedAt": "2026-09-25T23:15:04+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "March 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jess4.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess401.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Power-sharing",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess402.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Federalism",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess403.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Gender, Religion and Caste",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess404.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Political Parties",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jess405.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Outcomes of Democracy",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "jhss4",
+       "title": "Loktantrik Rajniti",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?jhss4=0-5"
+      },
+      {
+       "code": "juss4",
+       "title": "Jamhuri Siyasat-II",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 8,
+       "bookUrl": "https://ncert.nic.in/textbook.php?juss4=0-8"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "English",
+   "code": "ENGLISH",
+   "books": [
+    {
+     "code": "jeff1",
+     "title": "First Flight",
+     "language": "en",
+     "indexValue": "textbook.php?jeff1=0-9",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jeff1=0-9",
+     "indexChapterCount": 9,
+     "listedChapterCount": 9,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jeff1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jeff1ps.pdf",
+      "sha256": "665f92ea88ea7994549e277eafb8e779adcbd06b61e2c13f38e17f45f834858f",
+      "fetchedAt": "2026-09-25T23:15:04+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "February 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jeff1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jeff101.pdf",
+       "number": "1",
+       "kind": "lesson",
+       "title": "A Letter to God",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Dust of Snow",
+         "page": "14"
+        },
+        {
+         "kind": "piece",
+         "title": "Fire and Ice",
+         "page": "15"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "contained"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jeff102.pdf",
+       "number": "2",
+       "kind": "lesson",
+       "title": "Nelson Mandela: Long Walk to Freedom",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "A Tiger in the Zoo",
+         "page": "29"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "contained"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jeff103.pdf",
+       "number": "3",
+       "kind": "lesson",
+       "title": "Two Stories about Flying",
+       "includes": [
+        {
+         "kind": "part",
+         "n": "I",
+         "title": "His First Flight"
+        },
+        {
+         "kind": "part",
+         "n": "II",
+         "title": "Black Aeroplane"
+        },
+        {
+         "kind": "piece",
+         "title": "How to Tell Wild Animals",
+         "page": "43"
+        },
+        {
+         "kind": "piece",
+         "title": "The Ball Poem",
+         "page": "46"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "contained"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jeff104.pdf",
+       "number": "4",
+       "kind": "lesson",
+       "title": "From the Diary of Anne Frank",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Amanda!",
+         "page": "61"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "contained"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jeff105.pdf",
+       "number": "5",
+       "kind": "lesson",
+       "title": "Glimpses of India",
+       "includes": [
+        {
+         "kind": "part",
+         "n": "I",
+         "title": "A Baker from Goa"
+        },
+        {
+         "kind": "part",
+         "n": "II",
+         "title": "Coorg"
+        },
+        {
+         "kind": "part",
+         "n": "III",
+         "title": "Tea from Assam"
+        },
+        {
+         "kind": "piece",
+         "title": "The Trees",
+         "page": "77"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "no"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jeff106.pdf",
+       "number": "6",
+       "kind": "lesson",
+       "title": "Mijbil the Otter",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Fog",
+         "page": "93"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "contained"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jeff107.pdf",
+       "number": "7",
+       "kind": "lesson",
+       "title": "Madam Rides the Bus",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "The Tale of Custard the Dragon",
+         "page": "107"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "contained"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jeff108.pdf",
+       "number": "8",
+       "kind": "lesson",
+       "title": "The Sermon at Benares",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "For Anne Gregory",
+         "page": "118"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "no"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jeff109.pdf",
+       "number": "9",
+       "kind": "lesson",
+       "title": "The Proposal",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    },
+    {
+     "code": "jefp1",
+     "title": "Foot Prints Without feet Supp. Reader",
+     "language": "en",
+     "indexValue": "textbook.php?jefp1=0-9",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jefp1=0-9",
+     "indexChapterCount": 9,
+     "listedChapterCount": 9,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jefp1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jefp1ps.pdf",
+      "sha256": "1de1447d9bb70a099be730375daae47fa21ccbc18eba52885c4f142d8987f182",
+      "fetchedAt": "2026-09-25T23:15:05+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "April 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jefp1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jefp101.pdf",
+       "number": "1",
+       "kind": "lesson",
+       "title": "A Triumph of Surgery",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jefp102.pdf",
+       "number": "2",
+       "kind": "lesson",
+       "title": "The Thief’s Story",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jefp103.pdf",
+       "number": "3",
+       "kind": "lesson",
+       "title": "The Midnight Visitor",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jefp104.pdf",
+       "number": "4",
+       "kind": "lesson",
+       "title": "A Question of Trust",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jefp105.pdf",
+       "number": "5",
+       "kind": "lesson",
+       "title": "Footprints without Feet",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jefp106.pdf",
+       "number": "6",
+       "kind": "lesson",
+       "title": "The Making of a Scientist",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jefp107.pdf",
+       "number": "7",
+       "kind": "lesson",
+       "title": "The Necklace",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jefp108.pdf",
+       "number": "8",
+       "kind": "lesson",
+       "title": "Bholi",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jefp109.pdf",
+       "number": "9",
+       "kind": "lesson",
+       "title": "The Book That Saved the Earth",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    },
+    {
+     "code": "jewe2",
+     "title": "Words and Expressions  2",
+     "language": "en",
+     "indexValue": "textbook.php?jewe2=0-9",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jewe2=0-9",
+     "indexChapterCount": 9,
+     "listedChapterCount": 9,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jewe2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jewe2ps.pdf",
+      "sha256": "d4c3b119f47dab2a81efa928b079ec8940ce600348c65bec521af22df3505d05",
+      "fetchedAt": "2026-09-25T23:15:08+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "June 2019",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jewe2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jewe201.pdf",
+       "number": "1",
+       "kind": "unit",
+       "title": "A Letter to God",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jewe202.pdf",
+       "number": "2",
+       "kind": "unit",
+       "title": "Nelson Mandela: Long Walk to Freedom",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jewe203.pdf",
+       "number": "3",
+       "kind": "unit",
+       "title": "Two Stories about Flying",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jewe205.pdf",
+       "number": "5",
+       "kind": "unit",
+       "title": "Glimpses of India",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jewe206.pdf",
+       "number": "6",
+       "kind": "unit",
+       "title": "Mijbil the Otter",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jewe207.pdf",
+       "number": "7",
+       "kind": "unit",
+       "title": "Madam Rides the Bus",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jewe208.pdf",
+       "number": "8",
+       "kind": "unit",
+       "title": "The Sermon at Benaras",
+       "titleSource": "contents"
+      }
+     ],
+     "unresolved": [
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jewe204.pdf",
+       "number": "4",
+       "titleCandidate": "From the Diary of Anne Frank",
+       "reason": "pdf-http-404: chapter PDF did not return 200 on 2026-09-25"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jewe209.pdf",
+       "number": "9",
+       "titleCandidate": "The Proposal",
+       "reason": "pdf-http-404: chapter PDF did not return 200 on 2026-09-25"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Sanskrit",
+   "code": "SANSKRIT",
+   "books": [
+    {
+     "code": "jhsk1",
+     "title": "Shemushi",
+     "language": "sa",
+     "indexValue": "textbook.php?jhsk1=0-10",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jhsk1=0-10",
+     "indexChapterCount": 10,
+     "listedChapterCount": 10,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jhsk1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jhsk1ps.pdf",
+      "sha256": "a5684b72ea676aba18f3362118587d2b7232ee9d48a2f5ae434f56b25ce38683",
+      "fetchedAt": "2026-09-25T23:15:05+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jhsk1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsk101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsk102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsk103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsk104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsk105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsk106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsk107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsk108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsk109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhsk110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "jhva1",
+     "title": "Vyakaranavithi",
+     "language": "sa",
+     "indexValue": "textbook.php?jhva1=0-12",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jhva1=0-12",
+     "indexChapterCount": 12,
+     "listedChapterCount": 12,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jhva1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jhva1ps.pdf",
+      "sha256": "389b4b82b13b49247503b31551cab5da51f0ed45b2287462531602d06b74d611",
+      "fetchedAt": "2026-09-25T23:15:05+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jhva1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhva101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhva102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhva103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhva104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhva105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhva106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhva107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhva108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhva109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhva110.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhva111.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jhva112.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "jsab1",
+     "title": "Abhyaswaan Bhav-II",
+     "language": "sa",
+     "indexValue": "textbook.php?jsab1=0-14",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jsab1=0-14",
+     "indexChapterCount": 14,
+     "listedChapterCount": 14,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jsab1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jsab1ps.pdf",
+      "sha256": "221dc94e577234c890132ae48e9ff16ed1e7fb0c9287e1b6d41741c629e356d2",
+      "fetchedAt": "2026-09-25T23:15:06+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jsab1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab110.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab111.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab112.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab113.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jsab114.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Urdu",
+   "code": "URDU",
+   "books": [
+    {
+     "code": "juge1",
+     "title": "Gulzar-e-Urdu",
+     "language": "ur",
+     "indexValue": "textbook.php?juge1=0-12",
+     "bookUrl": "https://ncert.nic.in/textbook.php?juge1=0-12",
+     "indexChapterCount": 12,
+     "listedChapterCount": 12,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/juge1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/juge1ps.pdf",
+      "sha256": "d242715beebac7b567857838d12537c83d25f5a7ce2f9e908cc7236276bb14cf",
+      "fetchedAt": "2026-09-25T23:15:06+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/juge1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juge101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juge102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juge103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juge104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juge105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juge106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juge107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juge108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juge109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juge110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juge111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/juge112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "june1",
+     "title": "Nawa-e-Urdu",
+     "language": "ur",
+     "indexValue": "textbook.php?june1=0-14",
+     "bookUrl": "https://ncert.nic.in/textbook.php?june1=0-14",
+     "indexChapterCount": 14,
+     "listedChapterCount": 14,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/june1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/june1ps.pdf",
+      "sha256": "9eaec28e5b007db9eef1319c5564f7f60f414a256ec3453384dae8e0eec3932c",
+      "fetchedAt": "2026-09-25T23:15:08+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/june1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june113.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/june114.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "jujp1",
+     "title": "Jaan Pahechan",
+     "language": "ur",
+     "indexValue": "textbook.php?jujp1=0-22",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jujp1=0-22",
+     "indexChapterCount": 22,
+     "listedChapterCount": 22,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jujp1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jujp1ps.pdf",
+      "sha256": "7dd3f3e4eab3c52a04619939e3ab2f16e7bc31cb06686548b13bcceb0f762976",
+      "fetchedAt": "2026-09-25T23:15:07+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jujp1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp113.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp114.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp115.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp116.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp117.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 18,
+       "pdfSeq": 18,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp118.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 19,
+       "pdfSeq": 19,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp119.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 20,
+       "pdfSeq": 20,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp120.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 21,
+       "pdfSeq": 21,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp121.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 22,
+       "pdfSeq": 22,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jujp122.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "judp1",
+     "title": "Door-Paas",
+     "language": "ur",
+     "indexValue": "textbook.php?judp1=0-19",
+     "bookUrl": "https://ncert.nic.in/textbook.php?judp1=0-19",
+     "indexChapterCount": 19,
+     "listedChapterCount": 19,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/judp1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/judp1ps.pdf",
+      "sha256": "b38c5819ded4654466ff80fa96c7798b55367cdafeaa62d3c6234ef4888eb77d",
+      "fetchedAt": "2026-09-25T23:15:08+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/judp1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp101.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp102.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp103.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp104.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp105.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp106.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp107.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp108.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp109.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp110.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp111.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp112.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp113.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp114.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp115.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp116.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp117.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 18,
+       "pdfSeq": 18,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp118.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      },
+      {
+       "seq": 19,
+       "pdfSeq": 19,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/judp119.pdf",
+       "reason": "no-text-layer: the prelims PDF has no extractable text (scanned pages)"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "jusr1",
+     "title": "Sab Rang",
+     "language": "ur",
+     "indexValue": "textbook.php?jusr1=0-9",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jusr1=0-9",
+     "indexChapterCount": 9,
+     "listedChapterCount": 9,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jusr1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jusr1ps.pdf",
+      "sha256": "a76523bf7be69f8f68d4648887de11df27ab2a904fcfe1b08820ab0da88d6c3e",
+      "fetchedAt": "2026-09-25T23:15:09+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jusr1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jusr101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jusr102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jusr103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jusr104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jusr105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jusr106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jusr107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jusr108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jusr109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Health and Physical Education",
+   "code": "HEALTH_AND_PHYSICAL_EDUCATION",
+   "books": [
+    {
+     "code": "jehp1",
+     "title": "Health and Physical Education",
+     "language": "en",
+     "indexValue": "textbook.php?jehp1=0-13",
+     "bookUrl": "https://ncert.nic.in/textbook.php?jehp1=0-13",
+     "indexChapterCount": 13,
+     "listedChapterCount": 13,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/jehp1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/jehp1ps.pdf",
+      "sha256": "f8049325d8254a3544842e9b821600a4ec2a92e98dbcb85c6c699401d821e899",
+      "fetchedAt": "2026-09-25T23:15:09+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "August 2020",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/jehp1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Physical Education: Relation with other Subjects",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Effects of Physical Activities on Human Body",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Growth and Development during Adolescence",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Individual Games and Sports I",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Individual Games and Sports II",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Team Games and Sports II",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Dietary Considerations and Food Quality",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Safety Measures for Healthy Living",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Healthy Community Living",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Social Health",
+       "titleSource": "contents"
+      }
+     ],
+     "unresolved": [
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp106.pdf",
+       "number": "6",
+       "titleCandidate": "Team Games and Sports I",
+       "reason": "pdf-http-404: chapter PDF did not return 200 on 2026-09-25"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp108.pdf",
+       "number": "8",
+       "titleCandidate": "Yoga for Healthy Living",
+       "reason": "pdf-http-404: chapter PDF did not return 200 on 2026-09-25"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/jehp113.pdf",
+       "number": "13",
+       "titleCandidate": "Agencies and Awards Promoting Health, Sports and Yoga",
+       "reason": "pdf-http-404: chapter PDF did not return 200 on 2026-09-25"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  }
+ ],
+ "counts": {
+  "subjects": 8,
+  "books": 22,
+  "chapters": 84,
+  "unresolvedChapters": 149,
+  "editions": 12
+ }
+}

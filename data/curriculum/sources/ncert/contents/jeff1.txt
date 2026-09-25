@@ -1,0 +1,103 @@
+# NCERT contents evidence — jeff1 — First Flight (index class 10, English)
+# source: https://ncert.nic.in/textbook/pdf/jeff1ps.pdf
+# fetched: 2026-09-25T23:15:04+05:30  sha256: 665f92ea88ea7994549e277eafb8e779adcbd06b61e2c13f38e17f45f834858f  bytes: 1516355
+# contents pages of the PDF: 11,12 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 0cc6aedea5db3aa5a3c07d1fd0d735f9aee50daa136228ee1122274c01020dce);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@jeff1#1 title [pdftotext p11] next=caps-line
+  1. A Letter to God
++ 1
++ G.L.FUENTES
+@jeff1#1/1 include [pdftotext p11] next=caps-line
+  Dust of Snow
++ 14
++ ROBERT FROST
+@jeff1#1/2 include [pdftotext p11] next=caps-line
+  Fire and Ice
++ 15
++ ROBERT FROST
+@jeff1#2 title [pymupdf p11] next=caps-line
+  2. Nelson Mandela: Long Walk to Freedom
++ 16
++ NELSON ROLIHLAHLA MANDELA
+@jeff1#2/1 include [pdftotext p11] next=caps-line
+  A Tiger in the Zoo
++ 29
++ LESLIE NORRIS
+@jeff1#3 title [pdftotext p11] next=number
+  3. Two Stories about Flying
++ 32
++ I. His First Flight
+@jeff1#3/1 include [pdftotext p11] next=caps-line
+  I. His First Flight
++ LIAM O’ FLAHERTY
++ II. Black Aeroplane FREDERICK FORSYTH
+@jeff1#3/2 include [pymupdf p11] next=caps-line
+  II. Black Aeroplane
++ FREDERICK FORSYTH
++ How to Tell Wild Animals
+@jeff1#3/3 include [pdftotext p11] next=caps-line
+  How to Tell Wild Animals
++ 43
++ CAROLYN WELLS
+@jeff1#3/4 include [pdftotext p11] next=caps-line
+  The Ball Poem
++ 46
++ JOHN BERRYMAN
+@jeff1#4 title [pdftotext p11] next=caps-line
+  4. From the Diary of Anne Frank
++ 48
++ ANNE FRANK
+@jeff1#4/1 include [pdftotext p11] next=caps-line
+  Amanda!
++ 61
++ ROBIN KLEIN
+@jeff1#5 title [pymupdf p12] next=number
+  5. Glimpses of India
++ 63
++ I. A Baker from Goa
+@jeff1#5/1 include [pymupdf p12] next=caps-line
+  I. A Baker from Goa
++ LUCIO RODRIGUES
++ II. Coorg
+@jeff1#5/2 include [pymupdf p12] next=caps-line
+  II. Coorg
++ LOKESH ABROL
++ III. Tea from Assam
+@jeff1#5/3 include [pymupdf p12] next=caps-line
+  III. Tea from Assam
++ ARUP KUMAR DATTA
++ The Trees
+@jeff1#5/4 include [pymupdf p12] next=caps-line
+  The Trees
++ 77
++ ADRIENNE RICH
+@jeff1#6 title [pymupdf p12] next=caps-line
+  6. Mijbil the Otter
++ 80
++ GAVIN MAXWELL
+@jeff1#6/1 include [pymupdf p12] next=caps-line
+  Fog
++ 93
++ CARL SANDBURG
+@jeff1#7 title [pymupdf p12] next=caps-line
+  7. Madam Rides the Bus
++ 94
++ VALLIKKANNAN
+@jeff1#7/1 include [pymupdf p12] next=caps-line
+  The Tale of Custard the Dragon
++ 107
++ OGDEN NASH
+@jeff1#8 title [pdftotext p12] next=known
+  8. The Sermon at Benares
++ For Anne Gregory WILLIAM BUTLER YEATS
++ 9. The Proposal ANTON CHEKOV
+@jeff1#8/1 include [pymupdf p12] next=caps-line
+  For Anne Gregory
++ 118
++ WILLIAM BUTLER YEATS
+@jeff1#9 title [pymupdf p12] next=caps-line
+  9. The Proposal
++ 120
++ ANTON CHEKOV

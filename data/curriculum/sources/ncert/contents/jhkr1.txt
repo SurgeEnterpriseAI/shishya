@@ -1,0 +1,8 @@
+# NCERT contents evidence — jhkr1 — Kritika (index class 10, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/jhkr1ps.pdf
+# fetched: 2026-09-25T23:15:02+05:30  sha256: c15911f0061ffa617714953c0ea3d75ed9928d6ac5209b97e9ef4a87a743586f  bytes: 1434750
+# contents pages of the PDF: none found of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 093b83022cfd9a4c3b7a18854500c7eda0551f7c975d46b1fe2d5c1818549b77);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

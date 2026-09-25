@@ -1,0 +1,8 @@
+# NCERT contents evidence — khgv1 — Hindustani Sangeet Gayan Evam Vadan (index class 11, Sangeet)
+# source: https://ncert.nic.in/textbook/pdf/khgv1ps.pdf
+# fetched: 2026-09-25T23:15:25+05:30  sha256: acc17c6ef798b0f827f120658de549d82b91c2e11f195c117b2e2c163418e3f4  bytes: 3846258
+# contents pages of the PDF: none found of 24
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 8d2c4b264b2970e479a84fb40c6fd72d0bbc76a7a5f13167a3c3f2f8ef559ecf);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

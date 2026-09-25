@@ -1,0 +1,8 @@
+# NCERT contents evidence — lhat1 — Antra (index class 12, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/lhat1ps.pdf
+# fetched: 2026-09-25T23:15:30+05:30  sha256: 3e42ad1871da25ae0a31ca9bb37b3918ccdbafce10e0df315aa70b5564789856  bytes: 1479940
+# contents pages of the PDF: none found of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 d6e64b94fdd814bd2ef160aa237f567dcafe37cb9b1fde48d7c4b6818be1b2ad);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

@@ -1,0 +1,126 @@
+# chapter PDFs downloaded 26 Sep 2026 for chapters with includes (pieces printed inside the chapter PDF) and chapters whose title was corrected: item=title → result exact (pages 1-2 print the whole title as the heading) / contained (words present, not the whole heading) / no (image heading); item=include → the PDF pages whose text carries that piece's title
+code	pdfSeq	url	status	bytes	sha256	fetchedAt	item	text	result	pages
+cesa1	11	https://ncert.nic.in/textbook/pdf/cesa111.pdf	200	2342338	2de04e20602be925abd1ce0a92f59b5ee110a161ac799021a7d97a9747d0e6f7	2026-09-26T00:34:53+05:30	title	Chanda Mama Counts the Stars	exact	
+fepr1	1	https://ncert.nic.in/textbook/pdf/fepr101.pdf	200	14040235	256fda6b053cda4dbc836dcbd88e984d1f4d9f04849c8465129506cc2a162ddb	2026-09-26T00:34:33+05:30	title	Fables and Folk Tales	exact	
+fepr1	1	https://ncert.nic.in/textbook/pdf/fepr101.pdf	200	14040235	256fda6b053cda4dbc836dcbd88e984d1f4d9f04849c8465129506cc2a162ddb	2026-09-26T00:34:33+05:30	include	A Bottle of Dew	found	1,12,36
+fepr1	1	https://ncert.nic.in/textbook/pdf/fepr101.pdf	200	14040235	256fda6b053cda4dbc836dcbd88e984d1f4d9f04849c8465129506cc2a162ddb	2026-09-26T00:34:33+05:30	include	The Raven and the Fox	found	13,14,37
+fepr1	1	https://ncert.nic.in/textbook/pdf/fepr101.pdf	200	14040235	256fda6b053cda4dbc836dcbd88e984d1f4d9f04849c8465129506cc2a162ddb	2026-09-26T00:34:33+05:30	include	Rama to the Rescue	found	20,26,38
+fepr1	2	https://ncert.nic.in/textbook/pdf/fepr102.pdf	200	12342631	c4f0906c5fdb055f6e8309197e19128e651f845ce8dd0f7e86eb34df98e79608	2026-09-26T00:34:30+05:30	title	Friendship	exact	
+fepr1	2	https://ncert.nic.in/textbook/pdf/fepr102.pdf	200	12342631	c4f0906c5fdb055f6e8309197e19128e651f845ce8dd0f7e86eb34df98e79608	2026-09-26T00:34:30+05:30	include	The Unlikely Best Friends	found	1,31,33
+fepr1	2	https://ncert.nic.in/textbook/pdf/fepr102.pdf	200	12342631	c4f0906c5fdb055f6e8309197e19128e651f845ce8dd0f7e86eb34df98e79608	2026-09-26T00:34:30+05:30	include	A Friend’s Prayer	found	14,31,34
+fepr1	2	https://ncert.nic.in/textbook/pdf/fepr102.pdf	200	12342631	c4f0906c5fdb055f6e8309197e19128e651f845ce8dd0f7e86eb34df98e79608	2026-09-26T00:34:30+05:30	include	The Chair	found	21,24,26,27,28,35
+fepr1	3	https://ncert.nic.in/textbook/pdf/fepr103.pdf	200	9782731	3fc967ff357914eeccfcc8d1d41b672bed36a48b123fc6ab7942ca90a74cdb03	2026-09-26T00:34:35+05:30	title	Nurturing Nature	exact	
+fepr1	3	https://ncert.nic.in/textbook/pdf/fepr103.pdf	200	9782731	3fc967ff357914eeccfcc8d1d41b672bed36a48b123fc6ab7942ca90a74cdb03	2026-09-26T00:34:35+05:30	include	Neem Baba	found	1,2,3,4,5,6,9,10
+fepr1	3	https://ncert.nic.in/textbook/pdf/fepr103.pdf	200	9782731	3fc967ff357914eeccfcc8d1d41b672bed36a48b123fc6ab7942ca90a74cdb03	2026-09-26T00:34:35+05:30	include	What a Bird Thought	found	11,28
+fepr1	3	https://ncert.nic.in/textbook/pdf/fepr103.pdf	200	9782731	3fc967ff357914eeccfcc8d1d41b672bed36a48b123fc6ab7942ca90a74cdb03	2026-09-26T00:34:35+05:30	include	Spices that Heal Us	found	19,28
+fepr1	4	https://ncert.nic.in/textbook/pdf/fepr104.pdf	200	5811425	86cc9ae841d18d011fd177e8640eed96970a18bb76fe467e2be3c0ad339a9849	2026-09-26T00:34:32+05:30	title	Sports and Wellness	exact	
+fepr1	4	https://ncert.nic.in/textbook/pdf/fepr104.pdf	200	5811425	86cc9ae841d18d011fd177e8640eed96970a18bb76fe467e2be3c0ad339a9849	2026-09-26T00:34:32+05:30	include	Change of Heart	found	1,7,26
+fepr1	4	https://ncert.nic.in/textbook/pdf/fepr104.pdf	200	5811425	86cc9ae841d18d011fd177e8640eed96970a18bb76fe467e2be3c0ad339a9849	2026-09-26T00:34:32+05:30	include	The Winner	found	13,16
+fepr1	4	https://ncert.nic.in/textbook/pdf/fepr104.pdf	200	5811425	86cc9ae841d18d011fd177e8640eed96970a18bb76fe467e2be3c0ad339a9849	2026-09-26T00:34:32+05:30	include	Yoga—A Way of Life	found	20,27
+fepr1	5	https://ncert.nic.in/textbook/pdf/fepr105.pdf	200	9571559	3d58845dbed7a3721a11602ff63c06b5b299aafe75b57d60072aa232ef013b46	2026-09-26T00:34:35+05:30	title	Culture and Tradition	exact	
+fepr1	5	https://ncert.nic.in/textbook/pdf/fepr105.pdf	200	9571559	3d58845dbed7a3721a11602ff63c06b5b299aafe75b57d60072aa232ef013b46	2026-09-26T00:34:35+05:30	include	Hamara Bharat—Incredible India!	found	1
+fepr1	5	https://ncert.nic.in/textbook/pdf/fepr105.pdf	200	9571559	3d58845dbed7a3721a11602ff63c06b5b299aafe75b57d60072aa232ef013b46	2026-09-26T00:34:35+05:30	include	The Kites	found	11,12,13,14,15,17,18,19,33
+fepr1	5	https://ncert.nic.in/textbook/pdf/fepr105.pdf	200	9571559	3d58845dbed7a3721a11602ff63c06b5b299aafe75b57d60072aa232ef013b46	2026-09-26T00:34:35+05:30	include	Ila Sachani: Embroidering Dreams with her Feet	found	21,34
+fepr1	5	https://ncert.nic.in/textbook/pdf/fepr105.pdf	200	9571559	3d58845dbed7a3721a11602ff63c06b5b299aafe75b57d60072aa232ef013b46	2026-09-26T00:34:35+05:30	include	National War Memorial	found	30,31
+fees1	11	https://ncert.nic.in/textbook/pdf/fees111.pdf	200	8118760	61d0eaa6113cc92c0d49711e79d6d40cdc6a3d5918330eb5ba30abbcb0b3d569	2026-09-26T00:34:50+05:30	title	Grassroots Democracy — Part 2: Local Government in Rural Areas	exact	
+fees1	12	https://ncert.nic.in/textbook/pdf/fees112.pdf	200	11464809	e9607dcbe334b80c3584e062596972ea9cee1697fab48d5e1bc2ff3fef5edf77	2026-09-26T00:34:53+05:30	title	Grassroots Democracy — Part 3: Local Government in Urban Areas	exact	
+gepr1	1	https://ncert.nic.in/textbook/pdf/gepr101.pdf	200	17923438	3e8ea91a79cdde47f3da0cb4cd87e10675c28f3d901f740f0aa8384c0b9656c0	2026-09-26T00:34:36+05:30	title	Learning Together	exact	
+gepr1	1	https://ncert.nic.in/textbook/pdf/gepr101.pdf	200	17923438	3e8ea91a79cdde47f3da0cb4cd87e10675c28f3d901f740f0aa8384c0b9656c0	2026-09-26T00:34:36+05:30	include	The Day the River Spoke	found	1,6,39
+gepr1	1	https://ncert.nic.in/textbook/pdf/gepr101.pdf	200	17923438	3e8ea91a79cdde47f3da0cb4cd87e10675c28f3d901f740f0aa8384c0b9656c0	2026-09-26T00:34:36+05:30	include	Try Again	found	16,40,41
+gepr1	1	https://ncert.nic.in/textbook/pdf/gepr101.pdf	200	17923438	3e8ea91a79cdde47f3da0cb4cd87e10675c28f3d901f740f0aa8384c0b9656c0	2026-09-26T00:34:36+05:30	include	Three Days to See	found	28,41
+gepr1	2	https://ncert.nic.in/textbook/pdf/gepr102.pdf	200	19017415	c2ca48089bc2b3c65bc9b79ff04750c120be10cc6080654a2dc4a977517a3477	2026-09-26T00:34:39+05:30	title	Wit and Humour	exact	
+gepr1	2	https://ncert.nic.in/textbook/pdf/gepr102.pdf	200	19017415	c2ca48089bc2b3c65bc9b79ff04750c120be10cc6080654a2dc4a977517a3477	2026-09-26T00:34:39+05:30	include	Animals, Birds, and Dr. Dolittle	found	1,46
+gepr1	2	https://ncert.nic.in/textbook/pdf/gepr102.pdf	200	19017415	c2ca48089bc2b3c65bc9b79ff04750c120be10cc6080654a2dc4a977517a3477	2026-09-26T00:34:39+05:30	include	A Funny Man	found	17,46
+gepr1	2	https://ncert.nic.in/textbook/pdf/gepr102.pdf	200	19017415	c2ca48089bc2b3c65bc9b79ff04750c120be10cc6080654a2dc4a977517a3477	2026-09-26T00:34:39+05:30	include	Say the Right Thing	found	28,29,30,35,42,44,47
+gepr1	3	https://ncert.nic.in/textbook/pdf/gepr103.pdf	200	19127215	173f4029ef9b911a0ba3114e35a0cb8e969da079102c3c376dc2a66b40945a78	2026-09-26T00:34:42+05:30	title	Dreams and Discoveries	exact	
+gepr1	3	https://ncert.nic.in/textbook/pdf/gepr103.pdf	200	19127215	173f4029ef9b911a0ba3114e35a0cb8e969da079102c3c376dc2a66b40945a78	2026-09-26T00:34:42+05:30	include	My Brother’s Great Invention	found	1
+gepr1	3	https://ncert.nic.in/textbook/pdf/gepr103.pdf	200	19127215	173f4029ef9b911a0ba3114e35a0cb8e969da079102c3c376dc2a66b40945a78	2026-09-26T00:34:42+05:30	include	Paper Boats	found	19,20,21,22,23,27,47
+gepr1	3	https://ncert.nic.in/textbook/pdf/gepr103.pdf	200	19127215	173f4029ef9b911a0ba3114e35a0cb8e969da079102c3c376dc2a66b40945a78	2026-09-26T00:34:42+05:30	include	North, South, East, West	found	28,35,48
+gepr1	4	https://ncert.nic.in/textbook/pdf/gepr104.pdf	200	14069517	510a25e15c35222fb3840d9b9579d80316ef7a716cb9ecfeb2308bf762816d5a	2026-09-26T00:34:42+05:30	title	Travel and Adventure	exact	
+gepr1	4	https://ncert.nic.in/textbook/pdf/gepr104.pdf	200	14069517	510a25e15c35222fb3840d9b9579d80316ef7a716cb9ecfeb2308bf762816d5a	2026-09-26T00:34:42+05:30	include	The Tunnel	found	1,2,3,4,5,6,7,8,9,10,11,12,14
+gepr1	4	https://ncert.nic.in/textbook/pdf/gepr104.pdf	200	14069517	510a25e15c35222fb3840d9b9579d80316ef7a716cb9ecfeb2308bf762816d5a	2026-09-26T00:34:42+05:30	include	Travel	found	1,3,5,7,9,10,11,13,15,17,19,21,22,23,25,26,27,29,31,33,34,35,37,39
+gepr1	4	https://ncert.nic.in/textbook/pdf/gepr104.pdf	200	14069517	510a25e15c35222fb3840d9b9579d80316ef7a716cb9ecfeb2308bf762816d5a	2026-09-26T00:34:42+05:30	include	Conquering the Summit	found	28,39
+gepr1	5	https://ncert.nic.in/textbook/pdf/gepr105.pdf	200	18413716	000f001705207ccc74b987dfe157d4b539a134e5ffc29032296441d6f36d86a0	2026-09-26T00:34:44+05:30	title	Bravehearts	exact	
+gepr1	5	https://ncert.nic.in/textbook/pdf/gepr105.pdf	200	18413716	000f001705207ccc74b987dfe157d4b539a134e5ffc29032296441d6f36d86a0	2026-09-26T00:34:44+05:30	include	A Homage to Our Brave Soldiers	found	1,15
+gepr1	5	https://ncert.nic.in/textbook/pdf/gepr105.pdf	200	18413716	000f001705207ccc74b987dfe157d4b539a134e5ffc29032296441d6f36d86a0	2026-09-26T00:34:44+05:30	include	My Dear Soldiers	found	21,26,46
+gepr1	5	https://ncert.nic.in/textbook/pdf/gepr105.pdf	200	18413716	000f001705207ccc74b987dfe157d4b539a134e5ffc29032296441d6f36d86a0	2026-09-26T00:34:44+05:30	include	Rani Abbakka	found	28,36,37,39,43,46
+hepr1	1	https://ncert.nic.in/textbook/pdf/hepr101.pdf	200	10594080	5075bd97c3015e9c6d83dffdcbea28fd48149ceb1ae345b5e8c1e961ab92fef7	2026-09-26T00:34:44+05:30	title	Wit and Wisdom	exact	
+hepr1	1	https://ncert.nic.in/textbook/pdf/hepr101.pdf	200	10594080	5075bd97c3015e9c6d83dffdcbea28fd48149ceb1ae345b5e8c1e961ab92fef7	2026-09-26T00:34:44+05:30	include	The Wit that Won Hearts	found	1,46
+hepr1	1	https://ncert.nic.in/textbook/pdf/hepr101.pdf	200	10594080	5075bd97c3015e9c6d83dffdcbea28fd48149ceb1ae345b5e8c1e961ab92fef7	2026-09-26T00:34:44+05:30	include	A Concrete Example	found	17,20,47
+hepr1	1	https://ncert.nic.in/textbook/pdf/hepr101.pdf	200	10594080	5075bd97c3015e9c6d83dffdcbea28fd48149ceb1ae345b5e8c1e961ab92fef7	2026-09-26T00:34:44+05:30	include	Wisdom Paves the Way	found	27,45,48
+hepr1	2	https://ncert.nic.in/textbook/pdf/hepr102.pdf	200	12025465	2e5ec55b2d8d317c0921309e1f16e1975c012c4d288bcc7fa1aeba42a34c3874	2026-09-26T00:34:45+05:30	title	Values and Dispositions	exact	
+hepr1	2	https://ncert.nic.in/textbook/pdf/hepr102.pdf	200	12025465	2e5ec55b2d8d317c0921309e1f16e1975c012c4d288bcc7fa1aeba42a34c3874	2026-09-26T00:34:45+05:30	include	A Tale of Valour: Major Somnath Sharma and the Battle of Badgam	found	1,50
+hepr1	2	https://ncert.nic.in/textbook/pdf/hepr102.pdf	200	12025465	2e5ec55b2d8d317c0921309e1f16e1975c012c4d288bcc7fa1aeba42a34c3874	2026-09-26T00:34:45+05:30	include	Somebody’s Mother	found	22,24,26,51
+hepr1	2	https://ncert.nic.in/textbook/pdf/hepr102.pdf	200	12025465	2e5ec55b2d8d317c0921309e1f16e1975c012c4d288bcc7fa1aeba42a34c3874	2026-09-26T00:34:45+05:30	include	Verghese Kurien— I Too Had A Dream	found	34,52
+hepr1	3	https://ncert.nic.in/textbook/pdf/hepr103.pdf	200	15028159	9eaddd2923bed925f66b76a59b1c49dbc4833bb768dae7bf05d3896ec4fef1bd	2026-09-26T00:34:48+05:30	title	Mystery and Magic	exact	
+hepr1	3	https://ncert.nic.in/textbook/pdf/hepr103.pdf	200	15028159	9eaddd2923bed925f66b76a59b1c49dbc4833bb768dae7bf05d3896ec4fef1bd	2026-09-26T00:34:48+05:30	include	The Case of the Fifth Word	found	1,51
+hepr1	3	https://ncert.nic.in/textbook/pdf/hepr103.pdf	200	15028159	9eaddd2923bed925f66b76a59b1c49dbc4833bb768dae7bf05d3896ec4fef1bd	2026-09-26T00:34:48+05:30	include	The Magic Brush of Dreams	found	22,24,52
+hepr1	3	https://ncert.nic.in/textbook/pdf/hepr103.pdf	200	15028159	9eaddd2923bed925f66b76a59b1c49dbc4833bb768dae7bf05d3896ec4fef1bd	2026-09-26T00:34:48+05:30	include	Spectacular Wonders	found	37,53
+hepr1	4	https://ncert.nic.in/textbook/pdf/hepr104.pdf	200	16872106	dfe100a069e308f19d20bd43e80aab44970abd2057711d529974a05393be7297	2026-09-26T00:34:52+05:30	title	Environment	exact	
+hepr1	4	https://ncert.nic.in/textbook/pdf/hepr104.pdf	200	16872106	dfe100a069e308f19d20bd43e80aab44970abd2057711d529974a05393be7297	2026-09-26T00:34:52+05:30	include	The Cherry Tree	found	1,4,5,6,7,8,10,11,12,14,47
+hepr1	4	https://ncert.nic.in/textbook/pdf/hepr104.pdf	200	16872106	dfe100a069e308f19d20bd43e80aab44970abd2057711d529974a05393be7297	2026-09-26T00:34:52+05:30	include	Harvest Hymn	found	19,49
+hepr1	4	https://ncert.nic.in/textbook/pdf/hepr104.pdf	200	16872106	dfe100a069e308f19d20bd43e80aab44970abd2057711d529974a05393be7297	2026-09-26T00:34:52+05:30	include	Waiting for the Rain	found	31,50
+hepr1	5	https://ncert.nic.in/textbook/pdf/hepr105.pdf	200	11709119	8ac8b20a1a41c0afe29d5e0991ac08353e8eb858f9d6fd636981e5e7c94f22a8	2026-09-26T00:34:49+05:30	title	Science and Curiosity	exact	
+hepr1	5	https://ncert.nic.in/textbook/pdf/hepr105.pdf	200	11709119	8ac8b20a1a41c0afe29d5e0991ac08353e8eb858f9d6fd636981e5e7c94f22a8	2026-09-26T00:34:49+05:30	include	Feathered Friend	found	1,17,45
+hepr1	5	https://ncert.nic.in/textbook/pdf/hepr105.pdf	200	11709119	8ac8b20a1a41c0afe29d5e0991ac08353e8eb858f9d6fd636981e5e7c94f22a8	2026-09-26T00:34:49+05:30	include	Magnifying Glass	found	18,19,20,21,46
+hepr1	5	https://ncert.nic.in/textbook/pdf/hepr105.pdf	200	11709119	8ac8b20a1a41c0afe29d5e0991ac08353e8eb858f9d6fd636981e5e7c94f22a8	2026-09-26T00:34:49+05:30	include	Bibha Chowdhuri: The Beam of Light that Lit the Path for Women in Indian Science	found	29,47
+iebe1	1	https://ncert.nic.in/textbook/pdf/iebe101.pdf	200	4828926	49299c57ee26f26387083c15e14b0e0fecda0fbc91080a9ef2e7931263345f6b	2026-09-26T00:34:25+05:30	title	How I Taught My Grandmother to Read	exact	
+iebe1	1	https://ncert.nic.in/textbook/pdf/iebe101.pdf	200	4828926	49299c57ee26f26387083c15e14b0e0fecda0fbc91080a9ef2e7931263345f6b	2026-09-26T00:34:25+05:30	include	Bharat Our Land	found	23,25,27,29,31
+iebe1	2	https://ncert.nic.in/textbook/pdf/iebe102.pdf	200	4515578	cd470d6f26fa1e2ec101ce8c13fa2c37aea76fabdd4f95c4022088aace6265a2	2026-09-26T00:34:25+05:30	title	The Pot Maker	exact	
+iebe1	2	https://ncert.nic.in/textbook/pdf/iebe102.pdf	200	4515578	cd470d6f26fa1e2ec101ce8c13fa2c37aea76fabdd4f95c4022088aace6265a2	2026-09-26T00:34:25+05:30	include	Gifts of Grace: Honouring Our Vocations	found	25,27,29,31,33
+iebe1	3	https://ncert.nic.in/textbook/pdf/iebe103.pdf	200	3987773	bf0297633f9bd7b79dd98774d35848b1ddbf32714e9a9c3227f14b81923198aa	2026-09-26T00:34:26+05:30	title	Winds of Change	exact	
+iebe1	3	https://ncert.nic.in/textbook/pdf/iebe103.pdf	200	3987773	bf0297633f9bd7b79dd98774d35848b1ddbf32714e9a9c3227f14b81923198aa	2026-09-26T00:34:26+05:30	include	Canvas of Soil	found	18,19,21,23,25,27
+iebe1	4	https://ncert.nic.in/textbook/pdf/iebe104.pdf	200	4701865	d373a2a750b480f28b8c0c44a6dde0f671e16bbc0789cd44974b2218172694c1	2026-09-26T00:34:27+05:30	title	Vitamin-M	exact	
+iebe1	4	https://ncert.nic.in/textbook/pdf/iebe104.pdf	200	4701865	d373a2a750b480f28b8c0c44a6dde0f671e16bbc0789cd44974b2218172694c1	2026-09-26T00:34:27+05:30	include	I Cannot Remember My Mother	found	30,31,33,35,37,39
+iebe1	5	https://ncert.nic.in/textbook/pdf/iebe105.pdf	200	3584686	99a27110cd4a9a8578ed04369fad49e9d963b431effb6729d154f478765c28c6	2026-09-26T00:34:27+05:30	title	The World of Limitless Possibilities	exact	
+iebe1	5	https://ncert.nic.in/textbook/pdf/iebe105.pdf	200	3584686	99a27110cd4a9a8578ed04369fad49e9d963b431effb6729d154f478765c28c6	2026-09-26T00:34:27+05:30	include	Nine Gold Medals	found	20,21,22,23,25,27,29,31
+iebe1	6	https://ncert.nic.in/textbook/pdf/iebe106.pdf	200	3474066	a466f854bd359fff95c72fa97a07207020d538d3ad67df293ba35415203f5c6d	2026-09-26T00:34:30+05:30	title	Twin Melodies	exact	
+iebe1	6	https://ncert.nic.in/textbook/pdf/iebe106.pdf	200	3474066	a466f854bd359fff95c72fa97a07207020d538d3ad67df293ba35415203f5c6d	2026-09-26T00:34:30+05:30	include	A Friend Found in Music	found	26,27,29,31,33
+iebe1	7	https://ncert.nic.in/textbook/pdf/iebe107.pdf	200	3627243	f8bca1fdd170db50669c1dd1e29a980e0b9c6ec9f8823c777cf41e98907551a5	2026-09-26T00:34:27+05:30	title	Carrier of Words	exact	
+iebe1	7	https://ncert.nic.in/textbook/pdf/iebe107.pdf	200	3627243	f8bca1fdd170db50669c1dd1e29a980e0b9c6ec9f8823c777cf41e98907551a5	2026-09-26T00:34:27+05:30	include	Words	found	1,2,5,7,9,10,11,13,15,17,18,19,20,21,22,23,24,25,26,27,28
+iebe1	8	https://ncert.nic.in/textbook/pdf/iebe108.pdf	200	4514440	8336a2d385b636c06665a8a91f527e736b7f20a0f5e7fc7446478b57b7d91f63	2026-09-26T00:34:28+05:30	title	Follow That Dream	exact	
+iebe1	8	https://ncert.nic.in/textbook/pdf/iebe108.pdf	200	4514440	8336a2d385b636c06665a8a91f527e736b7f20a0f5e7fc7446478b57b7d91f63	2026-09-26T00:34:28+05:30	include	Believe in Yourself	found	15,16,17,19,21,23,25,27,28
+iemh1	8	https://ncert.nic.in/textbook/pdf/iemh108.pdf	200	2726466	71fa97928a2aeff91b97f5ac3bc9b8efea2a31b186dffcc9a62029932b355d92	2026-09-26T00:34:48+05:30	title	Predicting What Comes Next: Exploring Sequences and Progressions	exact	
+iest1	8	https://ncert.nic.in/textbook/pdf/iest108.pdf	200	1540875	613622465160a0f98af38bdbf55c08385ad085c9d747cb736de316db98ce2898	2026-09-26T00:34:49+05:30	title	Building Blocks in Economics: The Problem of Choice	exact	
+jeff1	1	https://ncert.nic.in/textbook/pdf/jeff101.pdf	200	2134196	2554abf66b90cc88e8df1ac85d670098842180780fd2ff549cddd6c1dd81e69a	2026-09-26T00:34:22+05:30	title	A Letter to God	contained	
+jeff1	1	https://ncert.nic.in/textbook/pdf/jeff101.pdf	200	2134196	2554abf66b90cc88e8df1ac85d670098842180780fd2ff549cddd6c1dd81e69a	2026-09-26T00:34:22+05:30	include	Dust of Snow	found	14
+jeff1	1	https://ncert.nic.in/textbook/pdf/jeff101.pdf	200	2134196	2554abf66b90cc88e8df1ac85d670098842180780fd2ff549cddd6c1dd81e69a	2026-09-26T00:34:22+05:30	include	Fire and Ice	found	15
+jeff1	2	https://ncert.nic.in/textbook/pdf/jeff102.pdf	200	2177329	10f97cb3c26f8bd3c26735fb5025d9c19d45ed95a28cc17017961328622a7e06	2026-09-26T00:34:21+05:30	title	Nelson Mandela: Long Walk to Freedom	contained	
+jeff1	2	https://ncert.nic.in/textbook/pdf/jeff102.pdf	200	2177329	10f97cb3c26f8bd3c26735fb5025d9c19d45ed95a28cc17017961328622a7e06	2026-09-26T00:34:21+05:30	include	A Tiger in the Zoo	found	14,16
+jeff1	3	https://ncert.nic.in/textbook/pdf/jeff103.pdf	200	2324820	074ad18280788501a648232cb6afc89e3322a6b9ca5d2c66e4c87aedfb202b24	2026-09-26T00:34:21+05:30	title	Two Stories about Flying	contained	
+jeff1	3	https://ncert.nic.in/textbook/pdf/jeff103.pdf	200	2324820	074ad18280788501a648232cb6afc89e3322a6b9ca5d2c66e4c87aedfb202b24	2026-09-26T00:34:21+05:30	include	His First Flight	found	1,5
+jeff1	3	https://ncert.nic.in/textbook/pdf/jeff103.pdf	200	2324820	074ad18280788501a648232cb6afc89e3322a6b9ca5d2c66e4c87aedfb202b24	2026-09-26T00:34:21+05:30	include	Black Aeroplane	found	6,7,8,9
+jeff1	3	https://ncert.nic.in/textbook/pdf/jeff103.pdf	200	2324820	074ad18280788501a648232cb6afc89e3322a6b9ca5d2c66e4c87aedfb202b24	2026-09-26T00:34:21+05:30	include	How to Tell Wild Animals	found	14
+jeff1	3	https://ncert.nic.in/textbook/pdf/jeff103.pdf	200	2324820	074ad18280788501a648232cb6afc89e3322a6b9ca5d2c66e4c87aedfb202b24	2026-09-26T00:34:21+05:30	include	The Ball Poem	found	15,16
+jeff1	4	https://ncert.nic.in/textbook/pdf/jeff104.pdf	200	1954669	5cd74b1bdfb065d0659dec0b0b0a303c09ba00e1155e0b0408c6a69062c8b394	2026-09-26T00:34:21+05:30	title	From the Diary of Anne Frank	contained	
+jeff1	4	https://ncert.nic.in/textbook/pdf/jeff104.pdf	200	1954669	5cd74b1bdfb065d0659dec0b0b0a303c09ba00e1155e0b0408c6a69062c8b394	2026-09-26T00:34:21+05:30	include	Amanda!	found	14,15
+jeff1	5	https://ncert.nic.in/textbook/pdf/jeff105.pdf	200	2114261	16d0fd9ebf13d20bc4768ad0f423270779253706d2e06aa40c9080475850af3d	2026-09-26T00:34:22+05:30	title	Glimpses of India	no	
+jeff1	5	https://ncert.nic.in/textbook/pdf/jeff105.pdf	200	2114261	16d0fd9ebf13d20bc4768ad0f423270779253706d2e06aa40c9080475850af3d	2026-09-26T00:34:22+05:30	include	A Baker from Goa	found	1
+jeff1	5	https://ncert.nic.in/textbook/pdf/jeff105.pdf	200	2114261	16d0fd9ebf13d20bc4768ad0f423270779253706d2e06aa40c9080475850af3d	2026-09-26T00:34:22+05:30	include	Coorg	found	6,7,8,9,13
+jeff1	5	https://ncert.nic.in/textbook/pdf/jeff105.pdf	200	2114261	16d0fd9ebf13d20bc4768ad0f423270779253706d2e06aa40c9080475850af3d	2026-09-26T00:34:22+05:30	include	Tea from Assam	found	10
+jeff1	5	https://ncert.nic.in/textbook/pdf/jeff105.pdf	200	2114261	16d0fd9ebf13d20bc4768ad0f423270779253706d2e06aa40c9080475850af3d	2026-09-26T00:34:22+05:30	include	The Trees	found	15,16,17
+jeff1	6	https://ncert.nic.in/textbook/pdf/jeff106.pdf	200	1944893	44935ba5b724155989696a9541f56957f38b22a55e9978b31d289ef550340972	2026-09-26T00:34:22+05:30	title	Mijbil the Otter	contained	
+jeff1	6	https://ncert.nic.in/textbook/pdf/jeff106.pdf	200	1944893	44935ba5b724155989696a9541f56957f38b22a55e9978b31d289ef550340972	2026-09-26T00:34:22+05:30	include	Fog	found	14
+jeff1	7	https://ncert.nic.in/textbook/pdf/jeff107.pdf	200	2406051	960643fa97f13ce5cd525072a0958ae9e7a6e397f024a88ba51529761ab72f25	2026-09-26T00:34:22+05:30	title	Madam Rides the Bus	contained	
+jeff1	7	https://ncert.nic.in/textbook/pdf/jeff107.pdf	200	2406051	960643fa97f13ce5cd525072a0958ae9e7a6e397f024a88ba51529761ab72f25	2026-09-26T00:34:22+05:30	include	The Tale of Custard the Dragon	found	14,16,17
+jeff1	8	https://ncert.nic.in/textbook/pdf/jeff108.pdf	200	1546451	0f27cf046f3612343f2cc69eff517884a29109f86d8e8c4fa30b98238c4503d1	2026-09-26T00:34:26+05:30	title	The Sermon at Benares	no	
+jeff1	8	https://ncert.nic.in/textbook/pdf/jeff108.pdf	200	1546451	0f27cf046f3612343f2cc69eff517884a29109f86d8e8c4fa30b98238c4503d1	2026-09-26T00:34:26+05:30	include	For Anne Gregory	found	8,9
+keww1	13	https://ncert.nic.in/textbook/pdf/keww113.pdf	200	719282	7e522a8cdd4bb8b825952fc2d037394ff664e394c51f7713612e88d8d8fb562c	2026-09-26T00:42:06+05:30	title	Coming	exact	
+keww1	13	https://ncert.nic.in/textbook/pdf/keww113.pdf	200	719282	7e522a8cdd4bb8b825952fc2d037394ff664e394c51f7713612e88d8d8fb562c	2026-09-26T00:42:06+05:30	include	(Haiku)	found	3
+keww1	18	https://ncert.nic.in/textbook/pdf/keww118.pdf	200	1107937	b805a115a0b28eb98c4d206ede5382cba445fa378b9b1bb8458bed78250ed5ef	2026-09-26T00:42:05+05:30	title	For Elkana	exact	
+keww1	18	https://ncert.nic.in/textbook/pdf/keww118.pdf	200	1107937	b805a115a0b28eb98c4d206ede5382cba445fa378b9b1bb8458bed78250ed5ef	2026-09-26T00:42:05+05:30	include	(The Limerick)	found	4
+kehb1	1	https://ncert.nic.in/textbook/pdf/kehb101.pdf	200	1496644	165f8d07d863c2d72a32c9caeadb7bcb8c2245e7ff175cee244582e50cd2360a	2026-09-26T00:34:23+05:30	title	The Portrait of a Lady	contained	
+kehb1	1	https://ncert.nic.in/textbook/pdf/kehb101.pdf	200	1496644	165f8d07d863c2d72a32c9caeadb7bcb8c2245e7ff175cee244582e50cd2360a	2026-09-26T00:34:23+05:30	include	A Photograph	found	1,10,11
+kehb1	3	https://ncert.nic.in/textbook/pdf/kehb103.pdf	200	1904694	3cb73fab024ecc03ae5ad71a217ba5b2fcc21d317f98479b83182fed3f20f0c7	2026-09-26T00:34:24+05:30	title	Discovering Tut: the Saga Continues	exact	
+kehb1	3	https://ncert.nic.in/textbook/pdf/kehb103.pdf	200	1904694	3cb73fab024ecc03ae5ad71a217ba5b2fcc21d317f98479b83182fed3f20f0c7	2026-09-26T00:34:24+05:30	include	The Laburnum Top	found	10,11
+kehb1	3	https://ncert.nic.in/textbook/pdf/kehb103.pdf	200	1904694	3cb73fab024ecc03ae5ad71a217ba5b2fcc21d317f98479b83182fed3f20f0c7	2026-09-26T00:34:24+05:30	include	The Voice of the Rain	found	13,14
+kehb1	4	https://ncert.nic.in/textbook/pdf/kehb104.pdf	200	1190268	3ef92341ca331dabb88b80bbe4b8a4314f4e996f81c1a353daec434512977632	2026-09-26T00:34:24+05:30	title	The Ailing Planet: the Green Movement’s Role	exact	
+kehb1	4	https://ncert.nic.in/textbook/pdf/kehb104.pdf	200	1190268	3ef92341ca331dabb88b80bbe4b8a4314f4e996f81c1a353daec434512977632	2026-09-26T00:34:24+05:30	include	Childhood	found	7,8
+kehb1	6	https://ncert.nic.in/textbook/pdf/kehb106.pdf	200	1624715	411b4eb2a76f82f66a96e0b00d7083aaf9c921189d9cee6d974b742757a873a8	2026-09-26T00:34:24+05:30	title	Silk Road	exact	
+kehb1	6	https://ncert.nic.in/textbook/pdf/kehb106.pdf	200	1624715	411b4eb2a76f82f66a96e0b00d7083aaf9c921189d9cee6d974b742757a873a8	2026-09-26T00:34:24+05:30	include	Father to Son	found	12,13
+kesp1	1	https://ncert.nic.in/textbook/pdf/kesp101.pdf	200	1217662	3fa28c342601eb84c29f74276d166ad9849a6ed33498fbe971c03aeaca271277	2026-09-26T00:34:53+05:30	title	The Summer of the Beautiful White Horse	exact	
+leac1	2	https://ncert.nic.in/textbook/pdf/leac102.pdf	200	4382260	593edb08236a797e2c8c2104198ca850030c3ed681a733ffa2662db5a6606239	2026-09-26T00:34:51+05:30	title	Reconstitution of a Partnership Firm – Admission of a Partner	exact	
+leac1	3	https://ncert.nic.in/textbook/pdf/leac103.pdf	200	3749936	bcbabbaf795413a519afcab242d08749739adc1084fbdb3bbe5456f59c8ebae6	2026-09-26T00:34:52+05:30	title	Reconstitution of a Partnership Firm – Retirement/Death of a Partner	exact	
+levt1	6	https://ncert.nic.in/textbook/pdf/levt106.pdf	200	1387791	0ed887246f2ec705cf71f3cd1c3ee1b651cf6e204330504efed8373a53193229	2026-09-26T00:34:46+05:30	title	Memories of Childhood	exact	
+levt1	6	https://ncert.nic.in/textbook/pdf/levt106.pdf	200	1387791	0ed887246f2ec705cf71f3cd1c3ee1b651cf6e204330504efed8373a53193229	2026-09-26T00:34:46+05:30	include	The Cutting of My Long Hair	found	2
+levt1	6	https://ncert.nic.in/textbook/pdf/levt106.pdf	200	1387791	0ed887246f2ec705cf71f3cd1c3ee1b651cf6e204330504efed8373a53193229	2026-09-26T00:34:46+05:30	include	We Too are Human Beings	found	4,6

@@ -1,0 +1,8 @@
+# NCERT contents evidence — lhvt1 — Vitan (index class 12, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/lhvt1ps.pdf
+# fetched: 2026-09-25T23:15:31+05:30  sha256: 99d82b8e00d6e8746e614874f6e7b2c18f59e03864929ce5d0b154e249614c8c  bytes: 3806743
+# contents pages of the PDF: none found of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 9d20d4b3ac8bdd40edd1b16d970702edfba838a1a5f845bcfb1058b92a371ab4);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

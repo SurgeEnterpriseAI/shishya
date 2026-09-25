@@ -1,26 +1,35 @@
 // /schooling/[board]/class-[n]/[subject]/[chapter] — per-chapter page.
 //
-// Currently surfaces:
-//   * Chapter overview + NCERT chapter reference
-//   * Mastery quiz (5 MCQs with explanations) when one is authored
-//   * Honest "concept notes being authored" stub when notes aren't ready
-//   * Sibling chapters nav
+// 25 Sep 2026 (school build, Step 0): a chapter page now says only what is
+// true — the chapter's printed title and number, which official NCERT book
+// it is in (with the link), and that Shishya's own notes and practice are
+// coming soon. It is noindex (SCHOOLING_ROBOTS).
 //
-// AI-generated concept notes are authored progressively; quiz lib in
-// src/lib/schooling-quizzes.ts is the day-1 covered chapter set.
+// What was removed and why:
+//   * The 5-question "mastery quiz" (src/lib/schooling-quizzes.ts). None of
+//     those questions has an answer check, and school content goes live
+//     only after its answers are checked; SCHOOL_QUIZZES_ANSWER_CHECKED
+//     gates it.
+//   * "We hand-author quizzes against the NCERT chapter so every question
+//     is grounded" — nothing records that, and Shishya must not ground its
+//     content in textbook text.
+//   * The "Notes being generated" stub: no notes exist and nothing is
+//     generating them.
+//   * The per-chapter blurbs, written from the pre-2023 books.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
-import { findBoard } from "@/lib/schooling-data";
+import { findBoard, SCHOOLING_ROBOTS } from "@/lib/schooling-data";
 import {
   findClassSyllabus,
   findSubject,
   findChapter,
   allChapterPaths,
+  ncertBookUrl,
 } from "@/lib/schooling-subjects";
-import { findQuiz } from "@/lib/schooling-quizzes";
+import { findQuiz, SCHOOL_QUIZZES_ANSWER_CHECKED } from "@/lib/schooling-quizzes";
 import { ChapterQuizPlayer } from "@/components/ChapterQuizPlayer";
 
 interface PageParams { slug: string; classSlug: string; subject: string; chapter: string }
@@ -49,28 +58,24 @@ export async function generateMetadata({
   const board = findBoard(slug);
   const s = findSubject(slug, classNum, subject);
   const ch = findChapter(slug, classNum, subject, chapter);
-  if (!board || !s || !ch) return { title: "Not found — Shishya" };
-  const year = new Date().getUTCFullYear();
-  const title = `${ch.name} — ${board.shortName} Class ${classNum} ${s.name} Chapter ${ch.number} ${year} | Shishya`;
+  if (!board || !s || !ch) return { title: "Not found — Shishya", robots: SCHOOLING_ROBOTS };
+  const title = `${ch.name} — ${board.shortName} Class ${classNum} ${s.name} Chapter ${ch.number} | Shishya`;
+  const description =
+    `Chapter ${ch.number} of NCERT ${ch.book.title} (${board.shortName} Class ${classNum} ${s.name}): ${ch.name}. Link to the official textbook on ncert.nic.in.`;
   return {
     title,
-    description:
-      `${ch.blurb ?? ""} Free NCERT chapter overview + mastery quiz for ${board.shortName} Class ${classNum} ${s.name} Chapter ${ch.number}: ${ch.name}.`.slice(
-        0,
-        280,
-      ),
+    description,
     alternates: { canonical: `https://shishya.in/schooling/${slug}/class-${classNum}/${subject}/${chapter}` },
+    robots: SCHOOLING_ROBOTS,
     keywords: [
       `${board.shortName} Class ${classNum} ${s.name} ${ch.name}`,
       `${ch.name} Class ${classNum}`,
       `${s.name} ${ch.name} NCERT`,
       `${s.name} Class ${classNum} chapter ${ch.number}`,
-      `${ch.name} mcq quiz`,
-      `${ch.name} mastery quiz`,
     ],
     openGraph: {
       title,
-      description: ch.blurb ?? `Chapter ${ch.number} of ${s.name}.`,
+      description,
       url: `https://shishya.in/schooling/${slug}/class-${classNum}/${subject}/${chapter}`,
       siteName: "Shishya",
       locale: "en_IN",
@@ -90,11 +95,13 @@ export default async function ChapterPage({
   const ch = findChapter(slug, classNum, subject, chapter);
   if (!board || !syllabus || !s || !ch) notFound();
 
-  const quiz = findQuiz(slug, classNum, subject, chapter);
+  // Unchecked quizzes are never served (see the header).
+  const quiz = SCHOOL_QUIZZES_ANSWER_CHECKED ? findQuiz(slug, classNum, subject, chapter) : undefined;
   const siblings = s.chapters ?? [];
   const idx = siblings.findIndex((c) => c.slug === ch.slug);
   const prev = idx > 0 ? siblings[idx - 1] : null;
   const next = idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null;
+  const listedAs = ch.numberInBook !== ch.number;
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -129,76 +136,44 @@ export default async function ChapterPage({
           </span>
         </div>
         <p className="mt-1 text-sm text-ink-500">
-          {board.shortName} Class {classNum} {s.name}
+          {board.shortName} Class {classNum} {s.name} · NCERT {ch.book.title}
+          {ch.book.edition ? ` (${ch.book.edition})` : ""}
         </p>
 
-        {ch.blurb && (
-          <p className="mt-4 max-w-3xl text-sm text-ink-700">{ch.blurb}</p>
-        )}
+        {/* The official book — primary source, linked, never copied. */}
+        <div className="mt-6 rounded-lg border border-ink-200 bg-white p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">
+            Read the chapter
+          </p>
+          <p className="mt-1 text-sm text-ink-700">
+            This chapter is in NCERT&apos;s {ch.book.title}, free on ncert.nic.in
+            {listedAs ? `, where that book lists it as Chapter ${ch.numberInBook}` : ""}.
+          </p>
+          <a
+            href={ncertBookUrl(ch.book)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-saffron-600"
+          >
+            Open {ch.book.title} on NCERT ↗
+          </a>
+        </div>
 
-        {/* Read on NCERT — primary source */}
-        {(s.officialChapterIndex || ch.pdfUrl) && (
-          <div className="mt-6 rounded-lg border border-ink-200 bg-white p-5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">
-              Read the chapter
-            </p>
-            <p className="mt-1 text-sm text-ink-700">
-              The authoritative chapter PDF is on NCERT's site. Open it side-by-side
-              with the quiz below for the best learning loop.
-            </p>
-            <a
-              href={ch.pdfUrl ?? s.officialChapterIndex}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-flex rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-saffron-600"
-            >
-              Open NCERT chapter ↗
-            </a>
-          </div>
-        )}
-
-        {/* Mastery quiz */}
-        <h2 className="mt-10 text-base font-semibold text-ink-900">Mastery quiz</h2>
         {quiz ? (
           <>
-            <p className="mt-2 text-xs text-ink-600">
-              5 multiple-choice questions. Pick an option — instant feedback +
-              one-line explanation. Answers don't leave your browser.
-            </p>
-            <ChapterQuizPlayer
-              quizKey={quiz.key}
-              questions={quiz.questions}
-            />
+            <h2 className="mt-10 text-base font-semibold text-ink-900">Practice</h2>
+            <ChapterQuizPlayer quizKey={quiz.key} questions={quiz.questions} />
           </>
         ) : (
-          <div className="mt-3 rounded-lg border border-dashed border-ink-300 bg-white p-6 text-sm text-ink-700">
-            <p className="font-semibold text-ink-900">Quiz being authored</p>
+          <div className="mt-10 rounded-lg border border-dashed border-ink-300 bg-white p-6 text-sm text-ink-700">
+            <p className="font-semibold text-ink-900">Coming soon</p>
             <p className="mt-1 text-xs text-ink-600">
-              We hand-author quizzes against the NCERT chapter so every
-              question is grounded. Class 10 Math + Science and Class 12
-              Physics/Chemistry/Math/Biology chapters are shipping first;
-              this chapter is on the list.
+              Notes and practice questions for this chapter, written by
+              Shishya. Every question&apos;s answer is checked before it goes
+              live. Until then, the NCERT book above is the source to study from.
             </p>
           </div>
         )}
-
-        {/* Concept notes — currently a stub. Future: AI-generated notes
-            scoped to this chapter. */}
-        <h2 className="mt-10 text-base font-semibold text-ink-900">Concept notes</h2>
-        <div className="mt-3 rounded-lg border border-dashed border-ink-300 bg-white p-6 text-sm text-ink-700">
-          <p className="font-semibold text-ink-900">Notes being generated</p>
-          <p className="mt-1 text-xs text-ink-600">
-            We're building chapter-scoped concept notes (Overview · Key
-            Concepts · Formulas · Worked Examples · Common Mistakes · Quick
-            Reference) using the same AI pipeline we use for exam topics.
-            Each chapter's notes will be human-reviewed against the NCERT
-            chapter before shipping.
-          </p>
-          <p className="mt-3 text-[11px] text-ink-500">
-            For the chapter content itself, the NCERT chapter PDF (linked
-            above) is the source of truth.
-          </p>
-        </div>
 
         {/* Prev / Next navigation */}
         <div className="mt-10 grid gap-3 sm:grid-cols-2">

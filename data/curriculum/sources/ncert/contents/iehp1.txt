@@ -1,0 +1,31 @@
+# NCERT contents evidence — iehp1 — Khel Praveen (index class 9, Physical Education and Well Being)
+# source: https://ncert.nic.in/textbook/pdf/iehp1ps.pdf
+# fetched: 2026-09-25T23:14:59+05:30  sha256: 5c9beb28bd8d5b19c3d2c3dbe4ac0ede6de906e6215b9759ec8423900ebce292  bytes: 4695012
+# contents pages of the PDF: 19,20 of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 6b4060fbdc4edf8ebad83d241c476ccacf6e0a17fc3282699562b0dbcb3456b9);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@iehp1#1 title [pdftotext p19] next=number
+  UNIT 1: Evolution of Physical Education and Well-being
++ Chapter 1 Physical Education
++ 		 and Well-being
+@iehp1#2 title [pdftotext p19] next=number
+  UNIT 2: Science and Sports
++ Chapter 5 Understanding Our Body
++ 30
+@iehp1#3 title [pdftotext p19] next=number
+  UNIT 3: Olympism
++ Chapter 9 Olympic Values
++ 76
+@iehp1#4 title [pdftotext p20] next=number
+  UNIT 4: Sports for All
++ Chapter 12 Sports and Inclusivity
++ 96
+@iehp1#5 title [pdftotext p20] next=number
+  UNIT 5: Sports
++ Chapter 18 Indigenious Martial Arts
++ and Sport
+@iehp1#6 title [pdftotext p20] next=number
+  UNIT 6: Yoga for Holistic Health and Personal Excellence
++ Chapter 21 Samagra Svāsthya
++ 		 (Yoga for Holistic Health)

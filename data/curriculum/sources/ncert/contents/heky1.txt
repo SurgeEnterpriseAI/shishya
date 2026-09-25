@@ -1,0 +1,31 @@
+# NCERT contents evidence — heky1 — Khel Yatra (index class 8, Physical Education and Well Being)
+# source: https://ncert.nic.in/textbook/pdf/heky1ps.pdf
+# fetched: 2026-09-25T23:15:18+05:30  sha256: 235f9a9ef5539bd4a8aba8e9c57c9ad0ca3bb3b99de7d4bcd0786aaa0944e7d8  bytes: 44160274
+# contents pages of the PDF: 17,18,19 of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 39b7e7bcccf114e3b6e71fe63db3b470295aec5e2c928a92c649a6bc13da8aa1);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@heky1#1 title [pdftotext p17] next=sub-entry
+  UNIT 1: Foundations of Physical Education and Well-being
++ • Horse Vault Race
++ 8
+@heky1#2 title [pdftotext p17] next=sub-entry
+  UNIT 2: Physical and Motor Fitness
++ • Crawl to the Front
++ 36
+@heky1#3 title [pdftotext p18] next=sub-entry
+  UNIT 3: Fundamental Skills of Sports – Athletics
++ • Crouch or Sitting Start
++ 59
+@heky1#4 title [pdftotext p18] next=sub-entry
+  UNIT 4: Fundamental Skills of Sports – Table Tennis
++ • Grip
++ 94
+@heky1#5 title [pdftotext p19] next=sub-entry
+  UNIT 5: Fundamental Skills of Sports – Volleyball
++ • Underhand Pass
++ 136
+@heky1#6 title [pdftotext p19] next=number
+  UNIT 6: Yoga
++ Chapter 1
++ • Yoga for Daily Life

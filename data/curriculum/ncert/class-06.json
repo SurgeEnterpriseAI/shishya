@@ -1,0 +1,2408 @@
+{
+ "curriculum": "NCERT",
+ "indexClassValue": 6,
+ "classes": [
+  6
+ ],
+ "classLabel": "Class VI",
+ "source": {
+  "indexUrl": "https://ncert.nic.in/textbook.php",
+  "snapshot": "data/curriculum/sources/ncert/textbook-php-2026-09-25.html",
+  "snapshotSha256": "f22b184dce0e02298d571a49ea768dd0809c146c540a77f6f23fdfbdc0c4ec29",
+  "fetchedOn": "2026-09-25"
+ },
+ "subjects": [
+  {
+   "name": "Hindi",
+   "code": "HINDI",
+   "books": [
+    {
+     "code": "fhml1",
+     "title": "Malhar",
+     "language": "hi",
+     "indexValue": "textbook.php?fhml1=0-13",
+     "bookUrl": "https://ncert.nic.in/textbook.php?fhml1=0-13",
+     "indexChapterCount": 13,
+     "listedChapterCount": 13,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/fhml1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/fhml1ps.pdf",
+      "sha256": "574f0e38c3af62bf911487b020ee2e2aedae7c4deb45525c46a212189ac6a80a",
+      "fetchedAt": "2026-09-25T23:14:26+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/fhml1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml110.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml111.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml112.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fhml113.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "English",
+   "code": "ENGLISH",
+   "books": [
+    {
+     "code": "fepr1",
+     "title": "Poorvi",
+     "language": "en",
+     "indexValue": "textbook.php?fepr1=0-5",
+     "bookUrl": "https://ncert.nic.in/textbook.php?fepr1=0-5",
+     "indexChapterCount": 5,
+     "listedChapterCount": 5,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/fepr1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/fepr1ps.pdf",
+      "sha256": "3d7e131cd2b57f4f3fb689baab049ebe89ec7f279ad936a9e5b51f3a1f7f5987",
+      "fetchedAt": "2026-09-25T23:14:26+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "June 2024",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/fepr1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fepr101.pdf",
+       "number": "1",
+       "kind": "unit",
+       "title": "Fables and Folk Tales",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "A Bottle of Dew",
+         "page": "1"
+        },
+        {
+         "kind": "piece",
+         "title": "The Raven and the Fox",
+         "page": "13"
+        },
+        {
+         "kind": "piece",
+         "title": "Rama to the Rescue",
+         "page": "20"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fepr102.pdf",
+       "number": "2",
+       "kind": "unit",
+       "title": "Friendship",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "The Unlikely Best Friends",
+         "page": "39"
+        },
+        {
+         "kind": "piece",
+         "title": "A Friend’s Prayer",
+         "page": "52"
+        },
+        {
+         "kind": "piece",
+         "title": "The Chair",
+         "page": "59"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fepr103.pdf",
+       "number": "3",
+       "kind": "unit",
+       "title": "Nurturing Nature",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Neem Baba",
+         "page": "75"
+        },
+        {
+         "kind": "piece",
+         "title": "What a Bird Thought",
+         "page": "85"
+        },
+        {
+         "kind": "piece",
+         "title": "Spices that Heal Us",
+         "page": "93"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fepr104.pdf",
+       "number": "4",
+       "kind": "unit",
+       "title": "Sports and Wellness",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Change of Heart",
+         "page": "103"
+        },
+        {
+         "kind": "piece",
+         "title": "The Winner",
+         "page": "115"
+        },
+        {
+         "kind": "piece",
+         "title": "Yoga—A Way of Life",
+         "page": "122"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fepr105.pdf",
+       "number": "5",
+       "kind": "unit",
+       "title": "Culture and Tradition",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Hamara Bharat—Incredible India!",
+         "page": "131"
+        },
+        {
+         "kind": "piece",
+         "title": "The Kites",
+         "page": "141"
+        },
+        {
+         "kind": "piece",
+         "title": "Ila Sachani: Embroidering Dreams with her Feet",
+         "page": "151"
+        },
+        {
+         "kind": "piece",
+         "title": "National War Memorial",
+         "page": "160"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Mathematics",
+   "code": "MATHEMATICS",
+   "books": [
+    {
+     "code": "fegp1",
+     "title": "Ganita Prakash",
+     "language": "en",
+     "indexValue": "textbook.php?fegp1=0-10",
+     "bookUrl": "https://ncert.nic.in/textbook.php?fegp1=0-10",
+     "indexChapterCount": 10,
+     "listedChapterCount": 10,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/fegp1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/fegp1ps.pdf",
+      "sha256": "902147cff853df0023b4e13293711573562bf42abf91253e5045e877c76d51df",
+      "fetchedAt": "2026-09-25T23:14:27+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "August 2024",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/fegp1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fegp101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Patterns in Mathematics",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fegp102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Lines and Angles",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fegp103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Number Play",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fegp104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Data Handling and Presentation",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fegp105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Prime Time",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fegp106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Perimeter and Area",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fegp107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Fractions",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fegp108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Playing with Constructions",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fegp109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Symmetry",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fegp110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "The Other Side of Zero",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "fhgp1",
+       "title": "Ganita Prakash (Hindi)",
+       "language": "hi",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fhgp1=0-10"
+      },
+      {
+       "code": "forgp1",
+       "title": "Ganita Prakash (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?forgp1=0-10"
+      },
+      {
+       "code": "fbdgp1",
+       "title": "Ganita Prakash (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fbdgp1=0-10"
+      },
+      {
+       "code": "fmlgp1",
+       "title": "Ganita Prakash (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmlgp1=0-10"
+      },
+      {
+       "code": "fpngp1",
+       "title": "Ganita Prakash (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fpngp1=0-10"
+      },
+      {
+       "code": "fskgp1",
+       "title": "Ganita Prakash (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fskgp1=0-10"
+      },
+      {
+       "code": "fkngp1",
+       "title": "Ganita Prakash (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fkngp1=0-10"
+      },
+      {
+       "code": "ftmgp1",
+       "title": "Ganita Prakash (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ftmgp1=0-10"
+      },
+      {
+       "code": "fmrgp1",
+       "title": "Ganita Prakash (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmrgp1=0-10"
+      },
+      {
+       "code": "fbngp1",
+       "title": "Ganita Prakash (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fbngp1=0-10"
+      },
+      {
+       "code": "ftlgp1",
+       "title": "Ganita Prakash (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ftlgp1=0-10"
+      },
+      {
+       "code": "fmtgp1",
+       "title": "Ganita Prakash (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmtgp1=0-10"
+      },
+      {
+       "code": "fdggp1",
+       "title": "Ganita Prakash (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fdggp1=0-10"
+      },
+      {
+       "code": "fnpgp1",
+       "title": "Ganita Prakash (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fnpgp1=0-10"
+      },
+      {
+       "code": "fugp1",
+       "title": "Ganita Prakash (Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fugp1=0-10"
+      },
+      {
+       "code": "fasgp1",
+       "title": "Ganita Prakash (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fasgp1=0-10"
+      },
+      {
+       "code": "fgjgp1",
+       "title": "Ganita Prakash (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fgjgp1=0-10"
+      },
+      {
+       "code": "fmngp1",
+       "title": "Ganita Prakash (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmngp1=0-10"
+      },
+      {
+       "code": "fkogp1",
+       "title": "Ganita Prakash (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fkogp1=0-10"
+      },
+      {
+       "code": "fsngp1",
+       "title": "Ganita Prakash (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fsngp1=0-10"
+      },
+      {
+       "code": "fsigp1",
+       "title": "Ganita Prakash (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fsigp1=0-10"
+      },
+      {
+       "code": "fksgp1",
+       "title": "Ganita Prakash (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fksgp1=0-10"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Social Science",
+   "code": "SOCIAL_SCIENCE",
+   "books": [
+    {
+     "code": "fees1",
+     "title": "Exploring Society India and Beyond",
+     "language": "en",
+     "indexValue": "textbook.php?fees1=0-14",
+     "bookUrl": "https://ncert.nic.in/textbook.php?fees1=0-14",
+     "indexChapterCount": 14,
+     "listedChapterCount": 14,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/fees1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/fees1ps.pdf",
+      "sha256": "7605e63efa73bf1748d866c843217473b1a4826f39309525540a3a058bd6e310",
+      "fetchedAt": "2026-09-25T23:14:34+05:30",
+      "printedSession": null,
+      "firstEdition": "June 2024",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/fees1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Locating Places on the Earth",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Oceans and Continents",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Landforms and Life",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Timeline and Sources of History",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "India, That Is Bharat",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "The Beginnings of Indian Civilisation",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "India's Cultural Roots",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Unity in Diversity, or 'Many in the One'",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Family and Community",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Grassroots Democracy — Part 1: Governance",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Grassroots Democracy — Part 2: Local Government in Rural Areas",
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Grassroots Democracy — Part 3: Local Government in Urban Areas",
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "The Value of Work",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fees114.pdf",
+       "number": "14",
+       "kind": "chapter",
+       "title": "Economic Activities Around Us",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "fhes1",
+       "title": "Samaj Ka Aadhyan: Bharat or uske aage",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fhes1=0-14"
+      },
+      {
+       "code": "fknes1",
+       "title": "Exploring Society India and Beyond (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fknes1=0-14"
+      },
+      {
+       "code": "fkses1",
+       "title": "Exploring Society India and Beyond (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fkses1=0-14"
+      },
+      {
+       "code": "fores1",
+       "title": "Exploring Society India and Beyond (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fores1=0-14"
+      },
+      {
+       "code": "fmnes1",
+       "title": "Exploring Society India and Beyond (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmnes1=0-14"
+      },
+      {
+       "code": "fmres1",
+       "title": "Exploring Society India and Beyond (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmres1=0-14"
+      },
+      {
+       "code": "fpnes1",
+       "title": "Exploring Society India and Beyond (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fpnes1=0-14"
+      },
+      {
+       "code": "fdges1",
+       "title": "Exploring Society India and Beyond (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fdges1=0-14"
+      },
+      {
+       "code": "fgjes1",
+       "title": "Exploring Society India and Beyond (Gujrati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fgjes1=0-14"
+      },
+      {
+       "code": "fmles1",
+       "title": "Exploring Society India and Beyond (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmles1=0-14"
+      },
+      {
+       "code": "fskes1",
+       "title": "Exploring Society India and Beyond (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fskes1=0-14"
+      },
+      {
+       "code": "fbnes1",
+       "title": "Exploring Society India and Beyond (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fbnes1=0-14"
+      },
+      {
+       "code": "fbdes1",
+       "title": "Exploring Society India and Beyond (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fbdes1=0-14"
+      },
+      {
+       "code": "fmtes1",
+       "title": "Exploring Society India and Beyond (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmtes1=0-14"
+      },
+      {
+       "code": "fnpes1",
+       "title": "Exploring Society India and Beyond (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fnpes1=0-14"
+      },
+      {
+       "code": "ftmes1",
+       "title": "Exploring Society India and Beyond (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ftmes1=0-14"
+      },
+      {
+       "code": "ftles1",
+       "title": "Exploring Society India and Beyond (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ftles1=0-14"
+      },
+      {
+       "code": "fues1",
+       "title": "Muashre Ki Daryaft Hindustan aur Us Se Aage (Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fues1=0-14"
+      },
+      {
+       "code": "fsnes1",
+       "title": "Exploring Society India and Beyond (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fsnes1=0-14"
+      },
+      {
+       "code": "fases1",
+       "title": "Exploring Society India and Beyond (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fases1=0-14"
+      },
+      {
+       "code": "fkoes1",
+       "title": "Exploring Society India and Beyond (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fkoes1=0-14"
+      },
+      {
+       "code": "fsies1",
+       "title": "Exploring Society India and Beyond (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 14,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fsies1=0-14"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Sanskrit",
+   "code": "SANSKRIT",
+   "books": [
+    {
+     "code": "fsde1",
+     "title": "Deepakam",
+     "language": "sa",
+     "indexValue": "textbook.php?fsde1=0-16",
+     "bookUrl": "https://ncert.nic.in/textbook.php?fsde1=0-16",
+     "indexChapterCount": 16,
+     "listedChapterCount": 16,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/fsde1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/fsde1ps.pdf",
+      "sha256": "aa2b1fdf93332ee877e46dac9a922e775f9012f4bac6003c7720440c9bd56eb4",
+      "fetchedAt": "2026-09-25T23:14:32+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/fsde1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde110.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde111.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde112.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde113.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde114.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde115.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fsde116.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Science",
+   "code": "SCIENCE",
+   "books": [
+    {
+     "code": "fecu1",
+     "title": "Curiosity",
+     "language": "en",
+     "indexValue": "textbook.php?fecu1=0-12",
+     "bookUrl": "https://ncert.nic.in/textbook.php?fecu1=0-12",
+     "indexChapterCount": 12,
+     "listedChapterCount": 12,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/fecu1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/fecu1ps.pdf",
+      "sha256": "0f143518474320c83059c0ca2036cf292e7a3f8a460c1c1c22719de193a0a058",
+      "fetchedAt": "2026-09-25T23:14:27+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "July 2024",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/fecu1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fecu101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "The Wonderful World of Science",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fecu102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Diversity in the Living World",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fecu103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Mindful Eating: A Path to a Healthy Body",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fecu104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Exploring Magnets",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fecu105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Measurement of Length and Motion",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fecu106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Materials Around Us",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fecu107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Temperature and its Measurement",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fecu108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "A Journey through States of Water",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fecu109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Methods of Separation in Everyday Life",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fecu110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Living Creatures: Exploring their Characteristics",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fecu111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Nature’s Treasures",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fecu112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Beyond Earth",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "fhcu1",
+       "title": "Jigyasa",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fhcu1=0-12"
+      },
+      {
+       "code": "fucu1",
+       "title": "Tajassus",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fucu1=0-12"
+      },
+      {
+       "code": "fmlcu1",
+       "title": "Curiosity (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmlcu1=0-12"
+      },
+      {
+       "code": "ftmcu1",
+       "title": "Curiosity (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ftmcu1=0-12"
+      },
+      {
+       "code": "fkncu1",
+       "title": "Curiosity (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fkncu1=0-12"
+      },
+      {
+       "code": "fmtcu1",
+       "title": "Curiosity (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmtcu1=0-12"
+      },
+      {
+       "code": "fpncu1",
+       "title": "Curiosity (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fpncu1=0-12"
+      },
+      {
+       "code": "fbncu1",
+       "title": "Curiosity (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fbncu1=0-12"
+      },
+      {
+       "code": "forcu1",
+       "title": "Curiosity (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?forcu1=0-12"
+      },
+      {
+       "code": "fkocu1",
+       "title": "Curiosity (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fkocu1=0-12"
+      },
+      {
+       "code": "fmncu1",
+       "title": "Curiosity (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmncu1=0-12"
+      },
+      {
+       "code": "fnpcu1",
+       "title": "Curiosity (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fnpcu1=0-12"
+      },
+      {
+       "code": "fskcu1",
+       "title": "Curiosity (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fskcu1=0-12"
+      },
+      {
+       "code": "ftlcu1",
+       "title": "Curiosity (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ftlcu1=0-12"
+      },
+      {
+       "code": "fascu1",
+       "title": "Curiosity (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fascu1=0-12"
+      },
+      {
+       "code": "fmrcu1",
+       "title": "Curiosity (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmrcu1=0-12"
+      },
+      {
+       "code": "fbdcu1",
+       "title": "Curiosity (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fbdcu1=0-12"
+      },
+      {
+       "code": "fdgcu1",
+       "title": "Curiosity (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fdgcu1=0-12"
+      },
+      {
+       "code": "fgjcu1",
+       "title": "Curiosity (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fgjcu1=0-12"
+      },
+      {
+       "code": "fsncu1",
+       "title": "Curiosity (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fsncu1=0-12"
+      },
+      {
+       "code": "fkscu1",
+       "title": "Curiosity (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fkscu1=0-12"
+      },
+      {
+       "code": "fsicu1",
+       "title": "Curiosity (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fsicu1=0-12"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Arts",
+   "code": "ARTS",
+   "books": [
+    {
+     "code": "fekr1",
+     "title": "Kriti-I",
+     "language": "en",
+     "indexValue": "textbook.php?fekr1=0-22",
+     "bookUrl": "https://ncert.nic.in/textbook.php?fekr1=0-22",
+     "indexChapterCount": 22,
+     "listedChapterCount": 22,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/fekr1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/fekr1ps.pdf",
+      "sha256": "7423e67a3a0f112808c3c196619ac7d4efd738419e8d695e85e31c1afb49dc34",
+      "fetchedAt": "2026-09-25T23:14:31+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "July 2024",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/fekr1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Objects and Still Life",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Changing the Typical Picture",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Portraying People",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Paper Crafts",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Seals to Prints",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Music and your Emotions",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Musical Instruments",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Taal or Talam and Raga or Ragam in Indian Music",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Melodies of Diversity",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Songwriting",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Music and Society",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "My Body in Motion",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Breaking Barriers with Dance",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr114.pdf",
+       "number": "14",
+       "kind": "chapter",
+       "title": "Harmony in Motion",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr115.pdf",
+       "number": "15",
+       "kind": "chapter",
+       "title": "Dances of Our Land",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr116.pdf",
+       "number": "16",
+       "kind": "chapter",
+       "title": "Emotions Unveiled!",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr117.pdf",
+       "number": "17",
+       "kind": "chapter",
+       "title": "Let’s Design",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 18,
+       "pdfSeq": 18,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr118.pdf",
+       "number": "18",
+       "kind": "chapter",
+       "title": "In the Company of Theatre",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 19,
+       "pdfSeq": 19,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr119.pdf",
+       "number": "19",
+       "kind": "chapter",
+       "title": "Stories of Shadows and Strings — Puppetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 20,
+       "pdfSeq": 20,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr120.pdf",
+       "number": "20",
+       "kind": "chapter",
+       "title": "The Grand Finale",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 21,
+       "pdfSeq": 21,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr121.pdf",
+       "number": "21",
+       "kind": "chapter",
+       "title": "Integration of All Art Forms",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 22,
+       "pdfSeq": 22,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekr122.pdf",
+       "number": "22",
+       "kind": "chapter",
+       "title": "Assessment",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "fhkr1",
+       "title": "Kriti-I (Hindi)",
+       "language": "hi",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fhkr1=0-22"
+      },
+      {
+       "code": "fbnkr1",
+       "title": "Kriti-I (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fbnkr1=0-22"
+      },
+      {
+       "code": "fkokr1",
+       "title": "Kriti-I (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fkokr1=0-22"
+      },
+      {
+       "code": "fbdkr1",
+       "title": "Kriti-I (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fbdkr1=0-22"
+      },
+      {
+       "code": "fmtkr1",
+       "title": "Kriti-I (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmtkr1=0-22"
+      },
+      {
+       "code": "fmnkr1",
+       "title": "Kriti-I (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmnkr1=0-22"
+      },
+      {
+       "code": "faskr1",
+       "title": "Kriti-I (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?faskr1=0-22"
+      },
+      {
+       "code": "fdgkr1",
+       "title": "Kriti-I (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fdgkr1=0-22"
+      },
+      {
+       "code": "forkr1",
+       "title": "Kriti-I (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?forkr1=0-22"
+      },
+      {
+       "code": "ftmkr1",
+       "title": "Kriti-I (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ftmkr1=0-22"
+      },
+      {
+       "code": "fgjkr1",
+       "title": "Kriti-I (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fgjkr1=0-22"
+      },
+      {
+       "code": "fknkr1",
+       "title": "Kriti-I (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fknkr1=0-22"
+      },
+      {
+       "code": "fmlkr1",
+       "title": "Kriti-I (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmlkr1=0-22"
+      },
+      {
+       "code": "fmrkr1",
+       "title": "Kriti-I (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmrkr1=0-22"
+      },
+      {
+       "code": "fskkr1",
+       "title": "Kriti-I (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fskkr1=0-22"
+      },
+      {
+       "code": "fnpkr1",
+       "title": "Kriti-I (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fnpkr1=0-22"
+      },
+      {
+       "code": "fpnkr1",
+       "title": "Kriti-I (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fpnkr1=0-22"
+      },
+      {
+       "code": "ftlkr1",
+       "title": "Kriti-I (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ftlkr1=0-22"
+      },
+      {
+       "code": "fkskr1",
+       "title": "Kriti-I (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fkskr1=0-22"
+      },
+      {
+       "code": "fsikr1",
+       "title": "Kriti-I (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fsikr1=0-22"
+      },
+      {
+       "code": "fsnkr1",
+       "title": "Kriti-I (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 22,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fsnkr1=0-22"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Physical Education and Well Being",
+   "code": "PHYSICAL_EDUCATION_AND_WELL_BEING",
+   "books": [
+    {
+     "code": "feky1",
+     "title": "Khel Yatra",
+     "language": "en",
+     "indexValue": "textbook.php?feky1=0-5",
+     "bookUrl": "https://ncert.nic.in/textbook.php?feky1=0-5",
+     "indexChapterCount": 5,
+     "listedChapterCount": 5,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/feky1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/feky1ps.pdf",
+      "sha256": "0dde749cc887f4de800fb9a6d8706ca3e916929addc35d5e5cc6cee7af40c021",
+      "fetchedAt": "2026-09-25T23:14:29+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "July 2024",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/feky1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/feky101.pdf",
+       "number": "1",
+       "kind": "unit",
+       "title": "Importance of Physical Education and Well-being",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/feky102.pdf",
+       "number": "2",
+       "kind": "unit",
+       "title": "Motor Fitness",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/feky103.pdf",
+       "number": "3",
+       "kind": "unit",
+       "title": "Fundamental Skills of Kho-Kho",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/feky104.pdf",
+       "number": "4",
+       "kind": "unit",
+       "title": "Fundamental Skills of Handball",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/feky105.pdf",
+       "number": "5",
+       "kind": "unit",
+       "title": "Yoga",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "fhky1",
+       "title": "Khel Yatra (Hindi)",
+       "language": "hi",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fhky1=0-5"
+      },
+      {
+       "code": "fbnky1",
+       "title": "Khel Yatra (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fbnky1=0-5"
+      },
+      {
+       "code": "fpnky1",
+       "title": "Khel Yatra (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fpnky1=0-5"
+      },
+      {
+       "code": "fasky1",
+       "title": "Khel Yatra (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fasky1=0-5"
+      },
+      {
+       "code": "ftmky1",
+       "title": "Khel Yatra (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ftmky1=0-5"
+      },
+      {
+       "code": "fnpky1",
+       "title": "Khel Yatra (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fnpky1=0-5"
+      },
+      {
+       "code": "forky1",
+       "title": "Khel Yatra (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?forky1=0-5"
+      },
+      {
+       "code": "fdgky1",
+       "title": "Khel Yatra (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fdgky1=0-5"
+      },
+      {
+       "code": "ftlky1",
+       "title": "Khel Yatra (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ftlky1=0-5"
+      },
+      {
+       "code": "fkoky1",
+       "title": "Khel Yatra (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fkoky1=0-5"
+      },
+      {
+       "code": "fknky1",
+       "title": "Khel Yatra (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fknky1=0-5"
+      },
+      {
+       "code": "fmlky1",
+       "title": "Khel Yatra (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmlky1=0-5"
+      },
+      {
+       "code": "fbdky1",
+       "title": "Khel Yatra (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fbdky1=0-5"
+      },
+      {
+       "code": "fksky1",
+       "title": "Khel Yatra (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fksky1=0-5"
+      },
+      {
+       "code": "fmnky1",
+       "title": "Khel Yatra (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmnky1=0-5"
+      },
+      {
+       "code": "fmrky1",
+       "title": "Khel Yatra (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmrky1=0-5"
+      },
+      {
+       "code": "fskky1",
+       "title": "Khel Yatra (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fskky1=0-5"
+      },
+      {
+       "code": "fsnky1",
+       "title": "Khel Yatra (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fsnky1=0-5"
+      },
+      {
+       "code": "fsiky1",
+       "title": "Khel Yatra (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fsiky1=0-5"
+      },
+      {
+       "code": "fmtky1",
+       "title": "Khel Yatra (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmtky1=0-5"
+      },
+      {
+       "code": "fgjky1",
+       "title": "Khel Yatra (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fgjky1=0-5"
+      }
+     ]
+    }
+   ],
+   "unlinkedEditions": [
+    {
+     "code": "fukl1",
+     "title": "Jismani Taleem aur Tandurusti",
+     "language": "ur",
+     "chapterCount": 5,
+     "bookUrl": "https://ncert.nic.in/textbook.php?fukl1=0-5",
+     "note": "no English-medium book in this subject shares its NCERT code stem"
+    }
+   ]
+  },
+  {
+   "name": "Vocational Education",
+   "code": "VOCATIONAL_EDUCATION",
+   "books": [
+    {
+     "code": "fekb1",
+     "title": "Kaushal Bodh",
+     "language": "en",
+     "indexValue": "textbook.php?fekb1=0-6",
+     "bookUrl": "https://ncert.nic.in/textbook.php?fekb1=0-6",
+     "indexChapterCount": 6,
+     "listedChapterCount": 6,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/fekb1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/fekb1ps.pdf",
+      "sha256": "df6eb7c2532ee37b7013e0554a80462affb7010b23b1330186fa8158684ed015",
+      "fetchedAt": "2026-09-25T23:14:30+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "July 2024",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/fekb1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekb101.pdf",
+       "number": "1",
+       "kind": "project",
+       "title": "School Kitchen Garden",
+       "section": "Part 1: Work with Life Forms",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekb102.pdf",
+       "number": "2",
+       "kind": "project",
+       "title": "Biodiversity Register",
+       "section": "Part 1: Work with Life Forms",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekb103.pdf",
+       "number": "3",
+       "kind": "project",
+       "title": "Maker Skills",
+       "section": "Part 2: Work with Machines and Materials",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekb104.pdf",
+       "number": "4",
+       "kind": "project",
+       "title": "Animation and Games",
+       "section": "Part 2: Work with Machines and Materials",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekb105.pdf",
+       "number": "5",
+       "kind": "project",
+       "title": "School Museum",
+       "section": "Part 3: Work in Human Services",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fekb106.pdf",
+       "number": "6",
+       "kind": "project",
+       "title": "Cooking without Fire",
+       "section": "Part 3: Work in Human Services",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "fhkb1",
+       "title": "Kaushal Bodh (Hindi)",
+       "language": "hi",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fhkb1=0-6"
+      },
+      {
+       "code": "fbnkb1",
+       "title": "Kaushal Bodh (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fbnkb1=0-6"
+      },
+      {
+       "code": "fbdkb1",
+       "title": "Kaushal Bodh (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fbdkb1=0-6"
+      },
+      {
+       "code": "fdgkb1",
+       "title": "Kaushal Bodh (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fdgkb1=0-6"
+      },
+      {
+       "code": "fkokb1",
+       "title": "Kaushal Bodh (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fkokb1=0-6"
+      },
+      {
+       "code": "forkb1",
+       "title": "Kaushal Bodh (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?forkb1=0-6"
+      },
+      {
+       "code": "fpnkb1",
+       "title": "Kaushal Bodh (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fpnkb1=0-6"
+      },
+      {
+       "code": "fmlkb1",
+       "title": "Kaushal Bodh (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmlkb1=0-6"
+      },
+      {
+       "code": "fknkb1",
+       "title": "Kaushal Bodh (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fknkb1=0-6"
+      },
+      {
+       "code": "fmnkb1",
+       "title": "Kaushal Bodh (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmnkb1=0-6"
+      },
+      {
+       "code": "ftmkb1",
+       "title": "Kaushal Bodh (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ftmkb1=0-6"
+      },
+      {
+       "code": "fgjkb1",
+       "title": "Kaushal Bodh (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fgjkb1=0-6"
+      },
+      {
+       "code": "fmtkb1",
+       "title": "Kaushal Bodh (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmtkb1=0-6"
+      },
+      {
+       "code": "faskb1",
+       "title": "Kaushal Bodh (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?faskb1=0-6"
+      },
+      {
+       "code": "fnpkb1",
+       "title": "Kaushal Bodh (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fnpkb1=0-6"
+      },
+      {
+       "code": "fskkb1",
+       "title": "Kaushal Bodh (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fskkb1=0-6"
+      },
+      {
+       "code": "fkskb1",
+       "title": "Kaushal Bodh (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fkskb1=0-6"
+      },
+      {
+       "code": "fmrkb1",
+       "title": "Kaushal Bodh (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fmrkb1=0-6"
+      },
+      {
+       "code": "ftlkb1",
+       "title": "Kaushal Bodh (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ftlkb1=0-6"
+      },
+      {
+       "code": "fsnkb1",
+       "title": "Kaushal Bodh (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fsnkb1=0-6"
+      },
+      {
+       "code": "fsikb1",
+       "title": "Kaushal Bodh (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?fsikb1=0-6"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Urdu",
+   "code": "URDU",
+   "books": [
+    {
+     "code": "fuky1",
+     "title": "Khayal",
+     "language": "ur",
+     "indexValue": "textbook.php?fuky1=0-14",
+     "bookUrl": "https://ncert.nic.in/textbook.php?fuky1=0-14",
+     "indexChapterCount": 14,
+     "listedChapterCount": 14,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/fuky1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/fuky1ps.pdf",
+      "sha256": "98a0be3e275bf6a0598463e65645276d85ab7533a243471df7b228253778eb8e",
+      "fetchedAt": "2026-09-25T23:14:32+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/fuky1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky101.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky102.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky103.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky104.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky105.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky106.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky107.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky108.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky109.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky110.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky111.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky112.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky113.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/fuky114.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  }
+ ],
+ "counts": {
+  "subjects": 10,
+  "books": 10,
+  "chapters": 74,
+  "unresolvedChapters": 43,
+  "editions": 130
+ }
+}

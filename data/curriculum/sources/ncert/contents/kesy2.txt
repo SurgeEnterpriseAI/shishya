@@ -1,0 +1,31 @@
+# NCERT contents evidence — kesy2 — Understanding Society (index class 11, Sociology)
+# source: https://ncert.nic.in/textbook/pdf/kesy2ps.pdf
+# fetched: 2026-09-25T23:15:16+05:30  sha256: c5012404ab9b2e0fabf5f56f74a9611cf946f7605f5196251c174e66a8cc9134  bytes: 1670402
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 49d268540c0749b00760b25e01721d7ed907b5c762298b6cac3f4559970b28fc);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kesy2#1 title [pymupdf p13] next=number
+  SOCIAL STRUCTURE, STRATIFICATION AND
+  1
+  SOCIAL PROCESSES IN SOCIETY
++ 2.
++ SOCIAL CHANGE AND SOCIAL ORDER
+@kesy2#2 title [pymupdf p13] next=number
+  SOCIAL CHANGE AND SOCIAL ORDER
+  21
+  IN RURAL AND URBAN SOCIETY
++ 3.
++ ENVIRONMENT AND SOCIETY
+@kesy2#3 title [pymupdf p13] next=number
+  ENVIRONMENT AND SOCIETY
++ 50
++ 4.
+@kesy2#4 title [pymupdf p13] next=number
+  INTRODUCING WESTERN SOCIOLOGISTS
++ 65
++ 5.
+@kesy2#5 title [pdftotext p13] next=page
+~ IRONMENT AND SOCIETY 4. INTRODUCING WESTERN SOCIOLOGISTS 5. INDIAN SOCIOLOGISTS
++ (v) (vii) (xi)
++ 1

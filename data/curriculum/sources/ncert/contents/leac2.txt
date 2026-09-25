@@ -1,0 +1,31 @@
+# NCERT contents evidence — leac2 — Accountancy Part-II (index class 12, Accountancy)
+# source: https://ncert.nic.in/textbook/pdf/leac2ps.pdf
+# fetched: 2026-09-25T23:15:29+05:30  sha256: 63448d97dfb11a90dce883bfef42c35ea06a8906c5f69fe7610937e709e36a40  bytes: 1684905
+# contents pages of the PDF: 9,10 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 601d09adeaa6f2cbd18992158f8ae037d35deb771aee2fe8450e9bb00b8e8e7b);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@leac2#1 title [pdftotext p9] next=sub-entry-list
+  Accounting for Share Capital
++ 1
++ Features of a Company
+@leac2#2 title [pdftotext p9] next=sub-entry-list
+  Issue and Redemption of Debentures
++ 75
++ Meaning of Debentures
+@leac2#3 title [pdftotext p9] next=sub-entry-list
+  Financial Statements of a Company
++ Meaning of Financial Statements Nature of Financial Statements Objectives of Financial Statements Types of Financial Statements Uses and Importance of Financial
++ 144
+@leac2#4 title [pymupdf p10] next=number
+  Analysis of Financial Statements
++ 171
++ 4.1
+@leac2#5 title [pymupdf p10] next=number
+  Accounting Ratios
++ 194
++ 5.1
+@leac2#6 title [pymupdf p10] next=number
+  Cash Flow Statement
++ 241
++ 6.1

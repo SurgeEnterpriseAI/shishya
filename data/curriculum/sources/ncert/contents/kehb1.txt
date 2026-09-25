@@ -1,0 +1,86 @@
+# NCERT contents evidence — kehb1 — Hornbill (index class 11, English)
+# source: https://ncert.nic.in/textbook/pdf/kehb1ps.pdf
+# fetched: 2026-09-25T23:15:17+05:30  sha256: ca733dfa70fa1d51456b8a21f6b60227ec3706de602fa7db4efb4cf698966670  bytes: 4509569
+# contents pages of the PDF: 11,12 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 51f990235b1baf79f0c3df9d8f8cb1ce9ce39283a46aef811e271fa0cd68a504);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kehb1#1 title [pymupdf p11] next=author
+  The Portrait of a Lady
++ 3
++ Khushwant Singh
+@kehb1#1:section section [pdftotext p11] next=number
+  Reading Skills
++ 1. The Portrait of a Lady Khushwant Singh
++ A Photograph Shirley Toulson
+@kehb1#1/1 include [pymupdf p11] next=author
+  A Photograph
++ 10
++ Shirley Toulson
+@kehb1#2 title [pymupdf p11] next=author
+  We’re Not Afraid to Die...
+  if We Can All Be Together
++ 12
++ Gordon Cook and Alan East
+@kehb1#3 title [pymupdf p11] next=author
+  Discovering Tut: the
+  Saga Continues
++ 21
++ A.R. Williams
+@kehb1#3/1 include [pymupdf p11] next=author
+  The Laburnum Top
++ 30
++ Ted Hughes
+@kehb1#3/2 include [pymupdf p11] next=author
+  The Voice of the Rain
++ 33
++ Walt Whitman
+@kehb1#4 title [pymupdf p11] next=author
+  The Ailing Planet: the
+  Green Movement’s Role
++ 35
++ Nani Palkhivala
+@kehb1#4/1 include [pymupdf p11] next=author
+  Childhood
++ 41
++ Markus Natten
+@kehb1#5 title [pymupdf p12] next=author
+  The Adventure
++ 43
++ Jayant Narlikar
+@kehb1#6 title [pymupdf p12] next=author
+  Silk Road
++ 57
++ Nick Middleton
+@kehb1#6/1 include [pymupdf p12] next=author
+  Father to Son
++ 68
++ Elizabeth Jennings
+@kehb1#7 title [pymupdf p12] next=number
+  Note-making
++ 72
++ 2.
+@kehb1#7:section section [pymupdf p12] next=number
+  Writing Skills
++ 70–100
++ 1.
+@kehb1#8 title [pymupdf p12] next=number
+  Summarising
++ 77
++ 3.
+@kehb1#9 title [pymupdf p12] next=number
+  Sub-titling
++ 81
++ 4.
+@kehb1#10 title [pymupdf p12] next=number
+  Essay-writing
++ 84
++ 5.
+@kehb1#11 title [pymupdf p12] next=number
+  Letter-writing
++ 89
++ 6.
+@kehb1#12 title [pdftotext p12] next=page
+  Writing Skills 1. Note-making 2. Summarising 3. Sub-titling 4. Essay-writing 5. Letter-writing 6. Creative Writing
++ 43
++ 57

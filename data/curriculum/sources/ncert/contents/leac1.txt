@@ -1,0 +1,27 @@
+# NCERT contents evidence — leac1 — Accountancy-I (index class 12, Accountancy)
+# source: https://ncert.nic.in/textbook/pdf/leac1ps.pdf
+# fetched: 2026-09-25T23:15:28+05:30  sha256: 71fe814b1146fd1dea3ea76d7206ba726f77adfc52c613d54edb951cc8a87926  bytes: 2116295
+# contents pages of the PDF: 9,10 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 650e48f40942098010a851d98fc4aaf17ee48c76014e3ad096115b1e97ce47a7);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@leac1#1 title [pdftotext p9] next=number
+  Accounting for Partnership: Basic Concepts
++ 1
++ 1.1 Nature of Partnership
+@leac1#2 title [pdftotext p9] next=number
+  Chapter 2		 Reconstitution of a Partnership Firm – Admission
+  48
+  of a Partner
++ 2.1 Modes of Reconstitution of a Partnership Firm
++ 48
+@leac1#3 title [pdftotext p9] next=number
+  Chapter 3		 Reconstitution of a Partnership Firm –
+  107
+  Retirement/Death of a Partner
++ 3.1 Ascertaining the Amount Due to
++ 107
+@leac1#4 title [pdftotext p10] next=number
+  Dissolution of Partnership Firm
++ 156
++ 4.1 Dissolution of Partnership

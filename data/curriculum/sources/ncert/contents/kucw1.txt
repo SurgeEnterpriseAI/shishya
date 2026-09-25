@@ -1,0 +1,8 @@
+# NCERT contents evidence — kucw1 — Takhleequi Jauhar (index class 11, Creative Writing and Translation)
+# source: https://ncert.nic.in/textbook/pdf/kucw1ps.pdf
+# fetched: 2026-09-25T23:15:34+05:30  sha256: aec2da29e94a080ca1ed738dbf0be4716f60ef15c4e9fdd1982026fcdc4dfa83  bytes: 39810489
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 c697374e5d394ff3acb21bafe3619e8f367bb23c86dd316c40a552cf440d9812);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

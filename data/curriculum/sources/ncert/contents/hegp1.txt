@@ -1,0 +1,35 @@
+# NCERT contents evidence — hegp1 — Ganita Prakash Part-I (index class 8, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/hegp1ps.pdf
+# fetched: 2026-09-25T23:14:41+05:30  sha256: e08bdb82e719ba12a1b2482c94629a4f35df91852539b4413f2a26e9eaab3dfd  bytes: 2847866
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 b6f75f1690f83ac2c5bd2e664ed2d7651daaa4a14cb6c1366a7dba735e6d4e49);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@hegp1#1 title [pdftotext p15] next=number
+  A Square and A Cube
++ 1
++ Chapter 2
+@hegp1#2 title [pdftotext p15] next=number
+  Power Play
++ 19
++ Chapter 3
+@hegp1#3 title [pdftotext p15] next=number
+  A Story of Numbers
++ 48
++ Chapter 4
+@hegp1#4 title [pdftotext p15] next=number
+  Quadrilaterals
++ 82
++ Chapter 5
+@hegp1#5 title [pdftotext p15] next=number
+  Number Play
++ 112
++ Chapter 6
+@hegp1#6 title [pdftotext p15] next=number
+  We Distribute, Yet Things Multiply
++ 136
++ Chapter 7
+@hegp1#7 title [pdftotext p15] next=page
+  Proportional Reasoning-1
++ 159
++ Reprint 2026-27

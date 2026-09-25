@@ -1,0 +1,745 @@
+{
+ "curriculum": "NCERT",
+ "indexClassValue": 1,
+ "classes": [
+  1
+ ],
+ "classLabel": "Class I",
+ "source": {
+  "indexUrl": "https://ncert.nic.in/textbook.php",
+  "snapshot": "data/curriculum/sources/ncert/textbook-php-2026-09-25.html",
+  "snapshotSha256": "f22b184dce0e02298d571a49ea768dd0809c146c540a77f6f23fdfbdc0c4ec29",
+  "fetchedOn": "2026-09-25"
+ },
+ "subjects": [
+  {
+   "name": "English",
+   "code": "ENGLISH",
+   "books": [
+    {
+     "code": "aemr1",
+     "title": "Mridang",
+     "language": "en",
+     "indexValue": "textbook.php?aemr1=0-9",
+     "bookUrl": "https://ncert.nic.in/textbook.php?aemr1=0-9",
+     "indexChapterCount": 9,
+     "listedChapterCount": 9,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/aemr1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/aemr1ps.pdf",
+      "sha256": "2d1815dd2829dd5955d1362b9bf6f8b79bd2f5f6b7f9dab77c05535f00ce586f",
+      "fetchedAt": "2026-09-25T23:14:11+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "May 2023",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/aemr1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aemr101.pdf",
+       "number": null,
+       "kind": "lesson",
+       "title": "Two Little Hands",
+       "section": "Unit 1: My Family and Me",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aemr102.pdf",
+       "number": null,
+       "kind": "lesson",
+       "title": "Greetings",
+       "section": "Unit 1: My Family and Me",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aemr103.pdf",
+       "number": null,
+       "kind": "lesson",
+       "title": "Picture Time",
+       "section": "Unit 2: Life Around Us",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aemr104.pdf",
+       "number": null,
+       "kind": "lesson",
+       "title": "The Cap-seller and the Monkeys",
+       "section": "Unit 2: Life Around Us",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aemr105.pdf",
+       "number": null,
+       "kind": "lesson",
+       "title": "A Farm",
+       "section": "Unit 2: Life Around Us",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aemr106.pdf",
+       "number": null,
+       "kind": "lesson",
+       "title": "Fun with Pictures",
+       "section": "Unit 3: Food",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aemr107.pdf",
+       "number": null,
+       "kind": "lesson",
+       "title": "The Food we Eat",
+       "section": "Unit 3: Food",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aemr108.pdf",
+       "number": null,
+       "kind": "lesson",
+       "title": "The Four Seasons",
+       "section": "Unit 4: Seasons",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aemr109.pdf",
+       "number": null,
+       "kind": "lesson",
+       "title": "Anandi’s Rainbow",
+       "section": "Unit 4: Seasons",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Mathematics",
+   "code": "MATHEMATICS",
+   "books": [
+    {
+     "code": "aejm1",
+     "title": "Joyful-Mathematics (English)",
+     "language": "en",
+     "indexValue": "textbook.php?aejm1=0-13",
+     "bookUrl": "https://ncert.nic.in/textbook.php?aejm1=0-13",
+     "indexChapterCount": 13,
+     "listedChapterCount": 13,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/aejm1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/aejm1ps.pdf",
+      "sha256": "ee12d6002641a43ea5499db1ea86b28cd8f25814102bb229886c4cc126a59895",
+      "fetchedAt": "2026-09-25T23:14:13+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "May 2023",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/aejm1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Finding the Furry Cat! (Pre-number Concepts)",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "What is Long? What is Round? (Shapes)",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Mango Treat (Numbers 1 to 9)",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Making 10 (Numbers 10 to 20)",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "How Many? (Addition and Subtraction of Single Digit Numbers)",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Vegetable Farm (Addition and Subtraction up to 20)",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Lina’s Family (Measurement)",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Fun with Numbers (Numbers 21 to 99)",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Utsav (Patterns)",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "How do I Spend my Day? (Time)",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "How Many Times? (Multiplication)",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "How Much Can We Spend? (Money)",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aejm113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "So Many Toys (Data Handling)",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "ahjm1",
+       "title": "Joyful-Mathematics (Hindi)",
+       "language": "hi",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ahjm1=0-13"
+      },
+      {
+       "code": "amrjm1",
+       "title": "Joyful-Mathematics (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?amrjm1=0-13"
+      },
+      {
+       "code": "asijm1",
+       "title": "Joyful-Mathematics (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?asijm1=0-13"
+      },
+      {
+       "code": "apjm1",
+       "title": "Joyful-Mathematics (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?apjm1=0-13"
+      },
+      {
+       "code": "agjm1",
+       "title": "Joyful-Mathematics (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?agjm1=0-13"
+      },
+      {
+       "code": "ayjm1",
+       "title": "Joyful-Mathematics (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ayjm1=0-13"
+      },
+      {
+       "code": "akjm1",
+       "title": "Joyful-Mathematics (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?akjm1=0-13"
+      },
+      {
+       "code": "aajm1",
+       "title": "Joyful-Mathematics (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?aajm1=0-13"
+      },
+      {
+       "code": "aijm1",
+       "title": "Joyful-Mathematics (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?aijm1=0-13"
+      },
+      {
+       "code": "aojm1",
+       "title": "Joyful-Mathematics (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?aojm1=0-13"
+      },
+      {
+       "code": "askjm1",
+       "title": "Joyful-Mathematics (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?askjm1=0-13"
+      },
+      {
+       "code": "aorjm1",
+       "title": "Joyful-Mathematics (Oriya)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?aorjm1=0-13"
+      },
+      {
+       "code": "abnjm1",
+       "title": "Joyful-Mathematics (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?abnjm1=0-13"
+      },
+      {
+       "code": "asnjm1",
+       "title": "Joyful-Mathematics (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?asnjm1=0-13"
+      },
+      {
+       "code": "amnjm1",
+       "title": "Joyful-Mathematics (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?amnjm1=0-13"
+      },
+      {
+       "code": "aujm1",
+       "title": "Joyful-Mathematics (Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?aujm1=0-13"
+      },
+      {
+       "code": "anpjm1",
+       "title": "Joyful-Mathematics (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?anpjm1=0-13"
+      },
+      {
+       "code": "atljm1",
+       "title": "Joyful-Mathematics (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?atljm1=0-13"
+      },
+      {
+       "code": "aknjm1",
+       "title": "Joyful-Mathematics (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?aknjm1=0-13"
+      },
+      {
+       "code": "atmjm1",
+       "title": "Joyful-Mathematics (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?atmjm1=0-13"
+      },
+      {
+       "code": "adgjm1",
+       "title": "Joyful-Mathematics (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?adgjm1=0-13"
+      },
+      {
+       "code": "aksjm1",
+       "title": "Joyful-Mathematics (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?aksjm1=0-13"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Hindi",
+   "code": "HINDI",
+   "books": [
+    {
+     "code": "ahsr1",
+     "title": "Sarangi",
+     "language": "hi",
+     "indexValue": "textbook.php?ahsr1=0-19",
+     "bookUrl": "https://ncert.nic.in/textbook.php?ahsr1=0-19",
+     "indexChapterCount": 19,
+     "listedChapterCount": 19,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/ahsr1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/ahsr1ps.pdf",
+      "sha256": "db9b07ca8a21c49a3785fc0a041ae68ff2c6a77fb1129efe46950b049f3441cb",
+      "fetchedAt": "2026-09-25T23:14:21+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/ahsr1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr110.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr111.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr112.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr113.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr114.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr115.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr116.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr117.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 18,
+       "pdfSeq": 18,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr118.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 19,
+       "pdfSeq": 19,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ahsr119.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Urdu",
+   "code": "URDU",
+   "books": [
+    {
+     "code": "aush1",
+     "title": "Shahnai",
+     "language": "ur",
+     "indexValue": "textbook.php?aush1=0-18",
+     "bookUrl": "https://ncert.nic.in/textbook.php?aush1=0-18",
+     "indexChapterCount": 18,
+     "listedChapterCount": 18,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/aush1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/aush1ps.pdf",
+      "sha256": "f3f59188bba3e90465ec5a50930d664c5291aa96d80392bc6ffebf2aa605a286",
+      "fetchedAt": "2026-09-25T23:14:11+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/aush1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush113.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush114.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush115.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush116.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush117.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 18,
+       "pdfSeq": 18,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/aush118.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  }
+ ],
+ "counts": {
+  "subjects": 4,
+  "books": 4,
+  "chapters": 22,
+  "unresolvedChapters": 37,
+  "editions": 22
+ }
+}

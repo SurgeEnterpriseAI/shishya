@@ -1,0 +1,8 @@
+# NCERT contents evidence — fsde1 — Deepakam (index class 6, Sanskrit)
+# source: https://ncert.nic.in/textbook/pdf/fsde1ps.pdf
+# fetched: 2026-09-25T23:14:32+05:30  sha256: aa2b1fdf93332ee877e46dac9a922e775f9012f4bac6003c7720440c9bd56eb4  bytes: 7582535
+# contents pages of the PDF: none found of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 4c865bbb9f1be366c019258be571a6d0491304aea1c25cda3b8f4ecd29bda745);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

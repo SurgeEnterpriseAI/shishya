@@ -1,0 +1,31 @@
+# NCERT contents evidence — kegy1 — India Physical Environment (index class 11, Geography)
+# source: https://ncert.nic.in/textbook/pdf/kegy1ps.pdf
+# fetched: 2026-09-25T23:15:13+05:30  sha256: 4406ed62316c38d12ec4c5e5832e12fbaad7dab4e30e0b9885d64c7a5a75e143  bytes: 1743717
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 24099167a604a904c32b152d68aa65326db6139ff3c925cbad22007064ddd889);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kegy1#1 title [pymupdf p11] next=number
+  India — Location
++ 2
++ UNIT II : P
+@kegy1#2 title [pymupdf p11] next=number
+  Structure and Physiography
++ 8
++ 3.
+@kegy1#3 title [pymupdf p11] next=number
+  Drainage System
++ 17
++ UNIT III : C
+@kegy1#4 title [pymupdf p11] next=caps-line
+  UNIT III : CLIMATE
++ LIMATE
++ LIMATE
+@kegy1#5 title [pymupdf p11] next=number
+  Natural Vegetation
++ 42
++ UNIT IV : N
+@kegy1#6 title [pdftotext p11] next=caps-line
+  CONSEQUENCES AND MANAGEMENT 6. Natural Hazards and Disasters
++ GL OSSA RY
++ v vii 1-6 2 7-26 8 17 27-51 28 42 52-69

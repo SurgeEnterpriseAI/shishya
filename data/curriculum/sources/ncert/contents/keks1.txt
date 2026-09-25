@@ -1,0 +1,45 @@
+# NCERT contents evidence — keks1 — Knowledge Traditions Practices of India (index class 11, Knowledge Traditions Practices of India)
+# source: https://ncert.nic.in/textbook/pdf/keks1ps.pdf
+# fetched: 2026-09-25T23:15:26+05:30  sha256: c330045a969d92d5080e39023a728b45e58fb55f4e7290e08980f584957ba2c5  bytes: 2420746
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 3905bae2cc3edb31ab6af80270efb30612b0e884ed66cbfe63b7136fd95caf8a);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@keks1#1 title [pdftotext p13] next=number
+  Chapter 1 — Language and Literature of India
++ 1
++ Chapter 2 — Indian Philosophical Systems
+@keks1#2 title [pdftotext p13] next=number
+  Chapter 2 — Indian Philosophical Systems
++ 19
++ Chapter 3 — Performing Art Traditions in India
+@keks1#3 title [pdftotext p13] next=number
+  Chapter 3 — Performing Art Traditions in India
++ 37
++ Chapter 4 — Indian Art and Architecture
+@keks1#4 title [pdftotext p13] next=number
+  Chapter 4 — Indian Art and Architecture
++ 61
++ Chapter 5 — Astronomy in India
+@keks1#5 title [pdftotext p13] next=number
+  Chapter 5 — Astronomy in India
++ 79
++ Chapter 6 — Mathematics in India
+@keks1#6 title [pdftotext p13] next=number
+  Chapter 6 — Mathematics in India
++ 99
++ Chapter 7 — Introducing Ayurveda: the Science of
+@keks1#7 title [pdftotext p13] next=number
+  Chapter 7 — Introducing Ayurveda: the Science of
+  117
+  Health and Disease
++ Chapter 8 — Chemistry and Metallurgy in India
++ 137
+@keks1#8 title [pdftotext p13] next=number
+  Chapter 8 — Chemistry and Metallurgy in India
++ 137
++ Chapter 9 — Yoga
+@keks1#9 title [pdftotext p13] next=page
+  Chapter 9 — Yoga
++ 155
++ Reprint 2026-27

@@ -1,0 +1,39 @@
+# NCERT contents evidence — leps2 — Politics in India Since Independence (index class 12, Political Science)
+# source: https://ncert.nic.in/textbook/pdf/leps2ps.pdf
+# fetched: 2026-09-25T23:15:37+05:30  sha256: 31de8c6ba88b699b3f493e1befef126e99c35c2caa24f671f55dfc77f6e9ded0  bytes: 1311373
+# contents pages of the PDF: 13 of 13
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 4a3ff1b592cc851c053257082e79ec7efb2669c1f76a8a5111d1201d334610b7);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@leps2#1 title [pdftotext p13] next=number
+  Challenges of nation building
++ 2
++ Chapter 2
+@leps2#2 title [pdftotext p13] next=number
+  Era of one-party dominance
++ 26
++ Chapter 3
+@leps2#3 title [pdftotext p13] next=number
+  Politics of planned development
++ 44
++ Chapter 4
+@leps2#4 title [pdftotext p13] next=number
+  India’s external relations
++ 54
++ Chapter 5
+@leps2#5 title [pdftotext p13] next=number
+  Challenges to and restoration of the congress system
++ 72
++ Chapter 6
+@leps2#6 title [pdftotext p13] next=number
+  The crisis of democratic order
++ 92
++ Chapter 7
+@leps2#7 title [pdftotext p13] next=number
+  Regional aspirations
++ 112
++ Chapter 8
+@leps2#8 title [pdftotext p13] next=page
+  Recent developments in indian politics
++ 136
++ Reprint 2026-27

@@ -1,0 +1,40 @@
+# NCERT contents evidence — kehe1 — Human Ecology and Family Sciences Part I (index class 11, Home Science)
+# source: https://ncert.nic.in/textbook/pdf/kehe1ps.pdf
+# fetched: 2026-09-25T23:15:20+05:30  sha256: 052412179595bd4fb45a4df56efe0666f044eb411dbe32654f9394671fbb733e  bytes: 1649660
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 ca143f77a27edc8c29f106b52b58d1370200af9e36d28b42221ba3a48e9c710b);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kehe1#1 title [pdftotext p13] next=known
+  Chapter 1 Introduction
++ HEFS: Evolution of the Discipline and its Relevance
++ to Quality of Life
+@kehe1#1:subtitle subtitle [pdftotext p13] next=number
+  HEFS: Evolution of the Discipline and its Relevance
+  to Quality of Life
++ 1
++ Unit I
+@kehe1#2 title [pdftotext p13] next=number
+  Chapter 2 Understanding the Self
++ A. What makes me ‘I’
++ 6
+@kehe1#3 title [pdftotext p13] next=number
+  Chapter 3 Food, Nutrition, Health and Fitness
++ 28
++ Chapter 4 Chapter 5
+@kehe1#4 title [pymupdf p13] next=number
+  Management of Resources
++ 47
++ Chapter 5
+@kehe1#5 title [pymupdf p13] next=number
+  Fabrics Around Us
++ 57
++ Chapter 6
+@kehe1#6 title [pdftotext p13] next=number
+  Chapter 6 Media and Communication Technology
++ 73
++ Unit II Chapter 7
+@kehe1#7 title [pdftotext p13] next=number
+  Concerns and Needs in Diverse Contexts
++ A. Nutrition, Health and Hygiene
++ 95

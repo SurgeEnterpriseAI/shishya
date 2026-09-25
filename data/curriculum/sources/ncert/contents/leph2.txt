@@ -1,0 +1,31 @@
+# NCERT contents evidence — leph2 — Physics Part-II (index class 12, Physics)
+# source: https://ncert.nic.in/textbook/pdf/leph2ps.pdf
+# fetched: 2026-09-25T23:15:27+05:30  sha256: ec55ddcdc76286a233424784c52294f4352ff41a1e34846f6b8182c0145ff247  bytes: 1718367
+# contents pages of the PDF: 15,16 of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 7b0de740a9512631bafbaba75b0c38c5d741c3ea5bf4bde7e5a27e364d3a7f45);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@leph2#1 title [pdftotext p15] next=number
+  RAY OPTICS AND OPTICAL INSTRUMENTS
++ 9.1 Introduction
++ 221
+@leph2#2 title [pdftotext p15] next=number
+  WAVE OPTICS
++ 10.1 Introduction
++ 255
+@leph2#3 title [pymupdf p15] next=number
+  DUAL NATURE OF RADIATION AND MATTER
++ 11.1
++ Introduction
+@leph2#4 title [pdftotext p16] next=number
+  ATOMS
++ 12.1 Introduction
++ 290
+@leph2#5 title [pdftotext p16] next=number
+  NUCLEI
++ 13.1 Introduction
++ 306
+@leph2#6 title [pdftotext p16] next=number
+  SEMICONDUCTOR ELECTRONICS: MATERIALS, DEVICES AND SIMPLE CIRCUITS
++ 14.1 Introduction
++ 323

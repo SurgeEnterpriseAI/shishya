@@ -1,0 +1,47 @@
+# NCERT contents evidence — deev1 — Our Wonderous World (index class 4, The World Around Us)
+# source: https://ncert.nic.in/textbook/pdf/deev1ps.pdf
+# fetched: 2026-09-25T23:14:21+05:30  sha256: 7be7e6f6a7c2d1ad3e59f23046bb59807685963179c4d9ce06a0be92f41c56eb  bytes: 8967069
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 2eefbcecbaf8cb4b3cccb438657d31d1b6b488bae0329216cd1bc93f77ff5b7f);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@deev1#1 title [pdftotext p15] next=number
+  Chapter 1: Living Together
++ 3
++ Chapter 2: Exploring Our Neighbourhood
+@deev1#2 title [pdftotext p15] next=number
+  Chapter 2: Exploring Our Neighbourhood
++ 17
++ Unit 2: Life Around Us
+@deev1#3 title [pdftotext p15] next=number
+  Chapter 3: Nature Trail
++ 35
++ Chapter 4: Growing up with Nature
+@deev1#4 title [pdftotext p15] next=number
+  Chapter 4: Growing up with Nature
++ 57
++ Unit 3: Health and Well-being
+@deev1#5 title [pdftotext p15] next=number
+  Chapter 5: Food for Health
++ 71
++ Chapter 6: Happy and Healthy Living
+@deev1#6 title [pdftotext p15] next=number
+  Chapter 6: Happy and Healthy Living
++ 85
++ Unit 4: Things Around Us
+@deev1#7 title [pdftotext p15] next=number
+  Chapter 7: How Things Work
++ 104
++ Chapter 8: How Things are Made
+@deev1#8 title [pdftotext p15] next=number
+  Chapter 8: How Things are Made
++ 117
++ Unit 5: Our Environment
+@deev1#9 title [pdftotext p15] next=number
+  Chapter 9: Different Lands, Different Lives 130
++ Chapter 10: Our Sky
++ 152
+@deev1#10 title [pdftotext p15] next=page
+  Chapter 10: Our Sky
++ 152
++ Reprint 2026-27

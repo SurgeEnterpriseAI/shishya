@@ -1,0 +1,35 @@
+# NCERT contents evidence — jess1 — Contemporary India (index class 10, Social Science)
+# source: https://ncert.nic.in/textbook/pdf/jess1ps.pdf
+# fetched: 2026-09-25T23:15:03+05:30  sha256: 49863325d9e0be6339eccbbd1a8604dd1e7ef3c3f3d6d279d42449da68296eca  bytes: 1563608
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 44b602a788bc7b775d806ca9452e999c2d2f5fa77f37af365853164b6c8dc47a);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@jess1#1 title [pdftotext p11] next=number
+  1. Resources and Development
++ 1
++ 2. Forest and Wildlife Resources
+@jess1#2 title [pdftotext p11] next=number
+  2. Forest and Wildlife Resources
++ 13
++ 3. Water Resources
+@jess1#3 title [pdftotext p11] next=number
+  3. Water Resources
++ 19
++ 4. Agriculture
+@jess1#4 title [pdftotext p11] next=number
+  4. Agriculture
++ 30
++ 5. Minerals and Energy Resources
+@jess1#5 title [pdftotext p11] next=number
+  5. Minerals and Energy Resources
++ 42
++ 6. Manufacturing Industries
+@jess1#6 title [pdftotext p11] next=number
+  6. Manufacturing Industries
++ 58
++ 7. Lifelines of National Economy
+@jess1#7 title [pdftotext p11] next=boilerplate
+  7. Lifelines of National Economy
++ 71
++ Appendix–I

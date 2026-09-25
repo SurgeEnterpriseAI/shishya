@@ -1,0 +1,8 @@
+# NCERT contents evidence — lsgv1 — Hindustani Sangeet Gayan Evam Vaadan (index class 12, Sangeet)
+# source: https://ncert.nic.in/textbook/pdf/lsgv1ps.pdf
+# fetched: 2026-09-25T23:15:47+05:30  sha256: 103c439b79cb1c75886e1b0086a15250e183c700854b8fdc16186af910da5c94  bytes: 4319375
+# contents pages of the PDF: none found of 34
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 df1bfc9fe3dee66a8bb47b1812b29b308b76e56ac274025710311c87ad315de0);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

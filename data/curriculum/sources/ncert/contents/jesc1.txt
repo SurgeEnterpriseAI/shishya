@@ -1,0 +1,59 @@
+# NCERT contents evidence — jesc1 — Science (index class 10, Science)
+# source: https://ncert.nic.in/textbook/pdf/jesc1ps.pdf
+# fetched: 2026-09-25T23:15:01+05:30  sha256: cf2a2afb28bd01b4518dbd7e9517b8a9b4a85c989bf3a047cd96d1a8408fdcb0  bytes: 3429027
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 2a59e43b1aa4643dfc36bf9c4dee08678fb659cf43f6b92a60162b0b0d4eab7e);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@jesc1#1 title [pdftotext p11] next=number
+  Chemical Reactions and Equations
++ Chapter 2
++ Acids, Bases and Salts
+@jesc1#2 title [pdftotext p11] next=number
+  Acids, Bases and Salts
++ Chapter 3
++ Metals and Non-metals
+@jesc1#3 title [pdftotext p11] next=number
+  Metals and Non-metals
++ Chapter 4
++ Carbon and its Compounds
+@jesc1#4 title [pdftotext p11] next=number
+  Carbon and its Compounds
++ Chapter 5
++ Life Processes
+@jesc1#5 title [pdftotext p11] next=number
+  Life Processes
++ Chapter 6
++ Control and Coordination
+@jesc1#6 title [pdftotext p11] next=number
+  Control and Coordination
++ Chapter 7
++ How do Organisms Reproduce?
+@jesc1#7 title [pdftotext p11] next=number
+  How do Organisms Reproduce?
++ Chapter 8
++ Heredity
+@jesc1#8 title [pdftotext p11] next=number
+  Heredity
++ Chapter 9
++ Light – Reflection and Refraction
+@jesc1#9 title [pdftotext p11] next=number
+  Light – Reflection and Refraction
++ Chapter 10 The Human Eye and the Colourful World
++ Chapter 11 Electricity
+@jesc1#10 title [pdftotext p11] next=number
+  Chapter 10 The Human Eye and the Colourful World
++ Chapter 11 Electricity
++ Chapter 12 Magnetic Effects of Electric Current
+@jesc1#11 title [pdftotext p11] next=number
+  Chapter 11 Electricity
++ Chapter 12 Magnetic Effects of Electric Current
++ Chapter 13 Our Environment
+@jesc1#12 title [pdftotext p11] next=number
+  Chapter 12 Magnetic Effects of Electric Current
++ Chapter 13 Our Environment
++ Answers
+@jesc1#13 title [pdftotext p11] next=boilerplate
+  Chapter 13 Our Environment
++ Answers
++ iii v vii 1 17 37 58 79 100 113 128 134 161 171 195 208 218-219

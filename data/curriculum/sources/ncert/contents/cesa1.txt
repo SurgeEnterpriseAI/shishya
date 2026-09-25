@@ -1,0 +1,57 @@
+# NCERT contents evidence — cesa1 — Santoor (index class 3, English)
+# source: https://ncert.nic.in/textbook/pdf/cesa1ps.pdf
+# fetched: 2026-09-25T23:14:15+05:30  sha256: 6b0ce2a24327c9fad6acd997b38a12ce4bff961e729856133c4474656b424816  bytes: 1956951
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 d2bd84786d876c28a9c375c2580da13acb71f5ef4a9c281d16fe5cf534c3fb11);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@cesa1#1 title [pdftotext p15] next=number
+  1. Colours
++ 4
++ 2. Badal and Moti
+@cesa1#2 title [pdftotext p15] next=number
+  2. Badal and Moti
++ 15
++ 3. Best Friends
+@cesa1#3 title [pdftotext p15] next=number
+  3. Best Friends
++ 25
++ Unit 2: Toys and Games
+@cesa1#4 title [pdftotext p15] next=number
+  4. Out in the Garden
++ 39
++ 5. Talking Toys
+@cesa1#5 title [pdftotext p15] next=number
+  5. Talking Toys
++ 44
++ 6. Paper Boats
+@cesa1#6 title [pdftotext p15] next=boilerplate
+  6. Paper Boats
++ 56
++ Self Assessment
+@cesa1#7 title [pdftotext p15] next=number
+  7. The Big Laddoo
++ 70
++ 8. Thank God
+@cesa1#8 title [pdftotext p15] next=number
+  8. Thank God
++ 78
++ 9. Madhu’s Wish
+@cesa1#9 title [pdftotext p15] next=number
+  9. Madhu’s Wish
++ 88
++ Unit 4: The Sky
+@cesa1#10 title [pdftotext p15] next=number
+  10. Night
++ 104
++ 11. Chanda Mama Counts
+@cesa1#11 title [pdftotext p15] next=number
+  11. Chanda Mama Counts
+  109
+  the Stars
++ 12. Chandrayaan
++ 118
+@cesa1#12 title [pdftotext p15] next=boilerplate
+  12. Chandrayaan
++ 118
++ Self Assessment

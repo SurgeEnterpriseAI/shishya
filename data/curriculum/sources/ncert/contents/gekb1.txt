@@ -1,0 +1,47 @@
+# NCERT contents evidence — gekb1 — Kaushal Bodh (index class 7, Vocational Education)
+# source: https://ncert.nic.in/textbook/pdf/gekb1ps.pdf
+# fetched: 2026-09-25T23:14:39+05:30  sha256: 88e6f1ff7ef701f6012d1b3dca78368db0edbbcc370a825a7b150b7f9dd7c9a6  bytes: 3291602
+# contents pages of the PDF: 21 of 22
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 b6a251947a27214b0d133a868bb9dbcb71d7806fc00a175d58b88d039bac9cc2);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@gekb1#1 title [pdftotext p21] next=number
+  Project 1: Plant Nursery
++ 3
++ Project 2: School Habitat Garden
+@gekb1#1:section section [pdftotext p21] next=number
+  Part 1: Work with Life Forms
++ 1
++ Project 1: Plant Nursery
+@gekb1#2 title [pdftotext p21] next=number
+  Project 2: School Habitat Garden
++ 25
++ Part 2: Work with Machines and Materials
+@gekb1#3 title [pdftotext p21] next=number
+  Project 3: Tie and Dye
++ 51
++ Project 4: AI Assistant
+@gekb1#3:section section [pdftotext p21] next=number
+  Part 2: Work with Machines and Materials
++ 49
++ Project 3: Tie and Dye
+@gekb1#4 title [pdftotext p21] next=number
+  Project 4: AI Assistant
++ 83
++ Part 3: Work in Human Services
+@gekb1#5 title [pdftotext p21] next=number
+  Project 5: Storytime with Puppets
++ 109
++ Project 6: Family Health Handbook
+@gekb1#5:section section [pdftotext p21] next=number
+  Part 3: Work in Human Services
++ 107
++ Project 5: Storytime with Puppets
+@gekb1#6 title [pdftotext p21] next=known
+  Project 6: Family Health Handbook
++ 138
++ Planning for Kaushal Mela161
+@gekb1#7 title [pdftotext p21] next=boilerplate
+  Planning for Kaushal Mela161
++ Annexure 1: Project Template
++ 164

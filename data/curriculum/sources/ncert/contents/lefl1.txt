@@ -1,0 +1,67 @@
+# NCERT contents evidence — lefl1 — Flamingo (index class 12, English)
+# source: https://ncert.nic.in/textbook/pdf/lefl1ps.pdf
+# fetched: 2026-09-25T23:15:33+05:30  sha256: cab54ed1146d4aed5c65240ebf081659e5a096ab55344c2fe08403336c09a66e  bytes: 1989663
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 59ece0164c1fdb8ac6a9eee16b23d57d844f75795b58ddb639e83156153d0a33);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lefl1#1 title [pdftotext p13] next=author
+  1. The Last Lesson
++ Alphonse Daudet
++ 1-86 2
+@lefl1#1:section section [pdftotext p13] next=number
+  Prose
++ 1. The Last Lesson
++ Alphonse Daudet
+@lefl1#2 title [pdftotext p13] next=author
+  2. Lost Spring
++ Anees Jung
++ 13
+@lefl1#3 title [pymupdf p13] next=author
+  3.	 Deep Water
++ William  Douglas
++ 23
+@lefl1#4 title [pdftotext p13] next=author
+  3. Deep Water 4. The Rattrap
++ William Douglas
++ 23
+@lefl1#5 title [pdftotext p13] next=author
+  5. Indigo
++ Louis Fischer
++ 45
+@lefl1#6 title [pdftotext p13] next=author
+  6. Poets and Pancakes
++ Asokamitran
++ 56
+@lefl1#7 title [pymupdf p13] next=number
+  7.	 The Interview
++ Part I
++ Christopher Silvester
+@lefl1#8 title [pdftotext p13] next=number
+  8. Going Places
++ A. R. Barton
++ 75
+@lefl1#9 title [pdftotext p13] next=author
+  1. My Mother at Sixty-six
++ Kamala Das
++ 2. Keeping Quiet
+@lefl1#9:section section [pdftotext p13] next=number
+  Poetry
++ 1. My Mother at Sixty-six
++ Kamala Das
+@lefl1#10 title [pdftotext p13] next=author
+  2. Keeping Quiet
++ Pablo Neruda
++ 3. A Thing of Beauty
+@lefl1#11 title [pdftotext p13] next=author
+  3. A Thing of Beauty
++ John Keats
++ 4. A Roadside Stand
+@lefl1#12 title [pdftotext p13] next=author
+  4. A Roadside Stand
++ Robert Frost
++ 5. Aunt Jennifer’s Tigers
+@lefl1#13 title [pdftotext p13] next=author
+  5. Aunt Jennifer’s Tigers
++ Adrienne Rich
++ 87-99 88 90 93 95 98

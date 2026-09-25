@@ -1,0 +1,6648 @@
+{
+ "_about": "Chapter titles of NCERT English-medium textbooks, transcribed on 25 Sep 2026 from each book's official contents page (sources/ncert/contents/<code>.txt, cut from https://ncert.nic.in/textbook/pdf/<code>ps.pdf). One entry per chapter PDF, in the order the NCERT book page lists them. n = the number printed in the contents (absent when NCERT prints none); kind = what NCERT calls the unit (chapter/unit/lesson/theme/project/section); source 'chapter-pdf' = the contents page is an image or mis-encoded there, so the title was read from the first lines of that chapter's own PDF (sources/ncert/chapter-title-lines/). tests/unit/school-spine.test.ts fails if any title is not in its source text. includes = pieces NCERT prints inside that chapter's PDF (unnumbered contents entries between two numbered chapters, unit lessons, numbered parts I/II/III), verbatim from the contents page; page = the printed start page. 26 Sep 2026: 8 titles that wrap onto a second contents line were cut at the first line; corrected and now guarded by the boundary test in tests/unit/school-spine.test.ts.",
+ "books": {
+  "aemr1": [
+   {
+    "kind": "lesson",
+    "title": "Two Little Hands",
+    "section": "Unit 1: My Family and Me"
+   },
+   {
+    "kind": "lesson",
+    "title": "Greetings",
+    "section": "Unit 1: My Family and Me"
+   },
+   {
+    "kind": "lesson",
+    "title": "Picture Time",
+    "section": "Unit 2: Life Around Us"
+   },
+   {
+    "kind": "lesson",
+    "title": "The Cap-seller and the Monkeys",
+    "section": "Unit 2: Life Around Us"
+   },
+   {
+    "kind": "lesson",
+    "title": "A Farm",
+    "section": "Unit 2: Life Around Us"
+   },
+   {
+    "kind": "lesson",
+    "title": "Fun with Pictures",
+    "section": "Unit 3: Food"
+   },
+   {
+    "kind": "lesson",
+    "title": "The Food we Eat",
+    "section": "Unit 3: Food"
+   },
+   {
+    "kind": "lesson",
+    "title": "The Four Seasons",
+    "section": "Unit 4: Seasons"
+   },
+   {
+    "kind": "lesson",
+    "title": "Anandi’s Rainbow",
+    "section": "Unit 4: Seasons"
+   }
+  ],
+  "aejm1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Finding the Furry Cat! (Pre-number Concepts)"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "What is Long? What is Round? (Shapes)"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Mango Treat (Numbers 1 to 9)"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Making 10 (Numbers 10 to 20)"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "How Many? (Addition and Subtraction of Single Digit Numbers)"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Vegetable Farm (Addition and Subtraction up to 20)"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Lina’s Family (Measurement)"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Fun with Numbers (Numbers 21 to 99)"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Utsav (Patterns)"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "How do I Spend my Day? (Time)"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "How Many Times? (Multiplication)"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "How Much Can We Spend? (Money)"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "So Many Toys (Data Handling)"
+   }
+  ],
+  "bejm1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "A Day at the Beach",
+    "subtitle": "Counting in Groups"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Shapes Around Us",
+    "subtitle": "3D Shapes"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Fun with Numbers",
+    "subtitle": "Numbers 1 to 100"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Shadow Story (Togalu)",
+    "subtitle": "2D Shapes"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Playing with Lines",
+    "subtitle": "Orientations of a line"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Decoration for Festival",
+    "subtitle": "Addition and Subtraction"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Rani’s Gift",
+    "subtitle": "Measurement"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Grouping and Sharing",
+    "subtitle": "Multiplication and Division"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Which Season is it?",
+    "subtitle": "Measurement of Time"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Fun at the Fair",
+    "subtitle": "Money"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Data Handling"
+   }
+  ],
+  "bemr1": [
+   {
+    "kind": "lesson",
+    "title": "My Bicycle",
+    "section": "1. Fun with Friends"
+   },
+   {
+    "kind": "lesson",
+    "title": "Picture Reading",
+    "section": "1. Fun with Friends"
+   },
+   {
+    "kind": "lesson",
+    "title": "It is Fun",
+    "section": "2. Welcome to My World"
+   },
+   {
+    "kind": "lesson",
+    "title": "Seeing without Seeing",
+    "section": "2. Welcome to My World"
+   },
+   {
+    "kind": "lesson",
+    "title": "Come Back Soon",
+    "section": "3. Going Places"
+   },
+   {
+    "kind": "lesson",
+    "title": "Between Home and School",
+    "section": "3. Going Places"
+   },
+   {
+    "kind": "lesson",
+    "title": "This is My Town",
+    "section": "3. Going Places"
+   },
+   {
+    "kind": "lesson",
+    "title": "A Show of Clouds",
+    "section": "4. Life Around Us"
+   },
+   {
+    "kind": "lesson",
+    "title": "My Name",
+    "section": "4. Life Around Us"
+   },
+   {
+    "kind": "lesson",
+    "title": "The Crow",
+    "section": "4. Life Around Us"
+   },
+   {
+    "kind": "lesson",
+    "title": "The Smart Monkey",
+    "section": "4. Life Around Us"
+   },
+   {
+    "kind": "lesson",
+    "title": "Little Drops of Water",
+    "section": "5. Harmony"
+   },
+   {
+    "kind": "lesson",
+    "title": "We are all Indians",
+    "section": "5. Harmony"
+   }
+  ],
+  "cemm1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "What’s in a Name?"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Toy Joy"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Double Century"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Vacation with My Nani Maa"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Fun with Shapes"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "House of Hundreds – I"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Raksha Bandhan"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Fair Share"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "House of Hundreds – II"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Fun at Class Party!"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Filling and Lifting"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Give and Take"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Time Goes On"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "The Surajkund Fair"
+   }
+  ],
+  "cesa1": [
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "Colours"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "Badal and Moti"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Best Friends"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "Out in the Garden"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "Talking Toys"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "Paper Boats"
+   },
+   {
+    "n": "7",
+    "kind": "lesson",
+    "title": "The Big Laddoo"
+   },
+   {
+    "n": "8",
+    "kind": "lesson",
+    "title": "Thank God"
+   },
+   {
+    "n": "9",
+    "kind": "lesson",
+    "title": "Madhu’s Wish"
+   },
+   {
+    "n": "10",
+    "kind": "lesson",
+    "title": "Night"
+   },
+   {
+    "n": "11",
+    "kind": "lesson",
+    "title": "Chanda Mama Counts the Stars"
+   },
+   {
+    "n": "12",
+    "kind": "lesson",
+    "title": "Chandrayaan"
+   }
+  ],
+  "ceev1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Family and Friends"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Going to the Mela"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Celebrating Festivals"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Getting to Know Plants"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Plants and Animals Live Together"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Living in Harmony"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Water— A Precious Gift"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Food We Eat"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Staying Healthy and Happy"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "This World of Things"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Making Things"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Taking Charge of Waste"
+   }
+  ],
+  "cebu1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Objects in Art"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Plants in Art"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Animals in Art"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "People Around Us"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Festivals, Occasions, and Celebrations"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Our National Anthem"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Feel the Rhythm ta ka ta ki Ta"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Travel Around"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Musical Instruments"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Celebratory Notes"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Let us Dance"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Dance for Joy"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "I Play and Dance"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Dance with Nature"
+   },
+   {
+    "n": "15",
+    "kind": "chapter",
+    "title": "Explore"
+   },
+   {
+    "n": "16",
+    "kind": "chapter",
+    "title": "Imagine"
+   },
+   {
+    "n": "17",
+    "kind": "chapter",
+    "title": "Let’s Create"
+   },
+   {
+    "n": "18",
+    "kind": "chapter",
+    "title": "Look Around"
+   },
+   {
+    "n": "19",
+    "kind": "chapter",
+    "title": "Activities"
+   },
+   {
+    "n": "20",
+    "kind": "chapter",
+    "title": "Integrating All Art Forms"
+   }
+  ],
+  "ceky1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Throwing and Catching"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Kicking and Receiving"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Strike the Ball"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Little Steps"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Local and Traditional Games"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Yoga for Daily Life"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Yogic Practices (Yoga Sadhana)"
+   }
+  ],
+  "demm1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Shapes Around Us"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Hide and Seek"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Pattern Around Us"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Thousands Around Us"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Sharing and Measuring"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Measuring Length"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "The Cleanest Village"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Weigh it, Pour it"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Equal Groups"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Elephants,Tigers, and Leopards"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Fun with Symmetry"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Ticking Clocks and Turning Calendar"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "The Transport Museum"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Data Handling"
+   }
+  ],
+  "desa1": [
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "Together We Can",
+    "section": "Unit 1: My Land"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "The Tinkling Bells",
+    "section": "Unit 1: My Land"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Be Smart, Be Safe",
+    "section": "Unit 1: My Land"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "One Thing at a Time",
+    "section": "Unit 2: My Beautiful World"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "The Old Stag",
+    "section": "Unit 2: My Beautiful World"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "Braille",
+    "section": "Unit 2: My Beautiful World"
+   },
+   {
+    "n": "7",
+    "kind": "lesson",
+    "title": "Fit Body, Fit Mind, Fit Nation",
+    "section": "Unit 3: Fun with Games"
+   },
+   {
+    "n": "8",
+    "kind": "lesson",
+    "title": "The Lagori Champions",
+    "section": "Unit 3: Fun with Games"
+   },
+   {
+    "n": "9",
+    "kind": "lesson",
+    "title": "Hekko",
+    "section": "Unit 3: Fun with Games"
+   },
+   {
+    "n": "10",
+    "kind": "lesson",
+    "title": "The Swing",
+    "section": "Unit 4: Up High"
+   },
+   {
+    "n": "11",
+    "kind": "lesson",
+    "title": "A Journey to the Magical Mountains",
+    "section": "Unit 4: Up High"
+   },
+   {
+    "n": "12",
+    "kind": "lesson",
+    "title": "Maheshwar",
+    "section": "Unit 4: Up High"
+   }
+  ],
+  "deev1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Living Together"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Exploring Our Neighbourhood"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Nature Trail"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Growing up with Nature"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Food for Health"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Happy and Healthy Living"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "How Things Work"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "How Things are Made"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Different Lands, Different Lives"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Our Sky"
+   }
+  ],
+  "debu1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Arrangements of Objects"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Textures in Nature"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Aqua World"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "People in Action"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Explore!"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Imagine"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Let’s Create"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Look Around"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Sing and Play"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Making Music"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Songs and Stories"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Think, Feel, Create"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Sounds and Instruments"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "My Body in Dance"
+   },
+   {
+    "n": "15",
+    "kind": "chapter",
+    "title": "My Dance Tells Stories"
+   },
+   {
+    "n": "16",
+    "kind": "chapter",
+    "title": "Creating My Dance"
+   },
+   {
+    "n": "17",
+    "kind": "chapter",
+    "title": "Emotion and Expression in Dance"
+   },
+   {
+    "n": "18",
+    "kind": "chapter",
+    "title": "Dances Around Me"
+   }
+  ],
+  "deky1": [
+   {
+    "n": "1",
+    "kind": "unit",
+    "title": "Basic Motor Movements"
+   },
+   {
+    "n": "2",
+    "kind": "unit",
+    "title": "Our Games"
+   },
+   {
+    "n": "3",
+    "kind": "unit",
+    "title": "Yoga"
+   }
+  ],
+  "eemm1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "We the Travellers — I"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Fractions"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Angles as Turns"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "We the Travellers — II"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Far and Near"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "The Dairy Farm"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Shapes and Patterns"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Weight and Capacity"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Coconut Farm"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Symmetrical Designs"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Grandmother’s Quilt"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Racing Seconds"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Animal Jumps"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Maps and Locations"
+   },
+   {
+    "n": "15",
+    "kind": "chapter",
+    "title": "Data Through Pictures"
+   }
+  ],
+  "eesa1": [
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "Papa’s Spectacles"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "Gone with the Scooter"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "The Rainbow"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "The Wise Parrot"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "The Frog"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "What a Tank!"
+   },
+   {
+    "n": "7",
+    "kind": "lesson",
+    "title": "Gilli Danda"
+   },
+   {
+    "n": "8",
+    "kind": "lesson",
+    "title": "The Decision of the Panchayat"
+   },
+   {
+    "n": "9",
+    "kind": "lesson",
+    "title": "Vocation"
+   },
+   {
+    "n": "10",
+    "kind": "lesson",
+    "title": "Glass Bangles"
+   }
+  ],
+  "eeev1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Water — The Essence of Life"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Journey of a River"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "The Mystery of Food"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Our School — A Happy Place"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Our Vibrant Country"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Some Unique Places"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Energy — How Things Work"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Clothes — How Things are Made"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Rhythms of Nature"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Earth — Our Shared Home"
+   }
+  ],
+  "eebu1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Objects on the Move"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Peeping Out of the Window"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Picturing Stories"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Imaginary Beings"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Spreading the Message"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Create a Scene"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Stitch it for a Story"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Time, Team, Technique"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "View and Review"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Sing and Play"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Music Around Me"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Sounds and Instruments"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Building Blocks"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Ideas and Inspiration"
+   },
+   {
+    "n": "15",
+    "kind": "chapter",
+    "title": "My Everyday Activities in Modes of Dance"
+   },
+   {
+    "n": "16",
+    "kind": "chapter",
+    "title": "Dancing with Rhythm and Tempos"
+   },
+   {
+    "n": "17",
+    "kind": "chapter",
+    "title": "Dances of My Nation"
+   },
+   {
+    "n": "18",
+    "kind": "chapter",
+    "title": "My Dance Expresses Emotions and Narrates Stories"
+   },
+   {
+    "n": "19",
+    "kind": "chapter",
+    "title": "My Dance and Your Dance"
+   }
+  ],
+  "eeky1": [
+   {
+    "n": "1",
+    "kind": "unit",
+    "title": "Basic Motor Movements"
+   },
+   {
+    "n": "2",
+    "kind": "unit",
+    "title": "Our Games"
+   },
+   {
+    "n": "3",
+    "kind": "unit",
+    "title": "Yoga"
+   }
+  ],
+  "fepr1": [
+   {
+    "n": "1",
+    "kind": "unit",
+    "title": "Fables and Folk Tales",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "A Bottle of Dew",
+      "page": "1"
+     },
+     {
+      "kind": "piece",
+      "title": "The Raven and the Fox",
+      "page": "13"
+     },
+     {
+      "kind": "piece",
+      "title": "Rama to the Rescue",
+      "page": "20"
+     }
+    ]
+   },
+   {
+    "n": "2",
+    "kind": "unit",
+    "title": "Friendship",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "The Unlikely Best Friends",
+      "page": "39"
+     },
+     {
+      "kind": "piece",
+      "title": "A Friend’s Prayer",
+      "page": "52"
+     },
+     {
+      "kind": "piece",
+      "title": "The Chair",
+      "page": "59"
+     }
+    ]
+   },
+   {
+    "n": "3",
+    "kind": "unit",
+    "title": "Nurturing Nature",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Neem Baba",
+      "page": "75"
+     },
+     {
+      "kind": "piece",
+      "title": "What a Bird Thought",
+      "page": "85"
+     },
+     {
+      "kind": "piece",
+      "title": "Spices that Heal Us",
+      "page": "93"
+     }
+    ]
+   },
+   {
+    "n": "4",
+    "kind": "unit",
+    "title": "Sports and Wellness",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Change of Heart",
+      "page": "103"
+     },
+     {
+      "kind": "piece",
+      "title": "The Winner",
+      "page": "115"
+     },
+     {
+      "kind": "piece",
+      "title": "Yoga—A Way of Life",
+      "page": "122"
+     }
+    ]
+   },
+   {
+    "n": "5",
+    "kind": "unit",
+    "title": "Culture and Tradition",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Hamara Bharat—Incredible India!",
+      "page": "131"
+     },
+     {
+      "kind": "piece",
+      "title": "The Kites",
+      "page": "141"
+     },
+     {
+      "kind": "piece",
+      "title": "Ila Sachani: Embroidering Dreams with her Feet",
+      "page": "151"
+     },
+     {
+      "kind": "piece",
+      "title": "National War Memorial",
+      "page": "160"
+     }
+    ]
+   }
+  ],
+  "fegp1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Patterns in Mathematics"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Lines and Angles"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Number Play"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Data Handling and Presentation"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Prime Time"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Perimeter and Area"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Fractions"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Playing with Constructions"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Symmetry"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "The Other Side of Zero"
+   }
+  ],
+  "fees1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Locating Places on the Earth"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Oceans and Continents"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Landforms and Life"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Timeline and Sources of History"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "India, That Is Bharat"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "The Beginnings of Indian Civilisation"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "India's Cultural Roots"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Unity in Diversity, or 'Many in the One'"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Family and Community"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Grassroots Democracy — Part 1: Governance"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Grassroots Democracy — Part 2: Local Government in Rural Areas"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Grassroots Democracy — Part 3: Local Government in Urban Areas"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "The Value of Work"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Economic Activities Around Us"
+   }
+  ],
+  "fecu1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "The Wonderful World of Science"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Diversity in the Living World"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Mindful Eating: A Path to a Healthy Body"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Exploring Magnets"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Measurement of Length and Motion"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Materials Around Us"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Temperature and its Measurement"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "A Journey through States of Water"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Methods of Separation in Everyday Life"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Living Creatures: Exploring their Characteristics"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Nature’s Treasures"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Beyond Earth"
+   }
+  ],
+  "fekr1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Objects and Still Life"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Changing the Typical Picture"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Portraying People"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Paper Crafts"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Seals to Prints"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Music and your Emotions"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Musical Instruments"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Taal or Talam and Raga or Ragam in Indian Music"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Melodies of Diversity"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Songwriting"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Music and Society"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "My Body in Motion"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Breaking Barriers with Dance"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Harmony in Motion"
+   },
+   {
+    "n": "15",
+    "kind": "chapter",
+    "title": "Dances of Our Land"
+   },
+   {
+    "n": "16",
+    "kind": "chapter",
+    "title": "Emotions Unveiled!"
+   },
+   {
+    "n": "17",
+    "kind": "chapter",
+    "title": "Let’s Design"
+   },
+   {
+    "n": "18",
+    "kind": "chapter",
+    "title": "In the Company of Theatre"
+   },
+   {
+    "n": "19",
+    "kind": "chapter",
+    "title": "Stories of Shadows and Strings — Puppetry"
+   },
+   {
+    "n": "20",
+    "kind": "chapter",
+    "title": "The Grand Finale"
+   },
+   {
+    "n": "21",
+    "kind": "chapter",
+    "title": "Integration of All Art Forms"
+   },
+   {
+    "n": "22",
+    "kind": "chapter",
+    "title": "Assessment"
+   }
+  ],
+  "feky1": [
+   {
+    "n": "1",
+    "kind": "unit",
+    "title": "Importance of Physical Education and Well-being"
+   },
+   {
+    "n": "2",
+    "kind": "unit",
+    "title": "Motor Fitness"
+   },
+   {
+    "n": "3",
+    "kind": "unit",
+    "title": "Fundamental Skills of Kho-Kho"
+   },
+   {
+    "n": "4",
+    "kind": "unit",
+    "title": "Fundamental Skills of Handball"
+   },
+   {
+    "n": "5",
+    "kind": "unit",
+    "title": "Yoga"
+   }
+  ],
+  "fekb1": [
+   {
+    "n": "1",
+    "kind": "project",
+    "title": "School Kitchen Garden",
+    "section": "Part 1: Work with Life Forms"
+   },
+   {
+    "n": "2",
+    "kind": "project",
+    "title": "Biodiversity Register",
+    "section": "Part 1: Work with Life Forms"
+   },
+   {
+    "n": "3",
+    "kind": "project",
+    "title": "Maker Skills",
+    "section": "Part 2: Work with Machines and Materials"
+   },
+   {
+    "n": "4",
+    "kind": "project",
+    "title": "Animation and Games",
+    "section": "Part 2: Work with Machines and Materials"
+   },
+   {
+    "n": "5",
+    "kind": "project",
+    "title": "School Museum",
+    "section": "Part 3: Work in Human Services"
+   },
+   {
+    "n": "6",
+    "kind": "project",
+    "title": "Cooking without Fire",
+    "section": "Part 3: Work in Human Services"
+   }
+  ],
+  "gepr1": [
+   {
+    "n": "1",
+    "kind": "unit",
+    "title": "Learning Together",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "The Day the River Spoke",
+      "page": "1"
+     },
+     {
+      "kind": "piece",
+      "title": "Try Again",
+      "page": "16"
+     },
+     {
+      "kind": "piece",
+      "title": "Three Days to See",
+      "page": "28"
+     }
+    ]
+   },
+   {
+    "n": "2",
+    "kind": "unit",
+    "title": "Wit and Humour",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Animals, Birds, and Dr. Dolittle",
+      "page": "43"
+     },
+     {
+      "kind": "piece",
+      "title": "A Funny Man",
+      "page": "59"
+     },
+     {
+      "kind": "piece",
+      "title": "Say the Right Thing",
+      "page": "70"
+     }
+    ]
+   },
+   {
+    "n": "3",
+    "kind": "unit",
+    "title": "Dreams and Discoveries",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "My Brother’s Great Invention",
+      "page": "91"
+     },
+     {
+      "kind": "piece",
+      "title": "Paper Boats",
+      "page": "109"
+     },
+     {
+      "kind": "piece",
+      "title": "North, South, East, West",
+      "page": "118"
+     }
+    ]
+   },
+   {
+    "n": "4",
+    "kind": "unit",
+    "title": "Travel and Adventure",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "The Tunnel",
+      "page": "139"
+     },
+     {
+      "kind": "piece",
+      "title": "Travel",
+      "page": "157"
+     },
+     {
+      "kind": "piece",
+      "title": "Conquering the Summit",
+      "page": "166"
+     }
+    ]
+   },
+   {
+    "n": "5",
+    "kind": "unit",
+    "title": "Bravehearts",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "A Homage to Our Brave Soldiers",
+      "page": "179"
+     },
+     {
+      "kind": "piece",
+      "title": "My Dear Soldiers",
+      "page": "199"
+     },
+     {
+      "kind": "piece",
+      "title": "Rani Abbakka",
+      "page": "206"
+     }
+    ]
+   }
+  ],
+  "gegp1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Large Numbers Around Us"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Arithmetic Expressions"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "A Peek Beyond the Point"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Expressions using Letter-Numbers"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Parallel and Intersecting Lines"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Number Play"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "A Tale of Three Intersecting Lines"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Working with Fractions"
+   }
+  ],
+  "gegp2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Geometric Twins"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Operations with Integers"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Finding Common Ground"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Another Peek Beyond the Point"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Connecting the Dots"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Constructions and Tilings"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Finding the Unknown"
+   }
+  ],
+  "gees1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Geographical Diversity of India",
+    "section": "Theme A — India and the World: Land and the People"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Understanding the Weather",
+    "section": "Theme A — India and the World: Land and the People"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Climates of India",
+    "section": "Theme A — India and the World: Land and the People"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "New Beginnings: Cities and States",
+    "section": "Theme B — Tapestry of the Past"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "The Rise of Empires",
+    "section": "Theme B — Tapestry of the Past"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "The Age of Reorganisation",
+    "section": "Theme B — Tapestry of the Past"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "The Gupta Era: An Age of Tireless Creativity",
+    "section": "Theme B — Tapestry of the Past"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "How the Land Becomes Sacred",
+    "section": "Theme C — Our Cultural Heritage and Knowledge Traditions"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "From the Rulers to the Ruled: Types of Governments",
+    "section": "Theme D — Governance and Democracy"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "The Constitution of India — An Introduction",
+    "section": "Theme D — Governance and Democracy"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "From Barter to Money",
+    "section": "Theme E — Economic Life Around Us"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Understanding Markets",
+    "section": "Theme E — Economic Life Around Us"
+   }
+  ],
+  "gees2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "The Story of Indian Farming"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "India and Her Neighbours"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Empires and Kingdoms: 6th to 10th Centuries"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Turning Tides: 11th and 12th Centuries"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "India, a Home to Many"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "The State, the Government, and You"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Infrastructure: Engine of India’s Development"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Banks and the Magic of Finance"
+   }
+  ],
+  "gecu1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "The Ever-Evolving World of Science"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Exploring Substances: Acidic, Basic, and Neutral"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Electricity: Circuits and their Components"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "The World of Metals and Non-metals"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Changes Around Us: Physical and Chemical"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Adolescence: A Stage of Growth and Change"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Heat Transfer in Nature"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Measurement of Time and Motion"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Life Processes in Animals"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Life Processes in Plants"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Light: Shadows and Reflections"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Earth, Moon, and the Sun"
+   }
+  ],
+  "gekr1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Understanding Emotions"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Say More without Speech — Mime"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Let’s Design — Stage Technicals"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Story of India’s Storytelling Tradition"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Making Music"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Music, Emotions and Creativity"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Ragas and Talas/Taal"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "The Music of the People"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Performance"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Dance and Sculpture"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Dance Vocabulary and Techniques"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Dance, You and Creativity"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Personalities"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Natya"
+   },
+   {
+    "n": "15",
+    "kind": "chapter",
+    "title": "Objects in Icons and Symbols"
+   },
+   {
+    "n": "16",
+    "kind": "chapter",
+    "title": "Nature’s Palette"
+   },
+   {
+    "n": "17",
+    "kind": "chapter",
+    "title": "How You Feel"
+   },
+   {
+    "n": "18",
+    "kind": "chapter",
+    "title": "Textiles and Traditions"
+   },
+   {
+    "n": "19",
+    "kind": "chapter",
+    "title": "The Art of Calligraphy"
+   },
+   {
+    "n": "20",
+    "kind": "chapter",
+    "title": "Integration of All Art Forms — Sculptures Come Alive!"
+   }
+  ],
+  "geky1": [
+   {
+    "n": "1",
+    "kind": "unit",
+    "title": "Foundational Basis of Physical Education and Well-being"
+   },
+   {
+    "n": "2",
+    "kind": "unit",
+    "title": "Physical and Motor Fitness"
+   },
+   {
+    "n": "3",
+    "kind": "unit",
+    "title": "Fundamental Skills of Sports — Badminton"
+   },
+   {
+    "n": "4",
+    "kind": "unit",
+    "title": "Fundamental Skills of Sports — Football"
+   },
+   {
+    "n": "5",
+    "kind": "unit",
+    "title": "Fundamental Skills of Sports — Kabaddi"
+   },
+   {
+    "n": "6",
+    "kind": "unit",
+    "title": "Yoga"
+   }
+  ],
+  "gekb1": [
+   {
+    "n": "1",
+    "kind": "project",
+    "title": "Plant Nursery",
+    "section": "Part 1: Work with Life Forms"
+   },
+   {
+    "n": "2",
+    "kind": "project",
+    "title": "School Habitat Garden",
+    "section": "Part 1: Work with Life Forms"
+   },
+   {
+    "n": "3",
+    "kind": "project",
+    "title": "Tie and Dye",
+    "section": "Part 2: Work with Machines and Materials"
+   },
+   {
+    "n": "4",
+    "kind": "project",
+    "title": "AI Assistant",
+    "section": "Part 2: Work with Machines and Materials"
+   },
+   {
+    "n": "5",
+    "kind": "project",
+    "title": "Storytime with Puppets",
+    "section": "Part 3: Work in Human Services"
+   },
+   {
+    "n": "6",
+    "kind": "project",
+    "title": "Family Health Handbook",
+    "section": "Part 3: Work in Human Services"
+   },
+   {
+    "kind": "section",
+    "title": "Planning for Kaushal Mela"
+   }
+  ],
+  "hepr1": [
+   {
+    "n": "1",
+    "kind": "unit",
+    "title": "Wit and Wisdom",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "The Wit that Won Hearts",
+      "page": "1"
+     },
+     {
+      "kind": "piece",
+      "title": "A Concrete Example",
+      "page": "17"
+     },
+     {
+      "kind": "piece",
+      "title": "Wisdom Paves the Way",
+      "page": "27"
+     }
+    ]
+   },
+   {
+    "n": "2",
+    "kind": "unit",
+    "title": "Values and Dispositions",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "A Tale of Valour: Major Somnath Sharma and the Battle of Badgam",
+      "page": "49"
+     },
+     {
+      "kind": "piece",
+      "title": "Somebody’s Mother",
+      "page": "70"
+     },
+     {
+      "kind": "piece",
+      "title": "Verghese Kurien— I Too Had A Dream",
+      "page": "82"
+     }
+    ]
+   },
+   {
+    "n": "3",
+    "kind": "unit",
+    "title": "Mystery and Magic",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "The Case of the Fifth Word",
+      "page": "101"
+     },
+     {
+      "kind": "piece",
+      "title": "The Magic Brush of Dreams",
+      "page": "122"
+     },
+     {
+      "kind": "piece",
+      "title": "Spectacular Wonders",
+      "page": "137"
+     }
+    ]
+   },
+   {
+    "n": "4",
+    "kind": "unit",
+    "title": "Environment",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "The Cherry Tree",
+      "page": "155"
+     },
+     {
+      "kind": "piece",
+      "title": "Harvest Hymn",
+      "page": "173"
+     },
+     {
+      "kind": "piece",
+      "title": "Waiting for the Rain",
+      "page": "185"
+     }
+    ]
+   },
+   {
+    "n": "5",
+    "kind": "unit",
+    "title": "Science and Curiosity",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Feathered Friend",
+      "page": "205"
+     },
+     {
+      "kind": "piece",
+      "title": "Magnifying Glass",
+      "page": "222"
+     },
+     {
+      "kind": "piece",
+      "title": "Bibha Chowdhuri: The Beam of Light that Lit the Path for Women in Indian Science",
+      "page": "233"
+     }
+    ]
+   }
+  ],
+  "hegp1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "A Square and A Cube"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Power Play"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "A Story of Numbers"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Quadrilaterals"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Number Play"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "We Distribute, Yet Things Multiply"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Proportional Reasoning-1"
+   }
+  ],
+  "hegp2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Fractions in Disguise"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "The Baudhayana-Pythagoras Theorem"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Proportional Reasoning-2"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Exploring Some Geometric Themes"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Tales by Dots and Lines"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Algebra Play"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Area"
+   }
+  ],
+  "hees1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Natural Resources and Their Use"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Reshaping India’s Political Map"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "The Rise of the Marathas"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "The Colonial Era in India"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Universal Franchise and India’s Electoral System"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "The Parliamentary System: Legislature and Executive"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Factors of Production"
+   }
+  ],
+  "hees2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "World Geography: Some Glimpses"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "India’s Long Road to Independence"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "A Journey Through Indian Architecture"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "The Role of the Judiciary in Our Society"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Citizenship: Rights and Duties"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Dynamics of Population"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "India’s Urban Landscape"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Cultural Currents: 13th to 17th Centuries"
+   }
+  ],
+  "hecu1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Exploring the Investigative World of Science"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "The Invisible Living World: Beyond Our Naked Eye"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Health: The Ultimate Treasure"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Electricity: Magnetic and Heating Effects"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Exploring Forces"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Pressure, Winds, Storms, and Cyclones"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Particulate Nature of Matter"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Nature of Matter: Elements, Compounds, and Mixtures"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "The Amazing World of Solutes, Solvents, and Solutions"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Light: Mirrors and Lenses"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Keeping Time with the Skies"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "How Nature Works in Harmony"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Our Home: Earth, a Unique Life Sustaining Planet"
+   }
+  ],
+  "hekr1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Bringing Words Alive — Play Reading"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "One Stage, Many Scripts"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "From Page to Stage"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Applause and Advice"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Discovering the Elements of Music"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Musical Instruments"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Indian Classical Music"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Inspiration and Imagination"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "My World of Music"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Inner Dynamics of Dance"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Pan Indian Dance Forms"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Dance for Well-being"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Innovation, Inclusivity and Inspiring Change"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "A Presentation of Dance and Choreography"
+   },
+   {
+    "n": "15",
+    "kind": "chapter",
+    "title": "Elements and Principles of Visual Art and Design"
+   },
+   {
+    "n": "16",
+    "kind": "chapter",
+    "title": "Still Life in Colour"
+   },
+   {
+    "n": "17",
+    "kind": "chapter",
+    "title": "People in Places"
+   },
+   {
+    "n": "18",
+    "kind": "chapter",
+    "title": "Arts of the People, With the People, For the People"
+   },
+   {
+    "n": "19",
+    "kind": "chapter",
+    "title": "Campaign for Art Awareness"
+   }
+  ],
+  "heky1": [
+   {
+    "n": "1",
+    "kind": "unit",
+    "title": "Foundations of Physical Education and Well-being"
+   },
+   {
+    "n": "2",
+    "kind": "unit",
+    "title": "Physical and Motor Fitness"
+   },
+   {
+    "n": "3",
+    "kind": "unit",
+    "title": "Fundamental Skills of Sports – Athletics"
+   },
+   {
+    "n": "4",
+    "kind": "unit",
+    "title": "Fundamental Skills of Sports – Table Tennis"
+   },
+   {
+    "n": "5",
+    "kind": "unit",
+    "title": "Fundamental Skills of Sports – Volleyball"
+   },
+   {
+    "n": "6",
+    "kind": "unit",
+    "title": "Yoga"
+   }
+  ],
+  "hekb1": [
+   {
+    "n": "1",
+    "kind": "project",
+    "title": "Hydroponics: Growing Plants without Soil",
+    "section": "Part 1: Work with Life Forms"
+   },
+   {
+    "n": "2",
+    "kind": "project",
+    "title": "Feeding and Caring for Farm Animals",
+    "section": "Part 1: Work with Life Forms"
+   },
+   {
+    "n": "3",
+    "kind": "project",
+    "title": "Working with Wood and Bamboo",
+    "section": "Part 2: Work with Machines and Materials"
+   },
+   {
+    "n": "4",
+    "kind": "project",
+    "title": "Home Automation",
+    "section": "Part 2: Work with Machines and Materials"
+   },
+   {
+    "n": "5",
+    "kind": "project",
+    "title": "Water Audit for Water Management",
+    "section": "Part 3: Work in Human Services"
+   },
+   {
+    "n": "6",
+    "kind": "project",
+    "title": "Creating Advertisements",
+    "section": "Part 3: Work in Human Services"
+   },
+   {
+    "kind": "section",
+    "title": "Planning for Kaushal Mela"
+   }
+  ],
+  "iebe1": [
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "How I Taught My Grandmother to Read",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Bharat Our Land",
+      "page": "23"
+     }
+    ]
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "The Pot Maker",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Gifts of Grace: Honouring Our Vocations",
+      "page": "57"
+     }
+    ]
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Winds of Change",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Canvas of Soil",
+      "page": "86"
+     }
+    ]
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "Vitamin-M",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "I Cannot Remember My Mother",
+      "page": "126"
+     }
+    ]
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "The World of Limitless Possibilities",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Nine Gold Medals",
+      "page": "156"
+     }
+    ]
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "Twin Melodies",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "A Friend Found in Music",
+      "page": "194"
+     }
+    ]
+   },
+   {
+    "n": "7",
+    "kind": "lesson",
+    "title": "Carrier of Words",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Words",
+      "page": "220"
+     }
+    ]
+   },
+   {
+    "n": "8",
+    "kind": "lesson",
+    "title": "Follow That Dream",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Believe in Yourself",
+      "page": "245"
+     }
+    ]
+   }
+  ],
+  "iemh1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Orienting Yourself: The Use of Coordinates"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Introduction to Linear Polynomials"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "The World of Numbers"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Exploring Algebraic Identities"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "I’m Up and Down, and Round and Round"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Measuring Space: Perimeter and Area"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "The Mathematics of Maybe: Introduction to Probability"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Predicting What Comes Next: Exploring Sequences and Progressions"
+   }
+  ],
+  "iesc1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Exploration: Entering the World of Secondary Science"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Cell: The Building Block of Life"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Tissues in Action"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Describing Motion Around Us"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Exploring Mixtures and their Separation"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "How Forces Affect Motion"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Work, Energy, and Simple Machines"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Journey Inside the Atom"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Atomic Foundations of Matter"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Sound Waves: Characteristics and Applications"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Reproduction: How Life Continues"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Patterns in Life: Diversity and Classification"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Earth as a System: Energy, Matter, and Life"
+   }
+  ],
+  "iest1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Understanding Social Science"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Shaping of the Earth’s Surface",
+    "section": "Geography"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Atmosphere and Climate",
+    "section": "Geography"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Early Humans and Beginning of Civilisation",
+    "section": "History"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "State and Society up to 1000 CE",
+    "section": "History"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Democracy",
+    "section": "Political Science"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Elections",
+    "section": "Political Science"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Building Blocks in Economics: The Problem of Choice",
+    "section": "Economics"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "The Price Puzzle: What Drives the Market",
+    "section": "Economics"
+   }
+  ],
+  "iemr1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Introduction to the History of Arts"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "The Stage Is Yours"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Symbols and Metaphors on Stage"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Creativity in Light and Sound"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "From Vision to Performance: Direction and Acting"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Music and Us"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "The Science of Music"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Rāga and Tāla"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Music Travels Around the World"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Components of Dance"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Dance as Visual Storytelling"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Cultural Connections Through Dance"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Dance Choreography"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Exploring the Fundamentals of Visual Arts"
+   },
+   {
+    "n": "15",
+    "kind": "chapter",
+    "title": "Mediums and Techniques in Visual Art"
+   },
+   {
+    "n": "16",
+    "kind": "chapter",
+    "title": "Visual Composition"
+   },
+   {
+    "n": "17",
+    "kind": "chapter",
+    "title": "Branches of Visual Arts"
+   }
+  ],
+  "iehp1": [
+   {
+    "n": "1",
+    "kind": "unit",
+    "title": "Evolution of Physical Education and Well-being"
+   },
+   {
+    "n": "2",
+    "kind": "unit",
+    "title": "Science and Sports"
+   },
+   {
+    "n": "3",
+    "kind": "unit",
+    "title": "Olympism"
+   },
+   {
+    "n": "4",
+    "kind": "unit",
+    "title": "Sports for All"
+   },
+   {
+    "n": "5",
+    "kind": "unit",
+    "title": "Sports"
+   },
+   {
+    "n": "6",
+    "kind": "unit",
+    "title": "Yoga for Holistic Health and Personal Excellence"
+   }
+  ],
+  "iekv1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Introduction to Agricultural Practices",
+    "section": "Work with Life Forms"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Rooftop Gardening",
+    "section": "Work with Life Forms"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Precision Farming",
+    "section": "Work with Life Forms"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Additional Vocations",
+    "section": "Work with Life Forms"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Shaping Materials",
+    "section": "Work with Machines and Materials"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Construction",
+    "section": "Work with Machines and Materials"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Apparel",
+    "section": "Work with Machines and Materials"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Additional Vocations",
+    "section": "Work with Machines and Materials"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Personal and Lifestyle Services",
+    "section": "Work in Human Services"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Healthcare",
+    "section": "Work in Human Services"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Tourism",
+    "section": "Work in Human Services"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Additional Vocations",
+    "section": "Work in Human Services"
+   }
+  ],
+  "jemh1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Real Numbers"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Polynomials"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Pair of Linear Equations in Two Variables"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Quadratic Equations"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Arithmetic Progressions"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Triangles"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Coordinate Geometry"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Introduction to Trigonometry"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Some Applications of Trigonometry"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Circles"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Areas Related to Circles"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Surface Areas and Volumes"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Statistics"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Probability"
+   }
+  ],
+  "jesc1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Chemical Reactions and Equations"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Acids, Bases and Salts"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Metals and Non-metals"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Carbon and its Compounds"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Life Processes"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Control and Coordination"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "How do Organisms Reproduce?"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Heredity"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Light – Reflection and Refraction"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "The Human Eye and the Colourful World"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Electricity"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Magnetic Effects of Electric Current"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Our Environment"
+   }
+  ],
+  "jess1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Resources and Development"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Forest and Wildlife Resources"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Water Resources"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Agriculture"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Minerals and Energy Resources"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Manufacturing Industries"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Lifelines of National Economy"
+   }
+  ],
+  "jess2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "DEVELOPMENT"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "SECTORS OF THE INDIAN ECONOMY"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "MONEY AND CREDIT"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "GLOBALISATION AND THE INDIAN ECONOMY"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "CONSUMER RIGHTS"
+   }
+  ],
+  "jess3": [
+   {
+    "n": "I",
+    "kind": "chapter",
+    "title": "The Rise of Nationalism in Europe",
+    "section": "Section I: Events and Processes"
+   },
+   {
+    "n": "II",
+    "kind": "chapter",
+    "title": "Nationalism in India",
+    "section": "Section I: Events and Processes"
+   },
+   {
+    "n": "III",
+    "kind": "chapter",
+    "title": "The Making of a Global World",
+    "section": "Section II: Livelihoods, Economies and Societies"
+   },
+   {
+    "n": "IV",
+    "kind": "chapter",
+    "title": "The Age of Industrialisation",
+    "section": "Section II: Livelihoods, Economies and Societies"
+   },
+   {
+    "n": "V",
+    "kind": "chapter",
+    "title": "Print Culture and the Modern World",
+    "section": "Section III: Everyday Life, Culture and Politics"
+   }
+  ],
+  "jess4": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Power-sharing"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Federalism"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Gender, Religion and Caste"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Political Parties"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Outcomes of Democracy"
+   }
+  ],
+  "jeff1": [
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "A Letter to God",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Dust of Snow",
+      "page": "14"
+     },
+     {
+      "kind": "piece",
+      "title": "Fire and Ice",
+      "page": "15"
+     }
+    ]
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "Nelson Mandela: Long Walk to Freedom",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "A Tiger in the Zoo",
+      "page": "29"
+     }
+    ]
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Two Stories about Flying",
+    "includes": [
+     {
+      "kind": "part",
+      "n": "I",
+      "title": "His First Flight"
+     },
+     {
+      "kind": "part",
+      "n": "II",
+      "title": "Black Aeroplane"
+     },
+     {
+      "kind": "piece",
+      "title": "How to Tell Wild Animals",
+      "page": "43"
+     },
+     {
+      "kind": "piece",
+      "title": "The Ball Poem",
+      "page": "46"
+     }
+    ]
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "From the Diary of Anne Frank",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Amanda!",
+      "page": "61"
+     }
+    ]
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "Glimpses of India",
+    "includes": [
+     {
+      "kind": "part",
+      "n": "I",
+      "title": "A Baker from Goa"
+     },
+     {
+      "kind": "part",
+      "n": "II",
+      "title": "Coorg"
+     },
+     {
+      "kind": "part",
+      "n": "III",
+      "title": "Tea from Assam"
+     },
+     {
+      "kind": "piece",
+      "title": "The Trees",
+      "page": "77"
+     }
+    ]
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "Mijbil the Otter",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Fog",
+      "page": "93"
+     }
+    ]
+   },
+   {
+    "n": "7",
+    "kind": "lesson",
+    "title": "Madam Rides the Bus",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "The Tale of Custard the Dragon",
+      "page": "107"
+     }
+    ]
+   },
+   {
+    "n": "8",
+    "kind": "lesson",
+    "title": "The Sermon at Benares",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "For Anne Gregory",
+      "page": "118"
+     }
+    ]
+   },
+   {
+    "n": "9",
+    "kind": "lesson",
+    "title": "The Proposal"
+   }
+  ],
+  "jefp1": [
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "A Triumph of Surgery"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "The Thief’s Story"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "The Midnight Visitor"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "A Question of Trust"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "Footprints without Feet"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "The Making of a Scientist"
+   },
+   {
+    "n": "7",
+    "kind": "lesson",
+    "title": "The Necklace"
+   },
+   {
+    "n": "8",
+    "kind": "lesson",
+    "title": "Bholi"
+   },
+   {
+    "n": "9",
+    "kind": "lesson",
+    "title": "The Book That Saved the Earth"
+   }
+  ],
+  "jewe2": [
+   {
+    "n": "1",
+    "kind": "unit",
+    "title": "A Letter to God"
+   },
+   {
+    "n": "2",
+    "kind": "unit",
+    "title": "Nelson Mandela: Long Walk to Freedom"
+   },
+   {
+    "n": "3",
+    "kind": "unit",
+    "title": "Two Stories about Flying"
+   },
+   {
+    "n": "4",
+    "kind": "unit",
+    "title": "From the Diary of Anne Frank"
+   },
+   {
+    "n": "5",
+    "kind": "unit",
+    "title": "Glimpses of India"
+   },
+   {
+    "n": "6",
+    "kind": "unit",
+    "title": "Mijbil the Otter"
+   },
+   {
+    "n": "7",
+    "kind": "unit",
+    "title": "Madam Rides the Bus"
+   },
+   {
+    "n": "8",
+    "kind": "unit",
+    "title": "The Sermon at Benaras"
+   },
+   {
+    "n": "9",
+    "kind": "unit",
+    "title": "The Proposal"
+   }
+  ],
+  "jehp1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Physical Education: Relation with other Subjects"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Effects of Physical Activities on Human Body"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Growth and Development during Adolescence"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Individual Games and Sports I"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Individual Games and Sports II"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Team Games and Sports I"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Team Games and Sports II"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Yoga for Healthy Living"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Dietary Considerations and Food Quality"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Safety Measures for Healthy Living"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Healthy Community Living"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Social Health"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Agencies and Awards Promoting Health, Sports and Yoga"
+   }
+  ],
+  "keac1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Introduction to Accounting"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Theory Base of Accounting"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Recording of Transactions - I"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Recording of Transactions - II"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Bank Reconciliation Statement"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Trial Balance and Rectification of Errors"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Depreciation, Provisions and Reserves"
+   }
+  ],
+  "keac2": [
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Financial Statements - I"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Financial Statements - II"
+   }
+  ],
+  "kech1": [
+   {
+    "n": "1",
+    "kind": "unit",
+    "title": "Some Basic Concepts of Chemistry"
+   },
+   {
+    "n": "2",
+    "kind": "unit",
+    "title": "Structure of Atom"
+   },
+   {
+    "n": "3",
+    "kind": "unit",
+    "title": "Classification of Elements and Periodicity in Properties"
+   },
+   {
+    "n": "4",
+    "kind": "unit",
+    "title": "Chemical Bonding and Molecular Structure"
+   },
+   {
+    "n": "5",
+    "kind": "unit",
+    "title": "Thermodynamics"
+   },
+   {
+    "n": "6",
+    "kind": "unit",
+    "title": "Equilibrium"
+   }
+  ],
+  "kech2": [
+   {
+    "n": "7",
+    "kind": "unit",
+    "title": "Redox Reactions"
+   },
+   {
+    "n": "8",
+    "kind": "unit",
+    "title": "Organic Chemistry – Some Basic Principles and Techniques"
+   },
+   {
+    "n": "9",
+    "kind": "unit",
+    "title": "Hydrocarbons"
+   }
+  ],
+  "kemh1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Sets"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Relations and Functions"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Trigonometric Functions"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Complex Numbers and Quadratic Equations"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Linear Inequalities"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Permutations and Combinations"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Binomial Theorem"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Sequences and Series"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Straight Lines"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Conic Sections"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Introduction to Three Dimensional Geometry"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Limits and Derivatives"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Statistics"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Probability"
+   }
+  ],
+  "kebo1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "The Living World"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Biological Classification"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Plant Kingdom"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Animal Kingdom"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Morphology of Flowering Plants"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Anatomy of Flowering Plants"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Structural Organisation in Animals"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Cell : The Unit of Life"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Biomolecules"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Cell Cycle and Cell Division"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Photosynthesis in Higher Plants"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Respiration in Plants"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Plant Growth and Development"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Breathing and Exchange of Gases"
+   },
+   {
+    "n": "15",
+    "kind": "chapter",
+    "title": "Body Fluids and Circulation"
+   },
+   {
+    "n": "16",
+    "kind": "chapter",
+    "title": "Excretory Products and their Elimination"
+   },
+   {
+    "n": "17",
+    "kind": "chapter",
+    "title": "Locomotion and Movement"
+   },
+   {
+    "n": "18",
+    "kind": "chapter",
+    "title": "Neural Control and Coordination"
+   },
+   {
+    "n": "19",
+    "kind": "chapter",
+    "title": "Chemical Coordination and Integration"
+   }
+  ],
+  "kepy1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "What is Psychology?"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Methods of Enquiry in Psychology"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Human Development"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Sensory, Attentional and Perceptual Processes"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Learning"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Human Memory"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Thinking"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Motivation and Emotion"
+   }
+  ],
+  "kegy2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Geography as a Discipline"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "The Origin and Evolution of the Earth"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Interior of the Earth"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Distribution of Oceans and Continents"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Geomorphic Processes"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Landforms and their Evolution"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Composition and Structure of Atmosphere"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Solar Radiation, Heat Balance and Temperature"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Atmospheric Circulation and Weather Systems"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Water in the Atmosphere"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "World Climate and Climate Change"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Water (Oceans)"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Movements of Ocean Water"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Biodiversity and Conservation"
+   }
+  ],
+  "kegy3": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Introduction to Maps"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Map Scale"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Latitude, Longitude and Time"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Map Projections"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Topographical Maps"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Introduction to Remote Sensing"
+   }
+  ],
+  "kegy1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "India — Location"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Structure and Physiography"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Drainage System"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Climate"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Natural Vegetation"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Natural Hazards and Disasters"
+   }
+  ],
+  "keph1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "UNITS AND MEASUREMENT",
+    "source": "chapter-pdf"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "MOTION IN A STRAIGHT LINE",
+    "source": "chapter-pdf"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "MOTION IN A PLANE",
+    "source": "chapter-pdf"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "LAWS OF MOTION",
+    "source": "chapter-pdf"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "WORK, ENERGY AND POWER"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "SYSTEM OF PARTICLES AND ROTATIONAL MOTION"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "GRAVITATION"
+   }
+  ],
+  "keph2": [
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "MECHANICAL PROPERTIES OF SOLIDS",
+    "source": "chapter-pdf"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "MECHANICAL PROPERTIES OF FLUIDS",
+    "source": "chapter-pdf"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "THERMAL PROPERTIES OF MATTER",
+    "source": "chapter-pdf"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "THERMODYNAMICS"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "KINETIC THEORY"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "OSCILLATIONS"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "WAVES"
+   }
+  ],
+  "kesy1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "SOCIOLOGY AND SOCIETY"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "TERMS, CONCEPTS AND THEIR USE IN SOCIOLOGY"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "UNDERSTANDING SOCIAL INSTITUTIONS"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "CULTURE AND SOCIALISATION"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "DOING SOCIOLOGY: RESEARCH METHODS"
+   }
+  ],
+  "kesy2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "SOCIAL STRUCTURE, STRATIFICATION AND SOCIAL PROCESSES IN SOCIETY"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "SOCIAL CHANGE AND SOCIAL ORDER IN RURAL AND URBAN SOCIETY"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "ENVIRONMENT AND SOCIETY"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "INTRODUCING WESTERN SOCIOLOGISTS"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "INDIAN SOCIOLOGISTS"
+   }
+  ],
+  "keww1": [
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "The Lament",
+    "section": "Short Stories"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "A Pair of Mustachios",
+    "section": "Short Stories"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "The Rocking-horse Winner",
+    "section": "Short Stories"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "The Adventure of the Three Garridebs",
+    "section": "Short Stories"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "Pappachi’s Moth",
+    "section": "Short Stories"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "The Third and Final Continent",
+    "section": "Short Stories"
+   },
+   {
+    "n": "7",
+    "kind": "lesson",
+    "title": "Glory at Twilight",
+    "section": "Short Stories"
+   },
+   {
+    "n": "8",
+    "kind": "lesson",
+    "title": "The Luncheon",
+    "section": "Short Stories"
+   },
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "The Peacock",
+    "section": "Poetry"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "Let me Not to the Marriage of True Minds",
+    "section": "Poetry"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Coming",
+    "section": "Poetry",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "(Haiku)",
+      "page": "113"
+     }
+    ]
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "Telephone Conversation",
+    "section": "Poetry"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "The World is too Much With Us",
+    "section": "Poetry"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "Mother Tongue",
+    "section": "Poetry"
+   },
+   {
+    "n": "7",
+    "kind": "lesson",
+    "title": "Hawk Roosting",
+    "section": "Poetry"
+   },
+   {
+    "n": "8",
+    "kind": "lesson",
+    "title": "For Elkana",
+    "section": "Poetry",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "(The Limerick)",
+      "page": "127"
+     }
+    ]
+   },
+   {
+    "n": "9",
+    "kind": "lesson",
+    "title": "Refugee Blues",
+    "section": "Poetry"
+   },
+   {
+    "n": "10",
+    "kind": "lesson",
+    "title": "Felling of the Banyan Tree",
+    "section": "Poetry"
+   },
+   {
+    "n": "11",
+    "kind": "lesson",
+    "title": "Ode to a Nightingale",
+    "section": "Poetry"
+   },
+   {
+    "n": "12",
+    "kind": "lesson",
+    "title": "Ajamil and the Tigers",
+    "section": "Poetry"
+   },
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "My Watch",
+    "section": "Essays"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "My Three Passions",
+    "section": "Essays"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Patterns of Creativity",
+    "section": "Essays"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "Tribal Verse",
+    "section": "Essays"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "What is a Good Book?",
+    "section": "Essays"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "The Story",
+    "section": "Essays"
+   },
+   {
+    "n": "7",
+    "kind": "lesson",
+    "title": "Bridges",
+    "section": "Essays"
+   }
+  ],
+  "kehb1": [
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "The Portrait of a Lady",
+    "section": "Reading Skills",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "A Photograph",
+      "page": "10"
+     }
+    ]
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "We’re Not Afraid to Die... if We Can All Be Together",
+    "section": "Reading Skills"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Discovering Tut: the Saga Continues",
+    "section": "Reading Skills",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "The Laburnum Top",
+      "page": "30"
+     },
+     {
+      "kind": "piece",
+      "title": "The Voice of the Rain",
+      "page": "33"
+     }
+    ]
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "The Ailing Planet: the Green Movement’s Role",
+    "section": "Reading Skills",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Childhood",
+      "page": "41"
+     }
+    ]
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "The Adventure",
+    "section": "Reading Skills"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "Silk Road",
+    "section": "Reading Skills",
+    "includes": [
+     {
+      "kind": "piece",
+      "title": "Father to Son",
+      "page": "68"
+     }
+    ]
+   },
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "Note-making",
+    "section": "Writing Skills"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "Summarising",
+    "section": "Writing Skills"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Sub-titling",
+    "section": "Writing Skills"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "Essay-writing",
+    "section": "Writing Skills"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "Letter-writing",
+    "section": "Writing Skills"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "Creative Writing",
+    "section": "Writing Skills"
+   }
+  ],
+  "kesp1": [
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "The Summer of the Beautiful White Horse"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "The Address"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Mother’s Day"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "Birth"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "The Tale of Melon City"
+   }
+  ],
+  "keps1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Political Theory: An Introduction"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Freedom"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Equality"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Social Justice"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Rights"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Citizenship"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Nationalism"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Secularism"
+   }
+  ],
+  "keps2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "CONSTITUTION: WHY AND HOW?"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "RIGHTS IN THE INDIAN CONSTITUTION"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "ELECTION AND REPRESENTATION"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "EXECUTIVE"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "LEGISLATURE"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "JUDICIARY"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "FEDERALISM"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "LOCAL GOVERNMENTS"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "CONSTITUTION AS A LIVING DOCUMENT"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "THE PHILOSOPHY OF THE CONSTITUTION"
+   }
+  ],
+  "kehs1": [
+   {
+    "n": "1",
+    "kind": "theme",
+    "title": "Writing and City Life",
+    "section": "Section I EARLY SOCIETIES"
+   },
+   {
+    "n": "2",
+    "kind": "theme",
+    "title": "An Empire Across Three Continents",
+    "section": "Section II EMPIRES"
+   },
+   {
+    "n": "3",
+    "kind": "theme",
+    "title": "Nomadic Empires",
+    "section": "Section II EMPIRES"
+   },
+   {
+    "n": "4",
+    "kind": "theme",
+    "title": "The Three Orders",
+    "section": "Section III CHANGING TRADITIONS"
+   },
+   {
+    "n": "5",
+    "kind": "theme",
+    "title": "Changing Cultural Traditions",
+    "section": "Section III CHANGING TRADITIONS"
+   },
+   {
+    "n": "6",
+    "kind": "theme",
+    "title": "Displacing Indigenous Peoples",
+    "section": "Section IV TOWARDS MODERNISATION"
+   },
+   {
+    "n": "7",
+    "kind": "theme",
+    "title": "Paths to Modernisation",
+    "section": "Section IV TOWARDS MODERNISATION"
+   }
+  ],
+  "keec1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "INDIAN ECONOMY ON THE EVE OF INDEPENDENCE"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "INDIAN ECONOMY 1950-1990"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "LIBERALISATION, PRIVATISATION AND GLOBALISATION: AN APPRAISAL"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "HUMAN CAPITAL FORMATION IN INDIA"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "RURAL DEVELOPMENT"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "EMPLOYMENT: GROWTH, INFORMALISATION AND OTHER ISSUES"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "ENVIRONMENT AND SUSTAINABLE DEVELOPMENT"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "COMPARATIVE DEVELOPMENT EXPERIENCES OF INDIA AND ITS NEIGHBOURS"
+   }
+  ],
+  "kest1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Introduction"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Collection of Data"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Organisation of Data"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Presentation of Data"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Measures of Central Tendency"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Correlation"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Index Numbers"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Use of Statistical Tools"
+   }
+  ],
+  "kebs1": [
+   {
+    "kind": "chapter",
+    "title": "Business, Trade and Commerce",
+    "section": "Part I Foundations of Business"
+   },
+   {
+    "kind": "chapter",
+    "title": "Forms of Business Organisation",
+    "section": "Part I Foundations of Business"
+   },
+   {
+    "kind": "chapter",
+    "title": "Private, Public and Global Enterprises",
+    "section": "Part I Foundations of Business"
+   },
+   {
+    "kind": "chapter",
+    "title": "Business Services",
+    "section": "Part I Foundations of Business"
+   },
+   {
+    "kind": "chapter",
+    "title": "Emerging Modes of Business",
+    "section": "Part I Foundations of Business"
+   },
+   {
+    "kind": "chapter",
+    "title": "Social Responsibilities of Business and Business Ethics",
+    "section": "Part I Foundations of Business"
+   },
+   {
+    "kind": "chapter",
+    "title": "Formation of a Company",
+    "section": "Part II Corporate Organisation, Finance and Trade"
+   },
+   {
+    "kind": "chapter",
+    "title": "Sources of Business Finance",
+    "section": "Part II Corporate Organisation, Finance and Trade"
+   },
+   {
+    "kind": "chapter",
+    "title": "MSME and Business Entrepreneurship",
+    "section": "Part II Corporate Organisation, Finance and Trade"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Internal Trade",
+    "section": "Part II Corporate Organisation, Finance and Trade"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "International Business",
+    "section": "Part II Corporate Organisation, Finance and Trade"
+   }
+  ],
+  "kehe1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Introduction",
+    "subtitle": "HEFS: Evolution of the Discipline and its Relevance to Quality of Life"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Understanding the Self"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Food, Nutrition, Health and Fitness"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Management of Resources"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Fabrics Around Us"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Media and Communication Technology"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Concerns and Needs in Diverse Contexts"
+   }
+  ],
+  "kehe2": [
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Nutrition, Health and Well-being"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Our Apparel"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Financial Management and Planning"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Care and Maintenance of Fabrics"
+   }
+  ],
+  "kefa1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Prehistoric Rock Paintings"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Arts of the Indus Valley"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Arts of the Mauryan Period"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Post-Mauryan Trends in Indian Art and Architecture"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Later Mural Traditions"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Temple Architecture and Sculpture"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Indian Bronze Sculpture"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Some Aspects of Indo-Islamic Architecture"
+   }
+  ],
+  "keip1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Computer System"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Emerging Trends"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Brief Overview of Python"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Working with Lists and Dictionaries"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Understanding Data"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Introduction to NumPy"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Database Concepts"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Introduction to Structured Query Language (SQL)"
+   }
+  ],
+  "kecs1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Computer System"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Encoding Schemes and Number System"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Emerging Trends"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Introduction to Problem Solving"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Getting Started with Python"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Flow of Control"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Functions"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Strings"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Lists"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Tuples and Dictionaries"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Societal Impact"
+   }
+  ],
+  "kehp1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Physical Education"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Understanding Health"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Physical and Physiological Aspects of Physical Education and Sports"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Individual Games"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Team Games"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Yoga and its Relevance in the Modern Times"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Safety and Security"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Health Related Physical Fitness"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Measurement and Evaluation"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Tournaments and Competitions"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Adventure Sports"
+   }
+  ],
+  "kebt1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Introduction"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Cellular Organelles"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Biomolecules"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Enzymes and Bioenergetics"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Cellular Processes"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Basic Principles of Inheritance"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Basic Processes"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Genetic Disorder"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Introduction to Bioinformatics"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Protein Informatics and Cheminformatics"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Programming and Systems Biology"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Tools and Techniques"
+   }
+  ],
+  "keks1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Language and Literature of India"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Indian Philosophical Systems"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Performing Art Traditions in India"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Indian Art and Architecture"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Astronomy in India"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Mathematics in India"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Introducing Ayurveda: the Science of Health and Disease"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Chemistry and Metallurgy in India"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Yoga"
+   }
+  ],
+  "lemh1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Relations and Functions"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Inverse Trigonometric Functions"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Matrices"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Determinants"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Continuity and Differentiability"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Application of Derivatives"
+   }
+  ],
+  "lemh2": [
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Integrals"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Application of Integrals"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Differential Equations"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Vector Algebra"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Three Dimensional Geometry"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Linear Programming"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Probability"
+   }
+  ],
+  "leph1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "ELECTRIC CHARGES AND FIELDS"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "ELECTROSTATIC POTENTIAL AND CAPACITANCE"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "CURRENT ELECTRICITY"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "MOVING CHARGES AND MAGNETISM"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "MAGNETISM AND MATTER"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "ELECTROMAGNETIC INDUCTION"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "ALTERNATING CURRENT"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "ELECTROMAGNETIC WAVES"
+   }
+  ],
+  "leph2": [
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "RAY OPTICS AND OPTICAL INSTRUMENTS"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "WAVE OPTICS"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "DUAL NATURE OF RADIATION AND MATTER"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "ATOMS"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "NUCLEI"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "SEMICONDUCTOR ELECTRONICS: MATERIALS, DEVICES AND SIMPLE CIRCUITS"
+   }
+  ],
+  "leac1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Accounting for Partnership: Basic Concepts"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Reconstitution of a Partnership Firm – Admission of a Partner"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Reconstitution of a Partnership Firm – Retirement/Death of a Partner"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Dissolution of Partnership Firm"
+   }
+  ],
+  "leac2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Accounting for Share Capital"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Issue and Redemption of Debentures"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Financial Statements of a Company"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Analysis of Financial Statements"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Accounting Ratios"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Cash Flow Statement"
+   }
+  ],
+  "leca1": [
+   {
+    "kind": "chapter",
+    "title": "OVERVIEW OF COMPUTERISED ACCOUNTING SYSTEM"
+   },
+   {
+    "kind": "chapter",
+    "title": "SPREADSHEET"
+   },
+   {
+    "kind": "chapter",
+    "title": "USE OF SPREADSHEET IN BUSINESS APPLICATIONS"
+   },
+   {
+    "kind": "chapter",
+    "title": "GRAPHS AND CHARTS FOR BUSINESS DATA"
+   }
+  ],
+  "lekl1": [
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "I Sell my Dreams",
+    "section": "Short Stories"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "Eveline",
+    "section": "Short Stories"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "A Wedding in Brownsville",
+    "section": "Short Stories"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "Tomorrow",
+    "section": "Short Stories"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "One Centimetre",
+    "section": "Short Stories"
+   },
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "A Lecture Upon the Shadow",
+    "section": "Poetry"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "Poems by Milton",
+    "section": "Poetry"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Poems by Blake",
+    "section": "Poetry"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "Kubla Khan",
+    "section": "Poetry"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "Trees",
+    "section": "Poetry"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "The Wild Swans at Coole",
+    "section": "Poetry"
+   },
+   {
+    "n": "7",
+    "kind": "lesson",
+    "title": "Time and Time Again",
+    "section": "Poetry"
+   },
+   {
+    "n": "8",
+    "kind": "lesson",
+    "title": "Blood",
+    "section": "Poetry"
+   },
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "Freedom",
+    "section": "Non-Fiction"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "The Mark on the Wall",
+    "section": "Non-Fiction"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Film-making",
+    "section": "Non-Fiction"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "Why the Novel Matters",
+    "section": "Non-Fiction"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "The Argumentative Indian",
+    "section": "Non-Fiction"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "On Science Fiction",
+    "section": "Non-Fiction"
+   },
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "Chandalika",
+    "section": "Drama"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "Broken Images",
+    "section": "Drama"
+   }
+  ],
+  "lefl1": [
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "The Last Lesson",
+    "section": "Prose"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "Lost Spring",
+    "section": "Prose"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Deep Water",
+    "section": "Prose"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "The Rattrap",
+    "section": "Prose"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "Indigo",
+    "section": "Prose"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "Poets and Pancakes",
+    "section": "Prose"
+   },
+   {
+    "n": "7",
+    "kind": "lesson",
+    "title": "The Interview",
+    "section": "Prose"
+   },
+   {
+    "n": "8",
+    "kind": "lesson",
+    "title": "Going Places",
+    "section": "Prose"
+   },
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "My Mother at Sixty-six",
+    "section": "Poetry"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "Keeping Quiet",
+    "section": "Poetry"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "A Thing of Beauty",
+    "section": "Poetry"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "A Roadside Stand",
+    "section": "Poetry"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "Aunt Jennifer’s Tigers",
+    "section": "Poetry"
+   }
+  ],
+  "levt1": [
+   {
+    "n": "1",
+    "kind": "lesson",
+    "title": "The Third Level"
+   },
+   {
+    "n": "2",
+    "kind": "lesson",
+    "title": "The Tiger King"
+   },
+   {
+    "n": "3",
+    "kind": "lesson",
+    "title": "Journey to the end of the Earth"
+   },
+   {
+    "n": "4",
+    "kind": "lesson",
+    "title": "The Enemy"
+   },
+   {
+    "n": "5",
+    "kind": "lesson",
+    "title": "On the face of It"
+   },
+   {
+    "n": "6",
+    "kind": "lesson",
+    "title": "Memories of Childhood",
+    "includes": [
+     {
+      "kind": "part",
+      "title": "The Cutting of My Long Hair"
+     },
+     {
+      "kind": "part",
+      "title": "We Too are Human Beings"
+     }
+    ]
+   }
+  ],
+  "lebo1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Sexual Reproduction in Flowering Plants"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Human Reproduction"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Reproductive Health"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Principles of Inheritance and Variation"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Molecular Basis of Inheritance"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Evolution"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Human Health and Disease"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Microbes in Human Welfare"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Biotechnology : Principles and Processes"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Biotechnology and its Applications"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Organisms and Populations"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Ecosystem"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Biodiversity and Conservation"
+   }
+  ],
+  "lehs1": [
+   {
+    "n": "1",
+    "kind": "theme",
+    "title": "BRICKS, BEADS AND BONES",
+    "subtitle": "The Harappan Civilisation"
+   },
+   {
+    "n": "2",
+    "kind": "theme",
+    "title": "KINGS, FARMERS AND TOWNS",
+    "subtitle": "Early States and Economies"
+   },
+   {
+    "n": "3",
+    "kind": "theme",
+    "title": "KINSHIP, CASTE AND CLASS",
+    "subtitle": "Early Societies"
+   },
+   {
+    "n": "4",
+    "kind": "theme",
+    "title": "THINKERS, BELIEFS AND BUILDINGS",
+    "subtitle": "Cultural Developments"
+   }
+  ],
+  "lehs2": [
+   {
+    "n": "5",
+    "kind": "theme",
+    "title": "THROUGH THE EYES OF TRAVELLERS",
+    "subtitle": "Perceptions of Society"
+   },
+   {
+    "n": "6",
+    "kind": "theme",
+    "title": "BHAKTI-SUFI TRADITIONS",
+    "subtitle": "Changes in Religious Beliefs and Devotional Texts"
+   },
+   {
+    "n": "7",
+    "kind": "theme",
+    "title": "AN IMPERIAL CAPITAL: VIJAYANAGARA"
+   },
+   {
+    "n": "8",
+    "kind": "theme",
+    "title": "PEASANTS, ZAMINDARS AND THE STATE",
+    "subtitle": "Agrarian Society and the Mughal Empire"
+   }
+  ],
+  "lehs3": [
+   {
+    "n": "9",
+    "kind": "theme",
+    "title": "COLONIALISM AND THE COUNTRYSIDE",
+    "subtitle": "Exploring Official Archives"
+   },
+   {
+    "n": "10",
+    "kind": "theme",
+    "title": "REBELS AND THE RAJ",
+    "subtitle": "The Revolt of1857 and Its Representations"
+   },
+   {
+    "n": "11",
+    "kind": "theme",
+    "title": "MAHATMA GANDHI AND THE NATIONALIST MOVEMENT",
+    "subtitle": "Civil Disobedience and Beyond"
+   },
+   {
+    "n": "12",
+    "kind": "theme",
+    "title": "FRAMING THE CONSTITUTION",
+    "subtitle": "The Beginning of a New Era"
+   }
+  ],
+  "legy1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Human Geography Nature and Scope"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "The World Population Distribution, Density and Growth"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Human Development"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Primary Activities"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Secondary Activities"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Tertiary and Quaternary Activities"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Transport and Communication"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "International Trade"
+   }
+  ],
+  "legy3": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Data – Its Source and Compilation"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Data Processing"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Graphical Representation of Data"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Spatial Information Technology"
+   }
+  ],
+  "legy2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Population : Distribution, Density, Growth and Composition"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Human Settlements"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Land Resources and Agriculture"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Water Resources"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Mineral and Energy Resources"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Planning and Sustainable Development in Indian Context"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Transport and Communication"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "International Trade"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Geographical Perspective on Selected Issues and Problems"
+   }
+  ],
+  "lepy1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Variations in Psychological Attributes"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Self and Personality"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Meeting Life Challenges"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Psychological Disorders"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Therapeutic Approaches"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Attitude and Social Cognition"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Social Influence and Group Processes"
+   }
+  ],
+  "lesy1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Introducing Indian Society"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "The Demographic Structure of the Indian Society"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Social Institutions: Continuity and Change"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "The Market as a Social Institution"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Patterns of Social Inequality and Exclusion"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "The Challenges of Cultural Diversity"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Suggestions for Project Work"
+   }
+  ],
+  "lesy2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Structural Change"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Cultural Change"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "The Constitution and Social Change"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Change and Development in Rural Society"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Change and Development in Industrial Society"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Globalisation and Social Change"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Mass Media and Communications"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Social Movements"
+   }
+  ],
+  "lech1": [
+   {
+    "n": "1",
+    "kind": "unit",
+    "title": "Solutions"
+   },
+   {
+    "n": "2",
+    "kind": "unit",
+    "title": "Electrochemistry"
+   },
+   {
+    "n": "3",
+    "kind": "unit",
+    "title": "Chemical Kinetics"
+   },
+   {
+    "n": "4",
+    "kind": "unit",
+    "title": "The d-and f-Block Elements"
+   },
+   {
+    "n": "5",
+    "kind": "unit",
+    "title": "Coordination Compounds"
+   }
+  ],
+  "lech2": [
+   {
+    "n": "6",
+    "kind": "unit",
+    "title": "Haloalkanes and Haloarenes"
+   },
+   {
+    "n": "7",
+    "kind": "unit",
+    "title": "Alcohols, Phenols and Ethers"
+   },
+   {
+    "n": "8",
+    "kind": "unit",
+    "title": "Aldehydes, Ketones and Carboxylic Acids"
+   },
+   {
+    "n": "9",
+    "kind": "unit",
+    "title": "Amines"
+   },
+   {
+    "n": "10",
+    "kind": "unit",
+    "title": "Biomolecules"
+   }
+  ],
+  "leps1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "The End of Bipolarity"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Contemporary Centres of Power"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Contemporary South Asia"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "International Organisations"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Security in the Contemporary World"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Environment and Natural Resources"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Globalisation"
+   }
+  ],
+  "leps2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Challenges of nation building"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Era of one-party dominance"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Politics of planned development"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "India’s external relations"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Challenges to and restoration of the congress system"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "The crisis of democratic order"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Regional aspirations"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Recent developments in indian politics"
+   }
+  ],
+  "leec2": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "INTRODUCTION"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "THEORY OF CONSUMER BEHAVIOUR"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "PRODUCTION AND COSTS"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "THE THEORY OF THE FIRM UNDER PERFECT COMPETITION"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "MARKET EQUILIBRIUM"
+   }
+  ],
+  "leec1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "INTRODUCTION"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "NATIONAL INCOME ACCOUNTING"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "MONEY AND BANKING"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "DETERMINATION OF INCOME AND EMPLOYMENT"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "GOVERNMENT BUDGET AND THE ECONOMY"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "OPEN ECONOMY MACROECONOMICS"
+   }
+  ],
+  "lebs1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Nature and Significance of Management"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Principles of Management"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Business Environment"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Planning"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Organising"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Staffing"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Directing"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Controlling"
+   }
+  ],
+  "lebs2": [
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Financial Management"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Marketing"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Consumer Protection"
+   }
+  ],
+  "lehe1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Work, Livelihood and Career"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Clinical Nutrition and Dietetics"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Public Nutrition and Health"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Food Processing and Technology"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Food Quality and Food Safety"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Early Childhood Care and Education"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Management of Support Services, Institutions and Programmes for Children, Youth and Elderly"
+   }
+  ],
+  "lehe2": [
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Design for Fabric and Apparel"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Fashion Design and Merchandising"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Care and Maintenance of Fabrics in Institutions"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Hospitality Management"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Consumer Education and Protection"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Development Communication and Journalism"
+   },
+   {
+    "n": "14",
+    "kind": "chapter",
+    "title": "Corporate Communication and Public Relations"
+   }
+  ],
+  "lefa1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "The Manuscript Painting Tradition"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "The Rajasthani Schools of Painting"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "The Mughal School of Miniature Painting"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "The Deccani Schools of Painting"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "The Pahari Schools of Painting"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "The Bengal School and Cultural Nationalism"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "The Modern Indian Art"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "The Living Art Traditions of India"
+   }
+  ],
+  "lecs1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Exception Handling in Python"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "File Handling in Python"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Stack"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Queue"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Sorting"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Searching"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Understanding Data"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Database Concepts"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Structured Query Language (SQL)"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Computer Networks"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Data Communication"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Security Aspects"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Project Based Learning"
+   }
+  ],
+  "leip1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "Querying and SQL Functions"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Data Handling using Pandas - I"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Data Handling using Pandas - II"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Plotting Data using Matplotlib"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Internet and Web"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Societal Impacts"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Project Based Learning"
+   }
+  ],
+  "lebt1": [
+   {
+    "n": "1",
+    "kind": "chapter",
+    "title": "An Overview of Recombinant DNA Technology"
+   },
+   {
+    "n": "2",
+    "kind": "chapter",
+    "title": "Host–Vector System"
+   },
+   {
+    "n": "3",
+    "kind": "chapter",
+    "title": "Gene Cloning"
+   },
+   {
+    "n": "4",
+    "kind": "chapter",
+    "title": "Applications of Recombinant DNA Technology"
+   },
+   {
+    "n": "5",
+    "kind": "chapter",
+    "title": "Genome Technology and Engineering"
+   },
+   {
+    "n": "6",
+    "kind": "chapter",
+    "title": "Microbial Culture"
+   },
+   {
+    "n": "7",
+    "kind": "chapter",
+    "title": "Plant Tissue Culture"
+   },
+   {
+    "n": "8",
+    "kind": "chapter",
+    "title": "Animal Cell Culture"
+   },
+   {
+    "n": "9",
+    "kind": "chapter",
+    "title": "Stem Cell Culture and Organ Culture"
+   },
+   {
+    "n": "10",
+    "kind": "chapter",
+    "title": "Bioprocessing and Biomanufacturing"
+   },
+   {
+    "n": "11",
+    "kind": "chapter",
+    "title": "Bioremediation"
+   },
+   {
+    "n": "12",
+    "kind": "chapter",
+    "title": "Recent Innovations in Biotechnology"
+   },
+   {
+    "n": "13",
+    "kind": "chapter",
+    "title": "Entrepreneurship"
+   }
+  ]
+ }
+}

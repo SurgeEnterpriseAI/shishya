@@ -1,0 +1,19 @@
+# NCERT contents evidence — keph1 — Physics Part-I (index class 11, Physics)
+# source: https://ncert.nic.in/textbook/pdf/keph1ps.pdf
+# fetched: 2026-09-25T23:15:16+05:30  sha256: b06cce4e3d6c4c150869bd4f6221ed5aa86bb0ff1725e4effcd2615e85ff5782  bytes: 1890608
+# contents pages of the PDF: 13,14 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 33b3349d869dd124c6b76eaa2c7cbf92b201fdba7349343d177aeed03aa60ee8);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@keph1#5 title [pdftotext p14] next=number
+  WORK, ENERGY AND POWER
++ 5.1 Introduction
++ 71
+@keph1#6 title [pdftotext p14] next=number
+  SYSTEM OF PARTICLES AND ROTATIONAL MOTION
++ 6.1 Introduction
++ 92
+@keph1#7 title [pdftotext p14] next=number
+  GRAVITATION
++ 7.1 Introduction
++ 127

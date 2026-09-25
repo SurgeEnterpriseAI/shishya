@@ -1,0 +1,8 @@
+# NCERT contents evidence — lhar1 — Aroh (index class 12, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/lhar1ps.pdf
+# fetched: 2026-09-25T23:15:30+05:30  sha256: 3697b6248c0b9f824a7f11607a09dac3abdf07cffc178b2750657dcdc17f3238  bytes: 1985781
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 eb5f4f6a1da1c1e7e05c9b777dcf51af0113333f35c28bad4bc75c59b06bdb6a);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

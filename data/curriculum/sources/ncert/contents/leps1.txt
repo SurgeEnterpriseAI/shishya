@@ -1,0 +1,35 @@
+# NCERT contents evidence — leps1 — Contemporary World Politics (index class 12, Political Science)
+# source: https://ncert.nic.in/textbook/pdf/leps1ps.pdf
+# fetched: 2026-09-25T23:15:37+05:30  sha256: 0749bdc9f915db1305dbbde199652de97669ebcd16f4487dd9b0af6a68731359  bytes: 2301858
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 2fcecfe61d10aca5654c559615bc5a15dae551e13e30af78c0ca93f1ebc8a847);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@leps1#1 title [pdftotext p11] next=number
+  The End of Bipolarity
++ 1
++ Chapter 2
+@leps1#2 title [pdftotext p11] next=number
+  Contemporary Centres of Power
++ 15
++ Chapter 3
+@leps1#3 title [pdftotext p11] next=number
+  Contemporary South Asia
++ 29
++ Chapter 4
+@leps1#4 title [pdftotext p11] next=number
+  International Organisations
++ 45
++ Chapter 5
+@leps1#5 title [pdftotext p11] next=number
+  Security in the Contemporary World
++ 63
++ Chapter 6
+@leps1#6 title [pdftotext p11] next=number
+  Environment and Natural Resources
++ 81
++ Chapter 7
+@leps1#7 title [pdftotext p11] next=page
+  Globalisation
++ 99
++ Reprint 2026-27

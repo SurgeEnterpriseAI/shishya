@@ -9,8 +9,20 @@
 // the board's own websites (links below). Shishya does NOT republish
 // the syllabus PDFs — we link out so students always get the current
 // version straight from the board.
+//
+// 25 Sep 2026: blurbs cut to what each board's own name says it runs. The
+// May copy carried unsourced counts ("27,000 schools", "~250 IB schools")
+// and admission claims that had gone stale (Tamil Nadu medical admissions go
+// through NEET; TS EAMCET is now EAPCET). CBSE and CISCE URLs were
+// re-checked that day; the state-board URLs were not (lastVerified 2026-05).
 
 export const SCHOOLING_LAST_VERIFIED = "2026-05";
+
+// 25 Sep 2026: every /schooling page is noindex (links still followed) until
+// school content passes a content gate (K-12 plan, Step 0). The pages stay
+// reachable by URL; nothing school-related goes into sitemap / llms.txt /
+// robots / context.md in this phase. Pinned by tests/unit/schooling-honesty.test.ts.
+export const SCHOOLING_ROBOTS = { index: false, follow: true } as const;
 
 export type BoardType =
   | "national-public"   // CBSE, NIOS — central govt boards
@@ -32,6 +44,9 @@ export interface Board {
   websiteUrl: string;       // board home page
   syllabusUrl?: string;     // syllabus / curriculum page (optional — many state boards consolidate this on the home page)
   samplePaperUrl?: string;  // sample papers / past papers page
+  // Per-class sample-paper pages where the board publishes them separately
+  // (25 Sep 2026: CBSE Class X / XII 2026-27, CISCE ICSE / ISC specimen papers).
+  samplePapersByClass?: Partial<Record<number, string>>;
   blurb: string;
   lastVerified: string;
 }
@@ -47,10 +62,18 @@ export const BOARDS: Board[] = [
     classes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     language: ["EN", "HI"],
     websiteUrl: "https://www.cbse.gov.in",
-    syllabusUrl: "https://www.cbse.gov.in/cbsenew/curriculum.html",
-    samplePaperUrl: "https://www.cbse.gov.in/cbsenew/SQP.html",
-    blurb: "India's largest school board — over 27,000 affiliated schools. NCERT books are the prescribed core curriculum; Class 10 and Class 12 board exams typically held February–March every year.",
-    lastVerified: "2026-05",
+    // 25 Sep 2026: cbse.gov.in/cbsenew/SQP.html is a 404. The 2026-27
+    // curriculum and sample papers live on cbseacademic.nic.in (all fetched
+    // 200 that day). The blurb lost its school count and "February–March"
+    // exam window: neither was sourced, and Class 10 now has two board exams.
+    syllabusUrl: "https://cbseacademic.nic.in/curriculum_2027.html",
+    samplePaperUrl: "https://cbseacademic.nic.in/",
+    samplePapersByClass: {
+      10: "https://cbseacademic.nic.in/SQP_CLASSX_2026-27.html",
+      12: "https://cbseacademic.nic.in/SQP_CLASSXII_2026-27.html",
+    },
+    blurb: "Central board that runs the Class 10 and Class 12 board exams for its schools. For most subjects, CBSE's curriculum prescribes NCERT textbooks.",
+    lastVerified: "2026-09",
   },
   {
     slug: "nios",
@@ -63,7 +86,7 @@ export const BOARDS: Board[] = [
     websiteUrl: "https://www.nios.ac.in",
     syllabusUrl: "https://nios.ac.in/online-course-material.aspx",
     samplePaperUrl: "https://www.nios.ac.in/online-course-material/question-papers.aspx",
-    blurb: "India's open school for distance learning. Equivalent to CBSE / state-board Class 10 and Class 12. On-demand examinations available — particularly valuable for students who dropped out, are repeating, or studying alongside work.",
+    blurb: "India's open school: Secondary (Class 10) and Senior Secondary (Class 12) courses through open and distance learning.",
     lastVerified: "2026-05",
   },
   // ── National private ────────────────────────────────────────────────
@@ -76,10 +99,16 @@ export const BOARDS: Board[] = [
     classes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     language: ["EN"],
     websiteUrl: "https://www.cisce.org",
-    syllabusUrl: "https://cisce.org/curriculum.aspx",
-    samplePaperUrl: "https://cisce.org/specimen-question-papers.aspx",
-    blurb: "Second-largest national board after CBSE. Class 10 is the ICSE exam; Class 12 is the ISC exam. Tends to weight English language and laboratory practice more heavily than CBSE.",
-    lastVerified: "2026-05",
+    // 25 Sep 2026: curriculum.aspx and specimen-question-papers.aspx are 404s
+    // on the rebuilt cisce.org; these pages fetched 200 that day.
+    syllabusUrl: "https://cisce.org/regulations-and-syllabuses-icse/",
+    samplePaperUrl: "https://cisce.org/icse-specimen-question-papers/",
+    samplePapersByClass: {
+      10: "https://cisce.org/icse-specimen-question-papers/",
+      12: "https://cisce.org/isc-specimen-question-papers/",
+    },
+    blurb: "Conducts the ICSE (Class 10) and ISC (Class 12) examinations.",
+    lastVerified: "2026-09",
   },
   // ── International ───────────────────────────────────────────────────
   {
@@ -92,7 +121,7 @@ export const BOARDS: Board[] = [
     language: ["EN"],
     websiteUrl: "https://www.ibo.org",
     syllabusUrl: "https://www.ibo.org/programmes",
-    blurb: "Three-stage international curriculum (PYP / MYP / DP). The Diploma Programme is the most familiar Class 11–12 track — recognised globally for university admissions. ~250 IB World Schools in India.",
+    blurb: "International curriculum in three stages (PYP / MYP / DP). The Diploma Programme covers the last two school years.",
     lastVerified: "2026-05",
   },
   {
@@ -105,7 +134,7 @@ export const BOARDS: Board[] = [
     language: ["EN"],
     websiteUrl: "https://www.cambridgeinternational.org",
     syllabusUrl: "https://www.cambridgeinternational.org/programmes-and-qualifications",
-    blurb: "UK-origin international qualifications widely offered in India. IGCSE (Class 10 equivalent), AS/A-Levels (Class 11/12 equivalent). Strong subject-specific depth, broadly accepted by Indian universities.",
+    blurb: "UK-based international qualifications: IGCSE (around Class 10) and AS / A Levels (around Classes 11–12).",
     lastVerified: "2026-05",
   },
   // ── Major state boards ──────────────────────────────────────────────
@@ -119,7 +148,7 @@ export const BOARDS: Board[] = [
     language: ["TA", "EN"],
     websiteUrl: "https://www.dge.tn.gov.in",
     syllabusUrl: "https://www.tnschools.gov.in",
-    blurb: "Tamil Nadu's state board. Class 12 result is the basis for Tamil Nadu's medical / engineering / arts undergraduate admissions via the TNCAA process.",
+    blurb: "Tamil Nadu's state board for school examinations.",
     lastVerified: "2026-05",
   },
   {
@@ -131,7 +160,7 @@ export const BOARDS: Board[] = [
     classes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     language: ["MR", "EN", "HI"],
     websiteUrl: "https://www.mahahsscboard.in",
-    blurb: "Maharashtra state board running SSC (Class 10) and HSC (Class 12). One of India's largest state board systems by student count.",
+    blurb: "Maharashtra's state board for the SSC (Class 10) and HSC (Class 12) examinations.",
     lastVerified: "2026-05",
   },
   {
@@ -143,7 +172,7 @@ export const BOARDS: Board[] = [
     classes: [9, 10, 11, 12],
     language: ["HI", "EN"],
     websiteUrl: "https://upmsp.edu.in",
-    blurb: "Uttar Pradesh state board — the largest state board in India by registered student count. Class 10 (High School) and Class 12 (Intermediate) exams are major annual cycles.",
+    blurb: "Uttar Pradesh's board for the High School (Class 10) and Intermediate (Class 12) examinations.",
     lastVerified: "2026-05",
   },
   {
@@ -155,7 +184,7 @@ export const BOARDS: Board[] = [
     classes: [11, 12],
     language: ["KN", "EN"],
     websiteUrl: "https://pue.karnataka.gov.in",
-    blurb: "Karnataka's pre-university (Class 11–12) examining body. Class 11 is 1st PUC, Class 12 is 2nd PUC. The 2nd PUC result determines KCET counselling rank.",
+    blurb: "Karnataka's pre-university (Class 11–12) department. Class 11 is 1st PUC, Class 12 is 2nd PUC.",
     lastVerified: "2026-05",
   },
   {
@@ -167,7 +196,7 @@ export const BOARDS: Board[] = [
     classes: [9, 10],
     language: ["KN", "EN"],
     websiteUrl: "https://kseab.karnataka.gov.in",
-    blurb: "Karnataka's Class 10 examining board (SSLC). Separate from the PUC board which handles Class 11-12.",
+    blurb: "Karnataka's board for the SSLC (Class 10) examination.",
     lastVerified: "2026-05",
   },
   {
@@ -179,7 +208,7 @@ export const BOARDS: Board[] = [
     classes: [5, 6, 7, 8, 9, 10],
     language: ["BN", "EN", "HI"],
     websiteUrl: "https://wbbse.wb.gov.in",
-    blurb: "West Bengal's secondary (Class 10 'Madhyamik') board. Class 11–12 are handled by WBCHSE separately.",
+    blurb: "West Bengal's board for the Madhyamik (Class 10) examination. Classes 11–12 are under WBCHSE.",
     lastVerified: "2026-05",
   },
   {
@@ -191,7 +220,7 @@ export const BOARDS: Board[] = [
     classes: [11, 12],
     language: ["BN", "EN", "HI"],
     websiteUrl: "https://wbchse.wb.gov.in",
-    blurb: "West Bengal's higher-secondary (Class 11–12) examining body. The Class 12 'Uchcha Madhyamik' result determines WB college admission rankings.",
+    blurb: "West Bengal's council for the Higher Secondary (Uchcha Madhyamik, Classes 11–12) examination.",
     lastVerified: "2026-05",
   },
   {
@@ -203,7 +232,7 @@ export const BOARDS: Board[] = [
     classes: [11, 12],
     language: ["TE", "EN"],
     websiteUrl: "https://bie.ap.gov.in",
-    blurb: "Andhra Pradesh's intermediate (Class 11–12) examining body. The Intermediate result is the basis for AP EAPCET and other state admissions.",
+    blurb: "Andhra Pradesh's board for the Intermediate (Classes 11–12) examinations.",
     lastVerified: "2026-05",
   },
   {
@@ -215,7 +244,7 @@ export const BOARDS: Board[] = [
     classes: [11, 12],
     language: ["TE", "EN"],
     websiteUrl: "https://tsbie.cgg.gov.in",
-    blurb: "Telangana's intermediate examining body, split from united AP after state bifurcation in 2014. Intermediate result drives TS EAMCET admissions.",
+    blurb: "Telangana's board for the Intermediate (Classes 11–12) examinations.",
     lastVerified: "2026-05",
   },
   {
@@ -227,7 +256,7 @@ export const BOARDS: Board[] = [
     classes: [11, 12],
     language: ["ML", "EN"],
     websiteUrl: "https://dhsekerala.gov.in",
-    blurb: "Kerala's Class 11–12 examining body. Class 12 result feeds into Kerala's KEAM-based admissions.",
+    blurb: "Kerala's directorate for Higher Secondary (Classes 11–12) education and examinations.",
     lastVerified: "2026-05",
   },
   {
@@ -239,7 +268,7 @@ export const BOARDS: Board[] = [
     classes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     language: ["GU", "EN", "HI"],
     websiteUrl: "https://gseb.org",
-    blurb: "Gujarat's state board for SSC (Class 10) and HSC (Class 12). HSC Science Class 12 results feed into GUJCET counselling.",
+    blurb: "Gujarat's state board for the SSC (Class 10) and HSC (Class 12) examinations.",
     lastVerified: "2026-05",
   },
   {
@@ -251,7 +280,7 @@ export const BOARDS: Board[] = [
     classes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     language: ["HI", "EN"],
     websiteUrl: "https://rajeduboard.rajasthan.gov.in",
-    blurb: "Rajasthan's secondary and higher-secondary board. Particularly large student body given Rajasthan's population.",
+    blurb: "Rajasthan's board for the Secondary (Class 10) and Senior Secondary (Class 12) examinations.",
     lastVerified: "2026-05",
   },
   {
@@ -263,7 +292,7 @@ export const BOARDS: Board[] = [
     classes: [9, 10, 11, 12],
     language: ["HI", "EN"],
     websiteUrl: "https://mpbse.nic.in",
-    blurb: "Madhya Pradesh state board. The MP Board scholarship for Class 12 toppers (Pratibha Kiran etc.) is tied to this examination result.",
+    blurb: "Madhya Pradesh's board for the High School (Class 10) and Higher Secondary (Class 12) examinations.",
     lastVerified: "2026-05",
   },
   {
@@ -275,7 +304,7 @@ export const BOARDS: Board[] = [
     classes: [9, 10, 11, 12],
     language: ["HI", "EN"],
     websiteUrl: "https://biharboardonline.bihar.gov.in",
-    blurb: "Bihar's state board running Matric (Class 10) and Intermediate (Class 12) examinations. One of the largest state boards by enrolment.",
+    blurb: "Bihar's board for the Matric (Class 10) and Intermediate (Class 12) examinations.",
     lastVerified: "2026-05",
   },
   {
@@ -287,7 +316,7 @@ export const BOARDS: Board[] = [
     classes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     language: ["PA", "EN", "HI"],
     websiteUrl: "https://pseb.ac.in",
-    blurb: "Punjab's state board. Class 12 result feeds into Punjab CET counselling.",
+    blurb: "Punjab's state board for school examinations.",
     lastVerified: "2026-05",
   },
 ];
@@ -316,4 +345,42 @@ export function boardsForState(stateCode: string): Board[] {
 
 export function findBoard(slug: string): Board | undefined {
   return BOARDS.find((b) => b.slug === slug);
+}
+
+/** The board's own sample-paper page for one class, else its general one. */
+export function samplePapersFor(board: Board, classNum: number): string | undefined {
+  return board.samplePapersByClass?.[classNum] ?? board.samplePaperUrl;
+}
+
+/** Which official pages a board's page actually links (the website always). */
+export function boardLinks(board: Board): { syllabus: boolean; samplePapers: boolean } {
+  return {
+    syllabus: Boolean(board.syllabusUrl),
+    samplePapers: Boolean(board.samplePaperUrl) || Object.values(board.samplePapersByClass ?? {}).some(Boolean),
+  };
+}
+
+// 26 Sep 2026: the board page's title and description said "Official
+// Syllabus and Sample Paper Links" for all 20 boards, but 14 link neither
+// page (only the board website) and 17 link no sample papers. Title and
+// description now name only the links the page has.
+export function boardLinkCopy(board: Board): { title: string; phrase: string } {
+  const { syllabus, samplePapers } = boardLinks(board);
+  if (syllabus && samplePapers) {
+    return { title: "Official Syllabus and Sample Paper Links", phrase: "the board's own website, syllabus page and sample-paper pages" };
+  }
+  if (syllabus) return { title: "Official Website and Syllabus Links", phrase: "the board's own website and syllabus page" };
+  if (samplePapers) return { title: "Official Website and Sample Paper Links", phrase: "the board's own website and sample-paper page" };
+  return { title: "Official Website Link", phrase: "the board's own website" };
+}
+
+// 26 Sep 2026: the class page's "Class 10/12 board exam" card said every
+// board publishes sample papers "on its own site", for all 20 boards,
+// including IB (no Class 10 board exam) and state boards whose sites were
+// never checked. It now shows only where we hold the board's own
+// question-paper link (CBSE, CISCE, NIOS) and only for Class 10 / 12.
+/** The board's own question-paper page for its Class 10 / 12 exam, else undefined. */
+export function boardExamPapersFor(board: Board, classNum: number): string | undefined {
+  if (classNum !== 10 && classNum !== 12) return undefined;
+  return samplePapersFor(board, classNum);
 }

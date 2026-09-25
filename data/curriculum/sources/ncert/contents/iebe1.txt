@@ -1,0 +1,71 @@
+# NCERT contents evidence — iebe1 — Kaveri (index class 9, English)
+# source: https://ncert.nic.in/textbook/pdf/iebe1ps.pdf
+# fetched: 2026-09-25T23:14:49+05:30  sha256: bacfd4a9157aaf4c3f639fa577365657fadd4b28e67f4bf01e6a4a06d7ac7b08  bytes: 4754203
+# contents pages of the PDF: 17 of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 3b241aa3e049087c661db64ce55e80fc636dc3248915c17ae50643c0c33df04f);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@iebe1#1 title [pdftotext p17] next=known
+  1. How I Taught My Grandmother to Read
++ 1
++ Bharat Our Land
+@iebe1#1/1 include [pdftotext p17] next=number
+  Bharat Our Land
++ 23
++ 2. The Pot Maker
+@iebe1#2 title [pdftotext p17] next=known
+  2. The Pot Maker
++ 33
++ Gifts of Grace: Honouring Our Vocations
+@iebe1#2/1 include [pdftotext p17] next=number
+  Gifts of Grace: Honouring Our Vocations
++ 57
++ 3. Winds of Change
+@iebe1#3 title [pdftotext p17] next=known
+  3. Winds of Change
++ 69
++ Canvas of Soil
+@iebe1#3/1 include [pdftotext p17] next=number
+  Canvas of Soil
++ 86
++ 4. Vitamin-M
+@iebe1#4 title [pdftotext p17] next=known
+  4. Vitamin-M
++ 97
++ I Cannot Remember My Mother
+@iebe1#4/1 include [pdftotext p17] next=number
+  I Cannot Remember My Mother
++ 126
++ 5. The World of Limitless Possibilities
+@iebe1#5 title [pdftotext p17] next=known
+  5. The World of Limitless Possibilities
++ 137
++ Nine Gold Medals
+@iebe1#5/1 include [pdftotext p17] next=number
+  Nine Gold Medals
++ 156
++ 6. Twin Melodies
+@iebe1#6 title [pdftotext p17] next=known
+  6. Twin Melodies
++ 169
++ A Friend Found in Music
+@iebe1#6/1 include [pdftotext p17] next=number
+  A Friend Found in Music
++ 194
++ 7. Carrier of Words
+@iebe1#7 title [pdftotext p17] next=known
+  7. Carrier of Words
++ 203
++ Words
+@iebe1#7/1 include [pdftotext p17] next=number
+  Words
++ 220
++ 8. Follow That Dream
+@iebe1#8 title [pdftotext p17] next=known
+  8. Follow That Dream
++ 231
++ Believe in Yourself
+@iebe1#8/1 include [pdftotext p17] next=boilerplate
+  Believe in Yourself
++ 245
++ Appendix

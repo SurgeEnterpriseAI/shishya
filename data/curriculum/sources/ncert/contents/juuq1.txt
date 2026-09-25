@@ -1,0 +1,8 @@
+# NCERT contents evidence — juuq1 — Urdu Qwaid aur Insha (index class 13, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/juuq1ps.pdf
+# fetched: 2026-09-25T23:15:50+05:30  sha256: dea47d4e6530cb24aa48402557d02e2a73a47f3cba1b32979a31764b53ee1098  bytes: 5506399
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 62894d979fc73ff807bd88f9323f0ed0ff7d3dabdd46ce72b3d5f63a3f6fd649);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

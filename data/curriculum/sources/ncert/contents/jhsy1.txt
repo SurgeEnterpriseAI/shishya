@@ -1,0 +1,8 @@
+# NCERT contents evidence — jhsy1 — Sanchayan Bhag-2 (index class 10, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/jhsy1ps.pdf
+# fetched: 2026-09-25T23:15:02+05:30  sha256: 5c9c3ff7c3531dedbbaad9f476913bdf3320728d1feb1a8d1d2178ea7b3c9aa7  bytes: 1617413
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 b9df2ec6cda8ebefe7e8eab3241a5290318f4c52410a21e462a75a3f44822fd0);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

@@ -1,0 +1,23 @@
+# NCERT contents evidence — kehe2 — Human Ecology and Family Sciences Part II (index class 11, Home Science)
+# source: https://ncert.nic.in/textbook/pdf/kehe2ps.pdf
+# fetched: 2026-09-25T23:15:21+05:30  sha256: 10573b92b00ab152bd83c2ce8bed084cef751edb6cea7c6715848371f59df374  bytes: 1603146
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 aaa7dccd2469251a6360dfc273e076509ca8f25d2140cb809df92913fd86b665);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kehe2#1 title [pymupdf p13] next=number
+  Nutrition, Health and Well-being
++ 151
++ Chapter 9
+@kehe2#2 title [pymupdf p13] next=number
+  Our Apparel
++ 171
++ Unit IV
+@kehe2#3 title [pdftotext p13] next=number
+  Chapter 10 Financial Management and Planning
++ Chapter 11 Care and Maintenance of Fabrics
++ References for Further Reading
+@kehe2#4 title [pdftotext p13] next=boilerplate
+  Chapter 11 Care and Maintenance of Fabrics
++ References for Further Reading
++ iii v vii

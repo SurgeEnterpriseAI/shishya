@@ -1,0 +1,8 @@
+# NCERT contents evidence — ahsr1 — Sarangi (index class 1, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/ahsr1ps.pdf
+# fetched: 2026-09-25T23:14:21+05:30  sha256: db9b07ca8a21c49a3785fc0a041ae68ff2c6a77fb1129efe46950b049f3441cb  bytes: 6265490
+# contents pages of the PDF: none found of 22
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 e1bf086163ed1f51686a5174f34b743621df2aaa46a280a66447ce4dac0a214d);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

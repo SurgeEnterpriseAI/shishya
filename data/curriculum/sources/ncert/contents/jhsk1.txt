@@ -1,0 +1,8 @@
+# NCERT contents evidence — jhsk1 — Shemushi (index class 10, Sanskrit)
+# source: https://ncert.nic.in/textbook/pdf/jhsk1ps.pdf
+# fetched: 2026-09-25T23:15:05+05:30  sha256: a5684b72ea676aba18f3362118587d2b7232ee9d48a2f5ae434f56b25ce38683  bytes: 2457029
+# contents pages of the PDF: none found of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 218d59681adaf8ab7e9ac7441edf0ec9ec65a387acba848b09c4f604f6b9618a);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

@@ -1,0 +1,67 @@
+# NCERT contents evidence — fees1 — Exploring Society India and Beyond (index class 6, Social Science)
+# source: https://ncert.nic.in/textbook/pdf/fees1ps.pdf
+# fetched: 2026-09-25T23:14:34+05:30  sha256: 7605e63efa73bf1748d866c843217473b1a4826f39309525540a3a058bd6e310  bytes: 23733031
+# contents pages of the PDF: 19 of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 0a1cc8c07d8d8c7687af89775d767c25bc4d79d5445190ec494eee59af992760);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@fees1#1 title [pymupdf p19] next=number
+  		Locating Places on the Earth
++ 7
++ 2.
+@fees1#2 title [pymupdf p19] next=number
+  		Oceans and Continents
++ 27
++ 3.
+@fees1#3 title [pymupdf p19] next=number
+  		Landforms and Life
++ 41
++ Theme B — Tapestry of the Past
+@fees1#4 title [pymupdf p19] next=number
+  		Timeline and Sources of History
++ 59
++ 5.
+@fees1#5 title [pymupdf p19] next=number
+  		India, That Is Bharat
++ 75
++ 6.
+@fees1#6 title [pymupdf p19] next=number
+  		The Beginnings of Indian Civilisation
++ 85
++ Theme C — Our Cultural Heritage and
+@fees1#7 title [pymupdf p19] next=number
+  		India's Cultural Roots
++ 105
++ 8.
+@fees1#8 title [pymupdf p19] next=number
+  		Unity in Diversity, or 'Many in the One'
++ 125
++ Theme D — Governance and Democracy
+@fees1#9 title [pymupdf p19] next=number
+  		Family and Community
++ 137
++ 10. 		Grassroots Democracy — Part 1: Governance
+@fees1#10 title [pymupdf p19] next=number
+  10. 		Grassroots Democracy — Part 1: Governance
++ 149
++ 11. 		Grassroots Democracy — Part 2: Local Government
+@fees1#11 title [pymupdf p19] next=number
+  11. 		Grassroots Democracy — Part 2: Local Government
+  163
+  		in Rural Areas
++ 12. 		Grassroots Democracy — Part 3: Local Government
++ 173
+@fees1#12 title [pymupdf p19] next=number
+  12. 		Grassroots Democracy — Part 3: Local Government
+  173
+  		in Urban Areas
++ Theme E — Economic Life Around Us
++ 13. 		The Value of Work
+@fees1#13 title [pymupdf p19] next=number
+  13. 		The Value of Work
++ 183
++ 14. 		Economic Activities Around Us
+@fees1#14 title [pymupdf p19] next=boilerplate
+  14. 		Economic Activities Around Us
++ 195
++ Glossary

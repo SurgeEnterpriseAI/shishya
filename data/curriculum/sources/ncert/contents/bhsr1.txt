@@ -1,0 +1,8 @@
+# NCERT contents evidence — bhsr1 — Sarangi (index class 2, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/bhsr1ps.pdf
+# fetched: 2026-09-25T23:14:14+05:30  sha256: 974c32d4dd1c3ccc23d99b7912ca1ad7dd8aabf73158fa634749cad85ad5bfd9  bytes: 6689678
+# contents pages of the PDF: none found of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 c06a183a964086fdc4155e4c27533b283df1aef31bd1c12fede6765e224b4f99);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

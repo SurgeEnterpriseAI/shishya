@@ -1,0 +1,73 @@
+# NCERT contents evidence — desa1 — Santoor (index class 4, English)
+# source: https://ncert.nic.in/textbook/pdf/desa1ps.pdf
+# fetched: 2026-09-25T23:14:20+05:30  sha256: dcc53d6bd7d2f0e2b1ef1722e8b8abb087ce9f178aa2bd29c4c4ff1d0e0aa654  bytes: 9151946
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 c19c855f8fd79da7e1dd1eb44ff58e5e64711a1cb9ef991a46a2aef4a276dc4d);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@desa1#1 title [pdftotext p15] next=number
+  1. Together We Can
++ 1
++ 2. The Tinkling Bells
+@desa1#1:section section [pdftotext p15] next=number
+  Unit 1: My Land
++ 1. Together We Can
++ 1
+@desa1#2 title [pdftotext p15] next=number
+  2. The Tinkling Bells
++ 9
++ 3. Be Smart, Be Safe
+@desa1#3 title [pdftotext p15] next=number
+  3. Be Smart, Be Safe
++ 25
++ Unit 2: My Beautiful World
+@desa1#4 title [pdftotext p15] next=number
+  4. One Thing at a Time
++ 35
++ 5. The Old Stag
+@desa1#4:section section [pdftotext p15] next=number
+  Unit 2: My Beautiful World
++ 4. One Thing at a Time
++ 35
+@desa1#5 title [pdftotext p15] next=number
+  5. The Old Stag
++ 43
++ 6. Braille
+@desa1#6 title [pdftotext p15] next=boilerplate
+  6. Braille
++ 55
++ Self Assessment 1
+@desa1#7 title [pdftotext p15] next=number
+  7. Fit Body, Fit Mind,
+  Fit Nation
++ 67
++ 8. The Lagori Champions
+@desa1#7:section section [pdftotext p15] next=number
+  Unit 3: Fun with Games
++ 7. Fit Body, Fit Mind,
++ Fit Nation
+@desa1#8 title [pdftotext p15] next=number
+  8. The Lagori Champions
++ 73
++ 9. Hekko
+@desa1#9 title [pdftotext p15] next=number
+  9. Hekko
++ 89
++ Unit 4: Up High
+@desa1#10 title [pdftotext p15] next=number
+  10. The Swing
++ 103
++ 11. A Journey to
+@desa1#10:section section [pdftotext p15] next=number
+  Unit 4: Up High
++ 10. The Swing
++ 103
+@desa1#11 title [pdftotext p15] next=number
+  11. A Journey to
+  the Magical Mountains
++ 111
++ 12. Maheshwar
+@desa1#12 title [pdftotext p15] next=boilerplate
+  12. Maheshwar
++ 125
++ Self Assessment 2

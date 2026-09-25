@@ -1,0 +1,107 @@
+# NCERT contents evidence — lekl1 — Kaliedoscope (index class 12, English)
+# source: https://ncert.nic.in/textbook/pdf/lekl1ps.pdf
+# fetched: 2026-09-25T23:15:32+05:30  sha256: 6a7cb5b8c68140aa4616b51581ab1a8ec11cb5559720b45b58c080ec0d95c1da  bytes: 1289867
+# contents pages of the PDF: 9,10 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 47bf93854642c4650929b352546f656846fdb5045c6d45a69c82989552d6eabf);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lekl1#1 title [pdftotext p9] next=caps-line
+  1. I Sell my Dreams
++ GABRIEL GARCIA MARQUEZ 2
++ 2. Eveline
+@lekl1#1:section section [pdftotext p9] next=complete (reviewed: printed 'SHORT STORIES – INTRODUCTION' etc.; '– Introduction' names the section's opening piece)
+  SHORT STORIES – INTRODUCTION
++ 1-89
++ 1. I Sell my Dreams
+@lekl1#2 title [pdftotext p9] next=caps-line
+  2. Eveline
++ JAMES JOYCE
++ 12
+@lekl1#3 title [pdftotext p9] next=caps-line
+  3. A Wedding in Brownsville
++ ISAAC BASHEVIS SINGER 21
++ 4. Tomorrow
+@lekl1#4 title [pdftotext p9] next=caps-line
+  4. Tomorrow
++ JOSEPH CONRAD
++ 39
+@lekl1#5 title [pdftotext p9] next=caps-line
+  5. One Centimetre
++ BI SHU-MIN
++ 71
+@lekl1#6 title [pdftotext p9] next=caps-line
+  POETRY – INTRODUCTION 1. A Lecture Upon the Shadow
++ JOHN DONNE
++ 2. Poems by Milton
+@lekl1#6:section section [pdftotext p9] next=complete (reviewed: printed 'SHORT STORIES – INTRODUCTION' etc.; '– Introduction' names the section's opening piece)
+  POETRY – INTRODUCTION 1. A Lecture Upon the Shadow
++ JOHN DONNE
++ 2. Poems by Milton
+@lekl1#7 title [pdftotext p9] next=caps-line
+  2. Poems by Milton
++ JOHN MILTON
++ 3. Poems by Blake
+@lekl1#8 title [pdftotext p9] next=caps-line
+  3. Poems by Blake
++ WILLIAM BLAKE
++ 4. Kubla Khan
+@lekl1#9 title [pdftotext p9] next=caps-line
+  4. Kubla Khan
++ S.T.COLERIDGE
++ 5. Trees
+@lekl1#10 title [pdftotext p9] next=caps-line
+  5. Trees
++ EMILY DICKINSON
++ 6. The Wild Swans at Coole
+@lekl1#11 title [pdftotext p9] next=caps-line
+  6. The Wild Swans at Coole
++ W.B.YEATS
++ 7. Time and Time Again
+@lekl1#12 title [pdftotext p9] next=caps-line
+  7. Time and Time Again
++ A.K.RAMANUJAN
++ 8. Blood
+@lekl1#13 title [pdftotext p9] next=caps-line
+  8. Blood
++ KAMALA DAS
++ 90-117 91 94 97
+@lekl1#14 title [pdftotext p10] next=caps-line
+  1. Freedom
++ G.B.SHAW
++ 2. The Mark on the Wall
+@lekl1#14:section section [pdftotext p10] next=complete (reviewed: printed 'SHORT STORIES – INTRODUCTION' etc.; '– Introduction' names the section's opening piece)
+  NON-FICTION – INTRODUCTION
++ 1. Freedom
++ G.B.SHAW
+@lekl1#15 title [pdftotext p10] next=caps-line
+  2. The Mark on the Wall
++ VIRGINIA WOOLF
++ 3. Film-making
+@lekl1#16 title [pdftotext p10] next=caps-line
+  3. Film-making
++ INGMAR BERGMAN
++ 4. Why the Novel Matters
+@lekl1#17 title [pdftotext p10] next=caps-line
+  4. Why the Novel Matters
++ D.H. LAWRENCE
++ 5. The Argumentative Indian AMARTYA SEN
+@lekl1#18 title [pdftotext p10] next=caps-line
+  5. The Argumentative Indian AMARTYA SEN
++ 6. On Science Fiction
++ ISAAC ASIMOV
+@lekl1#19 title [pdftotext p10] next=caps-line
+  6. On Science Fiction
++ ISAAC ASIMOV
++ 118-202 119 136 149 165 176 191
+@lekl1#20 title [pymupdf p10] next=caps-line
+  Chandalika
++ RABINDRANATH TAGORE
++ 204
+@lekl1#20:section section [pdftotext p10] next=complete (reviewed: printed 'SHORT STORIES – INTRODUCTION' etc.; '– Introduction' names the section's opening piece)
+  DRAMA - INTRODUCTION 1. Chandalika 2. Broken Images
++ 203-238
++ RABINDRANATH TAGORE
+@lekl1#21 title [pdftotext p10] next=caps-line
+  DRAMA - INTRODUCTION 1. Chandalika 2. Broken Images
++ 203-238
++ RABINDRANATH TAGORE

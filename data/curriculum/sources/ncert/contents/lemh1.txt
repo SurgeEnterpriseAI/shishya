@@ -1,0 +1,31 @@
+# NCERT contents evidence — lemh1 — Mathematics Part-I (index class 12, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/lemh1ps.pdf
+# fetched: 2026-09-25T23:15:26+05:30  sha256: 96441eb9592091d45369a43aa9f9de8d4a439cf95eaac28baf1a04372feaba65  bytes: 1975316
+# contents pages of the PDF: 11,12 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 ec5defc9a9b61472e5ecba144c52aa41ce8d85674dcbb7cd1d8e13bc9e2b4ae5);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lemh1#1 title [pdftotext p11] next=number
+  1. Relations and Functions
++ 1
++ 1.1 Introduction
+@lemh1#2 title [pdftotext p11] next=number
+  2. Inverse Trigonometric Functions
++ 18
++ 2.1 Introduction
+@lemh1#3 title [pdftotext p11] next=number
+  3. Matrices
++ 34
++ 3.1 Introduction
+@lemh1#4 title [pdftotext p11] next=number
+  4. Determinants
++ 76
++ 4.1 Introduction
+@lemh1#5 title [pdftotext p12] next=number
+  5. Continuity and Differentiability
++ 104
++ 5.1 Introduction
+@lemh1#6 title [pdftotext p12] next=number
+  6. Application of Derivatives
++ 147
++ 6.1 Introduction

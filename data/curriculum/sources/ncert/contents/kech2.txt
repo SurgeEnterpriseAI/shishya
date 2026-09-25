@@ -1,0 +1,19 @@
+# NCERT contents evidence — kech2 — Chemistry Part II (index class 11, Chemistry)
+# source: https://ncert.nic.in/textbook/pdf/kech2ps.pdf
+# fetched: 2026-09-25T23:15:12+05:30  sha256: 01938cca738e1717912a9aab686649cdfd984b0a96c48bb9f1ab6c665fcfb846  bytes: 1612754
+# contents pages of the PDF: 9 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 3c8e2111b173ff30250c9c5c5f0a49cfe32f3c302aac424563e08b3e20ae100f);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kech2#1 title [pdftotext p9] next=number
+  Redox Reactions
++ 235
++ 7.1 Classical Idea of Redox Reactions-Oxidation and Reduction Reactions 235
+@kech2#2 title [pymupdf p9] next=number
+  Organic Chemistry – Some Basic Principles and Techniques
++ 256
++ 8.1
+@kech2#3 title [pymupdf p9] next=number
+  Hydrocarbons
++ 295
++ 9.1

@@ -1,0 +1,31 @@
+# NCERT contents evidence — kech1 — Chemistry Part-I (index class 11, Chemistry)
+# source: https://ncert.nic.in/textbook/pdf/kech1ps.pdf
+# fetched: 2026-09-25T23:15:11+05:30  sha256: b79907421fdc31dc49646eb5b33a303c1d5228feb2bf9fd91f138bfde40e250b  bytes: 2228753
+# contents pages of the PDF: 9,10,11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 31e6fa61c6f1cf7fd1d23c051591ab32d8fa29842ac0abf278c9fceb69c1b6b0);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kech1#1 title [pdftotext p9] next=number
+  Unit 1 Some Basic Concepts of Chemistry
++ 1
++ 1.1 Importance of Chemistry
+@kech1#2 title [pdftotext p9] next=number
+  Unit 2 Structure of Atom
++ 29
++ 2.1 Discovery of Sub-atomic Particles
+@kech1#3 title [pdftotext p9] next=number
+  Unit 3 Classification of Elements and Periodicity in Properties
++ 74
++ 3.1 Why do we Need to Classify Elements ?
+@kech1#4 title [pymupdf p10] next=number
+  Chemical Bonding and Molecular Structure
++ 100
++ 4.1	 Kössel-Lewis Approach to Chemical Bonding
+@kech1#5 title [pymupdf p10] next=number
+  Thermodynamics
++ 136
++ 5.1	 Thermodynamic Terms
+@kech1#6 title [pymupdf p10] next=number
+  Equilibrium
++ 168
++ 6.1	 Equilibrium in Physical Processes

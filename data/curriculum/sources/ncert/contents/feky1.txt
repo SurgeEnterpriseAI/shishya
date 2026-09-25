@@ -1,0 +1,27 @@
+# NCERT contents evidence — feky1 — Khel Yatra (index class 6, Physical Education and Well Being)
+# source: https://ncert.nic.in/textbook/pdf/feky1ps.pdf
+# fetched: 2026-09-25T23:14:29+05:30  sha256: 0dde749cc887f4de800fb9a6d8706ca3e916929addc35d5e5cc6cee7af40c021  bytes: 4171050
+# contents pages of the PDF: 19,20,21 of 22
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 fabae578e8ecc5c30254664f35cf6f5da34fcd8d3183d8c19b0467bc8c017cab);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@feky1#1 title [pdftotext p19] next=sub-entry
+  UNIT 1: Importance of Physical Education and Well-being
++ • Ice Water
++ 2
+@feky1#2 title [pdftotext p19] next=boilerplate
+  UNIT 2: Motor Fitness
++ Introduction to Motor Fitness
++ 15
+@feky1#3 title [pdftotext p20] next=sub-entry
+  UNIT 3: Fundamental Skills of Kho-Kho
++ • Sitting
++ 42
+@feky1#4 title [pdftotext p20] next=sub-entry
+  UNIT 4: Fundamental Skills of Handball
++ • Passing
++ 77
+@feky1#5 title [pdftotext p21] next=sub-entry
+  UNIT 5: Yoga
++ Yoga Session Structure
++ 111

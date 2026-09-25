@@ -1,0 +1,63 @@
+# NCERT contents evidence — demm1 — Math-Mela (index class 4, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/demm1ps.pdf
+# fetched: 2026-09-25T23:14:18+05:30  sha256: ea174ec4e11d982fe2e0ff17283afb793cbb2d86b80163a2a0ce12f314ebd79a  bytes: 2913002
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 1e549cefc83dfce21f9342e914c9368ff49814e9fefe140a09c58220efc78898);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@demm1#1 title [pdftotext p15] next=number
+  Chapter 1 : Shapes Around Us
++ 1
++ Chapter 2 : Hide and Seek
+@demm1#2 title [pdftotext p15] next=number
+  Chapter 2 : Hide and Seek
++ 24
++ Chapter 3 : Pattern Around Us
+@demm1#3 title [pdftotext p15] next=number
+  Chapter 3 : Pattern Around Us
++ 34
++ Chapter 4 : Thousands Around Us
+@demm1#4 title [pdftotext p15] next=number
+  Chapter 4 : Thousands Around Us
++ 39
++ Chapter 5 : Sharing and Measuring
+@demm1#5 title [pdftotext p15] next=number
+  Chapter 5 : Sharing and Measuring
++ 62
++ Chapter 6 : Measuring Length
+@demm1#6 title [pdftotext p15] next=number
+  Chapter 6 : Measuring Length
++ 80
++ Chapter 7 : The Cleanest Village
+@demm1#7 title [pdftotext p15] next=number
+  Chapter 7 : The Cleanest Village
++ 95
++ Chapter 8 : Weigh it, Pour it
+@demm1#8 title [pdftotext p15] next=number
+  Chapter 8 : Weigh it, Pour it
++ 115
++ Chapter 9 : Equal Groups
+@demm1#9 title [pdftotext p15] next=number
+  Chapter 9 : Equal Groups
++ 128
++ Chapter 10 : Elephants,Tigers, and Leopards
+@demm1#10 title [pdftotext p15] next=number
+  Chapter 10 : Elephants,Tigers, and Leopards
++ 149
++ Chapter 11 : Fun with Symmetry
+@demm1#11 title [pdftotext p15] next=number
+  Chapter 11 : Fun with Symmetry
++ 164
++ Chapter 12 : Ticking Clocks and Turning Calendar
+@demm1#12 title [pdftotext p15] next=number
+  Chapter 12 : Ticking Clocks and Turning Calendar
++ 175
++ Chapter 13 : The Transport Museum
+@demm1#13 title [pdftotext p15] next=number
+  Chapter 13 : The Transport Museum
++ 184
++ Chapter 14 : Data Handling
+@demm1#14 title [pdftotext p15] next=boilerplate
+  Chapter 14 : Data Handling
++ 203
++ Learning Material Sheets

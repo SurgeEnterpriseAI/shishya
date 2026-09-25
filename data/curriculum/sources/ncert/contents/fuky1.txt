@@ -1,0 +1,8 @@
+# NCERT contents evidence — fuky1 — Khayal (index class 6, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/fuky1ps.pdf
+# fetched: 2026-09-25T23:14:32+05:30  sha256: 98a0be3e275bf6a0598463e65645276d85ab7533a243471df7b228253778eb8e  bytes: 13009822
+# contents pages of the PDF: none found of 15
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 ecb5cf0727f36247fc6361273d979954ffdfc02a2505e73addaa9bdf90d1da66);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

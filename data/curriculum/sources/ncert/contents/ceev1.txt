@@ -1,0 +1,55 @@
+# NCERT contents evidence — ceev1 — Our Wondrous World (index class 3, The World Around Us)
+# source: https://ncert.nic.in/textbook/pdf/ceev1ps.pdf
+# fetched: 2026-09-25T23:14:17+05:30  sha256: b2bfeab4f62f74981984bf75f2c086366cf13e91191f0affc13e2b0115402093  bytes: 8216668
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 8cba1d76cfdb1211a57c6a27d584370161de3ee68ae1223c8e97174c297e488e);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@ceev1#1 title [pdftotext p15] next=number
+  Chapter 1: Family and Friends		 		  3
++ Chapter 2: Going to the Mela
++ 19
+@ceev1#2 title [pdftotext p15] next=number
+  Chapter 2: Going to the Mela
++ 19
++ Chapter 3: Celebrating Festivals
+@ceev1#3 title [pdftotext p15] next=number
+  Chapter 3: Celebrating Festivals
++ 34
++ Unit 2: Life Around Us
+@ceev1#4 title [pdftotext p15] next=number
+  Chapter 4: Getting to Know Plants
++ 47
++ Chapter 5: Plants and Animals Live Together
+@ceev1#5 title [pdftotext p15] next=number
+  Chapter 5: Plants and Animals Live Together
++ 62
++ Chapter 6: Living in Harmony
+@ceev1#6 title [pdftotext p15] next=number
+  Chapter 6: Living in Harmony
++ 72
++ Unit 3: Gifts of Nature
+@ceev1#7 title [pdftotext p15] next=number
+  Chapter 7: Water— A Precious Gift
++ 86
++ Chapter 8: Food We Eat
+@ceev1#8 title [pdftotext p15] next=number
+  Chapter 8: Food We Eat
++ 100
++ Chapter 9: Staying Healthy and Happy
+@ceev1#9 title [pdftotext p15] next=number
+  Chapter 9: Staying Healthy and Happy
++ 109
++ Unit 4: Things Around Us
+@ceev1#10 title [pdftotext p15] next=number
+  Chapter 10: This World of Things
++ 123
++ Chapter 11: Making Things					135
+@ceev1#11 title [pdftotext p15] next=number
+  Chapter 11: Making Things					135
++ Chapter 12: Taking Charge of Waste
++ 149
+@ceev1#12 title [pdftotext p15] next=page
+  Chapter 12: Taking Charge of Waste
++ 149
++ Reprint 2026-27

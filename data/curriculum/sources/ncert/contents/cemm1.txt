@@ -1,0 +1,63 @@
+# NCERT contents evidence — cemm1 — Maths Mela (index class 3, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/cemm1ps.pdf
+# fetched: 2026-09-25T23:14:15+05:30  sha256: 3ed7e999560e77434fccccf3ad15ec1efc1b0675ee3ffde47f1e9755bcf2c6e7  bytes: 7201002
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 6670b04ad8e830ae1391340a63f562395c88d326efc240d74f2d37534c6a0939);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@cemm1#1 title [pdftotext p15] next=number
+  Chapter 1: What’s in a Name?
++ 1
++ Chapter 2: Toy Joy
+@cemm1#2 title [pdftotext p15] next=number
+  Chapter 2: Toy Joy
++ 9
++ Chapter 3: Double Century
+@cemm1#3 title [pdftotext p15] next=number
+  Chapter 3: Double Century
++ 16
++ Chapter 4: Vacation with My Nani Maa 29
+@cemm1#4 title [pdftotext p15] next=number
+  Chapter 4: Vacation with My Nani Maa 29
++ Chapter 5: Fun with Shapes
++ 44
+@cemm1#5 title [pdftotext p15] next=number
+  Chapter 5: Fun with Shapes
++ 44
++ Chapter 6: House of Hundreds – I
+@cemm1#6 title [pdftotext p15] next=number
+  Chapter 6: House of Hundreds – I
++ 64
++ Chapter 7: Raksha Bandhan
+@cemm1#7 title [pdftotext p15] next=number
+  Chapter 7: Raksha Bandhan
++ 82
++ Chapter 8: Fair Share
+@cemm1#8 title [pdftotext p15] next=number
+  Chapter 8: Fair Share
++ 107
++ Chapter 9: House of Hundreds – II
+@cemm1#9 title [pdftotext p15] next=number
+  Chapter 9: House of Hundreds – II
++ 117
++ Chapter 10: Fun at Class Party!
+@cemm1#10 title [pdftotext p15] next=number
+  Chapter 10: Fun at Class Party!
++ 128
++ Chapter 11: Filling and Lifting
+@cemm1#11 title [pdftotext p15] next=number
+  Chapter 11: Filling and Lifting
++ 139
++ Chapter 12: Give and Take
+@cemm1#12 title [pdftotext p15] next=number
+  Chapter 12: Give and Take
++ 150
++ Chapter 13: Time Goes On
+@cemm1#13 title [pdftotext p15] next=complete (reviewed: Chapter 13's whole entry; the next line is Chapter 14)
+  Chapter 13: Time Goes On
++ 165
++ Chapter 14: The Surajkund Fair
+@cemm1#14 title [pdftotext p15] next=boilerplate
+  Chapter 14: The Surajkund Fair
++ 177
++ Learning Material Sheets

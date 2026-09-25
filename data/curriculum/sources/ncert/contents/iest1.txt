@@ -1,0 +1,60 @@
+# NCERT contents evidence — iest1 — Understanding Society India and Beyond PART-I (index class 9, Social Science)
+# source: https://ncert.nic.in/textbook/pdf/iest1ps.pdf
+# fetched: 2026-09-25T23:14:58+05:30  sha256: 513a4c83675e10755e784e09728ae171b38826a6aee6cdb48f460cbec95ae25e  bytes: 11838106
+# contents pages of the PDF: 23 of 24
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 97559a67bdffd95d07adef703b4a525799ea1d2a791aff96ab3c16e0b885bcbf);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@iest1#1 title [pdftotext p23] next=known
+  Chapter 1 Understanding Social Science
++ 1
++ Geography
+@iest1#2 title [pdftotext p23] next=number
+  Chapter 2 Shaping of the Earth’s Surface
++ 13
++ Chapter 3 Atmosphere and Climate
+@iest1#2:section section [pdftotext p23] next=number
+  Geography
++ Chapter 2 Shaping of the Earth’s Surface
++ 13
+@iest1#3 title [pdftotext p23] next=known
+  Chapter 3 Atmosphere and Climate
++ 39
++ History
+@iest1#4 title [pdftotext p23] next=number
+  Chapter 4 Early Humans and Beginning of Civilisation
++ 61
++ Chapter 5 State and Society up to 1000 CE
+@iest1#4:section section [pdftotext p23] next=number
+  History
++ Chapter 4 Early Humans and Beginning of Civilisation
++ 61
+@iest1#5 title [pdftotext p23] next=known
+  Chapter 5 State and Society up to 1000 CE
++ 95
++ Political Science
+@iest1#6 title [pdftotext p23] next=number
+  Chapter 6 Democracy
++ 137
++ Chapter 7 Elections
+@iest1#6:section section [pdftotext p23] next=number
+  Political Science
++ Chapter 6 Democracy
++ 137
+@iest1#7 title [pdftotext p23] next=known
+  Chapter 7 Elections
++ 161
++ Economics
+@iest1#8 title [pdftotext p23] next=number
+  Chapter 8 Building Blocks in Economics:
+  			 The Problem of Choice
++ 183
++ Chapter 9 The Price Puzzle: What Drives the Market
+@iest1#8:section section [pdftotext p23] next=number
+  Economics
++ Chapter 8 Building Blocks in Economics:
++ 			 The Problem of Choice
+@iest1#9 title [pdftotext p23] next=boilerplate
+  Chapter 9 The Price Puzzle: What Drives the Market
++ 195
++ Image Credits

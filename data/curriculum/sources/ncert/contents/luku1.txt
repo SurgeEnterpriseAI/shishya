@@ -1,0 +1,8 @@
+# NCERT contents evidence — luku1 — Khayaban-e-Urdu (index class 12, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/luku1ps.pdf
+# fetched: 2026-09-25T23:15:41+05:30  sha256: e1bf8943d6a2a0acce6f088a30f360ba141e7161ac15e7db167448f26459f656  bytes: 1782502
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 273732f820e029a94ce4cffee89a5d118e1c7eee472a40b3b4f5870fd265675f);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

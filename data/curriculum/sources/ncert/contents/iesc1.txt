@@ -1,0 +1,59 @@
+# NCERT contents evidence — iesc1 — Exploration (index class 9, Science)
+# source: https://ncert.nic.in/textbook/pdf/iesc1ps.pdf
+# fetched: 2026-09-25T23:14:53+05:30  sha256: 6dfb484cc05eeea3886bd4db603b81e19c6b5e146d4a77a9a60a55cf12b2cdee  bytes: 9506968
+# contents pages of the PDF: 19 of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 0f1903e99846f8acc4b5168c3f43135b222d4ec0823a7108da850c80500e0d20);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@iesc1#1 title [pdftotext p19] next=number
+  Exploration: Entering the World of Secondary Science
++ 1
++ Chapter 2
+@iesc1#2 title [pdftotext p19] next=number
+  Cell: The Building Block of Life
++ 8
++ Chapter 3
+@iesc1#3 title [pdftotext p19] next=number
+  Tissues in Action
++ 28
++ Chapter 4
+@iesc1#4 title [pdftotext p19] next=number
+  Describing Motion Around Us
++ 48
++ Chapter 5
+@iesc1#5 title [pdftotext p19] next=number
+  Exploring Mixtures and their Separation
++ 72
++ Chapter 6
+@iesc1#6 title [pdftotext p19] next=number
+  How Forces Affect Motion
++ 94
++ Chapter 7
+@iesc1#7 title [pdftotext p19] next=number
+  Work, Energy, and Simple Machines
++ 116
++ Chapter 8
+@iesc1#8 title [pdftotext p19] next=number
+  Journey Inside the Atom
++ 140
++ Chapter 9
+@iesc1#9 title [pdftotext p19] next=number
+  Atomic Foundations of Matter
++ 162
++ Chapter 10
+@iesc1#10 title [pdftotext p19] next=number
+  Sound Waves: Characteristics and Applications
++ 184
++ Chapter 11
+@iesc1#11 title [pdftotext p19] next=number
+  Reproduction: How Life Continues
++ 208
++ Chapter 12
+@iesc1#12 title [pdftotext p19] next=number
+  Patterns in Life: Diversity and Classification
++ 228
++ Chapter 13
+@iesc1#13 title [pdftotext p19] next=boilerplate
+  Earth as a System: Energy, Matter, and Life
++ 252
++ Answer Key										 271

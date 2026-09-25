@@ -1,0 +1,93 @@
+# NCERT contents evidence — fekr1 — Kriti-I (index class 6, Arts)
+# source: https://ncert.nic.in/textbook/pdf/fekr1ps.pdf
+# fetched: 2026-09-25T23:14:31+05:30  sha256: 7423e67a3a0f112808c3c196619ac7d4efd738419e8d695e85e31c1afb49dc34  bytes: 4475925
+# contents pages of the PDF: 19,20 of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 811de6c98d009b9c3ca87bfd359853135c9d542565c27ceec9f5bf227d2f2a50);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@fekr1#1 title [pymupdf p19] next=number
+  1. Objects and Still Life..... 3
++ 2. Changing the Typical Picture..... 10
++ 3. Portraying People..... 20
+@fekr1#2 title [pymupdf p19] next=number
+  2. Changing the Typical Picture..... 10
++ 3. Portraying People..... 20
++ 4. Paper Crafts..... 25
+@fekr1#3 title [pymupdf p19] next=number
+  3. Portraying People..... 20
++ 4. Paper Crafts..... 25
++ 5. Seals to Prints..... 29
+@fekr1#4 title [pymupdf p19] next=number
+  4. Paper Crafts..... 25
++ 5. Seals to Prints..... 29
++ Music
+@fekr1#5 title [pdftotext p19] next=known
+~ ..... 25 5. Seals to Prints.....
++ Music
++ 6. Music and your Emotions..... 36 7. Musical Instruments..... 47 8. Taal or Talam and Raga or Ragam in Indian Music..... 53 9. Melodies of Diversity..... 61 10
+@fekr1#6 title [pymupdf p19] next=number
+  6. Music and your Emotions..... 36
++ 7. Musical Instruments..... 47
++ 8. Taal or Talam and Raga or Ragam in Indian Music..... 53
+@fekr1#7 title [pymupdf p19] next=number
+  7. Musical Instruments..... 47
++ 8. Taal or Talam and Raga or Ragam in Indian Music..... 53
++ 9. Melodies of Diversity..... 61
+@fekr1#8 title [pymupdf p19] next=number
+  8. Taal or Talam and Raga or Ragam in Indian Music..... 53
++ 9. Melodies of Diversity..... 61
++ 10. Songwriting..... 70
+@fekr1#9 title [pymupdf p19] next=number
+  9. Melodies of Diversity..... 61
++ 10. Songwriting..... 70
++ 11. Music and Society..... 74
+@fekr1#10 title [pymupdf p19] next=number
+  10. Songwriting..... 70
++ 11. Music and Society..... 74
++ Contents
+@fekr1#11 title [pdftotext p19] next=page
+~ ..... 70 11. Music and Society.....
++ Reprint 2026-27
+@fekr1#12 title [pymupdf p20] next=number
+  12. My Body in Motion..... 79
++ 13. Breaking Barriers with Dance..... 91
++ 14. Harmony in Motion..... 97
+@fekr1#13 title [pymupdf p20] next=number
+  13. Breaking Barriers with Dance..... 91
++ 14. Harmony in Motion..... 97
++ 15. Dances of Our Land..... 104
+@fekr1#14 title [pymupdf p20] next=number
+  14. Harmony in Motion..... 97
++ 15. Dances of Our Land..... 104
++ Theatre
+@fekr1#15 title [pdftotext p20] next=boilerplate
+~ ..... 97 15. Dances of Our Land..... 1
++ Theatre
++ 16. Emotions Unveiled!..... 114 17. Let’s Design..... 127 18. In the Company of Theatre..... 141 19. Stories of Shadows and Strings — Puppetry..... 145 20. The 
+@fekr1#16 title [pymupdf p20] next=number
+  16. Emotions Unveiled!..... 114
++ 17. Let’s Design..... 127
++ 18. In the Company of Theatre..... 141
+@fekr1#17 title [pymupdf p20] next=number
+  17. Let’s Design..... 127
++ 18. In the Company of Theatre..... 141
++ 19. Stories of Shadows and Strings — Puppetry..... 145
+@fekr1#18 title [pymupdf p20] next=number
+  18. In the Company of Theatre..... 141
++ 19. Stories of Shadows and Strings — Puppetry..... 145
++ 20. The Grand Finale..... 154
+@fekr1#19 title [pymupdf p20] next=number
+  19. Stories of Shadows and Strings — Puppetry..... 145
++ 20. The Grand Finale..... 154
++ 21. Integration of All Art Forms..... 157
+@fekr1#20 title [pymupdf p20] next=number
+  20. The Grand Finale..... 154
++ 21. Integration of All Art Forms..... 157
++ 22. Assessment..... 161
+@fekr1#21 title [pymupdf p20] next=number
+  21. Integration of All Art Forms..... 157
++ 22. Assessment..... 161
++ Reprint 2026-27
+@fekr1#22 title [pdftotext p20] next=page
+~ ..... 157 22. Assessment.....
++ Reprint 2026-27

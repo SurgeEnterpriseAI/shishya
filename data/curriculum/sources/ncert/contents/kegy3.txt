@@ -1,0 +1,31 @@
+# NCERT contents evidence — kegy3 — Pratical Work in Geography (index class 11, Geography)
+# source: https://ncert.nic.in/textbook/pdf/kegy3ps.pdf
+# fetched: 2026-09-25T23:15:13+05:30  sha256: dc59cbec6ee6a1e6e1080a9ec406e4b890d2436342f8a219f6d06b578d9f60c9  bytes: 1421280
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 49802749128c229c6071a577f5d81c74dfbdc71940482cd9e39cac046b8f1d59);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kegy3#1 title [pdftotext p11] next=number
+  Introduction to Maps
++ 1
++ CHAPTER 2
+@kegy3#2 title [pdftotext p11] next=number
+  Map Scale
++ 17
++ CHAPTER 3
+@kegy3#3 title [pdftotext p11] next=number
+  Latitude, Longitude and Time
++ 26
++ CHAPTER 4
+@kegy3#4 title [pdftotext p11] next=number
+  Map Projections
++ 35
++ CHAPTER 5
+@kegy3#5 title [pdftotext p11] next=number
+  Topographical Maps
++ CHAPTER 6
++ Introduction to Remote Sensing
+@kegy3#6 title [pdftotext p11] next=page
+  Introduction to Remote Sensing
++ 69
++ 2026-27

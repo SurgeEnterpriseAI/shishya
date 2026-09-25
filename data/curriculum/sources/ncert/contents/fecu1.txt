@@ -1,0 +1,55 @@
+# NCERT contents evidence — fecu1 — Curiosity (index class 6, Science)
+# source: https://ncert.nic.in/textbook/pdf/fecu1ps.pdf
+# fetched: 2026-09-25T23:14:27+05:30  sha256: 0f143518474320c83059c0ca2036cf292e7a3f8a460c1c1c22719de193a0a058  bytes: 3089282
+# contents pages of the PDF: 17 of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 69f878770d832d196145e6e9a983d91e3b2ae54cd1134beafacfa037cf707f6f);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@fecu1#1 title [pdftotext p17] next=number
+  The Wonderful World of Science
++ 1
++ Chapter 2
+@fecu1#2 title [pdftotext p17] next=number
+  Diversity in the Living World
++ 9
++ Chapter 3
+@fecu1#3 title [pdftotext p17] next=number
+  Mindful Eating: A Path to a Healthy Body
++ 35
++ Chapter 4
+@fecu1#4 title [pdftotext p17] next=number
+  Exploring Magnets
++ 61
++ Chapter 5
+@fecu1#5 title [pdftotext p17] next=number
+  Measurement of Length and Motion
++ 79
++ Chapter 6
+@fecu1#6 title [pdftotext p17] next=number
+  Materials Around Us
++ 101
++ Chapter 7
+@fecu1#7 title [pdftotext p17] next=number
+  Temperature and its Measurement
++ 123
++ Chapter 8
+@fecu1#8 title [pdftotext p17] next=number
+  A Journey through States of Water
++ 143
++ Chapter 9
+@fecu1#9 title [pdftotext p17] next=number
+  Methods of Separation in Everyday Life
++ 163
++ Chapter 10
+@fecu1#10 title [pdftotext p17] next=number
+  Living Creatures: Exploring their Characteristics
++ 183
++ Chapter 11
+@fecu1#11 title [pdftotext p17] next=number
+  Nature’s Treasures
++ 207
++ Chapter 12
+@fecu1#12 title [pdftotext p17] next=page
+  Beyond Earth
++ 231
++ Reprint 2026-27

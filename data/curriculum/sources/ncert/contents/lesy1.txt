@@ -1,0 +1,35 @@
+# NCERT contents evidence — lesy1 — Indian Society (index class 12, Sociology)
+# source: https://ncert.nic.in/textbook/pdf/lesy1ps.pdf
+# fetched: 2026-09-25T23:15:35+05:30  sha256: e00527fff99cf486f7e1644675928fc6512d5d18e9125ae0738d5496161603d9  bytes: 3015565
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 e649ddd2e04685b4ad0aa265e6d0b542346c6db436a1092dc0643bbe552ebbb8);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lesy1#1 title [pdftotext p13] next=number
+  Foreword Rationalisation of Content in the Textbooks How to use this textbook Chapter 1 Introducing Indian Society
++ Chapter 2 The Demographic Structure of the Indian Society
++ Chapter 3 Social Institutions: Continuity and Change
+@lesy1#2 title [pdftotext p13] next=number
+  Chapter 2 The Demographic Structure of the Indian Society
++ Chapter 3 Social Institutions: Continuity and Change
++ Chapter 4 The Market as a Social Institution
+@lesy1#3 title [pdftotext p13] next=number
+  Chapter 3 Social Institutions: Continuity and Change
++ Chapter 4 The Market as a Social Institution
++ Chapter 5 Patterns of Social Inequality and Exclusion
+@lesy1#4 title [pdftotext p13] next=number
+  Chapter 4 The Market as a Social Institution
++ Chapter 5 Patterns of Social Inequality and Exclusion
++ Chapter 6 The Challenges of Cultural Diversity
+@lesy1#5 title [pdftotext p13] next=number
+  Chapter 5 Patterns of Social Inequality and Exclusion
++ Chapter 6 The Challenges of Cultural Diversity
++ Chapter 7 Suggestions for Project Work
+@lesy1#6 title [pdftotext p13] next=number
+  Chapter 6 The Challenges of Cultural Diversity
++ Chapter 7 Suggestions for Project Work
++ Glossary
+@lesy1#7 title [pdftotext p13] next=boilerplate
+  Chapter 7 Suggestions for Project Work
++ Glossary
++ iii v vii 1-4

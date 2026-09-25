@@ -1,0 +1,58 @@
+# NCERT contents evidence — jehp1 — Health and Physical Education (index class 10, Health and Physical Education)
+# source: https://ncert.nic.in/textbook/pdf/jehp1ps.pdf
+# fetched: 2026-09-25T23:15:09+05:30  sha256: f8049325d8254a3544842e9b821600a4ec2a92e98dbcb85c6c699401d821e899  bytes: 1025946
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 4349aa41727aaea683796079927b53ed42e9b310559c23dae446dbfaf03b9659);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@jehp1#1 title [pdftotext p11] next=number
+  Chapter 1 Physical Education: 		 Relation with other Subjects.....1 - 10
++ Chapter 2 Effects of Physical Activities 		 on Human Body.....11 - 22
++ Chapter 3 Growth and Development 		 during Adolescence.....23 - 34
+@jehp1#2 title [pdftotext p11] next=number
+  Chapter 2 Effects of Physical Activities 		 on Human Body.....11 - 22
++ Chapter 3 Growth and Development 		 during Adolescence.....23 - 34
++ Chapter 4 Individual Games and Sports I.....35 - 51
+@jehp1#3 title [pdftotext p11] next=number
+  Chapter 3 Growth and Development 		 during Adolescence.....23 - 34
++ Chapter 4 Individual Games and Sports I.....35 - 51
++ Chapter 5 Individual Games and Sports II.....52 - 76
+@jehp1#4 title [pdftotext p11] next=number
+  Chapter 4 Individual Games and Sports I.....35 - 51
++ Chapter 5 Individual Games and Sports II.....52 - 76
++ Chapter 6 Team Games and Sports I..... 77 - 110
+@jehp1#5 title [pdftotext p11] next=number
+  Chapter 5 Individual Games and Sports II.....52 - 76
++ Chapter 6 Team Games and Sports I..... 77 - 110
++ Chapter 7 Team Games and Sports II..... 111 - 132
+@jehp1#6 title [pdftotext p11] next=number
+  Chapter 6 Team Games and Sports I..... 77 - 110
++ Chapter 7 Team Games and Sports II..... 111 - 132
++ Chapter 8 Yoga for Healthy Living..... 133 - 164
+@jehp1#7 title [pdftotext p11] next=number
+  Chapter 7 Team Games and Sports II..... 111 - 132
++ Chapter 8 Yoga for Healthy Living..... 133 - 164
++ Chapter 9 Dietary Considerations 		 and Food Quality..... 165 - 180
+@jehp1#8 title [pdftotext p11] next=number
+  Chapter 8 Yoga for Healthy Living..... 133 - 164
++ Chapter 9 Dietary Considerations 		 and Food Quality..... 165 - 180
++ Chapter 10 Safety Measures for Healthy Living..... 181 - 192
+@jehp1#9 title [pdftotext p11] next=number
+  Chapter 9 Dietary Considerations 		 and Food Quality..... 165 - 180
++ Chapter 10 Safety Measures for Healthy Living..... 181 - 192
++ Chapter 11 Healthy Community Living..... 193 - 204
+@jehp1#10 title [pdftotext p11] next=number
+  Chapter 10 Safety Measures for Healthy Living..... 181 - 192
++ Chapter 11 Healthy Community Living..... 193 - 204
++ Chapter 12 Social Health..... 205 - 214
+@jehp1#11 title [pdftotext p11] next=number
+  Chapter 11 Healthy Community Living..... 193 - 204
++ Chapter 12 Social Health..... 205 - 214
++ Chapter 13 Agencies and Awards Promoting 		 Health, Sports and Yoga..... 215 - 223
+@jehp1#12 title [pdftotext p11] next=number
+  Chapter 12 Social Health..... 205 - 214
++ Chapter 13 Agencies and Awards Promoting 		 Health, Sports and Yoga..... 215 - 223
++ Reprint 2026-27
+@jehp1#13 title [pdftotext p11] next=page
+  Chapter 13 Agencies and Awards Promoting 		 Health, Sports and Yoga..... 215 - 223
++ Reprint 2026-27

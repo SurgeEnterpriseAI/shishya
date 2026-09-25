@@ -1,0 +1,8 @@
+# NCERT contents evidence — lucw1 — Takhleequi Jauhar (index class 12, Creative Writing & Translation)
+# source: https://ncert.nic.in/textbook/pdf/lucw1ps.pdf
+# fetched: 2026-09-25T23:15:57+05:30  sha256: fabc614b0362befa055c95d45c1bfd2297805a1481c44742260cb582219a31da  bytes: 56593265
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 376d7a8ae635c4fa1e27329f1ea5876f227af713235eef7ba7ac59fbc2b098ef);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

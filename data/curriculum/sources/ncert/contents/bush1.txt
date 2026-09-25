@@ -1,0 +1,8 @@
+# NCERT contents evidence — bush1 — Shahnai (index class 2, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/bush1ps.pdf
+# fetched: 2026-09-25T23:14:15+05:30  sha256: a0f747edfa750c5ea45f83ea07586060a85e63ddcc0b526ec3ebdd0ca7e00633  bytes: 4138975
+# contents pages of the PDF: none found of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 3634ca9f807ed953c357d5bd2ead9d5724721aa85a641a6011d84d4484ce948a);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

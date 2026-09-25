@@ -1,0 +1,8 @@
+# NCERT contents evidence — khtp1 — Tabla evam Pakhawaj (index class 11, Sangeet)
+# source: https://ncert.nic.in/textbook/pdf/khtp1ps.pdf
+# fetched: 2026-09-25T23:15:25+05:30  sha256: b309c50ecec582c670f43a7b6f3b687c2dac23d4b24a73f3050999bb94e1b00d  bytes: 4168719
+# contents pages of the PDF: 21 of 22
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 6f20cdd53929692a4453d81ec9548bfb2cdb4538ed593b1d893de57227d87121);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

@@ -1,29 +1,78 @@
-// NCERT / ICSE / state-board subject lists per (board, class).
+// NCERT / CISCE subject lists per (board, class).
 //
 // Hardcoded TS for the same reasons as colleges-data / schooling-data:
 // reference data that only changes when a board revises its curriculum.
 // Updates ship via PR (visible diff) instead of via DB seed.
 //
-// Per the Phase 0 audit decision: subject TILES surface for Class 10
-// and Class 12 across CBSE + ICSE first (Day 1 of the schooling
-// build). Other class/board combos render an honest "subjects coming"
-// stub until populated.
+// 25 Sep 2026 (school build, Step 0): rebuilt against the official sources,
+// all fetched that day —
+//   * NCERT's textbook index, https://ncert.nic.in/textbook.php. Every book
+//     title and "code=first-last" query below is copied from it (snapshot:
+//     tests/fixtures/ncert-textbook-index-2026-09-25.json).
+//   * Each book's own contents page (its prelims PDF,
+//     https://ncert.nic.in/textbook/pdf/<code>ps.pdf) — the only source for
+//     chapter titles (snapshot: tests/fixtures/ncert-book-contents-2026-09-25.json).
+//   * CBSE Curriculum 2026-27, https://cbseacademic.nic.in/curriculum_2027.html
+//     — per-subject syllabus PDFs for Classes 9-12, and which NCERT books a
+//     CBSE course uses (Hindi A / B, English) (snapshot:
+//     tests/fixtures/school-official-sources-2026-09-25.json).
+// Why: the May 2026 version described the NCERT books Classes 6-9 used
+// before NCERT replaced them (6-8 are now Ganita Prakash / Curiosity /
+// Poorvi / Malhar; 9 is Ganita Manjari / Exploration / Kaveri / Ganga),
+// listed 22 chapters for Class 11 Biology (the book has 19), and linked
+// book ranges that no longer match the books. The per-chapter blurbs were
+// dropped: they were written from the pre-2023 books (Euclid's division
+// lemma, cross-multiplication, ...) and nobody had checked them against
+// today's books.
 //
-// Each subject entry includes the NCERT/ICSE official chapter URL
-// where applicable, so even before our chapter pages exist, students
-// see the authoritative source.
+// Rules for this file:
+//   * Book titles, codes and chapter titles are facts copied from NCERT's
+//     own pages. Never textbook text: Shishya's own notes and questions are
+//     written separately and live elsewhere.
+//   * A chapter is listed only if it was read off that book's contents page.
+//   * tests/unit/schooling-ncert-books.test.ts pins every book, chapter and
+//     syllabus link here to the snapshots. When NCERT changes a book,
+//     re-fetch, refresh the snapshot and this file in the same commit.
+
+export const NCERT_INDEX_URL = "https://ncert.nic.in/textbook.php";
+/** When the NCERT / CBSE / CISCE facts in this file were last read from the official pages. */
+export const SCHOOL_SOURCES_CHECKED_ON = "25 Sep 2026";
+export const CBSE_CURRICULUM_URL = "https://cbseacademic.nic.in/curriculum_2027.html";
+export const ICSE_REGULATIONS_URL = "https://cisce.org/regulations-and-syllabuses-icse/";
+export const ISC_REGULATIONS_URL = "https://cisce.org/regulations-and-syllabuses-isc/";
+const CISCE_HOME_URL = "https://cisce.org/";
+
+const cbseSyllabus = (file: string) => `https://cbseacademic.nic.in/web_material/CurriculumMain27/${file}`;
+
+/** One NCERT textbook, exactly as NCERT's index lists it. */
+export interface NcertBook {
+  /** Title as NCERT's index spells it (typos included), e.g. "Ganita Prakash Part-I". */
+  title: string;
+  /** NCERT index query: book code "=" first-last chapter file, e.g. "hegp1=0-7". */
+  query: string;
+  /** Set on the Hindi- / Urdu-medium edition of a main book. Absent = the main book. */
+  medium?: "hi" | "ur";
+  /** The edition line on the book's imprint page, where we read the prelims. */
+  edition?: string;
+  /** One factual line shown under the book (e.g. "Part I"). */
+  note?: string;
+  /** Printed chapter titles read off the book's contents page: [url slug, title]. */
+  chapters?: Array<[slug: string, title: string]>;
+  /** Printed number of chapters[0]. Part II books continue the numbering (Physics Part II starts at 8). */
+  firstChapter?: number;
+}
 
 export interface SchoolChapter {
   // URL slug for /schooling/[board]/class-[n]/[subject]/[chapter-slug]
   slug: string;
-  // Display name as it appears in the NCERT textbook
+  // Title as printed on the book's contents page
   name: string;
-  // Chapter number in the official textbook
+  // Chapter number as printed in the book
   number: number;
-  // 1-sentence summary shown on the chapter tile
-  blurb?: string;
-  // Direct NCERT PDF URL for this specific chapter, when known
-  pdfUrl?: string;
+  // The NCERT book the chapter is in
+  book: NcertBook;
+  // Position on NCERT's page for that book (a Part II book restarts at 1)
+  numberInBook: number;
 }
 
 export interface SchoolSubject {
@@ -31,18 +80,19 @@ export interface SchoolSubject {
   slug: string;
   // Display name
   name: string;
-  // Short blurb shown on the subject tile
-  blurb: string;
-  // Approximate chapter count (NCERT) — used for the tile metadata
-  chapterCount?: number;
-  // Direct link to NCERT/board chapter PDFs index for this subject + class
-  officialChapterIndex?: string;
-  // Tag indicating if this subject is foundational for a downstream
-  // entrance exam — drives the cross-link surface on the subject page
-  // (e.g., "This subject is foundational for JEE Main").
+  // Optional factual line for the subject tile; the tile falls back to the book titles
+  blurb?: string;
+  // Subject name on NCERT's index for this class (CBSE subjects taught from NCERT books)
+  ncertSubject?: string;
+  // NCERT books: main books first, then their Hindi / Urdu-medium editions
+  books?: NcertBook[];
+  // Official syllabus document for this subject + class
+  syllabusUrl?: string;
+  syllabusLabel?: string;
+  // Entrance exams this subject leads into — drives the cross-link surface
+  // on the subject page. Only codes that exist as live exam pages.
   feedsExams?: string[];
-  // Full chapter list. Populated for high-priority subjects first;
-  // others fall back to officialChapterIndex.
+  // Chapter list, derived from the main books' contents pages (never hand-typed)
   chapters?: SchoolChapter[];
 }
 
@@ -54,531 +104,737 @@ export interface ClassSyllabus {
   subjects: SchoolSubject[];
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// CBSE Class 10  (per CBSE/NCERT 2024-25 curriculum)
-// Source: https://www.cbse.gov.in/cbsenew/curriculum.html
-// ─────────────────────────────────────────────────────────────────────
-const CBSE_CLASS_10_SUBJECTS: SchoolSubject[] = [
-  {
-    slug: "mathematics",
-    name: "Mathematics",
-    blurb: "Real numbers, polynomials, linear equations, trigonometry, statistics. The foundation for every quantitative entrance exam.",
-    chapterCount: 15,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?jemh1=0-15",
-    feedsExams: ["JEE_MAIN"],
-    chapters: [
-      { slug: "real-numbers",                       number: 1,  name: "Real Numbers",                              blurb: "Euclid's division lemma, fundamental theorem of arithmetic, irrationality proofs." },
-      { slug: "polynomials",                        number: 2,  name: "Polynomials",                               blurb: "Geometric meaning of zeroes, division algorithm, relationships between coefficients and zeroes." },
-      { slug: "pair-of-linear-equations",           number: 3,  name: "Pair of Linear Equations in Two Variables", blurb: "Graphical + algebraic methods (substitution, elimination, cross-multiplication)." },
-      { slug: "quadratic-equations",                number: 4,  name: "Quadratic Equations",                       blurb: "Factorisation, quadratic formula, nature of roots via discriminant." },
-      { slug: "arithmetic-progressions",            number: 5,  name: "Arithmetic Progressions",                   blurb: "nth term, sum of n terms, applications." },
-      { slug: "triangles",                          number: 6,  name: "Triangles",                                 blurb: "Similarity, criteria for similarity, areas of similar triangles, Pythagoras theorem." },
-      { slug: "coordinate-geometry",                number: 7,  name: "Coordinate Geometry",                       blurb: "Distance, section formula, area of a triangle." },
-      { slug: "introduction-to-trigonometry",       number: 8,  name: "Introduction to Trigonometry",              blurb: "Trigonometric ratios, identities, complementary-angle relationships." },
-      { slug: "applications-of-trigonometry",       number: 9,  name: "Some Applications of Trigonometry",         blurb: "Heights + distances using angles of elevation and depression." },
-      { slug: "circles",                            number: 10, name: "Circles",                                   blurb: "Tangents to circles, theorems on tangent length from an external point." },
-      { slug: "areas-related-to-circles",           number: 11, name: "Areas Related to Circles",                  blurb: "Sector + segment areas, composite figures." },
-      { slug: "surface-areas-and-volumes",          number: 12, name: "Surface Areas and Volumes",                 blurb: "Combinations of solids, frustum of a cone." },
-      { slug: "statistics",                         number: 13, name: "Statistics",                                blurb: "Mean / median / mode for grouped data, cumulative frequency curves." },
-      { slug: "probability",                        number: 14, name: "Probability",                               blurb: "Theoretical (classical) probability of an event." },
-    ],
-  },
-  {
-    slug: "science",
-    name: "Science",
-    blurb: "Light + electricity + chemical reactions + heredity + ecosystems. Combined physics, chemistry, biology — splits in Class 11.",
-    chapterCount: 13,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?jesc1=0-13",
-    feedsExams: ["JEE_MAIN", "NEET_UG"],
-    chapters: [
-      { slug: "chemical-reactions-and-equations", number: 1,  name: "Chemical Reactions and Equations",     blurb: "Balancing, types (combination, decomposition, redox), corrosion, rancidity." },
-      { slug: "acids-bases-and-salts",            number: 2,  name: "Acids, Bases and Salts",                blurb: "Indicators, neutralisation, pH scale, salt nomenclature." },
-      { slug: "metals-and-non-metals",            number: 3,  name: "Metals and Non-Metals",                 blurb: "Reactivity series, extraction, properties, ionic + covalent bonds." },
-      { slug: "carbon-and-its-compounds",         number: 4,  name: "Carbon and Its Compounds",              blurb: "Catenation, functional groups, homologous series, soaps and detergents." },
-      { slug: "life-processes",                   number: 5,  name: "Life Processes",                        blurb: "Nutrition, respiration, transportation, excretion in plants and animals." },
-      { slug: "control-and-coordination",         number: 6,  name: "Control and Coordination",              blurb: "Nervous system, hormones in plants and animals." },
-      { slug: "how-do-organisms-reproduce",       number: 7,  name: "How Do Organisms Reproduce?",           blurb: "Asexual + sexual reproduction, reproductive health." },
-      { slug: "heredity",                          number: 8,  name: "Heredity",                              blurb: "Mendel's laws, sex determination, evolution basics." },
-      { slug: "light-reflection-and-refraction",  number: 9,  name: "Light – Reflection and Refraction",     blurb: "Spherical mirrors, lenses, lens formula, magnification, refractive index." },
-      { slug: "human-eye-and-colourful-world",    number: 10, name: "The Human Eye and the Colourful World", blurb: "Accommodation, defects of vision, prisms, dispersion, atmospheric refraction." },
-      { slug: "electricity",                       number: 11, name: "Electricity",                           blurb: "Ohm's law, resistance, series + parallel circuits, heating effect, power." },
-      { slug: "magnetic-effects-of-current",      number: 12, name: "Magnetic Effects of Electric Current",  blurb: "Magnetic fields, force on a conductor, electromagnetic induction, AC + DC." },
-      { slug: "our-environment",                  number: 13, name: "Our Environment",                       blurb: "Ecosystems, food chains, ozone depletion, waste management." },
-    ],
-  },
-  {
-    slug: "social-science",
-    name: "Social Science",
-    blurb: "History, geography, civics, economics. Includes the rise of nationalism, agriculture, federalism, money + credit.",
-    chapterCount: 18,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?jess1=0-18",
-  },
-  {
-    slug: "english",
-    name: "English (First Flight + Footprints)",
-    blurb: "Prose, poetry, supplementary reading + grammar + writing skills. Two textbooks: First Flight (main) + Footprints Without Feet (supplementary).",
-    chapterCount: 11,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?jeff1=0-12",
-  },
-  {
-    slug: "hindi-a",
-    name: "Hindi Course A (Kshitij + Kritika)",
-    blurb: "हिंदी कोर्स A. क्षितिज (पद्य + गद्य) + कृतिका. CBSE Class 10 का मुख्य हिंदी पाठ्यक्रम.",
-    chapterCount: 14,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?jhks1=0-13",
-  },
-  {
-    slug: "hindi-b",
-    name: "Hindi Course B (Sparsh + Sanchayan)",
-    blurb: "हिंदी कोर्स B. स्पर्श + संचयन. हिंदी द्वितीय भाषा के रूप में पढ़ने वालों के लिए.",
-    chapterCount: 13,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?jhsp1=0-13",
-  },
-  {
-    slug: "computer-applications",
-    name: "Computer Applications (Optional)",
-    blurb: "Networking, HTML, cybersecurity, scratch programming. CBSE skill-subject taught alongside the 5 main subjects.",
-    chapterCount: 7,
-  },
-];
+export function ncertBookUrl(book: Pick<NcertBook, "query">): string {
+  return `${NCERT_INDEX_URL}?${book.query}`;
+}
+
+/** Main books (not the Hindi / Urdu-medium editions). */
+export function mainBooks(subject: SchoolSubject): NcertBook[] {
+  return (subject.books ?? []).filter((b) => !b.medium);
+}
+
+export function booksInMedium(subject: SchoolSubject, medium: "hi" | "ur"): NcertBook[] {
+  return (subject.books ?? []).filter((b) => b.medium === medium);
+}
+
+type BookExtra = Omit<NcertBook, "title" | "query" | "medium">;
+const book = (title: string, query: string, extra: BookExtra = {}): NcertBook => ({ title, query, ...extra });
+const hi = (title: string, query: string): NcertBook => ({ title, query, medium: "hi" });
+const ur = (title: string, query: string): NcertBook => ({ title, query, medium: "ur" });
+
+function subject(def: Omit<SchoolSubject, "chapters">): SchoolSubject {
+  const chapters: SchoolChapter[] = [];
+  for (const b of def.books ?? []) {
+    if (b.medium || !b.chapters) continue;
+    const first = b.firstChapter ?? 1;
+    b.chapters.forEach(([slug, name], i) => {
+      chapters.push({ slug, name, number: first + i, book: b, numberInBook: i + 1 });
+    });
+  }
+  return chapters.length > 0 ? { ...def, chapters } : { ...def };
+}
 
 // ─────────────────────────────────────────────────────────────────────
-// CBSE Class 12  (per CBSE/NCERT 2024-25 curriculum)
-// Streams: Science (PCM / PCMB / PCB), Commerce, Humanities
-// Source: https://www.cbse.gov.in/cbsenew/curriculum.html
-// ─────────────────────────────────────────────────────────────────────
-const CBSE_CLASS_12_SUBJECTS: SchoolSubject[] = [
-  // Science stream
-  {
-    slug: "physics",
-    name: "Physics",
-    blurb: "Electrostatics, current electricity, magnetism, EMI, EM waves, optics, modern physics. The single most-tested subject for engineering entrances.",
-    chapterCount: 15,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?leph1=0-8",
-    feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"],
-    chapters: [
-      { slug: "electric-charges-and-fields",         number: 1,  name: "Electric Charges and Fields",          blurb: "Coulomb's law, electric field, dipole, Gauss's law." },
-      { slug: "electrostatic-potential-capacitance", number: 2,  name: "Electrostatic Potential and Capacitance", blurb: "Potential due to charges, capacitor combinations, energy stored." },
-      { slug: "current-electricity",                 number: 3,  name: "Current Electricity",                  blurb: "Ohm's law, drift velocity, Kirchhoff's laws, Wheatstone bridge, potentiometer." },
-      { slug: "moving-charges-and-magnetism",        number: 4,  name: "Moving Charges and Magnetism",         blurb: "Biot-Savart, Ampere's law, force on current, cyclotron, galvanometer." },
-      { slug: "magnetism-and-matter",                number: 5,  name: "Magnetism and Matter",                 blurb: "Bar magnet, earth's magnetism, dia/para/ferromagnetism, Curie's law." },
-      { slug: "electromagnetic-induction",           number: 6,  name: "Electromagnetic Induction",            blurb: "Faraday's laws, Lenz's law, self + mutual inductance, motional EMF." },
-      { slug: "alternating-current",                 number: 7,  name: "Alternating Current",                  blurb: "RMS values, LCR series, resonance, power factor, transformer." },
-      { slug: "electromagnetic-waves",               number: 8,  name: "Electromagnetic Waves",                blurb: "Displacement current, EM spectrum, properties of EM waves." },
-      { slug: "ray-optics-and-optical-instruments",  number: 9,  name: "Ray Optics and Optical Instruments",   blurb: "Mirrors, refraction, lens formula, prism, microscope, telescope." },
-      { slug: "wave-optics",                          number: 10, name: "Wave Optics",                         blurb: "Huygens principle, interference, diffraction, polarisation." },
-      { slug: "dual-nature-of-radiation-and-matter", number: 11, name: "Dual Nature of Radiation and Matter",  blurb: "Photoelectric effect, de Broglie hypothesis, Davisson-Germer experiment." },
-      { slug: "atoms",                                number: 12, name: "Atoms",                                blurb: "Rutherford + Bohr models, hydrogen spectrum, energy levels." },
-      { slug: "nuclei",                               number: 13, name: "Nuclei",                               blurb: "Mass defect, binding energy, radioactivity, fission, fusion." },
-      { slug: "semiconductor-electronics",           number: 14, name: "Semiconductor Electronics",            blurb: "p-n junction, diode, BJT, logic gates." },
-    ],
-  },
-  {
-    slug: "chemistry",
-    name: "Chemistry",
-    blurb: "Solid state, solutions, electrochemistry, kinetics, coordination compounds, biomolecules. Critical for NEET, fundamental for JEE.",
-    chapterCount: 16,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?lech1=0-9",
-    feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"],
-    chapters: [
-      { slug: "solutions",                         number: 1,  name: "Solutions",                            blurb: "Types, concentration, Raoult's law, colligative properties, abnormal molar mass." },
-      { slug: "electrochemistry",                  number: 2,  name: "Electrochemistry",                     blurb: "Galvanic cells, Nernst equation, conductivity, electrolysis, batteries." },
-      { slug: "chemical-kinetics",                 number: 3,  name: "Chemical Kinetics",                    blurb: "Rate, order, molecularity, integrated rate equations, Arrhenius, collision theory." },
-      { slug: "the-d-and-f-block-elements",        number: 4,  name: "The d- and f-Block Elements",          blurb: "Transition metals, lanthanides, actinides, oxidation states, complex formation." },
-      { slug: "coordination-compounds",            number: 5,  name: "Coordination Compounds",               blurb: "Ligands, nomenclature, isomerism, bonding theories (VBT, CFT)." },
-      { slug: "haloalkanes-and-haloarenes",        number: 6,  name: "Haloalkanes and Haloarenes",           blurb: "Preparation, properties, SN1/SN2, E1/E2 mechanisms." },
-      { slug: "alcohols-phenols-and-ethers",       number: 7,  name: "Alcohols, Phenols and Ethers",         blurb: "Preparation, properties, acidity of phenols, Reimer-Tiemann, Williamson." },
-      { slug: "aldehydes-ketones-carboxylic-acids", number: 8, name: "Aldehydes, Ketones and Carboxylic Acids", blurb: "Nucleophilic addition, oxidation, Aldol, Cannizzaro, ester formation." },
-      { slug: "amines",                            number: 9,  name: "Amines",                                blurb: "Preparation, basicity, Hofmann, Carbylamine, diazonium salts." },
-      { slug: "biomolecules",                      number: 10, name: "Biomolecules",                          blurb: "Carbohydrates, proteins, enzymes, nucleic acids, vitamins." },
-    ],
-  },
-  {
-    slug: "mathematics",
-    name: "Mathematics",
-    blurb: "Relations + functions, calculus, vectors, 3-D geometry, linear programming, probability. The hardest of the three for JEE.",
-    chapterCount: 13,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?lemh1=0-13",
-    feedsExams: ["JEE_MAIN", "JEE_ADVANCED"],
-    chapters: [
-      { slug: "relations-and-functions",        number: 1,  name: "Relations and Functions",          blurb: "Types of relations, types of functions, composition, inverse." },
-      { slug: "inverse-trigonometric-functions", number: 2, name: "Inverse Trigonometric Functions",   blurb: "Principal value branches, properties, identities." },
-      { slug: "matrices",                       number: 3,  name: "Matrices",                          blurb: "Types, operations, transpose, symmetric/skew-symmetric, invertibility." },
-      { slug: "determinants",                   number: 4,  name: "Determinants",                      blurb: "Properties, area of triangle, adjoint, inverse, system of equations." },
-      { slug: "continuity-and-differentiability", number: 5, name: "Continuity and Differentiability", blurb: "Continuity, derivative, chain rule, logarithmic + parametric differentiation." },
-      { slug: "applications-of-derivatives",    number: 6,  name: "Application of Derivatives",        blurb: "Rate of change, tangents + normals, maxima + minima, monotonicity." },
-      { slug: "integrals",                      number: 7,  name: "Integrals",                         blurb: "Indefinite + definite, methods of integration, fundamental theorem of calculus." },
-      { slug: "applications-of-integrals",      number: 8,  name: "Application of Integrals",          blurb: "Area under curves, between curves." },
-      { slug: "differential-equations",         number: 9,  name: "Differential Equations",            blurb: "Order, degree, formation, solution of variables-separable + linear equations." },
-      { slug: "vector-algebra",                 number: 10, name: "Vector Algebra",                    blurb: "Types, dot + cross product, applications to geometry." },
-      { slug: "three-dimensional-geometry",     number: 11, name: "Three Dimensional Geometry",        blurb: "Direction cosines, equations of lines + planes, distance formulas." },
-      { slug: "linear-programming",             number: 12, name: "Linear Programming",                blurb: "Graphical method for solving LPP, feasible region." },
-      { slug: "probability",                    number: 13, name: "Probability",                       blurb: "Conditional probability, Bayes' theorem, binomial distribution." },
-    ],
-  },
-  {
-    slug: "biology",
-    name: "Biology",
-    blurb: "Reproduction, genetics + evolution, biology + human welfare, biotechnology, ecology. The largest single-subject weight in NEET.",
-    chapterCount: 13,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?lebo1=0-16",
-    feedsExams: ["NEET_UG"],
-    chapters: [
-      { slug: "sexual-reproduction-flowering-plants", number: 1, name: "Sexual Reproduction in Flowering Plants", blurb: "Flower structure, micro/megasporogenesis, double fertilisation, apomixis." },
-      { slug: "human-reproduction",                  number: 2,  name: "Human Reproduction",                       blurb: "Male + female reproductive systems, gametogenesis, menstrual cycle, parturition." },
-      { slug: "reproductive-health",                 number: 3,  name: "Reproductive Health",                      blurb: "STIs, contraception, infertility, MTP, amniocentesis." },
-      { slug: "principles-of-inheritance",           number: 4,  name: "Principles of Inheritance and Variation",  blurb: "Mendel's laws, linkage, sex determination, mutations, pedigree." },
-      { slug: "molecular-basis-of-inheritance",      number: 5,  name: "Molecular Basis of Inheritance",           blurb: "DNA, transcription, translation, regulation, Human Genome Project." },
-      { slug: "evolution",                            number: 6,  name: "Evolution",                                 blurb: "Theories, evidences, Hardy-Weinberg, human evolution." },
-      { slug: "human-health-and-disease",            number: 7,  name: "Human Health and Disease",                 blurb: "Pathogens, immunity, AIDS, cancer, drug + alcohol abuse." },
-      { slug: "microbes-in-human-welfare",           number: 8,  name: "Microbes in Human Welfare",                blurb: "Fermentation, sewage treatment, biofertilisers, biocontrol agents." },
-      { slug: "biotechnology-principles-and-processes", number: 9, name: "Biotechnology: Principles and Processes", blurb: "Restriction enzymes, vectors, recombinant DNA, PCR, bioreactor." },
-      { slug: "biotechnology-and-its-applications",  number: 10, name: "Biotechnology and Its Applications",       blurb: "Transgenic organisms, gene therapy, RNAi, GM crops, biosafety." },
-      { slug: "organisms-and-populations",           number: 11, name: "Organisms and Populations",                blurb: "Ecological factors, population attributes, growth curves, interactions." },
-      { slug: "ecosystem",                            number: 12, name: "Ecosystem",                                blurb: "Structure, energy flow, food chains, biogeochemical cycles." },
-      { slug: "biodiversity-and-conservation",       number: 13, name: "Biodiversity and Conservation",            blurb: "Patterns, threats, conservation strategies, biodiversity hotspots." },
-    ],
-  },
-  // Commerce stream
-  {
-    slug: "accountancy",
-    name: "Accountancy",
-    blurb: "Partnership, financial statements, cash flow, ratio analysis. Single largest CA Foundation prep input.",
-    chapterCount: 13,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?leac1=0-6",
-  },
-  {
-    slug: "business-studies",
-    name: "Business Studies",
-    blurb: "Principles of management, business environment, marketing, consumer protection. Conceptual subject — strong reading + writing weight.",
-    chapterCount: 12,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?lebs1=0-12",
-  },
-  {
-    slug: "economics",
-    name: "Economics",
-    blurb: "Microeconomics (consumer behaviour, market structures) + macroeconomics (national income, money + banking, government budget).",
-    chapterCount: 16,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?leie1=0-6",
-    feedsExams: ["IPMAT"],
-  },
-  // Humanities
-  {
-    slug: "history",
-    name: "History",
-    blurb: "Themes in Indian history (3 volumes). Bricks, beads + bones; kings + chronicles; colonialism + countryside; Mahatma Gandhi; framing the constitution.",
-    chapterCount: 15,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?lehs1=0-15",
-    feedsExams: ["UPSC_PRELIMS"],
-  },
-  {
-    slug: "political-science",
-    name: "Political Science",
-    blurb: "Contemporary world politics + politics in India since Independence. UPSC-relevant for Polity + International Relations.",
-    chapterCount: 16,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?leps1=0-9",
-    feedsExams: ["UPSC_PRELIMS"],
-  },
-  {
-    slug: "geography",
-    name: "Geography",
-    blurb: "Fundamentals of human geography + India: people + economy. Strong UPSC overlap, especially for Indian geography paper.",
-    chapterCount: 17,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?legy1=0-10",
-    feedsExams: ["UPSC_PRELIMS"],
-  },
-  {
-    slug: "english-core",
-    name: "English Core (Flamingo + Vistas)",
-    blurb: "Prose, poetry, supplementary (short stories). Required across all streams — counts toward best-of-5 percentage.",
-    chapterCount: 12,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?lefl1=0-8",
-  },
-];
-
-// ─────────────────────────────────────────────────────────────────────
-// ICSE Class 10  (per CISCE 2024-25 curriculum)
-// Source: https://cisce.org/curriculum.aspx
-// ─────────────────────────────────────────────────────────────────────
-const ICSE_CLASS_10_SUBJECTS: SchoolSubject[] = [
-  { slug: "english-language",   name: "English I (Language)",      blurb: "Composition, comprehension, grammar.", chapterCount: 0 },
-  { slug: "english-literature", name: "English II (Literature)",   blurb: "Treasure Chest, Merchant of Venice, poems.", chapterCount: 0 },
-  { slug: "mathematics",        name: "Mathematics",               blurb: "ICSE Maths — wider arithmetic + commercial maths than CBSE.", chapterCount: 25, feedsExams: ["JEE_MAIN"] },
-  { slug: "physics",            name: "Physics",                   blurb: "Force, energy, light, sound, current electricity, modern physics.", chapterCount: 11, feedsExams: ["JEE_MAIN", "NEET_UG"] },
-  { slug: "chemistry",          name: "Chemistry",                 blurb: "Periodic properties, chemical bonding, analytical chemistry, acids + bases, ammonia.", chapterCount: 11, feedsExams: ["JEE_MAIN", "NEET_UG"] },
-  { slug: "biology",            name: "Biology",                   blurb: "Cell + genetics + plant physiology + human anatomy + ecology.", chapterCount: 12, feedsExams: ["NEET_UG"] },
-  { slug: "history-civics",     name: "History + Civics",          blurb: "Indian history (1857-1947) + Indian constitution + UN.", chapterCount: 0 },
-  { slug: "geography",          name: "Geography",                 blurb: "Map work + agriculture + industry + India regional studies.", chapterCount: 0 },
-  { slug: "computer-applications", name: "Computer Applications", blurb: "Java programming — classes, objects, arrays, strings.", chapterCount: 11 },
-];
-
-// ─────────────────────────────────────────────────────────────────────
-// ICSE Class 12 (ISC) (per CISCE 2024-25 curriculum)
-// ─────────────────────────────────────────────────────────────────────
-const ICSE_CLASS_12_SUBJECTS: SchoolSubject[] = [
-  { slug: "english",      name: "English",      blurb: "Compulsory paper across all streams.", chapterCount: 0 },
-  { slug: "mathematics",  name: "Mathematics",  blurb: "Calculus, probability, vectors, 3-D geometry, linear programming.", chapterCount: 16, feedsExams: ["JEE_MAIN", "JEE_ADVANCED"] },
-  { slug: "physics",      name: "Physics",      blurb: "Electrostatics, current electricity, magnetism, EM waves, modern physics, communication.", chapterCount: 11, feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"] },
-  { slug: "chemistry",    name: "Chemistry",    blurb: "Physical, inorganic + organic. Slightly broader scope than CBSE.", chapterCount: 11, feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"] },
-  { slug: "biology",      name: "Biology",      blurb: "Reproduction, genetics, evolution, biotechnology, ecology.", chapterCount: 14, feedsExams: ["NEET_UG"] },
-  { slug: "accounts",     name: "Accounts",     blurb: "Partnership accounts, company accounts, financial statement analysis, ratio + cash flow.", chapterCount: 0 },
-  { slug: "commerce",     name: "Commerce",     blurb: "Forms of business, management, trade, finance, leadership.", chapterCount: 0 },
-  { slug: "economics",    name: "Economics",    blurb: "Micro + macro + Indian economic problems. Slightly heavier theory than CBSE.", chapterCount: 0, feedsExams: ["IPMAT"] },
-  { slug: "history",      name: "History",      blurb: "World history + Indian history post-1857.", chapterCount: 0 },
-  { slug: "psychology",   name: "Psychology",   blurb: "ISC offers a full psychology paper (CBSE has it too but lighter coverage).", chapterCount: 0 },
-];
-
-// ─────────────────────────────────────────────────────────────────────
-// CBSE Class 11 — Science stream + key Commerce/Humanities subjects.
-// Fills the year between Class 10 + Class 12. NCERT Class 11 chapters
-// (which become foundational for JEE/NEET prep).
-// ─────────────────────────────────────────────────────────────────────
-const CBSE_CLASS_11_SUBJECTS: SchoolSubject[] = [
-  {
-    slug: "physics",
-    name: "Physics",
-    blurb: "Mechanics, oscillations + waves, thermodynamics, kinetic theory. The foundation year for JEE/NEET physics.",
-    chapterCount: 15,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?keph1=0-8",
-    feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"],
-    chapters: [
-      { slug: "units-and-measurements",              number: 1,  name: "Units and Measurements", blurb: "SI units, dimensional analysis, significant figures." },
-      { slug: "motion-in-a-straight-line",           number: 2,  name: "Motion in a Straight Line", blurb: "Position, velocity, acceleration, kinematic equations." },
-      { slug: "motion-in-a-plane",                   number: 3,  name: "Motion in a Plane", blurb: "Vectors, projectile motion, uniform circular motion." },
-      { slug: "laws-of-motion",                      number: 4,  name: "Laws of Motion", blurb: "Newton's laws, friction, circular motion dynamics." },
-      { slug: "work-energy-power",                   number: 5,  name: "Work, Energy and Power", blurb: "Work-energy theorem, conservation of energy, power." },
-      { slug: "system-of-particles-rotational-motion", number: 6, name: "System of Particles and Rotational Motion", blurb: "Centre of mass, torque, moment of inertia, angular momentum." },
-      { slug: "gravitation",                         number: 7,  name: "Gravitation", blurb: "Newton's law, Kepler's laws, satellites, escape velocity." },
-      { slug: "mechanical-properties-of-solids",     number: 8,  name: "Mechanical Properties of Solids", blurb: "Stress, strain, elastic moduli, applications." },
-      { slug: "mechanical-properties-of-fluids",     number: 9,  name: "Mechanical Properties of Fluids", blurb: "Pressure, viscosity, surface tension, Bernoulli's principle." },
-      { slug: "thermal-properties-of-matter",        number: 10, name: "Thermal Properties of Matter", blurb: "Temperature, expansion, calorimetry, conduction + convection + radiation." },
-      { slug: "thermodynamics",                      number: 11, name: "Thermodynamics", blurb: "First + second laws, heat engines, Carnot cycle." },
-      { slug: "kinetic-theory",                      number: 12, name: "Kinetic Theory", blurb: "Ideal gas, molecular speeds, mean free path." },
-      { slug: "oscillations",                        number: 13, name: "Oscillations", blurb: "Simple harmonic motion, energy in SHM, damped + forced oscillations." },
-      { slug: "waves",                               number: 14, name: "Waves", blurb: "Transverse + longitudinal, superposition, beats, Doppler effect." },
-    ],
-  },
-  {
-    slug: "chemistry",
-    name: "Chemistry",
-    blurb: "Atomic structure, periodicity, chemical bonding, thermodynamics + equilibrium, hydrocarbons. Foundational for JEE/NEET chemistry.",
-    chapterCount: 14,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?kech1=0-9",
-    feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"],
-    chapters: [
-      { slug: "some-basic-concepts-of-chemistry",   number: 1,  name: "Some Basic Concepts of Chemistry", blurb: "Moles, stoichiometry, empirical + molecular formula." },
-      { slug: "structure-of-atom",                  number: 2,  name: "Structure of Atom", blurb: "Bohr model, quantum numbers, electronic configuration." },
-      { slug: "classification-of-elements-periodicity", number: 3, name: "Classification of Elements and Periodicity", blurb: "Modern periodic law, atomic + ionic radius trends." },
-      { slug: "chemical-bonding-molecular-structure", number: 4, name: "Chemical Bonding and Molecular Structure", blurb: "VBT, hybridisation, MOT basics, VSEPR." },
-      { slug: "thermodynamics-chem",                number: 5,  name: "Thermodynamics", blurb: "First law, enthalpy + entropy, free energy, spontaneity." },
-      { slug: "equilibrium",                        number: 6,  name: "Equilibrium", blurb: "Chemical + ionic equilibrium, Ka/Kb, buffer solutions, solubility product." },
-      { slug: "redox-reactions",                    number: 7,  name: "Redox Reactions", blurb: "Oxidation states, balancing redox equations, electrochemical series intro." },
-      { slug: "organic-chemistry-basic-principles", number: 8,  name: "Organic Chemistry — Basic Principles", blurb: "IUPAC nomenclature, isomerism, reaction mechanisms intro." },
-      { slug: "hydrocarbons",                       number: 9,  name: "Hydrocarbons", blurb: "Alkanes, alkenes, alkynes, aromatic; preparation + reactions." },
-    ],
-  },
-  {
-    slug: "mathematics",
-    name: "Mathematics",
-    blurb: "Sets + functions, trigonometry, sequences, calculus introduction, probability. Foundation year for JEE/CUET Math.",
-    chapterCount: 16,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?kemh1=0-16",
-    feedsExams: ["JEE_MAIN", "JEE_ADVANCED"],
-    chapters: [
-      { slug: "sets",                                number: 1,  name: "Sets", blurb: "Set notation, subsets, power set, operations." },
-      { slug: "relations-and-functions",             number: 2,  name: "Relations and Functions", blurb: "Cartesian product, relations, types of functions." },
-      { slug: "trigonometric-functions",             number: 3,  name: "Trigonometric Functions", blurb: "Radians, identities, principal values, equations." },
-      { slug: "complex-numbers",                     number: 4,  name: "Complex Numbers and Quadratic Equations", blurb: "Argand plane, modulus, argument, roots of quadratic." },
-      { slug: "linear-inequalities",                 number: 5,  name: "Linear Inequalities", blurb: "Algebraic + graphical solutions, system of inequalities." },
-      { slug: "permutations-combinations",           number: 6,  name: "Permutations and Combinations", blurb: "Fundamental principle, factorials, P(n,r), C(n,r)." },
-      { slug: "binomial-theorem",                    number: 7,  name: "Binomial Theorem", blurb: "Expansion for positive integral index, general + middle term." },
-      { slug: "sequences-and-series",                number: 8,  name: "Sequences and Series", blurb: "AP, GP, HP, sum of n terms, AM-GM inequality." },
-      { slug: "straight-lines",                      number: 9,  name: "Straight Lines", blurb: "Slope, various forms, angle between lines, distance from point to line." },
-      { slug: "conic-sections",                      number: 10, name: "Conic Sections", blurb: "Circle, parabola, ellipse, hyperbola — standard equations." },
-      { slug: "introduction-three-dim-geometry",     number: 11, name: "Introduction to 3-D Geometry", blurb: "Coordinates, distance, section formula in 3-D." },
-      { slug: "limits-and-derivatives",              number: 12, name: "Limits and Derivatives", blurb: "Limit concept, standard limits, derivative as rate of change." },
-      { slug: "statistics-11",                       number: 13, name: "Statistics", blurb: "Mean deviation, variance, standard deviation for grouped + ungrouped data." },
-      { slug: "probability-11",                      number: 14, name: "Probability", blurb: "Sample space, events, axiomatic probability." },
-    ],
-  },
-  {
-    slug: "biology",
-    name: "Biology",
-    blurb: "Living world classification, plant + animal kingdoms, human physiology, cell biology. NEET foundation year.",
-    chapterCount: 22,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?kebo1=0-12",
-    feedsExams: ["NEET_UG"],
-    chapters: [
-      { slug: "living-world",                         number: 1,  name: "The Living World", blurb: "Diversity, classification, taxonomy basics." },
-      { slug: "biological-classification",            number: 2,  name: "Biological Classification", blurb: "Kingdom Monera, Protista, Fungi, virus + viroids." },
-      { slug: "plant-kingdom",                        number: 3,  name: "Plant Kingdom", blurb: "Algae, Bryophyta, Pteridophyta, Gymnosperms, Angiosperms." },
-      { slug: "animal-kingdom",                       number: 4,  name: "Animal Kingdom", blurb: "Phyla from Porifera to Chordata." },
-      { slug: "morphology-flowering-plants",          number: 5,  name: "Morphology of Flowering Plants", blurb: "Root, stem, leaf, inflorescence, flower, fruit." },
-      { slug: "anatomy-flowering-plants",             number: 6,  name: "Anatomy of Flowering Plants", blurb: "Tissue systems, primary + secondary growth." },
-      { slug: "structural-organisation-animals",      number: 7,  name: "Structural Organisation in Animals", blurb: "Animal tissues, organ systems of frog/cockroach/earthworm." },
-      { slug: "cell-unit-of-life",                    number: 8,  name: "Cell — The Unit of Life", blurb: "Cell theory, prokaryotic vs eukaryotic, organelles." },
-      { slug: "biomolecules-11",                      number: 9,  name: "Biomolecules", blurb: "Carbohydrates, proteins, lipids, nucleic acids, enzymes." },
-      { slug: "cell-cycle-division",                  number: 10, name: "Cell Cycle and Cell Division", blurb: "Mitosis + meiosis stages + significance." },
-      { slug: "transport-plants",                     number: 11, name: "Transport in Plants", blurb: "Diffusion, osmosis, transpiration, translocation." },
-      { slug: "mineral-nutrition",                    number: 12, name: "Mineral Nutrition", blurb: "Macro/micro nutrients, nitrogen cycle." },
-      { slug: "photosynthesis",                       number: 13, name: "Photosynthesis in Higher Plants", blurb: "Light + dark reactions, C3 + C4 + CAM, photorespiration." },
-      { slug: "respiration-plants",                   number: 14, name: "Respiration in Plants", blurb: "Glycolysis, Krebs cycle, electron transport." },
-      { slug: "plant-growth-development",             number: 15, name: "Plant Growth and Development", blurb: "Hormones (auxin, gibberellin, cytokinin, ethylene, ABA), photoperiodism." },
-      { slug: "digestion-absorption",                 number: 16, name: "Digestion and Absorption", blurb: "Human GI tract, digestion + absorption of nutrients." },
-      { slug: "breathing-exchange-gases",             number: 17, name: "Breathing and Exchange of Gases", blurb: "Respiratory system, gas transport, regulation." },
-      { slug: "body-fluids-circulation",              number: 18, name: "Body Fluids and Circulation", blurb: "Blood composition, heart structure, cardiac cycle." },
-      { slug: "excretory-products",                   number: 19, name: "Excretory Products and Their Elimination", blurb: "Kidneys, urine formation, regulation, dialysis." },
-      { slug: "locomotion-movement",                  number: 20, name: "Locomotion and Movement", blurb: "Bone + muscle structure, muscle contraction." },
-      { slug: "neural-control-coordination",          number: 21, name: "Neural Control and Coordination", blurb: "Nervous system, neuron, synapse, reflex arc." },
-      { slug: "chemical-coordination-integration",    number: 22, name: "Chemical Coordination and Integration", blurb: "Endocrine glands + hormones, regulation." },
-    ],
-  },
-  {
-    slug: "english-core",
-    name: "English Core (Hornbill + Snapshots)",
-    blurb: "Prose, poetry, short stories. Compulsory paper across all Class 11 streams.",
-    chapterCount: 14,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?kehb1=0-8",
-  },
-  {
-    slug: "accountancy",
-    name: "Accountancy",
-    blurb: "Theoretical foundations + journal/ledger/trial balance/financial statements basics.",
-    chapterCount: 15,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?keac1=0-15",
-  },
-  {
-    slug: "business-studies",
-    name: "Business Studies",
-    blurb: "Forms of business, business services, business environment, MSME + global enterprises.",
-    chapterCount: 12,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?kebs1=0-11",
-  },
-  {
-    slug: "economics",
-    name: "Economics",
-    blurb: "Statistics for economics + Indian economic development (planning, agriculture, employment).",
-    chapterCount: 16,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?keec1=0-9",
-    feedsExams: ["IPMAT"],
-  },
-  {
-    slug: "history",
-    name: "History",
-    blurb: "Themes in World History — early human, ancient civilisations, medieval + modern Europe + Industrial Rev.",
-    chapterCount: 11,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?kehs1=0-11",
-    feedsExams: ["UPSC_PRELIMS"],
-  },
-  {
-    slug: "political-science",
-    name: "Political Science",
-    blurb: "Indian Constitution at Work + Political Theory.",
-    chapterCount: 20,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?keps1=0-10",
-    feedsExams: ["UPSC_PRELIMS"],
-  },
-  {
-    slug: "geography",
-    name: "Geography",
-    blurb: "Fundamentals of Physical Geography + India: Physical Environment.",
-    chapterCount: 14,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?kegy1=0-16",
-    feedsExams: ["UPSC_PRELIMS"],
-  },
-];
-
-// ─────────────────────────────────────────────────────────────────────
-// CBSE Class 6-9 — Math + Science (highest-search-volume school
-// content gap). Chapter lists per NCERT 2024-25; concept summaries +
-// quizzes shipping progressively.
+// CBSE Classes 6-8 — NCERT's new books (NCERT index, 25 Sep 2026).
+// No chapter lists yet: chapters get listed once read off each book.
 // ─────────────────────────────────────────────────────────────────────
 const CBSE_CLASS_6_SUBJECTS: SchoolSubject[] = [
-  { slug: "mathematics", name: "Mathematics", blurb: "Numbers + integers + fractions + geometry + data handling — Class 6 NCERT.", chapterCount: 14, officialChapterIndex: "https://ncert.nic.in/textbook.php?femh1=0-14" },
-  { slug: "science",     name: "Science",     blurb: "Food, materials, world of living, motion + measurement.", chapterCount: 16, officialChapterIndex: "https://ncert.nic.in/textbook.php?fesc1=0-16" },
-  { slug: "english",     name: "English",     blurb: "Honeysuckle + Pact with Sun.", chapterCount: 16, officialChapterIndex: "https://ncert.nic.in/textbook.php?fehs1=0-10" },
-  { slug: "hindi",       name: "Hindi",       blurb: "वसंत + दूर्वा. CBSE Class 6 का मुख्य हिंदी पाठ्यक्रम.", chapterCount: 17, officialChapterIndex: "https://ncert.nic.in/textbook.php?fhvs1=0-17" },
-  { slug: "social-science", name: "Social Science", blurb: "History (Our Pasts), Geography (Earth our Habitat), Civics (Social + Political Life).", chapterCount: 30, officialChapterIndex: "https://ncert.nic.in/textbook.php?fesp1=0-10" },
+  subject({
+    slug: "mathematics", name: "Mathematics", ncertSubject: "Mathematics",
+    books: [book("Ganita Prakash", "fegp1=0-10"), hi("Ganita Prakash (Hindi)", "fhgp1=0-10"), ur("Ganita Prakash (Urdu)", "fugp1=0-10")],
+  }),
+  subject({
+    slug: "science", name: "Science", ncertSubject: "Science",
+    books: [book("Curiosity", "fecu1=0-12"), hi("Jigyasa", "fhcu1=0-12"), ur("Tajassus", "fucu1=0-12")],
+  }),
+  subject({ slug: "english", name: "English", ncertSubject: "English", books: [book("Poorvi", "fepr1=0-5")] }),
+  subject({ slug: "hindi", name: "Hindi", ncertSubject: "Hindi", books: [book("Malhar", "fhml1=0-13")] }),
+  subject({
+    slug: "social-science", name: "Social Science", ncertSubject: "Social Science",
+    books: [
+      book("Exploring Society India and Beyond", "fees1=0-14"),
+      hi("Samaj Ka Aadhyan: Bharat or uske aage", "fhes1=0-14"),
+      ur("Muashre Ki Daryaft Hindustan aur Us Se Aage (Urdu)", "fues1=0-14"),
+    ],
+  }),
 ];
 
 const CBSE_CLASS_7_SUBJECTS: SchoolSubject[] = [
-  { slug: "mathematics", name: "Mathematics", blurb: "Integers + fractions + decimals + simple equations + lines + angles + algebraic expressions.", chapterCount: 13, officialChapterIndex: "https://ncert.nic.in/textbook.php?gemh1=0-15" },
-  { slug: "science",     name: "Science",     blurb: "Nutrition + heat + acids + bases + physical/chemical changes + electricity + motion + light.", chapterCount: 13, officialChapterIndex: "https://ncert.nic.in/textbook.php?gesc1=0-13" },
-  { slug: "english",     name: "English",     blurb: "Honeycomb + An Alien Hand.", chapterCount: 16, officialChapterIndex: "https://ncert.nic.in/textbook.php?gehc1=0-10" },
-  { slug: "hindi",       name: "Hindi",       blurb: "वसंत भाग 2 + दूर्वा भाग 2.", chapterCount: 19, officialChapterIndex: "https://ncert.nic.in/textbook.php?ghvs1=0-19" },
-  { slug: "social-science", name: "Social Science", blurb: "History (Our Pasts II), Geography (Our Environment), Civics (Social + Political Life II).", chapterCount: 28, officialChapterIndex: "https://ncert.nic.in/textbook.php?gesp1=0-10" },
+  subject({
+    slug: "mathematics", name: "Mathematics", ncertSubject: "Mathematics",
+    books: [
+      book("Ganita Prakash", "gegp1=0-8"),
+      book("Ganita Prakash-II", "gegp2=0-7"),
+      hi("Ganita Prakash(Hindi)", "ghgp1=0-8"),
+      hi("Ganita Prakash-II (Hindi)", "ghgp2=0-7"),
+      ur("Ganita Prakash(Urdu)", "gugp1=0-8"),
+    ],
+  }),
+  subject({
+    slug: "science", name: "Science", ncertSubject: "Science",
+    books: [book("Curiosity", "gecu1=0-12"), hi("Jigyasa", "ghcu1=0-12"), ur("Tajassus", "gucu1=0-12")],
+  }),
+  subject({ slug: "english", name: "English", ncertSubject: "English", books: [book("Poorvi", "gepr1=0-5")] }),
+  subject({ slug: "hindi", name: "Hindi", ncertSubject: "Hindi", books: [book("Malhar", "ghml1=0-10")] }),
+  subject({
+    slug: "social-science", name: "Social Science", ncertSubject: "Social Science",
+    books: [
+      book("Exploring Society India and Beyond Part-I", "gees1=0-12"),
+      book("Exploring Society India and Beyond Part-II", "gees2=0-8"),
+      hi("Samaj Ka Aadhyan: Bharat or uske aage Part-I", "ghes1=0-12"),
+      hi("Samaj Ka Aadhyan: Bharat or uske aage Part-II", "ghes2=0-8"),
+      ur("Muashrey ki Daryaft - Hindustan aur Uske age Part-I", "gues1=0-12"),
+      ur("Muashrey ki Daryaft - Hindustan aur Uske age Part-II", "gues2=0-8"),
+    ],
+  }),
 ];
 
 const CBSE_CLASS_8_SUBJECTS: SchoolSubject[] = [
-  { slug: "mathematics", name: "Mathematics", blurb: "Rational numbers + linear equations + quadrilaterals + mensuration + algebraic expressions + factorisation.", chapterCount: 13, officialChapterIndex: "https://ncert.nic.in/textbook.php?hemh1=0-16" },
-  { slug: "science",     name: "Science",     blurb: "Crops + materials + microorganisms + cell structure + force + friction + sound + chemical effects.", chapterCount: 18, officialChapterIndex: "https://ncert.nic.in/textbook.php?hesc1=0-18" },
-  { slug: "english",     name: "English",     blurb: "Honeydew + It So Happened.", chapterCount: 16, officialChapterIndex: "https://ncert.nic.in/textbook.php?hehd1=0-10" },
-  { slug: "hindi",       name: "Hindi",       blurb: "वसंत भाग 3 + दूर्वा भाग 3.", chapterCount: 18, officialChapterIndex: "https://ncert.nic.in/textbook.php?hhvs1=0-18" },
-  { slug: "social-science", name: "Social Science", blurb: "History (Our Pasts III), Geography (Resources + Development), Civics (Social + Political Life III).", chapterCount: 28, officialChapterIndex: "https://ncert.nic.in/textbook.php?hesp1=0-10" },
+  subject({
+    slug: "mathematics", name: "Mathematics", ncertSubject: "Mathematics",
+    books: [
+      book("Ganita Prakash Part-I", "hegp1=0-7"),
+      book("Ganita Prakash Part-II", "hegp2=0-7"),
+      hi("Ganita Prakash Part-I (Hindi)", "hhgp1=0-7"),
+      ur("Ganita Prakash Part-I (Urdu)", "hugp1=0-7"),
+    ],
+  }),
+  subject({
+    slug: "science", name: "Science", ncertSubject: "Science",
+    books: [book("Curiosity", "hecu1=0-13"), hi("Jigyasa", "hhcu1=0-13"), ur("Tajassus", "hucu1=0-13")],
+  }),
+  subject({ slug: "english", name: "English", ncertSubject: "English", books: [book("Poorvi", "hepr1=0-5")] }),
+  subject({ slug: "hindi", name: "Hindi", ncertSubject: "Hindi", books: [book("Malhar", "hhml1=0-10")] }),
+  subject({
+    slug: "social-science", name: "Social Science", ncertSubject: "Social Science",
+    books: [
+      book("Exploring Society India and Beyond Part-I", "hees1=0-7"),
+      book("Exploring Society India and Beyond Part-II", "hees2=0-8"),
+      hi("Samaj Ka Aadhyan: Bharat or uske aage Part-I", "hhes1=0-7"),
+      ur("Muashrey ki Daryaft - Hindustan Aur Uske Age Part-I", "hues1=0-7"),
+    ],
+  }),
 ];
 
+// ─────────────────────────────────────────────────────────────────────
+// CBSE Class 9 — NCERT's new books for 2026-27 (first edition, April 2026).
+// CBSE 2026-27 has a single Hindi syllabus for Class IX (no Course A / B),
+// so the old hindi-a / hindi-b pages were folded into "hindi".
+// ─────────────────────────────────────────────────────────────────────
 const CBSE_CLASS_9_SUBJECTS: SchoolSubject[] = [
-  {
-    slug: "mathematics",
-    name: "Mathematics",
-    blurb: "Number systems, polynomials, coordinate geometry, Euclid's geometry, triangles, circles, surface areas + volumes, statistics.",
-    chapterCount: 15,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?iemh1=0-15",
-    chapters: [
-      { slug: "number-systems-9", number: 1, name: "Number Systems", blurb: "Rational + irrational numbers, real number line, decimal expansions." },
-      { slug: "polynomials-9",     number: 2, name: "Polynomials", blurb: "Polynomial in one variable, remainder + factor theorems, factorisation." },
-      { slug: "coordinate-geometry-9", number: 3, name: "Coordinate Geometry", blurb: "Cartesian system, plotting points." },
-      { slug: "linear-equations-9", number: 4, name: "Linear Equations in Two Variables", blurb: "Solutions, graphs, equations of lines parallel to axes." },
-      { slug: "euclids-geometry-9", number: 5, name: "Introduction to Euclid's Geometry", blurb: "Postulates, axioms, theorems." },
-      { slug: "lines-angles-9", number: 6, name: "Lines and Angles", blurb: "Adjacent + linear pair + vertically opposite angles, parallel lines." },
-      { slug: "triangles-9", number: 7, name: "Triangles", blurb: "Congruence, properties, inequalities in triangles." },
-      { slug: "quadrilaterals-9", number: 8, name: "Quadrilaterals", blurb: "Angle sum, properties of parallelogram + special quadrilaterals." },
-      { slug: "circles-9", number: 9, name: "Circles", blurb: "Chord properties, angle subtended, cyclic quadrilaterals." },
-      { slug: "herons-formula-9", number: 10, name: "Heron's Formula", blurb: "Area of triangle using semi-perimeter, applications to quadrilaterals." },
-      { slug: "surface-areas-volumes-9", number: 11, name: "Surface Areas and Volumes", blurb: "Cuboid, cube, cylinder, cone, sphere, hemisphere." },
-      { slug: "statistics-9", number: 12, name: "Statistics", blurb: "Frequency distribution, mean median mode, bar/histograms/frequency polygons." },
+  subject({
+    slug: "mathematics", name: "Mathematics", ncertSubject: "Mathematics",
+    syllabusUrl: cbseSyllabus("SecPart1/Maths_SecP1IX_2026-27.pdf"),
+    books: [
+      book("Ganita Manjari", "iemh1=0-8", {
+        edition: "First Edition April 2026",
+        note: "Part I. NCERT's index lists no Part II yet.",
+        chapters: [
+          ["orienting-yourself-the-use-of-coordinates", "Orienting Yourself: The Use of Coordinates"],
+          ["introduction-to-linear-polynomials", "Introduction to Linear Polynomials"],
+          ["the-world-of-numbers", "The World of Numbers"],
+          ["exploring-algebraic-identities", "Exploring Algebraic Identities"],
+          ["im-up-and-down-and-round-and-round", "I’m Up and Down, and Round and Round"],
+          ["measuring-space-perimeter-and-area", "Measuring Space: Perimeter and Area"],
+          ["the-mathematics-of-maybe-introduction-to-probability", "The Mathematics of Maybe: Introduction to Probability"],
+          ["predicting-what-comes-next-exploring-sequences-and-progressions", "Predicting What Comes Next: Exploring Sequences and Progressions"],
+        ],
+      }),
+      hi("Ganita Manjari (Hindi)", "ihmh1=0-8"),
+      ur("Ganit Manjari (Urdu)", "iumh1=0-8"),
     ],
-  },
-  {
-    slug: "science",
-    name: "Science",
-    blurb: "Matter, atoms + molecules, structure of atom, cell, tissues, motion + force, gravitation, work + energy, sound, natural resources.",
-    chapterCount: 12,
-    officialChapterIndex: "https://ncert.nic.in/textbook.php?iesc1=0-12",
-    chapters: [
-      { slug: "matter-surroundings-9", number: 1, name: "Matter in Our Surroundings", blurb: "States of matter, change of state, latent heat, evaporation." },
-      { slug: "is-matter-pure-9", number: 2, name: "Is Matter Around Us Pure?", blurb: "Mixtures, solutions, suspensions, colloids, separation methods." },
-      { slug: "atoms-molecules-9", number: 3, name: "Atoms and Molecules", blurb: "Laws of chemical combination, atomic + molecular masses, mole concept." },
-      { slug: "structure-atom-9", number: 4, name: "Structure of the Atom", blurb: "Thomson, Rutherford, Bohr models; electrons, protons, neutrons; valency." },
-      { slug: "fundamental-unit-life-9", number: 5, name: "The Fundamental Unit of Life", blurb: "Cell organelles, plasma membrane, nucleus." },
-      { slug: "tissues-9", number: 6, name: "Tissues", blurb: "Plant + animal tissues — meristematic, permanent, epithelial, connective, muscular, nervous." },
-      { slug: "motion-9", number: 7, name: "Motion", blurb: "Distance, displacement, velocity, acceleration, equations of motion, graphs." },
-      { slug: "force-laws-motion-9", number: 8, name: "Force and Laws of Motion", blurb: "Newton's three laws, inertia, momentum, conservation." },
-      { slug: "gravitation-9", number: 9, name: "Gravitation", blurb: "Universal law of gravitation, free fall, weight, thrust + pressure, Archimedes." },
-      { slug: "work-energy-9", number: 10, name: "Work and Energy", blurb: "Work, kinetic + potential energy, conservation of energy, power." },
-      { slug: "sound-9", number: 11, name: "Sound", blurb: "Production + propagation, characteristics, reflection, range of hearing, applications." },
-      { slug: "improvement-food-resources-9", number: 12, name: "Improvement in Food Resources", blurb: "Crop production, animal husbandry, food security." },
+  }),
+  subject({
+    slug: "science", name: "Science", ncertSubject: "Science",
+    syllabusUrl: cbseSyllabus("SecPart1/ScienceSt_SecP1_2026-27.pdf"),
+    books: [
+      book("Exploration", "iesc1=0-13", {
+        edition: "First Edition April 2026",
+        chapters: [
+          ["exploration-entering-the-world-of-secondary-science", "Exploration: Entering the World of Secondary Science"],
+          ["cell-the-building-block-of-life", "Cell: The Building Block of Life"],
+          ["tissues-in-action", "Tissues in Action"],
+          ["describing-motion-around-us", "Describing Motion Around Us"],
+          ["exploring-mixtures-and-their-separation", "Exploring Mixtures and their Separation"],
+          ["how-forces-affect-motion", "How Forces Affect Motion"],
+          ["work-energy-and-simple-machines", "Work, Energy, and Simple Machines"],
+          ["journey-inside-the-atom", "Journey Inside the Atom"],
+          ["atomic-foundations-of-matter", "Atomic Foundations of Matter"],
+          ["sound-waves-characteristics-and-applications", "Sound Waves: Characteristics and Applications"],
+          ["reproduction-how-life-continues", "Reproduction: How Life Continues"],
+          ["patterns-in-life-diversity-and-classification", "Patterns in Life: Diversity and Classification"],
+          ["earth-as-a-system-energy-matter-and-life", "Earth as a System: Energy, Matter, and Life"],
+        ],
+      }),
+      hi("Anveshan", "ihsc1=0-13"),
     ],
-  },
-  { slug: "english",     name: "English",     blurb: "Beehive + Moments + Workbook.", chapterCount: 19, officialChapterIndex: "https://ncert.nic.in/textbook.php?iebe1=0-11" },
-  { slug: "hindi-a",     name: "Hindi Course A", blurb: "क्षितिज + कृतिका — Hindi A.", chapterCount: 16, officialChapterIndex: "https://ncert.nic.in/textbook.php?ihks1=0-15" },
-  { slug: "hindi-b",     name: "Hindi Course B", blurb: "स्पर्श + संचयन — Hindi B.", chapterCount: 16, officialChapterIndex: "https://ncert.nic.in/textbook.php?ihsp1=0-15" },
-  { slug: "social-science", name: "Social Science", blurb: "History (India + Contemporary World I), Geography (Contemporary India I), Polity (Democratic Politics I), Economics.", chapterCount: 20, officialChapterIndex: "https://ncert.nic.in/textbook.php?iess1=0-20" },
+  }),
+  subject({
+    slug: "english", name: "English", ncertSubject: "English",
+    syllabusUrl: cbseSyllabus("SecPart1/English_LL_SecP1IX_2026-27.pdf"),
+    books: [book("Kaveri", "iebe1=0-8")],
+  }),
+  subject({
+    slug: "hindi", name: "Hindi", ncertSubject: "Hindi",
+    syllabusUrl: cbseSyllabus("SecPart1/Hindi_SecP1IX_2026-27.pdf"),
+    books: [book("Ganga", "ihga1=0-12")],
+  }),
+  subject({
+    slug: "social-science", name: "Social Science", ncertSubject: "Social Science",
+    syllabusUrl: cbseSyllabus("SecPart1/SocialScience_SecP1IX_2026-27.pdf"),
+    books: [book("Understanding Society India and Beyond PART-I", "iest1=0-9")],
+  }),
 ];
 
 // ─────────────────────────────────────────────────────────────────────
-// ICSE Class 11 (ISC) — same lifecycle gap fill.
+// CBSE Class 10 — NCERT books, Reprint 2026-27.
 // ─────────────────────────────────────────────────────────────────────
+const CBSE_CLASS_10_SUBJECTS: SchoolSubject[] = [
+  subject({
+    slug: "mathematics", name: "Mathematics", ncertSubject: "Mathematics",
+    syllabusUrl: cbseSyllabus("SecPart1/Maths_SecP1X_2026-27.pdf"),
+    feedsExams: ["JEE_MAIN"],
+    books: [
+      book("Mathematics", "jemh1=0-14", {
+        edition: "Reprint 2026-27",
+        chapters: [
+          ["real-numbers", "Real Numbers"],
+          ["polynomials", "Polynomials"],
+          ["pair-of-linear-equations", "Pair of Linear Equations in Two Variables"],
+          ["quadratic-equations", "Quadratic Equations"],
+          ["arithmetic-progressions", "Arithmetic Progressions"],
+          ["triangles", "Triangles"],
+          ["coordinate-geometry", "Coordinate Geometry"],
+          ["introduction-to-trigonometry", "Introduction to Trigonometry"],
+          ["applications-of-trigonometry", "Some Applications of Trigonometry"],
+          ["circles", "Circles"],
+          ["areas-related-to-circles", "Areas Related to Circles"],
+          ["surface-areas-and-volumes", "Surface Areas and Volumes"],
+          ["statistics", "Statistics"],
+          ["probability", "Probability"],
+        ],
+      }),
+      hi("Ganit", "jhmh1=0-14"),
+      ur("Riyazi", "jumh1=0-15"),
+    ],
+  }),
+  subject({
+    slug: "science", name: "Science", ncertSubject: "Science",
+    syllabusUrl: cbseSyllabus("SecPart1/Science_SecP1_2026-27.pdf"),
+    feedsExams: ["JEE_MAIN", "NEET_UG"],
+    books: [
+      book("Science", "jesc1=0-13", {
+        edition: "Reprint 2026-27",
+        chapters: [
+          ["chemical-reactions-and-equations", "Chemical Reactions and Equations"],
+          ["acids-bases-and-salts", "Acids, Bases and Salts"],
+          ["metals-and-non-metals", "Metals and Non-metals"],
+          ["carbon-and-its-compounds", "Carbon and its Compounds"],
+          ["life-processes", "Life Processes"],
+          ["control-and-coordination", "Control and Coordination"],
+          ["how-do-organisms-reproduce", "How do Organisms Reproduce?"],
+          ["heredity", "Heredity"],
+          ["light-reflection-and-refraction", "Light – Reflection and Refraction"],
+          ["human-eye-and-colourful-world", "The Human Eye and the Colourful World"],
+          ["electricity", "Electricity"],
+          ["magnetic-effects-of-current", "Magnetic Effects of Electric Current"],
+          ["our-environment", "Our Environment"],
+        ],
+      }),
+      hi("Vigyan", "jhsc1=0-13"),
+      ur("Science(Urdu)", "jusc1=0-16"),
+    ],
+  }),
+  subject({
+    slug: "social-science", name: "Social Science", ncertSubject: "Social Science",
+    syllabusUrl: cbseSyllabus("SecPart1/SocialScience_SecP1X_2026-27.pdf"),
+    books: [
+      book("Contemporary India", "jess1=0-7"),
+      book("Understanding Economic Development", "jess2=0-5"),
+      book("India and the Contemporary World-II", "jess3=0-5"),
+      book("Democratic Politics", "jess4=0-5"),
+      hi("Samkalin Bharat", "jhss1=0-7"),
+      hi("Arthik Vikas ki Samajh", "jhss2=0-5"),
+      hi("Bharat Aur Samakalin Vishav-2", "jhss3=0-5"),
+      hi("Loktantrik Rajniti", "jhss4=0-5"),
+      ur("Aasri Hindustan-II", "juss1=0-7"),
+      ur("Maashi Taraqqui Ki Samajh", "juss2=0-5"),
+      ur("Hindustan Aur Asri Duniya", "juss3=0-5"),
+      ur("Jamhuri Siyasat-II", "juss4=0-8"),
+    ],
+  }),
+  subject({
+    slug: "english", name: "English (Language and Literature)", ncertSubject: "English",
+    syllabusUrl: cbseSyllabus("SecPart1/English_LL_SecP1_2026-27.pdf"),
+    books: [book("First Flight", "jeff1=0-9"), book("Foot Prints Without feet Supp. Reader", "jefp1=0-9")],
+  }),
+  subject({
+    slug: "hindi-a", name: "Hindi Course A", ncertSubject: "Hindi",
+    syllabusUrl: cbseSyllabus("SecPart1/Hindi_A_SecP1_2026-27.pdf"),
+    books: [book("Kshitij-2", "jhks1=0-12"), book("Kritika", "jhkr1=0-3")],
+  }),
+  subject({
+    slug: "hindi-b", name: "Hindi Course B", ncertSubject: "Hindi",
+    syllabusUrl: cbseSyllabus("SecPart1/Hindi_B_SecP1_2026-27.pdf"),
+    books: [book("Sparsh", "jhsp1=0-14"), book("Sanchayan Bhag-2", "jhsy1=0-3")],
+  }),
+  subject({
+    slug: "computer-applications", name: "Computer Applications (optional)",
+    blurb: "An optional subject in CBSE's Class 10 curriculum. NCERT's index has no textbook for it; the syllabus is CBSE's own.",
+    syllabusUrl: cbseSyllabus("SecPart1/Computer_Applications_SecP1X_2026-27.pdf"),
+  }),
+];
+
+// ─────────────────────────────────────────────────────────────────────
+// CBSE Class 11 — NCERT books, Reprint 2026-27. Part I / Part II books
+// share one chapter numbering (Physics Part II starts at Chapter 8).
+// ─────────────────────────────────────────────────────────────────────
+const CBSE_CLASS_11_SUBJECTS: SchoolSubject[] = [
+  subject({
+    slug: "physics", name: "Physics", ncertSubject: "Physics",
+    syllabusUrl: cbseSyllabus("SecPart2/Physics_SecP2_2026-27.pdf"),
+    feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"],
+    books: [
+      book("Physics Part-I", "keph1=0-7", {
+        edition: "Reprint 2026-27",
+        chapters: [
+          ["units-and-measurements", "Units and Measurements"],
+          ["motion-in-a-straight-line", "Motion in a Straight Line"],
+          ["motion-in-a-plane", "Motion in a Plane"],
+          ["laws-of-motion", "Laws of Motion"],
+          ["work-energy-power", "Work, Energy and Power"],
+          ["system-of-particles-rotational-motion", "System of Particles and Rotational Motion"],
+          ["gravitation", "Gravitation"],
+        ],
+      }),
+      book("Physics Part-II", "keph2=0-7", {
+        edition: "Reprint 2026-27",
+        firstChapter: 8,
+        chapters: [
+          ["mechanical-properties-of-solids", "Mechanical Properties of Solids"],
+          ["mechanical-properties-of-fluids", "Mechanical Properties of Fluids"],
+          ["thermal-properties-of-matter", "Thermal Properties of Matter"],
+          ["thermodynamics", "Thermodynamics"],
+          ["kinetic-theory", "Kinetic Theory"],
+          ["oscillations", "Oscillations"],
+          ["waves", "Waves"],
+        ],
+      }),
+      hi("Bhautiki-I", "khph1=0-7"),
+      hi("Bhautiki-II", "khph2=0-7"),
+      ur("Tabiyaat-I", "kuph1=0-8"),
+      ur("Tabiyaat-II", "kuph2=0-7"),
+    ],
+  }),
+  subject({
+    slug: "chemistry", name: "Chemistry", ncertSubject: "Chemistry",
+    syllabusUrl: cbseSyllabus("SecPart2/Chemistry_SecP2_2026-27.pdf"),
+    feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"],
+    books: [
+      book("Chemistry Part-I", "kech1=0-6", {
+        edition: "Reprint 2026-27",
+        chapters: [
+          ["some-basic-concepts-of-chemistry", "Some Basic Concepts of Chemistry"],
+          ["structure-of-atom", "Structure of Atom"],
+          ["classification-of-elements-periodicity", "Classification of Elements and Periodicity in Properties"],
+          ["chemical-bonding-molecular-structure", "Chemical Bonding and Molecular Structure"],
+          ["thermodynamics-chem", "Thermodynamics"],
+          ["equilibrium", "Equilibrium"],
+        ],
+      }),
+      book("Chemistry Part II", "kech2=0-3", {
+        edition: "Reprint 2026-27",
+        firstChapter: 7,
+        chapters: [
+          ["redox-reactions", "Redox Reactions"],
+          ["organic-chemistry-basic-principles", "Organic Chemistry – Some Basic Principles and Techniques"],
+          ["hydrocarbons", "Hydrocarbons"],
+        ],
+      }),
+      hi("Rasayan Vigyan bhag-I", "khch1=0-6"),
+      hi("Rasayan Vigyan bhag-II", "khch2=0-3"),
+      ur("Keemiya I", "kuch1=0-7"),
+      ur("Keemiya II", "kuch2=0-7"),
+    ],
+  }),
+  subject({
+    slug: "mathematics", name: "Mathematics", ncertSubject: "Mathematics",
+    syllabusUrl: cbseSyllabus("SecPart2/Maths_SecP2_2026-27.pdf"),
+    feedsExams: ["JEE_MAIN", "JEE_ADVANCED"],
+    books: [
+      book("Mathematics", "kemh1=0-14", {
+        edition: "Reprint 2026-27",
+        chapters: [
+          ["sets", "Sets"],
+          ["relations-and-functions", "Relations and Functions"],
+          ["trigonometric-functions", "Trigonometric Functions"],
+          ["complex-numbers", "Complex Numbers and Quadratic Equations"],
+          ["linear-inequalities", "Linear Inequalities"],
+          ["permutations-combinations", "Permutations and Combinations"],
+          ["binomial-theorem", "Binomial Theorem"],
+          ["sequences-and-series", "Sequences and Series"],
+          ["straight-lines", "Straight Lines"],
+          ["conic-sections", "Conic Sections"],
+          ["introduction-three-dim-geometry", "Introduction to Three Dimensional Geometry"],
+          ["limits-and-derivatives", "Limits and Derivatives"],
+          ["statistics-11", "Statistics"],
+          ["probability-11", "Probability"],
+        ],
+      }),
+      hi("Ganit", "khmh1=0-14"),
+      ur("Riyazi I", "kumh1=0-16"),
+    ],
+  }),
+  subject({
+    slug: "biology", name: "Biology", ncertSubject: "Biology",
+    syllabusUrl: cbseSyllabus("SecPart2/Biology_SecP2_2026-27.pdf"),
+    feedsExams: ["NEET_UG"],
+    books: [
+      book("Biology", "kebo1=0-19", {
+        edition: "Reprint 2026-27",
+        chapters: [
+          ["living-world", "The Living World"],
+          ["biological-classification", "Biological Classification"],
+          ["plant-kingdom", "Plant Kingdom"],
+          ["animal-kingdom", "Animal Kingdom"],
+          ["morphology-flowering-plants", "Morphology of Flowering Plants"],
+          ["anatomy-flowering-plants", "Anatomy of Flowering Plants"],
+          ["structural-organisation-animals", "Structural Organisation in Animals"],
+          ["cell-unit-of-life", "Cell: The Unit of Life"],
+          ["biomolecules-11", "Biomolecules"],
+          ["cell-cycle-division", "Cell Cycle and Cell Division"],
+          ["photosynthesis", "Photosynthesis in Higher Plants"],
+          ["respiration-plants", "Respiration in Plants"],
+          ["plant-growth-development", "Plant Growth and Development"],
+          ["breathing-exchange-gases", "Breathing and Exchange of Gases"],
+          ["body-fluids-circulation", "Body Fluids and Circulation"],
+          ["excretory-products", "Excretory Products and their Elimination"],
+          ["locomotion-movement", "Locomotion and Movement"],
+          ["neural-control-coordination", "Neural Control and Coordination"],
+          ["chemical-coordination-integration", "Chemical Coordination and Integration"],
+        ],
+      }),
+      hi("Jeev Vigyan", "khbo1=0-19"),
+      ur("Hayatiyaat", "kubo1=0-22"),
+    ],
+  }),
+  subject({
+    slug: "english-core", name: "English Core", ncertSubject: "English",
+    syllabusUrl: cbseSyllabus("SecPart2/English_core_SecP2_2026-27.pdf"),
+    books: [book("Hornbill", "kehb1=0-14"), book("Snapshots Suppl.Reader English", "kesp1=0-5")],
+  }),
+  subject({
+    slug: "accountancy", name: "Accountancy", ncertSubject: "Accountancy",
+    syllabusUrl: cbseSyllabus("SecPart2/Accountancy_SecP2_2026-27.pdf"),
+    books: [
+      book("Financial Accounting-I", "keac1=0-7"),
+      book("Accountancy-II", "keac2=0-2"),
+      hi("Lekhashastra-I", "khac1=0-7"),
+      hi("Lekhashastra-II", "khac2=0-2"),
+    ],
+  }),
+  subject({
+    slug: "business-studies", name: "Business Studies", ncertSubject: "Business Studies",
+    syllabusUrl: cbseSyllabus("SecPart2/BusinessStudies_SecP2_2026-27.pdf"),
+    books: [book("Business Studies", "kebs1=0-11"), hi("Vyavsay Adhyanan", "khbs1=0-11")],
+  }),
+  subject({
+    slug: "economics", name: "Economics", ncertSubject: "Economics",
+    syllabusUrl: cbseSyllabus("SecPart2/Economics_SecP2_2026-27.pdf"),
+    books: [
+      book("Statistics for Economics", "kest1=0-8"),
+      book("Indian Economic Development", "keec1=0-8"),
+      hi("Sankhyiki", "khst1=0-8"),
+      hi("Bhartiya Airthryavstha Ka Vikas", "khec1=0-8"),
+    ],
+  }),
+  subject({
+    slug: "history", name: "History", ncertSubject: "History",
+    syllabusUrl: cbseSyllabus("SecPart2/History_SecP2_2026-27.pdf"),
+    feedsExams: ["UPSC_PRELIMS"],
+    books: [book("Themes in World History", "kehs1=0-7"), hi("Vishwa Itihas Ke Kuch Vishay", "khhs1=0-7")],
+  }),
+  subject({
+    slug: "political-science", name: "Political Science", ncertSubject: "Political Science",
+    syllabusUrl: cbseSyllabus("SecPart2/PoliticalScience_SecP2_2026-27.pdf"),
+    feedsExams: ["UPSC_PRELIMS"],
+    books: [
+      book("Political Theory", "keps1=0-8"),
+      book("India Constitution at Work", "keps2=0-10"),
+      hi("Raajneeti Sidhant", "khps1=0-8"),
+      hi("Bharat ka Samvidhan Sidhant aur Vyavhar", "khps2=0-10"),
+    ],
+  }),
+  subject({
+    slug: "geography", name: "Geography", ncertSubject: "Geography",
+    syllabusUrl: cbseSyllabus("SecPart2/Geography_SecP2_2026-27.pdf"),
+    feedsExams: ["UPSC_PRELIMS"],
+    books: [
+      book("Fundamental of Physical Geography", "kegy2=0-14"),
+      book("India Physical Environment", "kegy1=0-6"),
+      book("Pratical Work in Geography", "kegy3=0-6"),
+      hi("Bhautique Bhugol ke Mool Sidhant", "khgy2=0-14"),
+      hi("Bhart Bhautik Paryabaran", "khgy1=0-6"),
+      hi("Bhugol Main Prayogatmak Karya", "khgy3=0-6"),
+    ],
+  }),
+];
+
+// ─────────────────────────────────────────────────────────────────────
+// CBSE Class 12 — NCERT books, Reprint 2026-27 (Physics Part-II's
+// prelims carry no reprint line, so no edition is shown for it).
+// ─────────────────────────────────────────────────────────────────────
+const CBSE_CLASS_12_SUBJECTS: SchoolSubject[] = [
+  subject({
+    slug: "physics", name: "Physics", ncertSubject: "Physics",
+    syllabusUrl: cbseSyllabus("SecPart2/Physics_SecP2_2026-27.pdf"),
+    feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"],
+    books: [
+      book("Physics Part-I", "leph1=0-8", {
+        edition: "Reprint 2026-27",
+        chapters: [
+          ["electric-charges-and-fields", "Electric Charges and Fields"],
+          ["electrostatic-potential-capacitance", "Electrostatic Potential and Capacitance"],
+          ["current-electricity", "Current Electricity"],
+          ["moving-charges-and-magnetism", "Moving Charges and Magnetism"],
+          ["magnetism-and-matter", "Magnetism and Matter"],
+          ["electromagnetic-induction", "Electromagnetic Induction"],
+          ["alternating-current", "Alternating Current"],
+          ["electromagnetic-waves", "Electromagnetic Waves"],
+        ],
+      }),
+      book("Physics Part-II", "leph2=0-6", {
+        firstChapter: 9,
+        chapters: [
+          ["ray-optics-and-optical-instruments", "Ray Optics and Optical Instruments"],
+          ["wave-optics", "Wave Optics"],
+          ["dual-nature-of-radiation-and-matter", "Dual Nature of Radiation and Matter"],
+          ["atoms", "Atoms"],
+          ["nuclei", "Nuclei"],
+          ["semiconductor-electronics", "Semiconductor Electronics: Materials, Devices and Simple Circuits"],
+        ],
+      }),
+      hi("Bhautiki-I", "lhph1=0-8"),
+      hi("Bhautiki-II", "lhph2=0-6"),
+      ur("Tabiyaat-I", "luph1=0-8"),
+      ur("Tabiyaat-II", "luph2=0-6"),
+    ],
+  }),
+  subject({
+    slug: "chemistry", name: "Chemistry", ncertSubject: "Chemistry",
+    syllabusUrl: cbseSyllabus("SecPart2/Chemistry_SecP2_2026-27.pdf"),
+    feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"],
+    books: [
+      book("Chemistry-I", "lech1=0-5", {
+        edition: "Reprint 2026-27",
+        chapters: [
+          ["solutions", "Solutions"],
+          ["electrochemistry", "Electrochemistry"],
+          ["chemical-kinetics", "Chemical Kinetics"],
+          ["the-d-and-f-block-elements", "The d- and f-Block Elements"],
+          ["coordination-compounds", "Coordination Compounds"],
+        ],
+      }),
+      book("Chemistry-II", "lech2=0-5", {
+        edition: "Reprint 2026-27",
+        firstChapter: 6,
+        chapters: [
+          ["haloalkanes-and-haloarenes", "Haloalkanes and Haloarenes"],
+          ["alcohols-phenols-and-ethers", "Alcohols, Phenols and Ethers"],
+          ["aldehydes-ketones-carboxylic-acids", "Aldehydes, Ketones and Carboxylic Acids"],
+          ["amines", "Amines"],
+          ["biomolecules", "Biomolecules"],
+        ],
+      }),
+      hi("Rasayan vigyan bhag I", "lhch1=0-5"),
+      hi("Rasayan vigyan bhag II", "lhch2=0-5"),
+      ur("Keemiya-I", "luch1=0-9"),
+      ur("Keemiya-II", "luch2=0-7"),
+    ],
+  }),
+  subject({
+    slug: "mathematics", name: "Mathematics", ncertSubject: "Mathematics",
+    syllabusUrl: cbseSyllabus("SecPart2/Maths_SecP2_2026-27.pdf"),
+    feedsExams: ["JEE_MAIN", "JEE_ADVANCED"],
+    books: [
+      book("Mathematics Part-I", "lemh1=0-6", {
+        edition: "Reprint 2026-27",
+        chapters: [
+          ["relations-and-functions", "Relations and Functions"],
+          ["inverse-trigonometric-functions", "Inverse Trigonometric Functions"],
+          ["matrices", "Matrices"],
+          ["determinants", "Determinants"],
+          ["continuity-and-differentiability", "Continuity and Differentiability"],
+          ["applications-of-derivatives", "Application of Derivatives"],
+        ],
+      }),
+      book("Mathematics Part-II", "lemh2=0-7", {
+        edition: "Reprint 2026-27",
+        firstChapter: 7,
+        chapters: [
+          ["integrals", "Integrals"],
+          ["applications-of-integrals", "Application of Integrals"],
+          ["differential-equations", "Differential Equations"],
+          ["vector-algebra", "Vector Algebra"],
+          ["three-dimensional-geometry", "Three Dimensional Geometry"],
+          ["linear-programming", "Linear Programming"],
+          ["probability", "Probability"],
+        ],
+      }),
+      hi("Ganit-I", "lhmh1=0-6"),
+      hi("Ganit-II", "lhmh2=0-7"),
+      ur("Riyazi-I", "lumh1=0-6"),
+      ur("Riyazi-II", "lumh2=0-7"),
+    ],
+  }),
+  subject({
+    slug: "biology", name: "Biology", ncertSubject: "Biology",
+    syllabusUrl: cbseSyllabus("SecPart2/Biology_SecP2_2026-27.pdf"),
+    feedsExams: ["NEET_UG"],
+    books: [
+      book("Biology", "lebo1=0-13", {
+        edition: "Reprint 2026-27",
+        chapters: [
+          ["sexual-reproduction-flowering-plants", "Sexual Reproduction in Flowering Plants"],
+          ["human-reproduction", "Human Reproduction"],
+          ["reproductive-health", "Reproductive Health"],
+          ["principles-of-inheritance", "Principles of Inheritance and Variation"],
+          ["molecular-basis-of-inheritance", "Molecular Basis of Inheritance"],
+          ["evolution", "Evolution"],
+          ["human-health-and-disease", "Human Health and Disease"],
+          ["microbes-in-human-welfare", "Microbes in Human Welfare"],
+          ["biotechnology-principles-and-processes", "Biotechnology: Principles and Processes"],
+          ["biotechnology-and-its-applications", "Biotechnology and its Applications"],
+          ["organisms-and-populations", "Organisms and Populations"],
+          ["ecosystem", "Ecosystem"],
+          ["biodiversity-and-conservation", "Biodiversity and Conservation"],
+        ],
+      }),
+      hi("Jeev Vigyan", "lhbo1=0-13"),
+      ur("Hayatiyaat", "lubo1=0-16"),
+    ],
+  }),
+  subject({
+    slug: "accountancy", name: "Accountancy", ncertSubject: "Accountancy",
+    syllabusUrl: cbseSyllabus("SecPart2/Accountancy_SecP2_2026-27.pdf"),
+    books: [
+      book("Accountancy-I", "leac1=0-4"),
+      book("Accountancy Part-II", "leac2=0-6"),
+      book("Computerised Accounting System", "leca1=0-4"),
+      hi("Lekhashastra Part-I", "lhac1=0-4"),
+      hi("Lekhashastra Part-II", "lhac2=0-5"),
+    ],
+  }),
+  subject({
+    slug: "business-studies", name: "Business Studies", ncertSubject: "Business Studies",
+    syllabusUrl: cbseSyllabus("SecPart2/BusinessStudies_SecP2_2026-27.pdf"),
+    books: [
+      book("Business Studies-I", "lebs1=0-8"),
+      book("Business Studies-II", "lebs2=0-3"),
+      hi("Vyavasai Adhyan-I", "lhbs1=0-8"),
+      hi("Vyavasai Adhyan-II", "lhbs2=0-3"),
+    ],
+  }),
+  subject({
+    slug: "economics", name: "Economics", ncertSubject: "Economics",
+    syllabusUrl: cbseSyllabus("SecPart2/Economics_SecP2_2026-27.pdf"),
+    books: [
+      book("Introductory Microeconomics", "leec2=0-5"),
+      book("Introductory Macroeconomics", "leec1=0-6"),
+      hi("Vyashthi Arthshasrta", "lhec2=0-5"),
+      hi("Samashty Arthshastra Ek Parichay", "lhec1=0-6"),
+    ],
+  }),
+  subject({
+    slug: "history", name: "History", ncertSubject: "History",
+    syllabusUrl: cbseSyllabus("SecPart2/History_SecP2_2026-27.pdf"),
+    feedsExams: ["UPSC_PRELIMS"],
+    books: [
+      book("Themes in Indian History-I", "lehs1=0-4"),
+      book("Themes in Indian History-II", "lehs2=0-4"),
+      book("Themes in Indian History-III", "lehs3=0-4"),
+      hi("Bharatiya Itihas ke kuchh Vishay-I", "lhhs1=0-4"),
+      hi("Bharatiya Itihas ke kuchh Vishay-II", "lhhs2=0-4"),
+      hi("Bharatiya Itihas ke kuchh Vishay-III", "lhhs3=0-4"),
+    ],
+  }),
+  subject({
+    slug: "political-science", name: "Political Science", ncertSubject: "Political Science",
+    syllabusUrl: cbseSyllabus("SecPart2/PoliticalScience_SecP2_2026-27.pdf"),
+    feedsExams: ["UPSC_PRELIMS"],
+    books: [
+      book("Contemporary World Politics", "leps1=0-7"),
+      book("Politics in India Since Independence", "leps2=0-8"),
+      hi("Samkalin Vishwa Rajniti", "lhps1=0-7"),
+      hi("Swatantra Bharat Mein Rajniti-II", "lhps2=0-8"),
+    ],
+  }),
+  subject({
+    slug: "geography", name: "Geography", ncertSubject: "Geography",
+    syllabusUrl: cbseSyllabus("SecPart2/Geography_SecP2_2026-27.pdf"),
+    feedsExams: ["UPSC_PRELIMS"],
+    books: [
+      book("Fundamentals of Human Geography", "legy1=0-8"),
+      book("India -People And Economy", "legy2=0-9"),
+      book("Practical Work in Geography Part II", "legy3=0-4"),
+      hi("Manav Bhugol Ke Mool Sidhant", "lhgy1=0-8"),
+      hi("Bharat log aur arthvyasastha(Bhugol)", "lhgy2=0-9"),
+      hi("Bhugol main peryojnatmak pryogatmak karye", "lhgy3=0-4"),
+    ],
+  }),
+  subject({
+    slug: "english-core", name: "English Core", ncertSubject: "English",
+    syllabusUrl: cbseSyllabus("SecPart2/English_core_SecP2_2026-27.pdf"),
+    books: [book("Flamingo", "lefl1=0-13"), book("Vistas", "levt1=0-6")],
+  }),
+];
+
+// ─────────────────────────────────────────────────────────────────────
+// CISCE (ICSE Class 10, ISC Classes 11-12). CISCE prescribes syllabuses,
+// not one textbook, so these tiles only point at CISCE's own
+// regulations-and-syllabuses pages. 25 Sep 2026: the old chapter counts
+// and set-text / "wider than CBSE" blurbs were unsourced and are gone.
+// ─────────────────────────────────────────────────────────────────────
+const icse = (slug: string, name: string, feedsExams?: string[]): SchoolSubject =>
+  subject({ slug, name, syllabusUrl: ICSE_REGULATIONS_URL, syllabusLabel: "CISCE: ICSE regulations and syllabuses", ...(feedsExams ? { feedsExams } : {}) });
+const isc = (slug: string, name: string, feedsExams?: string[]): SchoolSubject =>
+  subject({ slug, name, syllabusUrl: ISC_REGULATIONS_URL, syllabusLabel: "CISCE: ISC regulations and syllabuses", ...(feedsExams ? { feedsExams } : {}) });
+
+const ICSE_CLASS_10_SUBJECTS: SchoolSubject[] = [
+  icse("english-language", "English I (Language)"),
+  icse("english-literature", "English II (Literature)"),
+  icse("mathematics", "Mathematics", ["JEE_MAIN"]),
+  icse("physics", "Physics", ["JEE_MAIN", "NEET_UG"]),
+  icse("chemistry", "Chemistry", ["JEE_MAIN", "NEET_UG"]),
+  icse("biology", "Biology", ["NEET_UG"]),
+  icse("history-civics", "History + Civics"),
+  icse("geography", "Geography"),
+  icse("computer-applications", "Computer Applications"),
+];
+
 const ICSE_CLASS_11_SUBJECTS: SchoolSubject[] = [
-  { slug: "english",      name: "English",      blurb: "Compulsory across streams.", chapterCount: 0 },
-  { slug: "mathematics",  name: "Mathematics",  blurb: "Sets, functions, trig, complex numbers, calculus intro, vectors, 3-D.", chapterCount: 16, feedsExams: ["JEE_MAIN", "JEE_ADVANCED"] },
-  { slug: "physics",      name: "Physics",      blurb: "Mechanics, oscillations, waves, thermodynamics. JEE foundation.", chapterCount: 11, feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"] },
-  { slug: "chemistry",    name: "Chemistry",    blurb: "Atomic structure, periodicity, bonding, organic intro. JEE/NEET foundation.", chapterCount: 11, feedsExams: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"] },
-  { slug: "biology",      name: "Biology",      blurb: "Cell, plant + animal kingdom, human physiology. NEET foundation.", chapterCount: 14, feedsExams: ["NEET_UG"] },
-  { slug: "accounts",     name: "Accounts",     blurb: "Journal + ledger + trial balance + financial statements.", chapterCount: 0 },
-  { slug: "commerce",     name: "Commerce",     blurb: "Forms of business, management functions.", chapterCount: 0 },
-  { slug: "economics",    name: "Economics",    blurb: "Micro + macro foundations.", chapterCount: 0, feedsExams: ["IPMAT"] },
-  { slug: "history",      name: "History",      blurb: "World history + medieval Indian history.", chapterCount: 0 },
+  isc("english", "English"),
+  isc("mathematics", "Mathematics", ["JEE_MAIN", "JEE_ADVANCED"]),
+  isc("physics", "Physics", ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"]),
+  isc("chemistry", "Chemistry", ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"]),
+  isc("biology", "Biology", ["NEET_UG"]),
+  isc("accounts", "Accounts"),
+  isc("commerce", "Commerce"),
+  isc("economics", "Economics"),
+  isc("history", "History"),
+];
+
+const ICSE_CLASS_12_SUBJECTS: SchoolSubject[] = [
+  isc("english", "English"),
+  isc("mathematics", "Mathematics", ["JEE_MAIN", "JEE_ADVANCED"]),
+  isc("physics", "Physics", ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"]),
+  isc("chemistry", "Chemistry", ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"]),
+  isc("biology", "Biology", ["NEET_UG"]),
+  isc("accounts", "Accounts"),
+  isc("commerce", "Commerce"),
+  isc("economics", "Economics"),
+  isc("history", "History"),
+  isc("psychology", "Psychology"),
 ];
 
 // ─────────────────────────────────────────────────────────────────────
@@ -612,7 +868,8 @@ export function findChapter(boardSlug: string, classNum: number, subjectSlug: st
 
 /**
  * Walk every (board, class, subject) tuple that has a chapter list,
- * yielding one entry per chapter. Used by sitemap + generateStaticParams.
+ * yielding one entry per chapter. Used by generateStaticParams (and, until
+ * the school pages leave the sitemap, by sitemap.ts).
  */
 export function allChapterPaths(): Array<{
   boardSlug: string;
@@ -637,14 +894,31 @@ export function allChapterPaths(): Array<{
   return out;
 }
 
-/** Class-level NCERT URL for the "official syllabus" link on a class page. */
-export function ncertClassUrl(boardSlug: string, classNum: number): string | null {
-  // NCERT hosts CBSE chapter PDFs at well-known per-class paths.
+/**
+ * Class-level official source for the "official textbooks / syllabus" link
+ * on a class page.
+ *
+ * 25 Sep 2026: this built `textbook.php?fec1={n}-12` — no NCERT book has
+ * that code, so every CBSE class page linked to a dead book. NCERT's index
+ * has no per-class deep link (the class is picked in a dropdown), so CBSE
+ * classes link to the index itself. CISCE classes link to CISCE's ICSE
+ * (Classes 9-10) or ISC (11-12) regulations-and-syllabuses page, and to
+ * cisce.org for Classes 1-8; the old cisce.org/curriculum.aspx is a 404.
+ */
+export function officialClassSource(boardSlug: string, classNum: number): { url: string; label: string } | null {
+  if (!Number.isInteger(classNum) || classNum < 1 || classNum > 12) return null;
   if (boardSlug === "cbse") {
-    return `https://ncert.nic.in/textbook.php?fec1=${classNum}-12`;
+    return { url: NCERT_INDEX_URL, label: `NCERT textbooks (official index: choose Class ${classNum})` };
   }
   if (boardSlug === "icse-cisce") {
-    return "https://cisce.org/curriculum.aspx";
+    if (classNum >= 11) return { url: ISC_REGULATIONS_URL, label: "CISCE: ISC regulations and syllabuses" };
+    if (classNum >= 9) return { url: ICSE_REGULATIONS_URL, label: "CISCE: ICSE regulations and syllabuses" };
+    return { url: CISCE_HOME_URL, label: "CISCE official website" };
   }
   return null;
+}
+
+/** URL half of officialClassSource (kept under its old name for callers). */
+export function ncertClassUrl(boardSlug: string, classNum: number): string | null {
+  return officialClassSource(boardSlug, classNum)?.url ?? null;
 }

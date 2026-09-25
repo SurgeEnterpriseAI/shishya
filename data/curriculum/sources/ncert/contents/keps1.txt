@@ -1,0 +1,39 @@
+# NCERT contents evidence — keps1 — Political Theory (index class 11, Political Science)
+# source: https://ncert.nic.in/textbook/pdf/keps1ps.pdf
+# fetched: 2026-09-25T23:15:17+05:30  sha256: 41c8c0056b98e89d5bc95ed68e4c0db4816a80b1e8462d5197bd4cbf20628d0c  bytes: 1021661
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 904b33b673989fa594847db37b090ceb18aa5ee16e5e265d97f8c1ec0b3d347d);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@keps1#1 title [pdftotext p11] next=number
+  Chapter 1 Political Theory: An Introduction
++ Chapter 2 Freedom
++ Chapter 3 Equality
+@keps1#2 title [pdftotext p11] next=number
+  Chapter 2 Freedom
++ Chapter 3 Equality
++ Chapter 4 Social Justice
+@keps1#3 title [pdftotext p11] next=number
+  Chapter 3 Equality
++ Chapter 4 Social Justice
++ Chapter 5 Rights
+@keps1#4 title [pdftotext p11] next=number
+  Chapter 4 Social Justice
++ Chapter 5 Rights
++ Chapter 6 Citizenship
+@keps1#5 title [pdftotext p11] next=number
+  Chapter 5 Rights
++ Chapter 6 Citizenship
++ Chapter 7 Nationalism
+@keps1#6 title [pdftotext p11] next=number
+  Chapter 6 Citizenship
++ Chapter 7 Nationalism
++ Chapter 8 Secularism
+@keps1#7 title [pdftotext p11] next=number
+  Chapter 7 Nationalism
++ Chapter 8 Secularism
++ v 1-16 17-30 31-52 53-66 67-78 79-96 97-110 111-128
+@keps1#8 title [pdftotext p11] next=page
+  Chapter 8 Secularism
++ v 1-16 17-30 31-52 53-66 67-78 79-96 97-110 111-128
++ Reprint 2026-27

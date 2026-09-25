@@ -1,0 +1,8 @@
+# NCERT contents evidence — chve1 — Veena (index class 3, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/chve1ps.pdf
+# fetched: 2026-09-25T23:14:17+05:30  sha256: fc68cb968cc3b2e17908e373a39702ef48e8e1bce60fa189e51d26690d275923  bytes: 5004139
+# contents pages of the PDF: none found of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 39c746c1c0d064f4a01596cbdf93ee4f8b47c975051187c52a86009895c5717a);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

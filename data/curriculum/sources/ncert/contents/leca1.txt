@@ -1,0 +1,23 @@
+# NCERT contents evidence — leca1 — Computerised Accounting System (index class 12, Accountancy)
+# source: https://ncert.nic.in/textbook/pdf/leca1ps.pdf
+# fetched: 2026-09-25T23:15:29+05:30  sha256: c7b26f211ad50cd2539f762a4f6337267332b4e07dd60dbdd4cb107ba8a7309a  bytes: 937002
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 e415dfa58b60fe8c95838ed0e6351d31538fc2fc1f2321c2dc7f0627883c7d05);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@leca1#1 title [pdftotext p11] next=sub-entry-list
+  OVERVIEW OF COMPUTERISED ACCOUNTING SYSTEM
++ Computerised Accounting System Components of CAS Salient Features of CAS Grouping of Accounts Using Software of CAS Advantages of CAS Limitations of CAS Account
++ CHAPTER 2
+@leca1#2 title [pdftotext p11] next=sub-entry-list
+  SPREADSHEET
++ Basic Concepts of Spreadsheet Data Entry, Text Management and Cell Formatting Data Formatting Output Reports Preparation of Reports Using Pivot Table Common Err
++ CHAPTER 3
+@leca1#3 title [pdftotext p11] next=sub-entry-list
+  USE OF SPREADSHEET IN BUSINESS APPLICATIONS
++ Payroll Accounting Asset Accounting Loan Repayment Schedule
++ CHAPTER 4 GRAPHS AND CHARTS FOR BUSINESS DATA
+@leca1#4 title [pdftotext p11] next=number
+  CHAPTER 4 GRAPHS AND CHARTS FOR BUSINESS DATA
++ 4.1 Graphs and Charts 4.2 Basics Steps for Graphs/Charts/Diagrams Using Excel 4.3 Advantages in Using Graph/Chart
++ v

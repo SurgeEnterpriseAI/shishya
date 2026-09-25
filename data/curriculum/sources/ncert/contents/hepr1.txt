@@ -1,0 +1,90 @@
+# NCERT contents evidence — hepr1 — Poorvi (index class 8, English)
+# source: https://ncert.nic.in/textbook/pdf/hepr1ps.pdf
+# fetched: 2026-09-25T23:14:41+05:30  sha256: 7de9daed93e47bcaeb7209e55699a1116a602b3bca39d71744e270f8da5dc2bf  bytes: 3789780
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 b8d65de702b1bdae58fff8fd93f3d590ebb101a16ba3f46f815a8758e7535f03);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@hepr1#1 title [pdftotext p15] next=known
+  Unit 1: Wit and Wisdom
++ The Wit that Won Hearts
++ 1
+@hepr1#1/1 include [pdftotext p15] next=known
+  The Wit that Won Hearts
++ 1
++ A Concrete Example
+@hepr1#1/2 include [pdftotext p15] next=known
+  A Concrete Example
++ 17
++ Wisdom Paves the Way
+@hepr1#1/3 include [pdftotext p15] next=number
+  Wisdom Paves the Way
++ 27
++ Unit 2: Values and Dispositions
+@hepr1#2 title [pdftotext p15] next=known
+  Unit 2: Values and Dispositions
++ A Tale of Valour: Major Somnath Sharma
++ and the Battle of Badgam
+@hepr1#2/1 include [pdftotext p15] next=known
+  A Tale of Valour: Major Somnath Sharma
+  and the Battle of Badgam
++ 49
++ Somebody’s Mother
+@hepr1#2/2 include [pdftotext p15] next=known
+  Somebody’s Mother
++ 70
++ Verghese Kurien— I Too Had A Dream
+@hepr1#2/3 include [pdftotext p15] next=number
+  Verghese Kurien— I Too Had A Dream
++ 82
++ Unit 3: Mystery and Magic
+@hepr1#3 title [pdftotext p15] next=known
+  Unit 3: Mystery and Magic
++ The Case of the Fifth Word
++ 101
+@hepr1#3/1 include [pdftotext p15] next=known
+  The Case of the Fifth Word
++ 101
++ The Magic Brush of Dreams
+@hepr1#3/2 include [pdftotext p15] next=known
+  The Magic Brush of Dreams
++ 122
++ Spectacular Wonders
+@hepr1#3/3 include [pdftotext p15] next=number
+  Spectacular Wonders
++ 137
++ Unit 4: Environment
+@hepr1#4 title [pdftotext p15] next=known
+  Unit 4: Environment
++ The Cherry Tree
++ 155
+@hepr1#4/1 include [pdftotext p15] next=known
+  The Cherry Tree
++ 155
++ Harvest Hymn
+@hepr1#4/2 include [pdftotext p15] next=known
+  Harvest Hymn
++ 173
++ Waiting for the Rain
+@hepr1#4/3 include [pdftotext p15] next=number
+  Waiting for the Rain
++ 185
++ Unit 5: Science and Curiosity
+@hepr1#5 title [pdftotext p15] next=known
+  Unit 5: Science and Curiosity
++ Feathered Friend
++ 205
+@hepr1#5/1 include [pdftotext p15] next=known
+  Feathered Friend
++ 205
++ Magnifying Glass
+@hepr1#5/2 include [pdftotext p15] next=known
+  Magnifying Glass
++ 222
++ 	Bibha Chowdhuri: The Beam of
+@hepr1#5/3 include [pdftotext p15] next=page
+  	Bibha Chowdhuri: The Beam of
+  Light that Lit the Path for Women in
+  Indian Science
++ 233
++ Reprint 2026-27

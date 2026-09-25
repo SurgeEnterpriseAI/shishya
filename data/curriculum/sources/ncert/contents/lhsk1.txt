@@ -1,0 +1,8 @@
+# NCERT contents evidence — lhsk1 — Bhaswati (index class 12, Sanskrit)
+# source: https://ncert.nic.in/textbook/pdf/lhsk1ps.pdf
+# fetched: 2026-09-25T23:15:29+05:30  sha256: 49a335dc3b834162a27ebd1ba8fbd9fd83b18faa6e33c55992f3bbce879eb607  bytes: 1298086
+# contents pages of the PDF: none found of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 847a7496665c2ea0d02c6bbd04ec8fb1022dedc7b94aefb13d4c232c0a2376d0);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

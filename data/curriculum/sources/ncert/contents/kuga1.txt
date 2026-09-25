@@ -1,0 +1,8 @@
+# NCERT contents evidence — kuga1 — Gulistan e Adab (index class 11, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/kuga1ps.pdf
+# fetched: 2026-09-25T23:15:21+05:30  sha256: 9ac54191eefa7adf074c70e01592997634d8423515ae8c7e403d07064d6f0f6a  bytes: 3132128
+# contents pages of the PDF: none found of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 90ed1ff0de6b0508db408472609ef31797a6d0306440d7f669bcf50a2e73778a);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

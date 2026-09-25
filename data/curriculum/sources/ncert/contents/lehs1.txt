@@ -1,0 +1,39 @@
+# NCERT contents evidence — lehs1 — Themes in Indian History-I (index class 12, History)
+# source: https://ncert.nic.in/textbook/pdf/lehs1ps.pdf
+# fetched: 2026-09-25T23:15:34+05:30  sha256: 596e824c434a956103db4c50aa9313fcf40ac3e6c579848e61204f8c9c9c27ed  bytes: 2258845
+# contents pages of the PDF: 11,12 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 b2ea5b71ae90b5bd12024639904da56c36cd58dfa4b823dbcfb3e8e583414845);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lehs1#1 title [pdftotext p11] next=known
+  BRICKS, BEADS AND BONES
++ The Harappan Civilisation
++ THEME TWO ○ ○ ○ ○ ○ ○ ○ ○ ○ ○ ○ ○ ○ ○
+@lehs1#1:subtitle subtitle [pdftotext p11] next=number
+  The Harappan Civilisation
++ THEME TWO ○ ○ ○ ○ ○ ○ ○ ○ ○ ○ ○ ○ ○ ○
++ KINGS, FARMERS AND TOWNS Early States and Economies (c.600 BCE-600 CE)
+@lehs1#2 title [pymupdf p11] next=known
+  KINGS, FARMERS AND TOWNS
++ Early States and Economies
++ (c.600 BCE-600 CE)
+@lehs1#2:subtitle subtitle [pymupdf p11] next=sub-entry
+  Early States and Economies
++ (c.600 BCE-600 CE)
++ THEME THREE
+@lehs1#3 title [pymupdf p11] next=known
+  KINSHIP, CASTE AND CLASS
++ Early Societies
++ (c. 600 BCE-600 CE)
+@lehs1#3:subtitle subtitle [pymupdf p11] next=sub-entry
+  Early Societies
++ (c. 600 BCE-600 CE)
++ THEME FOUR
+@lehs1#4 title [pymupdf p11] next=known
+  THINKERS, BELIEFS AND BUILDINGS
++ Cultural Developments
++ (c. 600 BCE-600 CE)
+@lehs1#4:subtitle subtitle [pymupdf p11] next=sub-entry
+  Cultural Developments
++ (c. 600 BCE-600 CE)
++ PART II*

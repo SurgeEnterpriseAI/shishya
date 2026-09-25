@@ -1,0 +1,8 @@
+# NCERT contents evidence — khat1 — Antra (index class 11, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/khat1ps.pdf
+# fetched: 2026-09-25T23:15:14+05:30  sha256: 411116e004e749c8d4223abf6a551140204b6b01a69eef29247ddff426a5de49  bytes: 2063900
+# contents pages of the PDF: none found of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 da5dc31f7bc242631c16b278cc11a1f1a2382dc743c35f8a86c42192ba997506);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

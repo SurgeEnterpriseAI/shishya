@@ -1,0 +1,47 @@
+# NCERT contents evidence — eesa1 — Santoor (index class 5, English)
+# source: https://ncert.nic.in/textbook/pdf/eesa1ps.pdf
+# fetched: 2026-09-25T23:14:23+05:30  sha256: 7ecaefaa0ed0ada410282fa18ab5a944b8e818cbc897993404cc4924a2682e5d  bytes: 4469179
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 fd51570a6946cbac28dda4b6b51a8a3a47900857e0faaeacf80236b09c5ba368);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@eesa1#1 title [pdftotext p15] next=number
+  1. Papa’s Spectacles
++ 1
++ 2. Gone with the Scooter
+@eesa1#2 title [pdftotext p15] next=number
+  2. Gone with the Scooter
++ 11
++ Unit 2: My Colourful World
+@eesa1#3 title [pdftotext p15] next=number
+  3. The Rainbow
++ 27
++ 4. The Wise Parrot
+@eesa1#4 title [pdftotext p15] next=boilerplate
+  4. The Wise Parrot
++ 41
++ Self-assessment 1
+@eesa1#5 title [pdftotext p15] next=number
+  5. The Frog
++ 55
++ 6. What a Tank!
+@eesa1#6 title [pdftotext p15] next=number
+  6. What a Tank!
++ 65
++ Unit 4: Ups and Downs
+@eesa1#7 title [pdftotext p15] next=number
+  7. Gilli Danda
++ 79
++ 8. The Decision of the Panchayat 91
+@eesa1#8 title [pdftotext p15] next=number
+  8. The Decision of the Panchayat 91
++ Unit 5: Work is Worship
++ 9. Vocation
+@eesa1#9 title [pdftotext p15] next=number
+  9. Vocation
++ 105
++ 10. Glass Bangles
+@eesa1#10 title [pdftotext p15] next=boilerplate
+  10. Glass Bangles
++ 119
++ Self-assessment 2

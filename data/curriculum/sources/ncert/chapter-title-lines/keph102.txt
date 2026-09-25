@@ -1,0 +1,4 @@
+# first 3 text lines of https://ncert.nic.in/textbook/pdf/keph102.pdf (fetched 2026-09-25T23:24:44+05:30, sha256 cd0307176cef6d2ccf50a48f4342d82cec49d191f1869dc71da4ff5173846f27)
+CHAPTER TWO
+MOTION IN A STRAIGHT LINE
+2.1

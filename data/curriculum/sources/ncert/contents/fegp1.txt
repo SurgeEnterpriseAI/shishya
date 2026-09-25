@@ -1,0 +1,47 @@
+# NCERT contents evidence — fegp1 — Ganita Prakash (index class 6, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/fegp1ps.pdf
+# fetched: 2026-09-25T23:14:27+05:30  sha256: 902147cff853df0023b4e13293711573562bf42abf91253e5045e877c76d51df  bytes: 2983798
+# contents pages of the PDF: 19 of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 31d678109d825cc5beb3072e9dae9953cc24e1ab97bb1783fadf5c2b420c785d);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@fegp1#1 title [pdftotext p19] next=number
+  Patterns in Mathematics
++ 1
++ Chapter 2
+@fegp1#2 title [pdftotext p19] next=number
+  Lines and Angles
++ 13
++ Chapter 3
+@fegp1#3 title [pdftotext p19] next=number
+  Number Play
++ 55
++ Chapter 4
+@fegp1#4 title [pdftotext p19] next=number
+  Data Handling and Presentation
++ 74
++ Chapter 5
+@fegp1#5 title [pdftotext p19] next=number
+  Prime Time
++ 107
++ Chapter 6
+@fegp1#6 title [pdftotext p19] next=number
+  Perimeter and Area
++ 129
++ Chapter 7
+@fegp1#7 title [pdftotext p19] next=number
+  Fractions
++ 151
++ Chapter 8
+@fegp1#8 title [pdftotext p19] next=number
+  Playing with Constructions
++ 187
++ Chapter 9 Symmetry217
+@fegp1#9 title [pdftotext p19] next=number
+  Chapter 9 Symmetry217
++ Chapter 10
++ The Other Side of Zero
+@fegp1#10 title [pdftotext p19] next=boilerplate
+  The Other Side of Zero
++ 242
++ Learning Material Sheets

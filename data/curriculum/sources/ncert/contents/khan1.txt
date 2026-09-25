@@ -1,0 +1,8 @@
+# NCERT contents evidence — khan1 — Antral (index class 11, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/khan1ps.pdf
+# fetched: 2026-09-25T23:15:15+05:30  sha256: 973f61bbb5292e88407bf1522358258c2c4a333a7dea2f8d17c6d3c4b1089cd3  bytes: 2215613
+# contents pages of the PDF: none found of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 6e8a1443a42298c8b96e747fca519c99f513000ac187454a904079f372e14c7e);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

@@ -1,0 +1,59 @@
+# NCERT contents evidence — lebo1 — Biology (index class 12, Biology)
+# source: https://ncert.nic.in/textbook/pdf/lebo1ps.pdf
+# fetched: 2026-09-25T23:15:32+05:30  sha256: 22804a9f4df81466593bf0fec0ff9f521b12a55887e32fb46340e528728ac771  bytes: 573875
+# contents pages of the PDF: 11,12 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 d8a2b9e769e3a0e337e2222a4a4a25739f9688155cd551b525e0e6fa2ca6a354);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lebo1#1 title [pymupdf p11] next=complete (reviewed: pdftotext interleaves two columns (': Sexual Reproduction in Flowering Plants : Human Reproduction'); PyMuPDF prints the entry alone)
+   : Sexual Reproduction in Flowering Plants
++ 3
++ Chapter 2
+@lebo1#2 title [pdftotext p11] next=number
+  : Sexual Reproduction in Flowering Plants : Human Reproduction
++ Chapter 3 : Reproductive Health
++ iii v vii
+@lebo1#3 title [pdftotext p11] next=page
+  Chapter 3 : Reproductive Health
++ iii v vii
++ 1-50
+@lebo1#4 title [pymupdf p11] next=number
+   : Principles of Inheritance and Variation
++ 53
++ Chapter 5
+@lebo1#5 title [pymupdf p11] next=number
+   : Molecular Basis of Inheritance
++ 79
++ Chapter 6
+@lebo1#6 title [pdftotext p11] next=page
+  Chapter 4 : Principles of Inheritance and Variation Chapter 5 : Molecular Basis of Inheritance Chapter 6 : Evolution
++ 51-126
++ 53 79 110
+@lebo1#7 title [pymupdf p11] next=number
+   : Human Health and Disease
++ 129
++ Chapter 8
+@lebo1#8 title [pdftotext p11] next=page
+  Chapter 7 : Human Health and Disease Chapter 8 : Microbes in Human Welfare
++ 127-160
++ 129 149
+@lebo1#9 title [pdftotext p11] next=number
+  Chapter 9 : Biotechnology : Principles and Processes
++ 163
++ Chapter 10 : Biotechnology and its Applications
+@lebo1#10 title [pdftotext p11] next=page
+  Chapter 10 : Biotechnology and its Applications
++ 177
++ Reprint 2026-27
+@lebo1#11 title [pymupdf p12] next=number
+  Chapter 11 :  Organisms and Populations
++ 190
++ Chapter 12 :  Ecosystem
+@lebo1#12 title [pymupdf p12] next=number
+  Chapter 12 :  Ecosystem
++ 205
++ Chapter 13 :  Biodiversity and Conservation
+@lebo1#13 title [pdftotext p12] next=page
+  Chapter 11 : Organisms and Populations Chapter 12 : Ecosystem Chapter 13 : Biodiversity and Conservation
++ 188-227
++ 190 205 216

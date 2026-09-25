@@ -1,0 +1,43 @@
+# NCERT contents evidence — legy2 — India -People And Economy (index class 12, Geography)
+# source: https://ncert.nic.in/textbook/pdf/legy2ps.pdf
+# fetched: 2026-09-25T23:15:35+05:30  sha256: d2d6236684a3709e48e24ae04308d375e3dca2bc4d22e2e7d277fa1425a77c67  bytes: 1670270
+# contents pages of the PDF: 9 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 8f92097ef0684dab61eae514c0098c321ff571eb8236bac01ae799ee1aa39ea1);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@legy2#1 title [pdftotext p9] next=number
+  Unit I 1. Population : Distribution, Density, Growth and Composition
++ Unit II 2. Human Settlements
++ Unit III 3. Land Resources and Agriculture 4. Water Resources 5. Mineral and Energy Resources 6. Planning and Sustainable Development in Indian Context
+@legy2#2 title [pdftotext p9] next=number
+  Unit II 2. Human Settlements
++ Unit III 3. Land Resources and Agriculture 4. Water Resources 5. Mineral and Energy Resources 6. Planning and Sustainable Development in Indian Context
++ Unit IV 7. Transport and Communication 8. International Trade
+@legy2#3 title [pymupdf p9] next=number
+  Land Resources and Agriculture
++ 21-40
++ 4.
+@legy2#4 title [pymupdf p9] next=number
+  Water Resources
++ 41-52
++ 5.
+@legy2#5 title [pymupdf p9] next=number
+  Mineral and Energy Resources
++ 53-65
++ 6.
+@legy2#6 title [pdftotext p9] next=number
+  Unit III 3. Land Resources and Agriculture 4. Water Resources 5. Mineral and Energy Resources 6. Planning and Sustainable Development in Indian Context
++ Unit IV 7. Transport and Communication 8. International Trade
++ Unit V 9. Geographical Perspective on Selected Issues and Problems
+@legy2#7 title [pymupdf p9] next=number
+  Transport and Communication
++ 75-85
++ 8.
+@legy2#8 title [pdftotext p9] next=number
+  Unit IV 7. Transport and Communication 8. International Trade
++ Unit V 9. Geographical Perspective on Selected Issues and Problems
++ iii v
+@legy2#9 title [pdftotext p9] next=page
+  Unit V 9. Geographical Perspective on Selected Issues and Problems
++ iii v
++ 1-14

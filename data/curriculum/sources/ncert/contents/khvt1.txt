@@ -1,0 +1,8 @@
+# NCERT contents evidence — khvt1 — Vitan (index class 11, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/khvt1ps.pdf
+# fetched: 2026-09-25T23:15:15+05:30  sha256: a3972e84c3724dfd6310017c1236bba9823f5c751533b1d7f2179518d316e247  bytes: 1638118
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 f58ccb114f2fe32db18de089da9ed4cb1a711533c802edfa02aa0f8e9c98acdb);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

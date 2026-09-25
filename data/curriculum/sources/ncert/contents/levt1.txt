@@ -1,0 +1,39 @@
+# NCERT contents evidence — levt1 — Vistas (index class 12, English)
+# source: https://ncert.nic.in/textbook/pdf/levt1ps.pdf
+# fetched: 2026-09-25T23:15:32+05:30  sha256: 975ed2ac27161e0e1e6295d5f2cee80ef8dd6851f160609503c193375773ab07  bytes: 4159684
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 b3bf56b98db15773d660cbb1c46fe52ffd70a95651f53f4713bcccbc3235c142);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@levt1#1 title [pdftotext p11] next=author
+  1. The Third Level
++ Jack Finney
++ 1
+@levt1#2 title [pdftotext p11] next=author
+  2. The Tiger King
++ Kalki
++ 8
+@levt1#3 title [pdftotext p11] next=author
+  3. Journey to the end of the Earth Tishani Doshi
++ 18
++ 4. The Enemy
+@levt1#4 title [pdftotext p11] next=author
+  4. The Enemy
++ Pearl S. Buck
++ 24
+@levt1#5 title [pdftotext p11] next=author
+  5. On the face of It
++ Susan Hill
++ 47
+@levt1#6 title [pdftotext p11] next=sub-entry
+  6. Memories of Childhood
++ 62
++ •  The Cutting of My Long Hair Zitkala-Sa •  We Too are Human Beings Bama
+@levt1#6/1 include [pdftotext p11] next=author
+  •  The Cutting of My Long Hair Zitkala-Sa •  We Too are Human Beings Bama
++ Prelims.indd 11
++ 12/18/2024 10:00:47 AM
+@levt1#6/2 include [pymupdf p11] next=author
+  •  We Too are Human Beings
++ Bama
++ Prelims.indd   11

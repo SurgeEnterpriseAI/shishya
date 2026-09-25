@@ -1,0 +1,87 @@
+# NCERT contents evidence — gepr1 — Poorvi (index class 7, English)
+# source: https://ncert.nic.in/textbook/pdf/gepr1ps.pdf
+# fetched: 2026-09-25T23:14:35+05:30  sha256: 5b6cb1c3f32fff05153c1f1e36cf7afd6e0c5823d09eb68144588f887da5db16  bytes: 4291509
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 fb065931da49467502c1f5356de001eced03520fd206d70c53db7b56a5c4bfc9);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@gepr1#1 title [pdftotext p13] next=known
+  Unit 1: Learning Together
++ The Day the River Spoke
++ 1
+@gepr1#1/1 include [pdftotext p13] next=known
+  The Day the River Spoke
++ 1
++ Try Again
+@gepr1#1/2 include [pdftotext p13] next=known
+  Try Again
++ 16
++ Three Days to See
+@gepr1#1/3 include [pdftotext p13] next=number
+  Three Days to See
++ 28
++ Unit 2: Wit and Humour
+@gepr1#2 title [pdftotext p13] next=known
+  Unit 2: Wit and Humour
++ Animals, Birds, and Dr. Dolittle
++ 43
+@gepr1#2/1 include [pdftotext p13] next=known
+  Animals, Birds, and Dr. Dolittle
++ 43
++ A Funny Man
+@gepr1#2/2 include [pdftotext p13] next=known
+  A Funny Man
++ 59
++ Say the Right Thing
+@gepr1#2/3 include [pdftotext p13] next=number
+  Say the Right Thing
++ 70
++ Unit 3: Dreams and Discoveries
+@gepr1#3 title [pdftotext p13] next=known
+  Unit 3: Dreams and Discoveries
++ My Brother’s Great Invention
++ 91
+@gepr1#3/1 include [pdftotext p13] next=known
+  My Brother’s Great Invention
++ 91
++ Paper Boats
+@gepr1#3/2 include [pdftotext p13] next=known
+  Paper Boats
++ 109
++ North, South, East, West
+@gepr1#3/3 include [pdftotext p13] next=number
+  North, South, East, West
++ 118
++ Unit 4: Travel and Adventure
+@gepr1#4 title [pdftotext p13] next=known
+  Unit 4: Travel and Adventure
++ The Tunnel
++ 139
+@gepr1#4/1 include [pdftotext p13] next=known
+  The Tunnel
++ 139
++ Travel
+@gepr1#4/2 include [pdftotext p13] next=known
+  Travel
++ 157
++ Conquering the Summit
+@gepr1#4/3 include [pdftotext p13] next=number
+  Conquering the Summit
++ 166
++ Unit 5: Bravehearts
+@gepr1#5 title [pdftotext p13] next=known
+  Unit 5: Bravehearts
++ A Homage to Our Brave Soldiers
++ 179
+@gepr1#5/1 include [pdftotext p13] next=known
+  A Homage to Our Brave Soldiers
++ 179
++ My Dear Soldiers
+@gepr1#5/2 include [pdftotext p13] next=known
+  My Dear Soldiers
++ 199
++ Rani Abbakka
+@gepr1#5/3 include [pdftotext p13] next=page
+  Rani Abbakka
++ 206
++ Reprint 2026-27

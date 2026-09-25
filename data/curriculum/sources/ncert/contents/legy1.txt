@@ -1,0 +1,39 @@
+# NCERT contents evidence — legy1 — Fundamentals of Human Geography (index class 12, Geography)
+# source: https://ncert.nic.in/textbook/pdf/legy1ps.pdf
+# fetched: 2026-09-25T23:15:34+05:30  sha256: 21b79d98fc8da938ede38f3cf806f71fc98b03cd13b638922f93f63c1eaa5326  bytes: 1715803
+# contents pages of the PDF: 9 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 481726c3c8c081009a1e371d28283d1e6f399d9619e9ce22640bcdb47baf390d);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@legy1#1 title [pdftotext p9] next=number
+  1. Human Geography Nature and Scope
++ UNIT II
++ 2. The World Population Distribution, Density and Growth
+@legy1#2 title [pdftotext p9] next=number
+  2. The World Population Distribution, Density and Growth
++ 3. Human Development
++ UNIT III
+@legy1#3 title [pdftotext p9] next=number
+  3. Human Development
++ UNIT III
++ 4. Primary Activities 5. Secondary Activities 6. Tertiary and Quaternary Activities 7. Transport and Communication 8. International Trade
+@legy1#4 title [pymupdf p9] next=number
+  Primary Activities
++ 22
++ 5.
+@legy1#5 title [pymupdf p9] next=number
+  Secondary Activities
++ 36
++ 6.
+@legy1#6 title [pymupdf p9] next=number
+  Tertiary and Quaternary Activities
++ 45
++ 7.
+@legy1#7 title [pymupdf p9] next=number
+  Transport and Communication
++ 54
++ 8.
+@legy1#8 title [pdftotext p9] next=boilerplate
+  4. Primary Activities 5. Secondary Activities 6. Tertiary and Quaternary Activities 7. Transport and Communication 8. International Trade
++ APPENDIX I GLOSSARY
++ iii 1-6

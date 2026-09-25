@@ -1,0 +1,40 @@
+# NCERT contents evidence — lehs3 — Themes in Indian History-III (index class 12, History)
+# source: https://ncert.nic.in/textbook/pdf/lehs3ps.pdf
+# fetched: 2026-09-25T23:15:34+05:30  sha256: 71aea2618641c3dce3d67211cf31095cf1070f1edafc994635dcfa70e6d7e0b7  bytes: 2427559
+# contents pages of the PDF: 11 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 8c47045588bba35b8fb227885922e6f6daf4d9e1136c0e62eccec470447e3eab);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lehs3#1 title [pdftotext p11] next=known
+  COLONIALISM AND THE COUNTRYSIDE
++ Exploring Official Archives
++ THEME TEN
+@lehs3#1:subtitle subtitle [pdftotext p11] next=number
+  Exploring Official Archives
++ THEME TEN
++ 258
+@lehs3#2 title [pymupdf p11] next=known
+  REBELS AND THE RAJ
++ The Revolt of1857 and Its Representations
++ THEME ELEVEN
+@lehs3#2:subtitle subtitle [pymupdf p11] next=number
+  The Revolt of1857 and Its Representations
++ THEME ELEVEN
++ 286
+@lehs3#3 title [pymupdf p11] next=known
+  MAHATMA GANDHI AND THE
+  NATIONALIST MOVEMENT
++ Civil Disobedience and Beyond
++ THEME TWELVE
+@lehs3#3:subtitle subtitle [pymupdf p11] next=number
+  Civil Disobedience and Beyond
++ THEME TWELVE
++ 316
+@lehs3#4 title [pymupdf p11] next=known
+  FRAMING THE CONSTITUTION
++ The Beginning of a New Era
++ CONTENTS
+@lehs3#4:subtitle subtitle [pymupdf p11] next=boilerplate
+  The Beginning of a New Era
++ CONTENTS
++ Foreword

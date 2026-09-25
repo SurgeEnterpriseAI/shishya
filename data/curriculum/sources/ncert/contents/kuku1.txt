@@ -1,0 +1,8 @@
+# NCERT contents evidence — kuku1 — Khyabane Urdu (index class 11, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/kuku1ps.pdf
+# fetched: 2026-09-25T23:15:20+05:30  sha256: d6461a5919e45599ed6e166cb3ea23b60891aa91f50c38def8be6f2e8223a99e  bytes: 1681591
+# contents pages of the PDF: none found of 13
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 afd57f94fce8907e96543abc2599e6a402e81cd47f7c6346fbf2531056f331ed);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

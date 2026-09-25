@@ -1,0 +1,18 @@
+# NCERT contents evidence — lebs2 — Business Studies-II (index class 12, Business Studies)
+# source: https://ncert.nic.in/textbook/pdf/lebs2ps.pdf
+# fetched: 2026-09-25T23:15:39+05:30  sha256: d81db7715190477b6829a86dbfa565967b8e4a887bd86dbcf560be8d8748e1c6  bytes: 2681633
+# contents pages of the PDF: 9 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 7362050b71c9414b962152b594301adf179bfee8ca1910a57364055f65c94adf);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lebs2#1 title [pdftotext p9] next=number
+  Financial Management
++ 215
++ Chapter 10 Marketing
+@lebs2#2 title [pdftotext p9] next=number
+  Chapter 10 Marketing
++ 242
++ Chapter 11 Consumer Protection
+@lebs2#3 title [pdftotext p9] next=page
+  Chapter 11 Consumer Protection
++ 289

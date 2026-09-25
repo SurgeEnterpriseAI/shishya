@@ -1,0 +1,63 @@
+# NCERT contents evidence — kemh1 — Mathematics (index class 11, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/kemh1ps.pdf
+# fetched: 2026-09-25T23:15:11+05:30  sha256: cd9c1697533ef25daed84bff0c93d305978485edb88564168357ad62d983c45e  bytes: 1933522
+# contents pages of the PDF: 9,10,11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 e07d81a3db969f71a32928bbd2052d2e32ddfceedd0e191ca23b7db1533f3b65);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kemh1#1 title [pdftotext p9] next=number
+  1. Sets
++ 1
++ 1.1 Introduction
+@kemh1#2 title [pdftotext p9] next=number
+  2. Relations and Functions
++ 24
++ 2.1 Introduction
+@kemh1#3 title [pdftotext p9] next=number
+  3. Trigonometric Functions
++ 43
++ 3.1 Introduction
+@kemh1#4 title [pdftotext p9] next=number
+  4. Complex Numbers and Quadratic Equations
++ 76
++ 4.1 Introduction
+@kemh1#5 title [pdftotext p10] next=number
+  5. Linear Inequalities
++ 89
++ 5.1 Introduction
+@kemh1#6 title [pdftotext p10] next=number
+  6. Permutations and Combinations
++ 100
++ 6.1 Introduction
+@kemh1#7 title [pdftotext p10] next=number
+  7. Binomial Theorem
++ 126
++ 7.1 Introduction
+@kemh1#8 title [pdftotext p10] next=number
+  8. Sequences and Series
++ 135
++ 8.1 Introduction
+@kemh1#9 title [pdftotext p10] next=number
+  9. Straight Lines
++ 151
++ 9.1 Introduction
+@kemh1#10 title [pdftotext p10] next=number
+  10. Conic Sections
++ 176
++ 10.1 Introduction
+@kemh1#11 title [pdftotext p11] next=number
+  11. Introduction to Three Dimensional Geometry
++ 208
++ 11.1 Introduction
+@kemh1#12 title [pdftotext p11] next=number
+  12. Limits and Derivatives
++ 217
++ 12.1 Introduction
+@kemh1#13 title [pdftotext p11] next=number
+  13. Statistics
++ 257
++ 13.1 Introduction
+@kemh1#14 title [pdftotext p11] next=number
+  14. Probability
++ 289
++ 14.1 Event

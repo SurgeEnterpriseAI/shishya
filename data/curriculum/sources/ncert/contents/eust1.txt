@@ -1,0 +1,8 @@
+# NCERT contents evidence — eust1 — Sitaar (index class 5, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/eust1ps.pdf
+# fetched: 2026-09-25T23:14:26+05:30  sha256: ab5e2f4f2a90ae90e4dd13a893e4791d2f9de0f284438e99780351d0dc091af6  bytes: 5168435
+# contents pages of the PDF: none found of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 b5782218f870c27f15a79546e7d7be13f97a58fed2995ff17e38ccb7bca79a41);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

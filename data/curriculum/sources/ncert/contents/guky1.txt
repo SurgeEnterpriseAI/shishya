@@ -1,0 +1,8 @@
+# NCERT contents evidence — guky1 — Khayal (index class 7, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/guky1ps.pdf
+# fetched: 2026-09-25T23:14:40+05:30  sha256: 42c3341f9486d34f1ec2f180772b7f4a64e5b8214b6b54d643385f9bd4cbac1f  bytes: 4967016
+# contents pages of the PDF: none found of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 274195d27f0e0e4cd22bfcb0f5d7a33fdc0d8d7a676ff4184262ff0ce9d1949a);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

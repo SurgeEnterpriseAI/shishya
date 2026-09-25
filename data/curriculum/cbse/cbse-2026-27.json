@@ -1,0 +1,2296 @@
+{
+ "board": "CBSE",
+ "session": "2026-27",
+ "fetchedOn": "2026-09-25",
+ "sources": {
+  "curriculumPage": {
+   "url": "https://cbseacademic.nic.in/curriculum_2027.html",
+   "sha256": "abb4c74fdc5854bb4b65bb6e5006e4b93a57edfbe7faf07d8a302d8fc3cb7f0b",
+   "fetchedOn": "2026-09-25"
+  },
+  "secondaryPart1": {
+   "url": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Curriculum_SecP1_2026-27.pdf",
+   "sha256": "02ae5047722b6e22c88aead60385bb0c608b973bbaf193ace18b48bd316f40f0",
+   "pagesRead": [
+    7,
+    8,
+    15,
+    16,
+    17,
+    21,
+    22
+   ]
+  },
+  "seniorSecondaryPart2": {
+   "url": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Curriculum_SecP2_2026-27.pdf",
+   "sha256": "5f43a711751963bfbae8abdf92b66cd125042f6dcb38f36ebde6432e2c674042",
+   "pagesRead": [
+    8,
+    9,
+    10,
+    11,
+    12
+   ]
+  },
+  "syllabusPdfs": "data/curriculum/sources/cbse/syllabus-pdfs-2026-09-25.tsv"
+ },
+ "linkMethods": {
+  "title-in-prescribed-or-ncert-context": "the NCERT book title appears in the syllabus PDF's 'Prescribed Books' text or next to the word NCERT",
+  "subject-textbook-for-class": "the prescribed-books text says '<subject> … Textbook for Class <n> … NCERT' and NCERT's index lists that book under the same subject and class",
+  "ncert-url-in-syllabus": "the syllabus PDF prints the book's ncert.nic.in/textbook.php link",
+  "manual-quote": "read by hand from the prescribed-books text (quoted)",
+  "cbse-statement+ncert-index": "CBSE names the NCERT textbook by subject; NCERT's index lists exactly one book for that subject and class",
+  "title-in-cbse-subject-name": "the CBSE subject name contains the NCERT book title",
+  "inferred": "CBSE's wording does not name the book; the link is our reading — confirm before relying on it",
+  "reference-only": "CBSE lists the NCERT book only 'as reference'; the prescribed textbook is CBSE's own"
+ },
+ "classMethods": {
+  "ncert-index": "XI-XII link: taught in the class NCERT's index files the book under",
+  "cbse-course-structure": "XI-XII link: CBSE's course structure puts the book in another class than NCERT's index (quoted in classEvidence)"
+ },
+ "bands": [
+  {
+   "classes": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+   ],
+   "schemeOfStudies": null,
+   "note": "The 2026-27 curriculum page lists only Secondary (IX, X) and Senior Secondary (XI-XII) documents; there is no CBSE subject scheme for Classes I-VIII on it. Using the NCERT class index for CBSE Classes I-VIII is a working default of this spine, not a CBSE statement.",
+   "facts": [
+    {
+     "fact": "R3 (third language) is compulsory from Class VI with effect from 2026-27 (Class VII from 2027-28, Class VIII from 2028-29).",
+     "source": "Curriculum_SecP1_2026-27.pdf, 'Table 1 (Revised): Phased Implementation of R3'",
+     "url": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Curriculum_SecP1_2026-27.pdf"
+    },
+    {
+     "fact": "Computational Thinking is integrated across subjects in Classes III-V and CT with foundational AI literacy is introduced in Classes VI-VIII from 2026-27, embedded in existing subject periods.",
+     "source": "Curriculum_SecP1_2026-27.pdf, Scheme of Studies, instruction vii",
+     "url": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Curriculum_SecP1_2026-27.pdf"
+    }
+   ]
+  },
+  {
+   "classes": [
+    9
+   ],
+   "schemeOfStudies": {
+    "source": "Curriculum_SecP1_2026-27.pdf, 02 - Scheme of Studies, Table 2 ('New 2026-27', Subject in Class IX)",
+    "readingNote": "Table 2 is a multi-column table whose text layer interleaves columns; the list below is the 'Subject in Class IX' column. Per-row assessment wording is quoted only where it is unambiguous.",
+    "items": [
+     {
+      "subject": "Language 1 at R1 level",
+      "status": "compulsory"
+     },
+     {
+      "subject": "Language 2 at R2 level",
+      "status": "compulsory"
+     },
+     {
+      "subject": "Mathematics",
+      "status": "compulsory",
+      "quote": "Mathematics and Science … will be compulsory and will be studied by all students"
+     },
+     {
+      "subject": "Mathematics Advanced",
+      "status": "optional",
+      "quote": "Mathematics Advanced and Science Advanced: will be optional"
+     },
+     {
+      "subject": "Science",
+      "status": "compulsory",
+      "quote": "Mathematics and Science … will be compulsory and will be studied by all students"
+     },
+     {
+      "subject": "Science Advanced",
+      "status": "optional",
+      "quote": "Mathematics Advanced and Science Advanced: will be optional"
+     },
+     {
+      "subject": "Social Science",
+      "status": "compulsory",
+      "quote": "the three compulsory subjects (i.e., Science, Mathematics and Social Science)"
+     },
+     {
+      "subject": "Language 3 at R3 Level",
+      "status": "compulsory",
+      "quote": "In the transitional phase (for students entering Class IX in 2026–27 …), R3 shall be a mandatory subject. Students in Class IX 2026-27 shall study the Class VI level R3 textbooks … Assessment of R3 shall be entirely school-based/internal"
+     },
+     {
+      "subject": "Individuals in Society",
+      "status": "listed"
+     },
+     {
+      "subject": "Art Education",
+      "status": "listed"
+     },
+     {
+      "subject": "Physical Education and Well-being",
+      "status": "listed"
+     },
+     {
+      "subject": "Vocational Education",
+      "status": "listed"
+     },
+     {
+      "subject": "Optional Subject",
+      "status": "optional",
+      "quote": "OPTIONAL SUBJECTS (as on March 2026)** … ** This is a tentative list"
+     },
+     {
+      "subject": "CT & AI (Class IX-X) as Modules",
+      "status": "compulsory-modules",
+      "quote": "CT & AI (Class IX-X) as Modules* (compulsory) … *CT & AI as a compulsory subject in session 2027-28"
+     }
+    ],
+    "boardExamNote": "Class IX has no Board examination; Mathematics and Science carry a common 80-mark paper (school-based annual in Class IX of 2026-27 onwards)."
+   },
+   "subjects": [
+    {
+     "name": "Arabic",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Arabic_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Assamese",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Assamese_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bahasa Melayu",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Bahasa_Melayu_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bengali",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Bengali_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bhoti",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Bhoti_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bhutia",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Bhutia_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bodo",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Bodo_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Dogri",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Dogri_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "English",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/English_LL_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "bc533abf3af07ceae60ad94790f975ac6458b4d86554cb311f37ad3463e9aa18",
+     "syllabusFetchedAt": "2026-09-25T23:30:46+05:30",
+     "ncertBooks": [
+      {
+       "book": "iebe1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "prescribed textbook- kaveri: textbook of english for grade 9 the textbook has been developed based on common curricular goals rather than rig"
+      }
+     ]
+    },
+    {
+     "name": "French",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/French_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "German",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/German_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Gujarati",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Gujarati_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Gurung",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Gurung_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Hindi",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Hindi_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "cdcc2a4a06a7023c1126d3043732af2788a19751cf3b4ccd62e85b23fa8fd528",
+     "syllabusFetchedAt": "2026-09-25T23:30:46+05:30"
+    },
+    {
+     "name": "Japanese",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Japanese_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Kannada",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Kannada_SecP1IX_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Kashmiri",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Kashmiri_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Kokborok",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/KOKBOROK_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Konkani",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/KONKANI_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Lepcha",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Lepcha_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Limboo",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Limboo_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Malayalam",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Malyalam_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Manipuri",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Manipuri_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Marathi",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Marathi_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Maithili",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/MAITHILI_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Mizo",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Mizo_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Nepali",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Nepali_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Odia",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Odia_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Persian",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Persian_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Punjabi",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Punjabi_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Rai",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Rai_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Russian",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Russian_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Sanskrit",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Sanskrit_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "76440b45e36c2723da473808017a75f98579d448b8487bef853ba4e054a6ca03",
+     "syllabusFetchedAt": "2026-09-25T23:30:46+05:30"
+    },
+    {
+     "name": "Santhali",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Santhali_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Sindhi",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Sindhi_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Spanish",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Spanish_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Sherpa",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Sherpa_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Tamang",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Tamang_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Tamil",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Tamil_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Tangkhul",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Tangkhul_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Telugu AP",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Telugu_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Telugu Telangana",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Telugu_Telangana_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Tibetan",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Tibetan_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Thai",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Thai_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Urdu",
+     "group": "Languages",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Urdu_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "71f9b9c83a195d2a5c66c0d4da74cbe2c4447e464175f666e89be9ac9ae08103",
+     "syllabusFetchedAt": "2026-09-25T23:30:47+05:30"
+    },
+    {
+     "name": "Mathematics",
+     "group": "Main Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Maths_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "932ea66d6fbfcefce8182f28ab921c886187f5dea674321088b5c7230bbe6c32",
+     "syllabusFetchedAt": "2026-09-25T23:30:47+05:30",
+     "ncertBooks": [
+      {
+       "book": "iemh1",
+       "method": "subject-textbook-for-class",
+       "evidence": "05 marks 05 marks prescribed books: 1. mathematics - textbook for class ix - ncert publication 2. guidelines for mathematics laboratory"
+      }
+     ]
+    },
+    {
+     "name": "Mathematics at Advanced Level",
+     "group": "Main Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/MathsAd_SecP1_2026-27.pdf",
+     "syllabusSha256": "24cb27010ff2c13832c58b3aaf4213537148a7396812982e34cb752e0a718cb4",
+     "syllabusFetchedAt": "2026-09-25T23:30:48+05:30"
+    },
+    {
+     "name": "Science",
+     "group": "Main Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/ScienceSt_SecP1_2026-27.pdf",
+     "syllabusSha256": "ab19589aede5ad8b0b2f87964914c1a55a987f39032903871baa973c02ed6e24",
+     "syllabusFetchedAt": "2026-09-25T23:30:47+05:30",
+     "ncertBooks": [
+      {
+       "book": "iesc1",
+       "method": "subject-textbook-for-class",
+       "evidence": "prescribed books:  science-textbook for class ix-ncert publication  assessment of practical skills in science-class ix - cbse publication  laborat"
+      }
+     ]
+    },
+    {
+     "name": "Science at Advanced Level",
+     "group": "Main Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/ScienceAd_SecP1_2026-27.pdf",
+     "syllabusSha256": "2f78065cf205139edc9423d4374848c0da999d89fb0f6798261b7c4b43ff8c3f",
+     "syllabusFetchedAt": "2026-09-25T23:30:49+05:30"
+    },
+    {
+     "name": "Social Science",
+     "group": "Main Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/SocialScience_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "c81d9237b8e74d462e57776e162d534ff04feff27ed72eb236621361a9061735",
+     "syllabusFetchedAt": "2026-09-25T23:30:48+05:30",
+     "ncertBooks": [
+      {
+       "book": "iest1",
+       "method": "inferred",
+       "evidence": "CBSE: 'PRESCRIBED TEXT BOOKS … 1 Social Science-Part 1 NCERT … 2 Social Science-Part 2'; NCERT index, Class IX Social Science lists only 'Understanding Society India and Beyond PART-I' (iest1). Part 2 is not on the NCERT index on 25 Sep 2026."
+      }
+     ]
+    },
+    {
+     "name": "Interdisciplinary Area",
+     "group": "Main Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/InterdisAreas_SecP1_2026-27.pdf"
+    },
+    {
+     "name": "Vocational Education (Kaushal Vikas)",
+     "group": "Main Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/Curriculum27/publication/secondary/Vocational_Education_(Kaushal_Vikas).pdf",
+     "syllabusSha256": "3f79c9913f9f224a5989c89c3ebb3ea7f06fea407363ba531b411779e910c7e8",
+     "syllabusFetchedAt": "2026-09-25T23:30:48+05:30",
+     "ncertBooks": [
+      {
+       "book": "iekv1",
+       "method": "title-in-cbse-subject-name",
+       "evidence": "CBSE subject 'Vocational Education (Kaushal Vikas)'; NCERT index, Class IX, 'Skill Education' lists 'Kaushal Vikas'"
+      }
+     ]
+    },
+    {
+     "name": "Computational Thinking & AI",
+     "group": "Main Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/CTAI_SecP1_2026-27.pdf"
+    },
+    {
+     "name": "Physical Education & Well Being",
+     "group": "Main Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/PEWB_SecP1_2026-27.pdf",
+     "syllabusSha256": "9703fb3905379ef932fa50e1f32c63504eea3ffc1ee26f8c63fe3a4ae22deb10",
+     "syllabusFetchedAt": "2026-09-25T23:30:48+05:30",
+     "ncertBooks": [
+      {
+       "book": "iehp1",
+       "method": "cbse-statement+ncert-index",
+       "evidence": "The NCF-SE 2023 aligned new textbook of Physical Education and Well-being for Grade 9 developed by the NCERT. (NCERT index, Class IX, 'Physical Education and Well Being' lists one book: Khel Praveen)"
+      }
+     ]
+    },
+    {
+     "name": "Art Education",
+     "group": "Main Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Art_Education_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "3a13be05dd6f78f8298d89d133337a25d4202d0007791d1b1657d6e46d4256e4",
+     "syllabusFetchedAt": "2026-09-25T23:30:48+05:30"
+    },
+    {
+     "name": "Home Science",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Home_Science_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "47a7cf7576f0b9b2ed0eef5caa7c06bc1159ce73fe2098e0f721bcd9dcc9c036",
+     "syllabusFetchedAt": "2026-09-25T23:30:48+05:30"
+    },
+    {
+     "name": "Painting",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Painting_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "13a4605cbfe93e69be7ef2737ca4540c975c4e36406f9a162badae212681e130",
+     "syllabusFetchedAt": "2026-09-25T23:30:48+05:30"
+    },
+    {
+     "name": "National Cadet Corps (NCC)",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/NCC_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "b1242ed77956b5f08ed5044bb3936b325bba4292781fd35d85c53d7d9cda169c",
+     "syllabusFetchedAt": "2026-09-25T23:30:49+05:30"
+    },
+    {
+     "name": "Computer Applications",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Computer_Applications_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "0d9f887a6b3a39ca838a2a9636c62663d5d48decc83dd96ea0280d3d1414ed8b",
+     "syllabusFetchedAt": "2026-09-25T23:30:49+05:30"
+    },
+    {
+     "name": "Elements of Business",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Elements_of_Business_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "22d880bf8bac6210742c0da83171600c84a2363cbfcef59c26d3a62054753f33",
+     "syllabusFetchedAt": "2026-09-25T23:30:49+05:30"
+    },
+    {
+     "name": "Elements of Book Keeping & Accountancy",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Elements_of_BK_Acc_SecP1IX_2026-27.pdf",
+     "syllabusSha256": "7f3e506bb84dbb4fa0fa0d26a31ace47f35cf168cabed5a568f61542e57ed2f5",
+     "syllabusFetchedAt": "2026-09-25T23:30:49+05:30"
+    },
+    {
+     "name": "Retail",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/Curriculum27/sec/401-RETAIL-IX.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Information Technology",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/Curriculum27/sec/402-IT-IX.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Introduction to Financial Markets",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/Curriculum27/sec/405-FMM-IX.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Introduction to Tourism",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/Curriculum27/sec/406-INTRODUCTION_TOURISM-IX.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Beauty & Wellness",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/Curriculum27/sec/407-BEAUTY_AND_WELLNESS-IX.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Front Office Operations",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/Curriculum27/sec/410-FRONT_OFFICE_OPERATIONS-IX.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Marketing and Sales",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/Curriculum27/sec/412-MARKETING_SALES_IX.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Artificial Intelligence",
+     "group": "Optional Subjects",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/Curriculum27/sec/417-AI-IX.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    }
+   ]
+  },
+  {
+   "classes": [
+    10
+   ],
+   "schemeOfStudies": {
+    "source": "Curriculum_SecP1_2026-27.pdf, Table 2 ('Subjects in Class X') and instruction v.5",
+    "readingNote": "Class X students of 2026-27 stay on the existing scheme: 'students of Class-X in 2026–27 will only continue under the existing scheme and may opt for Mathematics Basic, as applicable for the academic year 2025-26.'",
+    "items": [
+     {
+      "subject": "Language 1",
+      "status": "compulsory-board"
+     },
+     {
+      "subject": "Language 2",
+      "status": "compulsory-board"
+     },
+     {
+      "subject": "Mathematics (Basic/Standard)",
+      "status": "compulsory-board"
+     },
+     {
+      "subject": "Science",
+      "status": "compulsory-board"
+     },
+     {
+      "subject": "Social Science",
+      "status": "compulsory-board"
+     },
+     {
+      "subject": "Skill-based or another Subject",
+      "status": "optional"
+     },
+     {
+      "subject": "Language 3",
+      "status": "listed"
+     },
+     {
+      "subject": "Health and Physical Education (Work Experience subsumed in HPE)",
+      "status": "school-based"
+     },
+     {
+      "subject": "Art Education",
+      "status": "school-based"
+     }
+    ],
+    "quote": "School-based Internal Assessment (IA) and compulsory Board Examination"
+   },
+   "subjects": [
+    {
+     "name": "Arabic",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Arabic_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Assamese",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Assamese_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bahasa Melayu",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Bahasa_Melayu_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bengali",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Bengali_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bhoti",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Bhoti_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bhutia",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Bhutia_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bodo",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Bodo_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "English - Language and Literature",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/English_LL_SecP1_2026-27.pdf",
+     "syllabusSha256": "f07f6460813354f37a0291c2982bdd4694044dc6b0b877a0cdc2d3a753287758",
+     "syllabusFetchedAt": "2026-09-25T23:30:49+05:30",
+     "ncertBooks": [
+      {
+       "book": "jeff1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "prescribed books: published by ncert, new delhi 1. first flight a. prose 1. a letter to god 2. nelson mandela - long walk to freedom 3. stories about flying 4. from the di",
+       "pieces": [
+        "A Letter to God",
+        "Nelson Mandela - Long Walk to Freedom",
+        "Stories About Flying",
+        "From the Diary of Anne Frank",
+        "Glimpses of India",
+        "Mijbil the Otter",
+        "Madam Rides the Bus",
+        "The Sermon at Benares",
+        "The Proposal (Play)",
+        "Dust of Snow",
+        "Fire and Ice",
+        "A Tiger in the Zoo",
+        "How to Tell Wild Animals",
+        "The Ball Poem",
+        "Amanda!",
+        "The Trees",
+        "Fog",
+        "The Tale of Custard the Dragon",
+        "For Anne Gregory"
+       ]
+      },
+      {
+       "book": "jefp1",
+       "method": "manual-quote",
+       "evidence": "Prescribed Books: Published by NCERT, New Delhi 1. FIRST FLIGHT … 2. FOOTPRINTS WITHOUT FEET",
+       "pieces": [
+        "A Triumph of Surgery",
+        "The Thief's Story",
+        "The Midnight Visitor",
+        "A Question of Trust",
+        "Footprints Without Feet",
+        "The Making of a Scientist",
+        "The Necklace",
+        "Bholi",
+        "The Book that Saved the Earth"
+       ]
+      },
+      {
+       "book": "jewe2",
+       "method": "manual-quote",
+       "evidence": "3. WORDS AND EXPRESSIONS – II (WORKBOOK FOR CLASS X) – Units 1 to 4 and Units 7 to 11"
+      }
+     ]
+    },
+    {
+     "name": "English Communicative",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/English_Communicative_SecP1_2026-27.pdf",
+     "syllabusSha256": "e1056128b56a44134a6433c2cda405c270e7dac3daca23a6ec22f6d0925f5787",
+     "syllabusFetchedAt": "2026-09-25T23:30:49+05:30"
+    },
+    {
+     "name": "French",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/French_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "German",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/German_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Gujarati",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Gujarati_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Gurung",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Gurung_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Hindi Course-A",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Hindi_A_SecP1_2026-27.pdf",
+     "syllabusSha256": "b3a032371d151375052f1d3fc2d1038e42b82f7860ad1eda0c14bb673d71cc9d",
+     "syllabusFetchedAt": "2026-09-25T23:30:49+05:30"
+    },
+    {
+     "name": "Hindi Course-B",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Hindi_B_SecP1_2026-27.pdf",
+     "syllabusSha256": "da394ab009186a36c9521be9b4df9e727b8678fe080981c7e464e25a0899b104",
+     "syllabusFetchedAt": "2026-09-25T23:30:50+05:30"
+    },
+    {
+     "name": "Japanese",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Japanese_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Kannada",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Kannada_SecP1X_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Kashmiri",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Kashmiri_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Kokborok",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/KOKBOROK_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Lepcha",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Lepcha_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Limboo",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Limboo_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Malayalam",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Malyalam_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Manipuri",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Manipuri_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Marathi",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Marathi_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Mizo",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Mizo_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Nepali",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Nepali_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Odia",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Odia_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Persian",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Persian_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Punjabi",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Punjabi_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Rai",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Rai_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Russian",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Russian_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Sanskrit",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Sanskrit_SecP1_2026-27.pdf",
+     "syllabusSha256": "48a87208c5b068feff80ced1ed4e9caf83e469b23793057ac0d96c66b832978c",
+     "syllabusFetchedAt": "2026-09-25T23:30:50+05:30"
+    },
+    {
+     "name": "Sanskrit Communiucative",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Sanskrit_Communiucative_SecP1_2026-27.pdf",
+     "syllabusSha256": "d272b7cb1ccd8de687348b816b102a9bcfc41e7190567ecbd658f297919bc356",
+     "syllabusFetchedAt": "2026-09-25T23:30:50+05:30"
+    },
+    {
+     "name": "Sindhi",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Sindhi_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Spanish",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Spanish_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Sherpa",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Sherpa_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Tamang",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Tamang_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Tamil",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Tamil_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Tangkhul",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Tangkhul_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Telugu AP",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Telugu_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Telugu Telangana",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Telugu_Telangana_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Tibetan",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Tibetan_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Thai",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Thai_SecP1_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Course A",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/UrduA_SecP1X_2026-27.pdf",
+     "syllabusSha256": "bba3f58fa05a52e1e5fd6a54f398b577238304f5791d91216997233cf4486a91",
+     "syllabusFetchedAt": "2026-09-25T23:30:50+05:30"
+    },
+    {
+     "name": "Course B",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/UrduB_SecP1X_2026-27.pdf",
+     "syllabusSha256": "97a55760a24642409d79664ec8868248ed6e7e9660b31916145b51cf96089628",
+     "syllabusFetchedAt": "2026-09-25T23:30:50+05:30"
+    },
+    {
+     "name": "Mathematics",
+     "group": "Main Subjects - (Group-A1)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Maths_SecP1X_2026-27.pdf",
+     "syllabusSha256": "d773e7c12b99e0bd498067e2b8268c76d0496bf9cad1c9e41c8652ab68b412a5",
+     "syllabusFetchedAt": "2026-09-25T23:30:50+05:30",
+     "ncertBooks": [
+      {
+       "book": "jemh1",
+       "method": "subject-textbook-for-class",
+       "evidence": "05 marks 05 marks prescribed books: 1. mathematics - textbook for class x - ncert publication 2. guidelines for mathematics laboratory"
+      }
+     ]
+    },
+    {
+     "name": "Science",
+     "group": "Main Subjects - (Group-A1)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Science_SecP1_2026-27.pdf",
+     "syllabusSha256": "1bec4a9e44452b22c9d422d8cb528b4de30598f56c243461845165771df7bc37",
+     "syllabusFetchedAt": "2026-09-25T23:30:50+05:30",
+     "ncertBooks": [
+      {
+       "book": "jesc1",
+       "method": "subject-textbook-for-class",
+       "evidence": "prescribed books:  science-text book for class x- ncert publication  assessment of practical skills in science- class x- cbse publication  laborat"
+      }
+     ]
+    },
+    {
+     "name": "Reading Material",
+     "group": "Main Subjects - (Group-A1)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Science_SecP1IX_2026-27_RM.pdf",
+     "syllabusSha256": "cbb67ccd67e3ba148c3b1850b5b9c60f448437d9fde329b765456d91523c44f9",
+     "syllabusFetchedAt": "2026-09-25T23:30:50+05:30"
+    },
+    {
+     "name": "Social Science",
+     "group": "Main Subjects - (Group-A1)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/SocialScience_SecP1X_2026-27.pdf",
+     "syllabusSha256": "99d21fd5e2fdddb990797eec5450c31098438c6a7ecc4406fce401e5e88083eb",
+     "syllabusFetchedAt": "2026-09-25T23:30:50+05:30",
+     "ncertBooks": [
+      {
+       "book": "jess1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "al science india and the contemporary world-ii democratic politics-ii geography contemporary india-ii economics understanding economic development disaster management together, towards a safer india-"
+      },
+      {
+       "book": "jess2",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "orary world-ii democratic politics-ii geography contemporary india-ii economics understanding economic development disaster management together, towards a safer india- part iii publisher ncert ncert n"
+      },
+      {
+       "book": "jess3",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "ed textbooks s.no. 1 2 3 4 5 subject name of the book history political science india and the contemporary world-ii democratic politics-ii geography contemporary india-ii economics understanding econo"
+      },
+      {
+       "book": "jess4",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "name of the book history political science india and the contemporary world-ii democratic politics-ii geography contemporary india-ii economics understanding economic development disaster management"
+      }
+     ]
+    },
+    {
+     "name": "Carnatic Music (Vocal)",
+     "group": "Other Academic Electives -(Group-A2)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Carnatic_Vocal_SecP1_2026-27.pdf",
+     "syllabusSha256": "8ceab69c52b6c17eac07ea4b65b4da3594a51bd2a796447b340fa96e8cf31177",
+     "syllabusFetchedAt": "2026-09-25T23:30:50+05:30"
+    },
+    {
+     "name": "Carnatic Music (Melodic Instruments)",
+     "group": "Other Academic Electives -(Group-A2)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Carnatic_Melodic_SecP1_2026-27.pdf",
+     "syllabusSha256": "a674acdbc3caa693babd8e6ac980bcb43383b5b9585a2b202915a8dcda88232b",
+     "syllabusFetchedAt": "2026-09-25T23:30:50+05:30"
+    },
+    {
+     "name": "Carnatic Music (Percussion Instruments)",
+     "group": "Other Academic Electives -(Group-A2)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Carnatic_Percussion_SecP1_2026-27.pdf",
+     "syllabusSha256": "f685796f914dc8dadda79a7a35fba95de28147cacb1b807d467b25e6b5f54e62",
+     "syllabusFetchedAt": "2026-09-25T23:30:51+05:30"
+    },
+    {
+     "name": "Hindustani Music (Vocal)",
+     "group": "Other Academic Electives -(Group-A2)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Hindustani_Music_Vocal_SecP1_2026-27.pdf",
+     "syllabusSha256": "a77b7bc06052c386f1625b4b1c3ee8ee6cc87a55bc737bd99b47c9f8dec9f747",
+     "syllabusFetchedAt": "2026-09-25T23:30:51+05:30"
+    },
+    {
+     "name": "Hindustani Music (Melodic Instruments)",
+     "group": "Other Academic Electives -(Group-A2)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Hindustani_Music_Melodic_SecP1_2026-27.pdf",
+     "syllabusSha256": "f2dd72fe0a3b03409483bfdf23c0a1b667d60a96313aa79babdfbc4ac0e738ae",
+     "syllabusFetchedAt": "2026-09-25T23:30:51+05:30"
+    },
+    {
+     "name": "Hindustani Music (Percussion Instruments)",
+     "group": "Other Academic Electives -(Group-A2)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Hindustani_Music_Percussion_SecP1_2026-27.pdf",
+     "syllabusSha256": "e760120ca49f0c359ab8c5fe1531eec21ae92198ef19b3a8532d35cb3d35268f",
+     "syllabusFetchedAt": "2026-09-25T23:30:51+05:30"
+    },
+    {
+     "name": "Painting",
+     "group": "Other Academic Electives -(Group-A2)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Painting_SecP1_2026-27.pdf",
+     "syllabusSha256": "49bde3345f3e3a63d62409b588350fdfdabcfed3ea5f30717eb2cda9b5b6cd78",
+     "syllabusFetchedAt": "2026-09-25T23:30:51+05:30"
+    },
+    {
+     "name": "Home Science",
+     "group": "Other Academic Electives -(Group-A2)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Home_Science_SecP1X_2026-27.pdf",
+     "syllabusSha256": "dd8ef3bd4e5e9bda2bf893453472c08cae86161ba8926b2d8eca92f35b256f63",
+     "syllabusFetchedAt": "2026-09-25T23:30:51+05:30"
+    },
+    {
+     "name": "National Cadet Corps (NCC)",
+     "group": "Other Academic Electives -(Group-A2)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/NCC_SecP1X_2026-27.pdf",
+     "syllabusSha256": "ede512b7b37b8c8d60b2a4cb050a09f6b94c67a2a04266b77d287c91e05025b4",
+     "syllabusFetchedAt": "2026-09-25T23:30:51+05:30"
+    },
+    {
+     "name": "Computer Applications",
+     "group": "Other Academic Electives -(Group-A2)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Computer_Applications_SecP1X_2026-27.pdf",
+     "syllabusSha256": "ed542a2163192409a54477f79544d3831c0928b9ecf169d4dec4c3b9a2026ae9",
+     "syllabusFetchedAt": "2026-09-25T23:30:51+05:30"
+    },
+    {
+     "name": "Elements of Business",
+     "group": "Other Academic Electives -(Group-A2)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Elements_of_Business_SecP1X_2026-27.pdf",
+     "syllabusSha256": "d01e13cddbf83c071a8d3905fa072e4b6c732025fd0f7483d499e44270356fa8",
+     "syllabusFetchedAt": "2026-09-25T23:30:51+05:30"
+    },
+    {
+     "name": "Elements of Book Keeping and Accountancy",
+     "group": "Other Academic Electives -(Group-A2)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Elements_of_BK_Acc_SecP1X_2026-27.pdf",
+     "syllabusSha256": "40f9c142d1809f4b042b2452d16e4a8fb82ff4455f8859991943a93e6e405197",
+     "syllabusFetchedAt": "2026-09-25T23:30:51+05:30"
+    },
+    {
+     "name": "Health and Physical Education",
+     "group": "Subjects of Internal Assessment",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/HPE_SecP1_2026-27.pdf",
+     "syllabusSha256": "bc39647b3035d4f43b0a8d73823faf8f0b0eac4e70a72371dad01c772467ec3c",
+     "syllabusFetchedAt": "2026-09-25T23:30:52+05:30"
+    },
+    {
+     "name": "Work Experience",
+     "group": "Subjects of Internal Assessment",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Work_Experience_SecP1_2026-27.pdf",
+     "syllabusSha256": "1410fdf6ee51d7743892305d4c0f4924f6dbccec467f2d5a5495724ad9b766aa",
+     "syllabusFetchedAt": "2026-09-25T23:30:52+05:30"
+    },
+    {
+     "name": "Art Education",
+     "group": "Subjects of Internal Assessment",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Art_Education_SecP1_2026-27.pdf",
+     "syllabusSha256": "d792591da99fb291efe2c8dce3a4480fa6ea236f09deda144f8c0b05e7d5c620",
+     "syllabusFetchedAt": "2026-09-25T23:30:52+05:30"
+    }
+   ]
+  },
+  {
+   "classes": [
+    11,
+    12
+   ],
+   "schemeOfStudies": {
+    "source": "Curriculum_SecP2_2026-27.pdf, 3. Scheme of Studies and List of Subjects",
+    "items": [
+     {
+      "subject": "Subject 1: Hindi Elective or Hindi Core or English Elective or English Core",
+      "status": "compulsory"
+     },
+     {
+      "subject": "Subject 2: Any one Language from Group – L not opted as Subject 1",
+      "status": "compulsory"
+     },
+     {
+      "subject": "Subjects 3-5: electives from Group – A (or Group – S for subject 6 onward)",
+      "status": "elective"
+     },
+     {
+      "subject": "Health and Physical Education, Work Experience, General Studies",
+      "status": "internal-assessment"
+     }
+    ],
+    "quotes": [
+     "Hindi or English must be one of the two languages to be studied in class XI and XII.",
+     "Students can offer a minimum of 5 or more subjects in class XI. They need to continue the same subjects in class XII.",
+     "Mathematics (Code 041) and Applied Mathematics (Code 241)",
+     "Out of three Computer Science/IT related subjects i.e., Informatics Practices (065), Computer Science (Code 083), Information Technology (Code 802), a candidate can opt only for one subject."
+    ],
+    "subjectCodes": {
+     "L": {
+      "001": "English Elective",
+      "301": "English Core",
+      "002": "Hindi Elective",
+      "302": "Hindi Core",
+      "003": "Urdu Elective",
+      "303": "Urdu Core",
+      "022": "Sanskrit Elective",
+      "322": "Sanskrit Core"
+     },
+     "A": {
+      "027": "History",
+      "028": "Political Science",
+      "029": "Geography",
+      "030": "Economics",
+      "037": "Psychology",
+      "039": "Sociology",
+      "041": "Mathematics",
+      "241": "Applied Mathematics",
+      "042": "Physics",
+      "043": "Chemistry",
+      "044": "Biology",
+      "045": "Biotechnology",
+      "046": "Engineering Graphics",
+      "048": "Physical Education",
+      "054": "Business Studies",
+      "055": "Accountancy",
+      "064": "Home Science",
+      "065": "Informatics Practices",
+      "083": "Computer Science",
+      "066": "Entrepreneurship",
+      "073": "Knowledge Tradition and Practices of India",
+      "074": "Legal Studies",
+      "076": "National Cadet Corps (NCC)"
+     }
+    }
+   },
+   "subjects": [
+    {
+     "name": "Arabic",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Arabic_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Assamese",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Assamese_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bengali",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Bengali_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bhoti",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Bhoti_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bhutia",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Bhutia_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Bodo",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Bodo_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "French",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/French_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "German",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/German_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Gujarati",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Gujarati_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Hindi Core",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Hindi_Core_SecP2_2026-27.pdf",
+     "syllabusSha256": "5edab54393581154c2cf8b78802af528c2c1daeb7acfc377c461851b00f55d51",
+     "syllabusFetchedAt": "2026-09-25T23:30:52+05:30"
+    },
+    {
+     "name": "Hindi Elective",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Hindi_Elective_SecP2_2026-27.pdf",
+     "syllabusSha256": "6f288e1cc34cdb341348d176ad6a748a6760966675dc93e6644e5fe971dbbccb",
+     "syllabusFetchedAt": "2026-09-25T23:30:52+05:30"
+    },
+    {
+     "name": "English Core",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/English_core_SecP2_2026-27.pdf",
+     "syllabusSha256": "d2af35ab80de3dc6f1f62f3cd2b58f9cc95a39ca1d47abc45412a1034459092c",
+     "syllabusFetchedAt": "2026-09-25T23:30:52+05:30",
+     "ncertBooks": [
+      {
+       "book": "kehb1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "sired. so also, the reading of texts should be followed b ¦ prescribed books 1. hornbill: english reader published by national council of education research and training, new delhi • the portrait of a",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index",
+       "pieces": [
+        "The Portrait of a Lady (Prose)",
+        "A Photograph (Poem)",
+        "“We’re Not Afraid to Die… if We Can Be Together",
+        "Discovering Tut: The Saga Continues",
+        "The Laburnum Top (Poem)",
+        "The Voice of the Rain (Poem)",
+        "Childhood (Poem)",
+        "The Adventure",
+        "Silk Road (Prose)",
+        "Father to Son"
+       ]
+      },
+      {
+       "book": "kesp1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "poem) • childhood (poem)  the adventure • silk road (prose)  father to son 2. snapshots: supplementary reader published by national council of education research and training, new delhi • the summer",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index",
+       "pieces": [
+        "The Summer of the Beautiful White Horse (Prose)",
+        "The Address (Prose)",
+        "Mother’s Day (Play)",
+        "Birth (Prose)",
+        "The Tale of Melon City"
+       ]
+      },
+      {
+       "book": "lefl1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "ernal assessment assessment of listening skills assessmen ¦ prescribed books 1. flamingo: english reader published by national council of education research and training, new delhi prose  the last le",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index",
+       "pieces": [
+        "The Last Lesson",
+        "Lost Spring",
+        "Deep Water",
+        "The Rattrap",
+        "Indigo",
+        "Poets and Pancakes",
+        "The Interview",
+        "Going Places",
+        "My Mother at Sixty-Six",
+        "Keeping Quiet",
+        "A Thing of Beauty",
+        "A Roadside Stand",
+        "Aunt Jennifer’s Tigers"
+       ]
+      },
+      {
+       "book": "levt1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "eeping quiet  a thing of beauty  a roadside stand  aunt jennifer's tigers 2. vistas: supplementary reader published by national council of education research and training, new delhi  the third lev",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index",
+       "pieces": [
+        "The Third Level",
+        "The Tiger King",
+        "Journey to the End of the Earth",
+        "The Enemy",
+        "On the Face of It",
+        "Memories of Childhood",
+        "The Cutting of My Long Hair",
+        "We Too are Human Beings"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "English Elective",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/English_elective_SecP2_2026-27.pdf",
+     "syllabusSha256": "624caad4033a7fd99760c96ec5fa23763739d243b12c52446c9ab6d581fbecb2",
+     "syllabusFetchedAt": "2026-09-25T23:30:52+05:30",
+     "ncertBooks": [
+      {
+       "book": "keww1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "ent their views on a literary text.  some projects may b ¦ prescribed books 1. woven words- text book published by ncert short stories  the lament  a pair of mustachios  the rocking-horse winner ",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "lekl1",
+       "method": "manual-quote",
+       "evidence": "Class XII Prescribed Books: 1. Kaleidoscope - Text book published by NCERT (NCERT's index spells the book 'Kaliedoscope')",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Japanese",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Japanese_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Kannada",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Kannada_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Kashmiri",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Kashmiri_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Kokborok",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/KOKBOROK_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Lepcha",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Lepcha_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Limboo",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Limboo_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Malayalam",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Malyalam_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Manipuri",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Manipuri_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Marathi",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Marathi_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Mizo",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Mizo_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Nepali",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Nepali_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Odia",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Odia_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Persian",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Persian_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Punjabi",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Punjabi_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Russian",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Russian_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Sanskrit Core",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Sanskrit_Core_SecP2_2026-27.pdf",
+     "syllabusSha256": "465fe002ac0010bd34f708f3f08205e17c4c469563e2bc8bbb6569ec23d23dba",
+     "syllabusFetchedAt": "2026-09-25T23:30:52+05:30"
+    },
+    {
+     "name": "Sanskrit Elective",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Sanskrit_Elective_SecP2_2026-27.pdf",
+     "syllabusSha256": "4d6b57827bee35ffc23f2d7c590373a430215a7d8d2a5bfcb03254cf7d176491",
+     "syllabusFetchedAt": "2026-09-25T23:30:53+05:30"
+    },
+    {
+     "name": "Sindhi",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Sindhi_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Spanish",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Spanish_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Tamil",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Tamil_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Tangkhul",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Tangkhul_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Telugu AP",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Telugu_AP_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Telugu Telangana",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Telugu_Telangana_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Tibetan",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Tibetan_SecP2_2026-27.pdf",
+     "syllabusNotFetched": "regional/foreign language or skill subject — link recorded, PDF not read in this pass"
+    },
+    {
+     "name": "Urdu Core",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/URDU_CORE_SecP2_2026-27.pdf",
+     "syllabusSha256": "af55e822c66da90ab28a808df001336251b52c55c3b9e51284c2a89236328c71",
+     "syllabusFetchedAt": "2026-09-25T23:30:53+05:30"
+    },
+    {
+     "name": "Urdu Elective",
+     "group": "Languages - (Group-L)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/URDU_Elective_SecP2_2026-27.pdf",
+     "syllabusSha256": "450131846715df9baac9cd0829134a2ed422866f60201143b890881209275789",
+     "syllabusFetchedAt": "2026-09-25T23:30:53+05:30"
+    },
+    {
+     "name": "Accountancy",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Accountancy_SecP2_2026-27.pdf",
+     "syllabusSha256": "4a87dbd15758e42c2aa454d83708299a04b6fc12896392b13d12b9ae857ecc27",
+     "syllabusFetchedAt": "2026-09-25T23:30:53+05:30",
+     "ncertBooks": [
+      {
+       "book": "keac1",
+       "method": "subject-textbook-for-class",
+       "evidence": "books: financial accounting -i class xi accountancy -ii class xi accountancy -i class xii accountancy -ii class xii accountancy - computerised accounting system cla",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "keac2",
+       "method": "subject-textbook-for-class",
+       "evidence": "books: financial accounting -i class xi accountancy -ii class xi accountancy -i class xii accountancy -ii class xii accountancy - computerised accounting system cla",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "leca1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "or part b: computerised accounting unit 4: computerised accounting overview of computerised accounting system • introduction: application in accounting. • features of computerised accounting system.",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "leac1",
+       "method": "manual-quote",
+       "evidence": "Prescribed Books: Financial Accounting -I Class XI … Accountancy -II Class XI … Accountancy -I Class XII … Accountancy -II Class XII … Accountancy – Computerised Accounting System Class XII (NCERT Publication)",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "leac2",
+       "method": "manual-quote",
+       "evidence": "Prescribed Books: … Accountancy -I Class XII … Accountancy -II Class XII … (NCERT Publication)",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Biology",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Biology_SecP2_2026-27.pdf",
+     "syllabusSha256": "3a5767515b41b12b9356151e759beba48bb15a1b711b96c321fa273a7fa7a6ee",
+     "syllabusFetchedAt": "2026-09-25T23:30:53+05:30",
+     "ncertBooks": [
+      {
+       "book": "kebo1",
+       "method": "subject-textbook-for-class",
+       "evidence": "prescribed books: 1. biology class-xi, published by ncert 2. other related books and manuals brough",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "lebo1",
+       "method": "subject-textbook-for-class",
+       "evidence": "ncluded in the q ¦ prescribed books: 1. biology, class-xii, published by ncert. 2. other related books and manuals bro",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Reading Material",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Biology_SrSecXI_2026-27_RM.pdf",
+     "syllabusSha256": "bdca6149931ccf561ecf988346a7e08ed1bbc8f88eb64bff5b6ebed9ae2546b9",
+     "syllabusFetchedAt": "2026-09-25T23:30:53+05:30"
+    },
+    {
+     "name": "Biotechnology",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/BioTechnology_SecP2_2026-27.pdf",
+     "syllabusSha256": "77073224da65acbe0f8d4f5d51bd4b28d440c93017ad5c9ce435f718dcb1ff0e",
+     "syllabusFetchedAt": "2026-09-25T23:30:53+05:30",
+     "ncertBooks": [
+      {
+       "book": "kebt1",
+       "method": "reference-only",
+       "evidence": "Prescribed Books: 1. A Text Book of Biotechnology - Class XI : Published by CBSE … 2. As reference- Biotechnology - Class XI : Published by NCERT",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Business Studies",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/BusinessStudies_SecP2_2026-27.pdf",
+     "syllabusSha256": "94230c4d0627fc919ca96dd02dd1df1f21a065dd1f04455df364df7350fa8cb2",
+     "syllabusFetchedAt": "2026-09-25T23:30:53+05:30"
+    },
+    {
+     "name": "Carnatic Melodic",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Carnatic_Melodic_SecP2_2026-27.pdf",
+     "syllabusSha256": "8c264b6d6e58ac25a7d36a9298f262a5242538c573fa0c82c2a6643031e31212",
+     "syllabusFetchedAt": "2026-09-25T23:30:53+05:30"
+    },
+    {
+     "name": "Carnatic Vocal",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Carnatic_Vocal_SecP2_2026-27.pdf",
+     "syllabusSha256": "4ee992f4a213c223cdb3ed8df49f2f8257b7ba4339285d2173052ed8d9b4b7d0",
+     "syllabusFetchedAt": "2026-09-25T23:30:53+05:30"
+    },
+    {
+     "name": "Carnatic Percussion",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Carnatic_Percussion_SecP2_2026-27.pdf",
+     "syllabusSha256": "edcf87a267bee1a446b1882f741c713fb89e129fe5927afbe574ba6cda7be022",
+     "syllabusFetchedAt": "2026-09-25T23:30:53+05:30"
+    },
+    {
+     "name": "Chemistry",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Chemistry_SecP2_2026-27.pdf",
+     "syllabusSha256": "5610f09d357d3ccc9a7b39fc29cb7b1f4530847753783b16c72fff691acd2418",
+     "syllabusFetchedAt": "2026-09-25T23:30:53+05:30",
+     "ncertBooks": [
+      {
+       "book": "kech1",
+       "method": "ncert-url-in-syllabus",
+       "evidence": "prescribed books: 1. chemistry part - i, class-xi, published by ncert. 2. chemistry part - ii, class-xi, publ",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "kech2",
+       "method": "ncert-url-in-syllabus",
+       "evidence": "prescribed books: 1. chemistry part - i, class-xi, published by ncert. 2. chemistry part - ii, class-xi, publ",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "lech1",
+       "method": "ncert-url-in-syllabus",
+       "evidence": "ll questions inc ¦ prescribed books: 1. chemistry part - i, class-xii, published by ncert. 2. chemistry part - ii, class-xii, pub",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "lech2",
+       "method": "ncert-url-in-syllabus",
+       "evidence": "ll questions inc ¦ prescribed books: 1. chemistry part - i, class-xii, published by ncert. 2. chemistry part - ii, class-xii, pub",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Reading Material",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Chemistry_SecP2_2026-27_RM.pdf",
+     "syllabusSha256": "ed019273fdcc408471955790051c4a10a303b1a95f8f722cf2b8bd2f8f2727cb",
+     "syllabusFetchedAt": "2026-09-25T23:30:55+05:30"
+    },
+    {
+     "name": "Computer Science",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Computer_Science_SecP2_2026-27.pdf",
+     "syllabusSha256": "a46821a87292e5feb296a1ffdb5163f413258d1cb378b871c745539e34f96e82",
+     "syllabusFetchedAt": "2026-09-25T23:30:54+05:30",
+     "ncertBooks": [
+      {
+       "book": "kecs1",
+       "method": "subject-textbook-for-class",
+       "evidence": "d reading material ● ncert textbook for computer science (class xi) ● support material on cbse website computer science subject code - 083 class xii (2026-27) 1. prer",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "lecs1",
+       "method": "subject-textbook-for-class",
+       "evidence": "d reading material ● ncert textbook for computer science (class xii) ● support materials on the cbse website. 8. project the aim of the class projec",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Economics",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Economics_SecP2_2026-27.pdf",
+     "syllabusSha256": "927800c6e72b377509533fbe281fb1aa72383e20a3ab5b7b480bd976330b49fa",
+     "syllabusFetchedAt": "2026-09-25T23:30:54+05:30",
+     "ncertBooks": [
+      {
+       "book": "keec1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "prescribed books: 1. statistics for economics, ncert 2. indian economic development, ncert 3. introductory microeconomics, ncert 4. macroeconomics, ncert 5. supplementary readi",
+       "classes": [
+        12
+       ],
+       "classFrom": "cbse-course-structure",
+       "classEvidence": "CLASS XI … Part A Statistics for Economics … Part B Introductory Microeconomics; CLASS XII … Part A Introductory Macroeconomics … Part B Indian Economic Development (Economics_SecP2_2026-27.pdf, course structure)"
+      },
+      {
+       "book": "kest1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "prescribed books: 1. statistics for economics, ncert 2. indian economic development, ncert 3. introductory microeconomics, ncert 4. macroecon",
+       "classes": [
+        11
+       ],
+       "classFrom": "cbse-course-structure",
+       "classEvidence": "CLASS XI … Part A Statistics for Economics … Part B Introductory Microeconomics; CLASS XII … Part A Introductory Macroeconomics … Part B Indian Economic Development (Economics_SecP2_2026-27.pdf, course structure)"
+      },
+      {
+       "book": "leec2",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "ks: 1. statistics for economics, ncert 2. indian economic development, ncert 3. introductory microeconomics, ncert 4. macroeconomics, ncert 5. supplementary reading material in economics, cbse note: t",
+       "classes": [
+        11
+       ],
+       "classFrom": "cbse-course-structure",
+       "classEvidence": "CLASS XI … Part A Statistics for Economics … Part B Introductory Microeconomics; CLASS XII … Part A Introductory Macroeconomics … Part B Indian Economic Development (Economics_SecP2_2026-27.pdf, course structure)"
+      },
+      {
+       "book": "leec1",
+       "method": "manual-quote",
+       "evidence": "Prescribed Books: 1. Statistics for Economics, NCERT 2. Indian Economic Development, NCERT 3. Introductory Microeconomics, NCERT 4. Macroeconomics, NCERT",
+       "classes": [
+        12
+       ],
+       "classFrom": "cbse-course-structure",
+       "classEvidence": "CLASS XI … Part A Statistics for Economics … Part B Introductory Microeconomics; CLASS XII … Part A Introductory Macroeconomics … Part B Indian Economic Development (Economics_SecP2_2026-27.pdf, course structure)"
+      }
+     ]
+    },
+    {
+     "name": "Engineering Graphics",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Engineering_Graphics_SecP2_2026-27.pdf",
+     "syllabusSha256": "013c9485a5245185aca05c60f2452e7e34370626d246d0217185e0c1db8858b1",
+     "syllabusFetchedAt": "2026-09-25T23:30:55+05:30"
+    },
+    {
+     "name": "Entrepreneurship",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Enterprenuership_SecP2_2026-27.pdf",
+     "syllabusSha256": "243ac18d676d6f1912d5b8417a883106535652047652b33e0b66e04d2ffac8c0",
+     "syllabusFetchedAt": "2026-09-25T23:30:55+05:30"
+    },
+    {
+     "name": "Fine Arts",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Fine_Arts_SecP2_2026-27.pdf",
+     "syllabusSha256": "3447ff66fad5775b200dbce5aae0aeb9b7f8a5bca6627d38314c7f966f00f05e",
+     "syllabusFetchedAt": "2026-09-25T23:30:55+05:30"
+    },
+    {
+     "name": "Dance",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Indian_Classical_Dances_SecP2_2026-27.pdf",
+     "syllabusSha256": "303cae1c86fc8e0e078bc066a5f88acf72102c5c01386bd5d892446415e67a93",
+     "syllabusFetchedAt": "2026-09-25T23:30:55+05:30"
+    },
+    {
+     "name": "Geography",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Geography_SecP2_2026-27.pdf",
+     "syllabusSha256": "00e85430d75f8063902943817a57c9f22f037efb1d188b26d342b88550f8b90b",
+     "syllabusFetchedAt": "2026-09-25T23:30:55+05:30",
+     "ncertBooks": [
+      {
+       "book": "kegy2",
+       "method": "ncert-url-in-syllabus",
+       "evidence": "ribed books: 1.fundamentals of physical geography, class xi, published by ncert 2.india, physical environment,  ¦ prescri",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "kegy3",
+       "method": "ncert-url-in-syllabus",
+       "evidence": "ribed books: 1.fundamentals of physical geography, class xi, published by ncert 2.india, physical environment,  ¦ prescri",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "kegy1",
+       "method": "ncert-url-in-syllabus",
+       "evidence": "ribed books: 1.fundamentals of physical geography, class xi, published by ncert 2.india, physical environment,  ¦ prescri",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "legy1",
+       "method": "ncert-url-in-syllabus",
+       "evidence": "xam - 25 marks  practical file- 02 marks  viva- 03 m ¦ prescribed textbook 1. fundamentals of human geography 2. india- people and economy 3. practical work in geography- part ii links for ncert tex",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "legy3",
+       "method": "ncert-url-in-syllabus",
+       "evidence": "ublished by ncert 2.india, physical environment, class xi, published by ncert 3.practical work in geography part i, class xi, published by ncert links for ncert textbooks: 1. https://ncert.nic.in/text",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "legy2",
+       "method": "ncert-url-in-syllabus",
+       "evidence": "https://ncert.nic.in/textbook.php?legy2=…",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Reading Material",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Geography_SecP2_2026-27_RM.pdf",
+     "syllabusSha256": "8213c1e8b6ecaff2a3889f2c35b98d3efa0becc6f7b56e0a6d1f801059e8b905",
+     "syllabusFetchedAt": "2026-09-25T23:30:55+05:30"
+    },
+    {
+     "name": "Hindustani Melodic",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Hindustani_Melodic_SecP2_2026-27.pdf",
+     "syllabusSha256": "a1eedb3803a69a03a2806d44e581a44be06eee20f1a5fe205771051272ff50ce",
+     "syllabusFetchedAt": "2026-09-25T23:30:55+05:30"
+    },
+    {
+     "name": "Hindustani Percussion",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Hindustani_Percussion_SecP2_2026-27.pdf",
+     "syllabusSha256": "4912d7031070c481a6d2021a3ff5630a92d2ea2a70bd0399fe028087a5ce33e2",
+     "syllabusFetchedAt": "2026-09-25T23:30:55+05:30"
+    },
+    {
+     "name": "Hindustani Vocal",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Hindustani_Vocal_SecP2_2026-27.pdf",
+     "syllabusSha256": "eb114817f34ecac3dce10a2eb1d8cf68db2e921dfae3b3ae8b9ee7ecbe9dad77",
+     "syllabusFetchedAt": "2026-09-25T23:30:55+05:30"
+    },
+    {
+     "name": "History",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/History_SecP2_2026-27.pdf",
+     "syllabusSha256": "7c0c1280f90db4cf7f38824723ddda852c250bcbb5a458a20c2977c4381e53c4",
+     "syllabusFetchedAt": "2026-09-25T23:30:56+05:30"
+    },
+    {
+     "name": "Home Science",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Home_Science_SecP2_2026-27.pdf",
+     "syllabusSha256": "a8bb5904a25b50a3a4b145cca47f74fa9a6f9e4cf66d39a5fec09e50e1358fdb",
+     "syllabusFetchedAt": "2026-09-25T23:30:56+05:30",
+     "ncertBooks": [
+      {
+       "book": "kehe1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "prescribed textbook: human ecology and family sciences (for class xi): part i and part ii 13 introduction: home science subject code - 064 cl",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "kehe2",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "prescribed textbook: human ecology and family sciences (for class xi): part i and part ii 13 introduction: home science subject code - 064 cl",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "lehe1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "prescribed textbook: human ecology and family sciences (for class xi): part i and part ii 13 introduction: home science subject code - 064 cl",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "lehe2",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "prescribed textbook: human ecology and family sciences (for class xi): part i and part ii 13 introduction: home science subject code - 064 cl",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Infomatics Practices",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Informatics_Practices_SecP2_2026-27.pdf",
+     "syllabusSha256": "05747d6271e50d1221f312c710a3175e967f6d2d0f29a0f2cbc992f8267f8d34",
+     "syllabusFetchedAt": "2026-09-25T23:30:56+05:30",
+     "ncertBooks": [
+      {
+       "book": "keip1",
+       "method": "subject-textbook-for-class",
+       "evidence": "suggested material ncert informatics practices - text book for class - xi (isbn- 978-93-5292-148-5) informatics practices subject code - 065 class xii (2026-27) 1. prerequis",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Knowledge Tradition - Practices India",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/KTPI_SecP2_2026-27.pdf",
+     "syllabusSha256": "d6e2baa7f1f55116bca1547f9ff15ce7adb09e3e3ef9debdb9f5e000abd79ed5",
+     "syllabusFetchedAt": "2026-09-25T23:30:56+05:30"
+    },
+    {
+     "name": "Legal Studies",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/LegalStudies_SecP2_2026-27.pdf",
+     "syllabusSha256": "d1f7836c059406e66d6b092cffddb5120adb27a826be7b6413936fc330dd7348",
+     "syllabusFetchedAt": "2026-09-25T23:30:56+05:30"
+    },
+    {
+     "name": "Mathematics",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Maths_SecP2_2026-27.pdf",
+     "syllabusSha256": "5bf4105d4076189fe00b879fd6d41ffadec87a894a078a7fb912b2f219769572",
+     "syllabusFetchedAt": "2026-09-25T23:30:56+05:30",
+     "ncertBooks": [
+      {
+       "book": "kemh1",
+       "method": "subject-textbook-for-class",
+       "evidence": "prescribed books: 1) mathematics textbook for class xi, ncert publications 2) mathematics part i - textbook for class xii, ncert publication 3) mathematic",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "lemh1",
+       "method": "subject-textbook-for-class",
+       "evidence": "ook for class xii, ncert publication 3) mathematics part ii - textbook for class xii, ncert publication 4) mathematics exemplar problem for class xi, published by ncert 5) mathematics",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "lemh2",
+       "method": "subject-textbook-for-class",
+       "evidence": "ook for class xii, ncert publication 3) mathematics part ii - textbook for class xii, ncert publication 4) mathematics exemplar problem for class xi, published by ncert 5) mathematics",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Applied Mathematics",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Applied_Mathematics_SecP2_2026-27.pdf",
+     "syllabusSha256": "3125b1b6b00d8081bff34a1276d5f5203daa719af961d943380b4b0cb9d35a70",
+     "syllabusFetchedAt": "2026-09-25T23:30:56+05:30"
+    },
+    {
+     "name": "NCC",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/NCC_SecP2_2026-27.pdf",
+     "syllabusSha256": "3f2c3dd517603d20378980f06545bc3baca8a3d1bbfb2a4003b8036d4b04449e",
+     "syllabusFetchedAt": "2026-09-25T23:30:56+05:30"
+    },
+    {
+     "name": "Physical Education",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/PhysicalEducation_SecP2_2026-27.pdf",
+     "syllabusSha256": "5a063f5bdc3a92d60a4a86e83c985ffafc7d716359ab511cb2f09a0275c02c7a",
+     "syllabusFetchedAt": "2026-09-25T23:30:56+05:30"
+    },
+    {
+     "name": "Physics",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Physics_SecP2_2026-27.pdf",
+     "syllabusSha256": "9e32271cf5a86caa605cffe2a4b5e19710abc3d3a8715ef725ba78cd94caf1f7",
+     "syllabusFetchedAt": "2026-09-25T23:30:56+05:30",
+     "ncertBooks": [
+      {
+       "book": "keph1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "prescribed books: 1. physics part-i, textbook for class xi, published by ncert 2. physics part-ii, textbook for class xi, published by ncert",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "keph2",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "escribed books: 1. physics part-i, textbook for class xi, published by ncert 2. physics part-ii, textbook for class xi, published by ncert 3. laboratory manual of physics, class xi published by ncert",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "leph1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "prescribed books: 1. physics part-i, textbook for class xi, published by ncert 2. physics part-ii, textbook for class xi, published by ncert",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "leph2",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "escribed books: 1. physics part-i, textbook for class xi, published by ncert 2. physics part-ii, textbook for class xi, published by ncert 3. laboratory manual of physics, class xi published by ncert",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Political Science",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/PoliticalScience_SecP2_2026-27.pdf",
+     "syllabusSha256": "0914d089d6cd78cf56eec27fff9d42400706d8edf04163a9106b242df9e617e8",
+     "syllabusFetchedAt": "2026-09-25T23:30:57+05:30",
+     "ncertBooks": [
+      {
+       "book": "keps1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "ibed textbooks: 1. indian constitution at work, class xi, published by ncert 2. political theory, class xi, published by ncert 3. added reference material available with the document in the annexure n",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "leps1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "and urdu versions. 9 class xii course structure chapter no. chapter name part a-contemporary world politics 1 the end of bipolarity 2 contemporary centres of power 3 contemporary south asia 4 internat",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "leps2",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "world 6 environment and natural resources 7 globalisation part a - total part b-politics in india since independence 1 challenges of nation-building 2 era of one-party dominance 3 politics o ¦ prescri",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "keps2",
+       "method": "manual-quote",
+       "evidence": "PART A INDIAN CONSTITUTION AT WORK Constitution: Why and How? Rights in the Indian Constitution … (the unit is named after the NCERT book and lists its chapter titles)",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Psychology",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Psychology_SecP2_2026-27.pdf",
+     "syllabusSha256": "98f63864c0e161fc5d31347764e1edf591de7ae2028a9351c5519fb3429d216a",
+     "syllabusFetchedAt": "2026-09-25T23:30:57+05:30",
+     "ncertBooks": [
+      {
+       "book": "kepy1",
+       "method": "subject-textbook-for-class",
+       "evidence": "prescribed books: 1. psychology, class xi, published by ncert 2. psychology, class xii, published by nc",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "lepy1",
+       "method": "subject-textbook-for-class",
+       "evidence": "hology, class xi, published by ncert 2. psychology, class xii, published by ncert note: the above textbooks are also available in hindi medium. 12  ¦ ork based o",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Sociology",
+     "group": "Academic Electives - (Group-A)",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Sociology_SecP2_2026-27.pdf",
+     "syllabusSha256": "8b6ba4e2bd232445be46fb01a64030a6d1b7af3d0cd066fefca73a0850a10684",
+     "syllabusFetchedAt": "2026-09-25T23:30:57+05:30",
+     "ncertBooks": [
+      {
+       "book": "kesy1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "prescribed books: 1. introducing sociology, class xi, published by ncert 2. understanding society, class xi, published by ncert 3. indian soc",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "kesy2",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "prescribed books: 1. introducing sociology, class xi, published by ncert 2. understanding society, class xi, published by ncert 3. indian society, class xii, published by ncert 4. social change an",
+       "classes": [
+        11
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "lesy1",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "i, published by ncert 2. understanding society, class xi, published by ncert 3. indian society, class xii, published by ncert 4. social change and development in india, class xii, published by ncert 8",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      },
+      {
+       "book": "lesy2",
+       "method": "title-in-prescribed-or-ncert-context",
+       "evidence": "lass xi, published by ncert 3. indian society, class xii, published by ncert 4. social change and development in india, class xii, published by ncert 8 sociology question paper design ccllaassss xxiii",
+       "classes": [
+        12
+       ],
+       "classFrom": "ncert-index"
+      }
+     ]
+    },
+    {
+     "name": "Health and Physical Education",
+     "group": "Subjects of Internal Assessment",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/HPE_SecP2_2026-27.pdf",
+     "syllabusSha256": "494771571ee41e3e7629ffecbaeac47df478a5beeb464900e95f535063239d5e",
+     "syllabusFetchedAt": "2026-09-25T23:30:57+05:30"
+    },
+    {
+     "name": "Work Experience",
+     "group": "Subjects of Internal Assessment",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/WorkExperience_SecP2_2026-27.pdf",
+     "syllabusSha256": "aeac0c5204281279caa4c24ebc52b6c657ad58623ec23dcea6af18eb7e644636",
+     "syllabusFetchedAt": "2026-09-25T23:30:57+05:30"
+    },
+    {
+     "name": "General Studies",
+     "group": "Subjects of Internal Assessment",
+     "syllabusUrl": "https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/GeneralStudies_SecP2_2026-27.pdf",
+     "syllabusSha256": "b4ec2b3ace4e59322ca004d1bcf5799968f5fd467a4fc14d576db2db0880191b",
+     "syllabusFetchedAt": "2026-09-25T23:30:57+05:30"
+    }
+   ]
+  }
+ ]
+}

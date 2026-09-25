@@ -1,0 +1,63 @@
+# NCERT contents evidence — kegy2 — Fundamental of Physical Geography (index class 11, Geography)
+# source: https://ncert.nic.in/textbook/pdf/kegy2ps.pdf
+# fetched: 2026-09-25T23:15:13+05:30  sha256: a07396be5a6dcb415a7d49fbdf18c9e6ee0b22d9a8ead8f3d06578ea0e4f0d94  bytes: 1679226
+# contents pages of the PDF: 9 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 8ca1655a73e7166287d238fabf1009a63b493778e306e8ab8931168704779df3);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kegy2#1 title [pdftotext p9] next=number
+  FOREWORD UNIT I : GEOGRAPHY AS A DISCIPLINE
++ 1. Geography as a Discipline
++ UNIT II : THE EARTH 2. The Origin and Evolution of the Earth 3. Interior of the Earth 4. Distribution of Oceans and Continents
+@kegy2#2 title [pymupdf p9] next=number
+  The Origin and Evolution of the Earth
++ 14
++ 3.
+@kegy2#3 title [pymupdf p9] next=number
+  Interior of the Earth
++ 21
++ 4.
+@kegy2#4 title [pdftotext p9] next=number
+  UNIT II : THE EARTH 2. The Origin and Evolution of the Earth 3. Interior of the Earth 4. Distribution of Oceans and Continents
++ UNIT III : LANDFORMS 5. Geomorphic Processes 6. Landforms and their Evolution
++ UNIT IV : CLIMATE 7. Composition and Structure of Atmosphere 8. Solar Radiation, Heat Balance and Temperature 9. Atmospheric Circulation and Weather Systems
+@kegy2#5 title [pymupdf p9] next=number
+  Geomorphic Processes
++ 37
++ 6.
+@kegy2#6 title [pdftotext p9] next=number
+  UNIT III : LANDFORMS 5. Geomorphic Processes 6. Landforms and their Evolution
++ UNIT IV : CLIMATE 7. Composition and Structure of Atmosphere 8. Solar Radiation, Heat Balance and Temperature 9. Atmospheric Circulation and Weather Systems
++ 10. Water in the Atmosphere 11. World Climate and Climate Change
+@kegy2#7 title [pymupdf p9] next=number
+  Composition and Structure of Atmosphere
++ 64
++ 8.
+@kegy2#8 title [pymupdf p9] next=number
+  Solar Radiation, Heat Balance and Temperature
++ 67
++ 9.
+@kegy2#9 title [pdftotext p9] next=number
+  UNIT IV : CLIMATE 7. Composition and Structure of Atmosphere 8. Solar Radiation, Heat Balance and Temperature 9. Atmospheric Circulation and Weather Systems
++ 10. Water in the Atmosphere 11. World Climate and Climate Change
++ UNIT V : WATER (OCEANS) 12. Water (Oceans) 13. Movements of Ocean Water
+@kegy2#10 title [pymupdf p9] next=number
+  Water in the Atmosphere
++ 86
++ 11.
+@kegy2#11 title [pdftotext p9] next=number
+  10. Water in the Atmosphere 11. World Climate and Climate Change
++ UNIT V : WATER (OCEANS) 12. Water (Oceans) 13. Movements of Ocean Water
++ UNIT VI : LIFE ON THE EARTH 14. Biodiversity and Conservation
+@kegy2#12 title [pymupdf p9] next=number
+  UNIT V : WATER (OCEANS)
++ 99-113
++ 12.
+@kegy2#13 title [pdftotext p9] next=number
+  UNIT V : WATER (OCEANS) 12. Water (Oceans) 13. Movements of Ocean Water
++ UNIT VI : LIFE ON THE EARTH 14. Biodiversity and Conservation
++ GLOSSARY
+@kegy2#14 title [pdftotext p9] next=boilerplate
+  UNIT VI : LIFE ON THE EARTH 14. Biodiversity and Conservation
++ GLOSSARY
++ iii 1-12

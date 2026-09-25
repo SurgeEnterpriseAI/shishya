@@ -1,0 +1,4 @@
+# first 3 text lines of https://ncert.nic.in/textbook/pdf/keph203.pdf (fetched 2026-09-25T23:24:46+05:30, sha256 b062894aea80298f8df2f83e34dc11f5f96577bfe08d0ad35e2e647a8446854e)
+CHAPTER TEN
+THERMAL PROPERTIES OF MATTER
+10.1  INTRODUCTION

@@ -1,0 +1,8 @@
+# NCERT contents evidence — jhva1 — Vyakaranavithi (index class 10, Sanskrit)
+# source: https://ncert.nic.in/textbook/pdf/jhva1ps.pdf
+# fetched: 2026-09-25T23:15:05+05:30  sha256: 389b4b82b13b49247503b31551cab5da51f0ed45b2287462531602d06b74d611  bytes: 1980298
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 80d14b7f6a597c2e22481b3c54e4fe0f7adc7e82fb5b0c979e7bfe459e933378);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

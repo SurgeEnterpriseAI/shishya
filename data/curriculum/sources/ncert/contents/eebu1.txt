@@ -1,0 +1,82 @@
+# NCERT contents evidence — eebu1 — Bansuri (index class 5, Arts)
+# source: https://ncert.nic.in/textbook/pdf/eebu1ps.pdf
+# fetched: 2026-09-25T23:14:24+05:30  sha256: 4d28edbd94825ea19066a7c63ff3a408675d70a29190a50035827523f08d2e35  bytes: 4398747
+# contents pages of the PDF: 23,24 of 24
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 87b98cb26ce9e35201fda080ad485369a50d1bbc23e2a2bd1653cc0cfb1c4f48);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@eebu1#1 title [pymupdf p23] next=number
+  1. Objects on the Move.....4
++ 2. Peeping Out of the Window..... 13
++ 3. Picturing Stories..... 23
+@eebu1#2 title [pymupdf p23] next=number
+  2. Peeping Out of the Window..... 13
++ 3. Picturing Stories..... 23
++ 4. Imaginary Beings..... 33
+@eebu1#3 title [pymupdf p23] next=number
+  3. Picturing Stories..... 23
++ 4. Imaginary Beings..... 33
++ 5. Spreading the Message..... 41
+@eebu1#4 title [pymupdf p23] next=number
+  4. Imaginary Beings..... 33
++ 5. Spreading the Message..... 41
++ THEATRE.....51
+@eebu1#5 title [pdftotext p23] next=boilerplate
+~ s..... 33 5. Spreading the Message..... 41
++ THEATRE..... 51
++ 6. Create a Scene.....  55 7. Stitch it for a Story.....  63 8. Time, Team, Technique.....  69 9. View and Review.....  83
+@eebu1#6 title [pymupdf p23] next=number
+  6. Create a Scene..... 55
++ 7. Stitch it for a Story..... 63
++ 8. Time, Team, Technique..... 69
+@eebu1#7 title [pymupdf p23] next=number
+  7. Stitch it for a Story..... 63
++ 8. Time, Team, Technique..... 69
++ 9. View and Review..... 83
+@eebu1#8 title [pymupdf p23] next=number
+  8. Time, Team, Technique..... 69
++ 9. View and Review..... 83
++ Contents
+@eebu1#9 title [pdftotext p23] next=page
+~ Technique..... 69 9. View and Review..... 83
++ Reprint 2026-27
+@eebu1#10 title [pymupdf p24] next=number
+  10. Sing and Play..... 95
++ 11. Music Around Me..... 101
++ 12. Sounds and Instruments..... 106
+@eebu1#11 title [pymupdf p24] next=number
+  11. Music Around Me..... 101
++ 12. Sounds and Instruments..... 106
++ 13. Building Blocks..... 113
+@eebu1#12 title [pymupdf p24] next=number
+  12. Sounds and Instruments..... 106
++ 13. Building Blocks..... 113
++ 14. Ideas and Inspiration..... 124
+@eebu1#13 title [pymupdf p24] next=number
+  13. Building Blocks..... 113
++ 14. Ideas and Inspiration..... 124
++ DANCE.....132
+@eebu1#14 title [pdftotext p24] next=boilerplate
+~ s..... 113 14. Ideas and Inspiration..... 124
++ DANCE..... 132
++ 15. My Everyday Activities in Modes of Dance.....  135 16. Dancing with Rhythm and Tempos.....  143 17. Dances of My Nation.....  153 18. M y Dance Expresses Em
+@eebu1#15 title [pymupdf p24] next=number
+  15. My Everyday Activities in Modes of Dance..... 135
++ 16. Dancing with Rhythm and Tempos..... 143
++ 17. Dances of My Nation..... 153
+@eebu1#16 title [pymupdf p24] next=number
+  16. Dancing with Rhythm and Tempos..... 143
++ 17. Dances of My Nation..... 153
++ 18. My Dance Expresses Emotions and
+@eebu1#17 title [pymupdf p24] next=number
+  17. Dances of My Nation..... 153
++ 18. My Dance Expresses Emotions and
++ Narrates Stories..... 158
+@eebu1#18 title [pymupdf p24] next=number
+  18. My Dance Expresses Emotions and
+  Narrates Stories..... 158
++ 19. My Dance and Your Dance..... 166
++ Reprint 2026-27
+@eebu1#19 title [pdftotext p24] next=page
+  Narrates Stories.....  158 19. My Dance and Your Dance.....  166
++ Reprint 2026-27

@@ -1,0 +1,59 @@
+# NCERT contents evidence — lebt1 — Biotechnology (index class 12, Biotechnology)
+# source: https://ncert.nic.in/textbook/pdf/lebt1ps.pdf
+# fetched: 2026-09-25T23:15:45+05:30  sha256: 663586de91d4a67e405e2ea433dba447562707aa35972f938c21b76b55405d6a  bytes: 1676207
+# contents pages of the PDF: 11,12,13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 cc19e2fe3618db016548aa9aa979d44aa06b201b2e3e2193d3141e84afdbeffe);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lebt1#1 title [pdftotext p11] next=number
+  Chapter 1: An Overview of Recombinant DNA Technology
++ 1.1 An Overview of Recombinant DNA Technology
++ iii v
+@lebt1#2 title [pdftotext p11] next=number
+  Chapter 2: Host–Vector System
++ 9
++ 2.1 Two Key Components of Recombinant DNA Technology
+@lebt1#3 title [pdftotext p11] next=number
+  Chapter 3: Gene Cloning
++ 27
++ 3.1 Identification of Candidate Gene
+@lebt1#4 title [pdftotext p11] next=number
+  Chapter 4: Applications of Recombinant DNA Technology
++ 67
++ 4.1 Dna Fingerprinting
+@lebt1#5 title [pdftotext p12] next=number
+  Chapter 5: Genome Technology and Engineering
++ 5.1 Mapping of the Genome: Genetic and Physical 5.2 High–Throughput DNA Sequencing 5.3 Other Genome-related Technology 5.4 Genome Engineering 5.5 Structural, Fu
++ 113
+@lebt1#6 title [pdftotext p12] next=number
+  Chapter 6: Microbial Culture
++ 6.1 Historical Perspective 6.2 Nutritional Requirements and Culture Media 6.3 Sterilisation Methods 6.4 Pure Culture Techniques 6.5 Factors Affecting Microbial 
++ 141–252
+@lebt1#7 title [pdftotext p12] next=number
+  Chapter 7: Plant Tissue Culture
++ 7.1 Historical Perspective 7.2 Plant Cell and Tissue Culture Techniques 7.3 Nutrient Media 7.4 Culture Types 7.5 Applications of Plant Cell and Tissue Culture
++ 167
+@lebt1#8 title [pdftotext p12] next=number
+  Chapter 8: Animal Cell Culture
++ 8.1 Historical Perspective 8.2 Culture Media 8.3 Physical Environment for Culturing Animal Cells 8.4 Equipment Used for Cell Culture 8.5 Types of Animal Cell Cu
++ 185
+@lebt1#9 title [pdftotext p13] next=number
+  Chapter 9: Stem Cell Culture and Organ Culture
++ 9.1 Stem Cell Culture 9.2 Organ Culture
++ 209
+@lebt1#10 title [pdftotext p13] next=number
+  Chapter 10: Bioprocessing and Biomanufacturing
++ 10.1 Historical Perspective 10.2 Instrumentation in Bioprocessing:
++ Bioreactor and Fermenter Design 10.3 Operational Stages of Bioprocess 10.4 Bioprocessing and Biomanufacturing of Desired Products
+@lebt1#11 title [pdftotext p13] next=number
+  Unit IV: Bioremediation
++ Chapter 11: Bioremediation
++ 11.1 Waste Water Treatment 11.2 Solid Waste Management 11.3 Management and Disposal of Bio-medical Waste 11.4 Bioremediation of Pesticides
+@lebt1#12 title [pdftotext p13] next=number
+  Chapter 12: Recent Innovations in Biotechnology
++ 12.1 Environmental Biotechnology 12.2 Plant Biotechnology 12.3 Regenerative Medicine 12.4 Nanobiotechnology 12.5 Synthetic Biology 12.6 Future Prospects
++ 289–342
+@lebt1#13 title [pdftotext p13] next=number
+  Chapter 13: Entrepreneurship
++ 13.1	Concept of Entrepreneurship 13.2 Sources of Funds 13.3	Entrepreneurship in Biotechnology 13.4 Concept of IPR 13.5 Biopiracy
++ 323

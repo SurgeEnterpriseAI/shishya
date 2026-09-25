@@ -1,0 +1,41 @@
+# NCERT contents evidence — iemh1 — Ganita Manjari (index class 9, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/iemh1ps.pdf
+# fetched: 2026-09-25T23:14:51+05:30  sha256: e2e2f01f4ccba8fd5d9dbe7a48af89d882e3518e4e889ca139805b76cf43aca9  bytes: 2787821
+# contents pages of the PDF: 19 of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 0ede4ba36162251ec4a9ab520fa9fc0d55cc7dfb6b71a91edf30c057a89e1ab3);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@iemh1#1 title [pdftotext p19] next=number
+  Orienting Yourself: The Use of Coordinates
++ 1
++ Chapter 2
+@iemh1#2 title [pdftotext p19] next=number
+  Introduction to Linear Polynomials
++ 16
++ Chapter 3
+@iemh1#3 title [pdftotext p19] next=number
+  The World of Numbers
++ 41
++ Chapter 4
+@iemh1#4 title [pdftotext p19] next=number
+  Exploring Algebraic Identities
++ 68
++ Chapter 5
+@iemh1#5 title [pdftotext p19] next=number
+  I’m Up and Down, and Round and Round
++ 92
++ Chapter 6
+@iemh1#6 title [pdftotext p19] next=number
+  Measuring Space: Perimeter and Area
++ 118
++ Chapter 7
+@iemh1#7 title [pdftotext p19] next=number
+  The Mathematics of Maybe: Introduction to Probability
++ 155
++ Chapter 8
+@iemh1#8 title [pdftotext p19] next=boilerplate
+  Predicting What Comes Next: Exploring Sequences
+  174
+  and Progressions
++ Graph Paper
++ 197

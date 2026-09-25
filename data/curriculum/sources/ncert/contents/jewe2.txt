@@ -1,0 +1,43 @@
+# NCERT contents evidence — jewe2 — Words and Expressions  2 (index class 10, English)
+# source: https://ncert.nic.in/textbook/pdf/jewe2ps.pdf
+# fetched: 2026-09-25T23:15:08+05:30  sha256: d4c3b119f47dab2a81efa928b079ec8940ce600348c65bec521af22df3505d05  bytes: 2123341
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 941f31c4626382eb955e1e607b8a7ad623a6f1499b3bbb82c214208b7516db02);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@jewe2#1 title [pdftotext p13] next=number
+  A Letter to God
++ Unit 2	Nelson Mandela: Long Walk to Freedom
++ Unit 3	Two Stories about Flying
+@jewe2#2 title [pdftotext p13] next=number
+  Unit 2	Nelson Mandela: Long Walk to Freedom
++ Unit 3	Two Stories about Flying
++ Unit 4
+@jewe2#3 title [pdftotext p13] next=number
+  Unit 3	Two Stories about Flying
++ Unit 4
++ From the Diary of Anne Frank
+@jewe2#4 title [pdftotext p13] next=number
+  From the Diary of Anne Frank
++ Unit 5
++ Glimpses of India
+@jewe2#5 title [pdftotext p13] next=number
+  Glimpses of India
++ Unit 6
++ Mijbil the Otter
+@jewe2#6 title [pdftotext p13] next=number
+  Mijbil the Otter
++ Unit 7
++ Madam Rides the Bus
+@jewe2#7 title [pdftotext p13] next=number
+  Madam Rides the Bus
++ Unit 8	The Sermon at Benaras
++ Unit 9	The Proposal
+@jewe2#8 title [pdftotext p13] next=number
+  Unit 8	The Sermon at Benaras
++ Unit 9	The Proposal
++ Appendix Proofreading marks
+@jewe2#9 title [pdftotext p13] next=boilerplate
+  Unit 9	The Proposal
++ Appendix Proofreading marks
++ iii v vii 1 17 31 45 57 73 93 109 124 140

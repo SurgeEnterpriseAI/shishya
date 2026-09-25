@@ -1,0 +1,35 @@
+# NCERT contents evidence — lepy1 — Psychology (index class 12, Psychology)
+# source: https://ncert.nic.in/textbook/pdf/lepy1ps.pdf
+# fetched: 2026-09-25T23:15:35+05:30  sha256: 9f9a97f2c4fd07adf9d98ade4c809103640f80714c1119ca7145b561b6c9e504  bytes: 2849227
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 a6b086d2ab018aae557032a362b71661250eac87dbb72e08c4b24e518ee2f090);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lepy1#1 title [pdftotext p15] next=number
+  Variations in Psychological Attributes
++ 1
++ Chapter 2
+@lepy1#2 title [pdftotext p15] next=number
+  Self and Personality
++ 23
++ Chapter 3
+@lepy1#3 title [pdftotext p15] next=number
+  Meeting Life Challenges
++ 50
++ Chapter 4
+@lepy1#4 title [pdftotext p15] next=number
+  Psychological Disorders
++ 69
++ Chapter 5
+@lepy1#5 title [pdftotext p15] next=number
+  Therapeutic Approaches
++ 89
++ Chapter 6
+@lepy1#6 title [pdftotext p15] next=number
+  Attitude and Social Cognition
++ 104
++ Chapter 7
+@lepy1#7 title [pdftotext p15] next=boilerplate
+  Social Influence and Group Processes
++ 120
++ Guidelines for Practicals in Psychology

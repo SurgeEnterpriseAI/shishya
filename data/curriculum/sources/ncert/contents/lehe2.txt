@@ -1,0 +1,36 @@
+# NCERT contents evidence — lehe2 — Human Ecology and Family Sciences Part II (index class 12, Home Science)
+# source: https://ncert.nic.in/textbook/pdf/lehe2ps.pdf
+# fetched: 2026-09-25T23:15:39+05:30  sha256: 5120dd8cf4dbc5fca46ba7346206c6efb5b6c45c7c06fd1cc463df78385bb82d  bytes: 3016974
+# contents pages of the PDF: 23 of 24
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 6df25742c649b025293f03710342660f6323de2bc7e44aa2ac9b8d3fb8c8b30d);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lehe2#1 title [pymupdf p23] next=number
+  Design for Fabric and Apparel
++ 157
++ Chapter 9
+@lehe2#2 title [pymupdf p23] next=number
+  Fashion Design and Merchandising
++ 176
++ Chapter 10
+@lehe2#3 title [pymupdf p23] next=number
+  Care and Maintenance of Fabrics in Institutions
++ 190
++ Unit V
+@lehe2#4 title [pymupdf p23] next=number
+  Hospitality Management
++ 207
++ Chapter 12
+@lehe2#5 title [pymupdf p23] next=number
+  Consumer Education and Protection
++ 222
++ Unit VI
+@lehe2#6 title [pymupdf p23] next=number
+  Development Communication and
+  Journalism
++ 244
++ Chapter 14
+@lehe2#7 title [pdftotext p23] next=page
+  Corporate Communication and Public Relations
++ iii v vii ix
++ 153 157 176 190

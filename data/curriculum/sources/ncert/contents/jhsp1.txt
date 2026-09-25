@@ -1,0 +1,8 @@
+# NCERT contents evidence — jhsp1 — Sparsh (index class 10, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/jhsp1ps.pdf
+# fetched: 2026-09-25T23:15:02+05:30  sha256: 7b02d35bd5272afb76ccb1ac9de9e296ddb6bfe09106172b40114568c0455467  bytes: 1872908
+# contents pages of the PDF: none found of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 cf0fb8049ac1fb6ea200876961609d3f9078403847cb60802680d292217da1d2);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

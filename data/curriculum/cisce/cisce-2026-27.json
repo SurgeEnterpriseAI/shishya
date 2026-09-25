@@ -1,0 +1,1477 @@
+{
+ "board": "CISCE",
+ "session": "2026-27",
+ "fetchedOn": "2026-09-25",
+ "note": "CISCE prescribes syllabuses, not a single textbook series. This file lists subjects per class and the official regulation/syllabus PDFs only; it lists no textbooks and no chapters.",
+ "sources": {
+  "icse2027": {
+   "url": "https://cisce.org/regulations-and-syllabus-icse-2027/",
+   "snapshotLinks": "data/curriculum/sources/cisce/regulations-and-syllabus-icse-2027.links.json",
+   "sha256": "063acf601e018446d2f988e6993111d282d758657ed24b3957dc09156267ed97"
+  },
+  "icse2028": {
+   "url": "https://cisce.org/regulations-and-syllabuses-icse-2028/",
+   "snapshotLinks": "data/curriculum/sources/cisce/regulations-and-syllabuses-icse-2028.links.json",
+   "sha256": "6d36f9e3ae56fe03ce01374b665efcf70e5fb380f8b10dbe0566f441c09a4f3d"
+  },
+  "isc2027": {
+   "url": "https://cisce.org/regulations-and-syllabus-isc-2027/",
+   "snapshotLinks": "data/curriculum/sources/cisce/regulations-and-syllabus-isc-2027.links.json",
+   "sha256": "8b1cf1721ae4aa34f86366a0981ff26faf8667e4af82d03f8d8d663d0c184130"
+  },
+  "isc2028": {
+   "url": "https://cisce.org/regulations-and-syllabus-isc-2028/",
+   "snapshotLinks": "data/curriculum/sources/cisce/regulations-and-syllabus-isc-2028.links.json",
+   "sha256": "a2b1d9faa11a27491cae8ea43543903ed6211bc572a4262188c7a03e874592c8"
+  },
+  "rdcd": {
+   "url": "https://cisce.org/rdcd-curriculum-internal-page/",
+   "snapshotLinks": "data/curriculum/sources/cisce/rdcd-curriculum-internal-page.links.json",
+   "sha256": "431df9a104db02939bf66e5ad91344df0c28a6cccfe7b64651cb9eb1320918be"
+  },
+  "icse2027voc": {
+   "url": "https://cisce.org/vocational-subjects-icse-2027/",
+   "snapshotLinks": "data/curriculum/sources/cisce/vocational-subjects-icse-2027.links.json",
+   "sha256": "7812a8b2f748d442fb21a7cc7baa45cc28f448f130ee88af60f47ea91739b41d"
+  },
+  "icse2028voc": {
+   "url": "https://cisce.org/vocational-subjects-icse-2028/",
+   "snapshotLinks": "data/curriculum/sources/cisce/vocational-subjects-icse-2028.links.json",
+   "sha256": "7db7e83476fb30cd7e26833527b2cfe1b9a9b4c28c0ba276e70618847a85828e"
+  }
+ },
+ "levels": [
+  {
+   "classes": [
+    1,
+    2
+   ],
+   "stage": "Primary (Classes I-II)",
+   "document": {
+    "title": "CISCE Curriculum — Primary Classes (I-V)",
+    "url": "https://cisce.org/wp-content/uploads/2025/03/PrimaryCurriculum.pdf",
+    "sha256": "3a9944a448bec51459a0474a34bf1fee56d4bf92aeb5f932e2fcbaa9d461881a",
+    "dated": "November 2016"
+   },
+   "subjects": [
+    {
+     "name": "English"
+    },
+    {
+     "name": "Second Language"
+    },
+    {
+     "name": "Mathematics"
+    },
+    {
+     "name": "Environmental Studies (EVS)"
+    },
+    {
+     "name": "Computer Studies"
+    },
+    {
+     "name": "Arts Education"
+    }
+   ],
+   "subjectListSource": "PrimaryCurriculum.pdf / UpperPrimary.pdf introduction, 'Subjects to be studied at the Primary Level' (Classes I-II column)",
+   "supplementaryDocuments": [
+    "https://cisce.org/wp-content/uploads/2025/03/1.-Performing-Arts-I-V.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/3.-Physical-Education-I-V.pdf"
+   ],
+   "alsoTakenUp": [
+    "Third Language (at least Class V-VIII)",
+    "Physical Education/ Yoga",
+    "Education in Moral and Spiritual Values",
+    "Socially Useful Productive Work and Community Service (SUPW) (VI -VIII)"
+   ],
+   "alsoTakenUpQuote": "NOTE: In addition to the above, the following should also be taken up at the Primary and Upper Primary levels"
+  },
+  {
+   "classes": [
+    3,
+    4,
+    5
+   ],
+   "stage": "Primary (Classes III-V)",
+   "document": {
+    "title": "CISCE Curriculum — Primary Classes (I-V)",
+    "url": "https://cisce.org/wp-content/uploads/2025/03/PrimaryCurriculum.pdf",
+    "sha256": "3a9944a448bec51459a0474a34bf1fee56d4bf92aeb5f932e2fcbaa9d461881a",
+    "dated": "November 2016"
+   },
+   "subjects": [
+    {
+     "name": "English"
+    },
+    {
+     "name": "Second Language"
+    },
+    {
+     "name": "Mathematics"
+    },
+    {
+     "name": "Science"
+    },
+    {
+     "name": "Social Studies"
+    },
+    {
+     "name": "Computer Studies"
+    },
+    {
+     "name": "Arts Education"
+    }
+   ],
+   "subjectListSource": "'Subjects to be studied at the Primary Level' (Classes III – V column)",
+   "supplementaryDocuments": [
+    "https://cisce.org/wp-content/uploads/2025/03/1.-Performing-Arts-I-V.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/3.-Physical-Education-I-V.pdf"
+   ],
+   "alsoTakenUp": [
+    "Third Language (at least Class V-VIII)",
+    "Physical Education/ Yoga",
+    "Education in Moral and Spiritual Values",
+    "Socially Useful Productive Work and Community Service (SUPW) (VI -VIII)"
+   ],
+   "alsoTakenUpQuote": "NOTE: In addition to the above, the following should also be taken up at the Primary and Upper Primary levels"
+  },
+  {
+   "classes": [
+    6,
+    7,
+    8
+   ],
+   "stage": "Upper Primary (Classes VI-VIII)",
+   "document": {
+    "title": "CISCE Curriculum — Upper Primary Classes (VI-VIII)",
+    "url": "https://cisce.org/wp-content/uploads/2025/03/UpperPrimary.pdf",
+    "sha256": "ef81ffedc34c20b7dccb37552b8403fde43d747c70df70dcbd6098e88da2e9ed",
+    "dated": "November 2016"
+   },
+   "subjects": [
+    {
+     "name": "English"
+    },
+    {
+     "name": "Second Language"
+    },
+    {
+     "name": "Mathematics"
+    },
+    {
+     "name": "Science (Physics, Chemistry, Biology)"
+    },
+    {
+     "name": "History, Civics & Geography (History & Civics, Geography)"
+    },
+    {
+     "name": "Computer Studies"
+    },
+    {
+     "name": "Arts Education"
+    }
+   ],
+   "subjectListSource": "'Subjects to be studied at the Upper Primary Level' (Classes VI - VIII)",
+   "supplementaryDocuments": [
+    "https://cisce.org/wp-content/uploads/2025/03/2.-Performing-Arts-VI-VIII.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/4.-Physical-Education-VI-VIII.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/5.-Sanskrit-V-VIII1.pdf"
+   ],
+   "alsoTakenUp": [
+    "Third Language (at least Class V-VIII)",
+    "Physical Education/ Yoga",
+    "Education in Moral and Spiritual Values",
+    "Socially Useful Productive Work and Community Service (SUPW) (VI -VIII)"
+   ],
+   "alsoTakenUpQuote": "NOTE: In addition to the above, the following should also be taken up at the Primary and Upper Primary levels"
+  },
+  {
+   "classes": [
+    9
+   ],
+   "stage": "ICSE (Class IX of the IX-X course)",
+   "examinationYear": "ICSE 2028",
+   "sessionMapping": "ICSE is a two-year course (Classes IX-X) examined at the end of Class X, so Class IX in 2026-27 follows the ICSE Examination Year 2028 regulations and syllabuses (our derivation from the course structure).",
+   "syllabusPage": "https://cisce.org/regulations-and-syllabuses-icse-2028/",
+   "regulations": {
+    "url": "https://cisce.org/wp-content/uploads/2026/07/ICSE-Regulations-July-2026.pdf",
+    "sha256": "94aab329f0ae3960a90df0aa9ae48f3eb1bbb39135eea5d1b69da5582aa2b2cb"
+   },
+   "subjects": [
+    {
+     "name": "English",
+     "group": "Group I (compulsory)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/2.-English.pdf"
+     ]
+    },
+    {
+     "name": "A Second Language",
+     "group": "Group I (compulsory)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/04/3.-Second-Languages-1.pdf"
+     ]
+    },
+    {
+     "name": "History, Civics and Geography",
+     "group": "Group I (compulsory)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/5.-History-Civics.pdf",
+      "https://cisce.org/wp-content/uploads/2026/01/6.-Geography.pdf"
+     ]
+    },
+    {
+     "name": "History, Civics and Geography (Thailand)",
+     "group": "Group I (compulsory)",
+     "note": "alternative, only for affiliated schools in Thailand",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/7.-History-Civics-Thailand.pdf",
+      "https://cisce.org/wp-content/uploads/2026/01/8.-Geography-Thailand.pdf"
+     ]
+    },
+    {
+     "name": "Mathematics",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/9.-Mathematics.pdf"
+     ]
+    },
+    {
+     "name": "Science (Physics, Chemistry, Biology)",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/10.-Physics.pdf",
+      "https://cisce.org/wp-content/uploads/2026/01/11.-Chemistry.pdf",
+      "https://cisce.org/wp-content/uploads/2026/01/12.-Biology.pdf"
+     ]
+    },
+    {
+     "name": "Economics",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/13.-Economics.pdf"
+     ]
+    },
+    {
+     "name": "Commercial Studies",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/14.-Commercial-Studies.pdf"
+     ]
+    },
+    {
+     "name": "A Modern Foreign Language",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/4.-Modern-Foreign-Languages-Group-I-1.pdf",
+      "https://cisce.org/wp-content/uploads/2026/01/15.-Modern-Foreign-Languages-Group-II-1.pdf"
+     ]
+    },
+    {
+     "name": "A Classical Language",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/16.-Classical-Language.pdf"
+     ]
+    },
+    {
+     "name": "Environmental Science",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/09/Environmental-Science.pdf"
+     ]
+    },
+    {
+     "name": "Computer Applications",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/18.-Computer-Applications.pdf"
+     ]
+    },
+    {
+     "name": "Economic Applications",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/19.-Economic-Applications.pdf"
+     ]
+    },
+    {
+     "name": "Commercial Applications",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/20.-Commercial-Applications.pdf"
+     ]
+    },
+    {
+     "name": "Art",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/21.-Art.pdf"
+     ]
+    },
+    {
+     "name": "Performing Arts",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/22.-Performing-Arts.pdf"
+     ]
+    },
+    {
+     "name": "Home Science",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/23.-Home-Science.pdf"
+     ]
+    },
+    {
+     "name": "Cookery",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/24.-Cookery.pdf"
+     ]
+    },
+    {
+     "name": "Fashion Designing",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/25.-Fashion-Designing.pdf"
+     ]
+    },
+    {
+     "name": "Physical Education",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/26.-Physical-Education.pdf"
+     ]
+    },
+    {
+     "name": "Yoga",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/27.-Yoga.pdf"
+     ]
+    },
+    {
+     "name": "Technical Drawing Applications",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/28.-Technical-Drawing-Applications.pdf"
+     ]
+    },
+    {
+     "name": "Environmental Applications",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/29.-Environmental-Applications.pdf"
+     ]
+    },
+    {
+     "name": "Mass Media & Communication",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/30.-Mass-Media-Communication.pdf"
+     ]
+    },
+    {
+     "name": "Hospitality Management",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/31.-Hospitality-Management.pdf"
+     ]
+    },
+    {
+     "name": "Robotics and Artificial Intelligence",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/1.-Robotics-Artificial-Intelligence.pdf"
+     ]
+    },
+    {
+     "name": "Assistant Beauty Therapist",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/2.-Assistant-Beauty-Therapist.pdf"
+     ]
+    },
+    {
+     "name": "Assistant Hair Stylist",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/3.-Assistant-Hair-Stylist.pdf"
+     ]
+    },
+    {
+     "name": "Basic Data Entry Operator",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/4.-Basic-Data-Entry-Operator.pdf"
+     ]
+    },
+    {
+     "name": "Dietetic Aide",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/5.-Dietetic-Aide.pdf"
+     ]
+    },
+    {
+     "name": "Cashier",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/6.-Cashier.pdf"
+     ]
+    },
+    {
+     "name": "Early Years Physical Activity Facilitator",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/7.-Early-Years-Physical-Activity-Facilitator.pdf"
+     ]
+    },
+    {
+     "name": "Auto Service Technician",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/8.-Auto-Service-Technician.pdf"
+     ]
+    },
+    {
+     "name": "Socially Useful Productive Work and Community Service",
+     "group": "Internal assessment (compulsory)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/32.-SUPW-Community-Service.pdf"
+     ]
+    },
+    {
+     "name": "Health and Physical Education",
+     "group": "Internal assessment (compulsory)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/07/ICSE-Health-and-Physical-Education-2026.pdf"
+     ]
+    }
+   ],
+   "rules": [
+    "Candidates may select one subject either from Section A or Section B OR Two subjects, one from Section A and one from Section B",
+    "It is expected that candidates will normally opt for both Science and Mathematics from Group II.",
+    "Part I: Compulsory — (a) A third language from at least Class V to Class VIII (Internal Examination). (b) Art (Internal Assessment). (c) Socially Useful Productive Work and Community Service (Internal Assessment). (d) Health and Physical Education (Internal Assessment). (e) Education in Moral and Spiritual Values."
+   ],
+   "allSyllabusPdfs": [
+    "https://cisce.org/wp-content/uploads/2026/01/0.-Cover-Page-1.pdf",
+    "https://cisce.org/wp-content/uploads/2026/07/ICSE-Regulations-July-2026.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/2.-English.pdf",
+    "https://cisce.org/wp-content/uploads/2026/04/3.-Second-Languages-1.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/4.-Modern-Foreign-Languages-Group-I-1.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/5.-History-Civics.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/6.-Geography.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/7.-History-Civics-Thailand.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/8.-Geography-Thailand.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/9.-Mathematics.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/10.-Physics.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/11.-Chemistry.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/12.-Biology.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/13.-Economics.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/14.-Commercial-Studies.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/15.-Modern-Foreign-Languages-Group-II-1.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/16.-Classical-Language.pdf",
+    "https://cisce.org/wp-content/uploads/2026/09/Environmental-Science.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/18.-Computer-Applications.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/19.-Economic-Applications.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/20.-Commercial-Applications.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/21.-Art.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/22.-Performing-Arts.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/23.-Home-Science.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/24.-Cookery.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/25.-Fashion-Designing.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/26.-Physical-Education.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/27.-Yoga.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/28.-Technical-Drawing-Applications.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/29.-Environmental-Applications.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/30.-Mass-Media-Communication.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/31.-Hospitality-Management.pdf",
+    "https://cisce.org/wp-content/uploads/2026/07/ICSE-Health-and-Physical-Education-2026.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/32.-SUPW-Community-Service.pdf",
+    "https://cisce.org/wp-content/uploads/2026/04/ICSE-2028-Appendix-I-List-of-Prescribed-Textbooks.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/0.-Cover-Page.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/1.-Robotics-Artificial-Intelligence.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/2.-Assistant-Beauty-Therapist.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/3.-Assistant-Hair-Stylist.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/4.-Basic-Data-Entry-Operator.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/5.-Dietetic-Aide.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/6.-Cashier.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/7.-Early-Years-Physical-Activity-Facilitator.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/8.-Auto-Service-Technician.pdf"
+   ]
+  },
+  {
+   "classes": [
+    10
+   ],
+   "stage": "ICSE (Class X, examined in 2027)",
+   "examinationYear": "ICSE 2027",
+   "sessionMapping": "Class X in 2026-27 sits the ICSE Examination Year 2027.",
+   "syllabusPage": "https://cisce.org/regulations-and-syllabus-icse-2027/",
+   "regulations": {
+    "url": "https://cisce.org/wp-content/uploads/2025/03/1.-Regulations.pdf",
+    "sha256": "874332a561bc84eea3f8dc28c08b0152efeef1cab41588a98602b0b8805100da"
+   },
+   "subjects": [
+    {
+     "name": "English",
+     "group": "Group I (compulsory)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/2.-English.pdf"
+     ]
+    },
+    {
+     "name": "A Second Language",
+     "group": "Group I (compulsory)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/04/3.-Second-Languages.pdf"
+     ]
+    },
+    {
+     "name": "History, Civics and Geography",
+     "group": "Group I (compulsory)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/ICSE-History-Civics.pdf",
+      "https://cisce.org/wp-content/uploads/2025/03/ICSE-Geography.pdf"
+     ]
+    },
+    {
+     "name": "History, Civics and Geography (Thailand)",
+     "group": "Group I (compulsory)",
+     "note": "alternative, only for affiliated schools in Thailand",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/7.-History-Civics-Thailand.pdf",
+      "https://cisce.org/wp-content/uploads/2025/03/8.-Geography-Thailand.pdf"
+     ]
+    },
+    {
+     "name": "Mathematics",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/9.-Mathematics.pdf"
+     ]
+    },
+    {
+     "name": "Science (Physics, Chemistry, Biology)",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/10.-Physics.pdf",
+      "https://cisce.org/wp-content/uploads/2025/03/11.-Chemistry.pdf",
+      "https://cisce.org/wp-content/uploads/2025/03/12.-Biology.pdf"
+     ]
+    },
+    {
+     "name": "Economics",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/13.-Economics.pdf"
+     ]
+    },
+    {
+     "name": "Commercial Studies",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/14.-Commercial-Studies.pdf"
+     ]
+    },
+    {
+     "name": "A Modern Foreign Language",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/4.-Modern-Foreign-Languages-Group-I.pdf",
+      "https://cisce.org/wp-content/uploads/2025/03/15.-Modern-Foreign-Languages-Group-II.pdf",
+      "https://cisce.org/wp-content/uploads/2025/03/30.-Modern-Foreign-Languages-Group-III.pdf"
+     ]
+    },
+    {
+     "name": "A Classical Language",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/16.-Classical-Language.pdf"
+     ]
+    },
+    {
+     "name": "Environmental Science",
+     "group": "Group II (any two/three)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/17.-Environmental-Science.pdf"
+     ]
+    },
+    {
+     "name": "Computer Applications",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/18.-Computer-Applications.pdf"
+     ]
+    },
+    {
+     "name": "Economic Applications",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/19.-Economic-Applications.pdf"
+     ]
+    },
+    {
+     "name": "Commercial Applications",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/20.-Commercial-Applications.pdf"
+     ]
+    },
+    {
+     "name": "Art",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/12/21.-Art.pdf"
+     ]
+    },
+    {
+     "name": "Performing Arts",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/22.-Performing-Arts.pdf"
+     ]
+    },
+    {
+     "name": "Home Science",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/23.-Home-Science.pdf"
+     ]
+    },
+    {
+     "name": "Cookery",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/24.-Cookery.pdf"
+     ]
+    },
+    {
+     "name": "Fashion Designing",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/25.-Fashion-Designing.pdf"
+     ]
+    },
+    {
+     "name": "Physical Education",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/26.-Physical-Education.pdf"
+     ]
+    },
+    {
+     "name": "Yoga",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/27.-Yoga.pdf"
+     ]
+    },
+    {
+     "name": "Technical Drawing Applications",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/28.-Technical-Drawing-Applications.pdf"
+     ]
+    },
+    {
+     "name": "Environmental Applications",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/29.-Environmental-Applications.pdf"
+     ]
+    },
+    {
+     "name": "A Modern Foreign Language (Group III)",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/30.-Modern-Foreign-Languages-Group-III.pdf"
+     ]
+    },
+    {
+     "name": "Mass Media & Communication",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/31.-Mass-Media-Communication.pdf"
+     ]
+    },
+    {
+     "name": "Hospitality Management",
+     "group": "Group III Section A (one/two of Group III)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/32.-Hospitality-Management.pdf"
+     ]
+    },
+    {
+     "name": "Robotics and Artificial Intelligence",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/1.-ICSE_Robotics-AI-.docx.pdf"
+     ]
+    },
+    {
+     "name": "Assistant Beauty Therapist",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/2.-ICSE-Assistant-Beauty-Therapist.pdf"
+     ]
+    },
+    {
+     "name": "Assistant Hair Stylist",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/3.-ICSE-Assistant-Hair-Stylist.pdf"
+     ]
+    },
+    {
+     "name": "Basic Data Entry Operator",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/4.-ICSE-Basic-Data-Entry-Operator.pdf"
+     ]
+    },
+    {
+     "name": "Dietetic Aide",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/5.-ICSE-Dietetic-Aide.pdf"
+     ]
+    },
+    {
+     "name": "Cashier",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/6.-ICSE-Cashier.pdf"
+     ]
+    },
+    {
+     "name": "Early Years Physical Activity Facilitator",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/7.-ICSE-Early-Years-Physical-Activity-Facilitator.pdf"
+     ]
+    },
+    {
+     "name": "Auto Service Technician",
+     "group": "Group III Section B",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/8.-ICSE-Auto-Service-Technician.pdf"
+     ]
+    },
+    {
+     "name": "Socially Useful Productive Work and Community Service",
+     "group": "Internal assessment (compulsory)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/03/33.-SUPW-Community-Service.pdf"
+     ]
+    }
+   ],
+   "rules": [
+    "Candidates may select one subject either from Section A or Section B … Two subjects, one from Section A and one from Section B",
+    "It is expected that candidates will normally offer both Science and Mathematics from Group II."
+   ],
+   "allSyllabusPdfs": [
+    "https://cisce.org/wp-content/uploads/2025/03/0.-Cover-Page.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/1.-Regulations.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/2.-English.pdf",
+    "https://cisce.org/wp-content/uploads/2026/04/3.-Second-Languages.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/4.-Modern-Foreign-Languages-Group-I.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/ICSE-History-Civics.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/ICSE-Geography.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/7.-History-Civics-Thailand.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/8.-Geography-Thailand.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/9.-Mathematics.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/10.-Physics.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/11.-Chemistry.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/12.-Biology.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/13.-Economics.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/14.-Commercial-Studies.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/15.-Modern-Foreign-Languages-Group-II.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/16.-Classical-Language.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/17.-Environmental-Science.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/18.-Computer-Applications.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/19.-Economic-Applications.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/20.-Commercial-Applications.pdf",
+    "https://cisce.org/wp-content/uploads/2025/12/21.-Art.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/22.-Performing-Arts.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/23.-Home-Science.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/24.-Cookery.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/25.-Fashion-Designing.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/26.-Physical-Education.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/27.-Yoga.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/28.-Technical-Drawing-Applications.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/29.-Environmental-Applications.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/30.-Modern-Foreign-Languages-Group-III.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/31.-Mass-Media-Communication.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/32.-Hospitality-Management.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/33.-SUPW-Community-Service.pdf",
+    "https://cisce.org/wp-content/uploads/2026/04/ICSE-2027-Appendix-I-List-of-Prescribed-Books.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/0.-Cover-Page-1.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/1.-ICSE_Robotics-AI-.docx.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/2.-ICSE-Assistant-Beauty-Therapist.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/3.-ICSE-Assistant-Hair-Stylist.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/4.-ICSE-Basic-Data-Entry-Operator.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/5.-ICSE-Dietetic-Aide.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/6.-ICSE-Cashier.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/7.-ICSE-Early-Years-Physical-Activity-Facilitator.pdf",
+    "https://cisce.org/wp-content/uploads/2025/03/8.-ICSE-Auto-Service-Technician.pdf"
+   ]
+  },
+  {
+   "classes": [
+    11
+   ],
+   "stage": "ISC (Class XI of the XI-XII course)",
+   "examinationYear": "ISC 2028",
+   "sessionMapping": "ISC is a two-year course (Classes XI-XII) examined at the end of Class XII, so Class XI in 2026-27 follows the ISC Examination Year 2028 regulations and syllabuses (our derivation from the course structure).",
+   "syllabusPage": "https://cisce.org/regulations-and-syllabus-isc-2028/",
+   "regulations": {
+    "url": "https://cisce.org/wp-content/uploads/2026/07/ISC-Regulations-July-2026.pdf",
+    "sha256": "c5571f34ca698b6464d3e4be6ecb98d87cab63e8ab23d269b605922c7cba09f9"
+   },
+   "subjects": [
+    {
+     "name": "English (or Modern English)",
+     "group": "Compulsory",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/2.-English-1.pdf",
+      "https://cisce.org/wp-content/uploads/2026/01/3.-Modern-English-1.pdf"
+     ]
+    },
+    {
+     "name": "An Indian Language",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/04/4.-Indian-Languages.pdf"
+     ]
+    },
+    {
+     "name": "A Modern Foreign Language",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/5.-Modern-Foreign-Languages.pdf"
+     ]
+    },
+    {
+     "name": "A Classical Language",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/6.-Classical-Languages.pdf"
+     ]
+    },
+    {
+     "name": "Elective English",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/7.-Elective-English-1.pdf"
+     ]
+    },
+    {
+     "name": "History",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/8.-History.pdf"
+     ]
+    },
+    {
+     "name": "Political Science",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/9.-Political-Science.pdf"
+     ]
+    },
+    {
+     "name": "Geography",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/10.-Geography.pdf"
+     ]
+    },
+    {
+     "name": "Sociology",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/11.-Sociology.pdf"
+     ]
+    },
+    {
+     "name": "Psychology",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/12.-Psychology.pdf"
+     ]
+    },
+    {
+     "name": "Economics",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/13.-Economics-1.pdf"
+     ]
+    },
+    {
+     "name": "Business Studies (previously known as Commerce)",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/09/Business-Studies.pdf"
+     ]
+    },
+    {
+     "name": "Accountancy",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/15.-Accountancy.pdf"
+     ]
+    },
+    {
+     "name": "Entrepreneurship",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/02/16.-Entrepreneurship.pdf"
+     ]
+    },
+    {
+     "name": "Mathematics",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/17.-Mathematics.pdf"
+     ]
+    },
+    {
+     "name": "Physics",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/02/ISC-2028-Physics.pdf"
+     ]
+    },
+    {
+     "name": "Chemistry",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/19.-Chemistry.pdf"
+     ]
+    },
+    {
+     "name": "Biology",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/20.-Biology.pdf"
+     ]
+    },
+    {
+     "name": "Home Science",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/21.-Home-Science-1.pdf"
+     ]
+    },
+    {
+     "name": "Fashion Designing",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/22.-Fashion-Designing.pdf"
+     ]
+    },
+    {
+     "name": "Electricity & Electronics",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/23.-Electricity-Electronics.pdf"
+     ]
+    },
+    {
+     "name": "Engineering Science",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/24.-Engineering-Science.pdf"
+     ]
+    },
+    {
+     "name": "Computer Science",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/25.-Computer-Science.pdf"
+     ]
+    },
+    {
+     "name": "Geometrical & Mechanical Drawing",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/26.-Geometrical-and-Mechanical-Drawing.pdf"
+     ]
+    },
+    {
+     "name": "Geometrical & Building Drawing",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/27.-Geometrical-and-Building-Drawing.pdf"
+     ]
+    },
+    {
+     "name": "Art (Papers 1 to 6)",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/28.-Art.pdf"
+     ]
+    },
+    {
+     "name": "Music (Hindustani, Carnatic or Western)",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/29.-Music.pdf"
+     ]
+    },
+    {
+     "name": "Physical Education",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/30.-Physical-Education.pdf"
+     ]
+    },
+    {
+     "name": "Environmental Science",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/31.-Environmental-Science.pdf"
+     ]
+    },
+    {
+     "name": "Biotechnology",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/32.-Biotechnology.pdf"
+     ]
+    },
+    {
+     "name": "Mass Media & Communication",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/33.-Mass-Media-Communication.pdf"
+     ]
+    },
+    {
+     "name": "Hospitality Management",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/34.-Hospitality-Management.pdf"
+     ]
+    },
+    {
+     "name": "Legal Studies",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/35.-Legal-Studies.pdf"
+     ]
+    },
+    {
+     "name": "Artificial Intelligence",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/36.-Artificial-Intelligence.pdf"
+     ]
+    },
+    {
+     "name": "Robotics",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/37.-Robotics.pdf"
+     ]
+    },
+    {
+     "name": "Applied Mathematics",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/38.-Applied-Mathematics.pdf"
+     ]
+    },
+    {
+     "name": "Socially Useful Productive Work and Community Service",
+     "group": "Internal assessment (compulsory)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/01/39.-SUPW.pdf"
+     ]
+    },
+    {
+     "name": "Health and Physical Education",
+     "group": "Internal assessment (compulsory)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/07/ISC-Health-and-Physical-Education-2026.pdf"
+     ]
+    }
+   ],
+   "rules": [
+    "All candidates for the Examination must enter for English / Modern English (compulsory), with four or five elective subjects.",
+    "A candidate may not enter for more than six subjects including the compulsory subject English / Modern English.",
+    "Not permitted together: English with Modern English; Physics with Engineering Science; Geometrical & Mechanical Drawing with Geometrical & Building Drawing; Mathematics with Applied Mathematics; Robotics with Artificial Intelligence."
+   ],
+   "allSyllabusPdfs": [
+    "https://cisce.org/wp-content/uploads/2026/01/0.-Cover-Page-2.pdf",
+    "https://cisce.org/wp-content/uploads/2026/07/ISC-Regulations-July-2026.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/2.-English-1.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/3.-Modern-English-1.pdf",
+    "https://cisce.org/wp-content/uploads/2026/04/4.-Indian-Languages.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/5.-Modern-Foreign-Languages.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/6.-Classical-Languages.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/7.-Elective-English-1.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/8.-History.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/9.-Political-Science.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/10.-Geography.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/11.-Sociology.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/12.-Psychology.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/13.-Economics-1.pdf",
+    "https://cisce.org/wp-content/uploads/2026/09/Business-Studies.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/15.-Accountancy.pdf",
+    "https://cisce.org/wp-content/uploads/2026/02/16.-Entrepreneurship.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/17.-Mathematics.pdf",
+    "https://cisce.org/wp-content/uploads/2026/02/ISC-2028-Physics.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/19.-Chemistry.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/20.-Biology.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/21.-Home-Science-1.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/22.-Fashion-Designing.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/23.-Electricity-Electronics.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/24.-Engineering-Science.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/25.-Computer-Science.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/26.-Geometrical-and-Mechanical-Drawing.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/27.-Geometrical-and-Building-Drawing.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/28.-Art.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/29.-Music.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/30.-Physical-Education.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/31.-Environmental-Science.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/32.-Biotechnology.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/33.-Mass-Media-Communication.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/34.-Hospitality-Management.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/35.-Legal-Studies.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/36.-Artificial-Intelligence.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/37.-Robotics.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/38.-Applied-Mathematics.pdf",
+    "https://cisce.org/wp-content/uploads/2026/07/ISC-Health-and-Physical-Education-2026.pdf",
+    "https://cisce.org/wp-content/uploads/2026/01/39.-SUPW.pdf",
+    "https://cisce.org/wp-content/uploads/2026/04/40.-Appendix-I-List-of-Prescribed-Textbooks.pdf"
+   ]
+  },
+  {
+   "classes": [
+    12
+   ],
+   "stage": "ISC (Class XII, examined in 2027)",
+   "examinationYear": "ISC 2027",
+   "sessionMapping": "Class XII in 2026-27 sits the ISC Examination Year 2027.",
+   "syllabusPage": "https://cisce.org/regulations-and-syllabus-isc-2027/",
+   "regulations": {
+    "url": "https://cisce.org/wp-content/uploads/2025/04/1.-ISC-Regulations.pdf",
+    "sha256": "a1d21b5ca6cf15705e9e23f56db6203ff6db6a89560bdfc97306f9e72ca2d18b"
+   },
+   "subjects": [
+    {
+     "name": "English (or Modern English)",
+     "group": "Compulsory",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/2.-ISC-English.pdf",
+      "https://cisce.org/wp-content/uploads/2025/04/ISC-Modern-English.pdf"
+     ]
+    },
+    {
+     "name": "An Indian Language",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/04/4.-ISC-Indian-Languages.pdf"
+     ]
+    },
+    {
+     "name": "A Modern Foreign Language",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/5.-ISC-Modern-Foreign-Languages-1.pdf"
+     ]
+    },
+    {
+     "name": "A Classical Language",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/6.-ISC-Classical-Languages-1.pdf"
+     ]
+    },
+    {
+     "name": "Elective English",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/7.-ISC-Elective-English-1.pdf"
+     ]
+    },
+    {
+     "name": "History",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/8.-ISC-History-2.pdf"
+     ]
+    },
+    {
+     "name": "Political Science",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/9.-ISC-Political-Science-1.pdf"
+     ]
+    },
+    {
+     "name": "Geography",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/10.-ISC-Geography-1.pdf"
+     ]
+    },
+    {
+     "name": "Sociology",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/11.-ISC-Sociology-1.pdf"
+     ]
+    },
+    {
+     "name": "Psychology",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/12.-Psychology.pdf"
+     ]
+    },
+    {
+     "name": "Economics",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/13.-ISC-Economics-1.pdf"
+     ]
+    },
+    {
+     "name": "Commerce",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/14.-ISC-Commerce.doc.pdf"
+     ]
+    },
+    {
+     "name": "Accountancy",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/15.-ISC-Accountancy.docx.pdf"
+     ]
+    },
+    {
+     "name": "Business Studies",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/16.-ISC-Business-Studies-1.pdf"
+     ]
+    },
+    {
+     "name": "Mathematics",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/17.-ISC-Mathematics.pdf"
+     ]
+    },
+    {
+     "name": "Physics",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/02/ISC-2027-Physics.pdf"
+     ]
+    },
+    {
+     "name": "Chemistry",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/19.-ISC-Chemistry-1.pdf"
+     ]
+    },
+    {
+     "name": "Biology",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/20.-ISC-Biology.pdf"
+     ]
+    },
+    {
+     "name": "Home Science",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/21.-ISC-Home-Science-1.pdf"
+     ]
+    },
+    {
+     "name": "Fashion Designing",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/22.-ISC-Fashion-Designing.doc.pdf"
+     ]
+    },
+    {
+     "name": "Electricity & Electronics",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/23.-ISC-Electricity-Electronics.pdf"
+     ]
+    },
+    {
+     "name": "Engineering Science",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/24.-ISC-Engineering-Science.doc.pdf"
+     ]
+    },
+    {
+     "name": "Computer Science",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/25.-ISC-Computer-Science.doc.pdf"
+     ]
+    },
+    {
+     "name": "Geometrical & Mechanical Drawing",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/26.-ISC-Geometrical-Mechanical-Drawing.pdf"
+     ]
+    },
+    {
+     "name": "Geometrical & Building Drawing",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/27.-ISC-Geometrical-Building-Drawing.pdf"
+     ]
+    },
+    {
+     "name": "Art (Papers 1 to 6)",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/28.-ISC-Art.doc.pdf"
+     ]
+    },
+    {
+     "name": "Music (Hindustani, Carnatic or Western)",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/29.-ISC-Music.doc.pdf"
+     ]
+    },
+    {
+     "name": "Physical Education",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/30.-ISC-Physical-Education-2.pdf"
+     ]
+    },
+    {
+     "name": "Environmental Science",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/31.-ISC-Environmental-Science-1.pdf"
+     ]
+    },
+    {
+     "name": "Biotechnology",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/32.-ISC-Biotechnology.docx.pdf"
+     ]
+    },
+    {
+     "name": "Mass Media & Communication",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/33.-ISC-Mass-Media-Communication.pdf"
+     ]
+    },
+    {
+     "name": "Hospitality Management",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/34.-ISC-Hospitality-Management.pdf"
+     ]
+    },
+    {
+     "name": "Legal Studies",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2026/02/35.-ISC-Legal-Studies.doc.pdf"
+     ]
+    },
+    {
+     "name": "Artificial Intelligence",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/36.-ISC-Artificial-Intelligence.pdf"
+     ]
+    },
+    {
+     "name": "Robotics",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/37.-ISC-Robotics.pdf"
+     ]
+    },
+    {
+     "name": "Applied Mathematics",
+     "group": "Elective (four or five)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/38.-ISC-Applied-Mathematics.pdf"
+     ]
+    },
+    {
+     "name": "Socially Useful Productive Work and Community Service",
+     "group": "Internal assessment (compulsory)",
+     "syllabusUrls": [
+      "https://cisce.org/wp-content/uploads/2025/04/39.-ISC-SUPW.pdf"
+     ]
+    }
+   ],
+   "rules": [
+    "Not permitted together: English with Modern English; Physics with Engineering Science; Geometrical & Mechanical Drawing with Geometrical & Building Drawing; Mathematics with Applied Mathematics; Robotics with Artificial Intelligence."
+   ],
+   "allSyllabusPdfs": [
+    "https://cisce.org/wp-content/uploads/2025/04/0.-ISC-Cover-Page.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/1.-ISC-Regulations.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/1.-ISC-Syllabus-Contents.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/2-ISC-Syllabus-Regulations.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/2.-ISC-English.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/ISC-Modern-English.pdf",
+    "https://cisce.org/wp-content/uploads/2026/04/4.-ISC-Indian-Languages.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/5.-ISC-Modern-Foreign-Languages-1.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/6.-ISC-Classical-Languages-1.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/7.-ISC-Elective-English-1.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/8.-ISC-History-2.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/9.-ISC-Political-Science-1.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/10.-ISC-Geography-1.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/11.-ISC-Sociology-1.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/12.-Psychology.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/13.-ISC-Economics-1.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/14.-ISC-Commerce.doc.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/15.-ISC-Accountancy.docx.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/16.-ISC-Business-Studies-1.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/17.-ISC-Mathematics.pdf",
+    "https://cisce.org/wp-content/uploads/2026/02/ISC-2027-Physics.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/19.-ISC-Chemistry-1.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/20.-ISC-Biology.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/21.-ISC-Home-Science-1.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/22.-ISC-Fashion-Designing.doc.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/23.-ISC-Electricity-Electronics.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/24.-ISC-Engineering-Science.doc.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/25.-ISC-Computer-Science.doc.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/26.-ISC-Geometrical-Mechanical-Drawing.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/27.-ISC-Geometrical-Building-Drawing.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/28.-ISC-Art.doc.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/29.-ISC-Music.doc.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/30.-ISC-Physical-Education-2.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/31.-ISC-Environmental-Science-1.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/32.-ISC-Biotechnology.docx.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/33.-ISC-Mass-Media-Communication.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/34.-ISC-Hospitality-Management.pdf",
+    "https://cisce.org/wp-content/uploads/2026/02/35.-ISC-Legal-Studies.doc.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/36.-ISC-Artificial-Intelligence.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/37.-ISC-Robotics.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/38.-ISC-Applied-Mathematics.pdf",
+    "https://cisce.org/wp-content/uploads/2025/04/39.-ISC-SUPW.pdf",
+    "https://cisce.org/wp-content/uploads/2026/04/40.-ISC-Appendix-I-List-of-Prescribed-Textbooks.pdf"
+   ]
+  }
+ ]
+}

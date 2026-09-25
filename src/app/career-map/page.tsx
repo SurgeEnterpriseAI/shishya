@@ -49,7 +49,9 @@ const LIFECYCLE: Stage[] = [
     description:
       "Build subject strength. Choose stream by Class 10 result + genuine interest. Olympiads + NTSE for early signals.",
     paths: [
-      { label: "Schooling — your board's chapters", href: "/schooling", hint: "CBSE / ICSE / state — Class 9 + 10" },
+      // 26 Sep 2026: "your board's chapters" was untrue for ICSE and every
+      // state board (no chapter pages); /schooling is official links today.
+      { label: "Schooling — official board links", href: "/schooling", hint: "CBSE / ICSE / state — Class 9 + 10" },
       { label: "Stream selection (Science / Commerce / Humanities)", href: "/schooling/streams", hint: "The most consequential decision" },
       { label: "NTSE + Olympiads (NSEJS / NSO / IMO / NSO)", href: "/exams/NSEJS", hint: "Early-talent signal exams" },
     ],
@@ -74,7 +76,10 @@ const LIFECYCLE: Stage[] = [
     description:
       "Stream-specific prep + entrance exams. 2 years that shape the next 4-6.",
     paths: [
-      { label: "Class 11 + 12 subject pages", href: "/schooling", hint: "Per-subject chapter pages + quizzes" },
+      // 26 Sep 2026: the school quizzes are off until answer-checked
+      // (SCHOOL_QUIZZES_ANSWER_CHECKED), and only CBSE Maths / Physics /
+      // Chemistry / Biology list chapters — the hint says only that.
+      { label: "Class 11 + 12 subject pages", href: "/schooling", hint: "NCERT book links; CBSE chapter lists for Maths, Physics, Chemistry, Biology" },
       { label: "JEE Main / Advanced (Engineering)", href: "/exams/JEE_MAIN" },
       { label: "NEET UG (Medical)", href: "/exams/NEET_UG" },
       { label: "CUET UG (Central Universities)", href: "/exams/CUET_UG" },

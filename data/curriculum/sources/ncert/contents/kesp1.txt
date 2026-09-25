@@ -1,0 +1,28 @@
+# NCERT contents evidence — kesp1 — Snapshots Suppl.Reader English (index class 11, English)
+# source: https://ncert.nic.in/textbook/pdf/kesp1ps.pdf
+# fetched: 2026-09-25T23:15:17+05:30  sha256: 6a89dc4fff0908e25a19b3d81457a55c0a4dc0213c9e4afdf2de9c58bfccabf7  bytes: 2527903
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 a3a082acb8bf72a37b0075d2c0a7b135420b33bfe0e2ba499583777cef4f3a9b);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kesp1#1 title [pdftotext p13] next=page
+  1. The Summer of the Beautiful
+  White Horse
++ :
++ 1
+@kesp1#2 title [pymupdf p13] next=page
+  The Address
++ :
++ 9
+@kesp1#3 title [pymupdf p13] next=page
+  Mother’s Day
++ :
++ 14
+@kesp1#4 title [pymupdf p13] next=page
+  Birth
++ :
++ 34
+@kesp1#5 title [pymupdf p13] next=page
+  The Tale of Melon City
++ :
++ 39

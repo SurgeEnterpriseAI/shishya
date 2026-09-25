@@ -1,0 +1,39 @@
+# NCERT contents evidence — lebs1 — Business Studies-I (index class 12, Business Studies)
+# source: https://ncert.nic.in/textbook/pdf/lebs1ps.pdf
+# fetched: 2026-09-25T23:15:38+05:30  sha256: 04fffa6d71c1b2bc91d632053ad95458cd27780f6422ef03a4d07aa8e8fba487  bytes: 2851720
+# contents pages of the PDF: 9 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 ccbff1073b2a9fe835f19b3a436536eea822b80b34d11ebe479e99b66cc698b1);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lebs1#1 title [pymupdf p9] next=number
+  Nature and Significance of Management
++ 1
++ Chapter 2
+@lebs1#2 title [pymupdf p9] next=number
+  Principles of Management
++ 30
++ Chapter 3
+@lebs1#3 title [pymupdf p9] next=number
+  Business Environment
++ 69
++ Chapter 4
+@lebs1#4 title [pymupdf p9] next=number
+  Planning
++ 91
++ Chapter 5
+@lebs1#5 title [pymupdf p9] next=number
+  Organising
++ 109
++ Chapter 6
+@lebs1#6 title [pymupdf p9] next=number
+  Staffing
++ 139
++ Chapter 7
+@lebs1#7 title [pymupdf p9] next=number
+  Directing
++ 169
++ Chapter 8
+@lebs1#8 title [pdftotext p9] next=page
+~ Organising Chapter 6 Staffing Chapter 7 Directing Chapter 8 Controlling
++ iii v 1 30 69 91 109 139 169 201
++ Reprint 2026-27

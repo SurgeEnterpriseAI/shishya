@@ -1,0 +1,8 @@
+# NCERT contents evidence — ihsh1 — Sharada (index class 9, Sanskrit)
+# source: https://ncert.nic.in/textbook/pdf/ihsh1ps.pdf
+# fetched: 2026-09-25T23:14:53+05:30  sha256: 9a5024a6f65107f4fc1343d97405b3dd8fcf0bbdf7ae53ae751d59ad26de8dbf  bytes: 10565167
+# contents pages of the PDF: none found of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 c9894865d2b9222434cd2b4422bfb3dbb37c7b1c8a40e35daf90d8b1fd9a456e);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

@@ -1,0 +1,8 @@
+# NCERT contents evidence — isanskritr21 — Risikulya(R2) (index class 9, Sanskrit)
+# source: https://ncert.nic.in/textbook/pdf/isanskritr21ps.pdf
+# fetched: 2026-09-25T23:15:00+05:30  sha256: dd038f308877fce7b15da2f0339ce05ebeac37d740c8e8179572707e9d4ca76b  bytes: 12224377
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 8a9921b5f91be8d0fedd2a8d85d23e90d506650a04e02e141206b3947b99f018);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

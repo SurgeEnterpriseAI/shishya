@@ -1,0 +1,8 @@
+# NCERT contents evidence — ghml1 — Malhar (index class 7, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/ghml1ps.pdf
+# fetched: 2026-09-25T23:14:34+05:30  sha256: b5fa4a3f3ecb398aa808c277699398d7f9d4f8877fc934774629992cb64fa6c7  bytes: 8335716
+# contents pages of the PDF: none found of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 997a6fca4e82e5a6a8994cb7e11c0981c25d4952aab74a2819661d2d48b7652e);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

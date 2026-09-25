@@ -1,0 +1,47 @@
+# NCERT contents evidence — hekb1 — Kaushal Bodh (index class 8, Vocational Education)
+# source: https://ncert.nic.in/textbook/pdf/hekb1ps.pdf
+# fetched: 2026-09-25T23:14:49+05:30  sha256: 7ec96a4d04bac3ff393301145146d2911eafc633733828ea369c92b4a3933b77  bytes: 3651030
+# contents pages of the PDF: 21 of 22
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 b603b38deeec3337cae8e391a06d5852121193267a4e29ebc0e5139327601034);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@hekb1#1 title [pdftotext p21] next=number
+  Project 1: Hydroponics: Growing Plants without Soil 3
++ Project 2: Feeding and Caring for Farm Animals
++ 31
+@hekb1#1:section section [pdftotext p21] next=number
+  Part 1: Work with Life Forms
++ 1
++ Project 1: Hydroponics: Growing Plants without Soil 3
+@hekb1#2 title [pdftotext p21] next=number
+  Project 2: Feeding and Caring for Farm Animals
++ 31
++ Part 2: Work with Machines and Materials
+@hekb1#3 title [pdftotext p21] next=number
+  Project 3: Working with Wood and Bamboo
++ 61
++ Project 4: Home Automation
+@hekb1#3:section section [pdftotext p21] next=number
+  Part 2: Work with Machines and Materials
++ 59
++ Project 3: Working with Wood and Bamboo
+@hekb1#4 title [pdftotext p21] next=number
+  Project 4: Home Automation
++ 83
++ Part 3: Work in Human Services
+@hekb1#5 title [pdftotext p21] next=number
+  Project 5: Water Audit for Water Management
++ 109
++ Project 6: Creating Advertisements
+@hekb1#5:section section [pdftotext p21] next=number
+  Part 3: Work in Human Services
++ 107
++ Project 5: Water Audit for Water Management
+@hekb1#6 title [pdftotext p21] next=known
+  Project 6: Creating Advertisements
++ 135
++ Planning for Kaushal Mela
+@hekb1#7 title [pdftotext p21] next=boilerplate
+  Planning for Kaushal Mela
++ 162
++ Annexure 1: Project Template

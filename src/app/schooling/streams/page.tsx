@@ -3,17 +3,29 @@
 // The single most consequential decision a 15-16 year old Indian student
 // makes. Science (PCM, PCB, PCMB), Commerce, Humanities — each opens and
 // closes specific career doors. This page is the honest decision surface.
+//
+// 25 Sep 2026 (school build, Step 0): noindex like the rest of /schooling.
+// Removed claims that were unsourced or wrong: NEET "~24L applicants" and
+// "12L aspirants" on the same page, "₹3-4 LPA", "8-15% CA pass rate",
+// "~1300 pages", "humanities students dominate IIM intakes", "Maths is
+// mandatory for CA" (ICAI takes any stream), GST/IT-Act in Class 12
+// commerce, "42 career paths" (the careers page lists CAREERS.length).
+// Exam chips without a page on Shishya (CLAT, IPMAT, BITSAT, CA, NID,
+// NIFT) are plain labels now: /exams/CLAT was a 404 and /exams 308s to /.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
+import { SCHOOLING_ROBOTS } from "@/lib/schooling-data";
+import { CAREERS } from "@/data/careers";
 
 export const metadata: Metadata = {
   title: "Stream Selection After Class 10 — Science vs Commerce vs Humanities | Shishya",
   description:
     "Picking your Class 11 stream is the most consequential decision in your school years. Science (PCM/PCB/PCMB), Commerce, Humanities — what each opens up, what each closes, and how to pick honestly. No 'science is best' marketing.",
   alternates: { canonical: "https://shishya.in/schooling/streams" },
+  robots: SCHOOLING_ROBOTS,
   keywords: [
     "stream selection class 10",
     "science vs commerce vs humanities",
@@ -44,7 +56,8 @@ interface Stream {
   blurb: string;
   opens: string[];   // careers it opens
   closes: string[];  // careers it makes hard
-  exams: Array<{ label: string; href: string }>;
+  // href only for exams that have a page on Shishya.
+  exams: Array<{ label: string; href?: string }>;
   whoShouldPick: string;
   whoShouldnt: string;
   myths: Array<{ myth: string; reality: string }>;
@@ -74,7 +87,7 @@ const STREAMS: Stream[] = [
     exams: [
       { label: "JEE Main", href: "/exams/JEE_MAIN" },
       { label: "JEE Advanced", href: "/exams/JEE_ADVANCED" },
-      { label: "BITSAT", href: "/exams" },
+      { label: "BITSAT" },
       { label: "CUET UG", href: "/exams/CUET_UG" },
       { label: "NDA", href: "/exams/NDA" },
     ],
@@ -85,7 +98,7 @@ const STREAMS: Stream[] = [
     myths: [
       { myth: "PCM is the 'safest' choice", reality: "Only safe if you genuinely engage with math + science. Otherwise the 2 years of Class 11-12 become miserable + boards underperformance affects every UG admission." },
       { myth: "PCM with PCB option (PCMB) is best for keeping doors open", reality: "True ONLY if you can handle 5 difficult subjects simultaneously. Most students who take PCMB underperform in 2-3 subjects vs students focused on PCM or PCB." },
-      { myth: "Engineering is the highest-paying career", reality: "Top-tier engineering is. Tier-3 college BTech pays ₹3-4 LPA on graduation — well below CA, design, civil services at same tenure." },
+      { myth: "Engineering is the highest-paying career", reality: "Pay depends heavily on the college and the role. An engineering degree on its own does not guarantee high pay; CA, design and civil services can pay as well or better." },
     ],
   },
   {
@@ -107,7 +120,7 @@ const STREAMS: Stream[] = [
     closes: [
       "Engineering (need Math — would have to switch to PCMB or repeat Class 11 with PCM)",
       "Architecture (needs Math)",
-      "BCom + CA + traditional finance (no Math is a real handicap)",
+      "Maths-heavy commerce paths (economics honours, actuarial science)",
       "Defence technical entry (most need Math)",
     ],
     exams: [
@@ -118,10 +131,10 @@ const STREAMS: Stream[] = [
     whoShouldPick:
       "You're committed to medicine, dentistry, veterinary, or life-sciences research. You enjoy memorisation + recall (NEET rewards this) more than complex math problem-solving. Strong Class 10 biology grades are a positive signal.",
     whoShouldnt:
-      "You're picking PCB only because parents want a doctor. NEET has ~24L applicants for ~1.1L MBBS seats. Without genuine commitment, the prep grind is brutal. Also don't pick PCB if you're considering engineering as a backup — Math is the missing piece.",
+      "You're picking PCB only because parents want a doctor. NEET has many times more applicants than there are MBBS seats. Without genuine commitment, the prep grind is brutal. Also don't pick PCB if you're considering engineering as a backup — Math is the missing piece.",
     myths: [
-      { myth: "PCB is easier than PCM", reality: "Different difficulty, not easier. NEET Biology is volume-heavy (memorise + recall ~1300+ pages of NCERT). PCM is complexity-heavy. Both demand 2 years of dedicated work." },
-      { myth: "MBBS is guaranteed if I take PCB + score well", reality: "12L MBBS-aspirants vs 1.1L MBBS seats = ~1 in 11 chance. Govt MBBS at strong colleges = 1 in 22. Private MBBS is ₹70L-1.2 Cr fees over 5.5 yrs." },
+      { myth: "PCB is easier than PCM", reality: "Different difficulty, not easier. NEET Biology is volume-heavy (a lot of NCERT content to recall). PCM is complexity-heavy. Both demand 2 years of dedicated work." },
+      { myth: "MBBS is guaranteed if I take PCB + score well", reality: "MBBS seats are far fewer than NEET applicants, government seats fewer still, and private MBBS fees are very high. Have a plan B inside PCB." },
       { myth: "Without MBBS, PCB has no future", reality: "BPharm, Allied Health, Biotech, BSc Bio + MSc research, Veterinary, AYUSH, Nutrition + Sports Medicine — multiple viable careers. Pay range is wide; outcomes depend on specialisation." },
     ],
   },
@@ -142,11 +155,11 @@ const STREAMS: Stream[] = [
       "But you spread thin — pre-prep for JEE + NEET simultaneously is genuinely hard",
     ],
     exams: [
-      { label: "Either JEE Main or NEET UG (or both — rare)", href: "/exams" },
-      { label: "All PCM + PCB exams remain open", href: "/exams" },
+      { label: "JEE Main", href: "/exams/JEE_MAIN" },
+      { label: "NEET UG", href: "/exams/NEET_UG" },
     ],
     whoShouldPick:
-      "Class 10 percentage ≥90%, genuinely strong in math + bio + chem. You'd take JEE OR NEET depending on Class 12 performance + interest evolution. Top performers at central schools (KVS, Sainik) often pick PCMB.",
+      "Class 10 percentage ≥90%, genuinely strong in math + bio + chem. You'd take JEE OR NEET depending on Class 12 performance + interest evolution.",
     whoShouldnt:
       "You're at average grades + parents want you to 'keep all options open'. PCMB is brutal — 5 subjects to perform in for boards AND prep for the entrance + cover the syllabus. Most students underperform.",
     myths: [
@@ -180,18 +193,18 @@ const STREAMS: Stream[] = [
     ],
     exams: [
       { label: "CUET UG (Commerce stream)", href: "/exams/CUET_UG" },
-      { label: "CA Foundation (after Class 12)", href: "/exams" },
-      { label: "CLAT (for BBA-LLB)", href: "/exams/CLAT" },
-      { label: "IPMAT (IIM Indore/Rohtak integrated MBA)", href: "/exams" },
-      { label: "BITSAT (with Math)", href: "/exams" },
+      { label: "CA Foundation (after Class 12)" },
+      { label: "CLAT (for BBA-LLB)" },
+      { label: "IPMAT (IIM integrated MBA)" },
+      { label: "BITSAT (with Math)" },
     ],
     whoShouldPick:
-      "You're interested in business, finance, accounting, economics. Strong Class 10 social science + math grades. You're systems-oriented + numerate. Math version (Commerce with Math) is strongly recommended — it opens BCom Hons at top DU colleges, Eco at Eco hons, and is mandatory for CA + IPMAT.",
+      "You're interested in business, finance, accounting, economics. Strong Class 10 social science + math grades. You're systems-oriented + numerate. Commerce with Math is strongly recommended: many economics honours programmes and some BCom (Hons) programmes expect Class 12 Maths.",
     whoShouldnt:
-      "You picked it as a default because you're 'not science material'. Commerce demands genuine engagement with double-entry accounting, IT-Act/GST tax law, business cases — not just rote memorisation.",
+      "You picked it as a default because you're 'not science material'. Commerce demands genuine engagement with double-entry accounting, economics and business cases — not just rote memorisation.",
     myths: [
-      { myth: "Commerce is the 'easier' alternative to PCM", reality: "Different domain, not easier. CA clearance rate is 8-15% at first attempt; Class 12 commerce boards have detailed accountancy + tax syllabi." },
-      { myth: "Commerce without Math is fine", reality: "It's possible BUT cuts off CA's quantitative subjects, IPMAT, top BCom Hons + Eco programs, actuary. Take Commerce WITH Math unless you're truly math-averse." },
+      { myth: "Commerce is the 'easier' alternative to PCM", reality: "Different domain, not easier. CA exams are known for low pass rates, and Class 12 accountancy is a detailed, practice-heavy syllabus." },
+      { myth: "Commerce without Math is fine", reality: "It's possible, but it narrows economics honours, some BCom (Hons) programmes and actuarial science. Take Commerce WITH Math unless you're truly math-averse." },
       { myth: "CA is the only good commerce career", reality: "CA is one of several. CS, CMA, MBA via IIMs, banking via IBPS, investment banking via MBA, economics research via PhD — all viable from commerce." },
     ],
   },
@@ -219,21 +232,20 @@ const STREAMS: Stream[] = [
       "Engineering + Architecture",
       "MBBS / BDS / BVSc",
       "Most pure-science research careers",
-      "CA at the cleanest path (BA route to CA is possible but harder)",
     ],
     exams: [
       { label: "CUET UG (Humanities stream)", href: "/exams/CUET_UG" },
-      { label: "CLAT (Law)", href: "/exams/CLAT" },
+      { label: "CLAT (Law)" },
       { label: "UPSC CSE (after graduation)", href: "/exams/UPSC_PRELIMS" },
-      { label: "NID Design entrance", href: "/exams" },
-      { label: "NIFT entrance", href: "/exams" },
+      { label: "NID Design entrance" },
+      { label: "NIFT entrance" },
     ],
     whoShouldPick:
-      "You're interested in history, society, politics, language, design, psychology. You're considering civil services, law, journalism, design. Strong Class 10 social science + English grades are positive signals. Humanities is increasingly the 'serious' choice for UPSC aspirants — NCERT humanities aligns directly with UPSC GS.",
+      "You're interested in history, society, politics, language, design, psychology. You're considering civil services, law, journalism, design. Strong Class 10 social science + English grades are positive signals. NCERT history, geography and polity books are widely used for UPSC GS preparation.",
     whoShouldnt:
       "You picked it because 'I scored low so I can't take Science/Commerce'. Humanities at a top school is academically rigorous — Class 12 boards include difficult Geography, History, Political Science. Pick it because you genuinely engage with these subjects, not as a default.",
     myths: [
-      { myth: "Humanities is the 'last resort' stream", reality: "Humanities students dominate top IIM / FMS / IIT-Madras Liberal Arts intakes. UPSC top-rankers heavily come from humanities backgrounds. It's a real path, not a backup." },
+      { myth: "Humanities is the 'last resort' stream", reality: "Humanities leads to law, civil services, journalism, design, policy and management. It's a real path, not a backup." },
       { myth: "Humanities has no career options", reality: "UPSC, Law, Journalism, Design, Psychology, Foreign Service, Policy careers, Academia — all originate from humanities. Pay range is wide; top tier (SC judge, senior IAS officer, top journalist, design partner) is substantial." },
       { myth: "BA = unemployment", reality: "Top BA programmes (DU Hons, Ashoka, FLAME, JNU, Presidency Kolkata, St Stephen's, Hindu, LSR) feed strong career outcomes. The 'BA unemployment' narrative applies to mediocre BA from tier-3 colleges — same as tier-3 BTech." },
     ],
@@ -330,12 +342,18 @@ export default function StreamsPage() {
             <ul className="mt-2 flex flex-wrap gap-2">
               {s.exams.map((e, i) => (
                 <li key={i}>
-                  <Link
-                    href={e.href}
-                    className="rounded-md border border-saffron-300 bg-saffron-50/40 px-3 py-1 text-xs text-saffron-800 hover:bg-saffron-100"
-                  >
-                    {e.label} →
-                  </Link>
+                  {e.href ? (
+                    <Link
+                      href={e.href}
+                      className="rounded-md border border-saffron-300 bg-saffron-50/40 px-3 py-1 text-xs text-saffron-800 hover:bg-saffron-100"
+                    >
+                      {e.label} →
+                    </Link>
+                  ) : (
+                    <span className="rounded-md border border-ink-200 bg-white px-3 py-1 text-xs text-ink-700">
+                      {e.label}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -400,7 +418,7 @@ export default function StreamsPage() {
           >
             <p className="text-sm font-semibold text-ink-900">Explore careers →</p>
             <p className="mt-1 text-xs text-ink-600">
-              42 career paths with salary, qualifications, growth. Read what
+              {CAREERS.length} career paths with salary, qualifications, growth. Read what
               real work in each looks like before picking a stream.
             </p>
           </Link>
@@ -410,8 +428,8 @@ export default function StreamsPage() {
           >
             <p className="text-sm font-semibold text-ink-900">Back to schooling →</p>
             <p className="mt-1 text-xs text-ink-600">
-              Per-board, per-class syllabus + chapter pages. NCERT-aligned,
-              free.
+              Per-board and per-class pages linking the official syllabuses
+              and NCERT textbooks.
             </p>
           </Link>
         </div>

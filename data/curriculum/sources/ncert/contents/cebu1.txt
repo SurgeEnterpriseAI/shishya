@@ -1,0 +1,85 @@
+# NCERT contents evidence — cebu1 — Bansuri - I (index class 3, Arts)
+# source: https://ncert.nic.in/textbook/pdf/cebu1ps.pdf
+# fetched: 2026-09-25T23:14:16+05:30  sha256: cf9ab0ba057fad69f53a7c94918f7d4a60ae5ad507f2b7592cca3c5921bf6b6b  bytes: 3370480
+# contents pages of the PDF: 17,18 of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 e8dce2eeb7e81a5f13424234eed9635e79cc7774b65c632c9b14fc3fc1d456f0);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@cebu1#1 title [pymupdf p17] next=number
+  1. Objects in Art.....3
++ 2. Plants in Art.....12
++ 3. Animals in Art.....22
+@cebu1#2 title [pymupdf p17] next=number
+  2. Plants in Art.....12
++ 3. Animals in Art.....22
++ 4. People Around Us.....30
+@cebu1#3 title [pymupdf p17] next=number
+  3. Animals in Art.....22
++ 4. People Around Us.....30
++ 5. Festivals, Occasions, and Celebrations.....35
+@cebu1#4 title [pymupdf p17] next=number
+  4. People Around Us.....30
++ 5. Festivals, Occasions, and Celebrations.....35
++ Foreword..... iii
+@cebu1#5 title [pdftotext p17] next=known
+~ .....30 5. Festivals, Occasions, and Celebrations.....35
++ Music
++ 6. Our National Anthem.....43 7. Feel the Rhythm ta ka ta ki Ta.....45 8. Travel Around.....58 9. Musical Instruments.....64 10. Celebratory Notes.....71
+@cebu1#6 title [pymupdf p17] next=number
+  6. Our National Anthem.....43
++ 7. Feel the Rhythm ta ka ta ki Ta.....45
++ 8. Travel Around.....58
+@cebu1#7 title [pymupdf p17] next=number
+  7. Feel the Rhythm ta ka ta ki Ta.....45
++ 8. Travel Around.....58
++ 9. Musical Instruments.....64
+@cebu1#8 title [pymupdf p17] next=number
+  8. Travel Around.....58
++ 9. Musical Instruments.....64
++ 10.	Celebratory Notes.....71
+@cebu1#9 title [pymupdf p17] next=number
+  9. Musical Instruments.....64
++ 10.	Celebratory Notes.....71
++ Contents
+@cebu1#10 title [pdftotext p17] next=page
+~ ents.....64 10. Celebratory Notes.....71
++ Reprint 2026-27
+@cebu1#11 title [pymupdf p18] next=number
+  11.	Let us Dance.....82
++ 12.	Dance for Joy.....88
++ 13.	I Play and Dance.....93
+@cebu1#12 title [pymupdf p18] next=number
+  12.	Dance for Joy.....88
++ 13.	I Play and Dance.....93
++ 14.	Dance with Nature.....98
+@cebu1#13 title [pymupdf p18] next=number
+  13.	I Play and Dance.....93
++ 14.	Dance with Nature.....98
++ 15. Explore.....107
+@cebu1#14 title [pdftotext p18] next=boilerplate
+~ .....93 14. Dance with Nature.....98
++ Theatre
++ 15. Explore.....107 16. Imagine.....118 17. Let’s Create.....124 18. Look Around.....128 19. Activities.....135 20. Integrating All Art Forms.....137
+@cebu1#15 title [pymupdf p18] next=number
+  15. Explore.....107
++ 16. Imagine.....118
++ 17.	Let’s Create.....124
+@cebu1#16 title [pymupdf p18] next=number
+  16. Imagine.....118
++ 17.	Let’s Create.....124
++ 18.	Look Around.....128
+@cebu1#17 title [pymupdf p18] next=number
+  17.	Let’s Create.....124
++ 18.	Look Around.....128
++ 19. Activities.....135
+@cebu1#18 title [pymupdf p18] next=number
+  18.	Look Around.....128
++ 19. Activities.....135
++ Theatre
+@cebu1#19 title [pymupdf p18] next=boilerplate
+  19. Activities.....135
++ Theatre
++ 20.	Integrating All Art Forms.....137
+@cebu1#20 title [pdftotext p18] next=page
+~ .....135 20. Integrating All Art Forms.....137
++ Reprint 2026-27

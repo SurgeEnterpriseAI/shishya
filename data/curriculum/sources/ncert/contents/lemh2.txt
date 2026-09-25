@@ -1,0 +1,35 @@
+# NCERT contents evidence — lemh2 — Mathematics Part-II (index class 12, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/lemh2ps.pdf
+# fetched: 2026-09-25T23:15:28+05:30  sha256: 288843e5359d15b4bcd559392f7f28a8f8dc5592b7cd3213cbf70255729a202a  bytes: 1969919
+# contents pages of the PDF: 13,14 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 3113bbfb4b5e45447f258f7e2e6055cb3dfd6bb62352b8d6b32eb079237a5d80);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lemh2#1 title [pdftotext p13] next=number
+  7. Integrals
++ 225
++ 7.1 Introduction
+@lemh2#2 title [pdftotext p13] next=number
+  8. Application of Integrals
++ 292
++ 8.1 Introduction
+@lemh2#3 title [pdftotext p13] next=number
+  9. Differential Equations
++ 300
++ 9.1 Introduction
+@lemh2#4 title [pdftotext p13] next=number
+  10. Vector Algebra
++ 338
++ 10.1 Introduction
+@lemh2#5 title [pdftotext p14] next=number
+  11. Three Dimensional Geometry
++ 377
++ 11.1 Introduction
+@lemh2#6 title [pdftotext p14] next=number
+  12. Linear Programming
++ 394
++ 12.1 Introduction
+@lemh2#7 title [pdftotext p14] next=number
+  13. Probability
++ 406
++ 13.1 Introduction

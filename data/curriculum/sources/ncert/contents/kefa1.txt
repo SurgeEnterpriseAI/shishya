@@ -1,0 +1,43 @@
+# NCERT contents evidence — kefa1 — An Introduction to Indian Art Part-I (index class 11, Fine Art)
+# source: https://ncert.nic.in/textbook/pdf/kefa1ps.pdf
+# fetched: 2026-09-25T23:15:26+05:30  sha256: c0fb825d435709eebf151f80e9514ed47e739038aaa09c5761aad81b2da9b659  bytes: 10601296
+# contents pages of the PDF: 11 of 11
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 13095fe8a7e2110e02a4aa6d339a0f5ca9e98b196ac623516fb4f25061f7021b);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kefa1#1 title [pdftotext p11] next=number
+  1. Prehistoric Rock Paintings
++ 1
++ 2. Arts of the Indus Valley
+@kefa1#2 title [pdftotext p11] next=number
+  2. Arts of the Indus Valley
++ 9
++ 3. Arts of the Mauryan Period
+@kefa1#3 title [pdftotext p11] next=number
+  3. Arts of the Mauryan Period
++ 19
++ 4. Post-Mauryan Trends in Indian Art and 27 Architecture
+@kefa1#4 title [pymupdf p11] next=number
+  4. Post-Mauryan Trends in Indian Art and
+  27
+  Architecture
++ 5. Later Mural Traditions
++ 61
+@kefa1#5 title [pdftotext p11] next=number
+  5. Later Mural Traditions
++ 61
++ 6. Temple Architecture and Sculpture
+@kefa1#6 title [pdftotext p11] next=number
+  6. Temple Architecture and Sculpture
++ 69
++ 7. Indian Bronze Sculpture
+@kefa1#7 title [pdftotext p11] next=number
+  7. Indian Bronze Sculpture
++ 103
++ 8. Some Aspects of Indo-Islamic
+@kefa1#8 title [pdftotext p11] next=boilerplate
+  8. Some Aspects of Indo-Islamic
+  109
+  Architecture
++ GLOSSARY
++ 126

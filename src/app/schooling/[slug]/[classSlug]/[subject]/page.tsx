@@ -1,18 +1,32 @@
 // /schooling/[board]/class-[n]/[subject] — per-subject page.
 //
-// Day 1 of the chapter-content build:
-//   * Renders subject blurb, NCERT chapter PDF link, and cross-links
-//     to relevant entrance exams (e.g., Class 12 Physics → JEE Main).
-//   * Chapter-level concept summaries / practice / quizzes are stubbed
-//     as "Coming soon" tiles until the AI generation pipeline is run
-//     against this subject's Topic rows.
+// Renders the subject's official NCERT books (with the Hindi / Urdu-medium
+// editions NCERT lists), its official syllabus, cross-links to entrance
+// exams, and the chapter list where one was read off the book.
+//
+// 25 Sep 2026 (school build, Step 0): noindex (SCHOOLING_ROBOTS). The page
+// promised things that do not exist: "each chapter has ... a mastery quiz",
+// "AI-generated concept notes are being authored", "Ask Shishya scoped to
+// that chapter", "10-20 practice questions", "the source we'll ground our
+// generated content against" (Shishya must not ground content in textbook
+// text). Exam cross-links said "Start free mock + previous year papers" —
+// IPMAT has no page on Shishya at all. All of that is gone.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
-import { findBoard } from "@/lib/schooling-data";
-import { findSubject, findClassSyllabus } from "@/lib/schooling-subjects";
+import { findBoard, SCHOOLING_ROBOTS } from "@/lib/schooling-data";
+import {
+  booksInMedium,
+  findClassSyllabus,
+  findSubject,
+  mainBooks,
+  ncertBookUrl,
+  SCHOOL_SOURCES_CHECKED_ON,
+  type NcertBook,
+  type SchoolSubject,
+} from "@/lib/schooling-subjects";
 
 interface PageParams { slug: string; classSlug: string; subject: string }
 
@@ -23,6 +37,14 @@ function parseClassSlug(classSlug: string): number {
   return parseInt(classSlug.slice("class-".length), 10);
 }
 
+function describe(boardShortName: string, classNum: number, s: SchoolSubject): string {
+  const books = mainBooks(s);
+  if (books.length > 0) {
+    return `Official NCERT textbooks for ${boardShortName} Class ${classNum} ${s.name}: ${books.map((b) => b.title).join(", ")}.`;
+  }
+  return `${boardShortName} Class ${classNum} ${s.name}: link to the official syllabus.`;
+}
+
 export async function generateMetadata({
   params,
 }: { params: Promise<PageParams> }): Promise<Metadata> {
@@ -30,21 +52,33 @@ export async function generateMetadata({
   const board = findBoard(slug);
   const classNum = parseClassSlug(classSlug);
   const s = findSubject(slug, classNum, subject);
-  if (!board || !s) return { title: "Not found — Shishya" };
-  const year = new Date().getUTCFullYear();
-  const title = `${board.shortName} Class ${classNum} ${s.name} — Syllabus & Free Practice | Shishya`;
+  if (!board || !s) return { title: "Not found — Shishya", robots: SCHOOLING_ROBOTS };
+  const title = `${board.shortName} Class ${classNum} ${s.name} — Official Textbooks and Syllabus | Shishya`;
   return {
     title,
-    description: `${s.blurb} Free syllabus, NCERT chapter links, study help for Class ${classNum} ${s.name} (${board.shortName}, ${year}).`,
+    description: describe(board.shortName, classNum, s),
     alternates: { canonical: `https://shishya.in/schooling/${slug}/class-${classNum}/${subject}` },
+    robots: SCHOOLING_ROBOTS,
     keywords: [
       `${board.shortName} Class ${classNum} ${s.name}`,
       `${s.name} class ${classNum} syllabus`,
       `${s.name} class ${classNum} chapters`,
       `${s.name} class ${classNum} NCERT`,
-      `${s.name} class ${classNum} practice`,
     ],
   };
+}
+
+function BookLink({ b }: { b: NcertBook }) {
+  return (
+    <a
+      href={ncertBookUrl(b)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-saffron-700 underline"
+    >
+      {b.title} ↗
+    </a>
+  );
 }
 
 export default async function SubjectPage({
@@ -56,6 +90,13 @@ export default async function SubjectPage({
   const syllabus = findClassSyllabus(slug, classNum);
   const s = findSubject(slug, classNum, subject);
   if (!board || !syllabus || !s) notFound();
+
+  const main = mainBooks(s);
+  const hindi = booksInMedium(s, "hi");
+  const urdu = booksInMedium(s, "ur");
+  const chapters = s.chapters ?? [];
+  const chapterBooks = main.filter((b) => b.chapters && b.chapters.length > 0);
+  const syllabusLabel = s.syllabusLabel ?? (slug === "cbse" ? "CBSE syllabus 2026-27 (PDF)" : "Official syllabus");
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -86,36 +127,73 @@ export default async function SubjectPage({
           {board.shortName} Class {classNum}
         </p>
 
-        <p className="mt-4 max-w-3xl text-sm text-ink-700">{s.blurb}</p>
+        {s.blurb && <p className="mt-4 max-w-3xl text-sm text-ink-700">{s.blurb}</p>}
 
-        {/* Official source — the spec rule is "link out for things we can't
-            verifiably keep current". Subject-level NCERT chapter index. */}
-        {s.officialChapterIndex && (
+        {/* Official books — link out; Shishya never hosts or copies them. */}
+        {main.length > 0 && (
           <div className="mt-6 rounded-lg border border-ink-200 bg-white p-5">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">
-              Official chapter index
+              Official NCERT {main.length === 1 ? "textbook" : "textbooks"}
             </p>
-            <p className="mt-1 text-sm text-ink-700">
-              The complete, authoritative chapter list for this subject is
-              on the NCERT site. Use it as your primary source —
-              Shishya links to it directly so you never read a stale copy.
-            </p>
-            <a
-              href={s.officialChapterIndex}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-flex rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-saffron-600"
-            >
-              Open NCERT chapter index ↗
-            </a>
-            <p className="mt-2 text-[11px] text-ink-500">
-              {s.chapterCount && s.chapterCount > 0 ? `${s.chapterCount} chapters` : "Chapter list"} ·
-              {" "}{board.shortName} Class {classNum}
+            <ul className="mt-2 space-y-2">
+              {main.map((b) => (
+                <li key={b.query} className="text-sm text-ink-800">
+                  <a
+                    href={ncertBookUrl(b)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-saffron-600"
+                  >
+                    {b.title} ↗
+                  </a>
+                  {(b.edition || b.note) && (
+                    <span className="ml-2 text-[11px] text-ink-500">
+                      {[b.edition, b.note].filter(Boolean).join(" · ")}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {hindi.length > 0 && (
+              <p className="mt-3 text-xs text-ink-600">
+                Hindi medium:{" "}
+                {hindi.map((b, i) => (
+                  <span key={b.query}>{i > 0 && " · "}<BookLink b={b} /></span>
+                ))}
+              </p>
+            )}
+            {urdu.length > 0 && (
+              <p className="mt-1 text-xs text-ink-600">
+                Urdu medium:{" "}
+                {urdu.map((b, i) => (
+                  <span key={b.query}>{i > 0 && " · "}<BookLink b={b} /></span>
+                ))}
+              </p>
+            )}
+            <p className="mt-3 text-[11px] text-ink-500">
+              Titles as NCERT&apos;s textbook index lists them, checked {SCHOOL_SOURCES_CHECKED_ON}.
+              The books are free to read on ncert.nic.in.
             </p>
           </div>
         )}
 
-        {/* Cross-link to entrance exams this subject feeds into.
+        {s.syllabusUrl && (
+          <div className="mt-4 rounded-lg border border-ink-200 bg-white p-5">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">
+              Official syllabus
+            </p>
+            <a
+              href={s.syllabusUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex rounded-md border border-ink-300 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-50"
+            >
+              {syllabusLabel} ↗
+            </a>
+          </div>
+        )}
+
+        {/* Cross-link to entrance exams this subject leads into.
             Driven by the `feedsExams` field in schooling-subjects.ts. */}
         {s.feedsExams && s.feedsExams.length > 0 && (
           <div className="mt-6 rounded-lg border border-saffron-200 bg-saffron-50/40 p-5">
@@ -123,9 +201,7 @@ export default async function SubjectPage({
               Where this subject takes you next
             </h2>
             <p className="mt-1 text-xs text-ink-600">
-              Strong fundamentals here feed directly into these entrance exams.
-              Once you're approaching Class 12 finals, our exam section is the
-              next stop:
+              These entrance exams build on this subject:
             </p>
             <ul className="mt-3 grid gap-2 sm:grid-cols-2">
               {s.feedsExams.map((examCode) => (
@@ -138,7 +214,7 @@ export default async function SubjectPage({
                       {examCode.replace(/_/g, " ")}
                     </p>
                     <p className="mt-0.5 text-xs text-saffron-700">
-                      Start free mock + previous year papers →
+                      Exam page with free mock tests →
                     </p>
                   </Link>
                 </li>
@@ -147,22 +223,17 @@ export default async function SubjectPage({
           </div>
         )}
 
-        {/* Chapter-level surface. If chapters were authored for this
-            subject (Class 10 Math + Science, Class 12 Physics/Chem/Math/
-            Biology), render a clickable tile grid. Otherwise fall back
-            to the honest "being built" stub pointing students to the
-            NCERT chapter index. */}
         <h2 className="mt-10 text-base font-semibold text-ink-900">Chapters</h2>
-        {s.chapters && s.chapters.length > 0 ? (
+        {chapters.length > 0 ? (
           <>
             <p className="mt-2 text-xs text-ink-600">
-              {s.chapters.length} chapters in the NCERT syllabus. Each
-              chapter has its own page with the chapter overview, what
-              to read (NCERT section refs), and a mastery quiz. AI-
-              generated concept notes are being authored progressively.
+              {chapters.length} chapters, as printed on the contents page of{" "}
+              {chapterBooks.map((b) => b.title).join(" and ")}.
+              Each chapter page links to its book on ncert.nic.in. Shishya&apos;s
+              own notes and practice for these chapters are coming soon.
             </p>
             <ol className="mt-3 grid gap-2 sm:grid-cols-2">
-              {s.chapters.map((c) => (
+              {chapters.map((c) => (
                 <li key={c.slug}>
                   <Link
                     href={`/schooling/${slug}/class-${classNum}/${subject}/${c.slug}`}
@@ -173,7 +244,9 @@ export default async function SubjectPage({
                     </span>
                     <span className="min-w-0">
                       <span className="block text-sm font-semibold text-ink-900">{c.name}</span>
-                      {c.blurb && <span className="mt-0.5 block text-[11px] text-ink-600 line-clamp-2">{c.blurb}</span>}
+                      {chapterBooks.length > 1 && (
+                        <span className="mt-0.5 block text-[11px] text-ink-500">{c.book.title}</span>
+                      )}
                     </span>
                   </Link>
                 </li>
@@ -182,22 +255,12 @@ export default async function SubjectPage({
           </>
         ) : (
           <div className="mt-3 rounded-lg border border-dashed border-ink-300 bg-white p-6">
-            <p className="text-sm font-semibold text-ink-900">
-              Per-chapter learning pages — being built
-            </p>
+            <p className="text-sm font-semibold text-ink-900">Coming soon</p>
             <p className="mt-2 text-xs text-ink-600">
-              Each chapter will get its own page with: concept summary
-              (Overview · Key Concepts · Formulas · Worked Examples · Common
-              Mistakes · Quick Reference), 10-20 practice questions, a mastery
-              quiz with adaptive difficulty, and Ask Shishya scoped to that
-              chapter. Until each chapter is fully built, we keep this honest
-              instead of showing placeholder buttons that don't work.
-            </p>
-            <p className="mt-3 text-[11px] text-ink-500">
-              For the chapter list and reference content right now, use the
-              official NCERT link above. The NCERT textbook PDFs are free and
-              authoritative — they're the source we'll ground our generated
-              content against.
+              Chapter pages for this subject are not built yet.{" "}
+              {main.length > 0
+                ? "The official book above lists every chapter."
+                : "The official syllabus above lists what the subject covers."}
             </p>
           </div>
         )}

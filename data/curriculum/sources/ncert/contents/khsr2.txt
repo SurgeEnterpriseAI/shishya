@@ -1,0 +1,8 @@
+# NCERT contents evidence — khsr2 — Srijan-II (index class 12, Creative Writing & Translation)
+# source: https://ncert.nic.in/textbook/pdf/khsr2ps.pdf
+# fetched: 2026-09-25T23:15:45+05:30  sha256: 62f62f17e479f80e0f3f50ff1cd1f15eb55ec21548a0a0ef1cf9624d228c003e  bytes: 12982890
+# contents pages of the PDF: none found of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 5b36432b412d58c89dd5a91defe3e2e7aab507273c1c396e12bc4564085fb105);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

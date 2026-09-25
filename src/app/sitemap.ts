@@ -4,13 +4,12 @@
 
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_WHERE, REAL_EXAM_SQL, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
 import { loadExamWeekInputs } from "@/lib/exam-week-inputs";
 import { standingSitting } from "@/lib/score-sitting";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { COLLEGES, ALL_STREAMS } from "@/lib/colleges-data";
-import { BOARDS } from "@/lib/schooling-data";
-import { CLASS_SYLLABUS, allChapterPaths } from "@/lib/schooling-subjects";
 import { SCHOLARSHIPS } from "@/data/scholarships";
 import { WORLDWIDE_COUNTRIES, TEST_PREP } from "@/lib/worldwide-data";
 import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
@@ -29,9 +28,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // sitemap would 500 and Google would drop pages from its index. Better
   // to emit a slightly smaller sitemap than none at all — the static
   // section landings always render regardless.
+  // 25 Sep 2026: every exam-keyed family below reads real exams only
+  // (src/lib/db/exam-scope.ts) — no school class container gets an
+  // /exams/... URL here while the school pages are built hidden.
   const exams = await prisma.exam
     .findMany({
-      where: { active: true },
+      where: REAL_EXAM_WHERE,
       select: { code: true, state: true, updatedAt: true },
       orderBy: { candidatesPerYear: "desc" },
     })
@@ -39,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const topics = await prisma.topic
     .findMany({
-      where: { teachingNote: { isNot: null }, subject: { exam: { active: true } } },
+      where: { teachingNote: { isNot: null }, subject: { exam: REAL_EXAM_WHERE } },
       select: {
         code: true,
         createdAt: true,
@@ -107,21 +109,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .$queryRaw<{ code: string }[]>`
       SELECT DISTINCT e.code FROM "Exam" e
       JOIN "ExamImportantDate" d ON d."examId" = e.id
-      WHERE e.active = TRUE AND d."archivedAt" IS NULL
+      WHERE ${REAL_EXAM_SQL} AND d."archivedAt" IS NULL
         AND d.kind = 'EXAM' AND d.date >= NOW() - INTERVAL '30 days' AND d.date <= NOW() + INTERVAL '30 days'
     `.catch(() => [] as { code: string }[]);
   const answerKeyCandidates = await prisma
     .$queryRaw<{ id: string }[]>`
       SELECT DISTINCT e.id FROM "Exam" e
       JOIN "ExamImportantDate" d ON d."examId" = e.id
-      WHERE e.active = TRUE AND d."archivedAt" IS NULL
+      WHERE ${REAL_EXAM_SQL} AND d."archivedAt" IS NULL
         AND d.kind = 'ANSWER_KEY' AND d.confidence = 'official'
         AND d.date >= NOW() - INTERVAL '45 days' AND d.date <= NOW()
     `.catch(() => [] as { id: string }[]);
   const answerKeyExams = answerKeyCandidates.length
     ? await prisma.exam
         .findMany({
-          where: { id: { in: answerKeyCandidates.map((r) => r.id) } },
+          where: { ...NOT_SCHOOL_WHERE, id: { in: answerKeyCandidates.map((r) => r.id) } },
           select: {
             id: true,
             code: true,
@@ -259,7 +261,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // new stories. Archived rows stay listed (noindex decision pending).
   const newsItems = await prisma.examNewsItem
     .findMany({
-      where: { exam: { active: true }, OR: [{ source: null }, { source: { not: SUPPRESSED_SOURCE } }] },
+      where: { exam: REAL_EXAM_WHERE, OR: [{ source: null }, { source: { not: SUPPRESSED_SOURCE } }] },
       select: {
         id: true,
         publishedAt: true,
@@ -291,7 +293,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .$queryRaw<{ id: string; code: string; declaredOn: Date }[]>`
       SELECT r.id, e.code, r."declaredOn"
       FROM "ExamResult" r JOIN "Exam" e ON e.id = r."examId"
-      WHERE r.stage <> '__not_a_result__' AND e.active = TRUE
+      WHERE r.stage <> '__not_a_result__' AND ${REAL_EXAM_SQL}
       ORDER BY r."declaredOn" DESC LIMIT 5000
     `.catch(() => [] as { id: string; code: string; declaredOn: Date }[]);
   newsUrls.push(
@@ -312,7 +314,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       // archivedAt: null — archived versions share the same /checklist
       // etc URL as their live successor, so only emit the active one to
       // avoid duplicate sitemap entries.
-      where: { exam: { active: true }, archivedAt: null },
+      where: { exam: REAL_EXAM_WHERE, archivedAt: null },
       select: {
         phase: true,
         slug: true,
@@ -353,7 +355,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Last-minute checklist (13 Sep 2026) — built from stored facts for every
   // exam (src/lib/exam-checklist.ts). SCHOOL_BOARD containers have no page.
   const checklistExams = await prisma
-    .$queryRaw<{ code: string }[]>`SELECT code FROM "Exam" WHERE active = TRUE AND category::text <> 'SCHOOL_BOARD'`
+    .$queryRaw<{ code: string }[]>`SELECT e.code FROM "Exam" e WHERE ${REAL_EXAM_SQL}`
     .catch(() => [] as { code: string }[]);
   const checklistUrls: MetadataRoute.Sitemap = checklistExams.map((e) => ({
     url: `${base}/exams/${e.code}/checklist`,
@@ -373,7 +375,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     WHERE q.source = 'PYQ'
       AND q."pyqYear" IS NOT NULL
       AND q.validated = TRUE
-      AND e.active = TRUE
+      AND ${REAL_EXAM_SQL}
   `.catch(() => [] as { code: string; year: number }[]);
   const pyqUrls: MetadataRoute.Sitemap = pyqSets.map((p) => ({
     url: `${base}/exams/${p.code}/pyq/${Number(p.year)}`,
@@ -423,7 +425,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // translation, hreflang-paired in page metadata.
   const hindiTopics = await prisma.topicNoteTranslation
     .findMany({
-      where: { locale: "hi", topic: { subject: { exam: { active: true } } } },
+      where: { locale: "hi", topic: { subject: { exam: REAL_EXAM_WHERE } } },
       select: {
         generatedAt: true,
         topic: { select: { code: true, subject: { select: { exam: { select: { code: true } } } } } },
@@ -440,8 +442,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Lifecycle section landings — same depth and priority as /exams so
   // Google understands the homepage is a hub, not a single-purpose page.
+  // 25 Sep 2026: "/schooling" and "/schooling/streams" left this list with
+  // the rest of the school URLs (see "School pages" further down).
   const sectionLandings: MetadataRoute.Sitemap = [
-    "/schooling",
     "/colleges",
     "/scholarships",
     // "/exams" is a permanent redirect to "/" — never list a redirect.
@@ -479,7 +482,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/scholarships/match",
     "/worldwide/loans",
     "/careers",
-    "/schooling/streams",
     "/jobs/govt-jobs",
     "/jobs/internships",
     "/jobs/resume",
@@ -516,39 +518,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
-  // Per-board schooling pages.
-  const boardUrls: MetadataRoute.Sitemap = BOARDS.map((b) => ({
-    url: `${base}/schooling/${b.slug}`,
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
-  }));
-
-  // Per-class schooling pages — one URL per (board, class) we've populated.
-  // SEO targets: "CBSE Class 10 syllabus", "ICSE Class 12 subjects", etc.
-  const classUrls: MetadataRoute.Sitemap = CLASS_SYLLABUS.map((c) => ({
-    url: `${base}/schooling/${c.boardSlug}/class-${c.classNum}`,
-    changeFrequency: "weekly" as const,
-    priority: 0.75,
-  }));
-
-  // Per-subject schooling pages — one URL per (board, class, subject).
-  // Long-tail SEO: "CBSE Class 12 Physics chapters", "ICSE Class 10
-  // Mathematics NCERT", etc.
-  const subjectUrls: MetadataRoute.Sitemap = CLASS_SYLLABUS.flatMap((c) =>
-    c.subjects.map((s) => ({
-      url: `${base}/schooling/${c.boardSlug}/class-${c.classNum}/${s.slug}`,
-        changeFrequency: "monthly" as const,
-      priority: 0.65,
-    })),
-  );
-
-  // Per-chapter schooling pages — only emitted for subjects that have
-  // an authored chapter list. Highest-density long-tail SEO.
-  const chapterUrls: MetadataRoute.Sitemap = allChapterPaths().map((p) => ({
-    url: `${base}/schooling/${p.boardSlug}/class-${p.classNum}/${p.subjectSlug}/${p.chapterSlug}`,
-    changeFrequency: "monthly" as const,
-    priority: 0.55,
-  }));
+  // School pages (25 Sep 2026): every /schooling URL (landing, streams,
+  // 20 boards, 10 classes, 77 subjects, 154 chapters = 263 URLs) is out of
+  // the sitemap. The school build made the whole section noindex
+  // (SCHOOLING_ROBOTS, src/app/schooling/layout.tsx) until content passes a
+  // gate, and a noindex URL in the sitemap is a "Submitted URL marked
+  // noindex" error in Search Console (the 17 Sep not-indexed clean-up).
+  // They come back per page, with the content gate, not before.
 
   // Per-scholarship pages — long-tail SEO ("Reliance Foundation UG
   // scholarship 2026", "AICTE Pragati eligibility", etc.)
@@ -660,10 +636,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...streamUrls,
     ...collegeStateUrls,
     ...collegeUrls,
-    ...boardUrls,
-    ...classUrls,
-    ...subjectUrls,
-    ...chapterUrls,
     ...scholarshipUrls,
     ...countryUrls,
     ...universityUrls,

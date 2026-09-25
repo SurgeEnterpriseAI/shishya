@@ -1,0 +1,51 @@
+# NCERT contents evidence — kehp1 — Health and Physical Education (index class 11, Health and Physical Education)
+# source: https://ncert.nic.in/textbook/pdf/kehp1ps.pdf
+# fetched: 2026-09-25T23:15:23+05:30  sha256: b0c9ca1652434f38b960c8f37ebe1295aa846f1733960f6a22224431c0e1bbdc  bytes: 1394580
+# contents pages of the PDF: 9 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 2e925bd210d1a750b09e8c5dd2ec699f2e315059274de8203f2fdfc95afa4a59);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kehp1#1 title [pdftotext p9] next=number
+  Chapter 1 Physical Education.....1 - 14
++ Chapter 2 Understanding Health.....15 - 31
++ Chapter 3 Physical and Physiological Aspects of 		 Physical Education and Sports.....32 - 48
+@kehp1#2 title [pdftotext p9] next=number
+  Chapter 2 Understanding Health.....15 - 31
++ Chapter 3 Physical and Physiological Aspects of 		 Physical Education and Sports.....32 - 48
++ Chapter 4 Individual Games..... 49 - 128
+@kehp1#3 title [pdftotext p9] next=number
+  Chapter 3 Physical and Physiological Aspects of 		 Physical Education and Sports.....32 - 48
++ Chapter 4 Individual Games..... 49 - 128
++ Chapter 5 Team Games..... 129 - 209
+@kehp1#4 title [pdftotext p9] next=number
+  Chapter 4 Individual Games..... 49 - 128
++ Chapter 5 Team Games..... 129 - 209
++ Chapter 6 Yoga and its Relevance in the 		 Modern Times ..... 210 - 250
+@kehp1#5 title [pdftotext p9] next=number
+  Chapter 5 Team Games..... 129 - 209
++ Chapter 6 Yoga and its Relevance in the 		 Modern Times ..... 210 - 250
++ Chapter 7 Safety and Security..... 251 - 271
+@kehp1#6 title [pdftotext p9] next=number
+  Chapter 6 Yoga and its Relevance in the 		 Modern Times ..... 210 - 250
++ Chapter 7 Safety and Security..... 251 - 271
++ Chapter 8 Health Related Physical Fitness..... 272 - 287
+@kehp1#7 title [pdftotext p9] next=number
+  Chapter 7 Safety and Security..... 251 - 271
++ Chapter 8 Health Related Physical Fitness..... 272 - 287
++ Chapter 9 Measurement and Evaluation..... 288 - 299
+@kehp1#8 title [pdftotext p9] next=number
+  Chapter 8 Health Related Physical Fitness..... 272 - 287
++ Chapter 9 Measurement and Evaluation..... 288 - 299
++ Chapter 10 Tournaments and Competitions..... 300 - 327
+@kehp1#9 title [pdftotext p9] next=number
+  Chapter 9 Measurement and Evaluation..... 288 - 299
++ Chapter 10 Tournaments and Competitions..... 300 - 327
++ Chapter 11 Adventure Sports..... 328 - 336
+@kehp1#10 title [pdftotext p9] next=number
+  Chapter 10 Tournaments and Competitions..... 300 - 327
++ Chapter 11 Adventure Sports..... 328 - 336
++ 		Feedback Questionnaire
+@kehp1#11 title [pdftotext p9] next=boilerplate
+  Chapter 11 Adventure Sports..... 328 - 336
++ 		Feedback Questionnaire
++ 337 - 338

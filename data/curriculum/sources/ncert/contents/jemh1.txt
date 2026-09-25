@@ -1,0 +1,63 @@
+# NCERT contents evidence — jemh1 — Mathematics (index class 10, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/jemh1ps.pdf
+# fetched: 2026-09-25T23:15:00+05:30  sha256: 62867d1b27b42e110948ee1301446a15e89ed386e04bb5b29dc6e301fa679f94  bytes: 1969484
+# contents pages of the PDF: 11,12,13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 5d8738ae2534d28d6a861bb96ce25e2226a47f8273122cb6a438c9c76fbf6e0e);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@jemh1#1 title [pdftotext p11] next=number
+  1. Real Numbers
++ 1
++ 1.1 Introduction
+@jemh1#2 title [pdftotext p11] next=number
+  2. Polynomials
++ 10
++ 2.1 Introduction
+@jemh1#3 title [pdftotext p11] next=number
+  3. Pair of Linear Equations in Two Variables
++ 24
++ 3.1 Introduction
+@jemh1#4 title [pdftotext p11] next=number
+  4. Quadratic Equations
++ 38
++ 4.1 Introduction
+@jemh1#5 title [pdftotext p11] next=number
+  5. Arithmetic Progressions
++ 49
++ 5.1 Introduction
+@jemh1#6 title [pdftotext p12] next=number
+  6. Triangles
++ 73
++ 6.1 Introduction
+@jemh1#7 title [pdftotext p12] next=number
+  7. Coordinate Geometry
++ 99
++ 7.1 Introduction
+@jemh1#8 title [pdftotext p12] next=number
+  8. Introduction to Trigonometry
++ 113
++ 8.1 Introduction
+@jemh1#9 title [pdftotext p12] next=number
+  9. Some Applications of Trigonometry
++ 133
++ 9.1 Heights and Distances
+@jemh1#10 title [pdftotext p12] next=number
+  10. Circles
++ 144
++ 10.1 Introduction
+@jemh1#11 title [pdftotext p12] next=number
+  11. Areas Related to Circles
++ 154
++ 11.1 Areas of Sector and Segment of a Circle
+@jemh1#12 title [pdftotext p13] next=number
+  12. Surface Areas and Volumes
++ 161
++ 12.1 Introduction
+@jemh1#13 title [pdftotext p13] next=number
+  13. Statistics
++ 171
++ 13.1 Introduction
+@jemh1#14 title [pdftotext p13] next=number
+  14. Probability
++ 202
++ 14.1 Probability — A Theoretical Approach

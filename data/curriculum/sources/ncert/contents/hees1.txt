@@ -1,0 +1,37 @@
+# NCERT contents evidence — hees1 — Exploring Society India and Beyond Part-I (index class 8, Social Science)
+# source: https://ncert.nic.in/textbook/pdf/hees1ps.pdf
+# fetched: 2026-09-25T23:14:43+05:30  sha256: 70408aa655e5273cc98dc717bce61290d06313b12136d89b932c985dc3f1248b  bytes: 9116051
+# contents pages of the PDF: 21 of 22
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 13bb349fa5b7407bb989552953e562a017bd9e2d50c37a2efb7f8fd98b836da4);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@hees1#1 title [pdftotext p21] next=number
+  Chapter 1 Natural Resources and Their Use
++ 1
++ Theme B — Tapestry of the Past
+@hees1#2 title [pdftotext p21] next=number
+  Chapter 2 Reshaping India’s Political Map
++ 21
++ Chapter 3 The Rise of the Marathas
+@hees1#3 title [pdftotext p21] next=number
+  Chapter 3 The Rise of the Marathas
++ 61
++ Chapter 4 The Colonial Era in India
+@hees1#4 title [pdftotext p21] next=number
+  Chapter 4 The Colonial Era in India
++ 83
++ Theme D — Governance and Democracy
+@hees1#5 title [pdftotext p21] next=number
+  Chapter 5 Universal Franchise and India’s
+  			 Electoral System
++ 117
++ Chapter 6 The Parliamentary System:
+@hees1#6 title [pdftotext p21] next=number
+  Chapter 6 The Parliamentary System:
+  			 Legislature and Executive
++ 139
++ Theme E — Economic Life Around Us
+@hees1#7 title [pdftotext p21] next=boilerplate
+  Chapter 7 Factors of Production
++ 163
++ Glossary

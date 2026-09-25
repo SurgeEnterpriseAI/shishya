@@ -1,0 +1,135 @@
+# NCERT contents evidence — keww1 — Woven Words (index class 11, English)
+# source: https://ncert.nic.in/textbook/pdf/keww1ps.pdf
+# fetched: 2026-09-25T23:15:16+05:30  sha256: 3309f8b7364e533491d6ddb905dee177d14682f464892cfb790db7623f55d3f0  bytes: 1253466
+# contents pages of the PDF: 9,10 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 afb448b87570030a2735363530a5e6f36b89c7847598e66b9653fdbb2fb9a3c0);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@keww1#1 title [pymupdf p9] next=author
+  The Lament
++ 2
++ Anton Chekhov
+@keww1#1:section section [pymupdf p9] next=boilerplate
+  Short Stories
++ Introduction
++ 1
+@keww1#2 title [pymupdf p9] next=author
+  A Pair of Mustachios
++ 10
++ Mulk Raj Anand
+@keww1#3 title [pymupdf p9] next=author
+  The Rocking-horse Winner
++ 19
++ D.H.Lawrence
+@keww1#4 title [pymupdf p9] next=author
+  The Adventure of the Three Garridebs
++ 37
++ Arthur Conan Doyle
+@keww1#5 title [pymupdf p9] next=author
+  Pappachi’s Moth
++ 56
++ Arundhati Roy
+@keww1#6 title [pymupdf p9] next=author
+  The Third and Final Continent
++ 62
++ Jhumpa Lahiri
+@keww1#7 title [pymupdf p9] next=author
+  Glory at Twilight
++ 85
++ Bhabani Bhattacharya
+@keww1#8 title [pymupdf p9] next=author
+  The Luncheon
++ 99
++ William Somerset Maugham
+@keww1#9 title [pymupdf p9] next=author
+  The Peacock
++ 107
++ Sujata Bhatt
+@keww1#9:section section [pymupdf p9] next=boilerplate
+  Poetry
++ Introduction
++ 106
+@keww1#10 title [pymupdf p9] next=author
+  Let me Not to the Marriage of True Minds
++ 109
++ William Shakespeare
+@keww1#11 title [pymupdf p9] next=author
+  Coming
++ 111
++ Philip Larkin
+@keww1#11/1 include [pymupdf p9] next=page
+  (Haiku)
++ 113
++ Reprint 2026-27
+@keww1#12 title [pdftotext p10] next=author
+  x 4. Telephone Conversation
++ Wole Soyinka
++ 5. The World is too Much With Us William Wordsworth
+@keww1#13 title [pymupdf p10] next=author
+  The World is too Much With Us
++ 117
++ William Wordsworth
+@keww1#14 title [pymupdf p10] next=author
+  Mother Tongue
++ 119
++ Padma Sachdev
+@keww1#15 title [pymupdf p10] next=author
+  Hawk Roosting
++ 121
++ Ted Hughes
+@keww1#16 title [pymupdf p10] next=author
+  For Elkana
++ 124
++ Nissim Ezekiel
+@keww1#16/1 include [pymupdf p10] next=number
+  (The Limerick)
++ 127
++   9.
+@keww1#17 title [pymupdf p10] next=author
+  Refugee Blues
++ 129
++ W. H. Auden
+@keww1#18 title [pymupdf p10] next=author
+  Felling of the Banyan Tree
++ 132
++ Dilip Chitre
+@keww1#19 title [pymupdf p10] next=author
+  Ode to a Nightingale
++ 135
++ John Keats
+@keww1#20 title [pymupdf p10] next=author
+  Ajamil and the Tigers
++ 140
++ Arun Kolatkar
+@keww1#21 title [pymupdf p10] next=author
+  My Watch
++ 145
++ Mark Twain
+@keww1#21:section section [pymupdf p10] next=boilerplate
+  Essays
++ Introduction
++ 144
+@keww1#22 title [pymupdf p10] next=author
+  My Three Passions
++ 150
++ Bertrand Russell
+@keww1#23 title [pymupdf p10] next=author
+  Patterns of Creativity
++ 153
++ S.Chandrasekhar
+@keww1#24 title [pymupdf p10] next=author
+  Tribal Verse
++ 161
++ G.N.Devy
+@keww1#25 title [pymupdf p10] next=author
+  What is a Good Book?
++ 174
++ John Ruskin
+@keww1#26 title [pymupdf p10] next=author
+  The Story
++ 182
++ E.M.Forster
+@keww1#27 title [pymupdf p10] next=author
+  Bridges
++ 188
++ Kumudini Lakhia

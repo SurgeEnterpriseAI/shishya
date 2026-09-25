@@ -1,0 +1,67 @@
+# NCERT contents evidence — eemm1 — Math-Mela (index class 5, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/eemm1ps.pdf
+# fetched: 2026-09-25T23:14:23+05:30  sha256: c6d079f9c13d249b8252e76141a19eaa824c2e9011d77b14af54ed0a8a8c0845  bytes: 2347315
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 d1c114b9fc95d3781e0bbd6158f5b61769d20340fbe8db82623a3d459c55a2d9);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@eemm1#1 title [pdftotext p15] next=number
+  Chapter 1: We the Travellers — I
++ 1
++ Chapter 2: Fractions
+@eemm1#2 title [pdftotext p15] next=number
+  Chapter 2: Fractions
++ 17
++ Chapter 3: Angles as Turns
+@eemm1#3 title [pdftotext p15] next=number
+  Chapter 3: Angles as Turns
++ 32
++ Chapter 4: We the Travellers — II
+@eemm1#4 title [pdftotext p15] next=number
+  Chapter 4: We the Travellers — II
++ 42
++ Chapter 5: Far and Near
+@eemm1#5 title [pdftotext p15] next=number
+  Chapter 5: Far and Near
++ 57
++ Chapter 6: The Dairy Farm
+@eemm1#6 title [pdftotext p15] next=number
+  Chapter 6: The Dairy Farm
++ 70
++ Chapter 7: Shapes and Patterns
+@eemm1#7 title [pdftotext p15] next=number
+  Chapter 7: Shapes and Patterns
++ 92
++ Chapter 8: Weight and Capacity
+@eemm1#8 title [pdftotext p15] next=number
+  Chapter 8: Weight and Capacity
++ 104
++ Chapter 9: Coconut Farm
+@eemm1#9 title [pdftotext p15] next=number
+  Chapter 9: Coconut Farm
++ 119
++ Chapter 10: Symmetrical Designs
+@eemm1#10 title [pdftotext p15] next=number
+  Chapter 10: Symmetrical Designs
++ 136
++ Chapter 11: Grandmother’s Quilt
+@eemm1#11 title [pdftotext p15] next=number
+  Chapter 11: Grandmother’s Quilt
++ 142
++ Chapter 12: Racing Seconds
+@eemm1#12 title [pdftotext p15] next=number
+  Chapter 12: Racing Seconds
++ 155
++ Chapter 13: Animal Jumps
+@eemm1#13 title [pdftotext p15] next=number
+  Chapter 13: Animal Jumps
++ 164
++ Chapter 14: Maps and Locations
+@eemm1#14 title [pdftotext p15] next=number
+  Chapter 14: Maps and Locations
++ 171
++ Chapter 15: Data Through Pictures
+@eemm1#15 title [pdftotext p15] next=boilerplate
+  Chapter 15: Data Through Pictures
++ 179
++ Learning Material Sheets

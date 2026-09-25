@@ -1,0 +1,8 @@
+# NCERT contents evidence — khar1 — Aroh (index class 11, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/khar1ps.pdf
+# fetched: 2026-09-25T23:15:14+05:30  sha256: f148470f84274d13c36ac6227e6c5cdbd2e808a6d387d85a244371de17a5232e  bytes: 1587969
+# contents pages of the PDF: none found of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 be7cdbd5f9aaeef61f11d82d79dc564b56fa59022e226fab6d62f01b37ff8b30);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

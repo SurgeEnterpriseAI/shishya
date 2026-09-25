@@ -1,0 +1,1614 @@
+{
+ "curriculum": "NCERT",
+ "indexClassValue": 5,
+ "classes": [
+  5
+ ],
+ "classLabel": "Class V",
+ "source": {
+  "indexUrl": "https://ncert.nic.in/textbook.php",
+  "snapshot": "data/curriculum/sources/ncert/textbook-php-2026-09-25.html",
+  "snapshotSha256": "f22b184dce0e02298d571a49ea768dd0809c146c540a77f6f23fdfbdc0c4ec29",
+  "fetchedOn": "2026-09-25"
+ },
+ "subjects": [
+  {
+   "name": "Mathematics",
+   "code": "MATHEMATICS",
+   "books": [
+    {
+     "code": "eemm1",
+     "title": "Math-Mela",
+     "language": "en",
+     "indexValue": "textbook.php?eemm1=0-15",
+     "bookUrl": "https://ncert.nic.in/textbook.php?eemm1=0-15",
+     "indexChapterCount": 15,
+     "listedChapterCount": 15,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/eemm1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/eemm1ps.pdf",
+      "sha256": "c6d079f9c13d249b8252e76141a19eaa824c2e9011d77b14af54ed0a8a8c0845",
+      "fetchedAt": "2026-09-25T23:14:23+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "June 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/eemm1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "We the Travellers — I",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Fractions",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Angles as Turns",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "We the Travellers — II",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Far and Near",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "The Dairy Farm",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Shapes and Patterns",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Weight and Capacity",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Coconut Farm",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Symmetrical Designs",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Grandmother’s Quilt",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Racing Seconds",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Animal Jumps",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm114.pdf",
+       "number": "14",
+       "kind": "chapter",
+       "title": "Maps and Locations",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eemm115.pdf",
+       "number": "15",
+       "kind": "chapter",
+       "title": "Data Through Pictures",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "ehmm1",
+       "title": "Ganit-Mela",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ehmm1=0-15"
+      },
+      {
+       "code": "eumm1",
+       "title": "Riyazi Mela",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eumm1=0-15"
+      },
+      {
+       "code": "etmmm1",
+       "title": "Math-Mela (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?etmmm1=0-15"
+      },
+      {
+       "code": "emrmm1",
+       "title": "Math-Mela (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emrmm1=0-15"
+      },
+      {
+       "code": "eormm1",
+       "title": "Math-Mela (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eormm1=0-15"
+      },
+      {
+       "code": "epnmm1",
+       "title": "Math-Mela (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?epnmm1=0-15"
+      },
+      {
+       "code": "emnmm1",
+       "title": "Math-Mela (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emnmm1=0-15"
+      },
+      {
+       "code": "eknmm1",
+       "title": "Math-Mela (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eknmm1=0-15"
+      },
+      {
+       "code": "enpmm1",
+       "title": "Math-Mela (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?enpmm1=0-15"
+      },
+      {
+       "code": "ekomm1",
+       "title": "Math-Mela (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ekomm1=0-15"
+      },
+      {
+       "code": "easmm1",
+       "title": "Math-Mela (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?easmm1=0-15"
+      },
+      {
+       "code": "ebdmm1",
+       "title": "Math-Mela (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ebdmm1=0-15"
+      },
+      {
+       "code": "ebnmm1",
+       "title": "Math-Mela (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ebnmm1=0-15"
+      },
+      {
+       "code": "edgmm1",
+       "title": "Math-Mela (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?edgmm1=0-15"
+      },
+      {
+       "code": "emlmm1",
+       "title": "Math-Mela (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emlmm1=0-15"
+      },
+      {
+       "code": "etlmm1",
+       "title": "Math-Mela (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?etlmm1=0-15"
+      },
+      {
+       "code": "eksmm1",
+       "title": "Math-Mela (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eksmm1=0-15"
+      },
+      {
+       "code": "egjmm1",
+       "title": "Math-Mela (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?egjmm1=0-15"
+      },
+      {
+       "code": "esimm1",
+       "title": "Math-Mela (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?esimm1=0-15"
+      },
+      {
+       "code": "esnmm1",
+       "title": "Math-Mela (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?esnmm1=0-15"
+      },
+      {
+       "code": "emtmm1",
+       "title": "Math-Mela (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emtmm1=0-15"
+      },
+      {
+       "code": "eskmm1",
+       "title": "Math-Mela (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 15,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eskmm1=0-15"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Hindi",
+   "code": "HINDI",
+   "books": [
+    {
+     "code": "ehve1",
+     "title": "Veena",
+     "language": "hi",
+     "indexValue": "textbook.php?ehve1=0-12",
+     "bookUrl": "https://ncert.nic.in/textbook.php?ehve1=0-12",
+     "indexChapterCount": 12,
+     "listedChapterCount": 12,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/ehve1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/ehve1ps.pdf",
+      "sha256": "c3c5bbafb6d52df9c367a77ad4b95924e16f939c528ae42d309bbc2cf80f3d47",
+      "fetchedAt": "2026-09-25T23:14:23+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/ehve1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ehve101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ehve102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ehve103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ehve104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ehve105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ehve106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ehve107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ehve108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ehve109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ehve110.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ehve111.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ehve112.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "English",
+   "code": "ENGLISH",
+   "books": [
+    {
+     "code": "eesa1",
+     "title": "Santoor",
+     "language": "en",
+     "indexValue": "textbook.php?eesa1=0-10",
+     "bookUrl": "https://ncert.nic.in/textbook.php?eesa1=0-10",
+     "indexChapterCount": 10,
+     "listedChapterCount": 10,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/eesa1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/eesa1ps.pdf",
+      "sha256": "7ecaefaa0ed0ada410282fa18ab5a944b8e818cbc897993404cc4924a2682e5d",
+      "fetchedAt": "2026-09-25T23:14:23+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "June 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/eesa1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eesa101.pdf",
+       "number": "1",
+       "kind": "lesson",
+       "title": "Papa’s Spectacles",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eesa102.pdf",
+       "number": "2",
+       "kind": "lesson",
+       "title": "Gone with the Scooter",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eesa103.pdf",
+       "number": "3",
+       "kind": "lesson",
+       "title": "The Rainbow",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eesa104.pdf",
+       "number": "4",
+       "kind": "lesson",
+       "title": "The Wise Parrot",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eesa105.pdf",
+       "number": "5",
+       "kind": "lesson",
+       "title": "The Frog",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eesa106.pdf",
+       "number": "6",
+       "kind": "lesson",
+       "title": "What a Tank!",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eesa107.pdf",
+       "number": "7",
+       "kind": "lesson",
+       "title": "Gilli Danda",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eesa108.pdf",
+       "number": "8",
+       "kind": "lesson",
+       "title": "The Decision of the Panchayat",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eesa109.pdf",
+       "number": "9",
+       "kind": "lesson",
+       "title": "Vocation",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eesa110.pdf",
+       "number": "10",
+       "kind": "lesson",
+       "title": "Glass Bangles",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "The World Around Us",
+   "code": "THE_WORLD_AROUND_US",
+   "books": [
+    {
+     "code": "eeev1",
+     "title": "Our Wonderous World",
+     "language": "en",
+     "indexValue": "textbook.php?eeev1=0-10",
+     "bookUrl": "https://ncert.nic.in/textbook.php?eeev1=0-10",
+     "indexChapterCount": 10,
+     "listedChapterCount": 10,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/eeev1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/eeev1ps.pdf",
+      "sha256": "d53885920c708eec72ef340bfb554504edd99a4c927f625192d9e8d1bd386a7a",
+      "fetchedAt": "2026-09-25T23:14:26+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "July 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/eeev1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeev101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Water — The Essence of Life",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeev102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Journey of a River",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeev103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "The Mystery of Food",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeev104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Our School — A Happy Place",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeev105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Our Vibrant Country",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeev106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Some Unique Places",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeev107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Energy — How Things Work",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeev108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Clothes — How Things are Made",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeev109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Rhythms of Nature",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeev110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Earth — Our Shared Home",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "ehev1",
+       "title": "Hamara Adbhut Sansar",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ehev1=0-10"
+      },
+      {
+       "code": "euev1",
+       "title": "Hamari Hairatangez Duniya",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?euev1=0-10"
+      },
+      {
+       "code": "eorev1",
+       "title": "Our Wonderous World (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eorev1=0-10"
+      },
+      {
+       "code": "egjev1",
+       "title": "Our Wonderous World (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?egjev1=0-10"
+      },
+      {
+       "code": "esnev1",
+       "title": "Our Wonderous World (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?esnev1=0-10"
+      },
+      {
+       "code": "edgev1",
+       "title": "Our Wonderous World (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?edgev1=0-10"
+      },
+      {
+       "code": "emlev1",
+       "title": "Our Wonderous World (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emlev1=0-10"
+      },
+      {
+       "code": "eskev1",
+       "title": "Our Wonderous World (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eskev1=0-10"
+      },
+      {
+       "code": "ebnev1",
+       "title": "Our Wonderous World (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ebnev1=0-10"
+      },
+      {
+       "code": "enpev1",
+       "title": "Our Wonderous World (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?enpev1=0-10"
+      },
+      {
+       "code": "eknev1",
+       "title": "Our Wonderous World (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eknev1=0-10"
+      },
+      {
+       "code": "epnev1",
+       "title": "Our Wonderous World (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?epnev1=0-10"
+      },
+      {
+       "code": "etmev1",
+       "title": "Our Wonderous World (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?etmev1=0-10"
+      },
+      {
+       "code": "emnev1",
+       "title": "Our Wonderous World (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emnev1=0-10"
+      },
+      {
+       "code": "emrev1",
+       "title": "Our Wonderous World (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emrev1=0-10"
+      },
+      {
+       "code": "etlev1",
+       "title": "Our Wonderous World (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?etlev1=0-10"
+      },
+      {
+       "code": "easev1",
+       "title": "Our Wonderous World (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?easev1=0-10"
+      },
+      {
+       "code": "eksev1",
+       "title": "Our Wonderous World (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eksev1=0-10"
+      },
+      {
+       "code": "ebdev1",
+       "title": "Our Wonderous World (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ebdev1=0-10"
+      },
+      {
+       "code": "emtev1",
+       "title": "Our Wonderous World (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emtev1=0-10"
+      },
+      {
+       "code": "ekoev1",
+       "title": "Our Wonderous World (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ekoev1=0-10"
+      },
+      {
+       "code": "esiev1",
+       "title": "Our Wonderous World (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 10,
+       "bookUrl": "https://ncert.nic.in/textbook.php?esiev1=0-10"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Arts",
+   "code": "ARTS",
+   "books": [
+    {
+     "code": "eebu1",
+     "title": "Bansuri",
+     "language": "en",
+     "indexValue": "textbook.php?eebu1=0-19",
+     "bookUrl": "https://ncert.nic.in/textbook.php?eebu1=0-19",
+     "indexChapterCount": 19,
+     "listedChapterCount": 19,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/eebu1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/eebu1ps.pdf",
+      "sha256": "4d28edbd94825ea19066a7c63ff3a408675d70a29190a50035827523f08d2e35",
+      "fetchedAt": "2026-09-25T23:14:24+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "June 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/eebu1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Objects on the Move",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Peeping Out of the Window",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Picturing Stories",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Imaginary Beings",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Spreading the Message",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Create a Scene",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Stitch it for a Story",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Time, Team, Technique",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "View and Review",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Sing and Play",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Music Around Me",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Sounds and Instruments",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Building Blocks",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu114.pdf",
+       "number": "14",
+       "kind": "chapter",
+       "title": "Ideas and Inspiration",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu115.pdf",
+       "number": "15",
+       "kind": "chapter",
+       "title": "My Everyday Activities in Modes of Dance",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu116.pdf",
+       "number": "16",
+       "kind": "chapter",
+       "title": "Dancing with Rhythm and Tempos",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu117.pdf",
+       "number": "17",
+       "kind": "chapter",
+       "title": "Dances of My Nation",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 18,
+       "pdfSeq": 18,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu118.pdf",
+       "number": "18",
+       "kind": "chapter",
+       "title": "My Dance Expresses Emotions and Narrates Stories",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 19,
+       "pdfSeq": 19,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eebu119.pdf",
+       "number": "19",
+       "kind": "chapter",
+       "title": "My Dance and Your Dance",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "ehbu1",
+       "title": "Bansuri (Hindi)",
+       "language": "hi",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ehbu1=0-19"
+      },
+      {
+       "code": "eubu1",
+       "title": "Bansuri (Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eubu1=0-19"
+      },
+      {
+       "code": "egjbu1",
+       "title": "Bansuri (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?egjbu1=0-19"
+      },
+      {
+       "code": "emtbu1",
+       "title": "Bansuri (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emtbu1=0-19"
+      },
+      {
+       "code": "eorbu1",
+       "title": "Bansuri (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eorbu1=0-19"
+      },
+      {
+       "code": "epnbu1",
+       "title": "Bansuri (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?epnbu1=0-19"
+      },
+      {
+       "code": "eknbu1",
+       "title": "Bansuri (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eknbu1=0-19"
+      },
+      {
+       "code": "ebnbu1",
+       "title": "Bansuri (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ebnbu1=0-19"
+      },
+      {
+       "code": "edgbu1",
+       "title": "Bansuri (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?edgbu1=0-19"
+      },
+      {
+       "code": "etmbu1",
+       "title": "Bansuri (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?etmbu1=0-19"
+      },
+      {
+       "code": "eksbu1",
+       "title": "Bansuri (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eksbu1=0-19"
+      },
+      {
+       "code": "enpbu1",
+       "title": "Bansuri (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?enpbu1=0-19"
+      },
+      {
+       "code": "easbu1",
+       "title": "Bansuri (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?easbu1=0-19"
+      },
+      {
+       "code": "eskbu1",
+       "title": "Bansuri (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eskbu1=0-19"
+      },
+      {
+       "code": "emrbu1",
+       "title": "Bansuri (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emrbu1=0-19"
+      },
+      {
+       "code": "esibu1",
+       "title": "Bansuri (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?esibu1=0-19"
+      },
+      {
+       "code": "etlbu1",
+       "title": "Bansuri (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?etlbu1=0-19"
+      },
+      {
+       "code": "emnbu1",
+       "title": "Bansuri (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emnbu1=0-19"
+      },
+      {
+       "code": "emlbu1",
+       "title": "Bansuri (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emlbu1=0-19"
+      },
+      {
+       "code": "ebdbu1",
+       "title": "Bansuri (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ebdbu1=0-19"
+      },
+      {
+       "code": "esnbu1",
+       "title": "Bansuri (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?esnbu1=0-19"
+      },
+      {
+       "code": "ekobu1",
+       "title": "Bansuri (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ekobu1=0-19"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Physical Education and Well Being",
+   "code": "PHYSICAL_EDUCATION_AND_WELL_BEING",
+   "books": [
+    {
+     "code": "eeky1",
+     "title": "Khel Yoga",
+     "language": "en",
+     "indexValue": "textbook.php?eeky1=0-3",
+     "bookUrl": "https://ncert.nic.in/textbook.php?eeky1=0-3",
+     "indexChapterCount": 3,
+     "listedChapterCount": 3,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/eeky1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/eeky1ps.pdf",
+      "sha256": "fea08713c31003e1c57f0813e1551d67cce63a7883e99c5029879000db9d9c17",
+      "fetchedAt": "2026-09-25T23:14:24+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "July 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/eeky1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeky101.pdf",
+       "number": "1",
+       "kind": "unit",
+       "title": "Basic Motor Movements",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeky102.pdf",
+       "number": "2",
+       "kind": "unit",
+       "title": "Our Games",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eeky103.pdf",
+       "number": "3",
+       "kind": "unit",
+       "title": "Yoga",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "eorky1",
+       "title": "Khel Yoga(Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eorky1=0-3"
+      },
+      {
+       "code": "epnky1",
+       "title": "Khel Yoga(Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?epnky1=0-3"
+      },
+      {
+       "code": "eknky1",
+       "title": "Khel Yoga(Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eknky1=0-3"
+      },
+      {
+       "code": "ebnky1",
+       "title": "Khel Yoga(Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ebnky1=0-3"
+      },
+      {
+       "code": "etmky1",
+       "title": "Khel Yoga(Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?etmky1=0-3"
+      },
+      {
+       "code": "enpky1",
+       "title": "Khel Yoga(Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?enpky1=0-3"
+      },
+      {
+       "code": "emtky1",
+       "title": "Khel Yoga(Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emtky1=0-3"
+      },
+      {
+       "code": "emnky1",
+       "title": "Khel Yoga(Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emnky1=0-3"
+      },
+      {
+       "code": "etlky1",
+       "title": "Khel Yoga(Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?etlky1=0-3"
+      },
+      {
+       "code": "egjky1",
+       "title": "Khel Yoga(Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?egjky1=0-3"
+      },
+      {
+       "code": "easky1",
+       "title": "Khel Yoga(Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?easky1=0-3"
+      },
+      {
+       "code": "eskky1",
+       "title": "Khel Yoga(Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eskky1=0-3"
+      },
+      {
+       "code": "ekoky1",
+       "title": "Khel Yoga(Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ekoky1=0-3"
+      },
+      {
+       "code": "ebdky1",
+       "title": "Khel Yoga(Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?ebdky1=0-3"
+      },
+      {
+       "code": "edgky1",
+       "title": "Khel Yoga(Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?edgky1=0-3"
+      },
+      {
+       "code": "eksky1",
+       "title": "Khel Yoga(Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?eksky1=0-3"
+      },
+      {
+       "code": "emrky1",
+       "title": "Khel Yoga(Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emrky1=0-3"
+      },
+      {
+       "code": "esnky1",
+       "title": "Khel Yoga(Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?esnky1=0-3"
+      },
+      {
+       "code": "esiky1",
+       "title": "Khel Yoga(Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?esiky1=0-3"
+      },
+      {
+       "code": "emlky1",
+       "title": "Khel Yoga(Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?emlky1=0-3"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Urdu",
+   "code": "URDU",
+   "books": [
+    {
+     "code": "eust1",
+     "title": "Sitaar",
+     "language": "ur",
+     "indexValue": "textbook.php?eust1=0-18",
+     "bookUrl": "https://ncert.nic.in/textbook.php?eust1=0-18",
+     "indexChapterCount": 18,
+     "listedChapterCount": 18,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/eust1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/eust1ps.pdf",
+      "sha256": "ab5e2f4f2a90ae90e4dd13a893e4791d2f9de0f284438e99780351d0dc091af6",
+      "fetchedAt": "2026-09-25T23:14:26+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/eust1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust101.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust102.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust103.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust104.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust105.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust106.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust107.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust108.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust109.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust110.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust111.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust112.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust113.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust114.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust115.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust116.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust117.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 18,
+       "pdfSeq": 18,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/eust118.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  }
+ ],
+ "counts": {
+  "subjects": 7,
+  "books": 7,
+  "chapters": 57,
+  "unresolvedChapters": 30,
+  "editions": 86
+ }
+}

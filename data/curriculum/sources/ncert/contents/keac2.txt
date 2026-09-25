@@ -1,0 +1,15 @@
+# NCERT contents evidence — keac2 — Accountancy-II (index class 11, Accountancy)
+# source: https://ncert.nic.in/textbook/pdf/keac2ps.pdf
+# fetched: 2026-09-25T23:15:10+05:30  sha256: aa21f1e136a8927e2445f3935d9a5f88bef832700d3adc2e8ed47c3debdf6865  bytes: 1073117
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 de7923b726388e437e023e640926c9ac663c3870c72a889edc9166a04d817422);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@keac2#1 title [pymupdf p11] next=number
+  Financial Statements - I
++ 277
++ 8.1
+@keac2#2 title [pymupdf p11] next=number
+  Financial Statements - II
++ 318
++ 9.1

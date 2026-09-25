@@ -1,0 +1,35 @@
+# NCERT contents evidence — gegp2 — Ganita Prakash-II (index class 7, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/gegp2ps.pdf
+# fetched: 2026-09-25T23:14:35+05:30  sha256: 59a3b897ce08f71605805ee73ecbfeef126a930bc0d9a3716d15e9dcf2c430aa  bytes: 2830369
+# contents pages of the PDF: 17 of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 f7d2acc7d0a33592622322bb460576a230dd565859516b4f833a20fdf1a86104);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@gegp2#1 title [pdftotext p17] next=number
+  Geometric Twins
++ 1
++ Chapter 2
+@gegp2#2 title [pdftotext p17] next=number
+  Operations with Integers
++ 24
++ Chapter 3
+@gegp2#3 title [pdftotext p17] next=number
+  Finding Common Ground
++ 47
++ Chapter 4
+@gegp2#4 title [pdftotext p17] next=number
+  Another Peek Beyond the Point
++ 67
++ Chapter 5
+@gegp2#5 title [pdftotext p17] next=number
+  Connecting the Dots...
++ 97
++ Chapter 6
+@gegp2#6 title [pdftotext p17] next=number
+  Constructions and Tilings
++ 136
++ Chapter 7
+@gegp2#7 title [pdftotext p17] next=boilerplate
+  Finding the Unknown
++ 164
++ Learning Material Sheets

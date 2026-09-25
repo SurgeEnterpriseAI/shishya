@@ -1,23 +1,34 @@
 // /schooling — Schooling section landing.
 //
 // Phase 3 first cut: ~20 major boards (national + state + international)
-// each with its own indexable per-board page. Replaces the Phase 1
-// "coming soon" skeleton with real content that already provides value
-// (official syllabus links + sample paper links + class-level filters).
+// each with its own per-board page. Replaces the Phase 1 "coming soon"
+// skeleton with real content that already provides value (official
+// syllabus links + sample paper links + class-level filters).
+//
+// 25 Sep 2026 (school build, Step 0): noindex like the rest of /schooling
+// (SCHOOLING_ROBOTS), and the copy now says only what is true today. It
+// promised "every board, in your language" and "syllabi, chapters,
+// practice, and study help, verified against official board sources";
+// the pages are English-only, cover 20 boards, and have no Shishya
+// practice or notes yet.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
-import { BOARDS, type BoardType } from "@/lib/schooling-data";
+import { BOARDS, SCHOOLING_ROBOTS, type BoardType } from "@/lib/schooling-data";
 import { stateInfo } from "@/lib/state-info";
 
 export const revalidate = 86_400;
 
 export const metadata: Metadata = {
-  title: "Schooling — CBSE, ICSE, state boards Class 1–12 syllabus & sample papers | Shishya",
+  // 26 Sep 2026: title and description promised syllabus + sample-paper
+  // links for every board and "every major state board"; 14 of the 20
+  // boards link only their own website, and the state list is 15 boards.
+  title: "Schooling — CBSE, ICSE and state boards: official links | Shishya",
   description:
-    "Indian school boards in one place — CBSE, ICSE, NIOS, IB, Cambridge, plus every major state board (Maharashtra SSC/HSC, UP Board, Tamil Nadu, Karnataka PUC, WBBSE, AP/TS BIE, Kerala DHSE, GSEB, RBSE, MPBSE, BSEB, PSEB). Official syllabus + sample paper links, no third-party reposts.",
+    "Indian school boards in one place — CBSE, ICSE, NIOS, IB, Cambridge and state boards (Maharashtra SSC/HSC, UP Board, Tamil Nadu, Karnataka PUC, WBBSE, AP/TS BIE, Kerala DHSE, GSEB, RBSE, MPBSE, BSEB, PSEB). Each board's official website, plus its syllabus and sample-paper pages where we link them. No third-party reposts.",
   alternates: { canonical: "https://shishya.in/schooling" },
+  robots: SCHOOLING_ROBOTS,
   keywords: [
     "CBSE syllabus",
     "ICSE syllabus",
@@ -34,8 +45,8 @@ export const metadata: Metadata = {
     "board exam preparation",
   ],
   openGraph: {
-    title: "Schooling on Shishya — Class 1 to 12, every board",
-    description: "CBSE, ICSE, state boards, IB, Cambridge. Official sources only.",
+    title: "Schooling on Shishya — Indian school boards, official links",
+    description: "CBSE, ICSE, state boards, IB, Cambridge. Links to each board's own pages.",
     url: "https://shishya.in/schooling",
     siteName: "Shishya",
     locale: "en_IN",
@@ -120,15 +131,18 @@ export default async function SchoolingLanding({
           <Link href="/" className="hover:text-ink-800">Home</Link> · Schooling
         </p>
         <h1 className="mt-1 text-3xl font-bold text-ink-900">
-          Every class, every board, in your language
+          School boards: official syllabus and textbook links
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-ink-700">
-          Syllabi, chapters, practice, and study help — verified against
-          official board sources. For students and parents. {BOARDS.length}{" "}
-          school boards covered — national (CBSE, ICSE, NIOS), major state
-          boards from Maharashtra to Tamil Nadu, plus international (IB,
-          Cambridge). Every entry links to the board&apos;s own syllabus and
-          sample-paper pages — current version, straight from the board.
+          {/* 26 Sep 2026: was "Every entry links to the board's own
+              syllabus and sample-paper pages"; most boards link only their
+              website. */}
+          {BOARDS.length} school boards: national (CBSE, ICSE, NIOS), major
+          state boards, and international (IB, Cambridge). Every entry links
+          to the board&apos;s official website, and to its syllabus and
+          sample-paper pages where we have them. For CBSE Classes 6–12 there
+          are also links to the official NCERT textbooks, subject by subject,
+          on ncert.nic.in.
         </p>
 
         {/* Stream selection CTA — the most consequential Class 10 decision */}
@@ -246,24 +260,22 @@ export default async function SchoolingLanding({
           </ul>
         )}
 
-        {/* Phase-3 roadmap */}
+        {/* 25 Sep 2026: "what's coming" names only the decided next step,
+            not a feature list that isn't built. */}
         <div className="mt-12 rounded-lg border border-ink-200 bg-white p-5 text-sm text-ink-700">
-          <h3 className="text-base font-semibold text-ink-900">What's still coming</h3>
+          <h3 className="text-base font-semibold text-ink-900">Coming soon</h3>
           <p className="mt-2">
-            Per board × class × subject pages with chapter-wise concept
-            summaries, key formulas, practice questions and mastery quizzes.
-            Board exam preparation hubs (Class 10 / Class 12) with sample
-            papers, blueprint, last 10 years' papers and a study planner
-            tied to your real exam date. School-level scholarships hub.
-            Olympiad guidance (NSO, IMO, IJSO).
+            Chapter-wise notes and practice questions written by Shishya,
+            starting with NCERT Maths and Science. Every question&apos;s
+            answer is checked before it goes live. Until then, these pages
+            link you to the official books and syllabuses.
           </p>
           <p className="mt-2 text-[11px] text-ink-500">
-            Phase 3 of the roadmap. The boards above are live now with
-            official syllabus + sample paper links. Cross-link to{" "}
-            <Link href="/exams" className="text-saffron-700 underline">
+            Past Class 12? See{" "}
+            <Link href="/" className="text-saffron-700 underline">
               Entrance &amp; Government Exams
-            </Link>{" "}
-            once you're past Class 12.
+            </Link>
+            .
           </p>
         </div>
       </section>

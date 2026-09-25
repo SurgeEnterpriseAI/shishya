@@ -1,0 +1,39 @@
+# NCERT contents evidence — gegp1 — Ganita Prakash (index class 7, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/gegp1ps.pdf
+# fetched: 2026-09-25T23:14:34+05:30  sha256: d05d0fe3524eaa7727683387787f04c84f3d444e9f6b4b44819b97a6ee023d2c  bytes: 2727751
+# contents pages of the PDF: 17 of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 53a6852e63aaad31502ad8c0c687a9e12096ceaf52066c13c12229d952c73b7f);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@gegp1#1 title [pdftotext p17] next=number
+  Large Numbers Around Us
++ 1
++ Chapter 2
+@gegp1#2 title [pdftotext p17] next=number
+  Arithmetic Expressions
++ 24
++ Chapter 3
+@gegp1#3 title [pdftotext p17] next=number
+  A Peek Beyond the Point
++ 46
++ Chapter 4
+@gegp1#4 title [pdftotext p17] next=number
+  Expressions using Letter-Numbers
++ 81
++ Chapter 5
+@gegp1#5 title [pdftotext p17] next=number
+  Parallel and Intersecting Lines
++ 106
++ Chapter 6
+@gegp1#6 title [pdftotext p17] next=number
+  Number Play
++ 127
++ Chapter 7
+@gegp1#7 title [pdftotext p17] next=number
+  A Tale of Three Intersecting Lines
++ 146
++ Chapter 8
+@gegp1#8 title [pdftotext p17] next=boilerplate
+  Working with Fractions
++ 173
++ Learning Material Sheets

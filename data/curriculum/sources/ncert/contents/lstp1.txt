@@ -1,0 +1,8 @@
+# NCERT contents evidence — lstp1 — Tabla evam Pakhawaj (index class 12, Sangeet)
+# source: https://ncert.nic.in/textbook/pdf/lstp1ps.pdf
+# fetched: 2026-09-25T23:15:47+05:30  sha256: 0768b2bc16f261fff0e0fd67dc56fa4892441b07e6dadf54637421933c5d9a43  bytes: 10130230
+# contents pages of the PDF: 25 of 26
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 e255fec7c654efd5af9189a4ce5d2c36d4f651abe6fa39960ab81e6c0ca1b629);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

@@ -1,0 +1,27 @@
+# NCERT contents evidence — lech1 — Chemistry-I (index class 12, Chemistry)
+# source: https://ncert.nic.in/textbook/pdf/lech1ps.pdf
+# fetched: 2026-09-25T23:15:36+05:30  sha256: 4ee7d6795559fc185f092a5f39431420d4f45aacddbe95dfa84d79056750b3d5  bytes: 2854404
+# contents pages of the PDF: 13,14 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 59016c6d3a43b5881856c24a115dd252684ab849cbcc4f0476520d497a18b68c);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lech1#1 title [pdftotext p13] next=number
+  Unit 1 Solutions
++ 1
++ 1.1 Types of Solutions
+@lech1#2 title [pdftotext p13] next=number
+  Unit 2 Electrochemistry
++ 31
++ 2.1 Electrochemical Cells
+@lech1#3 title [pdftotext p13] next=number
+  Unit 3 Chemical Kinetics
++ 61
++ 3.1 Rate of a Chemical Reaction
+@lech1#4 title [pdftotext p14] next=number
+  Unit 4 The d-and f-Block Elements
++ 89
++ 4.1 Position in the Periodic Table
+@lech1#5 title [pymupdf p14] next=number
+  Unit 5 Coordination Compounds
++ 118
++ 5.1

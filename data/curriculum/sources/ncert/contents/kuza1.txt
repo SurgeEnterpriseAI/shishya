@@ -1,0 +1,8 @@
+# NCERT contents evidence — kuza1 — Zuban-O-Adab ki Tareekh (index class 13, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/kuza1ps.pdf
+# fetched: 2026-09-25T23:15:49+05:30  sha256: 96bb9d451e793aa4d0e94848941deeb1906237ab62c280121da29e502e3b8810  bytes: 7256916
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 949e396a52257b84e2585d803a030ea60c37c91d7e006ce8024ab46f3aa254d9);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

@@ -1,0 +1,8 @@
+# NCERT contents evidence — ihga1 — Ganga (index class 9, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/ihga1ps.pdf
+# fetched: 2026-09-25T23:14:50+05:30  sha256: dd0ffc29120c850955aab67b22d51ea84442ff32ceeab837df4ccd66ff403867  bytes: 3658595
+# contents pages of the PDF: 17 of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 7b26bb84ebef18e4ef70afb4e807fc241d73e251404adba8c08654cc7b84b870);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

@@ -1,0 +1,27 @@
+# NCERT contents evidence — lech2 — Chemistry-II (index class 12, Chemistry)
+# source: https://ncert.nic.in/textbook/pdf/lech2ps.pdf
+# fetched: 2026-09-25T23:15:36+05:30  sha256: cced7943f47e78ef4abe798243021a46a02c39a5eff719b534cd153377fd9e58  bytes: 2388903
+# contents pages of the PDF: 13,14 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 261b9d1fcf34af9bb1c353034b22f7c8ec7cec1d8bfe528ac00875523e064b6f);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lech2#1 title [pymupdf p13] next=number
+  Haloalkanes and Haloarenes
++ 159
++ 6.1
+@lech2#2 title [pymupdf p13] next=number
+  Alcohols, Phenols and Ethers
++ 193
++ 7.1
+@lech2#3 title [pymupdf p13] next=number
+  Aldehydes, Ketones and Carboxylic Acids
++ 227
++ 8.1
+@lech2#4 title [pymupdf p14] next=number
+  Amines
++ 259
++ 9.1
+@lech2#5 title [pymupdf p14] next=number
+  Biomolecules
++ 281
++ 10.1

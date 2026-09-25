@@ -1,0 +1,36 @@
+# NCERT contents evidence — lehe1 — Human Ecology and Family Sciences Part I (index class 12, Home Science)
+# source: https://ncert.nic.in/textbook/pdf/lehe1ps.pdf
+# fetched: 2026-09-25T23:15:39+05:30  sha256: eb1daf58503c3de00157b25a2fc6b15b7f689a853abd95de9d682ac9099bcd07  bytes: 3099059
+# contents pages of the PDF: 23 of 24
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 3eddb81bab133859bf2b5b60c527b11085865c17f027bdcf61b48e5909dacaa1);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lehe1#1 title [pdftotext p23] next=number
+  Work, Livelihood and Career
++ 1
++ Chapter 1 Work, Livelihood and Career
+@lehe1#2 title [pdftotext p23] next=number
+  Chapter 2 Clinical Nutrition and Dietetics
++ 32
++ Chapter 3 Public Nutrition and Health
+@lehe1#3 title [pdftotext p23] next=number
+  Chapter 3 Public Nutrition and Health
++ 46
++ Chapter 4 Food Processing and Technology
+@lehe1#4 title [pdftotext p23] next=number
+  Chapter 4 Food Processing and Technology
++ 61
++ Chapter 5 Food Quality and Food Safety
+@lehe1#5 title [pdftotext p23] next=number
+  Chapter 5 Food Quality and Food Safety
++ 75
++ Unit III
+@lehe1#6 title [pdftotext p23] next=number
+  Chapter 6 Early Childhood Care and Education
++ 103
++ Chapter 7 Management of Support Services, Institutions and
+@lehe1#7 title [pdftotext p23] next=boilerplate
+  Chapter 7 Management of Support Services, Institutions and
+  Programmes for Children, Youth and Elderly
++ 116
++ References for Further Reading

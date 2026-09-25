@@ -1,0 +1,8 @@
+# NCERT contents evidence — jujp1 — Jaan Pahechan (index class 10, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/jujp1ps.pdf
+# fetched: 2026-09-25T23:15:07+05:30  sha256: 7dd3f3e4eab3c52a04619939e3ab2f16e7bc31cb06686548b13bcceb0f762976  bytes: 3158543
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 805baaabe424b90e08a2e1a376046b866505048338c6bb12d7451a91200a8f96);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

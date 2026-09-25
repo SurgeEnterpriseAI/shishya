@@ -1,0 +1,55 @@
+# NCERT contents evidence — kebt1 — Biotechnology (index class 11, Biotechnology)
+# source: https://ncert.nic.in/textbook/pdf/kebt1ps.pdf
+# fetched: 2026-09-25T23:15:24+05:30  sha256: e6bc5668eab5717f7cda7cc82e07a6bcf01471440dd3ac2fd3a29700a4aba14f  bytes: 2202058
+# contents pages of the PDF: 9,10,11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 73d64785c098cf509db7bd675d27f8c48d6f2bdeee06b784e44b87eeeb24d7d3);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kebt1#1 title [pdftotext p9] next=number
+  Chapter 1: Introduction
++ 1.1 Historical Perspectives 1.2 Applications of Modern Biotechnology 1.3 Biotechnology in India: Academic Prospects
++ and Industrial Scenario
+@kebt1#2 title [pdftotext p9] next=number
+  Chapter 2: Cellular Organelles
++ 2.1 Plasma Membrane 2.2 Cell Wall 2.3 Endomembrane System 2.4 Mitochondria 2.5 Plastids 2.6 Ribosomes 2.7 Microbodies 2.8 Cytoskeleton 2.9 Cilia and Flagella 2.
++ Chapter 3: Biomolecules
+@kebt1#3 title [pdftotext p9] next=number
+  Chapter 3: Biomolecules
++ 3.1 Carbohydrates 3.2 Fatty Acids and Lipids 3.3 Amino Acids 3.4 Protein Structure 3.5 Nucleic Acids
++ Chapter 4: Enzymes and Bioenergetics
+@kebt1#4 title [pdftotext p9] next=number
+  Chapter 4: Enzymes and Bioenergetics
++ 4.1 Enzymes: Classification and Mode of Action 4.2 Brief Introduction to Bioenergetics
++ iii v
+@kebt1#5 title [pdftotext p10] next=number
+  Chapter 5: Cellular Processes
++ 5.1 Cell Signaling 5.2 Metabolic Pathways 5.3 Cell Cycle 5.4 Programmed Cell Death (Apoptosis) 5.5 Cell Differentiation 5.6 Cell Migration
++ 103
+@kebt1#6 title [pdftotext p10] next=number
+  Chapter 6: Basic Principles of Inheritance
++ 6.1 Introduction to Inheritance 6.2 Linkage and Crossing Over 6.3 Recombination 6.4 Sex-linked Inheritance 6.5 Extrachromosomal Inheritance 6.6 Polyploidy 6.7 R
++ 147
+@kebt1#7 title [pdftotext p10] next=number
+  Chapter 7: Basic Processes
++ 7.1 DNA as the Genetic Material 7.2 Prokaryotic and Eukaryotic Gene Organisation 7.3 DNA Replication 7.4 Gene Expression 7.5 Genetic Code 7.6 Translation 7.7 Ge
++ 166
+@kebt1#8 title [pdftotext p10] next=number
+  Chapter 8: Genetic Disorder
++ 8.1 Chromosomal Abnormalities and Syndromes 8.2 Monogenic Disorders and Pedigree Mapping 8.3 Polygenic Disorders
++ 217
+@kebt1#9 title [pdftotext p11] next=number
+  Chapter 9: Introduction to Bioinformatics
++ 9.1 The Utility of Basic Mathematical and 		 Statistical Concepts to Understand Biological 		 Systems and Processes 9.2 Introduction 9.3 Biological Databases 9.
++ Chapter 10: Protein Informatics and Cheminformatics
+@kebt1#10 title [pdftotext p11] next=number
+  Chapter 10: Protein Informatics and Cheminformatics
++ 10.1 Protein Informatics 10.2 Cheminformatics
++ Chapter 11: Programming and Systems Biology
+@kebt1#11 title [pdftotext p11] next=number
+  Chapter 11: Programming and Systems Biology
++ 11.1 Programming in Biology 11.2 Systems Biology
++ Unit V: Tools and Techniques: Basic Concepts
+@kebt1#12 title [pdftotext p11] next=number
+  Chapter 12: Tools and Techniques
++ 12.1 Microscopy 12.2 Centrifugation 12.3 Electrophoresis 12.4 Enzyme-linked Immunosorbent Assay (ELISA) 12.5 Chromatography 12.6 Spectroscopy 12.7 Mass Spectrom
++ 233-278

@@ -1,0 +1,39 @@
+# NCERT contents evidence — leph1 — Physics Part-I (index class 12, Physics)
+# source: https://ncert.nic.in/textbook/pdf/leph1ps.pdf
+# fetched: 2026-09-25T23:15:31+05:30  sha256: 66bceeb91660d27a8c280dd7087daa874ffe2745b2905ee517ac6cbc67d5273b  bytes: 2611580
+# contents pages of the PDF: 13,14,15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 b42749406596ca47f011078695154f8ebecdec280fc4a24ae3ec5d1b51861308);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@leph1#1 title [pymupdf p13] next=number
+  ELECTRIC CHARGES AND FIELDS
++ 1.1
++ Introduction
+@leph1#2 title [pymupdf p13] next=number
+  ELECTROSTATIC POTENTIAL AND CAPACITANCE
++ 2.1
++ Introduction
+@leph1#3 title [pymupdf p14] next=number
+  CURRENT ELECTRICITY
++ 3.1
++ Introduction
+@leph1#4 title [pymupdf p14] next=number
+  MOVING CHARGES AND MAGNETISM
++ 4.1
++ Introduction
+@leph1#5 title [pymupdf p14] next=number
+  MAGNETISM AND MATTER
++ 5.1
++ Introduction
+@leph1#6 title [pymupdf p15] next=number
+  ELECTROMAGNETIC INDUCTION
++ 6.1
++ Introduction
+@leph1#7 title [pdftotext p15] next=number
+  ALTERNATING CURRENT
++ 7.1 Introduction
++ 177
+@leph1#8 title [pdftotext p15] next=number
+  8.3 Electromagnetic Waves
++ 205
++ 8.4 Electromagnetic Spectrum

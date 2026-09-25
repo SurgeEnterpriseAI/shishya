@@ -1,0 +1,8 @@
+# NCERT contents evidence — lehh1 — Manav Paristhitik avam Parivar Vigyan Bhag 1 (index class 12, Home Science)
+# source: https://ncert.nic.in/textbook/pdf/lehh1ps.pdf
+# fetched: 2026-09-25T23:15:40+05:30  sha256: 9ae26170da12a99b749835c5a268de94141122f00a2eb121781176dce5445759  bytes: 1743321
+# contents pages of the PDF: 13,14 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 762af57c5358cb62e1f7f5833640ff7b6f8237b0f1d07ead05f6a349c861773e);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

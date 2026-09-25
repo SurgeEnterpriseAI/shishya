@@ -1,0 +1,78 @@
+# NCERT contents evidence — debu1 — Bansuri (index class 4, Arts)
+# source: https://ncert.nic.in/textbook/pdf/debu1ps.pdf
+# fetched: 2026-09-25T23:14:21+05:30  sha256: 006ba0fb32b4db0e882a81240f4888386f47d90279de26beb6ff4beb20b0eadf  bytes: 4316223
+# contents pages of the PDF: 22,23 of 24
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 6b7b4318d3a2b4ba7ba0b9ad53fc9f6e676d2ea75fbdb9493ec6e8d0995b52c8);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@debu1#1 title [pymupdf p22] next=number
+  1. Arrangements of Objects.....8
++ 2. Textures in Nature.....18
++ 3. Aqua World.....26
+@debu1#2 title [pymupdf p22] next=number
+  2. Textures in Nature.....18
++ 3. Aqua World.....26
++ 4. People in Action .....37
+@debu1#3 title [pymupdf p22] next=number
+  3. Aqua World.....26
++ 4. People in Action .....37
++ THEATRE..... 49
+@debu1#4 title [pdftotext p22] next=boilerplate
+~ .....26 4. People in Action .....37
++ THEATRE..... 49
++ 5. Explore! .....54 6. Imagine .....61 7. Let’s Create.....73 8. Look Around .....82
+@debu1#5 title [pymupdf p22] next=number
+  5. Explore! .....54
++ 6. Imagine .....61
++ 7. Let’s Create.....73
+@debu1#6 title [pymupdf p22] next=number
+  6. Imagine .....61
++ 7. Let’s Create.....73
++ 8. Look Around.....82
+@debu1#7 title [pymupdf p22] next=number
+  7. Let’s Create.....73
++ 8. Look Around.....82
++ CONTENTS
+@debu1#8 title [pdftotext p22] next=page
+~ .....73 8. Look Around .....82
++ Reprint 2026-27
+@debu1#9 title [pymupdf p23] next=number
+  9. Sing and Play..... 93
++ 10. Making Music.....100
++ 11. Songs and Stories .....108
+@debu1#10 title [pymupdf p23] next=number
+  10. Making Music.....100
++ 11. Songs and Stories .....108
++ 12. Think, Feel, Create.....115
+@debu1#11 title [pymupdf p23] next=number
+  11. Songs and Stories .....108
++ 12. Think, Feel, Create.....115
++ 13. Sounds and Instruments .....127
+@debu1#12 title [pymupdf p23] next=number
+  12. Think, Feel, Create.....115
++ 13. Sounds and Instruments .....127
++ DANCE..... 137
+@debu1#13 title [pdftotext p23] next=boilerplate
+~ te.....115 13. Sounds and Instruments .....127
++ DANCE ..... 137
++ 14. My Body in Dance.....139 15. My Dance Tells Stories.....150 16. Creating My Dance .....157 17. Emotion and Expression in Dance .....170 18. Dances Around Me
+@debu1#14 title [pymupdf p23] next=number
+  14. My Body in Dance.....139
++ 15. My Dance Tells Stories.....150
++ 16. Creating My Dance .....157
+@debu1#15 title [pymupdf p23] next=number
+  15. My Dance Tells Stories.....150
++ 16. Creating My Dance .....157
++ 17. Emotion and Expression in Dance .....170
+@debu1#16 title [pymupdf p23] next=number
+  16. Creating My Dance .....157
++ 17. Emotion and Expression in Dance .....170
++ 18. Dances Around Me.....175
+@debu1#17 title [pymupdf p23] next=number
+  17. Emotion and Expression in Dance .....170
++ 18. Dances Around Me.....175
++ Reprint 2026-27
+@debu1#18 title [pdftotext p23] next=page
+~ n and Expression in Dance .....170 18. Dances Around Me.....175
++ xxiii
++ Reprint 2026-27

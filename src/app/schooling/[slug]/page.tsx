@@ -3,12 +3,20 @@
 // SEO target: "CBSE Class 10 syllabus", "ICSE sample papers", "UP Board
 // 2026 exam date", "Karnataka PUC syllabus", etc. — head-of-funnel
 // queries for every Indian school student.
+//
+// 25 Sep 2026 (school build, Step 0): noindex (SCHOOLING_ROBOTS) until the
+// school section has checked content. Dropped the untrue bits: "refreshed
+// every 90 days" (no job refreshes these facts), "160+ exams / all state
+// CETs", "scholarships tied to {board} students", and the feature roadmap.
+// A verification badge now shows only when its Fact row is about the URL
+// we actually link (the CBSE / CISCE URLs changed that day; their Fact rows
+// still hold the old, dead ones until seed-facts is re-run).
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
-import { BOARDS, findBoard, CLASS_11_12_STREAMS } from "@/lib/schooling-data";
+import { BOARDS, findBoard, boardLinkCopy, CLASS_11_12_STREAMS, SCHOOLING_ROBOTS } from "@/lib/schooling-data";
 import { stateInfo } from "@/lib/state-info";
 import { SectionVerificationSummary, VerificationBadge } from "@/components/VerificationBadge";
 import { ClickableVerificationBadge } from "@/components/ClickableVerificationBadge";
@@ -26,17 +34,21 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const b = findBoard(slug);
-  if (!b) return { title: "Board not found — Shishya" };
+  if (!b) return { title: "Board not found — Shishya", robots: SCHOOLING_ROBOTS };
   const st = b.state ? stateInfo(b.state) : null;
   const year = new Date().getUTCFullYear();
 
-  const title = `${b.shortName} — Syllabus, Sample Papers, Board Exam Info ${year} | Shishya`;
+  // 26 Sep 2026: named only the links this board's page has (boardLinkCopy);
+  // it promised syllabus + sample-paper links on all 20 boards.
+  const copy = boardLinkCopy(b);
+  const title = `${b.shortName} — ${copy.title} | Shishya`;
   const description =
-    `${b.name}${st ? ` (${st.name})` : ""}. Class ${b.classes[0]}–${b.classes[b.classes.length - 1]}. Official syllabus + sample papers + board exam guidance. Free, sourced.`;
+    `${b.name}${st ? ` (${st.name})` : ""}. Class ${b.classes[0]}–${b.classes[b.classes.length - 1]}. Links to ${copy.phrase}.`;
   return {
     title,
     description,
     alternates: { canonical: `https://shishya.in/schooling/${b.slug}` },
+    robots: SCHOOLING_ROBOTS,
     keywords: [
       b.name,
       b.shortName,
@@ -71,9 +83,17 @@ export default async function BoardPage({
   const year = new Date().getUTCFullYear();
 
   const factMap = await getFactMap(`/schooling/${slug}`).catch(() => ({} as Record<string, any>));
-  const websiteFact  = factMap["official-website"];
-  const syllabusFact = factMap["syllabus-url"];
-  const samplesFact  = factMap["sample-paper-url"];
+  // A Fact vouches for one URL; hide it when we now link a different one.
+  const factFor = (key: string, url: string | undefined) => {
+    const f = factMap[key];
+    return f && url && f.claimValue === url ? f : null;
+  };
+  const websiteFact  = factFor("official-website", b.websiteUrl);
+  const syllabusFact = factFor("syllabus-url", b.syllabusUrl);
+  const samplesFact  = factFor("sample-paper-url", b.samplePaperUrl);
+  const perClassSamples = Object.entries(b.samplePapersByClass ?? {}).filter(
+    (e): e is [string, string] => typeof e[1] === "string",
+  );
 
   const session = await auth().catch(() => null);
   const signedIn = Boolean(session?.user);
@@ -110,7 +130,6 @@ export default async function BoardPage({
         <SectionVerificationSummary
           status="ai"
           source={`${b.shortName} official website`}
-          refreshCadence="every 90 days (board syllabi update annually)"
         />
 
         {/* Official links */}
@@ -146,7 +165,18 @@ export default async function BoardPage({
                 <FactBadge fact={syllabusFact} signedIn={signedIn} compact />
               </span>
             )}
-            {b.samplePaperUrl && (
+            {perClassSamples.map(([cls, url]) => (
+              <a
+                key={cls}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-md border border-ink-300 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-50"
+              >
+                Class {cls} sample papers ↗
+              </a>
+            ))}
+            {b.samplePaperUrl && perClassSamples.length === 0 && (
               <span className="inline-flex items-center gap-1">
                 <a
                   href={b.samplePaperUrl}
@@ -176,15 +206,18 @@ export default async function BoardPage({
           ))}
         </div>
 
-        {/* Class 11-12 streams (where applicable) */}
-        {(b.classes.includes(11) || b.classes.includes(12)) && (
+        {/* Class 11-12 streams (where applicable). 26 Sep 2026: Indian
+            boards only (IB / Cambridge have no Science / Commerce /
+            Humanities streams), and no "curriculum page" the board page
+            may not link. */}
+        {b.type !== "international" && (b.classes.includes(11) || b.classes.includes(12)) && (
           <div className="mt-8 rounded-lg border border-ink-200 bg-white p-5">
             <h2 className="text-base font-semibold text-ink-900">
               Class 11–12 streams
             </h2>
             <p className="mt-1 text-xs text-ink-500">
               The typical higher-secondary stream choices at this stage.
-              Check {b.shortName} curriculum page for the exact subject lists.
+              Check {b.shortName}&apos;s own site for the exact subject lists.
             </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
               {Object.entries(CLASS_11_12_STREAMS).map(([k, s]) => (
@@ -199,32 +232,42 @@ export default async function BoardPage({
           </div>
         )}
 
-        {/* What's coming */}
+        {/* What's coming (25 Sep 2026: the decided next step only).
+            26 Sep 2026: outside CBSE it no longer reads as if this board's
+            notes were next; the decided order starts with NCERT. */}
         <div className="mt-8 rounded-lg border border-dashed border-ink-300 bg-white p-5 text-xs text-ink-600">
-          <p className="font-semibold text-ink-800">What's still to come on this page</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>Subject-wise chapter summaries, formulas and mastery quizzes for Class 9–12</li>
-            <li>Board exam preparation hub for Class 10 + Class 12 with a personalised study planner</li>
-            <li>Last 10 years' question papers from the board's archive (linked)</li>
-            <li>Cross-links to scholarships tied to {b.shortName} students</li>
-          </ul>
+          <p className="font-semibold text-ink-800">Coming soon</p>
+          {b.slug === "cbse" ? (
+            <p className="mt-2">
+              Chapter-wise notes and practice questions written by Shishya,
+              starting with NCERT Maths and Science. Until they are ready, the
+              links above go straight to the board&apos;s own pages.
+            </p>
+          ) : (
+            <p className="mt-2">
+              Shishya&apos;s own chapter-wise notes and practice questions
+              start with NCERT (CBSE) Maths and Science. There is nothing for{" "}
+              {b.shortName} here yet; the links above go straight to the
+              board&apos;s own pages.
+            </p>
+          )}
         </div>
 
         {/* Cross-link to exams + scholarships */}
         <div className="mt-8 rounded-lg border border-saffron-200 bg-saffron-50/40 p-5 text-sm text-ink-700">
           <h3 className="text-base font-semibold text-ink-900">Beyond Class 12</h3>
           <p className="mt-2">
-            Once you're past Class 12, our{" "}
-            <Link href="/exams" className="text-saffron-700 underline">
+            Once you&apos;re past Class 12, our{" "}
+            <Link href="/" className="text-saffron-700 underline">
               Entrance &amp; Government Exams
             </Link>{" "}
-            section covers JEE, NEET, CUET, all state CETs, plus 160+ other
-            entrance and government exams. Free adaptive mock tests + study help.
-            Scholarships tied to {b.shortName} students are aggregated in our{" "}
+            section covers entrance and government exams such as JEE, NEET
+            and CUET, with free mock tests. Scholarships for students are
+            listed under{" "}
             <Link href="/scholarships" className="text-saffron-700 underline">
               Scholarships
-            </Link>{" "}
-            database.
+            </Link>
+            .
           </p>
         </div>
 

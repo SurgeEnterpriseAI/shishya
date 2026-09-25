@@ -1,0 +1,8 @@
+# NCERT contents evidence — kudh1 — Dhanak (index class 11, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/kudh1ps.pdf
+# fetched: 2026-09-25T23:15:21+05:30  sha256: 76ffac021dd79603ce1f59b98153b325ce7f6cd546f35609c324184b0167f111  bytes: 3842315
+# contents pages of the PDF: none found of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 fa1d7e1b5cf56f2eb013eca3593ff6a209e96b8c06576c37efad50a959136802);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

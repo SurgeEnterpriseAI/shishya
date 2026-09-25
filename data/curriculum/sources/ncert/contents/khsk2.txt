@@ -1,0 +1,8 @@
+# NCERT contents evidence — khsk2 — Shashwati (index class 11, Sanskrit)
+# source: https://ncert.nic.in/textbook/pdf/khsk2ps.pdf
+# fetched: 2026-09-25T23:15:10+05:30  sha256: d7c7c937bcd035f5a12756c092429f3e984bf04534e007b47fe3fafb0e18f1a7  bytes: 3694306
+# contents pages of the PDF: none found of 40
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 1b5d4e4db05191759916858df65054497ba235f20bf4b578f1c6d9c9c8bc16fd);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

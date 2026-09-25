@@ -1,0 +1,291 @@
+{
+ "source": "NCERT book prelims PDFs, https://ncert.nic.in/textbook/pdf/<code>ps.pdf",
+ "fetchedAt": "2026-09-25T22:45:00+05:30",
+ "note": "Printed chapter number -> chapter title, read mechanically (PyMuPDF / pdftotext) from each book's own Contents page. keph2ps sets PROPERTIES in a small-caps font that extracts as 'P52P(57,(6'; the extractor maps it back. Part II prelims (keph2, kech2, leph2, lech2) also print the Part I contents, so they list every chapter of the subject. edition = the 'Reprint 2026-27' / 'First Edition <Month> 2026' line on the imprint page (null when the PDF carries neither).",
+ "books": {
+  "iemh1": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/iemh1ps.pdf",
+   "sha256": "e2e2f01f4ccba8fd5d9dbe7a48af89d882e3518e4e889ca139805b76cf43aca9",
+   "edition": "First Edition April 2026",
+   "chapters": {
+    "1": "Orienting Yourself: The Use of Coordinates",
+    "2": "Introduction to Linear Polynomials",
+    "3": "The World of Numbers",
+    "4": "Exploring Algebraic Identities",
+    "5": "I’m Up and Down, and Round and Round",
+    "6": "Measuring Space: Perimeter and Area",
+    "7": "The Mathematics of Maybe: Introduction to Probability",
+    "8": "Predicting What Comes Next: Exploring Sequences and Progressions"
+   }
+  },
+  "iesc1": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/iesc1ps.pdf",
+   "sha256": "6dfb484cc05eeea3886bd4db603b81e19c6b5e146d4a77a9a60a55cf12b2cdee",
+   "edition": "First Edition April 2026",
+   "chapters": {
+    "1": "Exploration: Entering the World of Secondary Science",
+    "2": "Cell: The Building Block of Life",
+    "3": "Tissues in Action",
+    "4": "Describing Motion Around Us",
+    "5": "Exploring Mixtures and their Separation",
+    "6": "How Forces Affect Motion",
+    "7": "Work, Energy, and Simple Machines",
+    "8": "Journey Inside the Atom",
+    "9": "Atomic Foundations of Matter",
+    "10": "Sound Waves: Characteristics and Applications",
+    "11": "Reproduction: How Life Continues",
+    "12": "Patterns in Life: Diversity and Classification",
+    "13": "Earth as a System: Energy, Matter, and Life"
+   }
+  },
+  "jemh1": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/jemh1ps.pdf",
+   "sha256": "62867d1b27b42e110948ee1301446a15e89ed386e04bb5b29dc6e301fa679f94",
+   "edition": "Reprint 2026-27",
+   "chapters": {
+    "1": "Real Numbers",
+    "2": "Polynomials",
+    "3": "Pair of Linear Equations in Two Variables",
+    "4": "Quadratic Equations",
+    "5": "Arithmetic Progressions",
+    "6": "Triangles",
+    "7": "Coordinate Geometry",
+    "8": "Introduction to Trigonometry",
+    "9": "Some Applications of Trigonometry",
+    "10": "Circles",
+    "11": "Areas Related to Circles",
+    "12": "Surface Areas and Volumes",
+    "13": "Statistics",
+    "14": "Probability"
+   }
+  },
+  "jesc1": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/jesc1ps.pdf",
+   "sha256": "cf2a2afb28bd01b4518dbd7e9517b8a9b4a85c989bf3a047cd96d1a8408fdcb0",
+   "edition": "Reprint 2026-27",
+   "chapters": {
+    "1": "Chemical Reactions and Equations",
+    "2": "Acids, Bases and Salts",
+    "3": "Metals and Non-metals",
+    "4": "Carbon and its Compounds",
+    "5": "Life Processes",
+    "6": "Control and Coordination",
+    "7": "How do Organisms Reproduce?",
+    "8": "Heredity",
+    "9": "Light – Reflection and Refraction",
+    "10": "The Human Eye and the Colourful World",
+    "11": "Electricity",
+    "12": "Magnetic Effects of Electric Current",
+    "13": "Our Environment"
+   }
+  },
+  "kemh1": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/kemh1ps.pdf",
+   "sha256": "cd9c1697533ef25daed84bff0c93d305978485edb88564168357ad62d983c45e",
+   "edition": "Reprint 2026-27",
+   "chapters": {
+    "1": "Sets",
+    "2": "Relations and Functions",
+    "3": "Trigonometric Functions",
+    "4": "Complex Numbers and Quadratic Equations",
+    "5": "Linear Inequalities",
+    "6": "Permutations and Combinations",
+    "7": "Binomial Theorem",
+    "8": "Sequences and Series",
+    "9": "Straight Lines",
+    "10": "Conic Sections",
+    "11": "Introduction to Three Dimensional Geometry",
+    "12": "Limits and Derivatives",
+    "13": "Statistics",
+    "14": "Probability"
+   }
+  },
+  "keph1": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/keph1ps.pdf",
+   "sha256": "b06cce4e3d6c4c150869bd4f6221ed5aa86bb0ff1725e4effcd2615e85ff5782",
+   "edition": "Reprint 2026-27",
+   "chapters": {},
+   "contentsNote": "This prelims PDF's contents page did not extract cleanly; the same Part I chapter list is printed in keph2ps.pdf (chapters 1-7)."
+  },
+  "keph2": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/keph2ps.pdf",
+   "sha256": "75b36508385f54afb66906cc52d871325802d156535c102b17c1e96842298482",
+   "edition": "Reprint 2026-27",
+   "chapters": {
+    "1": "UNITS AND MEASUREMENTS",
+    "2": "MOTION IN A STRAIGHT LINE",
+    "3": "MOTION IN A PLANE",
+    "4": "LAWS OF MOTION",
+    "5": "WORK, ENERGY AND POWER",
+    "6": "SYSTEM OF PARTICLES AND ROTATIONAL MOTION",
+    "7": "GRAVITATION",
+    "8": "MECHANICAL PROPERTIES OF SOLIDS",
+    "9": "MECHANICAL PROPERTIES OF FLUIDS",
+    "10": "THERMAL PROPERTIES OF MATTER",
+    "11": "THERMODYNAMICS",
+    "12": "KINETIC THEORY",
+    "13": "OSCILLATIONS",
+    "14": "WAVES"
+   }
+  },
+  "kech1": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/kech1ps.pdf",
+   "sha256": "b79907421fdc31dc49646eb5b33a303c1d5228feb2bf9fd91f138bfde40e250b",
+   "edition": "Reprint 2026-27",
+   "chapters": {
+    "1": "Some Basic Concepts of Chemistry",
+    "2": "Structure of Atom",
+    "3": "Classification of Elements and Periodicity in Properties",
+    "4": "Chemical Bonding and Molecular Structure",
+    "5": "Thermodynamics",
+    "6": "Equilibrium"
+   }
+  },
+  "kech2": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/kech2ps.pdf",
+   "sha256": "01938cca738e1717912a9aab686649cdfd984b0a96c48bb9f1ab6c665fcfb846",
+   "edition": "Reprint 2026-27",
+   "chapters": {
+    "1": "Some Basic Concepts of Chemistry",
+    "2": "Structure of Atom",
+    "3": "Classification of Elements and Periodicity in Properties",
+    "4": "Chemical Bonding and Molecular Structure",
+    "5": "Thermodynamics",
+    "6": "Equilibrium",
+    "7": "Redox Reactions",
+    "8": "Organic Chemistry – Some Basic Principles and Techniques",
+    "9": "Hydrocarbons"
+   }
+  },
+  "kebo1": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/kebo1ps.pdf",
+   "sha256": "87f5b38b6cc9e5bcd3ac9ec1001ae157734154929fe142d136fae97a632f74d2",
+   "edition": "Reprint 2026-27",
+   "chapters": {
+    "1": "The Living World",
+    "2": "Biological Classification",
+    "3": "Plant Kingdom",
+    "4": "Animal Kingdom",
+    "5": "Morphology of Flowering Plants",
+    "6": "Anatomy of Flowering Plants",
+    "7": "Structural Organisation in Animals",
+    "8": "Cell : The Unit of Life",
+    "9": "Biomolecules",
+    "10": "Cell Cycle and Cell Division",
+    "11": "Photosynthesis in Higher Plants",
+    "12": "Respiration in Plants",
+    "13": "Plant Growth and Development",
+    "14": "Breathing and Exchange of Gases",
+    "15": "Body Fluids and Circulation",
+    "16": "Excretory Products and their Elimination",
+    "17": "Locomotion and Movement",
+    "18": "Neural Control and Coordination",
+    "19": "Chemical Coordination and Integration"
+   }
+  },
+  "lemh1": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/lemh1ps.pdf",
+   "sha256": "96441eb9592091d45369a43aa9f9de8d4a439cf95eaac28baf1a04372feaba65",
+   "edition": "Reprint 2026-27",
+   "chapters": {
+    "1": "Relations and Functions",
+    "2": "Inverse Trigonometric Functions",
+    "3": "Matrices",
+    "4": "Determinants",
+    "5": "Continuity and Differentiability",
+    "6": "Application of Derivatives"
+   }
+  },
+  "lemh2": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/lemh2ps.pdf",
+   "sha256": "288843e5359d15b4bcd559392f7f28a8f8dc5592b7cd3213cbf70255729a202a",
+   "edition": "Reprint 2026-27",
+   "chapters": {
+    "7": "Integrals",
+    "8": "Application of Integrals",
+    "9": "Differential Equations",
+    "10": "Vector Algebra",
+    "11": "Three Dimensional Geometry",
+    "12": "Linear Programming",
+    "13": "Probability"
+   }
+  },
+  "leph1": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/leph1ps.pdf",
+   "sha256": "66bceeb91660d27a8c280dd7087daa874ffe2745b2905ee517ac6cbc67d5273b",
+   "edition": "Reprint 2026-27",
+   "chapters": {},
+   "contentsNote": "This prelims PDF's contents page did not extract cleanly; the same Part I chapter list is printed in leph2ps.pdf (chapters 1-8)."
+  },
+  "leph2": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/leph2ps.pdf",
+   "sha256": "ec55ddcdc76286a233424784c52294f4352ff41a1e34846f6b8182c0145ff247",
+   "edition": null,
+   "chapters": {
+    "1": "ELECTRIC CHARGES AND FIELDS",
+    "2": "ELECTROSTATIC POTENTIAL AND CAPACITANCE",
+    "3": "CURRENT ELECTRICITY",
+    "4": "MOVING CHARGES AND MAGNETISM",
+    "5": "MAGNETISM AND MATTER",
+    "6": "ELECTROMAGNETIC INDUCTION",
+    "7": "ALTERNATING CURRENT",
+    "8": "ELECTROMAGNETIC WAVES",
+    "9": "RAY OPTICS AND OPTICAL INSTRUMENTS",
+    "10": "WAVE OPTICS",
+    "11": "DUAL NATURE OF RADIATION AND MATTER",
+    "12": "ATOMS",
+    "13": "NUCLEI",
+    "14": "SEMICONDUCTOR ELECTRONICS: MATERIALS, DEVICES AND SIMPLE CIRCUITS"
+   }
+  },
+  "lech1": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/lech1ps.pdf",
+   "sha256": "4ee7d6795559fc185f092a5f39431420d4f45aacddbe95dfa84d79056750b3d5",
+   "edition": "Reprint 2026-27",
+   "chapters": {
+    "1": "Solutions",
+    "2": "Electrochemistry",
+    "3": "Chemical Kinetics",
+    "4": "The d-and f-Block Elements",
+    "5": "Coordination Compounds"
+   }
+  },
+  "lech2": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/lech2ps.pdf",
+   "sha256": "cced7943f47e78ef4abe798243021a46a02c39a5eff719b534cd153377fd9e58",
+   "edition": "Reprint 2026-27",
+   "chapters": {
+    "1": "SOLUTIONS",
+    "2": "ELECTROCHEMISTRY",
+    "3": "CHEMICAL KINETICS",
+    "4": "THE d-AND f-BLOCK ELEMENTS",
+    "5": "COORDINATION COMPOUNDS",
+    "6": "Haloalkanes and Haloarenes",
+    "7": "Alcohols, Phenols and Ethers",
+    "8": "Aldehydes, Ketones and Carboxylic Acids",
+    "9": "Amines",
+    "10": "Biomolecules"
+   }
+  },
+  "lebo1": {
+   "pdf": "https://ncert.nic.in/textbook/pdf/lebo1ps.pdf",
+   "sha256": "22804a9f4df81466593bf0fec0ff9f521b12a55887e32fb46340e528728ac771",
+   "edition": "Reprint 2026-27",
+   "chapters": {
+    "1": "Sexual Reproduction in Flowering Plants",
+    "2": "Human Reproduction",
+    "3": "Reproductive Health",
+    "4": "Principles of Inheritance and Variation",
+    "5": "Molecular Basis of Inheritance",
+    "6": "Evolution",
+    "7": "Human Health and Disease",
+    "8": "Microbes in Human Welfare",
+    "9": "Biotechnology : Principles and Processes",
+    "10": "Biotechnology and its Applications",
+    "11": "Organisms and Populations",
+    "12": "Ecosystem",
+    "13": "Biodiversity and Conservation"
+   }
+  }
+ }
+}

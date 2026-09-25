@@ -1,0 +1,27 @@
+# NCERT contents evidence — jess2 — Understanding Economic Development (index class 10, Social Science)
+# source: https://ncert.nic.in/textbook/pdf/jess2ps.pdf
+# fetched: 2026-09-25T23:15:03+05:30  sha256: 40b5dcd81c747ecd1030a7bd28105963a7e13a5da615e5a37ab1e9d1101039da  bytes: 1886551
+# contents pages of the PDF: 13 of 13
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 000486a6b7b564c52cdcb9dec397a6c17b1e4d3d0d2a6bf0c8db2c20307702fb);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@jess2#1 title [pdftotext p13] next=number
+  DEVELOPMENT
++ 2
++ Chapter 2
+@jess2#2 title [pdftotext p13] next=number
+  SECTORS OF THE INDIAN ECONOMY
++ 18
++ Chapter 3
+@jess2#3 title [pdftotext p13] next=number
+  MONEY AND CREDIT
++ 38
++ Chapter 4
+@jess2#4 title [pdftotext p13] next=number
+  GLOBALISATION AND THE INDIAN ECONOMY 54
++ Chapter 5
++ CONSUMER RIGHTS
+@jess2#5 title [pdftotext p13] next=boilerplate
+  CONSUMER RIGHTS
++ 74
++ Appendix

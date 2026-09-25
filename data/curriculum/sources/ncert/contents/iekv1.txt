@@ -1,0 +1,67 @@
+# NCERT contents evidence — iekv1 — Kaushal Vikas (index class 9, Skill Education)
+# source: https://ncert.nic.in/textbook/pdf/iekv1ps.pdf
+# fetched: 2026-09-25T23:15:01+05:30  sha256: 4ed2a96fffe74f6d7b3b3eba41470ce14211106a1ff0cfe9df1f457d48292617  bytes: 7855061
+# contents pages of the PDF: 27 of 28
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 5a8dbc417874016111e4bac923d4fba9e94bea56f2b45094030f07dc7d455f28);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@iekv1#1 title [pdftotext p27] next=number
+  Chapter 1 – Introduction to Agricultural Practices
++ 5
++ Chapter 2 – Rooftop Gardening
+@iekv1#1:section section [pdftotext p27] next=page
+  Work with Life Forms
++ 1
++ I
+@iekv1#2 title [pdftotext p27] next=number
+  Chapter 2 – Rooftop Gardening
++ 21
++ Chapter 3 – Precision Farming
+@iekv1#3 title [pdftotext p27] next=number
+  Chapter 3 – Precision Farming
++ 39
++ Chapter 4 – Additional Vocations
+@iekv1#4 title [pdftotext p27] next=number
+  Chapter 4 – Additional Vocations
++ 61
++ Unit II
+@iekv1#5 title [pdftotext p27] next=number
+  Mandatory Chapter 5 – Shaping Materials
++ 73
++ Chapter 6 – Construction
+@iekv1#5:section section [pdftotext p27] next=number
+  Work with Machines and Materials
++ 69
++ Mandatory Chapter 5 – Shaping Materials
+@iekv1#6 title [pdftotext p27] next=boilerplate
+  Chapter 6 – Construction
++ 91
++ Select one
+@iekv1#7 title [pdftotext p27] next=number
+  Chapter 7 – Apparel
++ 113
++ Chapter 8 – Additional Vocations
+@iekv1#8 title [pdftotext p27] next=number
+  Chapter 4 – Additional Vocations
++ 61
++ Unit II
+@iekv1#9 title [pdftotext p27] next=number
+  Mandatory Chapter 9 – Personal and Lifestyle Services
++ 145
++ Chapter 10 – Healthcare
+@iekv1#9:section section [pdftotext p27] next=number
+  Work in Human Services
++ 141
++ Mandatory Chapter 9 – Personal and Lifestyle Services
+@iekv1#10 title [pdftotext p27] next=boilerplate
+  Chapter 10 – Healthcare
++ 163
++ Select one
+@iekv1#11 title [pdftotext p27] next=number
+  Chapter 11 – Tourism
++ 185
++ Chapter 12 – Additional Vocations
+@iekv1#12 title [pdftotext p27] next=number
+  Chapter 4 – Additional Vocations
++ 61
++ Unit II

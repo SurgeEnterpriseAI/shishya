@@ -1,0 +1,60 @@
+# NCERT contents evidence — aejm1 — Joyful-Mathematics (English) (index class 1, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/aejm1ps.pdf
+# fetched: 2026-09-25T23:14:13+05:30  sha256: ee12d6002641a43ea5499db1ea86b28cd8f25814102bb229886c4cc126a59895  bytes: 7878625
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 2ac9251d875c9e779489afac0050f62ec3320470181c4b55bdfab23f7366cdf8);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@aejm1#1 title [pdftotext p13] next=number
+  1. Finding the Furry Cat! (Pre-number Concepts)
++ 1
++ 2. What is Long? What is Round? (Shapes)
+@aejm1#2 title [pdftotext p13] next=number
+  2. What is Long? What is Round? (Shapes)
++ 10
++ 3. Mango Treat (Numbers 1 to 9)
+@aejm1#3 title [pdftotext p13] next=number
+  3. Mango Treat (Numbers 1 to 9)
++ 18
++ 4. Making 10 (Numbers 10 to 20)
+@aejm1#4 title [pdftotext p13] next=number
+  4. Making 10 (Numbers 10 to 20)
++ 33
++ 5. How Many? (Addition and Subtraction of
+@aejm1#5 title [pdftotext p13] next=number
+  5. How Many? (Addition and Subtraction of
+  Single Digit Numbers)
++ 48
++ 6. Vegetable Farm (Addition and Subtraction up to 20)
+@aejm1#6 title [pdftotext p13] next=number
+  6. Vegetable Farm (Addition and Subtraction up to 20)
++ 64
++ 7. Lina’s Family (Measurement)
+@aejm1#7 title [pdftotext p13] next=number
+  7. Lina’s Family (Measurement)
++ 72
++ 8. Fun with Numbers (Numbers 21 to 99)
+@aejm1#8 title [pdftotext p13] next=number
+  8. Fun with Numbers (Numbers 21 to 99)
++ 84
++ 9. Utsav (Patterns)
+@aejm1#9 title [pdftotext p13] next=number
+  9. Utsav (Patterns)
++ 98
++ 10. How do I Spend my Day? (Time)
+@aejm1#10 title [pdftotext p13] next=number
+  10. How do I Spend my Day? (Time)
++ 105
++ 11. How Many Times? (Multiplication)
+@aejm1#11 title [pdftotext p13] next=number
+  11. How Many Times? (Multiplication)
++ 111
++ 12. How Much Can We Spend? (Money)
+@aejm1#12 title [pdftotext p13] next=number
+  12. How Much Can We Spend? (Money)
++ 115
++ 13. So Many Toys (Data Handling)
+@aejm1#13 title [pdftotext p13] next=boilerplate
+  13. So Many Toys (Data Handling)
++ 120
++ Puzzles

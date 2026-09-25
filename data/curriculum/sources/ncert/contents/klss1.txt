@@ -1,0 +1,8 @@
+# NCERT contents evidence — klss1 — Sanskrit Sahitya parichay (index class 13, Sanskrit)
+# source: https://ncert.nic.in/textbook/pdf/klss1ps.pdf
+# fetched: 2026-09-25T23:15:48+05:30  sha256: 1b8b80ef2cc12f75cea98e5749e13557b4e77495a8950e02a1fea67fc104befa  bytes: 2003070
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 94f41281fda046a7847c4d886ee4135d7b0a65ef7414708901680413062883c6);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

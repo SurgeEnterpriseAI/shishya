@@ -1,0 +1,39 @@
+# NCERT contents evidence — kest1 — Statistics for Economics (index class 11, Economics)
+# source: https://ncert.nic.in/textbook/pdf/kest1ps.pdf
+# fetched: 2026-09-25T23:15:19+05:30  sha256: 995efc097f5545c6ee90f59915a0800e92d869e94f19ebdc4239f726aac26143  bytes: 1892051
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 21920710c934235c198665608d6a66312ef96db80e38980d68d32b69b8402602);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kest1#1 title [pdftotext p11] next=number
+  Chapter 1 : Introduction
++ 1
++ Chapter 2 : Collection of Data
+@kest1#2 title [pdftotext p11] next=number
+  Chapter 2 : Collection of Data
++ 9
++ Chapter 3 : Organisation of Data
+@kest1#3 title [pdftotext p11] next=number
+  Chapter 3 : Organisation of Data
++ 22
++ Chapter 4 : Presentation of Data
+@kest1#4 title [pdftotext p11] next=number
+  Chapter 4 : Presentation of Data
++ 40
++ Chapter 5 : Measures of Central Tendency
+@kest1#5 title [pdftotext p11] next=number
+  Chapter 5 : Measures of Central Tendency
++ 58
++ Chapter 6 : Correlation
+@kest1#6 title [pdftotext p11] next=number
+  Chapter 6 : Correlation
++ 74
++ Chapter 7 : Index Numbers
+@kest1#7 title [pdftotext p11] next=number
+  Chapter 7 : Index Numbers
++ 90
++ Chapter 8 : Use of Statistical Tools
+@kest1#8 title [pdftotext p11] next=boilerplate
+  Chapter 8 : Use of Statistical Tools
++ 105
++ APPENDIX A : GLOSSARY OF STATISTICAL TERMS APPENDIX B : TABLE OF TWO-DIGIT RANDOM NUMBERS

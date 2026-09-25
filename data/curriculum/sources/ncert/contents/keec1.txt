@@ -1,0 +1,39 @@
+# NCERT contents evidence — keec1 — Indian Economic Development (index class 11, Economics)
+# source: https://ncert.nic.in/textbook/pdf/keec1ps.pdf
+# fetched: 2026-09-25T23:15:18+05:30  sha256: b9da5c87d87fdb62e1bac96847d390435bb4b4f5628f6fbf0c6e5761b3b8de73  bytes: 2343424
+# contents pages of the PDF: 13,14 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 2b42066e69a7e1424380bd5638908f40a226ea5fdb91664dfc407df5e0a57f48);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@keec1#1 title [pymupdf p13] next=complete (reviewed: all-caps chapter title; '–' starts its bulleted section list (PyMuPDF prints each '– SECTION' on its own line))
+  CHAPTER 1: INDIAN ECONOMY ON THE EVE OF INDEPENDENCE
++ 3
++ –
+@keec1#2 title [pymupdf p13] next=complete (reviewed: all-caps chapter title; '–' starts its bulleted section list (PyMuPDF prints each '– SECTION' on its own line))
+  CHAPTER 2: INDIAN ECONOMY 1950-1990
++ 16
++ –
+@keec1#3 title [pdftotext p13] next=sub-entry
+  CHAPTER 3: LIBERALISATION, PRIVATISATION AND GLOBALISATION: AN APPRAISAL
++ 38
++ – BACKGROUND
+@keec1#4 title [pdftotext p13] next=sub-entry
+  CHAPTER 4: HUMAN CAPITAL FORMATION IN INDIA
++ 58
++ – WHAT IS HUMAN CAPITAL?
+@keec1#5 title [pymupdf p14] next=complete (reviewed: all-caps chapter title; '–' starts its bulleted section list (PyMuPDF prints each '– SECTION' on its own line))
+  CHAPTER 5: RURAL DEVELOPMENT
++ 75–91
++ –
+@keec1#6 title [pymupdf p14] next=complete (reviewed: all-caps chapter title; '–' starts its bulleted section list (PyMuPDF prints each '– SECTION' on its own line))
+  CHAPTER 6: EMPLOYMENT: GROWTH, INFORMALISATION AND OTHER ISSUES
++ 92–114
++ –
+@keec1#7 title [pymupdf p14] next=complete (reviewed: all-caps chapter title; '–' starts its bulleted section list (PyMuPDF prints each '– SECTION' on its own line))
+  CHAPTER 7: ENVIRONMENT AND SUSTAINABLE DEVELOPMENT
++ 115–131
++ –
+@keec1#8 title [pdftotext p14] next=sub-entry
+  CHAPTER 8: COMPARATIVE DEVELOPMENT EXPERIENCES OF INDIA AND ITS NEIGHBOURS
++ – DEVELOPMENTAL PATH — A SNAPSHOT VIEW – DEMOGRAPHIC INDICATORS
++ 132–150

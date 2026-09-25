@@ -1,0 +1,53 @@
+# NCERT contents evidence — keps2 — India Constitution at Work (index class 11, Political Science)
+# source: https://ncert.nic.in/textbook/pdf/keps2ps.pdf
+# fetched: 2026-09-25T23:15:18+05:30  sha256: 29f623e5bec9144e4614e434114006f0df68adfac7e470e6b3a8971a5c5dee08  bytes: 2573926
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 92dc55c178c18f6d3d9f11e672b6ea9e429c1a5e97572dea77b9a56129fa08d4);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@keps2#1 title [pdftotext p13] next=number
+  1. CONSTITUTION:
+  WHY AND HOW?
++ 1
++ 2. RIGHTS IN THE INDIAN
+@keps2#2 title [pdftotext p13] next=number
+  2. RIGHTS IN THE INDIAN
+  CONSTITUTION
++ 26
++ 3. ELECTION AND
+@keps2#3 title [pdftotext p13] next=number
+  3. ELECTION AND
+  REPRESENTATION
++ 51
++ 4. EXECUTIVE
+@keps2#4 title [pdftotext p13] next=number
+  4. EXECUTIVE
++ 78
++ 5. LEGISLATURE
+@keps2#5 title [pdftotext p13] next=number
+  5. LEGISLATURE
++ 100
++ 6. JUDICIARY
+@keps2#6 title [pdftotext p13] next=number
+  6. JUDICIARY
++ 124
++ 7. FEDERALISM
+@keps2#7 title [pdftotext p13] next=number
+  7. FEDERALISM
++ 150
++ 8. LOCAL
+@keps2#8 title [pdftotext p13] next=number
+  8. LOCAL
+  GOVERNMENTS
++ 176
++ 9. CONSTITUTION AS A
+@keps2#9 title [pdftotext p13] next=number
+  9. CONSTITUTION AS A
+  LIVING DOCUMENT
++ 196
++ 10. THE PHILOSOPHY OF
+@keps2#10 title [pdftotext p13] next=page
+  10. THE PHILOSOPHY OF
+  THE CONSTITUTION
++ 220
++ Reprint 2026-27

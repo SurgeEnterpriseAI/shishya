@@ -1,0 +1,39 @@
+# NCERT contents evidence — kepy1 — Introduction to Psychology (index class 11, Psychology)
+# source: https://ncert.nic.in/textbook/pdf/kepy1ps.pdf
+# fetched: 2026-09-25T23:15:12+05:30  sha256: 4571972a4faa721187ac382b1b9f1f586a1125c9c4cfed514ae021b7294baac4  bytes: 2468176
+# contents pages of the PDF: 15 of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 eb7e92998a289ed01568b75ca317897ab97a5ebf5e2c96669276bdfddadfef5a);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kepy1#1 title [pdftotext p15] next=number
+  Chapter 1 What is Psychology?
++ Chapter 2 Methods of Enquiry in Psychology
++ Chapter 3 Human Development
+@kepy1#2 title [pdftotext p15] next=number
+  Chapter 2 Methods of Enquiry in Psychology
++ Chapter 3 Human Development
++ Chapter 4 Sensory, Attentional and Perceptual Processes
+@kepy1#3 title [pdftotext p15] next=number
+  Chapter 3 Human Development
++ Chapter 4 Sensory, Attentional and Perceptual Processes
++ Chapter 5 Learning
+@kepy1#4 title [pdftotext p15] next=number
+  Chapter 4 Sensory, Attentional and Perceptual Processes
++ Chapter 5 Learning
++ Chapter 6 Human Memory
+@kepy1#5 title [pdftotext p15] next=number
+  Chapter 5 Learning
++ Chapter 6 Human Memory
++ Chapter 7 Thinking
+@kepy1#6 title [pdftotext p15] next=number
+  Chapter 6 Human Memory
++ Chapter 7 Thinking
++ Chapter 8 Motivation and Emotion Glossary Suggested Readings
+@kepy1#7 title [pdftotext p15] next=number
+  Chapter 7 Thinking
++ Chapter 8 Motivation and Emotion Glossary Suggested Readings
++ Page iii v vii xi
+@kepy1#8 title [pymupdf p15] next=boilerplate
+  Motivation and Emotion
++ 126
++ Glossary

@@ -1,0 +1,8 @@
+# NCERT contents evidence — hukl1 — Khayal (index class 8, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/hukl1ps.pdf
+# fetched: 2026-09-25T23:14:49+05:30  sha256: c446e32116dd54478fc84ef2652bfffaf3b1b53770c0cd5378a7d4d4ef212b0d  bytes: 4817987
+# contents pages of the PDF: none found of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 31917a4978ec7ccad15bb6eeb1d3a7ca7a752fcbd1da167c4d1b6a656a467fc5);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

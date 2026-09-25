@@ -1,0 +1,8 @@
+# NCERT contents evidence — kuiz1 — Izhar Aur Zara-e-Izhar (index class 13, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/kuiz1ps.pdf
+# fetched: 2026-09-25T23:15:51+05:30  sha256: 92a1a82789b0e2c82cbecc697fededebdbcaa857afe1f6ffb97ee446a3845441  bytes: 13356043
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 549f360046e99481c9b0aec53522333e9532231943f676e195ac28473db89d8f);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

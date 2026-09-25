@@ -1,0 +1,8 @@
+# NCERT contents evidence — fhml1 — Malhar (index class 6, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/fhml1ps.pdf
+# fetched: 2026-09-25T23:14:26+05:30  sha256: 574f0e38c3af62bf911487b020ee2e2aedae7c4deb45525c46a212189ac6a80a  bytes: 5640282
+# contents pages of the PDF: 19 of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 919bbe57973819a34097f06e276265491c89d9e5ba1eed7e6ae2669f8d4688b5);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

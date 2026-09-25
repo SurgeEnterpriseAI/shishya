@@ -1,0 +1,35 @@
+# NCERT contents evidence — leip1 — Informatics Practices (index class 12, Informatics Practices)
+# source: https://ncert.nic.in/textbook/pdf/leip1ps.pdf
+# fetched: 2026-09-25T23:15:45+05:30  sha256: d2aeba686019aefd904193589694dd7b197dd8dd3c98945c88cef7a320402507  bytes: 1602774
+# contents pages of the PDF: 9,10 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 0542edf8fbe6953d1bdd56e87775b27a997956ef4c427d2eb9d82123e0fea47d);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@leip1#1 title [pdftotext p9] next=number
+  Chapter 1 Querying and SQL Functions
++ 1
++ 1.1 Introduction
+@leip1#2 title [pdftotext p9] next=number
+  Chapter 2 Data Handling using Pandas - I
++ 27
++ 2.1 Introduction to Python Libraries
+@leip1#3 title [pdftotext p9] next=number
+  Chapter 3 Data Handling using Pandas - II
++ 63
++ 3.1 Introduction
+@leip1#4 title [pdftotext p9] next=number
+  Chapter 4 Plotting Data using Matplotlib
++ 4.1 Introduction 4.2 Plotting using Matplotlib 4.3 Customisation of Plots 4.4 The Pandas Plot Function (Pandas Visualisation)
++ 105
+@leip1#5 title [pdftotext p10] next=number
+  Chapter 5 Internet and Web
++ 5.1 Introduction to Computer Networks 5.2 Types of Networks 5.3 Network Devices 5.4 Networking Topologies 5.5 The Internet 5.6 Applications of Internet 5.7 Webs
++ Chapter 6 Societal Impacts
+@leip1#6 title [pdftotext p10] next=number
+  Chapter 6 Societal Impacts
++ 6.1 Introduction 6.2 Digital Footprints 6.3 Digital Society and Netizen 6.4 Data Protection 6.5 Creative Commons 6.6 Cyber Crime 6.7 Indian Information Technolo
++ Chapter 7 Project Based Learning
+@leip1#7 title [pdftotext p10] next=number
+  Chapter 7 Project Based Learning
++ 7.1 Introduction 7.2 Approaches for Solving Projects 7.3 Teamwork 7.4 Project Descriptions
++ 137

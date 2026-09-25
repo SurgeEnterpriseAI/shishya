@@ -1,0 +1,78 @@
+# NCERT contents evidence — bemr1 — Mridang (index class 2, English)
+# source: https://ncert.nic.in/textbook/pdf/bemr1ps.pdf
+# fetched: 2026-09-25T23:14:13+05:30  sha256: bd8b09e5eec4502a47bcaa5b46a0e4cb3cee9643fd5e20918a8b72a496ac22ca  bytes: 2812044
+# contents pages of the PDF: 13,14 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 601c1fb585b8890768340ac5b1acea4e92a922857dcb842322133cade855b84d);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@bemr1#1 title [pdftotext p13] next=known
+  My Bicycle
++ 1
++ Picture Reading
+@bemr1#1:section section [pdftotext p13] next=known
+  1. Fun with Friends
++ My Bicycle
++ 1
+@bemr1#2 title [pdftotext p13] next=number
+  Picture Reading
++ 8
++ 2. Welcome to My World
+@bemr1#3 title [pdftotext p13] next=known
+  It is Fun
++ 18
++ Seeing without Seeing 27
+@bemr1#3:section section [pdftotext p13] next=known
+  2. Welcome to My World
++ It is Fun
++ 18
+@bemr1#4 title [pdftotext p13] next=page
+  Seeing without Seeing 27
++ Reprint 2026-27
+@bemr1#5 title [pdftotext p14] next=known
+  Come Back Soon
++ 37
++ Between Home and School 42
+@bemr1#5:section section [pdftotext p14] next=known
+  3. Going Places
++ Come Back Soon
++ 37
+@bemr1#6 title [pdftotext p14] next=known
+  Between Home and School 42
++ This is My Town
++ 48
+@bemr1#7 title [pdftotext p14] next=number
+  This is My Town
++ 48
++ 4. Life Around Us
+@bemr1#8 title [pdftotext p14] next=known
+  A Show of Clouds
++ 54
++ My Name
+@bemr1#8:section section [pdftotext p14] next=known
+  4. Life Around Us
++ A Show of Clouds
++ 54
+@bemr1#9 title [pdftotext p14] next=known
+  My Name
++ 61
++ The Crow
+@bemr1#10 title [pdftotext p14] next=known
+  The Crow
++ 68
++ The Smart Monkey
+@bemr1#11 title [pdftotext p14] next=number
+  The Smart Monkey
++ 76
++ 5. Harmony
+@bemr1#12 title [pdftotext p14] next=known
+  Little Drops of Water
++ 84
++ We are all Indians
+@bemr1#12:section section [pdftotext p14] next=known
+  5. Harmony
++ Little Drops of Water
++ 84
+@bemr1#13 title [pdftotext p14] next=page
+  We are all Indians
++ 91
++ xiv

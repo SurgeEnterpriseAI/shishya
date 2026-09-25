@@ -1,0 +1,4 @@
+# first 3 text lines of https://ncert.nic.in/textbook/pdf/keph202.pdf (fetched 2026-09-25T23:24:46+05:30, sha256 3ff64c89dcbfaf99ecec307d753b0bd2d3f731f17e2f16875d74749840d223b6)
+CHAPTER NINE
+MECHANICAL PROPERTIES OF FLUIDS
+9.1 INTRODUCTION

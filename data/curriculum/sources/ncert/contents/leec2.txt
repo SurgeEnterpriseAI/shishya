@@ -1,0 +1,27 @@
+# NCERT contents evidence — leec2 — Introductory Microeconomics (index class 12, Economics)
+# source: https://ncert.nic.in/textbook/pdf/leec2ps.pdf
+# fetched: 2026-09-25T23:15:37+05:30  sha256: 1ae027d2b1529ae1c71d6c51ff4fc73499cb039e4b67ca3ed3ca83c1e8bce317  bytes: 2071475
+# contents pages of the PDF: 9,10 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 d472fd04db04e22dfd409e7f76c4dfd1f93841f315e3d1bb2694235dc94a75ec);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@leec2#1 title [pdftotext p9] next=number
+  1. INTRODUCTION
++ 1
++ 1.1 A Simple Economy
+@leec2#2 title [pdftotext p9] next=number
+  2. THEORY OF CONSUMER BEHAVIOUR
++ 8
++ 2.1 Utility
+@leec2#3 title [pdftotext p9] next=number
+  3. PRODUCTION AND COSTS
++ 36
++ 3.1 Production Function
+@leec2#4 title [pdftotext p10] next=number
+  4. THE THEORY OF THE FIRM UNDER PERFECT COMPETITION
++ 53
++ 4.1 Perfect Competition: Defining Features
+@leec2#5 title [pdftotext p10] next=number
+  5. MARKET EQUILIBRIUM
++ 71
++ 5.1 Equilibrium, Excess Demand, Excess Supply

@@ -1,0 +1,8 @@
+# NCERT contents evidence — judp1 — Door-Paas (index class 10, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/judp1ps.pdf
+# fetched: 2026-09-25T23:15:08+05:30  sha256: b38c5819ded4654466ff80fa96c7798b55367cdafeaa62d3c6234ef4888eb77d  bytes: 3105756
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 399d55eb084d2a6264b7dbf2210ce319d6264836538b66b5399e7445231ff891);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

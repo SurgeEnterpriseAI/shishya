@@ -1,0 +1,55 @@
+# NCERT contents evidence — gecu1 — Curiosity (index class 7, Science)
+# source: https://ncert.nic.in/textbook/pdf/gecu1ps.pdf
+# fetched: 2026-09-25T23:14:37+05:30  sha256: 1c3d49d5609cf52ac4c007bd42d0810d2449f08cb8870c535f8fe6246811b56d  bytes: 4268625
+# contents pages of the PDF: 19 of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 9df4b22f820ac3e28f11096f1783f689a9e9ead230475265b29c06a30a6bd927);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@gecu1#1 title [pdftotext p19] next=number
+  The Ever-Evolving World of Science
++ 01
++ Chapter 2
+@gecu1#2 title [pdftotext p19] next=number
+  Exploring Substances: Acidic, Basic, and Neutral
++ 07
++ Chapter 3
+@gecu1#3 title [pdftotext p19] next=number
+  Electricity: Circuits and their Components
++ 23
++ Chapter 4
+@gecu1#4 title [pdftotext p19] next=number
+  The World of Metals and Non-metals
++ 41
++ Chapter 5
+@gecu1#5 title [pdftotext p19] next=number
+  Changes Around Us: Physical and Chemical
++ 57
++ Chapter 6
+@gecu1#6 title [pdftotext p19] next=number
+  Adolescence: A Stage of Growth and Change
++ 73
++ Chapter 7
+@gecu1#7 title [pdftotext p19] next=number
+  Heat Transfer in Nature
++ 89
++ Chapter 8
+@gecu1#8 title [pdftotext p19] next=number
+  Measurement of Time and Motion
++ 105
++ Chapter 9
+@gecu1#9 title [pdftotext p19] next=number
+  Life Processes in Animals
++ 121
++ Chapter 10
+@gecu1#10 title [pdftotext p19] next=number
+  Life Processes in Plants
++ 137
++ Chapter 11
+@gecu1#11 title [pdftotext p19] next=number
+  Light: Shadows and Reflections
++ 153
++ Chapter 12
+@gecu1#12 title [pdftotext p19] next=page
+  Earth, Moon, and the Sun
++ 169
++ Reprint 2026-27

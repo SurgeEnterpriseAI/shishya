@@ -1,0 +1,39 @@
+# NCERT contents evidence — keip1 — Informatics Practices (index class 11, Informatics Practices)
+# source: https://ncert.nic.in/textbook/pdf/keip1ps.pdf
+# fetched: 2026-09-25T23:15:24+05:30  sha256: e8875d0d46f61ccf67e211cbc8d4691f977bad418b5d5b82a5c6a9e60df3f173  bytes: 3440882
+# contents pages of the PDF: 9,10 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 eb49b08b283d9250445a0f7fc02511ccd640eccbe79da663fffe95e4c5cc3dab);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@keip1#1 title [pdftotext p9] next=number
+  Chapter 1 Computer System
++ 1
++ 1.1 Introduction to Computer System
+@keip1#2 title [pdftotext p9] next=number
+  Chapter 2 Emerging Trends
++ 15
++ 2.1 Introduction to Emerging Trends
+@keip1#3 title [pdftotext p9] next=number
+  Chapter 3 Brief Overview of Python
++ 31
++ 3.1 Introduction to Python
+@keip1#4 title [pdftotext p9] next=number
+  Chapter 4 Working with Lists and Dictionaries
++ 55
++ 4.1 Introduction to List
+@keip1#5 title [pdftotext p10] next=number
+  Chapter 5 Understanding Data
++ 81
++ 5.1 Introduction to Data
+@keip1#6 title [pdftotext p10] next=number
+  Chapter 6 Introduction to NumPy
++ 95
++ 6.1 Introduction
+@keip1#7 title [pdftotext p10] next=number
+  Chapter 7 Database Concepts
++ 7.1 Introduction 7.2 File System 7.3 Database Management System 7.4 Relational Data Model 7.5 Keys in a Relational Database
++ 123
+@keip1#8 title [pdftotext p10] next=number
+  Chapter 8 Introduction to Structured Query Language (SQL)
++ 8.1 Introduction 8.2 Structured Query Language (SQL) 8.3 Data Types and Constraints in MySQL 8.4 SQL for Data Definition 8.5 SQL for Data Manipulation 8.6 SQL f
++ 143

@@ -1,0 +1,2664 @@
+{
+ "curriculum": "NCERT",
+ "indexClassValue": 8,
+ "classes": [
+  8
+ ],
+ "classLabel": "Class VIII",
+ "source": {
+  "indexUrl": "https://ncert.nic.in/textbook.php",
+  "snapshot": "data/curriculum/sources/ncert/textbook-php-2026-09-25.html",
+  "snapshotSha256": "f22b184dce0e02298d571a49ea768dd0809c146c540a77f6f23fdfbdc0c4ec29",
+  "fetchedOn": "2026-09-25"
+ },
+ "subjects": [
+  {
+   "name": "Hindi",
+   "code": "HINDI",
+   "books": [
+    {
+     "code": "hhml1",
+     "title": "Malhar",
+     "language": "hi",
+     "indexValue": "textbook.php?hhml1=0-10",
+     "bookUrl": "https://ncert.nic.in/textbook.php?hhml1=0-10",
+     "indexChapterCount": 10,
+     "listedChapterCount": 10,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/hhml1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/hhml1ps.pdf",
+      "sha256": "d1ca0c96d5346847622e6b7ec3439413d4ced74091d16a4b75512868b37254e7",
+      "fetchedAt": "2026-09-25T23:14:41+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/hhml1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hhml101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hhml102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hhml103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hhml104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hhml105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hhml106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hhml107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hhml108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hhml109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hhml110.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "English",
+   "code": "ENGLISH",
+   "books": [
+    {
+     "code": "hepr1",
+     "title": "Poorvi",
+     "language": "en",
+     "indexValue": "textbook.php?hepr1=0-5",
+     "bookUrl": "https://ncert.nic.in/textbook.php?hepr1=0-5",
+     "indexChapterCount": 5,
+     "listedChapterCount": 5,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/hepr1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/hepr1ps.pdf",
+      "sha256": "7de9daed93e47bcaeb7209e55699a1116a602b3bca39d71744e270f8da5dc2bf",
+      "fetchedAt": "2026-09-25T23:14:41+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "May 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/hepr1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hepr101.pdf",
+       "number": "1",
+       "kind": "unit",
+       "title": "Wit and Wisdom",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "The Wit that Won Hearts",
+         "page": "1"
+        },
+        {
+         "kind": "piece",
+         "title": "A Concrete Example",
+         "page": "17"
+        },
+        {
+         "kind": "piece",
+         "title": "Wisdom Paves the Way",
+         "page": "27"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hepr102.pdf",
+       "number": "2",
+       "kind": "unit",
+       "title": "Values and Dispositions",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "A Tale of Valour: Major Somnath Sharma and the Battle of Badgam",
+         "page": "49"
+        },
+        {
+         "kind": "piece",
+         "title": "Somebody’s Mother",
+         "page": "70"
+        },
+        {
+         "kind": "piece",
+         "title": "Verghese Kurien— I Too Had A Dream",
+         "page": "82"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hepr103.pdf",
+       "number": "3",
+       "kind": "unit",
+       "title": "Mystery and Magic",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "The Case of the Fifth Word",
+         "page": "101"
+        },
+        {
+         "kind": "piece",
+         "title": "The Magic Brush of Dreams",
+         "page": "122"
+        },
+        {
+         "kind": "piece",
+         "title": "Spectacular Wonders",
+         "page": "137"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hepr104.pdf",
+       "number": "4",
+       "kind": "unit",
+       "title": "Environment",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "The Cherry Tree",
+         "page": "155"
+        },
+        {
+         "kind": "piece",
+         "title": "Harvest Hymn",
+         "page": "173"
+        },
+        {
+         "kind": "piece",
+         "title": "Waiting for the Rain",
+         "page": "185"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hepr105.pdf",
+       "number": "5",
+       "kind": "unit",
+       "title": "Science and Curiosity",
+       "includes": [
+        {
+         "kind": "piece",
+         "title": "Feathered Friend",
+         "page": "205"
+        },
+        {
+         "kind": "piece",
+         "title": "Magnifying Glass",
+         "page": "222"
+        },
+        {
+         "kind": "piece",
+         "title": "Bibha Chowdhuri: The Beam of Light that Lit the Path for Women in Indian Science",
+         "page": "233"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Mathematics",
+   "code": "MATHEMATICS",
+   "books": [
+    {
+     "code": "hegp1",
+     "title": "Ganita Prakash Part-I",
+     "language": "en",
+     "indexValue": "textbook.php?hegp1=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?hegp1=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/hegp1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/hegp1ps.pdf",
+      "sha256": "e08bdb82e719ba12a1b2482c94629a4f35df91852539b4413f2a26e9eaab3dfd",
+      "fetchedAt": "2026-09-25T23:14:41+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "July 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/hegp1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "A Square and A Cube",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Power Play",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "A Story of Numbers",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Quadrilaterals",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Number Play",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "We Distribute, Yet Things Multiply",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Proportional Reasoning-1",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "hhgp1",
+       "title": "Ganita Prakash Part-I (Hindi)",
+       "language": "hi",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hhgp1=0-7"
+      },
+      {
+       "code": "hugp1",
+       "title": "Ganita Prakash Part-I (Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hugp1=0-7"
+      },
+      {
+       "code": "hpngp1",
+       "title": "Ganita Prakash Part-I (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hpngp1=0-7"
+      },
+      {
+       "code": "hmtgp1",
+       "title": "Ganita Prakash Part-I (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmtgp1=0-7"
+      },
+      {
+       "code": "hmrgp1",
+       "title": "Ganita Prakash Part-I (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmrgp1=0-7"
+      },
+      {
+       "code": "hbngp1",
+       "title": "Ganita Prakash Part-I (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbngp1=0-7"
+      },
+      {
+       "code": "hbdgp1",
+       "title": "Ganita Prakash Part-I (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbdgp1=0-7"
+      },
+      {
+       "code": "hnpgp1",
+       "title": "Ganita Prakash Part-I (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hnpgp1=0-7"
+      },
+      {
+       "code": "horgp1",
+       "title": "Ganita Prakash Part-I (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?horgp1=0-7"
+      },
+      {
+       "code": "hkngp1",
+       "title": "Ganita Prakash Part-I (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkngp1=0-7"
+      },
+      {
+       "code": "htlgp1",
+       "title": "Ganita Prakash Part-I (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htlgp1=0-7"
+      },
+      {
+       "code": "hdggp1",
+       "title": "Ganita Prakash Part-I (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hdggp1=0-7"
+      },
+      {
+       "code": "hkogp1",
+       "title": "Ganita Prakash Part-I (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkogp1=0-7"
+      },
+      {
+       "code": "htmgp1",
+       "title": "Ganita Prakash Part-I (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htmgp1=0-7"
+      },
+      {
+       "code": "hksgp1",
+       "title": "Ganita Prakash Part-I (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hksgp1=0-7"
+      },
+      {
+       "code": "hmngp1",
+       "title": "Ganita Prakash Part-I (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmngp1=0-7"
+      },
+      {
+       "code": "hskgp1",
+       "title": "Ganita Prakash Part-I (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hskgp1=0-7"
+      },
+      {
+       "code": "hsngp1",
+       "title": "Ganita Prakash Part-I (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsngp1=0-7"
+      },
+      {
+       "code": "hmlgp1",
+       "title": "Ganita Prakash Part-I (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmlgp1=0-7"
+      },
+      {
+       "code": "hsigp1",
+       "title": "Ganita Prakash Part-I (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsigp1=0-7"
+      },
+      {
+       "code": "hasgp1",
+       "title": "Ganita Prakash Part-I (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hasgp1=0-7"
+      },
+      {
+       "code": "hgjgp1",
+       "title": "Ganita Prakash Part-I (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hgjgp1=0-7"
+      }
+     ]
+    },
+    {
+     "code": "hegp2",
+     "title": "Ganita Prakash Part-II",
+     "language": "en",
+     "indexValue": "textbook.php?hegp2=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?hegp2=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/hegp2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/hegp2ps.pdf",
+      "sha256": "c5f4d86252edb391401831f279ab5f2065ecb2f2d0631607aa4044e5a0d74cc8",
+      "fetchedAt": "2026-09-25T23:14:43+05:30",
+      "printedSession": null,
+      "firstEdition": "December 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/hegp2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp201.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Fractions in Disguise",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp202.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "The Baudhayana-Pythagoras Theorem",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp203.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Proportional Reasoning-2",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp204.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Exploring Some Geometric Themes",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp205.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Tales by Dots and Lines",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp206.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Algebra Play",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hegp207.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Area",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "hkngp2",
+       "title": "Ganita Prakash Part-II(Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkngp2=0-7"
+      },
+      {
+       "code": "horgp2",
+       "title": "Ganita Prakash Part-II(Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?horgp2=0-7"
+      },
+      {
+       "code": "hpngp2",
+       "title": "Ganita Prakash Part-II(Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hpngp2=0-7"
+      },
+      {
+       "code": "hgjgp2",
+       "title": "Ganita Prakash Part-II(Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hgjgp2=0-7"
+      },
+      {
+       "code": "htmgp2",
+       "title": "Ganita Prakash Part-II(Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htmgp2=0-7"
+      },
+      {
+       "code": "hmlgp2",
+       "title": "Ganita Prakash Part-II(Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmlgp2=0-7"
+      },
+      {
+       "code": "hasgp2",
+       "title": "Ganita Prakash Part-II(Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hasgp2=0-7"
+      },
+      {
+       "code": "hmrgp2",
+       "title": "Ganita Prakash Part-II(Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmrgp2=0-7"
+      },
+      {
+       "code": "htlgp2",
+       "title": "Ganita Prakash Part-II(Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htlgp2=0-7"
+      },
+      {
+       "code": "hbngp2",
+       "title": "Ganita Prakash Part-II(Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbngp2=0-7"
+      },
+      {
+       "code": "hsngp2",
+       "title": "Ganita Prakash Part-II(Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsngp2=0-7"
+      },
+      {
+       "code": "hsigp2",
+       "title": "Ganita Prakash Part-II(Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsigp2=0-7"
+      },
+      {
+       "code": "hmngp2",
+       "title": "Ganita Prakash Part-II(Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmngp2=0-7"
+      },
+      {
+       "code": "hbdgp2",
+       "title": "Ganita Prakash Part-II(Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbdgp2=0-7"
+      },
+      {
+       "code": "hdggp2",
+       "title": "Ganita Prakash Part-II(Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hdggp2=0-7"
+      },
+      {
+       "code": "hskgp2",
+       "title": "Ganita Prakash Part-II(Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hskgp2=0-7"
+      },
+      {
+       "code": "hnpgp2",
+       "title": "Ganita Prakash Part-II(Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hnpgp2=0-7"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Social Science",
+   "code": "SOCIAL_SCIENCE",
+   "books": [
+    {
+     "code": "hees1",
+     "title": "Exploring Society India and Beyond Part-I",
+     "language": "en",
+     "indexValue": "textbook.php?hees1=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?hees1=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/hees1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/hees1ps.pdf",
+      "sha256": "70408aa655e5273cc98dc717bce61290d06313b12136d89b932c985dc3f1248b",
+      "fetchedAt": "2026-09-25T23:14:43+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "July 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/hees1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Natural Resources and Their Use",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Reshaping India’s Political Map",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "The Rise of the Marathas",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "The Colonial Era in India",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Universal Franchise and India’s Electoral System",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "The Parliamentary System: Legislature and Executive",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Factors of Production",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "hhes1",
+       "title": "Samaj Ka Aadhyan: Bharat or uske aage Part-I",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hhes1=0-7"
+      },
+      {
+       "code": "hues1",
+       "title": "Muashrey ki Daryaft - Hindustan Aur Uske Age Part-I",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hues1=0-7"
+      },
+      {
+       "code": "hores1",
+       "title": "Exploring Society India and Beyond Part-I (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hores1=0-7"
+      },
+      {
+       "code": "hskes1",
+       "title": "Exploring Society India and Beyond Part-I (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hskes1=0-7"
+      },
+      {
+       "code": "hmles1",
+       "title": "Exploring Society India and Beyond Part-I (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmles1=0-7"
+      },
+      {
+       "code": "hpnes1",
+       "title": "Exploring Society India and Beyond Part-I (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hpnes1=0-7"
+      },
+      {
+       "code": "hgjes1",
+       "title": "Exploring Society India and Beyond Part-I (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hgjes1=0-7"
+      },
+      {
+       "code": "hbnes1",
+       "title": "Exploring Society India and Beyond Part-I (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbnes1=0-7"
+      },
+      {
+       "code": "htmes1",
+       "title": "Exploring Society India and Beyond Part-I (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htmes1=0-7"
+      },
+      {
+       "code": "hnpes1",
+       "title": "Exploring Society India and Beyond Part-I (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hnpes1=0-7"
+      },
+      {
+       "code": "hmnes1",
+       "title": "Exploring Society India and Beyond Part-I (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmnes1=0-7"
+      },
+      {
+       "code": "hknes1",
+       "title": "Exploring Society India and Beyond Part-I (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hknes1=0-7"
+      },
+      {
+       "code": "hmres1",
+       "title": "Exploring Society India and Beyond Part-I (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmres1=0-7"
+      },
+      {
+       "code": "hdges1",
+       "title": "Exploring Society India and Beyond Part-I (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hdges1=0-7"
+      },
+      {
+       "code": "hases1",
+       "title": "Exploring Society India and Beyond Part-I (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hases1=0-7"
+      },
+      {
+       "code": "hkoes1",
+       "title": "Exploring Society India and Beyond Part-I (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkoes1=0-7"
+      },
+      {
+       "code": "hmtes1",
+       "title": "Exploring Society India and Beyond Part-I (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmtes1=0-7"
+      },
+      {
+       "code": "hbdes1",
+       "title": "Exploring Society India and Beyond Part-I (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbdes1=0-7"
+      },
+      {
+       "code": "hkses1",
+       "title": "Exploring Society India and Beyond Part-I (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkses1=0-7"
+      },
+      {
+       "code": "hsnes1",
+       "title": "Exploring Society India and Beyond Part-I (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsnes1=0-7"
+      },
+      {
+       "code": "htles1",
+       "title": "Exploring Society India and Beyond Part-I (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htles1=0-7"
+      },
+      {
+       "code": "hsies1",
+       "title": "Exploring Society India and Beyond Part-I (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsies1=0-7"
+      }
+     ]
+    },
+    {
+     "code": "hees2",
+     "title": "Exploring Society India and Beyond Part-II",
+     "language": "en",
+     "indexValue": "textbook.php?hees2=0-8",
+     "bookUrl": "https://ncert.nic.in/textbook.php?hees2=0-8",
+     "indexChapterCount": 8,
+     "listedChapterCount": 8,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/hees2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/hees2ps.pdf",
+      "sha256": "a15fbefbd6b55383b7b7a0cd2731c3ccedf7bd7584efafe2640ecfc48aa380ad",
+      "fetchedAt": "2026-09-25T23:14:46+05:30",
+      "printedSession": null,
+      "firstEdition": "June 2026",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/hees2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees201.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "World Geography: Some Glimpses",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees202.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "India’s Long Road to Independence",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees203.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "A Journey Through Indian Architecture",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees204.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "The Role of the Judiciary in Our Society",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees205.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Citizenship: Rights and Duties",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees206.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Dynamics of Population",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees207.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "India’s Urban Landscape",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hees208.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Cultural Currents: 13th to 17th Centuries",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Sanskrit",
+   "code": "SANSKRIT",
+   "books": [
+    {
+     "code": "hsde1",
+     "title": "Deepakam",
+     "language": "sa",
+     "indexValue": "textbook.php?hsde1=0-16",
+     "bookUrl": "https://ncert.nic.in/textbook.php?hsde1=0-16",
+     "indexChapterCount": 16,
+     "listedChapterCount": 16,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/hsde1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/hsde1ps.pdf",
+      "sha256": "7741674f9f7ff276a2105e755564905127a24f9a4a0555fa8045122b155f4256",
+      "fetchedAt": "2026-09-25T23:14:46+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/hsde1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde110.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde111.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde112.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde113.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde114.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde115.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hsde116.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Science",
+   "code": "SCIENCE",
+   "books": [
+    {
+     "code": "hecu1",
+     "title": "Curiosity",
+     "language": "en",
+     "indexValue": "textbook.php?hecu1=0-13",
+     "bookUrl": "https://ncert.nic.in/textbook.php?hecu1=0-13",
+     "indexChapterCount": 13,
+     "listedChapterCount": 13,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/hecu1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/hecu1ps.pdf",
+      "sha256": "cf752771b28a3328bf37ec768907ed0f46d2a2507a77803222b435c651830955",
+      "fetchedAt": "2026-09-25T23:14:45+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "June 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/hecu1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Exploring the Investigative World of Science",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "The Invisible Living World: Beyond Our Naked Eye",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Health: The Ultimate Treasure",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Electricity: Magnetic and Heating Effects",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Exploring Forces",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Pressure, Winds, Storms, and Cyclones",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Particulate Nature of Matter",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Nature of Matter: Elements, Compounds, and Mixtures",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "The Amazing World of Solutes, Solvents, and Solutions",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Light: Mirrors and Lenses",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Keeping Time with the Skies",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "How Nature Works in Harmony",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hecu113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Our Home: Earth, a Unique Life Sustaining Planet",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "hhcu1",
+       "title": "Jigyasa",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hhcu1=0-13"
+      },
+      {
+       "code": "hucu1",
+       "title": "Tajassus",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hucu1=0-13"
+      },
+      {
+       "code": "hpncu1",
+       "title": "Curiosity (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hpncu1=0-13"
+      },
+      {
+       "code": "htmcu1",
+       "title": "Curiosity (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htmcu1=0-13"
+      },
+      {
+       "code": "horcu1",
+       "title": "Curiosity (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?horcu1=0-13"
+      },
+      {
+       "code": "hascu1",
+       "title": "Curiosity (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hascu1=0-13"
+      },
+      {
+       "code": "hmrcu1",
+       "title": "Curiosity (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmrcu1=0-13"
+      },
+      {
+       "code": "hbncu1",
+       "title": "Curiosity (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbncu1=0-13"
+      },
+      {
+       "code": "hdgcu1",
+       "title": "Curiosity (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hdgcu1=0-13"
+      },
+      {
+       "code": "htlcu1",
+       "title": "Curiosity (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htlcu1=0-13"
+      },
+      {
+       "code": "hbdcu1",
+       "title": "Curiosity (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbdcu1=0-13"
+      },
+      {
+       "code": "hgjcu1",
+       "title": "Curiosity (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hgjcu1=0-13"
+      },
+      {
+       "code": "hmncu1",
+       "title": "Curiosity (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmncu1=0-13"
+      },
+      {
+       "code": "hskcu1",
+       "title": "Curiosity (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hskcu1=0-13"
+      },
+      {
+       "code": "hmlcu1",
+       "title": "Curiosity (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmlcu1=0-13"
+      },
+      {
+       "code": "hkncu1",
+       "title": "Curiosity (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkncu1=0-13"
+      },
+      {
+       "code": "hkocu1",
+       "title": "Curiosity (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkocu1=0-13"
+      },
+      {
+       "code": "hmtcu1",
+       "title": "Curiosity (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmtcu1=0-13"
+      },
+      {
+       "code": "hnpcu1",
+       "title": "Curiosity (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hnpcu1=0-13"
+      },
+      {
+       "code": "hsncu1",
+       "title": "Curiosity (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsncu1=0-13"
+      },
+      {
+       "code": "hsicu1",
+       "title": "Curiosity (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsicu1=0-13"
+      },
+      {
+       "code": "hkscu1",
+       "title": "Curiosity (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkscu1=0-13"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Arts",
+   "code": "ARTS",
+   "books": [
+    {
+     "code": "hekr1",
+     "title": "Kriti",
+     "language": "en",
+     "indexValue": "textbook.php?hekr1=0-19",
+     "bookUrl": "https://ncert.nic.in/textbook.php?hekr1=0-19",
+     "indexChapterCount": 19,
+     "listedChapterCount": 19,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/hekr1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/hekr1ps.pdf",
+      "sha256": "8d2caabe2d7a4480de8755105eb625d89934af2466bfad791361fcf0bf70d8db",
+      "fetchedAt": "2026-09-25T23:14:47+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "June 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/hekr1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Bringing Words Alive — Play Reading",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "One Stage, Many Scripts",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "From Page to Stage",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Applause and Advice",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Discovering the Elements of Music",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Musical Instruments",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Indian Classical Music",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Inspiration and Imagination",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "My World of Music",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Inner Dynamics of Dance",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Pan Indian Dance Forms",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Dance for Well-being",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Innovation, Inclusivity and Inspiring Change",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr114.pdf",
+       "number": "14",
+       "kind": "chapter",
+       "title": "A Presentation of Dance and Choreography",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr115.pdf",
+       "number": "15",
+       "kind": "chapter",
+       "title": "Elements and Principles of Visual Art and Design",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr116.pdf",
+       "number": "16",
+       "kind": "chapter",
+       "title": "Still Life in Colour",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr117.pdf",
+       "number": "17",
+       "kind": "chapter",
+       "title": "People in Places",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 18,
+       "pdfSeq": 18,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr118.pdf",
+       "number": "18",
+       "kind": "chapter",
+       "title": "Arts of the People, With the People, For the People",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 19,
+       "pdfSeq": 19,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekr119.pdf",
+       "number": "19",
+       "kind": "chapter",
+       "title": "Campaign for Art Awareness",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "hhkr1",
+       "title": "Kriti (Hindi)",
+       "language": "hi",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hhkr1=0-19"
+      },
+      {
+       "code": "hukr1",
+       "title": "Kriti (Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hukr1=0-19"
+      },
+      {
+       "code": "hmrkr1",
+       "title": "Kriti (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmrkr1=0-19"
+      },
+      {
+       "code": "htmkr1",
+       "title": "Kriti (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htmkr1=0-19"
+      },
+      {
+       "code": "hpnkr1",
+       "title": "Kriti (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hpnkr1=0-19"
+      },
+      {
+       "code": "hnpkr1",
+       "title": "Kriti (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hnpkr1=0-19"
+      },
+      {
+       "code": "horkr1",
+       "title": "Kriti (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?horkr1=0-19"
+      },
+      {
+       "code": "hdgkr1",
+       "title": "Kriti (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hdgkr1=0-19"
+      },
+      {
+       "code": "hknkr1",
+       "title": "Kriti (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hknkr1=0-19"
+      },
+      {
+       "code": "hmlkr1",
+       "title": "Kriti (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmlkr1=0-19"
+      },
+      {
+       "code": "hbdkr1",
+       "title": "Kriti (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbdkr1=0-19"
+      },
+      {
+       "code": "hbnkr1",
+       "title": "Kriti (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbnkr1=0-19"
+      },
+      {
+       "code": "htlkr1",
+       "title": "Kriti (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htlkr1=0-19"
+      },
+      {
+       "code": "haskr1",
+       "title": "Kriti (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?haskr1=0-19"
+      },
+      {
+       "code": "hkskr1",
+       "title": "Kriti (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkskr1=0-19"
+      },
+      {
+       "code": "hskkr1",
+       "title": "Kriti (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hskkr1=0-19"
+      },
+      {
+       "code": "hgjkr1",
+       "title": "Kriti (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hgjkr1=0-19"
+      },
+      {
+       "code": "hkokr1",
+       "title": "Kriti (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkokr1=0-19"
+      },
+      {
+       "code": "hsnkr1",
+       "title": "Kriti (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsnkr1=0-19"
+      },
+      {
+       "code": "hmtkr1",
+       "title": "Kriti (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmtkr1=0-19"
+      },
+      {
+       "code": "hmnkr1",
+       "title": "Kriti (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmnkr1=0-19"
+      },
+      {
+       "code": "hsikr1",
+       "title": "Kriti (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 19,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsikr1=0-19"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Physical Education and Well Being",
+   "code": "PHYSICAL_EDUCATION_AND_WELL_BEING",
+   "books": [
+    {
+     "code": "heky1",
+     "title": "Khel Yatra",
+     "language": "en",
+     "indexValue": "textbook.php?heky1=0-6",
+     "bookUrl": "https://ncert.nic.in/textbook.php?heky1=0-6",
+     "indexChapterCount": 6,
+     "listedChapterCount": 6,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/heky1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/heky1ps.pdf",
+      "sha256": "235f9a9ef5539bd4a8aba8e9c57c9ad0ca3bb3b99de7d4bcd0786aaa0944e7d8",
+      "fetchedAt": "2026-09-25T23:15:18+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "July 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/heky1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/heky101.pdf",
+       "number": "1",
+       "kind": "unit",
+       "title": "Foundations of Physical Education and Well-being",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/heky102.pdf",
+       "number": "2",
+       "kind": "unit",
+       "title": "Physical and Motor Fitness",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/heky103.pdf",
+       "number": "3",
+       "kind": "unit",
+       "title": "Fundamental Skills of Sports – Athletics",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/heky104.pdf",
+       "number": "4",
+       "kind": "unit",
+       "title": "Fundamental Skills of Sports – Table Tennis",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/heky105.pdf",
+       "number": "5",
+       "kind": "unit",
+       "title": "Fundamental Skills of Sports – Volleyball",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/heky106.pdf",
+       "number": "6",
+       "kind": "unit",
+       "title": "Yoga",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "hhky1",
+       "title": "Khel Yatra ( Hindi)",
+       "language": "hi",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hhky1=0-6"
+      },
+      {
+       "code": "huky1",
+       "title": "Khel Yatra (Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?huky1=0-6"
+      },
+      {
+       "code": "hpnky1",
+       "title": "Khel Yatra (Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hpnky1=0-6"
+      },
+      {
+       "code": "hmrky1",
+       "title": "Khel Yatra (Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmrky1=0-6"
+      },
+      {
+       "code": "horky1",
+       "title": "Khel Yatra (Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?horky1=0-6"
+      },
+      {
+       "code": "hmlky1",
+       "title": "Khel Yatra (Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmlky1=0-6"
+      },
+      {
+       "code": "hgjky1",
+       "title": "Khel Yatra (Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hgjky1=0-6"
+      },
+      {
+       "code": "hskky1",
+       "title": "Khel Yatra (Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hskky1=0-6"
+      },
+      {
+       "code": "hnpky1",
+       "title": "Khel Yatra (Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hnpky1=0-6"
+      },
+      {
+       "code": "htmky1",
+       "title": "Khel Yatra (Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htmky1=0-6"
+      },
+      {
+       "code": "hbnky1",
+       "title": "Khel Yatra (Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbnky1=0-6"
+      },
+      {
+       "code": "hdgky1",
+       "title": "Khel Yatra (Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hdgky1=0-6"
+      },
+      {
+       "code": "hbdky1",
+       "title": "Khel Yatra (Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbdky1=0-6"
+      },
+      {
+       "code": "hknky1",
+       "title": "Khel Yatra (Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hknky1=0-6"
+      },
+      {
+       "code": "htlky1",
+       "title": "Khel Yatra (Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htlky1=0-6"
+      },
+      {
+       "code": "hmnky1",
+       "title": "Khel Yatra (Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmnky1=0-6"
+      },
+      {
+       "code": "hmtky1",
+       "title": "Khel Yatra (Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmtky1=0-6"
+      },
+      {
+       "code": "hasky1",
+       "title": "Khel Yatra (Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hasky1=0-6"
+      },
+      {
+       "code": "hksky1",
+       "title": "Khel Yatra (Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hksky1=0-6"
+      },
+      {
+       "code": "hkoky1",
+       "title": "Khel Yatra (Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkoky1=0-6"
+      },
+      {
+       "code": "hsiky1",
+       "title": "Khel Yatra (Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsiky1=0-6"
+      },
+      {
+       "code": "hsnky1",
+       "title": "Khel Yatra (Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsnky1=0-6"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Vocational Education",
+   "code": "VOCATIONAL_EDUCATION",
+   "books": [
+    {
+     "code": "hekb1",
+     "title": "Kaushal Bodh",
+     "language": "en",
+     "indexValue": "textbook.php?hekb1=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?hekb1=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/hekb1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/hekb1ps.pdf",
+      "sha256": "7ec96a4d04bac3ff393301145146d2911eafc633733828ea369c92b4a3933b77",
+      "fetchedAt": "2026-09-25T23:14:49+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "June 2025",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/hekb1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekb101.pdf",
+       "number": "1",
+       "kind": "project",
+       "title": "Hydroponics: Growing Plants without Soil",
+       "section": "Part 1: Work with Life Forms",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekb102.pdf",
+       "number": "2",
+       "kind": "project",
+       "title": "Feeding and Caring for Farm Animals",
+       "section": "Part 1: Work with Life Forms",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekb103.pdf",
+       "number": "3",
+       "kind": "project",
+       "title": "Working with Wood and Bamboo",
+       "section": "Part 2: Work with Machines and Materials",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekb104.pdf",
+       "number": "4",
+       "kind": "project",
+       "title": "Home Automation",
+       "section": "Part 2: Work with Machines and Materials",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekb105.pdf",
+       "number": "5",
+       "kind": "project",
+       "title": "Water Audit for Water Management",
+       "section": "Part 3: Work in Human Services",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekb106.pdf",
+       "number": "6",
+       "kind": "project",
+       "title": "Creating Advertisements",
+       "section": "Part 3: Work in Human Services",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hekb107.pdf",
+       "number": null,
+       "kind": "section",
+       "title": "Planning for Kaushal Mela",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "hhkb1",
+       "title": "Kaushal Bodh (Hindi)",
+       "language": "hi",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hhkb1=0-7"
+      },
+      {
+       "code": "hgjkb1",
+       "title": "Kaushal Bodh(Gujarati)",
+       "language": "gu",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hgjkb1=0-7"
+      },
+      {
+       "code": "hbdkb1",
+       "title": "Kaushal Bodh(Bodo)",
+       "language": "brx",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbdkb1=0-7"
+      },
+      {
+       "code": "horkb1",
+       "title": "Kaushal Bodh(Odia)",
+       "language": "or",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?horkb1=0-7"
+      },
+      {
+       "code": "htlkb1",
+       "title": "Kaushal Bodh(Telugu)",
+       "language": "te",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htlkb1=0-7"
+      },
+      {
+       "code": "hskkb1",
+       "title": "Kaushal Bodh(Sanskrit)",
+       "language": "sa",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hskkb1=0-7"
+      },
+      {
+       "code": "hpnkb1",
+       "title": "Kaushal Bodh(Punjabi)",
+       "language": "pa",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hpnkb1=0-7"
+      },
+      {
+       "code": "hnpkb1",
+       "title": "Kaushal Bodh(Nepali)",
+       "language": "ne",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hnpkb1=0-7"
+      },
+      {
+       "code": "hmrkb1",
+       "title": "Kaushal Bodh(Marathi)",
+       "language": "mr",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmrkb1=0-7"
+      },
+      {
+       "code": "hknkb1",
+       "title": "Kaushal Bodh(Kannada)",
+       "language": "kn",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hknkb1=0-7"
+      },
+      {
+       "code": "htmkb1",
+       "title": "Kaushal Bodh(Tamil)",
+       "language": "ta",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?htmkb1=0-7"
+      },
+      {
+       "code": "hdgkb1",
+       "title": "Kaushal Bodh(Dogri)",
+       "language": "doi",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hdgkb1=0-7"
+      },
+      {
+       "code": "hkokb1",
+       "title": "Kaushal Bodh(Konkani)",
+       "language": "kok",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkokb1=0-7"
+      },
+      {
+       "code": "hmtkb1",
+       "title": "Kaushal Bodh(Maithili)",
+       "language": "mai",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmtkb1=0-7"
+      },
+      {
+       "code": "hmlkb1",
+       "title": "Kaushal Bodh(Malayalam)",
+       "language": "ml",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmlkb1=0-7"
+      },
+      {
+       "code": "hmnkb1",
+       "title": "Kaushal Bodh(Manipuri)",
+       "language": "mni",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hmnkb1=0-7"
+      },
+      {
+       "code": "hsnkb1",
+       "title": "Kaushal Bodh(Santhali)",
+       "language": "sat",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsnkb1=0-7"
+      },
+      {
+       "code": "hbnkb1",
+       "title": "Kaushal Bodh(Bengali)",
+       "language": "bn",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hbnkb1=0-7"
+      },
+      {
+       "code": "haskb1",
+       "title": "Kaushal Bodh(Assamese)",
+       "language": "as",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?haskb1=0-7"
+      },
+      {
+       "code": "hsikb1",
+       "title": "Kaushal Bodh(Sindhi)",
+       "language": "sd",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hsikb1=0-7"
+      },
+      {
+       "code": "hkskb1",
+       "title": "Kaushal Bodh(Kashmiri)",
+       "language": "ks",
+       "languageFrom": "title",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?hkskb1=0-7"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Urdu",
+   "code": "URDU",
+   "books": [
+    {
+     "code": "hukl1",
+     "title": "Khayal",
+     "language": "ur",
+     "indexValue": "textbook.php?hukl1=0-21",
+     "bookUrl": "https://ncert.nic.in/textbook.php?hukl1=0-21",
+     "indexChapterCount": 21,
+     "listedChapterCount": 21,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/hukl1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/hukl1ps.pdf",
+      "sha256": "c446e32116dd54478fc84ef2652bfffaf3b1b53770c0cd5378a7d4d4ef212b0d",
+      "fetchedAt": "2026-09-25T23:14:49+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/hukl1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl101.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl102.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl103.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl104.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl105.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl106.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl107.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl108.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl109.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl110.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl111.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl112.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl113.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl114.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl115.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl116.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl117.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 18,
+       "pdfSeq": 18,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl118.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 19,
+       "pdfSeq": 19,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl119.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 20,
+       "pdfSeq": 20,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl120.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      },
+      {
+       "seq": 21,
+       "pdfSeq": 21,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/hukl121.pdf",
+       "reason": "urdu-script-unverified: Urdu text layer not verified against the rendered page; needs a human check"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  }
+ ],
+ "counts": {
+  "subjects": 10,
+  "books": 12,
+  "chapters": 79,
+  "unresolvedChapters": 47,
+  "editions": 148
+ }
+}

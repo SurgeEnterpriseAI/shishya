@@ -1,0 +1,75 @@
+# NCERT contents evidence — iemr1 — Madhurima (index class 9, Arts)
+# source: https://ncert.nic.in/textbook/pdf/iemr1ps.pdf
+# fetched: 2026-09-25T23:14:55+05:30  sha256: 7b2b5a7a1041779b09aea3a06e2fa4abbd9030e66c59942e3d0c2639b1c61463  bytes: 2996680
+# contents pages of the PDF: 17 of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 88d6690a84efb5838899fbe78e61546cbcb5b4c1125e851d33bc35a4b7333fab);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@iemr1#1 title [pdftotext p17] next=boilerplate
+  Chapter 1 Introduction to the History of Arts
++ 3
++ Theatre
+@iemr1#2 title [pdftotext p17] next=number
+  Chapter 2 The Stage Is Yours
++ 43
++ Chapter 3 Symbols and Metaphors on Stage
+@iemr1#3 title [pdftotext p17] next=number
+  Chapter 3 Symbols and Metaphors on Stage
++ 51
++ Chapter 4 Creativity in Light and Sound
+@iemr1#4 title [pdftotext p17] next=number
+  Chapter 4 Creativity in Light and Sound
++ 62
++ Chapter 5 From Vision to Performance: Direction and Acting 72
+@iemr1#5 title [pdftotext p17] next=known
+  Chapter 5 From Vision to Performance: Direction and Acting 72
++ Music
++ 87
+@iemr1#6 title [pdftotext p17] next=number
+  Chapter 6 Music and Us
++ 91
++ Chapter 7 The Science of Music
+@iemr1#7 title [pdftotext p17] next=number
+  Chapter 7 The Science of Music
++ 103
++ Chapter 8 Rāga and Tāla
+@iemr1#8 title [pdftotext p17] next=number
+  Chapter 8 Rāga and Tāla
++ 111
++ Chapter 9 Music Travels Around the World
+@iemr1#9 title [pdftotext p17] next=known
+  Chapter 9 Music Travels Around the World
++ 127
++ Dance
+@iemr1#10 title [pdftotext p17] next=number
+  Chapter 10 Components of Dance
++ 139
++ Chapter 11 Dance as Visual Storytelling
+@iemr1#11 title [pdftotext p17] next=number
+  Chapter 11 Dance as Visual Storytelling
++ 154
++ Chapter 12 Cultural Connections Through Dance
+@iemr1#12 title [pdftotext p17] next=number
+  Chapter 12 Cultural Connections Through Dance
++ 160
++ Chapter 13 Dance Choreography
+@iemr1#13 title [pdftotext p17] next=boilerplate
+  Chapter 13 Dance Choreography
++ 169
++ Visual Arts
+@iemr1#14 title [pdftotext p17] next=number
+  Chapter 14 Exploring the Fundamentals of Visual Arts
++ 183
++ Chapter 15 Mediums and Techniques in Visual Art
+@iemr1#15 title [pdftotext p17] next=number
+  Chapter 15 Mediums and Techniques in Visual Art
++ 193
++ Chapter 16 Visual Composition
+@iemr1#16 title [pdftotext p17] next=number
+  Chapter 16 Visual Composition
++ 208
++ Chapter 17 Branches of Visual Arts
+@iemr1#17 title [pdftotext p17] next=boilerplate
+  Chapter 17 Branches of Visual Arts
++ 217
++ Annexure List of Padma Awardees for Art and Culture – 2026 224

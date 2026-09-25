@@ -1,0 +1,4862 @@
+{
+ "curriculum": "NCERT",
+ "indexClassValue": 12,
+ "classes": [
+  12
+ ],
+ "classLabel": "Class XII",
+ "source": {
+  "indexUrl": "https://ncert.nic.in/textbook.php",
+  "snapshot": "data/curriculum/sources/ncert/textbook-php-2026-09-25.html",
+  "snapshotSha256": "f22b184dce0e02298d571a49ea768dd0809c146c540a77f6f23fdfbdc0c4ec29",
+  "fetchedOn": "2026-09-25"
+ },
+ "subjects": [
+  {
+   "name": "Mathematics",
+   "code": "MATHEMATICS",
+   "books": [
+    {
+     "code": "lemh1",
+     "title": "Mathematics Part-I",
+     "language": "en",
+     "indexValue": "textbook.php?lemh1=0-6",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lemh1=0-6",
+     "indexChapterCount": 6,
+     "listedChapterCount": 6,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lemh1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lemh1ps.pdf",
+      "sha256": "96441eb9592091d45369a43aa9f9de8d4a439cf95eaac28baf1a04372feaba65",
+      "fetchedAt": "2026-09-25T23:15:26+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "November 2006",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lemh1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Relations and Functions",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Inverse Trigonometric Functions",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Matrices",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Determinants",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Continuity and Differentiability",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Application of Derivatives",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhmh1",
+       "title": "Ganit-I",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhmh1=0-6"
+      },
+      {
+       "code": "lumh1",
+       "title": "Riyazi-I",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lumh1=0-6"
+      }
+     ]
+    },
+    {
+     "code": "lemh2",
+     "title": "Mathematics Part-II",
+     "language": "en",
+     "indexValue": "textbook.php?lemh2=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lemh2=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lemh2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lemh2ps.pdf",
+      "sha256": "288843e5359d15b4bcd559392f7f28a8f8dc5592b7cd3213cbf70255729a202a",
+      "fetchedAt": "2026-09-25T23:15:28+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "January 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lemh2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh201.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Integrals",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh202.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Application of Integrals",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh203.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Differential Equations",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh204.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Vector Algebra",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh205.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Three Dimensional Geometry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh206.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Linear Programming",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lemh207.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Probability",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhmh2",
+       "title": "Ganit-II",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhmh2=0-7"
+      },
+      {
+       "code": "lumh2",
+       "title": "Riyazi-II",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lumh2=0-7"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Physics",
+   "code": "PHYSICS",
+   "books": [
+    {
+     "code": "leph1",
+     "title": "Physics Part-I",
+     "language": "en",
+     "indexValue": "textbook.php?leph1=0-8",
+     "bookUrl": "https://ncert.nic.in/textbook.php?leph1=0-8",
+     "indexChapterCount": 8,
+     "listedChapterCount": 8,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/leph1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/leph1ps.pdf",
+      "sha256": "66bceeb91660d27a8c280dd7087daa874ffe2745b2905ee517ac6cbc67d5273b",
+      "fetchedAt": "2026-09-25T23:15:31+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "December 2006",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/leph1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "ELECTRIC CHARGES AND FIELDS",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "ELECTROSTATIC POTENTIAL AND CAPACITANCE",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "CURRENT ELECTRICITY",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "MOVING CHARGES AND MAGNETISM",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "MAGNETISM AND MATTER",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "ELECTROMAGNETIC INDUCTION",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "ALTERNATING CURRENT",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "ELECTROMAGNETIC WAVES",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhph1",
+       "title": "Bhautiki-I",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 8,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhph1=0-8"
+      },
+      {
+       "code": "luph1",
+       "title": "Tabiyaat-I",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 8,
+       "bookUrl": "https://ncert.nic.in/textbook.php?luph1=0-8"
+      }
+     ]
+    },
+    {
+     "code": "leph2",
+     "title": "Physics Part-II",
+     "language": "en",
+     "indexValue": "textbook.php?leph2=0-6",
+     "bookUrl": "https://ncert.nic.in/textbook.php?leph2=0-6",
+     "indexChapterCount": 6,
+     "listedChapterCount": 6,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/leph2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/leph2ps.pdf",
+      "sha256": "ec55ddcdc76286a233424784c52294f4352ff41a1e34846f6b8182c0145ff247",
+      "fetchedAt": "2026-09-25T23:15:27+05:30",
+      "printedSession": null,
+      "firstEdition": "March 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/leph2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph201.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "RAY OPTICS AND OPTICAL INSTRUMENTS",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph202.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "WAVE OPTICS",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph203.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "DUAL NATURE OF RADIATION AND MATTER",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph204.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "ATOMS",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph205.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "NUCLEI",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leph206.pdf",
+       "number": "14",
+       "kind": "chapter",
+       "title": "SEMICONDUCTOR ELECTRONICS: MATERIALS, DEVICES AND SIMPLE CIRCUITS",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhph2",
+       "title": "Bhautiki-II",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhph2=0-6"
+      },
+      {
+       "code": "luph2",
+       "title": "Tabiyaat-II",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?luph2=0-6"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Accountancy",
+   "code": "ACCOUNTANCY",
+   "books": [
+    {
+     "code": "leac1",
+     "title": "Accountancy-I",
+     "language": "en",
+     "indexValue": "textbook.php?leac1=0-4",
+     "bookUrl": "https://ncert.nic.in/textbook.php?leac1=0-4",
+     "indexChapterCount": 4,
+     "listedChapterCount": 4,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/leac1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/leac1ps.pdf",
+      "sha256": "71fe814b1146fd1dea3ea76d7206ba726f77adfc52c613d54edb951cc8a87926",
+      "fetchedAt": "2026-09-25T23:15:28+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "January 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/leac1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leac101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Accounting for Partnership: Basic Concepts",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leac102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Reconstitution of a Partnership Firm – Admission of a Partner",
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leac103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Reconstitution of a Partnership Firm – Retirement/Death of a Partner",
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leac104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Dissolution of Partnership Firm",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhac1",
+       "title": "Lekhashastra Part-I",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 4,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhac1=0-4"
+      },
+      {
+       "code": "luac1",
+       "title": "Khatadari-I(Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?luac1=0-5"
+      }
+     ]
+    },
+    {
+     "code": "leac2",
+     "title": "Accountancy Part-II",
+     "language": "en",
+     "indexValue": "textbook.php?leac2=0-6",
+     "bookUrl": "https://ncert.nic.in/textbook.php?leac2=0-6",
+     "indexChapterCount": 6,
+     "listedChapterCount": 6,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/leac2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/leac2ps.pdf",
+      "sha256": "63448d97dfb11a90dce883bfef42c35ea06a8906c5f69fe7610937e709e36a40",
+      "fetchedAt": "2026-09-25T23:15:29+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "March 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/leac2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leac201.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Accounting for Share Capital",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leac202.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Issue and Redemption of Debentures",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leac203.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Financial Statements of a Company",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leac204.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Analysis of Financial Statements",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leac205.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Accounting Ratios",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leac206.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Cash Flow Statement",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhac2",
+       "title": "Lekhashastra Part-II",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhac2=0-5"
+      },
+      {
+       "code": "luac2",
+       "title": "Khatadari-II(Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?luac2=0-6"
+      }
+     ]
+    },
+    {
+     "code": "leca1",
+     "title": "Computerised Accounting System",
+     "language": "en",
+     "indexValue": "textbook.php?leca1=0-4",
+     "bookUrl": "https://ncert.nic.in/textbook.php?leca1=0-4",
+     "indexChapterCount": 4,
+     "listedChapterCount": 4,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/leca1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/leca1ps.pdf",
+      "sha256": "c7b26f211ad50cd2539f762a4f6337267332b4e07dd60dbdd4cb107ba8a7309a",
+      "fetchedAt": "2026-09-25T23:15:29+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "January 2010",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/leca1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leca101.pdf",
+       "number": null,
+       "kind": "chapter",
+       "title": "OVERVIEW OF COMPUTERISED ACCOUNTING SYSTEM",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leca102.pdf",
+       "number": null,
+       "kind": "chapter",
+       "title": "SPREADSHEET",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leca103.pdf",
+       "number": null,
+       "kind": "chapter",
+       "title": "USE OF SPREADSHEET IN BUSINESS APPLICATIONS",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leca104.pdf",
+       "number": null,
+       "kind": "chapter",
+       "title": "GRAPHS AND CHARTS FOR BUSINESS DATA",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Sanskrit",
+   "code": "SANSKRIT",
+   "books": [
+    {
+     "code": "lhsk1",
+     "title": "Bhaswati",
+     "language": "sa",
+     "indexValue": "textbook.php?lhsk1=0-10",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lhsk1=0-10",
+     "indexChapterCount": 10,
+     "listedChapterCount": 10,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lhsk1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lhsk1ps.pdf",
+      "sha256": "49a335dc3b834162a27ebd1ba8fbd9fd83b18faa6e33c55992f3bbce879eb607",
+      "fetchedAt": "2026-09-25T23:15:29+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lhsk1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "lhsk2",
+     "title": "Shaswati",
+     "language": "sa",
+     "indexValue": "textbook.php?lhsk2=0-11",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lhsk2=0-11",
+     "indexChapterCount": 11,
+     "listedChapterCount": 11,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lhsk2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lhsk2ps.pdf",
+      "sha256": "9c72158e907cc9844eb192a3eadaea55e4353fd74fab756051f7092a0fc055e5",
+      "fetchedAt": "2026-09-25T23:15:29+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lhsk2.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk201.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk202.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk203.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk204.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk205.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk206.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk207.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk208.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk209.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk210.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhsk211.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Hindi",
+   "code": "HINDI",
+   "books": [
+    {
+     "code": "lhat1",
+     "title": "Antra",
+     "language": "hi",
+     "indexValue": "textbook.php?lhat1=0-21",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lhat1=0-21",
+     "indexChapterCount": 21,
+     "listedChapterCount": 17,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lhat1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lhat1ps.pdf",
+      "sha256": "3e42ad1871da25ae0a31ca9bb37b3918ccdbafce10e0df315aa70b5564789856",
+      "fetchedAt": "2026-09-25T23:15:30+05:30",
+      "printedSession": "2025-26",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lhat1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat113.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat114.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat115.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat116.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhat117.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "lhar1",
+     "title": "Aroh",
+     "language": "hi",
+     "indexValue": "textbook.php?lhar1=0-15",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lhar1=0-15",
+     "indexChapterCount": 15,
+     "listedChapterCount": 15,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lhar1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lhar1ps.pdf",
+      "sha256": "3697b6248c0b9f824a7f11607a09dac3abdf07cffc178b2750657dcdc17f3238",
+      "fetchedAt": "2026-09-25T23:15:30+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lhar1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar113.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar114.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhar115.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "lhvt1",
+     "title": "Vitan",
+     "language": "hi",
+     "indexValue": "textbook.php?lhvt1=0-3",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lhvt1=0-3",
+     "indexChapterCount": 3,
+     "listedChapterCount": 3,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lhvt1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lhvt1ps.pdf",
+      "sha256": "99d82b8e00d6e8746e614874f6e7b2c18f59e03864929ce5d0b154e249614c8c",
+      "fetchedAt": "2026-09-25T23:15:31+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lhvt1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhvt101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhvt102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhvt103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "lhan1",
+     "title": "Antral Bhag 2",
+     "language": "hi",
+     "indexValue": "textbook.php?lhan1=0-3",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lhan1=0-3",
+     "indexChapterCount": 3,
+     "listedChapterCount": 3,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lhan1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lhan1ps.pdf",
+      "sha256": "ceec33fdfe2a0a81d2258510be4880fe510e9af2fec56ded7933ee5c88832367",
+      "fetchedAt": "2026-09-25T23:15:31+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lhan1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhan101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhan102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lhan103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "English",
+   "code": "ENGLISH",
+   "books": [
+    {
+     "code": "lekl1",
+     "title": "Kaliedoscope",
+     "language": "en",
+     "indexValue": "textbook.php?lekl1=0-21",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lekl1=0-21",
+     "indexChapterCount": 21,
+     "listedChapterCount": 21,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lekl1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lekl1ps.pdf",
+      "sha256": "6a7cb5b8c68140aa4616b51581ab1a8ec11cb5559720b45b58c080ec0d95c1da",
+      "fetchedAt": "2026-09-25T23:15:32+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "February 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lekl1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl101.pdf",
+       "number": "1",
+       "kind": "lesson",
+       "title": "I Sell my Dreams",
+       "section": "Short Stories",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl102.pdf",
+       "number": "2",
+       "kind": "lesson",
+       "title": "Eveline",
+       "section": "Short Stories",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl103.pdf",
+       "number": "3",
+       "kind": "lesson",
+       "title": "A Wedding in Brownsville",
+       "section": "Short Stories",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl104.pdf",
+       "number": "4",
+       "kind": "lesson",
+       "title": "Tomorrow",
+       "section": "Short Stories",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl105.pdf",
+       "number": "5",
+       "kind": "lesson",
+       "title": "One Centimetre",
+       "section": "Short Stories",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl111.pdf",
+       "number": "1",
+       "kind": "lesson",
+       "title": "A Lecture Upon the Shadow",
+       "section": "Poetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl112.pdf",
+       "number": "2",
+       "kind": "lesson",
+       "title": "Poems by Milton",
+       "section": "Poetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl113.pdf",
+       "number": "3",
+       "kind": "lesson",
+       "title": "Poems by Blake",
+       "section": "Poetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl114.pdf",
+       "number": "4",
+       "kind": "lesson",
+       "title": "Kubla Khan",
+       "section": "Poetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl115.pdf",
+       "number": "5",
+       "kind": "lesson",
+       "title": "Trees",
+       "section": "Poetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl116.pdf",
+       "number": "6",
+       "kind": "lesson",
+       "title": "The Wild Swans at Coole",
+       "section": "Poetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 17,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl117.pdf",
+       "number": "7",
+       "kind": "lesson",
+       "title": "Time and Time Again",
+       "section": "Poetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 18,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl118.pdf",
+       "number": "8",
+       "kind": "lesson",
+       "title": "Blood",
+       "section": "Poetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 21,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl121.pdf",
+       "number": "1",
+       "kind": "lesson",
+       "title": "Freedom",
+       "section": "Non-Fiction",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 22,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl122.pdf",
+       "number": "2",
+       "kind": "lesson",
+       "title": "The Mark on the Wall",
+       "section": "Non-Fiction",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 23,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl123.pdf",
+       "number": "3",
+       "kind": "lesson",
+       "title": "Film-making",
+       "section": "Non-Fiction",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 17,
+       "pdfSeq": 24,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl124.pdf",
+       "number": "4",
+       "kind": "lesson",
+       "title": "Why the Novel Matters",
+       "section": "Non-Fiction",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 18,
+       "pdfSeq": 25,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl125.pdf",
+       "number": "5",
+       "kind": "lesson",
+       "title": "The Argumentative Indian",
+       "section": "Non-Fiction",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 19,
+       "pdfSeq": 26,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl126.pdf",
+       "number": "6",
+       "kind": "lesson",
+       "title": "On Science Fiction",
+       "section": "Non-Fiction",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 20,
+       "pdfSeq": 31,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl131.pdf",
+       "number": "1",
+       "kind": "lesson",
+       "title": "Chandalika",
+       "section": "Drama",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 21,
+       "pdfSeq": 32,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lekl132.pdf",
+       "number": "2",
+       "kind": "lesson",
+       "title": "Broken Images",
+       "section": "Drama",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    },
+    {
+     "code": "lefl1",
+     "title": "Flamingo",
+     "language": "en",
+     "indexValue": "textbook.php?lefl1=0-13",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lefl1=0-13",
+     "indexChapterCount": 13,
+     "listedChapterCount": 13,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lefl1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lefl1ps.pdf",
+      "sha256": "cab54ed1146d4aed5c65240ebf081659e5a096ab55344c2fe08403336c09a66e",
+      "fetchedAt": "2026-09-25T23:15:33+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "January 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lefl1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl101.pdf",
+       "number": "1",
+       "kind": "lesson",
+       "title": "The Last Lesson",
+       "section": "Prose",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl102.pdf",
+       "number": "2",
+       "kind": "lesson",
+       "title": "Lost Spring",
+       "section": "Prose",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl103.pdf",
+       "number": "3",
+       "kind": "lesson",
+       "title": "Deep Water",
+       "section": "Prose",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl104.pdf",
+       "number": "4",
+       "kind": "lesson",
+       "title": "The Rattrap",
+       "section": "Prose",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl105.pdf",
+       "number": "5",
+       "kind": "lesson",
+       "title": "Indigo",
+       "section": "Prose",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl106.pdf",
+       "number": "6",
+       "kind": "lesson",
+       "title": "Poets and Pancakes",
+       "section": "Prose",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl107.pdf",
+       "number": "7",
+       "kind": "lesson",
+       "title": "The Interview",
+       "section": "Prose",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl108.pdf",
+       "number": "8",
+       "kind": "lesson",
+       "title": "Going Places",
+       "section": "Prose",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl111.pdf",
+       "number": "1",
+       "kind": "lesson",
+       "title": "My Mother at Sixty-six",
+       "section": "Poetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl112.pdf",
+       "number": "2",
+       "kind": "lesson",
+       "title": "Keeping Quiet",
+       "section": "Poetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl113.pdf",
+       "number": "3",
+       "kind": "lesson",
+       "title": "A Thing of Beauty",
+       "section": "Poetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl114.pdf",
+       "number": "4",
+       "kind": "lesson",
+       "title": "A Roadside Stand",
+       "section": "Poetry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefl115.pdf",
+       "number": "5",
+       "kind": "lesson",
+       "title": "Aunt Jennifer’s Tigers",
+       "section": "Poetry",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    },
+    {
+     "code": "levt1",
+     "title": "Vistas",
+     "language": "en",
+     "indexValue": "textbook.php?levt1=0-6",
+     "bookUrl": "https://ncert.nic.in/textbook.php?levt1=0-6",
+     "indexChapterCount": 6,
+     "listedChapterCount": 6,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/levt1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/levt1ps.pdf",
+      "sha256": "975ed2ac27161e0e1e6295d5f2cee80ef8dd6851f160609503c193375773ab07",
+      "fetchedAt": "2026-09-25T23:15:32+05:30",
+      "printedSession": null,
+      "firstEdition": "April 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/levt1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/levt101.pdf",
+       "number": "1",
+       "kind": "lesson",
+       "title": "The Third Level",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/levt102.pdf",
+       "number": "2",
+       "kind": "lesson",
+       "title": "The Tiger King",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/levt103.pdf",
+       "number": "3",
+       "kind": "lesson",
+       "title": "Journey to the end of the Earth",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/levt104.pdf",
+       "number": "4",
+       "kind": "lesson",
+       "title": "The Enemy",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/levt105.pdf",
+       "number": "5",
+       "kind": "lesson",
+       "title": "On the face of It",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/levt106.pdf",
+       "number": "6",
+       "kind": "lesson",
+       "title": "Memories of Childhood",
+       "includes": [
+        {
+         "kind": "part",
+         "title": "The Cutting of My Long Hair"
+        },
+        {
+         "kind": "part",
+         "title": "We Too are Human Beings"
+        }
+       ],
+       "titleSource": "contents",
+       "titleHeading": "exact"
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Biology",
+   "code": "BIOLOGY",
+   "books": [
+    {
+     "code": "lebo1",
+     "title": "Biology",
+     "language": "en",
+     "indexValue": "textbook.php?lebo1=0-13",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lebo1=0-13",
+     "indexChapterCount": 13,
+     "listedChapterCount": 13,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lebo1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lebo1ps.pdf",
+      "sha256": "22804a9f4df81466593bf0fec0ff9f521b12a55887e32fb46340e528728ac771",
+      "fetchedAt": "2026-09-25T23:15:32+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "December 2006",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lebo1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Sexual Reproduction in Flowering Plants",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Human Reproduction",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Reproductive Health",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Principles of Inheritance and Variation",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Molecular Basis of Inheritance",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Evolution",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Human Health and Disease",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Microbes in Human Welfare",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Biotechnology : Principles and Processes",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Biotechnology and its Applications",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Organisms and Populations",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Ecosystem",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebo113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Biodiversity and Conservation",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhbo1",
+       "title": "Jeev Vigyan",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 13,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhbo1=0-13"
+      },
+      {
+       "code": "lubo1",
+       "title": "Hayatiyaat",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 16,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lubo1=0-16"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "History",
+   "code": "HISTORY",
+   "books": [
+    {
+     "code": "lehs1",
+     "title": "Themes in Indian History-I",
+     "language": "en",
+     "indexValue": "textbook.php?lehs1=0-4",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lehs1=0-4",
+     "indexChapterCount": 4,
+     "listedChapterCount": 4,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lehs1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lehs1ps.pdf",
+      "sha256": "596e824c434a956103db4c50aa9313fcf40ac3e6c579848e61204f8c9c9c27ed",
+      "fetchedAt": "2026-09-25T23:15:34+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "January 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lehs1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehs101.pdf",
+       "number": "1",
+       "kind": "theme",
+       "title": "BRICKS, BEADS AND BONES",
+       "subtitle": "The Harappan Civilisation",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehs102.pdf",
+       "number": "2",
+       "kind": "theme",
+       "title": "KINGS, FARMERS AND TOWNS",
+       "subtitle": "Early States and Economies",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehs103.pdf",
+       "number": "3",
+       "kind": "theme",
+       "title": "KINSHIP, CASTE AND CLASS",
+       "subtitle": "Early Societies",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehs104.pdf",
+       "number": "4",
+       "kind": "theme",
+       "title": "THINKERS, BELIEFS AND BUILDINGS",
+       "subtitle": "Cultural Developments",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhhs1",
+       "title": "Bharatiya Itihas ke kuchh Vishay-I",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 4,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhhs1=0-4"
+      }
+     ]
+    },
+    {
+     "code": "lehs2",
+     "title": "Themes in Indian History-II",
+     "language": "en",
+     "indexValue": "textbook.php?lehs2=0-4",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lehs2=0-4",
+     "indexChapterCount": 4,
+     "listedChapterCount": 4,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lehs2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lehs2ps.pdf",
+      "sha256": "3b48ddd67f66a77aba801255e648a171c49705bd0033a99351e7096aee3991ae",
+      "fetchedAt": "2026-09-25T23:15:41+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "May 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lehs2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehs201.pdf",
+       "number": "5",
+       "kind": "theme",
+       "title": "THROUGH THE EYES OF TRAVELLERS",
+       "subtitle": "Perceptions of Society",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehs202.pdf",
+       "number": "6",
+       "kind": "theme",
+       "title": "BHAKTI-SUFI TRADITIONS",
+       "subtitle": "Changes in Religious Beliefs and Devotional Texts",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehs203.pdf",
+       "number": "7",
+       "kind": "theme",
+       "title": "AN IMPERIAL CAPITAL: VIJAYANAGARA",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehs204.pdf",
+       "number": "8",
+       "kind": "theme",
+       "title": "PEASANTS, ZAMINDARS AND THE STATE",
+       "subtitle": "Agrarian Society and the Mughal Empire",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhhs2",
+       "title": "Bharatiya Itihas ke kuchh Vishay-II",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 4,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhhs2=0-4"
+      }
+     ]
+    },
+    {
+     "code": "lehs3",
+     "title": "Themes in Indian History-III",
+     "language": "en",
+     "indexValue": "textbook.php?lehs3=0-4",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lehs3=0-4",
+     "indexChapterCount": 4,
+     "listedChapterCount": 4,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lehs3dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lehs3ps.pdf",
+      "sha256": "71aea2618641c3dce3d67211cf31095cf1070f1edafc994635dcfa70e6d7e0b7",
+      "fetchedAt": "2026-09-25T23:15:34+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "July 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lehs3.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehs301.pdf",
+       "number": "9",
+       "kind": "theme",
+       "title": "COLONIALISM AND THE COUNTRYSIDE",
+       "subtitle": "Exploring Official Archives",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehs302.pdf",
+       "number": "10",
+       "kind": "theme",
+       "title": "REBELS AND THE RAJ",
+       "subtitle": "The Revolt of1857 and Its Representations",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehs303.pdf",
+       "number": "11",
+       "kind": "theme",
+       "title": "MAHATMA GANDHI AND THE NATIONALIST MOVEMENT",
+       "subtitle": "Civil Disobedience and Beyond",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehs304.pdf",
+       "number": "12",
+       "kind": "theme",
+       "title": "FRAMING THE CONSTITUTION",
+       "subtitle": "The Beginning of a New Era",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhhs3",
+       "title": "Bharatiya Itihas ke kuchh Vishay-III",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 4,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhhs3=0-4"
+      }
+     ]
+    }
+   ],
+   "unlinkedEditions": [
+    {
+     "code": "luth1",
+     "title": "Tareekh-e-Hind ke Mauzuaat-I(Urdu)",
+     "language": "ur",
+     "chapterCount": 4,
+     "bookUrl": "https://ncert.nic.in/textbook.php?luth1=0-4",
+     "note": "no English-medium book in this subject shares its NCERT code stem"
+    },
+    {
+     "code": "luth2",
+     "title": "Tareekh-e-Hind ke Mauzuaat-II(Urdu)",
+     "language": "ur",
+     "chapterCount": 4,
+     "bookUrl": "https://ncert.nic.in/textbook.php?luth2=0-4",
+     "note": "no English-medium book in this subject shares its NCERT code stem"
+    },
+    {
+     "code": "luth3",
+     "title": "Tareekh-e-Hind ke Mauzuaat-III(Urdu)",
+     "language": "ur",
+     "chapterCount": 4,
+     "bookUrl": "https://ncert.nic.in/textbook.php?luth3=0-4",
+     "note": "no English-medium book in this subject shares its NCERT code stem"
+    }
+   ]
+  },
+  {
+   "name": "Geography",
+   "code": "GEOGRAPHY",
+   "books": [
+    {
+     "code": "legy1",
+     "title": "Fundamentals of Human Geography",
+     "language": "en",
+     "indexValue": "textbook.php?legy1=0-8",
+     "bookUrl": "https://ncert.nic.in/textbook.php?legy1=0-8",
+     "indexChapterCount": 8,
+     "listedChapterCount": 8,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/legy1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/legy1ps.pdf",
+      "sha256": "21b79d98fc8da938ede38f3cf806f71fc98b03cd13b638922f93f63c1eaa5326",
+      "fetchedAt": "2026-09-25T23:15:34+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "February 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/legy1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Human Geography Nature and Scope",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "The World Population Distribution, Density and Growth",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Human Development",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Primary Activities",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Secondary Activities",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Tertiary and Quaternary Activities",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Transport and Communication",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "International Trade",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhgy1",
+       "title": "Manav Bhugol Ke Mool Sidhant",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 8,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhgy1=0-8"
+      },
+      {
+       "code": "lugy1",
+       "title": "Hindustan Awam Aur Maishat(Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 12,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lugy1=0-12"
+      }
+     ]
+    },
+    {
+     "code": "legy3",
+     "title": "Practical Work in Geography Part II",
+     "language": "en",
+     "indexValue": "textbook.php?legy3=0-4",
+     "bookUrl": "https://ncert.nic.in/textbook.php?legy3=0-4",
+     "indexChapterCount": 4,
+     "listedChapterCount": 4,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/legy3dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/legy3ps.pdf",
+      "sha256": "5dfc77ad4f0fbb6b01722b30030fc69b3b0c8fcb66b2d1228ae81ec86cdc0dfc",
+      "fetchedAt": "2026-09-25T23:15:34+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "February 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/legy3.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy301.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Data – Its Source and Compilation",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy302.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Data Processing",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy303.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Graphical Representation of Data",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy304.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Spatial Information Technology",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhgy3",
+       "title": "Bhugol main peryojnatmak pryogatmak karye",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 4,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhgy3=0-4"
+      },
+      {
+       "code": "lugy3",
+       "title": "Jughrafia Mein Aamli Kam(Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lugy3=0-6"
+      }
+     ]
+    },
+    {
+     "code": "legy2",
+     "title": "India -People And Economy",
+     "language": "en",
+     "indexValue": "textbook.php?legy2=0-9",
+     "bookUrl": "https://ncert.nic.in/textbook.php?legy2=0-9",
+     "indexChapterCount": 9,
+     "listedChapterCount": 9,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/legy2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/legy2ps.pdf",
+      "sha256": "d2d6236684a3709e48e24ae04308d375e3dca2bc4d22e2e7d277fa1425a77c67",
+      "fetchedAt": "2026-09-25T23:15:35+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "February 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/legy2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy201.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Population : Distribution, Density, Growth and Composition",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy202.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Human Settlements",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy203.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Land Resources and Agriculture",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy204.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Water Resources",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy205.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Mineral and Energy Resources",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy206.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Planning and Sustainable Development in Indian Context",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy207.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Transport and Communication",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy208.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "International Trade",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/legy209.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Geographical Perspective on Selected Issues and Problems",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhgy2",
+       "title": "Bharat log aur arthvyasastha(Bhugol)",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 9,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhgy2=0-9"
+      }
+     ]
+    }
+   ],
+   "unlinkedEditions": [
+    {
+     "code": "lufh1",
+     "title": "Insani Jughrafia Ke Buniyadi Usool(Urdu)",
+     "language": "ur",
+     "chapterCount": 10,
+     "bookUrl": "https://ncert.nic.in/textbook.php?lufh1=0-10",
+     "note": "no English-medium book in this subject shares its NCERT code stem"
+    }
+   ]
+  },
+  {
+   "name": "Psychology",
+   "code": "PSYCHOLOGY",
+   "books": [
+    {
+     "code": "lepy1",
+     "title": "Psychology",
+     "language": "en",
+     "indexValue": "textbook.php?lepy1=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lepy1=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lepy1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lepy1ps.pdf",
+      "sha256": "9f9a97f2c4fd07adf9d98ade4c809103640f80714c1119ca7145b561b6c9e504",
+      "fetchedAt": "2026-09-25T23:15:35+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "January 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lepy1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lepy101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Variations in Psychological Attributes",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lepy102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Self and Personality",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lepy103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Meeting Life Challenges",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lepy104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Psychological Disorders",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lepy105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Therapeutic Approaches",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lepy106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Attitude and Social Cognition",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lepy107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Social Influence and Group Processes",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhpy1",
+       "title": "Manovigyan",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhpy1=0-7"
+      },
+      {
+       "code": "lupy1",
+       "title": "Nafsiat(Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 9,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lupy1=0-9"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Sociology",
+   "code": "SOCIOLOGY",
+   "books": [
+    {
+     "code": "lesy1",
+     "title": "Indian Society",
+     "language": "en",
+     "indexValue": "textbook.php?lesy1=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lesy1=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lesy1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lesy1ps.pdf",
+      "sha256": "e00527fff99cf486f7e1644675928fc6512d5d18e9125ae0738d5496161603d9",
+      "fetchedAt": "2026-09-25T23:15:35+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "January 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lesy1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Introducing Indian Society",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "The Demographic Structure of the Indian Society",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Social Institutions: Continuity and Change",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "The Market as a Social Institution",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Patterns of Social Inequality and Exclusion",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "The Challenges of Cultural Diversity",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Suggestions for Project Work",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhsy1",
+       "title": "Bhartiya Samaj",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhsy1=0-7"
+      }
+     ]
+    },
+    {
+     "code": "lesy2",
+     "title": "Social Change and Development in India",
+     "language": "en",
+     "indexValue": "textbook.php?lesy2=0-8",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lesy2=0-8",
+     "indexChapterCount": 8,
+     "listedChapterCount": 8,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lesy2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lesy2ps.pdf",
+      "sha256": "b5186946d96d8aa877e64ad6436037293ad025a3715c667e0b3713ced4e8a69b",
+      "fetchedAt": "2026-09-25T23:15:40+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "April 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lesy2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy201.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Structural Change",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy202.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Cultural Change",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy203.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "The Constitution and Social Change",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy204.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Change and Development in Rural Society",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy205.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Change and Development in Industrial Society",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy206.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Globalisation and Social Change",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy207.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Mass Media and Communications",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lesy208.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Social Movements",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhsy2",
+       "title": "Bharat main Samajik Parivartan aur Vikas",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 8,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhsy2=0-8"
+      },
+      {
+       "code": "lusy2",
+       "title": "Hindustan Mein Samaji Tabdili Aur Taraqqi(Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 8,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lusy2=0-8"
+      }
+     ]
+    }
+   ],
+   "unlinkedEditions": [
+    {
+     "code": "luis1",
+     "title": "Hindustani Samaj(Urdu)",
+     "language": "ur",
+     "chapterCount": 7,
+     "bookUrl": "https://ncert.nic.in/textbook.php?luis1=0-7",
+     "note": "no English-medium book in this subject shares its NCERT code stem"
+    }
+   ]
+  },
+  {
+   "name": "Chemistry",
+   "code": "CHEMISTRY",
+   "books": [
+    {
+     "code": "lech1",
+     "title": "Chemistry-I",
+     "language": "en",
+     "indexValue": "textbook.php?lech1=0-5",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lech1=0-5",
+     "indexChapterCount": 5,
+     "listedChapterCount": 5,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lech1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lech1ps.pdf",
+      "sha256": "4ee7d6795559fc185f092a5f39431420d4f45aacddbe95dfa84d79056750b3d5",
+      "fetchedAt": "2026-09-25T23:15:36+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "January 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lech1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lech101.pdf",
+       "number": "1",
+       "kind": "unit",
+       "title": "Solutions",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lech102.pdf",
+       "number": "2",
+       "kind": "unit",
+       "title": "Electrochemistry",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lech103.pdf",
+       "number": "3",
+       "kind": "unit",
+       "title": "Chemical Kinetics",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lech104.pdf",
+       "number": "4",
+       "kind": "unit",
+       "title": "The d-and f-Block Elements",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lech105.pdf",
+       "number": "5",
+       "kind": "unit",
+       "title": "Coordination Compounds",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhch1",
+       "title": "Rasayan vigyan bhag I",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhch1=0-5"
+      },
+      {
+       "code": "luch1",
+       "title": "Keemiya-I",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 9,
+       "bookUrl": "https://ncert.nic.in/textbook.php?luch1=0-9"
+      }
+     ]
+    },
+    {
+     "code": "lech2",
+     "title": "Chemistry-II",
+     "language": "en",
+     "indexValue": "textbook.php?lech2=0-5",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lech2=0-5",
+     "indexChapterCount": 5,
+     "listedChapterCount": 5,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lech2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lech2ps.pdf",
+      "sha256": "cced7943f47e78ef4abe798243021a46a02c39a5eff719b534cd153377fd9e58",
+      "fetchedAt": "2026-09-25T23:15:36+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "April 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lech2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lech201.pdf",
+       "number": "6",
+       "kind": "unit",
+       "title": "Haloalkanes and Haloarenes",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lech202.pdf",
+       "number": "7",
+       "kind": "unit",
+       "title": "Alcohols, Phenols and Ethers",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lech203.pdf",
+       "number": "8",
+       "kind": "unit",
+       "title": "Aldehydes, Ketones and Carboxylic Acids",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lech204.pdf",
+       "number": "9",
+       "kind": "unit",
+       "title": "Amines",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lech205.pdf",
+       "number": "10",
+       "kind": "unit",
+       "title": "Biomolecules",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhch2",
+       "title": "Rasayan vigyan bhag II",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhch2=0-5"
+      },
+      {
+       "code": "luch2",
+       "title": "Keemiya-II",
+       "language": "ur",
+       "languageFrom": "code",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?luch2=0-7"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Political Science",
+   "code": "POLITICAL_SCIENCE",
+   "books": [
+    {
+     "code": "leps1",
+     "title": "Contemporary World Politics",
+     "language": "en",
+     "indexValue": "textbook.php?leps1=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?leps1=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/leps1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/leps1ps.pdf",
+      "sha256": "0749bdc9f915db1305dbbde199652de97669ebcd16f4487dd9b0af6a68731359",
+      "fetchedAt": "2026-09-25T23:15:37+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "February 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/leps1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "The End of Bipolarity",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Contemporary Centres of Power",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Contemporary South Asia",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "International Organisations",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Security in the Contemporary World",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Environment and Natural Resources",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Globalisation",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhps1",
+       "title": "Samkalin Vishwa Rajniti",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 7,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhps1=0-7"
+      },
+      {
+       "code": "lups1",
+       "title": "Aasri Alami Siyasat(Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 9,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lups1=0-9"
+      }
+     ]
+    },
+    {
+     "code": "leps2",
+     "title": "Politics in India Since Independence",
+     "language": "en",
+     "indexValue": "textbook.php?leps2=0-8",
+     "bookUrl": "https://ncert.nic.in/textbook.php?leps2=0-8",
+     "indexChapterCount": 8,
+     "listedChapterCount": 8,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/leps2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/leps2ps.pdf",
+      "sha256": "31de8c6ba88b699b3f493e1befef126e99c35c2caa24f671f55dfc77f6e9ded0",
+      "fetchedAt": "2026-09-25T23:15:37+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "June 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/leps2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps201.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Challenges of nation building",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps202.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Era of one-party dominance",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps203.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Politics of planned development",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps204.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "India’s external relations",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps205.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Challenges to and restoration of the congress system",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps206.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "The crisis of democratic order",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps207.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Regional aspirations",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leps208.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Recent developments in indian politics",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhps2",
+       "title": "Swatantra Bharat Mein Rajniti-II",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 8,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhps2=0-8"
+      }
+     ]
+    }
+   ],
+   "unlinkedEditions": [
+    {
+     "code": "luab1",
+     "title": "Azadi Ke Baad Hindustan Ki Siyasat(Urdu)",
+     "language": "ur",
+     "chapterCount": 9,
+     "bookUrl": "https://ncert.nic.in/textbook.php?luab1=0-9",
+     "note": "no English-medium book in this subject shares its NCERT code stem"
+    }
+   ]
+  },
+  {
+   "name": "Economics",
+   "code": "ECONOMICS",
+   "books": [
+    {
+     "code": "leec2",
+     "title": "Introductory Microeconomics",
+     "language": "en",
+     "indexValue": "textbook.php?leec2=0-5",
+     "bookUrl": "https://ncert.nic.in/textbook.php?leec2=0-5",
+     "indexChapterCount": 5,
+     "listedChapterCount": 5,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/leec2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/leec2ps.pdf",
+      "sha256": "1ae027d2b1529ae1c71d6c51ff4fc73499cb039e4b67ca3ed3ca83c1e8bce317",
+      "fetchedAt": "2026-09-25T23:15:37+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "February 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/leec2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leec201.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "INTRODUCTION",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leec202.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "THEORY OF CONSUMER BEHAVIOUR",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leec203.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "PRODUCTION AND COSTS",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leec204.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "THE THEORY OF THE FIRM UNDER PERFECT COMPETITION",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leec205.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "MARKET EQUILIBRIUM",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhec2",
+       "title": "Vyashthi Arthshasrta",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 5,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhec2=0-5"
+      }
+     ]
+    },
+    {
+     "code": "leec1",
+     "title": "Introductory Macroeconomics",
+     "language": "en",
+     "indexValue": "textbook.php?leec1=0-6",
+     "bookUrl": "https://ncert.nic.in/textbook.php?leec1=0-6",
+     "indexChapterCount": 6,
+     "listedChapterCount": 6,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/leec1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/leec1ps.pdf",
+      "sha256": "8c2e6d9ab5e92d0f56cbf0fb9657bb8c2282bb7a655e33b4ffcf79170ff7f9dc",
+      "fetchedAt": "2026-09-25T23:15:37+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "March 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/leec1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leec101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "INTRODUCTION",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leec102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "NATIONAL INCOME ACCOUNTING",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leec103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "MONEY AND BANKING",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leec104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "DETERMINATION OF INCOME AND EMPLOYMENT",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leec105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "GOVERNMENT BUDGET AND THE ECONOMY",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leec106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "OPEN ECONOMY MACROECONOMICS",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhec1",
+       "title": "Samashty Arthshastra Ek Parichay",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 6,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhec1=0-6"
+      }
+     ]
+    }
+   ],
+   "unlinkedEditions": [
+    {
+     "code": "lume1",
+     "title": "Juzvi Maashiyat ka Taruf(Urdu)",
+     "language": "ur",
+     "chapterCount": 6,
+     "bookUrl": "https://ncert.nic.in/textbook.php?lume1=0-6",
+     "note": "no English-medium book in this subject shares its NCERT code stem"
+    },
+    {
+     "code": "lume2",
+     "title": "Kulli Maashiyat Ka Taruf(Urdu)",
+     "language": "ur",
+     "chapterCount": 6,
+     "bookUrl": "https://ncert.nic.in/textbook.php?lume2=0-6",
+     "note": "no English-medium book in this subject shares its NCERT code stem"
+    }
+   ]
+  },
+  {
+   "name": "Business Studies",
+   "code": "BUSINESS_STUDIES",
+   "books": [
+    {
+     "code": "lebs1",
+     "title": "Business Studies-I",
+     "language": "en",
+     "indexValue": "textbook.php?lebs1=0-8",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lebs1=0-8",
+     "indexChapterCount": 8,
+     "listedChapterCount": 8,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lebs1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lebs1ps.pdf",
+      "sha256": "04fffa6d71c1b2bc91d632053ad95458cd27780f6422ef03a4d07aa8e8fba487",
+      "fetchedAt": "2026-09-25T23:15:38+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "May 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lebs1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebs101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Nature and Significance of Management",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebs102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Principles of Management",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebs103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Business Environment",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebs104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Planning",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebs105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Organising",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebs106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Staffing",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebs107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Directing",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebs108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Controlling",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhbs1",
+       "title": "Vyavasai Adhyan-I",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 8,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhbs1=0-8"
+      },
+      {
+       "code": "lubs1",
+       "title": "Karobari Uloom I(Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 8,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lubs1=0-8"
+      }
+     ]
+    },
+    {
+     "code": "lebs2",
+     "title": "Business Studies-II",
+     "language": "en",
+     "indexValue": "textbook.php?lebs2=0-3",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lebs2=0-3",
+     "indexChapterCount": 3,
+     "listedChapterCount": 3,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lebs2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lebs2ps.pdf",
+      "sha256": "d81db7715190477b6829a86dbfa565967b8e4a887bd86dbcf560be8d8748e1c6",
+      "fetchedAt": "2026-09-25T23:15:39+05:30",
+      "printedSession": null,
+      "firstEdition": "May 2007",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lebs2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebs201.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Financial Management",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebs202.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Marketing",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebs203.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Consumer Protection",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhbs2",
+       "title": "Vyavasai Adhyan-II",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 3,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhbs2=0-3"
+      },
+      {
+       "code": "lubs2",
+       "title": "Karobari Uloom II(Urdu)",
+       "language": "ur",
+       "languageFrom": "title",
+       "chapterCount": 4,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lubs2=0-4"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Home Science",
+   "code": "HOME_SCIENCE",
+   "books": [
+    {
+     "code": "lehe1",
+     "title": "Human Ecology and Family Sciences Part I",
+     "language": "en",
+     "indexValue": "textbook.php?lehe1=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lehe1=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lehe1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lehe1ps.pdf",
+      "sha256": "eb1daf58503c3de00157b25a2fc6b15b7f689a853abd95de9d682ac9099bcd07",
+      "fetchedAt": "2026-09-25T23:15:39+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "March 2016",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lehe1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Work, Livelihood and Career",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Clinical Nutrition and Dietetics",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Public Nutrition and Health",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Food Processing and Technology",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Food Quality and Food Safety",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Early Childhood Care and Education",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Management of Support Services, Institutions and Programmes for Children, Youth and Elderly",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    },
+    {
+     "code": "lehe2",
+     "title": "Human Ecology and Family Sciences Part II",
+     "language": "en",
+     "indexValue": "textbook.php?lehe2=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lehe2=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lehe2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lehe2ps.pdf",
+      "sha256": "5120dd8cf4dbc5fca46ba7346206c6efb5b6c45c7c06fd1cc463df78385bb82d",
+      "fetchedAt": "2026-09-25T23:15:39+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "April 2016",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lehe2.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe201.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Design for Fabric and Apparel",
+       "titleSource": "contents",
+       "titleOnFirstPages": false
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe202.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Fashion Design and Merchandising",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe203.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Care and Maintenance of Fabrics in Institutions",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe204.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Hospitality Management",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe205.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Consumer Education and Protection",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe206.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Development Communication and Journalism",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lehe207.pdf",
+       "number": "14",
+       "kind": "chapter",
+       "title": "Corporate Communication and Public Relations",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ],
+   "unlinkedEditions": [
+    {
+     "code": "lehh1",
+     "title": "Manav Paristhitik avam Parivar Vigyan Bhag 1",
+     "language": "hi",
+     "chapterCount": 7,
+     "bookUrl": "https://ncert.nic.in/textbook.php?lehh1=0-7",
+     "note": "Devanagari text: Hindi-medium book, not matched to an English book by NCERT code"
+    },
+    {
+     "code": "lehh2",
+     "title": "Manav Paristhitiki avam Parivar Vigyan Bhag 2",
+     "language": "hi",
+     "chapterCount": 7,
+     "bookUrl": "https://ncert.nic.in/textbook.php?lehh2=0-7",
+     "note": "Devanagari text: Hindi-medium book, not matched to an English book by NCERT code"
+    }
+   ]
+  },
+  {
+   "name": "Urdu",
+   "code": "URDU",
+   "books": [
+    {
+     "code": "luga1",
+     "title": "Gulistan-e- Adab",
+     "language": "ur",
+     "indexValue": "textbook.php?luga1=0-12",
+     "bookUrl": "https://ncert.nic.in/textbook.php?luga1=0-12",
+     "indexChapterCount": 12,
+     "listedChapterCount": 12,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/luga1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/luga1ps.pdf",
+      "sha256": "5a09915606fda982e0006ac9fc9d221f0fc96fc9548c59c464de1eb65b678d0d",
+      "fetchedAt": "2026-09-25T23:15:41+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/luga1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luga101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luga102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luga103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luga104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luga105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luga106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luga107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luga108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luga109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luga110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luga111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luga112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF; the chapter PDF also returned HTTP 404 on 2026-09-25"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "luku1",
+     "title": "Khayaban-e-Urdu",
+     "language": "ur",
+     "indexValue": "textbook.php?luku1=0-6",
+     "bookUrl": "https://ncert.nic.in/textbook.php?luku1=0-6",
+     "indexChapterCount": 6,
+     "listedChapterCount": 6,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/luku1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/luku1ps.pdf",
+      "sha256": "e1bf8943d6a2a0acce6f088a30f360ba141e7161ac15e7db167448f26459f656",
+      "fetchedAt": "2026-09-25T23:15:41+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/luku1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luku101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luku102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luku103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luku104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luku105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luku106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "luna1",
+     "title": "Nai Awaz",
+     "language": "ur",
+     "indexValue": "textbook.php?luna1=0-16",
+     "bookUrl": "https://ncert.nic.in/textbook.php?luna1=0-16",
+     "indexChapterCount": 16,
+     "listedChapterCount": 16,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/luna1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/luna1ps.pdf",
+      "sha256": "ae0c282d09a9ca7c3b829ff2095783dd0c37a62663ebddd292466b3160c719e8",
+      "fetchedAt": "2026-09-25T23:15:42+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/luna1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna113.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 14,
+       "pdfSeq": 14,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna114.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 15,
+       "pdfSeq": 15,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna115.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 16,
+       "pdfSeq": 16,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/luna116.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "ludh1",
+     "title": "Dhanak",
+     "language": "ur",
+     "indexValue": "textbook.php?ludh1=0-12",
+     "bookUrl": "https://ncert.nic.in/textbook.php?ludh1=0-12",
+     "indexChapterCount": 12,
+     "listedChapterCount": 12,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/ludh1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/ludh1ps.pdf",
+      "sha256": "e98cad54a49cd60a6f6256e9258247ed9548b9064baafe3991a4a0b1803d256b",
+      "fetchedAt": "2026-09-25T23:15:41+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/ludh1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ludh101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ludh102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ludh103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ludh104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ludh105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ludh106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ludh107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ludh108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ludh109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ludh110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ludh111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/ludh112.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Creative Writing & Translation",
+   "code": "CREATIVE_WRITING_AND_TRANSLATION",
+   "books": [
+    {
+     "code": "lucw1",
+     "title": "Takhleequi Jauhar",
+     "language": "ur",
+     "indexValue": "textbook.php?lucw1=0-11",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lucw1=0-11",
+     "indexChapterCount": 11,
+     "listedChapterCount": 11,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lucw1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lucw1ps.pdf",
+      "sha256": "fabc614b0362befa055c95d45c1bfd2297805a1481c44742260cb582219a31da",
+      "fetchedAt": "2026-09-25T23:15:57+05:30",
+      "printedSession": null,
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lucw1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lucw101.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lucw102.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lucw103.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lucw104.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lucw105.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lucw106.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lucw107.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lucw108.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lucw109.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lucw110.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lucw111.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "khsr2",
+     "title": "Srijan-II",
+     "language": "hi",
+     "indexValue": "textbook.php?khsr2=0-4",
+     "bookUrl": "https://ncert.nic.in/textbook.php?khsr2=0-4",
+     "indexChapterCount": 4,
+     "listedChapterCount": 4,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/khsr2dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/khsr2ps.pdf",
+      "sha256": "62f62f17e479f80e0f3f50ff1cd1f15eb55ec21548a0a0ef1cf9624d228c003e",
+      "fetchedAt": "2026-09-25T23:15:45+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/khsr2.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/khsr201.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/khsr202.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/khsr203.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/khsr204.pdf",
+       "reason": "legacy-font: the PDF uses a non-Unicode Indic font, so the text layer is Latin gibberish; titles need a human reading of the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Fine Art",
+   "code": "FINE_ART",
+   "books": [
+    {
+     "code": "lefa1",
+     "title": "An Introduction to Indian Art Part-II",
+     "language": "en",
+     "indexValue": "textbook.php?lefa1=0-8",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lefa1=0-8",
+     "indexChapterCount": 8,
+     "listedChapterCount": 8,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lefa1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lefa1ps.pdf",
+      "sha256": "e2f9976261e0a8a82ddb081ddb05674b1dad2dd58c82bfecd2b21223cf9454b8",
+      "fetchedAt": "2026-09-25T23:15:44+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "August 2020",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lefa1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefa101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "The Manuscript Painting Tradition",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefa102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "The Rajasthani Schools of Painting",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefa103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "The Mughal School of Miniature Painting",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefa104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "The Deccani Schools of Painting",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefa105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "The Pahari Schools of Painting",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefa106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "The Bengal School and Cultural Nationalism",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefa107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "The Modern Indian Art",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lefa108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "The Living Art Traditions of India",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": [
+      {
+       "code": "lhfa1",
+       "title": "Bhartiya Kala ka Itihaas Bhag 2",
+       "language": "hi",
+       "languageFrom": "code",
+       "chapterCount": 8,
+       "bookUrl": "https://ncert.nic.in/textbook.php?lhfa1=0-8"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Computer Science",
+   "code": "COMPUTER_SCIENCE",
+   "books": [
+    {
+     "code": "lecs1",
+     "title": "Computer Science",
+     "language": "en",
+     "indexValue": "textbook.php?lecs1=0-13",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lecs1=0-13",
+     "indexChapterCount": 13,
+     "listedChapterCount": 13,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lecs1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lecs1ps.pdf",
+      "sha256": "81e004d02e9d14265377788799cbe3b8c073ab6e8796c891164d4f74e3994e0c",
+      "fetchedAt": "2026-09-25T23:15:44+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "September 2020",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lecs1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Exception Handling in Python",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "File Handling in Python",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Stack",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Queue",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Sorting",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Searching",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Understanding Data",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Database Concepts",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Structured Query Language (SQL)",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Computer Networks",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Data Communication",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Security Aspects",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lecs113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Project Based Learning",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Informatics Practices",
+   "code": "INFORMATICS_PRACTICES",
+   "books": [
+    {
+     "code": "leip1",
+     "title": "Informatics Practices",
+     "language": "en",
+     "indexValue": "textbook.php?leip1=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?leip1=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/leip1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/leip1ps.pdf",
+      "sha256": "d2aeba686019aefd904193589694dd7b197dd8dd3c98945c88cef7a320402507",
+      "fetchedAt": "2026-09-25T23:15:45+05:30",
+      "printedSession": "2026-27",
+      "firstEdition": "December 2020",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/leip1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leip101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "Querying and SQL Functions",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leip102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Data Handling using Pandas - I",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leip103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Data Handling using Pandas - II",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leip104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Plotting Data using Matplotlib",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leip105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Internet and Web",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leip106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Societal Impacts",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/leip107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Project Based Learning",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Biotechnology",
+   "code": "BIOTECHNOLOGY",
+   "books": [
+    {
+     "code": "lebt1",
+     "title": "Biotechnology",
+     "language": "en",
+     "indexValue": "textbook.php?lebt1=0-13",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lebt1=0-13",
+     "indexChapterCount": 13,
+     "listedChapterCount": 13,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lebt1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lebt1ps.pdf",
+      "sha256": "663586de91d4a67e405e2ea433dba447562707aa35972f938c21b76b55405d6a",
+      "fetchedAt": "2026-09-25T23:15:45+05:30",
+      "printedSession": "2025-26",
+      "firstEdition": "February 2023",
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lebt1.txt"
+     },
+     "chapters": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt101.pdf",
+       "number": "1",
+       "kind": "chapter",
+       "title": "An Overview of Recombinant DNA Technology",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt102.pdf",
+       "number": "2",
+       "kind": "chapter",
+       "title": "Host–Vector System",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt103.pdf",
+       "number": "3",
+       "kind": "chapter",
+       "title": "Gene Cloning",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt104.pdf",
+       "number": "4",
+       "kind": "chapter",
+       "title": "Applications of Recombinant DNA Technology",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt105.pdf",
+       "number": "5",
+       "kind": "chapter",
+       "title": "Genome Technology and Engineering",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt106.pdf",
+       "number": "6",
+       "kind": "chapter",
+       "title": "Microbial Culture",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt107.pdf",
+       "number": "7",
+       "kind": "chapter",
+       "title": "Plant Tissue Culture",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt108.pdf",
+       "number": "8",
+       "kind": "chapter",
+       "title": "Animal Cell Culture",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt109.pdf",
+       "number": "9",
+       "kind": "chapter",
+       "title": "Stem Cell Culture and Organ Culture",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 10,
+       "pdfSeq": 10,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt110.pdf",
+       "number": "10",
+       "kind": "chapter",
+       "title": "Bioprocessing and Biomanufacturing",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 11,
+       "pdfSeq": 11,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt111.pdf",
+       "number": "11",
+       "kind": "chapter",
+       "title": "Bioremediation",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 12,
+       "pdfSeq": 12,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt112.pdf",
+       "number": "12",
+       "kind": "chapter",
+       "title": "Recent Innovations in Biotechnology",
+       "titleSource": "contents"
+      },
+      {
+       "seq": 13,
+       "pdfSeq": 13,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lebt113.pdf",
+       "number": "13",
+       "kind": "chapter",
+       "title": "Entrepreneurship",
+       "titleSource": "contents",
+       "titleOnFirstPages": true
+      }
+     ],
+     "unresolved": [],
+     "editions": []
+    }
+   ]
+  },
+  {
+   "name": "Sangeet",
+   "code": "SANGEET",
+   "books": [
+    {
+     "code": "lstp1",
+     "title": "Tabla evam Pakhawaj",
+     "language": "und",
+     "indexValue": "textbook.php?lstp1=0-7",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lstp1=0-7",
+     "indexChapterCount": 7,
+     "listedChapterCount": 7,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lstp1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lstp1ps.pdf",
+      "sha256": "0768b2bc16f261fff0e0fd67dc56fa4892441b07e6dadf54637421933c5d9a43",
+      "fetchedAt": "2026-09-25T23:15:47+05:30",
+      "printedSession": "2025-26",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lstp1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lstp101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lstp102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lstp103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lstp104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lstp105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lstp106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lstp107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    },
+    {
+     "code": "lsgv1",
+     "title": "Hindustani Sangeet Gayan Evam Vaadan",
+     "language": "und",
+     "indexValue": "textbook.php?lsgv1=0-9",
+     "bookUrl": "https://ncert.nic.in/textbook.php?lsgv1=0-9",
+     "indexChapterCount": 9,
+     "listedChapterCount": 9,
+     "zipUrl": "https://ncert.nic.in/textbook/pdf/lsgv1dd.zip",
+     "prelims": {
+      "url": "https://ncert.nic.in/textbook/pdf/lsgv1ps.pdf",
+      "sha256": "103c439b79cb1c75886e1b0086a15250e183c700854b8fdc16186af910da5c94",
+      "fetchedAt": "2026-09-25T23:15:47+05:30",
+      "printedSession": "2025-26",
+      "firstEdition": null,
+      "contentsSnapshot": "data/curriculum/sources/ncert/contents/lsgv1.txt"
+     },
+     "chapters": [],
+     "unresolved": [
+      {
+       "seq": 1,
+       "pdfSeq": 1,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lsgv101.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 2,
+       "pdfSeq": 2,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lsgv102.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 3,
+       "pdfSeq": 3,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lsgv103.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 4,
+       "pdfSeq": 4,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lsgv104.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 5,
+       "pdfSeq": 5,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lsgv105.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 6,
+       "pdfSeq": 6,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lsgv106.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 7,
+       "pdfSeq": 7,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lsgv107.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 8,
+       "pdfSeq": 8,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lsgv108.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      },
+      {
+       "seq": 9,
+       "pdfSeq": 9,
+       "pdfUrl": "https://ncert.nic.in/textbook/pdf/lsgv109.pdf",
+       "reason": "devanagari-unverified: the PDF text layer drops or reorders conjuncts/matras (e.g. पुषप for पुष्प), so titles cannot be taken verbatim; needs a human check against the PDF"
+      }
+     ],
+     "editions": []
+    }
+   ]
+  }
+ ],
+ "counts": {
+  "subjects": 23,
+  "books": 48,
+  "chapters": 251,
+  "unresolvedChapters": 136,
+  "editions": 51
+ }
+}

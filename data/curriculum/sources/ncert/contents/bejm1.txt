@@ -1,0 +1,91 @@
+# NCERT contents evidence — bejm1 — Joyful-Mathematics (English) (index class 2, Mathematics)
+# source: https://ncert.nic.in/textbook/pdf/bejm1ps.pdf
+# fetched: 2026-09-25T23:14:12+05:30  sha256: 3dfd634b51958dca6c3731ddbde180177ebf5729ed4a3daa56bb93353cd57988  bytes: 3855895
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 fda6773a4f98e9ba174b54647a830beccc5187955a15c872287f5d6a9ee1f126);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@bejm1#1 title [pdftotext p13] next=sub-entry
+  1. A Day at the Beach
++ 1
++ (Counting in Groups)
+@bejm1#1:subtitle subtitle [pdftotext p13] next=number
+  (Counting in Groups)
++ 2. Shapes Around Us
++ 16
+@bejm1#2 title [pdftotext p13] next=sub-entry
+  2. Shapes Around Us
++ 16
++ 		 (3D Shapes)
+@bejm1#2:subtitle subtitle [pdftotext p13] next=number
+  		 (3D Shapes)
++ 3. Fun with Numbers
++ 23
+@bejm1#3 title [pdftotext p13] next=sub-entry
+  3. Fun with Numbers
++ 23
++ 		 (Numbers 1 to 100)
+@bejm1#3:subtitle subtitle [pdftotext p13] next=number
+  		 (Numbers 1 to 100)
++ 4. Shadow Story (Togalu)
++ 32
+@bejm1#4 title [pdftotext p13] next=sub-entry
+  4. Shadow Story (Togalu)
++ 32
++ 		 (2D Shapes)
+@bejm1#4:subtitle subtitle [pdftotext p13] next=number
+  		 (2D Shapes)
++ 5. Playing with Lines
++ 44
+@bejm1#5 title [pdftotext p13] next=sub-entry
+  5. Playing with Lines
++ 44
++ 		 (Orientations of a line)
+@bejm1#5:subtitle subtitle [pdftotext p13] next=number
+  		 (Orientations of a line)
++ 6. Decoration for Festival
++ 50
+@bejm1#6 title [pdftotext p13] next=sub-entry
+  6. Decoration for Festival
++ 50
++ 		 (Addition and Subtraction)
+@bejm1#6:subtitle subtitle [pdftotext p13] next=number
+  		 (Addition and Subtraction)
++ 7. Rani’s Gift
++ 71
+@bejm1#7 title [pdftotext p13] next=sub-entry
+  7. Rani’s Gift
++ 71
++ 		(Measurement)
+@bejm1#7:subtitle subtitle [pdftotext p13] next=number
+  		(Measurement)
++ 8. Grouping and Sharing
++ 83
+@bejm1#8 title [pdftotext p13] next=sub-entry
+  8. Grouping and Sharing
++ 83
++ 		 (Multiplication and Division)
+@bejm1#8:subtitle subtitle [pdftotext p13] next=number
+  		 (Multiplication and Division)
++ 9. Which Season is it?
++ 98
+@bejm1#9 title [pdftotext p13] next=sub-entry
+  9. Which Season is it?
++ 98
++ 		 (Measurement of Time)
+@bejm1#9:subtitle subtitle [pdftotext p13] next=number
+  		 (Measurement of Time)
++ 10. Fun at the Fair
++ 113
+@bejm1#10 title [pdftotext p13] next=sub-entry
+  10. Fun at the Fair
++ 113
++ 		(Money)
+@bejm1#10:subtitle subtitle [pdftotext p13] next=number
+  		(Money)
++ 11. Data Handling
++ 123
+@bejm1#11 title [pdftotext p13] next=boilerplate
+  11. Data Handling
++ 123
++ 		Puzzles

@@ -1,0 +1,78 @@
+# NCERT contents evidence — gees1 — Exploring Society India and Beyond Part-I (index class 7, Social Science)
+# source: https://ncert.nic.in/textbook/pdf/gees1ps.pdf
+# fetched: 2026-09-25T23:14:40+05:30  sha256: 7701947726d2dcc9890bce3e36669cd8388fe5bea2cf3cd55082b2a409fdb7da  bytes: 16408301
+# contents pages of the PDF: 21 of 22
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 1f0ccda97117abb75f8474d3017861009ab55124a3e7ba460853d3af2439037d);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@gees1#1 title [pdftotext p21] next=number
+  Chapter 1 Geographical Diversity of India
++ 1
++ Chapter 2 Understanding the Weather
+@gees1#1:section section [pdftotext p21] next=number
+  Theme A — India and the World: Land and the People
++ Chapter 1 Geographical Diversity of India
++ 1
+@gees1#2 title [pdftotext p21] next=number
+  Chapter 2 Understanding the Weather
++ 27
++ Chapter 3 Climates of India
+@gees1#3 title [pdftotext p21] next=number
+  Chapter 3 Climates of India
++ 45
++ Theme B — Tapestry of the Past
+@gees1#4 title [pdftotext p21] next=number
+  Chapter 4 New Beginnings: Cities and States
++ 67
++ Chapter 5 The Rise of Empires
+@gees1#4:section section [pdftotext p21] next=number
+  Theme B — Tapestry of the Past
++ Chapter 4 New Beginnings: Cities and States
++ 67
+@gees1#5 title [pdftotext p21] next=number
+  Chapter 5 The Rise of Empires
++ 83
++ Chapter 6 The Age of Reorganisation
+@gees1#6 title [pdftotext p21] next=number
+  Chapter 6 The Age of Reorganisation
++ 117
++ Chapter 7 The Gupta Era: An Age of
+@gees1#7 title [pdftotext p21] next=number
+  Chapter 7 The Gupta Era: An Age of
+  Tireless Creativity
++ 145
++ Theme C — Our Cultural Heritage and Knowledge Traditions
+@gees1#8 title [pdftotext p21] next=number
+  Chapter 8 How the Land Becomes Sacred
++ 167
++ Theme D — Governance and Democracy
+@gees1#8:section section [pdftotext p21] next=number
+  Theme C — Our Cultural Heritage and Knowledge Traditions
++ Chapter 8 How the Land Becomes Sacred
++ 167
+@gees1#9 title [pdftotext p21] next=number
+  Chapter 9 From the Rulers to the Ruled: Types
+  of Governments
++ 185
++ Chapter 10 The Constitution of India
+@gees1#9:section section [pdftotext p21] next=number
+  Theme D — Governance and Democracy
++ Chapter 9 From the Rulers to the Ruled: Types
++ of Governments
+@gees1#10 title [pdftotext p21] next=number
+  Chapter 10 The Constitution of India
+  — An Introduction
++ 209
++ Theme E — Economic Life Around Us
+@gees1#11 title [pdftotext p21] next=number
+  Chapter 11 From Barter to Money
++ 229
++ Chapter 12 Understanding Markets
+@gees1#11:section section [pdftotext p21] next=number
+  Theme E — Economic Life Around Us
++ Chapter 11 From Barter to Money
++ 229
+@gees1#12 title [pdftotext p21] next=boilerplate
+  Chapter 12 Understanding Markets
++ 247
++ Political Map of India

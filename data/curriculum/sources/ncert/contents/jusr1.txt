@@ -1,0 +1,8 @@
+# NCERT contents evidence — jusr1 — Sab Rang (index class 10, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/jusr1ps.pdf
+# fetched: 2026-09-25T23:15:09+05:30  sha256: a76523bf7be69f8f68d4648887de11df27ab2a904fcfe1b08820ab0da88d6c3e  bytes: 3346460
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 d3f9cea5c698bf61835020f553a72ab11c21ee4eb64ccd0320cfd481c7f66559);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

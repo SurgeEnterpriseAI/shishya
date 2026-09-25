@@ -1,0 +1,31 @@
+# NCERT contents evidence — leec1 — Introductory Macroeconomics (index class 12, Economics)
+# source: https://ncert.nic.in/textbook/pdf/leec1ps.pdf
+# fetched: 2026-09-25T23:15:37+05:30  sha256: 8c2e6d9ab5e92d0f56cbf0fb9657bb8c2282bb7a655e33b4ffcf79170ff7f9dc  bytes: 1569596
+# contents pages of the PDF: 9,10 of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 d999438b7c9154374d856c2ee4b6808efdf493e056c2ef2b93ec11b2bb2e09d0);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@leec1#1 title [pdftotext p9] next=number
+  1. INTRODUCTION
++ 1
++ 1.1 Emergence of Macroeconomics
+@leec1#2 title [pymupdf p9] next=number
+  2. NATIONAL INCOME ACCOUNTING
++ 9
++ 2.1 Some Basic Concepts of Macroeconomics
+@leec1#3 title [pdftotext p9] next=number
+  3. MONEY AND BANKING
++ 36
++ 3.1 Functions of Money
+@leec1#4 title [pdftotext p9] next=number
+  4. DETERMINATION OF INCOME AND EMPLOYMENT
++ 53
++ 4.1 Aggregate Demand and its Components
+@leec1#5 title [pdftotext p10] next=number
+  5. GOVERNMENT BUDGET AND THE ECONOMY
++ 66
++ 5.1 Government Budget – Meaning and its Components
+@leec1#6 title [pdftotext p10] next=number
+  6. OPEN ECONOMY MACROECONOMICS
++ 85
++ 6.1 The Balance of Payments

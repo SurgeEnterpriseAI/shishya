@@ -1,0 +1,23 @@
+# NCERT contents evidence — legy3 — Practical Work in Geography Part II (index class 12, Geography)
+# source: https://ncert.nic.in/textbook/pdf/legy3ps.pdf
+# fetched: 2026-09-25T23:15:34+05:30  sha256: 5dfc77ad4f0fbb6b01722b30030fc69b3b0c8fcb66b2d1228ae81ec86cdc0dfc  bytes: 1828900
+# contents pages of the PDF: 11 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 2cbe99e5650a1f5f57135f55e0f5cb73c75ceac2a2d09463e2460fd30989e5d7);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@legy3#1 title [pymupdf p11] next=number
+  Data – Its Source and Compilation
++ 1 – 12
++ CHAPTER 2
+@legy3#2 title [pymupdf p11] next=number
+  Data Processing
++ 13 – 22
++ CHAPTER 3
+@legy3#3 title [pymupdf p11] next=number
+  Graphical Representation of Data
++ 23– 45
++ CHAPTER 4
+@legy3#4 title [pdftotext p11] next=boilerplate
+  Spatial Information Technology
++ GLOSSARY
++ iii 1 – 12 13 – 22 23– 45 46 – 61

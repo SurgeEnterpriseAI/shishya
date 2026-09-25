@@ -1,0 +1,35 @@
+# NCERT contents evidence — keac1 — Financial Accounting-I (index class 11, Accountancy)
+# source: https://ncert.nic.in/textbook/pdf/keac1ps.pdf
+# fetched: 2026-09-25T23:15:10+05:30  sha256: d3c29b0a46f2687a64d566438fe9f4c3d664d594693d6600d3699bd7a9f10cd1  bytes: 1585314
+# contents pages of the PDF: 11,12 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 1714e63ad97032e22a8850a93ed2a974972e21b43c3850c95a1bfe948451a95f);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@keac1#1 title [pdftotext p11] next=number
+  Chapter 1		 Introduction to Accounting
++ 1
++ 1.1 Meaning of Accounting
+@keac1#2 title [pdftotext p11] next=number
+  Chapter 2		 Theory Base of Accounting
++ 25
++ 2.1 Generally Accepted Accounting Principles
+@keac1#3 title [pdftotext p11] next=number
+  Chapter 3		 Recording of Transactions - I
++ 46
++ 3.1 Business Transactions and Source Document
+@keac1#4 title [pdftotext p11] next=number
+  Chapter 4 		 Recording of Transactions - II
++ 99
++ 4.1 Cash Book
+@keac1#5 title [pdftotext p12] next=number
+  Chapter 5		 Bank Reconciliation Statement
++ 160
++ 5.1 Need for Reconciliation
+@keac1#6 title [pdftotext p12] next=number
+  Chapter 6		 Trial Balance and Rectification of Errors
++ 180
++ 6.1 Meaning of Trial Balance
+@keac1#7 title [pdftotext p12] next=number
+  Chapter 7		 Depreciation, Provisions and Reserves
++ 226
++ 7.1 Depreciation

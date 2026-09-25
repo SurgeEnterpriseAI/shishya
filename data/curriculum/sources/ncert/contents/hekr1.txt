@@ -1,0 +1,83 @@
+# NCERT contents evidence — hekr1 — Kriti (index class 8, Arts)
+# source: https://ncert.nic.in/textbook/pdf/hekr1ps.pdf
+# fetched: 2026-09-25T23:14:47+05:30  sha256: 8d2caabe2d7a4480de8755105eb625d89934af2466bfad791361fcf0bf70d8db  bytes: 7151958
+# contents pages of the PDF: 17,18 of 18
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 4655271302d7f7f4305e669fedfe4302bb0b540707e0b2bb3842a4b50f8e56e3);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@hekr1#1 title [pdftotext p17] next=number
+  1. Bringing Words Alive — Play Reading
++ 4
++ 2. One Stage, Many Scripts
+@hekr1#2 title [pdftotext p17] next=number
+  2. One Stage, Many Scripts
++ 17
++ 3. From Page to Stage
+@hekr1#3 title [pdftotext p17] next=number
+  3. From Page to Stage
++ 27
++ 4. Applause and Advice
+@hekr1#4 title [pdftotext p17] next=known
+  4. Applause and Advice
++ 46
++ MUSIC
+@hekr1#5 title [pdftotext p17] next=number
+  5. Discovering the Elements of Music
++ 57
++ 6. Musical Instruments
+@hekr1#6 title [pdftotext p17] next=number
+  6. Musical Instruments
++ 66
++ 7. Indian Classical Music
+@hekr1#7 title [pdftotext p17] next=number
+  7. Indian Classical Music
++ 75
++ 8. Inspiration and Imagination
+@hekr1#8 title [pdftotext p17] next=number
+  8. Inspiration and Imagination
++ 88
++ 9. My World of Music
+@hekr1#9 title [pdftotext p17] next=page
+  9. My World of Music
++ 95
++ Reprint 2026-27
+@hekr1#10 title [pdftotext p18] next=number
+  10. Inner Dynamics of Dance
++ 107
++ 11. Pan Indian Dance Forms
+@hekr1#11 title [pdftotext p18] next=number
+  11. Pan Indian Dance Forms
++ 122
++ 12. Dance for Well-being
+@hekr1#12 title [pdftotext p18] next=number
+  12. Dance for Well-being
++ 134
++ 13. Innovation, Inclusivity and Inspiring Change
+@hekr1#13 title [pdftotext p18] next=number
+  13. Innovation, Inclusivity and Inspiring Change
++ 144
++ 14. A Presentation of Dance and Choreography
+@hekr1#14 title [pdftotext p18] next=boilerplate
+  14. A Presentation of Dance and Choreography
++ 152
++ VISUAL ARTS
+@hekr1#15 title [pdftotext p18] next=number
+  15. Elements and Principles of Visual Art and Design
++ 165
++ 16. Still Life in Colour
+@hekr1#16 title [pdftotext p18] next=number
+  16. Still Life in Colour
++ 177
++ 17. People in Places
+@hekr1#17 title [pdftotext p18] next=number
+  17. People in Places
++ 186
++ 18. Arts of the People, With the People, For the People
+@hekr1#18 title [pdftotext p18] next=number
+  18. Arts of the People, With the People, For the People
++ 198
++ 19. Campaign for Art Awareness
+@hekr1#19 title [pdftotext p18] next=page
+  19. Campaign for Art Awareness
++ 207
++ Reprint 2026-27

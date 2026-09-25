@@ -1,0 +1,8 @@
+# NCERT contents evidence — luna1 — Nai Awaz (index class 12, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/luna1ps.pdf
+# fetched: 2026-09-25T23:15:42+05:30  sha256: ae0c282d09a9ca7c3b829ff2095783dd0c37a62663ebddd292466b3160c719e8  bytes: 2415109
+# contents pages of the PDF: none found of 10
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 5d8fc7dc7afba91e08fc29e827b6ad5b8ed48e41fcb926bfa2d996d38f813f9a);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

@@ -1,0 +1,8 @@
+# NCERT contents evidence — cust1 — Sitar (index class 3, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/cust1ps.pdf
+# fetched: 2026-09-25T23:14:18+05:30  sha256: 46f189d0951fce691f100fa318176094a9a13a3a97832834dc8fdcf88026b244  bytes: 3734617
+# contents pages of the PDF: none found of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 2d0dd70e7acfcb89bce2a135d5715cb18a24fe36b966d94c92c5f6a96838c371);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

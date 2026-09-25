@@ -1,0 +1,39 @@
+# NCERT contents evidence — lesy2 — Social Change and Development in India (index class 12, Sociology)
+# source: https://ncert.nic.in/textbook/pdf/lesy2ps.pdf
+# fetched: 2026-09-25T23:15:40+05:30  sha256: b5186946d96d8aa877e64ad6436037293ad025a3715c667e0b3713ced4e8a69b  bytes: 3729723
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 b31e69a1ac6c5ad7a544272a5d0924ccba19ffdeb6770f88f216d14bf3e06517);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@lesy2#1 title [pdftotext p13] next=number
+  Chapter 1 Structural Change
++ Chapter 2 Cultural Change
++ Chapter 3 The Constitution and Social Change
+@lesy2#2 title [pdftotext p13] next=number
+  Chapter 2 Cultural Change
++ Chapter 3 The Constitution and Social Change
++ Chapter 4 Change and Development in Rural Society
+@lesy2#3 title [pdftotext p13] next=number
+  Chapter 3 The Constitution and Social Change
++ Chapter 4 Change and Development in Rural Society
++ Chapter 5 Change and Development in Industrial Society
+@lesy2#4 title [pdftotext p13] next=number
+  Chapter 4 Change and Development in Rural Society
++ Chapter 5 Change and Development in Industrial Society
++ Chapter 6 Globalisation and Social Change
+@lesy2#5 title [pdftotext p13] next=number
+  Chapter 5 Change and Development in Industrial Society
++ Chapter 6 Globalisation and Social Change
++ Chapter 7 Mass Media and Communications
+@lesy2#6 title [pdftotext p13] next=number
+  Chapter 6 Globalisation and Social Change
++ Chapter 7 Mass Media and Communications
++ Chapter 8 Social Movements
+@lesy2#7 title [pdftotext p13] next=number
+  Chapter 7 Mass Media and Communications
++ Chapter 8 Social Movements
++ Glossary
+@lesy2#8 title [pdftotext p13] next=boilerplate
+  Chapter 8 Social Movements
++ Glossary
++ v vii xii

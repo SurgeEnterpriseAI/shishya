@@ -1,0 +1,4 @@
+# first 3 text lines of https://ncert.nic.in/textbook/pdf/keph201.pdf (fetched 2026-09-25T23:22:40+05:30, sha256 54ef32e2d3eb1e47e87f9d8e6a49423b8b2cc77e4ac5efbc7c34670c49462de6)
+CHAPTER EIGHT
+MECHANICAL PROPERTIES OF SOLIDS
+8.1

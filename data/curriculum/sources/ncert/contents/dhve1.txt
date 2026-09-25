@@ -1,0 +1,8 @@
+# NCERT contents evidence — dhve1 — Veena (index class 4, Hindi)
+# source: https://ncert.nic.in/textbook/pdf/dhve1ps.pdf
+# fetched: 2026-09-25T23:14:19+05:30  sha256: f1a68449c799791b09eecfbd338de33a64335e9672b7992616b8cd4c55ff3666  bytes: 3061671
+# contents pages of the PDF: none found of 20
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 94dcdd0fd8b8d2fb312995b2bdd981c50eced212a81790ec8e700cdcecbc6e45);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

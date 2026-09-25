@@ -1,0 +1,31 @@
+# NCERT contents evidence — geky1 — Khel Yatra (index class 7, Physical Education and Well Being)
+# source: https://ncert.nic.in/textbook/pdf/geky1ps.pdf
+# fetched: 2026-09-25T23:14:39+05:30  sha256: 15a037c5ecc2e5ce78072482c3e35857f59413ac60b33e19c9967d31ea01223c  bytes: 4143560
+# contents pages of the PDF: 19,20,21 of 22
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 39b4c806574f3ade4ceca50152f155ca9e5309a2519941a396909322139e5952);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@geky1#1 title [pdftotext p19] next=sub-entry
+  UNIT 1: Foundational Basis of Physical Education and Well-being
++ • The Ball Progression Game
++ 8
+@geky1#2 title [pdftotext p19] next=sub-entry
+  UNIT 2: Physical and Motor Fitness
++ • Set It Up, Knock It Down
++ 28
+@geky1#3 title [pdftotext p20] next=sub-entry
+  UNIT 3: Fundamental Skills of Sports — Badminton
++ • Forehand Grip and Air Toss 56
++ • Backhand Grip and Air Toss 58
+@geky1#4 title [pdftotext p20] next=sub-entry
+  UNIT 4: Fundamental Skills of Sports — Football
++ • Kicking the Ball with the Inside
++ of the Foot
+@geky1#5 title [pdftotext p21] next=sub-entry
+  UNIT 5: Fundamental Skills of Sports — Kabaddi
++ • Raiding Foot Work
++ 118
+@geky1#6 title [pdftotext p21] next=number
+  UNIT 6: Yoga
++ Chapter 1
++ • Yoga for Daily Life

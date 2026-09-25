@@ -1,0 +1,43 @@
+# NCERT contents evidence — jefp1 — Foot Prints Without feet Supp. Reader (index class 10, English)
+# source: https://ncert.nic.in/textbook/pdf/jefp1ps.pdf
+# fetched: 2026-09-25T23:15:05+05:30  sha256: 1de1447d9bb70a099be730375daae47fa21ccbc18eba52885c4f142d8987f182  bytes: 1925309
+# contents pages of the PDF: 13 of 14
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 83ed75b1f09255a06efa4944b3fcaa741cfd1495e83ab73787cac0d41c3acdef);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@jefp1#1 title [pdftotext p13] next=caps-line
+  1. A Triumph of Surgery
++ 1
++ JAMES HERRIOT
+@jefp1#2 title [pdftotext p13] next=caps-line
+  2. The Thief’s Story
++ 8
++ RUSKIN BOND
+@jefp1#3 title [pdftotext p13] next=caps-line
+  3. The Midnight Visitor
++ 14
++ ROBERT ARTHUR
+@jefp1#4 title [pdftotext p13] next=caps-line
+  4. A Question of Trust
++ 20
++ VICTOR CANNING
+@jefp1#5 title [pdftotext p13] next=caps-line
+  5. Footprints without Feet
++ 26
++ H.G. WELLS
+@jefp1#6 title [pdftotext p13] next=caps-line
+  6. The Making of a Scientist
++ 32
++ ROBERT W. PETERSON
+@jefp1#7 title [pdftotext p13] next=caps-line
+  7. The Necklace
++ 39
++ GUY DE MAUPASSANT
+@jefp1#8 title [pdftotext p13] next=caps-line
+  8. Bholi
++ 47
++ K.A. ABBAS
+@jefp1#9 title [pdftotext p13] next=caps-line
+  9. The Book That Saved the Earth
++ 56
++ CLAIRE BOIKO

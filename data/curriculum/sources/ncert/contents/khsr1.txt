@@ -1,0 +1,8 @@
+# NCERT contents evidence — khsr1 — Srijan (index class 11, Creative Writing and Translation)
+# source: https://ncert.nic.in/textbook/pdf/khsr1ps.pdf
+# fetched: 2026-09-25T23:15:21+05:30  sha256: 589c2dcc4a012f79906d4f2946ce2959ece91eedd32e609beea63f7a85f6d934  bytes: 3501282
+# contents pages of the PDF: none found of 16
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 c4f399d0b92612cf282d8e0b76ba1dd01e6f99fbad2f69840056bdb848e54cf9);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

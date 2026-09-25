@@ -1,0 +1,8 @@
+# NCERT contents evidence — june1 — Nawa-e-Urdu (index class 10, Urdu)
+# source: https://ncert.nic.in/textbook/pdf/june1ps.pdf
+# fetched: 2026-09-25T23:15:08+05:30  sha256: 9eaec28e5b007db9eef1319c5564f7f60f414a256ec3453384dae8e0eec3932c  bytes: 3033075
+# contents pages of the PDF: none found of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 9afe4740e71799430ea00d7e82cb102f87aa333e6d7d5e81993c0e0813524018);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+# no titles transcribed for this book (see the book's unresolved reason in ncert/class-*.json)

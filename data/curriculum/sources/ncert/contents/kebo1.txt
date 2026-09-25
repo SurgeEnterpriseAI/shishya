@@ -1,0 +1,83 @@
+# NCERT contents evidence — kebo1 — Biology (index class 11, Biology)
+# source: https://ncert.nic.in/textbook/pdf/kebo1ps.pdf
+# fetched: 2026-09-25T23:15:12+05:30  sha256: 87f5b38b6cc9e5bcd3ac9ec1001ae157734154929fe142d136fae97a632f74d2  bytes: 2951992
+# contents pages of the PDF: 11,12 of 12
+# 26 Sep 2026: evidence lines only — for each title in data/curriculum/ncert/titles.json, the contents line(s) that print it
+# and the next two lines ('+'). The whole contents text stays in the builder cache (sha256 94213c8b6a109402d06e248221270e8d1de03a2ece75028d2a2afc9bbe2fdc74);
+# the repo is public and NCERT's prelims say all rights reserved. Control characters are removed.
+@kebo1#1 title [pymupdf p11] next=number
+  Chapter 1 : The Living World
++ 3
++ Chapter 2 : Biological Classification
+@kebo1#2 title [pymupdf p11] next=number
+  Chapter 2 : Biological Classification
++ 10
++ Chapter 3 : Plant Kingdom
+@kebo1#3 title [pymupdf p11] next=number
+  Chapter 3 : Plant Kingdom
++ 23
++ Chapter 4 : Animal Kingdom
+@kebo1#4 title [pdftotext p11] next=number
+  Chapter 1 : The Living World Chapter 2 : Biological Classification Chapter 3 : Plant Kingdom Chapter 4 : Animal Kingdom
++ UNIT II
++ STRUCTURAL ORGANISATION IN PLANTS AND ANIMALS
+@kebo1#5 title [pymupdf p11] next=number
+  Chapter 5 : Morphology of Flowering Plants
++ 57
++ Chapter 6 : Anatomy of Flowering Plants
+@kebo1#6 title [pymupdf p11] next=number
+  Chapter 6 : Anatomy of Flowering Plants
++ 71
++ Chapter 7 : Structural Organisation in Animals
+@kebo1#7 title [pdftotext p11] next=number
+  Chapter 5 : Morphology of Flowering Plants Chapter 6 : Anatomy of Flowering Plants Chapter 7 : Structural Organisation in Animals
++ UNIT III
++ CELL : STRUCTURE AND FUNCTIONS
+@kebo1#8 title [pymupdf p11] next=number
+  : Cell : The Unit of Life
++ 87
++ Chapter 9
+@kebo1#9 title [pymupdf p11] next=number
+  : Biomolecules
++ 104
++ Chapter 10 : Cell Cycle and Cell Division
+@kebo1#10 title [pdftotext p11] next=page
+  Chapter 8 : Cell : The Unit of Life Chapter 9 : Biomolecules Chapter 10 : Cell Cycle and Cell Division
++ iii
++ V
+@kebo1#11 title [pymupdf p12] next=number
+  Chapter 11 : Photosynthesis in Higher Plants
++ 133
++ Chapter 12 : Respiration in Plants
+@kebo1#12 title [pymupdf p12] next=number
+  Chapter 12 : Respiration in Plants
++ 153
++ Chapter 13 : Plant Growth and Development
+@kebo1#13 title [pdftotext p12] next=page
+  Chapter 11 : Photosynthesis in Higher Plants Chapter 12 : Respiration in Plants Chapter 13 : Plant Growth and Development
++ 131-180
++ 133 153 166
+@kebo1#14 title [pdftotext p12] next=number
+  Chapter 14 : Breathing and Exchange of Gases
++ 183
++ Chapter 15 : Body Fluids and Circulation
+@kebo1#15 title [pdftotext p12] next=number
+  Chapter 15 : Body Fluids and Circulation
++ 193
++ Chapter 16 : Excretory Products and their Elimination
+@kebo1#16 title [pdftotext p12] next=number
+  Chapter 16 : Excretory Products and their Elimination
++ 205
++ Chapter 17 : Locomotion and Movement
+@kebo1#17 title [pdftotext p12] next=number
+  Chapter 17 : Locomotion and Movement
++ 217
++ Chapter 18 : Neural Control and Coordination
+@kebo1#18 title [pdftotext p12] next=number
+  Chapter 18 : Neural Control and Coordination
++ 230
++ Chapter 19 : Chemical Coordination and Integration
+@kebo1#19 title [pdftotext p12] next=page
+  Chapter 19 : Chemical Coordination and Integration
++ 239
++ Reprint 2026-27
