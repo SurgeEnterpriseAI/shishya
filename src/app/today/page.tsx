@@ -10,7 +10,8 @@
 //                 logic the dashboard card uses — validated pool, rule-based
 //                 TOPIC on the weakest topic, DIAGNOSTIC baseline when no
 //                 weakest topic exists yet) and go to /mocks/{id}
-//   not enrolled → /dashboard (its exam picker is the right next step)
+//   not enrolled → /dashboard (its exam picker is the right next step),
+//                 utm kept (25 Sep 2026, see below)
 //
 // The create step is one client POST (AutoStartDailyFive) because
 // /api/mocks' pool + generator code is not exported as a server function
@@ -21,6 +22,12 @@
 // utm_* on the inbound link is forwarded onto /mocks/{id} so the email
 // channel stays visible in the analytics channel split (the client tracker
 // reads utm_* off the page URL; a server redirect would otherwise drop it).
+// 25 Sep 2026: the not-enrolled fallback to /dashboard dropped them, so an
+// email click from a student with no exam to build a set for landed
+// untagged. All three hops now share src/lib/login-return.ts: utm_source /
+// utm_medium / utm_campaign only (the three the tracker records;
+// utm_content was never stored), each [A-Za-z0-9_.-] and at most 64, a bad
+// value dropped.
 //
 // Language (13 Sep 2026): copy comes from getT() — the same locale the
 // mock player's labels use on the next screen — so a hi/te student sees
@@ -32,6 +39,7 @@ import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { findTodaysDailyFive, pickDailyFive } from "@/lib/study-day-five";
+import { loginRedirectPath, returnUtmQuery, withReturnUtm } from "@/lib/login-return";
 import { todayLabels } from "@/lib/study-day-copy";
 import { AutoStartDailyFive } from "./AutoStartDailyFive";
 
@@ -45,29 +53,16 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content"] as const;
-
 type SearchParams = Record<string, string | string[] | undefined>;
-
-/** Only the utm_* keys, bounded, re-encoded — never an arbitrary passthrough. */
-function utmQuery(sp: SearchParams): string {
-  const q = new URLSearchParams();
-  for (const k of UTM_KEYS) {
-    const raw = sp[k];
-    const v = Array.isArray(raw) ? raw[0] : raw;
-    if (v) q.set(k, v.slice(0, 64));
-  }
-  const s = q.toString();
-  return s ? `?${s}` : "";
-}
 
 export default async function TodayPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams;
-  const qs = utmQuery(sp);
+  // Only the utm tags, checked and re-encoded — never an arbitrary passthrough.
+  const qs = returnUtmQuery(sp);
 
   const session = await auth();
   if (!session?.user?.id) {
-    redirect(`/login?callbackUrl=${encodeURIComponent(`/today${qs}`)}`);
+    redirect(loginRedirectPath("/today", sp));
   }
   const userId = session.user.id;
 
@@ -77,7 +72,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   if (existing) redirect(`/mocks/${existing}${qs}`);
 
   const pick = await pickDailyFive(userId).catch(() => null);
-  if (!pick) redirect("/dashboard");
+  if (!pick) redirect(withReturnUtm("/dashboard", sp));
 
   // Only now that we render: the redirects above never pay for the locale.
   const { t } = await getT();

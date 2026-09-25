@@ -17,6 +17,7 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { TwoPathsCard } from "./TwoPathsCard";
 import { QuickStartDiagnostic } from "./QuickStartDiagnostic";
 import { captureSignupAttribution } from "@/lib/signup-attribution";
+import { loginRedirectPath } from "@/lib/login-return";
 import { getDueRevisions } from "@/lib/db/revision-due";
 import { getStudyStreak, type StudyStreak } from "@/lib/db/streak";
 import { DailyFiveCard } from "./DailyFiveCard";
@@ -50,10 +51,14 @@ import { FlashHint } from "@/components/FlashHint";
 import { FoundViaChip } from "@/components/FoundViaChip";
 import { YouAskedWeBuilt } from "@/components/YouAskedWeBuilt";
 
+// ?joined=1 (JoinBatchButton) is read below; the utm_* tags only by the
+// signed-out redirect. Next hands over every query param, so the type says so.
+type DashboardSearchParams = { joined?: string; [key: string]: string | string[] | undefined };
+
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ joined?: string }>;
+  searchParams: Promise<DashboardSearchParams>;
 }) {
   try {
     return await renderDashboard(searchParams);
@@ -76,10 +81,15 @@ export default async function DashboardPage({
   }
 }
 
-async function renderDashboard(searchParams: Promise<{ joined?: string }>) {
+async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
   const sp = await searchParams;
   const session = await auth();
-  if (!session?.user?.id) redirect("/login?callbackUrl=/dashboard");
+  // The email tag survives the sign-in wall (25 Sep 2026 email-reach read):
+  // lapsed students open mail signed out, and /login?callbackUrl=/dashboard
+  // dropped utm_source/medium/campaign, so their return never counted as
+  // email. Only those three, checked, ride inside the callback
+  // (src/lib/login-return.ts); the /login page itself is untouched.
+  if (!session?.user?.id) redirect(loginRedirectPath("/dashboard", sp));
 
   // Admin accounts (anyone in ADMIN_EMAILS) land on /dashboard by default
   // after Google sign-in, but the student dashboard isn't useful to them.

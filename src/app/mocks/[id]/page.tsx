@@ -6,12 +6,15 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { resolvePreferredLocale } from "@/lib/preferred-lang";
+import { loginRedirectPath } from "@/lib/login-return";
 import { MockPlayer } from "./MockPlayer";
 
 export default async function MockPlayerPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
   const session = await auth();
@@ -21,8 +24,10 @@ export default async function MockPlayerPage({
   // — the paper they tapped was gone after sign-in. /login already reads a
   // /mocks/ callback ("Your mock is one tap away"), and on return this page
   // auto-enrols and creates the attempt (see below), so the callback is the
-  // mock itself.
-  if (!session?.user?.id) redirect(`/login?callbackUrl=${encodeURIComponent(`/mocks/${id}`)}`);
+  // mock itself. 25 Sep 2026: an email's utm_source/medium/campaign ride
+  // along inside the callback (only those three, checked; see
+  // src/lib/login-return.ts) so the return after sign-in counts as email.
+  if (!session?.user?.id) redirect(loginRedirectPath(`/mocks/${id}`, await searchParams));
   const userId = session.user.id;
 
   // Lookup mock + attempt state IN PARALLEL. Critically, we DO NOT
