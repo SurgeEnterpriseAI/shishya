@@ -21,6 +21,15 @@ import { PulseAsk } from "@/components/PulseAsk";
 import { StateExamsLink } from "@/components/StateExamsLink";
 import { pyqYearDescription, pyqYearH1, pyqYearHeadline } from "@/lib/pyq-naming";
 import { fillPyq, pyqCopyLocale, pyqYearCopy } from "@/lib/pyq-year-copy";
+import {
+  FULL_PATTERN_PREFIX,
+  fullMockFaqNote,
+  isQuestionPaper,
+  officialYearFaqNote,
+  pickFullPatternMock,
+  pickOfficialPaperLinks,
+} from "@/lib/pyq-full-paper";
+import { OfficialYearPapers, WholePaperLinks } from "./WholePaperLinks";
 
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
@@ -146,11 +155,33 @@ export default async function PYQYearPage({
   // Inactive = seeded ahead of its question bank; not public yet.
   if (!exam || !exam.active) notFound();
 
-  const questions = await prisma.question.findMany({
-    where: { examId: exam.id, source: "PYQ", pyqYear: yearNum, validated: true },
-    include: { topic: { include: { subject: true } } },
-    orderBy: { id: "asc" },
-  });
+  // The original paper, when the conducting body publishes it (14 Sep 2026):
+  // linked to the body's own file, never reproduced (src/lib/official-papers.ts).
+  const { loadOfficialPapers } = await import("@/lib/official-papers-db");
+  // 25 Sep 2026: students on year pages ask for "the real 200 question
+  // paper". The exam's full-length real-pattern mock (the hub's tile) and
+  // the body's papers from other years are linked here too
+  // (src/lib/pyq-full-paper.ts) — one extra small query, in parallel with the
+  // page's own; the official rows are the same cached read as before.
+  const [questions, fullPatternMocks, officialRows] = await Promise.all([
+    prisma.question.findMany({
+      where: { examId: exam.id, source: "PYQ", pyqYear: yearNum, validated: true },
+      include: { topic: { include: { subject: true } } },
+      orderBy: { id: "asc" },
+    }),
+    prisma.mock
+      .findMany({
+        where: { examId: exam.id, userId: null, generatedBy: { startsWith: FULL_PATTERN_PREFIX } },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { id: true, generatedBy: true, questionIds: true, config: true, createdAt: true },
+      })
+      .catch(() => []),
+    loadOfficialPapers(exam.id),
+  ]);
+  const fullMock = pickFullPatternMock(fullPatternMocks, exam);
+  const official = pickOfficialPaperLinks(officialRows, yearNum);
+  const officialForYear = official.sameYear;
 
   if (questions.length === 0) {
     return (
@@ -164,6 +195,14 @@ export default async function PYQYearPage({
           <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
             {t("exam.pyq.empty")}
           </p>
+          <OfficialYearPapers rows={officialForYear} year={yearNum} locale={locale} />
+          <WholePaperLinks
+            fullMock={fullMock}
+            official={official}
+            examCode={exam.code}
+            examShortName={exam.shortName}
+            locale={locale}
+          />
         </section>
       </main>
     );
@@ -181,19 +220,15 @@ export default async function PYQYearPage({
   // English copy — a Hindi clause inside an English FAQ answer is noise to
   // an answer engine (16 Sep 2026).
   const modelledEn = fillPyq(pyqYearCopy("en").modelled, { n: questions.length, year: yearNum, m: exam.totalQuestions });
-  // The original paper, when the conducting body publishes it (14 Sep 2026):
-  // linked to the body's own file, never reproduced (src/lib/official-papers.ts).
-  const { loadOfficialPapers } = await import("@/lib/official-papers-db");
-  const { formatPdfSize, papersForYear } = await import("@/lib/official-papers");
-  const officialForYear = papersForYear(await loadOfficialPapers(exam.id), yearNum);
-  const officialPaper = officialForYear.find((r) => r.kind !== "answer key") ?? officialForYear[0] ?? null;
+  // A question paper only (25 Sep 2026): the fallback to officialForYear[0]
+  // handed an answer key to the FAQ note below as "the original paper".
+  const officialPaper = officialForYear.find(isQuestionPaper) ?? null;
   // "Ask Shishya — your free AI tutor — …", split at the first "Shishya".
   const tutorBodyParts = fillPyq(P.tutorBody, { short: exam.shortName, year: yearNum }).split("Shishya");
   // A real question paper (not only an answer key) for this year.
-  const hasOfficialQuestionPaper = officialForYear.some((r) => r.kind !== "answer key");
-  const officialPaperNote = officialPaper
-    ? ` The original ${yearNum} paper is published by ${officialPaper.publisher}: ${officialPaper.url}`
-    : "";
+  const hasOfficialQuestionPaper = official.sameYearHasPaper;
+  // A key-only year is named as the answer key, like the visible heading.
+  const officialPaperNote = officialYearFaqNote(officialForYear, yearNum);
 
   // Signed-in only: find-or-create the system Mock + the user's attempt
   // state. Anonymous visitors (and crawlers) get a read-only landing — no
@@ -289,7 +324,7 @@ export default async function PYQYearPage({
       held: questions.length,
       total: exam.totalQuestions,
       partial,
-      officialPublisher: hasOfficialQuestionPaper ? officialPaper?.publisher ?? null : null,
+      officialPublisher: officialPaper?.publisher ?? null,
     }),
     url: pageUrl,
     inLanguage: "en-IN",
@@ -337,7 +372,8 @@ export default async function PYQYearPage({
         name: `Are these the actual ${exam.shortName} ${yearNum} paper questions?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `No. They are PYQ-pattern questions modelled on the ${exam.shortName} ${yearNum} paper — freshly worded practice questions in the same pattern, not the original questions, which Shishya does not reproduce. The page shows how many questions it holds (${questions.length}) against the real paper's length (${exam.totalQuestions}).${officialPaperNote}`,
+          // + the full-length real-pattern mock (25 Sep 2026), with its own size.
+          text: `No. They are PYQ-pattern questions modelled on the ${exam.shortName} ${yearNum} paper — freshly worded practice questions in the same pattern, not the original questions, which Shishya does not reproduce. The page shows how many questions it holds (${questions.length}) against the real paper's length (${exam.totalQuestions}).${officialPaperNote}${fullMockFaqNote(fullMock, exam.code)}`,
         },
       },
       {
@@ -390,33 +426,17 @@ export default async function PYQYearPage({
         </p>
         <p className="mt-2 max-w-3xl text-xs text-ink-500">{fillPyq(P.freshNote, { year: yearNum })}</p>
         <StateExamsLink state={exam.state} label={t("exam.state.more")} locale={locale} />
-        {officialForYear.length > 0 && (
-          <div id="official-paper" className="mt-3 max-w-3xl rounded-md border border-ink-200 bg-white p-3">
-            <p className="text-sm font-semibold text-ink-900">
-              {fillPyq(P.officialHeading, { year: yearNum, publisher: officialForYear[0].publisher })}
-            </p>
-            <ul className="mt-1 space-y-1">
-              {officialForYear.map((r) => (
-                <li key={r.url} className="text-sm leading-snug">
-                  <a
-                    href={r.url}
-                    target="_blank"
-                    rel="noopener nofollow"
-                    className="break-words font-medium text-saffron-800 underline underline-offset-2 hover:text-saffron-900"
-                  >
-                    {r.paper} ↗
-                  </a>
-                  <span className="text-xs text-ink-500">
-                    {[r.kind, r.language, r.scan ? P.scannedPdf : P.pdf, formatPdfSize(r.bytes)]
-                      .filter(Boolean)
-                      .map((s) => ` · ${s}`)
-                      .join("")}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <OfficialYearPapers rows={officialForYear} year={yearNum} locale={locale} />
+        {/* The whole paper (25 Sep 2026): the full-length real-pattern mock
+            and, when this year has no official paper, other years' — beside
+            the set, never renaming it. Nothing renders when neither exists. */}
+        <WholePaperLinks
+          fullMock={fullMock}
+          official={official}
+          examCode={exam.code}
+          examShortName={exam.shortName}
+          locale={locale}
+        />
 
         <div className="mt-4">
           <ShareExamButton
