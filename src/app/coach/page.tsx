@@ -16,6 +16,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL, REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { Header } from "@/components/Header";
 import { computeCoachPlan } from "@/lib/coach-plan";
@@ -52,10 +53,12 @@ async function loadRollover(userId: string, fromCode: string): Promise<RolloverD
   const todayUtc = new Date(`${new Date(Date.now() + IST_OFFSET_MS).toISOString().slice(0, 10)}T00:00:00.000Z`);
   const lo = new Date(todayUtc.getTime() + 7 * DAY_MS);
   const hi = new Date(todayUtc.getTime() + 90 * DAY_MS);
+  // 25 Sep 2026: the coach plans toward real exams only — school class
+  // containers (src/lib/db/exam-scope.ts) are never a rollover or an option.
   const rows = await prisma.$queryRaw<{ id: string; code: string; short: string; date: Date; enrolled: boolean }[]>`
     SELECT e.id, e.code, e."shortName" AS short, MIN(d.date) AS date, (en."userId" IS NOT NULL) AS enrolled
     FROM "ExamImportantDate" d
-    JOIN "Exam" e ON e.id = d."examId" AND e.active = TRUE
+    JOIN "Exam" e ON e.id = d."examId" AND ${REAL_EXAM_SQL}
     LEFT JOIN "Enrollment" en ON en."examId" = e.id AND en."userId" = ${userId} AND en.active = TRUE
     WHERE d."archivedAt" IS NULL
       AND (d.kind = 'EXAM' OR (d.kind IS NULL AND d."isExamDay" = TRUE))
@@ -120,13 +123,13 @@ async function examOptions(userId: string | null): Promise<ExamOption[]> {
     FROM "Exam" e
     LEFT JOIN "Enrollment" en ON en."examId" = e.id AND en."userId" = ${userId}
     LEFT JOIN (SELECT "examId", COUNT(*) c FROM "Enrollment" GROUP BY 1) pop ON pop."examId" = e.id
-    WHERE e.active = TRUE
+    WHERE ${REAL_EXAM_SQL}
     ORDER BY (en."userId" IS NOT NULL) DESC, COALESCE(pop.c, 0) DESC, e."shortName" ASC
     LIMIT 60`;
   const dates = await prisma.$queryRaw<{ code: string; d: Date }[]>`
     SELECT DISTINCT ON (e.code) e.code, i.date AS d
     FROM "ExamImportantDate" i JOIN "Exam" e ON e.id = i."examId"
-    WHERE i."isExamDay" = TRUE AND i."archivedAt" IS NULL AND i.date > NOW()
+    WHERE i."isExamDay" = TRUE AND i."archivedAt" IS NULL AND i.date > NOW() AND ${NOT_SCHOOL_SQL}
     ORDER BY e.code, i.date ASC`;
   const dateByCode = new Map(dates.map((x) => [x.code, x.d.toISOString().slice(0, 10)]));
   return rows.map((r) => ({

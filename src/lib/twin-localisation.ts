@@ -558,9 +558,10 @@ function groupByExam<T extends { examId: string }>(rows: readonly T[]): Map<stri
  *  its twins localised, so every caller treats a rejection as "no twins"
  *  (sitemap, IndexNow, the writer, getTwinVerdict). */
 export async function loadTwinVerdicts(examIds: readonly string[] | "all", now: Date = new Date()): Promise<ExamTwinRow[]> {
-  const { prisma } = await import("@/lib/db/prisma");
+  const [{ prisma }, { REAL_EXAM_WHERE }] = await Promise.all([import("@/lib/db/prisma"), import("@/lib/db/exam-scope")]);
   const exams = await prisma.exam.findMany({
-    where: examIds === "all" ? { active: true } : { id: { in: [...examIds] } },
+    // 25 Sep 2026: "all" = real exams only (school class containers have no twins).
+    where: examIds === "all" ? REAL_EXAM_WHERE : { id: { in: [...examIds] } },
     select: { id: true, code: true, name: true, shortName: true, description: true },
   });
   if (exams.length === 0) return [];
@@ -623,20 +624,25 @@ const CALENDAR_HORIZON_DAYS = 120;
 /** Verdict for /hi/exam-calendar and /te/exam-calendar — same reads as the
  *  page. Rejects when a read fails (callers treat that as no twins). */
 export async function loadCalendarTwinVerdict(now: Date = new Date()): Promise<TwinVerdict> {
-  const [{ prisma }, { MATERIAL_NEWS_RE }] = await Promise.all([import("@/lib/db/prisma"), import("@/lib/exam-timeline")]);
+  const [{ prisma }, { MATERIAL_NEWS_RE }, { REAL_EXAM_WHERE }] = await Promise.all([
+    import("@/lib/db/prisma"),
+    import("@/lib/exam-timeline"),
+    import("@/lib/db/exam-scope"),
+  ]);
   const [rows, news] = await Promise.all([
     prisma.examImportantDate.findMany({
       where: {
         date: { gte: new Date(now.getTime() - 1.5 * DAY_MS), lte: new Date(now.getTime() + CALENDAR_HORIZON_DAYS * DAY_MS) },
         archivedAt: null,
-        exam: { active: true },
+        // 25 Sep 2026: real exams only, as on the calendar page itself.
+        exam: REAL_EXAM_WHERE,
       },
       orderBy: { date: "asc" },
       take: 800,
       select: { label: true, kind: true, isExamDay: true, date: true, examId: true, exam: { select: { shortName: true } } },
     }),
     prisma.examNewsItem.findMany({
-      where: { archivedAt: null, createdAt: { gte: new Date(now.getTime() - 14 * DAY_MS) }, exam: { active: true } },
+      where: { archivedAt: null, createdAt: { gte: new Date(now.getTime() - 14 * DAY_MS) }, exam: REAL_EXAM_WHERE },
       orderBy: { publishedAt: "desc" },
       take: 200,
       select: { title: true, examId: true, exam: { select: { shortName: true } } },

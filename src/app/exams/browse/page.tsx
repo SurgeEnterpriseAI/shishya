@@ -16,6 +16,7 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { Prisma } from "@prisma/client";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { STATES, stateSlug, languageName } from "@/lib/state-info";
 import { getExamCatalog } from "@/lib/db/exam-cache";
 import { ExamSearchBox } from "./ExamSearchBox";
@@ -118,8 +119,9 @@ export default async function ExamsCatalogPage({
 
   // Build Prisma where clause from the URL params. ANDed together, so
   // /exams?state=TN&lang=TA narrows to "Tamil Nadu exams offered in Tamil".
-  // SCHOOL_BOARD entries belong to /schooling, not the entrance-exam browse.
-  const where: Prisma.ExamWhereInput = { active: true, category: { not: "SCHOOL_BOARD" } };
+  // SCHOOL_BOARD entries belong to /schooling, not the entrance-exam browse
+  // (25 Sep 2026: the shared REAL_EXAM_WHERE, also on every facet below).
+  const where: Prisma.ExamWhereInput = { ...REAL_EXAM_WHERE };
   if (q) {
     where.OR = [
       { shortName: { contains: q, mode: "insensitive" } },
@@ -160,7 +162,7 @@ export default async function ExamsCatalogPage({
   // Counts per facet — drives the "number of exams" pill beside each
   // filter chip. Computed off the SAME `where` (minus the facet we're
   // counting) so the counts feel correct as filters compose.
-  const totalActive = await prisma.exam.count({ where: { active: true, category: { not: "SCHOOL_BOARD" } } });
+  const totalActive = await prisma.exam.count({ where: REAL_EXAM_WHERE });
 
   // Facet counts: state, category, lang (each computed without their own
   // current filter applied so a chip's count reflects what the user would
@@ -168,7 +170,7 @@ export default async function ExamsCatalogPage({
   const stateCounts = await prisma.exam.groupBy({
     by: ["state"],
     where: {
-      active: true,
+      ...REAL_EXAM_WHERE,
       state: { not: null },
       ...(q ? { OR: where.OR } : {}),
       ...(lang && (FILTER_LANGS as readonly string[]).includes(lang) ? { languages: { has: lang as any } } : {}),
@@ -183,7 +185,7 @@ export default async function ExamsCatalogPage({
   const categoryCounts = await prisma.exam.groupBy({
     by: ["category"],
     where: {
-      active: true,
+      ...REAL_EXAM_WHERE,
       ...(q ? { OR: where.OR } : {}),
       ...(state && state in STATES ? { state } : {}),
       ...(lang && (FILTER_LANGS as readonly string[]).includes(lang) ? { languages: { has: lang as any } } : {}),
@@ -199,7 +201,7 @@ export default async function ExamsCatalogPage({
   // filtered set ignoring the current lang filter.
   const langFilterBase = await prisma.exam.findMany({
     where: {
-      active: true,
+      ...REAL_EXAM_WHERE,
       ...(q ? { OR: where.OR } : {}),
       ...(state && state in STATES ? { state } : {}),
       ...(category && (FILTER_CATEGORIES as readonly string[]).includes(category) ? { category: category as any } : {}),

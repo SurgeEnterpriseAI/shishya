@@ -12,6 +12,7 @@ export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { sendTelegramMessage, telegramConfigured, tgEscape, tgUrl, ensureTelegramWebhook } from "@/lib/telegram";
 import { liveTestEmailNotice } from "@/lib/live-test-today";
 import { buildTimeline, fmtDay } from "@/lib/exam-timeline";
@@ -43,7 +44,9 @@ export async function GET(req: Request) {
   const now = new Date();
   // Live catalogue size for the footer line (audit 11 Sep 2026: this
   // carried a typed "177" that drifted). Stable wording if the count fails.
-  const examCount = await prisma.exam.count({ where: { active: true } }).catch(() => 0);
+  // 25 Sep 2026: real exams only — school class containers are not exams
+  // (src/lib/db/exam-scope.ts), here or in the tracker lines below.
+  const examCount = await prisma.exam.count({ where: REAL_EXAM_WHERE }).catch(() => 0);
   const examScope = examCount > 0 ? String(examCount) : "170+";
 
   // Exam tracker signals for the channel (23 Aug 2026): exam days in the
@@ -51,7 +54,7 @@ export async function GET(req: Request) {
   // in the last 24 h — the lines aspirants forward into their groups.
   const weekRows = await prisma.examImportantDate
     .findMany({
-      where: { archivedAt: null, isExamDay: true, date: { gte: new Date(now.getTime() - 86_400_000), lte: new Date(now.getTime() + 7 * 86_400_000) }, exam: { active: true } },
+      where: { archivedAt: null, isExamDay: true, date: { gte: new Date(now.getTime() - 86_400_000), lte: new Date(now.getTime() + 7 * 86_400_000) }, exam: REAL_EXAM_WHERE },
       orderBy: { date: "asc" },
       take: 60,
       include: { exam: { select: { shortName: true, code: true, eligibility: { select: { officialUrl: true } } } } },
@@ -79,7 +82,7 @@ export async function GET(req: Request) {
       SELECT d.label, d.date, e."shortName" AS short, e.code, d.url, el."officialUrl"
       FROM "ExamImportantDate" d JOIN "Exam" e ON e.id = d."examId"
       LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
-      WHERE d."archivedAt" IS NULL AND d.confidence = 'official' AND e.active = TRUE
+      WHERE d."archivedAt" IS NULL AND d.confidence = 'official' AND ${REAL_EXAM_SQL}
         AND d."createdAt" > NOW() - INTERVAL '26 hours' AND d.date >= NOW() - INTERVAL '1 day'
       ORDER BY d.date ASC LIMIT 4`
     .catch(() => []);

@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
+import { notSchoolSqlText } from "@/lib/db/exam-scope";
 import { recordAiUsage } from "@/lib/ai/usage";
 
 const MODEL = "claude-sonnet-4-5-20250929";
@@ -48,12 +49,13 @@ export async function GET(req: Request) {
 
   // Most-stale first — by the later of last SUCCESS (generatedAt) and last
   // ATTEMPT (vacanciesAttemptedAt), so a failing exam cannot hog the batch.
+  // 25 Sep 2026: real exams only — no web-searched vacancies for a school class.
   const exams = await prisma.$queryRawUnsafe<
     { id: string; code: string; name: string; shortName: string }[]
   >(
     `SELECT e.id, e.code, e.name, e."shortName"
      FROM "ExamEligibility" x JOIN "Exam" e ON e.id = x."examId"
-     WHERE e.active = TRUE
+     WHERE e.active = TRUE AND ${notSchoolSqlText("e")}
      ORDER BY GREATEST(x."generatedAt", COALESCE(x."vacanciesAttemptedAt", 'epoch'::timestamp)) ASC
      LIMIT ${BATCH}`,
   );

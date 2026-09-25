@@ -11,6 +11,7 @@
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { tk, type Locale, type StringKey } from "@/lib/i18n";
 import { computeExamWeekState, dateWithTier, examRowOrder, isOpenEndedRow, istDay, type ExamWeekState } from "@/lib/exam-week";
 import { applyShiftDay } from "@/lib/exam-week-student";
@@ -96,6 +97,8 @@ export interface ExamBundle {
 /** Active exams + ALL their live tracker rows, keyed by exam id. Rows come
  *  back by date then id (16 Sep 2026) — the row picks themselves are
  *  order-independent (examRowOrder), this only keeps the payload stable. */
+// 25 Sep 2026: "active exams" = real exams (src/lib/db/exam-scope.ts) here and
+// in every exam-week selection below — school class containers never mail.
 export async function loadExamBundles(examIds: string[]): Promise<Map<string, ExamBundle>> {
   const out = new Map<string, ExamBundle>();
   const ids = Array.from(new Set(examIds)).filter(Boolean);
@@ -104,7 +107,7 @@ export async function loadExamBundles(examIds: string[]): Promise<Map<string, Ex
     SELECT e.id AS "examId", e.code, e."shortName" AS short, e.name, e.category::text AS category, e.state, el."officialUrl"
     FROM "Exam" e
     LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
-    WHERE e.active = TRUE AND e.id IN (${Prisma.join(ids)})`.catch((err) => {
+    WHERE ${REAL_EXAM_SQL} AND e.id IN (${Prisma.join(ids)})`.catch((err) => {
     console.error("[exam-week-mail] exam meta failed", err);
     return [] as ExamMeta[];
   });
@@ -434,7 +437,7 @@ export async function nextExamsInTrack(meta: ExamMeta, now: Date): Promise<NextE
     SELECT d.id, d."examId", e.code, e."shortName" AS short, el."officialUrl",
            d.label, d.date, d."isExamDay", d.kind, d.confidence, d.url, d.source, d.notes
     FROM "ExamImportantDate" d
-    JOIN "Exam" e ON e.id = d."examId" AND e.active = TRUE
+    JOIN "Exam" e ON e.id = d."examId" AND ${REAL_EXAM_SQL}
     LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
     WHERE d."archivedAt" IS NULL
       AND (d."isExamDay" = TRUE OR d.kind = 'EXAM')

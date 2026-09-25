@@ -48,6 +48,7 @@
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { istDay, type ExamWeekPhase } from "@/lib/exam-week";
 import { buildTimeline, type SourceTier, type TimelineInput } from "@/lib/exam-timeline";
 import { loadExamWeekExams } from "@/lib/exam-week-aeo";
@@ -209,7 +210,8 @@ interface PastDateRow extends TimelineInput {
 
 const TIER_RANK: Record<SourceTier, number> = { official: 0, reported: 1, expected: 2 };
 
-/** One seed per (active exam, typed exam day) with the day 8–30 days ago. */
+/** One seed per (active exam, typed exam day) with the day 8–30 days ago.
+ *  25 Sep 2026: "active exam" = real exam (REAL_EXAM_SQL, src/lib/db/exam-scope.ts). */
 async function pastSeeds(now: Date): Promise<Loaded<Seed[]>> {
   const today = istDay(now);
   const fromDay = shiftDay(today, -PAST_FROM_DAYS);
@@ -219,7 +221,7 @@ async function pastSeeds(now: Date): Promise<Loaded<Seed[]>> {
     SELECT d.id, d."examId", e.code, e."shortName" AS short, el."officialUrl",
            d.label, d.date, d."isExamDay", d.kind, d.confidence, d.url, d.source, d.notes
     FROM "ExamImportantDate" d
-    JOIN "Exam" e ON e.id = d."examId" AND e.active = TRUE
+    JOIN "Exam" e ON e.id = d."examId" AND ${REAL_EXAM_SQL}
     LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
     WHERE d."archivedAt" IS NULL
       AND d.kind = 'EXAM'

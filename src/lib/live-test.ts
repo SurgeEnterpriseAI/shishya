@@ -25,6 +25,7 @@
 // see EXCLUDE_REHEARSAL_SQL in src/lib/live-test-today.ts.
 
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { loadExamWeekExams } from "@/lib/exam-week-aeo";
 import { plainDay, tierWord, whenWithTier } from "@/lib/exam-week-mail";
 import type { SourceTier } from "@/lib/exam-timeline";
@@ -253,13 +254,15 @@ async function createSundayPapers(opensAt: Date, closesAt: Date): Promise<LiveTe
   //   2. fill remaining slots by popularity, but NEVER include an exam
   //      whose exam day passed within the last 6 months and has no
   //      upcoming date (that cohort has already sat the paper).
+  // 25 Sep 2026: real exams only in both picks (src/lib/db/exam-scope.ts) —
+  // a school class container is never an All-India live test.
   const imminent = await prisma.$queryRaw<{ examId: string; code: string; short: string }[]>`
     SELECT e.id AS "examId", e.code, e."shortName" AS short
     FROM "Exam" e
     JOIN "ExamImportantDate" d
       ON d."examId" = e.id AND d."isExamDay" = TRUE AND d."archivedAt" IS NULL AND d.date > NOW()
     LEFT JOIN "Enrollment" en ON en."examId" = e.id AND en.active = TRUE
-    WHERE e.active = TRUE
+    WHERE ${REAL_EXAM_SQL}
     GROUP BY e.id, e.code, e."shortName"
     HAVING (MIN(d.date)::date - CURRENT_DATE) BETWEEN 7 AND 75
     ORDER BY COUNT(en.id) DESC, MIN(d.date) ASC
@@ -270,7 +273,7 @@ async function createSundayPapers(opensAt: Date, closesAt: Date): Promise<LiveTe
     const have = top.map((t) => t.examId);
     const filler = await prisma.$queryRaw<{ examId: string; code: string; short: string }[]>`
       SELECT e.id AS "examId", e.code, e."shortName" AS short
-      FROM "Enrollment" en JOIN "Exam" e ON e.id = en."examId" AND e.active = TRUE
+      FROM "Enrollment" en JOIN "Exam" e ON e.id = en."examId" AND ${REAL_EXAM_SQL}
       WHERE NOT (e.id = ANY(${have}))
         -- exclude exams already written in the last 6 months with nothing upcoming
         AND NOT EXISTS (

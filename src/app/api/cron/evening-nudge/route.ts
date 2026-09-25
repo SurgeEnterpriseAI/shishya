@@ -20,6 +20,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_WHERE } from "@/lib/db/exam-scope";
 import { sendEveningRescueEmail } from "@/lib/email";
 import { optedOutUserIds } from "@/lib/email-optout";
 import { computeStreak, istDay } from "@/lib/db/streak";
@@ -70,16 +71,20 @@ export async function GET(req: Request) {
   }
   if (atRisk.length === 0) return Response.json({ ok: true, sent: 0, reason: "no streaks at risk" });
 
+  // 25 Sep 2026: the mail names the newest active enrolment as "your exam",
+  // so school class containers (src/lib/db/exam-scope.ts) count neither for
+  // the audience nor for the name — a student enrolled only in a school
+  // class gets no exam streak mail.
   const users = await prisma.user.findMany({
     where: {
       email: { not: "" },
       id: { in: atRisk.map((r) => r.userId), notIn: await optedOutUserIds() }, // opt-out at selection (review 22 Aug 2026)
-      enrollments: { some: { active: true } },
+      enrollments: { some: { active: true, exam: NOT_SCHOOL_WHERE } },
     },
     select: {
       id: true, email: true, name: true,
       enrollments: {
-        where: { active: true },
+        where: { active: true, exam: NOT_SCHOOL_WHERE },
         orderBy: { createdAt: "desc" },
         take: 1,
         select: { exam: { select: { shortName: true } } },

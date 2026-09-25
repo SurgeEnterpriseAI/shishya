@@ -11,6 +11,7 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { FindExamQuiz } from "./FindExamQuiz";
 import { SaveMatchesNudge } from "./SaveMatchesNudge";
@@ -80,7 +81,7 @@ export default async function FindYourExamPage({
              x."domicileState", x."vacanciesApprox", x."vacanciesNote", x."skillProfile",
              x."officialUrl", x."officialName"
       FROM "ExamEligibility" x JOIN "Exam" e ON e.id = x."examId"
-      WHERE e.active = TRUE
+      WHERE ${REAL_EXAM_SQL} -- 25 Sep 2026: real exams only, never a school class container
     `.catch(() => [] as Row[]);
 
   // Government-job exams only — this finder answers "which govt JOB can

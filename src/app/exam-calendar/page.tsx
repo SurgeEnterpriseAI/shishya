@@ -8,6 +8,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale, twinCanonical } from "@/lib/seo-locale";
 import { getCalendarTwinVerdict } from "@/lib/twin-localisation";
@@ -81,7 +82,8 @@ export default async function ExamCalendarPage() {
 
   const raw = await prisma.examImportantDate
     .findMany({
-      where: { date: { gte: from, lte: to }, archivedAt: null, exam: { active: true } },
+      // 25 Sep 2026: real exams only (school class containers are not exams).
+      where: { date: { gte: from, lte: to }, archivedAt: null, exam: REAL_EXAM_WHERE },
       orderBy: { date: "asc" },
       take: 800,
       include: {
@@ -131,7 +133,7 @@ export default async function ExamCalendarPage() {
   // Latest material updates (14 days), one per exam.
   const newsRaw = await prisma.examNewsItem
     .findMany({
-      where: { archivedAt: null, createdAt: { gte: new Date(now.getTime() - 14 * 86_400_000) }, exam: { active: true } },
+      where: { archivedAt: null, createdAt: { gte: new Date(now.getTime() - 14 * 86_400_000) }, exam: REAL_EXAM_WHERE },
       orderBy: { publishedAt: "desc" },
       take: 200,
       include: { exam: { select: { code: true, shortName: true } } },

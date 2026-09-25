@@ -43,6 +43,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 import { prisma } from "@/lib/db/prisma";
+import { notSchoolSql } from "@/lib/db/exam-scope";
 import { sendCoachDayEmail, type MailRollover } from "@/lib/email";
 import { istDay } from "@/lib/exam-week";
 import {
@@ -93,21 +94,32 @@ export async function GET(req: Request) {
 
   const rows = await prisma
     .$queryRaw<Row[]>`
-      SELECT DISTINCT ON (cd."userId") cd."userId", u.email, u.name,
-        cp."examId", e.code, e."shortName" AS short, cd.tasks, cd.note,
-        GREATEST(0, CEIL(EXTRACT(EPOCH FROM (cp."examDate" - NOW())) / 86400))::int AS "daysLeft",
-        cp."examDate", cp."createdAt" AS "planCreatedAt"
-      FROM "CoachDay" cd
-      JOIN "CoachPlan" cp ON cp."userId" = cd."userId"
-      JOIN "User" u ON u.id = cd."userId"
-      JOIN "Exam" e ON e.id = cp."examId"
-      WHERE cd.date = ${dayKey} AND u.email <> '' AND u."emailOptOut" = FALSE
-        AND NOT EXISTS (
-          SELECT 1 FROM "EmailTouch" t
-          WHERE t."userId" = cd."userId" AND t.tag = 'coach-morning'
-            AND t."sentAt" > NOW() - INTERVAL '20 hours'
-        )
-      ORDER BY cd."userId", cp."updatedAt" DESC
+      SELECT latest."userId", latest.email, latest.name, latest."examId", latest.code, latest.short,
+        latest.tasks, latest.note, latest."daysLeft", latest."examDate", latest."planCreatedAt"
+      FROM (
+        SELECT DISTINCT ON (cd."userId") cd."userId", u.email, u.name,
+          cp."examId", e.code, e."shortName" AS short, e.category, cd.tasks, cd.note,
+          GREATEST(0, CEIL(EXTRACT(EPOCH FROM (cp."examDate" - NOW())) / 86400))::int AS "daysLeft",
+          cp."examDate", cp."createdAt" AS "planCreatedAt"
+        FROM "CoachDay" cd
+        JOIN "CoachPlan" cp ON cp."userId" = cd."userId"
+        JOIN "User" u ON u.id = cd."userId"
+        JOIN "Exam" e ON e.id = cp."examId"
+        WHERE cd.date = ${dayKey} AND u.email <> '' AND u."emailOptOut" = FALSE
+          AND NOT EXISTS (
+            SELECT 1 FROM "EmailTouch" t
+            WHERE t."userId" = cd."userId" AND t.tag = 'coach-morning'
+              AND t."sentAt" > NOW() - INTERVAL '20 hours'
+          )
+        ORDER BY cd."userId", cp."updatedAt" DESC
+      ) latest
+      -- 25 Sep 2026: exam coaching mail only; a school class plan never mails.
+      -- The newest plan is picked FIRST and dropped when it is a school plan:
+      -- today's CoachDay tasks were written for the newest plan
+      -- (coach-plan.ts loadPlanContext), so falling back to an older exam
+      -- plan would print that exam's name and countdown over school tasks.
+      WHERE ${notSchoolSql("latest")}
+      ORDER BY latest."userId"
       LIMIT ${MAX_SENDS}
     `.catch((e) => {
       console.error("[coach-morning] selection failed", e);

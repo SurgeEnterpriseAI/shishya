@@ -11,6 +11,7 @@
 //   • today only (IST), so it always reads as "right now"
 
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 
 export interface GrinderEntry {
   icon: string;
@@ -43,12 +44,14 @@ function istDayStartUtc(now = new Date()): Date {
 export async function loadWallOfGrinders(limit = 10): Promise<GrinderEntry[]> {
   const day = istDayStartUtc();
 
+  // 25 Sep 2026: exam effort only (NOT_SCHOOL_SQL) — school class practice
+  // never reaches this public home-page wall (children's activity stays off it).
   const [mocks, topics, tutor] = await Promise.all([
     prisma.$queryRaw<{ uid: string; short: string; n: bigint }[]>`
       SELECT a."userId" uid, e."shortName" short, COUNT(*) n
       FROM "Attempt" a JOIN "Mock" m ON m.id = a."mockId" JOIN "Exam" e ON e.id = m."examId"
       WHERE a."finishedAt" >= ${day} AND a.status IN ('SUBMITTED','AUTO_SUBMITTED')
-        AND a."userId" IS NOT NULL
+        AND a."userId" IS NOT NULL AND ${NOT_SCHOOL_SQL}
       GROUP BY 1, 2`.catch(() => []),
     prisma.$queryRaw<{ uid: string; short: string; n: bigint }[]>`
       SELECT ts."userId" uid, e."shortName" short, COUNT(*) n
@@ -56,7 +59,7 @@ export async function loadWallOfGrinders(limit = 10): Promise<GrinderEntry[]> {
       JOIN "Topic" t ON t.id = ts."topicId"
       JOIN "Subject" s ON s.id = t."subjectId"
       JOIN "Exam" e ON e.id = s."examId"
-      WHERE ts."readAt" >= ${day}
+      WHERE ts."readAt" >= ${day} AND ${NOT_SCHOOL_SQL}
       GROUP BY 1, 2`.catch(() => []),
     prisma.$queryRaw<{ uid: string; n: bigint }[]>`
       SELECT cs."userId" uid, COUNT(*) n

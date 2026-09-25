@@ -9,6 +9,7 @@
 // varies by exam/state/notification.
 
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { computeExamTags } from "@/lib/exam-tags";
 import { INDIAN_STATES } from "@/lib/states";
 
@@ -61,7 +62,7 @@ export async function loadVacancyExplorer(): Promise<VacancyExplorer> {
     SELECT e.code, e."shortName" AS short, e.category::text AS category, e.state,
            x."vacanciesApprox" AS v, x."generatedAt"
     FROM "ExamEligibility" x JOIN "Exam" e ON e.id = x."examId"
-    WHERE e.active = TRUE
+    WHERE ${REAL_EXAM_SQL} -- 25 Sep 2026: real exams only; a school class container is not a job
   `;
 
   const jobs = rows.filter((r) =>

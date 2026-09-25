@@ -7,6 +7,7 @@
 
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 import { Header } from "@/components/Header";
 import { ResultsBrowser, type ResultRow } from "./ResultsBrowser";
 
@@ -42,6 +43,7 @@ export default async function ResultsPage() {
     JOIN "Exam" e ON e.id = r."examId"
     WHERE r.stage <> '__not_a_result__'
       AND r."declaredOn" > NOW() - INTERVAL '60 days'
+      AND ${NOT_SCHOOL_SQL} -- 25 Sep 2026: exam results only, never a school class container
     ORDER BY r."declaredOn" DESC, r."createdAt" DESC
     LIMIT 100`;
 

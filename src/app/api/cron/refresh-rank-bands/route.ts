@@ -10,6 +10,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { generateRankBands } from "@/lib/ai/rank-bands";
 
 const GEN_SOURCE = "ai-generated:claude";
@@ -37,7 +38,9 @@ export async function GET(req: Request) {
   }
 
   const exams = await prisma.exam.findMany({
-    where: { active: true },
+    // 25 Sep 2026: real exams only — "rank bands" for a school class would
+    // be invented numbers (and AI spend) for something with no rank.
+    where: REAL_EXAM_WHERE,
     orderBy: { code: "asc" },
     select: { id: true, code: true, name: true, shortName: true, category: true },
   });

@@ -27,6 +27,7 @@
 // No model calls anywhere in this file.
 
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_WHERE, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { computeExamWeekState, istDay, type ExamWeekPhase, type ExamWeekState } from "@/lib/exam-week";
 import { PASSED_ESTIMATE_TEXT, type TimelineRow } from "@/lib/exam-timeline";
 import { markingSchemeVerdict, type MarkingSchemeVerdict } from "@/lib/marking-scheme";
@@ -104,7 +105,9 @@ export async function loadExamWeekExams(opts: { examCode?: string; now?: Date } 
       archivedAt: null,
       kind: "EXAM",
       date: { gte: from, lte: to },
-      exam: { active: true, ...(opts.examCode ? { code: opts.examCode } : {}) },
+      // 25 Sep 2026: real exams only — exam week is a recruitment /
+      // entrance-exam state machine; school class containers never enter it.
+      exam: { ...REAL_EXAM_WHERE, ...(opts.examCode ? { code: opts.examCode } : {}) },
     },
     select: { examId: true },
     distinct: ["examId"],
@@ -114,7 +117,7 @@ export async function loadExamWeekExams(opts: { examCode?: string; now?: Date } 
 
   const [exams, rows, elig] = await Promise.all([
     prisma.exam.findMany({
-      where: { id: { in: ids } },
+      where: { ...NOT_SCHOOL_WHERE, id: { in: ids } },
       select: {
         id: true,
         code: true,

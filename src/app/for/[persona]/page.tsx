@@ -20,6 +20,7 @@ import { PersonaViewBeacon } from "./PersonaViewBeacon";
 import { PERSONAS, findPersona } from "@/data/personas";
 import { findArticle } from "@/data/insights-articles";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { unstable_cache } from "next/cache";
 
 export const revalidate = 86_400; // 24h
@@ -72,7 +73,8 @@ const loadExams = unstable_cache(
     if (codes.length === 0) return [];
     try {
       const rows = await prisma.exam.findMany({
-        where: { code: { in: codes }, active: true },
+        // 25 Sep 2026: real exams only (school class containers are not exams).
+        where: { code: { in: codes }, ...REAL_EXAM_WHERE },
         select: { code: true, shortName: true, name: true, category: true },
       });
       // Cast category enum → string for the card render, then preserve

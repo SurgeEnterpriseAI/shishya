@@ -13,6 +13,7 @@ import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { isCurrentUserAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_WHERE, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { formatDisplayScorePct } from "@/lib/scoring";
 
 // The page fires ~30 read queries to build the operator dashboard. With
@@ -249,8 +250,10 @@ async function renderInsights() {
             .slice(0, 10);
         }), [] as Array<{ code?: string; shortName?: string; count: number }>),
 
-    safe("totalExams", () => prisma.exam.count(), 0),
-    safe("activeExams", () => prisma.exam.count({ where: { active: true } }), 0),
+    // 25 Sep 2026: exam totals count real exams; school class containers
+    // would inflate "Active exams" and dilute the news/date/band coverage.
+    safe("totalExams", () => prisma.exam.count({ where: NOT_SCHOOL_WHERE }), 0),
+    safe("activeExams", () => prisma.exam.count({ where: REAL_EXAM_WHERE }), 0),
     safe("totalQuestions", () => prisma.question.count(), 0),
     safe("validatedQuestions", () => prisma.question.count({ where: { validated: true } }), 0),
     safe("pendingAiQuestions",

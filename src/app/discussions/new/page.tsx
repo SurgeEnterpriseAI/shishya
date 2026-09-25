@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { ComposeForm } from "./ComposeForm";
 
@@ -13,7 +14,8 @@ export default async function NewDiscussionPage() {
   const { t } = await getT();
 
   const exams = await prisma.exam.findMany({
-    where: { active: true },
+    // 25 Sep 2026: real exams only (school class containers are not exams).
+    where: REAL_EXAM_WHERE,
     select: { code: true, shortName: true },
     orderBy: { candidatesPerYear: "desc" },
   });

@@ -31,6 +31,7 @@ export const maxDuration = 120;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { pingIndexNow, SITE_ORIGIN } from "@/lib/indexnow";
 import { indexNowWindowMs, selectFreshStories, STORY_LOOKBACK_DAYS, type StoryRow } from "@/lib/news-dedupe";
 import { GET as examWeekGET } from "../indexnow-examweek/route";
@@ -57,7 +58,8 @@ export async function GET(req: Request) {
     const fresh = await prisma.$queryRaw<(StoryRow & { code: string })[]>`
       SELECT n.id, n."examId", n.title, LEFT(n.body, 600) AS body, n."createdAt", e.code
       FROM "ExamNewsItem" n JOIN "Exam" e ON e.id = n."examId"
-      WHERE n."createdAt" >= ${since} AND n."archivedAt" IS NULL AND e.active = TRUE
+      -- 25 Sep 2026: real exams only; no school class URL is pinged while hidden.
+      WHERE n."createdAt" >= ${since} AND n."archivedAt" IS NULL AND ${REAL_EXAM_SQL}
       ORDER BY n."createdAt" ASC LIMIT ${FRESH_CAP}`;
     const examIds = [...new Set(fresh.map((r) => r.examId))];
     // Earlier rows of the same exams, live or archived — the families a

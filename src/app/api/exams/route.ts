@@ -8,12 +8,14 @@
 export const revalidate = 60;
 
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { ok, serverError } from "@/lib/http";
 
 export async function GET() {
   try {
     const rows = await prisma.exam.findMany({
-      where: { active: true },
+      // 25 Sep 2026: real exams only; school class containers are not exams.
+      where: REAL_EXAM_WHERE,
       orderBy: { candidatesPerYear: "desc" },
       select: {
         id: true,

@@ -52,6 +52,7 @@ export const dynamic = "force-dynamic";
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { sendExamEveEmail } from "@/lib/email";
 import { getDailyQuote } from "@/data/motivational-quotes";
 import { admitNotesAreReporting, computeExamWeekState, istDay } from "@/lib/exam-week";
@@ -183,10 +184,12 @@ export async function GET(req: Request) {
 
   // 1) Exams with ANY live exam-day row dated tomorrow (IST). The shared
   //    state machine then decides, per exam, whether tonight is its eve.
+  //    25 Sep 2026: real exams only in all three selections (REAL_EXAM_SQL)
+  //    — a school class container never reaches an exam-eve mail.
   const tomorrowExams = await prisma.$queryRaw<{ examId: string }[]>`
     SELECT DISTINCT d."examId"
     FROM "ExamImportantDate" d
-    JOIN "Exam" e ON e.id = d."examId" AND e.active = TRUE
+    JOIN "Exam" e ON e.id = d."examId" AND ${REAL_EXAM_SQL}
     WHERE d."archivedAt" IS NULL
       AND (d."isExamDay" = TRUE OR d.kind = 'EXAM')
       AND (d.date + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' + INTERVAL '1 day')::date
@@ -207,7 +210,7 @@ export async function GET(req: Request) {
     SELECT DISTINCT ON (u.id) u.id, u.email, u.name, cp."examId", cp."examDate" AS "planDate", en."shiftDate"
     FROM "CoachPlan" cp
     JOIN "User" u ON u.id = cp."userId"
-    JOIN "Exam" e ON e.id = cp."examId" AND e.active = TRUE
+    JOIN "Exam" e ON e.id = cp."examId" AND ${REAL_EXAM_SQL}
     LEFT JOIN "Enrollment" en ON en."userId" = u.id AND en."examId" = cp."examId" AND en.active = TRUE
     WHERE u.email <> '' AND u."emailOptOut" = FALSE
       AND (cp."examDate" + INTERVAL '5.5 hours')::date
@@ -228,7 +231,7 @@ export async function GET(req: Request) {
   const shiftExams = await prisma.$queryRaw<{ examId: string }[]>`
     SELECT DISTINCT en."examId"
     FROM "Enrollment" en
-    JOIN "Exam" e ON e.id = en."examId" AND e.active = TRUE
+    JOIN "Exam" e ON e.id = en."examId" AND ${REAL_EXAM_SQL}
     WHERE en.active = TRUE AND en."shiftDate" = ${tomorrow}::date
   `.catch((err) => {
     console.error("[exam-eve] shift-day selection failed", err);

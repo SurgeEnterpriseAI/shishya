@@ -15,6 +15,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_WHERE, notSchoolSql } from "@/lib/db/exam-scope";
 import { STATES } from "@/lib/state-info";
 import { recordEvent } from "@/lib/analytics";
 import { isLanguageCode } from "@/lib/preferred-lang";
@@ -56,13 +57,15 @@ export async function POST(req: Request) {
   }
 
   // Validate exam codes — must each exist in the Exam table.
+  // 25 Sep 2026: and be a real exam — onboarding enrolments feed every
+  // exam mail loop, which a school class container must never join.
   const requestedCodes = Array.isArray(body.prepCodes)
     ? (body.prepCodes as unknown[]).filter((c): c is string => typeof c === "string").slice(0, 10)
     : [];
   let prepCodes: string[] = [];
   if (requestedCodes.length > 0) {
     const rows = await prisma.$queryRaw<{ code: string }[]>`
-      SELECT "code" FROM "Exam" WHERE "code" = ANY(${requestedCodes}::text[]) AND "active" = TRUE
+      SELECT "code" FROM "Exam" WHERE "code" = ANY(${requestedCodes}::text[]) AND "active" = TRUE AND ${notSchoolSql("")}
     `;
     prepCodes = rows.map((r) => r.code);
   }
@@ -92,7 +95,7 @@ export async function POST(req: Request) {
   // browses is invisible to every email we send (audit, 18 Aug 2026).
   if (prepCodes.length > 0) {
     const exams = await prisma.exam.findMany({
-      where: { code: { in: prepCodes } },
+      where: { ...NOT_SCHOOL_WHERE, code: { in: prepCodes } },
       select: { id: true },
     });
     for (const e of exams) {

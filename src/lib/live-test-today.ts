@@ -11,6 +11,7 @@
 import { unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 
 /**
  * Keeps ONLY the shared Sunday All-India papers.
@@ -46,13 +47,15 @@ export interface LiveTestToday {
 async function loadRaw(): Promise<LiveTestToday | null> {
   // "Today-ish": anything still open, or opening within the next 18h
   // (so the banner also teases tonight → tomorrow-morning opens).
+  // 25 Sep 2026: exam papers only (NOT_SCHOOL_SQL) in all three readers here
+  // — the home banner, the mail/Telegram notice and the Sunday teaser.
   const rows = await prisma.$queryRaw<
     { code: string; short: string; opensAt: Date; closesAt: Date }[]
   >`
     SELECT e.code, e."shortName" AS short, lt."opensAt", lt."closesAt"
     FROM "LiveTest" lt JOIN "Exam" e ON e.id = lt."examId"
     WHERE lt."closesAt" > NOW() AND lt."opensAt" < NOW() + INTERVAL '18 hours'
-      AND ${EXCLUDE_REHEARSAL_SQL}
+      AND ${EXCLUDE_REHEARSAL_SQL} AND ${NOT_SCHOOL_SQL}
     ORDER BY lt."opensAt" ASC, e."shortName" ASC
   `;
   if (rows.length === 0) return null;
@@ -101,7 +104,7 @@ export async function liveTestEmailNotice(now = new Date()): Promise<LiveTestNot
       SELECT e."shortName" AS short, lt."closesAt"
       FROM "LiveTest" lt JOIN "Exam" e ON e.id = lt."examId"
       WHERE lt."opensAt" <= NOW() + INTERVAL '2 hours' AND lt."closesAt" > NOW()
-        AND ${EXCLUDE_REHEARSAL_SQL}
+        AND ${EXCLUDE_REHEARSAL_SQL} AND ${NOT_SCHOOL_SQL}
       ORDER BY e."shortName" ASC
     `;
     if (rows.length > 0) {
@@ -161,7 +164,7 @@ async function loadUpcomingRaw(): Promise<UpcomingSunday | null> {
       -- rehearsals open the instant they are created, so they are normally
       -- already in the past here; excluded anyway so a clock skew can never
       -- make one the "nearest Sunday" and break the batch grouping below.
-      AND ${EXCLUDE_REHEARSAL_SQL}
+      AND ${EXCLUDE_REHEARSAL_SQL} AND ${NOT_SCHOOL_SQL}
     ORDER BY lt."opensAt" ASC, e."shortName" ASC
   `;
   if (rows.length === 0) return null;

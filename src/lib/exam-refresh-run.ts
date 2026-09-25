@@ -23,6 +23,7 @@
 // most-stale-first picks it up next run).
 
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { generateExamInfo } from "@/lib/ai/exam-info";
 import { writeExamInfo, GEN_SOURCE } from "@/lib/exam-data-writer";
 import { loadExamWeekExams } from "@/lib/exam-week-aeo";
@@ -96,7 +97,9 @@ export async function runExamDataRefresh(opts: ExamRefreshRunOptions = {}): Prom
   });
   const lastNews = new Map(staleness.map((s) => [s.examId, s._max.createdAt?.getTime() ?? 0]));
   const exams = await prisma.exam.findMany({
-    where: { active: true },
+    // 25 Sep 2026: real exams only — a web-searched "news" refresh for a
+    // school class (SCHOOL_BOARD container) would be spend on a non-exam.
+    where: REAL_EXAM_WHERE,
     select: {
       id: true,
       code: true,

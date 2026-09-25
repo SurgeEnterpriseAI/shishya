@@ -46,6 +46,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { getExamTheme } from "@/lib/exam-theme";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { fillTemplate, locales } from "@/lib/i18n";
@@ -165,8 +166,9 @@ export default async function SharePage({
       },
     }),
     // Honest count at render time — the old "all 163 exams" was a number
-    // frozen in copy while the catalogue kept growing.
-    prisma.exam.count({ where: { active: true } }).catch(() => null),
+    // frozen in copy while the catalogue kept growing. 25 Sep 2026: real
+    // exams only — school class containers are not exams to explore.
+    prisma.exam.count({ where: REAL_EXAM_WHERE }).catch(() => null),
     // The visitor's own language, else the one the share was sent in.
     visitorLocale(shareLinkLocale(sp[SHARE_LANG_PARAM])),
   ]);

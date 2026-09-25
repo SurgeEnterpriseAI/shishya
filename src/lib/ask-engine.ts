@@ -16,6 +16,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL, REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
 import { anthropic, MODEL, cachedSystem } from "@/lib/ai/client";
 import { recordAiUsage } from "@/lib/ai/usage";
@@ -98,13 +99,15 @@ async function searchExams(input: { state?: string; category?: string; keyword?:
     ? Prisma.sql`CASE WHEN e.code LIKE ANY(${codePats}) THEN 0 ELSE 1 END,`
     : Prisma.empty;
 
+  // 25 Sep 2026: every /ask tool reads real exams only (src/lib/db/exam-scope.ts)
+  // — a school class container is never offered or described as an exam.
   const rows = await prisma.$queryRaw<any[]>`
     SELECT e.code, e.name, e."shortName", e.category::text AS category, e.state,
            e."totalQuestions", e."totalMarks", e."durationMin", e."negativeMark",
            el."minAge", el."maxAge", el."educationNote", el."vacanciesApprox", el."officialName"
     FROM "Exam" e
     LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
-    WHERE e.active = TRUE
+    WHERE ${REAL_EXAM_SQL}
       AND (${state}::text IS NULL OR e.state = ${state})
       AND (${cat}::text IS NULL OR e.category::text = ${cat})
       AND (${kw}::text IS NULL OR e.name ILIKE ${kw} OR e."shortName" ILIKE ${kw} OR (${aliasSql}))
@@ -135,7 +138,7 @@ async function getExamDetails(input: { code: string }) {
     FROM "Exam" e
     LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
     LEFT JOIN "ExamCategoryCutoff" cc ON cc."examId" = e.id
-    WHERE e.code = ${input.code.toUpperCase()} AND e.active = TRUE LIMIT 1`;
+    WHERE e.code = ${input.code.toUpperCase()} AND ${REAL_EXAM_SQL} LIMIT 1`;
   const e = rows[0];
   if (!e) return { error: "exam not found — use search_exams first" };
   // Links only to pages that render; a failed gate read links none of them
@@ -196,11 +199,11 @@ async function searchContent(input: { query: string }) {
     prisma.$queryRaw<any[]>`
       SELECT e.code, e."shortName", LEFT(g.content, 1500) AS excerpt
       FROM "ExamGuide" g JOIN "Exam" e ON e.id = g."examId"
-      WHERE g.content ILIKE ${q} AND e.active = TRUE LIMIT 4`,
+      WHERE g.content ILIKE ${q} AND ${REAL_EXAM_SQL} LIMIT 4`,
     prisma.$queryRaw<any[]>`
       SELECT e.code, n.title, LEFT(n.body, 400) AS excerpt, n."publishedAt"
       FROM "ExamNewsItem" n JOIN "Exam" e ON e.id = n."examId"
-      WHERE (n.title ILIKE ${q} OR n.body ILIKE ${q}) AND n.source IS DISTINCT FROM ${SUPPRESSED_SOURCE}
+      WHERE (n.title ILIKE ${q} OR n.body ILIKE ${q}) AND n.source IS DISTINCT FROM ${SUPPRESSED_SOURCE} AND ${NOT_SCHOOL_SQL}
       ORDER BY n."publishedAt" DESC LIMIT 4`,
   ]);
   return {
@@ -223,7 +226,7 @@ async function getVacancyStats(input: { state?: string }) {
   const rows = await prisma.$queryRaw<any[]>`
     SELECT e.code, e."shortName", e.state, el."vacanciesApprox"
     FROM "Exam" e JOIN "ExamEligibility" el ON el."examId" = e.id
-    WHERE e.active = TRUE AND el."vacanciesApprox" IS NOT NULL
+    WHERE ${REAL_EXAM_SQL} AND el."vacanciesApprox" IS NOT NULL
       AND (${state}::text IS NULL OR e.state = ${state} OR e.state IS NULL)
     ORDER BY el."vacanciesApprox" DESC LIMIT 20`;
   const total = rows.reduce((s, r) => s + (r.vacanciesApprox ?? 0), 0);

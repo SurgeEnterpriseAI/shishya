@@ -15,6 +15,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 import { Header } from "@/components/Header";
 
 export const dynamic = "force-dynamic";
@@ -72,6 +73,7 @@ export default async function LiveTestPage() {
   const userId = session?.user?.id ?? null;
   const now = new Date();
 
+  // 25 Sep 2026: real exams only (NOT_SCHOOL_SQL) — never a school class container.
   const rows = await prisma.$queryRaw<Row[]>`
     SELECT lt.id, lt."mockId", lt."opensAt", lt."closesAt",
            e.code, e."shortName" AS short,
@@ -88,7 +90,7 @@ export default async function LiveTestPage() {
       FROM "Attempt" a
       WHERE a."mockId" = lt."mockId" AND a.status IN ('SUBMITTED', 'AUTO_SUBMITTED')
     ) agg ON TRUE
-    WHERE lt."closesAt" > NOW() - INTERVAL '8 days'
+    WHERE lt."closesAt" > NOW() - INTERVAL '8 days' AND ${NOT_SCHOOL_SQL}
     ORDER BY lt."opensAt" ASC, e."shortName" ASC
     LIMIT 24`;
 

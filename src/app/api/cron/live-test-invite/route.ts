@@ -25,6 +25,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL, REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { sendLiveTestInviteEmail } from "@/lib/email";
 import { istDay } from "@/lib/exam-week";
 import { buildTimeline, type TimelineRow } from "@/lib/exam-timeline";
@@ -47,13 +48,14 @@ export async function GET(req: Request) {
   const now = new Date();
   const today = istDay(now);
 
-  // The nearest upcoming Sunday batch.
+  // The nearest upcoming Sunday batch. 25 Sep 2026: real exams only, here
+  // and in the exam-day selection below (src/lib/db/exam-scope.ts).
   const tests = await prisma.$queryRaw<
     { examId: string; short: string; opensAt: Date }[]
   >`
     SELECT lt."examId", e."shortName" AS short, lt."opensAt"
     FROM "LiveTest" lt JOIN "Exam" e ON e.id = lt."examId"
-    WHERE lt."opensAt" > NOW()
+    WHERE lt."opensAt" > NOW() AND ${NOT_SCHOOL_SQL}
     ORDER BY lt."opensAt" ASC
   `.catch(() => []);
   if (tests.length === 0) return Response.json({ ok: true, dry, sent: 0, reason: "no upcoming tests" });
@@ -114,7 +116,7 @@ export async function GET(req: Request) {
   const recentExams = await prisma.$queryRaw<{ examId: string }[]>`
     SELECT DISTINCT d."examId"
     FROM "ExamImportantDate" d
-    JOIN "Exam" e ON e.id = d."examId" AND e.active = TRUE
+    JOIN "Exam" e ON e.id = d."examId" AND ${REAL_EXAM_SQL}
     WHERE d."archivedAt" IS NULL AND d.kind = 'EXAM'
       AND (d.date + INTERVAL '5.5 hours')::date >= (NOW() + INTERVAL '5.5 hours')::date - 14
       AND (d.date + INTERVAL '5.5 hours')::date < (NOW() + INTERVAL '5.5 hours')::date

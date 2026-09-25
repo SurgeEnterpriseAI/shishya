@@ -10,6 +10,7 @@
 import { ImageResponse } from "next/og";
 import { findPersona, PERSONAS } from "@/data/personas";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 
 // Node runtime (not edge) because (a) Next.js 15 forbids edge + generateStaticParams
 // together, and (b) we want Prisma access at build time to fetch real exam
@@ -217,7 +218,7 @@ async function loadShortNames(codes: string[]): Promise<string[]> {
   if (codes.length === 0) return [];
   try {
     const rows = await prisma.exam.findMany({
-      where: { code: { in: codes }, active: true },
+      where: { code: { in: codes }, ...REAL_EXAM_WHERE },
       select: { code: true, shortName: true },
     });
     const byCode = new Map(rows.map((r) => [r.code, r.shortName]));

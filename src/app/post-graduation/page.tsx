@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { prisma } from "@/lib/db/prisma";
+import { notSchoolSql } from "@/lib/db/exam-scope";
 
 export const metadata: Metadata = {
   title: "Post-Graduation — GATE, CAT, NEET-PG, UGC-NET, fellowships | Shishya",
@@ -109,7 +110,7 @@ export default async function PostGraduationLanding() {
     SELECT "code", "shortName", "name", "category"::text AS category,
            "candidatesPerYear"
     FROM "Exam"
-    WHERE "code" = ANY(${PG_EXAM_CODES}::text[]) AND "active" = TRUE
+    WHERE "code" = ANY(${PG_EXAM_CODES}::text[]) AND "active" = TRUE AND ${notSchoolSql("")}
     ORDER BY "candidatesPerYear" DESC NULLS LAST
   `.catch(() => [] as ExamRow[]);
 

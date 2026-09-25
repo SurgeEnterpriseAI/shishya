@@ -13,6 +13,7 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { buildTimeline } from "@/lib/exam-timeline";
 import { fillState, stateCopy, type StateCopyLocale } from "@/lib/state-exams-copy";
@@ -211,7 +212,9 @@ export function stateContextMarkdown(
 /** Every state with at least one active exam, exams most-taken first. */
 export async function loadStateDirectory(): Promise<StateDirectoryEntry[]> {
   const exams = await prisma.exam.findMany({
-    where: { active: true, state: { not: null } },
+    // 25 Sep 2026: real exams only — a state board's class containers carry
+    // a state code too and must not join a state's exam directory.
+    where: { ...REAL_EXAM_WHERE, state: { not: null } },
     select: {
       code: true,
       name: true,
@@ -300,7 +303,7 @@ export async function loadStateUpcoming(
 export const getStateUpcoming = unstable_cache(
   async (stateCode: string, horizonDays: number): Promise<StateDate[]> => {
     const exams = await prisma.exam.findMany({
-      where: { active: true, state: stateCode },
+      where: { ...REAL_EXAM_WHERE, state: stateCode },
       select: { code: true, shortName: true, eligibility: { select: { officialUrl: true } } },
     });
     return loadStateUpcoming(
@@ -316,7 +319,7 @@ export const getStateUpcoming = unstable_cache(
 export const getStateExamCards = unstable_cache(
   async (stateCode: string) =>
     prisma.exam.findMany({
-      where: { active: true, state: stateCode },
+      where: { ...REAL_EXAM_WHERE, state: stateCode },
       select: { code: true, description: true, totalQuestions: true, durationMin: true, languages: true },
     }),
   ["state-exam-cards-v2"],

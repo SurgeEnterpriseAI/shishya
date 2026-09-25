@@ -12,6 +12,7 @@
 // and (examId, headline) is unique.
 
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 import { callClaude, cachedSystem, parseJson, MODEL } from "@/lib/ai/client";
 
 const RESULT_KEYWORDS =
@@ -51,6 +52,7 @@ export async function extractResults(opts?: { days?: number; cap?: number }): Pr
     WHERE n."publishedAt" > NOW() - (${days} || ' days')::interval
       AND (n.title ILIKE ANY(string_to_array(${RESULT_KEYWORDS}, '|')))
       AND NOT EXISTS (SELECT 1 FROM "ExamResult" er WHERE er."sourceNewsId" = n.id)
+      AND ${NOT_SCHOOL_SQL} -- 25 Sep 2026: no AI result extraction for a school class container
     ORDER BY n."publishedAt" DESC
     LIMIT ${cap}`;
 

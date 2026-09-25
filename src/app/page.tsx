@@ -35,6 +35,7 @@ import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { calendarRailLabels, fillHome, homeStripCopy, type HomeStripCopy } from "@/lib/home-strip-copy";
 import { Header } from "@/components/Header";
@@ -128,7 +129,7 @@ import { FALLBACK_EXAMS } from "@/data/fallback-exams";
 async function loadExamsRaw(): Promise<ExamCard[]> {
   try {
     const rows = await prisma.exam.findMany({
-      where: { active: true, category: { not: "SCHOOL_BOARD" } },
+      where: REAL_EXAM_WHERE,
       orderBy: [{ candidatesPerYear: "desc" }, { code: "asc" }],
       select: {
         code: true,
@@ -207,14 +208,16 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
       // live and archived, newest first.
       prisma.examImportantDate.findMany({
         // Suppressed rows (a human archived them as wrong) are not history.
-        where: { date: { gte: from, lt: todayStartUtc }, exam: { active: true }, isExamDay: true, OR: [{ source: null }, { source: { not: SUPPRESSED_SOURCE } }] },
+        // 25 Sep 2026: real exams only here and below — school class
+        // containers stay off the home page (src/lib/db/exam-scope.ts).
+        where: { date: { gte: from, lt: todayStartUtc }, exam: REAL_EXAM_WHERE, isExamDay: true, OR: [{ source: null }, { source: { not: SUPPRESSED_SOURCE } }] },
         orderBy: { date: "desc" },
         take: 800,
         include: { exam: { select: { id: true, code: true, shortName: true, eligibility: { select: { officialUrl: true } } } } },
       }),
       // Today/future: live rows only, soonest first.
       prisma.examImportantDate.findMany({
-        where: { date: { gte: todayStartUtc }, exam: { active: true }, archivedAt: null },
+        where: { date: { gte: todayStartUtc }, exam: REAL_EXAM_WHERE, archivedAt: null },
         orderBy: { date: "asc" },
         take: 400,
         include: { exam: { select: { id: true, code: true, shortName: true, eligibility: { select: { officialUrl: true } } } } },
@@ -403,7 +406,7 @@ async function loadVacancyExplorerSafe(): Promise<VacancyExplorer> {
 async function loadPortalStatsRaw(): Promise<{ examCount: string; questions: string; notes: string }> {
   try {
     const [ex, q, n] = await Promise.all([
-      prisma.exam.count({ where: { active: true, category: { not: "SCHOOL_BOARD" } } }),
+      prisma.exam.count({ where: REAL_EXAM_WHERE }),
       prisma.question.count(),
       prisma.$queryRaw<{ c: bigint }[]>`SELECT COUNT(*)::bigint AS c FROM "TopicTeachingNote"`,
     ]);

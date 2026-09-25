@@ -42,6 +42,7 @@ export const dynamic = "force-dynamic";
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { sendResultDayEmail } from "@/lib/email";
 import { istDay } from "@/lib/exam-week";
 import { buildTimeline } from "@/lib/exam-timeline";
@@ -86,10 +87,11 @@ export async function GET(req: Request) {
 
   // Exams with a typed, announced RESULT row dated in [today-2, today] IST.
   // The tier (official vs reported) is decided in TS from the cited domain.
+  // 25 Sep 2026: real exams only (REAL_EXAM_SQL) — never a school class container.
   const hits = await prisma.$queryRaw<{ examId: string }[]>`
     SELECT DISTINCT d."examId"
     FROM "ExamImportantDate" d
-    JOIN "Exam" e ON e.id = d."examId" AND e.active = TRUE
+    JOIN "Exam" e ON e.id = d."examId" AND ${REAL_EXAM_SQL}
     WHERE d."archivedAt" IS NULL AND d.kind = 'RESULT'
       AND LOWER(COALESCE(d.confidence, '')) = 'official' AND d.url IS NOT NULL
       AND (d.date + INTERVAL '5.5 hours')::date >= (NOW() + INTERVAL '5.5 hours')::date - 2

@@ -21,6 +21,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 import { sendLapseNudgeEmail, type MailRollover } from "@/lib/email";
 import { loadExamBundles, nextExamsInTrack, resolveMailExam, trackKey, type ExamMeta, type NextExam } from "@/lib/exam-week-mail";
 import { LAPSE_NUDGE_TAG, pickLapseRecipients, type LapseCandidate } from "@/lib/lapse-nudge";
@@ -62,13 +63,19 @@ export async function GET(req: Request) {
       SELECT u.id, u.email, u.name, u."emailOptOut", act.last_seen AS "lastSeen",
              EXISTS (SELECT 1 FROM "Enrollment" en WHERE en."userId" = u.id AND en.active = TRUE) AS enrolled,
              EXISTS (SELECT 1 FROM "CoachPlan" cp WHERE cp."userId" = u.id AND cp."examDate" > NOW()) AS "livePlan",
-             (SELECT e."shortName" FROM "CoachPlan" cp JOIN "Exam" e ON e.id = cp."examId"
-              WHERE cp."userId" = u.id AND cp."examDate" > NOW()
-              ORDER BY cp."updatedAt" DESC LIMIT 1) AS "coachShort",
-             (SELECT GREATEST(0, CEIL(EXTRACT(EPOCH FROM (cp."examDate" - NOW())) / 86400))::int
-              FROM "CoachPlan" cp WHERE cp."userId" = u.id AND cp."examDate" > NOW()
-              ORDER BY cp."updatedAt" DESC LIMIT 1) AS "coachDaysLeft"
+             plan."coachShort", plan."coachDaysLeft"
       FROM "User" u JOIN act ON act."userId" = u.id
+      -- 25 Sep 2026: name and countdown come from ONE plan row (the newest
+      -- live plan that is not a school class plan), as in win-back. As two
+      -- subselects, only the name skipped school plans, so a newer school
+      -- plan's countdown could print under an older exam's name.
+      LEFT JOIN LATERAL (
+        SELECT e."shortName" AS "coachShort",
+               GREATEST(0, CEIL(EXTRACT(EPOCH FROM (cp."examDate" - NOW())) / 86400))::int AS "coachDaysLeft"
+        FROM "CoachPlan" cp JOIN "Exam" e ON e.id = cp."examId"
+        WHERE cp."userId" = u.id AND cp."examDate" > NOW() AND ${NOT_SCHOOL_SQL}
+        ORDER BY cp."updatedAt" DESC LIMIT 1
+      ) plan ON TRUE
       WHERE u.email <> '' AND u."emailOptOut" = FALSE
         AND act.last_seen < NOW() - INTERVAL '72 hours'
         AND act.last_seen > NOW() - INTERVAL '7 days'
@@ -104,12 +111,13 @@ export async function GET(req: Request) {
   const picked = pickLapseRecipients(candidates, now);
   if (picked.length === 0) return Response.json({ ok: true, dry, candidates: rows.length, eligible: 0, sent: 0 });
 
-  // Resolve the exam each mail may name (same as win-back).
+  // Resolve the exam each mail may name (same as win-back). 25 Sep 2026:
+  // never a school class container, here or in coachShort above.
   const pickedIds = picked.map((c) => c.id);
   const enrollmentRows = await prisma.$queryRaw<EnrollmentRow[]>`
     SELECT en."userId", en."examId", e.code, e."shortName" AS short, en."createdAt"
     FROM "Enrollment" en JOIN "Exam" e ON e.id = en."examId"
-    WHERE en.active = TRUE AND en."userId" = ANY(${pickedIds})
+    WHERE en.active = TRUE AND en."userId" = ANY(${pickedIds}) AND ${NOT_SCHOOL_SQL}
     ORDER BY en."createdAt" DESC
   `.catch(() => [] as EnrollmentRow[]);
   const enrollmentsByUser = new Map<string, EnrollmentRow[]>();

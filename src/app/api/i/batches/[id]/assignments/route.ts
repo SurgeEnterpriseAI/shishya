@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { after } from "next/server";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { requireInstitutionSession } from "@/lib/institution-auth";
 import { sendEmail } from "@/lib/email";
 
@@ -53,7 +54,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     const exam = await prisma.exam
       .findFirst({
         where: {
-          active: true,
+          // 25 Sep 2026: real exams only (school class containers are not exams).
+          ...REAL_EXAM_WHERE,
           OR: [
             { code: { equals: q.toUpperCase().replace(/[\s-]+/g, "_") } },
             { shortName: { equals: q, mode: "insensitive" } },

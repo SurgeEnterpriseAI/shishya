@@ -28,6 +28,7 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { notSchoolSql } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { localeToLanguage } from "@/lib/preferred-lang";
 import { OnboardingWizard } from "./OnboardingWizard";
@@ -100,7 +101,7 @@ export default async function OnboardingPage({
     exams = await prisma.$queryRaw<ExamRow[]>`
       SELECT "code", "shortName", "name", "category"::text AS category
       FROM "Exam"
-      WHERE "active" = TRUE AND "category"::text != 'SCHOOL_BOARD'
+      WHERE "active" = TRUE AND ${notSchoolSql("")}
       ORDER BY "candidatesPerYear" DESC NULLS LAST, "code" ASC
       LIMIT 100
     `;

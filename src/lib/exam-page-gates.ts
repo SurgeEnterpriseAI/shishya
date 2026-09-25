@@ -19,6 +19,7 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { WITHDRAWN_TAG } from "@/lib/question-withdrawn";
 
 export interface ExamPageGates {
@@ -55,7 +56,7 @@ async function readGates(): Promise<GateRow[]> {
         GROUP BY q."topicId" HAVING COUNT(*) >= ${BUILDABLE_TOPIC_MIN}
       ) AS "buildMock"
     FROM "Exam" e
-    WHERE e.active = TRUE`;
+    WHERE ${REAL_EXAM_SQL}`; // 25 Sep 2026: real exams only; a school class container links no /exams page
 }
 
 const cachedGates = unstable_cache(

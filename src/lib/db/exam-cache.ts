@@ -12,6 +12,7 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
+import { REAL_EXAM_WHERE } from "./exam-scope";
 import { computeExamWeekState, istDay } from "@/lib/exam-week";
 import { isUnannouncedAnswerKey } from "@/lib/exam-timeline";
 
@@ -215,7 +216,8 @@ export const getExamShared = unstable_cache(
 export const getDashboardExams = unstable_cache(
   async () => {
     return prisma.exam.findMany({
-      where: { active: true },
+      // 25 Sep 2026: real exams only (school class containers are not exams).
+      where: REAL_EXAM_WHERE,
       orderBy: [{ candidatesPerYear: "desc" }, { code: "asc" }],
       select: {
         id: true,
@@ -242,7 +244,7 @@ export const getDashboardExams = unstable_cache(
 export const getExamCatalog = unstable_cache(
   async () => {
     const exams = await prisma.exam.findMany({
-      where: { active: true },
+      where: REAL_EXAM_WHERE,
       orderBy: [{ category: "asc" }, { code: "asc" }],
       select: {
         id: true,

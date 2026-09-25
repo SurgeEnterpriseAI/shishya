@@ -23,6 +23,7 @@ export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { generateSeedThreads } from "@/lib/ai/seed-discussions";
 
 const ACTIVITY_THRESHOLD = 8; // skip seeding when real rail already has ≥ N threads
@@ -54,7 +55,8 @@ export async function GET(req: Request) {
     where: {
       date: { gte: from, lte: to },
       isExamDay: true,
-      exam: { active: true },
+      // 25 Sep 2026: real exams only — no AI seed threads for a school class.
+      exam: REAL_EXAM_WHERE,
       archivedAt: null,
     },
     include: { exam: { select: { id: true, code: true, shortName: true, name: true } } },

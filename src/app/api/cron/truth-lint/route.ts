@@ -27,6 +27,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { createNotification } from "@/lib/db/notifications";
 import { examCodesFromLlmsFull, runTruthLint } from "@/lib/truth-lint";
 import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
@@ -52,7 +53,8 @@ export async function GET(req: Request) {
     /* fall back below */
   }
   if (codes.length === 0) {
-    const rows = await prisma.exam.findMany({ where: { active: true }, select: { code: true }, orderBy: { candidatesPerYear: "desc" } });
+    // 25 Sep 2026: real exams only — school class containers have no exam pages to lint.
+    const rows = await prisma.exam.findMany({ where: REAL_EXAM_WHERE, select: { code: true }, orderBy: { candidatesPerYear: "desc" } });
     codes = rows.map((r) => r.code);
   }
 

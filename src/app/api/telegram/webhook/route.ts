@@ -20,6 +20,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE, notSchoolSql } from "@/lib/db/exam-scope";
 import {
   answerCallback,
   editTelegramMessage,
@@ -43,7 +44,9 @@ async function activeExams(): Promise<Exam[]> {
   if (examCache && Date.now() - examCache.at < 10 * 60_000) return examCache.rows;
   const rows = await prisma.exam
     .findMany({
-      where: { active: true },
+      // 25 Sep 2026: real exams only — the bot is a govt-exam channel;
+      // school class containers (src/lib/db/exam-scope.ts) never appear.
+      where: REAL_EXAM_WHERE,
       select: { id: true, code: true, name: true, shortName: true, category: true, state: true, candidatesPerYear: true },
       orderBy: { candidatesPerYear: "desc" },
     })
@@ -74,7 +77,7 @@ async function sendToday(chatId: number | string) {
     .$queryRaw<{ id: string; body: string; options: any; answerKey: string; solution: string; short: string; code: string }[]>`
       SELECT q.id, q.body, q.options, q."answerKey", q.solution, e."shortName" AS short, e.code
       FROM (
-        SELECT e2.id FROM "Exam" e2 WHERE e2.active = TRUE ORDER BY e2."candidatesPerYear" DESC NULLS LAST LIMIT 12
+        SELECT e2.id FROM "Exam" e2 WHERE e2.active = TRUE AND ${notSchoolSql("e2")} ORDER BY e2."candidatesPerYear" DESC NULLS LAST LIMIT 12
       ) top
       JOIN LATERAL (
         SELECT q2.* FROM "Question" q2
@@ -223,7 +226,7 @@ async function sendCalendar(chatId: number | string) {
   const now = new Date();
   const rows = await prisma.examImportantDate
     .findMany({
-      where: { archivedAt: null, isExamDay: true, date: { gte: new Date(now.getTime() - 86_400_000), lte: new Date(now.getTime() + 30 * 86_400_000) }, exam: { active: true } },
+      where: { archivedAt: null, isExamDay: true, date: { gte: new Date(now.getTime() - 86_400_000), lte: new Date(now.getTime() + 30 * 86_400_000) }, exam: REAL_EXAM_WHERE },
       orderBy: { date: "asc" },
       take: 120,
       include: { exam: { select: { shortName: true, code: true, eligibility: { select: { officialUrl: true } } } } },

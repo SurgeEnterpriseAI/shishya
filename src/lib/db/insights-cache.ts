@@ -9,6 +9,7 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
+import { NOT_SCHOOL_WHERE, REAL_EXAM_WHERE } from "./exam-scope";
 
 const TTL = 30; // seconds
 
@@ -122,8 +123,10 @@ export const getInsightsBulk = unstable_cache(
             .then((r) => r.length),
         0,
       ),
-      safe(() => prisma.exam.count(), 0),
-      safe(() => prisma.exam.count({ where: { active: true } }), 0),
+      // 25 Sep 2026: exam totals count real exams; school class containers
+      // would inflate "active exams" and dilute news/date coverage ratios.
+      safe(() => prisma.exam.count({ where: NOT_SCHOOL_WHERE }), 0),
+      safe(() => prisma.exam.count({ where: REAL_EXAM_WHERE }), 0),
       safe(() => prisma.question.count(), 0),
       safe(() => prisma.question.count({ where: { validated: true } }), 0),
       safe(

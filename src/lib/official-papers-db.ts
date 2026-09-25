@@ -6,6 +6,7 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 import type { OfficialPaperRow } from "@/lib/official-papers";
 
 const cachedPapers = unstable_cache(
@@ -25,11 +26,12 @@ export async function loadOfficialPapers(examId: string): Promise<OfficialPaperR
   }
 }
 
-/** Codes of the exams holding at least one verified official paper or listing page. */
+/** Codes of the exams holding at least one verified official paper or listing page.
+ *  25 Sep 2026: real exams only (src/lib/db/exam-scope.ts). */
 export async function examCodesWithOfficialPapers(): Promise<Set<string>> {
   try {
     const rows = await prisma.$queryRaw<{ code: string }[]>`
-      SELECT DISTINCT e.code FROM "OfficialPaper" p JOIN "Exam" e ON e.id = p."examId" WHERE p."archivedAt" IS NULL`;
+      SELECT DISTINCT e.code FROM "OfficialPaper" p JOIN "Exam" e ON e.id = p."examId" WHERE p."archivedAt" IS NULL AND ${NOT_SCHOOL_SQL}`;
     return new Set(rows.map((r) => r.code));
   } catch {
     return new Set();

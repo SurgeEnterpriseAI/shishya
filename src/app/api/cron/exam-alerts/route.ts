@@ -33,6 +33,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { sendExamAlertEmail } from "@/lib/email";
 import { alertUnsubApiUrl, alertUnsubUrl } from "@/lib/exam-alerts";
 import { MATERIAL_NEWS_RE, buildTimeline, fmtDay, stageOf } from "@/lib/exam-timeline";
@@ -71,11 +72,12 @@ export async function GET(req: Request) {
   // Exams that have at least one live subscriber. officialUrl widens the
   // gold source tier to conducting bodies on commercial TLDs (NABARD,
   // LIC, …) so their own notices are never mailed as "press reports".
+  // 25 Sep 2026: real exams only (src/lib/db/exam-scope.ts), both queries.
   const emailExamRows = await prisma.$queryRaw<ExamRow[]>`
     SELECT DISTINCT e.id, e.code, e."shortName" AS short, e.name, el."officialUrl"
     FROM "ExamAlert" a JOIN "Exam" e ON e.id = a."examId"
     LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
-    WHERE a."unsubscribedAt" IS NULL AND e.active = TRUE`.catch(() => [] as ExamRow[]);
+    WHERE a."unsubscribedAt" IS NULL AND ${REAL_EXAM_SQL}`.catch(() => [] as ExamRow[]);
   // Exams followed only on phones join the same loop (their email query
   // simply finds nobody). A failing push query never touches email.
   const pushExamIds = pushOn
@@ -89,7 +91,7 @@ export async function GET(req: Request) {
       ? await prisma.$queryRaw<ExamRow[]>`
           SELECT e.id, e.code, e."shortName" AS short, e.name, el."officialUrl"
           FROM "Exam" e LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
-          WHERE e.id = ANY(${pushOnlyIds}::text[]) AND e.active = TRUE`.catch(() => [] as ExamRow[])
+          WHERE e.id = ANY(${pushOnlyIds}::text[]) AND ${REAL_EXAM_SQL}`.catch(() => [] as ExamRow[])
       : [];
   const examRows = [...emailExamRows, ...pushOnlyRows];
 

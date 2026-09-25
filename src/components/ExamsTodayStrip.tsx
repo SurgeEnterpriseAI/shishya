@@ -24,6 +24,7 @@
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { istDay } from "@/lib/exam-week";
 import { pickExamsStrip, type StripRowInput } from "@/lib/exam-checklist";
 import { getT } from "@/lib/i18n-server";
@@ -44,7 +45,7 @@ const loadStripRows = unstable_cache(
         // One day either side: stored instants are midnight-UTC of the IST
         // day by convention, but the selection re-checks the IST day.
         date: { gte: new Date(start.getTime() - DAY_MS), lt: new Date(start.getTime() + 9 * DAY_MS) },
-        exam: { active: true, category: { not: "SCHOOL_BOARD" } },
+        exam: REAL_EXAM_WHERE,
       },
       orderBy: { date: "asc" },
       take: 120,

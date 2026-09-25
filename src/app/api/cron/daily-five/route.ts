@@ -37,6 +37,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_WHERE } from "@/lib/db/exam-scope";
 import { sendDailyFiveEmail, type MailRollover } from "@/lib/email";
 import { optedOutUserIds } from "@/lib/email-optout";
 import { computeStreak, istDay } from "@/lib/db/streak";
@@ -100,17 +101,21 @@ export async function GET(req: Request) {
     return Response.json({ ok: true, dry, sent: 0, reason: "no candidates" });
   }
 
+  // 25 Sep 2026: school class containers (src/lib/db/exam-scope.ts) count
+  // neither for the audience nor for the exam the mail names. A school
+  // enrolment has no exam bundle (loadExamBundles is real-exam only), so
+  // resolveMailExam's "unknown exam" branch would name the class as-is.
   const users = await prisma.user.findMany({
     where: {
       id: { in: candidates, notIn: await optedOutUserIds() }, // opt-out applied at selection too (review 22 Aug 2026)
       email: { not: "" },
-      enrollments: { some: { active: true } },
+      enrollments: { some: { active: true, exam: NOT_SCHOOL_WHERE } },
     },
     select: {
       id: true, email: true, name: true,
       // ALL active enrollments, newest first — resolveMailExam walks them.
       enrollments: {
-        where: { active: true },
+        where: { active: true, exam: NOT_SCHOOL_WHERE },
         orderBy: { createdAt: "desc" },
         // shiftDate: the day THIS student sits a multi-day window — the
         // exam-week line is keyed on it, exactly like the hub block.

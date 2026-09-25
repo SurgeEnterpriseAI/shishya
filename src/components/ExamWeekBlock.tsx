@@ -58,6 +58,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { tFor } from "@/lib/i18n-server";
 import type { Locale, StringKey } from "@/lib/i18n";
 import { localizedPath, localizedUrl, type PageLocale } from "@/lib/seo-locale";
@@ -616,6 +617,7 @@ async function loadNextInTrack(
   const from = new Date(todayUtc.getTime() + 7 * DAY_MS);
   const to = new Date(todayUtc.getTime() + 60 * DAY_MS);
   const stateFilter = exam.category === "STATE_LEVEL" && exam.state ? exam.state : null;
+  // 25 Sep 2026: real exams only (src/lib/db/exam-scope.ts) — never a school class container.
   const rows = await prisma.$queryRaw<
     { code: string; shortName: string; date: Date; confidence: string | null; url: string | null; source: string | null; officialUrl: string | null }[]
   >`
@@ -623,7 +625,7 @@ async function loadNextInTrack(
     FROM "ExamImportantDate" d
     JOIN "Exam" e ON e.id = d."examId"
     LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
-    WHERE e.active = TRUE
+    WHERE ${REAL_EXAM_SQL}
       AND e.category::text = ${exam.category}
       AND e.id <> ${exam.id}
       AND (${stateFilter}::text IS NULL OR e.state = ${stateFilter})

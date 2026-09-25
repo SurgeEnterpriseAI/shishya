@@ -49,6 +49,7 @@ export const dynamic = "force-dynamic";
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { sendExamDayAfterEmail } from "@/lib/email";
 import { computeExamWeekState, istDay } from "@/lib/exam-week";
 import { shiftableDays } from "@/lib/exam-week-student";
@@ -119,10 +120,11 @@ export async function GET(req: Request) {
   const outOfTime = () => Date.now() - started > (maxDuration - 30) * 1000;
 
   // 1) Exams with a live exam-day row dated yesterday (IST).
+  //    25 Sep 2026: real exams only in all three selections (REAL_EXAM_SQL).
   const trackerExams = await prisma.$queryRaw<{ examId: string }[]>`
     SELECT DISTINCT d."examId"
     FROM "ExamImportantDate" d
-    JOIN "Exam" e ON e.id = d."examId" AND e.active = TRUE
+    JOIN "Exam" e ON e.id = d."examId" AND ${REAL_EXAM_SQL}
     WHERE d."archivedAt" IS NULL
       AND (d."isExamDay" = TRUE OR d.kind = 'EXAM')
       AND (d.date + INTERVAL '5.5 hours')::date = (NOW() + INTERVAL '5.5 hours' - INTERVAL '1 day')::date
@@ -136,7 +138,7 @@ export async function GET(req: Request) {
   const coachExams = await prisma.$queryRaw<{ examId: string }[]>`
     SELECT DISTINCT cp."examId"
     FROM "CoachPlan" cp
-    JOIN "Exam" e ON e.id = cp."examId" AND e.active = TRUE
+    JOIN "Exam" e ON e.id = cp."examId" AND ${REAL_EXAM_SQL}
     WHERE (cp."examDate" + INTERVAL '5.5 hours')::date
       BETWEEN (NOW() + INTERVAL '5.5 hours' - INTERVAL '4 days')::date AND (NOW() + INTERVAL '5.5 hours' + INTERVAL '2 days')::date
   `.catch((err) => {
@@ -149,7 +151,7 @@ export async function GET(req: Request) {
   const shiftExams = await prisma.$queryRaw<{ examId: string }[]>`
     SELECT DISTINCT en."examId"
     FROM "Enrollment" en
-    JOIN "Exam" e ON e.id = en."examId" AND e.active = TRUE
+    JOIN "Exam" e ON e.id = en."examId" AND ${REAL_EXAM_SQL}
     WHERE en.active = TRUE AND en."shiftDate" = ${yesterday}::date
   `.catch((err) => {
     console.error("[exam-day-after] shift-day selection failed", err);

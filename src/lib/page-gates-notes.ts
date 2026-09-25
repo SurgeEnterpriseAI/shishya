@@ -9,6 +9,7 @@
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { usableNotesSql } from "@/lib/topic-notes";
 
 const cachedNotesExamCodes = unstable_cache(
@@ -16,7 +17,7 @@ const cachedNotesExamCodes = unstable_cache(
     const rows = await prisma.$queryRaw<{ code: string }[]>`
       SELECT DISTINCT e.code FROM "TopicTeachingNote" n
       JOIN "Topic" t ON t.id = n."topicId" JOIN "Subject" s ON s.id = t."subjectId" JOIN "Exam" e ON e.id = s."examId"
-      WHERE e.active = TRUE AND ${usableNotesSql(Prisma.sql`n.content`)}`;
+      WHERE ${REAL_EXAM_SQL} AND ${usableNotesSql(Prisma.sql`n.content`)}`; // 25 Sep 2026: real exams only
     return rows.map((r) => r.code);
   },
   ["exam-notes-codes-v1"],

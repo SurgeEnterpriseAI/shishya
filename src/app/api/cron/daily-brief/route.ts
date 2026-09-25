@@ -29,6 +29,7 @@ export const dynamic = "force-dynamic";
 
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_WHERE } from "@/lib/db/exam-scope";
 import { istDayNumber } from "@/lib/exam-phase";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { generateMock } from "@/lib/ai";
@@ -136,7 +137,9 @@ export async function GET(req: Request) {
 
   const enrollments = (
     await prisma.enrollment.findMany({
-      where: { active: true, userId: { in: [...lastActive.keys()] } },
+      // 25 Sep 2026: exam enrolments only — a school class container never
+      // gets a model-written exam brief (AI spend on a non-exam).
+      where: { active: true, userId: { in: [...lastActive.keys()] }, exam: NOT_SCHOOL_WHERE },
       include: {
         exam: { select: { id: true, code: true, shortName: true, name: true } },
         user: {

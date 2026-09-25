@@ -16,6 +16,7 @@ import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { computeExamTags, type ExamTag } from "@/lib/exam-tags";
 
 export const revalidate = 21600; // 6h
@@ -130,7 +131,7 @@ async function loadMapDataRaw(): Promise<{
     SELECT e.code, e."shortName" AS short, e.category::text AS category, e.state,
            x."vacanciesApprox" AS v
     FROM "Exam" e LEFT JOIN "ExamEligibility" x ON x."examId" = e.id
-    WHERE e.active = TRUE
+    WHERE ${REAL_EXAM_SQL} -- 25 Sep 2026: real exams only; a school class container is not a job
   `;
 
   const buckets: Record<NodeId, MapExam[]> = {

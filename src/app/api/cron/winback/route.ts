@@ -31,6 +31,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 import { sendWinbackEmail, type MailRollover } from "@/lib/email";
 import { loadExamBundles, nextExamsInTrack, resolveMailExam, trackKey, type ExamMeta, type NextExam } from "@/lib/exam-week-mail";
 
@@ -68,13 +69,19 @@ export async function GET(req: Request) {
            -- "your coach already rebuilt your plan — N days left" (audit
            -- 18 Aug 2026; review 22 Aug 2026: subject and countdown must
            -- name the same exam).
-           (SELECT e."shortName" FROM "CoachPlan" cp JOIN "Exam" e ON e.id = cp."examId"
-            WHERE cp."userId" = u.id AND cp."examDate" > NOW()
-            ORDER BY cp."updatedAt" DESC LIMIT 1) AS "coachShort",
-           (SELECT GREATEST(0, CEIL(EXTRACT(EPOCH FROM (cp."examDate" - NOW())) / 86400))::int
-            FROM "CoachPlan" cp WHERE cp."userId" = u.id AND cp."examDate" > NOW()
-            ORDER BY cp."updatedAt" DESC LIMIT 1) AS "coachDaysLeft"
+           plan."coachShort", plan."coachDaysLeft"
     FROM "User" u JOIN act ON act."userId" = u.id
+    -- 25 Sep 2026: name and countdown come from ONE plan row (the newest
+    -- live plan that is not a school class plan). As two subselects, only
+    -- the name skipped school plans, so a newer school plan's countdown
+    -- could print under an older exam's name.
+    LEFT JOIN LATERAL (
+      SELECT e."shortName" AS "coachShort",
+             GREATEST(0, CEIL(EXTRACT(EPOCH FROM (cp."examDate" - NOW())) / 86400))::int AS "coachDaysLeft"
+      FROM "CoachPlan" cp JOIN "Exam" e ON e.id = cp."examId"
+      WHERE cp."userId" = u.id AND cp."examDate" > NOW() AND ${NOT_SCHOOL_SQL}
+      ORDER BY cp."updatedAt" DESC LIMIT 1
+    ) plan ON TRUE
     WHERE u.email <> '' AND u."emailOptOut" = FALSE
       AND act.last_seen < NOW() - INTERVAL '7 days'
       AND act.last_seen > NOW() - INTERVAL '60 days'
@@ -93,12 +100,13 @@ export async function GET(req: Request) {
   });
   if (candidates.length === 0) return Response.json({ ok: true, dry, eligible: 0, sent: 0 });
 
-  // Active enrollments of the batch, newest first (one query).
+  // Active enrollments of the batch, newest first (one query). 25 Sep 2026:
+  // the mail never names a school class container (nor does coachShort).
   const ids = candidates.map((c) => c.id);
   const enrollmentRows = await prisma.$queryRaw<EnrollmentRow[]>`
     SELECT en."userId", en."examId", e.code, e."shortName" AS short, en."createdAt"
     FROM "Enrollment" en JOIN "Exam" e ON e.id = en."examId"
-    WHERE en.active = TRUE AND en."userId" = ANY(${ids})
+    WHERE en.active = TRUE AND en."userId" = ANY(${ids}) AND ${NOT_SCHOOL_SQL}
     ORDER BY en."createdAt" DESC
   `.catch(() => [] as EnrollmentRow[]);
   const enrollmentsByUser = new Map<string, EnrollmentRow[]>();
