@@ -26,6 +26,20 @@
 // PYQ mode (15 Sep 2026): pyqOnly draws only PYQ-pattern questions (source
 // PYQ, every year) — the builder's ?pyq=1 page counts the same pool, so its
 // "available" and `bank.size` agree. Students asked for "PYQ topic based".
+//
+// Honest size (25 Sep 2026): 232 of 370 builder mocks came back short and
+// were still titled as asked. The title now carries the number the mock
+// really holds ("… · 18 questions", src/lib/mock-fill.ts), config keeps
+// count + requestedCount, and the response carries `requested`, `short` and
+// a plain `line` ("Only 18 questions were available for these topics …").
+// `count` may be any size 5-50: the builder offers "All N" when a selection
+// holds fewer than 50.
+//
+// Seen = answered (25 Sep 2026): the seen map is now a SeenHistory
+// (src/lib/answered-questions.ts). Order of preference: never-shown →
+// shown but never answered (least-recently-shown first) → answered
+// (least-recently-answered first). `bank.seen` / `repeats` count answered
+// questions only. Withdrawn questions (tag "rejected") never enter the pool.
 
 import { z } from "zod";
 import { NextResponse } from "next/server";
@@ -33,23 +47,24 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
-import { getSeenQuestions } from "@/lib/seen-questions";
+import { getSeenHistory } from "@/lib/answered-questions";
 import {
   SEEN_WINDOW_DAYS,
-  bankLine,
+  answeredBankLine,
   countRepeats,
   partitionBySeen,
   pickTiered,
   seenSummary,
   shuffleWith,
   type BankStats,
-  type SeenMap,
+  type SeenInput,
 } from "@/lib/question-pick";
+import { MAX_BUILDER_QUESTIONS, MIN_MOCK_QUESTIONS, questionsLabel, shortfallLine, titleWithCount } from "@/lib/mock-fill";
 
 const Body = z.object({
   examCode: z.string().min(1).max(64),
   topicIds: z.array(z.string().min(1).max(40)).min(1).max(10),
-  count: z.union([z.literal(10), z.literal(25), z.literal(50)]),
+  count: z.number().int().min(MIN_MOCK_QUESTIONS).max(MAX_BUILDER_QUESTIONS),
   difficulty: z.enum(["MIXED", "EASY", "HARD"]),
   pyqOnly: z.boolean().optional(),
 });
@@ -83,33 +98,42 @@ export async function POST(req: Request) {
   const diffFilter = difficulty === "MIXED" ? undefined : difficulty;
 
   // Pull the candidate pool once (ids + topic + difficulty) and the
-  // student's seen map once (questionId -> lastSeenAt on this exam in
-  // the window); sample in JS.
+  // student's seen history once (answered / shown-only questions on this
+  // exam in the window); sample in JS.
   const [pool, seen] = await Promise.all([
     prisma.question.findMany({
-      where: { examId: exam.id, topicId: { in: validIds }, validated: true, ...(pyqOnly ? { source: "PYQ" as const } : {}) },
+      where: {
+        examId: exam.id,
+        topicId: { in: validIds },
+        validated: true,
+        NOT: { tags: { has: "rejected" } },
+        ...(pyqOnly ? { source: "PYQ" as const } : {}),
+      },
       select: { id: true, topicId: true, difficulty: true },
     }),
-    getSeenQuestions(userId, exam.id),
+    getSeenHistory(userId, exam.id),
   ]);
   // seen === null → the seen query failed: sample as if nothing were
   // seen, but report no numbers (see header).
-  const seenForPick: SeenMap = seen ?? new Map();
+  const seenForPick: SeenInput = seen ?? new Map();
   type Row = (typeof pool)[number];
   const strict = diffFilter ? pool.filter((q) => q.difficulty === diffFilter) : pool;
   const fallback = diffFilter ? pool.filter((q) => q.difficulty === "MEDIUM") : [];
 
-  // Pass 1 — even split across topics, UNSEEN strict questions only.
+  // Pass 1 — even split across topics, strict questions the student has
+  // NOT answered: never-shown first, then shown-but-unanswered
+  // (least-recently-shown first).
   const per = Math.ceil(count / validIds.length);
   const picked = new Map<string, Row>();
   for (const tid of validIds) {
-    const { unseen } = partitionBySeen(strict.filter((q) => q.topicId === tid), seenForPick);
-    for (const q of shuffleWith(unseen).slice(0, per)) picked.set(q.id, q);
+    const { fresh, shownLrs } = partitionBySeen(strict.filter((q) => q.topicId === tid), seenForPick);
+    for (const q of [...shuffleWith(fresh), ...shownLrs].slice(0, per)) picked.set(q.id, q);
   }
-  // Pass 2 — top up to `count`: unseen from the rest of the strict pool,
-  // then unseen MEDIUM fallback, then least-recently-seen strict, then
-  // least-recently-seen fallback. A thin topic never shrinks the paper,
-  // and a repeat is only ever the oldest one available.
+  // Pass 2 — top up to `count`: never-shown from the rest of the strict
+  // pool, then never-shown MEDIUM fallback, then shown-but-unanswered
+  // (strict, then fallback), then least-recently-answered strict, then
+  // fallback. A thin topic never shrinks the paper, and a repeat is only
+  // ever the oldest one available.
   if (picked.size < count) {
     const rest = (qs: Row[]) => qs.filter((q) => !picked.has(q.id));
     const { picked: extra } = pickTiered([rest(strict), rest(fallback)], count - picked.size, seenForPick);
@@ -119,14 +143,20 @@ export async function POST(req: Request) {
   // (was a random trim), then shuffle for presentation order.
   const chosen = pickTiered([[...picked.values()]], count, seenForPick).picked;
   const questionIds = shuffleWith(chosen).map((q) => q.id);
-  if (questionIds.length < 5) {
-    return NextResponse.json({ error: "not enough questions for this selection" }, { status: 422 });
+  if (questionIds.length < MIN_MOCK_QUESTIONS) {
+    return NextResponse.json(
+      {
+        error: `Only ${questionsLabel(questionIds.length)} ${questionIds.length === 1 ? "is" : "are"} available for this selection — a mock needs at least ${MIN_MOCK_QUESTIONS}. Add another topic, or choose Mixed.`,
+        available: questionIds.length,
+      },
+      { status: 422 },
+    );
   }
 
   // Honest numbers for the response + config. `pool` is the whole
-  // validated bank of the chosen topics (all difficulties — the same
-  // number the builder page shows as "available"). null when the seen
-  // query failed — we then have no number to report.
+  // validated bank of the chosen topics (all difficulties). `seen` counts
+  // ANSWERED questions. null when the seen query failed — we then have no
+  // number to report.
   const bank: BankStats | null = seen
     ? {
         size: seenSummary(pool, seen).bankSize,
@@ -140,7 +170,13 @@ export async function POST(req: Request) {
   const durationMin = Math.min(exam.durationMin, Math.max(10, Math.round(questionIds.length * perQMin)));
 
   const names = topics.map((t) => t.name);
-  const title = `${exam.shortName} — ${pyqOnly ? "PYQ-pattern practice" : "Custom"}: ${names.slice(0, 3).join(", ")}${names.length > 3 ? ` +${names.length - 3}` : ""}`;
+  // The number in the title is the number of questions picked, never the
+  // size asked for.
+  const title = titleWithCount(
+    `${exam.shortName} — ${pyqOnly ? "PYQ-pattern practice" : "Custom"}: ${names.slice(0, 3).join(", ")}${names.length > 3 ? ` +${names.length - 3}` : ""}`,
+    questionIds.length,
+  );
+  const short = questionIds.length < count;
 
   const mock = await prisma.mock.create({
     data: {
@@ -158,7 +194,8 @@ export async function POST(req: Request) {
         requestedCount: count,
         ...(pyqOnly ? { pyqOnly: true } : {}),
         durationMin,
-        ...(bank ? { seen: bank } : {}),
+        // Additive (25 Sep 2026): `seen` counts answered questions.
+        ...(bank ? { seen: { ...bank, basis: "answered" } } : {}),
       } as object,
     },
     select: { id: true },
@@ -166,10 +203,16 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     id: mock.id,
+    title,
     count: questionIds.length,
+    requested: count,
+    // true when the selection held fewer questions than asked; `line` then
+    // says so in plain words (the builder shows its own localised copy).
+    short,
+    line: shortfallLine(count, questionIds.length),
     durationMin,
     // null when the seen query failed — the builder page then starts the
     // mock straight away, exactly as it does for a set with no repeats.
-    bank: bank ? { ...bank, line: bankLine(bank) } : null,
+    bank: bank ? { ...bank, line: answeredBankLine(bank) } : null,
   });
 }

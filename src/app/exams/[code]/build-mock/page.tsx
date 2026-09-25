@@ -24,6 +24,17 @@
 // questions (NEET_PG, NIFT …) were indexable empty builders linked from
 // llms-full.txt and context.md, whose empty state sent students to "the full
 // mocks" of a bank with no questions.
+//
+// Honest availability (25 Sep 2026): 232 of 370 builder mocks came back
+// short — a topic is listed at 3 validated questions (median per topic:
+// SBI Clerk 9, UKSSSC 2) while the sizes were 10/25/50. The page now loads
+// each topic's validated count PER DIFFICULTY (withdrawn "rejected" rows
+// excluded), so the form can show what the chosen difficulty really draws
+// on (EASY/HARD fall back to MEDIUM, as the API does), grey out sizes the
+// selection cannot fill and offer "All N" — no extra round trip.
+// "Seen" is now ANSWERED (src/lib/answered-questions.ts), per topic and
+// difficulty, and the seen lines come from src/lib/builder-fill-copy.ts
+// because the old build.seen.* strings say "any mock you opened counts".
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -34,8 +45,10 @@ import { auth } from "@/lib/auth";
 import { getExamTheme } from "@/lib/exam-theme";
 import { BuilderForm, type BuilderLabels } from "./BuilderForm";
 import { OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
-import { getSeenCountByTopic } from "@/lib/seen-questions";
+import { getAnsweredCountByTopic } from "@/lib/answered-questions";
 import { SEEN_WINDOW_DAYS } from "@/lib/question-pick";
+import { ZERO_COUNTS, type DiffCounts } from "@/lib/mock-fill";
+import { builderFillCopy, type BuilderFillCopy } from "@/lib/builder-fill-copy";
 import { getT } from "@/lib/i18n-server";
 import { fillTemplate, type StringKey } from "@/lib/i18n";
 import { buildMockCopy } from "@/lib/quiz-entry-copy";
@@ -43,16 +56,18 @@ import { BUILDABLE_TOPIC_MIN, examPageGates } from "@/lib/exam-page-gates";
 
 // The form's copy in the visitor's locale (13 Sep 2026): cookie / URL /
 // preferredLang via getT(). Not exported — a page file may only export
-// Next's own fields.
-function builderLabels(t: (key: StringKey) => string): BuilderLabels {
+// Next's own fields. The answered / availability lines (25 Sep 2026) come
+// from builderFillCopy in the same locale.
+function builderLabels(t: (key: StringKey) => string, F: BuilderFillCopy): BuilderLabels {
   return {
-    seenLine: t("build.seen.line"),
-    seenShort: t("build.seen.short"),
-    seenExhausted: t("build.seen.exhausted"),
+    seenLine: F.answeredLine,
+    seenShort: F.answeredShort,
+    seenExhausted: F.answeredExhausted,
     seenExamPage: t("build.seen.examPage"),
-    topicSeenTitle: t("build.topic.seenTitle"),
-    topicNewOf: t("build.topic.newOf"),
-    builtRepeats: t("build.built.repeats"),
+    topicSeenTitle: F.topicAnsweredTitle,
+    topicNewOf: F.topicNotAnsweredOf,
+    builtRepeats: F.builtRepeats,
+    builtShort: F.builtShort,
     builtStart: t("build.built.start"),
     builtChange: t("build.built.change"),
     questions: t("build.questions"),
@@ -62,7 +77,18 @@ function builderLabels(t: (key: StringKey) => string): BuilderLabels {
     diffHard: t("build.diff.hard"),
     availableOne: t("build.available.one"),
     availableMany: t("build.available.many"),
-    fewer: t("build.fewer"),
+    sizeAll: F.sizeAll,
+    sizeTooBig: F.sizeTooBig,
+    onlyAvailable: F.onlyAvailable,
+    tooFew: F.tooFew,
+    fallbackEasy: F.fallbackEasy,
+    fallbackHard: F.fallbackHard,
+    fallbackNoneEasy: F.fallbackNoneEasy,
+    fallbackNoneHard: F.fallbackNoneHard,
+    fallbackAnsweredEasy: F.fallbackAnsweredEasy,
+    fallbackAnsweredHard: F.fallbackAnsweredHard,
+    fallbackAnsweredNoneEasy: F.fallbackAnsweredNoneEasy,
+    fallbackAnsweredNoneHard: F.fallbackAnsweredNoneHard,
     pickOne: t("build.pickOne"),
     failed: t("build.failed"),
     building: t("build.building"),
@@ -114,16 +140,29 @@ export default async function BuildMockPage({
   const pyq = sp.pyq === "1";
 
   // Subjects → topics with validated-question counts, all and PYQ-pattern
-  // only. Topics under 3 questions in the chosen mode are hidden — a
-  // 2-question "topic mock" reads as broken.
+  // only, each split by difficulty (25 Sep 2026) so the form can count what
+  // the chosen difficulty really draws on. Topics under 3 questions in the
+  // chosen mode are hidden — a 2-question "topic mock" reads as broken.
+  // Withdrawn questions (tag "rejected") are never counted: the API never
+  // picks them.
   const rowsRead = await prisma.$queryRaw<
-    { sname: string; sweight: number | null; tid: string; tcode: string; tname: string; n: bigint; npyq: bigint }[]
+    {
+      sname: string; sweight: number | null; tid: string; tcode: string; tname: string;
+      n: bigint; ne: bigint; nm: bigint; nh: bigint;
+      npyq: bigint; pe: bigint; pm: bigint; ph: bigint;
+    }[]
   >`
     SELECT s.name sname, s.weight sweight, t.id tid, t.code tcode, t.name tname, COUNT(q.id) n,
-           COUNT(q.id) FILTER (WHERE q.source = 'PYQ') npyq
+           COUNT(q.id) FILTER (WHERE q.difficulty = 'EASY') ne,
+           COUNT(q.id) FILTER (WHERE q.difficulty = 'MEDIUM') nm,
+           COUNT(q.id) FILTER (WHERE q.difficulty = 'HARD') nh,
+           COUNT(q.id) FILTER (WHERE q.source = 'PYQ') npyq,
+           COUNT(q.id) FILTER (WHERE q.source = 'PYQ' AND q.difficulty = 'EASY') pe,
+           COUNT(q.id) FILTER (WHERE q.source = 'PYQ' AND q.difficulty = 'MEDIUM') pm,
+           COUNT(q.id) FILTER (WHERE q.source = 'PYQ' AND q.difficulty = 'HARD') ph
     FROM "Subject" s
     JOIN "Topic" t ON t."subjectId" = s.id
-    JOIN "Question" q ON q."topicId" = t.id AND q.validated = TRUE
+    JOIN "Question" q ON q."topicId" = t.id AND q.validated = TRUE AND NOT ('rejected' = ANY(q.tags))
     WHERE s."examId" = ${exam.id}
     GROUP BY 1, 2, 3, 4, 5
     HAVING COUNT(q.id) >= 3
@@ -132,26 +171,44 @@ export default async function BuildMockPage({
   const rowsFailed = rowsRead === null;
   const allRows = rowsRead ?? [];
   const pyqAvailable = allRows.some((r) => Number(r.npyq) >= 3);
-  const rows = pyq ? allRows.filter((r) => Number(r.npyq) >= 3).map((r) => ({ ...r, n: r.npyq })) : allRows;
+  const rows = (pyq ? allRows.filter((r) => Number(r.npyq) >= 3) : allRows).map((r) => ({
+    ...r,
+    n: pyq ? r.npyq : r.n,
+    diff: pyq
+      ? { EASY: Number(r.pe), MEDIUM: Number(r.pm), HARD: Number(r.ph) }
+      : { EASY: Number(r.ne), MEDIUM: Number(r.nm), HARD: Number(r.nh) },
+  }));
 
   // Signed in: how many validated questions of each topic this student
-  // has had on screen (any mock they opened on this exam) in the last
-  // SEEN_WINDOW_DAYS days — one query — so the form can say "seen N of
-  // M" with real numbers. Anonymous → no seen data, no seen copy. The
-  // query returns null on a DB error: then seenKnown=false and the form
-  // hides every seen line rather than asserting "seen 0 of M".
+  // has ANSWERED on this exam in the last SEEN_WINDOW_DAYS days, per
+  // difficulty — one query — so the form can say "answered N of M" with
+  // real numbers. Questions that were only on screen (a mock left at
+  // question 1) do not count (25 Sep 2026). Anonymous → no data, no copy.
+  // The query returns null on a DB error: then seenKnown=false and the
+  // form hides every answered line rather than asserting "0 of M".
   const seenResult = session?.user?.id
-    ? await getSeenCountByTopic(session.user.id, exam.id, undefined, { pyqOnly: pyq })
+    ? await getAnsweredCountByTopic(session.user.id, exam.id, undefined, { pyqOnly: pyq })
     : null;
   const seenKnown = seenResult !== null;
-  const seenByTopic = seenResult ?? new Map<string, number>();
+  const seenByTopic = seenResult ?? new Map<string, DiffCounts>();
 
   const theme = getExamTheme(exam.category);
-  const subjects = new Map<string, { name: string; topics: { id: string; code: string; name: string; n: number; seen: number }[] }>();
+  const subjects = new Map<
+    string,
+    { name: string; topics: { id: string; code: string; name: string; n: number; seen: number; diff: DiffCounts; seenDiff: DiffCounts }[] }
+  >();
   for (const r of rows) {
     const s = subjects.get(r.sname) ?? { name: r.sname, topics: [] };
     const n = Number(r.n);
-    s.topics.push({ id: r.tid, code: r.tcode, name: r.tname, n, seen: Math.min(n, seenByTopic.get(r.tid) ?? 0) });
+    const got = seenByTopic.get(r.tid) ?? ZERO_COUNTS;
+    // Never more answered than the topic holds, per difficulty.
+    const seenDiff = {
+      EASY: Math.min(r.diff.EASY, got.EASY),
+      MEDIUM: Math.min(r.diff.MEDIUM, got.MEDIUM),
+      HARD: Math.min(r.diff.HARD, got.HARD),
+    };
+    const seen = Math.min(n, seenDiff.EASY + seenDiff.MEDIUM + seenDiff.HARD);
+    s.topics.push({ id: r.tid, code: r.tcode, name: r.tname, n, seen, diff: r.diff, seenDiff });
     subjects.set(r.sname, s);
   }
   // PYQ mode re-ranks each subject's topics by their PYQ-pattern count.
@@ -274,7 +331,7 @@ export default async function BuildMockPage({
             signedIn={!!session?.user?.id}
             seenKnown={seenKnown}
             windowDays={SEEN_WINDOW_DAYS}
-            labels={builderLabels(tt.t)}
+            labels={builderLabels(tt.t, builderFillCopy(tt.locale))}
           />
         )}
       </section>

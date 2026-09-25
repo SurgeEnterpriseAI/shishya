@@ -9,10 +9,10 @@ import { tryCatAdaptiveMock } from "@/lib/psychometrics";
 import { getStudentState } from "@/lib/db/student-state";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import { bad, notFound, ok, serverError, unauth, parseBody } from "@/lib/http";
-import { getSeenQuestions } from "@/lib/seen-questions";
+import { getSeenHistory } from "@/lib/answered-questions";
 import {
   SEEN_WINDOW_DAYS,
-  bankLine,
+  answeredBankLine,
   countRepeats,
   dedupeById,
   dedupeIds,
@@ -21,9 +21,11 @@ import {
   seenSummary,
   shapeCandidates,
   type BankStats,
-  type SeenMap,
+  type SeenHistory,
+  type SeenInput,
 } from "@/lib/question-pick";
-import type { Difficulty, GenerateMockRequest, QuestionRef } from "@/lib/ai/types";
+import { rankByInstruction, shortfallLine, stripCountClaims, titleWithCount } from "@/lib/mock-fill";
+import type { Difficulty, GenerateMockRequest, QuestionRef, SyllabusContext } from "@/lib/ai/types";
 
 /** Narrow-select cap on the validated pool fetched per creation. Seen
  *  exclusion runs over this whole slice (the old code took 200/500 full
@@ -62,13 +64,23 @@ export async function POST(req: Request) {
     // `seen` is null when the seen query failed: pick as if nothing were
     // seen (a DB blip must not fail the mock) but report NO bank numbers —
     // an empty map would make the honest line say "seen 0 of M".
-    const seenForPick: SeenMap = seen ?? new Map();
+    const seenForPick: SeenInput = seen ?? new Map();
     if (pool.length === 0) {
       return bad("No questions available yet for this configuration. Try a different topic or wait for content to be seeded.");
     }
 
     const studentState = await getStudentStateOrInit(session.user.id, body.examCode);
     const syllabus = await getSyllabusContext(body.examCode);
+
+    // Free text (25 Sep 2026): the model reads at most 120 candidates in
+    // pool order, so a request naming a topic whose questions sat past the
+    // first 120 came back with 3 questions under a "25Q" title. Put the
+    // questions of the topics the request names first — nothing is added
+    // or dropped.
+    const candidates =
+      body.request.type === "USER_REQUEST"
+        ? rankByInstruction(pool, body.request.instruction, topicTextLookup(syllabus))
+        : pool;
 
     // ADAPTIVE: try the psychometric CAT engine first — measurement-driven,
     // deterministic, and no Claude call. Returns null until the student has
@@ -90,7 +102,7 @@ export async function POST(req: Request) {
       result = await generateMock({
         studentState,
         request: body.request as GenerateMockRequest,
-        availableQuestions: pool,
+        availableQuestions: candidates,
         syllabus,
       });
     }
@@ -145,23 +157,36 @@ export async function POST(req: Request) {
             windowDays: SEEN_WINDOW_DAYS,
           };
 
+    // Honest size (25 Sep 2026): a free-text mock titled "25Q" held 3
+    // questions. A model-written title loses any count claim and states
+    // the number the mock really holds; any other title gains the real
+    // number whenever the set came back smaller than asked.
+    const short = requested != null && finalIds.length < requested;
+    const title =
+      body.request.type === "USER_REQUEST" || short
+        ? titleWithCount(result.title, finalIds.length, "Custom mock")
+        : stripCountClaims(result.title) || result.title;
+
     const mock = await prisma.mock.create({
       data: {
         userId: session.user.id,
         examId: exam.id,
         type: mockTypeFromRequest(body.request),
-        title: result.title,
+        title,
         config: {
           rationale: result.rationale,
           topicMix,
           difficultyMix,
           durationMin: result.durationMin,
           requestType: body.request.type,
+          count: finalIds.length,
+          ...(requested != null ? { requestedCount: requested } : {}),
           // Persisted so the player / results page can show the same
           // honest line later (every /api/mocks client auto-redirects).
           // Spread into a literal: an interface has no index signature,
-          // which Prisma's InputJsonValue requires.
-          ...(bank ? { seen: { ...bank } } : {}),
+          // which Prisma's InputJsonValue requires. `seen` counts ANSWERED
+          // questions since 25 Sep 2026 (basis marks the change).
+          ...(bank ? { seen: { ...bank, basis: "answered" } } : {}),
         },
         questionIds: finalIds,
         generatedBy:
@@ -183,12 +208,18 @@ export async function POST(req: Request) {
         rationale: result.rationale,
         durationMin: result.durationMin,
         questionCount: finalIds.length,
+        // Additive (25 Sep 2026): what was asked for, and the plain line
+        // when the set holds fewer ("Only 3 questions were available for
+        // this request, so this mock has 3, not 25.").
+        requestedCount: requested,
+        short,
+        shortLine: requested != null ? shortfallLine(requested, finalIds.length, "this request") : null,
         topicMix,
         difficultyMix,
         // Additive: { size, seen, repeats, windowDays, line }. null for
         // REVISION (all repeats by design). Existing clients read only
-        // mock.id.
-        bank: bank ? { ...bank, line: bankLine(bank) } : null,
+        // mock.id. `seen` = answered questions.
+        bank: bank ? { ...bank, line: answeredBankLine(bank) } : null,
       },
     });
   } catch (err: any) {
@@ -220,10 +251,11 @@ interface CandidatePool {
   /** The whole validated scope (topic / subject / exam), capped at POOL_TAKE
    *  (plus up to POOL_TAKE unseen rows fetched directly when the cap hit). */
   full: QuestionRef[];
-  /** questionId -> lastSeenAt for this user+exam in the window. NULL when
-   *  the seen query failed (pick without exclusion, report no numbers) and
-   *  for REVISION (no bank numbers by design). */
-  seen: SeenMap | null;
+  /** answered / shown-only questions for this user+exam in the window
+   *  (src/lib/answered-questions.ts). NULL when the seen query failed
+   *  (pick without exclusion, report no numbers) and for REVISION (no bank
+   *  numbers by design). */
+  seen: SeenHistory | null;
   /** Exact validated count of the scope (== full.length unless the cap hit). */
   bankSize: number;
   /** Exact count of the scope the student has seen in the window — from the
@@ -243,7 +275,9 @@ async function fetchCandidatePool(
   userId: string,
   request: GenerateMockRequest
 ): Promise<CandidatePool> {
-  const baseWhere = { examId, validated: true };
+  // Withdrawn questions (tag "rejected") never reach a mock, even if a
+  // row were ever left validated (25 Sep 2026).
+  const baseWhere = { examId, validated: true, NOT: { tags: { has: "rejected" } } };
 
   // REVISION intentionally re-shows past wrong questions, so it must
   // NOT get the don't-repeat / escalation treatment — handled in its
@@ -255,23 +289,25 @@ async function fetchCandidatePool(
 
   // ── DEPTH LEVER 1 ────────────────────────────────────────────────
   // Two signals computed once per request (one query each):
-  //   seen     — every question this user has had on screen on this
-  //              exam in the last SEEN_WINDOW_DAYS days, with when.
-  //              Excluded from new mocks; when the unseen pool runs
-  //              short we fall back to the LEAST-recently-seen ones
-  //              (never a random recycle of the whole bank).
+  //   seen     — this user's history on this exam in the last
+  //              SEEN_WINDOW_DAYS days: questions ANSWERED (seen) and
+  //              questions only on screen, never answered (25 Sep 2026).
+  //              Never-shown questions go first; when they run short we
+  //              fall back to shown-but-unanswered, then to the
+  //              LEAST-recently-answered ones (never a random recycle of
+  //              the whole bank).
   //   isStrong — recent submitted attempts average > 70%. Such users
   //              get EASY questions dropped so the mock skews harder —
   //              the platform pushes them instead of coasting.
   // TOPIC requests that pin an explicit difficulty opt OUT of
   // escalation (the user picked the level).
   const [seen, strongPerformer] = await Promise.all([
-    getSeenQuestions(userId, examId),
+    getSeenHistory(userId, examId),
     isStrongPerformer(examId, userId),
   ]);
   // null = the seen query failed. Pick as if nothing were seen; the
   // caller reports no bank numbers (see CandidatePool.seen).
-  const seenForPick: SeenMap = seen ?? new Map();
+  const seenForPick: SeenInput = seen ?? new Map();
   const escalate =
     strongPerformer && !(request.type === "TOPIC" && request.difficulty);
 
@@ -319,12 +355,15 @@ async function fetchCandidatePool(
     //   - the honest numbers — bank size AND seen-in-scope are counted in
     //     the DB (seen ids are bounded by the student's own attempts in
     //     the window, so the IN list is small);
-    //   - the unseen pool — if the sample's unseen slice is short of the
-    //     floor, fetch unseen rows directly (id NOT IN seen) so a repeat is
-    //     never served while unseen questions exist past the cap.
-    const seenIds = seen ? [...seen.keys()] : [];
+    //   - the unseen pool — if the sample's never-shown slice is short of
+    //     the floor, fetch never-shown rows directly (id NOT IN answered or
+    //     shown) so a repeat is never served while fresh questions exist
+    //     past the cap.
+    // Bank numbers count ANSWERED questions (25 Sep 2026).
+    const seenIds = seen ? [...seen.answered.keys()] : [];
+    const touchedIds = seen ? [...seen.answered.keys(), ...seen.shown.keys()] : [];
     const floor = Math.max(minKeep, 5);
-    const needUnseen = seen != null && seenIds.length > 0 && partitionBySeen(full, seen).unseen.length < floor;
+    const needUnseen = seen != null && touchedIds.length > 0 && partitionBySeen(full, seen).fresh.length < floor;
     const [total, seenCount, unseenRows] = await Promise.all([
       prisma.question.count({ where }),
       seen == null
@@ -333,7 +372,7 @@ async function fetchCandidatePool(
           ? Promise.resolve<number | null>(0)
           : prisma.question.count({ where: { ...where, id: { in: seenIds } } }),
       needUnseen
-        ? prisma.question.findMany({ where: { ...where, id: { notIn: seenIds } }, select: NARROW_SELECT, take: POOL_TAKE })
+        ? prisma.question.findMany({ where: { ...where, id: { notIn: touchedIds } }, select: NARROW_SELECT, take: POOL_TAKE })
         : Promise.resolve([] as typeof qs),
     ]);
     bankSize = total;
@@ -345,7 +384,7 @@ async function fetchCandidatePool(
   return { candidates, full, seen, bankSize, seenInBank };
 }
 
-function emptyPool(seen: SeenMap | null): CandidatePool {
+function emptyPool(seen: SeenHistory | null): CandidatePool {
   return { candidates: [], full: [], seen, bankSize: 0, seenInBank: seen ? 0 : null };
 }
 
@@ -370,7 +409,7 @@ async function fetchRevisionPool(
   }
   if (wrongIds.size === 0) return [];
   const qs = await prisma.question.findMany({
-    where: { examId, validated: true, id: { in: [...wrongIds] } },
+    where: { examId, validated: true, NOT: { tags: { has: "rejected" } }, id: { in: [...wrongIds] } },
     include: { topic: true },
   });
   return qs.map(toRef);
@@ -414,7 +453,7 @@ async function isStrongPerformer(examId: string, userId: string): Promise<boolea
  *       (not enough hard content yet → don't starve). */
 function shapePool(
   pool: QuestionRef[],
-  opts: { seen: SeenMap; escalate: boolean; minKeep: number },
+  opts: { seen: SeenInput; escalate: boolean; minKeep: number },
 ): QuestionRef[] {
   const floor = Math.max(opts.minKeep, 5);
 
@@ -425,6 +464,20 @@ function shapePool(
     if (harder.length >= floor) out = harder;
   }
   return out;
+}
+
+/** topicCode -> "topic name + subject name" for rankByInstruction, from the
+ *  syllabus the generator already loaded (subtopics included, since a
+ *  question may hang off one). Unknown codes match on the code alone. */
+function topicTextLookup(syllabus: SyllabusContext): (topicCode: string) => string {
+  const text = new Map<string, string>();
+  for (const s of syllabus.subjects) {
+    for (const t of s.topics) {
+      text.set(t.code, `${t.name} ${s.name}`);
+      for (const st of t.subtopics ?? []) text.set(st.code, `${st.name} ${t.name} ${s.name}`);
+    }
+  }
+  return (code) => text.get(code) ?? "";
 }
 
 /** Recompute topic / difficulty mixes after a post-generator top-up so

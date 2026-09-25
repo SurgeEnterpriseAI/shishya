@@ -17,6 +17,7 @@ import { prisma } from "@/lib/db/prisma";
 import { createAdaptiveQuiz } from "./adaptive-quiz";
 import { getSeenQuestions } from "@/lib/seen-questions";
 import { pickWithSeenExclusion } from "@/lib/question-pick";
+import { warmupReplyWithSize } from "@/lib/mock-fill";
 import { SCHOLARSHIPS, scholarshipsForExam, type Scholarship } from "@/data/scholarships";
 
 export interface ToolContext {
@@ -212,15 +213,23 @@ export async function executeTool(
         return { ok: true, data: await getAttemptMistakes(ctx, String(input?.attempt_id ?? "")) };
       case "predict_rank":
         return { ok: true, data: await predictRank(ctx, Number(input?.score_pct ?? 0)) };
-      case "start_adaptive_quiz":
+      case "start_adaptive_quiz": {
+        const quiz = await createAdaptiveQuiz(
+          ctx.userId,
+          ctx.examCode,
+          typeof input?.topic_hint === "string" ? input.topic_hint : undefined,
+        );
+        // 25 Sep 2026: a warmup on a thin topic holds fewer than 10
+        // questions; the verbatim reply says so plainly instead of leaving
+        // the "10-question" tool framing to stand.
         return {
           ok: true,
-          data: await createAdaptiveQuiz(
-            ctx.userId,
-            ctx.examCode,
-            typeof input?.topic_hint === "string" ? input.topic_hint : undefined,
-          ),
+          data: {
+            ...quiz,
+            message_to_user: warmupReplyWithSize(quiz.message_to_user, quiz.warmupQuestionCount, quiz.topicTargeted),
+          },
         };
+      }
       case "find_scholarships":
         return { ok: true, data: findScholarships(ctx, input) };
       case "search_knowledge":
