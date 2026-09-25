@@ -30,11 +30,15 @@ export const stateExamsSeed = [
   // ── Tamil Nadu ─────────────────────────────────────────────────────────
   { code: "TN_TNPSC_GROUP1", state: "TN", name: "TNPSC Group I (Combined Civil Services - I, Prelims)", shortName: "TNPSC Group I",
     description: "Tamil Nadu Public Service Commission Group I Prelims — single GS paper, 200 MCQs in 3 hours, for Deputy Collector / DSP / Asst Commissioner posts.",
-    durationMin: 180, totalQuestions: 200, totalMarks: 300, marksPerQ: 1.5, negativeMark: 1 / 3,
+    // TNPSC Notfn 05/2026 (23.06.2026) para 1.11.3: no deduction for a wrong answer
+    // (a blank answer loses 0.5, which this field can not express).
+    durationMin: 180, totalQuestions: 200, totalMarks: 300, marksPerQ: 1.5, negativeMark: 0,
     languages: ["EN", "TA"] as const, candidatesPerYear: 600_000 },
   { code: "TN_TNPSC_GROUP2", state: "TN", name: "TNPSC Group II/IIA (Combined Civil Services - II, Prelims)", shortName: "TNPSC Group II",
     description: "TNPSC Group II/IIA Prelims — single GS paper, 200 MCQs in 3 hours, for Sub-Registrar, Assistant Inspector etc.",
-    durationMin: 180, totalQuestions: 200, totalMarks: 300, marksPerQ: 1.5, negativeMark: 1 / 3,
+    // TNPSC Notfn 07/2026 (11.08.2026) para 1.12.3: no deduction for a wrong answer
+    // (a blank answer loses 0.5, which this field can't express).
+    durationMin: 180, totalQuestions: 200, totalMarks: 300, marksPerQ: 1.5, negativeMark: 0,
     languages: ["EN", "TA"] as const, candidatesPerYear: 1_500_000 },
   { code: "TN_TNPSC_GROUP4", state: "TN", name: "TNPSC Group IV", shortName: "TNPSC Group IV",
     description: "TNPSC Group IV — VAO + Junior Assistant + Typist combined exam. 200 MCQs in 3 hours covering GS, Aptitude, and General Tamil.",
