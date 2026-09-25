@@ -6,6 +6,8 @@
 //   event: delta\ndata: <text chunk>\n\n
 //   event: done\ndata: {"messageId":"...","actions":[...]}\n\n
 //   event: error\ndata: {"error":"<friendly text>","next":"/exams/..."}\n\n
+//     (+ "code" when the chat has its own localised line for it — see
+//     src/lib/chat-reply-status.ts; 25 Sep 2026: "still-answering")
 // A signed-in turn that was already answered is replayed from the stored
 // reply over the same events (done carries replayed: true) — see
 // src/lib/chat-turn-dedupe.ts (24 Sep 2026). A turn whose row another run
@@ -28,6 +30,7 @@ import { getStudentJourney } from "@/lib/db/student-journey";
 import { getSyllabusContext } from "@/lib/db/syllabus";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 import { classifyClient } from "@/lib/client-class";
+import { CHAT_ERROR_CODE, CHAT_ERROR_COPY } from "@/lib/chat-reply-status";
 import {
   decideTurn,
   replayFrames,
@@ -295,9 +298,13 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
     }
     if (decision.kind === "wait") {
       // No meta frame: the chat stays where it was, and Retry asks again.
-      const error = "Your earlier message is still being answered. Tap Retry again in a moment to see the reply.";
+      // The English line goes with a stable code, and the chat shows its own
+      // en/hi/te line for that code (25 Sep 2026 — this was English-only in a
+      // localised chat); src/lib/chat-reply-status.ts.
+      const code = CHAT_ERROR_CODE.stillAnswering;
+      const error = CHAT_ERROR_COPY[code].en;
       return new Response(
-        `event: error\ndata: ${JSON.stringify({ error, next: examCodeForChat ? `/exams/${examCodeForChat}` : "/exams" })}\n\n`,
+        `event: error\ndata: ${JSON.stringify({ error, code, next: examCodeForChat ? `/exams/${examCodeForChat}` : "/exams" })}\n\n`,
         { headers: SSE_HEADERS },
       );
     }

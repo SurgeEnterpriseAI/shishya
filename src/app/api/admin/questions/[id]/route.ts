@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { bad, forbidden, notFound, ok, parseBody, serverError } from "@/lib/http";
+import { tagsAfterAdminEdit, WITHDRAWN_TAG, type AdminQuestionAction } from "@/lib/question-withdrawn";
 
 const Patch = z.object({
   body: z.string().optional(),
@@ -21,6 +22,9 @@ const Patch = z.object({
   //   - { validated: true }  → marks AI_GENERATED → AI_VALIDATED, stamps validatedBy/At
   //   - { validated: false } → un-validates (e.g., found a bug post-publish)
   //   - { reject: true }     → soft-reject: validated stays false; tag "rejected"
+  //   - { validated: true } on a rejected question → the one deliberate way
+  //     back: clears the tag, stamps metadata.reinstatedBy/At (25 Sep 2026).
+  //     Bulk validate never touches it (src/lib/question-withdrawn.ts).
   validated: z.boolean().optional(),
   reject: z.boolean().optional(),
 });
@@ -46,7 +50,23 @@ export async function PATCH(
     if (body.answerKey != null) data.answerKey = body.answerKey;
     if (body.solution != null) data.solution = body.solution;
     if (body.difficulty != null) data.difficulty = body.difficulty;
-    if (body.tags != null) data.tags = body.tags;
+
+    // Tags (25 Sep 2026, src/lib/question-withdrawn.ts): the editor always
+    // sends its tag list WITHOUT "rejected", so a plain "Save edits" on a
+    // withdrawn question used to un-withdraw it — and a later bulk validate
+    // would then have put it back in front of students. Only Validate (this
+    // single-question, deliberate override) clears the tag now.
+    const action: AdminQuestionAction = body.reject
+      ? "reject"
+      : body.validated === true
+      ? "validate"
+      : body.validated === false
+      ? "unvalidate"
+      : "save";
+    const wasWithdrawn = (existing.tags ?? []).includes(WITHDRAWN_TAG);
+    if (body.tags != null || action === "reject" || wasWithdrawn) {
+      data.tags = tagsAfterAdminEdit({ existing: existing.tags, requested: body.tags ?? null, action });
+    }
 
     // Move to a different topic (within the same exam)
     if (body.topicCode && body.topicCode !== existing.topic.code) {
@@ -62,7 +82,6 @@ export async function PATCH(
 
     if (body.reject) {
       data.validated = false;
-      data.tags = [...(body.tags ?? existing.tags ?? []), "rejected"];
       data.metadata = { ...(existing.metadata as any), rejectedBy: admin.email, rejectedAt: new Date().toISOString() };
     } else if (body.validated === true) {
       data.validated = true;
@@ -70,6 +89,10 @@ export async function PATCH(
       data.validatedAt = new Date();
       // Promote source: AI_GENERATED → AI_VALIDATED
       if (existing.source === "AI_GENERATED") data.source = "AI_VALIDATED";
+      // Re-validating a withdrawn question is deliberate — keep a trail of it.
+      if (wasWithdrawn) {
+        data.metadata = { ...(existing.metadata as any), reinstatedBy: admin.email, reinstatedAt: new Date().toISOString() };
+      }
     } else if (body.validated === false) {
       data.validated = false;
     }

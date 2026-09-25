@@ -7,8 +7,14 @@
 // off. Run once after each sign-off batch.
 //
 // Idempotent — already-validated rows aren't touched.
+//
+// 25 Sep 2026: withdrawn questions (tag "rejected"), ones validated once
+// and later pulled (validatedAt set) and ones the answer-check firewall
+// already failed (metadata.factoryVerify) are held back — a bulk flip would
+// put them in front of students (src/lib/question-withdrawn.ts).
 
 import { PrismaClient, QuestionSource } from "@prisma/client";
+import { BULK_HELD_BACK, BULK_VALIDATABLE } from "../src/lib/question-withdrawn";
 
 const prisma = new PrismaClient();
 
@@ -19,12 +25,13 @@ async function main() {
     : null; // optionally also flip the source enum
 
   // Snapshot before
-  const [pendingTotal, validatedBefore, byExam] = await Promise.all([
-    prisma.question.count({ where: { source: QuestionSource.AI_GENERATED, validated: false } }),
+  const [pendingTotal, heldBack, validatedBefore, byExam] = await Promise.all([
+    prisma.question.count({ where: { source: QuestionSource.AI_GENERATED, ...BULK_VALIDATABLE } }),
+    prisma.question.count({ where: { source: QuestionSource.AI_GENERATED, ...BULK_HELD_BACK } }),
     prisma.question.count({ where: { validated: true } }),
     prisma.question.groupBy({
       by: ["examId"],
-      where: { source: QuestionSource.AI_GENERATED, validated: false },
+      where: { source: QuestionSource.AI_GENERATED, ...BULK_VALIDATABLE },
       _count: true,
     }),
   ]);
@@ -39,6 +46,7 @@ async function main() {
   console.log(`\n=== sme-bulk-validate ===`);
   console.log(`Mode:                    ${dryRun ? "DRY RUN" : "LIVE — will write to DB"}`);
   console.log(`Pending validation:      ${pendingTotal}`);
+  console.log(`Held back (withdrawn, pulled or failed check): ${heldBack}`);
   console.log(`Already validated:       ${validatedBefore}`);
   console.log(`Will also flip source:   ${sourceTag ? "yes (AI_GENERATED → AI_VALIDATED)" : "no"}\n`);
 
@@ -68,7 +76,7 @@ async function main() {
   }
 
   const result = await prisma.question.updateMany({
-    where: { source: QuestionSource.AI_GENERATED, validated: false },
+    where: { source: QuestionSource.AI_GENERATED, ...BULK_VALIDATABLE },
     data: updateData,
   });
 

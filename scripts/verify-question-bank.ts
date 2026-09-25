@@ -94,6 +94,7 @@ import {
   type JournalRequest,
 } from "../src/lib/ai/batch";
 import type { Difficulty } from "../src/lib/ai/types";
+import { WITHDRAWN_TAG } from "../src/lib/question-withdrawn";
 
 const prisma = new PrismaClient();
 
@@ -255,22 +256,26 @@ const ROW_SELECT = Prisma.sql`SELECT q.id, q.body, q.options, q."answerKey", q.s
             q.validated, q."validatedBy", q.source::text AS source, q.metadata, t.code AS "topicCode"
      FROM "Question" q JOIN "Exam" x ON x.id = q."examId" JOIN "Topic" t ON t.id = q."topicId"`;
 
+// Withdrawn questions (tag "rejected") are never picked up: an ACCEPT here
+// would validate them again (25 Sep 2026, src/lib/question-withdrawn.ts).
 async function rowsForExam(code: string): Promise<Row[]> {
   const scopeSql = SCOPE === "unvalidated" ? "AND NOT q.validated" : SCOPE === "validated" ? "AND q.validated" : "";
   return prisma.$queryRaw<Row[]>(
     Prisma.sql`${ROW_SELECT}
      WHERE x.code = ${code} AND q.type = 'MCQ' ${Prisma.raw(scopeSql)}
        AND (q.metadata IS NULL OR q.metadata->'factoryVerify' IS NULL)
+       AND NOT (${WITHDRAWN_TAG} = ANY(q.tags))
      ORDER BY q."createdAt" ASC ${Prisma.raw(LIMIT ? `LIMIT ${LIMIT}` : "")}`,
   );
 }
 
-/** Resume: re-fetch the journaled questions by id, still skipping any that were verified meanwhile. */
+/** Resume: re-fetch the journaled questions by id, still skipping any that were verified or withdrawn meanwhile. */
 async function rowsByIds(ids: string[]): Promise<Row[]> {
   const out: Row[] = [];
   for (const part of chunk(ids, 500)) {
     const rows = await prisma.$queryRaw<Row[]>(
-      Prisma.sql`${ROW_SELECT} WHERE q.id IN (${Prisma.join(part)}) AND (q.metadata IS NULL OR q.metadata->'factoryVerify' IS NULL)`,
+      Prisma.sql`${ROW_SELECT} WHERE q.id IN (${Prisma.join(part)}) AND (q.metadata IS NULL OR q.metadata->'factoryVerify' IS NULL)
+        AND NOT (${WITHDRAWN_TAG} = ANY(q.tags))`,
     );
     out.push(...rows);
   }

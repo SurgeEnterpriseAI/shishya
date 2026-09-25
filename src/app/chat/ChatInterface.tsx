@@ -23,18 +23,33 @@
 // Every turn carries a turnId and its Retry sends the same one, so the
 // server replays only the reply to that turn, never an earlier answer to the
 // same text ("B" twice in a quiz) — review, same day.
+//
+// Cut-off replies (25 Sep 2026): a reply that streamed some text and then
+// errored, or stopped without a done event, used to look finished with no
+// Retry. It keeps its text, reads "Reply incomplete — Retry", and Retry
+// replaces it the same way (src/lib/chat-reply-status.ts). Error events with
+// a known code (the route's "still-answering") show this chat's own en/hi/te
+// line instead of the route's English.
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { markSeedFired, seedFingerprint, stripSeedParam, wasSeedFiredRecently } from "@/lib/chat-seed-once";
+import {
+  canRetryAt,
+  chatErrorText,
+  failedReplyKind,
+  replyStreamFailed,
+  retryableTurn,
+  withLastReplyFailed,
+} from "@/lib/chat-reply-status";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
-  /** The reply never arrived (error, outage, dropped stream) — the bubble offers Retry. */
+  /** The reply never arrived or was cut off (error, outage, dropped stream) — the bubble offers Retry. */
   failed?: boolean;
   /** User turns: this turn's id, sent again by its Retry so the server knows which turn failed. */
   turnId?: string;
@@ -104,22 +119,26 @@ const SAVE_COPY = {
 
 // A turn with no reply, a seed held back, and the guest tutor declining a
 // browser it takes for a crawler (24 Sep 2026). The last is signed-out only:
-// signed-in students are never judged by their user-agent.
+// signed-in students are never judged by their user-agent. A reply cut off
+// part-way (25 Sep 2026) keeps its text under "incomplete".
 const TURN_COPY = {
   en: {
     notAnswered: "Not answered",
+    incomplete: "Reply incomplete",
     retry: "Retry",
     seedHeld: "You asked this here a little while ago, so it was not sent again. Send it when you want to.",
     unavailable: "The guest tutor isn't available in this browser. Sign in (free) to use the tutor.",
   },
   hi: {
     notAnswered: "जवाब नहीं आया",
+    incomplete: "जवाब अधूरा रह गया",
     retry: "फिर से भेजें",
     seedHeld: "आपने यह यहाँ कुछ देर पहले पूछा था, इसलिए इसे दोबारा नहीं भेजा गया। जब चाहें, भेज दें।",
     unavailable: "इस ब्राउज़र में गेस्ट ट्यूटर उपलब्ध नहीं है। ट्यूटर के लिए साइन इन करें (मुफ़्त)।",
   },
   te: {
     notAnswered: "సమాధానం రాలేదు",
+    incomplete: "సమాధానం పూర్తి కాలేదు",
     retry: "మళ్లీ పంపండి",
     seedHeld: "మీరు ఇది ఇక్కడ కొద్దిసేపటి క్రితం అడిగారు, కాబట్టి మళ్లీ పంపలేదు. కావాలనుకున్నప్పుడు పంపండి.",
     unavailable: "ఈ బ్రౌజర్‌లో గెస్ట్ ట్యూటర్ అందుబాటులో లేదు. ట్యూటర్ కోసం సైన్ ఇన్ చేయండి (ఉచితం).",
@@ -376,25 +395,23 @@ export function ChatInterface({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSeed]);
 
-  // The reply never arrived: the empty bubble becomes "Not answered — Retry".
+  // The reply never arrived, or stopped part-way: the bubble becomes "Not
+  // answered — Retry", or keeps its text under "Reply incomplete — Retry"
+  // (25 Sep 2026; it used to be marked only when empty).
   function markLastReplyFailed() {
-    setMessages((m) => {
-      const last = m[m.length - 1];
-      if (last?.role !== "assistant" || last.content) return m;
-      return [...m.slice(0, -1), { ...last, failed: true }];
-    });
+    setMessages((m) => withLastReplyFailed(m));
   }
 
   // "Retry" on the last turn: the same text again, in place (24 Sep 2026).
   // A signed-in retry reuses the stored question row instead of adding a
   // second one, and gets the stored reply if one was saved after all — the
-  // same turnId tells the server which turn this is.
+  // same turnId tells the server which turn this is. A cut-off reply's
+  // partial text is replaced by the new answer (25 Sep 2026).
   function retryLastTurn() {
-    const last = messages[messages.length - 1];
-    const prev = messages[messages.length - 2];
-    if (busy || !last?.failed || prev?.role !== "user") return;
+    const turn = retryableTurn(messages);
+    if (busy || !turn) return;
     beacon({ cta: "chat-retry", surface: "chat", examCode });
-    void send(prev.content, { retry: true, turnId: prev.turnId });
+    void send(turn.text, { retry: true, turnId: turn.turnId });
   }
 
   async function send(text: string, opts: { retry?: boolean; turnId?: string } = {}) {
@@ -406,8 +423,9 @@ export function ChatInterface({
     // request body so anonymous (signed-out) chats — which aren't stored
     // server-side — still get multi-turn context. Signed-in chats ignore
     // this and use their DB-persisted history. A retry re-sends the failed
-    // turn in place: that turn (the last user bubble and its empty reply)
-    // stays out of the snapshot, and only its reply bubble is replaced.
+    // turn in place: that turn (the last user bubble and its empty or
+    // cut-off reply) stays out of the snapshot, and only its reply bubble is
+    // replaced.
     const priorHistory = (opts.retry ? messages.slice(0, -2) : messages)
       .filter((m) => m.content.trim())
       .slice(-12)
@@ -422,6 +440,10 @@ export function ChatInterface({
     setActions([]);
     setToolStatus(null);
 
+    // Which closing events arrived. Only a done event (and no error) makes
+    // the reply complete; a stream that just stops — a dropped connection —
+    // leaves it failed, with whatever text it had (25 Sep 2026).
+    const seen = { done: false, error: false };
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -452,9 +474,6 @@ export function ChatInterface({
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = "";
-      // A done or error event arrived. A stream that just stops (a dropped
-      // connection) leaves the turn unanswered, and it is shown as such.
-      let settled = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -494,28 +513,34 @@ export function ChatInterface({
               setToolStatus(prettyTool(parsed?.name));
             } catch {}
           } else if (event === "done") {
-            settled = true;
+            seen.done = true;
             try {
               const parsed = JSON.parse(data);
               if (Array.isArray(parsed?.actions) && parsed.actions.length) setActions(parsed.actions);
               setToolStatus(null);
             } catch {}
           } else if (event === "error") {
-            settled = true;
+            seen.error = true;
             markLastReplyFailed();
+            // A known code shows this chat's own line in the UI language;
+            // anything else, the server's text (25 Sep 2026).
+            let parsed: unknown = null;
             try {
-              const parsed = JSON.parse(data);
-              setError(parsed?.error ?? "Chat stream error");
-            } catch {
-              setError("Chat stream error");
-            }
+              parsed = JSON.parse(data);
+            } catch {}
+            setError(chatErrorText(parsed, uiLang(), "Chat stream error"));
           }
         }
       }
-      if (!settled) markLastReplyFailed();
+      if (replyStreamFailed(seen)) markLastReplyFailed();
     } catch (e: any) {
-      markLastReplyFailed();
-      setError(e.message ?? "Chat failed");
+      // A read that fails after the done event changes nothing: the reply is
+      // complete. Otherwise the reply (empty or partial) failed; an error
+      // event's message, if one came, stays on screen.
+      if (!seen.done) {
+        markLastReplyFailed();
+        if (!seen.error) setError(e.message ?? "Chat failed");
+      }
     } finally {
       setToolStatus(null);
       setBusy(false);
@@ -631,50 +656,63 @@ export function ChatInterface({
           </div>
         )}
 
-        {messages.map((m, i) => (
-          <div
-            key={m.id}
-            className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
-          >
+        {messages.map((m, i) => {
+          // A failed reply: "not-answered" (empty) or "incomplete" (its text
+          // stopped part-way — 25 Sep 2026). Only the latest turn can be
+          // retried in place.
+          const failedKind = failedReplyKind(m);
+          const failedNote = failedKind && (
+            <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+              <span>{failedKind === "incomplete" ? TURN_COPY[navLang].incomplete : TURN_COPY[navLang].notAnswered}</span>
+              {canRetryAt(messages, i) && (
+                <>
+                  <span aria-hidden="true">—</span>
+                  <button
+                    type="button"
+                    onClick={retryLastTurn}
+                    disabled={busy}
+                    className="rounded-md border border-rose-300 bg-white px-2.5 py-0.5 text-xs font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-60"
+                  >
+                    {TURN_COPY[navLang].retry}
+                  </button>
+                </>
+              )}
+            </span>
+          );
+          return (
             <div
-              className={
-                m.role === "user"
-                  ? "max-w-prose rounded-lg bg-saffron-500 px-4 py-2 text-sm text-white whitespace-pre-line"
-                  : m.failed && !m.content
-                    ? "max-w-prose rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
-                    : "max-w-prose rounded-lg bg-ink-100 px-4 py-3 text-sm text-ink-900"
-              }
+              key={m.id}
+              className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
             >
-              {m.content ? (
-                m.role === "assistant"
-                  ? <ChatMarkdown text={m.content} />
-                  : m.content
-              ) : m.role === "assistant" ? (
-                m.failed ? (
-                  // Only the latest turn can be retried in place.
-                  <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                    <span>{TURN_COPY[navLang].notAnswered}</span>
-                    {i === messages.length - 1 && messages[i - 1]?.role === "user" && (
-                      <>
-                        <span aria-hidden="true">—</span>
-                        <button
-                          type="button"
-                          onClick={retryLastTurn}
-                          disabled={busy}
-                          className="rounded-md border border-rose-300 bg-white px-2.5 py-0.5 text-xs font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-60"
-                        >
-                          {TURN_COPY[navLang].retry}
-                        </button>
-                      </>
+              <div
+                className={
+                  m.role === "user"
+                    ? "max-w-prose rounded-lg bg-saffron-500 px-4 py-2 text-sm text-white whitespace-pre-line"
+                    : failedKind === "not-answered"
+                      ? "max-w-prose rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+                      : failedKind === "incomplete"
+                        ? "max-w-prose rounded-lg border border-rose-200 bg-ink-100 px-4 py-3 text-sm text-ink-900"
+                        : "max-w-prose rounded-lg bg-ink-100 px-4 py-3 text-sm text-ink-900"
+                }
+              >
+                {m.role === "user" ? (
+                  m.content
+                ) : failedKind === "not-answered" ? (
+                  failedNote
+                ) : m.content ? (
+                  <>
+                    <ChatMarkdown text={m.content} />
+                    {failedKind === "incomplete" && (
+                      <div className="mt-2 border-t border-rose-200 pt-2 text-rose-800">{failedNote}</div>
                     )}
-                  </span>
+                  </>
                 ) : (
                   <span className="text-ink-500">{toolStatus ?? labels.thinking}</span>
-                )
-              ) : null}
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {importedNote && (
           <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">✓ {importedNote}</p>

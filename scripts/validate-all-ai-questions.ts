@@ -6,8 +6,14 @@
 //
 // Batches by 1000 so the pooled pgbouncer connection isn't held for a
 // single huge transaction.
+//
+// 25 Sep 2026: withdrawn questions (tag "rejected"), ones validated once
+// and later pulled (validatedAt set) and ones the answer-check firewall
+// already failed (metadata.factoryVerify) are held back, as in the admin
+// bulk validate (src/lib/question-withdrawn.ts).
 
 import { PrismaClient } from "@prisma/client";
+import { BULK_HELD_BACK, BULK_VALIDATABLE } from "../src/lib/question-withdrawn";
 
 const p = new PrismaClient();
 const BATCH_SIZE = 1000;
@@ -15,14 +21,16 @@ const VALIDATED_BY = process.env.VALIDATED_BY ?? "system:bulk:overnight";
 
 async function main() {
   const total = await p.question.count({
-    where: { validated: false, source: "AI_GENERATED" },
+    where: { ...BULK_VALIDATABLE, source: "AI_GENERATED" },
   });
   console.log(`Unvalidated AI_GENERATED questions: ${total}`);
+  const heldBack = await p.question.count({ where: BULK_HELD_BACK });
+  console.log(`Held back (withdrawn, pulled or failed check, any source): ${heldBack}`);
 
   let aiPromoted = 0;
   while (true) {
     const batch = await p.question.findMany({
-      where: { validated: false, source: "AI_GENERATED" },
+      where: { ...BULK_VALIDATABLE, source: "AI_GENERATED" },
       select: { id: true },
       take: BATCH_SIZE,
     });
@@ -45,7 +53,7 @@ async function main() {
   let otherValidated = 0;
   while (true) {
     const batch = await p.question.findMany({
-      where: { validated: false, source: { not: "AI_GENERATED" } },
+      where: { ...BULK_VALIDATABLE, source: { not: "AI_GENERATED" } },
       select: { id: true },
       take: BATCH_SIZE,
     });
