@@ -3,6 +3,7 @@
 
 import { prisma } from "@/lib/db/prisma";
 import { liveTestRank } from "@/lib/live-test";
+import { attemptPaperIds } from "@/lib/attempt-paper";
 import { cardFirstName, printableRank, type CardPaper, type PaperRank, type ResultCardInput } from "@/lib/result-card";
 
 /**
@@ -34,6 +35,7 @@ export async function loadResultCard(attemptId: string, userId: string): Promise
       scoreMax: true,
       scorePct: true,
       answers: true,
+      startedAt: true,
       finishedAt: true,
       user: { select: { name: true } },
       mock: {
@@ -52,7 +54,10 @@ export async function loadResultCard(attemptId: string, userId: string): Promise
   if (!a || a.userId !== userId) return null;
   if (a.status !== "SUBMITTED" && a.status !== "AUTO_SUBMITTED") return null;
 
-  const inPaper = new Set(a.mock.questionIds);
+  // 25 Sep 2026: the paper this attempt had (a shared mock's slot can be
+  // swapped after it was taken) — src/lib/attempt-paper.ts.
+  const paperIds = attemptPaperIds({ questionIds: a.mock.questionIds, answers: a.answers, startedAt: a.startedAt, config: a.mock.config });
+  const inPaper = new Set(paperIds);
   const answers = Array.isArray(a.answers) ? (a.answers as { questionId?: string; correct?: boolean }[]) : [];
   const correct = answers.filter((x) => x && x.correct === true && typeof x.questionId === "string" && inPaper.has(x.questionId)).length;
 
@@ -92,7 +97,7 @@ export async function loadResultCard(attemptId: string, userId: string): Promise
     scoreMax: a.scoreMax,
     scorePct: a.scorePct,
     correct,
-    total: a.mock.questionIds.length,
+    total: paperIds.length,
     personalBest,
     rank: printableRank(paper, raw, a.id),
   };

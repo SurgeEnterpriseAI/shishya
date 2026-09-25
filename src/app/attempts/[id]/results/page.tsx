@@ -36,6 +36,8 @@ import { resultsStudyDayCopy } from "@/lib/study-day-copy";
 import { ResultsCtaLink } from "./ResultsCtaLink";
 import { resultsNextStep, setupHref } from "@/lib/results-next-step";
 import { askTutorText, resultsNextStepCopy } from "@/lib/results-next-step-copy";
+import { attemptPaperIds } from "@/lib/attempt-paper";
+import { isWithdrawnForReview, maskWithdrawnReviewItem } from "@/lib/review-withdrawn";
 
 export default async function ResultsPage({
   params,
@@ -69,9 +71,21 @@ export default async function ResultsPage({
   const submitted = attempt.status === "SUBMITTED" || attempt.status === "AUTO_SUBMITTED";
   if (!submitted) redirect(`/mocks/${attempt.mockId}`);
 
+  // 25 Sep 2026: the review shows the paper THIS attempt had, not the mock's
+  // current one — a shared mock can have a faulty question swapped out at its
+  // slot after students took it, or a PYQ year set can grow or shrink, and the
+  // review then showed a question the student never saw (as skipped) and lost
+  // their answer to the one they had. See src/lib/attempt-paper.ts.
+  const paperIds = attemptPaperIds({
+    questionIds: attempt.mock.questionIds,
+    answers: attempt.answers,
+    startedAt: attempt.startedAt,
+    config: attempt.mock.config,
+  });
+
   const [questions, rankBands, tt] = await Promise.all([
     prisma.question.findMany({
-      where: { id: { in: attempt.mock.questionIds } },
+      where: { id: { in: paperIds } },
       include: { topic: { select: { code: true, name: true } } },
     }),
     prisma.examRankBand.findMany({
@@ -103,18 +117,23 @@ export default async function ResultsPage({
   const challengeEligible = mockChallengeEligible({
     examActive: attempt.mock.exam.active,
     examId: attempt.mock.examId,
-    questionIds: attempt.mock.questionIds,
+    questionIds: paperIds,
     byId: qById,
   });
 
   const answers = (attempt.answers as any[]) ?? [];
   const answersByQid = new Map(answers.map((a) => [a.questionId, a]));
 
-  const orderedQs = attempt.mock.questionIds.map((qid) => {
+  // 25 Sep 2026: a question withdrawn after a problem was found in it (tagged
+  // rejected, pulled after validation, or failed the answer check) keeps its
+  // place — the student saw it — but its faulty key is no longer marked
+  // "Correct" and its solution is replaced by a note; the stored grade stays.
+  // 16 finished attempts re-show such questions. See src/lib/review-withdrawn.ts.
+  const orderedQs = paperIds.map((qid) => {
     const q = qById.get(qid);
     if (!q) return null;
     const a = answersByQid.get(qid) ?? null;
-    return {
+    return maskWithdrawnReviewItem({
       id: q.id,
       body: q.body,
       options: q.options as { key: string; text: string }[],
@@ -126,7 +145,7 @@ export default async function ResultsPage({
       correct: a?.correct ?? false,
       timeSec: a?.timeSec ?? 0,
       marked: a?.marked ?? false,
-    };
+    }, isWithdrawnForReview(q), locale);
   }).filter((x): x is NonNullable<typeof x> => Boolean(x));
 
   const correctCount = orderedQs.filter((q) => q.correct).length;

@@ -15,6 +15,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db/prisma";
 import { getAnonQuiz, type AnonQuiz } from "@/lib/anon-quiz";
+import { attemptPaperIds } from "@/lib/attempt-paper";
 import { sendEmail } from "@/lib/email";
 import { fillTemplate, locales, tk, type Locale } from "@/lib/i18n";
 import { clipText, isAllowedPushEndpoint, type PushPayload } from "@/lib/push-alert-rules";
@@ -164,7 +165,10 @@ export async function createChallenge(input: CreateChallengeInput, who: Challeng
         userId: true,
         status: true,
         answers: true,
-        mock: { select: { examId: true, questionIds: true, exam: { select: { code: true, shortName: true, active: true } } } },
+        startedAt: true,
+        mock: {
+          select: { examId: true, questionIds: true, config: true, exam: { select: { code: true, shortName: true, active: true } } },
+        },
       },
     });
     if (!attempt?.mock || attempt.userId !== who.userId || !attempt.mock.exam.active) {
@@ -175,12 +179,21 @@ export async function createChallenge(input: CreateChallengeInput, who: Challeng
     }
     // Only questions a friend can actually be served (the anonymous quiz
     // pool), then evenly spaced — never chosen by what the student got right.
+    // 25 Sep 2026: from the paper this attempt had, not the mock's current one
+    // (a swapped-in question was never answered by the maker, so it would
+    // count against them) — src/lib/attempt-paper.ts.
+    const paperIds = attemptPaperIds({
+      questionIds: attempt.mock.questionIds,
+      answers: attempt.answers,
+      startedAt: attempt.startedAt,
+      config: attempt.mock.config,
+    });
     const eligible = await prisma.question.findMany({
-      where: { id: { in: attempt.mock.questionIds }, examId: attempt.mock.examId, validated: true, type: "MCQ" },
+      where: { id: { in: paperIds }, examId: attempt.mock.examId, validated: true, type: "MCQ" },
       select: { id: true },
     });
     const eligibleIds = new Set(eligible.map((q) => q.id));
-    const slice = mockSlice(attempt.mock.questionIds.filter((id) => eligibleIds.has(id)));
+    const slice = mockSlice(paperIds.filter((id) => eligibleIds.has(id)));
     if (!slice) return { ok: false, status: 422, error: "This mock doesn't have enough questions a friend can play." };
     const answers = new Map(
       ((attempt.answers as { questionId?: string; correct?: boolean }[] | null) ?? []).map((a) => [a?.questionId, a]),
