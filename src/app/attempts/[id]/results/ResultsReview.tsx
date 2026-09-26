@@ -4,6 +4,18 @@
 // Each Q is collapsible; tapping it reveals the options with correct/wrong markers,
 // the existing solution from the DB, and a button to ask Claude for a deeper
 // step-by-step (POST /api/explain).
+//
+// School attempt (26 Sep 2026, student mode — fixer): with `school` set (a
+// Class 8-12 chapter practice set, src/lib/school/student-db.ts
+// config.school) every exam piece per question is off — the "Ask why" pill
+// and the Explain / Deep buttons (POST /api/explain is the exam explainer:
+// full answer, exam persona, outside the school tutor's 20-a-day cap), the
+// exam-framed chat link, the expert callback (no teacher CTA on a school
+// surface) and the Mistake Notebook star + /revision link (an exam notebook;
+// /api/bookmarks?exam= is keyed on real exams). What stays: Shishya's own
+// solution, the language picker, "Report this question", and ONE entry —
+// "Ask the AI tutor about this question", chapter-scoped, hint-first
+// (schoolTutorHref), with the visible AI line. Words: src/lib/school/student-copy.ts.
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -11,6 +23,17 @@ import { apiPost } from "@/lib/api";
 import { QuestionLangSwitcher } from "@/components/QuestionLangSwitcher";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import type { Locale } from "@/lib/i18n";
+import { schoolTutorHref } from "@/lib/school/student-classes";
+import { SCHOOL_REVIEW_COPY, schoolQuestionSeed } from "@/lib/school/student-copy";
+
+/** The chapter a school attempt practised (config.school of its mock). */
+export interface SchoolReviewScope {
+  examCode: string;
+  topicCode: string;
+  chapterName: string;
+  cls: number;
+  subjectName: string;
+}
 
 interface ReviewQ {
   id: string;
@@ -38,12 +61,15 @@ export function ResultsReview({
   examCode,
   examShortName,
   initialLocale = "en",
+  school = null,
 }: {
   questions: ReviewQ[];
   attemptId: string;
   examCode: string;
   examShortName: string;
   initialLocale?: Locale;
+  /** 26 Sep 2026: set for a school chapter practice attempt (see the header). */
+  school?: SchoolReviewScope | null;
 }) {
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
 
@@ -132,6 +158,8 @@ export function ResultsReview({
   // regardless — starring is for "this one specifically, keep it".
   const [stars, setStars] = useState<Set<string>>(new Set());
   useEffect(() => {
+    // 26 Sep 2026: no exam notebook on a school attempt (nothing to hydrate).
+    if (school) return;
     let cancelled = false;
     fetch(`/api/bookmarks?exam=${encodeURIComponent(examCode)}`)
       .then((r) => (r.ok ? r.json() : null))
@@ -142,7 +170,7 @@ export function ResultsReview({
     return () => {
       cancelled = true;
     };
-  }, [examCode]);
+  }, [examCode, school]);
 
   async function toggleStar(id: string) {
     const has = stars.has(id);
@@ -167,7 +195,10 @@ export function ResultsReview({
   return (
     <>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        {wrongCount > 0 ? (
+        {wrongCount > 0 && school ? (
+          /* 26 Sep 2026: a school attempt names the AI tutor, never the exam notebook. */
+          <p className="text-xs text-ink-600">{SCHOOL_REVIEW_COPY.toReview(wrongCount)}</p>
+        ) : wrongCount > 0 ? (
           <p className="text-xs text-ink-600">
             <span className="font-semibold text-rose-700">{wrongCount}</span> to
             review — tap{" "}
@@ -218,7 +249,9 @@ export function ResultsReview({
                 {/* One-tap Ask-why pill — only on wrong/skipped rows, and
                     only while the explanation hasn't been opened yet.
                     Sits OUTSIDE the toggle button (can't nest buttons). */}
-                {needsReview && !autoExplainIds.has(q.id) && (
+                {/* 26 Sep 2026: neither the explain pill nor the notebook star
+                    on a school attempt (see the header). */}
+                {!school && needsReview && !autoExplainIds.has(q.id) && (
                   <button
                     onClick={() => askWhy(q.id)}
                     className="shrink-0 self-center mr-2 rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-saffron-600"
@@ -228,14 +261,16 @@ export function ResultsReview({
                 )}
                 {/* Star → Mistake Notebook. Outside the toggle (no nested
                     buttons); optimistic; works on right answers too. */}
-                <button
-                  onClick={() => toggleStar(q.id)}
-                  aria-label={stars.has(q.id) ? "Remove from Mistake Notebook" : "Save to Mistake Notebook"}
-                  title={stars.has(q.id) ? "Saved — tap to remove" : "Save to Mistake Notebook"}
-                  className="shrink-0 self-center mr-3 text-base leading-none"
-                >
-                  {stars.has(q.id) ? "⭐" : "☆"}
-                </button>
+                {!school && (
+                  <button
+                    onClick={() => toggleStar(q.id)}
+                    aria-label={stars.has(q.id) ? "Remove from Mistake Notebook" : "Save to Mistake Notebook"}
+                    title={stars.has(q.id) ? "Saved — tap to remove" : "Save to Mistake Notebook"}
+                    className="shrink-0 self-center mr-3 text-base leading-none"
+                  >
+                    {stars.has(q.id) ? "⭐" : "☆"}
+                  </button>
+                )}
               </div>
 
               {openIds.has(q.id) && (
@@ -244,7 +279,8 @@ export function ResultsReview({
                   index={i}
                   examCode={examCode}
                   examShortName={examShortName}
-                  autoExplain={autoExplainIds.has(q.id)}
+                  autoExplain={!school && autoExplainIds.has(q.id)}
+                  school={school}
                 />
               )}
             </li>
@@ -261,6 +297,7 @@ function ReviewBody({
   examCode,
   examShortName,
   autoExplain = false,
+  school = null,
 }: {
   q: ReviewQ;
   index: number;
@@ -270,6 +307,8 @@ function ReviewBody({
    *  AI explanation automatically on first mount so the student lands
    *  straight on the step-by-step. */
   autoExplain?: boolean;
+  /** 26 Sep 2026: a school attempt — the school tutor entry only (header). */
+  school?: SchoolReviewScope | null;
 }) {
   const [explain, setExplain] = useState<{
     stepByStep: string[];
@@ -381,6 +420,21 @@ function ReviewBody({
       <div className="mt-4">
         {!explain && (
           <div className="flex flex-wrap gap-2">
+            {/* 26 Sep 2026: a school attempt gets the school tutor entry only
+                (chapter-scoped, hint-first); the exam explainer, the
+                exam-framed chat link and the expert call stay off. */}
+            {school ? (
+              <a
+                href={schoolTutorHref(
+                  school,
+                  schoolQuestionSeed({ chapterName: school.chapterName, cls: school.cls, index, chosen: q.chosen, answerKey: q.answerKey, body: q.body }),
+                )}
+                className="btn-secondary !py-1.5 !px-3 text-xs"
+              >
+                {SCHOOL_REVIEW_COPY.askTutor}
+              </a>
+            ) : (
+              <>
             <button
               onClick={() => fetchExplanation("STANDARD")}
               disabled={busy}
@@ -407,6 +461,8 @@ function ReviewBody({
             >
               Ask Shishya about this Q
             </a>
+              </>
+            )}
             {/* Report bad question. Students were hitting AI-generated
                 questions with wrong answer keys or missing words in the
                 jumble. This routes their flag straight into QuestionReport
@@ -419,8 +475,9 @@ function ReviewBody({
               Report this question
             </button>
             {/* Human escalation right where a wrong answer stings — call the
-                Surge expert desk / request a callback (closed-loop enquiry). */}
-            {!q.correct && (
+                Surge expert desk / request a callback (closed-loop enquiry).
+                26 Sep 2026: never on a school attempt. */}
+            {!school && !q.correct && (
               <TalkToTeacher
                 surface="review"
                 examCode={examCode}
@@ -432,6 +489,7 @@ function ReviewBody({
             )}
           </div>
         )}
+        {school && <p className="mt-2 text-[11px] text-ink-500">{SCHOOL_REVIEW_COPY.aiLine}</p>}
 
         {reportOpen && reportStatus !== "sent" && (
           <div className="mt-3 rounded-md border border-rose-200 bg-rose-50/60 p-3">

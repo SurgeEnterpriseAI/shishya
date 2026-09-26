@@ -1,17 +1,37 @@
 // /chat?examCode=SSC_CGL — full-page "Ask Shishya" chat.
 // Server component picks the exam (default first enrolled) and hands off to client.
+//
+// School tutor (26 Sep 2026): /chat?examCode=NCERT_C09&topicCode=<chapter>
+// &seed=… is the entry from a Class 8-12 school chapter page. It renders
+// BEFORE the exam flows below — the sign-in card with the age line, the
+// band-required card, or the school chat — and never enrols, never reads
+// the exam picker. See the school branch in the body.
+// Fixer review, same day: the exam flows below read real-exam enrolments
+// only (exam: NOT_SCHOOL_WHERE — the school profile flow enrols a declared
+// account on its class container, and plain /chat used to pick that
+// container as "the exam" and render the exam island on it), a declared
+// 13-17 account is sent to its class chat from every other /chat URL, and a
+// school-only adult account on plain /chat lands on its class chat too.
 
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
-import { realExamKey } from "@/lib/db/exam-scope";
+import { NOT_SCHOOL_WHERE, realExamKey } from "@/lib/db/exam-scope";
 import { ensureEnrollment } from "@/lib/db/enrollment";
 import { getT } from "@/lib/i18n-server";
 import { ChatInterface } from "./ChatInterface";
 import { ExamSwitcher } from "./ExamSwitcher";
 import { ChatOpenedBeacon } from "@/components/ChatOpenedBeacon";
 import { attemptSeedScope } from "@/lib/chat-seed-once";
+import type { ReactNode } from "react";
+import { notFound, redirect } from "next/navigation";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { fillTemplate } from "@/lib/i18n";
+import { isMinorBand, isStudentModeClass, schoolBandOfProfile, schoolContainerClassOf, schoolReturnPath } from "@/lib/school/student-classes";
+import { schoolOnlyChatPath } from "@/lib/school/tutor-scope";
+import { countSchoolTutorMessagesToday, getSchoolChapterFocus, getSchoolTutorContext } from "@/lib/school/tutor-context";
+import { SCHOOL_TUTOR_CAP_COPY, schoolTutorCapReached, schoolTutorMessagesLeft, schoolUiLang } from "@/lib/school/tutor-cap";
 
 export default async function ChatPage({
   searchParams,
@@ -20,13 +40,158 @@ export default async function ChatPage({
 }) {
   const session = await auth();
   const sp = await searchParams;
-  const { t } = await getT();
+  const { t, locale } = await getT();
   const generalMode = sp.general === "1";
 
   // CHAT_OPENED is now fired client-side by <ChatOpenedBeacon> at the
   // point ChatInterface mounts, so bot crawls and router prefetches
   // (neither of which run effects) no longer inflate it. The old
   // server-side fire + prefetch-header guard is gone.
+
+  // ── School tutor (26 Sep 2026) ────────────────────────────────────
+  // /chat?examCode=NCERT_C09&topicCode=<chapter>&seed=… is the "Ask the AI
+  // tutor" entry on a Class 8-12 chapter page (src/lib/school/student-classes.ts
+  // schoolTutorHref). Founder decision, 26 Sep 2026: Classes 8-12 get
+  // sign-in and the tutor; Classes 1-7 stay content only, so their codes 404
+  // here for everyone. A signed-out visitor gets a plain sign-in card with
+  // the age line (the /login intent card's shape); a signed-in account that
+  // has not answered the one-time age band is sent to the chapter page,
+  // whose entry asks it (the chat never writes the band itself); a declared
+  // account gets the school chat — the "AI tutor" line, the chapter focus,
+  // hint-first starters, the daily cap — and none of the exam CTAs
+  // (diagnostic, teacher, save-conversation, suggested actions). Nothing
+  // here enrols, reads mastery or touches the exam picker below.
+  const schoolCls = !generalMode && sp.examCode ? schoolContainerClassOf(sp.examCode) : null;
+  if (schoolCls !== null) {
+    if (!isStudentModeClass(schoolCls)) notFound();
+    const examCode = sp.examCode!;
+    const ctx = await getSchoolTutorContext(examCode);
+    if (!ctx) notFound();
+    const focus = sp.topicCode ? await getSchoolChapterFocus(examCode, sp.topicCode) : null;
+    const classLabel = fillTemplate(t("chat.school.classLabel"), { n: schoolCls, board: ctx.scope.boardShort });
+    const backHref = focus?.path ?? ctx.scope.classPath;
+    const backLabel = focus ? t("chat.school.back.chapter") : t("chat.school.back.class");
+    const crumb = `${t("chat.school.crumb")} · ${classLabel}${focus ? ` · ${focus.subjectName}` : ""}`;
+    const selfQuery = new URLSearchParams({ examCode });
+    if (sp.topicCode) selfQuery.set("topicCode", sp.topicCode);
+    if (sp.seed) selfQuery.set("seed", sp.seed);
+    const selfUrl = `/chat?${selfQuery.toString()}`;
+    const card = (body: ReactNode) => (
+      <main className="flex min-h-screen items-center justify-center bg-saffron-50/30 p-4">
+        <div className="w-full max-w-md rounded-lg border border-ink-200 bg-white p-8 shadow-sm">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-saffron-500 font-sans text-lg font-bold text-white">शि</span>
+            <span className="text-lg font-semibold tracking-tight text-ink-900">Shishya</span>
+          </Link>
+          <p className="mt-6 text-xs text-ink-500">{crumb}</p>
+          {body}
+          {/* 26 Sep 2026: no login.smallprint here — its "your email is the only
+              thing we read" line contradicted the school body above (Google
+              hands Shishya name, email and picture); the body already says
+              exactly what is shared. */}
+        </div>
+      </main>
+    );
+
+    if (!session?.user?.id) {
+      return card(
+        <>
+          <h1 className="mt-1 text-2xl font-bold text-ink-900">
+            {focus
+              ? fillTemplate(t("chat.school.signin.h1Chapter"), { chapter: focus.name })
+              : fillTemplate(t("chat.school.signin.h1"), { cls: classLabel })}
+          </h1>
+          <p className="mt-2 text-sm text-ink-600">{t("chat.school.signin.body")}</p>
+          <p role="note" className="mt-3 rounded-md bg-saffron-50 px-3 py-2 text-sm font-medium text-saffron-900 ring-1 ring-saffron-200">
+            {t("chat.school.ageLine")}
+          </p>
+          <GoogleSignInButton callbackUrl={selfUrl} label={t("login.continue")} />
+          <Link href={backHref} className="mt-3 block text-center text-sm font-medium text-saffron-700 hover:underline">
+            {backLabel}
+          </Link>
+        </>,
+      );
+    }
+
+    const userId = session.user.id;
+    const profile = await prisma.user.findUnique({ where: { id: userId }, select: { onbStage: true, onbPrepCodes: true } });
+    const band = schoolBandOfProfile(profile)?.band ?? null;
+    if (!band) {
+      return card(
+        <>
+          <h1 className="mt-1 text-2xl font-bold text-ink-900">{t("chat.school.band.h1")}</h1>
+          <p className="mt-2 text-sm text-ink-600">{t("chat.school.band.body")}</p>
+          <p role="note" className="mt-3 rounded-md bg-saffron-50 px-3 py-2 text-sm font-medium text-saffron-900 ring-1 ring-saffron-200">
+            {t("chat.school.ageLine")}
+          </p>
+          <Link href={schoolReturnPath(backHref)} className="btn-primary mt-6 block w-full text-center">
+            {t("chat.school.band.cta")}
+          </Link>
+        </>,
+      );
+    }
+
+    const usedToday = await countSchoolTutorMessagesToday(userId);
+    const starters = focus
+      ? [t("chat.school.starter.1"), t("chat.school.starter.2"), t("chat.school.starter.3"), t("chat.school.starter.4")]
+      : [
+          fillTemplate(t("chat.school.classStarter.1"), { cls: classLabel }),
+          t("chat.school.classStarter.2"),
+          t("chat.school.classStarter.3"),
+          t("chat.school.classStarter.4"),
+        ];
+    return (
+      <main className="min-h-screen bg-ink-50/40">
+        <Header />
+        <section className="container-prose flex flex-col py-6 sm:py-8" style={{ minHeight: "calc(100vh - 64px)" }}>
+          <div>
+            <p className="text-xs text-ink-500">
+              <Link href="/schooling" className="hover:text-ink-800">{t("chat.school.crumb")}</Link> ·{" "}
+              <Link href={ctx.scope.classPath} className="hover:text-ink-800">{classLabel}</Link>
+              {focus && (
+                <>
+                  {" "}· <Link href={focus.path} className="hover:text-ink-800">{focus.subjectName}</Link>
+                </>
+              )}
+            </p>
+            <h1 className="mt-1 text-xl font-semibold text-ink-900">{fillTemplate(t("chat.school.title"), { cls: classLabel })}</h1>
+            <p className="mt-0.5 text-xs text-ink-500">{t("chat.school.subtitle")}</p>
+          </div>
+
+          <ChatOpenedBeacon props={{ examCode, topicCode: sp.topicCode ?? null, general: false, anon: false, school: true }} />
+          <ChatInterface
+            examCode={examCode}
+            topicFocus={focus ? { code: focus.code, name: focus.name, subjectName: focus.subjectName, examShortName: classLabel } : null}
+            initialSeed={sp.seed ?? null}
+            school={{
+              aiLine: t("chat.school.aiLine"),
+              classLabel,
+              capReached: schoolTutorCapReached(usedToday),
+              capLine: SCHOOL_TUTOR_CAP_COPY[schoolUiLang(locale)],
+              messagesLeft: schoolTutorMessagesLeft(usedToday),
+              leftTemplate: t("chat.school.left"),
+              backHref,
+              backLabel,
+            }}
+            labels={{
+              placeholder: t("chat.placeholder"),
+              send: t("chat.send"),
+              thinking: t("chat.thinking"),
+              empty: t("chat.school.empty"),
+              emptyExamPrefix: t("chat.empty.examPrefix"),
+              suggested: t("chat.suggested"),
+              starters,
+              focusLabel: t("chat.focus.label"),
+              focusClear: t("chat.focus.clear"),
+              diagnosticCta: t("chat.diagnostic.cta"),
+              diagnosticBuilding: t("chat.diagnostic.building"),
+              diagnosticHint: t("chat.diagnostic.hint"),
+            }}
+          />
+        </section>
+      </main>
+    );
+  }
 
   // ── Anonymous tutor — UNGATED ────────────────────────────────────────
   // The AI tutor is open to signed-out visitors. Two anons reached /chat
@@ -124,11 +289,30 @@ export default async function ChatPage({
     anon: false,
   };
 
+  // The account's school age band (26 Sep 2026 fixer review — the rule and
+  // the why are in src/lib/school/tutor-scope.ts). A declared 13-17 student
+  // gets the school tutor ONLY: general mode, plain /chat and every
+  // /chat?examCode=<real exam> (which auto-enrols below) go to the class
+  // chat, where the school persona, the AI line and the daily cap apply.
+  // Adult school bands (18+, parent, teacher) keep the exam tutor; with no
+  // real-exam enrolment, plain /chat takes them to the class chat rather
+  // than the "no enrollments" screen.
+  const profile = await prisma.user.findUnique({ where: { id: session.user.id }, select: { onbStage: true, onbPrepCodes: true } });
+  const schoolProfile = schoolBandOfProfile(profile);
+  if (schoolProfile && isMinorBand(schoolProfile.band)) redirect(schoolOnlyChatPath(schoolProfile.classCodes, sp.examCode));
+
+  // Real exams only: the school profile flow enrols a declared account on
+  // its class container (src/lib/school/student-db.ts), and that row must
+  // never feed the picker, the switcher or enrollments[0] here — the school
+  // chat is the branch above, reached by its own examCode.
   let enrollments = await prisma.enrollment.findMany({
-    where: { userId: session.user.id, active: true },
+    where: { userId: session.user.id, active: true, exam: NOT_SCHOOL_WHERE },
     include: { exam: { select: { code: true, shortName: true } } },
     orderBy: { createdAt: "desc" },
   });
+  if (schoolProfile && !generalMode && !sp.examCode && enrollments.length === 0) {
+    redirect(schoolOnlyChatPath(schoolProfile.classCodes, null));
+  }
 
   // If the URL points at a real exam the user isn't enrolled in yet (e.g.
   // they followed a topic / weakness / mock-results deep link for an exam
@@ -147,7 +331,7 @@ export default async function ChatPage({
       // Re-read enrollments so the switcher and downstream logic include the
       // freshly-added one. orderBy createdAt desc puts the new one first.
       enrollments = await prisma.enrollment.findMany({
-        where: { userId: session.user.id, active: true },
+        where: { userId: session.user.id, active: true, exam: NOT_SCHOOL_WHERE },
         include: { exam: { select: { code: true, shortName: true } } },
         orderBy: { createdAt: "desc" },
       });

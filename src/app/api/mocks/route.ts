@@ -1,5 +1,14 @@
 // POST /api/mocks — create a new mock test for the current user.
 // Body: { examCode, request: GenerateMockRequest } (matches src/lib/ai/types.ts)
+//
+// School chapter practice (26 Sep 2026): { examCode: "NCERT_C09", school:
+// true, request: { type: "TOPIC", topicCode, questionCount } } from a Class
+// 8-12 school page builds "Practise this chapter" through
+// src/lib/school/student-db.ts buildSchoolChapterMock — the chapter's
+// answer-checked questions only, honest size, no generator, no AI, the same
+// set /api/mocks/custom builds — and returns it in this route's `mock`
+// shape (every client reads mock.id). Without the flag a school code is an
+// unknown exam here, as before (realExamKey).
 
 import { z } from "zod";
 import { auth } from "@/lib/auth";
@@ -27,6 +36,7 @@ import {
   type SeenInput,
 } from "@/lib/question-pick";
 import { rankByInstruction, shortfallLine, stripCountClaims, titleWithCount } from "@/lib/mock-fill";
+import { buildSchoolChapterMock } from "@/lib/school/student-db";
 import type { Difficulty, GenerateMockRequest, QuestionRef, SyllabusContext } from "@/lib/ai/types";
 
 /** Narrow-select cap on the validated pool fetched per creation. Seen
@@ -38,6 +48,8 @@ const POOL_TAKE = 1000;
 
 const Body = z.object({
   examCode: z.string(),
+  // 26 Sep 2026: a school chapter practice (TOPIC on a student-mode container).
+  school: z.boolean().optional(),
   request: z.discriminatedUnion("type", [
     z.object({ type: z.literal("DIAGNOSTIC"), questionCount: z.number().int().min(5).max(50) }),
     z.object({ type: z.literal("ADAPTIVE"), questionCount: z.number().int().min(5).max(100), durationMin: z.number().int().optional() }),
@@ -54,6 +66,36 @@ export async function POST(req: Request) {
     const session = await auth();
     if (!session?.user?.id) return unauth();
     const body = await parseBody(req, Body);
+
+    // 26 Sep 2026: school chapter practice — no generator, no enrolment on an
+    // exam; src/lib/school/student-db.ts owns the whole build.
+    if (body.school) {
+      if (body.request.type !== "TOPIC") return bad("A school chapter practice is a TOPIC request on the chapter's code.");
+      const r = await buildSchoolChapterMock({
+        userId: session.user.id,
+        examCode: body.examCode,
+        topicCode: body.request.topicCode,
+        count: body.request.questionCount,
+      });
+      if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
+      return ok({
+        mock: {
+          id: r.id,
+          title: r.title,
+          rationale: null,
+          durationMin: r.durationMin,
+          questionCount: r.count,
+          requestedCount: r.requested,
+          short: r.short,
+          shortLine: r.line,
+          topicMix: {},
+          difficultyMix: {},
+          bank: r.bank,
+          school: true,
+          chapterPath: r.chapterPath,
+        },
+      });
+    }
 
     const exam = await prisma.exam.findUnique({ where: realExamKey({ code: body.examCode }) });
     if (!exam) return notFound("exam");

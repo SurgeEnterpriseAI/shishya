@@ -142,6 +142,11 @@ const UNSCOPED: Record<string, { n: number; why: string }> = {
   // return a real exam.
   "src/lib/school/surface.ts": { n: 3, why: "SCHOOL: sitemap / llms-full / context.md loader over SCHOOL_BOARD containers by category (inactive by design)" },
   "src/lib/school/db.ts": { n: 1, why: "SCHOOL: page loader — one school container by its NCERT_Cnn / CISCE_Cnn code, category pinned (inactive by design)" },
+  // 26 Sep 2026 (student mode): the one server module behind the Class 8-12
+  // flows (age band, "Practise this chapter") reads ONE student-mode
+  // container by code, category pinned; the routes that serve those flows
+  // hold no school lookup of their own and keep realExamKey() for the rest.
+  "src/lib/school/student-db.ts": { n: 1, why: "SCHOOL: student-mode flows — one Class 8-12 container by code, category pinned (inactive by design); refused for Class 1-7" },
 };
 
 const HELPER_WHERE = /(?:\.\.\.|:|\?|,|\(|\[)\s*(?:REAL_EXAM_WHERE|NOT_SCHOOL_WHERE|SCHOOL_WHERE)\b/;
@@ -482,6 +487,31 @@ describe("the one enrolment door (src/lib/db/enrollment.ts, 26 Sep 2026)", () =>
     expect(src.indexOf("isSchoolCategory(exam.category)")).toBeLessThan(src.indexOf("prisma.enrollment.upsert("));
   });
 
+  // 26 Sep 2026 (student mode): the ONLY way a school row gets an enrolment
+  // is the explicit school flag on a student-mode container (Class 8-12),
+  // and only the school flows pass it: the age-band write and the chapter
+  // mock builder (src/lib/school/student-db.ts), the mock player and the
+  // attempt start for a "school-chapter" set. Nothing else under src/.
+  it("the school flag is passed by the four school flows only, each on a student-mode set", () => {
+    const re = /ensureEnrollment\([^;]*?\{\s*school:\s*([^}]*)\},?\s*\)/gs;
+    const found: string[] = [];
+    for (const abs of walk(SRC)) {
+      const file = path.relative(ROOT, abs).split(path.sep).join("/");
+      if (file === DOOR) continue;
+      const s = fs.readFileSync(abs, "utf8").replace(/\r\n/g, "\n");
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(s))) if (!inComment(s, m.index)) found.push(`${file}: ${m[1].trim()}`);
+    }
+    expect(found.sort()).toEqual([
+      'src/app/api/attempts/route.ts: mock.generatedBy === "school-chapter"',
+      'src/app/mocks/[id]/page.tsx: mock.generatedBy === "school-chapter"',
+      "src/lib/school/student-db.ts: true",
+      "src/lib/school/student-db.ts: true",
+    ]);
+    const door = read(DOOR);
+    expect(door).toMatch(/opts\.school === true && typeof exam\.code === "string" && isStudentModeContainer\(\{ code: exam\.code, category: exam\.category \}\)/);
+  });
+
   it("no other Enrollment write exists under src/", () => {
     const re = /\.enrollment\s*\.\s*(?:upsert|create|createMany)\s*\(|INSERT INTO "Enrollment"/g;
     const offenders: string[] = [];
@@ -539,7 +569,8 @@ describe("the counters count real exams' content (26 Sep 2026)", () => {
 // `active` (every container is inactive by design) and never through the
 // real-exam helpers, which would turn a school code into an unknown exam.
 describe("school loaders read school containers by category only (src/lib/school/scope.ts)", () => {
-  const SCHOOL_FILES = ["src/lib/school/db.ts", "src/lib/school/surface.ts"];
+  // 26 Sep 2026 (student mode): student-db.ts is the third school reader.
+  const SCHOOL_FILES = ["src/lib/school/db.ts", "src/lib/school/surface.ts", "src/lib/school/student-db.ts"];
 
   it("every exam site in the school loaders carries SCHOOL_CONTAINER_WHERE, and none a real-exam helper", () => {
     for (const file of SCHOOL_FILES) {

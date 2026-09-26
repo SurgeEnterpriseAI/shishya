@@ -11,6 +11,24 @@
 //
 // Writes to User.onbStage / onbState / onbPrepCodes / onbCompletedAt, and
 // User.preferredLang when the wizard's language step was answered.
+//
+// School age band (26 Sep 2026, student mode on Class 8-12 school pages):
+//   GET  ?school=1            → { signedIn, band, classCodes } for the school
+//                               page island (null band = the card is due);
+//   POST { school: { band, examCode } } → the one-time self-declared band
+//                               (13-17 student / 18+ student / parent /
+//                               teacher) on the class container the student
+//                               signed in on. Stored in the EXISTING fields
+//                               — onbStage = the band in the wizard's
+//                               vocabulary, onbPrepCodes += the container
+//                               code (the marker) — and the account is
+//                               enrolled on the container through the one
+//                               door with the school flag. See
+//                               src/lib/school/student-classes.ts for the
+//                               encoding and src/lib/school/student-db.ts
+//                               for the write. No new column, no migration.
+//   The wizard's own POST keeps any school container code already in
+//   onbPrepCodes (its exam validation would otherwise drop the marker).
 
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
@@ -20,6 +38,8 @@ import { ensureEnrollment } from "@/lib/db/enrollment";
 import { STATES } from "@/lib/state-info";
 import { recordEvent } from "@/lib/analytics";
 import { isLanguageCode } from "@/lib/preferred-lang";
+import { isSchoolBand, studentModeCodesOf } from "@/lib/school/student-classes";
+import { declareSchoolBand, readSchoolProfile } from "@/lib/school/student-db";
 
 const ALLOWED_STAGES = new Set([
   "CLASS_9_10",
@@ -30,17 +50,51 @@ const ALLOWED_STAGES = new Set([
   "OTHER",
 ]);
 
+/** GET ?school=1 — the school band of the signed-in account, for the
+ *  Class 8-12 page island. A guest gets { signedIn: false } (200, no
+ *  redirect: the island decides what to show). Never cached. */
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  if (url.searchParams.get("school") !== "1") return NextResponse.json({ error: "not found" }, { status: 404 });
+  const session = await auth().catch(() => null);
+  if (!session?.user?.id) return NextResponse.json({ signedIn: false, band: null, classCodes: [] }, { headers: { "cache-control": "no-store" } });
+  const profile = await readSchoolProfile(session.user.id).catch(() => null);
+  return NextResponse.json(
+    { signedIn: true, band: profile?.band ?? null, classCodes: profile?.classCodes ?? [] },
+    { headers: { "cache-control": "no-store" } },
+  );
+}
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  let body: { stage?: unknown; state?: unknown; prepCodes?: unknown; lang?: unknown };
+  let body: { stage?: unknown; state?: unknown; prepCodes?: unknown; lang?: unknown; school?: unknown };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  // 26 Sep 2026: the school age-band card. Its own branch — the wizard's
+  // stage / state / prepCodes are not read, and nothing below runs.
+  if (body.school !== undefined) {
+    const s = body.school as { band?: unknown; examCode?: unknown } | null;
+    const band = s && isSchoolBand(s.band) ? s.band : null;
+    const examCode = s && typeof s.examCode === "string" ? s.examCode.trim().toUpperCase() : "";
+    if (!band || !examCode) return NextResponse.json({ error: "Pick who you are" }, { status: 400 });
+    const r = await declareSchoolBand(session.user.id, band, examCode);
+    if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
+    // The band and the class — never a name, school or any other detail.
+    void recordEvent({
+      kind: "CTA_CLICKED",
+      userId: session.user.id,
+      path: "/schooling",
+      props: { kind: "school_band_declared", band, examCode },
+    });
+    return NextResponse.json({ ok: true, signedIn: true, band: r.profile.band, classCodes: r.profile.classCodes });
   }
 
   const stage = typeof body.stage === "string" && ALLOWED_STAGES.has(body.stage) ? body.stage : null;
@@ -70,12 +124,21 @@ export async function POST(req: Request) {
     `;
     prepCodes = rows.map((r) => r.code);
   }
+  // 26 Sep 2026: a school account's confirmed class container(s) stay in
+  // onbPrepCodes (they are the age-band marker; the validation above only
+  // ever lists real exams). Read from the row, never from the request.
+  const keptSchool = await prisma.$queryRaw<{ onbPrepCodes: string[] | null }[]>`
+    SELECT "onbPrepCodes" FROM "User" WHERE "id" = ${session.user.id} LIMIT 1
+  `
+    .then((rows) => studentModeCodesOf(rows[0]?.onbPrepCodes))
+    .catch(() => [] as string[]);
+  const storedCodes = [...new Set([...prepCodes, ...keptSchool])];
 
   await prisma.$executeRaw`
     UPDATE "User"
     SET "onbStage" = ${stage},
         "onbState" = ${state},
-        "onbPrepCodes" = ${prepCodes}::text[],
+        "onbPrepCodes" = ${storedCodes}::text[],
         "onbCompletedAt" = NOW(),
         "updatedAt" = NOW()
     WHERE "id" = ${session.user.id}

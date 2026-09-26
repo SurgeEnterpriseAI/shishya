@@ -30,11 +30,25 @@
 // replaces it the same way (src/lib/chat-reply-status.ts). Error events with
 // a known code (the route's "still-answering") show this chat's own en/hi/te
 // line instead of the route's English.
+//
+// School chat (26 Sep 2026): with the `school` prop (a signed-in Class 8-12
+// student on their class container, src/app/chat/page.tsx) the island shows
+// the "You are talking to an AI tutor" line above the messages, keeps the
+// page's hint-first starters, hides every exam CTA — the topic diagnostic,
+// "Still stuck? talk to a teacher", the guest save card, suggested actions —
+// and honours the daily cap: a done event carrying the cap code
+// (src/lib/school/tutor-cap.ts) closes the composer with the end-of-day line
+// and the way back to the chapter. No leaderboard, challenge, share or
+// study-group surface is ever reachable from here. Fixer review, same day:
+// the cap code closes the composer WITHOUT the `school` prop too (the line
+// in the UI language, no back link) — a page rendered before the account's
+// band was declared still talks to the school path on the server.
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
+import { SCHOOL_CAP_CODE, SCHOOL_TUTOR_CAP_COPY, SCHOOL_TUTOR_DAILY_CAP } from "@/lib/school/tutor-cap";
 import { markSeedFired, seedFingerprint, stripSeedParam, wasSeedFiredRecently } from "@/lib/chat-seed-once";
 import {
   canRetryAt,
@@ -75,6 +89,28 @@ interface TopicFocus {
   name: string;
   subjectName: string;
   examShortName: string;
+}
+
+/** A school chat (26 Sep 2026): a signed-in Class 8-12 student on their
+ *  class container. The chat then shows the "AI tutor" line, hides every
+ *  exam CTA (diagnostic, teacher, save-conversation, suggested actions) and
+ *  keeps the daily cap (src/lib/school/tutor-cap.ts). */
+interface SchoolChat {
+  /** "You are talking to an AI tutor…" — always visible above the messages. */
+  aiLine: string;
+  /** "Class 9 · CBSE" — the scope shown in the focus chip and the empty state. */
+  classLabel: string;
+  /** The account's cap was reached before this page loaded. */
+  capReached: boolean;
+  /** The end-of-day line, in the site UI language. */
+  capLine: string;
+  /** Messages the account may still send today. */
+  messagesLeft: number;
+  /** "{n} of {cap} tutor messages left today". */
+  leftTemplate: string;
+  /** The chapter (or class) page, for the capped state. */
+  backHref: string;
+  backLabel: string;
 }
 
 function prettyTool(name?: string): string {
@@ -187,6 +223,7 @@ export function ChatInterface({
   seedScope,
   labels,
   guestSignInHref,
+  school,
 }: {
   /** Null when the chat is in "General" mode — exam-agnostic Q&A. The
    *  /api/chat call then sends `general: true` instead of an examCode
@@ -205,6 +242,8 @@ export function ChatInterface({
    *  after the second completed reply (11 Sep 2026 signup-leak audit) —
    *  the ask comes after value, and costs no model call. */
   guestSignInHref?: string | null;
+  /** Set for a school chat — see SchoolChat. */
+  school?: SchoolChat | null;
 }) {
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -216,6 +255,11 @@ export function ChatInterface({
   const [toolStatus, setToolStatus] = useState<string | null>(null);
   const [creatingDiag, setCreatingDiag] = useState(false);
   const [importedNote, setImportedNote] = useState<string | null>(null);
+  // School chat (26 Sep 2026): the daily cap. Reached on load, or when a
+  // turn's done event carries the cap code — the composer closes and the
+  // line stays; a reload asks the server again.
+  const [capped, setCapped] = useState<boolean>(school?.capReached ?? false);
+  const [messagesLeft, setMessagesLeft] = useState<number | null>(school ? school.messagesLeft : null);
   // This island's own lines in the site UI language (16 Sep 2026). Read after
   // mount — the server cannot see the shishya-lang cookie, and the guest save
   // nudge only appears after two completed tutor replies, so nothing is ever
@@ -415,7 +459,7 @@ export function ChatInterface({
   }
 
   async function send(text: string, opts: { retry?: boolean; turnId?: string } = {}) {
-    if (!text.trim() || busy) return;
+    if (!text.trim() || busy || capped) return;
     sentRef.current = true;
     setImportedNote(null);
     setSeedHeld(false);
@@ -518,6 +562,10 @@ export function ChatInterface({
               const parsed = JSON.parse(data);
               if (Array.isArray(parsed?.actions) && parsed.actions.length) setActions(parsed.actions);
               setToolStatus(null);
+              // School chat: the cap line came instead of a reply, or one
+              // more of today's messages was used (a replayed reply used none).
+              if (parsed?.code === SCHOOL_CAP_CODE) setCapped(true);
+              else if (school && !parsed?.replayed) setMessagesLeft((n) => (n == null ? n : Math.max(0, n - 1)));
             } catch {}
           } else if (event === "error") {
             seen.error = true;
@@ -586,8 +634,11 @@ export function ChatInterface({
     }
   }
 
-  // Topic-tailored starters override the generic ones when focused.
-  const starters: string[] = topicFocus
+  // Topic-tailored starters override the generic ones when focused. A
+  // school chat keeps the page's hint-first starters whatever the focus.
+  const starters: string[] = school
+    ? labels.starters
+    : topicFocus
     ? [
         `Go deeper on ${topicFocus.name} for ${topicFocus.examShortName} — examples and edge cases I should know.`,
         `Give me 3 fastest shortcuts to solve ${topicFocus.name} questions in the exam.`,
@@ -607,6 +658,7 @@ export function ChatInterface({
             <span className="text-ink-500"> · {topicFocus.subjectName} · {topicFocus.examShortName}</span>
           </p>
           <div className="flex items-center gap-3">
+            {!school && (
             <button
               type="button"
               onClick={takeTopicDiagnostic}
@@ -616,6 +668,7 @@ export function ChatInterface({
             >
               {creatingDiag ? `${labels.diagnosticBuilding}…` : `${labels.diagnosticCta} →`}
             </button>
+            )}
             <a
               href={examCode ? `/chat?examCode=${encodeURIComponent(examCode)}` : "/chat?general=1"}
               className="text-ink-500 hover:text-ink-800"
@@ -624,6 +677,13 @@ export function ChatInterface({
             </a>
           </div>
         </div>
+      )}
+
+      {/* School chat: the AI disclosure, always visible (26 Sep 2026). */}
+      {school && (
+        <p role="note" className="border-b border-ink-200 bg-ink-50 px-4 py-2 text-xs text-ink-700">
+          <span aria-hidden="true">🤖</span> {school.aiLine}
+        </p>
       )}
 
       {/* Messages */}
@@ -636,11 +696,12 @@ export function ChatInterface({
                 <>
                   {" "}
                   <strong>
-                    {labels.emptyExamPrefix} {topicFocus ? topicFocus.name : examCode}
+                    {labels.emptyExamPrefix} {topicFocus ? topicFocus.name : school ? school.classLabel : examCode}
                   </strong>.
                 </>
               )}
             </p>
+            {!capped && (
             <ul className="mt-5 grid grid-cols-1 gap-2">
               {starters.map((s) => (
                 <li key={s}>
@@ -653,6 +714,7 @@ export function ChatInterface({
                 </li>
               ))}
             </ul>
+            )}
           </div>
         )}
 
@@ -747,7 +809,7 @@ export function ChatInterface({
             had a real exchange with the AI (2+ completed replies) and the
             tutor isn't mid-answer. The AI absorbs volume; a real teacher is
             the escape hatch when it isn't landing (human-connection pilot). */}
-        {!busy && messages.filter((m) => m.role === "assistant" && m.content).length >= 2 && (
+        {!school && !busy && messages.filter((m) => m.role === "assistant" && m.content).length >= 2 && (
           <div className="flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50/60 px-3 py-2">
             <p className="text-xs text-ink-600">
               Still stuck after chatting with Shishya?
@@ -756,7 +818,7 @@ export function ChatInterface({
           </div>
         )}
 
-        {actions.length > 0 && (
+        {!school && actions.length > 0 && (
           <div className="rounded-md border border-saffron-200 bg-saffron-50/60 p-3">
             <p className="text-xs font-medium uppercase tracking-wider text-saffron-800">
               {labels.suggested}
@@ -790,6 +852,24 @@ export function ChatInterface({
         </p>
       )}
 
+      {/* School chat, cap reached: the end-of-day line and the way back to
+          the chapter, in place of the composer (26 Sep 2026). */}
+      {capped ? (
+        <div className="border-t border-ink-200 bg-saffron-50/60 px-4 py-3 text-sm text-ink-800">
+          <p>{school ? school.capLine : SCHOOL_TUTOR_CAP_COPY[navLang]}</p>
+          {school && (
+            <a href={school.backHref} className="mt-2 inline-block text-sm font-medium text-saffron-700 hover:underline">
+              {school.backLabel}
+            </a>
+          )}
+        </div>
+      ) : (
+      <>
+      {school && messagesLeft != null && (
+        <p className="bg-white px-3 pt-2 text-[11px] text-ink-500">
+          {school.leftTemplate.replace("{n}", String(messagesLeft)).replace("{cap}", String(SCHOOL_TUTOR_DAILY_CAP))}
+        </p>
+      )}
       {/* Composer */}
       <form
         onSubmit={(e) => {
@@ -829,6 +909,8 @@ export function ChatInterface({
           {busy ? "…" : labels.send}
         </button>
       </form>
+      </>
+      )}
     </div>
   );
 }

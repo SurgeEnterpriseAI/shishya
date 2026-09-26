@@ -454,7 +454,7 @@ describe("schoolLlmsFullLines", () => {
     );
     expect(text).toContain(`- Mathematics — ${SITE}/schooling/icse-cisce/class-10/mathematics — official syllabus link`);
     expect(text).toMatch(/never NCERT exercises, board questions or previous-year questions/);
-    expect(text).toMatch(/no chat tutor, offer no sign-in and ask no child to create an account/);
+    expect(text).toMatch(/Class 1-7 school pages have no chat tutor, offer no sign-in and ask no child to create an account. On Class 8-12 pages a student may sign in .* for students 13 and above/);
     expect(text).not.toMatch(/TNSB|Tamil/);
   });
 
@@ -588,13 +588,17 @@ describe("the spine's documents decide what a subject line claims and whether a 
   });
 
   it("no machine surface says practice 'stores nothing' or that parents may sign in to keep track (fixer, 26 Sep 2026)", async () => {
-    const claims = /stores nothing|saves nothing|nothing is (saved|stored)|keep track|may sign in|sign in to/i;
+    // 26 Sep 2026 (student mode): "a student may sign in" on Class 8-12 pages
+    // is now true and said with the age line; the parent / keep-track claim
+    // stays banned.
+    const claims = /stores nothing|saves nothing|nothing is (saved|stored)|keep track|parents? may sign in/i;
     const children = schoolContextHonestyLines()[1];
     expect(children).toMatch(/^> Children: /);
     expect(children).not.toMatch(claims);
     expect(children).toContain("no result is saved to any account or profile");
     expect(children).toContain("anonymous usage event (which chapter was practised and the score)");
-    expect(children).toContain("offer no sign-in");
+    expect(children).toContain("Class 1-7 school pages have no chat tutor, offer no sign-in");
+    expect(children).toMatch(/On Class 8-12 pages a student may sign in .*for students 13 and above/);
     const full = schoolLlmsFullLines(await readSchoolSurface(NOW), SITE, schoolClassIdentity).join("\n");
     expect(full).not.toMatch(claims);
     expect(full).toContain(SCHOOL_CHILDREN_LINE);
@@ -635,7 +639,7 @@ describe("class and subject context.md", () => {
     // Hindi's books are unresolved in the spine: the book is linked, the chapter list is honestly absent.
     expect(md).toMatch(/### Hindi — [^\n]+\n- Book: Malhar — https:\/\/ncert\.nic\.in\/textbook\.php\?fhml1=0-13[^\n]*\n- Chapters: list not available yet — read the book at the official link\. No Shishya notes or practice for this subject yet\./);
     expect(md).toMatch(/> Honesty: Shishya never reproduces, summarises or translates textbook text/);
-    expect(md).toMatch(/> Children: School pages have no chat tutor, offer no sign-in and ask no child to create an account/);
+    expect(md).toMatch(/> Children: Class 1-7 school pages have no chat tutor, offer no sign-in and ask no child to create an account. On Class 8-12 pages a student may sign in .* for students 13 and above/);
     expect(md).not.toMatch(/exercise \d|Exercise \d|Fig\. \d/);
     expect(md).not.toMatch(/TNSB|Tamil/);
   });
@@ -737,7 +741,7 @@ describe("the surface files", () => {
     expect(section).not.toMatch(/\b\d[\d,]*\+?\s+(chapters?|notes|practice questions|questions|subjects|books|classes)\b/i);
     expect(section).toMatch(/computed live/);
     expect(section).toMatch(/never NCERT exercises, board questions or previous-year questions/);
-    expect(section).toMatch(/no chat tutor, offer no sign-in and ask no child to create an account/);
+    expect(section).toMatch(/Class 1-7 school pages have no chat tutor, offer no sign-in and ask no child to create an account. On Class 8-12 pages a student may sign in .* for students 13 and above/);
     expect(txt).toContain("- [School — CBSE (NCERT) by class](https://shishya.in/schooling/cbse)");
   });
 });

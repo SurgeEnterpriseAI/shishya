@@ -32,6 +32,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
+import { realEnrollmentExistsSql } from "@/lib/db/enrollment";
 import { sendWinbackEmail, type MailRollover } from "@/lib/email";
 import { loadExamBundles, nextExamsInTrack, resolveMailExam, trackKey, type ExamMeta, type NextExam } from "@/lib/exam-week-mail";
 
@@ -85,8 +86,10 @@ export async function GET(req: Request) {
     WHERE u.email <> '' AND u."emailOptOut" = FALSE
       AND act.last_seen < NOW() - INTERVAL '7 days'
       AND act.last_seen > NOW() - INTERVAL '60 days'
+      -- 26 Sep 2026: an active enrolment on a REAL exam (src/lib/db/enrollment.ts):
+      -- a school-only account (Class 8-12 student mode) never enters this audience.
       AND (
-        EXISTS (SELECT 1 FROM "Enrollment" en WHERE en."userId" = u.id AND en.active = TRUE)
+        ${realEnrollmentExistsSql("u")}
         OR EXISTS (SELECT 1 FROM "CoachPlan" cp WHERE cp."userId" = u.id AND cp."examDate" > NOW())
       )
       AND (SELECT COUNT(*) FROM "EmailTouch" t WHERE t."userId" = u.id AND t.tag = 'winback') < 2

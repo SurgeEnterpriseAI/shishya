@@ -26,12 +26,14 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { OfficialLink, SchoolCrumbs } from "@/components/school/SchoolBits";
+import { SchoolStudentEntry } from "@/components/school/SchoolStudentEntry";
 import { findBoard, boardExamPapersFor, SCHOOLING_ROBOTS, schoolRobots, type Board } from "@/lib/schooling-data";
 import { findClassSyllabus, mainBooks, officialClassSource, SCHOOL_SOURCES_CHECKED_ON, type SchoolSubject } from "@/lib/schooling-subjects";
 import { cisceClassDocuments, cisceSubjectLinks, cisceSubjectsWithPdf, ncertBooksForSubject } from "@/lib/school/books";
 import { CLASS_COPY, SCHOOL_SITE, cisceDocsPhrase, countsLine, oursTitleBit } from "@/lib/school/copy";
 import { chapterCounts, getLiveSchoolClass, getSchoolOfficialLinks } from "@/lib/school/db";
 import { SCHOOL_GUEST_QUIZ_MIN } from "@/lib/school/scope";
+import { isStudentModeClass } from "@/lib/school/student-classes";
 import { parseSchoolClassSlug, schoolBoardPath, schoolClassPath, schoolSubjectPath, type SchoolSurfaceClass } from "@/lib/school/surface";
 import { stateInfo } from "@/lib/state-info";
 
@@ -245,6 +247,11 @@ function LiveClass({ board, cls, live }: { board: Board; cls: number; live: Scho
           ))}
         </div>
       )}
+
+      {/* 26 Sep 2026 (student mode): Class 8-12 only — the sign-in line with
+          the age line (students 13 and above); a signed-in account is told to
+          open a chapter. A Class 1-7 page renders nothing here. */}
+      {isStudentModeClass(cls) && <SchoolStudentEntry variant="class" cls={cls} examCode={live.examCode} pagePath={schoolClassPath(board.slug, cls)} />}
 
       <h2 className="mt-8 text-base font-semibold text-ink-900">{CLASS_COPY.subjectsHeading}</h2>
       <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

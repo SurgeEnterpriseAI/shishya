@@ -43,7 +43,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 import { prisma } from "@/lib/db/prisma";
-import { notSchoolSql } from "@/lib/db/exam-scope";
+import { NOT_SCHOOL_SQL, notSchoolSql } from "@/lib/db/exam-scope";
 import { sendCoachDayEmail, type MailRollover } from "@/lib/email";
 import { istDay } from "@/lib/exam-week";
 import {
@@ -135,9 +135,11 @@ export async function GET(req: Request) {
   /** "userId|examId" → the student's own shift day, when they picked one. */
   const shiftBy = new Map<string, string | null>();
   type EnrRow = { userId: string; examId: string; shiftDate: Date | null };
+  // 26 Sep 2026: real exams only — a school class enrolment (Class 8-12
+  // student mode) is never "the student's own next exam".
   const enrRows = await prisma.$queryRaw<EnrRow[]>`
-    SELECT "userId", "examId", "shiftDate" FROM "Enrollment"
-    WHERE active = TRUE AND "userId" = ANY(${rows.map((r) => r.userId)})
+    SELECT en."userId", en."examId", en."shiftDate" FROM "Enrollment" en JOIN "Exam" e ON e.id = en."examId"
+    WHERE en.active = TRUE AND en."userId" = ANY(${rows.map((r) => r.userId)}) AND ${NOT_SCHOOL_SQL}
   `.catch(() => [] as EnrRow[]);
   for (const r of enrRows) {
     const set = enrolled.get(r.userId) ?? new Set<string>();

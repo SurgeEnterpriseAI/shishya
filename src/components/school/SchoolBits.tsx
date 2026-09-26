@@ -1,8 +1,9 @@
 // Small server pieces the /schooling pages share (26 Sep 2026): the
 // breadcrumb line, the official-link buttons and the chapter status pill.
 // No client code, no session, nothing stored — the school pages are public
-// and cached, and carry no tutor, sign-in or account entry (Anthropic
-// minors policy; the parent-consent layer is not built).
+// and cached. 26 Sep 2026 (student mode): the one tutor / sign-in / account
+// entry a Class 8-12 page carries is SchoolStudentEntry.tsx (students 13 and
+// above); these pieces stay session-free on every class.
 
 import Link from "next/link";
 import { chapterStatusLabel } from "@/lib/school/copy";

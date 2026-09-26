@@ -26,6 +26,7 @@ import type { TutorInput, TutorOutput } from "./types";
 import { tutorTools, executeTool, type ToolContext } from "./tools";
 import { siteFeaturesBlock } from "./site-facts";
 import { buildTutorExamFacts, examFactsBlock } from "./exam-facts";
+import { SCHOOL_TUTOR_STATIC_PROMPT, schoolClassBlock, schoolTurnContext, type SchoolTurn, type SchoolTutorScope } from "@/lib/school/tutor-persona";
 
 // What Shishya actually offers (24 Sep 2026) — exam-agnostic, rendered once,
 // so it is part of the shared 1-hour prefix and byte-identical for everyone.
@@ -75,13 +76,23 @@ When find_questions_on_topic returns a question, present it WITHOUT the answer f
  * stale after a quiet spell, so "today" and past/upcoming must not be
  * baked into it. The block still caches: it only changes when the rows or
  * the IST day do.
+ *
+ * School mode (26 Sep 2026): a signed-in student of Class 8-12 chatting from
+ * a school chapter page gets the SCHOOL persona instead — its own 1-hour
+ * static block and a per-class 5-minute block (src/lib/school/tutor-persona.ts),
+ * and nothing of the exam layout below runs, so the exam prefix stays
+ * byte-identical for every exam chat (tests/unit/school-tutor.test.ts pins
+ * its hash).
  */
 export function tutorSystemBlocks(args: {
   syllabus: TutorInput["syllabus"];
   generalMode?: boolean;
   toolsOn: boolean;
   now?: Date;
+  /** The class scope of a school chat; unset for every exam / general chat. */
+  school?: SchoolTutorScope | null;
 }) {
+  if (args.school) return cachedSystemHourFirst(SCHOOL_TUTOR_STATIC_PROMPT, schoolClassBlock(args.school));
   const { syllabus, generalMode, toolsOn } = args;
   // Anthropic caps `cache_control` blocks at 4 per request. Combine the
   // small static blocks (persona + safety + format + features + tools) into
@@ -130,15 +141,20 @@ export function tutorSystemBlocks(args: {
 
 /** Streaming version — yields {delta} for text chunks, {tool} for tool events, {done} when complete. */
 export async function* tutorStream(
-  input: TutorInput & { ctx?: ToolContext }
+  input: TutorInput & { ctx?: ToolContext; school?: SchoolTurn | null }
 ): AsyncGenerator<
   | { delta: string }
   | { tool: { name: string; args: any; ok: boolean; ms: number } }
   | { done: TutorOutput }
 > {
-  const { studentState, history, userMessage, language, topicFocus, journey, generalMode, ctx } = input;
+  const { studentState, history, userMessage, language, topicFocus, journey, generalMode } = input;
+  // 26 Sep 2026: a school turn is tools-off whatever the caller passed (the
+  // tools read mastery, attempts and rank bands — a school chat has none)
+  // and gets the school prompt blocks and turn context.
+  const school = input.school ?? null;
+  const ctx = school ? undefined : input.ctx;
 
-  const systemBlocks = tutorSystemBlocks({ syllabus: input.syllabus, generalMode, toolsOn: Boolean(ctx) });
+  const systemBlocks = tutorSystemBlocks({ syllabus: input.syllabus, generalMode, toolsOn: Boolean(ctx), school: school?.scope });
 
   const focusBlock = topicFocus
     ? `CURRENT FOCUS — the student opened this chat from the study-notes page for "${topicFocus.name}" (subject: ${topicFocus.subjectName}). Anchor your reply to this topic: use its terminology, examples, and formulas. Only diverge if the student explicitly asks to switch topics. When citing the topic, use the code \`${topicFocus.code}\`.
@@ -149,7 +165,9 @@ ${topicFocus.notesExcerpt ? `\nReference notes (already shown to the student —
 
   // In general mode we don't show studentStateBlock either — there's no
   // useful exam-scoped data to reference.
-  const dynamicContext = generalMode
+  const dynamicContext = school
+    ? schoolTurnContext(school, language)
+    : generalMode
     ? `Reply language: ${language}.`
     : `${studentStateBlock(studentState)}
 ${journeyText ? `\n${journeyText}\n` : ""}${focusBlock ? `\n${focusBlock}\n` : ""}
@@ -177,7 +195,7 @@ Skip if no clear next step.`;
       messages,
       tools: ctx ? tutorTools : undefined,
     });
-    recordAiUsage(ctx ? "tutor" : "tutor-anon", response, { model: MODEL, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
+    recordAiUsage(school ? "tutor-school" : ctx ? "tutor" : "tutor-anon", response, { model: MODEL, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
 
     // Append the assistant message to the conversation history (full content blocks
     // — tool_use blocks need to be carried forward so tool_result can reference them).

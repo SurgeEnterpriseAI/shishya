@@ -7,8 +7,12 @@
 // Voice: say what the page has. A chapter without notes says so in one
 // plain line. Practice questions are Shishya's own, written by AI and
 // answer-checked — never called an exercise from the book, a board question
-// or a previous-year question. No tutor, no sign-in, no account on school
-// pages (Anthropic minors policy; the parent-consent layer is not built).
+// or a previous-year question. No tutor, no sign-in, no account on Class
+// 1-7 pages (Anthropic minors policy; the parent-consent layer is not
+// built). 26 Sep 2026 (student mode): Class 8-12 pages carry the student
+// entry — sign-in for students 13 and above, the AI tutor and account
+// practice — whose words live in src/lib/school/student-copy.ts; the hub
+// line below says so.
 // 26 Sep 2026 (fixer): the practice copy said "nothing is saved" / "saves
 // nothing", but the quiz's finish sends one anonymous QUIZ_ATTEMPTED event
 // (chapter and score, under the rotating shishya_anon cookie — the same
@@ -170,6 +174,6 @@ export const HUB_COPY = {
   noneSeeded: "Class pages for this board are not on Shishya yet; the board's own site is the source.",
   todayHeading: "On these pages today",
   today: (c: { chapters: number; notes: number; practice: number }) =>
-    `NCERT chapters: ${countsLine(c)}. Practice questions are Shishya's own, written by AI and answer-checked before they are shown; a chapter without notes or practice shows the official chapter link only. School pages have no chat tutor and ask for no account: practice runs without one, and no result is saved to any account or profile — Shishya records only an anonymous usage event (which chapter was practised and the score), the same cookie-based analytics every page view sends.`,
+    `NCERT chapters: ${countsLine(c)}. Practice questions are Shishya's own, written by AI and answer-checked before they are shown; a chapter without notes or practice shows the official chapter link only. Class 1-7 pages have no chat tutor and ask for no account. On Class 8-12 pages a student may sign in to practise a chapter and to ask the AI tutor about it — for students 13 and above. The 5-question practice on every chapter page runs without an account, and no result is saved to any account or profile from it — Shishya records only an anonymous usage event (which chapter was practised and the score), the same cookie-based analytics every page view sends. A signed-in student's own practice set is saved to that account.`,
   boardsHeading: "All boards: official links",
 } as const;

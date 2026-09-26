@@ -553,9 +553,13 @@ export function chapterContentLabel(ch: Pick<SchoolSurfaceChapter, "hasNotes" | 
  *  beacon every page view's analytics sends (/api/analytics: chapter and
  *  score under the rotating anonymous cookie id) — so "stores nothing" was
  *  untrue, and no school page offers a sign-in, so "parents may sign in to
- *  keep track" was too. */
+ *  keep track" was too.
+ *  26 Sep 2026 (student mode): the founder opened Class 8-12 pages to
+ *  student sign-in, the AI tutor and account practice
+ *  (src/lib/school/student-classes.ts); Classes 1-7 stay as they were. The
+ *  line says both, and the age line the pages carry. */
 export const SCHOOL_CHILDREN_LINE =
-  "School pages have no chat tutor, offer no sign-in and ask no child to create an account. Practice needs no account, and no result is saved to any account or profile: Shishya records only an anonymous usage event (which chapter was practised and the score), the same cookie-based analytics every page view sends.";
+  "Class 1-7 school pages have no chat tutor, offer no sign-in and ask no child to create an account. On Class 8-12 pages a student may sign in to practise a chapter with Shishya's own answer-checked questions and to ask the AI tutor about it — for students 13 and above, with a one-time self-declared age band, and the tutor says it is an AI. The 5-question practice on every chapter page needs no account, and no result is saved to any account or profile from it: Shishya records only an anonymous usage event (which chapter was practised and the score), the same cookie-based analytics every page view sends. A signed-in student's own practice set is saved to that account.";
 
 /** The CISCE class line of llms-full.txt: per-subject syllabus PDFs where
  *  the council publishes them (ICSE / ISC classes), the stage curriculum

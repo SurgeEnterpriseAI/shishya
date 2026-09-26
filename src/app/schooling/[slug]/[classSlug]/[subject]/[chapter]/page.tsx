@@ -20,6 +20,14 @@
 // says so (26 Sep 2026 fixer: "nothing is saved" was untrue) — in a
 // school-only player with no tutor, sign-in, challenge or teacher links
 // (Anthropic minors policy; the parent-consent layer is not built).
+// 26 Sep 2026 (student mode): on a Class 8-12 chapter only
+// (isStudentModeClass, src/lib/school/student-classes.ts) the page also
+// carries the student entry island (src/components/school/SchoolStudentEntry.tsx):
+// sign-in for students 13 and above, "Practise this chapter" (an account
+// set of up to 10 of the chapter's checked questions) and "Ask the AI tutor
+// about this chapter". The page itself reads no session — it stays public
+// and ISR-cached; the island asks after mount. A Class 1-7 page renders
+// none of it.
 // Old URLs (the 25 Sep hand-picked subject segments and chapter slugs that
 // differ from the seeded title) 308 to today's address
 // (src/lib/school/legacy-urls.ts, resolved against the LIVE chapter list —
@@ -39,6 +47,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { NotesMarkdown } from "@/components/NotesMarkdown";
 import { SchoolChapterQuiz } from "@/components/school/SchoolChapterQuiz";
+import { SchoolStudentEntry } from "@/components/school/SchoolStudentEntry";
 import { ChapterStatusPill, OfficialLink, SchoolCrumbs } from "@/components/school/SchoolBits";
 import { findBoard, SCHOOLING_ROBOTS, schoolRobots, type Board } from "@/lib/schooling-data";
 import {
@@ -58,6 +67,7 @@ import { CHAPTER_COPY, CHAPTER_QUIZ_COPY, SCHOOL_SITE, chapterHasParts, subjectS
 import { getLiveSchoolChapter, getLiveSchoolClass, getSchoolChapterDetail, getSchoolOfficialLinks, type LiveSchoolChapter } from "@/lib/school/db";
 import { legacyChapterSlug, legacySubjectSlug } from "@/lib/school/legacy-urls";
 import { hasSchoolGuestQuiz } from "@/lib/school/scope";
+import { isStudentModeClass } from "@/lib/school/student-classes";
 import { parseSchoolClassSlug, schoolBoardPath, schoolChapterPath, schoolClassPath, schoolSubjectPath } from "@/lib/school/surface";
 
 // Public page; notes and practice land in batches. 10 minutes = SCHOOL_REVALIDATE
@@ -179,7 +189,8 @@ export default async function ChapterPage({ params }: { params: Promise<PagePara
   const boardPath = schoolBoardPath(board.slug);
   const classPath = schoolClassPath(board.slug, cls);
   const subjectPath = schoolSubjectPath(board.slug, cls, subject.slug);
-  const url = `${SCHOOL_SITE}${schoolChapterPath(board.slug, cls, subject.slug, chapter.slug)}`;
+  const chapterPath = schoolChapterPath(board.slug, cls, subject.slug, chapter.slug);
+  const url = `${SCHOOL_SITE}${chapterPath}`;
   const notesAt = detail?.notesAt ? new Date(detail.notesAt) : null;
   const notesDateText = notesAt ? notesAt.toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" }) : null;
 
@@ -260,6 +271,22 @@ export default async function ChapterPage({ params }: { params: Promise<PagePara
             {book && <OfficialLink href={book.bookUrl}>{CHAPTER_COPY.openBook(book.title)}</OfficialLink>}
           </div>
         </div>
+
+        {/* 26 Sep 2026 (student mode): Class 8-12 only — sign-in for
+            students 13 and above, account practice and the AI tutor entry.
+            A Class 1-7 chapter renders nothing here. */}
+        {isStudentModeClass(cls) && (
+          <SchoolStudentEntry
+            variant="chapter"
+            cls={cls}
+            examCode={examCode}
+            pagePath={chapterPath}
+            topicCode={chapter.code}
+            chapterName={chapter.name}
+            subjectName={subject.name}
+            validatedQuestions={chapter.validatedQuestions}
+          />
+        )}
 
         {notes ? (
           <>

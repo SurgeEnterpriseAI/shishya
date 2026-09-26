@@ -26,6 +26,7 @@ export function MockRebuilding({
   examShort,
   copy,
   attempt = null,
+  back = null,
 }: {
   title: string;
   examCode: string;
@@ -35,6 +36,10 @@ export function MockRebuilding({
    *  owner (for the player's localStorage mirror key) and how many answers
    *  it holds on questions of the paper submit would grade. */
   attempt?: { id: string; userId: string; answered: number } | null;
+  /** 26 Sep 2026 (student mode): a school chapter practice set's way back —
+   *  its chapter page and label — instead of the exam hub (/exams/<school
+   *  container> is a 404 by design). */
+  back?: { href: string; label: string } | null;
 }) {
   return (
     <main className="min-h-screen bg-ink-50/40">
@@ -50,6 +55,7 @@ export function MockRebuilding({
               userId={attempt.userId}
               answered={attempt.answered}
               examCode={examCode}
+              backHref={back?.href ?? null}
               copy={{
                 line: fillTemplate(attempt.answered > 0 ? copy.rebuildAttemptAnswered : copy.rebuildAttemptEmpty, {
                   answered: attempt.answered,
@@ -61,10 +67,10 @@ export function MockRebuilding({
             />
           )}
           <Link
-            href={`/exams/${encodeURIComponent(examCode)}`}
+            href={back?.href ?? `/exams/${encodeURIComponent(examCode)}`}
             className="btn-primary mt-5 inline-block text-center"
           >
-            {fillTemplate(copy.rebuildBack, { exam: examShort })}
+            {back?.label ?? fillTemplate(copy.rebuildBack, { exam: examShort })}
           </Link>
         </div>
       </section>

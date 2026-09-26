@@ -10,6 +10,14 @@
 // entry (Anthropic minors policy; the parent-consent layer is not built);
 // and practice comes only from answer-checked Question rows through the
 // school-only getter, never from the unchecked May-2026 quiz file.
+// 26 Sep 2026 (student mode): the founder opened Class 8-12 pages to
+// student sign-in, the AI tutor and account practice — through ONE island
+// (src/components/school/SchoolStudentEntry.tsx) the pages render only under
+// isStudentModeClass(cls), with every word in src/lib/school/student-copy.ts.
+// So the sign-in ban below becomes a rule: a sign-in word may appear only
+// beside the age line ("13 and above"); the tutor / login / dashboard
+// literals stay banned in every school file (the island builds its links
+// through src/lib/school/student-classes.ts); Classes 1-7 keep everything.
 // Static checks over the page sources, in the style of the other
 // index-shape tests. No DB. Run: npx vitest run tests/unit/schooling-honesty.test.ts
 
@@ -137,16 +145,20 @@ describe("no untrue promises on /schooling", () => {
     [/\bNCERT\s+exercises?\b/i, "an AI question is never called an NCERT exercise (say 'not taken from the NCERT book')"],
     [/\bboard\s+questions?\b/i, "an AI question is never called a board question"],
     [/keep\s+track|track\s+your|your\s+progress/i, "nothing school-related is stored for an account"],
-    [/\bsign[\s-]?(in|up)\b/i, "no sign-in / sign-up ask on school pages (children)"],
+    // 26 Sep 2026 (student mode): "sign in" is checked separately below —
+    // allowed only beside the age line ("13 and above").
+    [/\bsign[\s-]?up\b/i, "no sign-up ask on school pages (children)"],
     [/create\s+an?\s+account/i, "no account ask on school pages (children)"],
     // 26 Sep 2026 (fixer): the quiz finish sends one anonymous QUIZ_ATTEMPTED
     // event (chapter + score) under the shishya_anon cookie; say that, not "nothing".
     [/nothing\s+is\s+saved|saves\s+nothing|stores\s+nothing|nothing\s+is\s+stored/i, "practice sends an anonymous usage event (chapter + score); the copy must say so"],
   ];
+  const STUDENT_COPY = path.join(ROOT, "src/lib/school/student-copy.ts");
   const files = [
     ...walk(SCHOOL_APP).filter((f) => /\.tsx?$/.test(f)),
     ...walk(SCHOOL_COMPONENTS).filter((f) => /\.tsx?$/.test(f)),
     SCHOOL_COPY,
+    STUDENT_COPY,
     ...["schooling-data.ts", "schooling-subjects.ts"].map((f) => path.join(ROOT, "src/lib", f)),
   ];
 
@@ -155,6 +167,21 @@ describe("no untrue promises on /schooling", () => {
     for (const [re, why] of BANNED) {
       const m = src.match(re);
       expect(m?.[0] ?? null, `${why}`).toBeNull();
+    }
+  });
+
+  // 26 Sep 2026 (student mode): every sign-in word on a school surface sits
+  // beside the age line. The two copy files hold every such sentence; no
+  // page or component may carry one of its own.
+  it.each(files.map((f) => [rel(f), f]))("%s: a sign-in word only beside the age line (13 and above)", (_name, f) => {
+    const src = stripComments(read(f));
+    const re = /\bsign[\s-]?in\b/gi;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(src))) {
+      expect([SCHOOL_COPY, STUDENT_COPY].includes(f), `${rel(f)}: sign-in copy belongs in student-copy.ts`).toBe(true);
+      const window = src.slice(Math.max(0, m.index - 400), m.index + 400);
+      // The text, or the AGE_LINE constant that carries it (student-copy.ts).
+      expect(window, `${rel(f)} @${m.index}: "${m[0]}" without the age line`).toMatch(/13 and above|\bAGE_LINE\b/);
     }
   });
 
@@ -292,7 +319,12 @@ describe("school practice is answer-checked rows through the school-only getter"
 // parent-consent and safety layer is not built). Guest practice with no
 // account is fine — no result is saved to any account; its one anonymous
 // analytics beacon is what every page view sends, and the copy says so.
-describe("school pages carry no tutor, sign-in, account or storage entry", () => {
+// 26 Sep 2026 (student mode): the Class 8-12 entry island reaches /login,
+// /chat and the profile route ONLY through src/lib/school/student-classes.ts
+// (schoolSignInHref / schoolTutorHref) and fetch() — no literal route, no
+// storage, no session import in any school file; the pages render the
+// island under isStudentModeClass(cls) alone (tests/unit/school-student-mode.test.ts).
+describe("school pages carry no tutor, sign-in, account or storage entry of their own", () => {
   const files = [...walk(SCHOOL_APP).filter((f) => /\.tsx?$/.test(f)), ...walk(SCHOOL_COMPONENTS).filter((f) => /\.tsx?$/.test(f)), SCHOOL_COPY];
   const FORBIDDEN: Array<[RegExp, string]> = [
     [/["'`]\/chat\b/, "the AI tutor"],

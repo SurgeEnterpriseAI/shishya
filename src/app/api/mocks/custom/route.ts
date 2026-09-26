@@ -40,6 +40,16 @@
 // shown but never answered (least-recently-shown first) → answered
 // (least-recently-answered first). `bank.seen` / `repeats` count answered
 // questions only. Withdrawn questions (tag "rejected") never enter the pool.
+//
+// School chapter practice (26 Sep 2026): `school: true` + `topicCode` (the
+// chapter's Topic.code) builds "Practise this chapter" for a signed-in
+// student of a student-mode class (Class 8-12, src/lib/school/student-classes.ts)
+// — up to 10 of the chapter's answer-checked questions, honest size, no AI —
+// through src/lib/school/student-db.ts buildSchoolChapterMock, which is the
+// only place that reads a school container; this route keeps realExamKey()
+// for every other request, so a school code without the flag stays an
+// unknown exam. An account that has not answered the age-band card gets
+// 403 { error: "school-band-required" } and the page shows the card.
 
 import { z } from "zod";
 import { NextResponse } from "next/server";
@@ -61,14 +71,22 @@ import {
   type SeenInput,
 } from "@/lib/question-pick";
 import { MAX_BUILDER_QUESTIONS, MIN_MOCK_QUESTIONS, questionsLabel, shortfallLine, titleWithCount } from "@/lib/mock-fill";
+import { buildSchoolChapterMock } from "@/lib/school/student-db";
 
-const Body = z.object({
-  examCode: z.string().min(1).max(64),
-  topicIds: z.array(z.string().min(1).max(40)).min(1).max(10),
-  count: z.number().int().min(MIN_MOCK_QUESTIONS).max(MAX_BUILDER_QUESTIONS),
-  difficulty: z.enum(["MIXED", "EASY", "HARD"]),
-  pyqOnly: z.boolean().optional(),
-});
+const Body = z
+  .object({
+    examCode: z.string().min(1).max(64),
+    topicIds: z.array(z.string().min(1).max(40)).min(1).max(10).optional(),
+    count: z.number().int().min(MIN_MOCK_QUESTIONS).max(MAX_BUILDER_QUESTIONS),
+    difficulty: z.enum(["MIXED", "EASY", "HARD"]),
+    pyqOnly: z.boolean().optional(),
+    // 26 Sep 2026: school chapter practice — the chapter's Topic.code.
+    school: z.boolean().optional(),
+    topicCode: z.string().min(1).max(80).optional(),
+  })
+  .refine((b) => (b.school ? typeof b.topicCode === "string" : Array.isArray(b.topicIds)), {
+    message: "topicIds (exam) or school + topicCode (school chapter) required",
+  });
 
 export async function POST(req: Request) {
   const session = await auth().catch(() => null);
@@ -80,7 +98,26 @@ export async function POST(req: Request) {
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "bad request" }, { status: 400 });
-  const { examCode, topicIds, count, difficulty, pyqOnly = false } = parsed.data;
+  const { examCode, count, difficulty, pyqOnly = false } = parsed.data;
+
+  // 26 Sep 2026: "Practise this chapter" on a Class 8-12 school page.
+  if (parsed.data.school) {
+    const r = await buildSchoolChapterMock({ userId, examCode, topicCode: parsed.data.topicCode as string, count });
+    if (!r.ok) return NextResponse.json({ error: r.error, ...(r.available !== undefined ? { available: r.available } : {}) }, { status: r.status });
+    return NextResponse.json({
+      id: r.id,
+      title: r.title,
+      count: r.count,
+      requested: r.requested,
+      short: r.short,
+      line: r.line,
+      durationMin: r.durationMin,
+      bank: r.bank,
+      school: true,
+      chapterPath: r.chapterPath,
+    });
+  }
+  const topicIds = parsed.data.topicIds as string[];
 
   const exam = await prisma.exam.findUnique({
     where: realExamKey({ code: examCode }),

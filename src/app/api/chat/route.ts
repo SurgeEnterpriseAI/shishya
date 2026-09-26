@@ -48,6 +48,11 @@ import {
 } from "@/lib/chat-turn-dedupe";
 import { locales } from "@/lib/i18n";
 import { detectLanguageRequest, langToReplyLanguage, resolvePreferredLocale, TUTOR_LANG_COOKIE, tutorMessageFor } from "@/lib/preferred-lang";
+import { schoolBandRequiredErrorFrame, schoolOnlyChatPath, schoolOnlyTutorErrorFrame, schoolStudentExamKey } from "@/lib/school/tutor-scope";
+import { countSchoolTutorMessagesToday, getSchoolChapterFocus, getSchoolTutorContext } from "@/lib/school/tutor-context";
+import { schoolCapFrames, schoolTutorCapReached, schoolUiLang } from "@/lib/school/tutor-cap";
+import { isMinorBand, schoolBandOfProfile, schoolReturnPath, type SchoolBand } from "@/lib/school/student-classes";
+import type { SchoolChapterFocus } from "@/lib/school/tutor-persona";
 
 const Body = z
   .object({
@@ -183,20 +188,91 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
   const isGeneral = body.general === true;
   const examCodeForChat = isGeneral ? null : body.examCode!;
 
-  const exam = isGeneral
+  // ── School tutor (26 Sep 2026) ────────────────────────────────────
+  // A signed-in student of Class 8-12 may chat on their school container
+  // (NCERT_C08..C12 / CISCE_C08..C12 — src/lib/school/tutor-scope.ts). The
+  // container is read by category through src/lib/school/tutor-context.ts,
+  // never through realExamKey(); for a guest, a Class 1-7 container or any
+  // other code the key is null and the real-exam lookup below runs, under
+  // which a school row is an unknown exam: 404, exactly as before.
+  const schoolKey = schoolStudentExamKey({ code: examCodeForChat, userId });
+  const schoolCtx = schoolKey ? await getSchoolTutorContext(schoolKey.code) : null;
+
+  const exam: { id: string; code: string; category: string } | null = isGeneral
     ? null
-    : await prisma.exam.findUnique({ where: realExamKey({ code: examCodeForChat! }) });
+    : schoolCtx
+      ? schoolCtx.exam
+      : await prisma.exam.findUnique({ where: realExamKey({ code: examCodeForChat! }) });
   if (!isGeneral && !exam) {
     return new Response(JSON.stringify({ error: "exam not found" }), {
       status: 404,
       headers: { "content-type": "application/json" },
     });
   }
+
+  // The signed-in account's profile, read once (26 Sep 2026 fixer review):
+  // the school age band (src/lib/school/student-classes.ts — onbStage plus
+  // the container code in onbPrepCodes, written once by the school profile
+  // flow) gates the exam tutor just below and rides on a school turn;
+  // preferredLang feeds the general / school prompt state further down.
+  const profile = userId
+    ? await prisma.user.findUnique({ where: { id: userId }, select: { preferredLang: true, onbStage: true, onbPrepCodes: true } })
+    : null;
+  const schoolProfile = schoolBandOfProfile(profile);
+  const jar = await cookies();
+
+  // The one-time age band is a safety requirement (founder, 26 Sep 2026 —
+  // integrator; src/lib/school/tutor-scope.ts says why): a school turn from
+  // an account that has not declared it is refused with the localised line
+  // and the page that asks — before the cap read, before any write, with no
+  // model call — so the persona is never told a declaration that was not
+  // made. /chat shows its band card first; this is the rule for a direct call.
+  if (schoolCtx && userId && !schoolProfile?.band) {
+    return new Response(
+      schoolBandRequiredErrorFrame(schoolReturnPath(schoolCtx.scope.classPath), schoolUiLang(jar.get("shishya-lang")?.value)),
+      { headers: SSE_HEADERS },
+    );
+  }
+
+  // The school tutor's daily cap (src/lib/school/tutor-cap.ts): 20 USER
+  // messages per account per IST day, counted from the stored rows of the
+  // account's school sessions — checked before anything is written or asked
+  // of the model. Over it, the friendly end-of-day line streams as a reply
+  // in the site UI language and the chat disables its composer.
+  if (schoolCtx && userId) {
+    const usedToday = await countSchoolTutorMessagesToday(userId);
+    if (schoolTutorCapReached(usedToday)) {
+      return new Response(schoolCapFrames(body.sessionId ?? null, schoolUiLang(jar.get("shishya-lang")?.value)), {
+        headers: SSE_HEADERS,
+      });
+    }
+  }
+
+  // A declared 13-17 student gets the school tutor ONLY (26 Sep 2026 fixer
+  // review — src/lib/school/tutor-scope.ts says why): a general or real-exam
+  // turn from such an account is refused here with the localised line and
+  // the way to its class chat — before enrolment (a real-exam turn used to
+  // enrol the child on that exam), before any write, and with no model call.
+  // /chat sends the account to the same place; this is the rule for a direct
+  // call. Adult school bands (18+, parent, teacher) keep the exam tutor.
+  if (userId && !schoolCtx && schoolProfile && isMinorBand(schoolProfile.band)) {
+    return new Response(
+      schoolOnlyTutorErrorFrame(schoolOnlyChatPath(schoolProfile.classCodes, examCodeForChat), schoolUiLang(jar.get("shishya-lang")?.value)),
+      { headers: SSE_HEADERS },
+    );
+  }
+  // Where an error event sends the student back to: a school chat to its
+  // class page (or the chapter, once known), an exam chat to its hub.
+  const backPath = schoolCtx ? schoolCtx.scope.classPath : examCodeForChat ? `/exams/${examCodeForChat}` : "/exams";
+
   // Signed-in only: track enrollment for the exam they're chatting about.
   // 26 Sep 2026: `exam` came through realExamKey() (a school container is
   // 404 above, exactly like an unknown code) and the upsert goes through the
   // one enrolment door, so a child's class never enters the mail loops here.
-  if (exam && userId) {
+  // A school chat (schoolCtx) enrols nobody: the student's class enrolment
+  // belongs to the school profile flow (src/lib/school/student-db.ts), not
+  // to the chat.
+  if (exam && userId && !schoolCtx) {
     await ensureEnrollment(userId, exam);
   }
 
@@ -208,6 +284,17 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
       ? await prisma.chatSession.findUnique({ where: { id: body.sessionId } })
       : null;
   if (chatSession && chatSession.userId !== userId) chatSession = null;
+  // The conversation the client named must be of THIS turn's scope — the
+  // same school container, the same exam, or general (examId null) — 26 Sep
+  // 2026 fixer review. The school daily cap counts USER rows on SCHOOL
+  // sessions only (countSchoolTutorMessagesToday), so a school turn carried
+  // into a general or exam session by its sessionId would never count and
+  // the cap could be walked around with one request field; the reverse put
+  // an exam turn's rows under the cap. A session of another scope is dropped
+  // and a fresh one of the right scope is created below. The chat island only
+  // ever sends the id its own page's meta event gave it, so nothing a student
+  // does in the UI is dropped.
+  if (chatSession && chatSession.examId !== (exam?.id ?? null)) chatSession = null;
 
   // The LAST 30 turns of a conversation, oldest-first. (Was asc/take 30 =
   // the FIRST 30 turns of the session: long sessions lost their recent
@@ -305,7 +392,7 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
       const code = CHAT_ERROR_CODE.stillAnswering;
       const error = CHAT_ERROR_COPY[code].en;
       return new Response(
-        `event: error\ndata: ${JSON.stringify({ error, code, next: examCodeForChat ? `/exams/${examCodeForChat}` : "/exams" })}\n\n`,
+        `event: error\ndata: ${JSON.stringify({ error, code, next: backPath })}\n\n`,
         { headers: SSE_HEADERS },
       );
     }
@@ -386,27 +473,35 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
   // personalized state + journey load only for signed-in users (anon has
   // no account data). With connection_limit=5 on the pooled DB URL these
   // fan out in parallel without overflowing the 10s pool timeout.
+  // 26 Sep 2026: a school chat has no student state or journey (no mocks,
+  // mastery or briefs for a class); its syllabus is the class, built by the
+  // school context loader, and the real-exam-keyed getStudentState /
+  // getStudentJourney are never called for it.
   const [studentState, syllabus, journey] = exam
-    ? await Promise.all([
-        userId ? getStudentState(userId, examCodeForChat!) : Promise.resolve(null),
-        getSyllabusContext(examCodeForChat!),
-        userId ? getStudentJourney(userId, examCodeForChat!) : Promise.resolve(null),
-      ])
+    ? schoolCtx
+      ? ([null, schoolCtx.syllabus, null] as const)
+      : await Promise.all([
+          userId ? getStudentState(userId, examCodeForChat!) : Promise.resolve(null),
+          getSyllabusContext(examCodeForChat!),
+          userId ? getStudentJourney(userId, examCodeForChat!) : Promise.resolve(null),
+        ])
     : ([null, null, null] as const);
 
   // For general / anonymous chats we need a minimal StudentState for the
   // tutor's prompt-builder (it needs preferredLang at minimum). Build one
-  // from the User row when signed in; anon defaults to EN.
+  // from the User row (read once above) when signed in; anon defaults to EN.
   let generalStudentState = studentState;
+  // 26 Sep 2026: the school tutor also carries the account's declared age
+  // band (schoolProfile above) in its turn context; /chat shows the band
+  // card until it exists.
+  let band: SchoolBand | null = null;
   if (!generalStudentState) {
-    const user = userId
-      ? await prisma.user.findUnique({ where: { id: userId }, select: { preferredLang: true } })
-      : null;
+    if (schoolCtx) band = schoolProfile?.band ?? null;
     generalStudentState = {
       userId: userId ?? "anon",
       examCode: "",
       examName: "",
-      preferredLang: (user?.preferredLang ?? "EN") as any,
+      preferredLang: (profile?.preferredLang ?? "EN") as any,
       enrolledAt: new Date().toISOString(),
       weaknesses: [],
       strengths: [],
@@ -426,7 +521,6 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
   // (a student typing "Marathi" was told "I'll reply in English from now on").
   // It is remembered for the tutor alone, in its own cookie, so the site's
   // interface language does not change under the student.
-  const jar = await cookies();
   const cookieLang = jar.get("shishya-lang")?.value ?? null;
   const tutorLang = jar.get(TUTOR_LANG_COOKIE)?.value ?? null;
   const requestedLang = detectLanguageRequest(body.message);
@@ -451,7 +545,14 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
     subjectName: string;
     notesExcerpt: string | null;
   } | null = null;
-  if (exam && body.topicCode) {
+  // 26 Sep 2026: a school chat's focus is the chapter — code, Shishya page,
+  // official link, our own notes — from src/lib/school/tutor-context.ts,
+  // never this exam-page topic read.
+  let schoolFocus: SchoolChapterFocus | null = null;
+  if (schoolCtx && body.topicCode) {
+    schoolFocus = await getSchoolChapterFocus(schoolCtx.exam.code, body.topicCode);
+  }
+  if (exam && !schoolCtx && body.topicCode) {
     const topic = await prisma.topic.findFirst({
       where: { code: body.topicCode, subject: { examId: exam.id } },
       select: {
@@ -513,12 +614,15 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
           topicFocus: topicFocus ?? undefined,
           journey: journey ?? undefined,
           generalMode: isGeneral,
+          // 26 Sep 2026: the school persona, class block, chapter focus and
+          // declared band (src/lib/school/tutor-persona.ts); tools stay off.
+          school: schoolCtx ? { scope: schoolCtx.scope, focus: schoolFocus, band } : undefined,
           // Tool use needs an exam scope AND a signed-in user to look up
-          // the student's mastery / attempts. General mode and anonymous
-          // chats pass no ctx, so the tutor goes tools-off and answers
+          // the student's mastery / attempts. General mode, anonymous and
+          // school chats pass no ctx, so the tutor goes tools-off and answers
           // from the syllabus + its own knowledge.
           ctx:
-            examCodeForChat && userId
+            examCodeForChat && userId && !schoolCtx
               ? { userId, examCode: examCodeForChat }
               : undefined,
         });
@@ -585,7 +689,11 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
         // An outage must not end a new student's first session (16 Sep 2026:
         // signups during the 11-13 Sep credit outages came back at half the
         // usual rate). The practice pages need no AI, so name one.
-        const practice = examCodeForChat
+        // 26 Sep 2026: a school student is sent back to the chapter (or class)
+        // page, whose notes and practice need no AI — never to an /exams page.
+        const practice = schoolCtx
+          ? ` Meanwhile the chapter's notes and practice are open at https://shishya.in${schoolFocus?.path ?? backPath}`
+          : examCodeForChat
           ? ` Meanwhile you can still practise without the tutor: free questions and mocks at https://shishya.in/exams/${examCodeForChat}`
           : " Meanwhile you can still practise without the tutor: pick your exam at https://shishya.in/exams and take a free quiz or mock.";
         const friendly = /credit balance|billing|invalid_request_error/i.test(raw)
@@ -597,7 +705,7 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
         // error, so a quick Retry re-sends it rather than waiting on it as if
         // this run were still answering (24 Sep 2026 review).
         if (userId) await markTurnFailed(turn);
-        emit(`event: error\ndata: ${JSON.stringify({ error: friendly, next: examCodeForChat ? `/exams/${examCodeForChat}` : "/exams" })}\n\n`);
+        emit(`event: error\ndata: ${JSON.stringify({ error: friendly, next: schoolFocus?.path ?? backPath })}\n\n`);
         // A failed guest turn is logged too, with no reply (24 Sep 2026) —
         // failed guest asks used to vanish, so guest failures could not be
         // counted. Same best-effort rule as a successful turn; the student sees

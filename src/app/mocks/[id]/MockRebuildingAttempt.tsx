@@ -22,6 +22,7 @@ export function MockRebuildingAttempt({
   answered,
   examCode,
   copy,
+  backHref = null,
 }: {
   attemptId: string;
   /** Same key segment the player used for its localStorage mirror. */
@@ -30,6 +31,9 @@ export function MockRebuildingAttempt({
   answered: number;
   examCode: string;
   copy: { line: string; submit: string; discard: string; busy: string };
+  /** 26 Sep 2026 (student mode): where "discard" lands for a school chapter
+   *  practice set — its chapter page (/exams/<school container> is a 404). */
+  backHref?: string | null;
 }) {
   const [busy, setBusy] = useState<null | "submit" | "discard">(null);
   const router = useRouter();
@@ -57,7 +61,7 @@ export function MockRebuildingAttempt({
   async function discardAttempt() {
     setBusy("discard");
     await fetch(`/api/attempts/${attemptId}/discard`, { method: "POST" }).catch(() => null);
-    router.push(`/exams/${encodeURIComponent(examCode)}`);
+    router.push(backHref ?? `/exams/${encodeURIComponent(examCode)}`);
   }
 
   return (

@@ -7,6 +7,9 @@ import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { ensureEnrollment } from "@/lib/db/enrollment";
+// 26 Sep 2026 (student mode, integrator): a school set's way back is its chapter page.
+import { schoolResultsCopy } from "@/lib/school/student-copy";
+import { schoolMockConfigOf } from "@/lib/school/student-db";
 import { getT } from "@/lib/i18n-server";
 import { resolvePreferredLocale } from "@/lib/preferred-lang";
 import {
@@ -229,6 +232,12 @@ export default async function MockPlayerPage({
   const byId = new Map(questions.map((q) => [q.id, q]));
   const paperIds = persisted ?? servedPaperIds(mock, byId);
   const paperCopy = servedPaperCopy(locale);
+  // 26 Sep 2026 (student mode, integrator): a school chapter practice set
+  // (src/lib/school/student-db.ts config.school) has no exam hub — every
+  // /exams/<school container> is a 404 by design — so the "being rebuilt"
+  // notice and the expired gate go back to the chapter page instead.
+  const schoolCfg = mock.generatedBy === "school-chapter" ? schoolMockConfigOf(mock.config) : null;
+  const schoolBack = schoolCfg ? { href: schoolCfg.chapterPath ?? "/schooling", label: schoolResultsCopy(locale).backToChapter } : null;
   // "K questions were withdrawn after an answer check and are not served" —
   // shown on the choice and in the player only when K > 0; and a title that
   // states the size ("… (119 of 200 questions)") says the served size.
@@ -254,6 +263,7 @@ export default async function MockPlayerPage({
         examCode={mock.exam.code}
         examShort={mock.exam.shortName}
         copy={paperCopy}
+        back={schoolBack}
         attempt={
           inProgress ? { id: inProgress.id, userId, answered: answeredInPaper(inProgress.answers, paperIds) } : null
         }
@@ -282,6 +292,7 @@ export default async function MockPlayerPage({
           total={paperIds.length}
           examShort={mock.exam.shortName}
           examCode={mock.exam.code}
+          backHref={schoolBack?.href ?? null}
         />
       );
     }
@@ -297,7 +308,15 @@ export default async function MockPlayerPage({
     // dashboard recommendations. Caught when Abhishek (signup 17:10,
     // SSC_GD attempt 17:11) had no enrollment.
     // 26 Sep 2026: through the one enrolment door (src/lib/db/enrollment.ts).
-    await ensureEnrollment(userId, { id: mock.examId, category: mock.exam.category });
+    // 26 Sep 2026 (student mode): a school chapter practice set — built by
+    // src/lib/school/student-db.ts on a Class 8-12 container — passes the
+    // school flag, so the door allows that container and no other school row.
+    await ensureEnrollment(
+      userId,
+      { id: mock.examId, category: mock.exam.category, code: mock.exam.code },
+      {},
+      { school: mock.generatedBy === "school-chapter" },
+    );
     // Full paper or warm up first? (25 Sep 2026) Only for the return from
     // Google sign-in (?from=signin, set by the gate and the private-mock
     // bounce above) to a paper-length mock with nothing in progress — not a

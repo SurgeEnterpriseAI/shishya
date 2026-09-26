@@ -12,9 +12,21 @@
 // inside it exactly ONE nightly run, so we never re-send. No
 // schema column required.
 //
+// 26 Sep 2026 (student mode, fixer): this audience is keyed on the User
+// row alone — no enrolment, no exam — so a Class 8-12 student who signed
+// in on a school page, answered the age-band card and only read (no
+// attempt, no chat) was exactly a candidate for the exam-prep diagnostic
+// mail ("talk to a real subject expert matched to your exam"). Founder
+// rule: school-only accounts get no exam-prep email or nudge. The
+// selection now drops every school-only account (src/lib/db/enrollment.ts
+// schoolOnlyAccountSql: marked school by its class enrolment or the school
+// code in onbPrepCodes, and no active enrolment on a real exam).
+// ?dry=1 → the candidates it would mail, sends nothing.
+//
 // Auth: Bearer ${CRON_SECRET}, same as the other cron routes.
 
 import { prisma } from "@/lib/db/prisma";
+import { schoolOnlyAccountSql } from "@/lib/db/enrollment";
 import { sendDay3NudgeEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
@@ -33,6 +45,7 @@ export async function GET(req: Request) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  const dry = new URL(req.url).searchParams.get("dry") === "1";
   const now = Date.now();
   const from = new Date(now - WINDOW_FROM_DAYS * 86_400_000);
   const to = new Date(now - WINDOW_TO_DAYS * 86_400_000);
@@ -55,8 +68,21 @@ export async function GET(req: Request) {
           JOIN "ChatMessage" cm ON cm."sessionId" = cs.id
           WHERE cs."userId" = u.id AND cm.role = 'USER'
       )
+      -- 26 Sep 2026: never a school-only account (Class 8-12 student mode).
+      AND NOT ${schoolOnlyAccountSql("u")}
     ORDER BY u."createdAt" ASC
   `;
+
+  if (dry) {
+    return Response.json({
+      ok: true,
+      dry: true,
+      windowFrom: from.toISOString(),
+      windowTo: to.toISOString(),
+      candidates: candidates.length,
+      sample: candidates.map((u) => ({ id: u.id, email: u.email, createdAt: u.createdAt.toISOString() })),
+    });
+  }
 
   const log: Array<{ email: string; ok: boolean }> = [];
   for (const u of candidates) {

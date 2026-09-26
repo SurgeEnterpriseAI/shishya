@@ -50,6 +50,12 @@ import { EducatorCard } from "@/components/EducatorCard";
 import { FlashHint } from "@/components/FlashHint";
 import { FoundViaChip } from "@/components/FoundViaChip";
 import { YouAskedWeBuilt } from "@/components/YouAskedWeBuilt";
+// 26 Sep 2026 (student mode, fixer): a school-only account's own home.
+import { NOT_SCHOOL_WHERE } from "@/lib/db/exam-scope";
+import { fillTemplate } from "@/lib/i18n";
+import { schoolBandOfProfile, schoolContainerClassOf } from "@/lib/school/student-classes";
+import { schoolDashboardCopy } from "@/lib/school/student-copy";
+import { schoolBoardForExamCode, schoolClassPath } from "@/lib/school/surface";
 
 // ?joined=1 (JoinBatchButton) is read below; the utm_* tags only by the
 // signed-out redirect. Next hands over every query param, so the type says so.
@@ -149,18 +155,23 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
   // pre-stage the user's onboarding-chosen exam without a second
   // picker step. See src/app/dashboard/DiagnosticHero.tsx.
   let onbPrepCodes: string[] = [];
+  // 26 Sep 2026: onbStage too — with a school container code in
+  // onbPrepCodes it is the school age band (src/lib/school/student-classes.ts).
+  let onbStage: string | null = null;
   try {
     const onboardedRows = await prisma.$queryRaw<{
       onboardedAt: Date | null;
       onbCompletedAt: Date | null;
       onbPrepCodes: string[] | null;
+      onbStage: string | null;
     }[]>`
-      SELECT "onboardedAt", "onbCompletedAt", "onbPrepCodes"
+      SELECT "onboardedAt", "onbCompletedAt", "onbPrepCodes", "onbStage"
       FROM "User" WHERE "id" = ${userId} LIMIT 1
     `;
     onboardedAt = onboardedRows[0]?.onboardedAt ?? null;
     onbCompletedAt = onboardedRows[0]?.onbCompletedAt ?? null;
     onbPrepCodes = onboardedRows[0]?.onbPrepCodes ?? [];
+    onbStage = onboardedRows[0]?.onbStage ?? null;
   } catch (err) {
     console.error("[dashboard] onboarding-state query failed, treating as completed:", err);
     onbCompletedAt = new Date();
@@ -182,8 +193,14 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
   const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs, dueRevisions, streak, dailyPick] =
     await Promise.all([
       getDashboardExams(),
+      // 26 Sep 2026 (student mode): real exams only. A Class 8-12 school
+      // account is enrolled on its class container (src/lib/db/enrollment.ts,
+      // school flag); that row must never make the exam-prep dashboard —
+      // streak, Daily-5, study-group nudge, /exams/NCERT_C09 links (404) —
+      // treat the account as an aspirant. School-only accounts get their own
+      // home below.
       prisma.enrollment.findMany({
-        where: { userId, active: true },
+        where: { userId, active: true, exam: NOT_SCHOOL_WHERE },
         include: { exam: true },
         orderBy: { createdAt: "desc" },
       }),
@@ -253,6 +270,72 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
       // Today's 5 topic from the one picker /today uses (rotation included).
       pickDailyFive(userId).catch(() => null),
     ]);
+
+  // ── School-only account (26 Sep 2026, student mode — fixer) ──────────
+  // The age band was declared on a Class 8-12 school page
+  // (schoolBandOfProfile: a school container code in onbPrepCodes + a school
+  // stage) and the account holds NO real-exam enrolment: it gets its own
+  // small home — its classes, its recent practice, the AI line — and nothing
+  // of the exam dashboard renders (founder rules 5 and 6: no streak, study
+  // group, Daily-5, coach, invite, live-test or "pick your exam" piece on a
+  // school account). An account that also enrolled on a real exam is an
+  // aspirant too and sees the exam dashboard as before.
+  const schoolProfile = schoolBandOfProfile({ onbStage, onbPrepCodes });
+  if (schoolProfile && enrollments.length === 0) {
+    const sc = schoolDashboardCopy(locale);
+    const classes = schoolProfile.classCodes.flatMap((code) => {
+      const board = schoolBoardForExamCode(code);
+      const cls = schoolContainerClassOf(code);
+      return board && cls !== null
+        ? [{ code, href: schoolClassPath(board.slug, cls), label: fillTemplate(sc.classLabel, { board: board.shortName, n: cls }) }]
+        : [];
+    });
+    return (
+      <main className="min-h-screen bg-ink-50/40">
+        <Header />
+        <section className="container-prose py-10">
+          <h1 className="text-2xl font-bold text-ink-900">
+            {t("dash.welcome")} {session.user.name?.split(" ")[0] ?? "Shishya"}.
+          </h1>
+          <section className="mt-6 rounded-xl border border-saffron-200 bg-saffron-50/60 p-5">
+            <h2 className="text-base font-semibold text-ink-900">{sc.heading}</h2>
+            <p className="mt-1 text-sm text-ink-700">{sc.body}</p>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {classes.map((c) => (
+                <li key={c.code}>
+                  <Link href={c.href} className="btn-primary inline-block !py-2 !px-4 text-sm">
+                    {c.label} {sc.open}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-[11px] text-ink-500">{sc.aiLine}</p>
+            <Link href="/schooling" className="mt-2 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800">
+              {sc.allClasses}
+            </Link>
+          </section>
+          {recentAttempts.length > 0 && (
+            <section className="mt-10">
+              <h2 className="text-base font-semibold text-ink-800">{sc.recent}</h2>
+              <ul className="mt-3 divide-y divide-ink-200 overflow-hidden rounded-md border border-ink-200 bg-white">
+                {recentAttempts.map((a) => (
+                  <li key={a.id}>
+                    <Link href={`/attempts/${a.id}/results`} prefetch={false} className="flex items-center justify-between px-4 py-3 hover:bg-ink-50/60">
+                      <div>
+                        <p className="text-sm font-medium text-ink-900">{a.mock.title}</p>
+                        <p className="text-xs text-ink-500">{new Date(a.startedAt).toLocaleDateString("en-IN")}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-ink-900">{formatDisplayScorePct(a.scorePct)}</p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </section>
+      </main>
+    );
+  }
 
   // Pick today's brief for the recommended-exam slot. Prefer the brief
   // matching the recommended exam if present; otherwise the first brief.

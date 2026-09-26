@@ -22,6 +22,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
+import { realEnrollmentExistsSql } from "@/lib/db/enrollment";
 import { sendLapseNudgeEmail, type MailRollover } from "@/lib/email";
 import { loadExamBundles, nextExamsInTrack, resolveMailExam, trackKey, type ExamMeta, type NextExam } from "@/lib/exam-week-mail";
 import { LAPSE_NUDGE_TAG, pickLapseRecipients, type LapseCandidate } from "@/lib/lapse-nudge";
@@ -61,7 +62,9 @@ export async function GET(req: Request) {
         GROUP BY "userId"
       )
       SELECT u.id, u.email, u.name, u."emailOptOut", act.last_seen AS "lastSeen",
-             EXISTS (SELECT 1 FROM "Enrollment" en WHERE en."userId" = u.id AND en.active = TRUE) AS enrolled,
+             -- 26 Sep 2026: enrolled = on a REAL exam (src/lib/db/enrollment.ts);
+             -- a school-only account (Class 8-12 student mode) is not.
+             ${realEnrollmentExistsSql("u")} AS enrolled,
              EXISTS (SELECT 1 FROM "CoachPlan" cp WHERE cp."userId" = u.id AND cp."examDate" > NOW()) AS "livePlan",
              plan."coachShort", plan."coachDaysLeft"
       FROM "User" u JOIN act ON act."userId" = u.id

@@ -1,6 +1,18 @@
 // /attempts/:id/results — score, diagnostic, weakness map, per-Q review.
 // Server Component fetches data; Review section is a client component for
 // on-demand explanations.
+//
+// School attempt (26 Sep 2026, student mode): an attempt on a school
+// chapter practice set (a Class 8-12 container, src/lib/school/student-classes.ts
+// isStudentModeContainer; the set was built by src/lib/school/student-db.ts)
+// shows the score, the per-chapter mastery and the review, and links the
+// chapter page and the school AI tutor. Every exam-prep piece is off for
+// it: the challenge, share and invite cards, the result-card image, the
+// teacher request, the coach entry, the setup card, the streak / tomorrow
+// block, peer proof, the rank card, fresh-question generation, the custom
+// builder, the /exams links and the pulse question (no leaderboards, study
+// groups, challenges, share cards, streaks or marketing on school surfaces;
+// Anthropic usage policy for minors). Words: src/lib/school/student-copy.ts.
 
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -39,6 +51,9 @@ import { askTutorText, resultsNextStepCopy } from "@/lib/results-next-step-copy"
 import { attemptPaperIds } from "@/lib/attempt-paper";
 import { isWithdrawnForReview, maskWithdrawnReviewItem } from "@/lib/review-withdrawn";
 import { servedPaperCopy } from "@/lib/served-paper";
+import { isStudentModeContainer, schoolTutorHref } from "@/lib/school/student-classes";
+import { schoolMockConfigOf } from "@/lib/school/student-db";
+import { schoolMistakesHeading, schoolMistakesSeed, schoolResultsCopy } from "@/lib/school/student-copy";
 
 export default async function ResultsPage({
   params,
@@ -61,13 +76,26 @@ export default async function ResultsPage({
     include: {
       mock: {
         include: {
-          exam: { select: { code: true, shortName: true, active: true } },
+          exam: { select: { code: true, shortName: true, active: true, category: true } },
         },
       },
     },
   });
   if (!attempt) notFound();
   if (attempt.userId !== session.user.id) redirect("/dashboard");
+
+  // 26 Sep 2026: a school chapter practice attempt (see the header).
+  const school = isStudentModeContainer({ code: attempt.mock.exam.code, category: attempt.mock.exam.category });
+  const schoolCfg = school ? schoolMockConfigOf(attempt.mock.config) : null;
+  const schoolChapterHref = schoolCfg?.chapterPath ?? "/schooling";
+  const schoolChapterName = schoolCfg?.chapterName ?? attempt.mock.title;
+  // 26 Sep 2026 (fixer): the per-question review gets the same scope, so its
+  // exam pieces (explainer, expert call, notebook) are off and its one AI
+  // entry is the school tutor. A school attempt whose mock lost its
+  // config.school still reviews as school — on the container, class-level.
+  const schoolReview = school
+    ? (schoolCfg ?? { examCode: attempt.mock.exam.code, topicCode: "", chapterName: schoolChapterName, cls: 0, subjectName: "" })
+    : null;
 
   const submitted = attempt.status === "SUBMITTED" || attempt.status === "AUTO_SUBMITTED";
   if (!submitted) redirect(`/mocks/${attempt.mockId}`);
@@ -115,12 +143,15 @@ export default async function ResultsPage({
   // the same rule createChallenge applies (the exam's validated MCQs, at
   // least CHALLENGE_MIN_QUESTIONS of them, exam active). 185 of 1,216 attempts
   // in the 14 days to 16 Sep showed a button that could only ever fail.
-  const challengeEligible = mockChallengeEligible({
-    examActive: attempt.mock.exam.active,
-    examId: attempt.mock.examId,
-    questionIds: paperIds,
-    byId: qById,
-  });
+  // 26 Sep 2026: never on a school attempt (no challenge on school surfaces).
+  const challengeEligible =
+    !school &&
+    mockChallengeEligible({
+      examActive: attempt.mock.exam.active,
+      examId: attempt.mock.examId,
+      questionIds: paperIds,
+      byId: qById,
+    });
 
   const answers = (attempt.answers as any[]) ?? [];
   const answersByQid = new Map(answers.map((a) => [a.questionId, a]));
@@ -202,10 +233,12 @@ export default async function ResultsPage({
   const airRank = liveRank && liveRank.attemptId === attempt.id ? liveRank : null;
   const isRehearsal = (attempt.mock.config as { rehearsal?: unknown } | null)?.rehearsal === true;
 
-  const peerProof = await examPeerProof(attempt.mock.examId, session.user.id).catch(() => null);
+  // 26 Sep 2026: no peer proof and no coach on a school attempt (not read).
+  const peerProof = school ? null : await examPeerProof(attempt.mock.examId, session.user.id).catch(() => null);
 
   // Coach entry is suppressed for students who already have a plan.
   const hasCoachPlan =
+    school ||
     (
       await prisma
         .$queryRaw<{ n: bigint }[]>`SELECT COUNT(*) n FROM "CoachPlan" WHERE "userId" = ${session.user.id}`
@@ -218,12 +251,15 @@ export default async function ResultsPage({
   // topic from the same picker /today uses, and the mail line only when
   // the Daily-5 cron's own predicate says this student would be mailed.
   // All best-effort: a failure hides the block, never breaks results.
-  const [streak, tomorrow, willMail, todaysFiveId] = await Promise.all([
-    getStudyStreak(session.user.id).catch(() => null),
-    pickDailyFive(session.user.id).catch(() => null),
-    wouldGetDailyFiveMail(session.user.id).catch(() => false),
-    findTodaysDailyFive(session.user.id).catch(() => null),
-  ]);
+  // 26 Sep 2026: no streak, tomorrow or mail line on a school attempt (not read).
+  const [streak, tomorrow, willMail, todaysFiveId] = school
+    ? [null, null, false, null]
+    : await Promise.all([
+        getStudyStreak(session.user.id).catch(() => null),
+        pickDailyFive(session.user.id).catch(() => null),
+        wouldGetDailyFiveMail(session.user.id).catch(() => false),
+        findTodaysDailyFive(session.user.id).catch(() => null),
+      ]);
   const streakTone = streak ? streakState(streak) : null;
   // "Open today's 5 →" only when /today would DO something: nothing counted
   // yet today (it resumes or builds the set), or the day is kept by other
@@ -252,11 +288,19 @@ export default async function ResultsPage({
     .filter((t: any) => t.score < 1)
     .slice(0, 3)
     .map((t: any) => t.name);
-  const mistakeSeed =
-    `I just took a ${attempt.mock.exam.shortName} mock and got ${wrongCount} ` +
-    `question${wrongCount === 1 ? "" : "s"} wrong` +
-    (weakTopicNames.length ? ` — weakest: ${weakTopicNames.join(", ")}` : "") +
-    `. Go through my mistakes one by one: why the right answer is right, and how to get it next time.`;
+  const mistakeSeed = school
+    ? schoolMistakesSeed({ chapterName: schoolChapterName, cls: schoolCfg?.cls ?? 0, wrong: wrongCount, weakest: weakTopicNames })
+    : `I just took a ${attempt.mock.exam.shortName} mock and got ${wrongCount} ` +
+      `question${wrongCount === 1 ? "" : "s"} wrong` +
+      (weakTopicNames.length ? ` — weakest: ${weakTopicNames.join(", ")}` : "") +
+      `. Go through my mistakes one by one: why the right answer is right, and how to get it next time.`;
+  // 26 Sep 2026: the school tutor entry — the container, the CHAPTER's code
+  // (never a piece's) and a hint-first seed (src/lib/school/student-classes.ts).
+  const schoolCopy = schoolResultsCopy(locale);
+  const schoolTutor = (seed: string) =>
+    schoolCfg
+      ? schoolTutorHref({ examCode: schoolCfg.examCode, topicCode: schoolCfg.topicCode, chapterName: schoolCfg.chapterName, cls: schoolCfg.cls, subjectName: schoolCfg.subjectName }, seed)
+      : `/chat?examCode=${attempt.mock.exam.code}&seed=${encodeURIComponent(seed)}`;
 
   // Score-spiral detection (founder call, 16 Aug): an aspirant re-testing
   // 3+ times in a day with scores stuck under 35% is doing the WRONG kind
@@ -281,7 +325,8 @@ export default async function ResultsPage({
   // already links the report, so the report card hides under it. (The setup
   // offer left the space above the score on 18 Sep 2026 — it is a card under
   // the score now, so a low-score block no longer has to hide it.)
-  const softLanding = !isSpiral && (attempt.scorePct ?? 0) < 30 && topicArr.length > 0;
+  // 26 Sep 2026: neither intervention on a school attempt (exam strategy talk).
+  const softLanding = !school && !isSpiral && (attempt.scorePct ?? 0) < 30 && topicArr.length > 0;
 
   // Challenge card placement (18 Sep 2026): first under the score when the
   // score is one a student would dare a friend with.
@@ -295,7 +340,8 @@ export default async function ResultsPage({
   // from "Explain my mistakes", 1-10 Sep), and the setup wizard had no door
   // at all (2 of 295 new accounts opened it).
   const next = resultsNextStep({
-    setupDone: onbRow[0] ? onbRow[0].done : null,
+    // 26 Sep 2026: no setup card on a school attempt (it would enrol exams).
+    setupDone: school ? true : onbRow[0] ? onbRow[0].done : null,
     submittedAttempts: onbRow[0] ? Number(onbRow[0].n) : Number.NaN,
     earlierAttempts: onbRow[0] ? Number(onbRow[0].earlier) : null,
     wrongCount,
@@ -326,7 +372,7 @@ export default async function ResultsPage({
   // best). Above the score, except on a first-ever attempt, where it follows
   // the tutor and setup cards (18 Sep 2026: 1 tap in its first 7 days there).
   const inviteCard =
-    isPersonalBest || isFirstMock ? (
+    !school && (isPersonalBest || isFirstMock) ? (
       <InviteFriendsCard
         examShort={attempt.mock.exam.shortName}
         examCode={attempt.mock.exam.code}
@@ -343,12 +389,20 @@ export default async function ResultsPage({
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
           <Link href="/dashboard" className="hover:text-ink-800">{t("nav.dashboard")}</Link> ·{" "}
-          <Link href={`/exams/${attempt.mock.exam.code}`} className="hover:text-ink-800">
-            {attempt.mock.exam.shortName}
-          </Link>{" "}
+          {school ? (
+            <>
+              <Link href="/schooling" className="hover:text-ink-800">{schoolCopy.schoolPages}</Link> ·{" "}
+              <Link href={schoolChapterHref} className="hover:text-ink-800">{schoolChapterName}</Link>
+            </>
+          ) : (
+            <Link href={`/exams/${attempt.mock.exam.code}`} className="hover:text-ink-800">
+              {attempt.mock.exam.shortName}
+            </Link>
+          )}{" "}
           · {t("results.title.results")}
         </p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900">{attempt.mock.title}</h1>
+        {school && <p className="mt-2 text-xs text-ink-600">{schoolCopy.honesty}</p>}
 
         {attempt.status === "AUTO_SUBMITTED" && (
           <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
@@ -362,7 +416,7 @@ export default async function ResultsPage({
             moment "where am I overall / what should I study now?" — so the
             report and today's study pack are offered as two visible
             actions, still no popup. */}
-        {!isSpiral && (
+        {!isSpiral && !school && (
         <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-saffron-200 bg-saffron-50/60 px-3 py-2">
           <span className="text-xs font-semibold text-ink-800">📊 This test just updated your personal system:</span>
           <Link href="/me/report" className="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-saffron-800 ring-1 ring-saffron-300 hover:bg-saffron-100">
@@ -388,7 +442,7 @@ export default async function ResultsPage({
             shift: scores grow by STRATEGY, not by re-testing — and
             Shishya builds their personal one. Supersedes the soft-landing
             block below (one intervention, never two stacked). */}
-        {isSpiral && topicArr.length > 0 && (
+        {isSpiral && !school && topicArr.length > 0 && (
           <div className="mt-6 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
               {spiralRows[0].n} tests today — your effort is real. Let&apos;s aim it.
@@ -535,7 +589,7 @@ export default async function ResultsPage({
         )}
         {/* Celebration moments — personal best beats any leaderboard;
             first mock gets a baseline framing instead of a raw judgment. */}
-        {isPersonalBest && (
+        {isPersonalBest && !school && (
           <div className="mt-6 rounded-xl border-2 border-emerald-400 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 p-4 text-center">
             <p className="text-lg font-bold text-emerald-800">
               🎉 New personal best in {attempt.mock.exam.shortName}!
@@ -546,7 +600,7 @@ export default async function ResultsPage({
             </p>
           </div>
         )}
-        {isFirstMock && (
+        {isFirstMock && !school && (
           <div className="mt-6 rounded-xl border border-sky-300 bg-sky-50 p-4 text-center">
             <p className="text-sm font-bold text-sky-900">
               🏁 First {attempt.mock.exam.shortName} mock done — your baseline is set.
@@ -564,17 +618,20 @@ export default async function ResultsPage({
 
         {/* Belonging, right after the score: they didn't just take a
             test, they joined today's cohort of people doing the work. */}
-        <PeerProofLine
-          proof={peerProof}
-          examShort={attempt.mock.exam.shortName}
-          variant="results"
-        />
+        {!school && (
+          <PeerProofLine
+            proof={peerProof}
+            examShort={attempt.mock.exam.shortName}
+            variant="results"
+          />
+        )}
 
         {/* Coach entry — "I have a score, now what?" is the moment a
             plan means most. Suppressed once they have one; plan-holders
             get the next-task breadcrumb instead (a mock often IS a plan
-            task — this closes the loop right after they finish it). */}
-        {!hasCoachPlan ? (
+            task — this closes the loop right after they finish it).
+            26 Sep 2026: neither on a school attempt. */}
+        {school ? null : !hasCoachPlan ? (
           <CoachEntry
             examCode={attempt.mock.exam.code}
             examShort={attempt.mock.exam.shortName}
@@ -588,7 +645,7 @@ export default async function ResultsPage({
           <ScoreCard
             label={`${t("results.score")} (marks)`}
             primary={`${(attempt.scoreRaw ?? 0).toFixed(0)} / ${(attempt.scoreMax ?? 0).toFixed(0)}`}
-            secondary={`${formatDisplayScorePct(attempt.scorePct)} · with negative marking`}
+            secondary={school ? formatDisplayScorePct(attempt.scorePct) : `${formatDisplayScorePct(attempt.scorePct)} · with negative marking`}
             accent="primary"
           />
           <ScoreCard
@@ -628,7 +685,28 @@ export default async function ResultsPage({
             Placed right under the score so it's the first thing they can act
             on. Only when there's something to review. prefetch=false to keep
             CHAT_OPENED honest. */}
-        {wrongCount > 0 && (
+        {wrongCount > 0 && school && (
+          /* 26 Sep 2026: the school tutor — the chapter, hints first, and
+             the visible "you will be talking to an AI tutor" line. */
+          <div className="mt-6 rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50/60 p-5 shadow-sm">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex-1">
+                <p className="text-base font-bold text-ink-900">{schoolMistakesHeading(locale, wrongCount)}</p>
+                <p className="mt-1 text-xs text-ink-600">{schoolCopy.mistakesBody}</p>
+                <p className="mt-1 text-[11px] text-ink-500">{schoolCopy.aiLine}</p>
+              </div>
+              <ResultsCtaLink
+                href={schoolTutor(mistakeSeed)}
+                cta="results-tutor-first"
+                props={{ ...tutorBeaconProps, variant: "school-mistakes" }}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              >
+                {schoolCopy.mistakesButton}
+              </ResultsCtaLink>
+            </div>
+          </div>
+        )}
+        {wrongCount > 0 && !school && (
           <div className="mt-6 rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50/60 p-5 shadow-sm">
             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex-1">
@@ -658,8 +736,23 @@ export default async function ResultsPage({
         {/* Nothing answered wrong (18 Sep 2026): there is no mistake to
             explain, so the AI tutor is offered in one plain line — no seed,
             the student asks their own question. About 1 in 9 first attempts
-            (26 of 239) had no tutor offer here at all. */}
-        {next.tutor === "ask" && (
+            (26 of 239) had no tutor offer here at all.
+            26 Sep 2026: a school attempt names the chapter and the AI line. */}
+        {next.tutor === "ask" && school && (
+          <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-sm text-ink-800">
+            {fillTemplate(schoolCopy.askText, { chapter: schoolChapterName })}{" "}
+            <ResultsCtaLink
+              href={schoolTutor(`I practised "${schoolChapterName}" (Class ${schoolCfg?.cls ?? 0}) and got every question right. Ask me one harder question about it, then explain the answer step by step.`)}
+              cta="results-tutor-first"
+              props={{ ...tutorBeaconProps, variant: "school-ask" }}
+              className="font-semibold text-emerald-700 underline-offset-2 hover:underline"
+            >
+              {schoolCopy.askLink}
+            </ResultsCtaLink>
+            <span className="mt-1 block text-[11px] text-ink-500">{schoolCopy.aiLine}</span>
+          </p>
+        )}
+        {next.tutor === "ask" && !school && (
           <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-sm text-ink-800">
             {askTutorText(locale, attempt.mock.exam.shortName)}{" "}
             <ResultsCtaLink
@@ -675,8 +768,9 @@ export default async function ResultsPage({
 
         {/* Human-connection pilot — the escalation from AI to a real teacher,
             placed right after the AI mistake CTA. Results is the peak moment
-            to want a person: they just saw what they got wrong. */}
-        {wrongCount > 0 && (
+            to want a person: they just saw what they got wrong.
+            26 Sep 2026: never on a school attempt. */}
+        {wrongCount > 0 && !school && (
           <div className="mt-4">
             <TalkToTeacher
               surface="results"
@@ -729,7 +823,7 @@ export default async function ResultsPage({
             face — peak motivation = peak share intent. See
             ShareScoreButton component for the wa.me + Web Share +
             Copy fallback chain. */}
-        {attempt.finishedAt && (
+        {attempt.finishedAt && !school && (
           <>
             <ShareScoreButton
               attemptId={attempt.id}
@@ -805,7 +899,7 @@ export default async function ResultsPage({
             topicArr[0] is weakest). One tap → fresh, level-tuned
             questions on exactly the topic they struggled with. The
             infinite-depth escape hatch for users who exhaust the pool. */}
-        {attempt.finishedAt && topicArr.length > 0 && (
+        {attempt.finishedAt && !school && topicArr.length > 0 && (
           <FreshQuestionsButton
             examCode={attempt.mock.exam.code}
             topicCode={topicArr[0].code}
@@ -818,7 +912,7 @@ export default async function ResultsPage({
             this score get me in the real exam" before they dive into
             per-topic mastery + per-Q review. attempt.scorePct is
             already stored as a percentage (0-100), not a fraction. */}
-        {rankBands.length > 0 && (
+        {rankBands.length > 0 && !school && (
           <div className="mt-6">
             <RankCard
               scorePct={attempt.scorePct ?? 0}
@@ -840,7 +934,11 @@ export default async function ResultsPage({
               {topicArr.map((tp: any) => (
                 <li key={tp.code}>
                   <Link
-                    href={`/chat?examCode=${attempt.mock.exam.code}&topicCode=${encodeURIComponent(tp.code)}&seed=${encodeURIComponent(`On my last ${attempt.mock.exam.shortName} mock I got ${tp.correct}/${tp.total} on ${tp.name}. Help me improve on this topic.`)}`}
+                    href={
+                      school
+                        ? schoolTutor(`I practised "${schoolChapterName}" and got ${tp.correct}/${tp.total} on ${tp.name}. Help me with it — a hint first, then the working step by step.`)
+                        : `/chat?examCode=${attempt.mock.exam.code}&topicCode=${encodeURIComponent(tp.code)}&seed=${encodeURIComponent(`On my last ${attempt.mock.exam.shortName} mock I got ${tp.correct}/${tp.total} on ${tp.name}. Help me improve on this topic.`)}`
+                    }
                     className="block rounded-md border border-ink-200 bg-white p-3 hover:border-saffron-400 hover:bg-saffron-50/30"
                   >
                     <div className="flex items-baseline justify-between">
@@ -878,21 +976,24 @@ export default async function ResultsPage({
             examCode={attempt.mock.exam.code}
             examShortName={attempt.mock.exam.shortName}
             initialLocale={locale}
+            school={schoolReview}
           />
         </section>
 
         {/* PulseAsk (1 Sep 2026): one quiet mock-realism question after
             the review — the moment they can actually judge it. Keyed per
             exam so each exam is asked at most once per 14 days. */}
-        <PulseAsk
-          surface="results"
-          promptKey={`results-${attempt.mock.exam.code}`}
-          prompt={`Did this ${attempt.mock.exam.shortName} mock feel like the real exam?`}
-          chips={["Felt real", "Too easy", "Too hard"]}
-          signedIn
-          examCode={attempt.mock.exam.code}
-          attemptId={attempt.id}
-        />
+        {!school && (
+          <PulseAsk
+            surface="results"
+            promptKey={`results-${attempt.mock.exam.code}`}
+            prompt={`Did this ${attempt.mock.exam.shortName} mock feel like the real exam?`}
+            chips={["Felt real", "Too easy", "Too hard"]}
+            signedIn
+            examCode={attempt.mock.exam.code}
+            attemptId={attempt.id}
+          />
+        )}
 
         </div>{/* /lg:col-span-2 */}
 
@@ -922,6 +1023,31 @@ export default async function ResultsPage({
               instead of routing back to the hub to choose again. Under 30%
               it becomes a 5-question EASY confidence-builder on the weakest
               topic (soft landing — see banner at top of page). */}
+          {/* 26 Sep 2026: a school attempt's rail — the chapter page (its
+              entry builds a fresh set) and the school tutor; no builder, no
+              /exams, no generated mock. */}
+          {school ? (
+            <>
+              <Link href={schoolChapterHref} className="btn-primary block w-full !py-2 !px-4 text-center text-sm">
+                {schoolCopy.practiseAgain}
+              </Link>
+              <Link href={schoolChapterHref} className="block w-full text-center text-xs font-medium text-ink-500 hover:text-ink-700">
+                {schoolCopy.backToChapter}
+              </Link>
+              <Link
+                href={schoolTutor(
+                  `I practised "${schoolChapterName}" and got ${correctCount} right, ${wrongCount} wrong and ${skipped} skipped.${
+                    topicArr.length > 0 ? ` My weakest part was ${topicArr[0].name} (${topicArr[0].correct}/${topicArr[0].total}).` : ""
+                  } What should I revise first? Give me hints before answers.`,
+                )}
+                className="btn-secondary block w-full !py-2 !px-4 text-center text-sm"
+              >
+                {schoolCopy.askLink}
+              </Link>
+              <p className="text-center text-[11px] text-ink-500">{schoolCopy.aiLine}</p>
+            </>
+          ) : (
+            <>
           <NextMockButton
             examCode={attempt.mock.exam.code}
             label={t("results.cta.another")}
@@ -966,6 +1092,8 @@ export default async function ResultsPage({
           >
             {t("results.cta.askShishya")}
           </Link>
+            </>
+          )}
 
           <Link
             href="/dashboard"

@@ -21,6 +21,8 @@
 // with no weakest topic yet gets a 5-question DIAGNOSTIC baseline instead.
 
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_WHERE } from "@/lib/db/exam-scope";
+import { realEnrollmentExistsSql } from "@/lib/db/enrollment";
 import { istDay, istDayStartUtc } from "@/lib/study-day";
 import { seenCutoff } from "@/lib/seen-questions";
 
@@ -114,8 +116,11 @@ async function topicFreshness(userId: string, topicIds: string[]): Promise<Map<s
 
 /** Same selection as the dashboard's Daily 5 card. Null = not enrolled anywhere. */
 export async function pickDailyFive(userId: string): Promise<DailyFivePick | null> {
+  // 26 Sep 2026: real exams only — a school chapter practice (Class 8-12
+  // student mode) writes WeaknessMap rows on its container, and a Daily-5
+  // built on one would be an exam mock on a school class.
   const weakness = await prisma.weaknessMap.findMany({
-    where: { userId },
+    where: { userId, exam: NOT_SCHOOL_WHERE },
     include: {
       topic: { select: { code: true, name: true } },
       exam: { select: { code: true, shortName: true } },
@@ -144,7 +149,7 @@ export async function pickDailyFive(userId: string): Promise<DailyFivePick | nul
   }
 
   const enrollment = await prisma.enrollment.findFirst({
-    where: { userId, active: true },
+    where: { userId, active: true, exam: NOT_SCHOOL_WHERE },
     orderBy: { createdAt: "desc" },
     select: { exam: { select: { code: true, shortName: true } } },
   });
@@ -223,7 +228,9 @@ export async function wouldGetDailyFiveMail(userId: string): Promise<boolean> {
     >`
       SELECT (COALESCE(u.email, '') <> '') AS has_email,
              COALESCE(u."emailOptOut", FALSE) AS opted_out,
-             EXISTS (SELECT 1 FROM "Enrollment" e WHERE e."userId" = u.id AND e.active) AS enrolled,
+             -- 26 Sep 2026: enrolled on a REAL exam, as the cron's own
+             -- selection requires (src/lib/db/enrollment.ts).
+             ${realEnrollmentExistsSql("u")} AS enrolled,
              EXISTS (
                SELECT 1 FROM "AnalyticsEvent" a
                 WHERE a."userId" = u.id AND a."createdAt" >= NOW() - INTERVAL '3 days'

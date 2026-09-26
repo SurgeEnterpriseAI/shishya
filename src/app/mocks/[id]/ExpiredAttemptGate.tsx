@@ -17,6 +17,7 @@ export function ExpiredAttemptGate({
   examShort,
   examCode,
   userId,
+  backHref = null,
 }: {
   attemptId: string;
   answered: number;
@@ -25,6 +26,10 @@ export function ExpiredAttemptGate({
   examCode: string;
   /** Same key segment the player used for its localStorage mirror. */
   userId?: string | null;
+  /** 26 Sep 2026 (student mode): where "discard" lands when the set is not
+   *  an exam's — a school chapter practice set goes back to its chapter page
+   *  (/exams/<school container> is a 404 by design). */
+  backHref?: string | null;
 }) {
   const [busy, setBusy] = useState<null | "submit" | "discard">(null);
   const router = useRouter();
@@ -55,8 +60,8 @@ export function ExpiredAttemptGate({
   async function discardAndRestart() {
     setBusy("discard");
     await fetch(`/api/attempts/${attemptId}/discard`, { method: "POST" }).catch(() => null);
-    // Back to the exam hub to start a clean run.
-    router.push(`/exams/${examCode}`);
+    // Back to the exam hub (or the school chapter page) to start a clean run.
+    router.push(backHref ?? `/exams/${examCode}`);
   }
 
   return (

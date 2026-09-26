@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         examId: true,
         generatedBy: true,
         questionIds: true,
-        exam: { select: { category: true } },
+        exam: { select: { category: true, code: true } },
       },
     });
     if (!mock) return notFound("mock");
@@ -64,7 +64,15 @@ export async function POST(req: Request) {
     // and never receives the daily brief. We saw the gap when Sachin
     // started 3 mocks without ever enrolling.
     // 26 Sep 2026: through the one enrolment door (src/lib/db/enrollment.ts).
-    await ensureEnrollment(session.user.id, { id: mock.examId, category: mock.exam.category });
+    // 26 Sep 2026 (student mode): a school chapter practice set (generatedBy
+    // "school-chapter", src/lib/school/student-db.ts) passes the school flag —
+    // the door allows its Class 8-12 container and no other school row.
+    await ensureEnrollment(
+      session.user.id,
+      { id: mock.examId, category: mock.exam.category, code: mock.exam.code },
+      {},
+      { school: mock.generatedBy === "school-chapter" },
+    );
 
     const attempt = await prisma.attempt.create({
       data: {
