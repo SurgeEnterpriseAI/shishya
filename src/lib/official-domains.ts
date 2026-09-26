@@ -256,3 +256,33 @@ export function relabelOfficialClaims(md: string, toolOfficial: Iterable<string>
     return `[${sourceTag(false, lang)} — ${sourceName(url)}](${url})`;
   });
 }
+
+/**
+ * Web tiers, enforced (26 Sep 2026, prod check): an RRB JE answer marked its
+ * web dates "(OFFICIAL)" and listed "Official — Railway Recruitment Board"
+ * with no link, while every source it actually found was an aggregator. When
+ * a run found NO official web source, the 🌐 section cannot call anything
+ * official: tier words become REPORTED (in the label's language) and an
+ * unlinked "Official — <body>" line becomes "<body> — check the official
+ * site". Text above the 🌐 heading (tool facts, which carry their own tiers)
+ * and every link are left as written.
+ */
+const WEB_HEADING = /^[^\n]*🌐[^\n]*$/m;
+const TIER_WORDS: ReadonlyArray<[RegExp, string]> = [
+  [/\bOFFICIAL\b/g, "REPORTED"],
+  [/\((?:official|Official)\)/g, "(reported)"],
+  [/\(आधिकारिक\)/g, "(रिपोर्टेड)"],
+  [/\(అధికారిక\)/g, "(నివేదిత)"],
+];
+const UNLINKED_OFFICIAL = /^(\s*(?:[-*•]\s*)?)(?:official|आधिकारिक|అధికారిక)\s*[—–:-]\s*([^\n\[\]()]+?)\s*$/gim;
+export function enforceWebTiers(md: string, hasOfficialWebSource: boolean): string {
+  const text = String(md ?? "");
+  if (hasOfficialWebSource) return text;
+  const m = WEB_HEADING.exec(text);
+  if (!m) return text;
+  const start = m.index;
+  let web = text.slice(start);
+  for (const [re, to] of TIER_WORDS) web = web.replace(re, to);
+  web = web.replace(UNLINKED_OFFICIAL, (_w: string, lead: string, body: string) => `${lead}${body.trim()} — check the official site`);
+  return text.slice(0, start) + web;
+}

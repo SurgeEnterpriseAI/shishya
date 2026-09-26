@@ -166,3 +166,30 @@ describe("relabelOfficialClaims", () => {
     expect(relabelOfficialClaims("[Official — Some PSU](https://careers.somepsu.co.in/n)", ["https://somepsu.co.in/"])).toBe("[Official — Some PSU](https://careers.somepsu.co.in/n)");
   });
 });
+
+// 26 Sep 2026 (prod check): web dates may be called official only when the
+// run found an official web source.
+import { enforceWebTiers } from "@/lib/official-domains";
+describe("enforceWebTiers", () => {
+  const md = [
+    "**Shishya पर RRB JE का कोई पेज अभी नहीं है।**",
+    "Tool fact: SSC CGL Tier 1 on 30 Sept (OFFICIAL).",
+    "## 🌐 वेब से मिली जानकारी (अस्थायी)",
+    "**Notification 13 अगस्त 2026 को जारी** (OFFICIAL)",
+    "- आवेदन की अंतिम तिथि (official): 13 सितंबर 2026",
+    "- Official — Railway Recruitment Board",
+    "- [Other source — Testbook](https://testbook.com/rrb-je)",
+  ].join("\n");
+  it("rewrites web tiers and unlinked official lines when no official source was found", () => {
+    const out = enforceWebTiers(md, false);
+    expect(out).toContain("Tool fact: SSC CGL Tier 1 on 30 Sept (OFFICIAL).");
+    expect(out).toContain("**Notification 13 अगस्त 2026 को जारी** (REPORTED)");
+    expect(out).toContain("आवेदन की अंतिम तिथि (reported)");
+    expect(out).toContain("- Railway Recruitment Board — check the official site");
+    expect(out).toContain("[Other source — Testbook](https://testbook.com/rrb-je)");
+  });
+  it("leaves everything as written when an official source was found, or there is no web section", () => {
+    expect(enforceWebTiers(md, true)).toBe(md);
+    expect(enforceWebTiers("Only tool facts (OFFICIAL).", false)).toBe("Only tool facts (OFFICIAL).");
+  });
+});

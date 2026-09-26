@@ -61,7 +61,7 @@ import { ASK_MAX_TOKENS, ASK_TIME_BUDGET_MS, ASK_TURN_CAP, ASK_WEB_MAX_USES, ask
 import { NEXT_MARK, PAGES_MARK, SITE, knownPath, normUrl, urlsIn, validateAnswerLinks, type WebSource } from "@/lib/ask-links";
 import { createTextGate, type AskStreamEvent } from "@/lib/ask-stream";
 import { askScopeOf, isDistressAnswer, offTopicReply, type AskScopeNotice } from "@/lib/ask-scope";
-import { officialUrlsIn, rankSources, relabelOfficialClaims } from "@/lib/official-domains";
+import { enforceWebTiers, officialUrlsIn, rankSources, relabelOfficialClaims } from "@/lib/official-domains";
 
 type Locale = "en" | "hi" | "te";
 
@@ -855,5 +855,8 @@ export async function runAsk(question: string, opts: AskOptions = {}): Promise<A
   const keep = (s: { official: boolean; url: string }) => s.official || inText.has(normUrl(s.url));
   let room = 6 - ranked.filter(keep).length;
   const webSources = ranked.filter((s) => keep(s) || room-- > 0);
+  // 26 Sep 2026: no official web source this run → the 🌐 section cannot call
+  // any web fact official (src/lib/official-domains.ts enforceWebTiers).
+  if (ranked.length > 0) answer = enforceWebTiers(answer, ranked.some((s) => s.official));
   return done(answer, { pages, next, webSources });
 }
