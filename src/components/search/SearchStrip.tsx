@@ -51,6 +51,7 @@ import {
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { SearchCopy } from "@/lib/search-copy";
+import { isDistressQuery } from "@/lib/ask-distress";
 import type { resolveQuery } from "@/lib/search/resolve";
 import type { PageStatus, Resolution, SearchHit, SearchIndex, SearchSection } from "@/lib/search/types";
 import { ASK_INTENT_KEY, RECENT_KEY, SECTION_ICON } from "@/lib/search/types";
@@ -398,6 +399,12 @@ export function SearchStrip({
 
   /** Open a real page now, with the "Opening …" line. */
   function openHit(hit: SearchHit, t: string, action: "open" | "suggestion", rank: number, r: Resolution | null, from: From) {
+    // 26 Sep 2026: a distress sign never opens a study page ("class 6 i want to
+    // die" matched the Class 6 page); /ask shows the helplines instead.
+    if (isDistressQuery(t)) {
+      goAsk(t, false, "ask", r, from);
+      return;
+    }
     if (!isSitePath(hit.url)) {
       goAsk(t, false, "list", r, from);
       return;

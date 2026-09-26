@@ -8,6 +8,7 @@
 // the AI is called an AI; a page that is not ready says so.
 
 import { homeCopyLocale } from "@/lib/home-strip-copy";
+import type { AskStatusKey } from "@/lib/ask-stream";
 import type { Outcome, PageStatus, SearchNotice, SearchSection } from "@/lib/search/types";
 
 export interface SearchCopy {
@@ -65,6 +66,20 @@ export interface SearchCopy {
     openKey: string;
     seeAll: string;
     shortcut: string;
+  };
+  /** 26 Sep 2026 (streaming builder): the streamed AI answer on /ask
+   *  (src/app/ask/AskAnswer.tsx, /api/ask SSE). `status` lines are picked by
+   *  the server for its status frames; `{x}` is a Shishya page or exam name
+   *  taken from the index, never the question's words. */
+  stream: {
+    status: Record<AskStatusKey, string>;
+    writing: string;
+    linksSoon: string;
+    stop: string;
+    stopped: string;
+    retry: string;
+    official: string;
+    otherSite: string;
   };
 }
 
@@ -167,6 +182,27 @@ const EN: SearchCopy = {
     seeAll: "See every page for “{q}”",
     shortcut: "Press / to search",
   },
+  stream: {
+    status: {
+      question: "Reading your question…",
+      page: "Reading Shishya's {x} page…",
+      examPages: "Checking which {x} pages Shishya has…",
+      exams: "Searching Shishya's exams…",
+      pages: "Finding the right pages on Shishya…",
+      topics: "Looking through Shishya's topic notes…",
+      guides: "Reading Shishya's exam guides and news…",
+      vacancies: "Checking the vacancy figures Shishya tracks…",
+      web: "Checking official sources on the web…",
+      thinking: "Putting your answer together…",
+    },
+    writing: "Writing the answer…",
+    linksSoon: "Links appear when the answer is complete.",
+    stop: "Stop",
+    stopped: "Stopped. The answer above is incomplete, and its links were not checked.",
+    retry: "Try again",
+    official: "Official",
+    otherSite: "Other site — confirm on the official site",
+  },
 };
 
 const HI: SearchCopy = {
@@ -252,6 +288,27 @@ const HI: SearchCopy = {
     seeAll: "“{q}” के सभी पेज देखें",
     shortcut: "खोजने के लिए / दबाएं",
   },
+  stream: {
+    status: {
+      question: "आपका सवाल पढ़ रहे हैं…",
+      page: "शिष्य का {x} पेज पढ़ रहे हैं…",
+      examPages: "देख रहे हैं कि शिष्य पर {x} के कौन-से पेज हैं…",
+      exams: "शिष्य की परीक्षाएं खोज रहे हैं…",
+      pages: "शिष्य पर सही पेज ढूंढ रहे हैं…",
+      topics: "शिष्य के टॉपिक नोट्स देख रहे हैं…",
+      guides: "शिष्य की परीक्षा गाइड और खबरें पढ़ रहे हैं…",
+      vacancies: "शिष्य के रिक्तियों के आंकड़े देख रहे हैं…",
+      web: "वेब पर आधिकारिक स्रोत देख रहे हैं…",
+      thinking: "आपका जवाब तैयार कर रहे हैं…",
+    },
+    writing: "जवाब लिख रहे हैं…",
+    linksSoon: "जवाब पूरा होने पर लिंक दिखेंगे।",
+    stop: "रोकें",
+    stopped: "रोक दिया। ऊपर का जवाब अधूरा है, और उसके लिंक जांचे नहीं गए।",
+    retry: "फिर कोशिश करें",
+    official: "आधिकारिक",
+    otherSite: "दूसरी साइट — आधिकारिक साइट पर पुष्टि करें",
+  },
 };
 
 const TE: SearchCopy = {
@@ -336,6 +393,27 @@ const TE: SearchCopy = {
     openKey: "తెరవండి",
     seeAll: "“{q}” కోసం అన్ని పేజీలు చూడండి",
     shortcut: "వెతకడానికి / నొక్కండి",
+  },
+  stream: {
+    status: {
+      question: "మీ ప్రశ్న చదువుతోంది…",
+      page: "శిష్య {x} పేజీ చదువుతోంది…",
+      examPages: "శిష్యలో {x} పేజీలు ఏవి ఉన్నాయో చూస్తోంది…",
+      exams: "శిష్య పరీక్షలు వెతుకుతోంది…",
+      pages: "శిష్యలో సరైన పేజీలు వెతుకుతోంది…",
+      topics: "శిష్య టాపిక్ నోట్స్ చూస్తోంది…",
+      guides: "శిష్య పరీక్ష గైడ్‌లు, వార్తలు చదువుతోంది…",
+      vacancies: "శిష్య ట్రాక్ చేసే ఖాళీల సంఖ్యలు చూస్తోంది…",
+      web: "వెబ్‌లో అధికారిక మూలాలు చూస్తోంది…",
+      thinking: "మీ సమాధానం సిద్ధం చేస్తోంది…",
+    },
+    writing: "సమాధానం రాస్తోంది…",
+    linksSoon: "సమాధానం పూర్తయ్యాక లింకులు కనిపిస్తాయి.",
+    stop: "ఆపండి",
+    stopped: "ఆపివేయబడింది. పై సమాధానం అసంపూర్ణం, దాని లింకులు తనిఖీ కాలేదు.",
+    retry: "మళ్ళీ ప్రయత్నించండి",
+    official: "అధికారిక",
+    otherSite: "ఇతర సైట్ — అధికారిక సైట్‌లో నిర్ధారించుకోండి",
   },
 };
 

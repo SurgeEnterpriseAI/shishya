@@ -29,6 +29,18 @@
 // runAsk(question) with no options still works — the teacher-request-sla cron
 // calls it that way — and returns a superset of the old {answer, usedWeb,
 // toolsUsed}.
+//
+// 26 Sep 2026 — streaming (founder: "yes show them word by word"): a caller
+// that passes opts.onEvent (POST /api/ask with Accept: text/event-stream) gets
+// every turn streamed — status lines for the tools the model calls (named
+// from the index, never from the question), and the answer's words as they
+// are written, passed through the same rules finalText applies to the whole
+// response: a turn that calls one of our tools shows nothing (its words were
+// narration), words before a web search are dropped, a first paragraph that
+// looks like narration is held until it is decided (src/lib/ask-stream.ts
+// createTextGate). The result — validated links, pages, next, web sources —
+// is identical to the non-streaming path, which the cron and the JSON callers
+// keep (no onEvent → messages.create, unchanged).
 
 import type Anthropic from "@anthropic-ai/sdk";
 import { Prisma } from "@prisma/client";
@@ -46,7 +58,10 @@ import { DIRECT_MIN, type PageLink, type Resolution, type SearchIndex, type Sear
 import { PAGE_TOOLS, examPages, findPages, looseMatches, pageFacts, searchTopics } from "@/lib/search/ask-tools";
 import { localeTarget } from "@/lib/search/targets";
 import { ASK_MAX_TOKENS, ASK_TIME_BUDGET_MS, ASK_TURN_CAP, ASK_WEB_MAX_USES, askFirstTurn, askSystemPrompt, isRouteOnly, prePassHits } from "@/lib/ask-prompt";
-import { NEXT_MARK, PAGES_MARK, SITE, normUrl, urlsIn, validateAnswerLinks, type WebSource } from "@/lib/ask-links";
+import { NEXT_MARK, PAGES_MARK, SITE, knownPath, normUrl, urlsIn, validateAnswerLinks, type WebSource } from "@/lib/ask-links";
+import { createTextGate, type AskStreamEvent } from "@/lib/ask-stream";
+import { askScopeOf, isDistressAnswer, offTopicReply, type AskScopeNotice } from "@/lib/ask-scope";
+import { officialUrlsIn, rankSources, relabelOfficialClaims } from "@/lib/official-domains";
 
 type Locale = "en" | "hi" | "te";
 
@@ -365,6 +380,13 @@ export interface AskOptions {
   via?: AskVia;
   /** The request's signal: a closed tab stops the model call. */
   signal?: AbortSignal;
+  /**
+   * 26 Sep 2026: stream the answer — every turn uses the streaming API and
+   * this receives status lines and the answer's words as they are written
+   * (src/lib/ask-stream.ts). The returned AskResult is unchanged. Absent (the
+   * cron, the JSON path): one messages.create per turn, as before.
+   */
+  onEvent?: (e: AskStreamEvent) => void;
 }
 
 export interface AskResult {
@@ -381,7 +403,8 @@ export interface AskResult {
   turns: number;
   latencyMs: number;
   costUsd: number;
-  notice?: SearchNotice;
+  /** A resolver notice, or "off-topic" / "distress" for a reply src/lib/ask-scope.ts built without the model. */
+  notice?: SearchNotice | AskScopeNotice;
 }
 
 const CANNED_LONG =
@@ -391,14 +414,19 @@ function toPageLink(h: { url: string; label: string; section: PageLink["section"
   return { url: h.url, label: h.label, section: h.section, ...(h.status ? { status: h.status } : {}) };
 }
 
-/** The answer text of the final response: what follows the last web-search block (earlier text is narration). */
-export function finalText(content: readonly any[]): string {
+/**
+ * The answer text of the final response: what follows the last web-search
+ * block (earlier text is narration). With nothing after it, every text block
+ * is used — unless `fallback` is false (26 Sep 2026: the streaming view, where
+ * "nothing after the search yet" means the answer has not started).
+ */
+export function finalText(content: readonly any[], opts: { fallback?: boolean } = {}): string {
   let lastServer = -1;
   content.forEach((b, i) => {
     if (b?.type === "server_tool_use" || b?.type === "web_search_tool_result") lastServer = i;
   });
   let blocks = content.slice(lastServer + 1).filter((b) => b?.type === "text" && typeof b.text === "string");
-  if (blocks.length === 0) blocks = content.filter((b) => b?.type === "text" && typeof b.text === "string");
+  if (blocks.length === 0 && opts.fallback !== false) blocks = content.filter((b) => b?.type === "text" && typeof b.text === "string");
   // Cited fragments of one sentence arrive as separate blocks: they join as
   // written. Separate plain blocks are separate paragraphs.
   let out = "";
@@ -429,6 +457,191 @@ function citationsOf(content: readonly any[]): WebSource[] {
   return out;
 }
 
+// ── Streaming (26 Sep 2026) ──────────────────────────────────────────
+
+/**
+ * The text a turn shows while it streams: nothing once it calls one of our
+ * tools (a tool_use turn is never the final one, so its words are narration),
+ * else finalText with no fallback to the words before a web search.
+ */
+export function visibleTurnText(content: readonly any[]): string {
+  if (content.some((b) => b?.type === "tool_use")) return "";
+  return finalText(content, { fallback: false });
+}
+
+/**
+ * Builds one turn's Message from the raw stream events. Not the SDK's
+ * MessageStream: the installed SDK (0.40) leaves a server_tool_use block's
+ * input at {} (the web-search query streams as input_json_delta, which it
+ * applies to tool_use blocks only — a pause_turn would go back without its
+ * query) and copies only output_tokens from message_delta (the web-search
+ * request count and the final input / cache figures that AiUsage prices
+ * arrive there). Every block is copied on arrival, so nothing is shared with
+ * the SDK's own objects.
+ */
+export function createTurnAccumulator() {
+  let msg: any = null;
+  const json = new Map<number, string>();
+  const copy = (v: unknown) => (v == null ? v : JSON.parse(JSON.stringify(v)));
+  return {
+    push(ev: any): void {
+      switch (ev?.type) {
+        case "message_start":
+          msg = { ...copy(ev.message), content: [] };
+          msg.usage = { ...(ev.message?.usage ?? {}) };
+          break;
+        case "content_block_start":
+          if (msg && typeof ev.index === "number") msg.content[ev.index] = copy(ev.content_block);
+          break;
+        case "content_block_delta": {
+          const b = msg?.content[ev.index];
+          const d = ev.delta;
+          if (!b || !d) break;
+          if (d.type === "text_delta" && typeof d.text === "string") b.text = (b.text ?? "") + d.text;
+          else if (d.type === "citations_delta" && d.citation) b.citations = [...(Array.isArray(b.citations) ? b.citations : []), d.citation];
+          else if (d.type === "input_json_delta" && typeof d.partial_json === "string") json.set(ev.index, (json.get(ev.index) ?? "") + d.partial_json);
+          break;
+        }
+        case "content_block_stop": {
+          const b = msg?.content[ev.index];
+          const raw = json.get(ev.index);
+          if (b && raw && raw.trim()) {
+            try {
+              b.input = JSON.parse(raw);
+            } catch {
+              /* a cut-off input keeps the start's {} */
+            }
+          }
+          break;
+        }
+        case "message_delta":
+          if (!msg) break;
+          if (ev.delta && "stop_reason" in ev.delta) msg.stop_reason = ev.delta.stop_reason;
+          if (ev.delta && "stop_sequence" in ev.delta) msg.stop_sequence = ev.delta.stop_sequence;
+          for (const [k, v] of Object.entries(ev.usage ?? {})) if (v != null) msg.usage[k] = v;
+          break;
+      }
+    },
+    get content(): any[] {
+      return msg?.content ?? [];
+    },
+    message(): Anthropic.Messages.Message | null {
+      return msg ? ({ ...msg, content: msg.content.filter((b: unknown) => b != null) } as Anthropic.Messages.Message) : null;
+    },
+  };
+}
+
+const pathTitles = new WeakMap<SearchIndex, Map<string, string>>();
+/** A Shishya page's name from the index (status lines only). */
+function titleOfPath(index: SearchIndex, path: string): string | undefined {
+  let m = pathTitles.get(index);
+  if (!m) {
+    m = new Map();
+    for (const d of index.docs) {
+      const p = d.path.split("#")[0];
+      if (!m.has(p)) m.set(p, d.title);
+    }
+    pathTitles.set(index, m);
+  }
+  return m.get(path);
+}
+
+/** A checked path's name: its index doc, else — an exam's sub-page — the exam page label ("SSC CGL · Cutoff") or the exam's name. */
+function pageTitle(index: SearchIndex, path: string): string | undefined {
+  const own = titleOfPath(index, path);
+  if (own) return own;
+  const code = /^\/exams\/([A-Z0-9_]+)(?:[/?#]|$)/.exec(path)?.[1];
+  if (!code || !index.exams[code]) return undefined;
+  return examPages(index, code).find((p) => p.url === `${SITE}${path}`)?.label ?? titleOfPath(index, `/exams/${code}`);
+}
+
+/** The status line for one of our tools: the page or exam it reads, named from the index. */
+export function toolStatus(name: string, input: any, index: SearchIndex): Extract<AskStreamEvent, { type: "status" }> {
+  const code = String(input?.code ?? "").toUpperCase().replace(/[^A-Z0-9_]/g, "");
+  const exam = code && index.exams[code] ? titleOfPath(index, `/exams/${code}`) : undefined;
+  switch (name) {
+    case "get_exam_details":
+      return exam ? { type: "status", key: "page", subject: exam } : { type: "status", key: "exams" };
+    case "exam_page_facts":
+      return exam ? { type: "status", key: "examPages", subject: exam } : { type: "status", key: "pages" };
+    case "page_facts": {
+      const path = typeof input?.url === "string" ? knownPath(input.url, index) : null;
+      const title = path ? pageTitle(index, path) : undefined;
+      return title ? { type: "status", key: "page", subject: title } : { type: "status", key: "pages" };
+    }
+    case "search_exams":
+      return { type: "status", key: "exams" };
+    case "search_topics":
+      return { type: "status", key: "topics" };
+    case "search_content":
+      return { type: "status", key: "guides" };
+    case "get_vacancy_stats":
+      return { type: "status", key: "vacancies" };
+    default:
+      return { type: "status", key: "pages" };
+  }
+}
+
+type TextGate = ReturnType<typeof createTextGate>;
+
+/**
+ * One model turn over the streaming API: status lines for the tools it calls,
+ * the answer's words through the gate, and the whole Message back — the same
+ * object messages.create returns, so the loop below treats both paths alike.
+ */
+async function streamTurn(
+  body: Record<string, unknown>,
+  signal: AbortSignal | undefined,
+  emit: (e: AskStreamEvent) => void,
+  gate: TextGate,
+  index: SearchIndex,
+): Promise<Anthropic.Messages.Message> {
+  gate.newTurn();
+  const acc = createTurnAccumulator();
+  const t = Date.now();
+  try {
+    const stream = await anthropic.messages.create({ ...body, stream: true } as unknown as Anthropic.Messages.MessageCreateParamsStreaming, { signal });
+    for await (const ev of stream as AsyncIterable<any>) {
+      acc.push(ev);
+      if (ev?.type === "content_block_start") {
+        const b = ev.content_block;
+        if (b?.type === "server_tool_use") emit({ type: "status", key: "web" });
+        else if (b?.type === "tool_use") emit(toolStatus(String(b.name ?? ""), {}, index));
+      } else if (ev?.type === "content_block_stop") {
+        // The input is complete: name the page or exam the tool reads.
+        const b = acc.content[ev.index];
+        if (b?.type === "tool_use") {
+          const s = toolStatus(String(b.name ?? ""), b.input, index);
+          if (s.subject) emit(s);
+        }
+      }
+      if (ev?.type === "content_block_start" || ev?.type === "content_block_delta") gate.update(visibleTurnText(acc.content));
+    }
+  } catch (err) {
+    // A closed tab, Stop, or a dropped stream: the input was billed all the
+    // same — ledger what the stream reported so far (ref "aborted"; the output
+    // count is the start's, so the row is a floor, not the full cost).
+    const partial = acc.message();
+    if (partial?.usage) recordAiUsage("ask", partial, { model: MODEL, latencyMs: Date.now() - t, ref: "aborted" });
+    throw err;
+  }
+  const msg = acc.message();
+  // 26 Sep 2026 (fixer): the installed SDK (0.40.1, streaming.js) swallows an
+  // AbortError — Stop or a closed tab ENDS the loop above instead of throwing
+  // — and a body that closes early ends it too. Either way the turn has no
+  // stop_reason (message_delta never came): it is not an answer. Ledger the
+  // known usage once (ref "aborted") and fail, so runAsk rejects and the
+  // route logs no answered question.
+  if (signal?.aborted || !msg || msg.stop_reason == null) {
+    if (msg?.usage) recordAiUsage("ask", msg, { model: MODEL, latencyMs: Date.now() - t, ref: "aborted" });
+    throw new Error(signal?.aborted ?"ask stream aborted" : msg ? "ask stream ended before message_stop" : "ask stream ended before message_start");
+  }
+  // The turn is over: a short answer that looked like narration is released.
+  // (A paused turn is resumed, and the answer is the next response's text.)
+  if ((msg.stop_reason as string | null) !== "pause_turn") gate.update(visibleTurnText(msg.content), true);
+  return msg;
+}
+
 async function loadDeepIndex(): Promise<SearchIndex> {
   // Imported on demand: the loader is server-only (next/cache), and callers
   // that already hold an index (the route, scripts) never load it.
@@ -442,14 +655,18 @@ async function loadDeepIndex(): Promise<SearchIndex> {
  * book and chapter PDF) whatever the score — they are static and they are
  * the whole answer.
  */
-async function prefetchFor(r: Resolution, ctx: ToolCtx, routeOnly: boolean): Promise<unknown> {
+async function prefetchFor(r: Resolution, ctx: ToolCtx, routeOnly: boolean, onRead: (label: string) => void = () => {}): Promise<unknown> {
   const chapter = routeOnly ? prePassHits(r).find((h) => h.kind === "school-chapter") : undefined;
-  if (chapter) return runTool("page_facts", { url: `${SITE}${chapter.url}` }, ctx);
+  if (chapter) {
+    onRead(chapter.label);
+    return runTool("page_facts", { url: `${SITE}${chapter.url}` }, ctx);
+  }
   const top = r.best ?? r.hits[0];
   if (!top || top.score < DIRECT_MIN) return undefined;
   const code = /^\/(?:(?:hi|te)\/)?exams\/([A-Z0-9_]+)(?:[/#?]|$)/.exec(top.url)?.[1];
-  if (top.kind === "exam" && code) return runTool("get_exam_details", { code }, ctx);
   if (top.kind === "topic-note") return undefined;
+  onRead(top.label);
+  if (top.kind === "exam" && code) return runTool("get_exam_details", { code }, ctx);
   return runTool("page_facts", { url: `${SITE}${top.url}` }, ctx);
 }
 
@@ -457,6 +674,19 @@ export async function runAsk(question: string, opts: AskOptions = {}): Promise<A
   const t0 = Date.now();
   const q = String(question ?? "").slice(0, 800);
   const locale: Locale = opts.locale ?? "en";
+
+  // 26 Sep 2026 (founder: "anonymous teenager answers is fine as we will be
+  // showing only study related content for them"; distress → Tele-MANAS /
+  // Childline and a trusted adult): an obvious off-topic or distress question
+  // never reaches the model, for EVERY caller — POST /api/ask checks first
+  // too; the teacher-request-sla cron relies on this one. The reply is
+  // src/lib/ask-scope.ts offTopicReply (distress: the helplines, no pages).
+  const scope = askScopeOf(q);
+  if (!scope.inScope) {
+    const r = offTopicReply(locale, { question: q, distress: scope.distress });
+    return { answer: r.answer, usedWeb: false, toolsUsed: [], pages: r.pages, links: r.pages, next: r.next, webSources: [], turns: 0, latencyMs: Date.now() - t0, costUsd: 0, notice: r.notice };
+  }
+
   const index = opts.index ?? (await loadDeepIndex());
   const resolution = opts.resolution ?? resolveQuery(q, index, { pageLocale: locale });
   const pre = prePassHits(resolution).map(toPageLink);
@@ -489,9 +719,21 @@ export async function runAsk(question: string, opts: AskOptions = {}): Promise<A
   // Class 1-7: pages only, never a model call (the 25 Sep minors decision).
   if (resolution.schoolScope === "class1to7") return done("", { notice: "no-ai-young-class" });
 
+  // 26 Sep 2026: the streaming sink (a sink failure never stops the answer),
+  // and the gate that turns each turn's text into words on screen.
+  const emit = (e: AskStreamEvent) => {
+    try {
+      opts.onEvent?.(e);
+    } catch {
+      /* the caller's problem, not the answer's */
+    }
+  };
+  const gate = opts.onEvent ? createTextGate(emit) : null;
+  emit({ type: "status", key: "question" });
+
   const ctx: ToolCtx = { index, locale };
   const routeOnly = isRouteOnly(resolution);
-  const prefetch = await prefetchFor(resolution, ctx, routeOnly);
+  const prefetch = await prefetchFor(resolution, ctx, routeOnly, (label) => emit({ type: "status", key: "page", subject: label }));
   const first = askFirstTurn(q, resolution, { routeOnly, prefetch, loose });
 
   // Outside URLs this run met (tool results, web results, citations): the only
@@ -501,6 +743,10 @@ export async function runAsk(question: string, opts: AskOptions = {}): Promise<A
   // the real form?") is not "seen" and never survives as a live link.
   const seen = new Set<string>(prefetch === undefined ? [] : urlsIn(JSON.stringify(prefetch)));
   const cited: WebSource[] = [];
+  // 26 Sep 2026 (fixer): the official URLs the tools returned (an exam's portal
+  // on a commercial domain, a board's book link) — official for the labels
+  // and the order of the answer's sources (src/lib/official-domains.ts).
+  const toolOfficial = new Set<string>(officialUrlsIn(prefetch));
 
   const messages: Anthropic.Messages.MessageParam[] = [{ role: "user", content: first }];
   // any[]: the installed SDK's Tool union predates the server-side
@@ -513,18 +759,18 @@ export async function runAsk(question: string, opts: AskOptions = {}): Promise<A
   for (let turn = 0; turn < ASK_TURN_CAP; turn++) {
     // The last turn — by count, or by the time budget — must answer with what it has.
     const lastTurn = turn === ASK_TURN_CAP - 1 || Date.now() - t0 > ASK_TIME_BUDGET_MS;
+    const body = {
+      model: MODEL,
+      max_tokens: ASK_MAX_TOKENS,
+      system,
+      messages,
+      tools,
+      ...(lastTurn ? { tool_choice: { type: "none" as const } } : {}),
+    };
+    if (turn > 0) emit({ type: "status", key: "thinking" });
     const t = Date.now();
-    const res = await anthropic.messages.create(
-      {
-        model: MODEL,
-        max_tokens: ASK_MAX_TOKENS,
-        system,
-        messages,
-        tools,
-        ...(lastTurn ? { tool_choice: { type: "none" as const } } : {}),
-      },
-      { signal: opts.signal },
-    );
+    // Streaming: the same request over the streaming API, one Message back.
+    const res = gate ? await streamTurn(body, opts.signal, emit, gate, index) : await anthropic.messages.create(body, { signal: opts.signal });
     turns++;
     costUsd += recordAiUsage("ask", res, { model: MODEL, latencyMs: Date.now() - t });
 
@@ -543,10 +789,14 @@ export async function runAsk(question: string, opts: AskOptions = {}): Promise<A
       cited.push(c);
     }
 
+    // A streamed turn can hold a text block that never received a word; the
+    // API refuses an empty text block when the turn is sent back (26 Sep 2026).
+    const sendBack = gate ? res.content.filter((b: any) => !(b?.type === "text" && !b.text)) : res.content;
+
     // The server paused its own web-search loop: send the turn back as is and it
     // resumes. (The installed SDK's StopReason union predates "pause_turn".)
     if ((res.stop_reason as string | null) === "pause_turn") {
-      messages.push({ role: "assistant", content: res.content });
+      messages.push({ role: "assistant", content: sendBack });
       continue;
     }
     const toolCalls = res.content.filter((b): b is Anthropic.Messages.ToolUseBlock => b.type === "tool_use");
@@ -555,11 +805,13 @@ export async function runAsk(question: string, opts: AskOptions = {}): Promise<A
       break;
     }
 
-    messages.push({ role: "assistant", content: res.content });
+    messages.push({ role: "assistant", content: sendBack });
     const results = await Promise.all(
       toolCalls.map(async (tc) => {
         if (!toolsUsed.includes(tc.name)) toolsUsed.push(tc.name);
-        const text = JSON.stringify(await runTool(tc.name, tc.input, ctx)) ?? "null";
+        const out = await runTool(tc.name, tc.input, ctx);
+        for (const u of officialUrlsIn(out)) toolOfficial.add(u);
+        const text = JSON.stringify(out) ?? "null";
         for (const u of urlsIn(text)) seen.add(u);
         return { type: "tool_result" as const, tool_use_id: tc.id, content: text.slice(0, 12_000) };
       }),
@@ -570,25 +822,38 @@ export async function runAsk(question: string, opts: AskOptions = {}): Promise<A
   const raw = final ? finalText(final.content) : "";
   if (!raw) return done(CANNED_LONG);
 
-  const checked = validateAnswerLinks(raw, index, seen, { fallback });
+  // 26 Sep 2026 (fixer): a link the model labelled "Official — <body>" on a
+  // site that is not official is relabelled "Other source — <site>" before
+  // the check (the link stays; only the false claim goes).
+  const checked = validateAnswerLinks(relabelOfficialClaims(raw, toolOfficial), index, seen, { fallback });
   let answer = checked.answer;
   let pages = checked.pages;
   let next = checked.next;
+  // 26 Sep 2026 (founder: distress → Tele-MANAS / Childline and a trusted
+  // adult, as the school tutor persona does): a distress reply that names no
+  // page gets none added and no study page to "Open next" — the prompt says
+  // no page block after it (src/lib/ask-scope.ts isDistressAnswer).
+  const distress = isDistressAnswer(answer);
+  if (distress && pages.length === 0) next = null;
   // The prompt asks for 1-3 pages; when the model named none, the resolver's
   // closest pages are added as the block (labels are page names, so the block
   // needs no language of its own).
-  if (pages.length === 0 && closest.length > 0) {
+  if (pages.length === 0 && closest.length > 0 && !distress) {
     pages = closest.slice(0, 3);
     next = pages[0];
     answer = `${answer}\n\n${PAGES_MARK}\n${pages.map((p) => `- [${p.label}](${SITE}${p.url})`).join("\n")}\n${NEXT_MARK} [${next.label}](${SITE}${next.url})`;
   }
-  const webSeen = new Set(checked.webSources.map((w) => normUrl(w.url)));
-  const webSources = [...checked.webSources];
-  for (const c of cited) {
-    if (webSources.length >= 6) break;
-    if (webSeen.has(normUrl(c.url))) continue;
-    webSeen.add(normUrl(c.url));
-    webSources.push(c);
-  }
+  // 26 Sep 2026 (founder: "keep as many official sources whatever you get as
+  // possible"): every source is labelled official or not with the wide list
+  // (src/lib/official-domains.ts: gov.in / nic.in / ac.in / edu.in, foreign
+  // .gov / .edu, bodies on commercial domains such as CISCE, ICAI, ETS, and
+  // this run's tool portals) and named; official ones first. Every official
+  // source and every source the answer text links is kept; sources only
+  // cited fill the list up to 6.
+  const ranked = rankSources([...checked.webSources, ...cited], { toolOfficial });
+  const inText = new Set(checked.webSources.map((w) => normUrl(w.url)));
+  const keep = (s: { official: boolean; url: string }) => s.official || inText.has(normUrl(s.url));
+  let room = 6 - ranked.filter(keep).length;
+  const webSources = ranked.filter((s) => keep(s) || room-- > 0);
   return done(answer, { pages, next, webSources });
 }

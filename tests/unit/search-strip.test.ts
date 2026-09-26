@@ -254,7 +254,9 @@ describe("SearchStrip.tsx", () => {
   it("the first-load shell carries no resolver, index or copy tables: the engine is a dynamic import", () => {
     expect(src).toMatch(/import\("\.\/strip-engine"\)/);
     const imports = valueImports(src);
-    expect(imports.sort()).toEqual(["./strip-logic", "@/lib/search/types", "next/navigation", "react"].sort());
+    // 26 Sep 2026: + @/lib/ask-distress (7 KB of patterns, no imports) — a distress
+    // sign must never open a study page directly, even before the engine loads.
+    expect(imports.sort()).toEqual(["./strip-logic", "@/lib/ask-distress", "@/lib/search/types", "next/navigation", "react"].sort());
     expect(valueImports(logic)).toEqual(["@/lib/search/types"]);
     for (const i of valueImports(engine)) expect(i).toMatch(/^@\/lib\/search\/(resolve|index-codec)$/);
     // No exam list rides in the page payload: the strip takes copy and askBase only.

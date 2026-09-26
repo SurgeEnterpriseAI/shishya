@@ -15,6 +15,14 @@
 // /hi/ask and /te/ask are the middleware twins: copy in that language, and
 // results open the /hi or /te twin of pages that have one.
 //
+// 26 Sep 2026 (fixer — founder: distress → Tele-MANAS 14416 / Childline 1098
+// and a trusted adult): a query that src/lib/ask-scope.ts reads as distress
+// gets the helpline reply right here, from the server, whatever the resolver
+// says — never a redirect, no study rows and no AI panel ("stop the lesson",
+// as the school tutor persona does). Before this, a Class 1-7 child typing it
+// saw only Class N study pages (the panel is not rendered for Class 1-7), and
+// a "list" outcome needed a click to reach the helplines.
+//
 // This render NEVER calls a model and records no analytics row: SearchAction
 // visits, llms.txt deep links, shared links and crawlers get pages, not AI.
 // The AI runs only from the panel (src/app/ask/AskAnswer.tsx) — on a click, or
@@ -36,6 +44,8 @@ import { resolveQuery } from "@/lib/search/resolve";
 import { isSafePath } from "@/lib/search/targets";
 import { SECTION_ICON } from "@/lib/search/types";
 import { askBaseFor, searchCopy, type SearchCopy } from "@/lib/search-copy";
+import { askScopeOf, offTopicReply } from "@/lib/ask-scope";
+import { ChatMarkdown } from "@/components/ChatMarkdown";
 import { AskAnswer } from "./AskAnswer";
 
 export const dynamic = "force-dynamic";
@@ -156,6 +166,25 @@ export default async function AskPage({ searchParams }: { searchParams: SP }) {
   const locale = await getUrlLocale();
   const copy = searchCopy(locale);
   const askBase = askBaseFor(locale);
+
+  if (q && askScopeOf(q).distress) {
+    // The helplines first and alone — no model call, no redirect, no study rows.
+    const help = offTopicReply(locale, { question: q, distress: true });
+    return (
+      <main className="min-h-screen bg-paper-50">
+        <Header />
+        <section className="container-prose py-6 sm:py-8">
+          <SearchStrip variant="page" copy={copy} askBase={askBase} initialQuery={q} />
+          <section className="mt-8 rounded-2xl border border-saffron-200 bg-saffron-50/40 p-4 sm:p-5" data-ask-help>
+            <h1 className="text-sm font-bold text-ink-900">{copy.answerTitle}</h1>
+            <div className="mt-3 break-words rounded-xl border border-ink-200 bg-white p-4">
+              <ChatMarkdown text={help.answer} />
+            </div>
+          </section>
+        </section>
+      </main>
+    );
+  }
 
   if (q) {
     const r = await resolveQueryServer(q, locale);

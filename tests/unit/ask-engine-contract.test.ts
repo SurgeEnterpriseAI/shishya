@@ -383,7 +383,8 @@ describe("runAsk", () => {
     expect(r.toolsUsed).toEqual(["web_search"]);
     expect(r.answer.startsWith("Shishya does not track RRB JE yet. The board lists the JE notice.")).toBe(true);
     expect(r.answer).not.toMatch(/Let me search|sarkari-blog/);
-    expect(r.webSources).toEqual([{ title: "RRB JE notice", url: "https://indianrailways.gov.in/rrb-je" }]);
+    // 26 Sep 2026 (fixer): each source is labelled official or not and named (src/lib/official-domains.ts).
+    expect(r.webSources).toEqual([{ title: "RRB JE notice", url: "https://indianrailways.gov.in/rrb-je", official: true, source: "Indian Railways" }]);
   });
 
   it("a link typed in the question is never 'seen': the answer cannot keep it as a live link (26 Sep 2026 review)", async () => {
