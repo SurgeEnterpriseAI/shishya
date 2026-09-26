@@ -20,6 +20,7 @@
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { bad, notFound, ok, parseBody, serverError, unauth } from "@/lib/http";
 import { generateFreshQuestions } from "@/lib/ai/on-demand-questions";
 
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
     const count = body.count ?? 10;
 
     const exam = await prisma.exam.findUnique({
-      where: { code: body.examCode },
+      where: realExamKey({ code: body.examCode }),
       select: { id: true, name: true, shortName: true },
     });
     if (!exam) return notFound("exam");

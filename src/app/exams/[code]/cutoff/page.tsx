@@ -34,6 +34,7 @@ import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { getVerdictTally, VERDICT_MIN_N } from "@/lib/exam-verdict";
 import { auth } from "@/lib/auth";
 import { getExamShared } from "@/lib/db/exam-cache";
@@ -212,7 +213,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: { id: true, code: true, shortName: true, name: true },
   });
   if (!exam) return { title: "Exam cutoff — Shishya" };
@@ -261,7 +262,7 @@ export async function generateMetadata({
 export default async function CutoffPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: {
       id: true, code: true, shortName: true, name: true, active: true, state: true,
       // The marking-scheme test decides whether the estimator pill is a real

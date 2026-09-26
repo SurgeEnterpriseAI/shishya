@@ -25,6 +25,7 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
+import { realExamKey } from "./exam-scope";
 import type { Exam } from "@prisma/client";
 import type { SyllabusContext, TutorExamFactsSource } from "../ai/types";
 import { loadExamPageGates } from "../exam-page-gates";
@@ -126,8 +127,11 @@ export async function loadTutorExamFactsSource(exam: ExamRow): Promise<TutorExam
 }
 
 export async function buildSyllabusContext(examCode: string): Promise<SyllabusContext> {
+  // 26 Sep 2026: realExamKey — a SCHOOL_BOARD container throws "Exam not
+  // found" like an unknown code, so the tutor, /api/exams/[code]/syllabus,
+  // mocks and the adaptive quiz never build a syllabus for a school class.
   const exam = await prisma.exam.findUnique({
-    where: { code: examCode },
+    where: realExamKey({ code: examCode }),
     include: {
       subjects: {
         orderBy: { orderIdx: "asc" },

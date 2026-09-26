@@ -49,7 +49,7 @@ export const dynamic = "force-dynamic";
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
-import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
+import { REAL_EXAM_SQL, realExamKey } from "@/lib/db/exam-scope";
 import { sendExamDayAfterEmail } from "@/lib/email";
 import { computeExamWeekState, istDay } from "@/lib/exam-week";
 import { shiftableDays } from "@/lib/exam-week-student";
@@ -261,7 +261,7 @@ export async function GET(req: Request) {
     // refuses the sitting (SBI PO Mains on its Prelims record, 13 Sep).
     const canEstimate = await prisma.exam
       .findUnique({
-        where: { id: meta.examId },
+        where: realExamKey({ id: meta.examId }),
         select: {
           code: true,
           name: true,

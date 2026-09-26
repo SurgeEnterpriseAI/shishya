@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { auth } from "@/lib/auth";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale, twinCanonical } from "@/lib/seo-locale";
@@ -59,7 +60,7 @@ const KEY_KINDS: DateKind[] = ["NOTIFICATION", "APPLICATION_END", "ADMIT_CARD", 
 
 async function loadExam(code: string) {
   return prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: { id: true, code: true, shortName: true, name: true, active: true, category: true, state: true },
   });
 }

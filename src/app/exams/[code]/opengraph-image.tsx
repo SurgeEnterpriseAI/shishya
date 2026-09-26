@@ -8,6 +8,7 @@
 
 import { ImageResponse } from "next/og";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 
 export const runtime = "nodejs";
 export const alt = "Shishya — exam preparation";
@@ -22,7 +23,7 @@ export const contentType = "image/png";
 export default async function Image({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: { shortName: true, name: true, category: true, state: true },
   }).catch(() => null);
 

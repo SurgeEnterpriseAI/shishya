@@ -24,6 +24,8 @@ import { z } from "zod";
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
+import { ensureEnrollment } from "@/lib/db/enrollment";
 import { tutorStream } from "@/lib/ai";
 import { getStudentState } from "@/lib/db/student-state";
 import { getStudentJourney } from "@/lib/db/student-journey";
@@ -183,7 +185,7 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
 
   const exam = isGeneral
     ? null
-    : await prisma.exam.findUnique({ where: { code: examCodeForChat! } });
+    : await prisma.exam.findUnique({ where: realExamKey({ code: examCodeForChat! }) });
   if (!isGeneral && !exam) {
     return new Response(JSON.stringify({ error: "exam not found" }), {
       status: 404,
@@ -191,12 +193,11 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
     });
   }
   // Signed-in only: track enrollment for the exam they're chatting about.
+  // 26 Sep 2026: `exam` came through realExamKey() (a school container is
+  // 404 above, exactly like an unknown code) and the upsert goes through the
+  // one enrolment door, so a child's class never enters the mail loops here.
   if (exam && userId) {
-    await prisma.enrollment.upsert({
-      where: { userId_examId: { userId, examId: exam.id } },
-      update: {},
-      create: { userId, examId: exam.id },
-    });
+    await ensureEnrollment(userId, exam);
   }
 
   // Persisted chat session — signed-in only. ChatSession.userId is

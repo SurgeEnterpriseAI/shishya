@@ -52,7 +52,7 @@ export const dynamic = "force-dynamic";
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
-import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
+import { REAL_EXAM_SQL, realExamKey } from "@/lib/db/exam-scope";
 import { sendExamEveEmail } from "@/lib/email";
 import { getDailyQuote } from "@/data/motivational-quotes";
 import { admitNotesAreReporting, computeExamWeekState, istDay } from "@/lib/exam-week";
@@ -104,7 +104,7 @@ async function buildContent(
     checklistLink(meta.examId, meta.code),
     prisma.exam
       .findUnique({
-        where: { id: meta.examId },
+        where: realExamKey({ id: meta.examId }),
         select: {
           code: true,
           name: true,

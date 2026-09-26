@@ -9,12 +9,13 @@
 
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { getUrlLocale } from "@/lib/i18n-server";
 import { localizedPath } from "@/lib/seo-locale";
 
 export default async function ExamPyqIndexPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
-  const exam = await prisma.exam.findUnique({ where: { code }, select: { code: true, active: true } });
+  const exam = await prisma.exam.findUnique({ where: realExamKey({ code }), select: { code: true, active: true } });
   if (!exam || !exam.active) notFound();
   redirect(`${localizedPath(`/exams/${exam.code}`, await getUrlLocale())}#pyqs`);
 }

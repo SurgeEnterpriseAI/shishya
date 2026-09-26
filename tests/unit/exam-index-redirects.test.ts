@@ -56,7 +56,11 @@ beforeEach(() => {
 describe("/exams/[code]/topics → the hub's Syllabus section", () => {
   it("redirects to /exams/{code}#syllabus", async () => {
     expect(await outcome(TopicsIndexPage, "TS_POLICE_PC")).toBe("redirect /exams/TS_POLICE_PC#syllabus");
-    expect(state.lookups).toEqual([{ where: { code: "TS_POLICE_PC" }, select: { code: true, active: true } }]);
+    // 26 Sep 2026: the lookup carries realExamKey's category filter, so a
+    // school container 404s here exactly like an unknown code.
+    expect(state.lookups).toEqual([
+      { where: { code: "TS_POLICE_PC", category: { not: "SCHOOL_BOARD" } }, select: { code: true, active: true } },
+    ]);
   });
 
   it("keeps the /hi and /te twin", async () => {

@@ -48,6 +48,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { scoredCount } from "@/lib/marking-scheme";
 import { auth } from "@/lib/auth";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
@@ -93,7 +94,7 @@ function num(n: number): string {
 
 async function loadExam(code: string) {
   return prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: {
       id: true,
       code: true,

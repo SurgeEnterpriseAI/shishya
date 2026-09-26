@@ -14,6 +14,8 @@
 // distinguish them from SME / cron mocks.
 
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
+import { ensureEnrollment } from "@/lib/db/enrollment";
 import { generateMock } from "./generator";
 import { getStudentState } from "@/lib/db/student-state";
 import { getSyllabusContext } from "@/lib/db/syllabus";
@@ -56,16 +58,12 @@ export async function createAdaptiveQuiz(
   //    a great moment to silently enrol someone who landed on the chat
   //    via a deep link without clicking "Enroll".
   const exam = await prisma.exam.findUnique({
-    where: { code: examCode },
-    select: { id: true, shortName: true, totalQuestions: true, durationMin: true },
+    where: realExamKey({ code: examCode }),
+    select: { id: true, shortName: true, totalQuestions: true, durationMin: true, category: true },
   });
   if (!exam) throw new Error(`Exam ${examCode} not found`);
 
-  await prisma.enrollment.upsert({
-    where: { userId_examId: { userId, examId: exam.id } },
-    update: {},
-    create: { userId, examId: exam.id },
-  });
+  await ensureEnrollment(userId, exam);
 
   // 2. Resolve target topic.
   //    Priority: explicit hint > weakest topic with history > heaviest

@@ -9,6 +9,7 @@
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { bad, ok, parseBody, serverError, unauth } from "@/lib/http";
 
 // ─── GET ──────────────────────────────────────────────────────────────────
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
 
     let examId: string | null = null;
     if (body.examCode) {
-      const exam = await prisma.exam.findUnique({ where: { code: body.examCode }, select: { id: true } });
+      const exam = await prisma.exam.findUnique({ where: realExamKey({ code: body.examCode }), select: { id: true } });
       if (!exam) return bad(`Unknown exam ${body.examCode}`);
       examId = exam.id;
     }

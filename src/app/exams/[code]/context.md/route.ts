@@ -50,6 +50,7 @@
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { GATES_CLOSED, loadExamPageGates } from "@/lib/exam-page-gates";
 import { ageEligibilityLine, relatedExamLines } from "@/lib/page-gates-copy";
 import { usableNotesSql } from "@/lib/topic-notes";
@@ -72,7 +73,7 @@ export async function GET(
   const { code } = await params;
 
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: {
       id: true,
       code: true,

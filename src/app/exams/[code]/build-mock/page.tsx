@@ -49,6 +49,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { auth } from "@/lib/auth";
 import { getExamTheme } from "@/lib/exam-theme";
 import { BuilderForm, type BuilderLabels } from "./BuilderForm";
@@ -118,7 +119,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
   const { code } = await params;
-  const exam = await prisma.exam.findUnique({ where: { code }, select: { shortName: true, name: true } });
+  const exam = await prisma.exam.findUnique({ where: realExamKey({ code }), select: { shortName: true, name: true } });
   if (!exam) return { title: "Build a mock — Shishya" };
   // A failed gate read keeps the page indexable (GATES_OPEN), as before.
   const buildable = (await examPageGates(code)).buildMock;
@@ -144,7 +145,7 @@ export default async function BuildMockPage({
 }) {
   const [{ code }, sp, session, tt] = await Promise.all([params, searchParams, auth().catch(() => null), getT()]);
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: { id: true, code: true, shortName: true, name: true, active: true, category: true, durationMin: true, totalQuestions: true },
   });
   if (!exam || !exam.active) notFound();

@@ -16,6 +16,7 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { computeExamWeekState, type ExamWeekPhase, type ExamWeekState } from "@/lib/exam-week";
 import type { TimelineInput } from "@/lib/exam-timeline";
 import type { StringKey } from "@/lib/i18n";
@@ -64,7 +65,7 @@ export async function getExamWeekStateById(examId: string, now: Date = new Date(
 /** Exam-week state for an exam code (pages that only know the code, e.g.
  *  the anonymous quiz). Unknown code → phase "none". */
 export async function getExamWeekStateByCode(code: string, now: Date = new Date()): Promise<ExamWeekState> {
-  const exam = await prisma.exam.findUnique({ where: { code }, select: { id: true } }).catch(() => null);
+  const exam = await prisma.exam.findUnique({ where: realExamKey({ code }), select: { id: true } }).catch(() => null);
   if (!exam) return computeExamWeekState([], null, now);
   return getExamWeekStateById(exam.id, now);
 }

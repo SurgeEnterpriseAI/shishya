@@ -2,6 +2,7 @@
 // Computed deterministically from DB rows — no LLM here.
 
 import { prisma } from "./prisma";
+import { NOT_SCHOOL_WHERE } from "./exam-scope";
 import { recentTrend } from "../scoring";
 import type { StudentState, TopicMastery } from "../ai/types";
 
@@ -15,7 +16,7 @@ export async function getStudentState(
     where: { id: userId },
     include: {
       enrollments: {
-        where: { exam: { code: examCode } },
+        where: { exam: { code: examCode, ...NOT_SCHOOL_WHERE } },
         include: { exam: true },
       },
     },

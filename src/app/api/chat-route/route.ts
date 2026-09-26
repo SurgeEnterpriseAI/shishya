@@ -18,6 +18,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { anthropic, MODEL } from "@/lib/ai/client";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { EXAM_GOALS } from "@/data/exam-goals";
 
 export const runtime = "nodejs";
@@ -156,7 +157,7 @@ async function resolveTarget(input: {
       if (!input.examCode) break;
       // Validate against the DB — Claude can hallucinate exam codes.
       const exam = await prisma.exam.findUnique({
-        where: { code: input.examCode },
+        where: realExamKey({ code: input.examCode }),
         select: { code: true },
       });
       if (!exam) break;
@@ -165,7 +166,7 @@ async function resolveTarget(input: {
     case "phase_article": {
       if (!input.examCode || !input.phase) break;
       const exam = await prisma.exam.findUnique({
-        where: { code: input.examCode },
+        where: realExamKey({ code: input.examCode }),
         select: { code: true },
       });
       if (!exam) break;

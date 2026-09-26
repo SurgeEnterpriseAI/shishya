@@ -35,7 +35,7 @@ import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
-import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
+import { NOT_SCHOOL_SQL, NOT_SCHOOL_WHERE, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { calendarRailLabels, fillHome, homeStripCopy, type HomeStripCopy } from "@/lib/home-strip-copy";
 import { Header } from "@/components/Header";
@@ -407,8 +407,16 @@ async function loadPortalStatsRaw(): Promise<{ examCount: string; questions: str
   try {
     const [ex, q, n] = await Promise.all([
       prisma.exam.count({ where: REAL_EXAM_WHERE }),
-      prisma.question.count(),
-      prisma.$queryRaw<{ c: bigint }[]>`SELECT COUNT(*)::bigint AS c FROM "TopicTeachingNote"`,
+      // 26 Sep 2026: questions and notes of real exams only — school
+      // (curriculum, class) containers share the tree (exam-scope.ts) and
+      // would inflate the govt-exam band. Same numbers today (0 school rows).
+      prisma.question.count({ where: { exam: NOT_SCHOOL_WHERE } }),
+      prisma.$queryRaw<{ c: bigint }[]>`
+        SELECT COUNT(*)::bigint AS c FROM "TopicTeachingNote" n
+        JOIN "Topic" t ON t.id = n."topicId"
+        JOIN "Subject" s ON s.id = t."subjectId"
+        JOIN "Exam" e ON e.id = s."examId"
+        WHERE ${NOT_SCHOOL_SQL}`,
     ]);
     const notesCount = Number(n[0]?.c ?? 0);
     const floorTo = (v: number, step: number) => Math.floor(v / step) * step;

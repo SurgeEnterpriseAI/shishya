@@ -17,6 +17,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { NotesMarkdown } from "@/components/NotesMarkdown";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { tFor } from "@/lib/i18n-server";
@@ -61,7 +62,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: { code: true, shortName: true, name: true },
   });
   if (!exam) return { title: "Exam tricks — Shishya" };
@@ -107,7 +108,7 @@ export default async function TricksPage({ params }: { params: Promise<{ code: s
   const locale = pilotPageLocale(lang);
   if (!locale) notFound();
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: { id: true, code: true, shortName: true, name: true, active: true, state: true },
   });
   if (!exam || !exam.active) notFound();

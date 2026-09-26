@@ -6,6 +6,7 @@ import { notFound, redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { formatDisplayScorePct } from "@/lib/scoring";
 
@@ -22,7 +23,7 @@ export default async function AttemptsPage({
   const { code } = await params;
   const { t } = await getT();
 
-  const exam = await prisma.exam.findUnique({ where: { code } });
+  const exam = await prisma.exam.findUnique({ where: realExamKey({ code }) });
   if (!exam) notFound();
 
   const attempts = await prisma.attempt.findMany({

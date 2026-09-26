@@ -9,6 +9,7 @@
 // at hard limits below so we never explode the budget.
 
 import { prisma } from "./prisma";
+import { realExamKey } from "./exam-scope";
 import { istDayNumber } from "@/lib/exam-phase";
 
 const MAX_THREADS = 5;            // how many recent sessions to surface
@@ -41,7 +42,7 @@ export async function getStudentJourney(
   const todayUtc = new Date(istDayNumber(new Date()) * 86_400_000);
 
   const exam = await prisma.exam.findUnique({
-    where: { code: examCode },
+    where: realExamKey({ code: examCode }),
     select: { id: true },
   });
   if (!exam) {

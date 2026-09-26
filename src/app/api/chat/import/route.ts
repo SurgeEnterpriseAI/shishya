@@ -32,6 +32,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 
 const Body = z.object({
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
 
   let examId: string | null = null;
   if (body.examCode) {
-    const exam = await prisma.exam.findUnique({ where: { code: body.examCode }, select: { id: true, active: true } });
+    const exam = await prisma.exam.findUnique({ where: realExamKey({ code: body.examCode }), select: { id: true, active: true } });
     if (!exam || !exam.active) return Response.json({ imported: 0, reason: "exam" });
     examId = exam.id;
   }

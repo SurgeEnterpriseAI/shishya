@@ -4,6 +4,7 @@
 
 import { createHash } from "node:crypto";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { scoredCount } from "@/lib/marking-scheme";
 import { sittingVerdict, standingSitting } from "@/lib/score-sitting";
@@ -33,7 +34,7 @@ export type AddScoreResult =
  */
 export async function addScoreEntry(p: { examCode: string; counts: EstimateCounts; key: string }): Promise<AddScoreResult> {
   const exam = await prisma.exam.findUnique({
-    where: { code: p.examCode },
+    where: realExamKey({ code: p.examCode }),
     select: {
       id: true,
       code: true,

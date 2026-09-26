@@ -10,6 +10,7 @@
 // Builder: src/lib/exam-week-ics.ts. Cached an hour; no personal data.
 
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { buildExamWeekIcs, examWeekCalendarRows } from "@/lib/exam-week-ics";
 
@@ -22,7 +23,7 @@ export async function GET(
   const { code } = await params;
   const exam = await prisma.exam
     .findUnique({
-      where: { code },
+      where: realExamKey({ code }),
       select: { id: true, code: true, shortName: true, name: true, active: true },
     })
     .catch(() => null);

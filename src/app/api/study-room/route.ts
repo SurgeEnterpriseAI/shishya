@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
+import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 
 const Body = z.object({
   examCode: z.string().min(1),
@@ -23,12 +24,14 @@ export async function POST(req: Request) {
   if (!parsed.success) return Response.json({ error: "bad request" }, { status: 400 });
   const { examCode, topicCode } = parsed.data;
 
+  // 26 Sep 2026: real exams only (REAL_EXAM_SQL = active and not a school
+  // container) — a study room is never opened under a school class.
   const rows = await prisma.$queryRaw<{ examId: string; short: string; topicName: string }[]>`
     SELECT e.id AS "examId", e."shortName" AS short, t.name AS "topicName"
     FROM "Exam" e
     JOIN "Subject" s ON s."examId" = e.id
     JOIN "Topic" t ON t."subjectId" = s.id AND t.code = ${topicCode}
-    WHERE e.code = ${examCode} AND e.active = TRUE
+    WHERE e.code = ${examCode} AND ${REAL_EXAM_SQL}
     LIMIT 1
   `;
   if (!rows[0]) return Response.json({ error: "not found" }, { status: 404 });

@@ -9,6 +9,7 @@
 // Used by the dashboard right-rail panel + the "Focus topics" section.
 
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 
 const TARGET_MASTERY = 0.85;     // the bar we tell students to clear per topic
 const MIN_ATTEMPTS = 1;          // include topics with at least 1 attempt
@@ -55,7 +56,7 @@ export async function computeScoreBoost(
   // /exams/[code] cold render time.
   const [exam, subjects, weak, myBest, bestPerUser] = await Promise.all([
     prisma.exam.findUnique({
-      where: { id: examId },
+      where: realExamKey({ id: examId }),
       select: { id: true, code: true, shortName: true, totalMarks: true },
     }),
     prisma.subject.findMany({

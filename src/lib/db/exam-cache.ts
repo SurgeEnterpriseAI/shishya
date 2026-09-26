@@ -12,7 +12,7 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
-import { REAL_EXAM_WHERE } from "./exam-scope";
+import { REAL_EXAM_WHERE, realExamKey } from "./exam-scope";
 import { computeExamWeekState, istDay } from "@/lib/exam-week";
 import { isUnannouncedAnswerKey } from "@/lib/exam-timeline";
 
@@ -67,8 +67,11 @@ async function loadTitleDates(examId: string) {
 /** Shared exam payload — safe to cache across all users. */
 export const getExamShared = unstable_cache(
   async (code: string) => {
+    // 26 Sep 2026: realExamKey — a SCHOOL_BOARD container is null here, so
+    // /exams/[code] and every subpage on this payload 404 it like an unknown
+    // code (src/lib/db/exam-scope.ts, keyed lookups).
     const exam = await prisma.exam.findUnique({
-      where: { code },
+      where: realExamKey({ code }),
       include: {
         subjects: {
           orderBy: { orderIdx: "asc" },

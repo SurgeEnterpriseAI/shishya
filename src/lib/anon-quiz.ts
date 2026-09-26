@@ -23,6 +23,7 @@
 // the marginal exposure is acceptable for the conversion win.
 
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL, realExamKey } from "@/lib/db/exam-scope";
 import { parseCategoryCutoff } from "@/lib/category-cutoff";
 
 export const ANON_QUIZ_MIN = 5;
@@ -87,7 +88,7 @@ export async function getAnonQuiz(opts: {
   ids?: string[];
 }): Promise<AnonQuiz | null> {
   const exam = await prisma.exam.findUnique({
-    where: { code: opts.examCode },
+    where: realExamKey({ code: opts.examCode }),
     select: { id: true, code: true, shortName: true, name: true, active: true },
   });
   if (!exam || !exam.active) return null;
@@ -197,7 +198,7 @@ export async function getAnonCutoffRows(
     .$queryRaw<{ content: string }[]>`
       SELECT c.content FROM "ExamCategoryCutoff" c
       JOIN "Exam" e ON e.id = c."examId"
-      WHERE e.code = ${examCode} LIMIT 1
+      WHERE e.code = ${examCode} AND ${NOT_SCHOOL_SQL} LIMIT 1
     `.catch(() => [] as { content: string }[]);
   const parsed = parseCategoryCutoff(rows[0]?.content);
   // Header + at least one category row, else nothing worth showing.

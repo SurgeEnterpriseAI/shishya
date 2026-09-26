@@ -16,6 +16,7 @@ export const dynamic = "force-dynamic";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 
 export async function GET(req: Request) {
   const session = await auth().catch(() => null);
@@ -31,7 +32,7 @@ export async function GET(req: Request) {
              w."masteryScore" AS mastery
       FROM "Topic" t
       JOIN "Subject" sub ON sub.id = t."subjectId"
-      JOIN "Exam" e ON e.id = sub."examId" AND e.code = ${examCode}
+      JOIN "Exam" e ON e.id = sub."examId" AND e.code = ${examCode} AND ${NOT_SCHOOL_SQL}
       LEFT JOIN "TopicStudyState" s ON s."topicId" = t.id AND s."userId" = ${session.user.id}
       LEFT JOIN "WeaknessMap" w ON w."topicId" = t.id AND w."userId" = ${session.user.id}
       WHERE s.id IS NOT NULL OR w.id IS NOT NULL
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
     SELECT t.id FROM "Topic" t
     JOIN "Subject" s ON s.id = t."subjectId"
     JOIN "Exam" e ON e.id = s."examId"
-    WHERE e.code = ${examCode} AND t.code = ${topicCode} LIMIT 1
+    WHERE e.code = ${examCode} AND ${NOT_SCHOOL_SQL} AND t.code = ${topicCode} LIMIT 1
   `;
   if (!topic[0]) return Response.json({ error: "topic not found" }, { status: 404 });
 

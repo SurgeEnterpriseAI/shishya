@@ -17,6 +17,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { getExamTheme } from "@/lib/exam-theme";
 import { getT } from "@/lib/i18n-server";
 import { SUPPRESSED_SOURCE, isUnannouncedAnswerKey, rowCitation } from "@/lib/exam-timeline";
@@ -30,7 +31,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: { shortName: true, name: true },
   });
   if (!exam) return { title: "Archive — Shishya" };
@@ -50,7 +51,7 @@ export default async function ArchivePage({
   const { code } = await params;
 
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: { id: true, code: true, name: true, shortName: true, category: true, active: true, state: true },
   });
   // Inactive = seeded ahead of its question bank; not public yet.

@@ -58,7 +58,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { prisma } from "@/lib/db/prisma";
-import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
+import { REAL_EXAM_SQL, realExamKey } from "@/lib/db/exam-scope";
 import { tFor } from "@/lib/i18n-server";
 import type { Locale, StringKey } from "@/lib/i18n";
 import { localizedPath, localizedUrl, type PageLocale } from "@/lib/seo-locale";
@@ -301,7 +301,7 @@ export async function ExamWeekBlock({
       exam.name !== undefined
         ? Promise.resolve(exam.name)
         : prisma.exam
-            .findUnique({ where: { id: exam.id }, select: { name: true } })
+            .findUnique({ where: realExamKey({ id: exam.id }), select: { name: true } })
             .then((e) => e?.name ?? null)
             .catch(() => null),
     ]);
@@ -414,7 +414,7 @@ export async function ExamWeekBlock({
     phase === "today-pm" || phase === "post"
       ? prisma.exam
           .findUnique({
-            where: { id: exam.id },
+            where: realExamKey({ id: exam.id }),
             select: {
               code: true,
               name: true,

@@ -16,6 +16,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_WHERE, notSchoolSql } from "@/lib/db/exam-scope";
+import { ensureEnrollment } from "@/lib/db/enrollment";
 import { STATES } from "@/lib/state-info";
 import { recordEvent } from "@/lib/analytics";
 import { isLanguageCode } from "@/lib/preferred-lang";
@@ -96,16 +97,11 @@ export async function POST(req: Request) {
   if (prepCodes.length > 0) {
     const exams = await prisma.exam.findMany({
       where: { ...NOT_SCHOOL_WHERE, code: { in: prepCodes } },
-      select: { id: true },
+      select: { id: true, category: true },
     });
+    // 26 Sep 2026: through the one enrolment door (src/lib/db/enrollment.ts).
     for (const e of exams) {
-      await prisma.enrollment
-        .upsert({
-          where: { userId_examId: { userId: session.user.id, examId: e.id } },
-          update: { active: true },
-          create: { userId: session.user.id, examId: e.id },
-        })
-        .catch(() => {}); // enrollment failure must not break onboarding
+      await ensureEnrollment(session.user.id, e, { active: true }).catch(() => {}); // enrollment failure must not break onboarding
     }
   }
 

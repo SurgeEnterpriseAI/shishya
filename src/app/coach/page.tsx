@@ -16,7 +16,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
-import { NOT_SCHOOL_SQL, REAL_EXAM_SQL } from "@/lib/db/exam-scope";
+import { NOT_SCHOOL_SQL, REAL_EXAM_SQL, realExamKey } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { Header } from "@/components/Header";
 import { computeCoachPlan } from "@/lib/coach-plan";
@@ -46,7 +46,7 @@ interface RolloverData {
 async function loadRollover(userId: string, fromCode: string): Promise<RolloverData | null> {
   if (!EXAM_CODE_RE.test(fromCode)) return null;
   const from = await prisma.exam
-    .findUnique({ where: { code: fromCode }, select: { id: true, code: true, shortName: true, category: true, state: true } })
+    .findUnique({ where: realExamKey({ code: fromCode }), select: { id: true, code: true, shortName: true, category: true, state: true } })
     .catch(() => null);
   if (!from) return null;
 

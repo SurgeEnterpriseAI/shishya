@@ -54,6 +54,7 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import {
   alertCopyPhase,
   computeExamWeekState,
@@ -444,7 +445,7 @@ export function stageAwarePhaseMeta(
 export async function loadExamNightExam(code: string): Promise<ExamNightExam | null> {
   return prisma.exam
     .findUnique({
-      where: { code },
+      where: realExamKey({ code }),
       select: {
         id: true,
         code: true,

@@ -21,6 +21,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { SyllabusProgress } from "./SyllabusProgress";
@@ -39,7 +40,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: { id: true, code: true, shortName: true, name: true },
   });
   if (!exam) return { title: "Exam syllabus — Shishya" };
@@ -110,7 +111,7 @@ function syllabusCounts(subjects: Awaited<ReturnType<typeof loadSyllabusTree>>) 
 export default async function SyllabusPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: { id: true, code: true, shortName: true, name: true, active: true, state: true },
   });
   if (!exam || !exam.active) notFound();

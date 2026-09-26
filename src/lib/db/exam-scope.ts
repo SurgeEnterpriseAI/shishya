@@ -56,6 +56,31 @@ export const SCHOOL_WHERE = {
   category: SCHOOL_CATEGORY,
 } satisfies Prisma.ExamWhereInput;
 
+// ── Keyed lookups (26 Sep 2026) ───────────────────────────────────────
+// The list queries above were scoped on 25 Sep; the ~70 lookups of ONE exam
+// by a client-supplied code or id (the /exams/[code]/* loaders, the tutor,
+// enrolment, coach, mocks, alerts, the anonymous quiz …) still accepted a
+// school code, so the day NCERT_C09 was seeded — even inactive — a request
+// with that code reached the paid tutor with the exam-prep persona and
+// enrolled the student. Every such lookup now goes through realExamKey():
+// Prisma 5's extended where-unique takes the category filter beside the
+// unique key, so a SCHOOL_BOARD row simply does not match and the caller's
+// existing "unknown exam" branch (notFound(), 404, null) runs — exactly as
+// for a code that does not exist, active or not. The static guard flags any
+// exam.findUnique / findFirst under src/ that uses neither this nor a
+// helper constant.
+
+/** The `where` for a lookup of ONE real exam by its unique key. */
+export function realExamKey(key: { code: string } | { id: string }): Prisma.ExamWhereUniqueInput {
+  return { ...key, ...NOT_SCHOOL_WHERE };
+}
+
+/** Row-level twin for an exam that arrived through a relation (a mock's or
+ *  an enrolment's exam): null when it is a school container. */
+export function realExamOrNull<T extends { category: string }>(exam: T | null | undefined): T | null {
+  return exam && !isSchoolCategory(exam.category) ? exam : null;
+}
+
 // ── Raw SQL ───────────────────────────────────────────────────────────
 // Postgres enum → text compare, the idiom sitemap.ts / onboarding already
 // used. The constants assume the "Exam" row is aliased `e` (as almost every

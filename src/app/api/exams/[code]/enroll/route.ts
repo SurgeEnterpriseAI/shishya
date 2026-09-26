@@ -3,6 +3,8 @@
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
+import { ensureEnrollment } from "@/lib/db/enrollment";
 import { bad, ok, notFound, serverError, unauth, parseBody } from "@/lib/http";
 
 const Body = z.object({
@@ -19,24 +21,17 @@ export async function POST(
     if (!session?.user?.id) return unauth();
 
     const { code } = await ctx.params;
-    const exam = await prisma.exam.findUnique({ where: { code } });
+    const exam = await prisma.exam.findUnique({ where: realExamKey({ code }) });
     if (!exam) return notFound("exam");
 
     const body = await parseBody(req, Body);
 
-    const enrollment = await prisma.enrollment.upsert({
-      where: { userId_examId: { userId: session.user.id, examId: exam.id } },
-      update: {
-        active: true,
-        targetDate: body.targetDate ? new Date(body.targetDate) : null,
-        goalScore: body.goalScore ?? null,
-      },
-      create: {
-        userId: session.user.id,
-        examId: exam.id,
-        targetDate: body.targetDate ? new Date(body.targetDate) : null,
-        goalScore: body.goalScore ?? null,
-      },
+    // 26 Sep 2026: one enrolment door (src/lib/db/enrollment.ts); the exam
+    // above is a real one (realExamKey) — a school code was 404 already.
+    const enrollment = await ensureEnrollment(session.user.id, exam, {
+      active: true,
+      targetDate: body.targetDate ? new Date(body.targetDate) : null,
+      goalScore: body.goalScore ?? null,
     });
     return ok({ enrollment });
   } catch (err: any) {

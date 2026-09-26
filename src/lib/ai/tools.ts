@@ -14,6 +14,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { createAdaptiveQuiz } from "./adaptive-quiz";
 import { getSeenHistory } from "@/lib/answered-questions";
 import { pickWithSeenExclusion } from "@/lib/question-pick";
@@ -277,7 +278,7 @@ async function searchKnowledge(ctx: ToolContext, input: any) {
 }
 
 async function getMyMastery(ctx: ToolContext, limit: number) {
-  const exam = await prisma.exam.findUnique({ where: { code: ctx.examCode }, select: { id: true } });
+  const exam = await prisma.exam.findUnique({ where: realExamKey({ code: ctx.examCode }), select: { id: true } });
   if (!exam) return { topics: [] as any[], message: "Exam not found." };
   const rows = await prisma.weaknessMap.findMany({
     where: { userId: ctx.userId, examId: exam.id },
@@ -304,7 +305,7 @@ async function getMyMastery(ctx: ToolContext, limit: number) {
 }
 
 async function getRecentAttempts(ctx: ToolContext, limit: number) {
-  const exam = await prisma.exam.findUnique({ where: { code: ctx.examCode }, select: { id: true } });
+  const exam = await prisma.exam.findUnique({ where: realExamKey({ code: ctx.examCode }), select: { id: true } });
   if (!exam) return { attempts: [] as any[] };
   const rows = await prisma.attempt.findMany({
     where: {
@@ -339,7 +340,7 @@ async function findQuestionsOnTopic(
   difficulty: string | undefined,
   limit: number
 ) {
-  const exam = await prisma.exam.findUnique({ where: { code: ctx.examCode }, select: { id: true } });
+  const exam = await prisma.exam.findUnique({ where: realExamKey({ code: ctx.examCode }), select: { id: true } });
   if (!exam) return { questions: [] as any[], message: "Exam not found." };
 
   const topic = await prisma.topic.findFirst({
@@ -516,7 +517,7 @@ function findScholarships(ctx: ToolContext, input: any) {
 
 async function predictRank(ctx: ToolContext, scorePct: number) {
   const exam = await prisma.exam.findUnique({
-    where: { code: ctx.examCode },
+    where: realExamKey({ code: ctx.examCode }),
     select: { id: true, shortName: true },
   });
   if (!exam) return { message: "Exam not found." };

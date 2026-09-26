@@ -14,6 +14,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 import { isAllowedPushEndpoint, welcomePushPayload } from "@/lib/push-alert-rules";
 import { pushConfigured, sendPush } from "@/lib/web-push";
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
   if (!rl.ok) return rateLimited(rl);
 
   const exam = await prisma.exam
-    .findUnique({ where: { code: body.examCode }, select: { id: true, active: true, shortName: true } })
+    .findUnique({ where: realExamKey({ code: body.examCode }), select: { id: true, active: true, shortName: true } })
     .catch(() => null);
   if (!exam || !exam.active) return NextResponse.json({ error: "unknown exam" }, { status: 404 });
 
@@ -109,7 +110,7 @@ export async function DELETE(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "invalid request" }, { status: 400 });
   }
-  const exam = await prisma.exam.findUnique({ where: { code: body.examCode }, select: { id: true } }).catch(() => null);
+  const exam = await prisma.exam.findUnique({ where: realExamKey({ code: body.examCode }), select: { id: true } }).catch(() => null);
   if (!exam) return NextResponse.json({ error: "unknown exam" }, { status: 404 });
   await prisma.$executeRaw`
     UPDATE "ExamPushAlert" SET "unsubscribedAt" = NOW()

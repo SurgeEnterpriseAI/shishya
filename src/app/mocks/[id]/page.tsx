@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { ensureEnrollment } from "@/lib/db/enrollment";
 import { getT } from "@/lib/i18n-server";
 import { resolvePreferredLocale } from "@/lib/preferred-lang";
 import {
@@ -100,7 +101,7 @@ export default async function MockPlayerPage({
   const [mock, existingInProgress, existingSubmitted] = await Promise.all([
     prisma.mock.findUnique({
       where: { id },
-      include: { exam: { select: { code: true, shortName: true, marksPerQ: true, negativeMark: true } } },
+      include: { exam: { select: { code: true, shortName: true, marksPerQ: true, negativeMark: true, category: true } } },
     }),
     prisma.attempt.findFirst({
       where: { mockId: id, userId, status: "IN_PROGRESS" },
@@ -194,11 +195,8 @@ export default async function MockPlayerPage({
     // get an attempt but no enrollment, breaking their WeaknessMap +
     // dashboard recommendations. Caught when Abhishek (signup 17:10,
     // SSC_GD attempt 17:11) had no enrollment.
-    await prisma.enrollment.upsert({
-      where: { userId_examId: { userId, examId: mock.examId } },
-      update: {},
-      create: { userId, examId: mock.examId },
-    });
+    // 26 Sep 2026: through the one enrolment door (src/lib/db/enrollment.ts).
+    await ensureEnrollment(userId, { id: mock.examId, category: mock.exam.category });
     // Full paper or warm up first? (25 Sep 2026) Only for the return from
     // Google sign-in (?from=signin, set by the gate and the private-mock
     // bounce above) to a paper-length mock with nothing in progress — not a

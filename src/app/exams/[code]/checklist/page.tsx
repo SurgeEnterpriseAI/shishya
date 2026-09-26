@@ -41,6 +41,7 @@ import { ShareExamButton } from "@/components/ShareExamButton";
 import { ReactionButtons } from "@/components/exam-phase/ReactionButtons";
 import { ShareButtons } from "@/components/exam-phase/ShareButtons";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { fillTemplate, type StringKey } from "@/lib/i18n";
@@ -76,7 +77,7 @@ interface ChecklistFacts {
 const loadChecklistFacts = unstable_cache(
   async (code: string): Promise<ChecklistFacts | null> => {
     const exam = await prisma.exam.findUnique({
-      where: { code },
+      where: realExamKey({ code }),
       select: {
         id: true,
         code: true,

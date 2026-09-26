@@ -14,6 +14,7 @@
 
 import { createHash, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { getAnonQuiz, type AnonQuiz } from "@/lib/anon-quiz";
 import { attemptPaperIds } from "@/lib/attempt-paper";
 import { sendEmail } from "@/lib/email";
@@ -257,7 +258,7 @@ export async function createChallenge(input: CreateChallengeInput, who: Challeng
     if (!quiz || !quiz.replay || quiz.questions.length !== ids.length || quiz.questions.some((q, i) => q.id !== ids[i])) {
       return { ok: false, status: 422, error: "These questions can't be used for a challenge." };
     }
-    const exam = await prisma.exam.findUnique({ where: { code: quiz.examCode }, select: { id: true } });
+    const exam = await prisma.exam.findUnique({ where: realExamKey({ code: quiz.examCode }), select: { id: true } });
     if (!exam) return { ok: false, status: 404, error: "exam not found" };
     examId = exam.id;
     examCode = quiz.examCode;

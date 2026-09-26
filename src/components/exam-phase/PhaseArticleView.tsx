@@ -58,6 +58,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { auth } from "@/lib/auth";
 import { ReactionButtons } from "./ReactionButtons";
 import { ShareButtons } from "./ShareButtons";
@@ -107,7 +108,7 @@ export async function PhaseArticleView({
   hideEmpty?: boolean;
 }) {
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: { id: true, code: true, name: true, shortName: true },
   });
   if (!exam) notFound();

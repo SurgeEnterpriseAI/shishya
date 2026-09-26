@@ -10,6 +10,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 import { normaliseEmail } from "@/lib/exam-alerts";
 
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
   if (!rlEmail.ok) return rateLimited(rlEmail);
 
   const exam = await prisma.exam
-    .findUnique({ where: { code: body.examCode }, select: { id: true, active: true } })
+    .findUnique({ where: realExamKey({ code: body.examCode }), select: { id: true, active: true } })
     .catch(() => null);
   if (!exam || !exam.active) return NextResponse.json({ error: "unknown exam" }, { status: 404 });
 

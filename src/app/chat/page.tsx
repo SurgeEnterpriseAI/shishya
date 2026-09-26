@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
+import { ensureEnrollment } from "@/lib/db/enrollment";
 import { getT } from "@/lib/i18n-server";
 import { ChatInterface } from "./ChatInterface";
 import { ExamSwitcher } from "./ExamSwitcher";
@@ -37,7 +39,7 @@ export default async function ChatPage({
     let anonExamShort: string | null = null;
     if (!generalMode && sp.examCode) {
       const ex = await prisma.exam.findUnique({
-        where: { code: sp.examCode },
+        where: realExamKey({ code: sp.examCode }),
         select: { code: true, shortName: true, active: true },
       });
       if (ex && ex.active) {
@@ -137,15 +139,11 @@ export default async function ChatPage({
   // first enrollment happened to be RRB NTPC.
   if (sp.examCode && !enrollments.find((e) => e.exam.code === sp.examCode)) {
     const target = await prisma.exam.findUnique({
-      where: { code: sp.examCode },
-      select: { id: true, code: true, shortName: true, active: true },
+      where: realExamKey({ code: sp.examCode }),
+      select: { id: true, code: true, shortName: true, active: true, category: true },
     });
     if (target && target.active) {
-      await prisma.enrollment.upsert({
-        where: { userId_examId: { userId: session.user.id, examId: target.id } },
-        update: { active: true },
-        create: { userId: session.user.id, examId: target.id },
-      });
+      await ensureEnrollment(session.user.id, target, { active: true });
       // Re-read enrollments so the switcher and downstream logic include the
       // freshly-added one. orderBy createdAt desc puts the new one first.
       enrollments = await prisma.enrollment.findMany({

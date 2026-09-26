@@ -13,6 +13,7 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { StartFullMockButton } from "./StartFullMockButton";
@@ -68,7 +69,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { code, year } = await params;
   const exam = await prisma.exam.findUnique({
-    where: { code },
+    where: realExamKey({ code }),
     select: { id: true, code: true, shortName: true, name: true, totalQuestions: true },
   });
   if (!exam) return { title: "Previous year paper — Shishya" };
@@ -151,7 +152,7 @@ export default async function PYQYearPage({
   const lc = pyqCopyLocale(locale);
   const P = pyqYearCopy(lc);
 
-  const exam = await prisma.exam.findUnique({ where: { code } });
+  const exam = await prisma.exam.findUnique({ where: realExamKey({ code }) });
   // Inactive = seeded ahead of its question bank; not public yet.
   if (!exam || !exam.active) notFound();
 

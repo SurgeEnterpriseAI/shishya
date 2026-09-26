@@ -45,6 +45,7 @@ import { z } from "zod";
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { auth } from "@/lib/auth";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 import { getSeenHistory } from "@/lib/answered-questions";
@@ -82,7 +83,7 @@ export async function POST(req: Request) {
   const { examCode, topicIds, count, difficulty, pyqOnly = false } = parsed.data;
 
   const exam = await prisma.exam.findUnique({
-    where: { code: examCode },
+    where: realExamKey({ code: examCode }),
     select: { id: true, shortName: true, durationMin: true, totalQuestions: true },
   });
   if (!exam) return NextResponse.json({ error: "unknown exam" }, { status: 404 });

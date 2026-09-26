@@ -28,6 +28,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { drillScope, DRILL_MOCK_TYPE } from "@/lib/coach-plan";
 import { getSeenHistory } from "@/lib/answered-questions";
 import { pickTiered, shuffleWith, type SeenInput } from "@/lib/question-pick";
@@ -75,7 +76,7 @@ export async function GET(req: Request) {
 
   try {
     const exam = await prisma.exam.findUnique({
-      where: { code: examCode },
+      where: realExamKey({ code: examCode }),
       select: { id: true, code: true, shortName: true },
     });
     if (!exam) return go(req, "/coach");

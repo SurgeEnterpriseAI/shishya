@@ -17,6 +17,7 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { findTranslations } from "@/lib/db/questionTranslations";
 import { ShareExamButton } from "@/components/ShareExamButton";
@@ -43,7 +44,7 @@ export async function generateMetadata({
   const { code, topicCode } = await params;
   const [exam, topic] = await Promise.all([
     prisma.exam.findUnique({
-      where: { code },
+      where: realExamKey({ code }),
       select: { code: true, shortName: true, name: true },
     }),
     prisma.topic.findFirst({
@@ -111,7 +112,7 @@ export default async function TopicPage({
   const { code, topicCode } = await params;
   const { t } = await getT();
 
-  const exam = await prisma.exam.findUnique({ where: { code } });
+  const exam = await prisma.exam.findUnique({ where: realExamKey({ code }) });
   // Inactive = seeded ahead of its question bank; not public yet.
   if (!exam || !exam.active) notFound();
 

@@ -18,6 +18,14 @@
 //     until it uses a helper or is added to the list with a reason.
 //     Plus (25 Sep 2026, fixer review) the cron mail audiences that reach
 //     Exam through Prisma's Enrollment relation (scanEnrollmentSource).
+//  3. (26 Sep 2026) KEYED lookups — `.exam.findUnique / findFirst(...)` by
+//     a client-supplied code or id. These were exempt, so a school container
+//     (active or not) was served by every /exams/[code]/* loader, the tutor,
+//     enrolment, coach, mocks and alerts. Every keyed site must now use
+//     realExamKey() (or a helper constant); the two that deliberately read
+//     the category themselves are allow-listed. Plus: every Enrollment write
+//     goes through src/lib/db/enrollment.ts, the named routes reference the
+//     helper, and the home / admin counters join the exam category.
 // No DB, no network. Run: npx vitest run tests/unit/exam-scope-guard.test.ts
 
 import fs from "node:fs";
@@ -35,6 +43,8 @@ import {
   isSchoolCategory,
   notSchoolSql,
   notSchoolSqlText,
+  realExamKey,
+  realExamOrNull,
 } from "@/lib/db/exam-scope";
 
 describe("exam-scope helpers", () => {
@@ -69,6 +79,23 @@ describe("exam-scope helpers", () => {
     expect(isSchoolCategory("school_board")).toBe(true);
     for (const c of ["GOVT_JOBS", "OLYMPIAD", "", null, undefined]) expect(isSchoolCategory(c)).toBe(false);
   });
+
+  it("realExamKey = the unique key plus `not a school container`, for findUnique's extended where", () => {
+    expect(realExamKey({ code: "SSC_CGL" })).toEqual({ code: "SSC_CGL", category: { not: "SCHOOL_BOARD" } });
+    expect(realExamKey({ id: "e1" })).toEqual({ id: "e1", category: { not: "SCHOOL_BOARD" } });
+    // No `active` test: the callers keep their own `!exam.active` rule, so an
+    // inactive real exam behaves exactly as it did (404 on public pages).
+    expect(realExamKey({ code: "X" })).not.toHaveProperty("active");
+  });
+
+  it("realExamOrNull drops a school row that arrived through a relation", () => {
+    const real = { id: "e1", category: "GOVT_JOBS" };
+    expect(realExamOrNull(real)).toBe(real);
+    expect(realExamOrNull({ id: "s1", category: "SCHOOL_BOARD" })).toBeNull();
+    expect(realExamOrNull({ id: "s1", category: "school_board" })).toBeNull();
+    expect(realExamOrNull(null)).toBeNull();
+    expect(realExamOrNull(undefined)).toBeNull();
+  });
 });
 
 // ── Source scan ───────────────────────────────────────────────────────
@@ -90,15 +117,14 @@ const UNSCOPED: Record<string, { n: number; why: string }> = {
   "src/app/admin/sme-stats/page.tsx": { n: 1, why: "ADMIN: exam filter for SME stats" },
   "src/lib/demand-mine.ts": { n: 1, why: "ADMIN: /admin/demand mines chat asks; LEFT JOIN only names the exam" },
   // KEYED
-  "src/app/api/me/topic-progress/route.ts": { n: 2, why: "KEYED: one exam by code (+ the viewer's own topic state)" },
-  "src/app/api/study-room/route.ts": { n: 1, why: "KEYED: one exam by code + topic code" },
   "src/app/api/telegram/webhook/route.ts": { n: 1, why: "KEYED: one question by id (from a scoped /today message)" },
-  "src/app/exams/[code]/results/[id]/page.tsx": { n: 1, why: "KEYED: one result by id + exam code" },
   "src/app/i/batches/[id]/page.tsx": { n: 1, why: "KEYED: one assignment's exam code, the batch's own attempts" },
   "src/app/me/report/pack/page.tsx": { n: 3, why: "KEYED: the report's own exam code" },
-  "src/lib/anon-quiz.ts": { n: 1, why: "KEYED: one exam by code" },
   "src/lib/challenge-db.ts": { n: 1, why: "KEYED: one challenge by token" },
   "src/lib/question-sweep.ts": { n: 1, why: "KEYED: reporters of one question id" },
+  // KEYED by id, reading the category themselves (26 Sep 2026)
+  "src/lib/exam-week-mail.ts": { n: 1, why: "KEYED: reads the exam's own category to pick the checklist link" },
+  "src/lib/exam-data-writer.ts": { n: 1, why: "KEYED: id → code for the IndexNow ping of a row the scoped refresher wrote" },
   // OWN
   "src/app/api/bookmarks/route.ts": { n: 1, why: "OWN: the viewer's bookmarks for one exam code" },
   "src/app/dashboard/page.tsx": { n: 2, why: "OWN: the viewer's own study state and open attempts" },
@@ -112,13 +138,15 @@ const UNSCOPED: Record<string, { n: number; why: string }> = {
 
 const HELPER_WHERE = /(?:\.\.\.|:|\?|,|\(|\[)\s*(?:REAL_EXAM_WHERE|NOT_SCHOOL_WHERE|SCHOOL_WHERE)\b/;
 const HELPER_SQL = /\$\{\s*(?:REAL_EXAM_SQL|NOT_SCHOOL_SQL|SCHOOL_SQL|notSchoolSql\(|notSchoolSqlText\()/;
+/** 26 Sep 2026: a keyed lookup's where — `where: realExamKey({ code })`. */
+const HELPER_KEY = /\bwhere:\s*realExamKey\s*\(/;
 const HELPER_VAR = (name: string) =>
   new RegExp(`(?:const|let)\\s+${name}\\b[^=;]*=\\s*(?:\\{\\s*\\.\\.\\.\\s*)?(?:REAL_EXAM_WHERE|NOT_SCHOOL_WHERE|SCHOOL_WHERE)\\b`);
 
 interface Site {
   file: string;
   line: number;
-  kind: "prisma" | "sql" | "nested" | "enrollment";
+  kind: "prisma" | "keyed" | "sql" | "nested" | "enrollment";
   scoped: boolean;
   text: string;
 }
@@ -208,14 +236,20 @@ function scanSource(src: string, file: string): Site[] {
   const s = src.replace(/\r\n/g, "\n");
   const sites: Site[] = [];
 
-  const prismaRe = /\.exam\s*\.\s*(findMany|findFirst|findFirstOrThrow|count|groupBy|aggregate)\s*\(/g;
+  // findUnique / findFirst by one key are "keyed" (26 Sep 2026): scoped by
+  // realExamKey() or a helper constant in the where, never exempt.
+  const prismaRe = /\.exam\s*\.\s*(findMany|findFirst|findFirstOrThrow|findUnique|findUniqueOrThrow|count|groupBy|aggregate)\s*\(/g;
   let m: RegExpExecArray | null;
   while ((m = prismaRe.exec(s))) {
     if (inComment(s, m.index)) continue;
     const args = balancedParens(s, m.index + m[0].length - 1);
     const whereVar = /\bwhere\s*(?:,|\})/.test(args) ? "where" : /\bwhere:\s*([A-Za-z_$][\w$]*)\s*[,}]/.exec(args)?.[1];
-    const scoped = HELPER_WHERE.test(args) || (!!whereVar && !/^(?:REAL_EXAM_WHERE|NOT_SCHOOL_WHERE|SCHOOL_WHERE)$/.test(whereVar) && HELPER_VAR(whereVar).test(s));
-    sites.push({ file, line: lineOf(s, m.index), kind: "prisma", scoped, text: args.replace(/\s+/g, " ").slice(0, 160) });
+    const scoped =
+      HELPER_WHERE.test(args) ||
+      HELPER_KEY.test(args) ||
+      (!!whereVar && !/^(?:REAL_EXAM_WHERE|NOT_SCHOOL_WHERE|SCHOOL_WHERE)$/.test(whereVar) && HELPER_VAR(whereVar).test(s));
+    const kind = /^find(?:Unique|First)/.test(m[1]) ? "keyed" : "prisma";
+    sites.push({ file, line: lineOf(s, m.index), kind, scoped, text: args.replace(/\s+/g, " ").slice(0, 160) });
   }
 
   const spans = sqlSpans(s);
@@ -268,8 +302,10 @@ const CRON_ENROLLMENT_SITES = walk(CRON_DIR).flatMap((abs) =>
 describe("every exam list query under src/ is scoped (src/lib/db/exam-scope.ts)", () => {
   it("the scan sees the query sites (a broken detector must not pass vacuously)", () => {
     expect(ALL_SITES.filter((x) => x.kind === "prisma").length).toBeGreaterThanOrEqual(35);
+    // 70 keyed lookups on 26 Sep 2026 (68 through realExamKey, 2 allow-listed).
+    expect(ALL_SITES.filter((x) => x.kind === "keyed").length).toBeGreaterThanOrEqual(60);
     expect(ALL_SITES.filter((x) => x.kind === "sql").length).toBeGreaterThanOrEqual(80);
-    expect(ALL_SITES.filter((x) => x.scoped).length).toBeGreaterThanOrEqual(90);
+    expect(ALL_SITES.filter((x) => x.scoped).length).toBeGreaterThanOrEqual(150);
   });
 
   it("no unscoped exam query outside the reasoned allow-list, and the list is exact", () => {
@@ -307,6 +343,188 @@ describe("every exam list query under src/ is scoped (src/lib/db/exam-scope.ts)"
   });
 });
 
+// ── Keyed lookups, the enrolment door and the counters (26 Sep 2026) ──
+
+const read = (file: string) => fs.readFileSync(path.join(ROOT, file), "utf8").replace(/\r\n/g, "\n");
+
+/** Every surface a client-supplied exam code or id reaches. Each must look
+ *  the exam up with realExamKey() (Prisma) — a school container then behaves
+ *  exactly like an unknown code: notFound(), 404, null. */
+const KEYED_PRISMA_FILES = [
+  // shared loaders
+  "src/lib/db/exam-cache.ts", // getExamShared: /exams/[code] + cutoff
+  "src/lib/db/syllabus.ts", // getSyllabusContext: tutor, /api/exams/[code]/syllabus, mocks, adaptive quiz
+  "src/lib/exam-night-facts.ts", // loadExamNightExam: /live, /reactions
+  "src/lib/exam-week-inputs.ts", // getExamWeekStateByCode: quiz pages
+  "src/lib/anon-quiz.ts", // getAnonQuiz: /quiz, topic quiz, challenge
+  "src/components/exam-phase/PhaseArticleView.tsx", // /checklist, /live, /reactions article
+  "src/components/ExamWeekBlock.tsx",
+  // tutor
+  "src/app/api/chat/route.ts",
+  "src/app/api/chat/import/route.ts",
+  "src/app/api/chat-route/route.ts",
+  "src/app/chat/page.tsx",
+  "src/lib/ai/tools.ts",
+  "src/lib/ai/adaptive-quiz.ts",
+  "src/lib/db/student-journey.ts",
+  // enrolment, coach, mocks
+  "src/app/api/exams/[code]/enroll/route.ts",
+  "src/app/api/enrollment/shift/route.ts",
+  "src/app/api/coach/route.ts",
+  "src/app/api/coach/today/drill/route.ts",
+  "src/app/coach/page.tsx",
+  "src/app/api/mocks/route.ts",
+  "src/app/api/mocks/custom/route.ts",
+  "src/app/api/mocks/fresh/route.ts",
+  "src/lib/focus-topics.ts",
+  // alerts, verdicts, standings, discussions, institutions
+  "src/app/api/exam-alerts/route.ts",
+  "src/app/api/exam-verdict/route.ts",
+  "src/app/api/push/subscribe/route.ts",
+  "src/lib/score-standing-db.ts",
+  "src/lib/challenge-db.ts",
+  "src/app/api/discussions/route.ts",
+  "src/app/api/i/batches/route.ts",
+  // crons that name one exam by id
+  "src/app/api/cron/exam-eve/route.ts",
+  "src/app/api/cron/exam-day-after/route.ts",
+  // /exams/[code]/* loaders with their own query
+  "src/app/exams/[code]/archive/page.tsx",
+  "src/app/exams/[code]/attempts/page.tsx",
+  "src/app/exams/[code]/build-mock/page.tsx",
+  "src/app/exams/[code]/checklist/page.tsx",
+  "src/app/exams/[code]/context.md/route.ts",
+  "src/app/exams/[code]/cutoff/page.tsx",
+  "src/app/exams/[code]/exam-week.ics/route.ts",
+  "src/app/exams/[code]/guide/page.tsx",
+  "src/app/exams/[code]/opengraph-image.tsx",
+  "src/app/exams/[code]/pyq/page.tsx",
+  "src/app/exams/[code]/pyq/[year]/page.tsx",
+  "src/app/exams/[code]/score-estimate/page.tsx",
+  "src/app/exams/[code]/syllabus/page.tsx",
+  "src/app/exams/[code]/topics/page.tsx",
+  "src/app/exams/[code]/topics/[topicCode]/page.tsx",
+  "src/app/exams/[code]/topics/[topicCode]/hi/page.tsx",
+  "src/app/exams/[code]/tricks/page.tsx",
+  "src/app/exams/[code]/updates/page.tsx",
+];
+
+/** Raw-SQL lookups by a client code: `e.code = ${code}` must sit beside a
+ *  category fragment. */
+const KEYED_SQL_FILES = [
+  "src/app/api/study-room/route.ts",
+  "src/app/api/me/topic-progress/route.ts",
+  "src/app/exams/[code]/results/[id]/page.tsx",
+  "src/lib/anon-quiz.ts",
+];
+
+describe("keyed exam lookups (26 Sep 2026): a school container is an unknown exam everywhere", () => {
+  it("every keyed lookup under src/ is scoped or allow-listed (the scan above), and none is exempt", () => {
+    const keyed = ALL_SITES.filter((x) => x.kind === "keyed");
+    const unscoped = keyed.filter((x) => !x.scoped && !UNSCOPED[x.file]).map((x) => `${x.file}:L${x.line} ${x.text}`);
+    expect(unscoped, `use where: realExamKey({ code }) / realExamKey({ id }):\n${unscoped.join("\n")}`).toEqual([]);
+  });
+
+  it("every listed route and loader references realExamKey (and none of them a bare where: { code })", () => {
+    const problems: string[] = [];
+    for (const file of KEYED_PRISMA_FILES) {
+      expect(fs.existsSync(path.join(ROOT, file)), file).toBe(true);
+      const src = read(file);
+      if (!/\bwhere:\s*realExamKey\s*\(/.test(src)) problems.push(`${file}: no where: realExamKey(...)`);
+      if (!/import \{[^}]*\brealExamKey\b[^}]*\} from "(?:@\/lib\/db\/exam-scope|\.\/exam-scope)"/.test(src)) problems.push(`${file}: realExamKey not imported from exam-scope`);
+      const bare = scanSource(src, file).filter((x) => x.kind === "keyed" && !x.scoped);
+      for (const x of bare) problems.push(`${file}:L${x.line} bare keyed lookup ${x.text}`);
+    }
+    expect(problems, problems.join("\n")).toEqual([]);
+  });
+
+  it("every raw-SQL lookup by exam code carries the category fragment", () => {
+    const problems: string[] = [];
+    for (const file of KEYED_SQL_FILES) {
+      const src = read(file);
+      const re = /e\.code = \$\{[^}]+\}([^\n]*)/g;
+      let m: RegExpExecArray | null;
+      let n = 0;
+      while ((m = re.exec(src))) {
+        n++;
+        // The fragment sits on the same line or the JOIN line just above it.
+        const lineStart = src.lastIndexOf("\n", m.index - 1) + 1;
+        const prevStart = src.lastIndexOf("\n", lineStart - 2) + 1;
+        const window = src.slice(prevStart, m.index + m[0].length);
+        if (!/\$\{(?:NOT_SCHOOL_SQL|REAL_EXAM_SQL)\}/.test(window)) problems.push(`${file}: ${m[0].trim().slice(0, 90)}`);
+      }
+      if (n === 0) problems.push(`${file}: no e.code = \${…} lookup found (update KEYED_SQL_FILES)`);
+    }
+    expect(problems, problems.join("\n")).toEqual([]);
+  });
+
+  it("the shared loaders carry the dated why", () => {
+    for (const file of ["src/lib/db/exam-cache.ts", "src/lib/db/syllabus.ts", "src/app/api/chat/route.ts"]) {
+      expect(read(file), file).toMatch(/26 Sep 2026: (?:realExamKey|`exam` came through realExamKey)/);
+    }
+  });
+});
+
+describe("the one enrolment door (src/lib/db/enrollment.ts, 26 Sep 2026)", () => {
+  const DOOR = "src/lib/db/enrollment.ts";
+
+  it("refuses a school container before touching the table", () => {
+    const src = read(DOOR);
+    expect(src).toMatch(/isSchoolCategory\(exam\.category\)/);
+    expect(src.indexOf("isSchoolCategory(exam.category)")).toBeLessThan(src.indexOf("prisma.enrollment.upsert("));
+  });
+
+  it("no other Enrollment write exists under src/", () => {
+    const re = /\.enrollment\s*\.\s*(?:upsert|create|createMany)\s*\(|INSERT INTO "Enrollment"/g;
+    const offenders: string[] = [];
+    for (const abs of walk(SRC)) {
+      const file = path.relative(ROOT, abs).split(path.sep).join("/");
+      if (file === DOOR) continue;
+      const s = fs.readFileSync(abs, "utf8").replace(/\r\n/g, "\n");
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(s))) if (!inComment(s, m.index)) offenders.push(`${file}:L${lineOf(s, m.index)}`);
+    }
+    expect(offenders, `route Enrollment writes through ensureEnrollment():\n${offenders.join("\n")}`).toEqual([]);
+  });
+
+  it("the ten writers go through ensureEnrollment", () => {
+    for (const file of [
+      "src/app/api/chat/route.ts",
+      "src/app/api/exams/[code]/enroll/route.ts",
+      "src/app/api/coach/route.ts",
+      "src/app/api/mocks/route.ts",
+      "src/lib/ai/adaptive-quiz.ts",
+      "src/app/chat/page.tsx",
+      "src/app/api/attempts/route.ts",
+      "src/app/api/enrollment/shift/route.ts",
+      "src/app/mocks/[id]/page.tsx",
+      "src/app/api/me/onboarding-profile/route.ts",
+    ]) {
+      const src = read(file);
+      expect(src, file).toMatch(/\bensureEnrollment\(/);
+      expect(src, file).toMatch(/import \{ ensureEnrollment \} from "@\/lib\/db\/enrollment"/);
+    }
+  });
+});
+
+describe("the counters count real exams' content (26 Sep 2026)", () => {
+  it("home 'at a glance': questions and notes join the exam category", () => {
+    const src = read("src/app/page.tsx");
+    const band = src.slice(src.indexOf("async function loadPortalStatsRaw"), src.indexOf("const loadPortalStats ="));
+    expect(band).toMatch(/prisma\.question\.count\(\{ where: \{ exam: NOT_SCHOOL_WHERE \} \}\)/);
+    expect(band).toMatch(/FROM "TopicTeachingNote" n[\s\S]*JOIN "Exam" e ON e\.id = s\."examId"[\s\S]*WHERE \$\{NOT_SCHOOL_SQL\}/);
+    expect(band).not.toMatch(/prisma\.question\.count\(\)/);
+  });
+
+  it("admin insights: question and topic totals join the exam category", () => {
+    const src = read("src/lib/db/insights-cache.ts");
+    expect(src).not.toMatch(/prisma\.question\.count\(\)/);
+    expect(src).not.toMatch(/prisma\.topic\.count\(\)/);
+    expect(src.match(/prisma\.question\.count\(\{ where: \{[^\n]*exam: NOT_SCHOOL_WHERE \}/g)?.length ?? 0).toBe(3);
+    expect(src.match(/prisma\.topic\.count\(\{ where: \{[^\n]*subject: \{ exam: NOT_SCHOOL_WHERE \}/g)?.length ?? 0).toBe(2);
+  });
+});
+
 describe("the detector itself", () => {
   const scan = (src: string) => scanSource(src, "fixture.ts");
 
@@ -329,14 +547,13 @@ describe("the detector itself", () => {
     ]);
   });
 
-  it("accepts the helper forms, a helper-initialised where variable, and skips findUnique and comments", () => {
+  it("accepts the helper forms, a helper-initialised where variable, and skips comments", () => {
     const sites = scan(
       [
         "await prisma.exam.findMany({ where: REAL_EXAM_WHERE });",
         "await prisma.exam.count({ where: { ...REAL_EXAM_WHERE, state } });",
         "const where: Prisma.ExamWhereInput = { ...REAL_EXAM_WHERE };",
         "await prisma.exam.findMany({ where, select: { code: true } });",
-        "await prisma.exam.findUnique({ where: { code } });",
         "// prisma.exam.findMany() in prose",
         'await prisma.$queryRaw`SELECT e.code FROM "Exam" e WHERE ${REAL_EXAM_SQL} AND ${fn(Prisma.sql`x`)}`;',
         'await prisma.$queryRaw`SELECT 1 FROM "Exam" e2 WHERE e2.active = TRUE AND ${notSchoolSql("e2")}`;',
@@ -349,6 +566,28 @@ describe("the detector itself", () => {
       ["prisma", true],
       ["sql", true],
       ["sql", true],
+    ]);
+  });
+
+  it("keyed lookups (26 Sep 2026): a bare findUnique / findFirst by code or id is flagged, realExamKey() accepted", () => {
+    const sites = scan(
+      [
+        "await prisma.exam.findUnique({ where: { code } });",
+        "await prisma.exam\n  .findUnique({ where: { id: examId }, select: { code: true } })\n  .catch(() => null);",
+        "await prisma.exam.findFirst({ where: { code: body.examCode, active: true } });",
+        "await prisma.exam.findUnique({ where: realExamKey({ code }) });",
+        "await prisma.exam.findUnique({\n  where: realExamKey({ id: meta.examId }),\n  select: { code: true },\n});",
+        "await prisma.exam.findFirst({ where: { ...REAL_EXAM_WHERE, code } });",
+        "// prisma.exam.findUnique({ where: { code } }) in prose",
+      ].join("\n"),
+    );
+    expect(sites.map((x) => [x.kind, x.scoped])).toEqual([
+      ["keyed", false],
+      ["keyed", false],
+      ["keyed", false],
+      ["keyed", true],
+      ["keyed", true],
+      ["keyed", true],
     ]);
   });
 

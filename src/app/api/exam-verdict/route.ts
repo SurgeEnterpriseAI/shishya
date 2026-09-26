@@ -19,6 +19,7 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { auth } from "@/lib/auth";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 import { istDay } from "@/lib/exam-week";
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
   if (!EXAM_CODE_RE.test(code) || !examDateFromIso(date)) {
     return NextResponse.json({ error: "invalid request" }, { status: 400 });
   }
-  const exam = await prisma.exam.findUnique({ where: { code }, select: { id: true } }).catch(() => null);
+  const exam = await prisma.exam.findUnique({ where: realExamKey({ code }), select: { id: true } }).catch(() => null);
   if (!exam) return NextResponse.json({ error: "unknown exam" }, { status: 404 });
   const tally = publicTally(await getVerdictTally(exam.id, date));
   return NextResponse.json(tally, {
@@ -122,7 +123,7 @@ export async function POST(req: NextRequest) {
   }
 
   const exam = await prisma.exam
-    .findUnique({ where: { code: examCode }, select: { id: true, active: true } })
+    .findUnique({ where: realExamKey({ code: examCode }), select: { id: true, active: true } })
     .catch(() => null);
   if (!exam || !exam.active) return NextResponse.json({ error: "unknown exam" }, { status: 404 });
 

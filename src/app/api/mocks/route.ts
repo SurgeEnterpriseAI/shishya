@@ -4,6 +4,8 @@
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
+import { ensureEnrollment } from "@/lib/db/enrollment";
 import { generateMock } from "@/lib/ai";
 import { tryCatAdaptiveMock } from "@/lib/psychometrics";
 import { getStudentState } from "@/lib/db/student-state";
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
     if (!session?.user?.id) return unauth();
     const body = await parseBody(req, Body);
 
-    const exam = await prisma.exam.findUnique({ where: { code: body.examCode } });
+    const exam = await prisma.exam.findUnique({ where: realExamKey({ code: body.examCode }) });
     if (!exam) return notFound("exam");
 
     // Build candidate question pool — only validated questions go to live mocks.
@@ -518,12 +520,8 @@ function mockTypeFromRequest(r: GenerateMockRequest) {
 
 async function getStudentStateOrInit(userId: string, examCode: string) {
   // Auto-enroll if not yet enrolled — frictionless first mock.
-  const exam = await prisma.exam.findUnique({ where: { code: examCode } });
+  const exam = await prisma.exam.findUnique({ where: realExamKey({ code: examCode }) });
   if (!exam) throw new Error("Exam not found");
-  await prisma.enrollment.upsert({
-    where: { userId_examId: { userId, examId: exam.id } },
-    update: {},
-    create: { userId, examId: exam.id },
-  });
+  await ensureEnrollment(userId, exam);
   return await getStudentState(userId, examCode);
 }

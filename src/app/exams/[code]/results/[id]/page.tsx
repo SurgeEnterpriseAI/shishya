@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
+import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 import { Header } from "@/components/Header";
 
 export const revalidate = 3600;
@@ -38,7 +39,7 @@ async function loadResult(code: string, id: string): Promise<Row | null> {
            r."cutoffNote", r."nextSteps", r."createdAt",
            e.code, e."shortName" AS short, e.name AS "examName"
     FROM "ExamResult" r JOIN "Exam" e ON e.id = r."examId"
-    WHERE r.id = ${id} AND e.code = ${code} AND r.stage <> '__not_a_result__'
+    WHERE r.id = ${id} AND e.code = ${code} AND ${NOT_SCHOOL_SQL} AND r.stage <> '__not_a_result__'
     LIMIT 1`;
   return rows[0] ?? null;
 }

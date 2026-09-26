@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { ensureEnrollment } from "@/lib/db/enrollment";
 import { bad, notFound, ok, serverError, unauth, forbidden, parseBody } from "@/lib/http";
 
 const Body = z.object({
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
 
     const mock = await prisma.mock.findUnique({
       where: { id: body.mockId },
-      select: { id: true, userId: true, examId: true, generatedBy: true },
+      select: { id: true, userId: true, examId: true, generatedBy: true, exam: { select: { category: true } } },
     });
     if (!mock) return notFound("mock");
     if (mock.userId && mock.userId !== session.user.id) return forbidden();
@@ -41,11 +42,8 @@ export async function POST(req: Request) {
     // this, the user never gets a WeaknessMap, never sees recommendations,
     // and never receives the daily brief. We saw the gap when Sachin
     // started 3 mocks without ever enrolling.
-    await prisma.enrollment.upsert({
-      where: { userId_examId: { userId: session.user.id, examId: mock.examId } },
-      update: {},
-      create: { userId: session.user.id, examId: mock.examId },
-    });
+    // 26 Sep 2026: through the one enrolment door (src/lib/db/enrollment.ts).
+    await ensureEnrollment(session.user.id, { id: mock.examId, category: mock.exam.category });
 
     const attempt = await prisma.attempt.create({
       data: {

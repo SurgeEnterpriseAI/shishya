@@ -127,15 +127,17 @@ export const getInsightsBulk = unstable_cache(
       // would inflate "active exams" and dilute news/date coverage ratios.
       safe(() => prisma.exam.count({ where: NOT_SCHOOL_WHERE }), 0),
       safe(() => prisma.exam.count({ where: REAL_EXAM_WHERE }), 0),
-      safe(() => prisma.question.count(), 0),
-      safe(() => prisma.question.count({ where: { validated: true } }), 0),
+      // 26 Sep 2026: question and topic totals count real exams' content —
+      // school containers share the tree and would pad "Topics with notes".
+      safe(() => prisma.question.count({ where: { exam: NOT_SCHOOL_WHERE } }), 0),
+      safe(() => prisma.question.count({ where: { validated: true, exam: NOT_SCHOOL_WHERE } }), 0),
       safe(
-        () => prisma.question.count({ where: { source: "AI_GENERATED", validated: false } }),
+        () => prisma.question.count({ where: { source: "AI_GENERATED", validated: false, exam: NOT_SCHOOL_WHERE } }),
         0,
       ),
       safe(() => prisma.mock.count({ where: { userId: null } }), 0),
-      safe(() => prisma.topic.count(), 0),
-      safe(() => prisma.topic.count({ where: { notes: { not: null } } }), 0),
+      safe(() => prisma.topic.count({ where: { subject: { exam: NOT_SCHOOL_WHERE } } }), 0),
+      safe(() => prisma.topic.count({ where: { notes: { not: null }, subject: { exam: NOT_SCHOOL_WHERE } } }), 0),
       safe(
         () =>
           prisma.chatMessage.count({ where: { role: "ASSISTANT", createdAt: { gte: day1 } } }),

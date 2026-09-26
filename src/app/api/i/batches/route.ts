@@ -11,6 +11,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
 import { requireInstitutionSession } from "@/lib/institution-auth";
 
 export const runtime = "nodejs";
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
   if (body.examCode) {
     const code = body.examCode.toUpperCase();
     const exam = await prisma.exam.findUnique({
-      where: { code },
+      where: realExamKey({ code }),
       select: { code: true },
     });
     if (exam) validExamCode = exam.code;

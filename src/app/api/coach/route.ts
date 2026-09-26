@@ -9,6 +9,8 @@ export const dynamic = "force-dynamic";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
+import { ensureEnrollment } from "@/lib/db/enrollment";
 
 const Body = z.object({
   examCode: z.string().min(1),
@@ -35,8 +37,8 @@ export async function POST(req: Request) {
   }
 
   const exam = await prisma.exam.findUnique({
-    where: { code: examCode },
-    select: { id: true, active: true },
+    where: realExamKey({ code: examCode }),
+    select: { id: true, active: true, category: true },
   });
   if (!exam?.active) return Response.json({ error: "exam not found" }, { status: 404 });
 
@@ -48,13 +50,7 @@ export async function POST(req: Request) {
 
   // Ensure enrollment exists so the rest of the platform (Daily-5,
   // dashboard, emails) treats this exam as theirs.
-  await prisma.enrollment
-    .upsert({
-      where: { userId_examId: { userId, examId: exam.id } },
-      update: { active: true },
-      create: { userId, examId: exam.id },
-    })
-    .catch(() => null);
+  await ensureEnrollment(userId, exam, { active: true }).catch(() => null);
 
   return Response.json({ ok: true });
 }

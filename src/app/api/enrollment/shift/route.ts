@@ -15,6 +15,8 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db/prisma";
+import { realExamKey } from "@/lib/db/exam-scope";
+import { ensureEnrollment } from "@/lib/db/enrollment";
 import { auth } from "@/lib/auth";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 import { buildTimeline } from "@/lib/exam-timeline";
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest) {
   if (!rl.ok) return rateLimited(rl);
 
   const exam = await prisma.exam
-    .findUnique({ where: { code: examCode }, select: { id: true, active: true } })
+    .findUnique({ where: realExamKey({ code: examCode }), select: { id: true, active: true, category: true } })
     .catch(() => null);
   if (!exam || !exam.active) return NextResponse.json({ error: "unknown exam" }, { status: 404 });
 
@@ -71,11 +73,7 @@ export async function POST(req: NextRequest) {
   if (!valid) return NextResponse.json({ error: "not an announced exam day" }, { status: 400 });
 
   try {
-    await prisma.enrollment.upsert({
-      where: { userId_examId: { userId, examId: exam.id } },
-      update: { shiftDate: shiftAt },
-      create: { userId, examId: exam.id, shiftDate: shiftAt },
-    });
+    await ensureEnrollment(userId, exam, { shiftDate: shiftAt });
   } catch (err) {
     console.error("[enrollment-shift] upsert failed:", err);
     return NextResponse.json({ error: "could not save" }, { status: 500 });
