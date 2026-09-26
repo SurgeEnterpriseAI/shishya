@@ -9,6 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
+import { isSchoolCategory } from "@/lib/db/exam-scope";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,10 +22,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       teachingNote: {
         select: { content: true, generatedAt: true, validatedAt: true },
       },
-      subject: { select: { name: true, exam: { select: { code: true, shortName: true } } } },
+      subject: { select: { name: true, exam: { select: { code: true, shortName: true, category: true } } } },
     },
   });
-  if (!topic) return Response.json({ error: "topic not found" }, { status: 404 });
+  // 26 Sep 2026: school chapters (SCHOOL_BOARD curricula) get notes before
+  // any school page exists; this public read by topic id was the one door
+  // that would have served them. Same answer as an unknown topic.
+  if (!topic || isSchoolCategory(topic.subject?.exam?.category)) {
+    return Response.json({ error: "topic not found" }, { status: 404 });
+  }
 
   const note = topic.teachingNote;
   return Response.json({
