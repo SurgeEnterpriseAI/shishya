@@ -119,8 +119,15 @@ ${OUTPUT_SCHEMA}`;
   return { candidates, groundedSources };
 }
 
+// 26 Sep 2026: the school content runner (src/lib/school/content-prompts.ts,
+// scripts/school-content-batch.ts) asks its generator for exactly this JSON
+// shape and coerces replies with the same function, so a school question is
+// the same object the firewall (solver → verifier → gate) has always taken.
+// Additive: nothing in this file changes for existing callers.
+export { OUTPUT_SCHEMA as GENERATOR_OUTPUT_SCHEMA };
+
 /** Shape-validate one raw candidate; return null if structurally invalid. */
-function coerceCandidate(raw: unknown): CandidateQuestion | null {
+export function coerceCandidate(raw: unknown): CandidateQuestion | null {
   if (!raw || typeof raw !== "object") return null;
   const q = raw as Record<string, unknown>;
   const body = typeof q.body === "string" ? q.body.trim() : "";

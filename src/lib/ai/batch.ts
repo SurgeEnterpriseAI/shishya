@@ -29,7 +29,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
-import { BATCH_PRICE_FACTOR, PRICING } from "./usage";
+import { BATCH_PRICE_FACTOR, PRICING, recordAiUsageAwaited } from "./usage";
 
 export type BatchRequest = Anthropic.Messages.BatchCreateParams.Request;
 export type MessageBatch = Anthropic.Messages.MessageBatch;
@@ -304,7 +304,10 @@ export type JournalRequestStatus =
 export interface JournalRequest {
   customId: string;
   phase: string;
-  /** Question id the request belongs to. */
+  /** Question id the request belongs to. 26 Sep 2026: the school content
+   *  runner (scripts/school-content-batch.ts) journals one request per
+   *  chapter (notes) or per chapter set (MCQs) and stores the Topic id here;
+   *  the field keeps its name so both runners read one journal shape. */
   questionId: string;
   /** Exam code, carried to the ledger as ref. */
   code: string;
@@ -378,4 +381,273 @@ export function loadJournal<TOutputs>(file: string): BatchJournal<TOutputs> {
   const j = JSON.parse(fs.readFileSync(file, "utf8")) as BatchJournal<TOutputs>;
   if (j?.version !== 1 || typeof j.runId !== "string" || !j.requests || !j.batches) throw new Error(`journal: ${file} is not a v1 batch journal`);
   return j;
+}
+
+/**
+ * Journals under `dir` that still have submitted batches (or a cut-off
+ * submit) and cover any of these row ids. A fresh --apply over them would
+ * pay for the same requests again, because outputs are written only when a
+ * run finishes. Additive twin (26 Sep 2026) of the scan in
+ * scripts/verify-question-bank.ts, for the school content runner's own
+ * journal folder; that script keeps its copy. An unreadable journal is
+ * reported through `warn` and skipped, a missing folder means "none".
+ */
+export function openJournalsCovering(
+  dir: string,
+  rowIds: Set<string>,
+  warn: (line: string) => void = (line) => console.warn(line),
+): Array<{ runId: string; phase: string; overlap: number; submitted: boolean }> {
+  let names: string[];
+  try {
+    names = fs.readdirSync(dir).filter((n) => n.endsWith(".json"));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw e;
+  }
+  const out: Array<{ runId: string; phase: string; overlap: number; submitted: boolean }> = [];
+  for (const name of names) {
+    let j: BatchJournal<unknown>;
+    try {
+      j = loadJournal<unknown>(path.join(dir, name));
+    } catch (e) {
+      warn(`   ! skipping unreadable journal ${name}: ${String((e as Error)?.message ?? e).split("\n")[0].slice(0, 120)}`);
+      continue;
+    }
+    if (j.phase === "done") continue;
+    const overlap = Object.keys(j.questions).filter((id) => rowIds.has(id)).length;
+    if (overlap) out.push({ runId: j.runId, phase: j.phase, overlap, submitted: j.batches.length > 0 || !!j.pendingSubmit });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Phase driver (26 Sep 2026)
+// ---------------------------------------------------------------------------
+//
+// The re-entrant submit → poll → collect → retry loop that
+// scripts/verify-question-bank.ts runs per phase, as a helper with every
+// side effect injectable (the SDK slice, the ledger, the clock, the log), so
+// the school content runner reuses it and tests drive it with a fake API.
+// The verify runner keeps its own copy: it is mid-run on the full bank and
+// is not touched. Behaviour is the same, step for step:
+//
+//   0. a submit that was cut off (kill during the create POST) is adopted
+//      from the API rather than submitted twice (findUnjournaledBatch);
+//   1. "built" requests are submitted attempt by attempt, ≤ BATCH_CHUNK_MAX
+//      per batch, and the journal is saved before and after each create;
+//   2. open batches are polled to "ended";
+//   3. ended batches are collected once: every succeeded result is ledgered
+//      exactly once (r.ledgered), parsed by onMessage (true = usable), and a
+//      stale request (its row left the run) is ledgered but never parsed;
+//   4. errored (retryable), expired, canceled — and unusable when
+//      retryUnusable — requests get ONE resubmission (attempt 2);
+// then whatever is not succeeded / unusable / stale is marked failed.
+
+export interface PhaseDeps {
+  /** SDK slice; the live bulk-key client when omitted. */
+  api?: BatchesApi;
+  /**
+   * Ledgers one succeeded result and returns its USD. Default: an AiUsage row
+   * via recordAiUsageAwaited(feature, message, { model, ref: request.code,
+   * batch: true }); a test passes a stub so nothing reaches the database.
+   */
+  ledger?: (feature: string, req: JournalRequest, message: Anthropic.Messages.Message) => Promise<number>;
+  pollIntervalMs?: number;
+  pollMaxMs?: number;
+  log?: (line: string) => void;
+  warn?: (line: string) => void;
+  /** Ledger inserts in flight while collecting (see recordAiUsageAwaited). Default 6. */
+  ledgerParallel?: number;
+  /** Journal saves while collecting: a kill between two saves re-ledgers at most this many results on resume. Default 50. */
+  saveEvery?: number;
+  /** Clock, for the submit timestamps (tests pin it). */
+  now?: () => Date;
+}
+
+export interface PhaseOutcome {
+  /** USD ledgered by this call (results collected now, not on an earlier resume). */
+  costUsd: number;
+  /** Requests that ended failed (API error after the retry, or non-retryable). */
+  failed: JournalRequest[];
+  /** Replies still unparseable after their retry (only when retryUnusable). */
+  stuck: JournalRequest[];
+}
+
+const isTerminalStatus = (s: JournalRequestStatus) => s !== "built" && s !== "submitted";
+
+function defaultLedger(feature: string, req: JournalRequest, message: Anthropic.Messages.Message): Promise<number> {
+  return recordAiUsageAwaited(feature, message, { model: message.model, ref: req.code, batch: true });
+}
+
+export async function runJournalPhase<TOutputs>(
+  journal: BatchJournal<TOutputs>,
+  file: string,
+  phase: string,
+  feature: string,
+  build: (req: JournalRequest) => Anthropic.Messages.MessageCreateParamsNonStreaming,
+  onMessage: (req: JournalRequest, message: Anthropic.Messages.Message) => boolean,
+  retryUnusable: boolean,
+  deps: PhaseDeps = {},
+): Promise<PhaseOutcome> {
+  const api = deps.api;
+  const ledger = deps.ledger ?? defaultLedger;
+  const log = deps.log ?? ((line: string) => console.log(line));
+  const warn = deps.warn ?? ((line: string) => console.warn(line));
+  const now = deps.now ?? (() => new Date());
+  const ledgerParallel = deps.ledgerParallel ?? 6;
+  const saveEvery = deps.saveEvery ?? 50;
+  const pollIntervalMs = deps.pollIntervalMs ?? 60_000;
+  let costUsd = 0;
+  const reqs = () => Object.values(journal.requests).filter((r) => r.phase === phase);
+
+  // 0. adopt a batch the API accepted while the journal was not yet written
+  const pending = journal.pendingSubmit;
+  if (pending && pending.phase === phase) {
+    const known = new Set(journal.batches.map((b) => b.id));
+    const found = await findUnjournaledBatch(known, pending.at, pending.count, api);
+    if (found) {
+      log(`   ↩ ${phase} attempt ${pending.attempt}: adopting batch ${found.id} (${pending.count} requests) that the API accepted before the journal was written`);
+      journal.batches.push({ id: found.id, phase, attempt: pending.attempt, count: pending.count, submittedAt: pending.at, status: "in_progress", collected: false });
+      for (const id of pending.customIds) {
+        const r = journal.requests[id];
+        if (r && r.status === "built") {
+          r.status = "submitted";
+          r.batchId = found.id;
+        }
+      }
+      journal.phase = `${phase}-submitted`;
+    } else {
+      log(`   ↩ ${phase}: the interrupted submit of ${pending.count} requests never reached the API; submitting again`);
+    }
+    delete journal.pendingSubmit;
+    saveJournal(file, journal);
+  }
+
+  for (let pass = 0; pass < 3; pass++) {
+    // 1. submit (attempt by attempt, so a batch never mixes first tries and retries)
+    for (const attempt of [1, 2]) {
+      const toSubmit = reqs().filter((r) => r.status === "built" && r.attempt === attempt);
+      for (const part of chunk(toSubmit, BATCH_CHUNK_MAX)) {
+        const requests: BatchRequest[] = part.map((r) => ({ custom_id: r.customId, params: build(r) }));
+        log(`   → ${phase} attempt ${attempt}: submitting ${requests.length} requests…`);
+        journal.pendingSubmit = { phase, attempt, count: requests.length, at: now().toISOString(), customIds: part.map((r) => r.customId) };
+        saveJournal(file, journal);
+        const batch = await submitBatch(requests, api);
+        journal.batches.push({ id: batch.id, phase, attempt, count: requests.length, submittedAt: now().toISOString(), status: "in_progress", collected: false });
+        for (const r of part) {
+          r.status = "submitted";
+          r.batchId = batch.id;
+        }
+        delete journal.pendingSubmit;
+        journal.phase = `${phase}-submitted`;
+        saveJournal(file, journal);
+        log(`     batch ${batch.id} (expires ${batch.expires_at})`);
+      }
+    }
+
+    // 2. poll
+    for (const b of journal.batches.filter((x) => x.phase === phase && x.status !== "ended")) {
+      log(`   … polling ${b.id} every ${pollIntervalMs / 1000}s`);
+      const ended = await pollBatch(b.id, {
+        intervalMs: pollIntervalMs,
+        maxMs: deps.pollMaxMs,
+        api,
+        onTick: (m) => {
+          b.counts = m.request_counts;
+          saveJournal(file, journal);
+          const c = m.request_counts;
+          log(`     ${now().toISOString().slice(11, 19)} ${m.processing_status} · processing ${c.processing} · succeeded ${c.succeeded} · errored ${c.errored} · expired ${c.expired} · canceled ${c.canceled}`);
+        },
+      });
+      b.status = "ended";
+      b.endedAt = ended.ended_at ?? now().toISOString();
+      b.counts = ended.request_counts;
+      saveJournal(file, journal);
+    }
+
+    // 3. collect + ledger + parse
+    for (const b of journal.batches.filter((x) => x.phase === phase && x.status === "ended" && !x.collected)) {
+      log(`   ← collecting ${b.id}…`);
+      const outcomes = [...(await collectResults(b.id, api)).values()];
+      let done = 0;
+      await mapLimit(outcomes, ledgerParallel, async (o) => {
+        const r = journal.requests[o.customId];
+        if (!r || r.batchId !== b.id) return;
+        // `costUsd += await …` would read costUsd before the await and lose
+        // updates across the parallel ledger inserts; add after awaiting.
+        if (r.status === "stale") {
+          if (o.type === "succeeded" && !r.ledgered) {
+            const usd = await ledger(feature, r, o.message);
+            costUsd += usd;
+            r.ledgered = true;
+          }
+          return;
+        }
+        if (isTerminalStatus(r.status)) return;
+        if (o.type === "succeeded") {
+          if (!r.ledgered) {
+            const usd = await ledger(feature, r, o.message);
+            costUsd += usd;
+            r.ledgered = true;
+          }
+          r.status = onMessage(r, o.message) ? "succeeded" : "unusable";
+        } else if (o.type === "errored") {
+          r.status = o.retryable ? "errored" : "failed";
+          r.error = `${o.errorType}: ${o.error}`;
+        } else {
+          r.status = o.type;
+        }
+        done += 1;
+        if (done % saveEvery === 0) saveJournal(file, journal);
+      });
+      for (const r of reqs()) if (r.batchId === b.id && r.status === "submitted") r.status = "expired";
+      b.collected = true;
+      journal.phase = `${phase}-collected`;
+      saveJournal(file, journal);
+      const n = { ok: 0, unusable: 0, err: 0, stale: 0 };
+      for (const r of reqs()) {
+        if (r.batchId !== b.id) continue;
+        if (r.status === "succeeded") n.ok += 1;
+        else if (r.status === "unusable") n.unusable += 1;
+        else if (r.status === "stale") n.stale += 1;
+        else n.err += 1;
+      }
+      log(`     ${b.id}: ${n.ok} usable · ${n.unusable} unusable replies · ${n.err} errored/expired${n.stale ? ` · ${n.stale} stale (ledgered only)` : ""} · ledger +$${costUsd.toFixed(2)} so far`);
+    }
+
+    // 4. one retry for what is worth retrying
+    const retry = reqs().filter(
+      (r) => r.attempt === 1 && (r.status === "errored" || r.status === "expired" || r.status === "canceled" || (retryUnusable && r.status === "unusable")),
+    );
+    if (!retry.length) break;
+    log(`   ↻ ${phase}: resubmitting ${retry.length} requests once`);
+    for (const r of retry) {
+      r.attempt = 2;
+      r.status = "built";
+      r.batchId = undefined;
+      // The retry's reply is a new billable result: `ledgered` guards the
+      // current attempt only (a crash between its ledger row and its status
+      // update still re-parses without a second row on resume).
+      delete r.ledgered;
+    }
+    saveJournal(file, journal);
+  }
+
+  const failed = reqs().filter((r) => r.status !== "succeeded" && r.status !== "unusable" && r.status !== "stale");
+  for (const r of failed) if (r.status !== "failed") r.status = "failed";
+  if (failed.length) {
+    saveJournal(file, journal);
+    warn(`   ✗ ${phase}: ${failed.length} requests failed after a retry — first: ${failed
+      .slice(0, 5)
+      .map((r) => `${r.customId} ${r.error ?? r.status}`)
+      .join(" | ")}`);
+  }
+  const stuck = retryUnusable ? reqs().filter((r) => r.status === "unusable" && r.attempt === 2) : [];
+  if (stuck.length) {
+    warn(`   ✗ ${phase}: ${stuck.length} replies unusable after a retry — first: ${stuck
+      .slice(0, 5)
+      .map((r) => `${r.customId} ${r.error ?? "not JSON"}`)
+      .join(" | ")}`);
+  }
+  return { costUsd, failed, stuck };
 }
