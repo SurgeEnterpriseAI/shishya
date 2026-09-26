@@ -8,11 +8,18 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { EDUCATION_LOANS, TAX_BENEFIT_NOTE } from "@/lib/worldwide-data";
 
+// 26 Sep 2026: own openGraph {title, description, url} — without one the page
+// inherited og:url=https://shishya.in and the site-wide card text.
+const TITLE = "Education Loan for Study Abroad (India) — Compare SBI, HDFC, Axis, ICICI, NBFCs";
+const DESCRIPTION =
+  `Honest comparison of ${EDUCATION_LOANS.length} Indian education loan providers for study abroad. SBI Global Ed-Vantage, HDFC Credila, Axis, ICICI, BoB, Avanse, GyanDhan, Prodigy. Section 80E tax benefit. No affiliate links.`;
+const PAGE_URL = "https://shishya.in/worldwide/loans";
+
 export const metadata: Metadata = {
-  title: "Education Loan for Study Abroad (India) — Compare SBI, HDFC, Axis, ICICI, NBFCs | Shishya",
-  description:
-    "Honest comparison of 8 Indian education loan providers for study abroad. SBI Global Ed-Vantage, HDFC Credila, Axis, ICICI, BoB, Avanse, GyanDhan, Prodigy. Section 80E tax benefit. No affiliate links.",
-  alternates: { canonical: "https://shishya.in/worldwide/loans" },
+  title: `${TITLE} | Shishya`,
+  description: DESCRIPTION,
+  alternates: { canonical: PAGE_URL },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: PAGE_URL, siteName: "Shishya", locale: "en_IN", type: "website" },
   keywords: [
     "education loan India",
     "SBI Global Ed-Vantage",

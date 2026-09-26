@@ -34,7 +34,8 @@
 // withholds a better-tier date, and rows from one refresh run are a
 // multi-day window, not a revision.
 
-import type { SourceTier, TimelineRow } from "@/lib/exam-timeline";
+import { titleCycleYear, type SourceTier, type TimelineRow } from "@/lib/exam-timeline";
+import { istDayNumber } from "@/lib/exam-phase";
 
 /** How far back an announced exam day still leads the title. */
 export const HELD_WINDOW_DAYS = 60;
@@ -352,6 +353,50 @@ export function hubDateLead(timeline: TimelineRow[], exam: HubTitleExam, created
   return { kind: "held", row, stage: heldStage(row.label), verb };
 }
 
+// ── The year beside the exam's name (26 Sep 2026) ────────────────────────
+//
+// The title used to print the calendar year ("JEE Main 2026 — Exam Date Not
+// Announced Yet" in September 2026, when JEE Main 2026 was long over and the
+// tracker already held the 2027 rows). Now:
+//   cycle     — "{Exam} {year} — {lead}": the held row's year for a held
+//               lead, else titleCycleYear (src/lib/exam-timeline.ts);
+//   held-year — nothing ahead names a year, but an announced written sitting
+//               of the whole exam went by: "{Exam} — 2026 Exam Held; Next
+//               Exam Date Not Announced Yet" (the year stated as held);
+//   none      — no year at all: "{Exam} — Exam Date Not Announced Yet".
+// A held year never sits beside "Not Announced Yet" as if it were the cycle
+// to come, and no future year is invented.
+
+export type HubTitleYear = { kind: "cycle"; year: number } | { kind: "held-year"; year: number } | { kind: "none" };
+
+/** The year of the latest announced, past, written exam day that names the
+ *  whole exam (the held lead's eligibility rules, without its 60-day window
+ *  and date checks — only the year is stated). Null when there is none. */
+export function lastHeldExamYear(timeline: readonly TimelineRow[], exam: HubTitleExam, now: Date = new Date()): number | null {
+  const today = istDayNumber(now);
+  const held = timeline.filter(
+    (r) =>
+      r.kind === "EXAM" &&
+      r.tier !== "expected" &&
+      istDayNumber(r.date) < today &&
+      !labelNamesOtherExam(r.label, exam) &&
+      !isNonWrittenStage(r.label, exam) &&
+      !isCalledOff(r) &&
+      !isTentativeLabel(r.label) &&
+      labelNamesWholeExam(r.label, exam),
+  );
+  return held.length ? held[held.length - 1].date.getUTCFullYear() : null;
+}
+
+/** Which year the hub title prints, and how (see the section header). */
+export function hubTitleYear(lead: HubDateLead, timeline: readonly TimelineRow[], exam: HubTitleExam, now: Date = new Date()): HubTitleYear {
+  if (lead.kind === "held") return { kind: "cycle", year: lead.row.date.getUTCFullYear() };
+  const year = titleCycleYear(timeline, now);
+  if (year !== null) return { kind: "cycle", year };
+  const heldYear = lastHeldExamYear(timeline, exam, now);
+  return heldYear !== null ? { kind: "held-year", year: heldYear } : { kind: "none" };
+}
+
 // ── Wording ──────────────────────────────────────────────────────────────
 
 export type HubTitleLocale = "en" | "hi" | "te";
@@ -398,6 +443,50 @@ export function heldDescriptionLead(locale: HubTitleLocale, shortName: string, l
   if (locale === "hi") return `${shortName} ${stage}परीक्षा ${date} को ${verb}${tier}; अगली परीक्षा तिथि: अभी घोषित नहीं. `;
   if (locale === "te") return `${shortName} ${stage}పరీక్ష ${date}న ${verb}${tier}; తదుపరి పరీక్ష తేదీ: ఇంకా ప్రకటించలేదు. `;
   return `${shortName} ${stage}exam ${verb.toLowerCase()} ${date}${tier}; next exam date: not announced yet. `;
+}
+
+/** The start of the hub title up to its date lead, for every year shape:
+ *  "SSC CGL 2027 — {dateBit}", "CDS — 2026 Exam Held; Next Exam Date Not
+ *  Announced Yet, ", "X — {dateBit}". `name` is the short name plus any
+ *  state bit; `dateBit` is the date lead WITH its trailing ", " (unused for
+ *  held-year, which is its own lead). */
+export function hubTitlePrefix(locale: HubTitleLocale, name: string, y: HubTitleYear, dateBit: string): string {
+  if (y.kind === "cycle") return `${name} ${y.year} — ${dateBit}`;
+  if (y.kind === "held-year") return `${name} — ${heldYearTitleLead(locale, y.year)}, `;
+  return `${name} — ${dateBit}`;
+}
+
+/** The held-year lead for the title: nothing ahead names a year, an
+ *  announced sitting went by in `year`. Keeps the "Exam Date … ," words
+ *  truth-lint's parseHubTitle reads, as "not announced". */
+export function heldYearTitleLead(locale: HubTitleLocale, year: number): string {
+  if (locale === "hi") return `${year} की परीक्षा हो चुकी है; अगली परीक्षा तिथि अभी घोषित नहीं`;
+  if (locale === "te") return `${year} పరీక్ష జరిగింది; తదుపరి పరీక్ష తేదీ ఇంకా ప్రకటించలేదు`;
+  return `${year} Exam Held; Next Exam Date Not Announced Yet`;
+}
+
+/** The held-year answer that opens the description. */
+export function heldYearDescriptionLead(locale: HubTitleLocale, shortName: string, year: number): string {
+  if (locale === "hi") return `${shortName} की ${year} परीक्षा हो चुकी है; अगली परीक्षा तिथि: अभी घोषित नहीं. `;
+  if (locale === "te") return `${shortName} ${year} పరీక్ష జరిగింది; తదుపరి పరీక్ష తేదీ: ఇంకా ప్రకటించలేదు. `;
+  return `${shortName} ${year} exam held; next exam date: not announced yet. `;
+}
+
+/** A meta description cut to `max` characters at the last sentence end
+ *  (kept whole) or, when that would drop more than half, at the last word
+ *  boundary with "…" (26 Sep 2026: the hub sliced at exactly 300 characters,
+ *  mid-word — "…checked against the offic"). Whitespace is collapsed. */
+export function clipDescription(text: string, max = 300): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (t.length <= max) return t;
+  let lastEnd = -1;
+  for (const m of t.slice(0, max + 1).matchAll(/[.!?।](?=\s|$)/g)) {
+    if (m.index !== undefined && m.index < max) lastEnd = m.index;
+  }
+  if (lastEnd >= Math.floor(max / 2)) return t.slice(0, lastEnd + 1);
+  const sp = t.lastIndexOf(" ", max - 1);
+  const head = (sp > 0 ? t.slice(0, sp) : t.slice(0, max - 1)).replace(/[\s,;:—–-]+$/u, "");
+  return `${head}…`;
 }
 
 /** The revision lead for the title: no date is stated. */

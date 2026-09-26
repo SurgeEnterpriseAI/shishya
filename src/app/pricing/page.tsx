@@ -1,15 +1,39 @@
 // /pricing — the shortest pricing page in ed-tech: everything free,
 // one optional human service at ₹9. Razorpay KYC-review requirement.
+//
+// 26 Sep 2026 (whole-education identity): the typed "175+ exams" is gone
+// from the page and its FAQPage JSON-LD; the free list now covers every
+// section (school, entrance and government exams, colleges, scholarships,
+// careers). The fee in the new copy is MENTOR_SESSION_FEE_PAISE — what
+// src/app/api/mentor-sessions/[id]/route.ts charges: nothing for a student's
+// first session, the fee from the second (a prior DONE session), and free
+// whenever the payment link cannot be created.
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { MENTOR_SESSION_FEE_PAISE } from "@/lib/razorpay";
+
+const MENTOR_FEE = `₹${MENTOR_SESSION_FEE_PAISE / 100}`;
+const PRICING_TITLE = "Pricing — Shishya";
+const PRICING_DESCRIPTION = `Every study feature on Shishya is free with no paywall — school, entrance and government exams, colleges, scholarships and careers. The only paid item is an optional mentor session: first free, then ${MENTOR_FEE} per session inclusive of GST.`;
+
+/** The one free sentence — the same wording on the page and in the FAQ. */
+const FREE_SENTENCE = `Every study feature is free with no paywall; the only paid item is an optional ${MENTOR_FEE} session with a human mentor (first session free).`;
 
 export const metadata: Metadata = {
-  title: "Pricing — Shishya",
-  description: "Shishya is free for aspirants. The only optional paid service is a mentor session: first free, then ₹9 per session inclusive of GST.",
+  title: PRICING_TITLE,
+  description: PRICING_DESCRIPTION,
   // Self canonical (16 Sep 2026): one of 7 sitemap landings the crawl found without one.
   alternates: { canonical: "https://shishya.in/pricing" },
+  openGraph: {
+    title: PRICING_TITLE,
+    description: PRICING_DESCRIPTION,
+    url: "https://shishya.in/pricing",
+    siteName: "Shishya",
+    locale: "en_IN",
+    type: "website",
+  },
 };
 
 // FAQPage JSON-LD: this is the schema AI engines and Google quote when
@@ -23,7 +47,7 @@ const pricingFaq = {
       name: "Is Shishya really free?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: `Yes — every preparation feature on Shishya is 100% free with no premium tier: mock tests for 175+ Indian government and entrance exams, previous-year papers, study notes, the AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages, personal coach plans, daily status reports, personalised study packs, All-India live tests, cutoffs and guides. No trial, no credit card.`,
+        text: `Yes. ${FREE_SENTENCE} Free on Shishya, with no premium tier: school chapters with the official books linked and Shishya's own notes and checked practice where ready; mock tests, previous-year papers and PYQ-pattern practice, study notes, trackers, cutoffs and guides for entrance and government exams; the AI tutor in English and ${INDIAN_LANGUAGE_COUNT} Indian languages; personal coach plans, daily status reports, personalised study packs and All-India live tests; and the colleges, scholarships and careers pages. No trial, no credit card.`,
       },
     },
     {
@@ -53,11 +77,14 @@ export default function PricingPage() {
 
       <div className="mt-5 rounded-xl border-2 border-emerald-300 bg-emerald-50/50 p-5">
         <p className="text-base font-bold text-ink-900">The platform: ₹0. Free, always.</p>
-        <p className="mt-1">
-          Mock tests for 175+ exams, previous-year papers, study notes, the AI tutor in {INDIAN_LANGUAGE_COUNT} Indian
-          languages, personal coach plans, daily status reports, personalised study packs, All-India
-          live tests, cutoffs and guides — all free. No trial, no credit card, no premium tier.
-        </p>
+        <p className="mt-1">{FREE_SENTENCE}</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li><b>School:</b> CBSE/NCERT and CISCE class pages with the official books linked, and Shishya&apos;s own chapter notes and checked practice where they are ready.</li>
+          <li><b>Entrance and government exams:</b> mock tests, previous-year papers and PYQ-pattern practice, study notes, date trackers, cutoffs and guides.</li>
+          <li><b>AI tutor</b> in English and {INDIAN_LANGUAGE_COUNT} Indian languages, personal coach plans, daily status reports, personalised study packs and All-India live tests.</li>
+          <li><b>Colleges, scholarships and careers:</b> every page, free to read.</li>
+        </ul>
+        <p className="mt-2">No trial, no credit card, no premium tier.</p>
       </div>
 
       <div className="mt-4 rounded-xl border border-ink-200 bg-white p-5">

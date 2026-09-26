@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Free Mistake Notebook — stop repeating the same mock-test mistakes | Shishya",
   description:
-    "Every question you get wrong in a mock is collected automatically into your free Mistake Notebook, grouped by exam with the correct answer and solution — then re-test yourself on exactly those questions until each one is cleared. The topper habit, kept for you. Free for 170+ Indian government and entrance exams.",
+    "Every question you get wrong in a mock is collected automatically into your free Mistake Notebook, grouped by exam with the correct answer and solution — then re-test yourself on exactly those questions until each one is cleared. The topper habit, kept for you. Free on every Shishya mock for government and entrance exams.",
   alternates: { canonical: "https://shishya.in/revision" },
   openGraph: {
     title: 'Mistake Notebook — turn every wrong answer into a mark | Shishya'.replace(" | Shishya", ""),
@@ -166,7 +166,7 @@ export default async function RevisionPage() {
             Start my free Mistake Notebook →
           </Link>
           <p className="mt-2 text-xs text-ink-500">
-            Free forever · 170+ exams · your notebook fills itself from your very first mock.
+            Free forever · every exam on Shishya · your notebook fills itself from your very first mock.
           </p>
         </section>
       </main>

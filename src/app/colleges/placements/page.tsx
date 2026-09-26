@@ -8,11 +8,18 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
+// 26 Sep 2026: own openGraph {title, description, url} — without one the page
+// inherited og:url=https://shishya.in and the site-wide card text.
+const TITLE = "Understanding College Placement Data — What the numbers really mean";
+const DESCRIPTION =
+  "Honest read of Indian college placement statistics. Median vs Highest CTC, placement % math, foreign vs domestic offers, service vs product split. Read this before picking a college based on placements.";
+const PAGE_URL = "https://shishya.in/colleges/placements";
+
 export const metadata: Metadata = {
-  title: "Understanding College Placement Data — What the numbers really mean | Shishya",
-  description:
-    "Honest read of Indian college placement statistics. Median vs Highest CTC, placement % math, foreign vs domestic offers, service vs product split. Read this before picking a college based on placements.",
-  alternates: { canonical: "https://shishya.in/colleges/placements" },
+  title: `${TITLE} | Shishya`,
+  description: DESCRIPTION,
+  alternates: { canonical: PAGE_URL },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: PAGE_URL, siteName: "Shishya", locale: "en_IN", type: "article" },
   keywords: [
     "college placement india",
     "IIT placement statistics",

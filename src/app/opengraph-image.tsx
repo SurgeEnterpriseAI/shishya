@@ -16,9 +16,19 @@
 // text container is display:flex, no template-mixed children.
 
 import { ImageResponse } from "next/og";
+import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { SITE_SLOGAN } from "@/lib/site-description";
+
+// 26 Sep 2026: the card now says what Shishya is — one smart place to study
+// across school, entrance and government exams, colleges, scholarships and
+// careers — instead of "Every Indian entrance exam". Card text stays Latin
+// script (Satori cannot shape Devanagari / Telugu; the शि logo tile is the
+// one existing exception). The language count is derived, never typed.
+const SUBLINE = "School · Entrance exams · Government exams · Colleges & scholarships · Careers";
+const FOOTER = `Free · no paywall · English + ${INDIAN_LANGUAGE_COUNT} Indian languages`;
 
 export const runtime = "nodejs";
-export const alt = "Shishya — free preparation for every Indian entrance exam";
+export const alt = `Shishya — ${SITE_SLOGAN.toLowerCase()}: school, entrance exams, government exams, colleges and scholarships, careers. Free, no paywall, in English and ${INDIAN_LANGUAGE_COUNT} Indian languages.`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -73,15 +83,15 @@ export default async function Image() {
             maxWidth: "1000px",
           }}
         >
-          <div style={{ display: "flex" }}>Every Indian entrance exam,</div>
-          <div style={{ display: "flex", color: "#c2410c" }}>free.</div>
+          <div style={{ display: "flex" }}>One smart place</div>
+          <div style={{ display: "flex", color: "#c2410c" }}>to study</div>
         </div>
 
-        <div style={{ display: "flex", marginTop: "32px", fontSize: "32px", color: "#57534e", fontWeight: 500 }}>
-          Free mocks · previous year papers · syllabus · exam dates
+        <div style={{ display: "flex", marginTop: "32px", maxWidth: "1000px", fontSize: "25px", color: "#57534e", fontWeight: 500 }}>
+          {SUBLINE}
         </div>
         <div style={{ display: "flex", marginTop: "20px", fontSize: "26px", color: "#78716c", fontWeight: 500 }}>
-          no paywall · no ads · in your language
+          {FOOTER}
         </div>
       </div>
     ),

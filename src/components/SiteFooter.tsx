@@ -9,14 +9,28 @@ import Link from "next/link";
 // the field web-vitals beacon. Both render nothing most of the time.
 import { InstallOffer } from "./InstallOffer";
 import { WebVitals } from "./WebVitals";
+// 26 Sep 2026 (whole-education identity): every page links the independent
+// sections (src/lib/site-description.ts SECTION_LINKS) so crawlers reach
+// school, entrance, government, colleges, scholarships and careers from any
+// URL, and the tagline is "one smart place to study", not "free for
+// aspirants". The row adds English letters to every /hi and /te twin page:
+// SITE_FRAME_LATIN in src/lib/twin-localisation.ts should follow.
+import { SECTION_LINKS } from "@/lib/site-description";
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-ink-100 bg-white py-5 print:hidden">
+      <nav aria-label="Sections" className="container-prose mb-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-ink-700">
+        {SECTION_LINKS.map((s) => (
+          <Link key={s.href} href={s.href} className="hover:text-ink-900">
+            {s.label}
+          </Link>
+        ))}
+      </nav>
       <div className="container-prose flex flex-wrap items-center justify-between gap-2 text-xs text-ink-500">
         <p>
-          © {new Date().getFullYear()} Surge Software Solutions Pvt Ltd · Shishya is free for
-          aspirants, always.
+          © {new Date().getFullYear()} Surge Software Solutions Pvt Ltd · Shishya — one smart, free place
+          to study.
         </p>
         <p className="flex flex-wrap gap-4">
           {/* Exam calendar in the site-wide footer (25 Aug 2026): every

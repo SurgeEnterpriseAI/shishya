@@ -305,8 +305,9 @@ ones you've heard of.
   {
     slug: "ai-tutoring-where-it-works",
     title: "Where AI tutoring actually helps Indian aspirants — and where it doesn't",
+    // 26 Sep 2026: "160+ exams" was a typed count; the catalogue size lives in the DB. "After a year of running an AI tutor" was false too — Shishya began in May 2026.
     dek:
-      "After a year of running an AI tutor across 160+ exams, the clearest signal is: AI is excellent for explanation and drilling, marginal for strategy, and counter-productive for original problem-solving practice.",
+      "From running an AI tutor across the exams on Shishya, the clearest signal so far is: AI is excellent for explanation and drilling, marginal for strategy, and counter-productive for original problem-solving practice.",
     publishedOn: "2026-05-05",
     readMins: 5,
     author: "Shishya editorial",
@@ -447,7 +448,7 @@ If you're at a tier-3 college right now:
 College tier matters less than what you do over the next 5 years. The
 tier-3 graduates who reach senior product roles aren't lucky — they're
 strategic about skill compounding, employer choices, and network building.
-Read our <a href="/alumni-stories#tier3-btech-faang">alumni stories</a> for a real example.
+See our <a href="/alumni-stories#tier3-btech-faang">career journey examples</a> for a composite example (built from several students' paths, not one person's story).
 `,
   },
 

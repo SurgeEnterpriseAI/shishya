@@ -1,10 +1,43 @@
 // /careers/[slug] — per-career detail page.
+//
+// 26 Sep 2026 (every-education-search wave):
+//   • Occupation JSON-LD: name, description, qualifications, skills,
+//     responsibilities, occupationLocation India, and estimatedSalary — one
+//     MonetaryAmountDistribution per salary band, named "indicative", with
+//     the band's own text and the sources src/data/careers.ts cites. The
+//     10th/90th-percentile numbers are the band's own ends, read only from a
+//     plain "₹a - ₹b LPA" / "Cr" band; any other band stays text only.
+//   • exam chips (and exam links inside entry routes) link only codes in the
+//     live catalogue — /exams/CLAT and /exams/BITSAT 404'd — other codes are
+//     plain labels; careers whose data named no entrance exam get the one
+//     their degree route needs (src/lib/section-related.ts);
+//   • links to the /colleges/stream/* pages the career runs through;
+//   • description cut at a sentence / word boundary (was .slice(0, 280));
+//   • revalidate daily (the page now reads the live exam list).
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
-import { CAREERS, findCareer, careerCategoryLabel } from "@/data/careers";
+import { ExamChip } from "@/components/ExamChip";
+import { CAREERS, findCareer, careerCategoryLabel, type CareerSalaryBand } from "@/data/careers";
+import { loadLiveExams } from "@/lib/live-exam-codes";
+import { CAREER_SALARY_SOURCES, careerCollegeStreams, careerExamCodes, salaryBandRange } from "@/lib/section-related";
+import { clipDescription, examHubHref } from "@/lib/section-seo";
+
+export const revalidate = 86_400;
+
+function salaryDistribution(b: CareerSalaryBand) {
+  const range = salaryBandRange(b.band);
+  return {
+    "@type": "MonetaryAmountDistribution",
+    name: `${b.experience} (indicative)`,
+    currency: "INR",
+    duration: "P1Y",
+    ...(range ? { percentile10: range[0], percentile90: range[1] } : {}),
+    description: `Indicative band: ${b.band}${b.note ? ` (${b.note})` : ""}. Sources: ${CAREER_SALARY_SOURCES}.`,
+  };
+}
 
 interface PageParams { slug: string }
 
@@ -22,7 +55,7 @@ export async function generateMetadata({
   const title = `${c.name} Career in India ${year} — Salary, Qualifications, Path | Shishya`;
   return {
     title,
-    description: `${c.dek} ${c.outlook}`.slice(0, 280),
+    description: clipDescription(`${c.dek} ${c.outlook}`),
     alternates: { canonical: `https://shishya.in/careers/${c.slug}` },
     keywords: c.keywords,
     openGraph: {
@@ -42,6 +75,23 @@ export default async function CareerPage({
   const { slug } = await params;
   const c = findCareer(slug);
   if (!c) notFound();
+  const [live] = await Promise.all([loadLiveExams()]);
+  const examCodes = careerExamCodes(c);
+  const streams = careerCollegeStreams(c);
+  const url = `https://shishya.in/careers/${c.slug}`;
+
+  const occupationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Occupation",
+    name: c.name,
+    url,
+    description: clipDescription(`${c.dek} ${c.whatTheyDo}`, 300),
+    qualifications: c.qualifications.join("; "),
+    skills: c.skills.join("; "),
+    responsibilities: c.dayToDay,
+    occupationLocation: { "@type": "Country", name: "India" },
+    estimatedSalary: c.salaryBands.map(salaryDistribution),
+  };
 
   // FAQ JSON-LD: high-volume "how to become X / X salary" queries.
   const faqJsonLd = {
@@ -92,6 +142,7 @@ export default async function CareerPage({
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(occupationJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <Header />
@@ -128,15 +179,26 @@ export default async function CareerPage({
               <p className="mt-1 text-xs text-ink-700">{r.body}</p>
               {r.links && r.links.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  {r.links.map((l, j) => (
-                    <Link
-                      key={j}
-                      href={l.href}
-                      className="rounded-md border border-saffron-300 bg-saffron-50/40 px-2 py-0.5 text-[11px] text-saffron-800 hover:bg-saffron-100"
-                    >
-                      {l.label} →
-                    </Link>
-                  ))}
+                  {r.links.map((l, j) => {
+                    // 26 Sep 2026: an /exams/{CODE} link renders only for a live exam.
+                    const exam = /^\/exams\/([A-Z0-9_]+)$/.exec(l.href)?.[1];
+                    if (exam && !examHubHref(exam, live)) {
+                      return (
+                        <span key={j} className="rounded-md border border-ink-200 bg-white px-2 py-0.5 text-[11px] text-ink-600">
+                          {l.label}
+                        </span>
+                      );
+                    }
+                    return (
+                      <Link
+                        key={j}
+                        href={l.href === "/exams" ? "/exams/browse" : l.href}
+                        className="rounded-md border border-saffron-300 bg-saffron-50/40 px-2 py-0.5 text-[11px] text-saffron-800 hover:bg-saffron-100"
+                      >
+                        {l.label} →
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </li>
@@ -162,8 +224,8 @@ export default async function CareerPage({
         {/* Salary bands */}
         <h2 className="mt-10 text-base font-semibold text-ink-900">Salary bands by experience</h2>
         <p className="mt-1 text-xs text-ink-500">
-          Wide bands — real salary depends on city, employer, performance. Pick the
-          midpoint for planning.
+          Indicative, wide bands — real salary depends on city, employer, performance. Pick the
+          midpoint for planning. Sources: {CAREER_SALARY_SOURCES}.
         </p>
         <ul className="mt-3 space-y-2">
           {c.salaryBands.map((b, i) => (
@@ -236,24 +298,57 @@ export default async function CareerPage({
           </>
         )}
 
-        {/* Relevant exams */}
-        {c.examCodes && c.examCodes.length > 0 && (
+        {/* Relevant exams — linked only when the exam has a live page. */}
+        {examCodes.length > 0 && (
           <>
             <h2 className="mt-10 text-base font-semibold text-ink-900">Relevant exams</h2>
             <ul className="mt-3 flex flex-wrap gap-2">
-              {c.examCodes.map((e) => (
+              {examCodes.map((e) => (
                 <li key={e}>
+                  <ExamChip
+                    code={e}
+                    live={live}
+                    className="inline-block rounded-md border border-ink-200 bg-white px-3 py-1.5 text-xs text-ink-700 hover:border-saffron-400"
+                  />
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {/* Colleges on the route (26 Sep 2026). */}
+        {streams.length > 0 && (
+          <>
+            <h2 className="mt-10 text-base font-semibold text-ink-900">Colleges on this route</h2>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {streams.map((s) => (
+                <li key={s.value}>
                   <Link
-                    href={`/exams/${e}`}
-                    className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-xs text-ink-700 hover:border-saffron-400"
+                    href={`/colleges/stream/${s.value}`}
+                    className="inline-block rounded-md border border-ink-200 bg-white px-3 py-1.5 text-xs text-ink-700 hover:border-saffron-400"
                   >
-                    {e.replace(/_/g, " ")}
+                    {s.label} colleges →
                   </Link>
                 </li>
               ))}
             </ul>
           </>
         )}
+
+        <nav aria-label="More on Shishya" className="mt-10 flex flex-wrap gap-2 text-xs">
+          <Link href="/careers" className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-ink-700 hover:border-saffron-400">
+            All career guides →
+          </Link>
+          <Link href="/career-map" className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-ink-700 hover:border-saffron-400">
+            Career map →
+          </Link>
+          <Link href="/scholarships" className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-ink-700 hover:border-saffron-400">
+            Scholarships →
+          </Link>
+          <Link href="/exams/browse" className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-ink-700 hover:border-saffron-400">
+            Entrance and government exams →
+          </Link>
+        </nav>
       </section>
     </main>
   );

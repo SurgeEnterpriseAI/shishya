@@ -17,6 +17,7 @@ import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { buildTimeline } from "@/lib/exam-timeline";
 import { fillState, stateCopy, type StateCopyLocale } from "@/lib/state-exams-copy";
+import { isStateCetCode } from "@/lib/exam-kind";
 
 export type ExamType = "PSC" | "Staff selection" | "Police" | "Teaching" | "Entrance" | "Other";
 
@@ -176,8 +177,12 @@ export function stateContextMarkdown(
 ): string {
   const SITE = "https://shishya.in";
   const page = `${SITE}/exams/state/${entry.slug}`;
+  // 26 Sep 2026: a state with an admission test (src/lib/exam-kind.ts
+  // STATE_CET_CODES — KCET, MHT-CET, EAMCET …) is "government and entrance
+  // exams", as its page title says.
+  const kinds = entry.exams.some((e) => isStateCetCode(e.code)) ? "government and entrance" : "government";
   const L: string[] = [
-    `# ${entry.name} government exams — Shishya context file`,
+    `# ${entry.name} ${kinds} exams — Shishya context file`,
     "",
     `> State page: ${page} · all states: ${SITE}/exams/state · data as of ${asOf} (IST)`,
     "> Dates are only those announced by the conducting body (official) or reported with a cited source (reported); estimates are left out.",

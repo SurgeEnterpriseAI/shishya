@@ -67,6 +67,7 @@ import { LangTwinLinks } from "@/components/LangTwinLinks";
 import { StateExamsLink } from "@/components/StateExamsLink";
 import { inlineMd } from "@/components/NotesMarkdown";
 import { ScoreEstimator } from "./ScoreEstimator";
+import { examDayRobots, isScoreEstimateIndexable } from "@/lib/exam-phase-indexable";
 
 export const revalidate = 900;
 
@@ -124,6 +125,22 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   // and the description carries the reason (English: it is the verdict's
   // own sentence, the same one the body prints).
   const { verdict } = sittingVerdict(exam, inputs);
+  // 26 Sep 2026 (src/lib/exam-phase-indexable.ts): index only when the
+  // sitemap lists the estimator — a typed exam-day row within ±30 days, or
+  // the answer-key comparison open (standingSitting). Out of season the page
+  // still renders, noindex,follow (/exams/CTET/score-estimate was crawled 56
+  // times in 30 days with the paper on 12 Dec and no key out). The exam-day
+  // rows are read uncapped, as the sitemap's SQL does; a failed read keeps
+  // the old index,follow.
+  const examDayRows = await prisma
+    .$queryRaw<{ date: Date }[]>`
+      SELECT date FROM "ExamImportantDate"
+      WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL AND kind = 'EXAM'
+        AND date >= NOW() - INTERVAL '31 days' AND date <= NOW() + INTERVAL '31 days'`
+    .catch(() => null);
+  const indexable =
+    examDayRows === null ||
+    isScoreEstimateIndexable({ examDays: examDayRows.map((r) => r.date), answerKeyOpen: standingSitting(exam, inputs) !== null });
   const title = `${fill(tt(verdict.ok ? "ew.score.title" : "ew.score.mixed.title"), { exam: short })} | Shishya`;
   const description = verdict.ok
     ? fill(tt("ew.score.lead"), { exam: short })
@@ -141,6 +158,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
     title,
     description,
     alternates: { canonical: twinCanonical(path, urlLocale, twins), languages: languageAlternates(path, twins) },
+    robots: examDayRobots(indexable),
     keywords: [
       `${short} score calculator`,
       `${short} marks calculator`,

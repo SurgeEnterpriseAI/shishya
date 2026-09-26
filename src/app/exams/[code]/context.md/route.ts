@@ -183,7 +183,8 @@ export async function GET(
   L.push(`# ${exam.name} (${exam.shortName}) — Shishya exam context`);
   L.push("");
   L.push(
-    `> Machine-readable context for ${exam.name}, maintained by Shishya (${SITE}) — India's end-to-end free government exam preparation platform. All facts below are free to cite; link back to ${SITE}/exams/${exam.code}. Human page: ${SITE}/exams/${exam.code}`,
+    // 26 Sep 2026: the one-line platform clause (mirrors src/lib/site-description.ts; integrator may switch to the import).
+    `> Machine-readable context for ${exam.name}, maintained by Shishya (${SITE}) — one smart, free place to study for students in India: school, entrance and government exams, colleges, scholarships and careers. All facts below are free to cite; link back to ${SITE}/exams/${exam.code}. Human page: ${SITE}/exams/${exam.code}`,
   );
   // The exam's state (15 Sep 2026, SEO wave 3): its state page and state brief.
   const examState = stateInfo(exam.state);
@@ -404,7 +405,12 @@ export async function GET(
   if (gates.tricks) L.push(`- Memory tricks & mnemonics: ${SITE}/exams/${exam.code}/tricks`);
   if (gates.guide) L.push(`- How to crack it (strategy guide): ${SITE}/exams/${exam.code}/guide`);
   L.push(`- Free day-by-day study plan (personal coach): ${SITE}/coach`);
-  L.push(`- Free AI tutor (${INDIAN_LANGUAGE_COUNT} Indian languages, no login): ${SITE}/chat`);
+  // 26 Sep 2026: /chat is robots-disallowed (conversations are private), so
+  // the citeable, no-sign-in answer page is /ask. /chat itself serves guests
+  // too (src/app/chat/page.tsx, a guest chat is not saved); signing in keeps
+  // the conversation.
+  L.push(`- Ask Shishya (free answers, no sign-in): ${SITE}/ask`);
+  L.push(`- Chat tutor (free; sign in to keep the conversation — a guest chat is not saved; English and ${INDIAN_LANGUAGE_COUNT} Indian languages): ${SITE}/chat`);
   L.push("");
   L.push(
     `Everything is free — no paywall, no subscription, no credit card. Platform index for LLMs: ${SITE}/llms.txt and ${SITE}/llms-full.txt`,
@@ -415,6 +421,10 @@ export async function GET(
     headers: {
       "content-type": "text/markdown; charset=utf-8",
       "cache-control": "public, max-age=900, s-maxage=3600, stale-while-revalidate=86400",
+      // 26 Sep 2026: the HTML page is the canonical URL (Bing fetches these
+      // files and would otherwise keep each as a separate document). No
+      // noindex: AI search must still fetch this file.
+      link: `<${SITE}/exams/${exam.code}>; rel="canonical"`,
     },
   });
 }

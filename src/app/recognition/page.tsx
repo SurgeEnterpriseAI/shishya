@@ -5,6 +5,12 @@
 //
 // During the activation window (Nov 1 – Dec 31 of FIRST_YEAR+), it
 // surfaces the live top-10 leaderboard.
+//
+// 26 Sep 2026: the meta and CollectionPage JSON-LD said Shishya already
+// "celebrates the top community contributors", naming the two senior badge
+// tiers, while no user held any badge level above NEWCOMER. Title,
+// description, JSON-LD and intro now come from recognitionCopy() — future
+// tense until the first window opens, computed from RECOGNITION_ACTIVATION.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -16,26 +22,30 @@ import {
   recognitionStatus,
   RECOGNITION_ACTIVATION,
 } from "@/lib/db/recognition";
+import { recognitionCopy } from "@/lib/recognition-copy";
 
-export const metadata: Metadata = {
-  title: "Annual Recognition — Top contributors of the year | Shishya",
-  description:
-    "Each year, Shishya celebrates the top community contributors — Trusted Verifiers, Domain Experts, and the most-active verifiers across every section. No money, just recognition.",
-  alternates: { canonical: "https://shishya.in/recognition" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const copy = recognitionCopy(recognitionStatus());
+  return {
+    title: copy.title,
+    description: copy.description,
+    alternates: { canonical: "https://shishya.in/recognition" },
+  };
+}
 
 export const revalidate = 3600; // hourly during active window; pre-window this page is largely static
 
 export default async function RecognitionPage() {
   const status = recognitionStatus();
+  const copy = recognitionCopy(status);
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <JsonLd
         data={[
           collectionPageLd({
-            name: "Annual Recognition — Top contributors of the year",
-            description: "Shishya celebrates the top community contributors each year — Trusted Verifiers, Domain Experts, and most-active verifiers.",
+            name: copy.ldName,
+            description: copy.description,
             path: "/recognition",
           }),
           breadcrumbLd([["Recognition","/recognition"]]),
@@ -47,11 +57,8 @@ export default async function RecognitionPage() {
           <Link href="/" className="hover:text-ink-800">Home</Link> · Recognition
         </p>
         <h1 className="mt-2 text-3xl font-bold text-ink-900">Annual Recognition</h1>
-        <p className="mt-2 max-w-3xl text-sm text-ink-700">
-          Each year Shishya celebrates the verifiers, flaggers, and Domain
-          Experts who kept the platform honest. Recognition is the only
-          currency on Shishya — there is no money in this system, ever.
-        </p>
+        {/* 26 Sep 2026: tense-aware intro (src/lib/recognition-copy.ts). */}
+        <p className="mt-2 max-w-3xl text-sm text-ink-700">{copy.intro}</p>
 
         {status.kind === "ACTIVE" ? (
           <ActiveLeaderboard year={status.year} windowEnd={status.windowEnd} />

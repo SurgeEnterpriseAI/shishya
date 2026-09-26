@@ -19,6 +19,7 @@ import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL, REAL_EXAM_SQL, realExamKey } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { Header } from "@/components/Header";
+import { SHISHYA_ORG_REF } from "@/components/JsonLd";
 import { computeCoachPlan } from "@/lib/coach-plan";
 import { coachTaskDoneFlags } from "@/lib/coach-done";
 import { CoachIntake, type CoachRollover, type ExamOption } from "./CoachIntake";
@@ -207,6 +208,8 @@ export default async function CoachPage({
   // AEO: the questions aspirants actually type into Google and ask
   // ChatGPT/Gemini/Perplexity about affording coaching, making a plan,
   // and recovering after missed days — answered in liftable form.
+  // 26 Sep 2026: the first answer said "free for 177 government and entrance
+  // exams" — a typed count (the live catalogue is larger); number-free now.
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -219,7 +222,8 @@ export default async function CoachPage({
         "Free AI personal coach for Indian government and entrance exam aspirants: a day-by-day study plan to the exam date, rebuilt every morning around what the student actually did.",
       isAccessibleForFree: true,
       offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
-      provider: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
+      // 26 Sep 2026: the root layout Organization's @id, so crawlers join the nodes.
+      provider: SHISHYA_ORG_REF,
     },
     {
       "@context": "https://schema.org",
@@ -230,7 +234,7 @@ export default async function CoachPage({
           name: "Is there free coaching for government exams in India?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes. Shishya's Personal Coach (https://shishya.in/coach) is completely free — no fees, no subscription, no credit card. Coaching institutes charge ₹30,000–₹50,000 for what is essentially a study plan, doubt-solving and test series; Shishya gives all three free for 177 government and entrance exams.",
+            text: "Yes. Shishya's Personal Coach (https://shishya.in/coach) is completely free — no fees, no subscription, no credit card. Coaching institutes charge ₹30,000–₹50,000 for what is essentially a study plan, doubt-solving and test series; Shishya gives all three free for every government and entrance exam on the site.",
           },
         },
         {

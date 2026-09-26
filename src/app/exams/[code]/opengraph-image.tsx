@@ -9,6 +9,8 @@
 import { ImageResponse } from "next/og";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
+import { examKindLabel } from "@/lib/exam-kind";
+import { examTitleYear } from "@/lib/exam-title-year";
 
 export const runtime = "nodejs";
 export const alt = "Shishya — exam preparation";
@@ -24,14 +26,20 @@ export default async function Image({ params }: { params: Promise<{ code: string
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
     where: realExamKey({ code }),
-    select: { shortName: true, name: true, category: true, state: true },
+    select: { code: true, shortName: true, name: true, category: true, state: true },
   }).catch(() => null);
 
   // Fallback to a generic Shishya card if the exam isn't found.
+  // 26 Sep 2026: the fallback line is the site's one-line description (no
+  // "community-driven" claim); the chip says what the exam is (entrance,
+  // olympiad, government, professional — src/lib/exam-kind.ts) instead of
+  // the raw enum ("GOVT JOBS" on NDA); the year is the hub title's cycle
+  // year (src/lib/exam-title-year.ts) — no year when nothing names one,
+  // never the calendar year.
   const shortName = exam?.shortName ?? "Shishya";
-  const fullName = exam?.name ?? "India's free, community-driven entrance exam platform";
-  const category = exam?.category?.replace(/_/g, " ") ?? "";
-  const year = new Date().getUTCFullYear();
+  const fullName = exam?.name ?? "One smart place to study for students in India";
+  const category = exam ? examKindLabel({ code: exam.code, category: String(exam.category) }) : "";
+  const year = exam ? await examTitleYear(exam.code) : null;
 
   return new ImageResponse(
     (
@@ -127,7 +135,7 @@ export default async function Image({ params }: { params: Promise<{ code: string
           }}
         >
           <div style={{ display: "flex" }}>Free mocks · syllabus · PYQ pattern · AI tutor</div>
-          <div style={{ display: "flex", color: "#c2410c", fontWeight: 700 }}>{year}</div>
+          {year !== null ? <div style={{ display: "flex", color: "#c2410c", fontWeight: 700 }}>{year}</div> : null}
         </div>
       </div>
     ),

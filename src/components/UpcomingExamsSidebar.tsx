@@ -193,8 +193,9 @@ export function UpcomingExamsSidebar({
             <span className="inline-block h-2 w-2 rounded-full bg-saffron-500" aria-hidden />
             {L.heading}
           </h3>
+          {/* 26 Sep 2026: /exams 308-redirects to the home page; the exam index is /exams/browse. */}
           <Link
-            href="/exams"
+            href="/exams/browse"
             className="shrink-0 rounded-md border border-ink-300 bg-white px-2 py-1 text-[11px] font-medium text-ink-700 hover:bg-ink-100"
           >
             {L.all}

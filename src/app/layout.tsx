@@ -5,6 +5,14 @@ import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 import { SignupNudge } from "@/components/SignupNudge";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Suspense } from "react";
+import {
+  SITE_LANGUAGE_CODES,
+  SITE_ORG_ID,
+  SITE_SHORT,
+  SITE_SLOGAN,
+  SITE_TITLE_DEFAULT,
+  siteDescriptionStatic,
+} from "@/lib/site-description";
 import "./globals.css";
 
 // Mobile + cross-browser viewport configuration.
@@ -50,9 +58,12 @@ const notoDevanagari = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  title: "Shishya — Free Government & Entrance Exam Preparation | 170+ exams, in your language",
-  description:
-    "India's end-to-end free government exam preparation platform. Free mock tests, previous year papers and PYQ-pattern practice, study notes, live cutoffs and an AI tutor for 170+ government and entrance exams — UPSC, SSC, IBPS, RRB, all state PSCs, all TETs, JEE, NEET, GATE, CAT. 100% free, no paywall, no credit card. In English, Hindi and other Indian languages.",
+  // 26 Sep 2026: Shishya is one smart place to study — school, entrance and
+  // government exams, colleges, scholarships and careers — not a
+  // government-exam site. The default title and description are the shared
+  // wording in src/lib/site-description.ts (no typed "170+", no "all TETs").
+  title: SITE_TITLE_DEFAULT,
+  description: SITE_SHORT,
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in"),
   // Web app manifest (13 Sep 2026) — src/app/manifest.ts, served at
   // /manifest.webmanifest. Next also auto-links the file; declaring it here
@@ -71,23 +82,22 @@ export const metadata: Metadata = {
     ],
     shortcut: ["/icon.svg"],
   },
+  // 26 Sep 2026: no url / title / description here. A page without its own
+  // openGraph inherited og:url=https://shishya.in (~319 sitemap URLs told
+  // crawlers they were the home page) and the old government-exam title.
+  // Next fills og:title / og:description from each page's own title and
+  // description when they are absent, and twitter:* from openGraph.
   openGraph: {
-    title: "Shishya — Free Government & Entrance Exam Preparation",
-    description:
-      "End-to-end free prep for 170+ Indian govt & entrance exams. Adaptive mocks, previous year papers, AI tutor, live cutoffs. 100% free, in your language.",
-    url: "https://shishya.in",
     siteName: "Shishya",
     locale: "en_IN",
     type: "website",
   },
   // Default Twitter card for every page that doesn't override.
   // summary_large_image makes the auto-fetched og:image render at
-  // 1200x630 in Twitter/X timeline previews.
+  // 1200x630 in Twitter/X timeline previews. @shishyaedu stays until the
+  // founder confirms the handle after deploy (26 Sep 2026).
   twitter: {
     card: "summary_large_image",
-    title: "Shishya — Free Government & Entrance Exam Preparation",
-    description:
-      "End-to-end free prep for 170+ Indian govt & entrance exams. Adaptive mocks, previous year papers, AI tutor, live cutoffs. 100% free, in your language.",
     site: "@shishyaedu",
     creator: "@shishyaedu",
   },
@@ -116,10 +126,15 @@ const websiteJsonLd = {
   name: "Shishya",
   alternateName: "शिष्य",
   url: SITE_BASE,
-  // SearchAction now targets Ask Shishya — the AI answer engine IS the
-  // site's search. Engines that honor SearchAction (sitelinks search
-  // box, AI assistants discovering site capabilities) learn they can
-  // pass a natural-language query straight to /ask.
+  // 26 Sep 2026: SearchAction targets the whole-platform search — the same
+  // URL the home search strip and the /ask box submit. /ask?q= resolves the
+  // query over Shishya's page index with no model call: a clear match 307s
+  // to its page (school class / subject / chapter, exam and its sub-pages,
+  // college, scholarship, career), anything else is a noindex list of real
+  // pages; the AI answers there only on a person's action. This is the one
+  // WebSite node on every page, "/" included — the home page adds none.
+  // Google stopped showing the sitelinks search box in Nov 2024; the
+  // schema stays valid for other engines and AI agents.
   potentialAction: {
     "@type": "SearchAction",
     target: {
@@ -130,14 +145,42 @@ const websiteJsonLd = {
   },
 };
 
+// 26 Sep 2026: one Organization entity for the whole-education platform.
+// "@id" lets every page's publisher / provider / author node (JsonLd.tsx,
+// /about) point at this one node; description is the shared static form
+// (src/lib/site-description.ts) — no typed "170+", no "all state PSCs, all
+// TETs, all Police exams". knowsLanguage is the locales list itself.
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "EducationalOrganization",
+  "@id": SITE_ORG_ID,
   name: "Shishya",
+  alternateName: ["शिष्य", "Shishya.in"],
+  slogan: SITE_SLOGAN,
   url: SITE_BASE,
-  logo: `${SITE_BASE}/icon.svg`,
-  description:
-    "Shishya is India's end-to-end free government exam preparation platform, covering 170+ Indian government and entrance exams — UPSC, SSC, IBPS, RRB, JEE, NEET, GATE, CAT, all state PSCs, all TETs, all Police exams. Adaptive mock tests, previous year papers and PYQ-pattern practice, study notes, AI tutor, live cutoffs and full syllabus coverage. Content is AI-drafted, grounded in official notifications and re-checked when a student reports an error. 100% free — no paywall, no credit card, no ads, no affiliate links, no agent referrals. Available in English, Hindi and other Indian languages.",
+  logo: { "@type": "ImageObject", url: `${SITE_BASE}/icons/icon-512.png`, width: 512, height: 512 },
+  description: `${siteDescriptionStatic()} Exam content is AI-drafted, grounded in official notifications and re-checked when a student reports an error. No credit card, no ads, no affiliate links, no agent referrals.`,
+  areaServed: { "@type": "Country", name: "India" },
+  knowsAbout: [
+    "CBSE",
+    "NCERT",
+    "CISCE",
+    "JEE",
+    "NEET",
+    "CUET",
+    "NDA",
+    "olympiads",
+    "UPSC",
+    "SSC",
+    "banking exams",
+    "railway exams",
+    "state PSC exams",
+    "teacher eligibility tests",
+    "colleges in India",
+    "scholarships in India",
+    "careers",
+  ],
+  knowsLanguage: [...SITE_LANGUAGE_CODES],
   sameAs: [
     "https://github.com/SurgeEnterpriseAI/shishya",
   ],

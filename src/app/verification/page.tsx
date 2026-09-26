@@ -4,6 +4,16 @@
 // the single canonical answer to "why should I trust what Shishya says?"
 // The text is intentionally direct, no marketing flourish, no hidden
 // caveats. Sober and trustworthy like a university library.
+//
+// 26 Sep 2026: rewritten to what the DB backs. The page claimed every fact
+// on Shishya carries a status, that AI re-checks sources "every few days"
+// and that verified students and professionals confirm facts. In fact
+// (read-only probe, 26 Sep 2026): per-fact badges render only on college and
+// school-board pages; 0 automated re-checks (AiCheck rows) have ever run;
+// 2 student confirmations from 1 student; no badge level above NEWCOMER.
+// The rules below mirror the verify route's code and every count comes from
+// Fact / Verification / AiCheck / User rows (src/lib/verification-state.ts,
+// src/lib/db/verification-stats.ts) — nothing is typed.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -12,15 +22,25 @@ import {
   VerificationBadge,
   SectionVerificationSummary,
 } from "@/components/VerificationBadge";
+import { loadVerificationStats } from "@/lib/db/verification-stats";
+import {
+  describeVerificationState,
+  FACT_STATUS_LABEL,
+  FACT_STATUS_RULES,
+  type FactStatusKey,
+} from "@/lib/verification-state";
+
+// 26 Sep 2026: the "Where this stands today" counts are read from the DB.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "How verification works — Shishya",
   description:
-    "Every fact on Shishya carries a visible verification status. AI checks the official source automatically; community members confirm what they personally know. Click any badge to see the verification history.",
+    "College and school-board pages on Shishya show a badge next to key facts, naming the official source for each. Signed-in students can confirm a fact or flag it as wrong, and flags go to the team. What each badge state means, and where the system stands today.",
   alternates: { canonical: "https://shishya.in/verification" },
   openGraph: {
-    title: "How Shishya verifies every fact",
-    description: "AI-checked + community-confirmed against official sources. Click any badge to see the history.",
+    title: "How fact badges work on Shishya",
+    description: "Each badge names the fact's official source; signed-in students can confirm or flag it. What each state means, and where the system stands today.",
     url: "https://shishya.in/verification",
     siteName: "Shishya",
     locale: "en_IN",
@@ -28,7 +48,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function VerificationExplainerPage() {
+export default async function VerificationExplainerPage() {
+  // Number-free fallback when the DB read fails: the table and the
+  // per-state counts are simply not shown.
+  const stats = await loadVerificationStats().catch(() => null);
+  const state = stats ? describeVerificationState(stats) : null;
+  const R = FACT_STATUS_RULES;
+  const today = (k: FactStatusKey) =>
+    state ? (
+      <p className="mt-2 text-[11px] text-ink-500 tabular-nums">
+        Facts in this state today: {state.perStatus[k].toLocaleString("en-IN")}
+      </p>
+    ) : null;
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <Header />
@@ -40,25 +71,24 @@ export default function VerificationExplainerPage() {
           How verification works on Shishya
         </h1>
         <p className="mt-4 max-w-3xl text-base text-ink-700">
-          Every fact you see here is checked. We pull information from
-          official government, university, and exam authority sources, then
-          verify each fact in two ways: our AI checks the source
-          automatically every few days, and verified students and
-          professionals from our community confirm what they know
-          personally. The badge next to each fact shows what's been
-          verified, when, and by whom. If something looks wrong to you,
+          College and school-board pages show a badge next to key facts —
+          a college&apos;s NIRF rank, a board&apos;s official website — and
+          each badge names the official source for that fact. Exam pages
+          show one &ldquo;Sourced&rdquo; line naming the official
+          notification instead. Signed-in students can confirm a fact or
+          flag it as wrong from its badge. If something looks wrong to you,
           click the badge and tell us. Every flag reaches the team and
           stays open until someone reviews it.
         </p>
         <p className="mt-3 max-w-3xl text-sm text-ink-600">
-          The students who help us keep Shishya accurate earn recognition
-          for it. This is how we stay different from any general AI tool:
-          we don't just give you answers; we show you why you can trust
-          them.
+          A badge tells you where a fact came from and how many students
+          have confirmed it, so you can check the source yourself before
+          you rely on it.
         </p>
 
-        {/* The five badge states */}
-        <h2 className="mt-10 text-base font-semibold text-ink-900">The five badge states</h2>
+        {/* The badge states (26 Sep 2026: rules from FACT_STATUS_RULES,
+            which a test pins to the verify route; today's counts from the DB) */}
+        <h2 className="mt-10 text-base font-semibold text-ink-900">The badge states</h2>
         <p className="mt-1 text-xs text-ink-500">
           Hover any badge for the exact verification details. Click any
           badge anywhere on the platform to come back to this page.
@@ -67,74 +97,93 @@ export default function VerificationExplainerPage() {
         <ul className="mt-6 space-y-4">
           <li className="rounded-lg border border-ink-200 bg-white p-4">
             <div className="flex items-baseline gap-3">
-              <VerificationBadge status="fully" source="NIRF" lastCheckedAt="2026-05-15" />
-              <h3 className="text-sm font-semibold text-ink-900">Fully verified</h3>
+              <VerificationBadge status="fully" />
+              <h3 className="text-sm font-semibold text-ink-900">{FACT_STATUS_LABEL.FULLY}</h3>
             </div>
             <p className="mt-2 text-xs text-ink-600">
-              AI-verified against the official source within the last 30
-              days <em>and</em> confirmed by 3+ community users (or by a
-              Trusted Verifier or Domain Expert). This is the strongest
-              status a fact can have.
+              The automated source re-check matched it within the last{" "}
+              {R.fullyRecheckDays} days <em>and</em> {R.fullyCommunity}+
+              students confirmed it — or a Trusted Verifier plus{" "}
+              {R.fullyTrustedPlusCommunity}+ students, or a Domain Expert,
+              did. This is the strongest status a fact can have.
             </p>
+            {today("FULLY")}
           </li>
           <li className="rounded-lg border border-ink-200 bg-white p-4">
             <div className="flex items-baseline gap-3">
-              <VerificationBadge status="verified" source="CBSE" lastCheckedAt="2026-05-15" />
-              <h3 className="text-sm font-semibold text-ink-900">Verified</h3>
+              <VerificationBadge status="verified" />
+              <h3 className="text-sm font-semibold text-ink-900">{FACT_STATUS_LABEL.VERIFIED}</h3>
             </div>
             <p className="mt-2 text-xs text-ink-600">
-              AI-verified within the last 60 days, or confirmed by 2+
-              community users. Trustworthy for most purposes.
+              Re-checked against the source within the last{" "}
+              {R.verifiedRecheckDays} days and confirmed by{" "}
+              {R.verifiedCommunity}+ students — or confirmed by a Trusted
+              Verifier or a Domain Expert.
             </p>
+            {today("VERIFIED")}
+            {state && !state.upperTiersReachable && (
+              <p className="mt-2 rounded border border-amber-200 bg-amber-50/60 px-2 py-1 text-[11px] text-amber-800">
+                No fact can reach this state or {FACT_STATUS_LABEL.FULLY} yet:
+                none has a source re-check from the last{" "}
+                {R.verifiedRecheckDays} days, and no Trusted Verifier or
+                Domain Expert has been named.
+              </p>
+            )}
           </li>
           <li className="rounded-lg border border-ink-200 bg-white p-4">
             <div className="flex items-baseline gap-3">
-              <VerificationBadge status="ai" source="official source" lastCheckedAt="2026-05-15" />
-              <h3 className="text-sm font-semibold text-ink-900">AI-verified</h3>
+              <VerificationBadge status="ai" />
+              <h3 className="text-sm font-semibold text-ink-900">{FACT_STATUS_LABEL.AI}</h3>
             </div>
             <p className="mt-2 text-xs text-ink-600">
-              Auto-verified by AI against the official source, but no
-              human has reviewed it yet. A real signal — but AI can
-              misread sources (especially tables and PDFs). Treat this
-              as one input, not absolute truth. Help us upgrade it by
-              clicking "I checked the source — this is accurate" when
-              you read the page.
+              The fact names its official source — NIRF for a
+              college&apos;s rank, the board&apos;s own website for board
+              facts — but has not reached the confirmations above. Sources
+              can be misread (especially tables and PDFs), so treat this as
+              one input, not absolute truth. Help us upgrade it by
+              clicking &ldquo;I checked the source — this is
+              accurate&rdquo; on the badge once you have read the source.
             </p>
+            {today("AI")}
           </li>
           <li className="rounded-lg border border-ink-200 bg-white p-4">
             <div className="flex items-baseline gap-3">
-              <VerificationBadge status="needs" source="UPSC" lastCheckedAt="2026-02-15" />
-              <h3 className="text-sm font-semibold text-ink-900">Needs verification</h3>
+              <VerificationBadge status="needs" />
+              <h3 className="text-sm font-semibold text-ink-900">{FACT_STATUS_LABEL.NEEDS_REVIEW}</h3>
             </div>
             <p className="mt-2 text-xs text-ink-600">
-              Last verification is more than 60 days old, or the source
-              URL has changed structure, or AI verification found a
-              discrepancy. The displayed fact is probably still correct,
-              but we're queueing a re-check. Don't rely on it for a
-              time-critical decision without checking the source yourself.
+              {state?.recheckRunning ? "Set by" : "Meant to be set by"} the
+              automated source re-check when a source has changed structure,
+              is unreachable, or shows a different value
+              {state && !state.recheckRunning ? " — the re-check is not running yet" : ""}.{" "}
+              Don&apos;t rely on such a fact for a time-critical decision
+              without checking the source yourself.
             </p>
+            {today("NEEDS_REVIEW")}
           </li>
           <li className="rounded-lg border border-ink-200 bg-white p-4">
             <div className="flex items-baseline gap-3">
               <VerificationBadge status="none" />
-              <h3 className="text-sm font-semibold text-ink-900">Not yet verified</h3>
+              <h3 className="text-sm font-semibold text-ink-900">{FACT_STATUS_LABEL.NONE}</h3>
             </div>
             <p className="mt-2 text-xs text-ink-600">
               New content awaiting its first verification. We show this
               honestly instead of hiding it behind a fake check mark.
               Help us upgrade it.
             </p>
+            {today("NONE")}
           </li>
           <li className="rounded-lg border border-ink-200 bg-white p-4">
             <div className="flex items-baseline gap-3">
               <VerificationBadge status="disputed" />
-              <h3 className="text-sm font-semibold text-ink-900">Flagged</h3>
+              <h3 className="text-sm font-semibold text-ink-900">{FACT_STATUS_LABEL.DISPUTED}</h3>
             </div>
             <p className="mt-2 text-xs text-ink-600">
-              Multiple users have flagged this as incorrect, or AI
-              verification keeps failing. It is with the team for review —
-              there is no set review time. Don't rely on this fact yet.
+              {R.disputedFlags} or more students have flagged it as wrong.
+              It is with the team for review — there is no set review time.
+              Don&apos;t rely on this fact yet.
             </p>
+            {today("DISPUTED")}
           </li>
         </ul>
 
@@ -147,15 +196,16 @@ export default function VerificationExplainerPage() {
           useful on mobile or for content-heavy pages where dozens of
           per-fact badges would clutter the layout.
         </p>
+        {/* 26 Sep 2026: example only — was status "verified" with
+            "refreshed every 30 days", which no page can back yet. */}
         <SectionVerificationSummary
-          status="verified"
-          source="NIRF 2024 + official college sites"
-          refreshCadence="every 30 days"
+          status="ai"
+          source="the official source named on the page"
         />
 
         {/* Contribution loop */}
         <h2 className="mt-12 text-base font-semibold text-ink-900">
-          Why community verification matters
+          Why student confirmations matter
         </h2>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
           AI can misread sources. Tables, PDF formats, and government
@@ -165,13 +215,11 @@ export default function VerificationExplainerPage() {
           wrong or outdated.
         </p>
         <p className="mt-3 max-w-3xl text-sm text-ink-700">
-          Students who help us keep Shishya accurate earn recognition
-          for it. <em>No money, no rewards convertible to money</em> —
-          just visible badges next to your name that compound over time:
-          Contributor → Verifier → Trusted Verifier → Domain Expert.
-          A Trusted Verifier who cleared UPSC is qualitatively different
-          from a ChatGPT answer, and that's the kind of signal Shishya
-          surfaces.
+          Each confirmation, flag or suggested update adds contribution
+          points to your profile. <em>No money, no rewards convertible to
+          money</em>. Badge levels are meant to show next to your name as
+          your contributions grow — Contributor → Verifier → Trusted
+          Verifier → Domain Expert{state ? <>; {state.levelsClause}.</> : "."}
         </p>
 
         {/* What this commits Shishya to */}
@@ -183,40 +231,67 @@ export default function VerificationExplainerPage() {
           commits Shishya to:
         </p>
         <ul className="mt-3 max-w-3xl list-disc space-y-2 pl-5 text-sm text-ink-700">
-          <li>Real ongoing infrastructure to keep AI verification running across thousands of facts.</li>
+          <li>
+            {state?.recheckRunning
+              ? "Keeping the automated source re-check running across every badged fact."
+              : state
+                ? "Building the automated source re-check — and, until it runs, calling these facts “Sourced”, never re-checked."
+                : "An automated re-check of every badged fact against its official source."}
+          </li>
           <li>Real moderation effort to handle disputes and badge promotions.</li>
           <li>Permanent commitment to source citation discipline. No shortcuts ever.</li>
           <li>Treating community contributors as genuine partners — with respect, recognition, and responsiveness.</li>
           <li>Transparency about what's not yet verified. The "Not yet verified" badge has to be allowed to exist visibly.</li>
         </ul>
 
-        {/* Phase 1 status (be honest with the user) */}
+        {/* 26 Sep 2026: was "Where we are in the rollout" with phases in
+            the wrong tense; now counted from the DB (src/lib/db/verification-stats.ts). */}
         <h2 className="mt-12 text-base font-semibold text-ink-900">
-          Where we are in the rollout
+          Where this stands today
         </h2>
-        <p className="mt-2 max-w-3xl text-sm text-ink-700">
-          <strong>Phase 1 (today):</strong> The badge UI is live across the
-          platform. Most facts currently show "AI-verified" against their
-          original ingestion source — that's an honest signal, not a fake
+        {state && (
+          <>
+            <table className="mt-3 w-full max-w-3xl border-collapse text-left text-sm">
+              <tbody>
+                {state.rows.map((r) => (
+                  <tr key={r.label} className="border-b border-ink-100 align-top">
+                    <th scope="row" className="py-2 pr-4 font-medium text-ink-800">{r.label}</th>
+                    <td className="py-2 text-ink-700 tabular-nums">{r.value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="mt-1 text-[11px] text-ink-500">
+              Counted from Shishya&apos;s database; this page refreshes hourly.
+            </p>
+          </>
+        )}
+        <p className="mt-4 max-w-3xl text-sm text-ink-700">
+          <strong>Badges (live):</strong> on college and school-board
+          pages. &ldquo;Sourced&rdquo; means the fact is shown against the
+          source it was first recorded from — an honest signal, not a fake
           check.
         </p>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
-          <strong>Phase 2 (next):</strong> The automated AI re-verification
-          job runs continuously, refreshing every fact on the cadence
-          appropriate to its type (exam dates daily, visa policy weekly,
-          syllabi quarterly).
+          <strong>
+            Automated source re-check{state ? (state.recheckRunning ? " (running)" : " (not running yet)") : ""}:
+          </strong>{" "}
+          {state?.recheckRunning ? "it refreshes" : "it is designed to refresh"} each
+          fact on the cadence appropriate to its type (exam dates daily,
+          visa policy weekly, syllabi quarterly).
         </p>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
-          <strong>Phase 3 (after that):</strong> Community verification —
-          click "I checked the source — this is accurate" or "this looks
-          wrong" on any badge. Contribution counts accrue and turn into
-          visible badges next to your name.
+          <strong>Student confirmations and flags (live):</strong> signed-in
+          students can click &ldquo;I checked the source — this is
+          accurate&rdquo;, &ldquo;This looks wrong&rdquo; or &ldquo;Suggest
+          an update&rdquo; on any badge on those pages.
         </p>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
-          <strong>Phase 4-5:</strong> Trusted Verifier and Domain Expert
-          promotions. Domain Experts upload credentials (admission
-          letter, employment letter, etc.) — we verify, then permanently
-          delete the document.
+          <strong>Trusted Verifier and Domain Expert:</strong>{" "}
+          {state ? state.seniorTiersSentence + " " : ""}Domain Experts will
+          be confirmed through a credential check (admission letter,
+          employment letter, etc.) — we verify, then permanently delete
+          the document.
         </p>
 
         <div className="mt-12 rounded-lg border border-saffron-200 bg-saffron-50/40 p-5 text-sm text-ink-700">

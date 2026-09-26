@@ -32,6 +32,7 @@
 // is only planned. Editing it re-writes the shared cache once, which is fine.
 
 import { OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { PERSONAS } from "@/data/personas";
 
 export interface SiteFeature {
   /** Path on https://shishya.in. {CODE} = exam code, {TOPIC} = topic code,
@@ -120,6 +121,8 @@ export const SITE_FEATURES: readonly SiteFeature[] = [
   { path: "/results", name: "Results", what: "declared exam results with the official link" },
   { path: "/find-your-exam", name: "Find your exam", what: "matches age, education and state to the government exams the student can apply for" },
   { path: "/exams/browse", name: "All exams", what: "search every exam on Shishya by name, state, language or category" },
+  // 26 Sep 2026: the Entrance exams section landing (src/app/exams/entrance/page.tsx).
+  { path: "/exams/entrance", name: "Entrance exams", what: "the admission tests on Shishya grouped by kind: engineering, medical, university and design, law, management, defence (NDA), olympiads and state CETs" },
   { path: "/exams/state", name: "Exams by state", what: "government exams grouped by state and union territory" },
   { path: "/jobs-map", name: "India's Govt Jobs Map", what: "central and state government jobs (Group A to C, banking, defence, police, teaching) with indicative pay bands and the exams Shishya tracks" },
   { path: "/current-affairs", name: "Current affairs", what: "daily digest and monthly capsules" },
@@ -155,16 +158,38 @@ export const SITE_FEATURES: readonly SiteFeature[] = [
   { path: "/ideas", name: "Ideas board", what: `feature requests sent through "Suggest a feature", with what has been built; signed-in students can upvote` },
   { path: "/mentors", name: "Mentors", what: "for people who have cleared a government exam: apply to guide current aspirants" },
   { path: "/pricing", name: "Pricing", what: "everything is free; the only paid service is the optional ₹9 mentor session" },
-  // ── Other sections of the portal (not exam prep) ───────────────────
+  // ── Other sections ─────────────────────────────────────────────────
+  // 26 Sep 2026 (whole-education identity): Shishya is one free place to
+  // study, not only exam prep — the school, college, careers and guidance
+  // sections are listed so the tutor can send a student there instead of
+  // saying it does not know of them.
   { path: "/jobs", name: "Jobs & careers", what: "government job catalogue, internships, resume and interview prep — information, not a job board" },
   { path: "/colleges", name: "Colleges", what: "NIRF-ranked colleges by stream and state" },
   { path: "/careers", name: "Careers", what: "career paths with entry routes and salary bands" },
-  // 26 Sep 2026: 14 of the 20 boards link only their website; syllabus
-  // links exist for 6 and sample-paper links for 3 (src/lib/schooling-data.ts).
+  { path: "/career-map", name: "Career Map", what: "one map from Class 9 to the first job: stream choice, Class 11-12 and entrance exams, college and the first career decision" },
+  // 26 Sep 2026: the school section is live — class and subject pages for
+  // CBSE (NCERT books) and CISCE, chapter pages that link the official NCERT
+  // PDF, and Shishya's own notes and checked practice only on the chapters
+  // that have them (no typed count: it grows chapter by chapter). Board
+  // links: 14 of the 20 boards link only their website; syllabus links exist
+  // for 6 and sample-paper links for 3 (src/lib/schooling-data.ts).
   {
     path: "/schooling",
-    name: "Schooling",
-    what: "links to each school board's official website; syllabus links for CBSE, CISCE, NIOS, IB, Cambridge and Tamil Nadu; sample-paper links for CBSE, CISCE and NIOS",
+    name: "School",
+    what: "school section: CBSE (NCERT textbooks) and CISCE class pages for Classes 1-12 — each NCERT chapter linked to its official book PDF, with Shishya's own chapter notes and checked practice questions on the chapters that have them (not every chapter yet) — and each school board's official website, with syllabus links for CBSE, CISCE, NIOS, IB, Cambridge and Tamil Nadu and sample-paper links for CBSE, CISCE and NIOS. On Class 8-12 pages a student aged 13 or above can sign in to ask the AI tutor about their class; Class 1-7 pages have no sign-in and no chat tutor",
+  },
+  {
+    path: "/schooling/{BOARD}/class-{N}",
+    name: "Class page",
+    what: "one class's subjects, each with its NCERT book or CISCE syllabus documents linked and a count of its chapters that have Shishya's notes or practice; on Class 8-12 pages, the sign-in for the class tutor (students 13 and above)",
+  },
+  { path: "/distance-learning", name: "Distance learning", what: "open and distance learning in India: IGNOU, NIOS and state open universities, and how to judge them" },
+  { path: "/post-graduation", name: "Post-graduation", what: "options after a degree: PG entrance exams (GATE, CAT, NEET-PG, UGC-NET and more), research, fellowships, civil services or a job" },
+  { path: "/insights", name: "Insights", what: "essays on Indian education decisions, with their sources" },
+  {
+    path: "/for/{PERSONA}",
+    name: "Guides by student type",
+    what: `a starting page for one kind of student — the exams, articles and next steps that fit them; {PERSONA} is one of ${PERSONAS.map((p) => p.slug).join(", ")}`,
   },
   { path: "/worldwide", name: "Study abroad", what: "countries, universities, test prep and loans" },
   {
@@ -204,7 +229,7 @@ function featureLine(f: SiteFeature): string {
 export function siteFeaturesBlock(): string {
   return [
     `What Shishya offers — the features, pages, buttons and settings you may describe:`,
-    `({CODE} = the exam's code from the syllabus block, e.g. SSC_GD; {TOPIC} = a topic code from it. With no exam picked, send the student to https://shishya.in to pick one first. Some exam pages exist only for some exams — the exam facts block says which.)`,
+    `({CODE} = the exam's code from the syllabus block, e.g. SSC_GD; {TOPIC} = a topic code from it. With no exam picked, send the student to https://shishya.in to pick one first. Some exam pages exist only for some exams — the exam facts block says which. {BOARD} = cbse (NCERT books) or icse-cisce; {N} = a class from 1 to 12; {PERSONA} = one of the slugs listed on that line.)`,
     ...SITE_FEATURES.map(featureLine),
     ...IN_PAGE_FEATURES.map((s) => `- ${s}`),
     ``,

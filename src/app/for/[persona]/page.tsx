@@ -106,6 +106,11 @@ export default async function PersonaPage({
   if (!persona) notFound();
 
   const [exams] = await Promise.all([loadExams(persona.examCodes)]);
+  // 26 Sep 2026: a persona code with no live exam (UGC_NET, CLAT today) is
+  // named as a plain label instead of silently vanishing — never linked,
+  // so it cannot 404. Empty when the read failed (then nothing is claimed).
+  const found = new Set(exams.map((e) => e.code));
+  const unlisted = exams.length > 0 ? persona.examCodes.filter((c) => !found.has(c)) : [];
   const articles = persona.articleSlugs
     .map((s) => findArticle(s))
     .filter((a): a is NonNullable<ReturnType<typeof findArticle>> => Boolean(a));
@@ -195,6 +200,12 @@ export default async function PersonaPage({
                 </li>
               ))}
             </ul>
+            {unlisted.length > 0 && (
+              <p className="mt-3 text-xs text-ink-500">
+                Also worth knowing (no page on Shishya yet):{" "}
+                {unlisted.map((c) => c.replace(/_/g, " ")).join(", ")}.
+              </p>
+            )}
           </>
         )}
 
@@ -269,7 +280,7 @@ export default async function PersonaPage({
               Sign up — auto-pin these exams →
             </Link>
             <Link
-              href="/exams"
+              href="/exams/browse"
               className="rounded-md border border-ink-300 bg-white px-4 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50"
             >
               Browse all exams instead

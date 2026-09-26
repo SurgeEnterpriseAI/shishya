@@ -9,11 +9,18 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { WORLDWIDE_COUNTRIES } from "@/lib/worldwide-data";
 
+// 26 Sep 2026: own openGraph {title, description, url} — without one the page
+// inherited og:url=https://shishya.in and the site-wide card text.
+const TITLE = "Country Comparison — US, UK, Canada, Australia, Germany + more";
+const DESCRIPTION =
+  `Compare ${WORLDWIDE_COUNTRIES.length} study-abroad destinations side-by-side: cost, post-study work permit length, PR pathway difficulty, English-medium availability, Indian student community. Pick based on YOUR priorities.`;
+const PAGE_URL = "https://shishya.in/worldwide/compare";
+
 export const metadata: Metadata = {
-  title: "Country Comparison — US, UK, Canada, Australia, Germany + more | Shishya",
-  description:
-    "Compare 10 study-abroad destinations side-by-side: cost, post-study work permit length, PR pathway difficulty, English-medium availability, Indian student community. Pick based on YOUR priorities.",
-  alternates: { canonical: "https://shishya.in/worldwide/compare" },
+  title: `${TITLE} | Shishya`,
+  description: DESCRIPTION,
+  alternates: { canonical: PAGE_URL },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: PAGE_URL, siteName: "Shishya", locale: "en_IN", type: "website" },
   keywords: [
     "study abroad comparison",
     "best country to study abroad india",

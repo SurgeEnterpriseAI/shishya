@@ -41,6 +41,7 @@ const EXPECTED_PATHS = [
   "/results",
   "/find-your-exam",
   "/exams/browse",
+  "/exams/entrance",
   "/exams/state",
   "/jobs-map",
   "/current-affairs",
@@ -60,7 +61,14 @@ const EXPECTED_PATHS = [
   "/jobs",
   "/colleges",
   "/careers",
+  // 26 Sep 2026 (whole-education identity): the other sections.
+  "/career-map",
   "/schooling",
+  "/schooling/{BOARD}/class-{N}",
+  "/distance-learning",
+  "/post-graduation",
+  "/insights",
+  "/for/{PERSONA}",
   "/worldwide",
   "/aptitude",
 ];
@@ -73,7 +81,10 @@ function routeFile(p: string): string {
   const dir = bare
     .replace(/\{CODE\}/g, "[code]")
     .replace(/\{TOPIC\}/g, "[topicCode]")
-    .replace(/\{YEAR\}/g, "[year]");
+    .replace(/\{YEAR\}/g, "[year]")
+    .replace(/\{BOARD\}/g, "[slug]")
+    .replace(/class-\{N\}/g, "[classSlug]")
+    .replace(/\{PERSONA\}/g, "[persona]");
   return path.join(APP, dir, "page.tsx");
 }
 
@@ -147,5 +158,33 @@ describe("siteFeaturesBlock", () => {
     expect(block).toContain(`"Study group" (make a group, share its invite link`);
     expect(block).toContain(`"Open study room"`);
     expect(block).toContain(`"Alert me on this phone"`);
+  });
+
+  it("describes the whole-education sections honestly (26 Sep 2026)", () => {
+    const school = block.split("\n").find((l) => l.startsWith("- School — https://shishya.in/schooling:"));
+    expect(school, "the /schooling line").toBeTruthy();
+    // The class-scoped tutor: Class 8-12, students 13 and above; Class 1-7 content only.
+    expect(school).toMatch(/Class 8-12 pages a student aged 13 or above can sign in to ask the AI tutor/);
+    expect(school).toMatch(/Class 1-7 pages have no sign-in and no chat tutor/);
+    // Official books linked, Shishya's notes only where they exist, no typed chapter count.
+    expect(school).toMatch(/official book PDF/);
+    expect(school).toMatch(/on the chapters that have them/);
+    expect(school!.replace(/Class(?:es)? \d+-\d+|aged 13/g, "")).not.toMatch(/\d/);
+    for (const p of ["/career-map", "/distance-learning", "/post-graduation", "/insights", "/for/{PERSONA}", "/schooling/{BOARD}/class-{N}"]) {
+      expect(block).toContain(`https://shishya.in${p}`);
+    }
+    // Every persona slug the /for/{PERSONA} line names is a real persona.
+    expect(block).toContain("{PERSONA} = one of the slugs listed on that line");
+    expect(block).toMatch(/class-10-student, engineering-aspirant/);
+  });
+});
+
+describe("PLATFORM_PERSONA (26 Sep 2026)", () => {
+  it("is the whole-education study companion, without 'community-driven' or 'every stage'", async () => {
+    const { PLATFORM_PERSONA } = await import("@/lib/ai/prompts");
+    expect(PLATFORM_PERSONA).toContain(
+      "a free, AI-supported study companion for students in India — school, entrance and government exams, colleges, scholarships and careers",
+    );
+    expect(PLATFORM_PERSONA).not.toMatch(/community-driven|every stage/);
   });
 });

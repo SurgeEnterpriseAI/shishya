@@ -6,6 +6,7 @@
 
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cache } from "react";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
@@ -30,11 +31,69 @@ function fill(s: string, vars: Record<string, string | number>): string {
   return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
 }
 
+// 26 Sep 2026: the page lists government AND entrance exams (JEE, NEET,
+// CUET, olympiads, state CETs), and its title said "Upcoming government
+// exams 2026" with the calendar year. The English title and heading now say
+// both, and the year range is computed from the exam days the page lists
+// ("2026", or "2026–27" once the 120-day window crosses the new year; none
+// when nothing is listed). The Hindi and Telugu twins keep their dictionary
+// headings (src/lib/i18n.ts is shared), with the same computed range.
+const EN_CALENDAR_HEADING = "Upcoming government and entrance exam dates";
+
+/** One read of the listed window per request — generateMetadata and the page
+ *  share it (React cache). */
+const loadCalendarRaw = cache(async () => {
+  const now = new Date();
+  const from = new Date(now.getTime() - 1.5 * 86_400_000);
+  const to = new Date(now.getTime() + HORIZON_DAYS * 86_400_000);
+  return prisma.examImportantDate
+    .findMany({
+      // 25 Sep 2026: real exams only (school class containers are not exams).
+      where: { date: { gte: from, lte: to }, archivedAt: null, exam: REAL_EXAM_WHERE },
+      orderBy: { date: "asc" },
+      take: 800,
+      include: {
+        exam: {
+          select: {
+            id: true,
+            code: true,
+            shortName: true,
+            // Portal domain widens the gold tier per exam (NABARD, LIC and
+            // other bodies on commercial TLDs) — see official-source.ts.
+            eligibility: { select: { officialUrl: true } },
+          },
+        },
+      },
+    })
+    .catch(() => []);
+});
+
+/** "2026" or "2026–27" from ISO days; null for none. */
+function calendarYearRange(days: readonly string[]): string | null {
+  const years = [...new Set(days.map((d) => Number(d.slice(0, 4))).filter((y) => Number.isInteger(y) && y > 2000))].sort();
+  if (years.length === 0) return null;
+  const first = years[0];
+  const last = years[years.length - 1];
+  return first === last ? String(first) : `${first}–${String(last).slice(-2)}`;
+}
+
+/** The calendar heading in a locale, with the computed range or none. */
+function calendarHeading(lc: string, t: TFn, range: string | null): string {
+  if (lc === "en") return range ? `${EN_CALENDAR_HEADING} ${range}` : EN_CALENDAR_HEADING;
+  const tpl = t("calendar.h1");
+  return range ? fill(tpl, { year: range }) : fill(tpl.replace(/\s*\{year\}/g, ""), {});
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const urlLocale = await getUrlLocale();
   const tt = tFor(urlLocale) as TFn;
-  const year = new Date().getUTCFullYear();
-  const title = `${fill(tt("calendar.h1"), { year })} | Shishya`;
+  const listedDays = buildTimeline(await loadCalendarRaw())
+    .filter((r) => r.isExamDay && r.daysFromToday >= 0)
+    .map((r) => r.day);
+  const range = calendarYearRange(listedDays);
+  const years = [...new Set(listedDays.map((d) => d.slice(0, 4)))].sort();
+  const heading = calendarHeading(urlLocale, tt, range);
+  const title = urlLocale === "en" ? `${heading} — notifications, admit cards | Shishya` : `${heading} | Shishya`;
   const description = tt("calendar.intro");
   const path = "/exam-calendar";
   const url = localizedUrl(path, urlLocale);
@@ -47,12 +106,16 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     alternates: { canonical: twinCanonical(path, urlLocale, twins), languages: languageAlternates(path, twins) },
     keywords: [
-      `upcoming government exams ${year}`,
-      `government exam calendar ${year}`,
-      `sarkari exam dates ${year}`,
-      `exam notifications ${year}`,
-      `admit card ${year}`,
+      ...years.flatMap((y) => [
+        `upcoming government exams ${y}`,
+        `upcoming entrance exams ${y}`,
+        `government exam calendar ${y}`,
+        `sarkari exam dates ${y}`,
+        `exam notifications ${y}`,
+        `admit card ${y}`,
+      ]),
       "upcoming exams in India",
+      "entrance exam dates",
     ],
     // Explicit og:image: a page-level openGraph block replaces the root's,
     // so the root card (src/app/opengraph-image.tsx) was not inherited.
@@ -75,31 +138,9 @@ export default async function ExamCalendarPage() {
   const [{ t: tRaw, locale }, urlLocale] = await Promise.all([getT(), getUrlLocale()]);
   const t = tRaw as TFn;
   const now = new Date();
-  const year = now.getUTCFullYear();
   const today = istDayNumber(now);
-  const from = new Date(now.getTime() - 1.5 * 86_400_000);
-  const to = new Date(now.getTime() + HORIZON_DAYS * 86_400_000);
 
-  const raw = await prisma.examImportantDate
-    .findMany({
-      // 25 Sep 2026: real exams only (school class containers are not exams).
-      where: { date: { gte: from, lte: to }, archivedAt: null, exam: REAL_EXAM_WHERE },
-      orderBy: { date: "asc" },
-      take: 800,
-      include: {
-        exam: {
-          select: {
-            id: true,
-            code: true,
-            shortName: true,
-            // Portal domain widens the gold tier per exam (NABARD, LIC and
-            // other bodies on commercial TLDs) — see official-source.ts.
-            eligibility: { select: { officialUrl: true } },
-          },
-        },
-      },
-    })
-    .catch(() => []);
+  const raw = await loadCalendarRaw();
 
   const rows: Row[] = buildTimeline(raw).map((r) => {
     const src = raw.find((x) => x.id === r.id)!;
@@ -125,6 +166,7 @@ export default async function ExamCalendarPage() {
     (byMonth.get(m) ?? byMonth.set(m, []).get(m)!).push(r);
   }
   const distinctExams = new Set([...examDays.values()].map((r) => r.examId)).size;
+  const range = calendarYearRange([...examDays.values()].map((r) => r.day));
 
   // This week: non-exam milestones (notification / admit card / deadlines / results) within 7 days.
   const WEEK_KINDS: DateKind[] = ["NOTIFICATION", "APPLICATION_START", "APPLICATION_END", "ADMIT_CARD", "ANSWER_KEY", "RESULT"];
@@ -151,7 +193,7 @@ export default async function ExamCalendarPage() {
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      name: fill(t("calendar.h1"), { year }),
+      name: calendarHeading(urlLocale, tFor(urlLocale) as TFn, range),
       description: t("calendar.intro"),
       url,
       inLanguage: lang,
@@ -207,7 +249,7 @@ export default async function ExamCalendarPage() {
         <p className="text-xs text-ink-500">
           <Link href={p("/")} className="hover:text-ink-800">Shishya</Link> · {t("calendar.title")}
         </p>
-        <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{fill(t("calendar.h1"), { year })}</h1>
+        <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{calendarHeading(locale, t, range)}</h1>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">{t("calendar.intro")}</p>
         <LangTwinLinks path={path} current={urlLocale} />
         <p className="mt-3 inline-block rounded-full bg-saffron-500 px-3 py-1 text-sm font-bold text-white">

@@ -1,6 +1,8 @@
-// Dynamic sitemap — Google + Bing discover all 163 exam pages plus the
-// public marketing surfaces from one fetch. Refreshes daily via Next's
-// revalidate (cheap because the underlying query is tiny).
+// Dynamic sitemap — Google + Bing discover every exam page, the school,
+// college, scholarship and career sections and the other public surfaces
+// from one fetch (26 Sep 2026: the typed "163 exam pages" was stale).
+// Refreshes daily via Next's revalidate (cheap because the underlying query
+// is tiny).
 
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db/prisma";
@@ -10,7 +12,9 @@ import { loadExamWeekInputs } from "@/lib/exam-week-inputs";
 import { standingSitting } from "@/lib/score-sitting";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { COLLEGES, ALL_STREAMS } from "@/lib/colleges-data";
-import { SCHOLARSHIPS } from "@/data/scholarships";
+// 26 Sep 2026 (repair): the schemes, never the one outside aggregator
+// (Buddy4Study) the raw catalogue holds — src/lib/scholarship-schemes.ts.
+import { SCHOLARSHIP_SCHEMES } from "@/lib/scholarship-schemes";
 import { WORLDWIDE_COUNTRIES, TEST_PREP } from "@/lib/worldwide-data";
 import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
 import { CAREERS } from "@/data/careers";
@@ -20,8 +24,69 @@ import { GATES_CLOSED, loadExamPageGates, type ExamPageGates } from "@/lib/exam-
 import { schoolClassIdentity } from "@/lib/school/context";
 import { schoolLandingSitemapEntries } from "@/lib/school/landings";
 import { EMPTY_SCHOOL_SURFACE, loadSchoolSurface, schoolSitemapEntries } from "@/lib/school/surface";
+import { capsuleLastmods, examPageLastmods, lastModifiedField, type ExamFreshnessRow } from "@/lib/sitemap-lastmod";
 
 export const revalidate = 86_400; // 24h
+
+/** The hand-listed section landings (priority 0.9). Every path here is a
+ *  public page robots.txt lets every crawler fetch
+ *  (tests/unit/robots-sections.test.ts). School URLs are never listed here:
+ *  they come from the live surface (pinned by the schooling-honesty test). */
+export const SECTION_LANDING_PATHS: readonly string[] = [
+  "/colleges",
+  "/scholarships",
+  // "/exams" is a permanent redirect to "/" — never list a redirect.
+  "/exams/browse",
+  // Government exams by state — the index every state page hangs under (15 Sep 2026).
+  "/exams/state",
+  // 26 Sep 2026: the Entrance-exams section hub (JEE, NEET, CUET, NDA,
+  // olympiads) — built by the sections workflow; the integrator checks the
+  // page renders before this ships.
+  "/exams/entrance",
+  "/current-affairs",
+  "/find-your-exam",
+  "/typing",
+  "/descriptive",
+  "/live-test",
+  "/exam-calendar",
+  "/editorial-policy",
+  "/results",
+  "/coach",
+  "/ask",
+  "/jobs-map",
+  "/mentors",
+  // Student feature requests + what the team built from them (13 Sep 2026).
+  "/ideas",
+  "/educators",
+  "/about",
+  "/pricing",
+  "/contact",
+  "/terms",
+  "/privacy",
+  "/refunds",
+  "/revision",
+  "/post-graduation",
+  "/jobs",
+  "/worldwide",
+  "/insights",
+  "/verification",
+  "/recognition",
+  "/scholarships/match",
+  "/worldwide/loans",
+  "/careers",
+  "/jobs/govt-jobs",
+  "/jobs/internships",
+  "/jobs/resume",
+  "/jobs/skill-careers",
+  "/colleges/cutoffs",
+  "/colleges/placements",
+  "/colleges/iti-diploma",
+  "/worldwide/compare",
+  "/distance-learning",
+  "/alumni-stories",
+  "/soft-skills",
+  "/career-map",
+];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in";
@@ -68,9 +133,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pageGates = await loadExamPageGates().catch(() => new Map<string, ExamPageGates>());
   const gate = (code: string): ExamPageGates => pageGates.get(code) ?? GATES_CLOSED;
 
+  // Honest per-page lastmod (26 Sep 2026, B-machine-crawl; the combiners and
+  // why are in src/lib/sitemap-lastmod.ts): one grouped SELECT gives each
+  // real exam its tracker change (ExamImportantDate has no updatedAt — rows
+  // are archived and re-inserted, so createdAt and archivedAt both count)
+  // and its newest non-suppressed news row. A failed read falls back to
+  // Exam.updatedAt for the hub and archive (what they carried before) and no
+  // lastmod for /updates.
+  const freshness = await prisma
+    .$queryRaw<(ExamFreshnessRow & { code: string })[]>`
+      WITH d AS (
+        SELECT "examId",
+          MAX(GREATEST("createdAt", COALESCE("archivedAt", "createdAt"))) AS "trackerAt",
+          MAX("archivedAt") AS "trackerArchivedAt"
+        FROM "ExamImportantDate" GROUP BY 1
+      ), n AS (
+        SELECT "examId", MAX("publishedAt") AS "newsAt", MAX("archivedAt") AS "newsArchivedAt"
+        FROM "ExamNewsItem" WHERE source IS NULL OR source <> ${SUPPRESSED_SOURCE}
+        GROUP BY 1
+      )
+      SELECT e.code, e."updatedAt", d."trackerAt", d."trackerArchivedAt", n."newsAt", n."newsArchivedAt"
+      FROM "Exam" e LEFT JOIN d ON d."examId" = e.id LEFT JOIN n ON n."examId" = e.id
+      WHERE ${REAL_EXAM_SQL}
+    `.catch(() => [] as (ExamFreshnessRow & { code: string })[]);
+  const lastmodByCode = new Map(freshness.map((r) => [r.code, examPageLastmods(r)]));
+
   const examUrls: MetadataRoute.Sitemap = exams.map((e) => ({
     url: `${base}/exams/${e.code}`,
-    lastModified: e.updatedAt,
+    lastModified: lastmodByCode.get(e.code)?.hub ?? e.updatedAt,
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));
@@ -172,8 +262,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // result / notification" is the largest query class in this niche;
   // every active exam has a tracker. The Hindi/Telugu twins are listed
   // separately below, only when localised (localeTwinUrls).
+  // 26 Sep 2026: lastmod = the tracker's own newest change (none on a failed read).
   const updatesUrls: MetadataRoute.Sitemap = exams.map((e) => ({
     url: `${base}/exams/${e.code}/updates`,
+    ...lastModifiedField(lastmodByCode.get(e.code)?.updates),
     changeFrequency: "daily" as const,
     priority: 0.8,
   }));
@@ -208,8 +300,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const v = twinVerdicts.get(e.code);
     if (!v) return [];
     return (["hi", "te"] as const).flatMap((lc) => [
-      ...(v.hub[lc] ? [{ url: `${base}/${lc}/exams/${e.code}`, lastModified: e.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 }] : []),
-      ...(v.updates[lc] ? [{ url: `${base}/${lc}/exams/${e.code}/updates`, changeFrequency: "daily" as const, priority: 0.7 }] : []),
+      ...(v.hub[lc] ? [{ url: `${base}/${lc}/exams/${e.code}`, lastModified: lastmodByCode.get(e.code)?.hub ?? e.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 }] : []),
+      ...(v.updates[lc] ? [{ url: `${base}/${lc}/exams/${e.code}/updates`, ...lastModifiedField(lastmodByCode.get(e.code)?.updates), changeFrequency: "daily" as const, priority: 0.7 }] : []),
       ...(gate(e.code).cutoff && v.cutoff[lc] ? [{ url: `${base}/${lc}/exams/${e.code}/cutoff`, changeFrequency: "weekly" as const, priority: 0.65 }] : []),
       ...(estimatorCodes.has(e.code) && v["score-estimate"][lc]
         ? [{ url: `${base}/${lc}/exams/${e.code}/score-estimate`, changeFrequency: "weekly" as const, priority: 0.5 }]
@@ -233,9 +325,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
   // Monthly capsule pages — one per month that has content.
-  const capsuleMonths = [...new Set(caDates.map((r) => r.d.toISOString().slice(0, 7)))];
-  const capsuleUrls: MetadataRoute.Sitemap = capsuleMonths.map((month) => ({
+  // 26 Sep 2026: lastmod = the newest current-affairs date in that month.
+  const capsuleMonthMods = capsuleLastmods(caDates.map((r) => r.d));
+  const capsuleUrls: MetadataRoute.Sitemap = [...capsuleMonthMods].map(([month, newestDay]) => ({
     url: `${base}/current-affairs/capsule/${month}`,
+    lastModified: newestDay,
     changeFrequency: "daily" as const,
     priority: 0.7,
   }));
@@ -248,9 +342,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // lastModified is the exam row's real timestamp (the 27 Aug revert had
   // re-introduced `new Date()` here — 178 URLs claiming "changed today"
   // every day, the spam signal the 25 Aug honesty pass removed elsewhere).
+  // 26 Sep 2026: plus the newest archived tracker / news row the page lists.
   const examArchiveUrls: MetadataRoute.Sitemap = exams.map((e) => ({
     url: `${base}/exams/${e.code}/archive`,
-    lastModified: e.updatedAt,
+    lastModified: lastmodByCode.get(e.code)?.archive ?? e.updatedAt,
     changeFrequency: "weekly" as const,
     priority: 0.55,
   }));
@@ -371,17 +466,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // long-tail SEO targets ("CAT 2023 questions", "JEE Advanced 2024 paper")
   // and the content is immutable once published, hence changeFrequency
   // yearly. Distinct query keeps it to one URL per paper, not per question.
-  const pyqSets = await prisma.$queryRaw<{ code: string; year: number }[]>`
-    SELECT DISTINCT e."code" AS code, q."pyqYear" AS year
+  // 26 Sep 2026: grouped per (exam, year) with lastmod = the newest question
+  // on the set — created, or validated later (a question joins the page when
+  // it is validated, not when it is written).
+  const pyqSets = await prisma.$queryRaw<{ code: string; year: number; lastmod: Date | null }[]>`
+    SELECT e."code" AS code, q."pyqYear" AS year,
+      MAX(GREATEST(q."createdAt", COALESCE(q."validatedAt", q."createdAt"))) AS lastmod
     FROM "Question" q
     JOIN "Exam" e ON e.id = q."examId"
     WHERE q.source = 'PYQ'
       AND q."pyqYear" IS NOT NULL
       AND q.validated = TRUE
       AND ${REAL_EXAM_SQL}
-  `.catch(() => [] as { code: string; year: number }[]);
+    GROUP BY e."code", q."pyqYear"
+  `.catch(() => [] as { code: string; year: number; lastmod: Date | null }[]);
   const pyqUrls: MetadataRoute.Sitemap = pyqSets.map((p) => ({
     url: `${base}/exams/${p.code}/pyq/${Number(p.year)}`,
+    ...lastModifiedField(p.lastmod),
     changeFrequency: "yearly" as const,
     priority: 0.6,
   }));
@@ -448,57 +549,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 25 Sep 2026: "/schooling" and "/schooling/streams" left this list with
   // the rest of the school URLs; 26 Sep 2026: the live school pages are
   // listed from the DB (see "School pages" further down).
-  const sectionLandings: MetadataRoute.Sitemap = [
-    "/colleges",
-    "/scholarships",
-    // "/exams" is a permanent redirect to "/" — never list a redirect.
-    "/exams/browse",
-    // Government exams by state — the index every state page hangs under (15 Sep 2026).
-    "/exams/state",
-    "/current-affairs",
-    "/find-your-exam",
-    "/typing",
-    "/descriptive",
-    "/live-test",
-    "/exam-calendar",
-    "/editorial-policy",
-    "/results",
-    "/coach",
-    "/ask",
-    "/jobs-map",
-    "/mentors",
-    // Student feature requests + what the team built from them (13 Sep 2026).
-    "/ideas",
-    "/educators",
-    "/about",
-    "/pricing",
-    "/contact",
-    "/terms",
-    "/privacy",
-    "/refunds",
-    "/revision",
-    "/post-graduation",
-    "/jobs",
-    "/worldwide",
-    "/insights",
-    "/verification",
-    "/recognition",
-    "/scholarships/match",
-    "/worldwide/loans",
-    "/careers",
-    "/jobs/govt-jobs",
-    "/jobs/internships",
-    "/jobs/resume",
-    "/jobs/skill-careers",
-    "/colleges/cutoffs",
-    "/colleges/placements",
-    "/colleges/iti-diploma",
-    "/worldwide/compare",
-    "/distance-learning",
-    "/alumni-stories",
-    "/soft-skills",
-    "/career-map",
-  ].map((path) => ({
+  // 26 Sep 2026 (B-machine-crawl): the list is the module-level
+  // SECTION_LANDING_PATHS above, exported so tests/unit/robots-sections.test.ts
+  // can prove robots.txt lets every crawler fetch each one.
+  const sectionLandings: MetadataRoute.Sitemap = SECTION_LANDING_PATHS.map((path) => ({
     url: `${base}${path}`,
     changeFrequency: "weekly" as const,
     priority: 0.9,
@@ -547,7 +601,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Per-scholarship pages — long-tail SEO ("Reliance Foundation UG
   // scholarship 2026", "AICTE Pragati eligibility", etc.)
-  const scholarshipUrls: MetadataRoute.Sitemap = SCHOLARSHIPS.map((s) => ({
+  const scholarshipUrls: MetadataRoute.Sitemap = SCHOLARSHIP_SCHEMES.map((s) => ({
     url: `${base}/scholarships/${s.id}`,
     changeFrequency: "monthly" as const,
     priority: 0.65,

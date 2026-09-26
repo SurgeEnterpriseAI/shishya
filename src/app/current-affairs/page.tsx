@@ -10,12 +10,24 @@ import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 export const revalidate = 1800;
 
+const CA_TITLE = "Daily Current Affairs for UPSC, SSC, Banking & Railways | Shishya";
+const CA_DESCRIPTION =
+  "Free daily current affairs for Indian government exams — national, international, economy, science, schemes & appointments, summarised for aspirants. Updated every day.";
+
 export const metadata: Metadata = {
-  title: "Daily Current Affairs for UPSC, SSC, Banking & Railways | Shishya",
-  description:
-    "Free daily current affairs for Indian government exams — national, international, economy, science, schemes & appointments, summarised for aspirants. Updated every day.",
+  title: CA_TITLE,
+  description: CA_DESCRIPTION,
   alternates: { canonical: "https://shishya.in/current-affairs" },
   keywords: ["current affairs today", "daily current affairs", "current affairs for UPSC SSC banking railways", "GK today India"],
+  // 26 Sep 2026: its own openGraph — shares carried the root card's title.
+  openGraph: {
+    title: CA_TITLE.replace(" | Shishya", ""),
+    description: CA_DESCRIPTION,
+    url: "https://shishya.in/current-affairs",
+    siteName: "Shishya",
+    locale: "en_IN",
+    type: "website",
+  },
 };
 
 interface Row {

@@ -7,12 +7,30 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { NIRF_SOURCE_URL, NIRF_SOURCE_YEAR } from "@/lib/colleges-data";
+
+// 26 Sep 2026 (whole-education identity): the typed "175+ exams" is gone;
+// the page now also says how the school pages and the colleges,
+// scholarships and careers data are made. Each data source below is stated
+// exactly as the data file's own header comment states it
+// (src/lib/colleges-data.ts, src/data/scholarships.ts, src/data/careers.ts)
+// — nothing added. The date tiers match src/lib/official-source.ts.
+const EDITORIAL_TITLE = "How Shishya builds and checks its content | Shishya";
+const EDITORIAL_DESCRIPTION =
+  "Shishya's editorial policy: AI-assisted content grounded in official notifications and previous-year papers, dates labelled official, reported or expected, school pages that link the official books and never copy them, stated sources for colleges, scholarships and careers, and student error-reporting on every question.";
 
 export const metadata: Metadata = {
-  title: "How Shishya builds and checks its content | Shishya",
-  description:
-    "Shishya's editorial policy: AI-assisted content grounded in official notifications and previous-year papers, official dates always linked to the source, expected dates clearly labelled, student error-reporting on every question, and human review.",
+  title: EDITORIAL_TITLE,
+  description: EDITORIAL_DESCRIPTION,
   alternates: { canonical: "https://shishya.in/editorial-policy" },
+  openGraph: {
+    title: EDITORIAL_TITLE,
+    description: EDITORIAL_DESCRIPTION,
+    url: "https://shishya.in/editorial-policy",
+    siteName: "Shishya",
+    locale: "en_IN",
+    type: "website",
+  },
 };
 
 export default function EditorialPolicyPage() {
@@ -28,21 +46,68 @@ export default function EditorialPolicyPage() {
 
         <h2 className="mt-8 text-lg font-semibold text-ink-900">AI-assisted, source-grounded</h2>
         <p className="mt-2">
-          Shishya covers 175+ Indian government and entrance exams. At that breadth, our practice
-          questions, study notes and exam summaries are drafted with AI — we say that plainly —
-          and they are grounded in the material that matters: official notifications from the
-          conducting bodies, previous-year papers, and each exam&apos;s published pattern. Practice
-          questions go through a validation step before they are served to aspirants.
+          Shishya covers school, entrance and government exams, colleges, scholarships and careers.
+          At that breadth, our practice questions, study notes and exam summaries are drafted with
+          AI — we say that plainly — and they are grounded in the material that matters: official
+          notifications from the conducting bodies, previous-year papers, and each exam&apos;s
+          published pattern. Practice questions go through a validation step before they are served
+          to students.
         </p>
 
-        <h2 className="mt-6 text-lg font-semibold text-ink-900">Official vs expected — always labelled</h2>
+        <h2 className="mt-6 text-lg font-semibold text-ink-900">Official, reported or expected — always labelled</h2>
         <p className="mt-2">
-          On every exam tracker, a date is marked <b>Official</b> only when we can link the official
-          notice it came from — the link is right there. Anything else is marked{" "}
-          <b>Expected</b>: an estimate from previous cycles, never presented as an announcement. We
-          also show when each exam&apos;s data was last updated, and we always tell aspirants to
-          confirm on the conducting body&apos;s website before acting.
+          On every exam tracker, a date is marked <b>Official</b> only when it is cited from the
+          conducting body&apos;s own site — the link is right there. A date that was announced but
+          is cited through a secondary source, such as a news or coaching site, is marked{" "}
+          <b>Reported</b>: real, but worth confirming. Anything else is marked <b>Expected</b>: an
+          estimate from previous cycles, never presented as an announcement. We also show when each
+          exam&apos;s data was last updated, and we always tell aspirants to confirm on the
+          conducting body&apos;s website before acting.
         </p>
+
+        <h2 className="mt-6 text-lg font-semibold text-ink-900">School pages</h2>
+        <p className="mt-2">
+          For CBSE, the school section follows the NCERT textbooks: class, subject and chapter
+          pages link the official NCERT books and chapter PDFs on ncert.nic.in, with chapter titles
+          as NCERT prints them. The books are NCERT&apos;s — we never copy, summarise or translate textbook
+          text; we link it. For CISCE (ICSE / ISC) we link the council&apos;s own syllabus and
+          curriculum documents. Shishya&apos;s own chapter notes and its AI-written, answer-checked
+          practice questions appear only on the chapters marked as having them; every other chapter
+          page shows the official link only.
+        </p>
+        <p className="mt-2">
+          Class 1-7 pages are content only: no sign-in and no chat tutor. On Class 8-12 pages,
+          students aged 13 and above can sign in for an AI tutor scoped to their class.
+        </p>
+
+        <h2 className="mt-6 text-lg font-semibold text-ink-900">Colleges, scholarships and careers data</h2>
+        <ul className="mt-2 list-disc pl-5 space-y-1">
+          <li>
+            <b>Colleges:</b> National Institutional Ranking Framework (NIRF) {NIRF_SOURCE_YEAR},
+            Ministry of Education, Government of India —{" "}
+            <a className="text-saffron-700 underline" href={NIRF_SOURCE_URL} rel="noopener">{NIRF_SOURCE_URL.replace(/^https?:\/\//, "")}</a>.
+            Every rank is from the published {NIRF_SOURCE_YEAR} list; where we are not certain of an
+            exact rank, we omit the number rather than guess. Each college page links the
+            college&apos;s own website.
+          </li>
+          <li>
+            {/* 26 Sep 2026 (repair): said links "never" go to a third-party aggregator, but the
+                catalogue held one (Buddy4Study); it is now kept out of the scholarship lists and
+                counts (src/lib/scholarship-schemes.ts) and linked once, labelled, on /scholarships. */}
+            <b>Scholarships:</b> each entry was cross-checked against the official site at the time
+            of writing, and each scheme links its awarding body or official portal directly. One
+            outside aggregator (Buddy4Study) is also linked for wider discovery; it is labelled as an
+            aggregator and is not counted among the scholarships. Where amounts vary by year or
+            category we describe the typical band rather than a fixed number.
+          </li>
+          <li>
+            <b>Careers:</b> salary bands draw on the NASSCOM Indian IT salary report, the Naukri
+            JobSpeak quarterly index, 7th Pay Commission tables for government roles, PayScale and
+            AmbitionBox aggregates for private roles, and official salary structures published by
+            ministries (UPSC, banks, defence). The bands are deliberately wide — real salaries vary
+            by city, employer, tier and performance.
+          </li>
+        </ul>
 
         <h2 className="mt-6 text-lg font-semibold text-ink-900">Every question can be challenged</h2>
         <p className="mt-2">

@@ -1,9 +1,12 @@
 // /worldwide/[country]/[university] — per-university detail page.
+// 26 Sep 2026: own openGraph {title, description, url}; the description is
+// cut at a sentence / word boundary (was .slice(0, 280)).
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { clipDescription } from "@/lib/section-seo";
 import { findCountry, findUniversity, WORLDWIDE_COUNTRIES } from "@/lib/worldwide-data";
 
 interface PageParams { country: string; university: string }
@@ -22,10 +25,14 @@ export async function generateMetadata({
   const u = findUniversity(country, university);
   if (!c || !u) return { title: "Not found — Shishya" };
   const year = new Date().getUTCFullYear();
+  const title = `${u.name} — Admissions, Tuition, Indian Students ${year} | Shishya`;
+  const description = clipDescription(`${u.blurb} Tuition: ${u.tuitionRange}. Programs: ${u.strongPrograms.join(", ")}.`);
+  const url = `https://shishya.in/worldwide/${country}/${university}`;
   return {
-    title: `${u.name} — Admissions, Tuition, Indian Students ${year} | Shishya`,
-    description: `${u.blurb} Tuition: ${u.tuitionRange}. Programs: ${u.strongPrograms.join(", ")}.`.slice(0, 280),
-    alternates: { canonical: `https://shishya.in/worldwide/${country}/${university}` },
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title, description, url, siteName: "Shishya", locale: "en_IN", type: "article" },
     keywords: [
       u.name,
       `${u.name} admission`,

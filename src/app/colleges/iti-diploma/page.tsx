@@ -10,11 +10,18 @@ import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { ITI_TRADES, DIPLOMA_PROGRAMS, POLYTECHNIC_ENTRY_EXAMS } from "@/data/iti-diploma";
 
+// 26 Sep 2026: own openGraph {title, description, url} — without one the page
+// inherited og:url=https://shishya.in and the site-wide card text.
+const TITLE = "ITI + Polytechnic + Diploma — Skill-based education pathways in India";
+const DESCRIPTION =
+  "ITI trades + Polytechnic diplomas — the parallel education track after Class 10. Electrician, fitter, welder, mechanic + Civil/Mech/Elec/CS diplomas. Realistic salary, lateral-entry to BTech, govt JE roles.";
+const PAGE_URL = "https://shishya.in/colleges/iti-diploma";
+
 export const metadata: Metadata = {
-  title: "ITI + Polytechnic + Diploma — Skill-based education pathways in India | Shishya",
-  description:
-    "ITI trades + Polytechnic diplomas — the parallel education track ~6.5M Indian students take. Electrician, fitter, welder, mechanic + Civil/Mech/Elec/CS diplomas. Realistic salary, lateral-entry to BTech, govt JE roles.",
-  alternates: { canonical: "https://shishya.in/colleges/iti-diploma" },
+  title: `${TITLE} | Shishya`,
+  description: DESCRIPTION,
+  alternates: { canonical: PAGE_URL },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: PAGE_URL, siteName: "Shishya", locale: "en_IN", type: "website" },
   keywords: [
     "ITI courses india",
     "ITI electrician scope",
@@ -36,7 +43,7 @@ export default function ITIDiplomaPage() {
           collectionPageLd({
             name: "ITI + Polytechnic + Diploma — Skill-based education pathways in India",
             description:
-              "ITI trades + Polytechnic diplomas — the parallel education track ~6.5M Indian students take. Electrician, fitter, welder, mechanic + Civil/Mech/Elec/CS diplomas. Realistic salary, lateral-entry to BTech, govt JE roles.",
+              "ITI trades + Polytechnic diplomas — the parallel education track after Class 10. Electrician, fitter, welder, mechanic + Civil/Mech/Elec/CS diplomas. Realistic salary, lateral-entry to BTech, govt JE roles.",
             path: "/colleges/iti-diploma",
           }),
           breadcrumbLd([["Colleges", "/colleges"], ["ITI & Diploma", "/colleges/iti-diploma"]]),
@@ -52,8 +59,8 @@ export default function ITIDiplomaPage() {
           ITI, Polytechnic + Diploma — the parallel education path
         </h1>
         <p className="mt-2 max-w-3xl text-base text-ink-700">
-          ~6.5M Indian students take this path; the mainstream education
-          discourse treats it as invisible. ITI trades (1-2 year, Class 10
+          {/* 26 Sep 2026: "~6.5M students" had no source; removed. */}
+          The mainstream education discourse treats this path as invisible. ITI trades (1-2 year, Class 10
           entry) + Polytechnic diplomas (3 year, Class 10 entry) lead to
           real, employable careers — often with better ROI than tier-3
           BTech.

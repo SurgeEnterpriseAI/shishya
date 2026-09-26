@@ -3,11 +3,19 @@
 // Long-tail SEO + decision-utility for "[College] [Branch] cutoff /
 // placement" queries. Highest-volume Indian-education search family
 // outside of "[career] salary".
+//
+// 26 Sep 2026 (every-education-search wave): own openGraph {title,
+// description, url} (it inherited none); CollegeOrUniversity JSON-LD whose
+// department is this branch, joined to the college page's entity by @id;
+// description cut at a sentence / word boundary (was .slice(0, 280)); the
+// entry exam links only a live exam (NLSIU's CLAT has no page — a 404) and
+// the page revalidates daily for that read.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { ExamChip } from "@/components/ExamChip";
 import { COLLEGES } from "@/lib/colleges-data";
 import {
   findCollegeDetail,
@@ -15,6 +23,10 @@ import {
   allBranchPaths,
 } from "@/data/college-details";
 import { findCareer } from "@/data/careers";
+import { loadLiveExams } from "@/lib/live-exam-codes";
+import { clipDescription } from "@/lib/section-seo";
+
+export const revalidate = 86_400;
 
 interface PageParams { slug: string; branch: string }
 
@@ -31,10 +43,15 @@ export async function generateMetadata({
   if (!college || !b) return { title: "Not found — Shishya" };
   const year = new Date().getUTCFullYear();
   const title = `${college.shortName} ${b.shortName} ${year} — Placements, Cutoff, Salary | Shishya`;
+  const description = clipDescription(
+    `${college.shortName} ${b.name} (${b.degree}): placements (median + top), JoSAA/MCC closing ranks, career outcomes, salary. ${b.blurb}`,
+  );
+  const url = `https://shishya.in/colleges/${slug}/${branch}`;
   return {
     title,
-    description: `${college.shortName} ${b.name} (${b.degree}) ${year}: placements (median + top), JoSAA/MCC closing ranks, career outcomes, salary. ${b.blurb}`.slice(0, 280),
-    alternates: { canonical: `https://shishya.in/colleges/${slug}/${branch}` },
+    description,
+    alternates: { canonical: url },
+    openGraph: { title, description, url, siteName: "Shishya", locale: "en_IN", type: "article" },
     keywords: [
       `${college.shortName} ${b.shortName} placement`,
       `${college.shortName} ${b.shortName} cutoff`,
@@ -82,9 +99,26 @@ export default async function BranchPage({
       { "@type": "ListItem", position: 4, name: b.name, item: `https://shishya.in/colleges/${slug}/${branch}` },
     ],
   };
+  // The college (same @id as /colleges/[slug]) with this branch as its department.
+  const collegeJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollegeOrUniversity",
+    "@id": `https://shishya.in/colleges/${slug}#college`,
+    name: college.name,
+    alternateName: college.shortName,
+    url: college.website,
+    department: {
+      "@type": "Organization",
+      name: `${b.name} (${b.degree}), ${college.shortName}`,
+      url: `https://shishya.in/colleges/${slug}/${branch}`,
+      description: clipDescription(b.blurb, 300),
+    },
+  };
+  const live = detail.entryExamCode ? await loadLiveExams() : new Map<string, string>();
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collegeJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <Header />
       <section className="container-prose py-10">
@@ -235,10 +269,10 @@ export default async function BranchPage({
             <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-800">Entry exam</p>
             <p className="mt-1 text-sm text-ink-700">
               Admission via{" "}
-              <Link href={`/exams/${detail.entryExamCode}`} className="text-saffron-700 underline">
-                {detail.entryExamCode.replace(/_/g, " ")}
-              </Link>{" "}
-              — open the exam page for syllabus, PYQ, mocks, and study help.
+              <ExamChip code={detail.entryExamCode} live={live} className="text-saffron-700 underline" plainClassName="font-medium text-ink-800" />
+              {live.has(detail.entryExamCode)
+                ? " — open the exam page for syllabus, PYQ, mocks, and study help."
+                : " (no page for this exam on Shishya yet)."}
             </p>
           </div>
         )}

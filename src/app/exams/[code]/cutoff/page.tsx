@@ -47,6 +47,7 @@ import type { SourceTier, TimelineRow } from "@/lib/exam-timeline";
 import { examAlertLabels, getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { categoryHeaderKey, parseCategoryCutoff } from "@/lib/category-cutoff";
 import { cutoffCategoryRowsHtml, cutoffRowsHtml, groupCutoffTables, type CutoffSource, type OfficialCutoffRow } from "@/lib/official-cutoffs";
+import { newestCutoffLabelYear } from "@/lib/cutoff-label-year";
 import { sourceTier } from "@/lib/official-source";
 import { markingSchemeStatable } from "@/lib/marking-scheme";
 import { ExamVerdictPoll } from "@/components/ExamVerdictPoll";
@@ -65,9 +66,15 @@ import { inlineMd } from "@/components/NotesMarkdown";
 // data caches underneath.
 export const revalidate = 900;
 
-const YEAR = new Date().getFullYear();
-
 type TFn = (key: StringKey) => string;
+
+// The year in the title, H1, share line and JSON-LD (26 Sep 2026): the
+// newest cutoff cycle the page actually shows — the published
+// OfficialCutoff tables (#published) — or no year at all
+// (src/lib/cutoff-label-year.ts). It was the calendar year ("SSC CGL Cutoff
+// 2026") on pages whose newest published figure is an older cycle and whose
+// bands are indicative, never the next cycle's.
+const newestCycleYear = newestCutoffLabelYear;
 
 const hostOf = (url: string) => {
   try {
@@ -85,6 +92,12 @@ const TIER_KEY: Record<SourceTier, StringKey> = {
 
 function fill(s: string, vars: Record<string, string | number>): string {
   return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
+}
+
+/** fill() for a template with a {year} slot: with no year the slot and the
+ *  space before it go ("SSC CGL cutoff: expected score …"). */
+function fillYear(s: string, vars: Record<string, string | number>, year: number | null): string {
+  return year === null ? fill(s.replace(/\s*\{year\}/g, ""), vars) : fill(s, { ...vars, year });
 }
 
 /** Phases the cutoff block covers: D-1 .. D+7 (not the run-up week). */
@@ -223,8 +236,13 @@ export async function generateMetadata({
   // English one. Same shape as score-estimate/page.tsx now.
   const urlLocale = await getUrlLocale();
   const tt = tFor(urlLocale) as TFn;
-  const title = `${fill(tt("cutoff.metaTitle"), { exam: exam.shortName, year: YEAR })} | Shishya`;
-  const description = fill(tt("cutoff.metaDescription"), { exam: exam.shortName, name: exam.name, year: YEAR });
+  const cycles = await prisma
+    .$queryRaw<{ cycle: string }[]>`
+      SELECT DISTINCT cycle FROM "OfficialCutoff" WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL
+    `.catch(() => [] as { cycle: string }[]);
+  const year = newestCycleYear(cycles.map((c) => c.cycle));
+  const title = `${fillYear(tt("cutoff.metaTitle"), { exam: exam.shortName }, year)} | Shishya`;
+  const description = fillYear(tt("cutoff.metaDescription"), { exam: exam.shortName, name: exam.name }, year);
   const path = `/exams/${exam.code}/cutoff`;
   const url = localizedUrl(path, urlLocale);
   const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
@@ -237,7 +255,7 @@ export async function generateMetadata({
     description,
     alternates: { canonical: twinCanonical(path, urlLocale, twins), languages: languageAlternates(path, twins) },
     keywords: [
-      `${exam.shortName} cutoff ${YEAR}`,
+      ...(year !== null ? [`${exam.shortName} cutoff ${year}`] : []),
       `${exam.shortName} expected cutoff`,
       `${exam.shortName} cutoff marks`,
       `${exam.shortName} safe score`,
@@ -312,6 +330,7 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
   const p = (rel: string) => localizedPath(rel, urlLocale);
   const short = exam.shortName;
   const published = groupCutoffTables(publishedRows);
+  const year = newestCycleYear(published.map((tb) => tb.cycle));
 
   const ew = computeExamWeekState(dateRows, officialUrl);
   const view = CUTOFF_PHASES.has(ew.phase) && ew.tier !== "expected" ? await loadExamWeekView(exam, ew, t, locale) : null;
@@ -328,8 +347,8 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: fill(tUrl("cutoff.metaTitle"), { exam: exam.shortName, year: YEAR }),
-    description: fill(tUrl("cutoff.metaDescription"), { exam: exam.shortName, name: exam.name, year: YEAR }),
+    headline: fillYear(tUrl("cutoff.metaTitle"), { exam: exam.shortName }, year),
+    description: fillYear(tUrl("cutoff.metaDescription"), { exam: exam.shortName, name: exam.name }, year),
     url,
     inLanguage: inLanguage(urlLocale),
     isAccessibleForFree: true,
@@ -378,7 +397,7 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
           </Link>{" "}
           · {t("tracker.cutoff")}
         </p>
-        <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{fill(t("cutoff.h1"), { exam: short, year: YEAR })}</h1>
+        <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{fillYear(t("cutoff.h1"), { exam: short }, year)}</h1>
 
         {/* Language twins — real links for humans AND the crawl graph, the
             same pair the hreflang block in generateMetadata declares. */}
@@ -590,7 +609,7 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
         <div className="mt-4">
           <ShareExamButton
             url={url}
-            message={fill(t("cutoff.share"), { exam: short, year: YEAR })}
+            message={fillYear(t("cutoff.share"), { exam: short }, year)}
             label={t("cutoff.shareLabel")}
             surface="cutoff"
             exam={exam.code}

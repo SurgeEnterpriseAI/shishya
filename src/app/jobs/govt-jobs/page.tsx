@@ -6,11 +6,18 @@ import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { GOVT_JOBS, GOVT_JOB_CATEGORIES, govtJobsByCategory } from "@/data/govt-jobs";
 
+// 26 Sep 2026: own openGraph {title, description, url} — without one the page
+// inherited og:url=https://shishya.in and the site-wide card text.
+const TITLE = "Government Jobs in India — UPSC, SSC, IBPS, RRB, RBI, Defence";
+const DESCRIPTION =
+  `${GOVT_JOBS.length} major recurring govt recruitments. Cadence, eligibility, pattern, official portal. UPSC CSE/ESE, SSC CGL/CHSL/MTS, IBPS PO/Clerk, SBI, RBI Grade B, SEBI, NABARD, NDA/CDS, RRB NTPC/Group D/ALP, KVS/NVS, State PSCs.`;
+const PAGE_URL = "https://shishya.in/jobs/govt-jobs";
+
 export const metadata: Metadata = {
-  title: "Government Jobs in India — UPSC, SSC, IBPS, RRB, RBI, Defence | Shishya",
-  description:
-    `${GOVT_JOBS.length} major recurring govt recruitments. Cadence, eligibility, pattern, official portal. UPSC CSE/ESE, SSC CGL/CHSL/MTS, IBPS PO/Clerk, SBI, RBI Grade B, SEBI, NABARD, NDA/CDS, RRB NTPC/Group D/ALP, KVS/NVS, State PSCs.`,
-  alternates: { canonical: "https://shishya.in/jobs/govt-jobs" },
+  title: `${TITLE} | Shishya`,
+  description: DESCRIPTION,
+  alternates: { canonical: PAGE_URL },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: PAGE_URL, siteName: "Shishya", locale: "en_IN", type: "website" },
   keywords: [
     "government jobs india",
     "UPSC CSE recruitment",

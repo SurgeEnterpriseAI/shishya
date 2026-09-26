@@ -8,13 +8,19 @@
 // 26 vs 27 Sep). Row labels below are the live tracker's own.
 
 import { describe, it, expect } from "vitest";
-import { buildTimeline, type TimelineInput } from "@/lib/exam-timeline";
+import { buildTimeline, titleCycleYear, type TimelineInput } from "@/lib/exam-timeline";
 import { parseHubTitle } from "@/lib/truth-lint";
 import {
   heldDescriptionLead,
   heldTitleLead,
   heldVerb,
+  clipDescription,
+  heldYearDescriptionLead,
+  heldYearTitleLead,
   hubDateLead,
+  hubTitlePrefix,
+  hubTitleYear,
+  lastHeldExamYear,
   isCalledOff,
   isNonWrittenStage,
   labelNamesOtherExam,
@@ -391,5 +397,146 @@ describe("sameStage", () => {
     expect(pet.kind === "announced" && pet.row.id).toBe("w");
     const cbt = hubDateLead(tl([row("w", "CBT-1 exam (CEN 03/2026)", "2026-10-12", "reported"), row("p", "CBT-2 exam", "2027-01-20", "reported")]), IOQM, created);
     expect(cbt.kind === "announced" && cbt.row.id).toBe("w");
+  });
+});
+
+// 26 Sep 2026: the year beside the exam's name. The hub printed the calendar
+// year ("JEE Main 2026 — Exam Date Not Announced Yet" in September 2026).
+describe("hubTitleYear / titleCycleYear — the title year", () => {
+  const sep26 = new Date("2026-09-26T06:00:00Z");
+  const JEE = exam("JEE_MAIN", "JEE Main", "Joint Entrance Examination Main");
+  const NDA = exam("NDA", "NDA", "National Defence Academy and Naval Academy Examination");
+  const other = (id: string, label: string, date: string, kind: string, tier: "official" | "reported" | "expected") =>
+    row(id, label, date, tier, { kind, isExamDay: false });
+
+  /** The English title as src/app/exams/[code]/page.tsx assembles it. */
+  function title(ex: HubTitleExam, rows: TimelineInput[], when: Date): string {
+    const t = tl(rows, when);
+    const lead = hubDateLead(t, ex);
+    const dateBit =
+      lead.kind === "held"
+        ? `${heldTitleLead("en", lead, lead.row.tier === "official" ? null : "reported")}, `
+        : lead.kind === "revision"
+          ? `${revisionTitleLead("en")}, `
+          : lead.kind === "announced"
+            ? `Exam Date ${lead.row.day}, `
+            : "Exam Date Not Announced Yet, ";
+    return `${hubTitlePrefix("en", ex.shortName, hubTitleYear(lead, t, ex, when), dateBit)}Free Mock Tests, PYQ | Shishya`;
+  }
+
+  it("held in April plus a 2027 expected row: the title says 2027", () => {
+    const rows = [
+      row("apr", "JEE Main 2026 Session 2 exam", "2026-04-04", "official"),
+      row("next", "JEE Main 2027 Session 1 exam (expected)", "2027-01-22", "expected"),
+    ];
+    expect(titleCycleYear(tl(rows, sep26), sep26)).toBe(2027);
+    expect(title(JEE, rows, sep26)).toBe("JEE Main 2027 — Exam Date Not Announced Yet, Free Mock Tests, PYQ | Shishya");
+    // The expected DATE still never leads the title.
+    expect(title(JEE, rows, sep26)).not.toContain("22 Jan");
+  });
+
+  it("an exam day names the cycle before an earlier notification row does", () => {
+    const rows = [
+      other("n", "Notification (expected)", "2026-10-30", "NOTIFICATION", "expected"),
+      row("e", "Session 1 exam (expected)", "2027-01-22", "expected"),
+    ];
+    expect(titleCycleYear(tl(rows, sep26), sep26)).toBe(2027);
+    expect(titleCycleYear(tl([rows[0]], sep26), sep26)).toBe(2026);
+  });
+
+  it("held in June, nothing ahead, day 90: never '2026 — Exam Date Not Announced Yet'", () => {
+    const rows = [row("jun", "CDS exam", "2026-06-28", "official")];
+    const t = title(CDS, rows, sep26);
+    expect(hubDateLead(tl(rows, sep26), CDS).kind).toBe("none");
+    expect(t).toBe("CDS — 2026 Exam Held; Next Exam Date Not Announced Yet, Free Mock Tests, PYQ | Shishya");
+    expect(t).not.toMatch(/CDS 2026 —/);
+    expect(t).not.toContain("2026 — Exam Date Not Announced Yet");
+    // truth-lint reads it as "not announced" with no held date.
+    const parsed = parseHubTitle(t);
+    expect(parsed.kind).toBe("not-announced");
+    expect(parsed.kind === "not-announced" && parsed.held).toBeFalsy();
+  });
+
+  it("a result or answer key ahead belongs to the held sitting and names no cycle", () => {
+    const rows = [row("jun", "CDS exam", "2026-06-28", "official"), other("res", "Result (expected)", "2026-10-20", "RESULT", "expected")];
+    expect(titleCycleYear(tl(rows, sep26), sep26)).toBeNull();
+    expect(title(CDS, rows, sep26)).toBe("CDS — 2026 Exam Held; Next Exam Date Not Announced Yet, Free Mock Tests, PYQ | Shishya");
+  });
+
+  it("nothing ahead and no announced sitting behind: no year at all", () => {
+    const rows = [row("est", "Exam (expected)", "2026-06-28", "expected")];
+    expect(title(CDS, rows, sep26)).toBe("CDS — Exam Date Not Announced Yet, Free Mock Tests, PYQ | Shishya");
+    expect(title(CDS, [], sep26)).toBe("CDS — Exam Date Not Announced Yet, Free Mock Tests, PYQ | Shishya");
+    // A postponed or other-exam row is not "held" either.
+    expect(lastHeldExamYear(tl([row("p", "Written exam (postponed)", "2026-06-28", "official")], sep26), CDS, sep26)).toBeNull();
+    expect(lastHeldExamYear(tl([row("u", "UPSC CSE 2026 Mains Exam", "2026-06-28", "official")], sep26), CDS, sep26)).toBeNull();
+  });
+
+  it("an announced future date: unchanged — its own year, its own date", () => {
+    const rows = [row("next", "Exam", "2026-10-04", "reported")];
+    expect(hubTitleYear(hubDateLead(tl(rows), IOQM), tl(rows), IOQM, now)).toEqual({ kind: "cycle", year: 2026 });
+    expect(title(IOQM, rows, now)).toBe("IOQM 2026 — Exam Date 2026-10-04, Free Mock Tests, PYQ | Shishya");
+  });
+
+  it("NDA with an announced 2027 date: 2027", () => {
+    const rows = [row("p", "NDA 1 2026 exam", "2026-04-12", "official"), row("n", "NDA 1 2027 exam", "2027-04-11", "official")];
+    const t = tl(rows, sep26);
+    const lead = hubDateLead(t, NDA);
+    expect(lead.kind === "announced" && lead.row.id).toBe("n");
+    expect(hubTitleYear(lead, t, NDA, sep26)).toEqual({ kind: "cycle", year: 2027 });
+    expect(title(NDA, rows, sep26).startsWith("NDA 2027 — Exam Date 2027-04-11, ")).toBe(true);
+  });
+
+  it("a held lead keeps the held row's year even with an expected row next year", () => {
+    const rows = [row("held", "IOQM 2026 exam day", "2026-09-06", "reported"), row("n", "IOQM 2027 (expected)", "2027-09-05", "expected")];
+    expect(title(IOQM, rows, now)).toBe(
+      "IOQM 2026 — Exam Held 6 Sept 2026 (reported), Next Exam Date Not Announced Yet, Free Mock Tests, PYQ | Shishya",
+    );
+  });
+
+  it("the held-year leads read as 'not announced' in hi and te, and the description says held", () => {
+    for (const lc of ["hi", "te"] as const) {
+      const tail = lc === "hi" ? "मुफ़्त मॉक टेस्ट, पिछले साल के पेपर | Shishya" : "ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు | Shishya";
+      const p = parseHubTitle(`${hubTitlePrefix(lc, "CDS", { kind: "held-year", year: 2026 }, "")}${tail}`);
+      expect(p.kind, lc).toBe("not-announced");
+      expect(p.kind === "not-announced" && p.held, lc).toBeFalsy();
+    }
+    expect(heldYearTitleLead("en", 2026)).toBe("2026 Exam Held; Next Exam Date Not Announced Yet");
+    expect(heldYearDescriptionLead("en", "CDS", 2026)).toBe("CDS 2026 exam held; next exam date: not announced yet. ");
+  });
+});
+
+describe("clipDescription — the hub meta description at a sentence or word boundary", () => {
+  it("leaves a short description as it is (whitespace collapsed)", () => {
+    expect(clipDescription("One.  Two.", 300)).toBe("One. Two.");
+  });
+
+  it("ends on the last whole sentence at or under the limit", () => {
+    const a = "A".repeat(200) + ".";
+    const text = `${a} Then a second sentence that runs past the limit of the description by a long way and on.`;
+    const out = clipDescription(text, 240);
+    expect(out).toBe(a);
+    expect(out.length).toBeLessThanOrEqual(240);
+  });
+
+  it("falls back to the last word boundary with an ellipsis, never mid-word", () => {
+    const text = `${"word ".repeat(80)}end`;
+    const out = clipDescription(text, 300);
+    expect(out.length).toBeLessThanOrEqual(300);
+    expect(out.endsWith("word…")).toBe(true);
+    expect(out).not.toMatch(/wor…$|wo…$/);
+  });
+
+  it("a sentence ending exactly at the limit is kept whole", () => {
+    const s = `${"x".repeat(98)}.`;
+    expect(clipDescription(`${s} more text here`, 99)).toBe(s);
+  });
+
+  it("a real hub description never ends mid-word", () => {
+    const d =
+      "SSC CGL exam date: not announced yet. Free SSC CGL (Staff Selection Commission Combined Graduate Level) 2026 mock tests, previous year papers and PYQ-pattern practice, AI tutor and a free day-by-day coach plan — AI-drafted, checked against the official notification. Karnataka (ಕರ್ನಾಟಕ / कर्नाटक). Questions available in English and Hindi. No paywall.";
+    const out = clipDescription(d, 300);
+    expect(out.length).toBeLessThanOrEqual(300);
+    expect(out).toMatch(/[.…]$/);
   });
 });

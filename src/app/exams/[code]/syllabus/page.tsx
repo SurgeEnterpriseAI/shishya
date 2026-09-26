@@ -28,10 +28,13 @@ import { SyllabusProgress } from "./SyllabusProgress";
 import { CoachEntry } from "@/components/CoachEntry";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { syllabusPageCopy } from "@/lib/page-gates-copy";
+import { examTitleYear, yearSuffix } from "@/lib/exam-title-year";
 
 export const revalidate = 3600;
 
-const YEAR = new Date().getFullYear();
+// 26 Sep 2026: the year is the hub title's cycle year (src/lib/exam-title-year.ts),
+// read per exam — it was the module-level calendar year, so "JEE Main
+// Syllabus 2026" ran in September 2026 beside a tracker full of 2027 rows.
 
 export async function generateMetadata({
   params,
@@ -44,11 +47,11 @@ export async function generateMetadata({
     select: { id: true, code: true, shortName: true, name: true },
   });
   if (!exam) return { title: "Exam syllabus — Shishya" };
-  const [tree, gates] = await Promise.all([loadSyllabusTree(exam.id), examPageGates(exam.code)]);
+  const [tree, gates, year] = await Promise.all([loadSyllabusTree(exam.id), examPageGates(exam.code), examTitleYear(exam.code)]);
   const { title, description, keywords } = syllabusPageCopy({
     examShort: exam.shortName,
     examName: exam.name,
-    year: YEAR,
+    year,
     ...syllabusCounts(tree),
     buildMock: gates.buildMock,
   });
@@ -116,19 +119,19 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
   });
   if (!exam || !exam.active) notFound();
 
-  const [subjects, gates] = await Promise.all([loadSyllabusTree(exam.id), examPageGates(exam.code)]);
+  const [subjects, gates, year] = await Promise.all([loadSyllabusTree(exam.id), examPageGates(exam.code), examTitleYear(exam.code)]);
   if (subjects.length === 0) notFound();
   const { t: tr, locale } = await getT();
 
   const counts = syllabusCounts(subjects);
   const topicCount = counts.topicCount;
-  const copy = syllabusPageCopy({ examShort: exam.shortName, examName: exam.name, year: YEAR, ...counts, buildMock: gates.buildMock });
+  const copy = syllabusPageCopy({ examShort: exam.shortName, examName: exam.name, year, ...counts, buildMock: gates.buildMock });
 
   const url = `https://shishya.in/exams/${exam.code}/syllabus`;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: `${exam.shortName} Syllabus ${YEAR} — Complete Topic List`,
+    headline: `${exam.shortName} Syllabus${yearSuffix(year)} — Complete Topic List`,
     description: copy.jsonLdDescription,
     url,
     inLanguage: "en-IN",
@@ -160,7 +163,7 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
           · Syllabus
         </p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">
-          {exam.shortName} Syllabus {YEAR} — every subject &amp; topic
+          {exam.shortName} Syllabus{yearSuffix(year)} — every subject &amp; topic
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
           {copy.intro}

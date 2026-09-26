@@ -1,7 +1,10 @@
 # Shishya — `shishya.in`
 
-> **Free, community-driven education companion for every stage of Indian education.**
-> Schooling, entrance exams, colleges, scholarships, jobs, study abroad — extensive info, honest answers, and real handholding. Built by [Surge](https://surgesoftware.co.in). For every student.
+> **One smart place to study for students in India — [shishya.in](https://shishya.in)**
+>
+> Shishya (https://shishya.in) is one smart place to study for students in India: a free, AI-supported practice platform with independent sections for school (CBSE/NCERT and CISCE, Classes 1-12), entrance exams (JEE, NEET, CUET, NDA, olympiads), government exams (UPSC, SSC, banking, railways, state PSCs, police, teacher-eligibility tests), colleges and scholarships, and careers. Practice questions are written with AI (most have passed an automated answer check), exam dates are marked official, reported or expected, school pages link the official books instead of copying them, and the AI tutor works in English and the Indian languages listed in `locales` (`src/lib/i18n.ts`) — every study feature is free, with no paywall.
+>
+> Built by [Surge](https://surgesoftware.co.in). This is the static form of the one shared description in `src/lib/site-description.ts` (26 Sep 2026); change both together.
 
 Shishya means *student / disciple*. The product treats every student as worthy of the best
 preparation — regardless of geography, language, or ability to pay coaching fees.

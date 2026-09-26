@@ -276,6 +276,46 @@ export function cycleYear(timeline: TimelineRow[], now: Date = new Date()): numb
   return ref ? ref.date.getUTCFullYear() : now.getUTCFullYear();
 }
 
+/** Row kinds that come BEFORE a sitting — a live one names the cycle still
+ *  to come. An answer key, question paper, result or interview ahead
+ *  belongs to a sitting already held, so it never names the next cycle. */
+const PRE_EXAM_KINDS: ReadonlySet<DateKind> = new Set<DateKind>([
+  "NOTIFICATION",
+  "APPLICATION_START",
+  "CORRECTION_WINDOW",
+  "APPLICATION_END",
+  "ADMIT_CARD",
+  "EXAM",
+]);
+
+/** The year a page <title> may print next to the exam's name (26 Sep 2026),
+ *  or null when nothing ahead names one. Unlike cycleYear (the tracker's —
+ *  /updates keeps it) it never falls back to the calendar year: the hubs
+ *  said "JEE Main 2026 — Exam Date Not Announced Yet" in September 2026,
+ *  months after JEE Main 2026 was held, while the tracker already held the
+ *  2027 rows. In order:
+ *    1. the next ANNOUNCED exam day (tier official or reported);
+ *    2. else the next exam day of any tier (an expected one names the
+ *       cycle — "JEE Main 2027 — Exam Date Not Announced Yet" is true);
+ *    3. else the next live pre-exam row (notification, application window,
+ *       admit card; any tier);
+ *    4. else null. The caller then prints no year, or the year an exam was
+ *       HELD in words that say so (src/lib/hub-title.ts hubTitleYear) —
+ *       never a held year beside "Not Announced Yet", never an invented one.
+ *  "Ahead" is judged against `now` (IST days), so a cached timeline built
+ *  earlier still answers for today. The year of a date only — the title
+ *  tier rule (never lead with an expected DATE) is unchanged. */
+export function titleCycleYear(timeline: readonly TimelineRow[], now: Date = new Date()): number | null {
+  const today = istDayNumber(now);
+  const ahead = timeline.filter((r) => istDayNumber(r.date) >= today);
+  const ref =
+    ahead.find((r) => r.kind === "EXAM" && r.tier !== "expected") ??
+    ahead.find((r) => r.kind === "EXAM") ??
+    ahead.find((r) => PRE_EXAM_KINDS.has(r.kind)) ??
+    null;
+  return ref ? ref.date.getUTCFullYear() : null;
+}
+
 /** Rows of one kind — but an INFERRED kind never outranks a DECLARED one
  *  (7 Sep 2026). SSC CGL's May seed row "Tier 1 result announcement"
  *  (kind NULL, guessed RESULT, 16 Sep) was answering the result question

@@ -155,6 +155,13 @@ export const FORBIDDEN_PHRASES: readonly string[] = [
   "19 indian languages",
   "22 indian languages",
   "fresh set weekly",
+  // 26 Sep 2026: live questions are answer-checked by the AI firewall
+  // (validatedBy 'factory:%'), not validated one by one by an admin team —
+  // the claim is untrue in every language it was printed in.
+  "admin-validated",
+  "validated by Shishya's admin team",
+  "एडमिन-जाँचे",
+  "అడ్మిన్ పరిశీలించిన",
 ];
 
 export interface PhraseOptions {
@@ -206,26 +213,42 @@ function snippetAround(line: string, at: number, len: number, width = 80): strin
   return (start > 0 ? "…" : "") + s + (start + width < line.length ? "…" : "");
 }
 
+/** How far below the live count an "N+" exam claim may sit before it is
+ *  stale (26 Sep 2026): "175+" with 180 live is a true floor; "163+" is not
+ *  wrong but tells crawlers a number the site outgrew months ago. */
+export const STALE_PLUS_MARGIN = 10;
+
 /** "N exams" / "N Indian government & entrance exams" with a three-digit N
- *  that is not the live active count. "170+"-style counts are skipped (the
- *  homepage and llms.txt legitimately say 170+). Warn only — the live
+ *  that is not the live active count. "N+" forms (26 Sep 2026 — until then
+ *  they were skipped) are a finding when N is more than STALE_PLUS_MARGIN
+ *  below the live count, or above it (an overclaim). Warn only — the live
  *  count changes with every exam activation. */
 export function findStaleExamCount(text: string, url: string, liveCount: number): Finding[] {
   const re = /\b(\d{3})(\+?)\s+(?:Indian\s+)?(?:(?:government|govt)(?:\s+(?:&|&amp;|and)\s+entrance)?\s+|entrance\s+)?exams\b/gi;
-  const seen = new Set<number>();
+  const seen = new Set<string>();
   const out: Finding[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
-    if (m[2] === "+") continue;
+    const plus = m[2] === "+";
     const n = Number(m[1]);
-    if (n === liveCount || seen.has(n)) continue;
-    seen.add(n);
+    const key = `${n}${plus ? "+" : ""}`;
+    if (seen.has(key)) continue;
+    if (plus) {
+      if (n <= liveCount && liveCount - n <= STALE_PLUS_MARGIN) continue;
+    } else if (n === liveCount) {
+      continue;
+    }
+    seen.add(key);
     out.push({
       check: "stale-count",
       severity: "warn",
       url,
       line: lineOfIndex(text, m.index),
-      detail: `says "${m[0]}" but the live active count is ${liveCount}`,
+      detail: plus
+        ? n > liveCount
+          ? `says "${m[0]}" but only ${liveCount} exams are live`
+          : `says "${m[0]}" — more than ${STALE_PLUS_MARGIN} below the live active count ${liveCount}`
+        : `says "${m[0]}" but the live active count is ${liveCount}`,
       snippet: text.slice(Math.max(0, m.index - 40), m.index + m[0].length + 40).replace(/\s+/g, " ").trim(),
     });
   }

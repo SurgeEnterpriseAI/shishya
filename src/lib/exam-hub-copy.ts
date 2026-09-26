@@ -13,9 +13,23 @@
 // pre-16-Sep page; tests/unit/i18n-b-surfaces-copy.test.ts pins it.
 //
 // Honesty carried into every locale, never softened:
-//   • questions are AI-generated, grounded in the official syllabus and
-//     notification, admin-validated, and re-checked when a student reports
-//     one — never "verified by students who cleared the exam";
+//   • questions are written with AI from the official syllabus and
+//     notification and re-checked when a student reports one — never
+//     "verified by students who cleared the exam", never "validated by an
+//     admin team" (the pre-26-Sep wording; live questions are not passed by
+//     an admin);
+//   • the automated answer check (three independent AI solves and an
+//     examiner — scripts/verify-question-bank.ts) is claimed only for the
+//     questions it actually passed, exam by exam (faqCountAnswer below).
+//     26 Sep 2026 (repair): the free answer said every question was
+//     "answer-checked … before they go live", but 157 validated questions
+//     on 55 real exams carried no answer-check record (validated at insert
+//     or in bulk — system:pyq-pattern, system:bulk, sme-bulk), and pickers
+//     serve every validated question. The count answer now prints the
+//     split from src/lib/exam-answer-check.ts — "every one of them has
+//     passed", or "has passed N of them; for the remaining M, that check has
+//     not run yet" — and, when that read fails, no check claim at all
+//     (tests/unit/exam-hub-copy.test.ts);
 //   • PYQ sets are "PYQ-pattern … not the paper itself", with the N-of-M
 //     depth against the real paper's count;
 //   • the conducting body's own papers are the "official" ones;
@@ -40,6 +54,32 @@ export function fillHub(template: string, vars: Record<string, string | number>)
   return template.replace(/\{(\w+)\}/g, (m, name: string) =>
     Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : m,
   );
+}
+
+/**
+ * The FAQ count answer (26 Sep 2026, repair). `count` is the hub's validated
+ * count; `unchecked` is how many of those carry no answer-check pass record
+ * (src/lib/exam-answer-check.ts), or null when that read failed. Only the
+ * questions the check passed are ever called checked:
+ *   • null (or nothing passed)  → faqCountA, no check claim;
+ *   • 0 unchecked              → faqCountCheckedA, "every one of them";
+ *   • some unchecked           → faqCountPartA, "{checked} … the remaining {unchecked}".
+ */
+export function faqCountAnswer(
+  C: Pick<ExamHubCopy, "faqCountA" | "faqCountCheckedA" | "faqCountPartA">,
+  v: { count: number; unchecked: number | null; short: string },
+): string {
+  const fmt = (n: number) => n.toLocaleString("en-IN");
+  const count = Math.max(0, Math.floor(v.count));
+  const base = { count: fmt(count), short: v.short };
+  if (v.unchecked === null || !Number.isFinite(v.unchecked)) return fillHub(C.faqCountA, base);
+  // The two counts come from caches filled at different moments; never let
+  // the split claim more unchecked questions than the count holds.
+  const unchecked = Math.min(count, Math.max(0, Math.floor(v.unchecked)));
+  const checked = count - unchecked;
+  if (checked === 0) return fillHub(C.faqCountA, base);
+  if (unchecked === 0) return fillHub(C.faqCountCheckedA, base);
+  return fillHub(C.faqCountPartA, { ...base, checked: fmt(checked), unchecked: fmt(unchecked) });
 }
 
 export interface ExamHubCopy {
@@ -67,7 +107,12 @@ export interface ExamHubCopy {
   faqFreeQ: string;
   faqFreeA: string;
   faqCountQ: string;
+  /** Count answer when the answer-check split could not be read — no check claim. */
   faqCountA: string;
+  /** Count answer when every validated question of the exam passed the answer check. */
+  faqCountCheckedA: string;
+  /** Count answer when some did not: {checked} passed, {unchecked} not run yet. */
+  faqCountPartA: string;
   faqPyqQ: string;
   faqPyqOfficialA: string;
   faqPyqA: string;
@@ -103,10 +148,14 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     faqHeading: "{short} — Frequently asked questions",
     faqFreeQ: "Is Shishya free for {short} preparation?",
     faqFreeA:
-      "Yes. Every {short} mock test, PYQ-pattern paper and study tool on Shishya is completely free — no subscription and no credit card. Questions are AI-generated, grounded in the official syllabus and notification, validated by Shishya's admin team before they go live, and re-checked whenever a student reports one.",
+      "Yes. Every {short} mock test, PYQ-pattern paper and study tool on Shishya is completely free — no subscription and no credit card. Questions are written with AI from the official syllabus and notification, and re-checked whenever a student reports one.",
     faqCountQ: "How many {short} practice questions does Shishya have?",
     faqCountA:
-      "Shishya has {count} admin-validated {short} practice questions (AI-generated and source-grounded; any question a student reports is re-checked), available as adaptive mock tests with a worked solution for every question.",
+      "Shishya has {count} {short} practice questions, written with AI (any question a student reports is re-checked), available as adaptive mock tests with a worked solution for every question.",
+    faqCountCheckedA:
+      "Shishya has {count} {short} practice questions, written with AI; every one of them has passed an automated answer check (three independent AI solves and an examiner), and any question a student reports is re-checked. They are available as adaptive mock tests with a worked solution for every question.",
+    faqCountPartA:
+      "Shishya has {count} {short} practice questions, written with AI. The automated answer check (three independent AI solves and an examiner) has passed {checked} of them; for the remaining {unchecked}, that check has not run yet. Any question a student reports is re-checked. They are available as adaptive mock tests with a worked solution for every question.",
     faqPyqQ: "Are {short} previous year question papers available?",
     faqPyqOfficialA:
       "Yes. The official {short} previous year papers the conducting body published are linked on this page, and Shishya has free PYQ-pattern practice papers covering {range} ({n} {yearWord}) — questions freshly worded in the pattern of each year's paper, not the paper itself; each year's page shows how many questions it holds against the real paper's count. Each is a timed practice set with full solutions.",
@@ -144,10 +193,14 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     faqHeading: "{short} — अक्सर पूछे जाने वाले सवाल",
     faqFreeQ: "क्या {short} की तैयारी के लिए Shishya मुफ़्त है?",
     faqFreeA:
-      "हाँ। Shishya पर हर {short} मॉक टेस्ट, PYQ-पैटर्न पेपर और स्टडी टूल पूरी तरह मुफ़्त है — न कोई सब्सक्रिप्शन, न क्रेडिट कार्ड। सवाल AI से बनाए जाते हैं, आधिकारिक सिलेबस और अधिसूचना पर आधारित होते हैं, लाइव होने से पहले Shishya की एडमिन टीम उन्हें जाँचती है, और कोई छात्र किसी सवाल की शिकायत करे तो उसे दोबारा जाँचा जाता है।",
+      "हाँ। Shishya पर हर {short} मॉक टेस्ट, PYQ-पैटर्न पेपर और स्टडी टूल पूरी तरह मुफ़्त है — न कोई सब्सक्रिप्शन, न क्रेडिट कार्ड। सवाल आधिकारिक सिलेबस और अधिसूचना के आधार पर AI से लिखे जाते हैं, और कोई छात्र किसी सवाल की शिकायत करे तो उसे दोबारा जाँचा जाता है।",
     faqCountQ: "Shishya पर {short} के कितने प्रैक्टिस सवाल हैं?",
     faqCountA:
-      "Shishya पर {count} एडमिन-जाँचे हुए {short} प्रैक्टिस सवाल हैं (AI से बने और स्रोत पर आधारित; किसी सवाल की शिकायत आने पर उसे दोबारा जाँचा जाता है), जो एडेप्टिव मॉक टेस्ट के रूप में मिलते हैं और हर सवाल का हल दिया रहता है।",
+      "Shishya पर {short} के {count} प्रैक्टिस सवाल हैं, जो AI से लिखे गए हैं (किसी सवाल की शिकायत आने पर उसे दोबारा जाँचा जाता है); ये एडेप्टिव मॉक टेस्ट के रूप में मिलते हैं और हर सवाल का हल दिया रहता है।",
+    faqCountCheckedA:
+      "Shishya पर {short} के {count} प्रैक्टिस सवाल हैं, जो AI से लिखे गए हैं; हर सवाल एक स्वचालित जाँच (तीन अलग-अलग AI हल और एक परीक्षक) में पास हुआ है, और किसी सवाल की शिकायत आने पर उसे दोबारा जाँचा जाता है। ये एडेप्टिव मॉक टेस्ट के रूप में मिलते हैं और हर सवाल का हल दिया रहता है।",
+    faqCountPartA:
+      "Shishya पर {short} के {count} प्रैक्टिस सवाल हैं, जो AI से लिखे गए हैं। स्वचालित जाँच (तीन अलग-अलग AI हल और एक परीक्षक) में इनमें से {checked} सवाल पास हुए हैं; बाकी {unchecked} पर यह जाँच अभी नहीं चली है। किसी सवाल की शिकायत आने पर उसे दोबारा जाँचा जाता है। ये एडेप्टिव मॉक टेस्ट के रूप में मिलते हैं और हर सवाल का हल दिया रहता है।",
     faqPyqQ: "क्या {short} के पिछले साल के प्रश्नपत्र उपलब्ध हैं?",
     faqPyqOfficialA:
       "हाँ। परीक्षा कराने वाली संस्था ने जो आधिकारिक {short} पिछले साल के पेपर प्रकाशित किए हैं, वे इसी पेज पर लिंक किए गए हैं, और Shishya पर {range} ({n} {yearWord}) के मुफ़्त PYQ-पैटर्न प्रैक्टिस पेपर हैं — हर साल के पेपर के पैटर्न पर नए सिरे से लिखे गए सवाल, पेपर खुद नहीं; हर साल का पेज बताता है कि असली पेपर के मुक़ाबले उसमें कितने सवाल हैं। हर सेट हल सहित एक टाइम्ड प्रैक्टिस सेट है।",
@@ -187,10 +240,14 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     faqHeading: "{short} — తరచుగా అడిగే ప్రశ్నలు",
     faqFreeQ: "{short} సన్నద్ధతకు Shishya ఉచితమా?",
     faqFreeA:
-      "అవును. Shishyaలో ప్రతి {short} మాక్ టెస్ట్, PYQ-ప్యాటర్న్ పేపర్, స్టడీ టూల్ పూర్తిగా ఉచితం — సబ్‌స్క్రిప్షన్ లేదు, క్రెడిట్ కార్డ్ లేదు. ప్రశ్నలు AI రూపొందించినవి, అధికారిక సిలబస్, నోటిఫికేషన్ ఆధారంగా తయారైనవి, లైవ్‌కి వెళ్లే ముందు Shishya అడ్మిన్ బృందం వాటిని పరిశీలిస్తుంది, ఏ ప్రశ్నపైనైనా విద్యార్థి ఫిర్యాదు చేస్తే దాన్ని మళ్లీ సరిచూస్తారు.",
+      "అవును. Shishyaలో ప్రతి {short} మాక్ టెస్ట్, PYQ-ప్యాటర్న్ పేపర్, స్టడీ టూల్ పూర్తిగా ఉచితం — సబ్‌స్క్రిప్షన్ లేదు, క్రెడిట్ కార్డ్ లేదు. ప్రశ్నలను అధికారిక సిలబస్, నోటిఫికేషన్ ఆధారంగా AI రాస్తుంది; ఏ ప్రశ్నపైనైనా విద్యార్థి ఫిర్యాదు చేస్తే దాన్ని మళ్లీ సరిచూస్తారు.",
     faqCountQ: "Shishyaలో {short} ప్రాక్టీస్ ప్రశ్నలు ఎన్ని ఉన్నాయి?",
     faqCountA:
-      "Shishyaలో {count} అడ్మిన్ పరిశీలించిన {short} ప్రాక్టీస్ ప్రశ్నలు ఉన్నాయి (AI రూపొందించినవి, మూలాధారితమైనవి; విద్యార్థి ఫిర్యాదు చేసిన ప్రశ్నను మళ్లీ సరిచూస్తారు), ఇవి అడాప్టివ్ మాక్ టెస్టులుగా లభిస్తాయి, ప్రతి ప్రశ్నకు వివరణాత్మక సమాధానం ఉంటుంది.",
+      "Shishyaలో {count} {short} ప్రాక్టీస్ ప్రశ్నలు ఉన్నాయి — AI రాసినవి (విద్యార్థి ఫిర్యాదు చేసిన ప్రశ్నను మళ్లీ సరిచూస్తారు); ఇవి అడాప్టివ్ మాక్ టెస్టులుగా లభిస్తాయి, ప్రతి ప్రశ్నకు వివరణాత్మక సమాధానం ఉంటుంది.",
+    faqCountCheckedA:
+      "Shishyaలో {count} {short} ప్రాక్టీస్ ప్రశ్నలు ఉన్నాయి — AI రాసినవి; ప్రతి ప్రశ్నను ఒక ఆటోమేటిక్ తనిఖీ (మూడు వేర్వేరు AI పరిష్కారాలు, ఒక ఎగ్జామినర్) ఆమోదించింది, విద్యార్థి ఫిర్యాదు చేసిన ప్రశ్నను మళ్లీ సరిచూస్తారు. ఇవి అడాప్టివ్ మాక్ టెస్టులుగా లభిస్తాయి, ప్రతి ప్రశ్నకు వివరణాత్మక సమాధానం ఉంటుంది.",
+    faqCountPartA:
+      "Shishyaలో {count} {short} ప్రాక్టీస్ ప్రశ్నలు ఉన్నాయి — AI రాసినవి. ఆటోమేటిక్ తనిఖీ (మూడు వేర్వేరు AI పరిష్కారాలు, ఒక ఎగ్జామినర్) వీటిలో {checked} ప్రశ్నలను ఆమోదించింది; మిగతా {unchecked} ప్రశ్నలకు ఆ తనిఖీ ఇంకా జరగలేదు. విద్యార్థి ఫిర్యాదు చేసిన ప్రశ్నను మళ్లీ సరిచూస్తారు. ఇవి అడాప్టివ్ మాక్ టెస్టులుగా లభిస్తాయి, ప్రతి ప్రశ్నకు వివరణాత్మక సమాధానం ఉంటుంది.",
     faqPyqQ: "{short} గత సంవత్సరాల ప్రశ్నపత్రాలు అందుబాటులో ఉన్నాయా?",
     faqPyqOfficialA:
       "అవును. పరీక్ష నిర్వహించే సంస్థ ప్రచురించిన అధికారిక {short} గత సంవత్సరాల పేపర్లు ఈ పేజీలోనే లింక్ చేసి ఉన్నాయి, అలాగే Shishyaలో {range} ({n} {yearWord}) కోసం ఉచిత PYQ-ప్యాటర్న్ ప్రాక్టీస్ పేపర్లు ఉన్నాయి — ప్రతి సంవత్సరం పేపర్ ప్యాటర్న్‌లో కొత్తగా రాసిన ప్రశ్నలు, పేపర్ మాత్రం కాదు; అసలు పేపర్‌తో పోలిస్తే ఎన్ని ప్రశ్నలు ఉన్నాయో ప్రతి సంవత్సరం పేజీ చూపుతుంది. ప్రతి సెట్ పూర్తి వివరణలతో కూడిన టైమ్డ్ ప్రాక్టీస్ సెట్.",

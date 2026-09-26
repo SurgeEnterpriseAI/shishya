@@ -17,6 +17,7 @@ import { AnonQuizRecall } from "@/components/AnonQuizRecall";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { getExamShared } from "@/lib/db/exam-cache";
+import { examUncheckedQuestionCount } from "@/lib/exam-answer-check";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import { computeExamWeekState } from "@/lib/exam-week";
 import { standingSitting } from "@/lib/score-sitting";
@@ -52,7 +53,22 @@ import { OfficialPapersBlock } from "@/components/OfficialPapersBlock";
 import { hubPyqPhrase } from "@/lib/pyq-naming";
 import { examHubCopy, fillHub, type ExamHubCopy } from "@/lib/exam-hub-copy";
 import { examPageGates } from "@/lib/exam-page-gates";
-import { heldDescriptionLead, heldTitleLead, hubDateLead, revisionDescriptionLead, revisionTitleLead } from "@/lib/hub-title";
+import {
+  clipDescription,
+  heldDescriptionLead,
+  heldTitleLead,
+  heldYearDescriptionLead,
+  hubDateLead,
+  hubTitlePrefix,
+  hubTitleYear,
+  revisionDescriptionLead,
+  revisionTitleLead,
+} from "@/lib/hub-title";
+import { examKind, examKindLabel } from "@/lib/exam-kind";
+import { relatedLinks, type RelatedLink } from "@/lib/exam-related-links";
+import { loadSchoolSurface } from "@/lib/school/surface";
+import { CAREERS } from "@/data/careers";
+import { examHasNotes } from "@/lib/page-gates-notes";
 
 // Honesty line for the Previous Papers cards (7 Sep + 11 Sep 2026).
 // Every PYQ question on the platform is freshly worded in the PATTERN of
@@ -81,7 +97,8 @@ function formatIstHour(hour24: number): string {
 //   1. state name (for "Tamil Nadu PSC" / "तमिलनाडु TET" style searches)
 //   2. native-script + English language coverage (for "TNPSC in Tamil" type
 //      long-tail queries, which is most of the high-intent India traffic)
-//   3. current year (2026 — refreshed annually by the title template)
+//   3. the cycle year (26 Sep 2026: from the tracker rows, src/lib/hub-title.ts
+//      hubTitleYear — no longer the calendar year)
 //   4. JSON-LD Course schema is added inline in the page body further down
 //
 // Goal: rank for every plausible spelling of every exam in the catalogue
@@ -114,7 +131,6 @@ export async function generateMetadata({
   // paper's language (KA_KSRP, 15 Sep 2026). The description then names only
   // English, which is true of Shishya's own questions; the FAQ makes no claim.
   const langs = exam.languages.length > 0 ? exam.languages : ["EN"];
-  const year = new Date().getUTCFullYear();
 
   // Exam-date answer in the title/description — GSC (16 Aug 2026) found
   // a large ZERO-CLICK query class: "{exam} exam date {year}" queries
@@ -140,8 +156,22 @@ export async function generateMetadata({
   // the cap turned AP TET's ended window into "Exam Ended 21 Aug 2026"
   // (17 Sep 2026). Over every live row the rule states no date instead.
   const titleRows = titleDates.length > 0 ? titleDates : importantDates;
-  const timeline = buildTimeline(titleRows, new Date(), officialUrl);
+  const titleNow = new Date();
+  const timeline = buildTimeline(titleRows, titleNow, officialUrl);
   const dateLead = hubDateLead(timeline, exam, new Map(titleRows.map((r) => [r.id, r.createdAt] as const)));
+  // The year beside the name (26 Sep 2026, src/lib/hub-title.ts hubTitleYear):
+  // it was the calendar year, so in September 2026 the hubs said "JEE Main
+  // 2026 — Exam Date Not Announced Yet" months after JEE Main 2026 was held.
+  // Now the next announced exam day decides, else the next exam day or
+  // pre-exam row of any tier (the year only — an expected DATE still never
+  // leads), else the held lead's own year; with nothing ahead the title
+  // says "{Exam} — 2026 Exam Held; Next Exam Date Not Announced Yet" or
+  // carries no year at all. No future year is invented.
+  const titleYear = hubTitleYear(dateLead, timeline, exam, titleNow);
+  const year = titleYear.kind === "none" ? null : titleYear.year;
+  // Descriptions and keywords name only a cycle year ("Free SSC CGL … 2027
+  // mock tests"); a held year stays in the held words.
+  const cycleYearText = titleYear.kind === "cycle" ? ` ${titleYear.year}` : "";
   const announced = dateLead.kind === "announced" ? dateLead.row : null;
   const held = dateLead.kind === "held" ? dateLead : null;
   const revision = dateLead.kind === "revision";
@@ -163,7 +193,7 @@ export async function generateMetadata({
     : revision
       ? `${revisionTitleLead("en")}, `
       : nextDate ? `Exam Date ${nextDate}, ` : "Exam Date Not Announced Yet, ";
-  const title = `${exam.shortName}${stateBit} ${year} — ${dateBit}Free Mock Tests, PYQ | Shishya`;
+  const title = `${hubTitlePrefix("en", `${exam.shortName}${stateBit}`, titleYear, dateBit)}Free Mock Tests, PYQ | Shishya`;
 
   // Description — packs in: the date answer first (zero-click queries),
   // exam full name, state name (English + Hindi + native script), the
@@ -175,7 +205,9 @@ export async function generateMetadata({
     ? heldDescriptionLead("en", exam.shortName, held, heldTier)
     : revision
       ? revisionDescriptionLead("en", exam.shortName)
-      : `${exam.shortName} exam date: ${nextDate ?? notAnnounced}. `;
+      : titleYear.kind === "held-year"
+        ? heldYearDescriptionLead("en", exam.shortName, titleYear.year)
+        : `${exam.shortName} exam date: ${nextDate ?? notAnnounced}. `;
   // Honesty (11 Sep 2026): no "verified by students who cleared it" — the
   // content is AI-drafted and checked against the official notification
   // (the page's own SectionVerificationSummary says exactly that).
@@ -183,7 +215,7 @@ export async function generateMetadata({
   const { loadOfficialPapers: loadOfficialPapersMeta } = await import("@/lib/official-papers-db");
   const hubHasOfficial = (await loadOfficialPapersMeta(exam.id)).some((r) => r.kind !== "answer key" && r.kind !== "listing page");
   const description =
-    `${dateCopy}Free ${exam.shortName} (${exam.name}) ${year} mock tests, ${hubPyqPhrase(hubHasOfficial)}, ` +
+    `${dateCopy}Free ${exam.shortName} (${exam.name})${cycleYearText} mock tests, ${hubPyqPhrase(hubHasOfficial)}, ` +
     `AI tutor and a free day-by-day coach plan — AI-drafted, checked against the official notification. ` +
     `${stateCopy}Questions available in ${langCopy}. No paywall.`;
 
@@ -193,13 +225,13 @@ export async function generateMetadata({
   const baseKeywords = [
     `${exam.shortName} syllabus`,
     `${exam.shortName} mock test`,
-    `${exam.shortName} mock test ${year}`,
+    ...(year !== null ? [`${exam.shortName} mock test ${year}`] : []),
     `${exam.shortName} previous year papers`,
     `${exam.shortName} PYQ`,
     `${exam.shortName} preparation`,
     `${exam.shortName} free mocks`,
     `${exam.shortName} online test`,
-    `${exam.shortName} ${year}`,
+    ...(year !== null ? [`${exam.shortName} ${year}`] : []),
     `${exam.name}`,
     `Shishya ${exam.shortName}`,
   ];
@@ -208,7 +240,7 @@ export async function generateMetadata({
     `${st.name} government exams`,
     `${st.nativeName} ${exam.shortName}`,
     `${st.hindiName} ${exam.shortName}`,
-    `${exam.shortName} ${st.name} ${year}`,
+    ...(year !== null ? [`${exam.shortName} ${st.name} ${year}`] : []),
     `${st.name} state exam mock test`,
   ] : [];
   const langKeywords = langs.flatMap((l) => {
@@ -227,19 +259,32 @@ export async function generateMetadata({
   // intent words are in the language the URL promises.
   const locTitle =
     urlLocale === "hi"
-      ? `${exam.shortName}${stateBit} ${year} — ${held ? heldTitleLead("hi", held, heldTier) : revision ? revisionTitleLead("hi") : `परीक्षा तिथि ${nextDate ?? notAnnounced}`}, मुफ़्त मॉक टेस्ट, पिछले साल के पेपर | Shishya`
+      ? `${hubTitlePrefix("hi", `${exam.shortName}${stateBit}`, titleYear, `${held ? heldTitleLead("hi", held, heldTier) : revision ? revisionTitleLead("hi") : `परीक्षा तिथि ${nextDate ?? notAnnounced}`}, `)}मुफ़्त मॉक टेस्ट, पिछले साल के पेपर | Shishya`
       : urlLocale === "te"
-        ? `${exam.shortName}${stateBit} ${year} — ${held ? heldTitleLead("te", held, heldTier) : revision ? revisionTitleLead("te") : `పరీక్ష తేదీ ${nextDate ?? notAnnounced}`}, ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు | Shishya`
+        ? `${hubTitlePrefix("te", `${exam.shortName}${stateBit}`, titleYear, `${held ? heldTitleLead("te", held, heldTier) : revision ? revisionTitleLead("te") : `పరీక్ష తేదీ ${nextDate ?? notAnnounced}`}, `)}ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు | Shishya`
         : title;
+  const locDateCopy = (lc: "hi" | "te"): string =>
+    held
+      ? heldDescriptionLead(lc, exam.shortName, held, heldTier)
+      : revision
+        ? revisionDescriptionLead(lc, exam.shortName)
+        : titleYear.kind === "held-year"
+          ? heldYearDescriptionLead(lc, exam.shortName, titleYear.year)
+          : lc === "hi"
+            ? `${exam.shortName} परीक्षा तिथि: ${nextDate ?? notAnnounced}. `
+            : `${exam.shortName} పరీక్ష తేదీ: ${nextDate ?? notAnnounced}. `;
   const locDescription =
     urlLocale === "hi"
-      ? `${held ? heldDescriptionLead("hi", exam.shortName, held, heldTier) : revision ? revisionDescriptionLead("hi", exam.shortName) : `${exam.shortName} परीक्षा तिथि: ${nextDate ?? notAnnounced}. `}${exam.shortName} (${exam.name}) ${year} के मुफ़्त मॉक टेस्ट, पिछले साल के पेपर, सिलेबस, कटऑफ़ और AI ट्यूटर — हिंदी में। ${stateCopy}कोई पेवॉल नहीं।`
+      ? `${locDateCopy("hi")}${exam.shortName} (${exam.name})${cycleYearText} के मुफ़्त मॉक टेस्ट, पिछले साल के पेपर, सिलेबस, कटऑफ़ और AI ट्यूटर — हिंदी में। ${stateCopy}कोई पेवॉल नहीं।`
       : urlLocale === "te"
-        ? `${held ? heldDescriptionLead("te", exam.shortName, held, heldTier) : revision ? revisionDescriptionLead("te", exam.shortName) : `${exam.shortName} పరీక్ష తేదీ: ${nextDate ?? notAnnounced}. `}${exam.shortName} (${exam.name}) ${year} ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు, సిలబస్, కటాఫ్, AI ట్యూటర్ — తెలుగులో. ${stateCopy}పేవాల్ లేదు.`
+        ? `${locDateCopy("te")}${exam.shortName} (${exam.name})${cycleYearText} ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు, సిలబస్, కటాఫ్, AI ట్యూటర్ — తెలుగులో. ${stateCopy}పేవాల్ లేదు.`
         : description;
+  // 26 Sep 2026: clipped at the last sentence or word boundary at or under
+  // 300 characters (it was sliced mid-word at exactly 300).
+  const metaDescription = clipDescription(locDescription, 300);
   return {
     title: locTitle,
-    description: locDescription.slice(0, 300),
+    description: metaDescription,
     alternates: {
       canonical: twinCanonical(path, urlLocale, twins),
       languages: languageAlternates(path, twins),
@@ -250,7 +295,7 @@ export async function generateMetadata({
     keywords: [...baseKeywords, ...stateKeywords, ...langKeywords],
     openGraph: {
       title: locTitle,
-      description: locDescription.slice(0, 300),
+      description: metaDescription,
       url,
       siteName: "Shishya",
       locale: ogLocale(urlLocale),
@@ -259,7 +304,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title,
-      description: description.slice(0, 200),
+      description: clipDescription(description, 200),
     },
   };
 }
@@ -337,6 +382,15 @@ export default async function ExamPage({
   // from every hub. Pills, FAQ answers and builder links now name only the
   // pages that render; a failed gate read keeps every link (GATES_OPEN).
   const gates = await examPageGates(exam.code);
+  // 26 Sep 2026: the FAQ said "full syllabus with study notes" wherever a
+  // syllabus exists, but 127 of the 168 exams with one have no notes (their
+  // syllabus page says so). "Study notes" only where a topic has them
+  // (src/lib/page-gates-notes.ts; a failed read claims none).
+  const hubHasNotes = (await examHasNotes(exam.code)) === true;
+  // 26 Sep 2026 (repair): the FAQ claimed every question was answer-checked;
+  // 157 validated questions on 55 exams carry no answer-check record. The
+  // count answer now states this exam's split; null (failed read) → no claim.
+  const faqUncheckedCount = await examUncheckedQuestionCount(exam.code);
 
   // Subject-wise test rows (gap-fill #1 — users asked for "25-question
   // English/GK/Computer tests" verbatim; the SUBJECT mock API existed but
@@ -555,12 +609,17 @@ export default async function ExamPage({
     "@type": "Course",
     name: `${exam.shortName}${stateInfo2 ? ` (${stateInfo2.name})` : ""} — Free Mock Tests, Syllabus & Study Help`,
     description: exam.description ?? `${exam.name} preparation on Shishya — free full-length mocks, ${hubPyqPhrase(hubPageHasOfficial)}, an AI tutor and a free day-by-day coach plan. Content is AI-drafted and checked against the official notification.`,
+    // 26 Sep 2026: the provider points at the one Organization node the root
+    // layout declares (src/lib/site-description.ts SITE_ORG_ID), and the
+    // level says what the exam is — it said "Entrance Exam" for SSC GD and
+    // every state PSC (src/lib/exam-kind.ts).
     provider: {
       "@type": "EducationalOrganization",
+      "@id": "https://shishya.in/#organization",
       name: "Shishya",
       url: "https://shishya.in",
     },
-    educationalLevel: "Entrance Exam",
+    educationalLevel: examKindLabel({ code: exam.code, category: String(exam.category) }),
     inLanguage: exam.languages.length > 0 ? exam.languages : ["en"],
     url: `https://shishya.in/exams/${exam.code}`,
     hasCourseInstance: {
@@ -706,11 +765,24 @@ export default async function ExamPage({
         name: `How can I prepare for ${exam.shortName} for free?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Shishya offers ${exam.shortName} preparation 100% free: adaptive mock tests, ${hubPyqPhrase(hubPageHasOfficial)} modelled on each year's paper, ${gates.syllabus ? `full syllabus with study notes (https://shishya.in/exams/${exam.code}/syllabus), ` : ""}${gates.tricks ? `subject-wise memory tricks (https://shishya.in/exams/${exam.code}/tricks), ` : ""}a free day-by-day coach plan, and an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages.`,
+          text: `Shishya offers ${exam.shortName} preparation 100% free: adaptive mock tests, ${hubPyqPhrase(hubPageHasOfficial)} modelled on each year's paper, ${gates.syllabus ? `${hubHasNotes ? "full syllabus with study notes" : "the full syllabus"} (https://shishya.in/exams/${exam.code}/syllabus), ` : ""}${gates.tricks ? `subject-wise memory tricks (https://shishya.in/exams/${exam.code}/tricks), ` : ""}a free day-by-day coach plan, and an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages.`,
         },
       },
     ],
   };
+
+  // "Related on Shishya" (26 Sep 2026, src/lib/exam-related-links.ts): the
+  // NCERT subject pages an entrance or olympiad aspirant studies from and the
+  // career guides that name this exam — at most eight links, each to a page
+  // that exists. The school surface is the cached read the sitemap uses; a
+  // failed read drops the school links, never the page.
+  const relatedSurface = await loadSchoolSurface().catch(() => ({ classes: [] }));
+  const related: RelatedLink[] = relatedLinks(exam.code, relatedSurface, CAREERS);
+  // Entrance and olympiad hubs also point at the entrance landing
+  // (/exams/entrance) — the one page that lists every entrance exam,
+  // olympiad and state CET on Shishya.
+  const hubKind = examKind({ code: exam.code, category: String(exam.category) });
+  const entranceIndex = hubKind === "entrance" || hubKind === "olympiad";
 
   return (
     // Whole-page background tinted to the category theme. This is the
@@ -1189,6 +1261,7 @@ export default async function ExamPage({
           examShortName={exam.shortName}
           examName={exam.name}
           questionCount={validatedQuestionCount}
+          uncheckedCount={faqUncheckedCount}
           pyqYears={pyqYears
             .map((y) => y.pyqYear)
             .filter((n): n is number => typeof n === "number")}
@@ -1371,10 +1444,14 @@ export default async function ExamPage({
             <h2 className="text-base font-semibold text-ink-800">Practice by subject &amp; topic</h2>
             <p className="mt-1 text-xs text-ink-500">
               Full-length subject tests below — 25 questions each, real exam format, instant scoring.
-              Want to drill a single topic? Every topic has its own{" "}
+              {/* 26 Sep 2026 (repair): said "Every topic has its own 10-question test";
+                  the topic page's quiz is 5 questions and shows only on topics with
+                  practice questions (about half of all topics have none yet). */}
+              Want to drill a single topic? Open it from the{" "}
               <a href="#syllabus" className="font-medium text-saffron-700 underline-offset-2 hover:underline">
-                10-question test in the syllabus
-              </a>.
+                syllabus
+              </a>{" "}
+              — a topic that has practice questions has a short quiz on its page.
             </p>
             <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {subjectTests.map((s) => (
@@ -1868,6 +1945,30 @@ export default async function ExamPage({
                 ))}
               </ul>
             </div>
+          )}
+
+          {(related.length > 0 || entranceIndex) && (
+            <section aria-labelledby="exam-related-heading" className="rounded-lg border border-ink-200 bg-white p-4">
+              <h2 id="exam-related-heading" className="text-sm font-semibold text-ink-900">
+                Related on Shishya
+              </h2>
+              <ul className="mt-2 space-y-1.5 text-sm">
+                {related.map((l) => (
+                  <li key={l.href}>
+                    <Link href={l.href} className="text-saffron-700 hover:underline">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {entranceIndex && (
+                <p className="mt-2 text-sm">
+                  <Link href="/exams/entrance" className="font-medium text-saffron-700 hover:underline">
+                    Entrance exams in India — JEE, NEET, CUET, NDA, olympiads and state CETs →
+                  </Link>
+                </p>
+              )}
+            </section>
           )}
 
           {/* Scholarships for this exam — surfaced on every exam page so

@@ -1,27 +1,47 @@
-// /alumni-stories — Real student career journey stories.
+// /alumni-stories — composite, anonymised career journey examples.
 //
-// Phase 1 launch: 5-7 hand-curated stories representing diverse paths
-// (tier-1 BTech → SDE, tier-3 BCom → CA, NIOS → freelance, BA → UPSC, etc.)
-// Built as a content surface; user-submitted stories shipping next.
+// Phase 1 launch: hand-written composite stories representing diverse paths
+// (tier-3 BTech → product company, BA → UPSC, ITI → state electricity board
+// JE, Commerce → CA, NIOS → freelance). Built as a content surface.
+//
+// 26 Sep 2026: the <title>, meta description and CollectionPage JSON-LD said
+// "real career journeys from real Indian students" while the code and the
+// disclaimer box below say these are composites — and snippets and LLM
+// answers quote the head, not the body disclaimer. Title, description,
+// JSON-LD, H1, subline and breadcrumb now come from one honest source
+// (src/lib/alumni-stories-copy.ts, pinned by
+// tests/unit/alumni-stories-copy.test.ts); openGraph/twitter carry the same
+// title instead of the inherited site-wide one. The story bodies are
+// unchanged.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
+import { ALUMNI_STORIES_COPY as COPY } from "@/lib/alumni-stories-copy";
+
+const PAGE_URL = "https://shishya.in/alumni-stories";
 
 export const metadata: Metadata = {
-  title: "Alumni Stories — Real career journeys from Indian students | Shishya",
-  description:
-    "Honest career journey stories from real Indian students. Tier-3 BTech to FAANG, NIOS Class 10 to entrepreneurship, BA to UPSC, ITI Electrician to PSU. No survivor bias gloss — real timelines + real setbacks.",
-  alternates: { canonical: "https://shishya.in/alumni-stories" },
-  keywords: [
-    "real student stories india",
-    "indian career journey",
-    "tier 3 college success",
-    "NIOS to job",
-    "ITI to PSU",
-    "UPSC clear story",
-  ],
+  title: COPY.title,
+  description: COPY.description,
+  alternates: { canonical: PAGE_URL },
+  keywords: [...COPY.keywords],
+  openGraph: {
+    title: COPY.title,
+    description: COPY.description,
+    url: PAGE_URL,
+    siteName: "Shishya",
+    locale: "en_IN",
+    type: "website",
+    images: [{ url: "https://shishya.in/opengraph-image", width: 1200, height: 630, alt: "Shishya — one smart place to study" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: COPY.title,
+    description: COPY.description,
+    images: ["https://shishya.in/opengraph-image"],
+  },
 };
 
 export const revalidate = 86_400;
@@ -175,32 +195,29 @@ export default function AlumniStoriesPage() {
       <JsonLd
         data={[
           collectionPageLd({
-            name: "Alumni Stories — Real career journeys from Indian students",
-            description:
-              "Honest career journey stories from real Indian students. Tier-3 BTech to FAANG, NIOS Class 10 to entrepreneurship, BA to UPSC, ITI Electrician to PSU. No survivor bias gloss — real timelines + real setbacks.",
+            name: COPY.heading,
+            description: COPY.description,
             path: "/alumni-stories",
           }),
-          breadcrumbLd([["Alumni stories", "/alumni-stories"]]),
+          breadcrumbLd([[COPY.breadcrumb, "/alumni-stories"]]),
         ]}
       />
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
-          <Link href="/" className="hover:text-ink-800">Home</Link> · Alumni Stories
+          <Link href="/" className="hover:text-ink-800">Home</Link> · {COPY.breadcrumb}
         </p>
         <h1 className="mt-2 text-3xl font-bold text-ink-900 sm:text-4xl">
-          Real career journeys — honest, not curated
+          {COPY.heading}
         </h1>
         <p className="mt-2 max-w-3xl text-base text-ink-700">
-          Real Indian students' career paths — without survivor-bias gloss.
-          Each story includes the timeline, key decisions, setbacks, and
-          advice. Anonymised composites for privacy.
+          {COPY.subline}
         </p>
 
         <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50/40 p-5 text-xs text-ink-700">
           <p className="font-semibold text-ink-800">A note on these stories</p>
           <p className="mt-2">
-            These 5 launch stories are composites — built from real student
+            These {STORIES.length} launch stories are composites — built from real student
             profiles we collected, anonymised + verified for plausibility.
             Volunteer your real story via the chat widget; we'll publish
             verified ones with your permission. No survivor-bias gloss: we
@@ -252,7 +269,7 @@ export default function AlumniStoriesPage() {
         <div className="mt-12 rounded-lg border border-ink-200 bg-white p-5 text-sm text-ink-700">
           <h2 className="text-base font-semibold text-ink-900">Volunteer your story</h2>
           <p className="mt-2 text-xs">
-            We're collecting real career journeys from across India.
+            We're collecting career journeys from students across India.
             Anonymous or named, your choice. Include timeline, key
             decisions, setbacks, and what you wish you'd known. Submit via
             the chat widget — published with your permission only after

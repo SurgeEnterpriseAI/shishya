@@ -137,8 +137,9 @@ describe("syllabus page copy — 'study notes' only when a topic links to them",
   it("keeps the notes title for an exam with linked notes", () => {
     const c = syllabusPageCopy({ ...base, linkedTopics: 37, buildMock: true });
     expect(c.title).toBe("MP RAEO Syllabus 2026 — Complete Topic List with Free Study Notes | Shishya");
+    // 26 Sep 2026: "with weightage" only when the page prints a weightage (base: none).
     expect(c.description).toBe(
-      "Complete MP RAEO (MP RAEO Recruitment Test) syllabus 2026: every subject and topic with weightage, free study notes, practice questions and topic-wise mock tests. No coaching fees, in your language.",
+      "Complete MP RAEO (MP RAEO Recruitment Test) syllabus 2026: every subject and topic, free study notes, practice questions and topic-wise mock tests. No coaching fees, in your language.",
     );
     expect(c.keywords).toContain("MP RAEO study notes");
     expect(c.intro).toContain("37 topics below link to free study notes");
@@ -172,7 +173,7 @@ describe("syllabus page copy — 'study notes' only when a topic links to them",
       for (const [buildMock, weightageShown] of [[true, true], [true, false], [false, true], [false, false]] as const) {
         const c = syllabusPageCopy({ ...base, linkedTopics, buildMock, weightageShown });
         expect(c.title).toContain("MP RAEO Syllabus 2026 — Complete Topic List");
-        expect(c.description).toContain("every subject and topic with weightage");
+        expect(c.description).toContain("every subject and topic");
         expect(c.keywords.slice(0, 4)).toEqual([
           "MP RAEO syllabus 2026",
           "MP RAEO syllabus topics",
@@ -185,9 +186,33 @@ describe("syllabus page copy — 'study notes' only when a topic links to them",
 
   it("claims topic-wise mock tests only when the builder has a topic", () => {
     expect(syllabusPageCopy({ ...base, linkedTopics: 0, buildMock: false }).description).toBe(
-      "Complete MP RAEO (MP RAEO Recruitment Test) syllabus 2026: every subject and topic with weightage, practice questions. No coaching fees, in your language.",
+      "Complete MP RAEO (MP RAEO Recruitment Test) syllabus 2026: every subject and topic, practice questions. No coaching fees, in your language.",
     );
     expect(syllabusPageCopy({ ...base, linkedTopics: 1, buildMock: false }).intro).toContain("1 topic below links to free study notes");
+  });
+
+  // 26 Sep 2026: the description said "with weightage" for every exam, and
+  // 77 of the 127 no-notes exams print no weightage at all.
+  it("the description says 'with weightage' only when the page prints one", () => {
+    for (const linkedTopics of [0, 1]) {
+      for (const buildMock of [true, false]) {
+        expect(syllabusPageCopy({ ...base, linkedTopics, buildMock, weightageShown: true }).description).toContain(
+          "every subject and topic with weightage,",
+        );
+        expect(syllabusPageCopy({ ...base, linkedTopics, buildMock, weightageShown: false }).description).not.toMatch(/weightage/i);
+      }
+    }
+  });
+
+  // 26 Sep 2026: the year is the hub title's cycle year; null prints none.
+  it("prints no year when none is known, and never a double space", () => {
+    const c = syllabusPageCopy({ ...base, year: null, linkedTopics: 0, buildMock: true, weightageShown: true });
+    expect(c.title).toBe("MP RAEO Syllabus — Complete Topic List with Weightage | Shishya");
+    expect(c.description.startsWith("Complete MP RAEO (MP RAEO Recruitment Test) syllabus: every subject and topic with weightage,")).toBe(true);
+    expect(c.shareMessage).toBe("Complete MP RAEO syllabus — every subject & topic (Shishya):");
+    expect(c.keywords[0]).toBe("MP RAEO syllabus");
+    for (const text of [c.title, c.description, c.shareMessage, ...c.keywords]) expect(text).not.toMatch(/ {2}|\d{4}/);
+    expect(syllabusPageCopy({ ...base, year: 2027, linkedTopics: 0, buildMock: true }).title).toBe("MP RAEO Syllabus 2027 — Complete Topic List | Shishya");
   });
 });
 

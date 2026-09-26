@@ -225,7 +225,8 @@ export async function PhaseArticleView({
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: "https://shishya.in" },
-      { "@type": "ListItem", position: 2, name: "Exams", item: "https://shishya.in/exams" },
+      // 26 Sep 2026: /exams 308-redirects to the home page; the exam index is /exams/browse.
+      { "@type": "ListItem", position: 2, name: "All exams", item: "https://shishya.in/exams/browse" },
       { "@type": "ListItem", position: 3, name: exam.shortName, item: `https://shishya.in/exams/${exam.code}` },
       { "@type": "ListItem", position: 4, name: phaseLabel, item: phaseUrl },
     ],

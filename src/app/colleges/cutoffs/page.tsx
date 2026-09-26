@@ -5,11 +5,18 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
+// 26 Sep 2026: own openGraph {title, description, url} — without one the page
+// inherited og:url=https://shishya.in and the site-wide card text.
+const TITLE = "College Cutoff Trends — How to read JEE/NEET/CLAT cutoffs honestly";
+const DESCRIPTION =
+  "Honest guide to college cutoff trends. JEE Advanced / Main, NEET UG, CLAT, CUET, IIM CAT cutoffs by category and branch. Read this before chasing rank predictors.";
+const PAGE_URL = "https://shishya.in/colleges/cutoffs";
+
 export const metadata: Metadata = {
-  title: "College Cutoff Trends — How to read JEE/NEET/CLAT cutoffs honestly | Shishya",
-  description:
-    "Honest guide to college cutoff trends. JEE Advanced / Main, NEET UG, CLAT, CUET, IIM CAT cutoffs by category and branch. Read this before chasing rank predictors.",
-  alternates: { canonical: "https://shishya.in/colleges/cutoffs" },
+  title: `${TITLE} | Shishya`,
+  description: DESCRIPTION,
+  alternates: { canonical: PAGE_URL },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: PAGE_URL, siteName: "Shishya", locale: "en_IN", type: "article" },
   keywords: [
     "JEE cutoff trend",
     "NEET cutoff trend",

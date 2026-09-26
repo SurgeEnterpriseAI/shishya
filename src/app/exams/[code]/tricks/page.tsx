@@ -24,6 +24,7 @@ import { tFor } from "@/lib/i18n-server";
 import { pilotPageLocale } from "@/lib/cache-pilot-routes";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { StateExamsLink } from "@/components/StateExamsLink";
+import { examTitleYear, yearSuffix } from "@/lib/exam-title-year";
 
 export const revalidate = 3600;
 
@@ -53,7 +54,9 @@ export function generateStaticParams() {
   return [];
 }
 
-const YEAR = new Date().getFullYear();
+// 26 Sep 2026: the year is the hub title's cycle year per exam
+// (src/lib/exam-title-year.ts; no year when nothing names one) — it was the
+// module-level calendar year.
 
 export async function generateMetadata({
   params,
@@ -66,7 +69,8 @@ export async function generateMetadata({
     select: { code: true, shortName: true, name: true },
   });
   if (!exam) return { title: "Exam tricks — Shishya" };
-  const title = `${exam.shortName} Tricks & Mnemonics ${YEAR} — Short Tricks That Save Minutes | Shishya`;
+  const year = await examTitleYear(exam.code);
+  const title = `${exam.shortName} Tricks & Mnemonics${yearSuffix(year)} — Short Tricks That Save Minutes | Shishya`;
   // The "free mock" sentence only where the exam has a question bank
   // (16 Sep 2026, src/lib/exam-page-gates.ts) — 12 active exams have none.
   const gates = await examPageGates(exam.code);

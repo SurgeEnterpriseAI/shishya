@@ -19,15 +19,25 @@ import { notFound } from "next/navigation";
 import { isUrlLocale } from "@/lib/seo-locale";
 import { fillState, stateCopy, stateCopyLocale, stateDisplayName, stateOtherNames } from "@/lib/state-exams-copy";
 import { STATES } from "@/lib/state-info";
+import { stateEntranceCount } from "@/lib/state-exam-sections";
 
 export const revalidate = 3600;
+
+// 26 Sep 2026: 28 of the state exams are admission tests (src/lib/exam-kind.ts
+// STATE_CET_CODES), so the index says "government and entrance exams" and
+// counts the two kinds apart — every count from the directory, none typed.
+function kindCounts(dir: readonly { exams: readonly { code: string }[] }[]): { gov: number; ent: number } {
+  const ent = dir.reduce((a, s) => a + stateEntranceCount(s.exams), 0);
+  const total = dir.reduce((a, s) => a + s.exams.length, 0);
+  return { gov: total - ent, ent };
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const year = new Date().getUTCFullYear();
   const dir = await getStateDirectory().catch(() => []);
-  const examCount = dir.reduce((a, s) => a + s.exams.length, 0);
-  const title = `Government Exams by State ${year} — All States & UTs | Shishya`;
-  const description = `${examCount} state government exams across ${dir.length} states and union territories — pick your state for its exams, announced dates, where to apply, and free mock tests.`;
+  const { gov, ent } = kindCounts(dir);
+  const title = `Government and Entrance Exams by State ${year} — All States & UTs | Shishya`;
+  const description = `${gov} state government exams and ${ent} state entrance tests across ${dir.length} states and UTs — pick your state for its exams, announced dates, where to apply, and free mock tests.`;
   const url = "https://shishya.in/exams/state";
   return {
     title,
@@ -43,8 +53,7 @@ export default async function StatesIndexPage({ params }: { params?: Promise<{ l
   // hi / te only from a [lang] twin route; anything else is not a twin prefix.
   if (lang !== undefined && !isUrlLocale(lang)) notFound();
   const dir = await getStateDirectory().catch(() => []);
-  const year = new Date().getUTCFullYear();
-  const examCount = dir.reduce((a, s) => a + s.exams.length, 0);
+  const { gov, ent } = kindCounts(dir);
   // 16 Sep 2026: body in the URL's language (file header). generateMetadata
   // stays English — this page canonicalises to the English URL for every
   // locale.
@@ -63,12 +72,12 @@ export default async function StatesIndexPage({ params }: { params?: Promise<{ l
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: `Government exams by state ${year}`,
+    name: "Government and entrance exams by state",
     itemListElement: dir.map((s, i) => ({
       "@type": "ListItem",
       position: i + 1,
       url: `https://shishya.in/exams/state/${s.slug}`,
-      name: `${s.name} government exams`,
+      name: `${s.name} ${stateEntranceCount(s.exams) > 0 ? "government and entrance exams" : "government exams"}`,
     })),
   };
   const breadcrumbJsonLd = {
@@ -90,9 +99,9 @@ export default async function StatesIndexPage({ params }: { params?: Promise<{ l
         <p className="text-xs text-ink-500">
           <Link href="/" className="hover:text-ink-800">{C.home}</Link> · {C.examsByState}
         </p>
-        <h1 className="mt-1 text-3xl font-bold text-ink-900">{fillState(C.indexH1, { year })}</h1>
+        <h1 className="mt-1 text-3xl font-bold text-ink-900">{C.indexH1}</h1>
         <p className="mt-3 max-w-3xl text-sm text-ink-700">
-          {fillState(C.indexIntro, { examCount, stateCount: dir.length })}
+          {fillState(C.indexIntro, { govCount: gov, entCount: ent, stateCount: dir.length })}
         </p>
 
         <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

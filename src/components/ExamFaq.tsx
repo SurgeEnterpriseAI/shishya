@@ -3,27 +3,36 @@
 // present on the page (not schema-only), so this component renders both
 // from the SAME data — every answer shown to a user is exactly what's in
 // the structured data. All facts are sourced from real exam data (free
-// pricing, admin-validated question count, available PYQ years, exam
+// pricing, the hub's validated question count, available PYQ years, exam
 // duration); nothing is fabricated, and items only appear when the
 // underlying fact exists. FAQ rich results are high-leverage for exam
 // queries like "is <exam> free", "how many <exam> questions", "<exam>
 // previous papers".
 //
 // Honesty (11 Sep 2026 audit): these answers used to claim the questions
-// were "community-verified … by students and educators who have cleared
-// the same exam" and "student-verified". Question.validated is set only
-// by admin routes; there is no student-verification loop. The answers
-// now state the real pipeline: AI-generated, grounded in the official
-// syllabus/notification, admin-validated before going live, and
-// re-checked when a student reports one. PYQ sets are PYQ-pattern
-// (freshly worded in that year's pattern), never "the paper".
+// were verified by students and educators; there is no student-verification
+// loop. The answers state the real pipeline.
+// 26 Sep 2026: the earlier wording credited an admin team with validating
+// each question, which is not how live questions are passed. The free
+// answer now says questions are "written with AI from the official syllabus
+// and notification, and re-checked whenever a student reports one". The
+// automated answer check (three independent AI solves and an examiner) is
+// claimed only in the count answer, and only for the questions it passed on
+// this exam: `uncheckedCount` (src/lib/exam-answer-check.ts) picks "every
+// one of them has passed", "has passed N of them; for the remaining M, that
+// check has not run yet", or — when the read failed — no check claim
+// (faqCountAnswer in src/lib/exam-hub-copy.ts). 26 Sep 2026 (repair): the
+// free answer had said every question was answer-checked "before they go
+// live" on all 180 hubs, false for the 157 validated questions on 55 exams
+// that carry no answer-check record. PYQ sets are PYQ-pattern (freshly
+// worded in that year's pattern), never "the paper".
 //
 // 16 Sep 2026: the four answers follow the reader's language on the /hi and
 // /te hub twins (src/lib/exam-hub-copy.ts). The visible accordion and the
 // FAQPage JSON-LD are still built from the SAME data, so they can never
 // disagree; English output is unchanged.
 
-import { examHubCopy, fillHub, hubDuration } from "@/lib/exam-hub-copy";
+import { examHubCopy, faqCountAnswer, fillHub, hubDuration } from "@/lib/exam-hub-copy";
 
 interface FaqItem {
   q: string;
@@ -37,11 +46,15 @@ export function ExamFaq({
   pyqYears,
   durationMin,
   hasOfficialPapers = false,
+  uncheckedCount = null,
   locale,
 }: {
   examShortName: string;
   examName: string;
   questionCount: number;
+  /** Of `questionCount`, how many the automated answer check has not passed
+   *  (src/lib/exam-answer-check.ts); null when unknown → no check claim. */
+  uncheckedCount?: number | null;
   /** Distinct PYQ years we have validated questions for. */
   pyqYears: number[];
   durationMin?: number | null;
@@ -62,7 +75,7 @@ export function ExamFaq({
   if (questionCount > 0) {
     faqs.push({
       q: fillHub(C.faqCountQ, { short: examShortName }),
-      a: fillHub(C.faqCountA, { count: questionCount.toLocaleString("en-IN"), short: examShortName }),
+      a: faqCountAnswer(C, { count: questionCount, unchecked: uncheckedCount, short: examShortName }),
     });
   }
 

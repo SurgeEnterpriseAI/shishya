@@ -68,7 +68,9 @@ const AI_BOTS: [string, RegExp][] = [
 // logged and nothing else: the response is always the untouched
 // pass-through, even if logging throws (a 5xx robots.txt reads to Google as
 // "crawl nothing").
-const OBSERVE_ONLY = new Set(["/llms.txt", "/llms-full.txt", "/robots.txt", "/sitemap.xml"]);
+// 26 Sep 2026: + /context.md, the whole-platform machine brief
+// (src/app/context.md/route.ts) — same treatment as llms.txt.
+const OBSERVE_ONLY = new Set(["/llms.txt", "/llms-full.txt", "/robots.txt", "/sitemap.xml", "/context.md"]);
 
 /** Fire-and-forget BotVisit row for a known AI crawler / fetcher. */
 function logAiBot(req: NextRequest, event: NextFetchEvent, path: string): void {
@@ -103,6 +105,27 @@ const LANG_COOKIE = "shishya-lang";
 // a prefix. Keep in sync with src/app/sitemap.ts localeTwinUrls.
 const TWIN_PUBLIC_RE =
   /^\/(exams(\/|$)|exam-calendar$|current-affairs(\/|$)|live-test$|ask$|jobs-map$|find-your-exam$|results$|mentors$|educators$|pricing$|about$|for\/)/;
+
+// Section roots whose every page records a tagged landing (26 Sep 2026).
+// "/for/" is a prefix only (there is no /for page).
+const SECTION_ROOTS = [
+  "/schooling",
+  "/colleges",
+  "/scholarships",
+  "/careers",
+  "/career-map",
+  "/distance-learning",
+  "/worldwide",
+  "/insights",
+  "/jobs",
+  "/post-graduation",
+] as const;
+
+/** True for a section root or any page under it (exact-or-prefix). */
+function isSectionPath(path: string): boolean {
+  if (path.startsWith("/for/")) return true;
+  return SECTION_ROOTS.some((root) => path === root || path.startsWith(`${root}/`));
+}
 
 export function middleware(req: NextRequest, event: NextFetchEvent): NextResponse {
   const rawPath = req.nextUrl.pathname;
@@ -199,22 +222,24 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
   //   /                          — UTM trail before they click "Sign in"
   //   /exams/...                 — marketing links often deep-link here
   //   /schooling, /colleges,
+  //   /scholarships, /careers,
+  //   /career-map, /for/…,
+  //   /distance-learning,
   //   /post-graduation, /jobs,
-  //   /worldwide, /insights      — Phase 1 section landings
+  //   /worldwide, /insights      — every page of each section (26 Sep 2026;
+  //                                was the landing only)
   //   /login                     — last-mile catch
   //   /api/auth/signin/:provider — NextAuth flow if user clicks Google
   //                                signin directly on / (skips /login)
   // Everything else passes through unchanged.
   const isHome = path === "/";
   const isExamPage = path.startsWith("/exams/");
-  const isSectionLanding =
-    path === "/schooling" ||
-    path === "/colleges" ||
-    path === "/post-graduation" ||
-    path === "/jobs" ||
-    path === "/worldwide" ||
-    path === "/insights" ||
-    path === "/scholarships";
+  // 26 Sep 2026 (whole-education platform): every page of a section, not
+  // only its landing — a ChatGPT answer deep-links /schooling/cbse/class-10,
+  // /colleges/iit-madras or /scholarships/{id}, and those arrivals carried
+  // no attribution. Exact path or a path under it (so "/jobs" never matches
+  // "/jobs-map"). Same rule as before: utm tags or an outside referrer only.
+  const isSectionLanding = isSectionPath(path);
   const isLogin = path === "/login";
   const isOAuthEntry = path.startsWith("/api/auth/signin/");
   // Score-share landings (13 Sep 2026): a friend arriving from a WhatsApp
@@ -327,10 +352,26 @@ export const config = {
     // Study group invites (14 Sep 2026) — same attribution as a challenge link.
     "/g/:path*",
     "/api/auth/signin/:path*",
+    // Every page of the whole-education sections (26 Sep 2026): attribution
+    // for deep links (isSectionPath) and AI-crawler logging. Observe and
+    // attribute only — no rewrite, no redirect, no response change beyond
+    // the attribution cookie.
+    "/schooling/:path*",
+    "/colleges/:path*",
+    "/scholarships/:path*",
+    "/careers",
+    "/careers/:path*",
+    "/career-map",
+    "/distance-learning",
+    "/for/:path*",
+    "/worldwide/:path*",
+    "/insights/:path*",
+    "/jobs/:path*",
     // Crawler-facing files — logged only (OBSERVE_ONLY above, 14 Sep 2026).
     "/llms.txt",
     "/llms-full.txt",
     "/robots.txt",
     "/sitemap.xml",
+    "/context.md",
   ],
 };

@@ -8,11 +8,18 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
+// 26 Sep 2026: own openGraph {title, description, url} — without one the page
+// inherited og:url=https://shishya.in and the site-wide card text.
+const TITLE = "Skill-Based Careers in India — Non-degree paths that actually work";
+const DESCRIPTION =
+  "Honest guide to non-degree careers in India. Coding bootcamps, design portfolios, content writing, sales, digital marketing, video editing, finance ops. What you can earn without (or alongside) a traditional degree.";
+const PAGE_URL = "https://shishya.in/jobs/skill-careers";
+
 export const metadata: Metadata = {
-  title: "Skill-Based Careers in India — Non-degree paths that actually work | Shishya",
-  description:
-    "Honest guide to non-degree careers in India. Coding bootcamps, design portfolios, content writing, sales, digital marketing, video editing, finance ops. What you can earn without (or alongside) a traditional degree.",
-  alternates: { canonical: "https://shishya.in/jobs/skill-careers" },
+  title: `${TITLE} | Shishya`,
+  description: DESCRIPTION,
+  alternates: { canonical: PAGE_URL },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: PAGE_URL, siteName: "Shishya", locale: "en_IN", type: "article" },
   keywords: [
     "skill based career india",
     "non degree career india",

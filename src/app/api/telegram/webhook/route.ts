@@ -55,8 +55,9 @@ async function activeExams(): Promise<Exam[]> {
   return rows as Exam[];
 }
 
+// 26 Sep 2026: no typed exam count in the bot's help ("170+" went stale).
 const HELP = [
-  `<b>Shishya</b> — free govt-exam prep for 170+ exams. Try:`,
+  `<b>Shishya</b> — free government-exam prep: practice, exam dates and results. Try:`,
   `• /today — 5 practice questions, right here`,
   `• /exam SSC CGL — exam date, admit card, result (official / announced / expected)`,
   `• /calendar — exam days in the next 30 days`,

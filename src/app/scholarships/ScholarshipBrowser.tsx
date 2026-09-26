@@ -3,7 +3,14 @@
 // Filter UI + card grid for the /scholarships page. Client component so
 // filtering is instant (no server round-trip) — the data is static and
 // already shipped to the browser via the server component's prop.
+//
+// 26 Sep 2026: every card title links its own page, /scholarships/{id}
+// (src/app/scholarships/[id]/page.tsx; generateStaticParams maps the same
+// s.id). The 208 detail pages were in the sitemap but no page linked them —
+// crawlers and students reached them only through search. The official
+// apply / awarding-body links stay on the card.
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Scholarship, ScholarshipType, ScholarshipCategory, ScholarshipLevel } from "@/data/scholarships";
 
@@ -79,7 +86,8 @@ const GENDER_FILTERS: Array<{ value: "ALL" | "F" | "M"; label: string }> = [
   { value: "F", label: "Girls / Women only" },
 ];
 
-export function ScholarshipBrowser({ scholarships }: { scholarships: Scholarship[] }) {
+// 26 Sep 2026 (repair): readonly — the page passes SCHOLARSHIP_SCHEMES (src/lib/scholarship-schemes.ts).
+export function ScholarshipBrowser({ scholarships }: { scholarships: readonly Scholarship[] }) {
   const [q, setQ] = useState("");
   const [state, setState] = useState<string>("ALL");
   const [type, setType] = useState<ScholarshipType | "ALL">("ALL");
@@ -197,7 +205,8 @@ export function ScholarshipBrowser({ scholarships }: { scholarships: Scholarship
         >
           Buddy4Study aggregator
         </a>{" "}
-        for 800+ active scholarships.
+        {/* 26 Sep 2026: "800+ active" was a third party's count we never checked. */}
+        for a wider list.
       </p>
     </div>
   );
@@ -247,7 +256,11 @@ function ScholarshipCard({ s }: { s: Scholarship }) {
   return (
     <li className="flex flex-col rounded-lg border border-ink-200 bg-white p-5 shadow-sm hover:border-saffron-300 hover:shadow-md transition">
       <div className="flex flex-wrap items-baseline gap-2">
-        <h2 className="text-base font-semibold text-ink-900">{s.name}</h2>
+        <h2 className="text-base font-semibold text-ink-900">
+          <Link href={`/scholarships/${s.id}`} className="hover:text-saffron-800 hover:underline">
+            {s.name}
+          </Link>
+        </h2>
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${TYPE_TONE[s.type]}`}>
           {s.type.replace("_", " ")}
         </span>

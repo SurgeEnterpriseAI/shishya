@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_SHORT, SITE_SLOGAN } from "@/lib/site-description";
 
 // Web app manifest (13 Sep 2026, phone-first speed). Served by Next at
 // /manifest.webmanifest and linked from the root layout's metadata.
@@ -22,10 +23,11 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Shishya — Free Government Exam Prep",
+    // 26 Sep 2026: the whole-education name and the shared short
+    // description (src/lib/site-description.ts), not "Government Exam Prep".
+    name: `Shishya — ${SITE_SLOGAN}`,
     short_name: "Shishya",
-    description:
-      "Free mock tests, previous year papers and PYQ-pattern practice, study notes and an AI tutor for Indian government and entrance exams.",
+    description: SITE_SHORT,
     start_url: "/?utm_source=pwa",
     scope: "/",
     display: "standalone",

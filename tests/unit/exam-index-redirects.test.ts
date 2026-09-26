@@ -12,6 +12,7 @@ const state = vi.hoisted(() => ({
   exam: null as null | { code: string; active: boolean },
   locale: "en" as string,
   lookups: [] as unknown[],
+  permanent: false,
 }));
 
 vi.mock("@/lib/db/prisma", () => ({
@@ -30,6 +31,12 @@ vi.mock("next/navigation", () => ({
     throw new Error("NEXT_NOT_FOUND");
   },
   redirect: (url: string) => {
+    throw Object.assign(new Error("NEXT_REDIRECT"), { url });
+  },
+  // 26 Sep 2026: both index paths redirect permanently (308) — they have no
+  // page of their own and never will.
+  permanentRedirect: (url: string) => {
+    state.permanent = true;
     throw Object.assign(new Error("NEXT_REDIRECT"), { url });
   },
 }));
@@ -51,6 +58,7 @@ beforeEach(() => {
   state.exam = { code: "TS_POLICE_PC", active: true };
   state.locale = "en";
   state.lookups = [];
+  state.permanent = false;
 });
 
 describe("/exams/[code]/topics → the hub's Syllabus section", () => {
@@ -90,6 +98,16 @@ describe("/exams/[code]/pyq → the hub's Previous Papers section", () => {
     expect(await outcome(PyqIndexPage, "NOPE")).toBe("NEXT_NOT_FOUND");
     state.exam = { code: "KA_KSRP", active: false };
     expect(await outcome(PyqIndexPage, "KA_KSRP")).toBe("NEXT_NOT_FOUND");
+  });
+});
+
+describe("the redirects are permanent (26 Sep 2026)", () => {
+  it("topics and pyq both use permanentRedirect", async () => {
+    await outcome(TopicsIndexPage, "TS_POLICE_PC");
+    expect(state.permanent).toBe(true);
+    state.permanent = false;
+    await outcome(PyqIndexPage, "TS_POLICE_PC");
+    expect(state.permanent).toBe(true);
   });
 });
 

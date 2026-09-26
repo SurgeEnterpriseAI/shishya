@@ -28,6 +28,7 @@ import { tFor } from "@/lib/i18n-server";
 import { pilotPageLocale } from "@/lib/cache-pilot-routes";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { StateExamsLink } from "@/components/StateExamsLink";
+import { examTitleYear, yearSuffix } from "@/lib/exam-title-year";
 
 export const revalidate = 3600;
 
@@ -57,7 +58,9 @@ export function generateStaticParams() {
   return [];
 }
 
-const YEAR = new Date().getFullYear();
+// 26 Sep 2026: the year is the hub title's cycle year per exam
+// (src/lib/exam-title-year.ts; no year when nothing names one) — it was the
+// module-level calendar year.
 
 export async function generateMetadata({
   params,
@@ -70,7 +73,8 @@ export async function generateMetadata({
     select: { code: true, shortName: true, name: true },
   });
   if (!exam) return { title: "Exam guide — Shishya" };
-  const title = `How to Prepare for ${exam.shortName} ${YEAR} — Without Coaching | Study Plan, Difficulty, Salary | Shishya`;
+  const year = await examTitleYear(exam.code);
+  const title = `How to Prepare for ${exam.shortName}${yearSuffix(year)} — Without Coaching | Study Plan, Difficulty, Salary | Shishya`;
   const description =
     `Complete free guide to cracking ${exam.shortName} (${exam.name}): how to prepare without coaching, a realistic study plan, ` +
     `honest difficulty for an average student, and salary & career growth. 100% free on Shishya.`;
@@ -131,11 +135,12 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
   // syllabus gate too: the coach builds each day from the exam's topics
   // (src/lib/coach-plan.ts), and the 12 active exams with no Subject rows
   // have none — their plan would hold nothing but the Daily-5 slot.
-  const [rows, gates] = await Promise.all([
+  const [rows, gates, year] = await Promise.all([
     prisma.$queryRaw<{ content: string; faq: { q: string; a: string }[] | null }[]>`
       SELECT content, faq FROM "ExamGuide" WHERE "examId" = ${exam.id} LIMIT 1
     `,
     examPageGates(exam.code),
+    examTitleYear(exam.code),
   ]);
   const guideMd = rows[0]?.content;
   if (!guideMd) notFound();
@@ -146,7 +151,7 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: `How to prepare for ${exam.shortName} ${YEAR} — with or without coaching`,
+    headline: `How to prepare for ${exam.shortName}${yearSuffix(year)} — with or without coaching`,
     description: `A complete free preparation guide for ${exam.name}: strategy, study plan, difficulty and career.`,
     url,
     inLanguage: "en-IN",
@@ -193,7 +198,7 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
           · How to crack it
         </p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">
-          How to crack {exam.shortName} {YEAR} — with or without coaching
+          How to crack {exam.shortName}{yearSuffix(year)} — with or without coaching
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
           A complete, honest guide to preparing for {exam.name}: a real self-study path, a weekly

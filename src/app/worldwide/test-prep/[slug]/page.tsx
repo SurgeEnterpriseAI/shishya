@@ -1,9 +1,13 @@
 // /worldwide/test-prep/[slug] — per-test prep guide.
+// 26 Sep 2026: own openGraph {title, description, url}; the description is
+// cut at a sentence / word boundary (the format text was .slice(0, 100)'d
+// mid-word, then the whole .slice(0, 280)'d).
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { clipDescription } from "@/lib/section-seo";
 import { TEST_PREP } from "@/lib/worldwide-data";
 
 interface PageParams { slug: string }
@@ -19,10 +23,14 @@ export async function generateMetadata({
   const t = TEST_PREP.find((x) => x.slug === slug);
   if (!t) return { title: "Not found — Shishya" };
   const year = new Date().getUTCFullYear();
+  const title = `${t.name} Prep Guide ${year} — Format, Fee, Strategy, Free Resources | Shishya`;
+  const description = clipDescription(`${t.fullName}. Fee: ${t.feeInr}. Validity: ${t.validity}. ${t.format}`);
+  const url = `https://shishya.in/worldwide/test-prep/${slug}`;
   return {
-    title: `${t.name} Prep Guide ${year} — Format, Fee, Strategy, Free Resources | Shishya`,
-    description: `${t.fullName}. ${t.format.slice(0, 100)} Fee: ${t.feeInr}. Validity: ${t.validity}.`.slice(0, 280),
-    alternates: { canonical: `https://shishya.in/worldwide/test-prep/${slug}` },
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title, description, url, siteName: "Shishya", locale: "en_IN", type: "article" },
     keywords: [
       `${t.name} preparation`,
       `${t.name} free prep`,

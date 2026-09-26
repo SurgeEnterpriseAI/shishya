@@ -6,17 +6,30 @@
 // collect home-state, category, income-band, etc. on a profile page.
 
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
-import { SCHOLARSHIPS } from "@/data/scholarships";
+import { SectionCrossLinks } from "@/components/SectionCrossLinks";
+// 26 Sep 2026 (repair): the schemes, never the one outside aggregator
+// (Buddy4Study) the raw catalogue holds — src/lib/scholarship-schemes.ts.
+import { SCHOLARSHIP_SCHEMES } from "@/lib/scholarship-schemes";
 import { ScholarshipBrowser } from "./ScholarshipBrowser";
 
-export const metadata = {
-  title: "Free scholarships for Indian students · Shishya",
-  description:
-    "Curated catalogue of central, state and private scholarships every Indian student can apply for — by state, category, level, and exam. Free forever.",
+// 26 Sep 2026: the count is SCHOLARSHIP_SCHEMES.length, never typed. "every Indian
+// student can apply for" (most schemes are for one state, level or
+// category) and "Free forever" (a promise) are gone; the page is free to use
+// and every scheme is free to apply for. Own openGraph (it inherited none),
+// and the section's context.md is declared as the markdown alternate.
+const TITLE = `Scholarships in India — ${SCHOLARSHIP_SCHEMES.length} central, state and private schemes`;
+const DESCRIPTION = `${SCHOLARSHIP_SCHEMES.length} central, state and private scholarships for students in India, by state, category, level and exam — each with its official apply link. Free to use.`;
+const PAGE_URL = "https://shishya.in/scholarships";
+
+export const metadata: Metadata = {
+  title: `${TITLE} | Shishya`,
+  description: DESCRIPTION,
   // Self canonical (16 Sep 2026): one of 7 sitemap landings the crawl found without one.
-  alternates: { canonical: "https://shishya.in/scholarships" },
+  alternates: { canonical: PAGE_URL, types: { "text/markdown": `${PAGE_URL}/context.md` } },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: PAGE_URL, siteName: "Shishya", locale: "en_IN", type: "website" },
 };
 
 export const revalidate = 3600; // refresh static cache every hour
@@ -27,9 +40,8 @@ export default function ScholarshipsPage() {
       <JsonLd
         data={[
           collectionPageLd({
-            name: "Free scholarships for Indian students",
-            description:
-              "Curated catalogue of central, state and private scholarships every Indian student can apply for — by state, category, level, and exam. Free forever.",
+            name: TITLE,
+            description: DESCRIPTION,
             path: "/scholarships",
           }),
           breadcrumbLd([["Scholarships", "/scholarships"]]),
@@ -72,7 +84,15 @@ export default function ScholarshipsPage() {
           </div>
         </div>
 
-        <ScholarshipBrowser scholarships={SCHOLARSHIPS} />
+        <ScholarshipBrowser scholarships={SCHOLARSHIP_SCHEMES} />
+
+        <SectionCrossLinks
+          current="/scholarships"
+          extra={[
+            { label: "Scholarship match wizard", href: "/scholarships/match", blurb: "Five questions; the schemes whose rules fit your answers." },
+            { label: "Class 11 streams", href: "/schooling/streams", blurb: "What Science, Commerce and Humanities each open up." },
+          ]}
+        />
       </section>
     </main>
   );

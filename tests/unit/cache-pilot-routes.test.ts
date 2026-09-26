@@ -260,13 +260,17 @@ describe("a cached render: no swallowed read, no link to a page that does not re
   });
 
   it("search surface: titles, canonicals and JSON-LD headlines are the pre-pilot strings", () => {
+    // 26 Sep 2026: the year is the hub title's cycle year per exam
+    // (src/lib/exam-title-year.ts; none when nothing names one), not the
+    // module-level calendar year — otherwise the strings are the pre-pilot ones.
     const guide = code(read(PAGES.guide));
-    expect(guide).toContain("`How to Prepare for ${exam.shortName} ${YEAR} — Without Coaching | Study Plan, Difficulty, Salary | Shishya`");
+    expect(guide).toContain("`How to Prepare for ${exam.shortName}${yearSuffix(year)} — Without Coaching | Study Plan, Difficulty, Salary | Shishya`");
     expect(guide).toContain("const url = `https://shishya.in/exams/${exam.code}/guide`;");
     expect(guide).toContain("alternates: { canonical: url },");
-    expect(guide).toContain("headline: `How to prepare for ${exam.shortName} ${YEAR} — with or without coaching`,");
+    expect(guide).toContain("headline: `How to prepare for ${exam.shortName}${yearSuffix(year)} — with or without coaching`,");
     const tricks = code(read(PAGES.tricks));
-    expect(tricks).toContain("`${exam.shortName} Tricks & Mnemonics ${YEAR} — Short Tricks That Save Minutes | Shishya`");
+    expect(tricks).toContain("`${exam.shortName} Tricks & Mnemonics${yearSuffix(year)} — Short Tricks That Save Minutes | Shishya`");
+    for (const body of [guide, tricks]) expect(body).not.toMatch(/getFullYear\(\)|getUTCFullYear\(\)/);
     expect(tricks).toContain("const url = `https://shishya.in/exams/${exam.code}/tricks`;");
     expect(tricks).toContain("alternates: { canonical: url },");
     expect(tricks).toContain("headline: `${exam.shortName} Tricks & Mnemonics — subject-wise short tricks`,");

@@ -35,11 +35,19 @@ export async function generateMetadata({
     select: { shortName: true, name: true },
   });
   if (!exam) return { title: "Archive — Shishya" };
+  // 26 Sep 2026: its own openGraph (shares carried the root card's title),
+  // and the description no longer calls every archived row an
+  // "official-source notification" — archived rows keep whatever source
+  // tier they had.
+  const title = `${exam.shortName} — older notifications & timeline | Shishya`;
+  const description = `Historical news, postponements, important dates and cutoff predictions for ${exam.name}, from earlier cycles, archived by Shishya with their sources.`;
+  const url = `https://shishya.in/exams/${code}/archive`;
   return {
-    title: `${exam.shortName} — older notifications & timeline | Shishya`,
-    description: `Historical news, postponements, important dates and cutoff predictions for ${exam.name}. Browse every cycle's official-source notifications archived by Shishya.`,
-    alternates: { canonical: `https://shishya.in/exams/${code}/archive` },
+    title,
+    description,
+    alternates: { canonical: url },
     robots: { index: true, follow: true },
+    openGraph: { title, description, url, siteName: "Shishya", locale: "en_IN", type: "website" },
   };
 }
 

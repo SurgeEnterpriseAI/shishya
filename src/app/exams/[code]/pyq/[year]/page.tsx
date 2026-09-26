@@ -93,8 +93,16 @@ export async function generateMetadata({
   // only where the conducting body published one and we link it.
   const { loadOfficialPapers: loadOfficialPapersMeta } = await import("@/lib/official-papers-db");
   const { papersForYear: papersForYearMeta } = await import("@/lib/official-papers");
-  const officialMeta =
-    papersForYearMeta(await loadOfficialPapersMeta(exam.id), yearNum).find((r) => r.kind !== "answer key") ?? null;
+  const officialYearRows = papersForYearMeta(await loadOfficialPapersMeta(exam.id), yearNum);
+  const officialMeta = officialYearRows.find((r) => r.kind !== "answer key") ?? null;
+  // Soft-404 guard (26 Sep 2026): /exams/SSC_CGL/pyq/1999 and /pyq/2031
+  // returned 200, self-canonical, "0 of 100, Solve Free" — an indexable page
+  // promising a paper for any year. With no question and no official paper
+  // row for the year the URL is a 404 (the page body does the same); with
+  // only an official paper (or key) it renders the links, noindex,follow.
+  // The title wording is unchanged (founder decision, 15 Sep 2026).
+  if (held === 0 && officialYearRows.length === 0) notFound();
+  const emptyYear = held === 0;
   const description = pyqYearDescription({
     short: exam.shortName,
     name: exam.name,
@@ -111,6 +119,7 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: url },
+    ...(emptyYear ? { robots: { index: false, follow: true } } : {}),
     keywords: [
       `${exam.shortName} ${year} question paper`,
       `${exam.shortName} ${year} previous year question paper`,
@@ -183,6 +192,11 @@ export default async function PYQYearPage({
   const fullMock = pickFullPatternMock(fullPatternMocks, exam);
   const official = pickOfficialPaperLinks(officialRows, yearNum);
   const officialForYear = official.sameYear;
+
+  // 26 Sep 2026: no question and no official paper row for the year → 404
+  // (it was a 200 "0 of 100" page for any year, 1999 or 2031). An official
+  // paper alone keeps the page, noindex (generateMetadata).
+  if (questions.length === 0 && officialForYear.length === 0) notFound();
 
   if (questions.length === 0) {
     return (

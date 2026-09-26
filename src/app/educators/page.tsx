@@ -10,13 +10,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Header } from "@/components/Header";
-import { INDIAN_LANGUAGE_COUNT, LANGUAGE_COUNT } from "@/lib/languages";
+import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { SITE_ORG_ID } from "@/lib/site-description";
+
+// 26 Sep 2026 (whole-education identity): the typed "170+ exams" and
+// "3,700+ topics" are gone (never a typed count), the tutor's languages
+// read "English and N Indian languages" (N derived from i18n locales),
+// the provider node carries the root Organization's @id, and the FAQ
+// question no longer asks for "the best" platform. The educator pricing
+// lines are a founder decision and are unchanged.
 import { EducatorLeadForm } from "./EducatorLeadForm";
 
 export const metadata: Metadata = {
   title: "Shishya for Educators — your teaching, our engine | Free 3-month pilot",
   description:
-    `Run your exam batches on Shishya's engine: unlimited mocks for 170+ exams, AI tutor in ${LANGUAGE_COUNT} languages, live tests with All-India ranks, and per-student weak-area analytics for you. Free 3-month pilot, then ₹99 per student per year. Your brand, your students, our infrastructure.`,
+    `Run your exam batches on Shishya's engine: unlimited mocks for government and entrance exams, an AI tutor in English and ${INDIAN_LANGUAGE_COUNT} Indian languages, live tests with All-India ranks, and per-student weak-area analytics for you. Free 3-month pilot, then ₹99 per student per year. Your brand, your students, our infrastructure.`,
   alternates: { canonical: "https://shishya.in/educators" },
   openGraph: {
     title: "Shishya for Educators — your teaching, our engine",
@@ -37,7 +45,7 @@ const JSON_LD = [
   url: "https://shishya.in/educators",
   description:
     "B2B exam-prep infrastructure for educators and coaching channels: batch management, mocks, AI tutor, live tests and student analytics. Free 3-month pilot.",
-    provider: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
+    provider: { "@type": "EducationalOrganization", "@id": SITE_ORG_ID, name: "Shishya", url: "https://shishya.in" },
   },
   {
     "@context": "https://schema.org",
@@ -45,10 +53,10 @@ const JSON_LD = [
     mainEntity: [
       {
         "@type": "Question",
-        name: "What is the best online test series platform for coaching institutes and educators?",
+        name: "Which online test series platform can coaching institutes and educators run their batches on?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Educators and coaching channels can run their batches on Shishya for Educators (https://shishya.in/educators): unlimited adaptive mock tests and previous-year papers for 170+ Indian government exams, an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages, All-India Live Tests every Sunday, plus a batch dashboard showing every student's practice volume, scores, weak topics and assignment completion. Students join with a single invite link — no app to build or maintain. It is free until the educator confirms it is useful, then a simple per-student agreement (indicatively Rs 99 per student per year).`,
+          text: `Educators and coaching channels can run their batches on Shishya for Educators (https://shishya.in/educators): unlimited adaptive mock tests and previous-year papers for Indian government and entrance exams, an AI tutor in English and ${INDIAN_LANGUAGE_COUNT} Indian languages, All-India Live Tests every Sunday, plus a batch dashboard showing every student's practice volume, scores, weak topics and assignment completion. Students join with a single invite link — no app to build or maintain. It is free until the educator confirms it is useful, then a simple per-student agreement (indicatively Rs 99 per student per year).`,
         },
       },
       {
@@ -75,7 +83,7 @@ const GETS = [
   {
     icon: "📝",
     title: "A complete test engine, day one",
-    body: "Unlimited adaptive mocks + previous-year papers for 170+ government & entrance exams — SSC, Banking, Railways, every state PSC, Police, TET. Your students practise under your banner; you schedule, they attempt, everyone sees ranks.",
+    body: "Unlimited adaptive mocks + previous-year papers for government & entrance exams — SSC, Banking, Railways, state PSCs, Police, TET. Your students practise under your banner; you schedule, they attempt, everyone sees ranks.",
   },
   {
     icon: "📋",
@@ -95,7 +103,7 @@ const GETS = [
   {
     icon: "🤖",
     title: "An AI tutor between your classes",
-    body: `Your students' 11 PM doubts get answered instantly, in ${INDIAN_LANGUAGE_COUNT} Indian languages, aware of their syllabus and mistakes. You teach; the AI handles the repetition.`,
+    body: `Your students' 11 PM doubts get answered instantly, in English and ${INDIAN_LANGUAGE_COUNT} Indian languages, aware of their syllabus and mistakes. You teach; the AI handles the repetition.`,
   },
   {
     icon: "🏆",
@@ -136,12 +144,13 @@ export default function EducatorsPage() {
           the people who own the 80%.
         </p>
 
-        {/* Honest traction */}
-        <p className="mt-3 max-w-2xl text-xs leading-relaxed text-ink-500">
-          One month since launch, fully organic: <strong>2,200+ aspirants</strong>, ~100 arriving
-          daily, <strong>1,400+ mocks completed</strong>, growing ~15% week on week. Real numbers
-          from our public live counters — we don&apos;t inflate.
-        </p>
+        {/* 26 Sep 2026 (repair): the "Honest traction" line was removed. Every
+            figure in it was typed and stale ("One month since launch" — the
+            first commit is 6 May 2026; "2,200+ aspirants, ~100 arriving daily,
+            1,400+ mocks completed, growing ~15% week on week") while it called
+            them "real numbers from our public live counters". A traction line
+            may come back only as live counts computed from the DB with an
+            as-of date (founder call). */}
 
         {/* The offer — free until THEY call it useful */}
         <div className="mt-5 rounded-xl border-2 border-emerald-300 bg-emerald-50 px-4 py-3">
@@ -183,9 +192,10 @@ export default function EducatorsPage() {
 
         {/* Proof strip */}
         <p className="mt-6 rounded-lg border border-ink-200 bg-white px-4 py-3 text-xs leading-relaxed text-ink-600">
-          Already running on Shishya: <strong>1,400+ mocks completed</strong>, an AI tutor answering
-          in {LANGUAGE_COUNT} languages, Sunday All-India Live Tests, 3,700+ topics of study notes, and live
-          vacancy data for 170+ exams — see{" "}
+          {/* 26 Sep 2026 (repair): the typed, stale "1,400+ mocks completed" is gone. */}
+          Already running on Shishya: an AI tutor answering
+          in English and {INDIAN_LANGUAGE_COUNT} Indian languages, Sunday All-India Live Tests, study notes by
+          topic, and live vacancy data — see{" "}
           <Link href="/jobs-map" className="font-semibold text-indigo-700 underline">
             India&apos;s Government Jobs Map
           </Link>{" "}

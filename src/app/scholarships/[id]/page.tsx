@@ -3,18 +3,43 @@
 // SEO target: long-tail queries like "Reliance Foundation UG scholarship
 // 2026 eligibility", "AICTE Pragati eligibility income", etc. Each
 // scholarship becomes its own indexable URL.
+//
+// 26 Sep 2026 (every-education-search wave):
+//   • linked from every card on /scholarships (they were orphans), and this
+//     page links on: up to 6 related scholarships (same state first, then a
+//     shared level, then the same type or reserved category), the match
+//     wizard, /colleges and /schooling/streams;
+//   • MonetaryGrant JSON-LD: our URL, the awarding body as funder, the
+//     amount only as the data's own text (no number is parsed or invented);
+//   • descriptions cut at a sentence / word boundary (was .slice(0, 280));
+//   • exam chips link only codes in the live catalogue (GATE had none);
+//   • revalidate daily — the page now reads the live exam list.
+// 26 Sep 2026 (repair): the catalogue's one outside aggregator (Buddy4Study,
+// tag "aggregator") is not a scholarship. It had a detail page marked up as
+// a MonetaryGrant funded by "Buddy4Study (aggregator)", with a superlative
+// and a third party's unchecked count in its text. Its URL now redirects
+// (308) to /scholarships, which links the aggregator once, labelled as one;
+// static params, related blocks and every count use SCHOLARSHIP_SCHEMES
+// (src/lib/scholarship-schemes.ts).
 
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { ExamChip } from "@/components/ExamChip";
 import { SaveScholarshipButton } from "@/components/SaveScholarshipButton";
 import { SCHOLARSHIPS, type Scholarship } from "@/data/scholarships";
+import { SCHOLARSHIP_SCHEMES, isAggregatorListing } from "@/lib/scholarship-schemes";
+import { loadLiveExams } from "@/lib/live-exam-codes";
+import { relatedScholarships } from "@/lib/section-related";
+import { clipDescription } from "@/lib/section-seo";
+
+export const revalidate = 86_400;
 
 interface PageParams { id: string }
 
 export async function generateStaticParams() {
-  return SCHOLARSHIPS.map((s) => ({ id: s.id }));
+  return SCHOLARSHIP_SCHEMES.map((s) => ({ id: s.id }));
 }
 
 function findScholarship(id: string): Scholarship | undefined {
@@ -27,11 +52,13 @@ export async function generateMetadata({
   const { id } = await params;
   const s = findScholarship(id);
   if (!s) return { title: "Scholarship not found — Shishya" };
+  // An aggregator listing redirects to /scholarships (see the page below).
+  if (isAggregatorListing(s)) return { title: "Scholarships in India | Shishya", robots: { index: false, follow: true } };
   const year = new Date().getUTCFullYear();
   const title = `${s.name} ${year} — Eligibility, Amount, Apply | Shishya`;
   return {
     title,
-    description: `${s.description} ${s.eligibility.note ?? ""} Amount: ${s.amount}. Free to apply.`.slice(0, 280),
+    description: clipDescription(`${s.description} ${s.eligibility.note ?? ""} Amount: ${s.amount}. Free to apply.`),
     alternates: { canonical: `https://shishya.in/scholarships/${id}` },
     keywords: [
       s.name,
@@ -43,7 +70,7 @@ export async function generateMetadata({
     ],
     openGraph: {
       title,
-      description: s.description.slice(0, 200),
+      description: clipDescription(s.description, 200),
       url: `https://shishya.in/scholarships/${id}`,
       siteName: "Shishya",
       locale: "en_IN",
@@ -67,6 +94,29 @@ export default async function ScholarshipDetailPage({
   const { id } = await params;
   const s = findScholarship(id);
   if (!s) notFound();
+  if (isAggregatorListing(s)) permanentRedirect("/scholarships");
+  const [live] = await Promise.all([loadLiveExams()]);
+  const related = relatedScholarships(s, SCHOLARSHIP_SCHEMES);
+  const url = `https://shishya.in/scholarships/${s.id}`;
+
+  // MonetaryGrant (26 Sep 2026): what the grant is and who funds it. The
+  // amount is the data's own prose ("₹12,000/year for 4 years", "Full
+  // tuition waiver"), carried as text — never parsed into a number.
+  const grantJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "MonetaryGrant",
+    name: s.name,
+    url,
+    description: clipDescription(s.description, 300),
+    funder: {
+      "@type": "Organization",
+      name: s.awardingBody,
+      ...(s.officialSite ? { url: s.officialSite } : {}),
+    },
+    amount: { "@type": "MonetaryAmount", description: s.amount },
+    // 26 Sep 2026: no isAccessibleForFree — schema.org defines it on CreativeWork,
+    // Event, Offer and Place, not on MonetaryGrant.
+  };
 
   // FAQ JSON-LD — Google rich result for "what is...", "who is eligible
   // for...", "how much does X pay" queries.
@@ -115,6 +165,7 @@ export default async function ScholarshipDetailPage({
 
   return (
     <main className="min-h-screen bg-ink-50/40">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(grantJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <Header />
@@ -199,15 +250,37 @@ export default async function ScholarshipDetailPage({
             <h2 className="mt-10 text-base font-semibold text-ink-900">Relevant for these exams</h2>
             <div className="mt-2 flex flex-wrap gap-2">
               {s.relevantExamCodes.map((code) => (
-                <Link
+                <ExamChip
                   key={code}
-                  href={`/exams/${code}`}
+                  code={code}
+                  live={live}
                   className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-xs text-ink-700 hover:border-saffron-400 hover:bg-saffron-50/30"
-                >
-                  {code.replace(/_/g, " ")}
-                </Link>
+                />
               ))}
             </div>
+          </>
+        )}
+
+        {/* Related scholarships (26 Sep 2026) — server-rendered, so every
+            detail page links six more and none is an orphan. */}
+        {related.length > 0 && (
+          <>
+            <h2 className="mt-10 text-base font-semibold text-ink-900">Related scholarships</h2>
+            <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+              {related.map((r) => (
+                <li key={r.id}>
+                  <Link
+                    href={`/scholarships/${r.id}`}
+                    className="block h-full rounded-lg border border-ink-200 bg-white p-3 transition-colors hover:border-saffron-400 hover:bg-saffron-50/30"
+                  >
+                    <p className="text-sm font-semibold text-ink-900">{r.name}</p>
+                    <p className="mt-0.5 text-[11px] text-ink-500">
+                      {r.awardingBody} · {r.levels.map((l) => LEVEL_LABEL[l]).join(", ")}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </>
         )}
 
@@ -225,6 +298,22 @@ export default async function ScholarshipDetailPage({
             Open Match Wizard →
           </Link>
         </div>
+
+        {/* Where to go next (26 Sep 2026). */}
+        <nav aria-label="More on Shishya" className="mt-6 flex flex-wrap gap-2 text-xs">
+          <Link href="/scholarships" className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-ink-700 hover:border-saffron-400">
+            All scholarships →
+          </Link>
+          <Link href="/colleges" className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-ink-700 hover:border-saffron-400">
+            Colleges by stream and state →
+          </Link>
+          <Link href="/schooling/streams" className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-ink-700 hover:border-saffron-400">
+            Choosing a Class 11 stream →
+          </Link>
+          <Link href="/careers" className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-ink-700 hover:border-saffron-400">
+            Career guides →
+          </Link>
+        </nav>
       </section>
     </main>
   );

@@ -11,8 +11,14 @@
 // them "this is the hub for X on shishya.in".
 
 import React from "react";
+import { SITE_ORG_ID } from "@/lib/site-description";
 
 const SITE = "https://shishya.in";
+
+/** 26 Sep 2026: every Shishya publisher / provider / author node carries the
+ *  root layout Organization's "@id", so crawlers join them to one entity
+ *  (name kept for engines that do not resolve ids). */
+export const SHISHYA_ORG_REF = { "@type": "EducationalOrganization", "@id": SITE_ORG_ID, name: "Shishya", url: SITE } as const;
 
 export function JsonLd({ data }: { data: object | object[] }) {
   const items = Array.isArray(data) ? data : [data];
@@ -58,6 +64,6 @@ export function collectionPageLd(opts: {
     inLanguage: "en-IN",
     isAccessibleForFree: true,
     isPartOf: { "@type": "WebSite", name: "Shishya", url: SITE },
-    publisher: { "@type": "EducationalOrganization", name: "Shishya", url: SITE },
+    publisher: SHISHYA_ORG_REF,
   };
 }

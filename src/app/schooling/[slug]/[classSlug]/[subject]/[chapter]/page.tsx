@@ -68,6 +68,7 @@ import { getLiveSchoolChapter, getLiveSchoolClass, getSchoolChapterDetail, getSc
 import { legacyChapterSlug, legacySubjectSlug } from "@/lib/school/legacy-urls";
 import { hasSchoolGuestQuiz } from "@/lib/school/scope";
 import { isStudentModeClass } from "@/lib/school/student-classes";
+import { fitTitle } from "@/lib/section-seo";
 import { parseSchoolClassSlug, schoolBoardPath, schoolChapterPath, schoolClassPath, schoolSubjectPath } from "@/lib/school/surface";
 
 // Public page; notes and practice land in batches. 10 minutes = SCHOOL_REVALIDATE
@@ -142,12 +143,26 @@ export async function generateMetadata({ params }: { params: Promise<PageParams>
   const label = chapterLabel(meta);
   const bookTitle = meta?.bookTitle ?? chapter.bookCode;
   const path = schoolChapterPath(board.slug, cls, subject.slug, chapter.slug);
-  const title = `Class ${cls} ${subjectShortName(subject.name)} ${label ? `${label}: ` : ""}${chapter.name} — ${chapterHasParts({ hasNotes: chapter.hasNotes, quiz })} | Shishya`;
+  // 26 Sep 2026 (group D): ≤ ~70 characters where the chapter name allows
+  // (fitTitle) — board, class, subject and chapter always; the tail names
+  // only what the chapter has ("notes and practice" only with both, i.e. an
+  // indexable chapter). A bare chapter's description is a sentence ("Link to
+  // the official chapter PDF …"), not a dangling lower-case fragment.
+  const tails = chapter.hasNotes && quiz
+    ? [chapterHasParts({ hasNotes: true, quiz: true }), "notes and practice"]
+    : chapter.hasNotes
+      ? ["Shishya notes and the NCERT PDF", "Shishya notes"]
+      : quiz
+        ? ["practice and the NCERT PDF", "practice"]
+        : ["official NCERT chapter PDF", "NCERT PDF"];
+  const title = fitTitle(`${board.shortName} Class ${cls} ${subjectShortName(subject.name)} ${label ? `${label}: ` : ""}${chapter.name}`, tails, {
+    keepTail: chapter.indexable,
+  });
   const has: string[] = [];
   if (chapter.hasNotes) has.push("Shishya's own study notes");
   if (quiz) has.push(`${chapter.validatedQuestions} answer-checked practice questions (5 at a time, no account needed)`);
   has.push("the official chapter PDF on ncert.nic.in");
-  const description = `${board.shortName} Class ${cls} ${subject.name} — ${label ? `${label} of ` : ""}NCERT ${bookTitle}: ${chapter.name}. ${has.length > 1 ? `${has.slice(0, -1).join(", ")} and ${has[has.length - 1]}` : has[0]}.`;
+  const description = `${board.shortName} Class ${cls} ${subject.name} — ${label ? `${label} of ` : ""}NCERT ${bookTitle}: ${chapter.name}. ${has.length > 1 ? `${has.slice(0, -1).join(", ")} and ${has[has.length - 1]}.` : "Link to the official chapter PDF on ncert.nic.in."}`;
   return {
     title,
     description,

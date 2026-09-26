@@ -26,12 +26,37 @@
 // 25 Sep 2026 (school build, Step 0): the page promised a "mastery quiz",
 // notes "being authored" and a tutor scoped to the chapter — none existed;
 // all of that went. What a chapter has is now read, never promised.
+//
+// 26 Sep 2026 (every-education-search wave):
+//   • H1 "CBSE Class 6 Mathematics" (board, class and subject — it was the
+//     bare subject name), on the 25 Sep form too;
+//   • title ≤ ~70 characters (fitTitle), board / class / subject always; the
+//     tail says "notes and practice on N" only for chapters with both, and
+//     "a free AI tutor" on a Class 8-12 NCERT subject with chapters (the
+//     tutor is opened from its chapter pages); the description adds the
+//     tutor clause there;
+//   • alternates.types text/markdown → the subject's context.md (live
+//     branch; the route 404s for a class that is not live);
+//   • CollectionPage JSON-LD (educationalLevel "Class N", about the board)
+//     whose chapter ItemList holds only the indexable chapter pages — a
+//     noindex chapter is never offered to a crawler as the list's content;
+//   • "Next steps" on Class 11-12 Physics / Chemistry / Mathematics /
+//     Biology: the entrance exams that subject feeds (live hubs only),
+//     entrance exams, colleges, scholarships, careers. The 25 Sep form's
+//     "feeds exams" cards link only live exams.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Header } from "@/components/Header";
+import { SHISHYA_ORG_REF } from "@/components/JsonLd";
 import { ChapterStatusPill, OfficialLink, SchoolCrumbs } from "@/components/school/SchoolBits";
+import { SchoolNextSteps } from "@/components/school/SchoolNextSteps";
+import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { loadLiveExams } from "@/lib/live-exam-codes";
+import { schoolNextSteps } from "@/lib/section-related";
+import { examHubHref, fitTitle } from "@/lib/section-seo";
+import { isStudentModeClass } from "@/lib/school/student-classes";
 import { findBoard, SCHOOLING_ROBOTS, schoolRobots, type Board } from "@/lib/schooling-data";
 import {
   booksInMedium,
@@ -46,7 +71,7 @@ import {
 } from "@/lib/schooling-subjects";
 import { bookLanguageName, cbseSyllabusLinksForBooks, chapterLabel, cisceClassDocuments, cisceSubjectLinks, ncertBooksForSubject, ncertChapterMeta, type SchoolBookRef } from "@/lib/school/books";
 import { schoolClassIdentity } from "@/lib/school/context";
-import { SCHOOL_SITE, SUBJECT_COPY, countsLine, oursTitleBit } from "@/lib/school/copy";
+import { SCHOOL_SITE, SUBJECT_COPY, countsLine } from "@/lib/school/copy";
 import { chapterCounts, getLiveSchoolClass, getLiveSchoolSubject, getSchoolOfficialLinks, type LiveSchoolSubject } from "@/lib/school/db";
 import { legacySubjectSlug } from "@/lib/school/legacy-urls";
 import { SCHOOL_GUEST_QUIZ_MIN, hasSchoolGuestQuiz } from "@/lib/school/scope";
@@ -90,6 +115,24 @@ function bookTitles(books: readonly SchoolBookRef[]): string {
   return t.length <= 1 ? t.join("") : `${t.slice(0, -1).join(", ")} and ${t[t.length - 1]}`;
 }
 
+/** "notes and practice on 5" (chapters with both), else "Shishya notes on
+ *  N" / "practice on N"; "" when the subject has neither. */
+function oursShortBit(chapters: ReadonlyArray<{ hasNotes: boolean; validatedQuestions: number }>): string {
+  let both = 0;
+  let notes = 0;
+  let practice = 0;
+  for (const ch of chapters) {
+    const quiz = hasSchoolGuestQuiz(ch);
+    if (ch.hasNotes && quiz) both++;
+    if (ch.hasNotes) notes++;
+    if (quiz) practice++;
+  }
+  if (both > 0) return `notes and practice on ${both}`;
+  if (notes > 0) return `Shishya notes on ${notes}`;
+  if (practice > 0) return `practice on ${practice}`;
+  return "";
+}
+
 export async function generateMetadata({ params }: { params: Promise<PageParams> }): Promise<Metadata> {
   const r = await resolve(await params);
   if (!r) return { title: "Not found — Shishya", robots: SCHOOLING_ROBOTS };
@@ -118,22 +161,37 @@ export async function generateMetadata({ params }: { params: Promise<PageParams>
   // practice tail is the computed count.
   const noBook = isNcert && books.length === 0 && counts.chapters === 0;
   const subjectPdf = !isNcert && cisceSubjectLinks(cls, subject.name).length > 0;
-  const title = isNcert
+  // The tutor is opened from a chapter page: Class 8-12 NCERT subjects with chapters.
+  const tutor = isStudentModeClass(cls) && isNcert && counts.chapters > 0;
+  const ours = oursShortBit(subject.chapters);
+  const core = `${board.shortName} Class ${cls} ${subject.name}`;
+  const bookBit = books.length ? `NCERT ${bookTitles(books)} chapters` : "NCERT chapters";
+  const tails = isNcert
     ? noBook
-      ? `${board.shortName} Class ${cls} ${subject.name} — no NCERT textbook published yet | Shishya`
-      : `${board.shortName} Class ${cls} ${subject.name} — NCERT ${books.length ? bookTitles(books) : "textbook"} chapters${oursTitleBit(counts)} | Shishya`
-    : `${board.shortName} Class ${cls} ${subject.name} — ${subjectPdf ? "official CISCE syllabus" : "official CISCE curriculum document"} | Shishya`;
+      ? ["no NCERT textbook published yet", "no NCERT textbook yet"]
+      : [
+          ...(ours && tutor ? [`${bookBit}, ${ours} and a free AI tutor`, `NCERT chapters, ${ours} and a free AI tutor`] : []),
+          ...(tutor ? [`${bookBit} and a free AI tutor`, "NCERT chapters and a free AI tutor", "free AI tutor"] : []),
+          ...(ours ? [`${bookBit}, ${ours}`, `NCERT chapters, ${ours}`, `${ours} chapters`] : []),
+          bookBit,
+          "NCERT chapters",
+        ]
+    : [subjectPdf ? "official CISCE syllabus" : "official CISCE curriculum document", subjectPdf ? "CISCE syllabus" : "CISCE curriculum"];
+  const title = fitTitle(core, tails, { keepTail: Boolean(ours) || tutor });
+  const tutorLine = tutor
+    ? ` Students 13 and above can ${counts.practice > 0 ? "practise chapters and " : ""}ask a free AI tutor about any chapter, in English or ${INDIAN_LANGUAGE_COUNT} Indian languages.`
+    : "";
   const description = isNcert
     ? noBook
       ? SUBJECT_COPY.noBook(subject.name, cls)
-      : `${board.shortName} Class ${cls} ${subject.name}: ${books.length ? `the official NCERT ${books.length === 1 ? "textbook" : "textbooks"} ${bookTitles(books)}` : "the official NCERT textbooks"}, ${countsLine(counts)}, every chapter linked to its official PDF on ncert.nic.in.`
+      : `${board.shortName} Class ${cls} ${subject.name}: ${books.length ? `the official NCERT ${books.length === 1 ? "textbook" : "textbooks"} ${bookTitles(books)}` : "the official NCERT textbooks"}, ${countsLine(counts)}, every chapter linked to its official PDF on ncert.nic.in.${tutorLine}`
     : subjectPdf
       ? `${board.shortName} Class ${cls} ${subject.name}: CISCE's own syllabus PDF and regulations. CISCE prescribes a syllabus, not one textbook.`
       : `${board.shortName} Class ${cls} ${subject.name}: CISCE's curriculum document for this stage — the council publishes no per-subject syllabus PDF for this class. CISCE prescribes a syllabus, not one textbook.`;
   return {
     title,
     description,
-    alternates: { canonical: `${SCHOOL_SITE}${path}` },
+    alternates: { canonical: `${SCHOOL_SITE}${path}`, types: { "text/markdown": `${SCHOOL_SITE}${path}/context.md` } },
     // The sitemap's own rule (src/lib/school/surface.ts isSchoolSubjectIndexable
     // with the spine identity): a subject the sitemap skips is noindex here too.
     robots: schoolRobots(isSchoolSubjectIndexable(subject, schoolClassIdentity(live.cls.curriculum, cls))),
@@ -143,6 +201,7 @@ export async function generateMetadata({ params }: { params: Promise<PageParams>
       ...books.map((b) => `${b.title} NCERT Class ${cls}`),
       ...(counts.notes > 0 ? [`Class ${cls} ${subject.name} notes`] : []),
       ...(counts.practice > 0 ? [`Class ${cls} ${subject.name} practice questions`] : []),
+      ...(tutor ? [`free AI tutor Class ${cls} ${subject.name}`] : []),
     ],
     openGraph: { title, description, url: `${SCHOOL_SITE}${path}`, siteName: "Shishya", locale: "en_IN", type: "website" },
   };
@@ -194,26 +253,44 @@ export default async function SubjectPage({ params }: { params: Promise<PagePara
       { "@type": "ListItem", position: 5, name: subject.name, item: url },
     ],
   };
-  const chapterListJsonLd =
-    chapters.length > 0
+  // 26 Sep 2026: the CollectionPage's chapter list holds only indexable
+  // chapter pages (surface `indexable` = isSchoolChapterIndexable, the
+  // sitemap's rule); the page itself still links every chapter.
+  const indexableChapters = chapters.filter((ch) => ch.indexable);
+  const collectionJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `${board.shortName} Class ${cls} ${subject.name}`,
+    url,
+    inLanguage: "en-IN",
+    isAccessibleForFree: true,
+    educationalLevel: `Class ${cls}`,
+    about: { "@type": "Organization", name: board.name, url: board.websiteUrl },
+    isPartOf: { "@type": "WebSite", name: "Shishya", url: SCHOOL_SITE },
+    publisher: SHISHYA_ORG_REF,
+    ...(indexableChapters.length > 0
       ? {
-          "@context": "https://schema.org",
-          "@type": "ItemList",
-          name: `${board.shortName} Class ${cls} ${subject.name} chapters`,
-          numberOfItems: chapters.length,
-          itemListElement: chapters.map((ch, i) => ({
-            "@type": "ListItem",
-            position: i + 1,
-            name: ch.name,
-            url: `${SCHOOL_SITE}${schoolChapterPath(board.slug, cls, subject.slug, ch.slug)}`,
-          })),
+          mainEntity: {
+            "@type": "ItemList",
+            name: `${board.shortName} Class ${cls} ${subject.name} chapters with Shishya notes or practice`,
+            numberOfItems: indexableChapters.length,
+            itemListElement: indexableChapters.map((ch, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              name: ch.name,
+              url: `${SCHOOL_SITE}${schoolChapterPath(board.slug, cls, subject.slug, ch.slug)}`,
+            })),
+          },
         }
-      : null;
+      : {}),
+  };
+  const nextSteps = schoolNextSteps(cls, subject.name);
+  const liveExams = nextSteps.length > 0 ? await loadLiveExams() : new Map<string, string>();
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      {chapterListJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(chapterListJsonLd) }} />}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
       <Header />
       <section className="container-prose py-10">
         <SchoolCrumbs
@@ -225,10 +302,10 @@ export default async function SubjectPage({ params }: { params: Promise<PagePara
             { label: subject.name },
           ]}
         />
-        <h1 className="mt-1 text-3xl font-bold text-ink-900">{subject.name}</h1>
-        <p className="mt-1 text-sm text-ink-500">
-          {board.shortName} Class {cls}
-        </p>
+        <h1 className="mt-1 text-3xl font-bold text-ink-900">
+          {board.shortName} Class {cls} {subject.name}
+        </h1>
+        <p className="mt-1 text-sm text-ink-500">{board.name}</p>
 
         {/* Official books — link out; Shishya never hosts or copies them. */}
         {books.length > 0 && (
@@ -396,6 +473,8 @@ export default async function SubjectPage({ params }: { params: Promise<PagePara
               </li>
             ))}
         </ul>
+
+        <SchoolNextSteps steps={nextSteps} live={liveExams} />
       </section>
     </main>
   );
@@ -411,7 +490,8 @@ function LegacyBookLink({ b }: { b: NcertBook }) {
 
 /** The 25 Sep form for a class the seed does not cover: official books and
  *  syllabus links from the hardcoded list, chapters where one was read. noindex. */
-function LegacySubjectPage({ board, cls, syllabus, s }: { board: Board; cls: number; syllabus: ClassSyllabus; s: SchoolSubject }) {
+async function LegacySubjectPage({ board, cls, syllabus, s }: { board: Board; cls: number; syllabus: ClassSyllabus; s: SchoolSubject }) {
+  const liveExams = s.feedsExams && s.feedsExams.length > 0 ? await loadLiveExams() : new Map<string, string>();
   const main = mainBooks(s);
   const hindi = booksInMedium(s, "hi");
   const urdu = booksInMedium(s, "ur");
@@ -444,10 +524,10 @@ function LegacySubjectPage({ board, cls, syllabus, s }: { board: Board; cls: num
             { label: s.name },
           ]}
         />
-        <h1 className="mt-1 text-3xl font-bold text-ink-900">{s.name}</h1>
-        <p className="mt-1 text-sm text-ink-500">
-          {board.shortName} Class {cls}
-        </p>
+        <h1 className="mt-1 text-3xl font-bold text-ink-900">
+          {board.shortName} Class {cls} {s.name}
+        </h1>
+        <p className="mt-1 text-sm text-ink-500">{board.name}</p>
         {s.blurb && <p className="mt-4 max-w-3xl text-sm text-ink-700">{s.blurb}</p>}
         {main.length > 0 && (
           <div className="mt-6 rounded-lg border border-ink-200 bg-white p-5">
@@ -502,14 +582,25 @@ function LegacySubjectPage({ board, cls, syllabus, s }: { board: Board; cls: num
             <h2 className="text-base font-semibold text-ink-900">Where this subject takes you next</h2>
             <p className="mt-1 text-xs text-ink-600">These entrance exams build on this subject:</p>
             <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-              {s.feedsExams.map((examCode) => (
-                <li key={examCode}>
-                  <Link href={`/exams/${examCode}`} className="block rounded-md border border-saffron-200 bg-white p-3 transition-colors hover:border-saffron-400 hover:bg-saffron-50/60">
-                    <p className="text-sm font-semibold text-ink-900">{examCode.replace(/_/g, " ")}</p>
-                    <p className="mt-0.5 text-xs text-saffron-700">Exam page with free mock tests →</p>
-                  </Link>
-                </li>
-              ))}
+              {s.feedsExams.map((examCode) => {
+                // 26 Sep 2026: a card links only a live exam; any other code is a plain card.
+                const href = examHubHref(examCode, liveExams);
+                return (
+                  <li key={examCode}>
+                    {href ? (
+                      <Link href={href} className="block rounded-md border border-saffron-200 bg-white p-3 transition-colors hover:border-saffron-400 hover:bg-saffron-50/60">
+                        <p className="text-sm font-semibold text-ink-900">{examCode.replace(/_/g, " ")}</p>
+                        <p className="mt-0.5 text-xs text-saffron-700">Exam page with free mock tests →</p>
+                      </Link>
+                    ) : (
+                      <div className="block rounded-md border border-dashed border-ink-200 bg-white p-3">
+                        <p className="text-sm font-semibold text-ink-900">{examCode.replace(/_/g, " ")}</p>
+                        <p className="mt-0.5 text-xs text-ink-500">No exam page on Shishya yet</p>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}

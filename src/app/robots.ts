@@ -46,7 +46,10 @@ export default function robots(): MetadataRoute.Robots {
     "/dashboard/",
     "/today",
     "/today/",
-    "/me",
+    // 26 Sep 2026: bare /me prefix-matched the public /mentors page (robots
+    // rules are prefixes, so "/me" also blocked /mentors for every crawler).
+    // "/me$" is the page itself; "/me/" everything under it.
+    "/me$",
     "/me/",
     "/chat",
     "/chat/",

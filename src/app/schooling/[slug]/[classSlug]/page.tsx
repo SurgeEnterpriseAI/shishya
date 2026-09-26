@@ -20,21 +20,47 @@
 // practice, study help, chapter notes sourced from NCERT", a tutor scoped
 // to the chapter, "10-20 practice questions drawn from official sources",
 // exam-window claims) and the dead textbook.php?fec1= link.
+//
+// 26 Sep 2026 (every-education-search wave):
+//   • title ≤ ~70 characters (fitTitle): board and class always, then what
+//     the class has — NCERT chapters, the computed "notes and practice on N"
+//     (chapters with both), and on Class 8-12 "a free AI tutor" (the
+//     student-mode tutor, isStudentModeClass; Classes 1-7 never mention it).
+//     The description adds one tutor clause on Class 8-12 pages: students 13
+//     and above can ask a free AI tutor, in English or INDIAN_LANGUAGE_COUNT
+//     Indian languages (the school tutor persona answers in every site
+//     locale); "practise chapters" only when a chapter has checked practice.
+//   • alternates.types text/markdown → this class's context.md (the live
+//     branch only: the context route 404s for a class that is not live);
+//   • CollectionPage JSON-LD: educationalLevel "Class N", about the board,
+//     mainEntity = the indexable subject pages;
+//   • a server-rendered "Next steps" block on Class 9-12 (olympiads and the
+//     stream guide for 9-10; JEE Main / NEET UG / CUET UG, entrance exams,
+//     colleges, scholarships and careers for 11-12), exam hubs only while
+//     live; CA Foundation (live since the stream box said "no page") links.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { ExamChip } from "@/components/ExamChip";
+import { SHISHYA_ORG_REF } from "@/components/JsonLd";
 import { OfficialLink, SchoolCrumbs } from "@/components/school/SchoolBits";
+import { SchoolNextSteps } from "@/components/school/SchoolNextSteps";
 import { SchoolStudentEntry } from "@/components/school/SchoolStudentEntry";
 import { findBoard, boardExamPapersFor, SCHOOLING_ROBOTS, schoolRobots, type Board } from "@/lib/schooling-data";
 import { findClassSyllabus, mainBooks, officialClassSource, SCHOOL_SOURCES_CHECKED_ON, type SchoolSubject } from "@/lib/schooling-subjects";
 import { cisceClassDocuments, cisceSubjectLinks, cisceSubjectsWithPdf, ncertBooksForSubject } from "@/lib/school/books";
-import { CLASS_COPY, SCHOOL_SITE, cisceDocsPhrase, countsLine, oursTitleBit } from "@/lib/school/copy";
+import { schoolClassIdentity } from "@/lib/school/context";
+import { CLASS_COPY, SCHOOL_SITE, cisceDocsPhrase, countsLine } from "@/lib/school/copy";
 import { chapterCounts, getLiveSchoolClass, getSchoolOfficialLinks } from "@/lib/school/db";
-import { SCHOOL_GUEST_QUIZ_MIN } from "@/lib/school/scope";
+import { SCHOOL_GUEST_QUIZ_MIN, hasSchoolGuestQuiz } from "@/lib/school/scope";
 import { isStudentModeClass } from "@/lib/school/student-classes";
-import { parseSchoolClassSlug, schoolBoardPath, schoolClassPath, schoolSubjectPath, type SchoolSurfaceClass } from "@/lib/school/surface";
+import { isSchoolSubjectIndexable, parseSchoolClassSlug, schoolBoardPath, schoolClassPath, schoolSubjectPath, type SchoolSurfaceClass } from "@/lib/school/surface";
+import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { loadLiveExams } from "@/lib/live-exam-codes";
+import { schoolNextSteps } from "@/lib/section-related";
+import { fitTitle } from "@/lib/section-seo";
 import { stateInfo } from "@/lib/state-info";
 
 // 10 minutes = SCHOOL_REVALIDATE (src/lib/school/scope.ts; Next needs the literal).
@@ -59,6 +85,31 @@ function classTotals(live: SchoolSurfaceClass) {
   return { subjects, totals };
 }
 
+/** "notes and practice on 5" (chapters with both), else "notes on N" /
+ *  "practice on N"; "" when the class has neither. */
+function oursShortBit(live: SchoolSurfaceClass): string {
+  let both = 0;
+  let notes = 0;
+  let practice = 0;
+  for (const s of live.subjects) {
+    for (const ch of s.chapters) {
+      const quiz = hasSchoolGuestQuiz(ch);
+      if (ch.hasNotes && quiz) both++;
+      if (ch.hasNotes) notes++;
+      if (quiz) practice++;
+    }
+  }
+  if (both > 0) return `notes and practice on ${both}`;
+  if (notes > 0) return `Shishya notes on ${notes}`;
+  if (practice > 0) return `practice on ${practice}`;
+  return "";
+}
+
+/** The Class 8-12 tutor sentence for a description (never on Classes 1-7). */
+function tutorClause(practiceChapters: number): string {
+  return `Students 13 and above can ${practiceChapters > 0 ? "practise chapters and " : ""}ask a free AI tutor about this class's chapters, in English or ${INDIAN_LANGUAGE_COUNT} Indian languages.`;
+}
+
 export async function generateMetadata({ params }: { params: Promise<PageParams> }): Promise<Metadata> {
   const r = await resolve(await params);
   if (!r) return { title: "Not found — Shishya", robots: SCHOOLING_ROBOTS };
@@ -71,16 +122,32 @@ export async function generateMetadata({ params }: { params: Promise<PageParams>
     // count; a CISCE class says per-subject syllabus PDFs only where the
     // council publishes them (Classes 1-8 have one stage curriculum document).
     const cisce = { subjects: totals.subjects, withPdf: isNcert ? 0 : cisceSubjectsWithPdf(cls, live.subjects.map((s) => s.name)) };
-    const title = isNcert
-      ? `${board.shortName} Class ${cls} — subjects, NCERT textbooks and chapters${oursTitleBit(totals)} | Shishya`
-      : `${board.shortName} Class ${cls} — subjects and ${cisce.withPdf > 0 ? "official CISCE syllabus PDFs" : "the official CISCE curriculum document"} | Shishya`;
-    const description = isNcert
-      ? `${board.shortName} Class ${cls}: ${totals.subjects} subjects with their official NCERT textbooks, ${countsLine(totals)}, every chapter linked to its official PDF on ncert.nic.in.`
-      : `${board.shortName} Class ${cls}: ${totals.subjects} subjects, ${cisceDocsPhrase(cisce)}.`;
+    // The tutor is opened from a chapter page (SchoolStudentEntry needs the
+    // chapter), so only a Class 8-12 class WITH chapters mentions it — a
+    // CISCE class has no chapter map and therefore no tutor entry today.
+    const tutor = isStudentModeClass(cls) && isNcert && totals.chapters > 0;
+    const ours = oursShortBit(live);
+    const docs = cisce.withPdf > 0 ? "official CISCE syllabus PDFs" : "the official CISCE curriculum document";
+    const core = `${board.shortName} Class ${cls}`;
+    const tails = isNcert
+      ? tutor
+        ? [
+            ...(ours ? [`NCERT chapters, ${ours} and a free AI tutor`] : []),
+            ...(totals.practice > 0 ? ["NCERT chapters, practice and a free AI tutor"] : []),
+            "NCERT chapters and a free AI tutor",
+            "free AI tutor",
+          ]
+        : [...(ours ? [`NCERT chapters, ${ours}`] : []), "subjects, NCERT books and chapters", "NCERT books and chapters"]
+      : [`subjects and ${docs}`, docs];
+    const title = fitTitle(core, tails, { keepTail: Boolean(ours) || tutor });
+    const description =
+      (isNcert
+        ? `${board.shortName} Class ${cls}: ${totals.subjects} subjects with their official NCERT textbooks, ${countsLine(totals)}, every chapter linked to its official PDF on ncert.nic.in.`
+        : `${board.shortName} Class ${cls}: ${totals.subjects} subjects, ${cisceDocsPhrase(cisce)}.`) + (tutor ? ` ${tutorClause(totals.practice)}` : "");
     return {
       title,
       description,
-      alternates: { canonical: `${SCHOOL_SITE}${path}` },
+      alternates: { canonical: `${SCHOOL_SITE}${path}`, types: { "text/markdown": `${SCHOOL_SITE}${path}/context.md` } },
       robots: schoolRobots(true),
       keywords: [
         `${board.shortName} Class ${cls} syllabus`,
@@ -88,6 +155,7 @@ export async function generateMetadata({ params }: { params: Promise<PageParams>
         ...(isNcert ? [`NCERT Class ${cls} textbooks`, `Class ${cls} chapters`] : [`CISCE Class ${cls}`]),
         ...(totals.notes > 0 ? [`Class ${cls} notes`] : []),
         ...(totals.practice > 0 ? [`Class ${cls} practice questions`] : []),
+        ...(tutor ? [`free AI tutor ${board.shortName} Class ${cls}`] : []),
       ],
       openGraph: { title, description, url: `${SCHOOL_SITE}${path}`, siteName: "Shishya", locale: "en_IN", type: "website" },
     };
@@ -135,10 +203,42 @@ export default async function ClassPage({ params }: { params: Promise<PageParams
       { "@type": "ListItem", position: 4, name: `Class ${cls}`, item: `${SCHOOL_SITE}${path}` },
     ],
   };
+  // CollectionPage (26 Sep 2026): a seeded class — its level, its board, and
+  // the subject pages the sitemap lists (isSchoolSubjectIndexable).
+  const identity = live ? schoolClassIdentity(live.curriculum, cls) : null;
+  const indexableSubjects = live ? live.subjects.filter((s) => isSchoolSubjectIndexable(s, identity)) : [];
+  const collectionJsonLd = live
+    ? {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: `${board.shortName} Class ${cls}`,
+        url: `${SCHOOL_SITE}${path}`,
+        inLanguage: "en-IN",
+        isAccessibleForFree: true,
+        educationalLevel: `Class ${cls}`,
+        about: { "@type": "Organization", name: board.name, url: board.websiteUrl },
+        isPartOf: { "@type": "WebSite", name: "Shishya", url: SCHOOL_SITE },
+        publisher: SHISHYA_ORG_REF,
+        mainEntity: {
+          "@type": "ItemList",
+          numberOfItems: indexableSubjects.length,
+          itemListElement: indexableSubjects.map((s, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            name: `${board.shortName} Class ${cls} ${s.name}`,
+            url: `${SCHOOL_SITE}${schoolSubjectPath(board.slug, cls, s.slug)}`,
+          })),
+        },
+      }
+    : null;
+  const nextSteps = schoolNextSteps(cls);
+  // One cached read of the live exam list, only where an exam is linked.
+  const liveExams = nextSteps.length > 0 || showStreams ? await loadLiveExams() : new Map<string, string>();
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      {collectionJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />}
       <Header />
       <section className="container-prose py-10">
         <SchoolCrumbs
@@ -171,21 +271,24 @@ export default async function ClassPage({ params }: { params: Promise<PageParams
               what each opens up:
             </p>
             <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-ink-700">
+              {/* 26 Sep 2026 (group D): every exam here links only while it has a live page. */}
               <li>
                 <strong>Science (PCM):</strong> JEE Main → IITs / NITs / state engineering.{" "}
-                <Link href="/exams/JEE_MAIN" className="text-saffron-700 underline">
-                  View JEE Main
-                </Link>
+                {liveExams.has("JEE_MAIN") && (
+                  <ExamChip code="JEE_MAIN" live={liveExams} label="View JEE Main" className="text-saffron-700 underline" />
+                )}
               </li>
               <li>
                 <strong>Science (PCB):</strong> NEET UG → medical / dental / AYUSH.{" "}
-                <Link href="/exams/NEET_UG" className="text-saffron-700 underline">
-                  View NEET UG
-                </Link>
+                {liveExams.has("NEET_UG") && (
+                  <ExamChip code="NEET_UG" live={liveExams} label="View NEET UG" className="text-saffron-700 underline" />
+                )}
               </li>
-              {/* 26 Sep 2026: none of the three named exams has a page, so they are plain labels. */}
+              {/* 26 Sep 2026: IPMAT and BBA-CET have no page; CA Foundation does (CA_FOUNDATION). */}
               <li>
-                <strong>Commerce:</strong> CA Foundation, IPMAT, BBA-CET (no pages on Shishya for these yet).
+                <strong>Commerce:</strong>{" "}
+                <ExamChip code="CA_FOUNDATION" live={liveExams} label="CA Foundation" className="text-saffron-700 underline" plainClassName="" />, IPMAT,{" "}
+                BBA-CET ({liveExams.has("CA_FOUNDATION") ? "no pages on Shishya for the last two yet" : "no pages on Shishya for these yet"}).
               </li>
               <li>
                 <strong>Humanities:</strong> CUET → liberal-arts UG, CLAT → law.{" "}
@@ -213,6 +316,8 @@ export default async function ClassPage({ params }: { params: Promise<PageParams
             </div>
           </div>
         )}
+
+        <SchoolNextSteps steps={nextSteps} live={liveExams} />
       </section>
     </main>
   );

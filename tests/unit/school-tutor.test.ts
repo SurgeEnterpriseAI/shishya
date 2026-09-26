@@ -323,14 +323,24 @@ describe("tutorSystemBlocks — school branch", () => {
 });
 
 describe("the exam tutor's shared 1-hour prefix is byte-identical to before school mode", () => {
-  // sha256 of tutorSystemBlocks(...)[0].text on 26 Sep 2026, before the
-  // school branch was added (scripts/tmp-school4-prefix-hash.ts). A change
-  // here re-writes the shared cache for every exam chat — only ever on
-  // purpose.
+  // sha256 of tutorSystemBlocks(...)[0].text (scripts/tmp-school4-prefix-hash.ts).
+  // A change here re-writes the shared cache for every exam chat — only ever
+  // on purpose.
+  // 26 Sep 2026 (repair): re-pinned after the whole-education identity wave
+  // changed the prefix ON PURPOSE — the new PLATFORM_PERSONA companion line
+  // (src/lib/ai/prompts.ts) and the new site-facts entries (/career-map,
+  // /schooling/{BOARD}/class-{N}, /distance-learning, /post-graduation,
+  // /insights, /for/{PERSONA} and the rewritten /schooling line,
+  // src/lib/ai/site-facts.ts). Before: signedIn b8c0e28f…, guest aab8ee50…,
+  // general 040145a9…. Re-run the script and re-pin if a later merge edits
+  // either file again (e.g. the search workflow's /ask line).
+  // 26 Sep 2026 (integrate): re-pinned again for the /exams/entrance entry
+  // (the Entrance exams landing now exists). Before: signedIn 9dd6bce3…,
+  // guest bc318474…, general 6a5dbcce….
   const PINNED = {
-    signedIn: "b8c0e28f4107199efe120e720b78173482bda39f5fdb9316c409f5f996ac63b6",
-    guest: "aab8ee5095728691d1c92c3bddb8c4b0f32c7132afeb0c7d9fe4b3b37964e3e5",
-    general: "040145a9e04e88b660aefc4fe3b6c8f351f2bd4fc7e3b87e3787588c9950b0a0",
+    signedIn: "58a6cb6305748451f914ae99f7d2d36fef01bf1d57b3532b89eac97ce2b3d063",
+    guest: "98ccf0b88a76494d43ece2499e52aee64622dd11138ebfaa0178eb3630850aff",
+    general: "b4ebd611db501b12bfbb42227800f79a67d6d89261731f97bd27659e5ae131b2",
   };
 
   it("signed-in (tools on), guest (tools off) and general mode", () => {

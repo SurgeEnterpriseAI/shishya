@@ -10,11 +10,18 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
+// 26 Sep 2026: own openGraph {title, description, url} — without one the page
+// inherited og:url=https://shishya.in and the site-wide card text.
+const TITLE = "Distance + Open Learning in India — IGNOU, NIOS, Open Universities";
+const DESCRIPTION =
+  "Distance + open learning in India: IGNOU, NIOS (Class 10+12 open school), state Open Universities (BRAOU, KKHSOU, UPRTOU etc.). Realistic for working students, late-start learners, gap-year people.";
+const PAGE_URL = "https://shishya.in/distance-learning";
+
 export const metadata: Metadata = {
-  title: "Distance + Open Learning in India — IGNOU, NIOS, Open Universities | Shishya",
-  description:
-    "Distance + open learning in India: IGNOU (4M+ students), NIOS (Class 10+12 open school), state Open Universities (BRAOU, KKHSOU, UPRTOU etc.). Realistic for working students, late-start learners, gap-year people. Most-undercovered education path in India.",
-  alternates: { canonical: "https://shishya.in/distance-learning" },
+  title: `${TITLE} | Shishya`,
+  description: DESCRIPTION,
+  alternates: { canonical: PAGE_URL },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: PAGE_URL, siteName: "Shishya", locale: "en_IN", type: "website" },
   keywords: [
     "IGNOU courses",
     "NIOS class 10 12",
@@ -140,7 +147,7 @@ export default function DistanceLearningPage() {
           collectionPageLd({
             name: "Distance + Open Learning in India — IGNOU, NIOS, Open Universities",
             description:
-              "Distance + open learning in India: IGNOU (4M+ students), NIOS (Class 10+12 open school), state Open Universities (BRAOU, KKHSOU, UPRTOU etc.). Realistic for working students, late-start learners, gap-year people. Most-undercovered education path in India.",
+              "Distance + open learning in India: IGNOU, NIOS (Class 10+12 open school), state Open Universities (BRAOU, KKHSOU, UPRTOU etc.). Realistic for working students, late-start learners, gap-year people.",
             path: "/distance-learning",
           }),
           breadcrumbLd([["Distance learning", "/distance-learning"]]),
@@ -154,11 +161,17 @@ export default function DistanceLearningPage() {
         <h1 className="mt-2 text-3xl font-bold text-ink-900 sm:text-4xl">
           Distance + Open Learning in India
         </h1>
+        {/* 26 Sep 2026: "~4-5M students per year" and "most-undercovered
+            path" were an unsourced count and a superlative; removed. */}
         <p className="mt-2 max-w-3xl text-base text-ink-700">
-          IGNOU + NIOS + state Open Universities serve ~4-5M Indian
-          students per year. Largely invisible in the typical Indian-
-          education narrative despite being the realistic option for
-          millions. Here's the honest map.
+          IGNOU, NIOS and the state Open Universities are largely invisible
+          in the typical Indian-education narrative despite being the
+          realistic option for many students. Here&apos;s the honest map.
+          For NIOS&apos;s official Class 10 and 12 links, see{" "}
+          <Link href="/schooling/nios" className="text-saffron-700 underline">
+            NIOS on Shishya&apos;s school section
+          </Link>
+          .
         </p>
 
         <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50/40 p-5 text-sm text-ink-700">
@@ -200,6 +213,14 @@ export default function DistanceLearningPage() {
               >
                 Official portal ↗
               </a>
+              {p.portal === "https://www.nios.ac.in/" && (
+                <Link
+                  href="/schooling/nios"
+                  className="ml-2 mt-3 inline-flex rounded-md border border-ink-300 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-50"
+                >
+                  NIOS on Shishya →
+                </Link>
+              )}
             </li>
           ))}
         </ul>

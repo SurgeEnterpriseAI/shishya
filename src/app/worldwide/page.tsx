@@ -8,12 +8,18 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
-import { WORLDWIDE_COUNTRIES, TEST_PREP } from "@/lib/worldwide-data";
+import { WORLDWIDE_COUNTRIES, TEST_PREP, EDUCATION_LOANS } from "@/lib/worldwide-data";
+
+// 26 Sep 2026: the description said "US, UK, Canada, Australia, Germany.
+// ~50 top universities" and the card "5 countries" — the data has 10
+// countries and 76 universities. Every count below is computed from
+// WORLDWIDE_COUNTRIES / TEST_PREP / EDUCATION_LOANS.
+const UNIVERSITY_COUNT = WORLDWIDE_COUNTRIES.reduce((n, c) => n + c.universities.length, 0);
+const DESCRIPTION = `Study abroad from India, neutrally: ${WORLDWIDE_COUNTRIES.length} countries, ${UNIVERSITY_COUNT} universities, visa info, ${TEST_PREP.map((t) => t.name).join("/")} prep and education loans. No agent referrals.`;
 
 export const metadata: Metadata = {
   title: "Worldwide — Study abroad from India, neutral comparison | Shishya",
-  description:
-    "Study abroad from India neutrally. US, UK, Canada, Australia, Germany. ~50 top universities, visa info, IELTS/TOEFL/GRE/GMAT prep, education loans. No agent referrals.",
+  description: DESCRIPTION,
   alternates: { canonical: "https://shishya.in/worldwide" },
   keywords: [
     "study abroad india",
@@ -31,9 +37,10 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "Worldwide on Shishya",
-    description: "Study abroad neutrally — 5 countries, ~50 universities, test prep, loans, visa info.",
+    description: `Study abroad neutrally — ${WORLDWIDE_COUNTRIES.length} countries, ${UNIVERSITY_COUNT} universities, test prep, loans, visa info.`,
     url: "https://shishya.in/worldwide",
     siteName: "Shishya",
+    locale: "en_IN",
     type: "website",
   },
 };
@@ -47,8 +54,7 @@ export default function WorldwideLanding() {
         data={[
           collectionPageLd({
             name: "Worldwide — Study abroad from India, neutral comparison",
-            description:
-              "Study abroad from India neutrally. US, UK, Canada, Australia, Germany. ~50 top universities, visa info, IELTS/TOEFL/GRE/GMAT prep, education loans. No agent referrals.",
+            description: DESCRIPTION,
             path: "/worldwide",
           }),
           breadcrumbLd([["Study abroad", "/worldwide"]]),
@@ -76,8 +82,9 @@ export default function WorldwideLanding() {
         <h2 className="mt-10 text-base font-semibold text-ink-900">
           {WORLDWIDE_COUNTRIES.length} destination countries
         </h2>
+        {/* 26 Sep 2026: "Covers ~95% of Indian students studying abroad" had no source. */}
         <p className="mt-1 text-xs text-ink-500">
-          Covers ~95% of Indian students studying abroad. Use the{" "}
+          {UNIVERSITY_COUNT} universities across these countries. Use the{" "}
           <Link href="/worldwide/compare" className="text-saffron-700 underline">comparison tool</Link>{" "}
           to weigh cost vs PSW vs PR difficulty side-by-side.
         </p>
@@ -106,7 +113,7 @@ export default function WorldwideLanding() {
           Language + standardised test prep
         </h2>
         <p className="mt-1 text-xs text-ink-500">
-          Honest 5-test coverage. No coaching upsell. We tell you which test
+          Honest {TEST_PREP.length}-test coverage. No coaching upsell. We tell you which test
           to pick + a brutally-honest prep strategy.
         </p>
         <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -130,7 +137,7 @@ export default function WorldwideLanding() {
             Education loan landscape (India)
           </h2>
           <p className="mt-2 text-sm text-ink-700">
-            8 lenders compared: SBI Global Ed-Vantage, HDFC Credila, Axis
+            {EDUCATION_LOANS.length} lenders compared: SBI Global Ed-Vantage, HDFC Credila, Axis
             Bank, ICICI, Bank of Baroda, Avanse, GyanDhan aggregator,
             Prodigy Finance (USD).{" "}
             <strong>
@@ -152,8 +159,9 @@ export default function WorldwideLanding() {
         <div className="mt-10 rounded-lg border border-ink-200 bg-white p-5 text-xs text-ink-700">
           <p className="font-semibold text-ink-800">What's still being built</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>9 more countries (NZ, Ireland, France, Netherlands, Singapore, Japan, Sweden, UAE, Italy)</li>
-            <li>Side-by-side country comparison tool — pick on YOUR priorities, not consultant commissions</li>
+            {/* 26 Sep 2026: NZ, Ireland, France, Netherlands and Singapore are live and the
+                comparison tool exists (/worldwide/compare); the list names only what is not. */}
+            <li>More countries (Japan, Sweden, UAE, Italy)</li>
             <li>Per-country visa step-by-step + document checklists</li>
             <li>City-wise Indian student community resources (real groups, not aggregators)</li>
             <li>Cross-link to relevant scholarships for international study (some live in /scholarships already)</li>

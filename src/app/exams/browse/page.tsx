@@ -29,17 +29,38 @@ export const revalidate = 300; // 5 min — the underlying list barely changes
 // said 163 while the catalogue held 178). No "verified by students who
 // cleared" — content is AI-drafted and checked against the official
 // notification.
+// 26 Sep 2026: the catalogue holds government AND entrance exams, and its
+// title said "All Entrance Exams in India" over SSC, UPSC and 128 state
+// exams. Title, heading, JSON-LD and the social card now say both, with
+// the count computed; the description names GATE as "GATE CSE" while that
+// is the only GATE paper in the catalogue, and no longer says "all state
+// PSCs, all TETs, all Police exams" (it is not all of them).
+/** "GATE CSE" while GATE_CSE is the catalogue's only GATE row, else "GATE"
+ *  (none: left out). */
+function gateName(codes: readonly string[]): string | null {
+  const gate = codes.filter((c) => /^GATE(_|$)/.test(c));
+  if (gate.length === 0) return null;
+  return gate.length === 1 && gate[0] === "GATE_CSE" ? "GATE CSE" : "GATE";
+}
+
 export async function generateMetadata(): Promise<Metadata> {
-  const n = await getExamCatalog()
-    .then((list) => list.filter((e) => e.category !== "SCHOOL_BOARD").length)
-    .catch(() => 0);
-  const scope = n > 0 ? `${n} government and entrance exams` : "every government and entrance exam";
+  const catalog = await getExamCatalog()
+    .then((list) => list.filter((e) => e.category !== "SCHOOL_BOARD"))
+    .catch(() => [] as { code: string }[]);
+  const n = catalog.length;
+  const scope = n > 0 ? `${n} government and entrance exams` : "government and entrance exams";
+  const names = ["SSC", "UPSC", "IBPS", "RRB", "NEET", "JEE", gateName(catalog.map((e) => e.code)), "CAT"].filter(Boolean).join(", ");
+  const title = n > 0
+    ? `All ${n} government and entrance exams in India — search by state, exam, language | Shishya`
+    : "Government and entrance exams in India — search by state, exam, language | Shishya";
+  const ogTitle = n > 0 ? `All ${n} government and entrance exams in India — free mocks and study help` : "Government and entrance exams in India — free mocks and study help";
   return {
-    title: "All Entrance Exams in India — Search by State, Exam, Language | Shishya",
+    title,
     description:
-      `Search and filter ${scope} across India by state, exam name, language, or category. Free mock tests, previous year papers and PYQ-pattern practice, AI tutor and a free day-by-day coach plan — AI-drafted, checked against the official notification. SSC, UPSC, IBPS, RRB, NEET, JEE, GATE, CAT, all state PSCs, all TETs, all Police exams.`,
+      `Search and filter ${scope} across India by state, exam name, language, or category. Free mock tests, previous year papers and PYQ-pattern practice, AI tutor and a free day-by-day coach plan — AI-drafted, checked against the official notification. ${names}, state PSCs, TETs and police exams.`,
     alternates: { canonical: "https://shishya.in/exams/browse" },
     keywords: [
+      "government exams india",
       "entrance exams india",
       "search entrance exams",
       "state-wise entrance exams",
@@ -55,8 +76,8 @@ export async function generateMetadata(): Promise<Metadata> {
       "teaching exam list",
     ],
     openGraph: {
-      title: "Search All Entrance Exams in India — Free Mocks & Study Help",
-      description: `${n > 0 ? `${n} exams` : "Every government and entrance exam"}. Filter by state, language, or category. Free.`,
+      title: ogTitle,
+      description: `${n > 0 ? `${n} government and entrance exams` : "Government and entrance exams"}. Filter by state, language, or category. Free.`,
       url: "https://shishya.in/exams/browse",
       siteName: "Shishya",
       locale: "en_IN",
@@ -241,7 +262,7 @@ export default async function ExamsCatalogPage({
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "Entrance Exams on Shishya",
+    name: "Government and entrance exams on Shishya",
     numberOfItems: exams.length,
     itemListElement: exams.slice(0, 50).map((e, idx) => ({
       "@type": "ListItem",
@@ -264,17 +285,26 @@ export default async function ExamsCatalogPage({
       />
       <Header />
       <section className="container-prose py-10">
+        {/* 26 Sep 2026: the crumb linked /exams, which 308-redirects to the
+            home page; this page is the exam index. */}
         <p className="text-xs text-ink-500">
-          <Link href="/" className="hover:text-ink-800">Home</Link> ·{" "}
-          <Link href="/exams" className="hover:text-ink-800">Exams</Link> · Browse
+          <Link href="/" className="hover:text-ink-800">Home</Link> · All exams
         </p>
         <h1 className="mt-1 text-3xl font-bold text-ink-900">
-          Search entrance exams in India
+          Search government and entrance exams in India
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
-          {totalActive} entrance exams. Filter by state, exam name, language or
+          {totalActive} government and entrance exams. Filter by state, exam name, language or
           category. Every exam is free with adaptive mock tests, previous year
           papers and Ask Shishya for study help when you need it.
+        </p>
+        <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+          <Link href="/exams/entrance" className="font-medium text-saffron-700 hover:underline">
+            Entrance exams — JEE, NEET, CUET, NDA, olympiads, state CETs →
+          </Link>
+          <Link href="/exams/state" className="font-medium text-saffron-700 hover:underline">
+            Exams by state →
+          </Link>
         </p>
 
         {/* Search box */}

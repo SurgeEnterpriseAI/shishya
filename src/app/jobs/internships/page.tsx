@@ -5,11 +5,18 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
+// 26 Sep 2026: own openGraph {title, description, url} — without one the page
+// inherited og:url=https://shishya.in and the site-wide card text.
+const TITLE = "Internships in India — Where to actually find them";
+const DESCRIPTION =
+  "Honest guide to internships for Indian students. AICTE Internship Portal, PM Internship Scheme, state schemes, Internshala, college TPOs, direct outreach. What works, what's a gimmick.";
+const PAGE_URL = "https://shishya.in/jobs/internships";
+
 export const metadata: Metadata = {
-  title: "Internships in India — Where to actually find them | Shishya",
-  description:
-    "Honest guide to internships for Indian students. AICTE Internship Portal, PM Internship Scheme, state schemes, Internshala, college TPOs, direct outreach. What works, what's a gimmick.",
-  alternates: { canonical: "https://shishya.in/jobs/internships" },
+  title: `${TITLE} | Shishya`,
+  description: DESCRIPTION,
+  alternates: { canonical: PAGE_URL },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: PAGE_URL, siteName: "Shishya", locale: "en_IN", type: "article" },
   keywords: [
     "internships india",
     "AICTE internship portal",

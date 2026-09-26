@@ -8,13 +8,16 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SectionCrossLinks } from "@/components/SectionCrossLinks";
 import { CAREERS, CAREER_CATEGORIES, careersByCategory } from "@/data/careers";
 
+// 26 Sep 2026: "40+" (typed; the data has CAREERS.length) is now the
+// computed count; the section's context.md is the markdown alternate.
 export const metadata: Metadata = {
-  title: "Careers in India — 40+ career paths with salary, qualifications, growth | Shishya",
+  title: `Careers in India — ${CAREERS.length} career guides with salary and entry routes | Shishya`,
   description:
     "Honest career path guides for Indian students. What each career actually involves, entry routes, qualifications, salary bands by experience, day-to-day, pros + cons. Software engineer, doctor, IAS, CA, lawyer, designer, teacher, and more.",
-  alternates: { canonical: "https://shishya.in/careers" },
+  alternates: { canonical: "https://shishya.in/careers", types: { "text/markdown": "https://shishya.in/careers/context.md" } },
   keywords: [
     "career options india",
     "career after 12th",
@@ -27,7 +30,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "Careers on Shishya",
-    description: "40+ career path guides with salary, qualifications, growth — honest, sourced, free.",
+    description: `${CAREERS.length} career path guides with indicative salary bands, qualifications and entry routes — free.`,
     url: "https://shishya.in/careers",
     siteName: "Shishya",
     locale: "en_IN",
@@ -115,14 +118,22 @@ export default function CareersLanding() {
         {/* Don't see your career? */}
         <div className="mt-12 rounded-lg border border-ink-200 bg-white p-5 text-xs text-ink-700">
           <p className="font-semibold text-ink-800">Don't see your career here?</p>
+          {/* 26 Sep 2026: "we add new careers monthly" and "Roadmap: 100+
+              careers including aerospace engineer, entrepreneur, pilot …"
+              were a promise and a stale list (those three have pages). */}
           <p className="mt-2">
-            Send feedback via the chat widget — we add new careers monthly. The
-            catalogue grows as students ask for what they're considering.
-            Roadmap: 100+ careers including aerospace engineer, marine
-            biologist, chef, professional sportsperson, entrepreneur, urban
-            planner, pilot, judge advocate, scientific officer, etc.
+            Send feedback via the chat widget. The catalogue grows as students
+            ask for what they&apos;re considering.
           </p>
         </div>
+
+        <SectionCrossLinks
+          current="/careers"
+          extra={[
+            { label: "Career map", href: "/career-map", blurb: "Class 9 to mid-career: the choices at each stage and where they lead." },
+            { label: "Government jobs", href: "/jobs/govt-jobs", blurb: "The recurring central recruitments, with eligibility and the official portal." },
+          ]}
+        />
       </section>
     </main>
   );

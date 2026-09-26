@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { JsonLd, breadcrumbLd } from "@/components/JsonLd";
+import { caNavLinks, loadCaNeighbours } from "@/lib/current-affairs-nav";
 
 export const revalidate = 3600;
 
@@ -68,6 +69,10 @@ export default async function CurrentAffairsDatePage({ params }: { params: Promi
 
   const pretty = prettyDate(date);
   const url = `https://shishya.in/current-affairs/${date}`;
+  // 26 Sep 2026: previous / next day links to the nearest dates that HAVE
+  // rows (src/lib/current-affairs-nav.ts — the digest skips days, so date ± 1
+  // would link a 404), the month capsule and the exam catalogue.
+  const nav = caNavLinks(date, await loadCaNeighbours(date));
 
   // Group by category for scannability.
   const byCat = new Map<string, Row[]>();
@@ -153,6 +158,14 @@ export default async function CurrentAffairsDatePage({ params }: { params: Promi
             </ul>
           </section>
         ))}
+
+        <nav aria-label="More current affairs" className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+          {nav.map((l) => (
+            <Link key={l.href} href={l.href} rel={l.rel} className="font-medium text-saffron-700 hover:underline">
+              {l.label}
+            </Link>
+          ))}
+        </nav>
 
         <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
           <p className="text-base font-bold text-ink-900">Turn today&apos;s GK into marks</p>

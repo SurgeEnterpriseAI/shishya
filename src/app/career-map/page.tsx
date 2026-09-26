@@ -8,11 +8,23 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
+import { CAREERS } from "@/data/careers";
+import { COLLEGES, NIRF_SOURCE_YEAR } from "@/lib/colleges-data";
+import { loadLiveExams } from "@/lib/live-exam-codes";
+import { examHubHref } from "@/lib/section-seo";
+
+// 26 Sep 2026 (every-education-search wave): an exam node names its code and
+// links its exam hub only when that exam is live — CLAT and BITSAT have no
+// page (CLAT linked a 404, BITSAT the bare exams path, a 308 to the home
+// page) and are plain labels now. The typed "170+ exams", "Top 77" and
+// "42 careers" are gone or computed; own openGraph.
+const TITLE = "Career Map — From Class 9 to your first job in one rail";
+const DESCRIPTION =
+  "Visual lifecycle map of Indian education + career choices. From Class 9 → stream → Class 11-12 → entrance exam → college → first job → mid-career evolution. All paths visible at once.";
 
 export const metadata: Metadata = {
-  title: "Career Map — From Class 9 to your first job in one rail | Shishya",
-  description:
-    "Visual lifecycle map of Indian education + career choices. From Class 9 → stream → Class 11-12 → entrance exam → college → first job → mid-career evolution. All paths visible at once.",
+  title: `${TITLE} | Shishya`,
+  description: DESCRIPTION,
   alternates: { canonical: "https://shishya.in/career-map" },
   keywords: [
     "career path india",
@@ -22,15 +34,25 @@ export const metadata: Metadata = {
     "what after class 12",
     "what after graduation",
   ],
+  openGraph: { title: TITLE, description: DESCRIPTION, url: "https://shishya.in/career-map", siteName: "Shishya", locale: "en_IN", type: "website" },
 };
 
 export const revalidate = 86_400;
 
 interface PathNode {
   label: string;
-  href: string;
+  /** A Shishya page. Absent on an exam node (see `exam`) or a plain label. */
+  href?: string;
+  /** An exam code: linked to its hub only while the exam is live. */
+  exam?: string;
   /** Sub-bullets visible on hover/under */
   hint?: string;
+}
+
+/** The node's link, or null for a plain label. */
+function nodeHref(p: PathNode, live: ReadonlyMap<string, string>): string | null {
+  if (p.exam) return examHubHref(p.exam, live);
+  return p.href ?? null;
 }
 
 interface Stage {
@@ -53,7 +75,7 @@ const LIFECYCLE: Stage[] = [
       // state board (no chapter pages); /schooling is official links today.
       { label: "Schooling — official board links", href: "/schooling", hint: "CBSE / ICSE / state — Class 9 + 10" },
       { label: "Stream selection (Science / Commerce / Humanities)", href: "/schooling/streams", hint: "The most consequential decision" },
-      { label: "NTSE + Olympiads (NSEJS / NSO / IMO / NSO)", href: "/exams/NSEJS", hint: "Early-talent signal exams" },
+      { label: "NTSE + Olympiads (NSEJS / NSO / IMO / NSO)", exam: "NSEJS", hint: "Early-talent signal exams" },
     ],
   },
   {
@@ -64,7 +86,7 @@ const LIFECYCLE: Stage[] = [
       "5 stream paths: PCM, PCB, PCMB, Commerce, Humanities. Each opens AND closes specific careers. Don't pick the 'high-status' one without genuine engagement.",
     paths: [
       { label: "Stream selection deep-dive", href: "/schooling/streams" },
-      { label: "ITI Trades (alt to Class 11-12)", href: "/colleges/iti-diploma", hint: "2-year, Class 10 entry; ~6.5M students take this" },
+      { label: "ITI Trades (alt to Class 11-12)", href: "/colleges/iti-diploma", hint: "Class 10 entry; trade courses of one or two years" },
       { label: "Polytechnic Diploma (alt to Class 11-12)", href: "/colleges/iti-diploma", hint: "3-year; lateral entry to BTech possible" },
       { label: "Career paths feeding each stream", href: "/careers" },
     ],
@@ -80,12 +102,12 @@ const LIFECYCLE: Stage[] = [
       // (SCHOOL_QUIZZES_ANSWER_CHECKED), and only CBSE Maths / Physics /
       // Chemistry / Biology list chapters — the hint says only that.
       { label: "Class 11 + 12 subject pages", href: "/schooling", hint: "NCERT book links; CBSE chapter lists for Maths, Physics, Chemistry, Biology" },
-      { label: "JEE Main / Advanced (Engineering)", href: "/exams/JEE_MAIN" },
-      { label: "NEET UG (Medical)", href: "/exams/NEET_UG" },
-      { label: "CUET UG (Central Universities)", href: "/exams/CUET_UG" },
-      { label: "CLAT (Law)", href: "/exams/CLAT" },
-      { label: "BITSAT", href: "/exams" },
-      { label: "All 170+ govt & entrance exams", href: "/exams" },
+      { label: "JEE Main / Advanced (Engineering)", exam: "JEE_MAIN" },
+      { label: "NEET UG (Medical)", exam: "NEET_UG" },
+      { label: "CUET UG (Central Universities)", exam: "CUET_UG" },
+      { label: "CLAT (Law)", exam: "CLAT" },
+      { label: "BITSAT", exam: "BITSAT" },
+      { label: "All government and entrance exams on Shishya", href: "/exams/browse" },
     ],
   },
   {
@@ -95,7 +117,7 @@ const LIFECYCLE: Stage[] = [
     description:
       "3-5 years of UG. Branch + college tier matter for placements + senior career trajectory.",
     paths: [
-      { label: "Top 77 NIRF colleges", href: "/colleges" },
+      { label: `${COLLEGES.length} colleges from the NIRF ${NIRF_SOURCE_YEAR} rankings`, href: "/colleges" },
       { label: "Branch-level placements + cutoffs", href: "/colleges/iit-bombay/cse", hint: "E.g., IIT Bombay CSE detail page" },
       { label: "How to read placement data honestly", href: "/colleges/placements" },
       { label: "How to read cutoffs honestly", href: "/colleges/cutoffs" },
@@ -125,7 +147,7 @@ const LIFECYCLE: Stage[] = [
     description:
       "Skill compounding + first promotions. Specialisation matters most here.",
     paths: [
-      { label: "42 careers with salary growth bands", href: "/careers" },
+      { label: `${CAREERS.length} career guides with indicative salary bands`, href: "/careers" },
       { label: "Skill-based careers (non-degree paths)", href: "/jobs/skill-careers" },
       { label: "Soft skills + employability", href: "/soft-skills" },
       { label: "Resume + interview prep", href: "/jobs/resume" },
@@ -139,15 +161,15 @@ const LIFECYCLE: Stage[] = [
     description:
       "MBA, switch fields, abroad move, entrepreneurship. Mid-career has more options than students assume.",
     paths: [
-      { label: "CAT / IIM MBA", href: "/exams/CAT" },
+      { label: "CAT / IIM MBA", exam: "CAT" },
       { label: "Top study-abroad MBA destinations", href: "/worldwide/compare" },
       { label: "Career switch via skill paths", href: "/jobs/skill-careers" },
-      { label: "Alumni stories — real mid-career journeys", href: "/alumni-stories" },
+      { label: "Career journey examples (composite stories)", href: "/alumni-stories" }, // 26 Sep 2026: composites, not real alumni
     ],
   },
 ];
 
-const SHORTCUTS = [
+const SHORTCUTS: Array<{ persona: string; do: string; links: PathNode[] }> = [
   {
     persona: "🎒 I'm in Class 10",
     do: "Read the stream selection guide → explore 5-7 careers → pick Class 11 stream",
@@ -160,7 +182,7 @@ const SHORTCUTS = [
     persona: "📐 I'm in Class 12 PCM",
     do: "Prep for JEE / state CET → research engineering branches → set 5-college choice list",
     links: [
-      { label: "JEE Main page", href: "/exams/JEE_MAIN" },
+      { label: "JEE Main page", exam: "JEE_MAIN" },
       { label: "IIT Bombay branches", href: "/colleges/iit-bombay" },
       { label: "Top engineering colleges", href: "/colleges/stream/engineering" },
     ],
@@ -169,7 +191,7 @@ const SHORTCUTS = [
     persona: "💉 I'm in Class 12 PCB",
     do: "NEET UG prep → research medical colleges → understand MBBS → MD path",
     links: [
-      { label: "NEET UG", href: "/exams/NEET_UG" },
+      { label: "NEET UG", exam: "NEET_UG" },
       { label: "AIIMS Delhi", href: "/colleges/aiims-delhi/mbbs" },
       { label: "Doctor career", href: "/careers/doctor-mbbs" },
     ],
@@ -180,7 +202,7 @@ const SHORTCUTS = [
     links: [
       { label: "CA career", href: "/careers/chartered-accountant" },
       { label: "Banking PO career", href: "/careers/bank-po" },
-      { label: "CUET UG", href: "/exams/CUET_UG" },
+      { label: "CUET UG", exam: "CUET_UG" },
     ],
   },
   {
@@ -188,9 +210,9 @@ const SHORTCUTS = [
     do: "CLAT for law OR CUET for BA Hons → UPSC prep in parallel from year 1",
     links: [
       { label: "Stream selection", href: "/schooling/streams" },
-      { label: "CLAT", href: "/exams/CLAT" },
+      { label: "CLAT", exam: "CLAT" },
       { label: "IAS career", href: "/careers/ias-officer" },
-      { label: "UPSC CSE", href: "/exams/UPSC_PRELIMS" },
+      { label: "UPSC CSE", exam: "UPSC_PRELIMS" },
     ],
   },
   {
@@ -207,7 +229,7 @@ const SHORTCUTS = [
     do: "Skill-based careers OR MBA OR distance PG. Don't quit before securing the next step.",
     links: [
       { label: "Skill-based careers", href: "/jobs/skill-careers" },
-      { label: "CAT / MBA", href: "/exams/CAT" },
+      { label: "CAT / MBA", exam: "CAT" },
       { label: "Distance learning", href: "/distance-learning" },
     ],
   },
@@ -216,21 +238,21 @@ const SHORTCUTS = [
     do: "Tier of UG isn't a ceiling. Self-learning + portfolio + skill careers compound to top outcomes.",
     links: [
       { label: "Skill-based careers", href: "/jobs/skill-careers" },
-      { label: "Alumni stories (tier-3 → FAANG)", href: "/alumni-stories#tier3-btech-faang" },
+      { label: "Career journey example: tier-3 BTech to a product company (composite)", href: "/alumni-stories#tier3-btech-faang" }, // 26 Sep 2026: composite, not a real alumnus
       { label: "Soft skills", href: "/soft-skills" },
     ],
   },
 ];
 
-export default function CareerMapPage() {
+export default async function CareerMapPage() {
+  const live = await loadLiveExams();
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <JsonLd
         data={[
           collectionPageLd({
-            name: "Career Map — From Class 9 to your first job in one rail",
-            description:
-              "Visual lifecycle map of Indian education + career choices. From Class 9 → stream → Class 11-12 → entrance exam → college → first job → mid-career evolution. All paths visible at once.",
+            name: TITLE,
+            description: DESCRIPTION,
             path: "/career-map",
           }),
           breadcrumbLd([["Career map", "/career-map"]]),
@@ -258,16 +280,23 @@ export default function CareerMapPage() {
               <p className="text-sm font-semibold text-ink-900">{s.persona}</p>
               <p className="mt-1 text-xs text-ink-700">{s.do}</p>
               <ul className="mt-2 flex flex-wrap gap-1.5">
-                {s.links.map((l, j) => (
-                  <li key={j}>
-                    <Link
-                      href={l.href}
-                      className="rounded-md border border-saffron-300 bg-saffron-50/40 px-2 py-0.5 text-[11px] text-saffron-800 hover:bg-saffron-100"
-                    >
-                      {l.label} →
-                    </Link>
-                  </li>
-                ))}
+                {s.links.map((l, j) => {
+                  const href = nodeHref(l, live);
+                  return (
+                    <li key={j}>
+                      {href ? (
+                        <Link
+                          href={href}
+                          className="rounded-md border border-saffron-300 bg-saffron-50/40 px-2 py-0.5 text-[11px] text-saffron-800 hover:bg-saffron-100"
+                        >
+                          {l.label} →
+                        </Link>
+                      ) : (
+                        <span className="rounded-md border border-ink-200 bg-white px-2 py-0.5 text-[11px] text-ink-600">{l.label}</span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </li>
           ))}
@@ -300,17 +329,27 @@ export default function CareerMapPage() {
               </div>
               <p className="mt-3 text-sm text-ink-700">{stage.description}</p>
               <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                {stage.paths.map((p, j) => (
-                  <li key={j}>
-                    <Link
-                      href={p.href}
-                      className="block rounded-md border border-ink-100 bg-saffron-50/30 px-3 py-2 text-xs hover:border-saffron-400 hover:bg-saffron-50/60"
-                    >
-                      <span className="font-semibold text-ink-900">{p.label}</span>
-                      {p.hint && <span className="mt-0.5 block text-[11px] text-ink-600">{p.hint}</span>}
-                    </Link>
-                  </li>
-                ))}
+                {stage.paths.map((p, j) => {
+                  const href = nodeHref(p, live);
+                  return (
+                    <li key={j}>
+                      {href ? (
+                        <Link
+                          href={href}
+                          className="block rounded-md border border-ink-100 bg-saffron-50/30 px-3 py-2 text-xs hover:border-saffron-400 hover:bg-saffron-50/60"
+                        >
+                          <span className="font-semibold text-ink-900">{p.label}</span>
+                          {p.hint && <span className="mt-0.5 block text-[11px] text-ink-600">{p.hint}</span>}
+                        </Link>
+                      ) : (
+                        <span className="block rounded-md border border-dashed border-ink-200 bg-white px-3 py-2 text-xs">
+                          <span className="font-semibold text-ink-800">{p.label}</span>
+                          <span className="mt-0.5 block text-[11px] text-ink-500">{p.hint ?? "No page on Shishya for this yet"}</span>
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </li>
           ))}

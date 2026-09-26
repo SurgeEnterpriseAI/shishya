@@ -13,7 +13,10 @@
 // (x-shishya-lang, src/middleware.ts) and are sent to their own twin of the
 // hub. An unknown or inactive exam is a 404, exactly as the hub itself.
 
-import { notFound, redirect } from "next/navigation";
+// 26 Sep 2026: permanentRedirect (308) — the path has no page of its own and
+// never will, so crawlers should fold it into the hub rather than keep
+// re-checking a temporary (307) redirect. Same target.
+import { notFound, permanentRedirect } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
 import { getUrlLocale } from "@/lib/i18n-server";
@@ -23,5 +26,5 @@ export default async function ExamTopicsIndexPage({ params }: { params: Promise<
   const { code } = await params;
   const exam = await prisma.exam.findUnique({ where: realExamKey({ code }), select: { code: true, active: true } });
   if (!exam || !exam.active) notFound();
-  redirect(`${localizedPath(`/exams/${exam.code}`, await getUrlLocale())}#syllabus`);
+  permanentRedirect(`${localizedPath(`/exams/${exam.code}`, await getUrlLocale())}#syllabus`);
 }

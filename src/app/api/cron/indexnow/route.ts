@@ -19,6 +19,11 @@
 //            schedule window; the durable fix is a per-URL submission log.
 //            Everything else is discovered through the sitemap; the writers
 //            that mint result and phase-article URLs ping at creation.
+//            26 Sep 2026: the same window also sends the current-affairs
+//            days created in it (+ their month capsules) and the school
+//            chapters whose notes were written in it and that pass the
+//            indexable rule (+ subject and class pages) — neither family
+//            was ever submitted (src/lib/indexnow.ts builders).
 //   examweek — the exam-week URL set, localised twins only. Same handler as
 //            /api/cron/indexnow-examweek (the daily schedule); selected here
 //            only by ?scope=examweek. (The old sniffing that treated any
@@ -32,7 +37,9 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
-import { pingIndexNow, SITE_ORIGIN } from "@/lib/indexnow";
+import { currentAffairsUrls, pingIndexNow, schoolChapterKey, schoolChapterUpdateUrls, SITE_ORIGIN } from "@/lib/indexnow";
+import { SCHOOL_CONTAINER_WHERE } from "@/lib/school/scope";
+import { EMPTY_SCHOOL_SURFACE, readSchoolSurface } from "@/lib/school/surface";
 import { indexNowWindowMs, selectFreshStories, STORY_LOOKBACK_DAYS, type StoryRow } from "@/lib/news-dedupe";
 import { GET as examWeekGET } from "../indexnow-examweek/route";
 
@@ -74,7 +81,33 @@ export async function GET(req: Request) {
         : [];
     const { keep, nearDuplicate } = selectFreshStories(fresh, earlier);
     const codeById = new Map(fresh.map((r) => [r.id, r.code]));
-    const urls = keep.map((id) => `${SITE_ORIGIN}/exams/${codeById.get(id)}/news/${id}`);
+    const newsUrls = keep.map((id) => `${SITE_ORIGIN}/exams/${codeById.get(id)}/news/${id}`);
+
+    // 26 Sep 2026 (B-machine-crawl), same window: current-affairs days
+    // created in it (with their month capsules), and school chapters whose
+    // Shishya notes were written in it and that now pass the chapter page's
+    // indexable rule (with their subject and class pages). Each read is
+    // best-effort: a failure drops that family, never the news set. The
+    // surface is read uncached so a note written minutes ago counts.
+    const caDays = await prisma
+      .$queryRaw<{ d: Date }[]>`SELECT DISTINCT date AS d FROM "CurrentAffair" WHERE "generatedAt" >= ${since} ORDER BY 1`
+      .catch(() => [] as { d: Date }[]);
+    const caUrls = currentAffairsUrls(caDays.map((r) => r.d));
+    const freshNotes = await prisma.topicTeachingNote
+      .findMany({
+        where: { generatedAt: { gte: since }, topic: { parentId: null, subject: { exam: SCHOOL_CONTAINER_WHERE } } },
+        select: { topic: { select: { code: true, subject: { select: { exam: { select: { code: true } } } } } } },
+        take: 5_000,
+      })
+      .catch(() => []);
+    const schoolUrls = freshNotes.length
+      ? schoolChapterUpdateUrls(
+          await readSchoolSurface().catch(() => EMPTY_SCHOOL_SURFACE),
+          new Set(freshNotes.map((n) => schoolChapterKey(n.topic.subject.exam.code, n.topic.code))),
+        )
+      : [];
+
+    const urls = [...newsUrls, ...caUrls, ...schoolUrls];
     const acceptedChunks = urls.length ? await pingIndexNow(urls) : 0;
     const totalChunks = Math.ceil(urls.length / CHUNK);
     return Response.json({
@@ -84,6 +117,9 @@ export async function GET(req: Request) {
       windowHours: Math.round(windowMs / 360_000) / 10,
       created: fresh.length,
       submitted: urls.length,
+      submittedNews: newsUrls.length,
+      submittedCurrentAffairs: caUrls.length,
+      submittedSchool: schoolUrls.length,
       nearDuplicates: nearDuplicate.length,
       acceptedChunks,
       totalChunks,

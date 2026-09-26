@@ -39,8 +39,10 @@ const STEPS: Step[] = [
     key: "exam-picker",
     anchor: "explore",
     title: "1 · Pick your exam",
+    // 26 Sep 2026: no typed exam count ("170+" went stale); "state exams"
+    // replaces "state boards" — school boards are not in the exam picker.
     body:
-      "Search or browse 170+ Indian govt & entrance exams — SSC, RRB, banking, JEE, NEET, UPSC, state boards, olympiads, and more. Click any card to open it.",
+      "Search or browse Indian government and entrance exams — SSC, RRB, banking, JEE, NEET, UPSC, state exams, olympiads, and more. Click any card to open it.",
   },
   {
     key: "start-mock",

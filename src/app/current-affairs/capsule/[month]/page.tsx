@@ -33,10 +33,15 @@ export async function generateMetadata({
   const { month } = await params;
   if (!MONTH_RE.test(month)) return { title: "Capsule not found — Shishya" };
   const label = monthLabel(month);
+  const title = `Current Affairs Capsule ${label} — free monthly PDF | Shishya`;
+  // 26 Sep 2026: not "Complete" — the capsule holds only the days Shishya published (some days are missing).
+  const description = `${label} current affairs for UPSC, SSC, banking, railways and state exams in one free capsule, from the days Shishya published — national, international, economy, science, schemes. Read online or download as PDF.`;
+  const url = `https://shishya.in/current-affairs/capsule/${month}`;
   return {
-    title: `Current Affairs Capsule ${label} — free monthly PDF | Shishya`,
-    description: `Complete ${label} current affairs for UPSC, SSC, banking, railways and state exams in one free capsule — national, international, economy, science, schemes. Read online or download as PDF.`,
-    alternates: { canonical: `https://shishya.in/current-affairs/capsule/${month}` },
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title, description, url, siteName: "Shishya", locale: "en_IN", type: "article" },
   };
 }
 
@@ -123,13 +128,15 @@ export default async function CapsulePage({
           </div>
         ))}
 
+        {/* 26 Sep 2026: the site's one-line description (src/lib/site-description.ts
+            SITE_CLAUSE) — it said "end-to-end free government exam preparation
+            platform … 170+ exams", a stale typed count and the old scope. */}
         <p className="mt-10 border-t border-ink-200 pt-4 text-center text-xs text-ink-500">
-          Compiled by Shishya — India&apos;s end-to-end free government exam preparation
-          platform. Daily updates at{" "}
+          Compiled by Shishya (shishya.in) — one smart, free place to study for students in India. Daily updates at{" "}
           <Link href="/current-affairs" className="font-medium text-saffron-700">
             shishya.in/current-affairs
           </Link>
-          . Free mock tests for 170+ exams at shishya.in.
+          .
         </p>
       </section>
     </main>

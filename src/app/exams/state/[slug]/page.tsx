@@ -23,6 +23,17 @@
 // [lang] twin route passes `lang` (the /guide and /tricks pattern in
 // src/lib/cache-pilot-routes.ts). Until then /hi and /te serve this page's
 // English copy, as they have since 15 Sep.
+//
+// 26 Sep 2026 (src/lib/state-exam-sections.ts): 28 state exams are admission
+// tests (KCET, MHT-CET, EAMCET, KEAM, WBJEE, POLYCETs …), so a state with one
+// is titled "{State} Government and Entrance Exams" and its exams are listed
+// in two groups — government recruitment exams (by type, as before) and
+// admission tests (state CETs). The state's own-script name joins the meta
+// description ("Karnataka (ಕರ್ನಾಟಕ)") and the JSON-LD (a State node with its
+// alternate names); titles stay Latin-first. An "Also for {State} students"
+// block links the state's NIRF colleges page, its school boards' pages
+// (official board links only) and its scholarships — each a slug or id that
+// exists in the data.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -42,6 +53,7 @@ import {
 import { tFor } from "@/lib/i18n-server";
 import { isUrlLocale } from "@/lib/seo-locale";
 import { fillState, stateCopy, stateCopyLocale, stateDisplayName, stateOtherNames, type StateCopyLocale } from "@/lib/state-exams-copy";
+import { splitStateExams, stateAlsoLinks, stateJsonLd, stateNameWithNative } from "@/lib/state-exam-sections";
 
 export const revalidate = 3600;
 
@@ -68,10 +80,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const entry = (await getStateDirectory().catch(() => [])).find((s) => s.code === code);
   const exams = entry?.exams ?? [];
   const top = exams.slice(0, 4).map((e) => e.shortName);
+  const { recruitment, admission } = splitStateExams(exams);
+  const kinds = admission.length > 0 ? "Government and Entrance" : "Government";
 
-  const title = `${st.name} Government Exams ${year} — Free Mock Tests, Dates & Syllabus | Shishya`;
+  const title = `${st.name} ${kinds} Exams ${year} — Free Mock Tests, Dates & Syllabus | Shishya`;
+  const split =
+    admission.length > 0
+      ? ` (${recruitment.length} government recruitment ${recruitment.length === 1 ? "exam" : "exams"}, ${admission.length} admission ${admission.length === 1 ? "test" : "tests"})`
+      : "";
   const description =
-    `${exams.length} ${st.name} ${exams.length === 1 ? "exam" : "exams"} on Shishya${top.length ? `: ${top.join(", ")}${exams.length > 4 ? " and more" : ""}` : ""}. ` +
+    `${exams.length} ${stateNameWithNative(st)} ${exams.length === 1 ? "exam" : "exams"} on Shishya${split}${top.length ? `: ${top.join(", ")}${exams.length > 4 ? " and more" : ""}` : ""}. ` +
     `Free mock tests, announced exam dates with their source, where to apply, syllabus and cutoffs — questions readable in ${readableIn(st.languages)} inside every test.`;
   const url = `https://shishya.in/exams/state/${slug}`;
 
@@ -85,6 +103,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       `${st.name} government jobs exams`,
       `${st.name} sarkari exam`,
       `${st.hindiName} सरकारी परीक्षा`,
+      ...(st.nativeName !== st.name && st.nativeName !== st.hindiName ? [`${st.nativeName} exams`] : []),
+      ...(admission.length > 0 ? [`${st.name} entrance exams ${year}`, `${st.name} CET`, `${st.hindiName} प्रवेश परीक्षा`] : []),
       `${st.name} exam calendar ${year}`,
       `${st.name} mock tests free`,
       ...exams.slice(0, 8).map((e) => `${e.shortName} mock test`),
@@ -124,12 +144,29 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
   const portals = statePortals(exams);
   const groups = EXAM_TYPE_ORDER.map((type) => ({ type, list: exams.filter((e) => e.type === type) })).filter((g) => g.list.length > 0);
   const typeNames = groups.map((g) => g.type).filter((ty) => ty !== "Other").map((ty) => C.typeShort[ty]);
+  // 26 Sep 2026: recruitment exams keep their type groups; admission tests
+  // (state CETs) are their own group when the state has any.
+  const { recruitment, admission } = splitStateExams(exams);
+  const recruitmentGroups = EXAM_TYPE_ORDER.map((type) => ({ type, list: recruitment.filter((e) => e.type === type) })).filter(
+    (g) => g.list.length > 0,
+  );
+  const hasAdmission = admission.length > 0;
+  const kindsEn = hasAdmission ? "government and entrance exams" : "government exams";
+  const alsoLinks = stateAlsoLinks(code, stateName, { colleges: C.alsoColleges, board: C.alsoBoard, scholarshipMatch: C.alsoScholarshipMatch });
+  const pageUrl = `https://shishya.in/exams/state/${slug}`;
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: `${st.name} government exams on Shishya`,
-    itemListElement: exams.map((e, i) => ({ "@type": "ListItem", position: i + 1, url: `https://shishya.in/exams/${e.code}`, name: e.shortName })),
+    "@type": "CollectionPage",
+    name: `${st.name} ${kindsEn} on Shishya`,
+    url: pageUrl,
+    // The state with its own-script and Hindi names (26 Sep 2026).
+    about: stateJsonLd(st),
+    mainEntity: {
+      "@type": "ItemList",
+      name: `${st.name} ${kindsEn} on Shishya`,
+      itemListElement: exams.map((e, i) => ({ "@type": "ListItem", position: i + 1, url: `https://shishya.in/exams/${e.code}`, name: e.shortName })),
+    },
   };
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -137,7 +174,7 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: "https://shishya.in" },
       { "@type": "ListItem", position: 2, name: "Exams by state", item: "https://shishya.in/exams/state" },
-      { "@type": "ListItem", position: 3, name: `${st.name} government exams`, item: `https://shishya.in/exams/state/${slug}` },
+      { "@type": "ListItem", position: 3, name: `${st.name} ${kindsEn}`, item: pageUrl },
     ],
   };
   const faqJsonLd = {
@@ -154,6 +191,39 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
     const names = codes.map((c) => languageName(c).native);
     return names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} ${C.listAnd} ${names[names.length - 1]}`;
   };
+  // One exam card list — the markup the type groups always used; the card
+  // title is an h3 under an h2 group, an h4 under a recruitment type h3.
+  const examCards = (list: typeof exams, level: 3 | 4 = 3) => {
+    const Title = level === 3 ? "h3" : "h4";
+    return (
+      <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+        {list.map((e) => {
+          const d = details.get(e.code);
+          return (
+            <li key={e.code}>
+              <Link
+                href={`/exams/${e.code}`}
+                className="block rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400 hover:bg-saffron-50/40"
+              >
+                <Title className="text-sm font-semibold text-ink-900">{e.shortName}</Title>
+                <p className="mt-0.5 text-xs text-ink-500">{e.name}</p>
+                {d?.description && <p className="mt-2 line-clamp-2 text-xs text-ink-600">{d.description}</p>}
+                {d && (
+                  <p className="mt-2 text-[11px] text-ink-500">
+                    {fillState(C.cardMeta, {
+                      n: d.totalQuestions,
+                      min: d.durationMin,
+                      langs: d.languages.length > 0 ? langsOf(d.languages) : C.langNotStated,
+                    })}
+                  </p>
+                )}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
 
   return (
     <main className="min-h-screen bg-ink-50/40">
@@ -167,7 +237,7 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
           <Link href="/exams/state" className="hover:text-ink-800">{C.examsByState}</Link> · {stateName}
         </p>
         <h1 className="mt-1 text-3xl font-bold text-ink-900">
-          {fillState(C.h1, { state: stateName, year })}
+          {fillState(hasAdmission ? C.h1Entrance : C.h1, { state: stateName, year })}
         </h1>
         <p className="mt-1 text-lg text-ink-600">{stateOtherNames(st, lc)}</p>
 
@@ -181,37 +251,36 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
           })}
         </p>
 
-        {groups.map((g) => (
-          <div key={g.type} className="mt-8">
-            <h2 className="text-lg font-semibold text-ink-900">{typeLabel(g.type)}</h2>
-            <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-              {g.list.map((e) => {
-                const d = details.get(e.code);
-                return (
-                  <li key={e.code}>
-                    <Link
-                      href={`/exams/${e.code}`}
-                      className="block rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400 hover:bg-saffron-50/40"
-                    >
-                      <h3 className="text-sm font-semibold text-ink-900">{e.shortName}</h3>
-                      <p className="mt-0.5 text-xs text-ink-500">{e.name}</p>
-                      {d?.description && <p className="mt-2 line-clamp-2 text-xs text-ink-600">{d.description}</p>}
-                      {d && (
-                        <p className="mt-2 text-[11px] text-ink-500">
-                          {fillState(C.cardMeta, {
-                            n: d.totalQuestions,
-                            min: d.durationMin,
-                            langs: d.languages.length > 0 ? langsOf(d.languages) : C.langNotStated,
-                          })}
-                        </p>
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+        {hasAdmission ? (
+          <>
+            {recruitment.length > 0 && (
+              <section className="mt-8" aria-labelledby="state-recruitment">
+                <h2 id="state-recruitment" className="text-xl font-bold text-ink-900">
+                  {C.recruitmentHeading}
+                </h2>
+                {recruitmentGroups.map((g) => (
+                  <div key={g.type} className="mt-5">
+                    <h3 className="text-lg font-semibold text-ink-900">{typeLabel(g.type)}</h3>
+                    {examCards(g.list, 4)}
+                  </div>
+                ))}
+              </section>
+            )}
+            <section className="mt-10" aria-labelledby="state-admission">
+              <h2 id="state-admission" className="text-xl font-bold text-ink-900">
+                {C.admissionHeading}
+              </h2>
+              {examCards(admission)}
+            </section>
+          </>
+        ) : (
+          groups.map((g) => (
+            <div key={g.type} className="mt-8">
+              <h2 className="text-lg font-semibold text-ink-900">{typeLabel(g.type)}</h2>
+              {examCards(g.list)}
+            </div>
+          ))
+        )}
 
         <div className="mt-10 rounded-lg border border-ink-200 bg-white p-5">
           <h2 className="text-lg font-semibold text-ink-900">{C.upcomingHeading}</h2>
@@ -266,6 +335,23 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
             ))}
           </dl>
         </div>
+
+        {alsoLinks.length > 0 && (
+          <nav aria-labelledby="state-also" className="mt-6 rounded-lg border border-ink-200 bg-white p-5">
+            <h2 id="state-also" className="text-lg font-semibold text-ink-900">
+              {fillState(C.alsoHeading, { state: stateName })}
+            </h2>
+            <ul className="mt-3 space-y-1.5 text-sm">
+              {alsoLinks.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="text-saffron-700 hover:underline">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
 
         <p className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm">
           <Link href="/exams/state" className="font-medium text-saffron-700 hover:underline">{C.allStates}</Link>

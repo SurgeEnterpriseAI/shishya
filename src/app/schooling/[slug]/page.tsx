@@ -164,7 +164,12 @@ export default async function BoardPage({ params }: { params: Promise<{ slug: st
       <Header />
       <section className="container-prose py-10">
         <SchoolCrumbs crumbs={[{ label: "Home", href: "/" }, { label: "Schooling", href: "/schooling" }, { label: b.shortName }]} />
-        <h1 className="mt-1 text-3xl font-bold text-ink-900">{b.shortName}</h1>
+        {/* 26 Sep 2026: the H1 names the class range ("CBSE — Class 1 to 12") —
+            the seeded classes where there are some, else the board's own list. */}
+        <h1 className="mt-1 text-3xl font-bold text-ink-900">
+          {b.shortName} — Class {live.length > 0 ? live[0].cls : b.classes[0]} to{" "}
+          {live.length > 0 ? live[live.length - 1].cls : b.classes[b.classes.length - 1]}
+        </h1>
         <p className="mt-1 text-sm text-ink-600">{b.name}</p>
         {st && (
           <p className="mt-1 text-xs text-ink-500">

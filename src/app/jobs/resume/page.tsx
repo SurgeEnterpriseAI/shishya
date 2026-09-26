@@ -5,11 +5,18 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
+// 26 Sep 2026: own openGraph {title, description, url} — without one the page
+// inherited og:url=https://shishya.in and the site-wide card text.
+const TITLE = "Fresher Resume + Interview Prep — Templates, Questions, Negotiation";
+const DESCRIPTION =
+  "ATS-friendly fresher resume templates by career, interview question banks per role (tech, finance, govt, design), salary negotiation basics. No paid coaching — actionable guidance only.";
+const PAGE_URL = "https://shishya.in/jobs/resume";
+
 export const metadata: Metadata = {
-  title: "Fresher Resume + Interview Prep — Templates, Questions, Negotiation | Shishya",
-  description:
-    "ATS-friendly fresher resume templates by career, interview question banks per role (tech, finance, govt, design), salary negotiation basics. No paid coaching — actionable guidance only.",
-  alternates: { canonical: "https://shishya.in/jobs/resume" },
+  title: `${TITLE} | Shishya`,
+  description: DESCRIPTION,
+  alternates: { canonical: PAGE_URL },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: PAGE_URL, siteName: "Shishya", locale: "en_IN", type: "article" },
   keywords: [
     "fresher resume template india",
     "ATS friendly resume",

@@ -18,6 +18,8 @@ import {
   checkTitleDate,
   examNamesFromContext,
   findForbiddenPhrases,
+  findStaleExamCount,
+  STALE_PLUS_MARGIN,
   parseHubTitle,
   parseUpdatesTitle,
   rowKey,
@@ -42,6 +44,46 @@ describe("findForbiddenPhrases", () => {
   it("passes the honest replacement line", () => {
     const f = findForbiddenPhrases("AI-drafted, checked against the official notification.", "https://shishya.in/x");
     expect(f).toEqual([]);
+  });
+  // 26 Sep 2026: live questions are answer-checked by the AI firewall, not
+  // validated by an admin team — the claim is forbidden in all three languages.
+  it.each([
+    ["Shishya has 412 admin-validated SSC CGL practice questions", "admin-validated"],
+    ["Questions are validated by Shishya's admin team before they go live.", "validated by Shishya's admin team"],
+    ["Shishya पर 412 एडमिन-जाँचे हुए SSC CGL प्रैक्टिस सवाल हैं", "एडमिन-जाँचे"],
+    ["Shishyaలో 412 అడ్మిన్ పరిశీలించిన SSC CGL ప్రాక్టీస్ ప్రశ్నలు ఉన్నాయి", "అడ్మిన్ పరిశీలించిన"],
+  ])("catches the admin-validation claim: %s", (text, phrase) => {
+    const f = findForbiddenPhrases(text, "https://shishya.in/exams/SSC_CGL");
+    expect(f.map((x) => x.detail).join(" ")).toContain(`"${phrase}"`);
+  });
+  it("passes the answer-check wording that replaces it", () => {
+    expect(findForbiddenPhrases("412 practice questions, answer-checked by AI before they are shown.", "u")).toEqual([]);
+  });
+});
+
+describe("findStaleExamCount — N+ forms (26 Sep 2026)", () => {
+  const LIVE = 180;
+  const hits = (text: string) => findStaleExamCount(text, "https://shishya.in/x", LIVE).map((f) => f.detail);
+  it("passes an N+ floor within the margin of the live count", () => {
+    expect(hits("Mock tests for 175+ exams")).toEqual([]);
+    expect(hits(`Mock tests for ${LIVE - STALE_PLUS_MARGIN}+ Indian government and entrance exams`)).toEqual([]);
+    expect(hits(`${LIVE}+ exams`)).toEqual([]);
+  });
+  it("flags an N+ claim more than the margin below the live count", () => {
+    const f = hits("free prep for 163+ Indian govt & entrance exams");
+    expect(f).toHaveLength(1);
+    expect(f[0]).toMatch(/163\+ Indian govt & entrance exams/);
+    expect(f[0]).toMatch(/below the live active count 180/);
+    expect(hits(`${LIVE - STALE_PLUS_MARGIN - 1}+ exams`)).toHaveLength(1);
+  });
+  it("flags an N+ claim above the live count (an overclaim)", () => {
+    const f = hits("practice for 200+ exams");
+    expect(f).toHaveLength(1);
+    expect(f[0]).toMatch(/only 180 exams are live/);
+  });
+  it("still flags a bare count that is not the live one, once per form", () => {
+    expect(hits("163 exams · 163 exams · 180 exams")).toHaveLength(1);
+    expect(hits("163 exams and 163+ exams")).toHaveLength(2);
   });
 });
 
@@ -375,10 +417,18 @@ describe("source scan — no forbidden trust phrase or stale count ships", () =>
     // Instruction text that FORBIDS the claim is not the claim: the PYQ
     // generator's prompt tells the model never to reproduce a real PYQ.
     const ALLOWED_LINE = /(?:never|not|don'?t|do not)\s+(?:reproduce|copy)\s+(?:any\s+|a\s+)?real pyq|not (?:a |the )?real pyq|no real pyq/i;
+    // 26 Sep 2026: "admin-validated" joined the list. The one pending hit in
+    // src/lib/i18n.ts is the English "brand.tagline" entry — a key no page
+    // renders (no t("brand.tagline") caller anywhere in src/), in a file this
+    // wave may not edit. Remove this allowance when that line is fixed; any
+    // other i18n line, and every other file, is still scanned.
+    const PENDING_UNRENDERED = (rel: string, line: string) =>
+      rel === path.join("src", "lib", "i18n.ts") && /^\s*"brand\.tagline":/.test(line);
     const hits: string[] = [];
     for (const file of files) {
       const text = stripComments(fs.readFileSync(file, "utf8"));
-      for (const f of findForbiddenPhrases(text, path.relative(ROOT, file), { allow: (_p, line) => ALLOWED_LINE.test(line) })) {
+      const rel = path.relative(ROOT, file);
+      for (const f of findForbiddenPhrases(text, rel, { allow: (_p, line) => ALLOWED_LINE.test(line) || PENDING_UNRENDERED(rel, line) })) {
         hits.push(`${f.url}:${f.line} ${f.detail} — ${f.snippet ?? ""}`);
       }
     }

@@ -125,11 +125,15 @@ export function topicPageMeta(i: {
  *  to their notes (hasUsableNotes); "study notes" is said only when > 0.
  *  `weightageShown` = the page prints a subject weightage (weight > 1); the
  *  no-notes title says "with Weightage" only then — 77 of the 127 no-notes
- *  exams show none (MP_RAEO's weights are 0.05–0.075). */
+ *  exams show none (MP_RAEO's weights are 0.05–0.075).
+ *  26 Sep 2026: the description says "with weightage" only then too (it
+ *  said so for every exam), and `year` is the hub title's cycle year
+ *  (src/lib/exam-title-year.ts) — null prints no year, never the calendar
+ *  year. */
 export function syllabusPageCopy(i: {
   examShort: string;
   examName: string;
-  year: number;
+  year: number | null;
   subjects: number;
   topicCount: number;
   linkedTopics: number;
@@ -141,8 +145,9 @@ export function syllabusPageCopy(i: {
     (x): x is string => x !== null,
   );
   const offerText = offers.length > 1 ? `${offers.slice(0, -1).join(", ")} and ${offers[offers.length - 1]}` : offers[0];
+  const y = i.year !== null ? ` ${i.year}` : "";
   const keywords = [
-    `${i.examShort} syllabus ${i.year}`,
+    `${i.examShort} syllabus${y}`,
     `${i.examShort} syllabus topics`,
     `${i.examShort} subject wise syllabus`,
     `${i.examShort} syllabus with weightage`,
@@ -151,12 +156,12 @@ export function syllabusPageCopy(i: {
   const head = `The complete ${i.examName} syllabus: ${i.subjects} subjects, ${i.topicCount} topics.`;
   return {
     title: notes
-      ? `${i.examShort} Syllabus ${i.year} — Complete Topic List with Free Study Notes | Shishya`
+      ? `${i.examShort} Syllabus${y} — Complete Topic List with Free Study Notes | Shishya`
       : i.weightageShown
-        ? `${i.examShort} Syllabus ${i.year} — Complete Topic List with Weightage | Shishya`
-        : `${i.examShort} Syllabus ${i.year} — Complete Topic List | Shishya`,
+        ? `${i.examShort} Syllabus${y} — Complete Topic List with Weightage | Shishya`
+        : `${i.examShort} Syllabus${y} — Complete Topic List | Shishya`,
     description:
-      `Complete ${i.examShort} (${i.examName}) syllabus ${i.year}: every subject and topic with weightage, ` +
+      `Complete ${i.examShort} (${i.examName}) syllabus${y}: every subject and topic${i.weightageShown ? " with weightage" : ""}, ` +
       `${offerText}. No coaching fees, in your language.`,
     keywords,
     intro: notes
@@ -164,8 +169,8 @@ export function syllabusPageCopy(i: {
       : `${head} Study notes for this exam are not published yet; every topic is listed so you can see the whole syllabus.`,
     jsonLdDescription: `Full ${i.examName} syllabus: ${i.subjects} subjects, ${i.topicCount} topics${notes ? `, ${i.linkedTopics} with free study notes` : ""}.`,
     shareMessage: notes
-      ? `Complete ${i.examShort} syllabus ${i.year} — topics with free study notes & practice (Shishya):`
-      : `Complete ${i.examShort} syllabus ${i.year} — every subject & topic (Shishya):`,
+      ? `Complete ${i.examShort} syllabus${y} — topics with free study notes & practice (Shishya):`
+      : `Complete ${i.examShort} syllabus${y} — every subject & topic (Shishya):`,
   };
 }
 

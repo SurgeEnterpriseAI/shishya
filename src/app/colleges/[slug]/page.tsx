@@ -5,11 +5,23 @@
 // college aspirant types. No invented rankings, no fee/cutoff numbers
 // we can't source — we link out to the college's official site for
 // anything that changes year to year.
+//
+// 26 Sep 2026 (every-education-search wave): CollegeOrUniversity JSON-LD
+// for every college (it was only for the "university" stream; an IIT or an
+// AIIMS is a college or university too), with an @id the branch pages point
+// at; the CLAT admission route is a plain label (no CLAT page — the link
+// 404'd; AILET is named only for NLU Delhi, which admits through it), and
+// every exam card links only a live exam; the description is cut at a
+// sentence / word boundary (the .slice(0, 300) cut "…NIRF Overall #") and
+// no longer says "verified info"; stream chips go to the static
+// /colleges/stream/* pages instead of ?stream= query URLs.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { loadLiveExams } from "@/lib/live-exam-codes";
+import { clipDescription, examHubHref } from "@/lib/section-seo";
 import {
   COLLEGES,
   findCollege,
@@ -18,7 +30,7 @@ import {
   NIRF_SOURCE_URL,
   ALL_STREAMS,
 } from "@/lib/colleges-data";
-import { stateInfo } from "@/lib/state-info";
+import { stateInfo, stateSlug } from "@/lib/state-info";
 import { VerificationBadge, SectionVerificationSummary } from "@/components/VerificationBadge";
 import { ClickableVerificationBadge } from "@/components/ClickableVerificationBadge";
 import { getFactMap, factToBadgeProps } from "@/lib/db/facts";
@@ -41,13 +53,14 @@ export async function generateMetadata({
 
   const ranksCopy = formatNirfRanks(c.nirf);
   const title = `${c.shortName} — ${ranksCopy || "Official Info"} | Shishya`;
-  const description =
-    `${c.name} (${c.city}, ${st?.name ?? c.state}). ${c.blurb} ` +
-    (ranksCopy ? `${ranksCopy}. ` : "") +
-    `Official website + verified info on Shishya.`;
+  // The ranks lead (they are what the query asks), then the blurb; cut at a
+  // sentence or word boundary, never inside "#1".
+  const description = clipDescription(
+    `${c.name}, ${c.city} (${st?.name ?? c.state}).` + (ranksCopy ? ` ${ranksCopy}.` : "") + ` ${c.blurb} Official website linked.`,
+  );
   return {
     title,
-    description: description.slice(0, 300),
+    description,
     alternates: { canonical: `https://shishya.in/colleges/${c.slug}` },
     keywords: [
       c.name,
@@ -62,7 +75,7 @@ export async function generateMetadata({
     ],
     openGraph: {
       title,
-      description: description.slice(0, 300),
+      description,
       url: `https://shishya.in/colleges/${c.slug}`,
       siteName: "Shishya",
       locale: "en_IN",
@@ -97,9 +110,10 @@ export default async function CollegePage({
   const session = await auth().catch(() => null);
   const signedIn = Boolean(session?.user);
 
-  // Cross-link to relevant exams for this college (best-effort by stream).
-  // Doesn't fetch from the exams DB — uses well-known mappings so this
-  // works at build time and stays cheap.
+  // Cross-link to relevant exams for this college (best-effort by stream,
+  // well-known mappings). 26 Sep 2026: each card links only when the exam
+  // is in the live catalogue (one cached read, src/lib/live-exam-codes.ts).
+  const live = await loadLiveExams();
   const relevantExams: Array<{ shortName: string; code: string; reason: string }> = [];
   if (c.streams.includes("engineering")) {
     if (c.type === "Central" || c.shortName.startsWith("IIT")) {
@@ -114,16 +128,20 @@ export default async function CollegePage({
     relevantExams.push({ shortName: "CAT", code: "CAT", reason: "PG management admission" });
   }
   if (c.streams.includes("law")) {
-    relevantExams.push({ shortName: "CLAT", code: "CLAT", reason: "law school admission" });
+    // NLU Delhi admits through its own AILET, not CLAT.
+    if (c.slug === "nlu-delhi") relevantExams.push({ shortName: "AILET", code: "AILET", reason: "NLU Delhi's own law admission test" });
+    else relevantExams.push({ shortName: "CLAT", code: "CLAT", reason: "law school admission" });
   }
 
-  // EducationalOrganization JSON-LD — Google rich-result eligible.
+  // CollegeOrUniversity JSON-LD for every college (26 Sep 2026).
   const orgJsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
-    "@type": c.streams.includes("university") ? "CollegeOrUniversity" : "EducationalOrganization",
+    "@type": "CollegeOrUniversity",
+    "@id": `https://shishya.in/colleges/${c.slug}#college`,
     name: c.name,
     alternateName: c.shortName,
     url: c.website,
+    mainEntityOfPage: `https://shishya.in/colleges/${c.slug}`,
     foundingDate: String(c.established),
     address: {
       "@type": "PostalAddress",
@@ -255,7 +273,7 @@ export default async function CollegePage({
             return (
               <Link
                 key={s}
-                href={`/colleges?stream=${s}`}
+                href={`/colleges/stream/${s}`}
                 className="rounded-full border border-ink-200 bg-white px-3 py-1 text-xs text-ink-700 hover:border-saffron-400 hover:bg-saffron-50/30"
               >
                 {label}
@@ -275,20 +293,31 @@ export default async function CollegePage({
               The entrance exam(s) typically required to apply here.
             </p>
             <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-              {relevantExams.map((e) => (
-                <li key={e.code}>
-                  <Link
-                    href={`/exams/${e.code}`}
-                    className="block rounded-md border border-ink-200 bg-saffron-50/20 p-3 transition-colors hover:border-saffron-400 hover:bg-saffron-50/60"
-                  >
-                    <p className="text-sm font-medium text-ink-900">{e.shortName}</p>
-                    <p className="mt-0.5 text-xs text-ink-600">{e.reason}</p>
-                    <p className="mt-1 text-[10px] text-saffron-700">
-                      Start a free mock test →
-                    </p>
-                  </Link>
-                </li>
-              ))}
+              {relevantExams.map((e) => {
+                const href = examHubHref(e.code, live);
+                return (
+                  <li key={e.code}>
+                    {href ? (
+                      <Link
+                        href={href}
+                        className="block rounded-md border border-ink-200 bg-saffron-50/20 p-3 transition-colors hover:border-saffron-400 hover:bg-saffron-50/60"
+                      >
+                        <p className="text-sm font-medium text-ink-900">{e.shortName}</p>
+                        <p className="mt-0.5 text-xs text-ink-600">{e.reason}</p>
+                        <p className="mt-1 text-[10px] text-saffron-700">
+                          Start a free mock test →
+                        </p>
+                      </Link>
+                    ) : (
+                      <div className="block rounded-md border border-dashed border-ink-200 bg-white p-3">
+                        <p className="text-sm font-medium text-ink-900">{e.shortName}</p>
+                        <p className="mt-0.5 text-xs text-ink-600">{e.reason}</p>
+                        <p className="mt-1 text-[10px] text-ink-500">No {e.shortName} page on Shishya yet</p>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}
@@ -357,6 +386,24 @@ export default async function CollegePage({
             </ul>
           </div>
         )}
+
+        {/* 26 Sep 2026: onward links — the state's colleges, funding, careers. */}
+        <nav aria-label="More on Shishya" className="mt-10 flex flex-wrap gap-2 text-xs">
+          {st && (
+            <Link href={`/colleges/state/${stateSlug(c.state)}`} className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-ink-700 hover:border-saffron-400">
+              Colleges in {st.name} →
+            </Link>
+          )}
+          <Link href="/scholarships" className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-ink-700 hover:border-saffron-400">
+            Scholarships →
+          </Link>
+          <Link href="/careers" className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-ink-700 hover:border-saffron-400">
+            Career guides →
+          </Link>
+          <Link href="/colleges/cutoffs" className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-ink-700 hover:border-saffron-400">
+            Reading cutoffs →
+          </Link>
+        </nav>
       </section>
     </main>
   );
