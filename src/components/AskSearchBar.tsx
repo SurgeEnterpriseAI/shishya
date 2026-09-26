@@ -17,6 +17,10 @@ import { useRouter } from "next/navigation";
 // Telugu so vernacular aspirants instantly know they can ask in their
 // own language.
 const SAMPLES = [
+  // 26 Sep 2026: entrance exams sit beside government exams in the rotation.
+  "When is JEE Main 2027 and what is the pattern?",
+  "NEET UG syllabus — which chapters carry the most marks?",
+  "CUET UG mock test for free?",
   "I want a government job in Bihar — what can I apply for?",
   "Which exams can a 12th-pass student write?",
   "What is the salary in SSC CGL posts?",
@@ -94,7 +98,7 @@ export function AskSearchBar({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={SAMPLES[i]}
-          aria-label="Ask Shishya anything about government jobs and exams"
+          aria-label="Ask Shishya about any exam"
           className={`w-full bg-transparent py-2.5 text-base text-ink-900 outline-none transition-opacity duration-200 placeholder:text-ink-400 ${
             fade ? "placeholder:opacity-100" : "placeholder:opacity-0"
           }`}
@@ -114,8 +118,8 @@ export function AskSearchBar({
             : "mt-1.5 px-2 text-xs text-ink-500"
         }
       >
-        Ask in any language — jobs for your state, salary, eligibility, vacancies, dates.
-        Answered from Shishya&apos;s data for 170+ exams. Free, no login.
+        Ask in any language — dates, eligibility, syllabus, cutoffs, salary, vacancies.
+        Answered from Shishya&apos;s exam data. Free, no login.
       </p>
     </form>
   );

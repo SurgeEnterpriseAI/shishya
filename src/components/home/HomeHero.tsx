@@ -6,6 +6,7 @@
 import Link from "next/link";
 import type { HomeDoorsCopy } from "@/lib/home-doors-copy";
 import { HOME_DOOR_IDS, type HomeDoorId } from "@/lib/home-doors";
+import { AskSearchBar } from "@/components/AskSearchBar";
 
 const PILL_ICON: Record<HomeDoorId, string> = {
   school: "🏫",
@@ -27,6 +28,12 @@ export function HomeHero({ copy }: { copy: HomeDoorsCopy }) {
       <p className="mx-auto mt-3.5 max-w-2xl text-balance text-[17px] leading-relaxed text-ink-600 sm:text-lg">
         {copy.hero.tagline}
       </p>
+      {/* 26 Sep 2026 (founder: "bring back the search strip"): the Ask box
+          returns under the tagline, where the whole-platform search strip
+          will sit. It sends the question to /ask, the answer page. */}
+      <div className="mx-auto mt-6 max-w-2xl text-left">
+        <AskSearchBar />
+      </div>
       {/* The proven no-login tutor path stays a text link so the hero keeps
           one accent; tutor opens are watched after this change. */}
       <Link
