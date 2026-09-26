@@ -110,13 +110,15 @@ export function CustomMockBuilder({ examCode }: { examCode: string }) {
         className="w-full rounded-lg border border-ink-300 px-3 py-2.5 text-sm focus:border-saffron-500 focus:outline-none"
       />
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-xs font-semibold uppercase tracking-wide text-ink-500">Questions</span>
           {COUNTS.map((c) => (
             <button key={c} type="button" onClick={() => { setCount(c); setShort(null); }} className={chip(count === c)}>{c}</button>
           ))}
         </div>
-        <div className="flex items-center gap-1.5">
+        {/* 26 Sep 2026: flex-wrap — at 360 px the label plus four chips ran
+            10 px past the screen and widened the whole exam page on phones. */}
+        <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-xs font-semibold uppercase tracking-wide text-ink-500">Difficulty</span>
           {DIFFS.map((d) => (
             <button key={d} type="button" onClick={() => { setDiff(d); setShort(null); }} className={chip(diff === d)}>{d}</button>
