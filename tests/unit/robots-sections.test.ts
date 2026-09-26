@@ -19,45 +19,8 @@ vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 import robots from "@/app/robots";
 import { SECTION_LANDING_PATHS } from "@/app/sitemap";
 
-type Rule = { userAgent?: string | string[]; allow?: string | string[]; disallow?: string | string[] };
-
-const list = (x: string | string[] | undefined): string[] => ([] as string[]).concat(x ?? []);
-
-/** RFC 9309 path pattern → RegExp: "*" any run, trailing "$" end anchor,
- *  everything else literal; always anchored at the start (a prefix match). */
-function patternRe(p: string): RegExp {
-  const anchored = p.endsWith("$");
-  const body = (anchored ? p.slice(0, -1) : p)
-    .split("*")
-    .map((s) => s.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
-    .join(".*");
-  return new RegExp(`^${body}${anchored ? "$" : ""}`);
-}
-
-/** The group for a user agent: an exact (case-insensitive) product-token
- *  match, else the "*" group. */
-function groupFor(rules: Rule[], ua: string): Rule[] {
-  const named = rules.filter((r) => list(r.userAgent).some((a) => a.toLowerCase() === ua.toLowerCase()));
-  return named.length ? named : rules.filter((r) => list(r.userAgent).includes("*"));
-}
-
-/** Longest matching rule wins; allow wins a tie; no match = allowed. */
-function allowed(rules: Rule[], ua: string, path: string): boolean {
-  let best: { len: number; allow: boolean } | null = null;
-  for (const r of groupFor(rules, ua)) {
-    for (const [pats, allow] of [
-      [list(r.allow), true],
-      [list(r.disallow), false],
-    ] as const) {
-      for (const p of pats) {
-        if (!p || !patternRe(p).test(path)) continue;
-        const len = p.length;
-        if (!best || len > best.len || (len === best.len && allow && !best.allow)) best = { len, allow };
-      }
-    }
-  }
-  return best ? best.allow : true;
-}
+// 27 Sep 2026: the evaluator moved to a shared fixture (the search tests ask the same question); unchanged.
+import { allowed, list, type Rule } from "../fixtures/robots-eval";
 
 const r = robots();
 const RULES = (Array.isArray(r.rules) ? r.rules : [r.rules]) as Rule[];

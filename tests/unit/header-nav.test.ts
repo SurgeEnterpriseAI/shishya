@@ -21,7 +21,10 @@
 //   6. honesty + independence: no retired links, nothing "coming soon", no
 //      degree-study section linked, no journey wording in labels or titles;
 //   7. every href in Header resolves to a page under src/app, and the
-//      /#entrance fragment still has its target on the home page.
+//      home page's Entrance door keeps its anchor (li#entrance).
+//
+// 27 Sep 2026: "Entrance exams" links /exams/entrance, the Entrance section's
+// own page (was /#entrance, the home page's door, before that page existed).
 
 import fs from "node:fs";
 import path from "node:path";
@@ -114,7 +117,8 @@ function routeExists(href: string): boolean {
 const EXPECTED_ROW: ReadonlyArray<{ label: string; href: string; nav: string }> = [
   { label: "Ask Shishya", href: "/chat", nav: "ask" },
   { label: "School", href: "/schooling", nav: "school" },
-  { label: "Entrance exams", href: "/#entrance", nav: "entrance" },
+  // 27 Sep 2026: the Entrance section's own page (was "/#entrance", the home page's door).
+  { label: "Entrance exams", href: "/exams/entrance", nav: "entrance" },
   { label: "Government exams", href: "/exams/browse", nav: "government" },
   { label: "College & scholarships", href: "/colleges", nav: "college" },
   { label: "Careers", href: "/careers", nav: "careers" },
@@ -321,6 +325,7 @@ describe("Header — every href resolves", () => {
     for (const h of hrefs) expect(routeExists(h), `${h} has no page.tsx under src/app`).toBe(true);
   });
 
+  // 27 Sep 2026: the header now links /exams/entrance; other pages may still link the door's anchor.
   it("/#entrance still has its target: the Entrance door's <li id> on the home page (read-only)", () => {
     expect(HOME_DOOR_IDS).toContain("entrance");
     const doors = read("src/components/home/HomeDoors.tsx");

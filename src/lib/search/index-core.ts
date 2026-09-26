@@ -3,7 +3,10 @@
 // query), state and category pages, school boards / classes / subjects /
 // chapters, colleges and their branch / state / stream pages, scholarships,
 // careers, persona pages (list rows only), study-abroad pages, insights and
-// the site landings. The DB-shaped inputs (exams, gates, PYQ years, topic
+// the site landings — and, 27 Sep 2026 (wave 2 search), the pages organic
+// wave 2 built: the exam category hubs, "exams after {level}", CBSE's
+// board-exam hubs, the subject hubs and the scholarship lists, each from its
+// family's own route list. The DB-shaped inputs (exams, gates, PYQ years, topic
 // notes, the school surface) are read by src/lib/search/index-build.ts
 // (server-only) and passed in; the static data is imported here. Tests build
 // the same index from a committed fixture.
@@ -30,6 +33,13 @@ import { EXAM_DEEP_CONTENT } from "@/data/exam-deep-content";
 import { aliasTable, stateWordTable } from "@/lib/exam-aliases";
 import { computeExamTags } from "@/lib/exam-tags";
 import { ENTRANCE_DOOR_CODES } from "@/lib/home-doors";
+// 27 Sep 2026 (wave 2 search): the route lists of the wave's page families
+// (a685688) — every page below is one entry of its family's own list.
+import { PUBLISHED_LEVELS } from "@/lib/exam-qualification";
+import { BOARD_EXAM_HUBS } from "@/data/board-exams";
+import { boardExamPath } from "@/lib/board-exams";
+import { CLOSING_SOON_DAYS, SCHOLARSHIP_FILTERS } from "@/lib/scholarship-lists";
+import { SUBJECT_HUBS, SUBJECT_HUB_ROOT, subjectHubPath } from "@/lib/subject-hubs";
 
 // ── Inputs (what the server loader reads from the DB) ────────────────────
 
@@ -82,6 +92,15 @@ export interface SearchIndexInputs {
    *  /current-affairs/capsule/{month} pages that render. Optional: absent (the
    *  DB-down fallback, older loaders) means no capsule pages in the index. */
   capsuleMonths?: readonly string[];
+  /** 27 Sep 2026 (wave 2 search): the /exams/category/{slug} hubs that render —
+   *  at least EXAM_CATEGORY_MIN real exams by the page's own rule
+   *  (src/lib/exam-categories.ts liveExamCategories) — with the page's noun.
+   *  Optional: absent (the DB-down fallback) means no hub in the index. */
+  categoryHubs?: readonly { slug: string; noun: string }[];
+  /** 27 Sep 2026 (wave 2 search): the /subjects/{slug} hubs that render
+   *  (src/lib/subject-hubs.ts subjectHubIndexRows — the list /subjects shows).
+   *  Optional: absent means no subject hub in the index. */
+  subjectHubs?: readonly string[];
 }
 
 export const GATES_ALL_CLOSED: ExamGatesLike = { cutoff: false, syllabus: false, tricks: false, guide: false, buildMock: false };
@@ -141,6 +160,51 @@ const CATEGORY_DOCS: Readonly<Record<string, { title: string; section: SearchSec
   OLYMPIAD: { title: "Olympiads", section: "entrance", terms: ["olympiad", "olympiads", "olympiad exams", "ओलंपियाड", "ఒలింపియాడ్"] },
   UNIVERSITY: { title: "University and design entrance exams", section: "entrance", terms: ["university entrance", "design entrance", "university exams"] },
 };
+
+// ── Wave 2 page families (27 Sep 2026) ───────────────────────────────────
+// The words students use for each family's pages, beside the names built from
+// the family's own data (a hub's noun, a level's tags, a subject's keywords).
+
+/** The /exams/browse?category= filter a category hub covers: while that hub
+ *  renders it carries the category's words, and the filter (robots-blocked
+ *  — "/exams/browse?*") keeps none of its own. */
+export const CATEGORY_HUB: Readonly<Record<string, string>> = {
+  BANKING: "banking", TEACHING: "teaching", ENGINEERING: "engineering-entrance", LAW: "law-entrance", MEDICAL: "medical-entrance", MBA: "management-entrance",
+};
+const HUB_WORDS: Readonly<Record<string, readonly string[]>> = {
+  banking: ["bank exam", "banking jobs"],
+  railway: ["railway exam", "railway jobs", "rrb exams", "रेलवे परीक्षा", "రైల్వే పరీక్షలు"],
+  ssc: ["all ssc exams", "ssc exam list"],
+  // Not a bare "police": beside a state ("ap police", "bihar police") it would tie the state's own exam.
+  police: ["police exam", "police bharti", "police recruitment", "police jobs", "पुलिस भर्ती", "पुलिस परीक्षा", "పోలీస్ ఉద్యోగాలు", "పోలీస్ పరీక్షలు"],
+  teaching: ["teacher recruitment exams", "tet exam list", "शिक्षक पात्रता परीक्षा"],
+  defence: ["defence exam", "defense exams", "defence jobs"],
+  "state-psc": ["state psc", "psc exams", "state public service commission exams", "राज्य लोक सेवा आयोग"],
+  "upsc-civil-services": ["upsc exams", "all upsc exams"],
+  "engineering-entrance": ["engineering entrance exam", "b tech entrance exams"],
+  "medical-entrance": ["medical entrance exam"],
+  "law-entrance": ["law entrance exam", "llb entrance exams"],
+  "management-entrance": ["mba entrance exam"],
+  "design-entrance": ["design entrance", "design exams"],
+};
+/** A qualification tag as students write it ("exams after 12th", "exams after iti"). */
+const LEVEL_TAG_WORD: Readonly<Record<string, string>> = { "10TH": "10th", ITI: "iti", "12TH": "12th", DIPLOMA: "diploma", GRADUATE: "graduation" };
+const AFTER_LEVEL_WORDS: Readonly<Record<string, readonly string[]>> = {
+  "10th": ["exams after class 10", "10वीं के बाद परीक्षा", "10వ తరగతి తర్వాత పరీక్షలు"],
+  "12th": ["exams after class 12", "exam after class 12", "exams after inter", "12वीं के बाद परीक्षा", "ఇంటర్ తర్వాత పరీక్షలు"],
+  graduation: ["exams after degree", "exams for graduates", "ग्रेजुएशन के बाद परीक्षा", "డిగ్రీ తర్వాత పరీక్షలు"],
+};
+const SUBJECT_HUB_WORDS: Readonly<Record<string, readonly string[]>> = {
+  reasoning: ["logical reasoning", "रीजनिंग", "तर्कशक्ति", "రీజనింగ్"],
+  "quantitative-aptitude": ["quant", "मात्रात्मक योग्यता", "क्वांट"],
+  "general-awareness": ["gk", "general knowledge", "general awareness", "सामान्य ज्ञान", "జనరల్ నాలెడ్జ్"],
+  "child-development-pedagogy": ["cdp", "child development", "bal vikas", "बाल विकास", "बाल विकास एवं शिक्षाशास्त्र"],
+};
+/** "phd" is also a being-built degree word (lexicon.ts BEING_BUILT_ALWAYS): only the whole name opens the list. */
+const SCHOLARSHIP_LIST_WORDS: Readonly<Record<string, readonly string[]>> = {
+  phd: ["phd scholarship", "phd scholarships", "phd fellowship", "phd fellowships", "research fellowship"],
+};
+const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const COUNTRY_ALIASES: Readonly<Record<string, readonly string[]>> = {
   us: ["usa", "america", "united states", "us"], uk: ["united kingdom", "england", "britain", "uk"], ca: ["canada"], au: ["australia"],
@@ -261,8 +325,14 @@ export function buildSearchIndex(inputs: SearchIndexInputs, tier: "lite" | "deep
   }
 
   // Exam categories (/exams/browse?category=X) present in the catalogue.
+  // 27 Sep 2026 (wave 2 search): a category a live hub covers (CATEGORY_HUB)
+  // gives its words to the hub below; its robots-blocked filter stays in the
+  // index with no words, so a pasted or AI-written filter link is still known
+  // but no typed search opens it ("banking" opens /exams/category/banking).
   const catAliases = aliasKeysByCategory();
   const cats = new Set(inputs.exams.map((e) => e.category));
+  const liveHubs = new Map((inputs.categoryHubs ?? []).filter((h) => /^[a-z]+(-[a-z]+)*$/.test(h.slug) && h.noun.trim()).map((h) => [h.slug, h.noun.trim()]));
+  const categoryWords = (cat: string) => [...CATEGORY_DOCS[cat].terms, ...(catAliases.get(cat) ?? [])];
   for (const [cat, meta] of Object.entries(CATEGORY_DOCS)) {
     if (!cats.has(cat)) continue;
     push({
@@ -272,7 +342,24 @@ export function buildSearchIndex(inputs: SearchIndexInputs, tier: "lite" | "deep
       title: meta.title,
       sub: "Browse exams in this category",
       path: `/exams/browse?category=${cat}`,
-      terms: uniqTerms([...meta.terms, ...(catAliases.get(cat) ?? [])]),
+      terms: liveHubs.has(CATEGORY_HUB[cat] ?? "") ? [] : uniqTerms(categoryWords(cat)),
+      weight: 0.5,
+    });
+  }
+  // The category hubs (/exams/category/{slug}) the loader says render — the
+  // same kind as the filters they replace, so an exam-page word beside a
+  // category ("primary teacher ka test") ranks the hub as it ranked the filter.
+  // Ids: the hub's lower-case slug, never a DB category's upper-case name.
+  for (const [slug, noun] of liveHubs) {
+    const covered = Object.keys(CATEGORY_HUB).filter((cat) => CATEGORY_HUB[cat] === slug && cats.has(cat));
+    push({
+      id: `exam-category:${slug}`,
+      kind: "exam-category",
+      section: slug.endsWith("-entrance") ? "entrance" : "government",
+      title: capitalise(noun),
+      sub: "Compared in one table: next exam day, age limit and official site",
+      path: `/exams/category/${slug}`,
+      terms: uniqTerms([noun, `${noun} in india`, ...(HUB_WORDS[slug] ?? []), ...covered.flatMap(categoryWords)]),
       weight: 0.5,
     });
   }
@@ -568,6 +655,95 @@ export function buildSearchIndex(inputs: SearchIndexInputs, tier: "lite" | "deep
     });
   }
 
+  // ── Wave 2 page families (27 Sep 2026) ──
+  // Exams after a qualification: every published level renders
+  // (src/lib/exam-qualification.ts; postgraduation is held and never listed).
+  for (const l of PUBLISHED_LEVELS) {
+    const words = l.tags.map((t) => LEVEL_TAG_WORD[t]).filter(Boolean);
+    push({
+      id: `landing:/exams/after/${l.slug}`,
+      kind: "landing",
+      section: "government",
+      title: `Exams after ${l.afterTitle}`,
+      sub: `Government and entrance exams whose lowest qualification is ${l.qualification}`,
+      path: `/exams/after/${l.slug}`,
+      // "12th pass exams", "exam after 12th", "entrance exams after 12th" are read as a stage
+      // (resolve.ts afterLevelDoc); these are the names a stage rule cannot see.
+      terms: uniqTerms([
+        ...words.flatMap((w) => [`exams after ${w}`, `government exams after ${w}`, `govt exams after ${w}`, `competitive exams after ${w}`]),
+        ...(AFTER_LEVEL_WORDS[l.slug] ?? []),
+      ]),
+      weight: 0.5,
+    });
+  }
+  // CBSE's board-exam hubs: one per hub the data file holds (src/data/board-exams.ts).
+  for (const h of BOARD_EXAM_HUBS) {
+    const path = boardExamPath(h);
+    const board = h.board.toUpperCase();
+    push({
+      id: `landing:${path}`,
+      kind: "landing",
+      section: "school",
+      title: `${board} Class ${h.cls} board exam ${h.examYear}`,
+      sub: h.samplePapers.papers.length > 0 ? `${board}'s own ${h.session} sample papers and marking schemes, linked` : `${board}'s own links for the ${h.examYear} board exam`,
+      path,
+      // Sample paper, marking scheme, date sheet and board-exam asks are read by resolve.ts boardExamHubs.
+      terms: uniqTerms([`${board} Class ${h.cls} board exam ${h.examYear}`, `class ${h.cls} board exam`]),
+      weight: 0.5,
+    });
+  }
+  // Subject hubs: the ones the loader says render, and their index page.
+  const subjectSlugs = new Set(inputs.subjectHubs ?? []);
+  const subjectDefs = SUBJECT_HUBS.filter((d) => subjectSlugs.has(d.slug));
+  for (const d of subjectDefs) {
+    push({
+      id: `landing:${subjectHubPath(d.slug)}`,
+      kind: "landing",
+      section: "government",
+      title: `${d.name} across exams`,
+      sub: "Its topics grouped across the exams that test it, linked to each exam's topic page",
+      path: subjectHubPath(d.slug),
+      terms: uniqTerms([d.name, ...d.keywords, ...(SUBJECT_HUB_WORDS[d.slug] ?? [])]),
+      weight: 0.5,
+    });
+  }
+  if (subjectDefs.length > 0) {
+    push({
+      id: `landing:${SUBJECT_HUB_ROOT}`,
+      kind: "landing",
+      section: "government",
+      title: "Subjects across exams",
+      sub: "Each subject's topics, mapped to the exams that test them",
+      path: SUBJECT_HUB_ROOT,
+      terms: uniqTerms(["subjects across exams", "competitive exam subjects"]),
+      weight: 0.3,
+    });
+  }
+  // Scholarship lists: every filter renders (src/lib/scholarship-lists.ts; noindex until each row is reviewed — real pages for people).
+  for (const f of SCHOLARSHIP_FILTERS) {
+    push({
+      id: `landing:/scholarships/for/${f.slug}`,
+      kind: "landing",
+      section: "college",
+      title: `Scholarships for ${f.audienceTitle}`,
+      sub: "One list with amounts and apply links",
+      path: `/scholarships/for/${f.slug}`,
+      // A one-filter scholarship ask ("scholarship for girls") is read by resolve.ts scholarshipListDoc.
+      terms: uniqTerms([`Scholarships for ${f.audienceTitle}`, ...(SCHOLARSHIP_LIST_WORDS[f.slug] ?? [])]),
+      weight: 0.4,
+    });
+  }
+  push({
+    id: "landing:/scholarships/closing-soon",
+    kind: "landing",
+    section: "college",
+    title: "Scholarships closing soon",
+    sub: `Last dates read on each scheme's official portal, in the next ${CLOSING_SOON_DAYS} days`,
+    path: "/scholarships/closing-soon",
+    terms: uniqTerms(["scholarships closing soon", "scholarship closing soon", "scholarship deadline", "scholarship deadlines"]),
+    weight: 0.4,
+  });
+
   const index: SearchIndex ={ v: 1, builtAt: inputs.builtAt, tier: "deep", docs: dedupeIds(docs), exams };
   return tier === "lite" ? toLiteIndex(index) : index;
 }
@@ -580,11 +756,23 @@ function dedupeIds(docs: SearchDoc[]): SearchDoc[] {
 /** Kinds the client index leaves to the server: topic-note pages (4,000+),
  *  and insight and persona pages — list rows that never open directly. */
 const LITE_SKIP: ReadonlySet<DocKind> = new Set<DocKind>(["topic-note", "insight", "persona"]);
+/** 27 Sep 2026 (wave 2 fixer): the monthly current-affairs capsules the lite
+ *  index keeps — the latest few, the months students search for. The loader
+ *  adds a page for every month with rows, so the list only grows; older months
+ *  stay in the deep index (a strip search that opens no page goes to /ask,
+ *  which resolves on the deep index and opens the capsule there). This keeps
+ *  the strip's download bounded (tests/unit/search-resolver.test.ts sizes it
+ *  with two years of months). */
+export const LITE_CAPSULE_MONTHS = 3;
+const CAPSULE_PATH = /^\/current-affairs\/capsule\/\d{4}-\d{2}$/;
 /** The lite (client) tier of a deep index: every page but LITE_SKIP, without
  *  the weak keys (career keywords, scholarship tags) — the server's deep index
- *  still ranks with them when a search reaches /ask. */
+ *  still ranks with them when a search reaches /ask — and only the latest
+ *  LITE_CAPSULE_MONTHS capsules. */
 export function toLiteIndex(full: SearchIndex): SearchIndex {
-  const docs = full.docs.filter((d) => !LITE_SKIP.has(d.kind)).map((d) => {
+  const capsules = full.docs.filter((d) => d.kind === "landing" && CAPSULE_PATH.test(d.path)).map((d) => d.path).sort();
+  const oldCapsules = new Set(capsules.slice(0, Math.max(0, capsules.length - LITE_CAPSULE_MONTHS)));
+  const docs = full.docs.filter((d) => !LITE_SKIP.has(d.kind) && !oldCapsules.has(d.path)).map((d) => {
     if (!d.soft) return d;
     const { soft: _soft, ...rest } = d;
     void _soft;

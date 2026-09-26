@@ -13,8 +13,11 @@
 // pre-16-Sep page; tests/unit/i18n-b-surfaces-copy.test.ts pins it.
 //
 // Honesty carried into every locale, never softened:
-//   • questions are written with AI from the official syllabus and
-//     notification and re-checked when a student reports one — never
+//   • questions are written with AI to follow each exam's syllabus topics
+//     on Shishya and re-checked when a student reports one (27 Sep 2026: it
+//     said "from the official syllabus and notification", but the question
+//     generators read the Subject / Topic tree in Shishya's DB, not an
+//     official document — the wording wave 2 uses on /mock-tests) — never
 //     "verified by students who cleared the exam", never "validated by an
 //     admin team" (the pre-26-Sep wording; live questions are not passed by
 //     an admin);
@@ -148,7 +151,7 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     faqHeading: "{short} — Frequently asked questions",
     faqFreeQ: "Is Shishya free for {short} preparation?",
     faqFreeA:
-      "Yes. Every {short} mock test, PYQ-pattern paper and study tool on Shishya is completely free — no subscription and no credit card. Questions are written with AI from the official syllabus and notification, and re-checked whenever a student reports one.",
+      "Yes. Every {short} mock test, PYQ-pattern paper and study tool on Shishya is completely free — no subscription and no credit card. Questions are written with AI to follow each exam's syllabus topics on Shishya, and re-checked whenever a student reports one.",
     faqCountQ: "How many {short} practice questions does Shishya have?",
     faqCountA:
       "Shishya has {count} {short} practice questions, written with AI (any question a student reports is re-checked), available as adaptive mock tests with a worked solution for every question.",
@@ -193,7 +196,7 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     faqHeading: "{short} — अक्सर पूछे जाने वाले सवाल",
     faqFreeQ: "क्या {short} की तैयारी के लिए Shishya मुफ़्त है?",
     faqFreeA:
-      "हाँ। Shishya पर हर {short} मॉक टेस्ट, PYQ-पैटर्न पेपर और स्टडी टूल पूरी तरह मुफ़्त है — न कोई सब्सक्रिप्शन, न क्रेडिट कार्ड। सवाल आधिकारिक सिलेबस और अधिसूचना के आधार पर AI से लिखे जाते हैं, और कोई छात्र किसी सवाल की शिकायत करे तो उसे दोबारा जाँचा जाता है।",
+      "हाँ। Shishya पर हर {short} मॉक टेस्ट, PYQ-पैटर्न पेपर और स्टडी टूल पूरी तरह मुफ़्त है — न कोई सब्सक्रिप्शन, न क्रेडिट कार्ड। सवाल Shishya पर हर परीक्षा के सिलेबस के टॉपिक के हिसाब से AI से लिखे जाते हैं, और कोई छात्र किसी सवाल की शिकायत करे तो उसे दोबारा जाँचा जाता है।",
     faqCountQ: "Shishya पर {short} के कितने प्रैक्टिस सवाल हैं?",
     faqCountA:
       "Shishya पर {short} के {count} प्रैक्टिस सवाल हैं, जो AI से लिखे गए हैं (किसी सवाल की शिकायत आने पर उसे दोबारा जाँचा जाता है); ये एडेप्टिव मॉक टेस्ट के रूप में मिलते हैं और हर सवाल का हल दिया रहता है।",
@@ -240,7 +243,7 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     faqHeading: "{short} — తరచుగా అడిగే ప్రశ్నలు",
     faqFreeQ: "{short} సన్నద్ధతకు Shishya ఉచితమా?",
     faqFreeA:
-      "అవును. Shishyaలో ప్రతి {short} మాక్ టెస్ట్, PYQ-ప్యాటర్న్ పేపర్, స్టడీ టూల్ పూర్తిగా ఉచితం — సబ్‌స్క్రిప్షన్ లేదు, క్రెడిట్ కార్డ్ లేదు. ప్రశ్నలను అధికారిక సిలబస్, నోటిఫికేషన్ ఆధారంగా AI రాస్తుంది; ఏ ప్రశ్నపైనైనా విద్యార్థి ఫిర్యాదు చేస్తే దాన్ని మళ్లీ సరిచూస్తారు.",
+      "అవును. Shishyaలో ప్రతి {short} మాక్ టెస్ట్, PYQ-ప్యాటర్న్ పేపర్, స్టడీ టూల్ పూర్తిగా ఉచితం — సబ్‌స్క్రిప్షన్ లేదు, క్రెడిట్ కార్డ్ లేదు. ప్రశ్నలను Shishyaలోని ప్రతి పరీక్ష సిలబస్ టాపిక్‌లకు అనుగుణంగా AI రాస్తుంది; ఏ ప్రశ్నపైనైనా విద్యార్థి ఫిర్యాదు చేస్తే దాన్ని మళ్లీ సరిచూస్తారు.",
     faqCountQ: "Shishyaలో {short} ప్రాక్టీస్ ప్రశ్నలు ఎన్ని ఉన్నాయి?",
     faqCountA:
       "Shishyaలో {count} {short} ప్రాక్టీస్ ప్రశ్నలు ఉన్నాయి — AI రాసినవి (విద్యార్థి ఫిర్యాదు చేసిన ప్రశ్నను మళ్లీ సరిచూస్తారు); ఇవి అడాప్టివ్ మాక్ టెస్టులుగా లభిస్తాయి, ప్రతి ప్రశ్నకు వివరణాత్మక సమాధానం ఉంటుంది.",

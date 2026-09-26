@@ -101,6 +101,15 @@ function splitShishya(url: string): { path: string; locale: "en" | "hi" | "te"; 
  * /exams/{x} path as an exam code, so /exams/state/{slug}, /exams/state and
  * /exams/browse(?category=) came back unknown (26 Sep 2026, flagged to the
  * resolver's owner). Those are looked up here as plain index paths.
+ *
+ * 27 Sep 2026 (wave 2 search): the wave's page families are known the same
+ * way as every other page — as index documents built from each family's own
+ * route list (src/lib/search/index-core.ts): /mock-tests, the live
+ * /exams/category/{slug} hubs, /exams/after/{level}, CBSE's
+ * /schooling/cbse/class-{10,12}/board-exam, the /subjects hubs that render,
+ * /scholarships/for/{slug} and /scholarships/closing-soon. A hub that does
+ * not render (a category under its floor) is in no list, so a link to it is
+ * unlinked; nothing is typed here.
  */
 export function knownPath(url: string, index: SearchIndex): string | null {
   const k = knownUrl(url, index);

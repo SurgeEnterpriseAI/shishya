@@ -25,14 +25,17 @@ import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
 import { loadSchoolSurface, schoolSurfaceCounts } from "@/lib/school/surface";
 import { loadCheckedQuestionCount, loadRealExamCatalog } from "@/lib/platform-counts";
 import { SITE, contextMarkdownHeaders, languagesLine, ncertChapterCount, platformContextMarkdown, type PlatformCounts } from "@/lib/section-context";
+// 27 Sep 2026 (wave 2 search): the wave's page families, from the sitemap's own list.
+import { familyBriefLines, loadFamilyLinks } from "@/lib/page-families-brief";
 
 export const revalidate = 3600;
 
 export async function GET() {
-  const [exams, checked, school] = await Promise.all([
+  const [exams, checked, school, families] = await Promise.all([
     loadRealExamCatalog().catch(() => null),
     loadCheckedQuestionCount().catch(() => null),
     loadSchoolSurface().catch(() => null),
+    loadFamilyLinks(SITE),
   ]);
   const liveExams = exams && exams.length > 0 ? exams : null;
   const liveSchool = school && school.classes.length > 0 ? school : null;
@@ -82,5 +85,9 @@ export async function GET() {
     `- Press kit: ${SITE}/press`,
     "",
   ].join("\n");
-  return new Response(md + transparency, { headers: contextMarkdownHeaders(`${SITE}/`) });
+  // 27 Sep 2026 (wave 2 search): the pages that list or compare across exams,
+  // subjects and boards — the sitemap's own list, each labelled from its
+  // family's data (src/lib/page-families-brief.ts); none when none may be indexed.
+  const familyBlock = familyBriefLines(families).join("\n");
+  return new Response(md + transparency + (familyBlock ? `\n${familyBlock}` : ""), { headers: contextMarkdownHeaders(`${SITE}/`) });
 }

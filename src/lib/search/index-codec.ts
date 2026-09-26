@@ -10,7 +10,9 @@
 // line, its key as words), rebuilds a scholarship's sub line from its own
 // facts, and derives the paths every kind builds from one key.
 // decodeIndex(encodeIndex(x)) equals x (tests/unit/search-resolver.test.ts),
-// and the lite wire stays under 200 KB raw / 45 KB gzipped (same test).
+// and the lite wire stays under 200 KB raw / 47 KB gzipped (same test; 27 Sep
+// 2026: measured with the capsule months production adds, index-core.ts
+// LITE_CAPSULE_MONTHS).
 
 import type { DocKind, ExamFacts, PageStatus, SearchDoc, SearchIndex } from "./types";
 import { SEARCH_SECTIONS } from "./types";

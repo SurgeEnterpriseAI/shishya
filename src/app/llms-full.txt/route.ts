@@ -47,6 +47,8 @@ import { TEST_PREP, WORLDWIDE_COUNTRIES } from "@/lib/worldwide-data";
 import { PERSONAS } from "@/data/personas";
 import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
 import { loadCheckedQuestionCount } from "@/lib/platform-counts";
+// 27 Sep 2026 (wave 2 search): the wave's page families, from the sitemap's own list.
+import { familyBriefLines, loadFamilyLinks } from "@/lib/page-families-brief";
 import {
   careersLlmsFullLines,
   collegesLlmsFullLines,
@@ -404,6 +406,13 @@ export async function GET() {
   lines.push(...careersLlmsFullLines(CAREERS, CAREER_CATEGORIES, SITE));
   lines.push(...studyAbroadLlmsFullLines(WORLDWIDE_COUNTRIES, TEST_PREP, SITE));
   lines.push(...guidesLlmsFullLines(PERSONAS, INSIGHTS_ARTICLES, SITE));
+
+  // 27 Sep 2026 (wave 2 search): the pages that list or compare across exams,
+  // subjects and boards (/mock-tests, the category hubs, exams after each
+  // level, CBSE's board-exam hubs, the subject hubs, the scholarship lists) —
+  // computed from the sitemap's providers, so only pages Google may index,
+  // each labelled from its family's own data (src/lib/page-families-brief.ts).
+  lines.push(...familyBriefLines(await loadFamilyLinks(SITE)));
 
   lines.push("## Other free resources");
   lines.push(`- Upcoming government exams calendar (next 120 days, official vs expected dates, latest notifications): ${SITE}/exam-calendar`);

@@ -56,6 +56,8 @@ const INTENT = compile(L.INTENT_PHRASES);
 const SECTION = compile(L.SECTION_PHRASES);
 const SUBJECT = compile(L.SUBJECT_PHRASES);
 const QUESTION = new Set(L.QUESTION_WORDS.map((w) => normaliseQuery(w).norm));
+const Q_PAIR_HEAD = new Set(L.QUESTION_PAIR_HEADS.map((w) => normaliseQuery(w).norm));
+const Q_PAIR_TAIL = new Set(L.QUESTION_PAIR_TAILS.map((w) => normaliseQuery(w).norm));
 const DOUBT = words(L.DOUBT_PHRASES);
 const FIRST = words(L.FIRST_PERSON_PHRASES);
 const COMPARE = words(L.COMPARE_PHRASES);
@@ -237,6 +239,9 @@ export function parseQuery(raw: string, opts: { typing?: boolean } = {}): Parsed
 
   // 3 — qualifiers: "12th pass", "after 10th", "with 12th", "12th ke baad", "after graduation".
   let stage: ParsedQuery["stage"] = null;
+  // 27 Sep 2026 (wave 2 fixer): true when the stage came only from a bare "10th" / "12th" beside a role
+  // or exam word ("12th exam" — often the board exam itself), not from a qualifier the student typed.
+  let stageFromBareOrdinal = false;
   for (let i = 0; i < toks.length; i++) {
     const lvl = phraseAt(s, i, STAGE_PH);
     if (lvl) {
@@ -271,6 +276,7 @@ export function parseQuery(raw: string, opts: { typing?: boolean } = {}): Parsed
     // A bare "12th" next to a job / exam word ("ssc 12th", "12th level jobs") is a qualifier too.
     const jobby = !hasSchoolCue && !hasSubjectWord && toks.some((t, j) => j !== i && ROLE.has(t));
     if (!before && !after && !tail && !jobby) continue;
+    if (stage == null && !before && !after && !tail) stageFromBareOrdinal = true;
     stage ??= n === 10 ? "after-10" : "after-12";
     mark(i, 1, "stage");
     if (before) mark(i - 1, 1, "stage");
@@ -454,6 +460,8 @@ export function parseQuery(raw: string, opts: { typing?: boolean } = {}): Parsed
       dateKind = "EXAM";
     }
     mark(i, 1, "question");
+    // 27 Sep 2026 (wave 2 fixer): "kaun sa" / "kon si" — the pair is one question word.
+    if (Q_PAIR_HEAD.has(toks[i]) && i + 1 < toks.length && !s.used[i + 1] && Q_PAIR_TAIL.has(toks[i + 1])) mark(i + 1, 1, "question");
   }
   const doubtVerb = has(toks, DOUBT);
   const firstPerson = has(toks, FIRST);
@@ -517,6 +525,7 @@ export function parseQuery(raw: string, opts: { typing?: boolean } = {}): Parsed
     chapterNo,
     chapterWords,
     stage,
+    stageExplicit: stage != null && !stageFromBareOrdinal,
     state,
     stateTokens,
     section,

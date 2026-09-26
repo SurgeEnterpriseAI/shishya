@@ -24,12 +24,13 @@ import path from "node:path";
 import zlib from "node:zlib";
 import { describe, expect, it } from "vitest";
 import { fixtureIndex, fixtureInputs } from "../fixtures/search-index-fixture";
+import { reviewedRows, reviewedTarget } from "../fixtures/search-reviewed";
 import { resolveQuery } from "@/lib/search/resolve";
 import { parseQuery } from "@/lib/search/parse";
 import { decodeLetterNames, normaliseQuery } from "@/lib/search/normalize";
 import { TWIN_PUBLIC_RE, examIntentUrl, isSafePath, knownUrl, localeTarget } from "@/lib/search/targets";
 import { decodeIndex, encodeIndex } from "@/lib/search/index-codec";
-import { buildSearchIndex, toLiteIndex } from "@/lib/search/index-core";
+import { LITE_CAPSULE_MONTHS, buildSearchIndex, toLiteIndex } from "@/lib/search/index-core";
 import { SEARCH_LANDINGS } from "@/lib/search/landings";
 import { SUBJECT_TARGETS } from "@/lib/search/lexicon";
 import { DIRECT_MIN, type Resolution, type SearchIndex } from "@/lib/search/types";
@@ -87,12 +88,6 @@ function routeExists(href: string): boolean {
   return ok;
 }
 
-/** 26 Sep 2026 (G2): the reviewed rows recorded /exams/X/pyq, which 308s to the hub's #pyqs —
- *  the search now links the section itself, so the recorded page is compared in that form. */
-function reviewedUrl(url: string | undefined): string | undefined {
-  if (url && url.startsWith("/exams/") && url.endsWith("/pyq") && url.split("/").length === 4) return `${url.slice(0, -4)}#pyqs`;
-  return url;
-}
 
 const FORBIDDEN = /^\/(api|me|dashboard|today|aptitude|chat|mocks|attempts|admin|login\/institution)(\/|$|\?|#)/;
 
@@ -191,7 +186,8 @@ const DIRECT: [q: string, url: string][] = [
   // State, category, landing and tool pages.
   ["sarkari naukri bihar", "/exams/state/bihar"],
   ["telangana", "/exams/state/telangana"],
-  ["banking", "/exams/browse?category=BANKING"],
+  // 27 Sep 2026 (wave 2 search): the Banking hub, not the robots-blocked /exams/browse?category=BANKING filter.
+  ["banking", "/exams/category/banking"],
   ["results", "/results"],
   ["typing test", "/typing"],
   ["current affairs", "/current-affairs"],
@@ -227,10 +223,13 @@ describe("several pages fit: a list, never a guess", () => {
     for (const u of urls) expect(got, `${q} lists ${u}`).toContain(u);
   });
 
-  it("scholarships for girls: the matcher first, then girls-only scholarships from data", () => {
+  // 27 Sep 2026 (wave 2 search): the girls' list (/scholarships/for/girls) opens; the matcher and
+  // the girls-only scholarships follow as rows (was: a list led by the matcher).
+  it("scholarships for girls: the girls' list opens, then the matcher and girls-only scholarships from data", () => {
     const r = res("scholarship for girls");
-    expect(r.outcome).toBe("list");
-    expect(r.hits[0].url).toBe("/scholarships/match");
+    expect(r.outcome).toBe("direct");
+    expect(r.best?.url).toBe("/scholarships/for/girls");
+    expect(r.hits.map((h) => h.url)).toContain("/scholarships/match");
     const girls = r.hits.filter((h) => h.kind === "scholarship");
     expect(girls.length).toBeGreaterThan(0);
     for (const h of girls) expect(h.sub).toMatch(/girls only/);
@@ -332,22 +331,21 @@ describe("the old exam-only matchers' misroutes (Ask log, 26 Sep 2026)", () => {
 });
 
 describe("every query students typed (Ask log + search-miss log)", () => {
-  const fixture = JSON.parse(fs.readFileSync(path.join(ROOT, "tests/fixtures/search-real-queries.json"), "utf8")) as {
-    rows: { q: string; src: string; outcome: "direct" | "list" | "ai"; url?: string }[];
-  };
+  const rows = reviewedRows();
 
+  // 27 Sep 2026: each row's reviewed outcome in today's page form (tests/fixtures/search-reviewed.ts).
   it("no wrong DIRECT, and at least 85% agree with the reviewed outcome", () => {
     let agree = 0;
     const wrongDirect: string[] = [];
-    for (const row of fixture.rows) {
+    for (const row of rows) {
       const r = res(row.q);
-      const want = reviewedUrl(row.url);
-      if (r.outcome === "direct" && (row.outcome !== "direct" || r.best?.url !== want)) wrongDirect.push(`${row.q} → ${r.best?.url} (expected ${row.outcome} ${row.url ?? ""})`);
-      if (r.outcome === row.outcome && (row.outcome !== "direct" || r.best?.url === want)) agree++;
+      const want = reviewedTarget(row, deep);
+      if (r.outcome === "direct" && (want.outcome !== "direct" || r.best?.url !== want.url)) wrongDirect.push(`${row.q} → ${r.best?.url} (expected ${want.outcome} ${want.url ?? ""})`);
+      if (r.outcome === want.outcome && (want.outcome !== "direct" || r.best?.url === want.url)) agree++;
     }
     expect(wrongDirect).toEqual([]);
-    expect(agree / fixture.rows.length).toBeGreaterThanOrEqual(0.85);
-    expect(fixture.rows.length).toBeGreaterThanOrEqual(200);
+    expect(agree / rows.length).toBeGreaterThanOrEqual(0.85);
+    expect(rows.length).toBeGreaterThanOrEqual(200);
   });
 });
 
@@ -574,10 +572,28 @@ describe("wire codec and size", () => {
     }
   });
 
-  it("the lite index the strip downloads stays small: ≤ 200 KB raw and ≤ 45 KB gzipped", () => {
-    const wire = JSON.stringify(encodeIndex(lite));
+  // 27 Sep 2026 (wave 2 search): 45 → 47 KB gzipped. The wave's 28 pages (category and subject
+  // hubs, exams after each level, CBSE's board-exam hubs, the scholarship lists, /mock-tests)
+  // cost 1.8 KB gzipped on this snapshot (45,899 → 47,522 bytes, the covered filters' words
+  // moved to their hubs), past the old cap's 181 bytes of headroom; 47 KB keeps ~0.6 KB for the
+  // capsule months production adds (~27 bytes a month). Measured, not guessed: raise it again
+  // only with a measurement.
+  // 27 Sep 2026 (wave 2 fixer): measured in production's shape. The loader adds a capsule page for
+  // every month with current affairs (index-build.ts readCapsuleMonths) and that list only grows, so
+  // the index here carries two years of months and the lite tier keeps the latest
+  // LITE_CAPSULE_MONTHS (index-core.ts toLiteIndex); the bare snapshot has none and missed them.
+  it("the lite index the strip downloads stays small: ≤ 200 KB raw and ≤ 47 KB gzipped, capsule months included", () => {
+    const months = Array.from({ length: 24 }, (_, k) => {
+      const d = new Date(Date.UTC(2024, 9 + k, 1));
+      return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    });
+    const served = toLiteIndex(buildSearchIndex({ ...fixtureInputs(), capsuleMonths: months }, "deep"));
+    expect(served.docs.filter((d) => d.path.startsWith("/current-affairs/capsule/")).map((d) => d.path)).toEqual(
+      months.slice(-LITE_CAPSULE_MONTHS).map((m) => `/current-affairs/capsule/${m}`),
+    );
+    const wire = JSON.stringify(encodeIndex(served));
     expect(wire.length).toBeLessThanOrEqual(200 * 1024);
-    expect(zlib.gzipSync(wire).length).toBeLessThanOrEqual(45 * 1024);
+    expect(zlib.gzipSync(wire).length).toBeLessThanOrEqual(47 * 1024);
     expect(lite.docs.some((d) => d.kind === "topic-note")).toBe(false);
     expect(lite.docs.filter((d) => d.kind === "school-chapter").length).toBe(deep.docs.filter((d) => d.kind === "school-chapter").length);
   });
@@ -644,12 +660,21 @@ describe("G2: the resolver opens the right page", () => {
     expect(res("upcet").best?.url).toBe("/exams/UP_UPCET");
   });
 
+  // 27 Sep 2026 (wave 2 search): a class with a list of its own opens that list
+  // (/scholarships/for/class-9-10, /scholarships/for/class-11-12); Class 5 has none and
+  // still opens /scholarships.
   it("(b) a scholarship word + a class opens the scholarships, not the school class page", () => {
     for (const idx of [deep, lite]) {
-      for (const q of ["scholarship for class 10 students", "class 10 scholarship", "scholarships for class 12", "class 9 scholarships", "scholarship for class 5"]) {
+      for (const [q, url] of [
+        ["scholarship for class 10 students", "/scholarships/for/class-9-10"],
+        ["class 10 scholarship", "/scholarships/for/class-9-10"],
+        ["scholarships for class 12", "/scholarships/for/class-11-12"],
+        ["class 9 scholarships", "/scholarships/for/class-9-10"],
+        ["scholarship for class 5", "/scholarships"],
+      ]) {
         const r = resolveQuery(q, idx);
         expect(r.outcome, q).toBe("direct");
-        expect(r.best?.url, q).toBe("/scholarships");
+        expect(r.best?.url, q).toBe(url);
         expect(r.hits.some((h) => h.url.startsWith("/schooling")), q).toBe(false);
       }
     }
@@ -658,9 +683,9 @@ describe("G2: the resolver opens the right page", () => {
     const rows = res("scholarship for class 10 students").hits.filter((h) => h.kind === "scholarship");
     expect(rows.length).toBeGreaterThan(0);
     for (const h of rows) expect(levels.get(h.url), h.url).toContain("CLASS_9_10");
-    // A school subject is still a school ask; girls-only filters still list the matcher first.
+    // A school subject is still a school ask; a girls-only ask opens the girls' list (27 Sep 2026, wave 2 search).
     expect(res("class 10 science").best?.url).toBe("/schooling/cbse/class-10/science");
-    expect(res("scholarship for girls").hits[0].url).toBe("/scholarships/match");
+    expect(res("scholarship for girls").hits[0].url).toBe("/scholarships/for/girls");
   });
 
   it("(c) current affairs today and the exam calendar open their pages", () => {
@@ -685,12 +710,19 @@ describe("G2: the resolver opens the right page", () => {
       expect(resolveQuery("current affairs september 2026", idx).best?.url).toBe("/current-affairs/capsule/2026-09");
       expect(resolveQuery("september 2026 current affairs", idx).best?.url).toBe("/current-affairs/capsule/2026-09");
       expect(resolveQuery("current affairs capsule august 2026", idx).best?.url).toBe("/current-affairs/capsule/2026-08");
-      expect(resolveQuery("current affairs sept 2025", idx).best?.url).toBe("/current-affairs/capsule/2025-09");
       // No year: the latest capsule of that month.
       expect(resolveQuery("current affairs september", idx).best?.url).toBe("/current-affairs/capsule/2026-09");
       // A month with no capsule is never opened as the daily page.
       expect(resolveQuery("current affairs may 2026", idx).outcome).not.toBe("direct");
     }
+    // 27 Sep 2026 (wave 2 fixer): the lite index keeps only the latest LITE_CAPSULE_MONTHS capsules
+    // (index-core.ts), so an older month opens from the server's deep index (/ask) and the strip
+    // hands it on (needsServer) — never a wrong page in between.
+    expect(resolveQuery("current affairs sept 2025", withCapsules).best?.url).toBe("/current-affairs/capsule/2025-09");
+    const olderInLite = resolveQuery("current affairs sept 2025", withCapsulesLite);
+    expect(olderInLite.outcome).not.toBe("direct");
+    expect(olderInLite.needsServer).toBe(true);
+    expect(capsulePaths(withCapsulesLite).map(([p]) => p)).toEqual(capsulePaths(withCapsules).map(([p]) => p).slice(-LITE_CAPSULE_MONTHS));
     // The fixture index has no capsule months (as production until the loader passes them): no capsule URL is ever made up.
     for (const q of ["current affairs september 2026", "current affairs may 2026"]) {
       const r = res(q);

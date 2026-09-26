@@ -30,6 +30,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { fixtureIndex, fixtureInputs } from "../fixtures/search-index-fixture";
+import { reviewedRows, reviewedTarget } from "../fixtures/search-reviewed";
 import { resolveQuery } from "@/lib/search/resolve";
 import { parseQuery, pastedShishyaPath } from "@/lib/search/parse";
 import { examIntentUrl, examSiblingIntents, knownUrl } from "@/lib/search/targets";
@@ -81,7 +82,7 @@ describe("2. school pages and exam-page words", () => {
     ["cbse class 12 result", "/schooling/cbse/class-12"],
     ["cbse 10th result", "/schooling/cbse/class-10"],
     ["class 12 admit card", "/schooling/cbse/class-12"],
-    ["cbse board exam date 2027", "/schooling/cbse"],
+    // 27 Sep 2026 (wave 2 search): "cbse board exam date 2027" moved to the board-exam test below.
     ["class 12 physics cutoff", "/schooling/cbse/class-12/physics"],
   ])("%s → a list with %s and no-page-for-intent", (q, url) => {
     const r = res(q);
@@ -90,11 +91,21 @@ describe("2. school pages and exam-page words", () => {
     expect(r.hits.map((h) => h.url)).toContain(url);
   });
 
-  it("sample papers: the board page (which links them) leads", () => {
+  // 27 Sep 2026 (wave 2 search): CBSE's board-exam hub for the class (its own sample papers,
+  // marking schemes and date-sheet status) opens, with the board and class pages as rows (was: a
+  // list led by the board page); with no class named, both hubs lead a list.
+  it("sample papers: the class's CBSE board-exam hub opens; the board page is a row", () => {
     const r = res("cbse class 10 sample paper");
+    expect(r.outcome).toBe("direct");
+    expect(r.best?.url).toBe("/schooling/cbse/class-10/board-exam");
+    expect(r.hits.map((h) => h.url)).toEqual(expect.arrayContaining(["/schooling/cbse", "/schooling/cbse/class-10"]));
+  });
+
+  it("cbse board exam date 2027: a list led by the two board-exam hubs, the board page below", () => {
+    const r = res("cbse board exam date 2027");
     expect(r.outcome).toBe("list");
-    expect(r.hits[0].url).toBe("/schooling/cbse");
-    expect(r.hits.map((h) => h.url)).toContain("/schooling/cbse/class-10");
+    expect(r.hits.slice(0, 2).map((h) => h.url)).toEqual(["/schooling/cbse/class-10/board-exam", "/schooling/cbse/class-12/board-exam"]);
+    expect(r.hits.map((h) => h.url)).toContain("/schooling/cbse");
   });
 
   it("practice, notes and syllabus words still open the school page", () => {
@@ -345,22 +356,19 @@ describe("12. production-shaped topic notes (every topic-note page, 26 Sep 2026)
   });
 
   it("no wrong DIRECT against the reviewed real queries, and ≥ 85% agree", () => {
-    const fixture = JSON.parse(fs.readFileSync(path.join(ROOT, "tests/fixtures/search-real-queries.json"), "utf8")) as {
-      rows: { q: string; outcome: "direct" | "list" | "ai"; url?: string }[];
-    };
+    const rows = reviewedRows();
     const wrong: string[] = [];
     let agree = 0;
-    // 26 Sep 2026 (G2): rows recorded /exams/X/pyq, which 308s to the hub's #pyqs — the search
-    // now links the section itself, so the recorded page is compared in that form.
-    const reviewedUrl = (u: string | undefined) => (u && u.startsWith("/exams/") && u.endsWith("/pyq") && u.split("/").length === 4 ? `${u.slice(0, -4)}#pyqs` : u);
-    for (const row of fixture.rows) {
+    // 27 Sep 2026: each row's reviewed outcome in today's page form — /pyq as the hub's #pyqs
+    // (26 Sep, G2), a covered category filter as its hub, /mock-tests (tests/fixtures/search-reviewed.ts).
+    for (const row of rows) {
       const r = resolveQuery(row.q, prod);
-      const want = reviewedUrl(row.url);
-      if (r.outcome === "direct" && (row.outcome !== "direct" || r.best?.url !== want)) wrong.push(`${row.q} → ${r.best?.url}`);
-      if (r.outcome === row.outcome && (row.outcome !== "direct" || r.best?.url === want)) agree++;
+      const want = reviewedTarget(row, prod);
+      if (r.outcome === "direct" && (want.outcome !== "direct" || r.best?.url !== want.url)) wrong.push(`${row.q} → ${r.best?.url}`);
+      if (r.outcome === want.outcome && (want.outcome !== "direct" || r.best?.url === want.url)) agree++;
     }
     expect(wrong).toEqual([]);
-    expect(agree / fixture.rows.length).toBeGreaterThanOrEqual(0.85);
+    expect(agree / rows.length).toBeGreaterThanOrEqual(0.85);
   });
 
   it("the copy's examples and the review's probes resolve the same as on the 3-exam snapshot", () => {

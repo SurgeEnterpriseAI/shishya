@@ -28,8 +28,15 @@ describe("exam hub copy — the question pipeline, honestly", () => {
 
   it("the free answer makes no universal check claim — only AI writing and the report re-check", () => {
     expect(fillHub(EXAM_HUB_COPY.en.faqFreeA, { short: "SSC CGL" })).toBe(
-      "Yes. Every SSC CGL mock test, PYQ-pattern paper and study tool on Shishya is completely free — no subscription and no credit card. Questions are written with AI from the official syllabus and notification, and re-checked whenever a student reports one.",
+      "Yes. Every SSC CGL mock test, PYQ-pattern paper and study tool on Shishya is completely free — no subscription and no credit card. Questions are written with AI to follow each exam's syllabus topics on Shishya, and re-checked whenever a student reports one.",
     );
+    // 27 Sep 2026: not "from the official syllabus and notification" in any locale — the question
+    // generators follow the Subject / Topic tree in Shishya's DB, not an official document.
+    expect(EXAM_HUB_COPY.en.faqFreeA).not.toMatch(/official syllabus|notification/i);
+    expect(EXAM_HUB_COPY.hi.faqFreeA).not.toContain("आधिकारिक सिलेबस");
+    expect(EXAM_HUB_COPY.hi.faqFreeA).not.toContain("अधिसूचना");
+    expect(EXAM_HUB_COPY.te.faqFreeA).not.toContain("అధికారిక సిలబస్");
+    expect(EXAM_HUB_COPY.te.faqFreeA).not.toContain("నోటిఫికేషన్");
     for (const lc of LOCALES) {
       const a = EXAM_HUB_COPY[lc].faqFreeA;
       expect(a, lc).toContain("AI");

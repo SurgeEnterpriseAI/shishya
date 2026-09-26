@@ -515,7 +515,9 @@ describe("src/app/page.tsx — the Doors page", () => {
     expect(src).toMatch(/languageCount=\{INDIAN_LANGUAGE_COUNT\}/);
     expect(src).toMatch(/careersCount=\{CAREERS\.length\}/);
     expect(src).toMatch(/examCount=\{portalStats\.examCount\}/);
-    expect(src).toMatch(/\$\{INDIAN_LANGUAGE_COUNT\} Indian languages/);
+    // 27 Sep 2026: the meta description moved to src/lib/home-meta.ts, which writes
+    // "{n} Indian languages" from the count the page passes (tests/unit/home-meta.test.ts).
+    expect(src).toMatch(/homeMetaDescription\(examCount, INDIAN_LANGUAGE_COUNT\)/);
     const jsx = src.slice(src.indexOf("export default async function"));
     expect(/\b1[0-9] Indian languages|\b4[0-9] (career )?paths|\b1[0-9]{2}\+? exams/.test(jsx)).toBe(false);
     for (const re of [/trusted by/i, /AI[- ]powered/i, /testimonial/i]) expect(re.test(src), String(re)).toBe(false);

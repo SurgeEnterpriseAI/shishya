@@ -14,8 +14,10 @@
 // loop. The answers state the real pipeline.
 // 26 Sep 2026: the earlier wording credited an admin team with validating
 // each question, which is not how live questions are passed. The free
-// answer now says questions are "written with AI from the official syllabus
-// and notification, and re-checked whenever a student reports one". The
+// answer now says questions are "written with AI to follow each exam's
+// syllabus topics on Shishya, and re-checked whenever a student reports one"
+// (27 Sep 2026: it said "from the official syllabus and notification", but
+// the generators read Shishya's own topic tree — src/lib/exam-hub-copy.ts). The
 // automated answer check (three independent AI solves and an examiner) is
 // claimed only in the count answer, and only for the questions it passed on
 // this exam: `uncheckedCount` (src/lib/exam-answer-check.ts) picks "every

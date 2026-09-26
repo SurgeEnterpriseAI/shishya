@@ -266,7 +266,9 @@ export const INTENT_LANDING: Readonly<Partial<Record<ExamIntent | "RESULT", { pa
   dates: { path: "/exam-calendar", direct: true },
   RESULT: { path: "/results", direct: true },
   eligibility: { path: "/find-your-exam", direct: true },
-  mocks: { path: "/live-test", direct: false },
+  // 27 Sep 2026 (wave 2 search): /mock-tests, every exam's free mocks on one
+  // page (a685688), leads a bare practice ask; it was the Sunday live tests.
+  mocks: { path: "/mock-tests", direct: false },
   pyq: { path: "/exams/browse", direct: false },
   syllabus: { path: "/exams/browse", direct: false },
   cutoff: { path: "/colleges/cutoffs", direct: false },
@@ -499,3 +501,50 @@ export const MONTH_WORDS: Readonly<Record<string, number>> = {
 };
 /** English month names, for capsule page titles and match keys (index-core.ts). */
 export const MONTH_NAMES: readonly string[] = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+// ── 15. Wave 2 page families (27 Sep 2026) ───────────────────────────────
+// Organic wave 2 (a685688) added pages for how students search: CBSE's
+// board-exam hubs, "exams after {level}", the scholarship lists, the category
+// and subject hubs and /mock-tests. index-core.ts builds one page per entry of
+// each family's own route list; resolve.ts reads the words below and opens a
+// family page only when the index holds it.
+/** Words that, beside CBSE or Class 10 / 12, ask for the board exam itself —
+ *  CBSE's own sample papers, marking schemes, date-sheet status and result
+ *  portals, which /schooling/cbse/class-{10,12}/board-exam links. */
+export const BOARD_EXAM_WORDS: readonly string[] = [
+  ...BOARD_PAPER_WORDS, "marking scheme", "marking schemes", "board exam", "board exams", "board paper", "board papers", "boards", "board pariksha",
+  "सैंपल पेपर", "सेम्पल पेपर", "मॉडल पेपर", "डेट शीट", "मार्किंग स्कीम", "बोर्ड परीक्षा", "बोर्ड एग्जाम",
+];
+/** A qualifier stage → the slug of its /exams/after/{slug} page (src/lib/exam-qualification.ts
+ *  QUALIFICATION_LEVELS; tests/unit/search-wave2-families.test.ts checks each is published). */
+export const STAGE_LEVEL_SLUG: Readonly<Record<"after-10" | "after-12" | "after-grad", string>> = { "after-10": "10th", "after-12": "12th", "after-grad": "graduation" };
+/** Words beside a stage that make it an ask for the exams ("exams after 12th", "12वीं के बाद परीक्षा"). */
+export const STAGE_EXAM_WORDS: readonly string[] = [
+  "exam", "exams", "examination", "examinations", "pariksha", "competitive", "परीक्षा", "परीक्षाएं", "परीक्षाओं", "పరీక్ష", "పరీక్షలు", "ఎగ్జామ్", "ఎగ్జామ్స్",
+];
+/** 27 Sep 2026 (wave 2 fixer): words that, beside a stage the student named AND an exam word, still ask
+ *  for the exams after that level — "graduation ke baad government exam", "competitive exams after 12th
+ *  science": the government word and the student's stream qualify the level and name no other page.
+ *  A stream alone ("after 12th arts") asks what to study next — the career pages (resolve.ts). */
+export const STAGE_GOVT_WORDS: readonly string[] = ["government", "govt", "sarkari", "सरकारी", "ప్రభుత్వ"];
+export const STAGE_STREAM_WORDS: readonly string[] = [
+  "science", "arts", "art", "commerce", "humanities", "pcm", "pcb", "maths", "math", "biology", "विज्ञान", "कला", "वाणिज्य",
+];
+/** 27 Sep 2026 (wave 2 fixer): besides BOARD_EXAM_WORDS, the only words a CBSE board-exam ask may carry.
+ *  Any other word left over — an exam's name ("neet pyq class 12", "cbse ctet sample paper") — asks for
+ *  that exam's papers, and CBSE's board-exam hubs stay out. */
+export const BOARD_EXAM_SIDE_WORDS: readonly string[] = [...PAPER_WORDS, "previous", "year", "years", "question", "questions", "pdf", "download"];
+/** 27 Sep 2026 (wave 2 fixer): "kaun sa", "kaun si", "kon se" — the second word belongs to the Hinglish
+ *  "which", never a search word ("10th ke baad kaun sa exam de" left "sa" to match nothing). */
+export const QUESTION_PAIR_HEADS: readonly string[] = ["kaun", "kon", "कौन"];
+export const QUESTION_PAIR_TAILS: readonly string[] = ["sa", "si", "se", "सा", "सी", "से"];
+/** A scholarship ask with ONE filter → its list, /scholarships/for/{slug} (src/lib/scholarship-lists.ts
+ *  SCHOLARSHIP_FILTERS; the test checks every slug here is one of them). A category ask opens a list
+ *  when every named category is in the list's set. With a state, or two filters, the matcher leads. */
+export const SCHOLARSHIP_LIST_BY_GENDER: Readonly<Record<string, string>> = { F: "girls" };
+export const SCHOLARSHIP_LIST_BY_CATEGORIES: readonly (readonly [categories: readonly string[], slug: string])[] = [
+  [["SC", "ST", "OBC"], "sc-st-obc"],
+  [["MIN"], "minority"],
+];
+export const SCHOLARSHIP_LIST_BY_LEVEL: Readonly<Record<string, string>> = { PHD: "phd" };
+export const SCHOLARSHIP_LIST_BY_CLASS: Readonly<Record<number, string>> = { 9: "class-9-10", 10: "class-9-10", 11: "class-11-12", 12: "class-11-12" };

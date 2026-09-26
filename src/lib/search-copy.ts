@@ -100,7 +100,8 @@ const EN: SearchCopy = {
     { text: "CUET UG", section: "entrance", expect: "direct" },
     { text: "एमपीएससी गट क मॉक टेस्ट", section: "government", expect: "direct" },
     { text: "software engineer salary", section: "careers", expect: "direct" },
-    { text: "scholarships for girls", section: "college", expect: "list" },
+    // 27 Sep 2026 (wave 2 search): opens /scholarships/for/girls, the list built for it (was a list of rows).
+    { text: "scholarships for girls", section: "college", expect: "direct" },
   ],
   tryRows: [
     { q: "class 10 maths chapter 3", section: "school" },
@@ -221,7 +222,8 @@ const HI: SearchCopy = {
     { text: "IIT Madras placements", section: "college", expect: "direct" },
     { text: "जेईई मेन", section: "entrance", expect: "direct" },
     { text: "తెలంగాణ పోలీస్ కానిస్టేబుల్", section: "government", expect: "direct" },
-    { text: "लड़कियों के लिए छात्रवृत्ति", section: "college", expect: "list" },
+    // 27 Sep 2026 (wave 2 search): opens /scholarships/for/girls (was a list of rows).
+    { text: "लड़कियों के लिए छात्रवृत्ति", section: "college", expect: "direct" },
   ],
   tryRows: [
     { q: "कक्षा 10 गणित अध्याय 3", section: "school" },
@@ -327,7 +329,8 @@ const TE: SearchCopy = {
     { text: "లెక్కలు 9వ తరగతి", section: "school", expect: "direct" },
     { text: "PM YASASVI scholarship", section: "college", expect: "direct" },
     { text: "कक्षा 6 गणित", section: "school", expect: "direct" },
-    { text: "scholarships for girls", section: "college", expect: "list" },
+    // 27 Sep 2026 (wave 2 search): opens /scholarships/for/girls (was a list of rows).
+    { text: "scholarships for girls", section: "college", expect: "direct" },
   ],
   tryRows: [
     { q: "10వ తరగతి గణితం", section: "school" },

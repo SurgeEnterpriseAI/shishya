@@ -7,6 +7,12 @@
 // /dashboard, /me, /chat, /api — private or retired surfaces.
 //
 // Titles and one-line subs describe the page as it is; no counts are typed.
+//
+// 27 Sep 2026 (wave 2 search): the wave's families whose pages depend on a
+// route list — the category and subject hubs, "exams after {level}", CBSE's
+// board-exam hubs and the scholarship lists — are built in index-core.ts from
+// each family's own list, never typed here. Only /mock-tests, one fixed page,
+// is listed below.
 
 import type { SearchSection } from "./types";
 
@@ -41,7 +47,8 @@ export const SEARCH_LANDINGS: readonly SearchLanding[] = [
   },
   {
     path: "/exams/state", section: "government", title: "Exams by state", sub: "Government and entrance exams, state by state",
-    terms: ["exams by state", "state exams", "state wise exams", "state government exams", "state psc", "राज्य परीक्षाएं", "రాష్ట్ర పరీక్షలు"],
+    // 27 Sep 2026 (wave 2 search): "state psc" moved to the State PSC hub (/exams/category/state-psc, index-core.ts).
+    terms: ["exams by state", "state exams", "state wise exams", "state government exams", "राज्य परीक्षाएं", "రాష్ట్ర పరీక్షలు"],
   },
   {
     path: "/current-affairs", section: "government", title: "Current affairs", sub: "Daily current affairs and monthly capsules",
@@ -56,7 +63,17 @@ export const SEARCH_LANDINGS: readonly SearchLanding[] = [
     path: "/descriptive", section: "government", title: "Descriptive writing", sub: "Essay and letter practice for descriptive papers",
     terms: ["descriptive", "descriptive writing", "descriptive paper", "essay writing", "letter writing", "precis writing", "निबंध लेखन"],
   },
-  { path: "/live-test", section: "government", title: "Live tests", sub: "Scheduled all-India live tests", terms: ["live test", "live tests", "sunday live test", "all india live test", "all india mock", "लाइव टेस्ट", "లైవ్ టెస్ట్"] },
+  // 27 Sep 2026 (wave 2 fixer): "all india mock test(s)" / "all india test series" are the scheduled
+  // all-India live tests — once the bare mock-test ask moved to /mock-tests they lost this page.
+  {
+    path: "/live-test", section: "government", title: "Live tests", sub: "Scheduled all-India live tests",
+    terms: ["live test", "live tests", "sunday live test", "all india live test", "all india mock", "all india mock test", "all india mock tests", "all india test series", "लाइव टेस्ट", "లైవ్ టెస్ట్"],
+  },
+  // 27 Sep 2026 (wave 2 search): the free mock-test catalogue (src/app/mock-tests) — the page for a bare mock-test ask.
+  {
+    path: "/mock-tests", section: "more", title: "Free mock tests", sub: "Exams with free mock tests on Shishya, by category and state",
+    terms: ["mock test", "mock tests", "free mock test", "free mock tests", "online mock test", "mock test series", "free test series", "all mock tests", "मॉक टेस्ट", "फ्री मॉक टेस्ट", "మాక్ టెస్ట్", "ఉచిత మాక్ టెస్ట్"],
+  },
   {
     path: "/exam-calendar", section: "government", title: "Exam calendar", sub: "Upcoming exam dates, admit cards and results",
     terms: ["exam calendar", "exams calendar", "upcoming exams", "exam schedule", "upcoming exam dates", "परीक्षा कैलेंडर", "परीक्षा तिथियां", "పరీక్షల క్యాలెండర్"],

@@ -63,6 +63,7 @@ import {
   mostTakenExams,
 } from "@/lib/home-doors";
 import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { homeMetaDescription } from "@/lib/home-meta";
 import { CAREERS } from "@/data/careers";
 import { findBoard } from "@/lib/schooling-data";
 import { Header } from "@/components/Header";
@@ -94,10 +95,10 @@ import { askBaseFor, searchCopy } from "@/lib/search-copy";
 // so it is never called a count of government exams (review, 26 Sep 2026).
 export async function generateMetadata(): Promise<Metadata> {
   const { examCount } = await loadPortalStats().catch(() => ({ examCount: "", questions: "", notes: "" }));
-  const examScope = examCount ? `${examCount} government and entrance exams` : "government and entrance exams";
   const title = "Shishya — One smart place to study: school, entrance & government exams";
-  const description =
-    `Free practice for anyone studying in India. CBSE and ICSE school chapters with the official book and syllabus links; ${examScope} — JEE, NEET, CUET, SSC, banking, railways, state PSCs, UPSC — with free mocks, previous-year practice, cutoffs and dates; colleges, scholarships and career paths. A tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages. Free, no paywall.`;
+  // 27 Sep 2026: ≤ 160 characters (it was ~300 and cut off in results) — the
+  // whole platform in one line, the exam count still computed (src/lib/home-meta.ts).
+  const description = homeMetaDescription(examCount, INDIAN_LANGUAGE_COUNT);
 
   return {
     title,

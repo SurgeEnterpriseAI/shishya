@@ -3,7 +3,11 @@
 // Reads what the index needs from the DB — the real exams (REAL_EXAM_WHERE),
 // the years with validated PYQ rows and the topics with usable notes
 // (REAL_EXAM_SQL), the page gates (loadExamPageGates, the sitemap's own rule)
-// and the school surface (loadSchoolSurface) — in one unstable_cache entry
+// and the school surface (loadSchoolSurface) — plus, 27 Sep 2026 (wave 2
+// search), the months with a current-affairs capsule, the category hubs that
+// render (liveExamCategories, the hub page's own rule over the same exam rows)
+// and the subject hubs that render (subjectHubIndexRows, the list /subjects
+// shows) — in one unstable_cache entry
 // (1 hour, tag "search-index"), then builds the pure index
 // (src/lib/search/index-core.ts) once per cached read. No model is ever
 // called; no query text reaches SQL.
@@ -23,6 +27,9 @@ import { loadExamPageGates } from "@/lib/exam-page-gates";
 import { loadSchoolSurface } from "@/lib/school/surface";
 import { usableNotesSql } from "@/lib/topic-notes";
 import { FALLBACK_EXAMS } from "@/data/fallback-exams";
+import { liveExamCategories } from "@/lib/exam-categories";
+import { loadSubjectHubs } from "@/lib/db/subject-hubs-db";
+import { subjectHubIndexRows } from "@/lib/subject-hubs";
 import { buildSearchIndex, toLiteIndex, type SearchExamRow, type SearchIndexInputs, type SearchTopicRow } from "./index-core";
 import { resolveQuery } from "./resolve";
 import type { ExamGatesLike, Resolution, SearchIndex } from "./types";
@@ -80,13 +87,36 @@ async function readTopics(): Promise<SearchTopicRow[]> {
     ORDER BY e.code, t.code`;
 }
 
+/** 27 Sep 2026 (wave 2 search): the months /current-affairs/capsule/{month}
+ *  renders — any CurrentAffair row that month (an empty month 404s). `date`
+ *  is a DATE column (the IST calendar day), so to_char reads it with no time zone. */
+async function readCapsuleMonths(): Promise<string[]> {
+  const rows = await prisma.$queryRaw<{ m: string }[]>`SELECT DISTINCT to_char(date, 'YYYY-MM') AS m FROM "CurrentAffair" ORDER BY m`;
+  return rows.map((r) => r.m);
+}
+
+/** 27 Sep 2026 (wave 2 search): the subject hubs that render, in SUBJECT_HUBS order. */
+async function readSubjectHubs(): Promise<string[]> {
+  return subjectHubIndexRows(await loadSubjectHubs()).map((h) => h.def.slug);
+}
+
+/** The two wave 2 extras are not worth the whole index: a failed read leaves
+ *  its pages out (search never opens a page it cannot vouch for) instead of
+ *  dropping every exam gate to the DB-down fallback. */
+const extraFailed = (what: string) => (err: unknown): undefined => {
+  console.error(`[search-index] ${what} read failed, left out:`, err instanceof Error ? err.message : err);
+  return undefined;
+};
+
 async function readInputs(): Promise<SearchIndexInputs> {
-  const [exams, pyqYears, topics, gates, school] = await Promise.all([
+  const [exams, pyqYears, topics, gates, school, capsuleMonths, subjectHubs] = await Promise.all([
     readExams(),
     readPyqYears(),
     readTopics(),
     loadExamPageGates(),
     loadSchoolSurface(),
+    readCapsuleMonths().catch(extraFailed("capsule months")),
+    readSubjectHubs().catch(extraFailed("subject hubs")),
   ]);
   const gateRecord: Record<string, ExamGatesLike> = {};
   for (const [code, g] of gates) gateRecord[code] = { cutoff: g.cutoff, syllabus: g.syllabus, tricks: g.tricks, guide: g.guide, buildMock: g.buildMock };
@@ -117,11 +147,16 @@ async function readInputs(): Promise<SearchIndexInputs> {
         })),
       })),
     },
+    capsuleMonths,
+    categoryHubs: liveExamCategories(exams).map((c) => ({ slug: c.slug, noun: c.noun })),
+    subjectHubs,
   };
 }
 
 // Throws on a failed read, so a DB hiccup is never cached for the hour.
-const cachedInputs = unstable_cache(readInputs, ["search-index-inputs-v1"], {
+// v2 (27 Sep 2026, wave 2 search): the inputs carry the capsule months and the
+// category / subject hubs — a new key, so no v1 entry without them is served.
+const cachedInputs = unstable_cache(readInputs, ["search-index-inputs-v2"], {
   revalidate: SEARCH_INDEX_REVALIDATE,
   tags: ["search-index"],
 });

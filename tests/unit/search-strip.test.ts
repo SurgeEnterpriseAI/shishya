@@ -161,10 +161,12 @@ describe("strip decisions (strip-logic.ts)", () => {
     expect(t.kind === "open" && t.hit.url).toBe("/exams/SSC_CGL/cutoff");
   });
 
+  // 27 Sep 2026 (wave 2 search): "scholarships for girls" now opens its list page; "group 2"
+  // (three states' Group 2 exams) is the several-pages case.
   it("several pages: grouped rows, then 'See every page' as the Enter default (→ /ask, no model), then the AI row", () => {
-    const res = both("scholarships for girls");
+    const res = both("group 2");
     expect(res.submit.outcome).toBe("list");
-    const v = buildStripView("scholarships for girls", res, "ready", EN, []);
+    const v = buildStripView("group 2", res, "ready", EN, []);
     expect(v.opts[v.def]).toEqual({ kind: "all" });
     expect(v.opts.at(-1)).toEqual({ kind: "ask" });
     expect(v.aiMode).toBe(false);

@@ -1,11 +1,43 @@
 // Builds the search index from the committed 26 Sep 2026 snapshot
 // (search-inputs-2026-09-26.json) — the same pure builder the server uses,
 // over real exam gates / PYQ years and the real school spine. No DB.
+//
+// 27 Sep 2026 (wave 2 search): plus what the server loader now passes — the
+// category hubs that render, by the hub page's own rule over the snapshot's
+// exams (liveExamCategories), and the subject hubs that render, built from the
+// committed 27 Sep 2026 prod read (subject-hubs-2026-09-27.json) exactly as
+// tests/unit/subject-hubs.test.ts builds them. The snapshot holds no
+// current-affairs months, so no capsule page is in this index.
 
 import fs from "node:fs";
 import path from "node:path";
 import { buildSearchIndex, type SearchIndexInputs } from "@/lib/search/index-core";
 import type { SearchIndex } from "@/lib/search/types";
+import { liveExamCategories } from "@/lib/exam-categories";
+import { buildSubjectHubs, subjectHubIndexRows, type HubSectionRow, type HubTopicRow } from "@/lib/subject-hubs";
+
+/** The subject hubs that render on the 27 Sep 2026 data (subjectHubIndexRows, the list /subjects shows). */
+function fixtureSubjectHubs(): string[] {
+  const fx = JSON.parse(fs.readFileSync(path.join(__dirname, "subject-hubs-2026-09-27.json"), "utf8")) as {
+    exams: Record<string, [string, string, string]>;
+    sections: [string, string][];
+    topics: [number, number, string, string, 0 | 1, number][];
+  };
+  const sections: HubSectionRow[] = fx.sections.map(([code, name], i) => {
+    const [shortName, examName, category] = fx.exams[code];
+    return { subjectId: `s${i}`, subjectName: name, exam: { code, shortName, name: examName, category } };
+  });
+  const topics: HubTopicRow[] = fx.topics.map(([si, pi, code, name, notes, checked], i) => ({
+    id: `t${i}`,
+    subjectId: `s${si}`,
+    parentId: pi >= 0 ? `t${pi}` : null,
+    code: code || `blank.${i}`,
+    name: name || `blank ${i}`,
+    hasNotes: notes === 1,
+    checkedOwn: checked,
+  }));
+  return subjectHubIndexRows(buildSubjectHubs(sections, topics)).map((h) => h.def.slug);
+}
 
 type Fixture = {
   builtAt: string;
@@ -60,6 +92,8 @@ export function fixtureInputs(): SearchIndexInputs {
       })),
     },
   };
+  cached.categoryHubs = liveExamCategories(cached.exams).map((c) => ({ slug: c.slug, noun: c.noun }));
+  cached.subjectHubs = fixtureSubjectHubs();
   return cached;
 }
 

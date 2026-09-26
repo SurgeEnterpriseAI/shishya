@@ -168,3 +168,35 @@ describe("link absoluteness (property)", () => {
     expect(urlsIn(JSON.stringify({ a: "https://ssc.gov.in/x.", b: ["see https://shishya.in/exams/SSC_CGL"] }))).toEqual(["https://ssc.gov.in/x", "https://shishya.in/exams/SSC_CGL"]);
   });
 });
+
+// 27 Sep 2026 (wave 2 search): the wave's page families (a685688) are index
+// documents built from their own route lists, so an answer that links them
+// keeps the link — before, the checker dropped every one of them.
+describe("the wave 2 page families", () => {
+  it("keeps a link to each family's page, labelled from the index", () => {
+    const pages = [
+      "/mock-tests",
+      "/exams/category/banking",
+      "/exams/after/12th",
+      "/schooling/cbse/class-10/board-exam",
+      "/subjects/reasoning",
+      "/scholarships/for/girls",
+      "/scholarships/closing-soon",
+    ];
+    const r = check(pages.map((p, i) => `- [page ${i}](https://shishya.in${p})`).join("\n"));
+    expect(r.pages.map((p) => p.url)).toEqual(pages);
+    for (const p of pages) expect(r.answer).toContain(`(https://shishya.in${p})`);
+    for (const p of pages) expect(knownPath(`https://shishya.in${p}`, idx), p).toBe(p);
+    expect(r.pages.find((p) => p.url === "/exams/category/banking")?.label).toBe("Banking exams");
+    expect(r.pages.find((p) => p.url === "/scholarships/for/girls")?.section).toBe("college");
+  });
+
+  it("unlinks a family page that does not render (a hub under its floor, a held level, a made-up slug)", () => {
+    for (const p of ["/exams/category/railway", "/exams/after/postgraduation", "/scholarships/for/boys", "/subjects/not-a-subject"]) {
+      expect(knownPath(`https://shishya.in${p}`, idx), p).toBeNull();
+    }
+    const r = check("See [railway exams](https://shishya.in/exams/category/railway).");
+    expect(r.answer).toBe("See railway exams.");
+    expect(r.pages).toEqual([]);
+  });
+});

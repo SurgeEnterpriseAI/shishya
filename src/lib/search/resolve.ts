@@ -45,10 +45,14 @@ import { parseQuery } from "./parse";
 import { decodeLetterNames, isLatinToken, normaliseTerm, trigramDice } from "./normalize";
 import { INTENT_LABEL, examIntentUrl, examSiblingIntents, isSafePath, knownUrl, localeTarget } from "./targets";
 import {
+  BOARD_EXAM_SIDE_WORDS,
+  BOARD_EXAM_WORDS,
   BOARD_PAPER_WORDS,
   CALENDAR_SIDE_WORDS,
   CALENDAR_WORDS,
   CAPSULE_SIDE_WORDS,
+  CLASS_PHRASES,
+  CONDITIONAL_CLASS_WORDS,
   CURRENT_AFFAIRS_PHRASES,
   DEFAULT_FAMILY,
   DEGREE_STREAM,
@@ -58,8 +62,16 @@ import {
   INTENT_PHRASES,
   MONTH_WORDS,
   PLURAL_COLLEGE_WORDS,
+  SCHOLARSHIP_LIST_BY_CATEGORIES,
+  SCHOLARSHIP_LIST_BY_CLASS,
+  SCHOLARSHIP_LIST_BY_GENDER,
+  SCHOLARSHIP_LIST_BY_LEVEL,
   SCHOOL_PAGE_INTENTS,
   SECTION_PHRASES,
+  STAGE_EXAM_WORDS,
+  STAGE_GOVT_WORDS,
+  STAGE_LEVEL_SLUG,
+  STAGE_STREAM_WORDS,
   SUBJECT_NEAREST,
   SUBJECT_TARGETS,
   TODAY_WORDS,
@@ -830,6 +842,82 @@ function capsuleDoc(P: Prep, month: number, year: number | null): number | null 
   return best ? best[1] : null;
 }
 
+// ── Wave 2 page families (27 Sep 2026) — lexicon.ts section 15 ──────────
+
+const BOARD_EXAM = BOARD_EXAM_WORDS.map((w) => ` ${normaliseTerm(w)} `);
+/** A state board's own name for a class ("sslc", "hsc", "2nd puc"): not CBSE's board exam. */
+const STATE_BOARD_CLASS = [...CONDITIONAL_CLASS_WORDS, ...CLASS_PHRASES.map(([p]) => p)].map((w) => ` ${normaliseTerm(w)} `);
+const BOARD_EXAM_RE = /^\/schooling\/cbse\/class-(\d{1,2})\/board-exam$/;
+const STAGE_EXAM = wordSet(STAGE_EXAM_WORDS);
+/** 27 Sep 2026 (wave 2 fixer): every word a board-exam ask may leave over (lexicon.ts BOARD_EXAM_WORDS, BOARD_EXAM_SIDE_WORDS). */
+const BOARD_EXAM_OK = wordSet([...BOARD_EXAM_WORDS.flatMap((w) => normaliseTerm(w).split(" ")), ...BOARD_EXAM_SIDE_WORDS]);
+const STAGE_GOVT = wordSet(STAGE_GOVT_WORDS);
+const STAGE_STREAM = wordSet(STAGE_STREAM_WORDS);
+
+/**
+ * "cbse class 10 sample paper", "cbse marking scheme", "class 12 board exam 2027", "cbse date sheet
+ * 2027": CBSE's board-exam hubs the index holds (/schooling/cbse/class-{n}/board-exam — CBSE's own
+ * sample papers, marking schemes, date-sheet status and result portals), the named class's alone
+ * or, with no class named, every one in class order. A previous-paper ask for a class counts too
+ * (the hub links CBSE's previous-year papers page). Never for another board, a subject or chapter.
+ */
+function boardExamHubs(P: Prep, parsed: ParsedQuery): number[] {
+  if (parsed.board != null && parsed.board !== "cbse") return [];
+  if (parsed.subject != null || parsed.chapterNo != null || parsed.state) return [];
+  if (parsed.board == null && parsed.cls == null) return [];
+  const norm = ` ${parsed.norm} `;
+  if (STATE_BOARD_CLASS.some((w) => norm.includes(w))) return [];
+  if (!BOARD_EXAM.some((w) => norm.includes(w)) && !(parsed.intent === "pyq" && parsed.cls != null)) return [];
+  // 27 Sep 2026 (wave 2 fixer): an exam named beside the class or board ("neet pyq class 12", "jee main
+  // class 12 pyq", "cbse ctet sample paper") asks for that exam's papers — they opened the class's hub,
+  // or pushed CTET's mocks out of the top rows. Any word left that is not a board-exam word keeps the hubs out.
+  if (parsed.hard.some((t) => !BOARD_EXAM_OK.has(t))) return [];
+  const hubs: [number, number][] = [];
+  for (const [path, i] of P.landing) {
+    const m = BOARD_EXAM_RE.exec(path);
+    if (m && (parsed.cls == null || Number(m[1]) === parsed.cls)) hubs.push([Number(m[1]), i]);
+  }
+  return hubs.sort((a, b) => a[0] - b[0]).map(([, i]) => i);
+}
+
+/** "exams after 12th": the /exams/after/{level} page of the stage, when the index holds it. */
+function afterLevelDoc(P: Prep, parsed: ParsedQuery): number | null {
+  return parsed.stage ? (P.landing.get(`/exams/after/${STAGE_LEVEL_SLUG[parsed.stage]}`) ?? null) : null;
+}
+
+/**
+ * 27 Sep 2026 (wave 2 fixer): a stage the student named with words left over that only qualify it.
+ * "exams": an exam word, plus a government word or the student's stream ("graduation ke baad
+ * government exam", "competitive exams after 12th science") — the exams after that level. "stream":
+ * a stream alone ("after 12th arts") — what to study next. Null for anything else.
+ */
+function stageQualifierAsk(parsed: ParsedQuery, hardWords: readonly string[]): "exams" | "stream" | null {
+  if (!parsed.stage || !parsed.stageExplicit || hardWords.length === 0) return null;
+  if (parsed.state || parsed.kindHint || parsed.section || parsed.intent || parsed.dateKind || parsed.cls != null || parsed.board || parsed.subject) return null;
+  if (!hardWords.every((t) => STAGE_EXAM.has(t) || STAGE_GOVT.has(t) || STAGE_STREAM.has(t))) return null;
+  if (parsed.tokens.some((t) => STAGE_EXAM.has(t))) return "exams";
+  return hardWords.every((t) => STAGE_STREAM.has(t)) ? "stream" : null;
+}
+
+/**
+ * "scholarship for girls", "sc st scholarship", "minority scholarship", "phd scholarship", "scholarship
+ * for class 10": the one /scholarships/for/{slug} list a single filter names (lexicon.ts
+ * SCHOLARSHIP_LIST_BY_*), when the index holds it. All-India lists: never beside a state.
+ */
+function scholarshipListDoc(P: Prep, parsed: ParsedQuery): number | null {
+  if (parsed.state) return null;
+  const f = parsed.filters;
+  const byClass = parsed.cls != null ? SCHOLARSHIP_LIST_BY_CLASS[parsed.cls] : undefined;
+  const named = [f.gender != null, f.categories.length > 0, f.levels.length > 0, parsed.cls != null].filter(Boolean).length;
+  if (named !== 1) return null;
+  let slug: string | undefined;
+  if (f.gender) slug = SCHOLARSHIP_LIST_BY_GENDER[f.gender];
+  else if (f.categories.length) slug = SCHOLARSHIP_LIST_BY_CATEGORIES.find(([set]) => f.categories.every((c) => set.includes(c)))?.[1];
+  else if (f.levels.length) slug = new Set(f.levels).size === 1 ? SCHOLARSHIP_LIST_BY_LEVEL[f.levels[0]] : undefined;
+  else slug = byClass;
+  return slug ? (P.landing.get(`/scholarships/for/${slug}`) ?? null) : null;
+}
+
 /**
  * "cuet pg": a family word ("cuet" — CUET UG's own code) beside a qualifier, and the top exam
  * owns NEITHER typed word in its code or acronyms (UPCET matched both only through "CUET
@@ -979,13 +1067,23 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
     const bi = P.boardIdx.get(parsed.board ?? "cbse");
     if (bi != null) scored.push(structHit(bi, 0.97, "structure"));
   }
+  // 27 Sep 2026 (wave 2 search): CBSE's board-exam hubs lead a board-exam ask, above the board page
+  // — the named class's hub opens; with no class named the hubs lead a list (boardExamHubs).
+  const boardExam = boardExamHubs(P, parsed);
+  boardExam.forEach((i, k) => scored.push(structHit(i, 0.98 - 0.005 * k, "landing")));
 
   // Nothing but slots: a state, a section, an intent, a qualifier.
   const hardLeft = qts.filter((q) => q.role === "hard").length;
-  let landingComplete = false;
+  // Only the class the student named opens — never the one hub that happens to be left.
+  let landingComplete = boardExam.length === 1 && parsed.cls != null;
+  // 27 Sep 2026 (wave 2 search): "exams after 12th" — the stage's /exams/after/{level} page.
+  const afterI = afterLevelDoc(P, parsed);
   if (hardLeft === 0 && !school && exactFull.size === 0) {
     const kind = parsed.kindHint;
-    if (parsed.state) {
+    // 27 Sep 2026 (wave 2 search): a scholarship ask with a state ("scholarship for girls in bihar")
+    // is not the state's exam page — it opened /exams/state/bihar; it now lists the matcher and
+    // that state's schemes (the branch below).
+    if (parsed.state && kind !== "scholarship") {
       const i = kind && COLLEGE_FAMILY.has(kind) ? P.collegeState.get(parsed.state) : P.examState.get(parsed.state);
       if (i != null) {
         scored.push(structHit(i, 0.95, "state"));
@@ -999,9 +1097,18 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
         const i = P.landing.get(p);
         if (i != null) scored.push(structHit(i, sc, "landing"));
       }
+      // 27 Sep 2026 (wave 2 search): the government exams after that level, as a row under the finder.
+      if (afterI != null) scored.push(structHit(afterI, 0.8, "landing"));
       landingComplete = P.landing.has("/find-your-exam");
-    } else if (kind === "scholarship" && (parsed.filters.gender || parsed.filters.categories.length || parsed.filters.levels.length)) {
+    } else if (kind === "scholarship" && (parsed.filters.gender || parsed.filters.categories.length || parsed.filters.levels.length || parsed.state)) {
       // "scholarships for girls": the matcher first, then the scholarships whose own rules fit.
+      // 27 Sep 2026 (wave 2 search): one filter with a list of its own ("scholarship for girls") opens
+      // that list, /scholarships/for/{slug}; the matcher and the fitting schemes follow as rows.
+      const li = scholarshipListDoc(P, parsed);
+      if (li != null) {
+        scored.push(structHit(li, 0.95, "landing"));
+        landingComplete = true;
+      }
       const m = P.landing.get("/scholarships/match");
       if (m != null) scored.push(structHit(m, 0.84, "landing"));
       const f = parsed.filters;
@@ -1023,6 +1130,16 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
         scored.push(structHit(i, 0.95, "landing"));
         landingComplete = !parsed.intent || path !== "/colleges";
       }
+      // 27 Sep 2026 (wave 2 search): "scholarship for class 10 students" opens the Class 9-10 list;
+      // "entrance exams after 12th" opens the exams after 12th (entrance tests included), above the
+      // Entrance hub.
+      const listI = kind === "scholarship" ? scholarshipListDoc(P, parsed) : null;
+      const levelI = !kind && parsed.section === "entrance" ? afterI : null;
+      for (const x of [listI, levelI]) {
+        if (x == null) continue;
+        scored.push(structHit(x, 0.96, "landing"));
+        landingComplete = true;
+      }
     } else if (parsed.intent || parsed.dateKind) {
       const spec = (parsed.dateKind === "RESULT" && INTENT_LANDING.RESULT) || INTENT_LANDING[parsed.intent ?? "hub"];
       const i = spec ? P.landing.get(spec.path) : undefined;
@@ -1036,6 +1153,44 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
         const i = P.landing.get(p);
         if (i != null) scored.push(structHit(i, sc, "landing"));
       }
+      // 27 Sep 2026 (wave 2 search): an exam word beside the stage ("12th ke baad exam", "12वीं के बाद
+      // परीक्षा") opens the exams after that level; without one it is a row under the finder.
+      // 27 Sep 2026 (wave 2 fixer): only for a stage the student named. A bare "12th" beside an exam
+      // word ("12th exam", "10th pariksha", "12th exam 2027") is often the board exam itself: it opened
+      // the exams after 12th; it is now a list led by CBSE's board-exam hub for that class, the finder
+      // and the exams after that level.
+      if (afterI != null) {
+        const examWord = parsed.tokens.some((t) => STAGE_EXAM.has(t));
+        const examAsk = examWord && parsed.stageExplicit;
+        scored.push(structHit(afterI, examAsk ? 0.95 : 0.71, "landing"));
+        if (examAsk) landingComplete = true;
+        const cls = parsed.stage === "after-10" ? 10 : parsed.stage === "after-12" ? 12 : null;
+        const hub = examWord && !parsed.stageExplicit && cls != null ? P.landing.get(`/schooling/cbse/class-${cls}/board-exam`) : undefined;
+        if (hub != null) scored.push(structHit(hub, 0.73, "landing"));
+      }
+    }
+  }
+
+  // 27 Sep 2026 (wave 2 fixer): a stage the student named, with words that only qualify it. With an
+  // exam word ("graduation ke baad government exam", "competitive exams after 12th science") it is the
+  // exams after that level — it listed the robots-blocked GOVT_JOBS filter, /exams/after/10th, or the
+  // General Science hub first. A stream alone ("after 12th arts") asks what to study next: the career
+  // pages lead a list (as "career after 12th science" does). The stage is never a class, and the stream
+  // word is not the Class 3-8 subject page it matches by name.
+  const stageAsk = hardLeft > 0 && !school && exactFull.size === 0 ? stageQualifierAsk(parsed, qts.filter((q) => q.role === "hard").map((q) => q.t)) : null;
+  if (stageAsk) {
+    scored = scored.filter((s) => !P.docs[s.i].kind.startsWith("school-"));
+    if (stageAsk === "exams" && afterI != null) {
+      scored.push(structHit(afterI, 0.95, "landing"));
+      landingComplete = true;
+    } else if (stageAsk === "stream") {
+      const rest = qts.filter((q) => q.role === "hard").map((q) => q.orig);
+      const rows: [string, number][] = [["/careers", 0.9], ["/career-map", 0.88], ...(parsed.stage === "after-10" ? ([["/schooling/streams", 0.86]] as [string, number][]) : [])];
+      for (const [p, sc] of rows) {
+        const i = P.landing.get(p);
+        if (i != null) scored.push(structHit(i, sc, "landing", rest));
+      }
+      if (afterI != null) scored.push(structHit(afterI, 0.8, "landing", rest));
     }
   }
 
@@ -1202,6 +1357,8 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
   // While typing, "nothing fits yet" is not a reason to ask the AI — only a finished query is.
   const aiWanted = (noHit && !typing) || doubt || deepMissing || (parsed.beingBuilt && doubt);
   const structureDirect = (schoolComplete || landingComplete) && !!top && (top.why === "structure" || top.why === "state" || top.why === "landing");
+  const topBoardExamM = topDoc ? BOARD_EXAM_RE.exec(topDoc.path) : null;
+  const topBoardExamCls = topBoardExamM ? Number(topBoardExamM[1]) : null;
   const directOk =
     !typing &&
     !!top &&
@@ -1209,6 +1366,9 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
     !intentMissing &&
     !partialFamily &&
     !(caMonthMissing && topDoc?.kind === "landing") &&
+    // 27 Sep 2026 (wave 2 fixer): a CBSE board-exam hub opens only for the class the student named —
+    // "cbse sample paper", "cbse model paper" (no class) opened Class 10's hub for a Class 12 student too.
+    !(topBoardExamCls != null && topBoardExamCls !== parsed.cls) &&
     !topDoc?.listOnly &&
     top.why !== "nearest" &&
     unexplained.length === 0 &&

@@ -270,11 +270,12 @@ export function Header({ admin = false }: { admin?: boolean }) {
             <Link href="/schooling" data-nav="school" className={SECTION_LINK}>
               School
             </Link>
-            {/* No page lists admission tests alone, so the Entrance door on
-                the home page (li#entrance, HomeDoors.tsx) is the section:
-                JEE, NEET, CUET, NDA and olympiad chips. Point this at an
-                entrance-only catalogue view the day one exists. */}
-            <Link href="/#entrance" data-nav="entrance" className={SECTION_LINK}>
+            {/* 27 Sep 2026: the Entrance section's own page, /exams/entrance
+                (every entrance exam, olympiad and state CET, grouped), exists
+                now — the link opens it instead of the home page's Entrance
+                door (li#entrance, HomeDoors.tsx, which stays). Same label,
+                no new text. */}
+            <Link href="/exams/entrance" data-nav="entrance" className={SECTION_LINK}>
               Entrance exams
             </Link>
             <Link href="/exams/browse" data-nav="government" className={SECTION_LINK}>

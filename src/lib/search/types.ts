@@ -111,6 +111,9 @@ export interface ParsedQuery {
   chapterNo: number | null;
   chapterWords: string[]; // what is left inside a class + subject query, matched against chapter names only
   stage: "after-10" | "after-12" | "after-grad" | null; // "12th pass", "after 10th": a qualifier, never a class
+  // 27 Sep 2026 (wave 2 fixer): the stage came from a qualifier the student typed ("after", "pass", "ke baad",
+  // "level", "graduate"), not from a bare "12th" beside an exam word ("12th exam" — often the board exam).
+  stageExplicit: boolean;
   state: string | null; // ISO code; a 2-letter abbreviation counts only next to a role / exam / section word
   stateTokens: string[]; // the words that named the state (they still match exam names)
   section: SearchSection | null;

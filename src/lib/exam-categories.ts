@@ -134,13 +134,24 @@ export function findExamCategory(slug: string): ExamCategory | undefined {
   return EXAM_CATEGORIES.find((c) => c.slug === slug);
 }
 
+/** The row fields a category's rule reads. 27 Sep 2026 (wave 2 search):
+ *  examsInCategory takes any row carrying them — the search index's exam rows
+ *  (src/lib/search/index-core.ts SearchExamRow) as well as ExamListRow. */
+export type CategoryRow = Pick<ExamLike, "code" | "category" | "state" | "name" | "shortName" | "candidatesPerYear">;
+
 /** The category's exams, most-taken first (the loader's order), olympiads never. */
-export function examsInCategory<E extends ExamLike>(cat: ExamCategory, rows: readonly E[]): E[] {
+export function examsInCategory<E extends CategoryRow>(cat: ExamCategory, rows: readonly E[]): E[] {
   return rows.filter((e) => e.category !== "OLYMPIAD" && cat.match(e));
 }
 
 export function isCategoryLive(list: readonly unknown[]): boolean {
   return list.length >= EXAM_CATEGORY_MIN;
+}
+
+/** 27 Sep 2026 (wave 2 search): the categories whose hub renders — the page's
+ *  and the sitemap's own rule — for the search index (src/lib/search/index-build.ts). */
+export function liveExamCategories(rows: readonly CategoryRow[]): ExamCategory[] {
+  return EXAM_CATEGORIES.filter((c) => isCategoryLive(examsInCategory(c, rows)));
 }
 
 // ── Shared cells (the qualification pages use them too) ──────────────────
