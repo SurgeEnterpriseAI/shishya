@@ -410,7 +410,6 @@ describe("exam doors — destinations", () => {
 // ── 6. the page ────────────────────────────────────────────────────────
 
 const RETIRED = [
-  "LiveCountersStrip",
   "AskSearchBar",
   "VacancyFinderCard",
   "PortalStatsBand",

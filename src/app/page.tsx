@@ -75,6 +75,7 @@ import { loadTodaysLiveTests } from "@/lib/live-test-today";
 import { LiveTestTodayBanner } from "@/components/LiveTestTodayBanner";
 import { ExamsTodayStrip } from "@/components/ExamsTodayStrip";
 import { resolvePhase, istDayNumber } from "@/lib/exam-phase";
+import { LiveCountersStrip } from "@/components/LiveCounters";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeDoors } from "@/components/home/HomeDoors";
 import { HomeFinder } from "@/components/home/HomeFinder";
@@ -442,7 +443,7 @@ export default async function HomePage({
   // 16 Sep 2026: "/" reads in the visitor's language on the /hi and /te
   // twins. generateMetadata above is untouched — "/" canonicalises to
   // https://shishya.in/ in every locale.
-  const { locale } = await getT();
+  const { locale, t } = await getT();
   const copy = homeDoorsCopy(locale);
 
   const [signedIn, exams, calendar, vacancy, portalStats, liveToday] = await Promise.all([
@@ -518,6 +519,22 @@ export default async function HomePage({
       )}
       {/* One delegated CTA_CLICKED beacon for every data-home-cta element. */}
       <HomeBeacons />
+
+      {/* 26 Sep 2026: the live stats strip (visited · mocks attempted ·
+          signed up) came back at the founder's request after the rewrite
+          dropped it; sticky under the header as before, without the old
+          Ask bar. */}
+      <div className="sticky top-0 z-40">
+        <LiveCountersStrip
+          sticky={false}
+          labels={{
+            preparingNow: t("live.preparingNow"),
+            inMockNow: t("live.inMockNow"),
+            activeDiscussions: t("disc.title"),
+            totalEver: t("live.totalEver"),
+          }}
+        />
+      </div>
 
       <div className="container-prose pb-16">
         <HomeHero copy={copy} />
