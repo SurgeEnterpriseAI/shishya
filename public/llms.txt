@@ -152,6 +152,9 @@ Guides by stage — Class 10, engineering or medical aspirant, commerce or human
 ## Key links
 - [Full machine-readable index — every exam, school class, college, scholarship and career with canonical URLs and computed counts](https://shishya.in/llms-full.txt)
 - [Platform context — every section with its computed counts (markdown)](https://shishya.in/context.md)
+- [Shishya in numbers — usage, return rates, sign-up sources and answer-check results, each with its definition and date](https://shishya.in/shishya-in-numbers) (markdown: https://shishya.in/shishya-in-numbers/context.md)
+- [Shishya Pulse — weekly data note: exams students took mocks for, most-practised topics, official exam dates; every group at least 20](https://shishya.in/pulse) (markdown: https://shishya.in/pulse/context.md)
+- [Press kit — what Shishya is, who runs it, how answer keys are checked, live numbers with definitions, brand files and press contact](https://shishya.in/press)
 - [Homepage — school, entrance and government exams, colleges, scholarships and careers](https://shishya.in)
 - [Entrance exams](https://shishya.in/exams/entrance)
 - [Browse every exam](https://shishya.in/exams/browse)

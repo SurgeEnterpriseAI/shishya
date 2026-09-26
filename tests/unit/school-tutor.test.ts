@@ -343,10 +343,13 @@ describe("the exam tutor's shared 1-hour prefix is byte-identical to before scho
   // /scholarships/for/{GROUP}, /scholarships/closing-soon and the two CBSE
   // board-exam pages). Before: signedIn 58a6cb63…, guest 98ccf0b8…,
   // general b4ebd611….
+  // 27 Sep 2026 (public numbers): re-pinned for the site-facts entries
+  // /shishya-in-numbers and /pulse. Before: signedIn f7d43f0a…, guest
+  // 3ed9ecbf…, general e4b68670….
   const PINNED = {
-    signedIn: "f7d43f0a4378587546d8468a9b098ef91eeb760ac129b4b0657c65d37e9d751c",
-    guest: "3ed9ecbfe33c05d72b950f3f065dfa4c665c45836a9b7e88b65326483089fa05",
-    general: "e4b68670ec9bf07043889c8eb104ad5d8d8da84f440c066c35d8dd63f603e9c8",
+    signedIn: "86383356d79827e13fcf53d6715380e37d7147a69a9b49d55560a26ec2937136",
+    guest: "2dba7e47555b1f2b1db70befe431051de783e70f3ab9fe6125d250b9b67302db",
+    general: "575643b1e97081a47565add5f627759df4b928b150968ebb77b50db207c6adb7",
   };
 
   it("signed-in (tools on), guest (tools off) and general mode", () => {

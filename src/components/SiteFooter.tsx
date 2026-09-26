@@ -48,6 +48,10 @@ export function SiteFooter() {
           <Link href="/exams/state" className="hover:text-ink-800">Exams by state</Link>
           <Link href="/about" className="hover:text-ink-800">About</Link>
           <Link href="/editorial-policy" className="hover:text-ink-800">Editorial policy</Link>
+          {/* 27 Sep 2026: the public numbers page and the press kit (21 Latin
+              letters on every /hi and /te twin: SITE_FRAME_LATIN follows). */}
+          <Link href="/shishya-in-numbers" className="hover:text-ink-800">Shishya in numbers</Link>
+          <Link href="/press" className="hover:text-ink-800">Press</Link>
           <Link href="/pricing" className="hover:text-ink-800">Pricing</Link>
           <Link href="/terms" className="hover:text-ink-800">Terms</Link>
           <Link href="/privacy" className="hover:text-ink-800">Privacy</Link>

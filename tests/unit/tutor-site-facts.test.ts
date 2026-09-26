@@ -61,6 +61,9 @@ const EXPECTED_PATHS = [
   "/chat",
   "/onboarding?rerun=1",
   "/ideas",
+  // 27 Sep 2026: the public transparency pages.
+  "/shishya-in-numbers",
+  "/pulse",
   "/mentors",
   "/pricing",
   "/jobs",

@@ -126,6 +126,10 @@ export const SEARCH_LANDINGS: readonly SearchLanding[] = [
   { path: "/login", section: "more", title: "Sign in", sub: "Sign in or create a free account", terms: ["sign in", "sign up", "login", "log in", "register", "create account", "signup", "साइन अप"] },
   { path: "/discussions", section: "more", title: "Discussions", sub: "Student discussion threads", terms: ["discussions", "discussion", "discussion forum", "forum", "doubts forum"] },
   { path: "/editorial-policy", section: "more", title: "Editorial policy", sub: "How Shishya sources and checks its data", terms: ["editorial policy", "how shishya verifies", "data sources", "sources"] },
+  // 27 Sep 2026: the public transparency pages.
+  { path: "/shishya-in-numbers", section: "more", title: "Shishya in numbers", sub: "Usage, return rates and answer-check results, each with its definition", terms: ["shishya in numbers", "shishya statistics", "shishya stats", "how many students use shishya", "shishya usage"] },
+  { path: "/pulse", section: "more", title: "Shishya Pulse", sub: "Weekly note on what students practised", terms: ["shishya pulse", "pulse weekly", "weekly data note"] },
+  { path: "/press", section: "more", title: "Press kit", sub: "Facts, method, brand files and contact for writing about Shishya", terms: ["press kit", "press", "media kit", "media contact", "shishya logo", "shishya brand", "write about shishya"] },
   { path: "/verification", section: "more", title: "Verification", sub: "How facts on Shishya are verified", terms: ["verification", "verified data"] },
   { path: "/terms", section: "more", title: "Terms of use", sub: "Terms of using Shishya", terms: ["terms", "terms of use", "terms and conditions"] },
   { path: "/privacy", section: "more", title: "Privacy", sub: "What Shishya stores and why", terms: ["privacy", "privacy policy", "data privacy"] },

@@ -149,6 +149,8 @@ export async function GET() {
     "",
     "## Context files (token-cheap markdown; prefer these over the HTML)",
     ...contextFileLines(SITE),
+    `- ${SITE}/shishya-in-numbers/context.md — every public number about Shishya with its definition and as-of date`,
+    `- ${SITE}/pulse/context.md — the latest Shishya Pulse weekly data note (mocks by exam, most-practised topics, official exam dates; every group at least 20)`,
     "",
   ];
 
@@ -413,6 +415,10 @@ export async function GET() {
   lines.push(`- Careers & government jobs: ${SITE}/jobs`);
   lines.push(`- Study abroad: ${SITE}/worldwide`);
   lines.push(`- Aspirant discussions: ${SITE}/discussions`);
+  // 27 Sep 2026: the public transparency pages.
+  lines.push(`- Shishya in numbers (usage, return rates, answer-check results, each with its definition and date): ${SITE}/shishya-in-numbers`);
+  lines.push(`- Shishya Pulse, a weekly note on what students on Shishya practised (every group at least 20): ${SITE}/pulse`);
+  lines.push(`- Press kit (what Shishya is, who runs it, how it is built, live numbers with definitions, brand files, press contact): ${SITE}/press`);
   // 26 Sep 2026: /ask, not the robots-disallowed /chat.
   lines.push(`- Free AI answers in English and ${INDIAN_LANGUAGE_COUNT} Indian languages, no sign-in: ${SITE}/ask`);
   lines.push("");

@@ -212,6 +212,9 @@ export const SITE_FEATURES: readonly SiteFeature[] = [
     signIn: true,
   },
   { path: "/ideas", name: "Ideas board", what: `feature requests sent through "Suggest a feature", with what has been built; signed-in students can upvote` },
+  // 27 Sep 2026: the public transparency pages (the press kit is left out: the tutor serves students).
+  { path: "/shishya-in-numbers", name: "Shishya in numbers", what: "public numbers about Shishya, each with its definition and date: sign-ups, mocks and tutor questions by week, how many new accounts come back, where sign-ups arrive from, and what the answer check found" },
+  { path: "/pulse", name: "Shishya Pulse", what: "a weekly data note: the exams students took the most mocks for, the most-practised topics of the last four weeks, the week's official exam dates and which exams students asked the AI tutor about (every group at least 20)" },
   { path: "/mentors", name: "Mentors", what: "for people who have cleared a government exam: apply to guide current aspirants" },
   { path: "/pricing", name: "Pricing", what: "everything is free; the only paid service is the optional ₹9 mentor session" },
   // ── Other sections ─────────────────────────────────────────────────

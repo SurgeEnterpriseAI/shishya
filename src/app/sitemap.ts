@@ -39,6 +39,7 @@ import { schoolClassIdentity } from "@/lib/school/context";
 import { schoolLandingSitemapEntries } from "@/lib/school/landings";
 import { EMPTY_SCHOOL_SURFACE, loadSchoolSurface, schoolSitemapEntries } from "@/lib/school/surface";
 import { capsuleLastmods, examPageLastmods, lastModifiedField, type ExamFreshnessRow } from "@/lib/sitemap-lastmod";
+import { pulseSitemapEntries } from "@/lib/pulse-rules";
 
 export const revalidate = 86_400; // 24h
 
@@ -84,6 +85,11 @@ export const SECTION_LANDING_PATHS: readonly string[] = [
   "/worldwide",
   "/insights",
   "/verification",
+  // 27 Sep 2026: public transparency pages — every number with its definition
+  // (/shishya-in-numbers), the weekly Shishya Pulse note, the press kit.
+  "/shishya-in-numbers",
+  "/pulse",
+  "/press",
   "/recognition",
   "/scholarships/match",
   "/worldwide/loans",
@@ -580,6 +586,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
+  // 27 Sep 2026: one permanent page per published Shishya Pulse week;
+  // lastmod is the fixed Monday 00:00 IST it was published (the rows and
+  // the clock read live in src/lib/pulse-rules.ts).
+  const pulseUrls: MetadataRoute.Sitemap = pulseSitemapEntries(base);
+
   // Per-college URLs (Phase 2). Each NIRF-ranked college is a separate
   // indexable page targeting long-tail queries like "IIT Madras admission",
   // "NIRF rank AIIMS Delhi", etc.
@@ -718,6 +729,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     },
     ...sectionLandings,
+    ...pulseUrls,
     ...stateUrls,
     ...examUrls,
     ...cutoffUrls,

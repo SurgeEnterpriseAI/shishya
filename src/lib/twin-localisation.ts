@@ -313,8 +313,10 @@ const EXAM_WEEK_BLOCK_SURFACES: ReadonlySet<TwinSurface> = new Set<TwinSurface>(
  *  marginal twins the review measured (TS_LAWCET /updates te, GJ_GUJCET
  *  /updates hi, WB_PSC_CLERK /updates te) to canonical → English. The older
  *  gap (the SECTION_LINKS labels, ~61 letters, never counted) is a separate
- *  decision: it moves ~13 more twins. */
-export const SITE_FRAME_LATIN = 142;
+ *  decision: it moves ~13 more twins.
+ *  27 Sep 2026 (public numbers): 142 → 163 — footer links "Shishya in
+ *  numbers" (16) and "Press" (5). */
+export const SITE_FRAME_LATIN = 163;
 
 const NATIVE_RE: Record<UrlLocale, RegExp> = { hi: /[ऀ-ॿ]/g, te: /[ఀ-౿]/g };
 

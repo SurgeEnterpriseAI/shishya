@@ -72,5 +72,15 @@ export async function GET() {
     },
     istDay(new Date()),
   );
-  return new Response(md, { headers: contextMarkdownHeaders(`${SITE}/`) });
+  // 27 Sep 2026: point answer engines at the public numbers (each with its
+  // definition and date), the weekly Pulse note and the press kit.
+  const transparency = [
+    "",
+    "## Transparency",
+    `- Shishya in numbers: ${SITE}/shishya-in-numbers (markdown ${SITE}/shishya-in-numbers/context.md)`,
+    `- Shishya Pulse, weekly data note: ${SITE}/pulse (markdown ${SITE}/pulse/context.md)`,
+    `- Press kit: ${SITE}/press`,
+    "",
+  ].join("\n");
+  return new Response(md + transparency, { headers: contextMarkdownHeaders(`${SITE}/`) });
 }
