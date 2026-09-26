@@ -1,16 +1,19 @@
 // GET /api/live-counts — REAL activity counters for the landing-page
 // strip and the discussion-sidebar block.
 //
-// Cached for 30 s (s-maxage). The strip polls every ~30 s, so 1,000
-// concurrent visitors only cost one real DB query per 30 s.
+// Cached for 30 s (s-maxage) + 60 s stale-while-revalidate. The strip
+// polls every ~30 s, so 1,000 concurrent visitors only cost one real DB
+// round per 30 s per edge region. Inside that read the supply / all-time
+// scan counts are memoised for 10 min (SUPPLY_TTL_MS in
+// src/lib/live-counts-server.ts).
 //
-// Counters surfaced (all REAL — synthetic floor removed 27 May 2026):
-//   uniqueVisitors    distinct PAGE_VIEW user/anon ids all-time
-//   mocksAttempted    total Attempt rows
-//   totalSignups      total User rows
-//   signupsLast7Days  momentum signal
-//   activeNow         distinct active users in last 30 min
-//   mocksToday        mocks submitted in last 24 h
+// Shape: LiveCounts — every field is defined, one honest sentence each,
+// in LIVE_COUNT_DEFINITIONS (src/lib/live-counts-server.ts). 26 Sep 2026:
+// grew from 9 fields (visitors, page views, mocks, sign-ups, active now)
+// to 21 — AI tutor questions, questions answered, live tests, exam goals
+// and the content supply (exams, practice questions, topic notes, school
+// chapters, languages), each with its own cost note there. All REAL —
+// synthetic floor removed 27 May 2026.
 
 import { getLiveCounts } from "@/lib/live-counts-server";
 
@@ -27,18 +30,15 @@ export async function GET() {
     });
   } catch (err) {
     console.error("[live-counts] failed", err);
-    // Graceful zero-fallback so the strip never breaks the home page
-    // if Neon stutters. Component has stable first-paint values to
-    // bridge any flash.
-    return Response.json({
-      uniqueVisitors: 0,
-      totalPageViews: 0,
-      pageViewsToday: 0,
-      mocksAttempted: 0,
-      totalSignups: 0,
-      signupsLast7Days: 0,
-      activeNow: 0,
-      mocksToday: 0,
-    });
+    // 26 Sep 2026 review: this used to answer 200 with every count at 0,
+    // and the strip took those zeros as real — one Neon stutter put
+    // "0 visitors · 0 mock exams taken · 0 signed up" on the home page.
+    // A failure is now a 503 that no cache keeps; the strip's poll skips
+    // a non-ok reply, so it keeps its last-known numbers (or its shell
+    // before the first reply). Never a typed number, never a fake zero.
+    return Response.json(
+      { error: "unavailable" },
+      { status: 503, headers: { "cache-control": "no-store" } },
+    );
   }
 }

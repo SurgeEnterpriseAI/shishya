@@ -9,50 +9,51 @@
 // Polls every 30 s (API caches 30 s on the edge → roughly one real DB
 // hit per 30 s regardless of concurrent visitors).
 //
+// 26 Sep 2026: the whole-platform strip (founder brief: "keep as many
+// stats as possible — AI tutor usage, sign-ups, everything across the
+// website; say 'mock exams taken'; a plain word for the people counter").
+//   • No typed number anywhere any more. Until the first /api/live-counts
+//     reply lands the strip renders its shell (the Live dot, height
+//     reserved) — the old SSR placeholders ("370 visited …") were typed
+//     values, and a failed API left them on screen.
+//   • Every label describes exactly what LIVE_COUNT_DEFINITIONS
+//     (src/lib/live-counts-server.ts) says the field counts; the people
+//     counter reads "learners" (founder's word, 26 Sep 2026).
+//   • Labels come from the caller (i18n live.*) with English defaults;
+//     the pre-26-Sep label fields are accepted but no longer rendered
+//     (/for/[persona] passed present-tense words for all-time counts).
+//   • Layout (26 Sep 2026 review: the first cut wrapped to 3–7 lines —
+//     113 px of sticky band on a desktop, 193 px at 640 px, 3 lines on
+//     phones — and the shell was shorter than the loaded strip, so the
+//     hero jumped when the numbers landed). Height is now fixed by
+//     construction: phones get a 2 × 2 grid of four counters (always two
+//     lines, 49 px band); from sm, exactly two single-line rows (57 px
+//     band) — a row wider than the screen scrolls sideways inside its
+//     line, it never wraps. The shell before the first reply is the same
+//     frame with the Live dot only, so nothing below it moves.
+//   • A failed poll (the API answers 503) changes nothing on screen: the
+//     last-known numbers stay, or the shell before the first reply.
+//   • The item table, labels and poll merge are pure functions in
+//     ./live-counters-strip.ts (unit-tested there, with the measured
+//     width budget).
+//
 // Two render variants:
-//   <LiveCountersStrip />    slim full-width banner above the hero
-//                            (visited · mocks attempted · signed up)
-//   <LiveCountersBlock />    boxed widget for the right sidebar
-//                            (visited · mocks · signed up · this week
-//                             · active now if non-zero)
+//   <LiveCountersStrip />    slim full-width banner under the header
+//   <LiveCountersBlock />    boxed widget for the discussion sidebar
 
 import { useEffect, useState } from "react";
-import {
-  formatCount,
-  getLiveCounts,
-  type LiveCounts,
-} from "@/lib/live-counters";
+import { formatCount } from "@/lib/live-counters";
+// Type-only: erased at build, so the client bundle never sees Prisma.
+import type { LiveCounts } from "@/lib/live-counts-server";
+import { buildStripItems, mergeCounts, type StripItem, type StripLabels } from "./live-counters-strip";
 
-interface StripLabels {
-  /** "visited" — i18n key live.preparingNow */
-  preparingNow: string;
-  /** "mocks attempted" — i18n key live.inMockNow */
-  inMockNow: string;
-  /** "signed up" — i18n key live.totalEver */
-  totalEver: string;
-  /** Optional "active discussions" string (kept for callers that still
-   *  pass it — we don't render it in the strip anymore). */
-  activeDiscussions?: string;
-}
+export type { StripLabels } from "./live-counters-strip";
 
 const TICK_MS = 30_000;
 
-// Stable initial values for BOTH SSR and the first client paint.
-// useEffect overlays the real /api/live-counts numbers ~200 ms in.
-const SSR_SAFE_INITIAL: LiveCounts = {
-  uniqueVisitors: 370,
-  totalPageViews: 1525,
-  pageViewsToday: 81,
-  mocksAttempted: 72,
-  totalSignups: 98,
-  signupsLast7Days: 14,
-  activeNow: 0,
-  mocksToday: 0,
-  walkIns: 0,
-};
-
-function useLiveCounts(): LiveCounts {
-  const [counts, setCounts] = useState<LiveCounts>(SSR_SAFE_INITIAL);
+function useLiveCounts(): LiveCounts | null {
+  // null until the first reply: nothing typed is ever shown.
+  const [counts, setCounts] = useState<LiveCounts | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,17 +63,7 @@ function useLiveCounts(): LiveCounts {
         if (!res.ok) return;
         const data = (await res.json()) as Partial<LiveCounts>;
         if (cancelled) return;
-        setCounts((prev) => ({
-          uniqueVisitors: data.uniqueVisitors ?? prev.uniqueVisitors,
-          totalPageViews: data.totalPageViews ?? prev.totalPageViews,
-          pageViewsToday: data.pageViewsToday ?? prev.pageViewsToday,
-          mocksAttempted: data.mocksAttempted ?? prev.mocksAttempted,
-          totalSignups: data.totalSignups ?? prev.totalSignups,
-          signupsLast7Days: data.signupsLast7Days ?? prev.signupsLast7Days,
-          activeNow: data.activeNow ?? prev.activeNow,
-          mocksToday: data.mocksToday ?? prev.mocksToday,
-          walkIns: data.walkIns ?? prev.walkIns,
-        }));
+        setCounts((prev) => mergeCounts(prev, data));
       } catch {
         /* network blip — keep last-known */
       }
@@ -94,8 +85,15 @@ function useLiveCounts(): LiveCounts {
  * Slim, full-width "real platform activity" banner. Sits just below the
  * page header on the landing page.
  *
- * Reads as e.g.
- *   "370 visited · 72 mocks attempted · 98 signed up · 14 this week"
+ * From sm it reads as two lines, e.g.
+ *   "● LIVE  9 active now · 14,460 learners · 5,230 mock exams taken +72 today ·
+ *    4,159 AI tutor questions +54 today · 1,900 signed up +170 this week ·
+ *    86,657 page views +945 today"
+ *   "72,907 questions answered +888 today · 84 live tests taken ·
+ *    1,795 exam goals set · 180 exams · 34,700 practice questions ·
+ *    4,350 topic notes · 5 school chapters · 19 languages"
+ * and on phones as a 2 × 2 grid: learners · mock exams taken /
+ * AI tutor questions · signed up.
  *
  * Strip is sticky so the social proof persists as the visitor scrolls.
  */
@@ -104,114 +102,137 @@ export function LiveCountersStrip({
   sticky = true,
 }: {
   labels: StripLabels;
-  /** Homepage passes false and provides its own sticky wrapper so the
-   *  strip + Ask bar pin together as one unit (a fixed offset can't
-   *  track the strip's variable wrapped height). */
+  /** Homepage passes false and provides its own sticky wrapper. */
   sticky?: boolean;
 }) {
-  const {
-    uniqueVisitors,
-    totalPageViews,
-    pageViewsToday,
-    mocksAttempted,
-    totalSignups,
-    signupsLast7Days,
-    activeNow,
-    mocksToday,
-    walkIns,
-  } = useLiveCounts();
-  // Counters in one slim strip. Wraps cleanly on narrow viewports
-  // (flex-wrap) — desktop gets a single line, mobile gets 2-3 lines.
-  // The "· " separators only render at sm+ so phone wraps stay readable.
-  const items: Array<{ icon: string; value: number; label: string; pill?: string }> = [
-    // Lead with the real-time "active now" pulse when anyone's live —
-    // strongest signal the platform is alive right now.
-    ...(activeNow > 0 ? [{ icon: "⚡", value: activeNow, label: "active now" }] : []),
-    { icon: "👁️", value: totalPageViews, label: "page views" },
-    { icon: "📈", value: pageViewsToday, label: "views today" },
-    // "aspirants" (founder calls, 31 Jul): ONE combined human number —
-    // engaged visitors (2+ pages) PLUS verified-browser single-page
-    // landers, overlap-corrected server-side. Everyone in it reached
-    // Shishya through govt-job intent and is provably not a crawler;
-    // the split lives in the API (walkIns) for internal analysis.
-    { icon: "🧑", value: uniqueVisitors, label: "aspirants" },
-    { icon: "📝", value: mocksAttempted, label: labels.inMockNow },
-    { icon: "✅", value: mocksToday, label: "mocks today" },
-    {
-      icon: "🎓",
-      value: totalSignups,
-      label: labels.totalEver,
-      pill: signupsLast7Days > 0 ? `+${signupsLast7Days} this week` : undefined,
-    },
-  ];
+  const counts = useLiveCounts();
+  const wrapper = `${sticky ? "sticky top-0 z-40 " : ""}pointer-events-auto border-b border-emerald-200 bg-emerald-50/95 backdrop-blur-sm supports-[backdrop-filter]:bg-emerald-50/80`;
+
+  // No items until the first reply (or while it keeps failing): the same
+  // fixed-height frame renders with the Live dot only.
+  const items = counts ? buildStripItems(counts, labels) : [];
+  const phone = items.filter((it) => it.phone);
+  const row1 = items.filter((it) => it.row === 1);
+  const row2 = items.filter((it) => it.row === 2);
 
   return (
-    <div
-      className={`${sticky ? "sticky top-0 z-40 " : ""}pointer-events-auto border-b border-emerald-200 bg-emerald-50/95 backdrop-blur-sm supports-[backdrop-filter]:bg-emerald-50/80 lg:mx-80`}
-    >
-      <div className="container-prose flex flex-wrap items-center justify-center gap-x-3 gap-y-1 py-1.5 text-[11px] text-emerald-900 sm:gap-x-5 sm:py-2 sm:text-sm">
-        {/* Lead with a live pulse so the strip reads as "real-time". */}
-        <span className="inline-flex items-center gap-1.5 font-medium">
-          <PingDot />
-          <span className="hidden text-[10px] uppercase tracking-wider text-emerald-700 sm:inline">
-            Live
-          </span>
-        </span>
-        {items.map((it, i) => (
-          <span
-            key={it.label}
-            className="inline-flex items-center gap-1.5"
-          >
-            <span aria-hidden>{it.icon}</span>
-            <span
-              className={`tabular-nums ${i === items.length - 1 ? "font-semibold" : "font-medium"}`}
-            >
-              {formatCount(it.value)}
-            </span>{" "}
-            {it.label}
-            {it.pill && (
-              <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800">
-                {it.pill}
-              </span>
-            )}
-            {i < items.length - 1 && (
-              <span className="hidden pl-1 text-emerald-300 sm:inline">·</span>
-            )}
-          </span>
-        ))}
+    <div className={wrapper} data-live-strip={counts ? "live" : "shell"}>
+      <div className="px-4 py-1.5 text-[11px] text-emerald-900 sm:px-6 sm:text-xs lg:px-8">
+        {/* Phones: PHONE_KEYS in a 2 × 2 grid — always exactly two lines. */}
+        <div className="grid h-9 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] grid-rows-2 items-center gap-x-3 sm:hidden">
+          {phone.length === 0 ? (
+            <span className="col-span-2 row-span-2 flex justify-center">
+              <PingDot />
+            </span>
+          ) : (
+            phone.map((it, i) => <PhoneCell key={it.key} item={it} pulse={i === 0} />)
+          )}
+        </div>
+        {/* sm+: exactly two single-line rows. */}
+        <div className="hidden sm:block">
+          <StripRow>
+            <LivePulse />
+            {row1.map((it, i) => (
+              <Counter key={it.key} item={it} last={i === row1.length - 1} />
+            ))}
+          </StripRow>
+          <StripRow muted>
+            {row2.map((it, i) => (
+              <Counter key={it.key} item={it} last={i === row2.length - 1} />
+            ))}
+          </StripRow>
+        </div>
       </div>
     </div>
   );
 }
 
+// A row never wraps: centred when it fits, scrolls sideways inside its
+// own line when the screen is narrower (scrollbar hidden, edges faded so
+// the cut reads as "more this way").
+const ROW_SCROLL_STYLE = {
+  scrollbarWidth: "none",
+  maskImage: "linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent)",
+  WebkitMaskImage: "linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent)",
+} as const;
+
+function StripRow({ children, muted = false }: { children: React.ReactNode; muted?: boolean }) {
+  return (
+    <div
+      className={`h-[22px] overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:hidden${muted ? " text-emerald-800" : ""}`}
+      style={ROW_SCROLL_STYLE}
+    >
+      <div className="mx-auto flex h-full w-max items-center gap-x-4 whitespace-nowrap">{children}</div>
+    </div>
+  );
+}
+
+function Counter({ item, last }: { item: StripItem; last: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5" data-counter={item.key}>
+      <span className={`tabular-nums ${item.key === "totalSignups" ? "font-semibold" : "font-medium"}`}>
+        {formatCount(item.value)}
+      </span>{" "}
+      {item.label}
+      {item.pill && (
+        <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800">
+          {item.pill}
+        </span>
+      )}
+      {!last && (
+        <span className="pl-1 text-emerald-300" aria-hidden>
+          ·
+        </span>
+      )}
+    </span>
+  );
+}
+
+function PhoneCell({ item, pulse }: { item: StripItem; pulse: boolean }) {
+  return (
+    <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap" data-counter={item.key}>
+      {pulse && <PingDot />}
+      <span className={`tabular-nums ${item.key === "totalSignups" ? "font-semibold" : "font-medium"}`}>
+        {formatCount(item.value)}
+      </span>{" "}
+      {item.label}
+    </span>
+  );
+}
+
+function LivePulse() {
+  return (
+    <span className="inline-flex items-center gap-1.5 font-medium">
+      <PingDot />
+      <span className="text-[10px] uppercase tracking-wider text-emerald-700">Live</span>
+    </span>
+  );
+}
+
 interface BlockLabels {
-  /** "Live on Shishya" title (i18n key live.block.title) */
+  /** "Real activity on Shishya" title (i18n key live.block.title) */
   title: string;
-  /** "students visited" (i18n key live.block.online) */
+  /** "learners" (i18n key live.block.online) */
   online: string;
-  /** "mocks attempted" (i18n key live.block.inMock) */
+  /** "mock exams taken" (i18n key live.block.inMock) */
   inMock: string;
-  /** "mocks today" (i18n key live.block.todaysMocks) */
+  /** "submitted today" (i18n key live.block.todaysMocks) */
   todaysMocks: string;
 }
 
 /**
- * Sidebar block for the discussion drawer. Shows the same four key
- * KPIs as the strip plus the live-today numbers.
+ * Sidebar block for the discussion drawer. Shows the same key numbers as
+ * the strip plus the live-today numbers. Renders nothing until the first
+ * reply (no typed placeholders).
  *
  * Order is intentional: lead with visitor reach, then engagement
  * (mocks), then signup conversion, with momentum + active-now as
  * supporting context.
  */
 export function LiveCountersBlock({ labels }: { labels: BlockLabels }) {
-  const {
-    uniqueVisitors,
-    mocksAttempted,
-    totalSignups,
-    signupsLast7Days,
-    activeNow,
-    mocksToday,
-  } = useLiveCounts();
+  const counts = useLiveCounts();
+  if (!counts) return null;
+  const { uniqueVisitors, mocksTaken, totalSignups, signupsLast7Days, activeNow, mocksToday } = counts;
   return (
     <div className="border-b border-ink-200 bg-gradient-to-b from-emerald-50 to-white px-4 py-3">
       <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
@@ -221,7 +242,7 @@ export function LiveCountersBlock({ labels }: { labels: BlockLabels }) {
 
       <div className="mt-2.5 space-y-2">
         <Row icon="👥" value={uniqueVisitors} label={labels.online} />
-        <Row icon="📝" value={mocksAttempted} label={labels.inMock} />
+        <Row icon="📝" value={mocksTaken} label={labels.inMock} />
         <Row
           icon="🎓"
           value={totalSignups}

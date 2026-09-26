@@ -528,10 +528,24 @@ export default async function HomePage({
         <LiveCountersStrip
           sticky={false}
           labels={{
-            preparingNow: t("live.preparingNow"),
-            inMockNow: t("live.inMockNow"),
-            activeDiscussions: t("disc.title"),
-            totalEver: t("live.totalEver"),
+            // 26 Sep 2026: one label per counter, each the honest description
+            // of what src/lib/live-counts-server.ts counts (LIVE_COUNT_DEFINITIONS).
+            activeNow: t("live.activeNow"),
+            pageViews: t("live.pageViews"),
+            visitors: t("live.visitors"),
+            mocksTaken: t("live.mocksTaken"),
+            signedUp: t("live.signedUp"),
+            tutorQuestions: t("live.tutorQuestions"),
+            questionsAnswered: t("live.questionsAnswered"),
+            liveTests: t("live.liveTests"),
+            examGoals: t("live.examGoals"),
+            exams: t("live.exams"),
+            questions: t("live.questions"),
+            notes: t("live.notes"),
+            schoolChapters: t("live.schoolChapters"),
+            languages: t("live.languages"),
+            today: t("live.today"),
+            thisWeek: t("live.thisWeek"),
           }}
         />
       </div>
