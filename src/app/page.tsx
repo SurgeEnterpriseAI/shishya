@@ -522,15 +522,6 @@ export default async function HomePage({
       <div className="container-prose pb-16">
         <HomeHero copy={copy} />
 
-        {/* The week's events, only on such days: live tests open today and
-            this week's announced exam days (both render nothing otherwise;
-            the wrapper hides itself when empty). Sits under the pills, per
-            the review, so a test-day or exam-day visitor sees it first. */}
-        <div className="mt-7 empty:hidden">
-          <LiveTestTodayBanner data={liveToday} />
-          <ExamsTodayStrip />
-        </div>
-
         <HomeDoors
           copy={copy}
           careersCount={CAREERS.length}
@@ -538,6 +529,16 @@ export default async function HomePage({
           entranceChips={entranceChips}
           governmentChips={governmentChips}
         />
+
+        {/* The week's events, only on such days: live tests open today and
+            this week's announced exam days (both render nothing otherwise;
+            the wrapper hides itself when empty). 26 Sep 2026: the founder
+            moved them from under the pills to between the sections and the
+            exam finder, side by side on wide screens. */}
+        <div className="mt-7 grid gap-4 empty:hidden lg:grid-cols-2 lg:items-start">
+          <LiveTestTodayBanner data={liveToday} />
+          <ExamsTodayStrip />
+        </div>
 
         <HomeFinder copy={copy} exams={exams} chips={chips} examCount={portalStats.examCount} />
 

@@ -449,7 +449,7 @@ describe("src/app/page.tsx — the Doors page", () => {
       expect(src).toMatch(new RegExp(`import \\{ ${name} \\} from "@/components/home/${name}"`));
       expect(src).toMatch(new RegExp(`<${name}\\b`));
     }
-    const order = ["<HomeHero", "<LiveTestTodayBanner", "<ExamsTodayStrip", "<HomeDoors", "<HomeFinder", "<HomeRails", "<HomeHowItWorks", "<HomeSignIn"].map((m) => src.indexOf(m));
+    const order = ["<HomeHero", "<HomeDoors", "<LiveTestTodayBanner", "<ExamsTodayStrip", "<HomeFinder", "<HomeRails", "<HomeHowItWorks", "<HomeSignIn"].map((m) => src.indexOf(m));
     expect(order.every((i) => i >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     for (const r of RETIRED) expect(src.includes(r), `retired block still present: ${r}`).toBe(false);
