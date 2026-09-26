@@ -350,10 +350,14 @@ describe("12. production-shaped topic notes (every topic-note page, 26 Sep 2026)
     };
     const wrong: string[] = [];
     let agree = 0;
+    // 26 Sep 2026 (G2): rows recorded /exams/X/pyq, which 308s to the hub's #pyqs — the search
+    // now links the section itself, so the recorded page is compared in that form.
+    const reviewedUrl = (u: string | undefined) => (u && u.startsWith("/exams/") && u.endsWith("/pyq") && u.split("/").length === 4 ? `${u.slice(0, -4)}#pyqs` : u);
     for (const row of fixture.rows) {
       const r = resolveQuery(row.q, prod);
-      if (r.outcome === "direct" && (row.outcome !== "direct" || r.best?.url !== row.url)) wrong.push(`${row.q} → ${r.best?.url}`);
-      if (r.outcome === row.outcome && (row.outcome !== "direct" || r.best?.url === row.url)) agree++;
+      const want = reviewedUrl(row.url);
+      if (r.outcome === "direct" && (row.outcome !== "direct" || r.best?.url !== want)) wrong.push(`${row.q} → ${r.best?.url}`);
+      if (r.outcome === row.outcome && (row.outcome !== "direct" || r.best?.url === want)) agree++;
     }
     expect(wrong).toEqual([]);
     expect(agree / fixture.rows.length).toBeGreaterThanOrEqual(0.85);

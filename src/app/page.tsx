@@ -102,7 +102,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: "https://shishya.in/" },
+    // 26 Sep 2026 (G2): the whole-platform machine brief (src/app/context.md)
+    // advertised the way the section and exam pages advertise theirs.
+    alternates: { canonical: "https://shishya.in/", types: { "text/markdown": "https://shishya.in/context.md" } },
     openGraph: {
       title,
       description,

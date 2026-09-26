@@ -33,6 +33,14 @@ export function SiteFooter() {
           to study.
         </p>
         <p className="flex flex-wrap gap-4">
+          {/* 26 Sep 2026 (entry points): the one crawlable link to the
+              whole-platform search and AI answers on every page. The
+              header's "Ask Shishya" chip opens /chat, which robots.txt
+              blocks for every crawler, so /ask had almost no internal
+              link. The anchor is the page's own H1 ("Search or ask
+              Shishya"). Adds 18 English letters to every /hi and /te twin:
+              SITE_FRAME_LATIN in src/lib/twin-localisation.ts should follow. */}
+          <Link href="/ask" className="hover:text-ink-800">Search or ask Shishya</Link>
           {/* Exam calendar in the site-wide footer (25 Aug 2026): every
               page passes crawl equity to the tracker surface — the
               counter-move for the Google slump. */}

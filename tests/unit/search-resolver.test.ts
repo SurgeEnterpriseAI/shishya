@@ -87,6 +87,13 @@ function routeExists(href: string): boolean {
   return ok;
 }
 
+/** 26 Sep 2026 (G2): the reviewed rows recorded /exams/X/pyq, which 308s to the hub's #pyqs —
+ *  the search now links the section itself, so the recorded page is compared in that form. */
+function reviewedUrl(url: string | undefined): string | undefined {
+  if (url && url.startsWith("/exams/") && url.endsWith("/pyq") && url.split("/").length === 4) return `${url.slice(0, -4)}#pyqs`;
+  return url;
+}
+
 const FORBIDDEN = /^\/(api|me|dashboard|today|aptitude|chat|mocks|attempts|admin|login\/institution)(\/|$|\?|#)/;
 
 /** Every URL a resolution can send a student to. */
@@ -124,7 +131,8 @@ const DIRECT: [q: string, url: string][] = [
   ["group2 tamilnadu", "/exams/TN_TNPSC_GROUP2"],
   // Exam pages (intents): dates, PYQ year, cutoff, salary, mocks, subject tests, topic-wise builder.
   ["appsc group 2 pyq 2024", "/exams/AP_APPSC_GROUP2/pyq/2024"],
-  ["pyqs of tspsc group 1", "/exams/TS_TSPSC_GROUP1/pyq"],
+  // 26 Sep 2026 (G2): the hub's Previous Papers section itself — /pyq only 308s there.
+  ["pyqs of tspsc group 1", "/exams/TS_TSPSC_GROUP1#pyqs"],
   ["appsc group 2 prelims qualifying marks ?", "/exams/AP_APPSC_GROUP2/cutoff"],
   ["when is the ssc cgl 2026 tier 1 exam?", "/exams/SSC_CGL/updates"],
   ["what is the salary of ssc cgl", "/exams/SSC_CGL#salary"],
@@ -333,8 +341,9 @@ describe("every query students typed (Ask log + search-miss log)", () => {
     const wrongDirect: string[] = [];
     for (const row of fixture.rows) {
       const r = res(row.q);
-      if (r.outcome === "direct" && (row.outcome !== "direct" || r.best?.url !== row.url)) wrongDirect.push(`${row.q} → ${r.best?.url} (expected ${row.outcome} ${row.url ?? ""})`);
-      if (r.outcome === row.outcome && (row.outcome !== "direct" || r.best?.url === row.url)) agree++;
+      const want = reviewedUrl(row.url);
+      if (r.outcome === "direct" && (row.outcome !== "direct" || r.best?.url !== want)) wrongDirect.push(`${row.q} → ${r.best?.url} (expected ${row.outcome} ${row.url ?? ""})`);
+      if (r.outcome === row.outcome && (row.outcome !== "direct" || r.best?.url === want)) agree++;
     }
     expect(wrongDirect).toEqual([]);
     expect(agree / fixture.rows.length).toBeGreaterThanOrEqual(0.85);
@@ -373,7 +382,8 @@ describe("honest URLs", () => {
     expect(t.notice).toBe("no-page-for-intent");
     const cgl = facts.SSC_CGL;
     expect(examIntentUrl("SSC_CGL", "pyq", cgl, 2024).url).toBe("/exams/SSC_CGL/pyq/2024");
-    expect(examIntentUrl("SSC_CGL", "pyq", cgl, 2019)).toMatchObject({ url: "/exams/SSC_CGL/pyq", downgraded: true });
+    expect(examIntentUrl("SSC_CGL", "pyq", cgl, 2019)).toMatchObject({ url: "/exams/SSC_CGL#pyqs", downgraded: true });
+    expect(examIntentUrl("SSC_CGL", "pyq", cgl)).toMatchObject({ url: "/exams/SSC_CGL#pyqs", downgraded: false });
     expect(examIntentUrl("SSC_CGL", "salary", cgl).url).toBe("/exams/SSC_CGL#salary");
     expect(examIntentUrl("SSC_CGL", "build-mock", cgl)).toMatchObject({ url: "/exams/SSC_CGL/build-mock", status: "sign-in" });
     expect(examIntentUrl("X_UNKNOWN", "syllabus", undefined)).toMatchObject({ url: "/exams/X_UNKNOWN", downgraded: true });
@@ -606,5 +616,127 @@ describe("speed", () => {
     for (let k = 0; k < 3; k++) for (const q of qs) res(q);
     const per = (performance.now() - t0) / (3 * qs.length);
     expect(per).toBeLessThan(10);
+  });
+});
+
+// ── 6. Discoverability G2 fixes (26 Sep 2026) ────────────────────────────
+
+describe("G2: the resolver opens the right page", () => {
+  const withCapsules = buildSearchIndex({ ...fixtureInputs(), capsuleMonths: ["2025-09", "2026-07", "2026-08", "2026-09", "bad", "2026-13"] }, "deep");
+  const withCapsulesLite = toLiteIndex(withCapsules);
+  const capsulePaths = (i: SearchIndex) => i.docs.filter((d) => d.path.startsWith("/current-affairs/capsule/")).map((d) => [d.path, d.title]);
+
+  it("(a) a family acronym + qualifier the catalogue lacks never direct-opens a partial-token match", () => {
+    for (const idx of [deep, lite]) {
+      for (const q of ["cuet pg", "cuet pg 2025", "CUET PG"]) {
+        const r = resolveQuery(q, idx);
+        expect(r.outcome, q).toBe("list");
+        expect(r.best, q).toBeNull();
+      }
+    }
+    const d = res("cuet pg");
+    expect(d.notices).toContain("not-in-catalogue");
+    expect(d.logMiss).toBe(true);
+    // Still opens where the top exam owns a typed word, or the name is its own.
+    expect(res("delhi police ssc").best?.url).toBe("/exams/DL_POLICE_PC");
+    expect(res("cuet ug").best?.url).toBe("/exams/CUET_UG");
+    expect(res("neet pg").best?.url).toBe("/exams/NEET_PG");
+    expect(res("upcet").best?.url).toBe("/exams/UP_UPCET");
+  });
+
+  it("(b) a scholarship word + a class opens the scholarships, not the school class page", () => {
+    for (const idx of [deep, lite]) {
+      for (const q of ["scholarship for class 10 students", "class 10 scholarship", "scholarships for class 12", "class 9 scholarships", "scholarship for class 5"]) {
+        const r = resolveQuery(q, idx);
+        expect(r.outcome, q).toBe("direct");
+        expect(r.best?.url, q).toBe("/scholarships");
+        expect(r.hits.some((h) => h.url.startsWith("/schooling")), q).toBe(false);
+      }
+    }
+    // The rows under it are schemes whose own levels cover that class.
+    const levels = new Map(deep.docs.filter((d) => d.kind === "scholarship").map((d) => [d.path, d.scholarship?.levels ?? []]));
+    const rows = res("scholarship for class 10 students").hits.filter((h) => h.kind === "scholarship");
+    expect(rows.length).toBeGreaterThan(0);
+    for (const h of rows) expect(levels.get(h.url), h.url).toContain("CLASS_9_10");
+    // A school subject is still a school ask; girls-only filters still list the matcher first.
+    expect(res("class 10 science").best?.url).toBe("/schooling/cbse/class-10/science");
+    expect(res("scholarship for girls").hits[0].url).toBe("/scholarships/match");
+  });
+
+  it("(c) current affairs today and the exam calendar open their pages", () => {
+    for (const idx of [deep, lite, withCapsules, withCapsulesLite]) {
+      for (const q of ["current affairs today", "today current affairs", "today's current affairs", "aaj ka current affairs"]) {
+        const r = resolveQuery(q, idx);
+        expect(r.outcome, q).toBe("direct");
+        expect(r.best?.url, q).toBe("/current-affairs");
+      }
+      for (const q of ["upcoming government exams 2026", "upcoming govt exams", "exam calendar 2026", "upsc calendar 2026", "ssc calendar 2026", "ssc exam calendar", "upsc calendar"]) {
+        const r = resolveQuery(q, idx);
+        expect(r.outcome, q).toBe("direct");
+        expect(r.best?.url, q).toBe("/exam-calendar");
+      }
+    }
+    // Other words beside "calendar" are not a calendar ask.
+    expect(res("class 4 calendar").best?.url ?? "").not.toBe("/exam-calendar");
+  });
+
+  it("(c) a month's capsule opens only when the index holds that month", () => {
+    for (const idx of [withCapsules, withCapsulesLite]) {
+      expect(resolveQuery("current affairs september 2026", idx).best?.url).toBe("/current-affairs/capsule/2026-09");
+      expect(resolveQuery("september 2026 current affairs", idx).best?.url).toBe("/current-affairs/capsule/2026-09");
+      expect(resolveQuery("current affairs capsule august 2026", idx).best?.url).toBe("/current-affairs/capsule/2026-08");
+      expect(resolveQuery("current affairs sept 2025", idx).best?.url).toBe("/current-affairs/capsule/2025-09");
+      // No year: the latest capsule of that month.
+      expect(resolveQuery("current affairs september", idx).best?.url).toBe("/current-affairs/capsule/2026-09");
+      // A month with no capsule is never opened as the daily page.
+      expect(resolveQuery("current affairs may 2026", idx).outcome).not.toBe("direct");
+    }
+    // The fixture index has no capsule months (as production until the loader passes them): no capsule URL is ever made up.
+    for (const q of ["current affairs september 2026", "current affairs may 2026"]) {
+      const r = res(q);
+      expect(r.outcome, q).not.toBe("direct");
+      for (const u of urlsOf(r)) expect(u, q).not.toContain("/capsule/");
+    }
+    // Only well-formed months become pages; each is a real route; the wire codec round-trips them.
+    expect(capsulePaths(withCapsules).map(([p]) => p)).toEqual([
+      "/current-affairs/capsule/2025-09",
+      "/current-affairs/capsule/2026-07",
+      "/current-affairs/capsule/2026-08",
+      "/current-affairs/capsule/2026-09",
+    ]);
+    for (const [p] of capsulePaths(withCapsules)) assertHonestUrl(p, "capsule doc");
+    const back = decodeIndex(JSON.parse(JSON.stringify(encodeIndex(withCapsulesLite))));
+    expect(capsulePaths(back)).toEqual(capsulePaths(withCapsulesLite));
+  });
+
+  it("(d) an exact career name beats careers that share one of its words", () => {
+    for (const idx of [deep, lite]) {
+      for (const q of ["data scientist career", "data scientist"]) {
+        const r = resolveQuery(q, idx);
+        expect(r.outcome, q).toBe("direct");
+        expect(r.best?.url, q).toBe("/careers/data-scientist");
+      }
+    }
+  });
+
+  it("(e) PYQ asks land on the hub's #pyqs, never on the /pyq redirect", () => {
+    expect(res("pyqs of tspsc group 1").best?.url).toBe("/exams/TS_TSPSC_GROUP1#pyqs");
+    expect(res("ssc cgl pyq").best?.url).toBe("/exams/SSC_CGL#pyqs");
+    for (const q of ["ssc cgl pyq", "mpesb pyqs", "ssc cgl previous papers", "ssc cgl 2019 paper", "pyqs of tspsc group 1"]) {
+      for (const u of urlsOf(res(q))) expect(u.split("#")[0].endsWith("/pyq"), `${q}: ${u}`).toBe(false);
+    }
+    expect(res("https://shishya.in/exams/ssc_cgl/pyq").best?.url).toBe("/exams/SSC_CGL#pyqs");
+  });
+
+  it("pasted links are read in the middleware's canonical form", () => {
+    expect(res("https://shishya.in/exams/neet").best?.url).toBe("/exams/NEET_UG");
+    expect(res("https://shishya.in/exams/entrance").best?.url).toBe("/exams/entrance");
+    expect(res("shishya.in/schooling/cbse/10").best?.url).toBe("/schooling/cbse/class-10");
+  });
+
+  it("the Entrance section has its own hub: its landing and its fallback", () => {
+    expect(res("entrance exams").best?.url).toBe("/exams/entrance");
+    expect(res("entrance exams in india").best?.url).toBe("/exams/entrance");
+    expect(res("jee").fallback.url).toBe("/exams/entrance");
   });
 });

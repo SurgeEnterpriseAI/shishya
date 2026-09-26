@@ -31,6 +31,8 @@ import {
   pickOfficialPaperLinks,
 } from "@/lib/pyq-full-paper";
 import { OfficialYearPapers, WholePaperLinks } from "./WholePaperLinks";
+import { PYQ_TEXT_QUESTIONS, pyqFaqItems, pyqModelledEn, pyqOptions, pyqTextShownLine } from "@/lib/pyq-faq";
+import { faqPageJsonLd } from "@/lib/hub-faq";
 
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
@@ -231,10 +233,10 @@ export default async function PYQYearPage({
   const counts = { n: questions.length, m: exam.totalQuestions, year: yearNum };
   const modelled = fillPyq(P.modelled, { n: questions.length, year: yearNum, m: exam.totalQuestions });
   // The structured data below stays English in every locale (inLanguage
-  // "en-IN", canonical → the English URL), so its sentence is built from the
-  // English copy — a Hindi clause inside an English FAQ answer is noise to
-  // an answer engine (16 Sep 2026).
-  const modelledEn = fillPyq(pyqYearCopy("en").modelled, { n: questions.length, year: yearNum, m: exam.totalQuestions });
+  // "en-IN", canonical → the English URL), so its sentence is built in
+  // English — a Hindi clause inside an English FAQ answer is noise to an
+  // answer engine (16 Sep 2026). 27 Sep 2026: built by pyqModelledEn, with
+  // no paper length (src/lib/pyq-faq.ts).
   // A question paper only (25 Sep 2026): the fallback to officialForYear[0]
   // handed an answer key to the FAQ note below as "the original paper".
   const officialPaper = officialForYear.find(isQuestionPaper) ?? null;
@@ -366,49 +368,29 @@ export default async function PYQYearPage({
   };
   // AEO: the questions searchers/AI engines actually ask about PYQs,
   // answered contextually for THIS exam and year with the live count.
-  const pyqFaq = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: `Where can I solve the ${exam.shortName} ${yearNum} previous year paper (PYQ) free online?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text:
-            `At ${pageUrl} you can solve ${exam.shortName} ${modelledEn} free. Shishya does not reproduce the original paper: every question is freshly worded in that year's pattern — same topics, style and difficulty, new wording and numbers` +
-            (partial ? `, and this set covers ${questions.length} of the paper's ${exam.totalQuestions} questions, not the whole paper` : ", at the real paper's full length") +
-            `. They run as a timed mock with instant scoring, step-by-step solutions and topic-wise weak-area analysis. No fee and no coaching enrolment needed.` +
-            officialPaperNote,
-        },
-      },
-      {
-        "@type": "Question",
-        name: `Are these the actual ${exam.shortName} ${yearNum} paper questions?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          // + the full-length real-pattern mock (25 Sep 2026), with its own size.
-          text: `No. They are PYQ-pattern questions modelled on the ${exam.shortName} ${yearNum} paper — freshly worded practice questions in the same pattern, not the original questions, which Shishya does not reproduce. The page shows how many questions it holds (${questions.length}) against the real paper's length (${exam.totalQuestions}).${officialPaperNote}${fullMockFaqNote(fullMock, exam.code)}`,
-        },
-      },
-      {
-        "@type": "Question",
-        name: `Do these ${exam.shortName} ${yearNum} pattern questions come with solutions and analysis?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: `Yes — every question carries a worked solution, and on submitting you get an instant score with a topic-wise breakdown showing exactly which areas to revise. Wrong answers are auto-collected into a free Mistake Notebook for one-tap re-practice until cleared.`,
-        },
-      },
-      {
-        "@type": "Question",
-        name: `Are previous year papers enough to crack ${exam.shortName}?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: `Previous-year papers are the best signal of what the exam actually tests, but toppers pair them with targeted practice and a plan. On Shishya (all free): solve PYQ-pattern sets year-wise, drill weak topics via the Mistake Notebook, follow a day-by-day plan from the Personal Coach at https://shishya.in/coach, and sit the Sunday All-India Live Test at https://shishya.in/live-test to see where you stand nationally.`,
-        },
-      },
-    ],
-  };
+  // 26 Sep 2026 (G3, src/lib/pyq-faq.ts): the same items render as a
+  // visible list below and as the page's one FAQPage — it was schema-only.
+  // English body only (the structured data was always English; the /hi and
+  // /te bodies, canonical to the English URL, render neither).
+  const englishBody = lc === "en";
+  const faqItems = englishBody
+    ? pyqFaqItems({
+        short: exam.shortName,
+        year: yearNum,
+        pageUrl,
+        // 27 Sep 2026 (repair): no paper length — Exam.totalQuestions is one
+        // undated number, not that year's paper (src/lib/pyq-faq.ts).
+        modelledEn: pyqModelledEn(questions.length, yearNum),
+        partial,
+        held: questions.length,
+        officialPaperNote,
+        fullMockNote: fullMockFaqNote(fullMock, exam.code),
+      })
+    : [];
+  const pyqFaq = faqPageJsonLd(faqItems);
+  // The set's first questions as text (26 Sep 2026, G3 stretch): our own
+  // wording (PYQ-pattern, never the paper), answers folded under each one.
+  const textQuestions = englishBody ? questions.slice(0, PYQ_TEXT_QUESTIONS) : [];
 
   return (
     <main className="min-h-screen bg-ink-50/40">
@@ -420,10 +402,12 @@ export default async function PYQYearPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(pyqBreadcrumbs) }}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(pyqFaq) }}
-      />
+      {pyqFaq && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(pyqFaq) }}
+        />
+      )}
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
@@ -514,7 +498,7 @@ export default async function PYQYearPage({
             {userAttempt?.status === "IN_PROGRESS" ? (
               // Already in progress — go straight to the player. No
               // warmup-vs-full prompt; they've already chosen.
-              <Link href={`/mocks/${mock.id}`} prefetch={false} className="btn-primary">
+              <Link href={`/mocks/${mock.id}`} rel="nofollow" prefetch={false} className="btn-primary">
                 {t("exam.pyq.resumeBtn")}
               </Link>
             ) : (
@@ -568,6 +552,48 @@ export default async function PYQYearPage({
           </Link>
         </div>
 
+        {/* The set's first questions as text (26 Sep 2026, G3): after the
+            official papers above, never presented as the paper. */}
+        {textQuestions.length > 0 && (
+          <section id="questions" className="mt-8 scroll-mt-24">
+            <h2 className="text-base font-semibold text-ink-800">
+              {exam.shortName} {yearNum} PYQ-pattern questions
+            </h2>
+            <p className="mt-1 text-xs text-ink-500">
+              {pyqTextShownLine(textQuestions.length, questions.length)}
+            </p>
+            <ol className="mt-3 space-y-3">
+              {textQuestions.map((q, i) => {
+                const options = pyqOptions(q.options);
+                return (
+                  <li key={q.id} className="rounded-md border border-ink-200 bg-white p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-ink-500">
+                      Q{i + 1} · {q.topic.name}
+                    </p>
+                    <p className="mt-1 whitespace-pre-line text-sm text-ink-900">{q.body}</p>
+                    {options.length > 0 && (
+                      <ul className="mt-2 space-y-1 text-sm text-ink-800">
+                        {options.map((o) => (
+                          <li key={o.key}>
+                            <span className="font-semibold">{o.key}.</span> {o.text}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <details className="mt-2 text-sm">
+                      <summary className="cursor-pointer text-xs font-semibold text-saffron-700">Answer and solution</summary>
+                      <p className="mt-1 text-ink-800">
+                        <span className="font-semibold">Answer: {q.answerKey}</span>
+                      </p>
+                      {q.solution && <p className="mt-1 whitespace-pre-line text-ink-700">{q.solution}</p>}
+                    </details>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        )}
+
         {subjectRows.length > 0 && (
           <section className="mt-8">
             <h2 className="text-base font-semibold text-ink-800">{t("exam.pyq.breakdown")}</h2>
@@ -597,6 +623,24 @@ export default async function PYQYearPage({
             signedIn={!!userId}
             examCode={exam.code}
           />
+        )}
+
+        {/* FAQ — visible, and the same items as the FAQPage above (26 Sep
+            2026, G3). */}
+        {faqItems.length > 0 && (
+          <section className="mt-10" aria-labelledby="pyq-faq-heading">
+            <h2 id="pyq-faq-heading" className="text-base font-semibold text-ink-800">
+              {exam.shortName} {yearNum} previous year paper — frequently asked questions
+            </h2>
+            <div className="mt-3 space-y-2">
+              {faqItems.map((f, i) => (
+                <details key={i} className="group rounded-lg border border-ink-200 bg-white">
+                  <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-ink-800 hover:bg-ink-50/60">{f.q}</summary>
+                  <div className="border-t border-ink-100 px-4 py-3 text-sm leading-relaxed text-ink-700">{f.a}</div>
+                </details>
+              ))}
+            </div>
+          </section>
         )}
       </section>
     </main>

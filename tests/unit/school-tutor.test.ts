@@ -337,10 +337,16 @@ describe("the exam tutor's shared 1-hour prefix is byte-identical to before scho
   // 26 Sep 2026 (integrate): re-pinned again for the /exams/entrance entry
   // (the Entrance exams landing now exists). Before: signedIn 9dd6bce3…,
   // guest bc318474…, general 6a5dbcce….
+  // 26 Sep 2026 (entry points): re-pinned for the site-facts edit — the
+  // whole-platform /ask line ("Search or ask Shishya") and the G4 pages
+  // (/exams/category/{CATEGORY}, /exams/after/{LEVEL},
+  // /scholarships/for/{GROUP}, /scholarships/closing-soon and the two CBSE
+  // board-exam pages). Before: signedIn 58a6cb63…, guest 98ccf0b8…,
+  // general b4ebd611….
   const PINNED = {
-    signedIn: "58a6cb6305748451f914ae99f7d2d36fef01bf1d57b3532b89eac97ce2b3d063",
-    guest: "98ccf0b88a76494d43ece2499e52aee64622dd11138ebfaa0178eb3630850aff",
-    general: "b4ebd611db501b12bfbb42227800f79a67d6d89261731f97bd27659e5ae131b2",
+    signedIn: "f7d43f0a4378587546d8468a9b098ef91eeb760ac129b4b0657c65d37e9d751c",
+    guest: "3ed9ecbfe33c05d72b950f3f065dfa4c665c45836a9b7e88b65326483089fa05",
+    general: "e4b68670ec9bf07043889c8eb104ad5d8d8da84f440c066c35d8dd63f603e9c8",
   };
 
   it("signed-in (tools on), guest (tools off) and general mode", () => {

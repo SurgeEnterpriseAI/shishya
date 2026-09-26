@@ -13,9 +13,16 @@ const nextConfig: NextConfig = {
   // Next's default blocking list; this extends the same treatment to
   // the rest (30k+ AI-crawler hits/week per BotVisit). Setting this
   // REPLACES Next's default regex, so the default list is inlined
-  // first. Googlebot renders JS and is deliberately left streaming.
+  // first.
+  // 26 Sep 2026: Googlebot too. It renders JS, but on a cold fetch the
+  // streamed metadata can land after </head>: 1 of about 45 cold fetches
+  // streamed <title> and the canonical link after </head>, where Google
+  // may ignore them — so Googlebot now gets the same blocking HTML as
+  // Bingbot. + Amzn-SearchBot / Amzn-User (Amazon's search crawler and
+  // user fetcher, non-rendering). Google-CloudVertexBot is already
+  // matched by Google-[\w-]+.
   htmlLimitedBots:
-    /[\w-]+-Google|Google-[\w-]+|Chrome-Lighthouse|Slurp|DuckDuckBot|baiduspider|yandex|sogou|bitlybot|tumblr|vkShare|quora link preview|redditbot|ia_archiver|Bingbot|BingPreview|applebot|facebookexternalhit|facebookcatalog|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|SkypeUriPreview|Yeti|googleweblight|GPTBot|OAI-SearchBot|ChatGPT-User|ClaudeBot|Claude-User|Claude-SearchBot|anthropic-ai|PerplexityBot|Perplexity-User|Amazonbot|meta-external|FacebookBot|Bytespider|CCBot|DuckAssistBot|MistralAI|cohere|YouBot|Diffbot/i,
+    /[\w-]+-Google|Google-[\w-]+|Googlebot|Chrome-Lighthouse|Slurp|DuckDuckBot|baiduspider|yandex|sogou|bitlybot|tumblr|vkShare|quora link preview|redditbot|ia_archiver|Bingbot|BingPreview|applebot|facebookexternalhit|facebookcatalog|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|SkypeUriPreview|Yeti|googleweblight|GPTBot|OAI-SearchBot|ChatGPT-User|ClaudeBot|Claude-User|Claude-SearchBot|anthropic-ai|PerplexityBot|Perplexity-User|Amzn-SearchBot|Amzn-User|Amazonbot|meta-external|FacebookBot|Bytespider|CCBot|DuckAssistBot|MistralAI|cohere|YouBot|Diffbot/i,
   experimental: {
     // Server actions enabled by default in Next 15
   },

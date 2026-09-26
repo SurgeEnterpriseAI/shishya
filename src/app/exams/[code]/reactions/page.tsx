@@ -34,9 +34,7 @@ import type { SourceTier } from "@/lib/exam-timeline";
 import { getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { loadExamNightExam, loadExamNightFacts, stageAwarePhaseMeta } from "@/lib/exam-night-facts";
 import { examDayClaim } from "@/lib/phase-article-copy";
-import { prisma } from "@/lib/db/prisma";
-import { loadExamWeekExams } from "@/lib/exam-week-aeo";
-import { examDayRobots, isPhasePageIndexable } from "@/lib/exam-phase-indexable";
+import { examPageIndexGates, examPageRobots } from "@/lib/exam-week-gates";
 
 type TFn = (key: StringKey) => string;
 
@@ -49,26 +47,22 @@ export async function generateMetadata({
   const exam = await loadExamNightExam(code);
   if (!exam) return { title: "Exam not found — Shishya" };
   const tEn = tFor("en") as TFn;
-  // 26 Sep 2026 (src/lib/exam-phase-indexable.ts): index only when the
-  // sitemap lists this page — an active "reactions" article, or the exam
-  // inside exam week. Out of season it stays noindex,follow and still
-  // renders. A failed read keeps the old index,follow.
-  const [inputs, facts, hasActiveArticle, inExamWeek] = await Promise.all([
+  // 26 Sep 2026 (G1, src/lib/exam-week-gates.ts): Google may index this page
+  // only while the sitemap lists it — from 3 days before to 30 days after an
+  // announced (official / reported) typed exam day. Outside that window it
+  // still renders, Google-only noindex,follow; Bing and ChatGPT search keep
+  // index,follow (Bingbot and OAI-SearchBot fetch these pages all year).
+  // Was: noindex for every engine unless an active article existed or the
+  // exam was inside exam week of any tier.
+  const [inputs, facts] = await Promise.all([
     getExamWeekInputs(exam.id),
     loadExamNightFacts(exam, "REACTIONS", {
       tierWord: (tier: SourceTier) => tEn(`ew.tier.${tier}` as StringKey),
       passedWord: tEn("tracker.passedEstimate"),
       locale: "en",
     }),
-    prisma.examPhaseArticle
-      .findFirst({ where: { examId: exam.id, slug: "reactions", archivedAt: null }, select: { id: true } })
-      .then((a) => a !== null)
-      .catch(() => null),
-    loadExamWeekExams({ examCode: exam.code })
-      .then((list) => list.length > 0)
-      .catch(() => null),
   ]);
-  const indexable = hasActiveArticle === null || inExamWeek === null ? true : isPhasePageIndexable({ hasActiveArticle, inExamWeek });
+  const indexable = examPageIndexGates(inputs.rows, inputs.officialUrl).examWeek;
   // Stage-aware (16 Sep 2026): a focus row of another stage keeps its date
   // but names that stage ("21 Aug (official) Mains paper"), never this
   // exam's own stage; "today" / "held" drop only when the short name is a
@@ -79,7 +73,7 @@ export async function generateMetadata({
     title: meta.title,
     description: meta.description,
     alternates: { canonical: url },
-    robots: examDayRobots(indexable),
+    robots: examPageRobots(indexable),
     openGraph: {
       title: meta.ogTitle,
       description: meta.ogDescription,

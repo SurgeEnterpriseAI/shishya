@@ -29,8 +29,29 @@ import { CoachEntry } from "@/components/CoachEntry";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { syllabusPageCopy } from "@/lib/page-gates-copy";
 import { examTitleYear, yearSuffix } from "@/lib/exam-title-year";
+import { cache } from "react";
+import { leadDescription, syllabusLead } from "@/lib/answer-lead";
+import { isoDayText, markText, patternCitation, verifiedPattern } from "@/lib/pattern-verified";
+import { latestCheck, freshnessLine } from "@/lib/page-freshness";
 
 export const revalidate = 3600;
+
+// 26 Sep 2026 (G3, discoverability wave 2): the page opens with the answer
+// (src/lib/answer-lead.ts syllabusLead — subjects, topic count, the official
+// site), and for an exam whose pattern was read from its notice
+// (src/lib/pattern-verified.ts) it prints the pattern table, the notice link
+// and when it was checked. No pattern number is printed for any other exam:
+// the stored Exam tuple and Subject.weight carry no source (critic veto), so
+// no weight column either. The official site comes from ExamEligibility.
+const loadOfficialSite = cache((examId: string) =>
+  prisma
+    .$queryRaw<{ officialUrl: string | null; officialName: string | null }[]>`
+      SELECT "officialUrl", "officialName" FROM "ExamEligibility" WHERE "examId" = ${examId} LIMIT 1
+    `
+    .then((r) => r[0] ?? { officialUrl: null, officialName: null })
+    .catch(() => ({ officialUrl: null as string | null, officialName: null as string | null })),
+);
+const PATTERN_SELECT = { totalQuestions: true, totalMarks: true, durationMin: true, negativeMark: true } as const;
 
 // 26 Sep 2026: the year is the hub title's cycle year (src/lib/exam-title-year.ts),
 // read per exam — it was the module-level calendar year, so "JEE Main
@@ -44,17 +65,32 @@ export async function generateMetadata({
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
     where: realExamKey({ code }),
-    select: { id: true, code: true, shortName: true, name: true },
+    select: { id: true, code: true, shortName: true, name: true, ...PATTERN_SELECT },
   });
   if (!exam) return { title: "Exam syllabus — Shishya" };
-  const [tree, gates, year] = await Promise.all([loadSyllabusTree(exam.id), examPageGates(exam.code), examTitleYear(exam.code)]);
-  const { title, description, keywords } = syllabusPageCopy({
+  const [tree, gates, year, site] = await Promise.all([
+    loadSyllabusTree(exam.id),
+    examPageGates(exam.code),
+    examTitleYear(exam.code),
+    loadOfficialSite(exam.id),
+  ]);
+  const counts = syllabusCounts(tree);
+  const { title, description: baseDescription, keywords } = syllabusPageCopy({
     examShort: exam.shortName,
     examName: exam.name,
     year,
-    ...syllabusCounts(tree),
+    ...counts,
     buildMock: gates.buildMock,
   });
+  // The answer lead heads the description, ~160 characters in all (26 Sep 2026, G3).
+  const lead = syllabusLead({
+    short: exam.shortName,
+    subjects: tree.map((s) => s.name),
+    topicCount: counts.topicCount,
+    pattern: verifiedPattern(exam),
+    officialUrl: site.officialUrl,
+  });
+  const description = leadDescription(lead, baseDescription);
   const url = `https://shishya.in/exams/${exam.code}/syllabus`;
   const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
   return {
@@ -115,17 +151,34 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
   const { code } = await params;
   const exam = await prisma.exam.findUnique({
     where: realExamKey({ code }),
-    select: { id: true, code: true, shortName: true, name: true, active: true, state: true },
+    select: { id: true, code: true, shortName: true, name: true, active: true, state: true, ...PATTERN_SELECT },
   });
   if (!exam || !exam.active) notFound();
 
-  const [subjects, gates, year] = await Promise.all([loadSyllabusTree(exam.id), examPageGates(exam.code), examTitleYear(exam.code)]);
+  const [subjects, gates, year, site] = await Promise.all([
+    loadSyllabusTree(exam.id),
+    examPageGates(exam.code),
+    examTitleYear(exam.code),
+    loadOfficialSite(exam.id),
+  ]);
   if (subjects.length === 0) notFound();
+  const pattern = verifiedPattern(exam);
+  // "Checked" only for a pattern read from the notice — the day it was read
+  // (src/lib/page-freshness.ts). Subjects and topics carry no check date.
+  const checked = pattern ? latestCheck([`${pattern.checkedOn}T00:00:00+05:30`]) : null;
   const { t: tr, locale } = await getT();
 
   const counts = syllabusCounts(subjects);
   const topicCount = counts.topicCount;
   const copy = syllabusPageCopy({ examShort: exam.shortName, examName: exam.name, year, ...counts, buildMock: gates.buildMock });
+
+  const lead = syllabusLead({
+    short: exam.shortName,
+    subjects: subjects.map((s) => s.name),
+    topicCount,
+    pattern,
+    officialUrl: site.officialUrl,
+  });
 
   const url = `https://shishya.in/exams/${exam.code}/syllabus`;
   const jsonLd = {
@@ -136,6 +189,7 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
     url,
     inLanguage: "en-IN",
     isAccessibleForFree: true,
+    ...(checked ? { dateModified: checked.iso } : {}),
     about: [{ "@type": "Thing", name: exam.name }, { "@type": "Thing", name: `${exam.shortName} syllabus` }],
     publisher: { "@type": "Organization", name: "Shishya", url: "https://shishya.in" },
     isPartOf: { "@type": "Course", name: `${exam.shortName} preparation`, url: `https://shishya.in/exams/${exam.code}` },
@@ -165,6 +219,8 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
         <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">
           {exam.shortName} Syllabus{yearSuffix(year)} — every subject &amp; topic
         </h1>
+        {/* The answer first (26 Sep 2026, G3). */}
+        {lead && <p className="mt-2 max-w-3xl text-base leading-relaxed text-ink-800">{lead}</p>}
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
           {copy.intro}
           {gates.buildMock && (
@@ -177,6 +233,61 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
           )}
         </p>
         <StateExamsLink state={exam.state} label={tr("exam.state.more")} locale={locale} />
+
+        {/* Exam pattern — only as read from the body's notice (26 Sep 2026,
+            G3, src/lib/pattern-verified.ts); every figure is the notice's. */}
+        {pattern && (
+          <section id="pattern" className="mt-6 scroll-mt-24">
+            <h2 className="text-base font-semibold text-ink-900">
+              {exam.shortName} {pattern.stage} exam pattern
+            </h2>
+            <div className="mt-3 overflow-x-auto rounded-lg border border-ink-200 bg-white">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-ink-200 bg-ink-50/60 text-left">
+                    <th className="px-4 py-2 font-semibold text-ink-800">Section</th>
+                    <th className="px-4 py-2 font-semibold text-ink-800">Questions</th>
+                    <th className="px-4 py-2 font-semibold text-ink-800">Marks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pattern.sections.map((s) => (
+                    <tr key={s.name} className="border-b border-ink-100">
+                      <td className="px-4 py-2 font-medium text-ink-900">{s.name}</td>
+                      <td className="px-4 py-2 tabular-nums text-ink-700">{s.questions}</td>
+                      <td className="px-4 py-2 tabular-nums text-ink-700">{s.marks}</td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td className="px-4 py-2 font-semibold text-ink-900">Total</td>
+                    <td className="px-4 py-2 font-semibold tabular-nums text-ink-900">{pattern.questions}</td>
+                    <td className="px-4 py-2 font-semibold tabular-nums text-ink-900">{pattern.marks}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-xs text-ink-600">
+              Time: {pattern.durationMin} minutes · Negative marking:{" "}
+              {pattern.negativePerWrong > 0 ? `${markText(pattern.negativePerWrong)} mark per wrong answer` : "none"} · Language:{" "}
+              {pattern.languages} · Source:{" "}
+              <a href={pattern.source.url} target="_blank" rel="noopener nofollow" className="font-medium text-saffron-800 underline">
+                {patternCitation(pattern)}
+              </a>{" "}
+              ({pattern.source.para}, dated {isoDayText(pattern.source.publishedOn)}).
+            </p>
+            {checked && <p className="mt-1 text-xs text-ink-500">{freshnessLine(checked, "Exam pattern")}</p>}
+          </section>
+        )}
+
+        {/* The body's own site (26 Sep 2026, G3): where the syllabus and
+            notification are published. */}
+        {site.officialUrl && (
+          <p className="mt-4 text-sm">
+            <a href={site.officialUrl} target="_blank" rel="noopener nofollow" className="font-medium text-saffron-700 hover:underline">
+              Check the official syllabus / notification — {site.officialName || site.officialUrl.replace(/^https?:\/\//, "")} ↗
+            </a>
+          </p>
+        )}
 
         <div className="mt-4">
           <ShareExamButton

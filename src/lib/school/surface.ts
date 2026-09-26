@@ -14,8 +14,10 @@
 // scripts/school-content-batch.ts.
 //
 // Rules:
-//   * Board, class and subject pages are always indexable: they list the
-//     official structure with the official links.
+//   * Board and class pages are always indexable: they list the official
+//     structure with the official links. A subject page is indexable only
+//     when it lists chapters (isSchoolSubjectIndexable, 26 Sep 2026) — one
+//     that is only an official book or syllabus link is noindex,follow.
 //   * A chapter page is indexable only when Shishya has something of its own
 //     there — usable notes (src/lib/topic-notes.ts) or a checked guest quiz
 //     (>= SCHOOL_GUEST_QUIZ_MIN validated, non-withdrawn MCQs on the chapter
@@ -328,15 +330,27 @@ export interface SchoolClassDocs {
  *  a page of one sentence. */
 export type SchoolDocsResolver = (curriculum: SchoolCurriculum, cls: number) => SchoolClassDocs | null;
 
-/** A subject page is indexable when it lists chapters, links an official
- *  document of its own (an NCERT book, a CISCE syllabus PDF) or sits under a
- *  CISCE stage document. Unknown to the spine (no resolver, no class, no
- *  subject entry) it counts as indexable, as every subject did before. */
-export function isSchoolSubjectIndexable(s: Pick<SchoolSurfaceSubject, "code" | "chapters">, docs: SchoolClassDocs | null | undefined): boolean {
-  if (s.chapters.length > 0 || !docs) return true;
-  const d = docs.subjects.get(s.code);
-  if (!d) return true;
-  return d.books.length > 0 || d.syllabusUrls.length > 0 || docs.levelDocument !== null;
+/** A subject page is indexable only when it lists chapters (each with its
+ *  official chapter PDF).
+ *
+ *  26 Sep 2026 (G1 index hygiene): until today a subject page also counted
+ *  as indexable when it linked one official document of its own — an NCERT
+ *  book, a CISCE syllabus PDF — or sat under a CISCE stage document. Such a
+ *  page is the official link and nothing more (a bare link in the index is
+ *  what Google's scaled-content policy demotes), so it now renders
+ *  noindex,follow and leaves the sitemap: all 199 CISCE subject pages (CISCE
+ *  prescribes syllabuses, not one textbook series — no chapter list) and the
+ *  35 NCERT subject pages whose book chapters are not seeded (Hindi, Urdu,
+ *  Sanskrit, Sangeet, Creative Writing and Translation), plus NCERT Class 9
+ *  ICT which was already out. The 90 NCERT subject pages with a chapter list
+ *  stay indexable; board and class pages are unchanged. Counts from
+ *  scripts/tmp-w2-g1-school.ts on 26 Sep 2026.
+ *
+ *  `docs` (the spine resolver) no longer decides anything; the parameter
+ *  stays so the pages, the sitemap and llms-full.txt keep one call shape. */
+export function isSchoolSubjectIndexable(s: Pick<SchoolSurfaceSubject, "code" | "chapters">, docs?: SchoolClassDocs | null): boolean {
+  void docs;
+  return s.chapters.length > 0;
 }
 
 // ── DB read ───────────────────────────────────────────────────────────
@@ -494,8 +508,8 @@ export function findSchoolClass(surface: Pick<SchoolSurface, "classes">, boardSl
 const date = (s: string | null | undefined): Date | undefined => (s ? new Date(s) : undefined);
 
 /** Sitemap entries for the school section: each board with a class, every
- *  class, every INDEXABLE subject (isSchoolSubjectIndexable — all of them
- *  without a resolver), and every INDEXABLE chapter. lastModified: a
+ *  class, every INDEXABLE subject (isSchoolSubjectIndexable — one with a
+ *  chapter list, 26 Sep 2026), and every INDEXABLE chapter. lastModified: a
  *  chapter's own content timestamp; a subject's newest chapter (omitted when
  *  it has none); a class's newest subject, else the Exam row's updatedAt; a
  *  board's newest class. */

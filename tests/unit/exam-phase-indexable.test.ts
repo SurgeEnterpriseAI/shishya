@@ -1,8 +1,15 @@
 // The exam-day pages' index rule = the sitemap's inclusion rule (26 Sep 2026).
+//
+// 27 Sep 2026 (integration): the pages no longer call these helpers. G1 moved
+// /live, /reactions and /score-estimate (and /checklist) to ONE rule that the
+// pages and the sitemap both read — src/lib/exam-week-gates.ts
+// (examPageIndexGates / examPageRobots, Google-only noindex out of window),
+// pinned by tests/unit/exam-week-gates.test.ts, which also asserts no page
+// imports this module. The source-pin block ("the three pages use the shared
+// rule") was removed with it; the helper tests below stay until the module is
+// deleted.
 
 import { describe, it, expect } from "vitest";
-import fs from "node:fs";
-import path from "node:path";
 import {
   SCORE_ESTIMATE_EXAM_DAY_WINDOW_DAYS,
   examDayRobots,
@@ -63,22 +70,5 @@ describe("examDayRobots", () => {
   it("noindex,follow out of season; the site default in season", () => {
     expect(examDayRobots(false)).toEqual({ index: false, follow: true });
     expect(examDayRobots(true)).toBeUndefined();
-  });
-});
-
-describe("the three pages use the shared rule", () => {
-  const read = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), "utf8");
-  it("score-estimate, live and reactions set robots from the helpers", () => {
-    expect(read("src/app/exams/[code]/score-estimate/page.tsx")).toMatch(/robots: examDayRobots\(indexable\)/);
-    expect(read("src/app/exams/[code]/score-estimate/page.tsx")).toContain("isScoreEstimateIndexable(");
-    for (const [rel, slug] of [
-      ["src/app/exams/[code]/live/page.tsx", "live"],
-      ["src/app/exams/[code]/reactions/page.tsx", "reactions"],
-    ] as const) {
-      const src = read(rel);
-      expect(src).toMatch(/robots: examDayRobots\(indexable\)/);
-      expect(src).toContain("isPhasePageIndexable(");
-      expect(src).toContain(`slug: "${slug}", archivedAt: null`);
-    }
   });
 });

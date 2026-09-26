@@ -3,18 +3,32 @@
 // from one fetch (26 Sep 2026: the typed "163 exam pages" was stale).
 // Refreshes daily via Next's revalidate (cheap because the underlying query
 // is tiny).
+//
+// 26 Sep 2026 (G1 index hygiene): this is the sitemap GOOGLE reads, so it
+// lists only pages Google may index —
+//   • news permalinks leave it while NEWS_GOOGLE_NOINDEX is on (founder
+//     flag, src/lib/news-index-policy.ts); Bing gets them from
+//     /sitemap-news.xml, which robots.txt does not name;
+//   • /checklist, /live, /reactions and /score-estimate (and the estimator's
+//     /hi /te twins) only inside their windows (src/lib/exam-week-gates.ts,
+//     the same verdict the pages' Google-only robots read);
+//   • result permalinks only with an official link (resultInSitemap);
+//   • school subject pages only with a chapter list (isSchoolSubjectIndexable).
 
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db/prisma";
-import { NOT_SCHOOL_WHERE, REAL_EXAM_SQL, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
-import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
-import { loadExamWeekInputs } from "@/lib/exam-week-inputs";
-import { standingSitting } from "@/lib/score-sitting";
+import { REAL_EXAM_SQL, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
+import { SUPPRESSED_SOURCE, type TimelineInput } from "@/lib/exam-timeline";
+import { GATE_ROWS_AHEAD_DAYS, GATE_ROWS_PAST_DAYS, NO_GATES_OPEN, examPageIndexGates, groupGateRows, type ExamPageIndexGates } from "@/lib/exam-week-gates";
+import { newsInMainSitemap, selfCanonicalNewsRows } from "@/lib/news-index-policy";
+import { resultInSitemap } from "@/lib/result-permalink-copy";
+import { dedupeSitemap, extraSitemapEntries } from "@/lib/sitemap-sections";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { COLLEGES, ALL_STREAMS } from "@/lib/colleges-data";
 // 26 Sep 2026 (repair): the schemes, never the one outside aggregator
 // (Buddy4Study) the raw catalogue holds — src/lib/scholarship-schemes.ts.
 import { SCHOLARSHIP_SCHEMES } from "@/lib/scholarship-schemes";
+import { isOpenScheme } from "@/lib/scholarship-lists";
 import { WORLDWIDE_COUNTRIES, TEST_PREP } from "@/lib/worldwide-data";
 import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
 import { CAREERS } from "@/data/careers";
@@ -185,60 +199,38 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly" as const,
       priority: 0.75,
     }));
-  // Score estimator (6 Sep 2026, Exam Week Mode) — the marking-scheme
-  // calculator at /exams/[code]/score-estimate exists for every active
-  // exam but is only worth a crawl around exam day: emit it for exams with
-  // a TYPED exam-day row within ±30 days (untyped legacy rows never count),
-  // or (14 Sep 2026) while a sitting is open for comparison after its answer
-  // key — answer-key time, often weeks after the exam, is when candidates
-  // count. That second set is exactly the page's own "where do I stand?"
-  // gate (standingSitting): an answer key on the conducting body's host
-  // (tier "official"; a row marked official but linked to a coaching or
-  // jobs site is "reported" and does not count), on or after the last held
-  // exam day, under 45 days old, on a paper whose marking scheme can be
-  // stated. The SQL only narrows the candidates; the tracker rows are read
-  // uncached so this route keeps its 24h revalidate.
-  const examDayEstimators = await prisma
-    .$queryRaw<{ code: string }[]>`
-      SELECT DISTINCT e.code FROM "Exam" e
-      JOIN "ExamImportantDate" d ON d."examId" = e.id
-      WHERE ${REAL_EXAM_SQL} AND d."archivedAt" IS NULL
-        AND d.kind = 'EXAM' AND d.date >= NOW() - INTERVAL '30 days' AND d.date <= NOW() + INTERVAL '30 days'
-    `.catch(() => [] as { code: string }[]);
-  const answerKeyCandidates = await prisma
-    .$queryRaw<{ id: string }[]>`
-      SELECT DISTINCT e.id FROM "Exam" e
-      JOIN "ExamImportantDate" d ON d."examId" = e.id
-      WHERE ${REAL_EXAM_SQL} AND d."archivedAt" IS NULL
-        AND d.kind = 'ANSWER_KEY' AND d.confidence = 'official'
-        AND d.date >= NOW() - INTERVAL '45 days' AND d.date <= NOW()
-    `.catch(() => [] as { id: string }[]);
-  const answerKeyExams = answerKeyCandidates.length
-    ? await prisma.exam
-        .findMany({
-          where: { ...NOT_SCHOOL_WHERE, id: { in: answerKeyCandidates.map((r) => r.id) } },
-          select: {
-            id: true,
-            code: true,
-            shortName: true,
-            name: true,
-            active: true,
-            description: true,
-            totalQuestions: true,
-            scoredQuestions: true,
-            totalMarks: true,
-            marksPerQ: true,
-            negativeMark: true,
-          },
-        })
-        .catch(() => [])
-    : [];
-  const answerKeyOpen = (
-    await Promise.all(answerKeyExams.map(async (e) => (standingSitting(e, await loadExamWeekInputs(e.id)) ? e.code : null))).catch(
-      () => [] as (string | null)[],
-    )
-  ).filter((c): c is string => c !== null);
-  const estimatorExams = [...new Set([...examDayEstimators.map((e) => e.code), ...answerKeyOpen])].map((code) => ({ code }));
+  // Exam-day pages (26 Sep 2026, G1 index hygiene): /checklist, /live,
+  // /reactions and /score-estimate are listed only inside their windows —
+  // src/lib/exam-week-gates.ts, the same verdict each page's Google-only
+  // robots read, so a listed page is never noindex for Google:
+  //   live / reactions  an announced (official / reported) typed exam day
+  //                     from 3 days ahead to 30 days back;
+  //   checklist         an announced typed exam day in the next 21 days or
+  //                     the last 3;
+  //   score-estimate    the live / reactions window AND an official answer
+  //                     key out (not a future date).
+  // One read of every real exam's live typed tracker rows in the range the
+  // windows look at (plus a day of slack), uncached so this route keeps its
+  // 24h revalidate. A failed read lists none of these pages — a smaller
+  // sitemap beats one that lists noindex pages. Until today /checklist was
+  // listed for every real exam all year, and the other three around exam
+  // days of any tier (an expected date included).
+  const gateRows = await prisma
+    .$queryRaw<(TimelineInput & { code: string; officialUrl: string | null })[]>`
+      SELECT e.code, d.id, d.label, d.date, d."isExamDay", d.kind, d.confidence, d.url, d.notes, d.source, el."officialUrl"
+      FROM "ExamImportantDate" d
+      JOIN "Exam" e ON e.id = d."examId"
+      LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
+      WHERE ${REAL_EXAM_SQL} AND d."archivedAt" IS NULL AND d.kind IS NOT NULL
+        AND d.date >= NOW() - make_interval(days => ${GATE_ROWS_PAST_DAYS}::int)
+        AND d.date <= NOW() + make_interval(days => ${GATE_ROWS_AHEAD_DAYS}::int)
+    `.catch(() => [] as (TimelineInput & { code: string; officialUrl: string | null })[]);
+  const gateRowsByCode = groupGateRows(gateRows);
+  const indexGates = new Map<string, ExamPageIndexGates>(
+    [...gateRowsByCode].map(([code, rows]) => [code, examPageIndexGates(rows, rows[0]?.officialUrl ?? null)]),
+  );
+  const seasonGate = (code: string): ExamPageIndexGates => indexGates.get(code) ?? NO_GATES_OPEN;
+  const estimatorExams = exams.filter((e) => seasonGate(e.code).scoreEstimate);
   const scoreEstimateUrls: MetadataRoute.Sitemap = estimatorExams.map((e) => ({
     url: `${base}/exams/${e.code}/score-estimate`,
     changeFrequency: "weekly" as const,
@@ -289,9 +281,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // canonicalises to the English URL. Until then every active exam's hub,
   // tracker and cutoff twin was listed (+ estimator + calendar = 1,154 URLs)
   // although the hub twins were 91-93% English. Score estimator: the same
-  // set as the English URL above (exam day ±30 days, or a sitting open
-  // after its answer key). A failed measurement lists no twins — a smaller
-  // sitemap beats a wrong one.
+  // set as the English URL above (26 Sep 2026: its exam-week-gates window).
+  // A failed measurement lists no twins — a smaller sitemap beats a wrong one.
   const { loadTwinVerdicts, loadCalendarTwinVerdict } = await import("@/lib/twin-localisation");
   const twinVerdicts = new Map((await loadTwinVerdicts("all").catch(() => [])).map((r) => [r.code, r.verdicts]));
   const calendarTwins = await loadCalendarTwinVerdict().catch(() => ({ hi: false, te: false }));
@@ -352,31 +343,53 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Per-news permalink. EVERY ExamNewsItem we've ever generated — both
   // active (archivedAt IS NULL) and archived (archivedAt IS NOT NULL).
-  // Each gets its own NewsArticle JSON-LD page at /exams/[code]/news/[id].
+  // Each gets its own Article JSON-LD page at /exams/[code]/news/[id].
   // 13 Sep 2026 (index shape): the writer no longer mints a permalink per
   // restatement — a restated story updates its existing row in place
   // (src/lib/news-dedupe.ts), so this family now grows only by genuinely
-  // new stories. Archived rows stay listed (noindex decision pending).
-  const newsItems = await prisma.examNewsItem
-    .findMany({
-      where: { exam: REAL_EXAM_WHERE, OR: [{ source: null }, { source: { not: SUPPRESSED_SOURCE } }] },
-      select: {
-        id: true,
-        publishedAt: true,
-        archivedAt: true,
-        createdAt: true,
-        exam: { select: { code: true } },
-      },
-      orderBy: { publishedAt: "desc" },
-      // Sitemap protocol caps URLs per file at 50k. We over-provision a
-      // limit here so a single exam catastrophe (50k news items somehow)
-      // can't blow past the cap. Realistic ceiling is ~10-20k entries.
-      take: 30_000,
-    })
-    .catch(() => []);
-  const newsUrls: MetadataRoute.Sitemap = newsItems.map((n) => ({
+  // new stories.
+  // 26 Sep 2026 (G1): listed here only while the founder flag
+  // NEWS_GOOGLE_NOINDEX is off (src/lib/news-index-policy.ts); with it on,
+  // the permalinks are Google-only noindex and live in /sitemap-news.xml
+  // for Bing. lastmod = publishedAt, never archivedAt — archiving is a
+  // status change, not an edit (5,462 archived stories claimed an edit on
+  // the day they were archived).
+  const newsItems = newsInMainSitemap()
+    ? await prisma.examNewsItem
+        .findMany({
+          where: { exam: REAL_EXAM_WHERE, OR: [{ source: null }, { source: { not: SUPPRESSED_SOURCE } }] },
+          select: {
+            id: true,
+            examId: true,
+            title: true,
+            url: true,
+            publishedAt: true,
+            archivedAt: true,
+            createdAt: true,
+            exam: { select: { code: true } },
+          },
+          orderBy: { publishedAt: "desc" },
+          // Sitemap protocol caps URLs per file at 50k. We over-provision a
+          // limit here so a single exam catastrophe (50k news items somehow)
+          // can't blow past the cap. Realistic ceiling is ~10-20k entries.
+          take: 30_000,
+        })
+        .catch(() => [])
+    : [];
+  // 27 Sep 2026 (integration): canonical permalinks only — a duplicate-title
+  // copy carries rel=canonical to another row (news-index-policy
+  // selfCanonicalNewsRows, the /sitemap-news.xml rule). A failed eligibility
+  // read lists every row, the page's own fallback.
+  const newsOfficialUrls = newsItems.length
+    ? await prisma.examEligibility
+        .findMany({ where: { examId: { in: [...new Set(newsItems.map((n) => n.examId))] } }, select: { examId: true, officialUrl: true } })
+        .then((es) => new Map(es.map((e) => [e.examId, e.officialUrl] as const)))
+        .catch(() => null)
+    : null;
+  const newsListed = newsOfficialUrls ? selfCanonicalNewsRows(newsItems, newsOfficialUrls) : newsItems;
+  const newsUrls: MetadataRoute.Sitemap = newsListed.map((n) => ({
     url: `${base}/exams/${n.exam.code}/news/${n.id}`,
-    lastModified: n.archivedAt ?? n.publishedAt ?? n.createdAt,
+    lastModified: n.publishedAt ?? n.createdAt,
     // Active items: weekly. Archived: yearly (content is immutable
     // after archival, so Google can crawl rarely).
     changeFrequency: (n.archivedAt ? "yearly" : "weekly") as
@@ -387,21 +400,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Per-result permalink — "{exam} {stage} result {year}" is the largest
   // query family in this category. One URL per declared result.
+  // 26 Sep 2026 (G1): only a result with an official link
+  // (src/lib/result-permalink-copy.ts resultInSitemap — the page's own
+  // Google robots rule); 50 of 52 rows had none. Its own family now, so the
+  // news flag never takes results out.
   const resultRows = await prisma
-    .$queryRaw<{ id: string; code: string; declaredOn: Date }[]>`
-      SELECT r.id, e.code, r."declaredOn"
+    .$queryRaw<{ id: string; code: string; declaredOn: Date; officialUrl: string | null }[]>`
+      SELECT r.id, e.code, r."declaredOn", r."officialUrl"
       FROM "ExamResult" r JOIN "Exam" e ON e.id = r."examId"
       WHERE r.stage <> '__not_a_result__' AND ${REAL_EXAM_SQL}
       ORDER BY r."declaredOn" DESC LIMIT 5000
-    `.catch(() => [] as { id: string; code: string; declaredOn: Date }[]);
-  newsUrls.push(
-    ...resultRows.map((r) => ({
+    `.catch(() => [] as { id: string; code: string; declaredOn: Date; officialUrl: string | null }[]);
+  const resultUrls: MetadataRoute.Sitemap = resultRows
+    .filter((r) => resultInSitemap(r.officialUrl))
+    .map((r) => ({
       url: `${base}/exams/${r.code}/results/${r.id}`,
       lastModified: r.declaredOn,
       changeFrequency: "weekly" as const,
       priority: 0.65,
-    })),
-  );
+    }));
 
   // Phase articles — the three time-sensitive long-form pieces per exam
   // (CHECKLIST / LIVE / REACTIONS). Each is a Claude-summarised, source-
@@ -421,14 +438,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
     })
     .catch(() => []);
-  // /checklist is listed for every exam below (checklistUrls), so only the
+  // /checklist has its own family below (checklistUrls), so only the
   // LIVE / REACTIONS article URLs come from here.
   // One entry per URL (13 Sep 2026): an exam can hold more than one active
   // row for a phase (two REACTIONS rows each for SSC CHSL and MHT CET), and
   // the sitemap listed those URLs twice. Keep the newest row's date.
+  // 26 Sep 2026 (G1): an article URL is listed only inside its exam's
+  // live / reactions window (exam-week-gates); the article's date is then
+  // that URL's lastmod.
   const phaseByUrl = new Map<string, MetadataRoute.Sitemap[number]>();
   for (const a of phaseArticles) {
-    if (a.slug === "checklist") continue;
+    if (a.slug !== "live" && a.slug !== "reactions") continue;
+    if (!seasonGate(a.exam.code).examWeek) continue;
     const url = `${base}/exams/${a.exam.code}/${a.slug}`;
     const prev = phaseByUrl.get(url);
     if (prev?.lastModified && new Date(prev.lastModified) >= a.updatedAt) continue;
@@ -438,9 +459,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const phaseUrls: MetadataRoute.Sitemap = [...phaseByUrl.values()];
   // Exam-day + after-the-paper pages (13 Sep 2026) lead with first-party
   // facts (src/lib/exam-night-facts.ts) whether or not an article exists —
-  // list both for every exam inside exam week, once.
-  const { loadExamWeekExams } = await import("@/lib/exam-week-aeo");
-  const weekCodes = (await loadExamWeekExams().catch(() => [])).map((e) => e.code);
+  // list both for every exam inside its window (26 Sep 2026: the
+  // exam-week-gates window, was loadExamWeekExams' ±7 days of any tier), once.
+  const weekCodes = exams.filter((e) => seasonGate(e.code).examWeek).map((e) => e.code);
   const phaseListed = new Set(phaseUrls.map((u) => u.url));
   for (const code of weekCodes) {
     for (const slug of ["live", "reactions"]) {
@@ -452,9 +473,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
   // Last-minute checklist (13 Sep 2026) — built from stored facts for every
   // exam (src/lib/exam-checklist.ts). SCHOOL_BOARD containers have no page.
-  const checklistExams = await prisma
-    .$queryRaw<{ code: string }[]>`SELECT e.code FROM "Exam" e WHERE ${REAL_EXAM_SQL}`
-    .catch(() => [] as { code: string }[]);
+  // 26 Sep 2026 (G1): listed only with an announced exam day in the next 21
+  // days or the last 3 (exam-week-gates) — out of season it is a list of
+  // "not announced yet" lines, Google-only noindex.
+  const checklistExams = exams.filter((e) => seasonGate(e.code).checklist);
   const checklistUrls: MetadataRoute.Sitemap = checklistExams.map((e) => ({
     url: `${base}/exams/${e.code}/checklist`,
     changeFrequency: "weekly" as const,
@@ -601,7 +623,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Per-scholarship pages — long-tail SEO ("Reliance Foundation UG
   // scholarship 2026", "AICTE Pragati eligibility", etc.)
-  const scholarshipUrls: MetadataRoute.Sitemap = SCHOLARSHIP_SCHEMES.map((s) => ({
+  // 27 Sep 2026 (integration): open schemes only — a discontinued scheme's
+  // page is noindex,follow (scholarships/[id], isOpenScheme), and a URL in
+  // the sitemap Google reads is never a noindex page.
+  const scholarshipUrls: MetadataRoute.Sitemap = SCHOLARSHIP_SCHEMES.filter(isOpenScheme).map((s) => ({
     url: `${base}/scholarships/${s.id}`,
     changeFrequency: "monthly" as const,
     priority: 0.65,
@@ -678,7 +703,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.85,
     }));
 
-  return [
+  // Families built by other groups (26 Sep 2026): the main session registers
+  // their providers in src/lib/sitemap-sections.ts EXTRA_SITEMAP_PROVIDERS
+  // (each guarded — a failing provider lists nothing).
+  const extraUrls: MetadataRoute.Sitemap = await extraSitemapEntries(base);
+
+  // One entry per URL (26 Sep 2026): the first family to list a URL keeps it.
+  return dedupeSitemap([
     {
       url: base,
       // The one honest new Date(): the homepage genuinely changes daily
@@ -704,6 +735,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...pyqUrls,
     ...personaUrls,
     ...newsUrls,
+    ...resultUrls,
     ...topicUrls,
     ...hindiTopicUrls,
     ...streamUrls,
@@ -718,5 +750,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...careerUrls,
     ...branchUrls,
     ...userProfileUrls,
-  ];
+    ...extraUrls,
+  ]);
 }

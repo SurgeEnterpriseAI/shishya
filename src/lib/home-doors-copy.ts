@@ -11,7 +11,8 @@
 // import): the /hi and /te twins of "/" read these; every other locale reads
 // English. Rules carried into every locale:
 //   • a section shown as available exists; graduation / PG / PhD study is
-//     "being built" and links nowhere;
+//     "being built" — its cell's one link is to PG entrance exams, which
+//     exist (26 Sep 2026, entry points);
 //   • no typed count anywhere — {n} placeholders take the live values the
 //     page loads (portalStats.examCount, CAREERS.length, INDIAN_LANGUAGE_COUNT);
 //   • nothing reads as a journey: no "then", "next step", "after that"
@@ -26,14 +27,18 @@ export interface HomeDoorsCopy {
   pills: { school: string; entrance: string; government: string; college: string; careers: string };
   kicker: { label: string; line: string };
   doors: {
-    school: { title: string; body: string; being: string; cbse: string; classTile: string; icse: string; all: string };
+    // 26 Sep 2026 (entry points): boardExam ({n} = 10 / 12, a hub that clears
+    // its floor — src/lib/home-door-links.ts); after12 / afterGraduation and
+    // closingSoon render only while their page is indexable; soon.pgExams
+    // carries {n} = the active PG entrance rows (src/lib/pg-entrances.ts).
+    school: { title: string; body: string; being: string; cbse: string; classTile: string; boardExam: string; icse: string; all: string };
     entrance: { title: string; body: string; olympiads: string; browse: string };
     // 26 Sep 2026 (review): no count on the Government door — the catalogue
     // count is government AND entrance exams; it sits on finder.browse.
-    government: { title: string; body: string; banking: string; state: string; all: string };
-    college: { title: string; body: string; colleges: string; scholarships: string; distance: string };
+    government: { title: string; body: string; banking: string; state: string; after12: string; afterGraduation: string; all: string };
+    college: { title: string; body: string; colleges: string; scholarships: string; closingSoon: string; distance: string };
     careers: { title: string; count: string; body: string; paths: string; map: string; internships: string };
-    soon: { title: string; tag: string; body: string };
+    soon: { title: string; tag: string; body: string; pgExams: string };
   };
   /** finder.browse carries {n}: the live catalogue count (portalStats.examCount). */
   finder: { kicker: string; h2: string; sub: string; mostTaken: string; finder: string; browse: string };
@@ -74,17 +79,19 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
         being: "Notes and practice: being written.",
         cbse: "CBSE · tap your class",
         classTile: "Class {n}",
+        boardExam: "CBSE Class {n} board exam",
         icse: "ICSE / ISC",
         all: "All boards →",
       },
       entrance: {
         title: "Entrance exams",
         // 26 Sep 2026 (review): CLAT is not named — it has no exam row, so
-        // /exams/CLAT is a 404. The body ends "Tap your exam:" because this
-        // door has no whole-card link; its chips are the section.
-        body: "After Class 10 or 12 — JEE, NEET, CUET, NDA, olympiads and more. Mocks, past-year practice, cutoffs. Tap your exam:",
+        // /exams/CLAT is a 404. 26 Sep 2026 (entry points): the card now opens
+        // the entrance hub /exams/entrance (shipped in 7bab6c7), so the body
+        // no longer ends "Tap your exam:" and "All entrance exams" opens it.
+        body: "After Class 10 or 12 — JEE, NEET, CUET, NDA, olympiads and more. Mocks, past-year practice, cutoffs.",
         olympiads: "Olympiads",
-        browse: "Browse all →",
+        browse: "All entrance exams →",
       },
       government: {
         title: "Government exams",
@@ -93,6 +100,8 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
         body: "SSC, banking, railways, state PSCs, police, teaching, UPSC. Mocks in the real pattern, past-year practice, cutoffs, a day-by-day plan.",
         banking: "Banking",
         state: "State exams",
+        after12: "Exams after 12th",
+        afterGraduation: "Exams after graduation",
         all: "All exams →",
       },
       college: {
@@ -100,6 +109,7 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
         body: "Colleges by stream and state, with cutoffs and placements. Scholarships you can apply for. Open and distance learning.",
         colleges: "Colleges",
         scholarships: "Scholarships",
+        closingSoon: "Scholarships closing soon",
         distance: "Distance learning",
       },
       careers: {
@@ -113,7 +123,10 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       soon: {
         title: "Graduation, PG & PhD",
         tag: "Being built",
-        body: "Study sections for degree courses, post-graduation and research. Not open yet — nothing to click here.",
+        // 26 Sep 2026 (entry points): study content for these stages is still
+        // being built; the one link is to PG entrance exams, which exist.
+        body: "Study sections for degree courses, post-graduation and research. Not open yet.",
+        pgExams: "PG entrance exams on Shishya ({n}) →",
       },
     },
     finder: {
@@ -168,20 +181,23 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
         being: "नोट्स और अभ्यास: लिखे जा रहे हैं।",
         cbse: "CBSE · अपनी कक्षा चुनिए",
         classTile: "कक्षा {n}",
+        boardExam: "CBSE कक्षा {n} बोर्ड परीक्षा",
         icse: "ICSE / ISC",
         all: "सभी बोर्ड →",
       },
       entrance: {
         title: "प्रवेश परीक्षाएं",
-        body: "कक्षा 10 या 12 के बाद — JEE, NEET, CUET, NDA, ओलंपियाड और भी। मॉक, पिछले सालों का अभ्यास, कटऑफ। अपनी परीक्षा चुनिए:",
+        body: "कक्षा 10 या 12 के बाद — JEE, NEET, CUET, NDA, ओलंपियाड और भी। मॉक, पिछले सालों का अभ्यास, कटऑफ।",
         olympiads: "ओलंपियाड",
-        browse: "सभी देखें →",
+        browse: "सभी प्रवेश परीक्षाएं →",
       },
       government: {
         title: "सरकारी परीक्षाएं",
         body: "SSC, बैंकिंग, रेलवे, राज्य PSC, पुलिस, शिक्षण, UPSC। असली पैटर्न में मॉक, पिछले सालों का अभ्यास, कटऑफ, रोज़-ब-रोज़ प्लान।",
         banking: "बैंकिंग",
         state: "राज्य की परीक्षाएं",
+        after12: "12वीं के बाद की परीक्षाएं",
+        afterGraduation: "ग्रेजुएशन के बाद की परीक्षाएं",
         all: "सभी परीक्षाएं →",
       },
       college: {
@@ -189,6 +205,7 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
         body: "स्ट्रीम और राज्य के हिसाब से कॉलेज, कटऑफ और प्लेसमेंट के साथ। स्कॉलरशिप जिनके लिए आप आवेदन कर सकते हैं। ओपन और दूरस्थ शिक्षा।",
         colleges: "कॉलेज",
         scholarships: "स्कॉलरशिप",
+        closingSoon: "जल्द बंद होने वाली स्कॉलरशिप",
         distance: "दूरस्थ शिक्षा",
       },
       careers: {
@@ -202,7 +219,8 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       soon: {
         title: "ग्रेजुएशन, PG और PhD",
         tag: "बन रहा है",
-        body: "डिग्री कोर्स, पोस्ट-ग्रेजुएशन और रिसर्च के लिए पढ़ाई के सेक्शन। अभी खुले नहीं — यहाँ क्लिक करने को कुछ नहीं है।",
+        body: "डिग्री कोर्स, पोस्ट-ग्रेजुएशन और रिसर्च के लिए पढ़ाई के सेक्शन। अभी खुले नहीं।",
+        pgExams: "Shishya पर PG प्रवेश परीक्षाएं ({n}) →",
       },
     },
     finder: {
@@ -249,20 +267,23 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
         being: "నోట్స్, సాధన: రాస్తున్నాం.",
         cbse: "CBSE · మీ తరగతి నొక్కండి",
         classTile: "తరగతి {n}",
+        boardExam: "CBSE {n}వ తరగతి బోర్డు పరీక్ష",
         icse: "ICSE / ISC",
         all: "అన్ని బోర్డులు →",
       },
       entrance: {
         title: "ప్రవేశ పరీక్షలు",
-        body: "10 లేదా 12వ తరగతి తర్వాత — JEE, NEET, CUET, NDA, ఒలింపియాడ్‌లు, ఇంకా ఎన్నో. మాక్‌లు, గత సంవత్సరాల సాధన, కటాఫ్‌లు. మీ పరీక్ష నొక్కండి:",
+        body: "10 లేదా 12వ తరగతి తర్వాత — JEE, NEET, CUET, NDA, ఒలింపియాడ్‌లు, ఇంకా ఎన్నో. మాక్‌లు, గత సంవత్సరాల సాధన, కటాఫ్‌లు.",
         olympiads: "ఒలింపియాడ్‌లు",
-        browse: "అన్నీ చూడండి →",
+        browse: "అన్ని ప్రవేశ పరీక్షలు →",
       },
       government: {
         title: "ప్రభుత్వ పరీక్షలు",
         body: "SSC, బ్యాంకింగ్, రైల్వే, రాష్ట్ర PSCలు, పోలీస్, టీచింగ్, UPSC. అసలు ప్యాటర్న్‌లో మాక్‌లు, గత సంవత్సరాల సాధన, కటాఫ్‌లు, రోజువారీ ప్లాన్.",
         banking: "బ్యాంకింగ్",
         state: "రాష్ట్ర పరీక్షలు",
+        after12: "12వ తరగతి తర్వాత పరీక్షలు",
+        afterGraduation: "గ్రాడ్యుయేషన్ తర్వాత పరీక్షలు",
         all: "అన్ని పరీక్షలు →",
       },
       college: {
@@ -270,6 +291,7 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
         body: "స్ట్రీమ్, రాష్ట్రం వారీగా కాలేజీలు, కటాఫ్‌లు, ప్లేస్‌మెంట్లతో. మీరు దరఖాస్తు చేయగల స్కాలర్‌షిప్‌లు. ఓపెన్, దూరవిద్య.",
         colleges: "కాలేజీలు",
         scholarships: "స్కాలర్‌షిప్‌లు",
+        closingSoon: "త్వరలో ముగిసే స్కాలర్‌షిప్‌లు",
         distance: "దూరవిద్య",
       },
       careers: {
@@ -283,7 +305,8 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       soon: {
         title: "గ్రాడ్యుయేషన్, PG, PhD",
         tag: "నిర్మాణంలో ఉంది",
-        body: "డిగ్రీ కోర్సులు, పోస్ట్-గ్రాడ్యుయేషన్, పరిశోధన కోసం చదువు విభాగాలు. ఇంకా తెరవలేదు — ఇక్కడ క్లిక్ చేయడానికి ఏమీ లేదు.",
+        body: "డిగ్రీ కోర్సులు, పోస్ట్-గ్రాడ్యుయేషన్, పరిశోధన కోసం చదువు విభాగాలు. ఇంకా తెరవలేదు.",
+        pgExams: "Shishyaలో PG ప్రవేశ పరీక్షలు ({n}) →",
       },
     },
     finder: {

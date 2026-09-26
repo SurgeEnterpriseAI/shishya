@@ -24,6 +24,11 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { getExamCatalog } from "@/lib/db/exam-cache";
 import { ENTRANCE_GROUPS, entranceGroupOf, type EntranceGroupKey } from "@/lib/exam-kind";
+// 26 Sep 2026 (G4): links to the live entrance category hubs and the
+// "exams after 12th" page — each shown only while it is live / indexable.
+import { getExamListRows } from "@/lib/exam-list-rows";
+import { EXAM_CATEGORIES, examsInCategory, isCategoryLive } from "@/lib/exam-categories";
+import { levelCounts } from "@/lib/exam-qualification";
 
 export const revalidate = 3600;
 
@@ -103,6 +108,9 @@ const RELATED: readonly { href: string; label: string }[] = [
 
 export default async function EntranceExamsPage() {
   const exams = await loadEntranceExams();
+  const listRows = await getExamListRows().catch(() => []);
+  const entranceHubs = EXAM_CATEGORIES.filter((c) => c.slug.endsWith("-entrance") && isCategoryLive(examsInCategory(c, listRows)));
+  const after12 = levelCounts(listRows).find((x) => x.level.slug === "12th" && x.indexable);
   const c = counts(exams);
   const groups = ENTRANCE_GROUPS.map((g) => ({ ...g, list: exams.filter((e) => e.group === g.key) })).filter((g) => g.list.length > 0);
   const url = `${SITE}${PATH}`;
@@ -180,6 +188,28 @@ export default async function EntranceExamsPage() {
             </ul>
           </section>
         ))}
+
+        {(entranceHubs.length > 0 || after12) && (
+          <nav aria-label="Compare entrance exams" className="mt-10 rounded-lg border border-ink-200 bg-white p-5">
+            <h2 className="text-base font-semibold text-ink-900">Compare side by side</h2>
+            <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              {entranceHubs.map((c) => (
+                <li key={c.slug}>
+                  <Link href={`/exams/category/${c.slug}`} className="font-medium text-saffron-700 hover:underline">
+                    {c.heading}
+                  </Link>
+                </li>
+              ))}
+              {after12 && (
+                <li>
+                  <Link href="/exams/after/12th" className="font-medium text-saffron-700 hover:underline">
+                    Exams after 12th ({after12.total})
+                  </Link>
+                </li>
+              )}
+            </ul>
+          </nav>
+        )}
 
         <nav aria-label="Related" className="mt-10 rounded-lg border border-ink-200 bg-white p-5">
           <h2 className="text-base font-semibold text-ink-900">Also on Shishya</h2>

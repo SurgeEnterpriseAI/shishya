@@ -52,7 +52,13 @@ export async function generateMetadata({
   const st = stateInfo(c.state);
 
   const ranksCopy = formatNirfRanks(c.nirf);
-  const title = `${c.shortName} — ${ranksCopy || "Official Info"} | Shishya`;
+  // 26 Sep 2026 (G4): "Cutoff" / "Placements" join the title only when this
+  // college's detail data holds branch closing ranks / placement figures.
+  const detail = findCollegeDetail(c.slug);
+  const hasCutoff = Boolean(detail?.branches.some((b) => b.cutoffs.length > 0));
+  const hasPlacements = Boolean(detail?.overallPlacements || detail?.branches.some((b) => b.placements.length > 0));
+  const dataBit = hasCutoff && hasPlacements ? "Cutoff & Placements" : hasCutoff ? "Cutoff" : hasPlacements ? "Placements" : "";
+  const title = `${c.shortName} — ${ranksCopy || "Official Info"}${dataBit ? `, ${dataBit}` : ""} | Shishya`;
   // The ranks lead (they are what the query asks), then the blurb; cut at a
   // sentence or word boundary, never inside "#1".
   const description = clipDescription(
@@ -209,10 +215,11 @@ export default async function CollegePage({
 
         {/* Section-level verification summary — sets the trust tone for
             the whole page in one glance. */}
+        {/* 26 Sep 2026 (G4): no job refreshes this page "every 30 days" — the
+            rank data is NIRF's, read once per NIRF edition. */}
         <SectionVerificationSummary
           status="ai"
-          source="NIRF + the college's official site"
-          refreshCadence="every 30 days"
+          source={`NIRF ${NIRF_SOURCE_YEAR} data + the college's official site — updated when NIRF publishes`}
         />
 
         <h2 className="mt-8 text-base font-semibold text-ink-900">About {c.shortName}</h2>

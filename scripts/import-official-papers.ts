@@ -27,7 +27,13 @@
 //     [--listings D:/CodexProjects/shishya-data/official-papers/listing-pages-2026-09-14.json] \
 //     [--rejected D:/CodexProjects/shishya-data/official-papers/hand-check-rejected.json] \
 //     [--browser-checked D:/CodexProjects/shishya-data/official-papers/browser-checked-2026-09-14.json] \
-//     [--only EXAM_CODE[,EXAM_CODE…]] [--apply]
+//     [--only EXAM_CODE[,EXAM_CODE…]] [--apply] [--indexnow]
+// --indexnow (26 Sep 2026, G1): opt-in, honoured only with --apply. After the
+// writes it submits each changed exam's hub (the official-papers block) and
+// every /pyq/{year} the written papers name that is indexable — a year with
+// validated PYQ questions; an official-paper-only year renders
+// noindex,follow and is never submitted (src/lib/indexnow.ts
+// officialDataUrls). Without --apply nothing is written or submitted.
 // --browser-checked: [{ "url", "year", "listingUrl", "evidence", "checkedAt" }], one entry per file whose
 // official listing was read in a browser: the link and the year printed with it.
 // --rejected: files a person rejected in the hand check before --apply (the
@@ -41,6 +47,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { asciiDigits, checkListing, hostOf, isOfficialHost, paperYear, yearPrinted } from "../src/lib/official-papers";
+import { officialDataUrls, submitIndexNow } from "../src/lib/indexnow";
 
 const prisma = new PrismaClient();
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ShishyaPaperVerifier/1.0 (+https://shishya.in/editorial-policy)";
@@ -214,6 +221,9 @@ async function main() {
   const onlyArg = argValues("--only")[0];
   const only = onlyArg ? new Set(onlyArg.split(",").map((s) => s.trim()).filter(Boolean)) : null;
   const apply = process.argv.includes("--apply");
+  // 26 Sep 2026: IndexNow only after real writes — never on a dry run.
+  const indexNow = apply && process.argv.includes("--indexnow");
+  if (process.argv.includes("--indexnow") && !apply) console.log("--indexnow ignored without --apply (dry run: nothing is written or submitted)");
   if (dirs.length === 0 && !listingsFile) throw new Error("--dir <research folder> (repeatable) and/or --listings <file.json> is required");
   const rejected = new Map<string, string>(
     rejectedFile
@@ -513,6 +523,31 @@ async function main() {
           scan = EXCLUDED.scan, "yearEvidence" = EXCLUDED."yearEvidence", "verifiedAt" = NOW(), "archivedAt" = NULL`;
     }
     console.log(`written ${passed.length} rows`);
+
+    if (indexNow) {
+      const urls: string[] = [];
+      const byExamWritten = new Map<string, { examId: string; years: Set<string> }>();
+      for (const p of passed) {
+        const e = byExamWritten.get(p.code) ?? { examId: p.examId, years: new Set<string>() };
+        const y = paperYear(p.year);
+        if (y) e.years.add(y);
+        byExamWritten.set(p.code, e);
+      }
+      for (const [code, e] of byExamWritten) {
+        // Indexable years only: the sitemap's own rule (validated PYQ questions).
+        const years = e.years.size
+          ? await prisma.$queryRaw<{ year: number }[]>`
+              SELECT DISTINCT q."pyqYear" AS year FROM "Question" q
+              WHERE q."examId" = ${e.examId} AND q.source = 'PYQ' AND q.validated = TRUE
+                AND q."pyqYear" = ANY(${[...e.years].map(Number)}::int[])`
+          : [];
+        urls.push(...officialDataUrls(code, { pyqYears: years.map((r) => Number(r.year)) }));
+      }
+      const list = [...new Set(urls)];
+      const accepted = await submitIndexNow(list);
+      console.log(`IndexNow: ${list.length} URLs for ${byExamWritten.size} exams — ${accepted ? "accepted" : "not accepted (the weekly sitemap submission will carry them)"}`);
+      for (const u of list) console.log(`   ${u}`);
+    }
   }
   rmSync(work, { recursive: true, force: true });
 }

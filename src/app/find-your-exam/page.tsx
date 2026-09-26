@@ -20,6 +20,9 @@ import { CoachEntry } from "@/components/CoachEntry";
 import {
   matchAll, type ExamElig, type MatchInput, type EducationLevel, type Stream, type Category, type Skill,
 } from "@/lib/exam-matcher";
+// 26 Sep 2026 (G4): crawlable links to the "exams after {level}" pages, with
+// counts computed from the same eligibility rows (src/lib/exam-qualification.ts).
+import { PUBLISHED_LEVELS, QUALIFICATION_MIN, levelOf } from "@/lib/exam-qualification";
 
 // The finder is about GOVERNMENT JOBS — not college-admission tests.
 // A person wanting a govt job should never be matched to JEE / NEET /
@@ -115,6 +118,18 @@ export default async function FindYourExamPage({
   }
 
   const eligibleVac = eligible.reduce((a, r) => a + (r.exam.vacanciesApprox ?? 0), 0);
+
+  // 26 Sep 2026 (G4): every exam (government and entrance) by the lowest
+  // qualification it lists — the /exams/after/{level} membership rule. Only
+  // levels whose page is indexable (at least QUALIFICATION_MIN exams) link.
+  const byLevel = PUBLISHED_LEVELS.map((level) => ({
+    level,
+    // 27 Sep 2026 (repair): the page's own rule (levelOf — checked rule vs
+    // tags, teacher-training exams out), so the counts match the pages.
+    count: rows.filter(
+      (r) => levelOf({ code: r.code, category: r.category, state: r.state, eligibility: { educationTags: r.educationTags ?? [], educationNote: r.educationNote } })?.slug === level.slug,
+    ).length,
+  })).filter((x) => x.count >= QUALIFICATION_MIN);
 
   // "Save your matches" nudge — only for ANONYMOUS visitors with results
   // (peak intent). The answers live in the URL, so the login callback
@@ -322,6 +337,19 @@ export default async function FindYourExamPage({
               official notification before applying.
             </p>
           </div>
+        )}
+
+        {byLevel.length > 0 && (
+          <nav aria-label="Exams by qualification" className="mt-8 rounded-lg border border-ink-200 bg-white p-4 text-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">Browse exams by qualification</p>
+            <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
+              {byLevel.map((x) => (
+                <Link key={x.level.slug} href={`/exams/after/${x.level.slug}`} className="font-medium text-saffron-700 hover:underline">
+                  Exams after {x.level.after} ({x.count})
+                </Link>
+              ))}
+            </p>
+          </nav>
         )}
 
         {!hasAnswers && (

@@ -28,10 +28,26 @@
 // label and the meta description say "study notes" only for an exam with
 // notes (src/lib/page-gates-notes.ts) — 127 of the 168 syllabus exams have
 // none, and the syllabus page says so. A failed notes read claims none.
+//
+// 26 Sep 2026 (G1 index hygiene, src/lib/news-index-policy.ts):
+//   • robots come from newsRobots(): while the founder flag
+//     NEWS_GOOGLE_NOINDEX is on, Google alone gets noindex,follow (Bing,
+//     ChatGPT search and Perplexity keep index,follow) — founder approval
+//     before deploy;
+//   • a copy of the same headline (same exam, same normalised title, within
+//     60 days) canonicalises to one row of its group — the live row with an
+//     official citation, else the earliest live row, else the earliest row —
+//     read once per exam and cached (loadNewsCanonicals);
+//   • structured data is Article, not NewsArticle (the page has no image, so
+//     Google's NewsArticle feature never applied), with author and publisher
+//     the site's one Organization node, and dateModified = publishedAt:
+//     archiving is a status change, not an edit — the old archivedAt
+//     dateModified told crawlers 5,462 unchanged stories had been edited.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { getExamTheme } from "@/lib/exam-theme";
@@ -41,11 +57,31 @@ import { StateExamsLink } from "@/components/StateExamsLink";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { examHasNotes } from "@/lib/page-gates-notes";
 import { newsPermalinkCopy } from "@/lib/page-gates-copy";
+import { SHISHYA_ORG_REF } from "@/components/JsonLd";
+import { newsCanonicalMap, newsRobots } from "@/lib/news-index-policy";
 
 interface RouteParams {
   code: string;
   id: string;
 }
+
+/** Duplicate-title canonicals of one exam's permalinks: { rowId: canonicalRowId }
+ *  for the copies only (src/lib/news-index-policy.ts newsCanonicalMap). One
+ *  read per exam, cached an hour — the refresh cron writes a few rows a day. */
+const loadNewsCanonicals = unstable_cache(
+  async (examId: string): Promise<Record<string, string>> => {
+    const [rows, elig] = await Promise.all([
+      prisma.examNewsItem.findMany({
+        where: { examId, OR: [{ source: null }, { source: { not: SUPPRESSED_SOURCE } }] },
+        select: { id: true, title: true, publishedAt: true, archivedAt: true, url: true },
+      }),
+      prisma.examEligibility.findUnique({ where: { examId }, select: { officialUrl: true } }),
+    ]);
+    return Object.fromEntries(newsCanonicalMap(rows, elig?.officialUrl ?? null));
+  },
+  ["news-canonicals-v1"],
+  { revalidate: 3600, tags: ["exam-shared"] },
+);
 
 export async function generateMetadata({
   params,
@@ -70,17 +106,23 @@ export async function generateMetadata({
   // everything here is free.
   const title = `${row.title} — ${row.exam.shortName} | Shishya`;
   const bodyLead = row.body.slice(0, 140).replace(/\s+/g, " ").replace(/\s+\S*$/, "").trim();
-  const { descriptionTail } = newsPermalinkCopy(row.exam.shortName, await examHasNotes(row.exam.code));
+  const [hasNotes, canonicals] = await Promise.all([
+    examHasNotes(row.exam.code),
+    // A failed read keeps the page self-canonical (its old behaviour).
+    loadNewsCanonicals(row.examId).catch(() => ({}) as Record<string, string>),
+  ]);
+  const { descriptionTail } = newsPermalinkCopy(row.exam.shortName, hasNotes);
   const description = `${bodyLead}… ${descriptionTail}`;
+  const canonical = `https://shishya.in/exams/${code}/news/${canonicals[id] ?? id}`;
 
   return {
     title,
     description,
-    alternates: { canonical: `https://shishya.in/exams/${code}/news/${id}` },
+    alternates: { canonical },
     openGraph: {
       title: row.title,
       description,
-      url: `https://shishya.in/exams/${code}/news/${id}`,
+      url: canonical,
       siteName: "Shishya",
       locale: "en_IN",
       type: "article",
@@ -91,10 +133,10 @@ export async function generateMetadata({
       title: row.title,
       description,
     },
-    // We keep archived rows indexable too — they're a key long-tail
-    // SEO surface ("[exam] notification 2024", "last year postponement
-    // [exam]"). robots default = index, follow.
-    robots: { index: true, follow: true },
+    // Archived rows stay public too — a long-tail surface ("[exam]
+    // notification 2024") for Bing and ChatGPT. Google: see newsRobots()
+    // (26 Sep 2026, founder flag NEWS_GOOGLE_NOINDEX).
+    robots: newsRobots(),
   };
 }
 
@@ -131,26 +173,21 @@ export default async function NewsPermalinkPage({
   const theme = getExamTheme(row.exam.category);
   const isArchived = row.archivedAt !== null;
 
-  // NewsArticle JSON-LD for Google rich results. Generic enough that
-  // Bing / DuckDuckGo / Yandex understand it too.
+  // Article JSON-LD (26 Sep 2026: was NewsArticle — without an image
+  // Google's NewsArticle feature never applied). dateModified = publishedAt:
+  // archiving is a status, not an edit. author + publisher = the one
+  // Organization node the root layout declares (SHISHYA_ORG_REF).
   const articleJsonLd = {
     "@context": "https://schema.org",
-    "@type": "NewsArticle",
+    "@type": "Article",
     headline: row.title,
     description: row.body.slice(0, 200),
     datePublished: row.publishedAt.toISOString(),
-    dateModified: (row.archivedAt ?? row.publishedAt).toISOString(),
+    dateModified: row.publishedAt.toISOString(),
     inLanguage: "en-IN",
     isAccessibleForFree: true,
-    publisher: {
-      "@type": "EducationalOrganization",
-      name: "Shishya",
-      url: "https://shishya.in",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://shishya.in/icon.svg",
-      },
-    },
+    author: SHISHYA_ORG_REF,
+    publisher: SHISHYA_ORG_REF,
     about: {
       "@type": "Course",
       name: row.exam.name,

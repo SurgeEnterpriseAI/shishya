@@ -50,7 +50,8 @@ describe("every scholarship count, list and sitemap row uses the schemes", () =>
   it("the detail route: static params and related blocks from the schemes; an aggregator URL redirects", () => {
     const src = code("src/app/scholarships/[id]/page.tsx");
     expect(src).toMatch(/SCHOLARSHIP_SCHEMES\.map\(\(s\) => \(\{ id: s\.id \}\)\)/);
-    expect(src).toContain("relatedScholarships(s, SCHOLARSHIP_SCHEMES)");
+    // 26 Sep 2026 (G4): related blocks never offer a discontinued scheme.
+    expect(src).toContain("relatedScholarships(s, SCHOLARSHIP_SCHEMES, 8).filter(isOpenScheme).slice(0, 6)");
     expect(src).toContain('if (isAggregatorListing(s)) permanentRedirect("/scholarships");');
   });
 

@@ -39,9 +39,18 @@
 // an estimate and never as a prediction. Served in English, Hindi (/hi/…)
 // and Telugu (/te/…) — same component, URL-driven locale, hreflang-paired.
 // Linked from the cutoff page's exam-week block (today-pm onwards) and the
-// exam hub while a sitting is open; in the sitemap (all three locales) for
-// exams with a typed exam day within ±30 days or a sitting open for
-// comparison after its official answer key (the same standingSitting gate).
+// exam hub while a sitting is open.
+//
+// 26 Sep 2026 (G1 index hygiene, src/lib/exam-week-gates.ts): in the sitemap
+// (all three locales) and indexable by Google only from 3 days before to 30
+// days after an announced (official / reported) typed exam day AND once an
+// official answer key is out — the estimator is for counting marks against a
+// released key. Otherwise the page renders with Google-only noindex,follow;
+// Bing and ChatGPT search keep index,follow (Bingbot fetched these pages
+// 1,538 times in 28 days). Was: noindex for every engine outside ±30 days of
+// an exam day of any tier, unless the answer-key comparison was open. The
+// /cutoff links render only when that page does (examPageGates: KA_KSRP's
+// estimator linked a 404).
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -67,7 +76,8 @@ import { LangTwinLinks } from "@/components/LangTwinLinks";
 import { StateExamsLink } from "@/components/StateExamsLink";
 import { inlineMd } from "@/components/NotesMarkdown";
 import { ScoreEstimator } from "./ScoreEstimator";
-import { examDayRobots, isScoreEstimateIndexable } from "@/lib/exam-phase-indexable";
+import { examPageIndexGates, examPageRobots } from "@/lib/exam-week-gates";
+import { examPageGates } from "@/lib/exam-page-gates";
 
 export const revalidate = 900;
 
@@ -125,22 +135,12 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   // and the description carries the reason (English: it is the verdict's
   // own sentence, the same one the body prints).
   const { verdict } = sittingVerdict(exam, inputs);
-  // 26 Sep 2026 (src/lib/exam-phase-indexable.ts): index only when the
-  // sitemap lists the estimator — a typed exam-day row within ±30 days, or
-  // the answer-key comparison open (standingSitting). Out of season the page
-  // still renders, noindex,follow (/exams/CTET/score-estimate was crawled 56
-  // times in 30 days with the paper on 12 Dec and no key out). The exam-day
-  // rows are read uncapped, as the sitemap's SQL does; a failed read keeps
-  // the old index,follow.
-  const examDayRows = await prisma
-    .$queryRaw<{ date: Date }[]>`
-      SELECT date FROM "ExamImportantDate"
-      WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL AND kind = 'EXAM'
-        AND date >= NOW() - INTERVAL '31 days' AND date <= NOW() + INTERVAL '31 days'`
-    .catch(() => null);
-  const indexable =
-    examDayRows === null ||
-    isScoreEstimateIndexable({ examDays: examDayRows.map((r) => r.date), answerKeyOpen: standingSitting(exam, inputs) !== null });
+  // 26 Sep 2026 (G1, src/lib/exam-week-gates.ts): Google may index the
+  // estimator only while the sitemap lists it — an announced exam day from 3
+  // days ahead to 30 days back AND an official answer key out. Otherwise
+  // Google-only noindex,follow (/exams/CTET/score-estimate was crawled 56
+  // times in 30 days with the paper on 12 Dec and no key out).
+  const indexable = examPageIndexGates(inputs.rows, inputs.officialUrl).scoreEstimate;
   const title = `${fill(tt(verdict.ok ? "ew.score.title" : "ew.score.mixed.title"), { exam: short })} | Shishya`;
   const description = verdict.ok
     ? fill(tt("ew.score.lead"), { exam: short })
@@ -158,7 +158,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
     title,
     description,
     alternates: { canonical: twinCanonical(path, urlLocale, twins), languages: languageAlternates(path, twins) },
-    robots: examDayRobots(indexable),
+    robots: examPageRobots(indexable),
     keywords: [
       `${short} score calculator`,
       `${short} marks calculator`,
@@ -184,7 +184,7 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
   const exam = await loadExam(code);
   if (!exam || !exam.active) notFound();
 
-  const [{ t: tRaw, locale }, urlLocale, session, inputs, catRows, publishedCount] = await Promise.all([
+  const [{ t: tRaw, locale }, urlLocale, session, inputs, catRows, publishedCount, gates] = await Promise.all([
     getT(),
     getUrlLocale(),
     auth().catch(() => null),
@@ -200,6 +200,9 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
         SELECT COUNT(*)::int AS n FROM "OfficialCutoff" WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL`
       .then((r) => Number(r[0]?.n ?? 0))
       .catch(() => 0),
+    // /cutoff 404s without rank bands (KA_KSRP, MP_RAEO); a failed gate read
+    // keeps the links (GATES_OPEN, the rendered-page default).
+    examPageGates(exam.code),
   ]);
   const t = tRaw as TFn;
   const short = exam.shortName;
@@ -390,7 +393,7 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
         {/* Published cutoffs from previous recruitments: a pointer to the
             cutoff page's verified tables, with the reminder to check the
             stage and marks scale before comparing an estimate with them. */}
-        {publishedCount > 0 && (
+        {publishedCount > 0 && gates.cutoff && (
           <section className="mt-6">
             <h2 className="text-base font-semibold text-ink-900">{t("ew.score.published.title")}</h2>
             <p className="mt-1 max-w-3xl text-xs text-ink-600">{t("ew.score.published.note")}</p>
@@ -444,9 +447,11 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
         )}
 
         <div className="mt-5 flex flex-wrap gap-2">
-          <Link href={p(`/exams/${exam.code}/cutoff`)} className={pill}>
-            🎯 {t("ew.post.cutoff")}
-          </Link>
+          {gates.cutoff && (
+            <Link href={p(`/exams/${exam.code}/cutoff`)} className={pill}>
+              🎯 {t("ew.post.cutoff")}
+            </Link>
+          )}
           <Link href={p(`/exams/${exam.code}/updates`)} className={pill}>
             📅 {t("tracker.title")}
           </Link>

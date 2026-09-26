@@ -90,6 +90,54 @@ export function phaseArticleUrl(code: string, slug: string): string {
   return `${SITE_ORIGIN}/exams/${code}/${slug}`;
 }
 
+// ── Fact changes (26 Sep 2026, G1 index hygiene) ─────────────────────────
+// Until today only an exam INSIDE its exam week pinged IndexNow when the
+// refresh writer changed it; a notification or exam date announced months
+// ahead waited for the weekly sitemap re-submission, while Bing — and
+// ChatGPT search on top of it — kept serving the old "not announced yet".
+// The writer (src/lib/exam-data-writer.ts) now calls these when the set of
+// ANNOUNCED dates changed (a new official / reported date, or a tier
+// upgrade), for any exam; the official-data import scripts call
+// officialDataUrls after --apply --indexnow.
+
+/** The pages that print an exam's announced dates: the hub, the tracker,
+ *  the all-exam calendar and (for a state exam) its state page, plus the
+ *  hub / tracker twins. Callers MUST pass the result through gateTwinUrls
+ *  (src/lib/twin-localisation.ts) — a twin that is not localised is never
+ *  submitted. `stateSlug` = src/lib/state-info.ts stateSlug(Exam.state), or
+ *  null for a national exam. */
+export function factUrlsForExam(code: string, stateSlug: string | null | undefined): string[] {
+  const b = SITE_ORIGIN;
+  return [
+    `${b}/exams/${code}`,
+    `${b}/exams/${code}/updates`,
+    `${b}/exam-calendar`,
+    ...(stateSlug ? [`${b}/exams/state/${stateSlug}`] : []),
+    `${b}/hi/exams/${code}`,
+    `${b}/te/exams/${code}`,
+    `${b}/hi/exams/${code}/updates`,
+    `${b}/te/exams/${code}/updates`,
+  ];
+}
+
+/** The pages an official-data import changes: the hub (official papers and
+ *  published cutoffs are summarised there), /cutoff when cutoff rows were
+ *  written AND the page renders (it 404s without rank bands), and each
+ *  /pyq/{year} that is indexable (a year with validated PYQ questions — an
+ *  official-paper-only year renders noindex and is never submitted). */
+export function officialDataUrls(
+  code: string,
+  opts: { cutoff?: boolean; pyqYears?: readonly (number | string)[] } = {},
+): string[] {
+  const b = SITE_ORIGIN;
+  const years = [...new Set((opts.pyqYears ?? []).map((y) => String(y).trim()).filter((y) => /^(19|20)\d{2}$/.test(y)))].sort();
+  return [
+    `${b}/exams/${code}`,
+    ...(opts.cutoff ? [`${b}/exams/${code}/cutoff`] : []),
+    ...years.map((y) => `${b}/exams/${code}/pyq/${y}`),
+  ];
+}
+
 // ── Whole-education sections (26 Sep 2026, B-machine-crawl) ─────────────
 // Until today nothing submitted a school, section or current-affairs URL:
 // the weekly news scope sends news permalinks only, and the school pages

@@ -178,10 +178,14 @@ export function localeEnglishName(code: string): string {
   }
 }
 
-/** "Languages: English and N Indian languages (Hindi, …)" from the locale list. */
+/** The site's languages, said as they are (26 Sep 2026, G4): the pages are
+ *  English, the interface has Hindi and Telugu editions, and practice
+ *  questions can be read in English and the N Indian locales (computed from
+ *  the list) inside a mock. It used to read "Languages: English and N Indian
+ *  languages", which machine readers took to mean the pages themselves. */
 export function languagesLine(locales: readonly string[]): string {
   const indian = locales.filter((l) => l !== "en");
-  return `Languages: English and ${indian.length} Indian languages (${indian.map(localeEnglishName).join(", ")}).`;
+  return `Languages: pages are in English, with Hindi and Telugu editions of the interface; practice questions can be read in English and ${indian.length} Indian languages (${indian.map(localeEnglishName).join(", ")}) inside a mock.`;
 }
 
 // ── Machine files ───────────────────────────────────────────────────────
@@ -247,6 +251,17 @@ export interface ScholarshipLite {
   eligibility: { categories?: readonly string[]; gender?: "F" | "M" | null };
   applyUrl: string;
   officialSite?: string;
+  /** 26 Sep 2026 (G4): set when the government discontinued the scheme. */
+  closed?: { note: string } | null;
+}
+
+/** The lists and the official 2026-27 dates the scholarships context file
+ *  names (26 Sep 2026, G4) — computed by the route from
+ *  src/lib/scholarship-lists.ts, so this module stays data-free. */
+export interface ScholarshipListsContext {
+  lists: readonly { path: string; label: string; count: number; indexable: boolean }[];
+  /** Schemes with a 2026-27 last date still ahead, read on the official portal. */
+  dated: readonly { id: string; name: string; closesOn: string; tier: string; host: string; checkedOn: string }[];
 }
 export interface CareerLite {
   slug: string;
@@ -371,13 +386,20 @@ export function scholarshipLine(s: ScholarshipLite, site: string = SITE): string
     s.state ? stateName(s.state) : "all India",
     s.eligibility.categories?.length ? `categories: ${s.eligibility.categories.join("/")}` : "",
     s.eligibility.gender === "F" ? "girls only" : s.eligibility.gender === "M" ? "boys only" : "",
+    // 26 Sep 2026 (G4): a discontinued scheme is never presented as open.
+    s.closed ? "discontinued — no new applications" : "",
   ]
     .filter(Boolean)
     .join("; ");
   return `- ${s.name} — ${s.awardingBody} — ${levels} — ${scope} — ${site}/scholarships/${s.id} — official: ${s.officialSite ?? s.applyUrl}`;
 }
 
-export function scholarshipsContextMarkdown(list: readonly ScholarshipLite[], asOf: string, site: string = SITE): string {
+export function scholarshipsContextMarkdown(
+  list: readonly ScholarshipLite[],
+  asOf: string,
+  site: string = SITE,
+  extra?: ScholarshipListsContext,
+): string {
   const L: string[] = [];
   L.push("# Scholarships on Shishya — section context");
   L.push("");
@@ -390,6 +412,17 @@ export function scholarshipsContextMarkdown(list: readonly ScholarshipLite[], as
   L.push("## Summary");
   L.push(`- ${list.length} scholarships · ${national} all-India · ${list.length - national} for one state`);
   L.push("");
+  if (extra) {
+    // 26 Sep 2026 (G4): the list pages and this year's official dates.
+    L.push("## Lists");
+    for (const l of extra.lists) L.push(`- ${l.label}: ${site}${l.path} (${l.count} ${l.count === 1 ? "scheme" : "schemes"}${l.indexable ? "" : "; not indexed yet"})`);
+    L.push("");
+    L.push(`## 2026-27 last dates read on the official portal (${extra.dated.length})`);
+    if (extra.dated.length === 0) L.push("- None still ahead. Every other scheme's page shows its usual window, named as such.");
+    for (const d of extra.dated) L.push(`- ${d.name} — closes ${d.closesOn} (${d.tier}, ${d.host}, checked ${d.checkedOn}) — ${site}/scholarships/${d.id}`);
+    L.push("- Every other scheme: no 2026-27 date checked yet; its page gives the usual window. Confirm on the official link.");
+    L.push("");
+  }
   L.push(`## Every scholarship (${list.length}) — name — provider — levels — scope — Shishya page — official link`);
   for (const s of list) L.push(scholarshipLine(s, site));
   L.push("");

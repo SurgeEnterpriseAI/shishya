@@ -587,7 +587,7 @@ export const CAREERS: Career[] = [
     whatTheyDo: "Litigators argue cases in courts (trial + appellate). Independent practice + chambers + senior counsel structure. Solo practice first 5 years is financially tough; senior advocates earn substantially.",
     dayToDay: ["Client consultations + case review", "Court appearances (sessions, high court, SC)", "Drafting petitions, plaints, replies", "Research on case law + statutes", "Negotiation + settlement discussions"],
     entryRoutes: [
-      { title: "Class 12 → CLAT → 5-yr BA-LLB at NLU", body: "Top entry. CLAT cleared into NLSIU/NLU-Delhi/NALSAR etc. Strong placements but litigation is independent path.", links: [{ label: "CLAT", href: "/exams/CLAT" }, { label: "Top law colleges", href: "/colleges/stream/law" }] },
+      { title: "Class 12 → CLAT → 5-yr BA-LLB at NLU", body: "Top entry. CLAT cleared into NLSIU/NLU-Delhi/NALSAR etc. Strong placements but litigation is independent path.", links: [{ label: "Law entrance exams on Shishya", href: "/exams/entrance#entrance-law" }, { label: "Top law colleges", href: "/colleges/stream/law" }] }, // 26 Sep 2026 (G4): /exams/CLAT has no page; the entrance page's law group until a CLAT hub exists.
       { title: "Bachelor's → 3-yr LLB", body: "DU Faculty of Law, BHU, ILS Pune. Standard route for late-deciders." },
     ],
     qualifications: ["BA-LLB / LLB", "All India Bar Examination (AIBE)", "Bar Council of India enrolment"],
@@ -615,7 +615,7 @@ export const CAREERS: Career[] = [
     whatTheyDo: "Corporate lawyers at Tier-1 Indian firms (AZB, Khaitan, CAM, JSA, S&R) advise on M&A, IPOs, fund-raising, joint ventures, regulatory compliance, employment + competition law. Hours intense; pay among highest in legal profession.",
     dayToDay: ["Due diligence on transactions", "Drafting + reviewing contracts (SHA, SPA, JV agreements)", "Negotiation with opposite-side counsel", "Regulatory filings (SEBI, RBI, MCA, CCI)", "Client + partner meetings"],
     entryRoutes: [
-      { title: "CLAT → NLU → Tier-1 firm placement", body: "Most direct. Top 50 in graduating class at NLSIU/NLUD/NALSAR get Tier-1 offers via campus.", links: [{ label: "CLAT", href: "/exams/CLAT" }] },
+      { title: "CLAT → NLU → Tier-1 firm placement", body: "Most direct. Top 50 in graduating class at NLSIU/NLUD/NALSAR get Tier-1 offers via campus.", links: [{ label: "Law entrance exams on Shishya", href: "/exams/entrance#entrance-law" }] }, // 26 Sep 2026 (G4): /exams/CLAT has no page (see above).
       { title: "Non-NLU → LLM (NLU/abroad) → Tier-1 firm", body: "Possible via LLM from top institute; harder route." },
     ],
     qualifications: ["BA-LLB or 3-yr LLB", "AIBE", "Optional: LLM (US/UK/India) for specialisations"],

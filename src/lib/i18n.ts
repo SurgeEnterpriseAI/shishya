@@ -162,7 +162,7 @@ export const dict = {
     "cutoff.nudge.body": "Answer 10 questions in this exam's pattern and see your score next to these category cutoffs — no account needed.",
     "cutoff.nudge.cta": "Try 10 questions — see where you stand, no sign-in →",
     "cutoff.nudge.signin": "or sign in free for full mocks with your scores saved →",
-    "cutoff.bands": "Score → rank → outcome bands",
+    "cutoff.bands": "Score → rank → outcome bands (indicative)",
     "cutoff.published.title": "Published {exam} cutoffs from previous recruitments",
     "cutoff.published.note": "Copied figure for figure from the published document, with the link. Open the document before you rely on a number.",
     "cutoff.published.source": "Source",
@@ -176,6 +176,17 @@ export const dict = {
     "cutoff.land.title": "Where would your score land?",
     "cutoff.land.body": "Take a free {exam} mock: instant score, this exact rank mapping, and your weak topics identified. No coaching fees.",
     "cutoff.land.cta": "Start free preparation →",
+    // 26 Sep 2026 (G3): the official headline — used only when the page's first
+    // published table comes from the conducting body's own site
+    // (src/lib/official-cutoff-title.ts); {noun} follows the figures' scoreType.
+    "cutoff.metaTitleOfficial": "{exam} Cutoff {year} (Official) — Category-wise {noun}",
+    "cutoff.h1Official": "{exam} Cutoff {year} (Official) — Category-wise {noun}",
+    "cutoff.metaDescriptionOfficial": "{exam} ({name}) cutoff {year} as the conducting body published it: category-wise {noun} with the document link for every figure, plus indicative score-to-rank bands.",
+    "cutoff.noun.marks": "Marks",
+    "cutoff.noun.percentile": "Percentile",
+    "cutoff.noun.rank": "Ranks",
+    "cutoff.noun.score": "Scores",
+    "cutoff.checkedOn": "Published figures last checked against their documents on {date} (IST).",
     // ── brand
     "brand.tagline": "Free, AI-drafted and admin-validated prep for India's top government exams. Supported by Shishya.",
 
@@ -1382,6 +1393,14 @@ export const dict = {
     "cutoff.land.title": "आपका स्कोर कहाँ पहुँचेगा?",
     "cutoff.land.body": "मुफ़्त {exam} मॉक दें: तुरंत स्कोर, यही रैंक मैपिंग और आपके कमज़ोर टॉपिक की पहचान। कोई कोचिंग फ़ीस नहीं।",
     "cutoff.land.cta": "मुफ़्त तैयारी शुरू करें →",
+    "cutoff.metaTitleOfficial": "{exam} कटऑफ {year} (आधिकारिक) — श्रेणी-वार {noun}",
+    "cutoff.h1Official": "{exam} कटऑफ {year} (आधिकारिक) — श्रेणी-वार {noun}",
+    "cutoff.metaDescriptionOfficial": "{exam} ({name}) कटऑफ {year}, जैसा परीक्षा संस्था ने प्रकाशित किया: श्रेणी-वार {noun}, हर अंक के साथ उसके दस्तावेज़ का लिंक, और सांकेतिक स्कोर-से-रैंक बैंड।",
+    "cutoff.noun.marks": "अंक",
+    "cutoff.noun.percentile": "पर्सेंटाइल",
+    "cutoff.noun.rank": "रैंक",
+    "cutoff.noun.score": "स्कोर",
+    "cutoff.checkedOn": "प्रकाशित अंक आख़िरी बार {date} (IST) को उनके दस्तावेज़ों से मिलाए गए।",
     "brand.tagline": "भारत के शीर्ष प्रवेश परीक्षाओं की मुफ़्त तैयारी। Shishya के सहयोग से।",
 
     // ── new search-first landing
@@ -2962,6 +2981,14 @@ export const dict = {
     "cutoff.land.title": "మీ స్కోరు ఎక్కడ నిలుస్తుంది?",
     "cutoff.land.body": "ఉచిత {exam} మాక్ రాయండి: వెంటనే స్కోరు, ఇదే ర్యాంక్ మ్యాపింగ్, మీ బలహీన టాపిక్‌ల గుర్తింపు. కోచింగ్ ఫీజు లేదు.",
     "cutoff.land.cta": "ఉచిత ప్రిపరేషన్ ప్రారంభించండి →",
+    "cutoff.metaTitleOfficial": "{exam} కటాఫ్ {year} (అధికారికం) — కేటగిరీ వారీ {noun}",
+    "cutoff.h1Official": "{exam} కటాఫ్ {year} (అధికారికం) — కేటగిరీ వారీ {noun}",
+    "cutoff.metaDescriptionOfficial": "{exam} ({name}) కటాఫ్ {year}, పరీక్ష నిర్వహణ సంస్థ ప్రచురించినట్లు: కేటగిరీ వారీ {noun}, ప్రతి అంకెకు దాని పత్రం లింక్‌తో, సూచనాత్మక స్కోరు-నుండి-ర్యాంక్ బ్యాండ్‌లతో.",
+    "cutoff.noun.marks": "మార్కులు",
+    "cutoff.noun.percentile": "పర్సంటైల్",
+    "cutoff.noun.rank": "ర్యాంకులు",
+    "cutoff.noun.score": "స్కోర్లు",
+    "cutoff.checkedOn": "ప్రచురించిన అంకెలను వాటి పత్రాలతో చివరిసారి {date} (IST)న సరిచూశాం.",
     "brand.tagline": "భారతదేశపు ప్రముఖ ప్రవేశ పరీక్షలకు ఉచిత తయారీ. Shishya మద్దతుతో.",
     "nav.signin": "Google తో Sign in చేయండి",
     "nav.signin.short": "Sign in",

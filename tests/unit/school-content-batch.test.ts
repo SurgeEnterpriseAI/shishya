@@ -7,6 +7,7 @@
 // Nothing here touches the network or the database.
 
 import { describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -47,8 +48,10 @@ import {
   MCQ_SET_ANGLES,
   MCQ_SETS_PER_CHAPTER,
   NOTES_HEADINGS,
+  NOTES_MAX_TOKENS,
   NOTES_PROMPT_VERSION,
   SCHOOL_CLASSES_SUPPORTED,
+  SENIOR_SUBJECTS,
   buildSchoolMcqRequest,
   buildSchoolNotesRequest,
   chapterIdentity,
@@ -56,13 +59,16 @@ import {
   mcqSystemPrompt,
   notesSystemPrompt,
   officialLinkLine,
+  personaSubjects,
   placeholderNotes,
   retryFeedbackBlock,
   type SchoolChapter,
 } from "@/lib/school/content-prompts";
 import {
+  HONEST_LABEL_PATTERNS,
   candidateSuspects,
   copySuspects,
+  countWords,
   dedupeCandidates,
   difficultyMix,
   normaliseStem,
@@ -81,6 +87,7 @@ import {
   setsNeeded,
   stripProvenanceComment,
 } from "@/lib/school/content-plan";
+import { displayTitle, ncertBooksForClass, ncertTopicCode } from "@/lib/school/spine";
 
 // ---------------------------------------------------------------------------
 // fixtures
@@ -102,6 +109,9 @@ const ch6: SchoolChapter = {
   officialUrl: "https://ncert.nic.in/textbook/pdf/fegp105.pdf",
 };
 const ch10: SchoolChapter = { ...ch6, examCode: "NCERT_C10", cls: 10, subject: "Science", bookCode: "jesc1", bookTitle: "Science", chapterNumber: "12", topicCode: "jesc1.ch12", title: "Electricity", officialUrl: "https://ncert.nic.in/textbook/pdf/jesc112.pdf" };
+// 26 Sep 2026: Class 11-12 fixtures, as the runner resolves them from the spine
+const ch11: SchoolChapter = { ...ch6, examCode: "NCERT_C11", cls: 11, subject: "Physics", bookCode: "keph1", bookTitle: "Physics Part-I", chapterNumber: "1", topicCode: "keph1.ch01", title: "Units and Measurement", officialUrl: "https://ncert.nic.in/textbook/pdf/keph101.pdf" };
+const ch12: SchoolChapter = { ...ch6, examCode: "NCERT_C12", cls: 12, subject: "Chemistry", bookCode: "lech1", bookTitle: "Chemistry-I", chapterNumber: "2", chapterKind: "unit", topicCode: "lech1.ch02", title: "Electrochemistry", officialUrl: "https://ncert.nic.in/textbook/pdf/lech102.pdf" };
 
 const words = (n: number, seed = "prime numbers have exactly two factors one and the number itself") => Array.from({ length: n }, (_, i) => seed.split(" ")[i % 11]).join(" ");
 
@@ -171,10 +181,12 @@ function message(text: string, model = "claude-sonnet-4-5-20250929"): Anthropic.
 // ---------------------------------------------------------------------------
 
 describe("class personas", () => {
-  it("exist for classes 6-10 and differ by class in both prompts", () => {
-    expect([...SCHOOL_CLASSES_SUPPORTED]).toEqual([6, 7, 8, 9, 10]);
-    const notes = SCHOOL_CLASSES_SUPPORTED.map((c) => notesSystemPrompt(c, "Mathematics"));
-    const mcqs = SCHOOL_CLASSES_SUPPORTED.map((c) => mcqSystemPrompt(c, "Science"));
+  it("exist for classes 6-12; the 6-10 ones differ by class in both prompts", () => {
+    // 26 Sep 2026: + 11 and 12 (Physics, Chemistry, Mathematics, Biology — see "Class 11-12 personas" below)
+    expect([...SCHOOL_CLASSES_SUPPORTED]).toEqual([6, 7, 8, 9, 10, 11, 12]);
+    const junior = SCHOOL_CLASSES_SUPPORTED.filter((c) => c <= 10);
+    const notes = junior.map((c) => notesSystemPrompt(c, "Mathematics"));
+    const mcqs = junior.map((c) => mcqSystemPrompt(c, "Science"));
     expect(new Set(notes).size).toBe(5);
     expect(new Set(mcqs).size).toBe(5);
     expect(notes[0]).toContain("Class 6");
@@ -197,8 +209,189 @@ describe("class personas", () => {
   });
 
   it("refuses a class without a persona", () => {
-    expect(() => classPersona(11)).toThrow(/no persona for Class 11/);
+    expect(() => classPersona(5)).toThrow(/no persona for Class 5/);
+    expect(() => classPersona(13)).toThrow(/no persona for Class 13/);
     expect(() => notesSystemPrompt(3, "Mathematics")).toThrow(/no persona/);
+    expect(() => personaSubjects(4)).toThrow(/no persona/);
+  });
+});
+
+// 26 Sep 2026: Class 11-12 (+1/+2) — Physics, Chemistry, Mathematics and
+// Biology — so scripts/school-content-batch.ts can price them in a free dry run
+// for the founder's Tier-2 decision. Same rules as 6-10 (link the book, never
+// copy it; own questions; honest labels), the 13-and-above framing of Class
+// 8-12, and one more line: no NCERT solutions.
+describe("Class 11-12 personas", () => {
+  const SENIOR = [11, 12] as const;
+
+  it("leave every Class 6-10 prompt byte for byte as it was (why the prompt versions stay v2)", () => {
+    // sha256 of the notes + MCQ system prompts of Classes 6-10 × Mathematics, Science, taken before the 11-12 change.
+    // If this fails, a 6-10 prompt changed: bump NOTES_PROMPT_VERSION / MCQ_PROMPT_VERSION, then update the hash.
+    const pin = [6, 7, 8, 9, 10].flatMap((c) => ["Mathematics", "Science"].flatMap((s) => [notesSystemPrompt(c, s), mcqSystemPrompt(c, s)])).join("\u0000");
+    expect(createHash("sha256").update(pin).digest("hex")).toBe("4c8f13c03f3390e06929542e74028af11ada9d06521195e3730d80370450f3fb");
+    expect(NOTES_PROMPT_VERSION).toBe("school-notes-v2");
+    for (const c of [6, 7, 8, 9, 10]) {
+      expect(personaSubjects(c)).toBeNull();
+      expect(classPersona(c).subjects).toBeUndefined();
+      expect(classPersona(c).copyrightAddendum).toBeUndefined();
+      expect(notesSystemPrompt(c, "Mathematics")).not.toMatch(/no NCERT solutions/);
+      // 6-10 still take any subject (the generic line), as before
+      expect(notesSystemPrompt(c, "English")).toContain(`Keep every idea within what Class ${c} studies in English.`);
+    }
+  });
+
+  it("exist for Physics, Chemistry, Mathematics and Biology, and differ by class and subject in both prompts", () => {
+    expect([...SENIOR_SUBJECTS]).toEqual(["Physics", "Chemistry", "Mathematics", "Biology"]);
+    const notes: string[] = [];
+    const mcqs: string[] = [];
+    for (const c of SENIOR) {
+      const p = classPersona(c);
+      expect(personaSubjects(c)).toEqual(SENIOR_SUBJECTS);
+      for (const s of SENIOR_SUBJECTS) {
+        const n = notesSystemPrompt(c, s);
+        const m = mcqSystemPrompt(c, s);
+        notes.push(n);
+        mcqs.push(m);
+        for (const text of [n, m]) {
+          expect(text).toContain(`This chapter is NCERT Class ${c} ${s}.`);
+          expect(text).toContain(`${s} at this class means: `);
+          expect(text).toContain(p.learner);
+          // the copyright rule unchanged, then the no-NCERT-solutions line
+          expect(text).toContain(COPYRIGHT_RULE);
+          expect(text).toContain(p.copyrightAddendum!);
+          expect(text.indexOf(p.copyrightAddendum!)).toBeGreaterThan(text.indexOf(COPYRIGHT_RULE));
+          expect(text).toMatch(/no quotation marks/i);
+          // a science subject gets its own coverage + the shared conventions line; Mathematics its course
+          if (s === "Mathematics") expect(text).toContain(p.maths);
+          else expect(text).toContain(p.science);
+        }
+        expect(m).toContain(HONEST_LABEL_RULE);
+        expect(m).toContain(GENERATOR_OUTPUT_SCHEMA);
+        expect(m).toContain(`Class ${c} question`);
+        expect(n).toContain(`${p.notesWords[0]}–${p.notesWords[1]} words in total`);
+        for (const h of NOTES_HEADINGS) expect(n).toContain(h);
+      }
+    }
+    expect(new Set(notes).size).toBe(SENIOR.length * SENIOR_SUBJECTS.length);
+    expect(new Set(mcqs).size).toBe(SENIOR.length * SENIOR_SUBJECTS.length);
+    expect(notesSystemPrompt(11, "Mathematics")).toContain("limits and derivatives");
+    expect(notesSystemPrompt(12, "Mathematics")).toContain("differential equations");
+    expect(notesSystemPrompt(11, "Physics")).toContain("oscillations and waves");
+    expect(notesSystemPrompt(12, "Chemistry")).toContain("electrochemistry");
+    expect(notesSystemPrompt(12, "Biology")).toContain("biotechnology");
+  });
+
+  it("refuse a senior subject nobody wrote a persona for, instead of a generic prompt", () => {
+    for (const c of SENIOR) {
+      for (const s of ["Science", "Accountancy", "English", "Computer Science", "physics", "constructor"]) {
+        expect(() => notesSystemPrompt(c, s)).toThrow(new RegExp(`Class ${c} persona is written for Physics, Chemistry, Mathematics, Biology only`));
+        expect(() => mcqSystemPrompt(c, s)).toThrow(/only \(got/);
+      }
+    }
+  });
+
+  it("frame the reader as a student of 13 and above, name no board or exam in the examples, quote nothing and trip none of our own checks", () => {
+    for (const c of SENIOR) {
+      const p = classPersona(c);
+      const age = Number(/(\d+)-year-old/.exec(p.learner)?.[1]);
+      expect(age).toBeGreaterThanOrEqual(13);
+      expect(age).toBe(c + 5);
+      expect(p.examples).not.toMatch(/board|exam/i);
+      const text = [p.learner, p.language, p.maths, p.science, p.examples, ...Object.values(p.subjects ?? {})].join("\n");
+      // the prompts forbid quotation marks and the copy check reads them as lifted text
+      expect(`${text}\n${p.copyrightAddendum}`).not.toMatch(/["“”„]/);
+      // the descriptive lines prime none of the shapes our checks reject (the addendum, like COPYRIGHT_RULE, names what it forbids)
+      expect(copySuspects(text)).toEqual([]);
+      for (const { re } of HONEST_LABEL_PATTERNS) expect(text).not.toMatch(re);
+      // class level, not a competitive-exam nudge
+      expect(text).not.toMatch(/\b(?:JEE|NEET|CUET|SSC)\b/);
+      // no NCERT solutions; our own questions
+      expect(p.copyrightAddendum).toMatch(/no NCERT solutions/);
+      expect(p.copyrightAddendum).toMatch(/Do not recall, rework, renumber or solve any of them/);
+      expect(p.copyrightAddendum).toMatch(/newly invented/);
+    }
+    // Class 12 Biology's reproduction and health chapters are handled factually, as a school lesson does
+    expect(classPersona(12).subjects!.Biology).toMatch(/factually and respectfully in scientific terms/);
+  });
+
+  it("grow the notes length with the class; the notes check applies the class's own bounds; the longest reply still fits max_tokens", () => {
+    for (let i = 1; i < SCHOOL_CLASSES_SUPPORTED.length; i++) {
+      const [a, b] = [classPersona(SCHOOL_CLASSES_SUPPORTED[i - 1]), classPersona(SCHOOL_CLASSES_SUPPORTED[i])];
+      expect(b.notesWords[0]).toBeGreaterThanOrEqual(a.notesWords[0]);
+      expect(b.notesWords[1]).toBeGreaterThanOrEqual(a.notesWords[1]);
+    }
+    // parser max = hi × 1.35 words; ~1.7 tokens a word (TopicTeachingNote: ~1,700 tokens for 1,023 words) stays under NOTES_MAX_TOKENS
+    for (const c of SCHOOL_CLASSES_SUPPORTED) expect(Math.round(classPersona(c).notesWords[1] * 1.35) * 1.7).toBeLessThan(NOTES_MAX_TOKENS);
+    // the same note passes at Class 6 length and fails at Class 11's minimum
+    const rest = countWords(goodNotes(ch11, { about: "" }));
+    const min11 = Math.round(classPersona(11).notesWords[0] * 0.65);
+    const atMin = goodNotes(ch11, { about: `${words(min11 - rest)}.` });
+    expect(countWords(atMin)).toBe(min11);
+    expect(parseSchoolNotes(atMin, ch11)).toMatchObject({ ok: true, reasons: [] });
+    const below = goodNotes(ch11, { about: `${words(min11 - rest - 1)}.` });
+    expect(parseSchoolNotes(below, ch11).reasons).toContain(`too short: ${min11 - 1} words (min ${min11})`);
+    expect(parseSchoolNotes(below, { ...ch6, officialUrl: ch11.officialUrl }).ok).toBe(true);
+  });
+
+  it("assemble the notes and MCQ requests for a Class 11 and a Class 12 chapter: chapter identity, the official link only, our notes as grounding", () => {
+    for (const ch of [ch11, ch12]) {
+      const n = buildSchoolNotesRequest(ch);
+      expect(Object.keys(n).sort()).toEqual(["max_tokens", "messages", "model", "system"]);
+      expect(n.model).toBe(modelFor("generate"));
+      expect(n.max_tokens).toBe(NOTES_MAX_TOKENS);
+      const live = messageParamsFor({ model: n.model, maxTokens: n.max_tokens, system: n.system, messages: n.messages });
+      expect(JSON.stringify(live)).toBe(JSON.stringify(n));
+      const user = String(n.messages[0].content);
+      expect(n.system[0].text).toBe(notesSystemPrompt(ch.cls, ch.subject));
+      expect(user).toContain(`Class: ${ch.cls}`);
+      expect(user).toContain(`Subject: ${ch.subject}`);
+      expect(user).toContain(`Book: ${ch.bookTitle} (NCERT code ${ch.bookCode})`);
+      expect(user).toContain(`Decide what a Class ${ch.cls} ${ch.subject} student studies under this chapter title`);
+      expect(user.endsWith(officialLinkLine(ch))).toBe(true);
+      const urls = JSON.stringify(n).match(/https?:\/\/[^\s"\\]+/g) ?? [];
+      expect(new Set(urls)).toEqual(new Set([ch.officialUrl]));
+      const m = buildSchoolMcqRequest(ch, goodNotes(ch), 2, { mix: mixForSet(2) });
+      expect(m.system[0].text).toBe(mcqSystemPrompt(ch.cls, ch.subject));
+      const mu = String(m.messages[0].content);
+      expect(mu).toContain("Generate exactly 10 questions");
+      expect(mu).toContain(MCQ_SET_ANGLES[2]);
+      expect(mu).toContain("Shishya's own study notes");
+      expect(mu).toContain(ch.officialUrl);
+    }
+    expect(String(buildSchoolNotesRequest(ch12).messages[0].content)).toContain("Unit 2: Electrochemistry");
+    expect(chapterIdentity(ch11)).toBe("NCERT Class 11 · Physics · Physics Part-I · Chapter 1: Units and Measurement");
+  });
+
+  it("cover every Physics, Chemistry, Mathematics and Biology chapter of the Class 11 and 12 spine under the spine's own subject names", () => {
+    for (const c of SENIOR) {
+      const seen = new Set<string>();
+      for (const { subject, book } of ncertBooksForClass(c)) {
+        if (!(SENIOR_SUBJECTS as readonly string[]).includes(subject.name)) continue;
+        for (const chapter of book.chapters) {
+          seen.add(subject.name);
+          const sc: SchoolChapter = {
+            topicId: `t-${book.code}-${chapter.pdfSeq}`,
+            examCode: `NCERT_C${c}`,
+            cls: c,
+            subject: subject.name,
+            bookCode: book.code,
+            bookTitle: book.title,
+            chapterNumber: chapter.number,
+            chapterKind: chapter.kind,
+            topicCode: ncertTopicCode(book.code, chapter.pdfSeq),
+            title: displayTitle(chapter.title),
+            officialUrl: chapter.pdfUrl,
+          };
+          const n = buildSchoolNotesRequest(sc, { model: "m" });
+          expect(String(n.messages[0].content).endsWith(officialLinkLine(sc))).toBe(true);
+          for (let i = 0; i < MCQ_SETS_PER_CHAPTER; i++) {
+            const m = buildSchoolMcqRequest(sc, placeholderNotes(sc), i, { model: "m", mix: mixForSet(i) });
+            expect(m.system[0].text).toContain(`NCERT Class ${c} ${subject.name}.`);
+          }
+        }
+      }
+      expect([...seen].sort(), `Class ${c}`).toEqual([...SENIOR_SUBJECTS].sort());
+    }
   });
 });
 

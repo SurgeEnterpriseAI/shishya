@@ -10,6 +10,7 @@ import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { prisma } from "@/lib/db/prisma";
 import { notSchoolSql } from "@/lib/db/exam-scope";
+import { PG_ENTRANCE_CODES } from "@/lib/pg-entrances";
 
 export const metadata: Metadata = {
   title: "Post-Graduation — GATE, CAT, NEET-PG, UGC-NET, fellowships | Shishya",
@@ -41,11 +42,13 @@ export const metadata: Metadata = {
 
 export const revalidate = 86_400;
 
-// PG-relevant exam codes already in our Exam catalogue.
-const PG_EXAM_CODES = [
-  "GATE_CSE", "CAT", "UGC_NET", "CSIR_NET", "UPSC_PRELIMS",
-  // Add more as they get seeded; the page survives if a code is absent.
-];
+// PG entrance exams (27 Sep 2026, integration): the one shared list,
+// src/lib/pg-entrances.ts — the codes the home page's "PG entrance exams on
+// Shishya ({n})" link counts, so the section it opens holds exactly those
+// exams. The old local list showed UPSC Prelims (a recruitment exam, not an
+// admission test) and missed NEET PG. A code with no active row is simply
+// absent.
+const PG_EXAM_CODES: string[] = [...PG_ENTRANCE_CODES];
 
 interface ExamRow {
   code: string;
@@ -135,11 +138,14 @@ export default async function PostGraduationLanding() {
         <h1 className="mt-2 text-3xl font-bold text-ink-900 sm:text-4xl">
           After graduation — your next step, mapped out
         </h1>
+        {/* 26 Sep 2026 (G4): "Real outcomes from students who took each path.
+            Verified" — Shishya holds no student-outcome data and nothing here
+            is verified; the page compares the paths. */}
         <p className="mt-2 max-w-3xl text-base text-ink-700">
-          PG entrances, research paths, fellowships, careers. Real outcomes
-          from students who took each path. Verified, free. Pick on YOUR
-          priorities — opportunity cost, earning curve, risk tolerance, family
-          situation — not on what your peer group is doing.
+          PG entrances, research paths, fellowships, careers. This page compares
+          the paths side by side, free. Pick on YOUR priorities — opportunity
+          cost, earning curve, risk tolerance, family situation — not on what
+          your peer group is doing.
         </p>
 
         {/* Five pathways grid — each card holds title + blurb + Pros
@@ -177,9 +183,12 @@ export default async function PostGraduationLanding() {
         <h2 id="pg-entrances" className="mt-12 text-base font-semibold text-ink-900">
           PG entrance exams
         </h2>
+        {/* 27 Sep 2026 (integration): no blanket "mock tests, PYQ" promise —
+            NEET PG has neither on Shishya today; each exam page says what
+            it holds. */}
         <p className="mt-1 text-xs text-ink-500">
-          Each entrance gets the same Shishya treatment: mock tests, PYQ, AI
-          tutor, syllabus. Click any to enter.
+          Each opens its exam page on Shishya: dates, eligibility and the
+          practice it has.
         </p>
         {pgExams.length > 0 ? (
           <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -206,7 +215,7 @@ export default async function PostGraduationLanding() {
         ) : (
           <div className="mt-3 rounded border border-dashed border-ink-300 bg-white p-4 text-xs text-ink-600">
             PG entrance exams are populated via the seeding pipeline.
-            Browse <Link href="/exams" className="text-saffron-700 underline">all exams</Link> for
+            Browse <Link href="/exams/browse" className="text-saffron-700 underline">all exams</Link> for
             the complete catalogue.
           </div>
         )}

@@ -2,13 +2,20 @@
 // — for a Class 9 student and a UPSC aspirant alike — and the ungated tutor
 // line. The language count is INDIAN_LANGUAGE_COUNT, passed in, never typed.
 // Server component, no JS.
+//
+// 26 Sep 2026 (entry points): beside the tutor line (/chat, kept for people;
+// robots.txt blocks it for every crawler) a plain link to /ask, the
+// whole-platform search with AI answers, in the reader's language
+// (src/lib/home-ask-link.ts).
 
 import Link from "next/link";
 import type { HomeDoorsCopy } from "@/lib/home-doors-copy";
 import { fillHome } from "@/lib/home-strip-copy";
+import { HOME_ASK_PAGE_LINK, homeCopyLocaleOf } from "@/lib/home-ask-link";
 
 export function HomeHowItWorks({ copy, languageCount }: { copy: HomeDoorsCopy; languageCount: number }) {
   const H = copy.how;
+  const askPage = HOME_ASK_PAGE_LINK[homeCopyLocaleOf(copy)];
   const steps: [string, string][] = [
     [H.s1t, H.s1b],
     [H.s2t, H.s2b],
@@ -35,9 +42,16 @@ export function HomeHowItWorks({ copy, languageCount }: { copy: HomeDoorsCopy; l
           </li>
         ))}
       </ol>
-      <p className="mt-4 text-center text-sm">
+      <p className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-center text-sm">
         <Link href="/chat?general=1" data-home-cta="how-ask" className="font-semibold text-saffron-700 hover:text-saffron-800">
           {fillHome(H.ask, { n: languageCount })}
+        </Link>
+        <Link
+          href={askPage.href}
+          data-home-cta="how-search"
+          className="font-medium text-ink-700 underline decoration-ink-300 underline-offset-2 hover:text-ink-900"
+        >
+          {askPage.label}
         </Link>
       </p>
     </section>

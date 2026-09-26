@@ -11,6 +11,7 @@ import { fillTemplate } from "@/lib/i18n";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { Header } from "@/components/Header";
 import { RankLadder } from "@/components/RankCard";
 import { AnonQuizRecall } from "@/components/AnonQuizRecall";
@@ -52,18 +53,29 @@ import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/langua
 import { OfficialPapersBlock } from "@/components/OfficialPapersBlock";
 import { hubPyqPhrase } from "@/lib/pyq-naming";
 import { examHubCopy, fillHub, type ExamHubCopy } from "@/lib/exam-hub-copy";
-import { examPageGates } from "@/lib/exam-page-gates";
+import { examPageGates, GATES_CLOSED } from "@/lib/exam-page-gates";
 import {
   clipDescription,
   heldDescriptionLead,
   heldTitleLead,
   heldYearDescriptionLead,
+  hubCourseNameTail,
   hubDateLead,
+  hubPracticeCtaCopy,
+  hubPracticeSuffix,
+  hubShareMessage,
   hubTitlePrefix,
   hubTitleYear,
   revisionDescriptionLead,
   revisionTitleLead,
+  type HubOffers,
 } from "@/lib/hub-title";
+import { cutoffHeadlineSentences, hubLead, leadDescription } from "@/lib/answer-lead";
+import { verifiedPattern } from "@/lib/pattern-verified";
+import { hubFaqExtraItems, hubPyqOffer } from "@/lib/hub-faq";
+import { groupCutoffTables, type OfficialCutoffRow } from "@/lib/official-cutoffs";
+import { pickCutoffHeadline, type CutoffHeadline } from "@/lib/official-cutoff-title";
+import { newestCutoffLabelYear } from "@/lib/cutoff-label-year";
 import { examKind, examKindLabel } from "@/lib/exam-kind";
 import { relatedLinks, type RelatedLink } from "@/lib/exam-related-links";
 import { loadSchoolSurface } from "@/lib/school/surface";
@@ -86,6 +98,26 @@ function pyqSetLine(C: ExamHubCopy, held: number, year: number | null, totalQues
     ? fillHub(C.pyqSet, { held, paper, total: totalQuestions })
     : fillHub(C.pyqSetNoTotal, { held, paper });
 }
+// The published cutoff the hub FAQ quotes (26 Sep 2026, G3): the cutoff
+// page's own headline figure (src/lib/official-cutoff-title.ts) — the first
+// table's first category — with its document. Cached per exam for an hour:
+// SSC GD holds 4,205 rows and the hub renders per request.
+const getHubCutoffHeadline = unstable_cache(
+  async (examId: string, officialUrl: string | null): Promise<{ headline: CutoffHeadline | null; year: number | null } | null> => {
+    const rows = await prisma
+      .$queryRaw<OfficialCutoffRow[]>`
+        SELECT cycle, stage, post, region, gender, category, "categoryLabel", marks, "maxMarks", "scoreType",
+               "sourceUrl", "sourceTitle", publisher, "publishedOn"
+        FROM "OfficialCutoff" WHERE "examId" = ${examId} AND "archivedAt" IS NULL
+      `.catch(() => [] as OfficialCutoffRow[]);
+    if (rows.length === 0) return null;
+    const tables = groupCutoffTables(rows);
+    return { headline: pickCutoffHeadline(tables, officialUrl), year: newestCutoffLabelYear(tables.map((t) => t.cycle)) };
+  },
+  ["hub-cutoff-headline-v1"],
+  { revalidate: 3600 },
+);
+
 // "6:00 pm" from an IST hour constant — the rehearsal close time comes
 // from src/lib/live-test.ts, never a typed number.
 function formatIstHour(hour24: number): string {
@@ -184,6 +216,21 @@ export async function generateMetadata({
   const notAnnounced =
     urlLocale === "hi" ? "अभी घोषित नहीं" : urlLocale === "te" ? "ఇంకా ప్రకటించలేదు" : "not announced yet";
 
+  // What the hub holds (26 Sep 2026, G3 — src/lib/hub-title.ts
+  // hubPracticeSuffix): the title said "Free Mock Tests, PYQ" on 12 hubs with
+  // no shared mock and 44 with no previous year paper. A failed gates read
+  // claims no syllabus here (GATES_CLOSED) — a title must never over-promise.
+  // Both names (15 Sep 2026, src/lib/pyq-naming.ts).
+  const { loadOfficialPapers: loadOfficialPapersMeta } = await import("@/lib/official-papers-db");
+  const hubHasOfficial = (await loadOfficialPapersMeta(exam.id)).some((r) => r.kind !== "answer key" && r.kind !== "listing page");
+  const metaGates = await examPageGates(exam.code, GATES_CLOSED);
+  const offers: HubOffers = {
+    hasMocks: shared.systemMocks.length > 0,
+    hasPyq: shared.pyqYears.length > 0 || hubHasOfficial,
+    hasSyllabus: metaGates.syllabus,
+    hasEligibility: !!findDeepContent(exam.code)?.eligibility,
+  };
+
   // Title — prioritises state name for state exams (huge SEO lever for
   // "Tamil Nadu TET 2026" / "Bihar Police mock test"-style searches),
   // and the exam-date answer when known.
@@ -193,7 +240,7 @@ export async function generateMetadata({
     : revision
       ? `${revisionTitleLead("en")}, `
       : nextDate ? `Exam Date ${nextDate}, ` : "Exam Date Not Announced Yet, ";
-  const title = `${hubTitlePrefix("en", `${exam.shortName}${stateBit}`, titleYear, dateBit)}Free Mock Tests, PYQ | Shishya`;
+  const title = `${hubTitlePrefix("en", `${exam.shortName}${stateBit}`, titleYear, dateBit)}${hubPracticeSuffix("en", offers)} | Shishya`;
 
   // Description — packs in: the date answer first (zero-click queries),
   // exam full name, state name (English + Hindi + native script), the
@@ -211,13 +258,30 @@ export async function generateMetadata({
   // Honesty (11 Sep 2026): no "verified by students who cleared it" — the
   // content is AI-drafted and checked against the official notification
   // (the page's own SectionVerificationSummary says exactly that).
-  // Both names (15 Sep 2026, src/lib/pyq-naming.ts).
-  const { loadOfficialPapers: loadOfficialPapersMeta } = await import("@/lib/official-papers-db");
-  const hubHasOfficial = (await loadOfficialPapersMeta(exam.id)).some((r) => r.kind !== "answer key" && r.kind !== "listing page");
-  const description =
-    `${dateCopy}Free ${exam.shortName} (${exam.name})${cycleYearText} mock tests, ${hubPyqPhrase(hubHasOfficial)}, ` +
-    `AI tutor and a free day-by-day coach plan — AI-drafted, checked against the official notification. ` +
-    `${stateCopy}Questions available in ${langCopy}. No paywall.`;
+  // 26 Sep 2026 (G3): mock tests, previous year papers and the question
+  // languages are named only where the hub has them.
+  const offerText = [
+    offers.hasMocks ? "mock tests" : null,
+    hubPyqOffer(shared.pyqYears.length > 0, hubHasOfficial),
+    "AI tutor",
+    "a free day-by-day coach plan",
+  ].filter((x): x is string => !!x);
+  const descriptionOffer =
+    `Free ${exam.shortName} (${exam.name})${cycleYearText} preparation: ${offerText.slice(0, -1).join(", ")} and ${offerText[offerText.length - 1]} — AI-drafted, checked against the official notification. ` +
+    `${stateCopy}${shared.validatedQuestionCount > 0 ? `Questions available in ${langCopy}. ` : ""}No paywall.`;
+  const description = `${dateCopy}${descriptionOffer}`;
+  // The answer lead (26 Sep 2026, G3 — src/lib/answer-lead.ts): the same
+  // date decision as the title, the verified pattern, the official site. It
+  // heads the English meta description (~160 characters); the twins keep
+  // their own description.
+  const lead = hubLead({
+    short: exam.shortName,
+    dateLead,
+    titleYear,
+    timeline,
+    pattern: verifiedPattern(exam),
+    officialUrl,
+  });
 
   // Keywords — a wide net mixing English, native-script state name, exam
   // name in native script (transliteration via state's hindi/native name),
@@ -259,9 +323,9 @@ export async function generateMetadata({
   // intent words are in the language the URL promises.
   const locTitle =
     urlLocale === "hi"
-      ? `${hubTitlePrefix("hi", `${exam.shortName}${stateBit}`, titleYear, `${held ? heldTitleLead("hi", held, heldTier) : revision ? revisionTitleLead("hi") : `परीक्षा तिथि ${nextDate ?? notAnnounced}`}, `)}मुफ़्त मॉक टेस्ट, पिछले साल के पेपर | Shishya`
+      ? `${hubTitlePrefix("hi", `${exam.shortName}${stateBit}`, titleYear, `${held ? heldTitleLead("hi", held, heldTier) : revision ? revisionTitleLead("hi") : `परीक्षा तिथि ${nextDate ?? notAnnounced}`}, `)}${hubPracticeSuffix("hi", offers)} | Shishya`
       : urlLocale === "te"
-        ? `${hubTitlePrefix("te", `${exam.shortName}${stateBit}`, titleYear, `${held ? heldTitleLead("te", held, heldTier) : revision ? revisionTitleLead("te") : `పరీక్ష తేదీ ${nextDate ?? notAnnounced}`}, `)}ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు | Shishya`
+        ? `${hubTitlePrefix("te", `${exam.shortName}${stateBit}`, titleYear, `${held ? heldTitleLead("te", held, heldTier) : revision ? revisionTitleLead("te") : `పరీక్ష తేదీ ${nextDate ?? notAnnounced}`}, `)}${hubPracticeSuffix("te", offers)} | Shishya`
         : title;
   const locDateCopy = (lc: "hi" | "te"): string =>
     held
@@ -273,15 +337,33 @@ export async function generateMetadata({
           : lc === "hi"
             ? `${exam.shortName} परीक्षा तिथि: ${nextDate ?? notAnnounced}. `
             : `${exam.shortName} పరీక్ష తేదీ: ${nextDate ?? notAnnounced}. `;
+  // 26 Sep 2026 (G3): the twins' offer list names only what the hub holds,
+  // like the English one.
+  const hiOffers = [
+    offers.hasMocks ? "मुफ़्त मॉक टेस्ट" : null,
+    offers.hasPyq ? "पिछले साल के पेपर" : null,
+    offers.hasSyllabus ? "सिलेबस" : null,
+    metaGates.cutoff ? "कटऑफ़" : null,
+    "AI ट्यूटर",
+  ].filter((x): x is string => !!x);
+  const teOffers = [
+    offers.hasMocks ? "ఉచిత మాక్ టెస్టులు" : null,
+    offers.hasPyq ? "గత సంవత్సరాల పేపర్లు" : null,
+    offers.hasSyllabus ? "సిలబస్" : null,
+    metaGates.cutoff ? "కటాఫ్" : null,
+    "AI ట్యూటర్",
+  ].filter((x): x is string => !!x);
   const locDescription =
     urlLocale === "hi"
-      ? `${locDateCopy("hi")}${exam.shortName} (${exam.name})${cycleYearText} के मुफ़्त मॉक टेस्ट, पिछले साल के पेपर, सिलेबस, कटऑफ़ और AI ट्यूटर — हिंदी में। ${stateCopy}कोई पेवॉल नहीं।`
+      ? `${locDateCopy("hi")}${exam.shortName} (${exam.name})${cycleYearText} के ${hiOffers.slice(0, -1).join(", ")} और ${hiOffers[hiOffers.length - 1]} — हिंदी में। ${stateCopy}कोई पेवॉल नहीं।`
       : urlLocale === "te"
-        ? `${locDateCopy("te")}${exam.shortName} (${exam.name})${cycleYearText} ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు, సిలబస్, కటాఫ్, AI ట్యూటర్ — తెలుగులో. ${stateCopy}పేవాల్ లేదు.`
+        ? `${locDateCopy("te")}${exam.shortName} (${exam.name})${cycleYearText} ${teOffers.join(", ")} — తెలుగులో. ${stateCopy}పేవాల్ లేదు.`
         : description;
   // 26 Sep 2026: clipped at the last sentence or word boundary at or under
-  // 300 characters (it was sliced mid-word at exactly 300).
-  const metaDescription = clipDescription(locDescription, 300);
+  // 300 characters (it was sliced mid-word at exactly 300). English: the
+  // answer lead heads it, ~160 characters in all (G3).
+  const metaDescription =
+    urlLocale === "en" && lead ? leadDescription(lead, descriptionOffer) : clipDescription(locDescription, 300);
   return {
     title: locTitle,
     description: metaDescription,
@@ -304,7 +386,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title,
-      description: clipDescription(description, 200),
+      description: urlLocale === "en" ? metaDescription : clipDescription(description, 200),
     },
   };
 }
@@ -604,11 +686,23 @@ export default async function ExamPage({
   // Both names on previous-year content (15 Sep 2026, src/lib/pyq-naming.ts).
   const { loadOfficialPapers: loadOfficialPapersHub } = await import("@/lib/official-papers-db");
   const hubPageHasOfficial = (await loadOfficialPapersHub(exam.id)).some((r) => r.kind !== "answer key" && r.kind !== "listing page");
+  // What this hub holds (26 Sep 2026, G3 — the title's rule, src/lib/hub-title.ts).
+  const hubOffers: HubOffers = {
+    hasMocks: systemMocks.length > 0,
+    hasPyq: pyqYears.length > 0 || hubPageHasOfficial,
+    hasSyllabus: gates.syllabus,
+    hasEligibility: !!findDeepContent(exam.code)?.eligibility,
+  };
+  // Pattern numbers only from a notice read by hand (src/lib/pattern-verified.ts).
+  const pattern = verifiedPattern(exam);
+  // English body on the English URL: the answer lead and the hub's own FAQ
+  // questions (the /hi and /te twins keep their localised copy — G3 veto).
+  const englishBody = locale === "en" && urlLocale === "en";
   const courseJsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Course",
-    name: `${exam.shortName}${stateInfo2 ? ` (${stateInfo2.name})` : ""} — Free Mock Tests, Syllabus & Study Help`,
-    description: exam.description ?? `${exam.name} preparation on Shishya — free full-length mocks, ${hubPyqPhrase(hubPageHasOfficial)}, an AI tutor and a free day-by-day coach plan. Content is AI-drafted and checked against the official notification.`,
+    name: `${exam.shortName}${stateInfo2 ? ` (${stateInfo2.name})` : ""} — ${hubCourseNameTail(hubOffers)}`,
+    description: exam.description ?? `${exam.name} preparation on Shishya — ${hubOffers.hasMocks ? "free full-length mocks, " : ""}${hubOffers.hasPyq ? `${hubPyqPhrase(hubPageHasOfficial)}, ` : ""}an AI tutor and a free day-by-day coach plan. Content is AI-drafted and checked against the official notification.`,
     // 26 Sep 2026: the provider points at the one Organization node the root
     // layout declares (src/lib/site-description.ts SITE_ORG_ID), and the
     // level says what the exam is — it said "Entrance Exam" for SSC GD and
@@ -677,99 +771,62 @@ export default async function ExamPage({
     itemListElement: breadcrumbItems,
   };
 
-  // FAQPage — the Q&A shape answer engines lift verbatim ("does SSC CGL
-  // have negative marking?"). Built ONLY from the exam's own stored
-  // facts, so it can never drift from what the page displays. Cutoff/
-  // syllabus answers point at the dedicated landings rather than
-  // quoting numbers that change every cycle.
-  const langNames = new Intl.DisplayNames(["en"], { type: "language" });
-  const langList = (exam.languages ?? ["en"])
-    .map((l) => { try { return langNames.of(String(l).toLowerCase()) ?? l; } catch { return l; } })
-    .join(", ");
-  const faqJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: `What is the exam pattern of ${exam.shortName}?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: `${exam.name} has ${exam.totalQuestions} questions for ${exam.totalMarks} marks, to be completed in ${exam.durationMin} minutes.`,
-        },
-      },
-      {
-        "@type": "Question",
-        name: `Is there negative marking in ${exam.shortName}?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text:
-            exam.negativeMark > 0
-              ? `Yes — ${formatNegativeMark(exam.negativeMark)} mark is deducted for every wrong answer in ${exam.name}.`
-              : `No — ${exam.name} has no negative marking.`,
-        },
-      },
-      ...(exam.languages.length > 0
-        ? [
-            {
-              "@type": "Question",
-              name: `In which languages is ${exam.shortName} conducted?`,
-              acceptedAnswer: { "@type": "Answer", text: `${exam.name} is offered in: ${langList}.` },
-            },
-          ]
-        : []),
-      // Only where the /cutoff page has bands to show (16 Sep 2026).
-      ...(gates.cutoff
-        ? [
-            {
-              "@type": "Question",
-              name: `What is the expected cutoff for ${exam.shortName}?`,
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: `Cutoffs change every cycle with paper difficulty and vacancies. Shishya maintains indicative score-to-rank bands and category-wise (General/EWS/OBC/SC/ST) expected cutoffs at https://shishya.in/exams/${exam.code}/cutoff.`,
-              },
-            },
-          ]
-        : []),
-      // Full-length real-pattern paper + topic builder (1 Sep 2026) —
-      // both answer literal student queries ("full mock in real
-      // pattern", "topic wise mock test"). Real-pattern line only when
-      // this exam's paper has actually been assembled.
-      ...(systemMocks.some((m) => (m.config as any)?.pattern === "real")
-        ? [
-            {
-              "@type": "Question",
-              name: `Is there a full-length ${exam.shortName} mock test in the real exam pattern?`,
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: `Yes — Shishya has a free full-length ${exam.name} mock with the real pattern: ${exam.totalQuestions} questions in ${exam.durationMin} minutes, sections in the real paper's order, scored with solutions. It is the "Full-Length Mock (Real Pattern)" tile on this page.`,
-              },
-            },
-          ]
-        : []),
-      // Only where a topic holds enough validated questions to build from.
-      ...(gates.buildMock
-        ? [
-            {
-              "@type": "Question",
-              name: `Can I build a topic-wise ${exam.shortName} mock test?`,
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: `Yes — pick any topics from the ${exam.shortName} syllabus, choose 10, 25 or 50 questions and the difficulty, and attempt it as a timed mock with solutions and weak-topic analysis, free, at https://shishya.in/exams/${exam.code}/build-mock. Questions can be read in Hindi and ${OTHER_INDIAN_LANGUAGE_COUNT} other Indian languages inside the test.`,
-              },
-            },
-          ]
-        : []),
-      {
-        "@type": "Question",
-        name: `How can I prepare for ${exam.shortName} for free?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: `Shishya offers ${exam.shortName} preparation 100% free: adaptive mock tests, ${hubPyqPhrase(hubPageHasOfficial)} modelled on each year's paper, ${gates.syllabus ? `${hubHasNotes ? "full syllabus with study notes" : "the full syllabus"} (https://shishya.in/exams/${exam.code}/syllabus), ` : ""}${gates.tricks ? `subject-wise memory tricks (https://shishya.in/exams/${exam.code}/tricks), ` : ""}a free day-by-day coach plan, and an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages.`,
-        },
-      },
-    ],
-  };
+  // The hub's own FAQ questions (26 Sep 2026, G3 — src/lib/hub-faq.ts).
+  // They were a second, schema-only FAQPage here beside ExamFaq's visible
+  // one; now they join ExamFaq's list, so ONE FAQPage carries exactly the
+  // questions the accordion shows. Built ONLY from the exam's own stored
+  // facts: pattern and negative-marking answers only for a verified
+  // pattern, the cutoff answer quotes the published figure and its document
+  // when the cutoff page has one (official tier only), each offer only
+  // where the hub has it. English body only — the twins keep ExamFaq's four.
+  // 27 Sep 2026 (repair): the languages answer comes from the verified
+  // pattern's notice (src/lib/hub-faq.ts), never the unsourced
+  // Exam.languages list.
+  const hubCutoff = englishBody && gates.cutoff ? await getHubCutoffHeadline(exam.id, officialUrl).catch(() => null) : null;
+  const hubCutoffOfficial =
+    hubCutoff?.headline && hubCutoff.headline.tier === "official"
+      ? cutoffHeadlineSentences(exam.shortName, hubCutoff.year, hubCutoff.headline).join(" ")
+      : null;
+  const hubFaqExtra = englishBody
+    ? hubFaqExtraItems({
+        code: exam.code,
+        short: exam.shortName,
+        name: exam.name,
+        pattern,
+        cutoffPage: gates.cutoff,
+        cutoffOfficial: hubCutoffOfficial,
+        realPatternMock: systemMocks.some((m) => (m.config as any)?.pattern === "real"),
+        buildMock: gates.buildMock,
+        hasContent,
+        hasPyqSets: pyqYears.length > 0,
+        hasOfficialPapers: hubPageHasOfficial,
+        syllabus: gates.syllabus,
+        notes: hubHasNotes,
+        tricks: gates.tricks,
+        otherLanguageCount: OTHER_INDIAN_LANGUAGE_COUNT,
+        tutorLanguageCount: INDIAN_LANGUAGE_COUNT,
+      })
+    : [];
+  // The answer lead under the H1 (26 Sep 2026, G3 — src/lib/answer-lead.ts):
+  // the title's date decision over the same live rows, the verified pattern,
+  // the official site. English body only.
+  const leadRows = shared.titleDates.length > 0 ? shared.titleDates : importantDates;
+  const leadNow = new Date();
+  const leadTimeline = buildTimeline(leadRows, leadNow, officialUrl);
+  const leadDecision = hubDateLead(leadTimeline, exam, new Map(leadRows.map((r) => [r.id, r.createdAt] as const)));
+  const hubLeadText = englishBody
+    ? hubLead({
+        short: exam.shortName,
+        dateLead: leadDecision,
+        titleYear: hubTitleYear(leadDecision, leadTimeline, exam, leadNow),
+        timeline: leadTimeline,
+        pattern,
+        officialUrl,
+      })
+    : null;
+  // Sign-in box copy for a hub with no previous year paper (G3): the default
+  // promises "previous year paper practice".
+  const ctaCopy = hubPracticeCtaCopy(locale, hubOffers);
 
   // "Related on Shishya" (26 Sep 2026, src/lib/exam-related-links.ts): the
   // NCERT subject pages an entrance or olympiad aspirant studies from and the
@@ -800,10 +857,8 @@ export default async function ExamPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
+      {/* 26 Sep 2026 (G3): no second FAQPage here — ExamFaq below carries the
+          one FAQPage, built from the questions its accordion shows. */}
       <Header />
       {/* Per-category top ribbon — 6px coloured strip that immediately
           signals which "track" the visitor is in (engineering blue,
@@ -813,7 +868,18 @@ export default async function ExamPage({
       <section className="container-prose py-10">
         <AnonQuizRecall examCode={exam.code} />
         <p className="text-xs text-ink-500">
-          <Link href="/dashboard" className="hover:text-ink-800">{t("nav.dashboard")}</Link> · {t("nav.exams")} ·{" "}
+          {/* 26 Sep 2026 (G3): the dashboard crumb only for a signed-in
+              student — for everyone else (and crawlers) it was a link to a
+              sign-in wall. They get the exam index instead. */}
+          {userId ? (
+            <>
+              <Link href="/dashboard" className="hover:text-ink-800">{t("nav.dashboard")}</Link> · {t("nav.exams")} ·{" "}
+            </>
+          ) : (
+            <>
+              <Link href="/exams/browse" prefetch={false} className="hover:text-ink-800">{t("nav.exams")}</Link> ·{" "}
+            </>
+          )}
           {stateInfo2 && (
             <>
               <Link href={`/exams/state/${stateSlug(stateInfo2.code)}`} prefetch={false} className="hover:text-ink-800">
@@ -837,6 +903,9 @@ export default async function ExamPage({
           </span>
         </div>
         <h1 className="mt-2 text-3xl font-bold text-ink-900">{exam.shortName}</h1>
+        {/* The answer first (26 Sep 2026, G3): what the searcher came for, from
+            stored rows only — the date the title states, with its tier. */}
+        {hubLeadText && <p className="mt-2 max-w-3xl text-base leading-relaxed text-ink-800">{hubLeadText}</p>}
         <p className="mt-1 text-sm text-ink-600">{exam.name}</p>
         <p className="mt-4 max-w-3xl text-sm text-ink-700">{exam.description}</p>
         {/* The state page link (15 Sep 2026): hubs named their state only in
@@ -987,13 +1056,17 @@ export default async function ExamPage({
             40%), so the next lever queued by the 18 Sep synthesis ships: the
             box moves up from the 7th block to right after the chips, on the
             first or second phone screen. */}
-        {!userId && (
+        {/* 26 Sep 2026 (G3): only where the hub has checked questions — on the
+            12 hubs with none the box promised mock tests that do not exist
+            (the Mock Tests section's empty state asks what to build instead).
+            A hub with no previous year paper gets copy that names none. */}
+        {!userId && hasContent && (
           <div className={`mt-6 rounded-md border p-5 ${theme.borderAccent} ${theme.heroTint}`}>
             <p className="text-sm font-semibold text-ink-900">
-              {fillHub(H.coachTitle, { short: exam.shortName })}
+              {fillHub(ctaCopy?.coachTitle ?? H.coachTitle, { short: exam.shortName })}
             </p>
             <p className="mt-1 text-sm text-ink-700">
-              {H.coachBodyA}<strong>Shishya</strong>{" "}
+              {ctaCopy?.coachBodyA ?? H.coachBodyA}<strong>Shishya</strong>{" "}
               {H.coachBodyB}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -1040,6 +1113,7 @@ export default async function ExamPage({
         {resumeMock && (
           <Link
             href={`/mocks/${resumeMock.mockId}`}
+            rel="nofollow"
             className="mt-5 flex items-center justify-between gap-3 rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 transition-colors hover:border-amber-400"
           >
             <span className="text-sm text-ink-800">
@@ -1124,7 +1198,7 @@ export default async function ExamPage({
         <div className="mt-5">
           <ShareExamButton
             url={`https://shishya.in/exams/${exam.code}`}
-            message={`${exam.shortName} — free mock tests, previous year papers & full syllabus on Shishya (100% free, in your language):`}
+            message={hubShareMessage(exam.shortName, hubOffers, hasContent)}
             surface="exam"
           />
         </div>
@@ -1265,9 +1339,10 @@ export default async function ExamPage({
           pyqYears={pyqYears
             .map((y) => y.pyqYear)
             .filter((n): n is number => typeof n === "number")}
-          durationMin={exam.durationMin}
+          durationMin={pattern ? pattern.durationMin : null}
           hasOfficialPapers={hubPageHasOfficial}
           locale={locale}
+          extraItems={hubFaqExtra}
         />
 
         <div className="mt-2 lg:grid lg:grid-cols-3 lg:gap-8">
@@ -1330,12 +1405,15 @@ export default async function ExamPage({
         <section id="mocks" className="mt-10 scroll-mt-20">
           <div className="flex items-baseline justify-between">
             <h2 className="text-base font-semibold text-ink-800">{t("exam.mocks.title")}</h2>
-            <Link
-              href={`/exams/${exam.code}/attempts`}
-              className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
-            >
-              {t("exam.mocks.allAttempts")} →
-            </Link>
+            {/* A student's own attempts: signed-in only (26 Sep 2026, G3). */}
+            {userId && (
+              <Link
+                href={`/exams/${exam.code}/attempts`}
+                className="text-xs font-medium text-saffron-700 hover:text-saffron-800"
+              >
+                {t("exam.mocks.allAttempts")} →
+              </Link>
+            )}
           </div>
           <p className="mt-1 text-xs text-ink-500">{t("exam.mocks.langHint")}</p>
           {/* START SMALL for newcomers (23 Aug 2026): week data — 25-Q
@@ -1405,6 +1483,7 @@ export default async function ExamPage({
                   </p>
                   <Link
                     href={`/mocks/${m.id}`}
+                    rel="nofollow"
                     prefetch={false}
                     className="mt-2 inline-block text-xs font-medium text-saffron-700 hover:text-saffron-800"
                   >

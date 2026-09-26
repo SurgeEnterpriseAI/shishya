@@ -557,3 +557,41 @@ describe("copy helpers", () => {
     expect(subjectShortName("Science")).toBe("Science");
   });
 });
+
+// ── 26 Sep 2026 (G4, school templates): titles say what the page holds ──
+describe("class and subject page titles (G4)", () => {
+  const src = (rel: string) =>
+    fs
+      .readFileSync(path.resolve(__dirname, "../../src/app/schooling", rel), "utf8")
+      .replace(/\r\n/g, "\n")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+  const classPage = src("[slug]/[classSlug]/page.tsx");
+  const subjectPage = src("[slug]/[classSlug]/[subject]/page.tsx");
+
+  it("the class title's count names its noun ('on 5 chapters', never a bare 'on 5')", () => {
+    expect(classPage).toContain("const chapterWord = (n: number) => `${n} ${n === 1 ? \"chapter\" : \"chapters\"}`;");
+    expect(classPage).toContain("return `notes and practice on ${chapterWord(both)}`;");
+    expect(classPage).not.toMatch(/return `notes and practice on \$\{both\}`/);
+  });
+
+  it("the subject title names the official PDFs and syllabus, never 'a free AI tutor'", () => {
+    const tailsBlock = subjectPage.slice(subjectPage.indexOf("const tails = isNcert"), subjectPage.indexOf("const title = fitTitle(core, tails"));
+    expect(tailsBlock).not.toMatch(/free AI tutor/);
+    expect(subjectPage).toContain('const pdfs = counts.chapters > 0 ? "NCERT chapter PDFs (official)"');
+    expect(subjectPage).toContain("const official = hasSyllabus ? `${pdfs} and syllabus 2026-27` : pdfs;");
+    expect(subjectPage).toContain("return `notes & practice on ${chapterWord(both)}`;");
+    // The tutor line stays in the description, where it is computed.
+    expect(subjectPage).toMatch(/const tutorLine = tutor\s*\?/);
+  });
+
+  it("both pages list the chapters with Shishya's notes AND checked practice, computed", () => {
+    expect(classPage).toContain(".filter((ch) => ch.hasNotes && hasSchoolGuestQuiz(ch))");
+    expect(subjectPage).toContain("const readyChapters = chapters.filter((ch) => ch.hasNotes && ch.quiz);");
+  });
+
+  it("the Humanities line no longer links the robots-blocked /exams/browse?category= filter", () => {
+    expect(classPage).not.toMatch(/\/exams\/browse\?category=/);
+    expect(classPage).toContain('href="/exams/entrance#entrance-law"');
+  });
+});

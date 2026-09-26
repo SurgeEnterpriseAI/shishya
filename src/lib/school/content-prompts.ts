@@ -20,7 +20,10 @@
 //      scripts/verify-question-bank.ts is the firewall.
 //   3. Class-appropriate: classPersona(cls) differs per class (reading level,
 //      sentence length, the maths a student of that class has, the kind of
-//      examples) and is printed into both system prompts.
+//      examples) and is printed into both system prompts. 26 Sep 2026:
+//      Classes 11-12 are written per subject (Physics, Chemistry,
+//      Mathematics, Biology only) and add a no-NCERT-solutions line after
+//      the copyright rule; the Class 6-10 prompts are unchanged.
 //   4. Honest labels: HONEST_LABEL_RULE — an AI question is never called an
 //      NCERT exercise, textbook question, board question or previous-year
 //      question; the parser (content-parse.ts) rejects such wording.
@@ -40,14 +43,22 @@ import type { Difficulty } from "../ai/types";
 export const NOTES_PROMPT_VERSION = "school-notes-v2";
 export const MCQ_PROMPT_VERSION = "school-mcq-v2";
 
-/** Classes the personas below are written for (the first build slice: NCERT 6-10 Maths and Science). */
-export const SCHOOL_CLASSES_SUPPORTED: readonly number[] = [6, 7, 8, 9, 10];
+/** Classes the personas below are written for (the first build slice: NCERT 6-10 Maths and Science).
+ *  26 Sep 2026: + 11 and 12 (Physics, Chemistry, Mathematics, Biology only — SENIOR_SUBJECTS), so the
+ *  runner can price Class 11-12 in a free dry run for the founder's Tier-2 decision. The 6-10 prompt
+ *  text is unchanged byte for byte (tests/unit/school-content-batch.test.ts pins its hash), which is
+ *  why NOTES_PROMPT_VERSION / MCQ_PROMPT_VERSION stay at v2: a v2 row's class says which persona wrote it. */
+export const SCHOOL_CLASSES_SUPPORTED: readonly number[] = [6, 7, 8, 9, 10, 11, 12];
+
+/** The subjects the Class 11-12 personas are written for (the NCERT Subject names, as the spine and the seed spell them). */
+export const SENIOR_SUBJECTS = ["Physics", "Chemistry", "Mathematics", "Biology"] as const;
+export type SeniorSubject = (typeof SENIOR_SUBJECTS)[number];
 
 /** One chapter as the runner resolves it: DB Topic + the spine's book/chapter identity + the KnowledgeSource link. */
 export interface SchoolChapter {
   topicId: string;
   examCode: string;
-  /** Class number (6-10). */
+  /** Class number (6-12; 11-12 for SENIOR_SUBJECTS only). */
   cls: number;
   /** Subject.name, e.g. "Mathematics". */
   subject: string;
@@ -96,7 +107,32 @@ export interface ClassPersona {
   examples: string;
   /** Target length of the notes in words. */
   notesWords: [number, number];
+  /**
+   * Class 11-12 only (26 Sep 2026): what each senior science subject covers at
+   * this class. When present, the persona covers Mathematics (via `maths`) and
+   * these subjects ONLY — any other subject throws, so no senior subject gets
+   * a generic prompt nobody wrote for it — and `science` is the conventions
+   * line every one of them shares.
+   */
+  subjects?: Readonly<Record<Exclude<SeniorSubject, "Mathematics">, string>>;
+  /**
+   * Class 11-12 only (26 Sep 2026): printed right after COPYRIGHT_RULE. The
+   * senior books' exercises circulate online with worked solutions, so the
+   * model is told in so many words not to recall or solve them: Shishya
+   * writes no NCERT solutions, only its own questions.
+   */
+  copyrightAddendum?: string;
 }
+
+// 26 Sep 2026: the Class 11-12 lines. Subject coverage is the chapter list of
+// the 2026-27 NCERT index as committed in data/curriculum/ncert/class-11.json
+// and class-12.json (chapter titles are facts, not textbook text); nothing
+// else here comes from a book.
+const SENIOR_LANGUAGE =
+  "Precise, formal sentences (under 30 words). State each definition, law and result exactly, with its conditions and units, then explain it in plain words; keep any derivation short and say why each step follows. Write notation as plain text: dy/dx, lim x→0, √2, θ, the vector A, H₂SO₄, Fe³⁺, ⇌.";
+const SENIOR_SCIENCE = "exact definitions and laws with the conditions they hold under, SI units with sensible significant figures, standard symbols and notation, and experiments a student could set up in a school laboratory";
+const SENIOR_COPYRIGHT_ADDENDUM = (cls: number) =>
+  `Class ${cls} rule (no NCERT solutions): the exercises, examples and in-text questions of the Class ${cls} NCERT books are reproduced widely online together with worked solutions, and you may remember some of them. Do not recall, rework, renumber or solve any of them, and never present an answer as the answer to a question from the book. Every example and question you write is newly invented, with your own numbers, substances, organisms and situations.`;
 
 const PERSONAS: Record<number, ClassPersona> = {
   6: {
@@ -145,6 +181,49 @@ const PERSONAS: Record<number, ClassPersona> = {
     examples: "real quantities with units, Indian everyday contexts, and multi-step situations that need two ideas of the chapter at once",
     notesWords: [800, 1200],
   },
+  // 26 Sep 2026: Class 11-12 (+1/+2), Physics, Chemistry, Mathematics and
+  // Biology. Same framing as 8-10 (a student of 13 and above, by age), same
+  // copyright and honest-label rules, plus the no-NCERT-solutions addendum.
+  // The examples lines name no board or exam (the honest-label check rejects
+  // that wording in a question).
+  11: {
+    cls: 11,
+    learner: "a 16-year-old in Class 11, the first year of senior secondary school",
+    language: SENIOR_LANGUAGE,
+    maths:
+      "sets, relations and functions, trigonometric functions, complex numbers and quadratic equations, linear inequalities, permutations and combinations, the binomial theorem, sequences and series, straight lines, conic sections, coordinates in three dimensions, limits and derivatives, statistics and probability, with proofs where the chapter has them and multi-step reasoning",
+    science: SENIOR_SCIENCE,
+    subjects: {
+      Physics:
+        "units and measurement, motion in a straight line and in a plane, the laws of motion, work, energy and power, systems of particles and rotational motion, gravitation, mechanical properties of solids and fluids, thermal properties of matter, thermodynamics, kinetic theory, oscillations and waves, using algebra, trigonometry, vectors, graphs and simple derivatives and integrals as tools where the chapter needs them",
+      Chemistry:
+        "the mole concept and stoichiometry, the structure of the atom, periodic properties, chemical bonding and molecular structure, thermodynamics, equilibrium, redox reactions, the basic principles of organic chemistry and hydrocarbons, with balanced equations, IUPAC names and structures written in plain text such as CH₃–CH₂–OH",
+      Biology:
+        "the diversity and classification of living things, the structure of plants and animals, the cell, biomolecules and cell division, plant physiology (photosynthesis, respiration, growth) and human physiology (breathing, body fluids and circulation, excretion, movement, neural and chemical coordination), with correct scientific terms",
+    },
+    examples: "real quantities with SI units, measurements, experiments and everyday situations a student can picture, and Indian settings such as transport, farms, homes, weather, and local plants and animals",
+    notesWords: [850, 1250],
+    copyrightAddendum: SENIOR_COPYRIGHT_ADDENDUM(11),
+  },
+  12: {
+    cls: 12,
+    learner: "a 17-year-old in Class 12, the last year of school, preparing for the Class 12 board examination",
+    language: SENIOR_LANGUAGE,
+    maths:
+      "relations and functions, inverse trigonometric functions, matrices and determinants, continuity and differentiability, applications of derivatives, integrals and their applications, differential equations, vector algebra, three-dimensional geometry, linear programming and probability, with proofs where the chapter has them and multi-step reasoning",
+    science: SENIOR_SCIENCE,
+    subjects: {
+      Physics:
+        "electric charges and fields, electrostatic potential and capacitance, current electricity, moving charges and magnetism, magnetism and matter, electromagnetic induction, alternating current, electromagnetic waves, ray and wave optics, the dual nature of radiation and matter, atoms, nuclei and semiconductor electronics, using vectors, graphs, circuits described in words and calculus as a tool where the chapter needs it",
+      Chemistry:
+        "solutions, electrochemistry, chemical kinetics, the d- and f-block elements, coordination compounds, haloalkanes and haloarenes, alcohols, phenols and ethers, aldehydes, ketones and carboxylic acids, amines and biomolecules, with balanced equations, reaction conditions, IUPAC names and structures written in plain text such as CH₃–CH₂–OH",
+      Biology:
+        "reproduction in flowering plants and in humans, reproductive health, the principles and molecular basis of inheritance, evolution, human health and disease, microbes in human welfare, biotechnology and its applications, organisms and populations, ecosystems, and biodiversity and conservation, with correct scientific terms; reproduction, reproductive health, disease, drugs and alcohol are handled factually and respectfully in scientific terms, as a school biology lesson does, with no graphic or personal detail",
+    },
+    examples: "real quantities with SI units, experiments and everyday situations a student can picture, Indian settings, and multi-step situations that need two ideas of the chapter at once",
+    notesWords: [900, 1300],
+    copyrightAddendum: SENIOR_COPYRIGHT_ADDENDUM(12),
+  },
 };
 
 /** The persona for a class; throws for a class this slice has no persona for. */
@@ -154,8 +233,26 @@ export function classPersona(cls: number): ClassPersona {
   return p;
 }
 
+/** The subjects a class's persona is written for: SENIOR_SUBJECTS for 11-12; null for 6-10, whose personas take any subject (a Maths or a Science register, else a generic line). Throws like classPersona for an unsupported class. */
+export function personaSubjects(cls: number): readonly string[] | null {
+  const p = classPersona(cls);
+  return p.subjects ? SENIOR_SUBJECTS : null;
+}
+
 function subjectRegister(p: ClassPersona, subject: string): string {
+  // 26 Sep 2026: a Class 11-12 persona is written per subject; a subject it does not name throws rather than get a generic line.
+  if (p.subjects) {
+    if (subject === "Mathematics") return `Mathematics at this class means: ${p.maths}.`;
+    const own = Object.prototype.hasOwnProperty.call(p.subjects, subject) ? (p.subjects as Record<string, string>)[subject] : undefined;
+    if (!own) throw new Error(`school content: the Class ${p.cls} persona is written for ${personaSubjects(p.cls)!.join(", ")} only (got ${subject})`);
+    return `${subject} at this class means: ${own}.\nEvery science subject at this class uses ${p.science}.`;
+  }
   return /math/i.test(subject) ? `Mathematics at this class means: ${p.maths}.` : /science/i.test(subject) ? `Science at this class means: ${p.science}.` : `Keep every idea within what Class ${p.cls} studies in ${subject}.`;
+}
+
+/** COPYRIGHT_RULE, then the class's addendum when it has one (11-12); 6-10 get COPYRIGHT_RULE alone, byte for byte as before. */
+function copyrightBlock(p: ClassPersona): string {
+  return p.copyrightAddendum ? `${COPYRIGHT_RULE}\n\n${p.copyrightAddendum}` : COPYRIGHT_RULE;
 }
 
 /** One-line chapter identity, e.g. "NCERT Class 6 · Mathematics · Ganita Prakash · Chapter 1: Patterns in Mathematics". */
@@ -211,7 +308,7 @@ Style:
 - No claims about examinations, marks or what is important for boards.
 - No quotation marks anywhere: state definitions, rules, results and a student's wrong thinking directly, never as a quoted sentence.
 
-${COPYRIGHT_RULE}
+${copyrightBlock(p)}
 
 Output strict markdown with these sections, in this exact order, each starting with the heading shown:
 
@@ -314,7 +411,7 @@ Each question:
 - Uses no quotation marks: a statement to judge is written directly as an option, never as a quoted sentence.
 - Never produces harmful, biased or controversial content.
 
-${COPYRIGHT_RULE}
+${copyrightBlock(p)}
 
 ${HONEST_LABEL_RULE}
 

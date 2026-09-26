@@ -44,6 +44,13 @@
 //     Biology: the entrance exams that subject feeds (live hubs only),
 //     entrance exams, colleges, scholarships, careers. The 25 Sep form's
 //     "feeds exams" cards link only live exams.
+// 26 Sep 2026 (G4, school templates): the <title> says what the page holds —
+// "CBSE Class 10 Mathematics — NCERT chapter PDFs (official) and syllabus
+// 2026-27" (the syllabus only where CBSE's 2026-27 PDF is linked), plus
+// "notes & practice on K chapters" when K chapters have both — and no longer
+// leads with "a free AI tutor" (the description still carries the tutor
+// line on Class 8-12 subjects with chapters). The chapters with Shishya's
+// notes AND checked practice are listed at the top of the chapter list.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -115,8 +122,10 @@ function bookTitles(books: readonly SchoolBookRef[]): string {
   return t.length <= 1 ? t.join("") : `${t.slice(0, -1).join(", ")} and ${t[t.length - 1]}`;
 }
 
-/** "notes and practice on 5" (chapters with both), else "Shishya notes on
- *  N" / "practice on N"; "" when the subject has neither. */
+/** "notes & practice on 5 chapters" (chapters with both), else "Shishya
+ *  notes on N chapters" / "practice on N chapters"; "" when the subject has
+ *  neither. 26 Sep 2026 (G4): the noun is said ("on 5" read as a number
+ *  with nothing after it). */
 function oursShortBit(chapters: ReadonlyArray<{ hasNotes: boolean; validatedQuestions: number }>): string {
   let both = 0;
   let notes = 0;
@@ -127,9 +136,10 @@ function oursShortBit(chapters: ReadonlyArray<{ hasNotes: boolean; validatedQues
     if (ch.hasNotes) notes++;
     if (quiz) practice++;
   }
-  if (both > 0) return `notes and practice on ${both}`;
-  if (notes > 0) return `Shishya notes on ${notes}`;
-  if (practice > 0) return `practice on ${practice}`;
+  const chapterWord = (n: number) => `${n} ${n === 1 ? "chapter" : "chapters"}`;
+  if (both > 0) return `notes & practice on ${chapterWord(both)}`;
+  if (notes > 0) return `Shishya notes on ${chapterWord(notes)}`;
+  if (practice > 0) return `practice on ${chapterWord(practice)}`;
   return "";
 }
 
@@ -165,19 +175,23 @@ export async function generateMetadata({ params }: { params: Promise<PageParams>
   const tutor = isStudentModeClass(cls) && isNcert && counts.chapters > 0;
   const ours = oursShortBit(subject.chapters);
   const core = `${board.shortName} Class ${cls} ${subject.name}`;
-  const bookBit = books.length ? `NCERT ${bookTitles(books)} chapters` : "NCERT chapters";
+  // 26 Sep 2026 (G4): what the page holds — the official chapter PDFs, CBSE's
+  // 2026-27 syllabus where it is linked, and the computed count of chapters
+  // with Shishya's own notes and practice. No "free AI tutor" in the title.
+  const hasSyllabus = isNcert && cbseSyllabusLinksForBooks(cls, books.map((b) => b.code)).length > 0;
+  const pdfs = counts.chapters > 0 ? "NCERT chapter PDFs (official)" : books.length ? `NCERT ${bookTitles(books)} (official)` : "NCERT books (official)";
+  const official = hasSyllabus ? `${pdfs} and syllabus 2026-27` : pdfs;
   const tails = isNcert
     ? noBook
       ? ["no NCERT textbook published yet", "no NCERT textbook yet"]
       : [
-          ...(ours && tutor ? [`${bookBit}, ${ours} and a free AI tutor`, `NCERT chapters, ${ours} and a free AI tutor`] : []),
-          ...(tutor ? [`${bookBit} and a free AI tutor`, "NCERT chapters and a free AI tutor", "free AI tutor"] : []),
-          ...(ours ? [`${bookBit}, ${ours}`, `NCERT chapters, ${ours}`, `${ours} chapters`] : []),
-          bookBit,
+          ...(ours ? [`${official}, ${ours}`, `${pdfs}, ${ours}`, ours] : []),
+          official,
+          pdfs,
           "NCERT chapters",
         ]
     : [subjectPdf ? "official CISCE syllabus" : "official CISCE curriculum document", subjectPdf ? "CISCE syllabus" : "CISCE curriculum"];
-  const title = fitTitle(core, tails, { keepTail: Boolean(ours) || tutor });
+  const title = fitTitle(core, tails, { keepTail: Boolean(ours) || isNcert });
   const tutorLine = tutor
     ? ` Students 13 and above can ${counts.practice > 0 ? "practise chapters and " : ""}ask a free AI tutor about any chapter, in English or ${INDIAN_LANGUAGE_COUNT} Indian languages.`
     : "";
@@ -235,6 +249,8 @@ export default async function SubjectPage({ params }: { params: Promise<PagePara
   const byBook = new Map<string, typeof chapters>();
   for (const ch of chapters) byBook.set(ch.bookCode, [...(byBook.get(ch.bookCode) ?? []), ch]);
   const booksWithChapters = books.filter((b) => byBook.has(b.code));
+  // 26 Sep 2026 (G4): the chapters with Shishya's notes AND checked practice, listed first.
+  const readyChapters = chapters.filter((ch) => ch.hasNotes && ch.quiz);
   const chapterBookTitles = bookTitles(booksWithChapters.length ? booksWithChapters : books);
 
   const boardPath = schoolBoardPath(board.slug);
@@ -306,6 +322,25 @@ export default async function SubjectPage({ params }: { params: Promise<PagePara
           {board.shortName} Class {cls} {subject.name}
         </h1>
         <p className="mt-1 text-sm text-ink-500">{board.name}</p>
+
+        {/* 26 Sep 2026 (G4): what Shishya itself has here — computed from the rows. */}
+        {readyChapters.length > 0 && (
+          <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50/40 p-5">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-800">
+              Shishya notes and checked practice ({readyChapters.length} {readyChapters.length === 1 ? "chapter" : "chapters"})
+            </p>
+            <ul className="mt-2 space-y-1 text-sm">
+              {readyChapters.map((ch) => (
+                <li key={ch.code}>
+                  <Link href={schoolChapterPath(board.slug, cls, subject.slug, ch.slug)} className="text-saffron-700 hover:underline">
+                    {ch.label ? `${ch.label}: ` : ""}
+                    {ch.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Official books — link out; Shishya never hosts or copies them. */}
         {books.length > 0 && (

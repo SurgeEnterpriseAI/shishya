@@ -7,7 +7,7 @@
 
 import { istDay } from "@/lib/exam-week";
 import { schoolClassIdentity, schoolSubjectContextMarkdown } from "@/lib/school/context";
-import { EMPTY_SCHOOL_SURFACE, findSchoolClass, loadSchoolSurface, parseSchoolClassSlug } from "@/lib/school/surface";
+import { EMPTY_SCHOOL_SURFACE, findSchoolClass, loadSchoolSurface, parseSchoolClassSlug, schoolSubjectPath } from "@/lib/school/surface";
 
 export const revalidate = 3600;
 
@@ -24,6 +24,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
     headers: {
       "content-type": "text/markdown; charset=utf-8",
       "cache-control": "public, max-age=900, s-maxage=3600, stale-while-revalidate=86400",
+      // 26 Sep 2026 (G2): the HTML subject page is the canonical URL, as on
+      // /exams/{CODE}/context.md. No noindex: AI search must still fetch it.
+      link: `<https://shishya.in${schoolSubjectPath(slug, c.cls, s.slug)}>; rel="canonical"`,
     },
   });
 }

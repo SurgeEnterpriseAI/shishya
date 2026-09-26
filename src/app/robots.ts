@@ -87,8 +87,17 @@ export default function robots(): MetadataRoute.Robots {
     "Applebot-Extended",
     "Bytespider",
     "Amazonbot",
+    // 26 Sep 2026 (G1): the answer-engine fetchers that were missing a
+    // group of their own — each gets the same public access and the same
+    // private-path disallows (without a group they fell to "*", which is
+    // the same today, but a named group keeps the intent visible and stops
+    // a future "*"-only rule from reaching them by accident).
+    "Amzn-SearchBot", // Amazon search / Alexa+ answers index
+    "Amzn-User", // Amazon live fetch for a user's question
     "cohere-ai",
     "meta-externalagent", // Meta AI
+    "meta-externalfetcher", // Meta AI live fetch for a user's link
+    "Google-CloudVertexBot", // Vertex AI Agents grounding crawls (site owners' agents)
     "DuckAssistBot", // DuckDuckGo AI answers
     "MistralAI-User",
     "YouBot",

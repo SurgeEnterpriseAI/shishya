@@ -29,6 +29,7 @@ import { CoachNextTask } from "@/components/CoachNextTask";
 import { StudyTogether } from "./StudyTogether";
 import { hasUsableNotes } from "@/lib/topic-notes";
 import { topicPageMeta } from "@/lib/page-gates-copy";
+import { NotesMarkdown } from "@/components/NotesMarkdown";
 
 // Public SEO page; data barely changes (notes regen weekly via cron).
 // Revalidate every 10 min so a content update propagates without
@@ -77,11 +78,23 @@ export async function generateMetadata({
   });
   const { title, description, keywords } = meta;
   const index = validatedQuestions === null || meta.index;
+  // 26 Sep 2026 (G3, src/lib/page-gates-copy.ts topicGoogleIndexable): a
+  // topic with no notes and under 10 checked questions stays indexable for
+  // Bing and the ChatGPT crawlers but tells Googlebot noindex,follow. A
+  // failed count claims nothing either way (indexable, as above).
+  const googleIndex = validatedQuestions === null || meta.googleIndex;
   const url = `https://shishya.in/exams/${exam.code}/topics/${topic.code}`;
+  // The exam's own social card (a child segment's openGraph replaces the
+  // parent's, so /exams/[code]/opengraph-image is not inherited).
+  const ogImage = `https://shishya.in/exams/${exam.code}/opengraph-image`;
   return {
     title,
     description,
-    ...(index ? {} : { robots: { index: false, follow: true } }),
+    ...(!index
+      ? { robots: { index: false, follow: true } }
+      : !googleIndex
+        ? { robots: { index: true, follow: true, googleBot: { index: false, follow: true } } }
+        : {}),
     alternates: {
       canonical: url,
       // hreflang pairing with the Hindi twin when it exists (gap-fill #3).
@@ -97,8 +110,9 @@ export async function generateMetadata({
       siteName: "Shishya",
       locale: "en_IN",
       type: "article",
+      images: [{ url: ogImage, width: 1200, height: 630, alt: `${exam.shortName} — Shishya` }],
     },
-    twitter: { card: "summary_large_image", title, description },
+    twitter: { card: "summary_large_image", title, description, images: [ogImage] },
   };
 }
 
@@ -122,7 +136,7 @@ export default async function TopicPage({
       subject: { select: { code: true, name: true } },
       parent: { select: { code: true, name: true } },
       children: { select: { code: true, name: true, description: true }, orderBy: { orderIdx: "asc" } },
-      teachingNote: { select: { content: true, generatedAt: true } },
+      teachingNote: { select: { content: true, generatedAt: true, updatedAt: true, validatedAt: true, validatorId: true } },
       noteTranslations: { where: { locale: "hi" }, select: { id: true } },
     },
   });
@@ -168,6 +182,12 @@ export default async function TopicPage({
 
   const notes = (topic as any).teachingNote?.content as string | null ?? null;
   const notesAt = (topic as any).teachingNote?.generatedAt as Date | null ?? null;
+  // 26 Sep 2026 (G3): dateModified = when the note itself last changed
+  // (TopicTeachingNote.updatedAt), never the render time. The reviewer line
+  // shows only when a person marked the note reviewed (validatedAt AND
+  // validatorId) — no reviewer is named or implied otherwise.
+  const notesUpdatedAt = topic.teachingNote?.updatedAt ?? null;
+  const reviewedAt = topic.teachingNote?.validatedAt && topic.teachingNote?.validatorId ? topic.teachingNote.validatedAt : null;
   const url = `https://shishya.in/exams/${exam.code}/topics/${topic.code}`;
 
   // Structured data — only when real notes exist, so a stub topic never
@@ -195,9 +215,9 @@ export default async function TopicPage({
           { "@type": "Thing", name: exam.name },
         ],
         wordCount: notes.split(/\s+/).filter(Boolean).length,
-        ...(notesAt
-          ? { datePublished: notesAt.toISOString(), dateModified: notesAt.toISOString() }
-          : {}),
+        ...(notesAt ? { datePublished: notesAt.toISOString() } : {}),
+        ...(notesUpdatedAt || notesAt ? { dateModified: (notesUpdatedAt ?? notesAt)!.toISOString() } : {}),
+        image: [`https://shishya.in/exams/${exam.code}/opengraph-image`],
         author: { "@type": "Organization", name: "Shishya", url: "https://shishya.in" },
         publisher: { "@type": "Organization", name: "Shishya", url: "https://shishya.in" },
         isPartOf: {
@@ -338,9 +358,35 @@ export default async function TopicPage({
         {/* ── Study material (primary content) ──────────────────────── */}
         {notes ? (
           <>
+            {/* 26 Sep 2026 (G3): the shared renderer in its full mode — tables,
+                numbered lists, ### headings, italics and code render as such
+                (they printed as raw "**" and "|---|"), and the note's own "# "
+                heading is an <h2>: the page keeps one <h1>. Every piece of
+                text is escaped (src/lib/notes-markdown.ts). */}
             <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
-              <NotesRenderer markdown={notes} />
+              <NotesMarkdown markdown={notes} rich demoteH1 />
             </article>
+            {/* Provenance, as it is (26 Sep 2026, G3). 27 Sep 2026
+                (integration): "from Shishya's syllabus outline", not "from
+                the official syllabus" — scripts/generate-topic-notes.ts
+                writes from the exam's Subject/Topic tree in our DB
+                (renderSyllabusBlock), and for long-tail exams that tree was
+                itself drafted by AI (src/lib/ai/syllabus.ts); no official
+                document is read. */}
+            <p className="mt-4 text-xs text-ink-500" data-notes-provenance>
+              Drafted with AI from Shishya&apos;s syllabus outline for this exam · Reviewed by a person:{" "}
+              {reviewedAt
+                ? reviewedAt.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })
+                : "not yet"}{" "}
+              ·{" "}
+              <a
+                href={`mailto:corp@surgesoftware.co.in?subject=${encodeURIComponent(`Error in notes: ${topic.name} (${exam.shortName})`)}`}
+                rel="nofollow"
+                className="font-medium text-saffron-700 underline-offset-2 hover:underline"
+              >
+                Report an error
+              </a>
+            </p>
 
             {/* The notes→quiz bridge stays FIRST after the notes: one
                 inline MCQ right where reading ends (readers who reach a
@@ -484,51 +530,5 @@ export default async function TopicPage({
   );
 }
 
-/**
- * Tiny markdown → HTML renderer. We intentionally avoid a full markdown
- * library to keep bundle size low — the notes follow a fixed structure
- * (## heading lines + - bullets + paragraphs), so a 30-line renderer is
- * enough. Upgrade to react-markdown if richer formatting is needed later.
- */
-function NotesRenderer({ markdown }: { markdown: string }) {
-  const lines = markdown.split(/\r?\n/);
-  const out: React.ReactNode[] = [];
-  let buf: string[] = [];
-  let inList = false;
-  const flushPara = () => {
-    if (buf.length === 0) return;
-    out.push(<p key={`p-${out.length}`}>{buf.join(" ")}</p>);
-    buf = [];
-  };
-  const flushList = () => {
-    if (!inList) return;
-    out.push(<ul key={`ul-${out.length}`} className="list-disc pl-5">{listBuf}</ul>);
-    listBuf = [] as React.ReactNode[];
-    inList = false;
-  };
-  let listBuf: React.ReactNode[] = [];
-  for (const raw of lines) {
-    const line = raw.trim();
-    if (!line) { flushPara(); flushList(); continue; }
-    if (line.startsWith("## ")) {
-      flushPara(); flushList();
-      out.push(<h2 key={`h2-${out.length}`}>{line.slice(3)}</h2>);
-      continue;
-    }
-    if (line.startsWith("# ")) {
-      flushPara(); flushList();
-      out.push(<h1 key={`h1-${out.length}`}>{line.slice(2)}</h1>);
-      continue;
-    }
-    if (/^[-*]\s+/.test(line)) {
-      flushPara();
-      inList = true;
-      listBuf.push(<li key={`li-${listBuf.length}`}>{line.replace(/^[-*]\s+/, "")}</li>);
-      continue;
-    }
-    flushList();
-    buf.push(line);
-  }
-  flushPara(); flushList();
-  return <>{out}</>;
-}
+// 26 Sep 2026 (G3): the local 30-line NotesRenderer (## / # / - only) is
+// gone — the notes render through src/components/NotesMarkdown (rich mode).

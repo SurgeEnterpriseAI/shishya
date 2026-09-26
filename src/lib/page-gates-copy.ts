@@ -71,18 +71,35 @@ export function topicIndexable(hasNotes: boolean, validatedQuestions: number): b
   return hasNotes || validatedQuestions > 0;
 }
 
+/** Checked questions a topic without notes needs before Google is asked to
+ *  index it (26 Sep 2026, discoverability wave 2 G3). */
+export const TOPIC_GOOGLE_MIN_QUESTIONS = 10;
+
+/** Google-only index rule (26 Sep 2026, G3). A topic with no notes and fewer
+ *  than TOPIC_GOOGLE_MIN_QUESTIONS checked questions is a near-empty page
+ *  (4,227 topics on prod had 1–9 and no notes) — the thin-page family behind
+ *  Google's site-level demotion. It stays indexable for Bing and the
+ *  ChatGPT/OAI crawlers, which land students on these pages, and only
+ *  Googlebot is told noindex,follow (robots googleBot). Topics with notes are
+ *  unchanged; empty topics stay noindex for everyone (topicIndexable). */
+export function topicGoogleIndexable(hasNotes: boolean, validatedQuestions: number): boolean {
+  return hasNotes || validatedQuestions >= TOPIC_GOOGLE_MIN_QUESTIONS;
+}
+
 /** Title / description / keywords / robots for
  *  /exams/[code]/topics/[topicCode]. Everything is unchanged for topics that
- *  have notes. */
+ *  have notes. `googleIndex` (26 Sep 2026): false → the page emits
+ *  googleBot noindex,follow while staying indexable for other engines. */
 export function topicPageMeta(i: {
   topicName: string;
   examShort: string;
   topicDescription: string | null;
   hasNotes: boolean;
   validatedQuestions: number;
-}): { title: string; description: string; keywords: string[]; index: boolean } {
+}): { title: string; description: string; keywords: string[]; index: boolean; googleIndex: boolean } {
   const tail = i.topicDescription ?? "";
   const index = topicIndexable(i.hasNotes, i.validatedQuestions);
+  const googleIndex = index && topicGoogleIndexable(i.hasNotes, i.validatedQuestions);
   const keywords = [
     `${i.topicName} ${i.examShort}`,
     ...(i.hasNotes ? [`${i.topicName} notes`, `${i.topicName} formulas`] : []),
@@ -99,6 +116,7 @@ export function topicPageMeta(i: {
         `when you need help on this topic. ${tail}`.slice(0, 300),
       keywords,
       index,
+      googleIndex,
     };
   }
   if (i.validatedQuestions > 0) {
@@ -109,6 +127,7 @@ export function topicPageMeta(i: {
         .slice(0, 300),
       keywords,
       index,
+      googleIndex,
     };
   }
   return {
@@ -118,6 +137,7 @@ export function topicPageMeta(i: {
       .slice(0, 300),
     keywords,
     index,
+    googleIndex,
   };
 }
 

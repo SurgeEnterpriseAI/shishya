@@ -46,20 +46,28 @@ import { decodeLetterNames, isLatinToken, normaliseTerm, trigramDice } from "./n
 import { INTENT_LABEL, examIntentUrl, examSiblingIntents, isSafePath, knownUrl, localeTarget } from "./targets";
 import {
   BOARD_PAPER_WORDS,
+  CALENDAR_SIDE_WORDS,
+  CALENDAR_WORDS,
+  CAPSULE_SIDE_WORDS,
+  CURRENT_AFFAIRS_PHRASES,
   DEFAULT_FAMILY,
   DEGREE_STREAM,
   EXAM_SUBJECT_WORDS,
   FILLER_SOFT_WORDS,
   INTENT_LANDING,
   INTENT_PHRASES,
+  MONTH_WORDS,
   PLURAL_COLLEGE_WORDS,
   SCHOOL_PAGE_INTENTS,
   SECTION_PHRASES,
   SUBJECT_NEAREST,
   SUBJECT_TARGETS,
+  TODAY_WORDS,
+  UPCOMING_WORDS,
 } from "./lexicon";
 import { STATES } from "@/lib/state-info";
 import { nearestExams } from "@/lib/exam-nearest";
+import { canonicalPath } from "@/lib/url-normalize";
 
 export const FUZZY_MIN = 0.72;
 const FUZZY_WEIGHT = 0.8;
@@ -106,6 +114,8 @@ interface Prep {
   landing: Map<string, number>;
   /** college-stream docs by stream slug ("management" → /colleges/stream/management). */
   streamIdx: Map<string, number>;
+  /** 26 Sep 2026 (G2): exam docs by the family word their code opens with ("CUET_UG" → "cuet"; 3+ letters, so never a state code). */
+  familyOf: Map<string, number[]>;
   entity: string[];
 }
 
@@ -142,7 +152,7 @@ function prepare(index: SearchIndex): Prep {
     // weigh a query the same way ("mp patwari" flipped from list to ai on production data).
     docs, toks, idToks, termIdx, inv, softInv, softToks, df, N: docs.filter((d) => d.kind !== "topic-note").length, maxIdf: 0, vocab: new Set(), sortedVocab: [], latinLong: [],
     examIdx: new Map(), examState: new Map(), collegeState: new Map(), boardIdx: new Map(), classIdx: new Map(), subjectsOf: new Map(),
-    chaptersOf: new Map(), topicsOf: new Map(), landing: new Map(), streamIdx: new Map(), entity: [],
+    chaptersOf: new Map(), topicsOf: new Map(), landing: new Map(), streamIdx: new Map(), familyOf: new Map(), entity: [],
   };
   docs.forEach((d, i) => {
     const set = new Set<string>();
@@ -172,7 +182,11 @@ function prepare(index: SearchIndex): Prep {
     P.entity.push(entityOf(d));
     switch (d.kind) {
       case "exam":
-        if (d.examCode) P.examIdx.set(d.examCode, i);
+        if (d.examCode) {
+          P.examIdx.set(d.examCode, i);
+          const fam = d.examCode.split("_")[0].toLowerCase();
+          if (fam.length >= 3) add(P.familyOf, fam, i);
+        }
         break;
       case "exam-state":
         if (d.state) P.examState.set(d.state, i);
@@ -757,9 +771,84 @@ const BOARD_PAPER = BOARD_PAPER_WORDS.map((w) => ` ${normaliseTerm(w)} `);
 const PLURAL_COLLEGE = new Set(PLURAL_COLLEGE_WORDS.map((w) => normaliseTerm(w)));
 const LIVE_TEST_RE = /(^| )live (test|tests|mock|mocks)( |$)/;
 
+// ── Site-page asks and family stand-ins (26 Sep 2026, discoverability G2) ──
+
+const wordSet = (list: readonly string[]) => new Set(list.map((w) => normaliseTerm(w)).filter(Boolean));
+const CALENDAR = wordSet(CALENDAR_WORDS);
+const UPCOMING = wordSet(UPCOMING_WORDS);
+const CALENDAR_SIDE = wordSet(CALENDAR_SIDE_WORDS);
+const CA_PHRASES = CURRENT_AFFAIRS_PHRASES.map((p) => ` ${normaliseTerm(p)} `);
+const CA_WORDS = wordSet(CURRENT_AFFAIRS_PHRASES.flatMap((p) => p.split(" ")));
+const TODAY = wordSet(TODAY_WORDS);
+const CAPSULE_SIDE = wordSet(CAPSULE_SIDE_WORDS);
+const MONTHS = new Map(Object.entries(MONTH_WORDS).map(([k, v]) => [normaliseTerm(k), v] as const));
+const CAPSULE_PREFIX = "/current-affairs/capsule/";
+
+/** No class, board, subject, chapter, state or other kind of page named: a site-wide ask. */
+function plainAsk(parsed: ParsedQuery): boolean {
+  return parsed.cls == null && parsed.board == null && parsed.subject == null && parsed.chapterNo == null && !parsed.state && !parsed.kindHint && !parsed.stage;
+}
+
+/**
+ * "exam calendar 2026", "upsc calendar 2026", "ssc exam calendar", "upcoming government exams 2026":
+ * a calendar or upcoming word, and nothing else but exam-family words ("upsc", "ssc", "rrb") and
+ * words that name no other page ("exams", "government", "sarkari"). The year is a slot.
+ */
+function calendarAsk(P: Prep, parsed: ParsedQuery): boolean {
+  if (!plainAsk(parsed) || (parsed.intent && parsed.intent !== "hub" && parsed.intent !== "dates")) return false;
+  const words = [...parsed.hard, ...parsed.soft];
+  if (!words.some((t) => CALENDAR.has(t) || UPCOMING.has(t))) return false;
+  return words.every((t) => CALENDAR.has(t) || UPCOMING.has(t) || CALENDAR_SIDE.has(t) || P.familyOf.has(t));
+}
+
+/** "current affairs today" / "current affairs september 2026": the month named (1-12, or null) and the words left over. */
+function currentAffairsAsk(parsed: ParsedQuery): { month: number | null; rest: string[] } | null {
+  if (!plainAsk(parsed) || (parsed.intent && parsed.intent !== "hub")) return null;
+  if (!CA_PHRASES.some((p) => ` ${parsed.norm} `.includes(p))) return null;
+  let month: number | null = null;
+  for (const t of parsed.tokens) {
+    const m = MONTHS.get(t);
+    if (m != null) {
+      month = m;
+      break;
+    }
+  }
+  // A one-letter word is a split possessive ("today's" → "today", "s").
+  const rest = [...parsed.hard, ...parsed.soft].filter((t) => t.length > 1 && !CA_WORDS.has(t) && !MONTHS.has(t));
+  return { month, rest };
+}
+
+/** The capsule page of a month the index holds: that year's, else the latest year's. */
+function capsuleDoc(P: Prep, month: number, year: number | null): number | null {
+  const mm = String(month).padStart(2, "0");
+  if (year != null) return P.landing.get(`${CAPSULE_PREFIX}${year}-${mm}`) ?? null;
+  let best: [string, number] | null = null;
+  for (const [path, i] of P.landing) {
+    if (!path.startsWith(CAPSULE_PREFIX) || !path.endsWith(`-${mm}`)) continue;
+    if (!best || path > best[0]) best = [path, i];
+  }
+  return best ? best[1] : null;
+}
+
+/**
+ * "cuet pg": a family word ("cuet" — CUET UG's own code) beside a qualifier, and the top exam
+ * owns NEITHER typed word in its code or acronyms (UPCET matched both only through "CUET
+ * PG-style" in its long name). That is a partial-token match standing in for an exam the
+ * catalogue does not have: list it, never open it. "delhi police ssc" still opens Delhi Police
+ * (it owns "police").
+ */
+function familyStandIn(P: Prep, i: number, qts: QT[]): boolean {
+  const hard = qts.filter((q) => q.role === "hard").map((q) => q.t);
+  if (hard.length < 2) return false;
+  const own = P.idToks[i];
+  if (hard.some((t) => own.has(t))) return false;
+  return hard.some((t) => (P.familyOf.get(t) ?? []).some((j) => j !== i));
+}
+
 const SECTION_FALLBACK: Readonly<Record<SearchSection, string>> = {
   school: "/schooling",
-  entrance: "/exams/browse",
+  // 26 Sep 2026 (G2): the Entrance section has its own hub now (was /exams/browse).
+  entrance: "/exams/entrance",
   government: "/exams/browse",
   college: "/colleges",
   careers: "/careers",
@@ -789,8 +878,14 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
   const exactEntity = new Set<number>();
   // A section word in any language names the page's own kind: "ఇంజనీరింగ్ కాలేజీలు" = "engineering colleges".
   const kindWords = parsed.kindHint && COLLEGE_FAMILY.has(parsed.kindHint) ? ["colleges", "college"] : parsed.kindHint === "scholarship" ? ["scholarships", "scholarship"] : [];
-  for (const p of [entityPhrase, hardPhrase, hardNoSubj, qts.map((q) => q.t).join(" "), ...kindWords.map((w) => `${hardPhrase} ${w}`)]) {
+  for (const p of [entityPhrase, hardPhrase, qts.map((q) => q.t).join(" "), ...kindWords.map((w) => `${hardPhrase} ${w}`)]) {
     for (const i of P.termIdx.get(p) ?? []) exactEntity.add(i);
+  }
+  // The hard words without their subject words ("ibps clerk" of "ibps clerk math") name a page
+  // only when no page is named by ALL the typed words (26 Sep 2026, G2): "data scientist career"
+  // is Data Scientist, not every "… / Scientist" career that "scientist" alone names.
+  if (exactEntity.size === 0 || hardNoSubj === hardPhrase) {
+    for (const i of P.termIdx.get(hardNoSubj) ?? []) exactEntity.add(i);
   }
   // A bare family name opens its main exam (neet → NEET UG); "neet pg" is not bare.
   let defaultDoc: number | null = null;
@@ -805,13 +900,17 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
 
   // A pasted shishya.in link opens that page.
   if (parsed.pastedPath) {
-    const canon = knownUrl(parsed.pastedPath, index);
+    // 26 Sep 2026 (G2): read it in the middleware's canonical form first — "/exams/NEET" is NEET UG,
+    // "/exams/ENTRANCE" is /exams/entrance, "/schooling/cbse/10" is Class 10 (src/lib/url-normalize.ts).
+    const canon = knownUrl(canonicalPath(parsed.pastedPath) ?? parsed.pastedPath, index);
     if (canon) {
       const docI = P.docs.findIndex((d) => d.path.split("#")[0] === canon) ;
       const examCode = /^\/exams\/([A-Z0-9_]+)/.exec(canon)?.[1];
       const i = docI >= 0 ? docI : examCode ? P.examIdx.get(examCode) ?? -1 : -1;
       if (i >= 0) {
-        const hit = { ...hitFor(ctxBase, structHit(i, 1, "url"), locale, null), url: localeTarget(canon, locale), why: "url" as HitWhy };
+        // /exams/X/pyq has no page of its own (it 308s to the hub's #pyqs): open the section itself.
+        const target = examCode && canon === `/exams/${examCode}/pyq` ? `/exams/${examCode}#pyqs` : canon;
+        const hit = { ...hitFor(ctxBase, structHit(i, 1, "url"), locale, null), url: localeTarget(target, locale), why: "url" as HitWhy };
         return finish(ctxBase, [structHit(i, 1, "url")], typing ? "list" : "direct", [], hit, false, locale, limit);
       }
     }
@@ -846,7 +945,20 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
 
   // School structure.
   const notices: SearchNotice[] = [];
-  const school = resolveSchool(ctxBase);
+  // 26 Sep 2026 (G2): "scholarship for class 10 students" — a scholarship word beside a class
+  // (and no subject or chapter) asks for scholarships a Class 10 student can get, not the Class
+  // 10 school page: the class structure steps aside and the scholarships landing leads.
+  const scholarshipOverSchool = parsed.kindHint === "scholarship" && parsed.subject == null && parsed.chapterNo == null && (parsed.cls != null || parsed.board != null);
+  const school = scholarshipOverSchool ? null : resolveSchool(ctxBase);
+  if (scholarshipOverSchool && parsed.cls != null) {
+    // The schemes whose own levels cover that class, as list rows under the landing.
+    const lvl = parsed.cls >= 11 ? "CLASS_11_12" : parsed.cls >= 9 ? "CLASS_9_10" : null;
+    if (lvl) {
+      P.docs.forEach((d, i) => {
+        if (d.kind === "scholarship" && d.scholarship?.levels.includes(lvl)) scored.push(structHit(i, Math.min(0.75, 0.6 + 0.05 * d.weight), "tokens"));
+      });
+    }
+  }
   let schoolComplete = false;
   if (school) {
     schoolComplete = school.complete;
@@ -923,6 +1035,39 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
       for (const [p, sc] of [["/find-your-exam", 0.72], ["/careers", 0.7], ["/jobs/govt-jobs", 0.7]] as const) {
         const i = P.landing.get(p);
         if (i != null) scored.push(structHit(i, sc, "landing"));
+      }
+    }
+  }
+
+  // 26 Sep 2026 (G2): the exam calendar — "upsc calendar 2026", "upcoming government exams 2026",
+  // "ssc exam calendar" — every exam's upcoming dates on one page.
+  if (!school && calendarAsk(P, parsed)) {
+    const i = P.landing.get("/exam-calendar");
+    if (i != null) {
+      scored.push(structHit(i, 0.97, "landing"));
+      landingComplete = true;
+    }
+  }
+  // 26 Sep 2026 (G2): current affairs — "current affairs today" is the daily page; "current affairs
+  // september 2026" is that month's capsule when the index holds it (a page that renders), and
+  // otherwise stays the list it was (the daily page first, the month word unexplained).
+  const ca = school ? null : currentAffairsAsk(parsed);
+  let caMonthMissing = false;
+  if (ca) {
+    if (ca.month != null) {
+      const i = ca.rest.every((t) => CAPSULE_SIDE.has(t)) ? capsuleDoc(P, ca.month, parsed.year) : null;
+      if (i != null) {
+        scored.push(structHit(i, 0.97, "landing"));
+        landingComplete = true;
+      } else {
+        // A month the index has no capsule for: the daily page is not that month's page.
+        caMonthMissing = true;
+      }
+    } else if (ca.rest.length > 0 && ca.rest.every((t) => TODAY.has(t))) {
+      const i = P.landing.get("/current-affairs");
+      if (i != null) {
+        scored.push(structHit(i, 0.97, "landing"));
+        landingComplete = true;
       }
     }
   }
@@ -1047,6 +1192,8 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
   const topHit = top ? hitFor(ctxBase, top, locale) : null;
   const schoolIntentMissing = schoolAskMissing && !!topDoc && topDoc.kind.startsWith("school-");
   const intentMissing = !!topHit?.downgraded || schoolIntentMissing;
+  // 26 Sep 2026 (G2): "cuet pg" never opens UPCET — see familyStandIn.
+  const partialFamily = !!top && topDoc?.kind === "exam" && (top.why === "tokens" || top.why === "fuzzy") && familyStandIn(P, top.i, qts);
 
   let outcome: Outcome = "list";
   const noHit = !top || top.score < LIST_MIN;
@@ -1060,6 +1207,8 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
     !!top &&
     !doubt &&
     !intentMissing &&
+    !partialFamily &&
+    !(caMonthMissing && topDoc?.kind === "landing") &&
     !topDoc?.listOnly &&
     top.why !== "nearest" &&
     unexplained.length === 0 &&
@@ -1085,8 +1234,10 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
   const familyMatched = !!top && topDoc?.kind === "exam" && top.unexplained.length > 0 && missing.length > 0 && missing.length < hardQ.length;
   // The client index has no topic-note pages: only the server says "not in the catalogue".
   if (outcome !== "direct" && familyMatched && index.tier === "deep") notices.push("not-in-catalogue");
+  // 26 Sep 2026 (G2): a family stand-in ("cuet pg") is a catalogue gap too — logged as a miss.
+  if (partialFamily && index.tier === "deep") notices.push("not-in-catalogue");
 
-  return finish(ctxBase, scored, outcome, notices, outcome === "direct" ? topHit : null, outcome !== "direct" && unexplained.length > 0, locale, limit, schoolScope, school?.subjectLabel ?? null);
+  return finish(ctxBase, scored, outcome, notices, outcome === "direct" ? topHit : null, outcome !== "direct" && (unexplained.length > 0 || partialFamily), locale, limit, schoolScope, school?.subjectLabel ?? null);
 }
 
 function finish(

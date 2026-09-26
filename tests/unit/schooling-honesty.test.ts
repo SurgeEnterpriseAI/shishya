@@ -23,7 +23,16 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// 26 Sep 2026 (G1): the subject rule below is imported from the surface
+// module, which creates a Prisma client and an unstable_cache wrapper on
+// import — neither is used (no DB here).
+vi.mock("@/lib/db/prisma", () => ({ prisma: {} }));
+vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
+
+import { isSchoolSubjectIndexable } from "@/lib/school/surface";
+import { schoolClassIdentity } from "@/lib/school/context";
 import {
   BOARDS,
   SCHOOLING_INDEX_ROBOTS,
@@ -74,10 +83,12 @@ describe("/schooling robots (26 Sep 2026: public page by page)", () => {
     expect(stripComments(layout)).not.toMatch(/robots/);
   });
 
-  it("finds every page (landing, streams, board, class, subject, chapter)", () => {
+  // 27 Sep 2026 (repair): + the CBSE Class 10 / 12 board-exam hub (G4).
+  it("finds every page (landing, streams, board, class, board-exam hub, subject, chapter)", () => {
     expect(pageFiles.map(rel).sort()).toEqual([
       "src/app/schooling/[slug]/[classSlug]/[subject]/[chapter]/page.tsx",
       "src/app/schooling/[slug]/[classSlug]/[subject]/page.tsx",
+      "src/app/schooling/[slug]/[classSlug]/board-exam/page.tsx",
       "src/app/schooling/[slug]/[classSlug]/page.tsx",
       "src/app/schooling/[slug]/page.tsx",
       "src/app/schooling/page.tsx",
@@ -226,6 +237,30 @@ describe("no untrue promises on /schooling", () => {
     // syllabus PDF names the stage curriculum document, not "syllabus PDF"
     expect(subject).toMatch(/SUBJECT_COPY\.noBook\(subject\.name, cls\)/);
     expect(subject).toMatch(/const subjectPdf = !isNcert && cisceSubjectLinks\(cls, subject\.name\)\.length > 0;/);
+  });
+
+  // 26 Sep 2026 (G1 index hygiene): a subject page is indexable only with a
+  // chapter list. A CISCE subject page (its syllabus PDF, or the stage
+  // curriculum document for Classes 1-8) and an NCERT subject whose book
+  // chapters are not seeded are the official link and nothing more —
+  // noindex,follow and off the sitemap. CBSE subjects that list NCERT
+  // chapters stay indexable. Board and class pages are unchanged.
+  it("CISCE subject pages are noindex,follow; CBSE subject pages that list NCERT chapters stay indexable (26 Sep 2026 G1)", () => {
+    const chapter = { code: "x.ch01" } as never;
+    // CISCE: a per-subject syllabus PDF (ICSE Class 10 English) and the stage document (Class 3) alone.
+    const cisce10 = schoolClassIdentity("CISCE", 10)!;
+    const cisce3 = schoolClassIdentity("CISCE", 3)!;
+    expect(cisce10.subjects.get("ENGLISH")?.syllabusUrls.length ?? 0).toBeGreaterThan(0);
+    expect(cisce3.levelDocument).not.toBeNull();
+    expect(isSchoolSubjectIndexable({ code: "ENGLISH", chapters: [] }, cisce10)).toBe(false);
+    expect(isSchoolSubjectIndexable({ code: "ENGLISH", chapters: [] }, cisce3)).toBe(false);
+    expect(schoolRobots(isSchoolSubjectIndexable({ code: "ENGLISH", chapters: [] }, cisce10))).toEqual(SCHOOLING_ROBOTS);
+    // CBSE (NCERT): a subject with its chapter list is indexable; Hindi with a book but no chapter rows is not.
+    const ncert6 = schoolClassIdentity("NCERT", 6)!;
+    expect(isSchoolSubjectIndexable({ code: "MATHEMATICS", chapters: [chapter] }, ncert6)).toBe(true);
+    expect(schoolRobots(isSchoolSubjectIndexable({ code: "MATHEMATICS", chapters: [chapter] }, ncert6))).toEqual(SCHOOLING_INDEX_ROBOTS);
+    expect(ncert6.subjects.get("HINDI")?.books.length ?? 0).toBeGreaterThan(0);
+    expect(isSchoolSubjectIndexable({ code: "HINDI", chapters: [] }, ncert6)).toBe(false);
   });
 
   it("the quiz's 'Back to the notes' button is offered only when the chapter has notes (26 Sep 2026 integrator)", () => {

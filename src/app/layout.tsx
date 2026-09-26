@@ -65,6 +65,20 @@ export const metadata: Metadata = {
   title: SITE_TITLE_DEFAULT,
   description: SITE_SHORT,
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in"),
+  // 26 Sep 2026: default robots for every page that declares none. index +
+  // follow is what a page without a robots tag already meant; the two
+  // directives are the additions: max-image-preview:large lets Google show
+  // a large preview of the page's card image (Discover, rich results;
+  // without it Google may show only a standard-size one) and max-snippet:-1
+  // sets no snippet length cap, so a result can quote a full answer. A page
+  // with its own robots (noindex pages, googleBot-only rules) replaces this
+  // whole object, as today — Next merges metadata per top-level key.
+  robots: {
+    index: true,
+    follow: true,
+    "max-image-preview": "large",
+    "max-snippet": -1,
+  },
   // Web app manifest (13 Sep 2026) — src/app/manifest.ts, served at
   // /manifest.webmanifest. Next also auto-links the file; declaring it here
   // keeps the <link rel="manifest"> explicit (one tag either way).
@@ -181,9 +195,10 @@ const organizationJsonLd = {
     "careers",
   ],
   knowsLanguage: [...SITE_LANGUAGE_CODES],
-  sameAs: [
-    "https://github.com/SurgeEnterpriseAI/shishya",
-  ],
+  // 26 Sep 2026: no sameAs. It named the GitHub repository as Shishya's own
+  // profile, and the repo is result #1 for a "Shishya" brand search, above
+  // shishya.in. sameAs is only for the brand's real public profiles; they
+  // are added here when the founder supplies them (open founder action).
   // Real-entity signals (25 Aug 2026, E-E-A-T): who operates the site,
   // where, and how to reach them — same facts as /about and /terms.
   parentOrganization: {

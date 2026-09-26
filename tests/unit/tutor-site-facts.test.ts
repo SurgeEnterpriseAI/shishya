@@ -11,7 +11,7 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { SITE_FEATURE_PATHS, siteFeaturesBlock } from "@/lib/ai/site-facts";
+import { SITE_FEATURE_PATHS, TUTOR_EXAM_CATEGORY_SLUGS, TUTOR_QUALIFICATION_LEVELS, siteFeaturesBlock } from "@/lib/ai/site-facts";
 
 const EXPECTED_PATHS = [
   "/exams/{CODE}",
@@ -43,6 +43,9 @@ const EXPECTED_PATHS = [
   "/exams/browse",
   "/exams/entrance",
   "/exams/state",
+  // 26 Sep 2026 (entry points, after G4): the comparison lists.
+  "/exams/category/{CATEGORY}",
+  "/exams/after/{LEVEL}",
   "/jobs-map",
   "/current-affairs",
   "/typing",
@@ -51,6 +54,8 @@ const EXPECTED_PATHS = [
   "/ask",
   "/scholarships",
   "/scholarships/match",
+  "/scholarships/for/{GROUP}",
+  "/scholarships/closing-soon",
   "/me/report",
   "/me/settings",
   "/chat",
@@ -65,6 +70,8 @@ const EXPECTED_PATHS = [
   "/career-map",
   "/schooling",
   "/schooling/{BOARD}/class-{N}",
+  "/schooling/cbse/class-10/board-exam",
+  "/schooling/cbse/class-12/board-exam",
   "/distance-learning",
   "/post-graduation",
   "/insights",
@@ -84,7 +91,12 @@ function routeFile(p: string): string {
     .replace(/\{YEAR\}/g, "[year]")
     .replace(/\{BOARD\}/g, "[slug]")
     .replace(/class-\{N\}/g, "[classSlug]")
-    .replace(/\{PERSONA\}/g, "[persona]");
+    .replace(/\{PERSONA\}/g, "[persona]")
+    // 26 Sep 2026 (entry points, after G4)
+    .replace(/\{CATEGORY\}/g, "[slug]")
+    .replace(/\{LEVEL\}/g, "[level]")
+    .replace(/\{GROUP\}/g, "[filter]")
+    .replace(/^\/schooling\/cbse\/class-\d+\//, "/schooling/[slug]/[classSlug]/");
   return path.join(APP, dir, "page.tsx");
 }
 
@@ -152,7 +164,8 @@ describe("siteFeaturesBlock", () => {
     expect(block).toContain("- Typing skill test practice — https://shishya.in/typing:");
     expect(block).toContain("https://shishya.in/descriptive (free sign-in)");
     expect(block).toContain("- Discussions — https://shishya.in/discussions:");
-    expect(block).toContain("- Ask Shishya — https://shishya.in/ask:");
+    // 26 Sep 2026 (entry points): named as the /ask page's H1.
+    expect(block).toContain("- Search or ask Shishya — https://shishya.in/ask:");
     expect(block).toContain("- India's Govt Jobs Map — https://shishya.in/jobs-map:");
     expect(block).toContain(`"Challenge a friend" card on a mock's results page`);
     expect(block).toContain(`"Study group" (make a group, share its invite link`);
@@ -176,6 +189,76 @@ describe("siteFeaturesBlock", () => {
     // Every persona slug the /for/{PERSONA} line names is a real persona.
     expect(block).toContain("{PERSONA} = one of the slugs listed on that line");
     expect(block).toMatch(/class-10-student, engineering-aspirant/);
+  });
+});
+
+// 26 Sep 2026 (entry points): /ask became the whole-platform search in
+// 60d3bb6 while its line still said "questions about government jobs", and
+// the G4 page families (exam comparison lists, scholarship lists, CBSE
+// board-exam pages) had no line, so neither the tutor nor /ask could send a
+// student to them.
+describe("whole-platform /ask and the G4 pages (26 Sep 2026, entry points)", () => {
+  const block = siteFeaturesBlock();
+  const line = (prefix: string) => {
+    const l = block.split("\n").find((x) => x.startsWith(prefix));
+    expect(l, prefix).toBeTruthy();
+    return l!;
+  };
+
+  it("describes /ask as the search for every section, not government jobs only", () => {
+    const ask = line("- Search or ask Shishya — https://shishya.in/ask:");
+    expect(ask).not.toMatch(/questions about government jobs/);
+    for (const w of ["school class, subject or chapter", "an exam and its dates", "college, scholarship, career", "no login"]) expect(ask).toContain(w);
+    expect(ask).toMatch(/instead of teaching from the textbook/);
+    expect(ask).toMatch(/Class 1-7 searches get pages only/);
+  });
+
+  it("names only category hubs that exist, and none the 26 Sep probe found under or on the floor", async () => {
+    const { EXAM_CATEGORIES } = await import("@/lib/exam-categories");
+    const slugs = EXAM_CATEGORIES.map((c) => c.slug as string);
+    expect(TUTOR_EXAM_CATEGORY_SLUGS.length).toBeGreaterThan(0);
+    for (const s of TUTOR_EXAM_CATEGORY_SLUGS) expect(slugs, s).toContain(s);
+    for (const s of ["railway", "ssc", "defence", "upsc-civil-services", "medical-entrance", "management-entrance", "design-entrance", "law-entrance"]) {
+      expect(TUTOR_EXAM_CATEGORY_SLUGS, s).not.toContain(s);
+    }
+    expect(line("- Compare exams by category — https://shishya.in/exams/category/{CATEGORY}:")).toContain(
+      `{CATEGORY} is one of ${TUTOR_EXAM_CATEGORY_SLUGS.join(", ")}; for any other kind use All exams`,
+    );
+  });
+
+  it("names only published qualification levels, never the held postgraduation page", async () => {
+    const { PUBLISHED_LEVELS, findQualificationLevel } = await import("@/lib/exam-qualification");
+    const published = PUBLISHED_LEVELS.map((l) => l.slug as string);
+    for (const l of TUTOR_QUALIFICATION_LEVELS) expect(published, l).toContain(l);
+    expect(TUTOR_QUALIFICATION_LEVELS).not.toContain("postgraduation");
+    expect(findQualificationLevel("postgraduation")?.held).toBeTruthy();
+    const after = line("- Exams after 10th, 12th or graduation — https://shishya.in/exams/after/{LEVEL}:");
+    expect(after).toContain(`{LEVEL} is one of ${TUTOR_QUALIFICATION_LEVELS.join(", ")}`);
+    expect(after).toContain("lowest qualification each one accepts");
+    expect(after).toContain("There is no list of exams after postgraduation yet");
+  });
+
+  it("names every scholarship list the page renders and the real closing-soon window", async () => {
+    const { SCHOLARSHIP_FILTERS, CLOSING_SOON_DAYS } = await import("@/lib/scholarship-lists");
+    const lists = line("- Scholarship lists — https://shishya.in/scholarships/for/{GROUP}:");
+    expect(lists).toContain(`{GROUP} is one of ${SCHOLARSHIP_FILTERS.map((f) => f.slug).join(", ")}`);
+    // The quality critic's vetoed near-copies of /scholarships are not lists.
+    expect(lists).not.toMatch(/\b(undergraduate|postgraduate)\b/);
+    expect(line("- Scholarships closing soon — https://shishya.in/scholarships/closing-soon:")).toContain(`in the next ${CLOSING_SOON_DAYS} days`);
+  });
+
+  it("links a board-exam page only where a CBSE hub exists, as links to CBSE, promising no date sheet", async () => {
+    const { findBoardExamHub } = await import("@/data/board-exams");
+    for (const n of [10, 12]) {
+      expect(findBoardExamHub("cbse", n), `cbse ${n}`).toBeTruthy();
+      const l = line(`- CBSE Class ${n} board exam — https://shishya.in/schooling/cbse/class-${n}/board-exam:`);
+      expect(l).toContain("no paper is copied onto Shishya");
+      expect(l).toContain("whether the date sheet is out yet");
+    }
+  });
+
+  it("tells the tutor the placeholder values are the listed ones only", () => {
+    expect(block).toContain("{CATEGORY}, {LEVEL} and {GROUP} likewise = one of the values listed on their own line — never any other");
   });
 });
 

@@ -87,7 +87,9 @@ describe("the RFC 9309 evaluator itself", () => {
   });
 });
 
-const CRAWLERS = ["*", "Googlebot", "bingbot", "GPTBot", "OAI-SearchBot", "ChatGPT-User", "PerplexityBot", "ClaudeBot", "Claude-SearchBot", "Google-Extended", "Applebot-Extended"];
+// 26 Sep 2026 (G1): + the four answer-engine fetchers that now have their own group.
+const NEW_AI_GROUPS = ["Amzn-SearchBot", "Amzn-User", "meta-externalfetcher", "Google-CloudVertexBot"];
+const CRAWLERS = ["*", "Googlebot", "bingbot", "GPTBot", "OAI-SearchBot", "ChatGPT-User", "PerplexityBot", "ClaudeBot", "Claude-SearchBot", "Google-Extended", "Applebot-Extended", ...NEW_AI_GROUPS];
 
 const PUBLIC_EXTRA = [
   "/",
@@ -140,5 +142,21 @@ describe("robots.txt: every section is fetchable by search and AI crawlers", () 
       expect(disallow, String(rule.userAgent)).toContain("/me$");
       expect(disallow, String(rule.userAgent)).toContain("/me/");
     }
+  });
+});
+
+describe("answer-engine groups added 26 Sep 2026 (G1)", () => {
+  it.each(NEW_AI_GROUPS)("%s has its own group with the same allow list and private-path disallows as '*'", (ua) => {
+    const star = RULES.find((x) => list(x.userAgent).includes("*"))!;
+    const own = RULES.filter((x) => list(x.userAgent).includes(ua));
+    expect(own).toHaveLength(1);
+    expect(list(own[0].allow)).toEqual(list(star.allow));
+    expect(list(own[0].disallow)).toEqual(list(star.disallow));
+    expect(own[0]).not.toHaveProperty("crawlDelay");
+  });
+
+  it("robots.txt names only /sitemap.xml — never the Bing-only news sitemap", () => {
+    expect(String(r.sitemap).endsWith("/sitemap.xml")).toBe(true);
+    expect(JSON.stringify(r)).not.toMatch(/sitemap-news/);
   });
 });

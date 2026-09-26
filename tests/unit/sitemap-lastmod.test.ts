@@ -94,6 +94,10 @@ describe("sitemap.ts wiring", () => {
     expect(src).toMatch(/lastModified: lastmodByCode\.get\(e\.code\)\?\.archive \?\? e\.updatedAt/);
     expect(src).toMatch(/\.\.\.lastModifiedField\(lastmodByCode\.get\(e\.code\)\?\.updates\)/);
   });
+  it("news lastmod is publishedAt, never archivedAt — archiving is a status, not an edit (26 Sep 2026, G1)", () => {
+    expect(src).toMatch(/lastModified: n\.publishedAt \?\? n\.createdAt,/);
+    expect(src).not.toMatch(/lastModified: n\.archivedAt/);
+  });
   it("PYQ sets are grouped per (exam, year) with the newest question's time; capsules carry their newest day", () => {
     expect(src).toMatch(/GROUP BY e\."code", q\."pyqYear"/);
     expect(src).toMatch(/\.\.\.lastModifiedField\(p\.lastmod\)/);
@@ -119,6 +123,8 @@ describe("sitemap.ts wiring", () => {
       "pyqUrls",
       "personaUrls",
       "newsUrls",
+      // 26 Sep 2026 (G1): results are their own family (the news flag never takes them out).
+      "resultUrls",
       "topicUrls",
       "hindiTopicUrls",
       "streamUrls",

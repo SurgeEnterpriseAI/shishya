@@ -87,6 +87,7 @@ Shishya also covers school: for CBSE, the subjects and textbooks NCERT lists for
 - [CISCE (ICSE / ISC) — classes, subjects and the council's official documents](https://shishya.in/schooling/icse-cisce)
 - Class pages: https://shishya.in/schooling/cbse/class-{n} and https://shishya.in/schooling/icse-cisce/class-{n} (n = 1 to 12); subject pages: https://shishya.in/schooling/{board}/class-{n}/{subject}
 - Context files (token-cheap markdown; prefer these over the HTML): https://shishya.in/schooling/{board}/class-{n}/context.md and https://shishya.in/schooling/{board}/class-{n}/{subject}/context.md, e.g. https://shishya.in/schooling/cbse/class-6/context.md and https://shishya.in/schooling/cbse/class-6/mathematics/context.md
+- CBSE board exams: [Class 10](https://shishya.in/schooling/cbse/class-10/board-exam) · [Class 12](https://shishya.in/schooling/cbse/class-12/board-exam) — links to CBSE's own sample question papers and marking schemes for 2026-27, the curriculum, past papers and results, and whether the date sheet is out yet (no copies). Use for "CBSE class {10|12} sample paper 2026-27", "CBSE class {10|12} marking scheme", "CBSE date sheet 2027".
 
 ## Entrance exams — JEE, NEET, CUET, NDA, olympiads
 Admission tests after Class 12 (engineering, medical, university, defence, design, architecture and law), postgraduate entrance tests, state entrance tests (state CETs) and olympiads — each with its hub and a token-cheap context file at https://shishya.in/exams/{CODE}/context.md. Section hub: https://shishya.in/exams/entrance. State entrance tests (KCET, MHT-CET, EAMCET, KEAM, WBJEE, polytechnic CETs and others) are grouped at https://shishya.in/exams/entrance#entrance-state-cet and also listed with their state (Government exams by state, above). Use for "{exam} mock test", "{exam} previous year paper practice", "{exam} exam date {year}", "{exam} syllabus".
@@ -154,6 +155,10 @@ Guides by stage — Class 10, engineering or medical aspirant, commerce or human
 - [Homepage — school, entrance and government exams, colleges, scholarships and careers](https://shishya.in)
 - [Entrance exams](https://shishya.in/exams/entrance)
 - [Browse every exam](https://shishya.in/exams/browse)
+- [Free mock tests — every exam that has one, in one list, with the next exam date](https://shishya.in/mock-tests)
+- Exams by qualification: [after 10th](https://shishya.in/exams/after/10th) · [after 12th](https://shishya.in/exams/after/12th) · [after graduation](https://shishya.in/exams/after/graduation) — government and entrance exams compared: age limits, next date with its tier, official site
+- Exams by category, compared side by side: [police](https://shishya.in/exams/category/police) · [teaching](https://shishya.in/exams/category/teaching) · [state PSC](https://shishya.in/exams/category/state-psc) · [banking](https://shishya.in/exams/category/banking) · [engineering entrance](https://shishya.in/exams/category/engineering-entrance)
+- Subjects across exams — each exam's topic pages with notes or checked practice, grouped by topic: [reasoning](https://shishya.in/subjects/reasoning) · [quantitative aptitude](https://shishya.in/subjects/quantitative-aptitude) · [English](https://shishya.in/subjects/english) · [general awareness](https://shishya.in/subjects/general-awareness) · [child development & pedagogy](https://shishya.in/subjects/child-development-pedagogy)
 - [Government exams by state — all states & UTs](https://shishya.in/exams/state)
 - [School — CBSE (NCERT) by class](https://shishya.in/schooling/cbse)
 - [School — CISCE (ICSE / ISC) by class](https://shishya.in/schooling/icse-cisce)

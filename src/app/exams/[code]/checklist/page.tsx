@@ -29,6 +29,14 @@
 // honours the /hi | /te URL prefix, then the cookie, then preferredLang,
 // so a Hindi reader who follows the language switcher or an exam-eve mail
 // link no longer lands on an English checklist.
+//
+// Index (26 Sep 2026, G1 index hygiene, src/lib/exam-week-gates.ts): the page
+// renders for every exam, but Google may index it — and the sitemap lists
+// it — only when an announced (official / reported) typed exam day falls in
+// the next 21 days or the last 3. Otherwise Google-only noindex,follow; Bing
+// and ChatGPT search keep index,follow (Bingbot fetched checklists 980 times
+// and OAI-SearchBot 86 in the 28 days to 26 Sep 2026). Until today every
+// real exam's checklist was a sitemap URL all year.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -62,6 +70,8 @@ import {
 import { isRealArticle } from "@/lib/phase-article-quality";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { renderMarkdown } from "@/lib/markdown";
+import { examPageIndexGates, examPageRobots } from "@/lib/exam-week-gates";
+import type { TimelineInput } from "@/lib/exam-timeline";
 
 interface ChecklistFacts {
   exam: ChecklistExam & { id: string };
@@ -134,7 +144,7 @@ async function loadChecklist(
   code: string,
   now: Date,
   lang?: { t: ChecklistT; locale: string },
-): Promise<{ facts: ChecklistFacts; checklist: ExamChecklist } | null> {
+): Promise<{ facts: ChecklistFacts; checklist: ExamChecklist; rows: TimelineInput[]; officialUrl: string | null } | null> {
   const facts = await loadChecklistFacts(code).catch(() => null);
   // SCHOOL_BOARD (Board, Class) containers are not exams: no checklist page.
   if (!facts || !hasChecklist(facts.exam.category)) return null;
@@ -156,7 +166,7 @@ async function loadChecklist(
     now,
     ...localised,
   });
-  return { facts, checklist };
+  return { facts, checklist, rows: inputs.rows, officialUrl: inputs.officialUrl ?? facts.officialUrl };
 }
 
 export async function generateMetadata({
@@ -170,10 +180,12 @@ export async function generateMetadata({
   const { exam } = loaded.facts;
   const meta = examChecklistMeta(exam, loaded.checklist);
   const url = `https://shishya.in/exams/${exam.code}/checklist`;
+  const indexable = examPageIndexGates(loaded.rows, loaded.officialUrl).checklist;
   return {
     title: meta.title,
     description: meta.description,
     alternates: { canonical: url },
+    robots: examPageRobots(indexable),
     openGraph: {
       title: `${exam.shortName} — last-minute checklist`,
       // Whole clauses only, no marking clause — never a sliced number.

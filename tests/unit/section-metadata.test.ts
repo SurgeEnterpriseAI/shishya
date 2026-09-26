@@ -276,7 +276,8 @@ describe("school pages", () => {
       expect(hrefs(cls)).toEqual(["IOQM", "NSEJS", "SOF_NSO", "SOF_IMO", "/schooling/streams", "/for/class-10-student", "/career-map", "/scholarships"]);
     }
     for (const cls of [11, 12]) {
-      expect(hrefs(cls)).toEqual(["JEE_MAIN", "NEET_UG", "CUET_UG", "/exams/entrance", "/colleges", "/scholarships", "/careers"]);
+      // 26 Sep 2026 (entry points): the qualification list /exams/after/12th.
+      expect(hrefs(cls)).toEqual(["JEE_MAIN", "NEET_UG", "CUET_UG", "/exams/entrance", "/exams/after/12th", "/colleges", "/scholarships", "/careers"]);
       expect(hrefs(cls, "Biology")).toContain("NEET_UG");
       expect(hrefs(cls, "Biology")).not.toContain("JEE_MAIN");
       expect(hrefs(cls, "Mathematics")).not.toContain("NEET_UG");

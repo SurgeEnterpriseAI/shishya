@@ -82,6 +82,13 @@ export function careerCollegeStreams(c: Pick<Career, "slug" | "category">): Arra
 // Where a Class 9-12 page points next. Exam steps name a code and render
 // only while that exam is live (examHubHref); page steps are fixed routes.
 // /exams/entrance is the entrance-exam landing (group C, same wave).
+// 26 Sep 2026 (entry points): Class 11-12 pages also link the qualification
+// list /exams/after/12th (src/lib/exam-qualification.ts) — the exams whose
+// lowest listed qualification is Class 12, government and entrance side by
+// side (71 exams, indexable, on the 26 Sep 2026 probe
+// scripts/tmp-w2-entry-points.ts). The page itself falls back to
+// noindex,follow if it ever drops below QUALIFICATION_MIN; the route always
+// renders (12th is never held), so the fixed link never 404s.
 
 export interface NextStep {
   label: string;
@@ -100,6 +107,7 @@ const OLYMPIAD_STEPS: readonly NextStep[] = [
 
 const SENIOR_SECTION_STEPS: readonly NextStep[] = [
   { label: "Entrance exams", href: "/exams/entrance" },
+  { label: "Exams after 12th", href: "/exams/after/12th" },
   { label: "Colleges", href: "/colleges" },
   { label: "Scholarships", href: "/scholarships" },
   { label: "Career guides", href: "/careers" },

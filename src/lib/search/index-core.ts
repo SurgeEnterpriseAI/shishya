@@ -16,7 +16,7 @@ import type { DocKind, ExamFacts, ExamGatesLike, SearchDoc, SearchIndex, SearchS
 import { normaliseTerm } from "./normalize";
 import { SEARCH_LANDINGS } from "./landings";
 import { scholarshipSub } from "./labels";
-import { BRANCH_SYNONYMS, CITY_SYNONYMS, SCHOLARSHIP_ALIASES } from "./lexicon";
+import { BRANCH_SYNONYMS, CITY_SYNONYMS, MONTH_NAMES, SCHOLARSHIP_ALIASES } from "./lexicon";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { ALL_STREAMS, COLLEGES, formatNirfRanks } from "@/lib/colleges-data";
 import { COLLEGE_DETAILS } from "@/data/college-details";
@@ -78,6 +78,10 @@ export interface SearchIndexInputs {
   /** Topic-note pages (deep tier only). */
   topics: SearchTopicRow[];
   school: { classes: SearchSchoolClassRow[] };
+  /** 26 Sep 2026 (G2): months ("YYYY-MM") that have CurrentAffair rows — the
+   *  /current-affairs/capsule/{month} pages that render. Optional: absent (the
+   *  DB-down fallback, older loaders) means no capsule pages in the index. */
+  capsuleMonths?: readonly string[];
 }
 
 export const GATES_ALL_CLOSED: ExamGatesLike = { cutoff: false, syllabus: false, tricks: false, guide: false, buildMock: false };
@@ -545,7 +549,26 @@ export function buildSearchIndex(inputs: SearchIndexInputs, tier: "lite" | "deep
     });
   }
 
-  const index: SearchIndex = { v: 1, builtAt: inputs.builtAt, tier: "deep", docs: dedupeIds(docs), exams };
+  // Monthly current-affairs capsules (26 Sep 2026, G2): one landing per month the
+  // loader says has rows (the capsule page 404s on an empty month). Title and
+  // match keys come from the month alone — no count, no claim about the content.
+  const months = [...new Set(inputs.capsuleMonths ?? [])].filter((m) => /^[0-9]{4}-(0[1-9]|1[0-2])$/.test(m)).sort();
+  for (const m of months) {
+    const [y, mo] = m.split("-").map(Number);
+    const name = MONTH_NAMES[mo - 1];
+    push({
+      id: `landing:/current-affairs/capsule/${m}`,
+      kind: "landing",
+      section: "government",
+      title: `Current affairs capsule — ${name} ${y}`,
+      sub: "The month's current affairs on one page",
+      path: `/current-affairs/capsule/${m}`,
+      terms: uniqTerms([`current affairs ${name} ${y}`, `${name} ${y} current affairs`, `current affairs capsule ${name} ${y}`, `${name} current affairs ${y}`]),
+      weight: 0.3,
+    });
+  }
+
+  const index: SearchIndex ={ v: 1, builtAt: inputs.builtAt, tier: "deep", docs: dedupeIds(docs), exams };
   return tier === "lite" ? toLiteIndex(index) : index;
 }
 

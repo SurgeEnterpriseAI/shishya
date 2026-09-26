@@ -331,17 +331,17 @@ describe("readSchoolSurface", () => {
 // ── 4. Sitemap ────────────────────────────────────────────────────────
 
 describe("schoolSitemapEntries", () => {
-  it("lists boards, classes, subjects and only indexable chapters", async () => {
+  // 26 Sep 2026 (G1 index hygiene): a subject is listed only with a chapter
+  // list — the CISCE Class 10 subjects and NCERT Class 6 Hindi (no chapter
+  // rows) are official links and nothing more, noindex,follow, off the sitemap.
+  it("lists boards, classes, subjects with a chapter list and only indexable chapters", async () => {
     const entries = schoolSitemapEntries(await readSchoolSurface(NOW), SITE);
     const urls = entries.map((e) => e.url.replace(SITE, ""));
     expect(urls).toEqual([
       "/schooling/cbse",
       "/schooling/icse-cisce",
       "/schooling/icse-cisce/class-10",
-      "/schooling/icse-cisce/class-10/english",
-      "/schooling/icse-cisce/class-10/mathematics",
       "/schooling/cbse/class-6",
-      "/schooling/cbse/class-6/hindi",
       "/schooling/cbse/class-6/mathematics",
       "/schooling/cbse/class-6/mathematics/patterns-in-mathematics",
       "/schooling/cbse/class-6/mathematics/lines-and-angles",
@@ -351,6 +351,9 @@ describe("schoolSitemapEntries", () => {
       "/schooling/cbse/class-6/mathematics/playing-with-constructions",
       "/schooling/cbse/class-6/social-science",
     ]);
+    expect(urls).not.toContain("/schooling/icse-cisce/class-10/english");
+    expect(urls).not.toContain("/schooling/icse-cisce/class-10/mathematics");
+    expect(urls).not.toContain("/schooling/cbse/class-6/hindi");
     expect(urls).not.toContain("/schooling/cbse/class-6/mathematics/perimeter-and-area");
     expect(urls).not.toContain("/schooling/cbse/class-6/mathematics/fractions");
     expect(urls.some((u) => u.startsWith("/schooling/cbse/class-6/social-science/"))).toBe(false);
@@ -370,8 +373,8 @@ describe("schoolSitemapEntries", () => {
     // No content on the class → the Exam row's own updatedAt; none on a subject → no lastmod at all.
     expect(lm("/schooling/icse-cisce/class-10")).toBe(EXAM_AT);
     expect(lm("/schooling/icse-cisce")).toBe(EXAM_AT);
-    expect(byUrl.get("/schooling/icse-cisce/class-10/mathematics")).not.toHaveProperty("lastModified");
-    expect(byUrl.get("/schooling/cbse/class-6/hindi")).not.toHaveProperty("lastModified");
+    // A listed subject whose chapters hold nothing of ours yet carries no lastmod.
+    expect(byUrl.get("/schooling/cbse/class-6/social-science")).not.toHaveProperty("lastModified");
     for (const e of entries) {
       if (e.lastModified) expect((e.lastModified as Date).getTime()).toBeLessThan(before - 60_000);
       expect(e.changeFrequency).toMatch(/^(weekly|monthly)$/);
@@ -503,7 +506,10 @@ function spineCases() {
 }
 
 describe("the spine's documents decide what a subject line claims and whether a bare subject is listed", () => {
-  it("isSchoolSubjectIndexable: chapters, a book, a syllabus PDF or a stage document; unknown to the spine stays indexable", () => {
+  // 26 Sep 2026 (G1 index hygiene): ONE rule — a chapter list. A book, a
+  // CISCE syllabus PDF or the CISCE stage document alone is an official link
+  // and nothing more; the spine no longer decides.
+  it("isSchoolSubjectIndexable: a chapter list, and nothing else — a book, a syllabus PDF or a stage document alone no longer counts", () => {
     const docs = (subjects: Record<string, { books?: unknown[]; syllabusUrls?: string[]; notYetPublished?: string[] }>, levelDocument: { title: string; url: string } | null) => ({
       subjects: new Map(Object.entries(subjects).map(([k, v]) => [k, { books: v.books ?? [], syllabusUrls: v.syllabusUrls ?? [], notYetPublished: v.notYetPublished }])),
       levelDocument,
@@ -512,36 +518,38 @@ describe("the spine's documents decide what a subject line claims and whether a 
     const withChapters = { code: "ICT", chapters: [{} as never] };
     expect(isSchoolSubjectIndexable(bare, docs({ ICT: { notYetPublished: ["Coming Soon"] } }, null))).toBe(false);
     expect(isSchoolSubjectIndexable(bare, docs({ ICT: {} }, null))).toBe(false);
-    expect(isSchoolSubjectIndexable(bare, docs({ ICT: { books: [{}] } }, null))).toBe(true);
-    expect(isSchoolSubjectIndexable(bare, docs({ ICT: { syllabusUrls: ["https://cisce.org/x.pdf"] } }, null))).toBe(true);
-    expect(isSchoolSubjectIndexable(bare, docs({ ICT: {} }, { title: "Primary", url: "https://cisce.org/p.pdf" }))).toBe(true);
+    expect(isSchoolSubjectIndexable(bare, docs({ ICT: { books: [{}] } }, null))).toBe(false);
+    expect(isSchoolSubjectIndexable(bare, docs({ ICT: { syllabusUrls: ["https://cisce.org/x.pdf"] } }, null))).toBe(false);
+    expect(isSchoolSubjectIndexable(bare, docs({ ICT: {} }, { title: "Primary", url: "https://cisce.org/p.pdf" }))).toBe(false);
+    expect(isSchoolSubjectIndexable(bare, docs({}, null))).toBe(false);
+    expect(isSchoolSubjectIndexable(bare, null)).toBe(false);
+    expect(isSchoolSubjectIndexable(bare, undefined)).toBe(false);
     expect(isSchoolSubjectIndexable(withChapters, docs({ ICT: {} }, null))).toBe(true);
-    expect(isSchoolSubjectIndexable(bare, docs({}, null))).toBe(true);
-    expect(isSchoolSubjectIndexable(bare, null)).toBe(true);
-    expect(isSchoolSubjectIndexable(bare, undefined)).toBe(true);
-    // The live spine: NCERT Class 9 ICT is the one bare subject; Hindi (a book, no chapter list) stays.
+    expect(isSchoolSubjectIndexable(withChapters, null)).toBe(true);
+    // The live spine: NCERT Class 9 ICT (no book) and Hindi (a book, no chapter list) are both out;
+    // CISCE subjects (a syllabus PDF or the stage document, never a chapter list) are out.
     const c9 = schoolClassIdentity("NCERT", 9)!;
     expect(isSchoolSubjectIndexable({ code: "ICT", chapters: [] }, c9)).toBe(false);
-    expect(isSchoolSubjectIndexable({ code: "HINDI", chapters: [] }, c9)).toBe(true);
-    expect(isSchoolSubjectIndexable({ code: "ENGLISH", chapters: [] }, schoolClassIdentity("CISCE", 3)!)).toBe(true);
-    expect(isSchoolSubjectIndexable({ code: "ENGLISH", chapters: [] }, schoolClassIdentity("CISCE", 10)!)).toBe(true);
+    expect(isSchoolSubjectIndexable({ code: "HINDI", chapters: [] }, c9)).toBe(false);
+    expect(isSchoolSubjectIndexable({ code: "MATHEMATICS", chapters: [{} as never] }, c9)).toBe(true);
+    expect(isSchoolSubjectIndexable({ code: "ENGLISH", chapters: [] }, schoolClassIdentity("CISCE", 3)!)).toBe(false);
+    expect(isSchoolSubjectIndexable({ code: "ENGLISH", chapters: [] }, schoolClassIdentity("CISCE", 10)!)).toBe(false);
   });
 
-  it("the sitemap skips the bare subject with the spine, lists it without, and carries the injective chapter slug", async () => {
+  it("the sitemap lists a subject only with a chapter list — with or without the spine — and carries the injective chapter slug", async () => {
     spineCases();
     const s = await readSchoolSurface(NOW);
     const withSpine = schoolSitemapEntries(s, SITE, schoolClassIdentity).map((e) => e.url.replace(SITE, ""));
     expect(withSpine).toContain("/schooling/icse-cisce/class-3");
-    expect(withSpine).toContain("/schooling/icse-cisce/class-3/english");
-    expect(withSpine).toContain("/schooling/cbse/class-9/hindi");
+    expect(withSpine).not.toContain("/schooling/icse-cisce/class-3/english");
+    expect(withSpine).not.toContain("/schooling/cbse/class-9/hindi");
     expect(withSpine).toContain("/schooling/cbse/class-9/skill-education");
     expect(withSpine).toContain("/schooling/cbse/class-9/skill-education/additional-vocations-iekv1-ch08");
     expect(withSpine).not.toContain("/schooling/cbse/class-9/ict");
     expect(withSpine.filter((u) => u.startsWith("/schooling/cbse/class-9/skill-education/"))).toHaveLength(1);
     expect(new Set(withSpine).size).toBe(withSpine.length);
     const withoutSpine = schoolSitemapEntries(s, SITE).map((e) => e.url.replace(SITE, ""));
-    expect(withoutSpine).toContain("/schooling/cbse/class-9/ict");
-    expect(withoutSpine).toHaveLength(withSpine.length + 1);
+    expect(withoutSpine).toEqual(withSpine);
   });
 
   it("llms-full.txt: a stage document for CISCE Class 3, a syllabus PDF only where one exists, 'no textbook published yet' for ICT", async () => {

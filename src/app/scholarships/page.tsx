@@ -13,7 +13,9 @@ import { SectionCrossLinks } from "@/components/SectionCrossLinks";
 // 26 Sep 2026 (repair): the schemes, never the one outside aggregator
 // (Buddy4Study) the raw catalogue holds — src/lib/scholarship-schemes.ts.
 import { SCHOLARSHIP_SCHEMES } from "@/lib/scholarship-schemes";
-import { ScholarshipBrowser } from "./ScholarshipBrowser";
+// 26 Sep 2026 (G4): the ready lists and the closing-soon list, computed.
+import { SCHOLARSHIP_FILTERS, closingSoon, formatIsoDay, istToday, schemesForFilter } from "@/lib/scholarship-lists";
+import { ScholarshipBrowser, type ReadyListLink } from "./ScholarshipBrowser";
 
 // 26 Sep 2026: the count is SCHOLARSHIP_SCHEMES.length, never typed. "every Indian
 // student can apply for" (most schemes are for one state, level or
@@ -35,6 +37,14 @@ export const metadata: Metadata = {
 export const revalidate = 3600; // refresh static cache every hour
 
 export default function ScholarshipsPage() {
+  // 26 Sep 2026 (G4): plain crawlable links to the list pages, with their
+  // computed counts (the ?query filter URLs stay robots-blocked).
+  const today = istToday();
+  const soon = closingSoon(today);
+  const lists: ReadyListLink[] = [
+    ...SCHOLARSHIP_FILTERS.map((f) => ({ href: `/scholarships/for/${f.slug}`, label: f.label, count: schemesForFilter(f, today).length })),
+    { href: "/scholarships/closing-soon", label: "Closing in 30 days", count: soon.length },
+  ];
   return (
     <main className="min-h-screen bg-ink-50/40">
       <JsonLd
@@ -84,7 +94,16 @@ export default function ScholarshipsPage() {
           </div>
         </div>
 
-        <ScholarshipBrowser scholarships={SCHOLARSHIP_SCHEMES} />
+        {soon.length > 0 && (
+          <p className="mt-6 max-w-3xl rounded-md border border-rose-200 bg-rose-50/60 px-3 py-2 text-sm text-ink-800">
+            <Link href="/scholarships/closing-soon" className="font-semibold text-rose-800 hover:underline">
+              {soon.length} {soon.length === 1 ? "scholarship closes" : "scholarships close"} in the next 30 days
+            </Link>{" "}
+            — the soonest: {soon[0].name}, {formatIsoDay(soon[0].cycle!.closesOn!)} ({soon[0].cycle!.tier}).
+          </p>
+        )}
+
+        <ScholarshipBrowser scholarships={SCHOLARSHIP_SCHEMES} lists={lists} />
 
         <SectionCrossLinks
           current="/scholarships"

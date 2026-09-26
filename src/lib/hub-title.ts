@@ -502,3 +502,114 @@ export function revisionDescriptionLead(locale: HubTitleLocale, shortName: strin
   if (locale === "te") return `${shortName} పరీక్ష తేదీ: సవరణలో ఉంది. `;
   return `${shortName} exam date: under revision. `;
 }
+
+// ── What the hub offers (26 Sep 2026, discoverability wave 2 G3) ─────────
+//
+// Every hub title ended "Free Mock Tests, PYQ | Shishya" and the Course
+// JSON-LD, description and sign-in box promised mocks and previous year
+// papers — on 12 hubs with no shared mock and no checked question
+// (CA_FOUNDATION, NEET_PG, RBI_GRADE_B, …) and 44 with no previous year
+// paper of any kind (G3 probe, 26 Sep). The suffix now names what the page
+// holds: "Free Mock Tests" only with a shared (system) mock, "PYQ" only with
+// PYQ-pattern sets or the body's own papers, "Syllabus" only where
+// /syllabus renders, "Eligibility" only where the hub prints the hand-written
+// eligibility block (src/data/exam-deep-content.ts, with its source) — the
+// stored ExamEligibility rows are indicative AI output and the hub shows no
+// eligibility section without the block. Every variant keeps the ", " after
+// the date lead that truth-lint's parseHubTitle reads.
+
+export interface HubOffers {
+  /** Shared (system) mocks exist — systemMocks.length > 0. */
+  hasMocks: boolean;
+  /** PYQ-pattern sets or the body's own question papers exist. */
+  hasPyq: boolean;
+  /** /syllabus renders (examPageGates). */
+  hasSyllabus: boolean;
+  /** The hub prints the hand-written eligibility block (exam-deep-content). */
+  hasEligibility?: boolean;
+}
+
+type SuffixKey = "both" | "mocksSyl" | "mocksDates" | "pyqSyl" | "pyqDates" | "sylElig" | "syl" | "elig" | "dates";
+
+const SUFFIX: Record<HubTitleLocale, Record<SuffixKey, string>> = {
+  en: {
+    both: "Free Mock Tests, PYQ",
+    mocksSyl: "Free Mock Tests & Syllabus",
+    mocksDates: "Free Mock Tests & Exam Dates",
+    pyqSyl: "PYQ & Syllabus",
+    pyqDates: "PYQ & Exam Dates",
+    sylElig: "Syllabus, Dates & Eligibility",
+    syl: "Syllabus & Exam Dates",
+    elig: "Exam Dates & Eligibility",
+    dates: "Exam Dates & Updates",
+  },
+  hi: {
+    both: "मुफ़्त मॉक टेस्ट, पिछले साल के पेपर",
+    mocksSyl: "मुफ़्त मॉक टेस्ट और सिलेबस",
+    mocksDates: "मुफ़्त मॉक टेस्ट और परीक्षा तिथियाँ",
+    pyqSyl: "पिछले साल के पेपर और सिलेबस",
+    pyqDates: "पिछले साल के पेपर और परीक्षा तिथियाँ",
+    sylElig: "सिलेबस, तिथियाँ और पात्रता",
+    syl: "सिलेबस और परीक्षा तिथियाँ",
+    elig: "परीक्षा तिथियाँ और पात्रता",
+    dates: "परीक्षा तिथियाँ और अपडेट",
+  },
+  te: {
+    both: "ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు",
+    mocksSyl: "ఉచిత మాక్ టెస్టులు, సిలబస్",
+    mocksDates: "ఉచిత మాక్ టెస్టులు, పరీక్ష తేదీలు",
+    pyqSyl: "గత సంవత్సరాల పేపర్లు, సిలబస్",
+    pyqDates: "గత సంవత్సరాల పేపర్లు, పరీక్ష తేదీలు",
+    sylElig: "సిలబస్, తేదీలు, అర్హత",
+    syl: "సిలబస్, పరీక్ష తేదీలు",
+    elig: "పరీక్ష తేదీలు, అర్హత",
+    dates: "పరీక్ష తేదీలు, అప్‌డేట్‌లు",
+  },
+};
+
+/** The hub title's tail before " | Shishya": what this hub holds. */
+export function hubPracticeSuffix(locale: HubTitleLocale, o: HubOffers): string {
+  const s = SUFFIX[locale] ?? SUFFIX.en;
+  if (o.hasMocks && o.hasPyq) return s.both;
+  if (o.hasMocks) return o.hasSyllabus ? s.mocksSyl : s.mocksDates;
+  if (o.hasPyq) return o.hasSyllabus ? s.pyqSyl : s.pyqDates;
+  if (o.hasSyllabus) return o.hasEligibility ? s.sylElig : s.syl;
+  return o.hasEligibility ? s.elig : s.dates;
+}
+
+/** The Course JSON-LD name's tail: "Free Mock Tests, Syllabus & Study Help"
+ *  where both exist, else only what does. */
+export function hubCourseNameTail(o: HubOffers): string {
+  const parts = [o.hasMocks ? "Free Mock Tests" : null, o.hasPyq ? "Previous Year Papers" : null, o.hasSyllabus ? "Syllabus" : null].filter(
+    (x): x is string => !!x,
+  );
+  return parts.length ? `${parts.join(", ")} & Study Help` : "Exam Dates & Study Help";
+}
+
+/** The sign-in box's title and first body half for a hub with checked
+ *  questions but no previous year paper: the default copy (src/lib/
+ *  exam-hub-copy.ts) promises "previous year paper practice" and "PYQ-pattern
+ *  papers". Null → the default copy is true for this hub. The box itself is
+ *  not shown on a hub without checked questions. */
+export function hubPracticeCtaCopy(locale: string, o: HubOffers): { coachTitle: string; coachBodyA: string } | null {
+  if (o.hasPyq) return null;
+  if (locale === "hi") {
+    return { coachTitle: "मुफ़्त {short} मॉक टेस्ट, तुरंत स्कोर के साथ — अभी शुरू करें।", coachBodyA: "तुरंत स्कोर और हल वाले मॉक टेस्ट, और अटकने पर पूछिए " };
+  }
+  if (locale === "te") {
+    return {
+      coachTitle: "ఉచిత {short} మాక్ టెస్టులు, వెంటనే స్కోరుతో — ఇప్పుడే మొదలుపెట్టండి.",
+      coachBodyA: "వెంటనే స్కోరు, పరిష్కారాలతో మాక్ టెస్టులు, ఆగిపోయినప్పుడు అడగడానికి ",
+    };
+  }
+  return { coachTitle: "Free {short} mock tests with instant scoring — start now.", coachBodyA: "Mock tests with instant scoring and solutions, and Ask " };
+}
+
+/** The WhatsApp share line: only what the hub holds. */
+export function hubShareMessage(short: string, o: HubOffers, hasContent: boolean): string {
+  const parts = [hasContent ? "free mock tests" : null, o.hasPyq ? "previous year papers" : null, o.hasSyllabus ? "full syllabus" : null].filter(
+    (x): x is string => !!x,
+  );
+  const what = parts.length > 1 ? `${parts.slice(0, -1).join(", ")} & ${parts[parts.length - 1]}` : parts[0] ?? "exam dates & updates";
+  return `${short} — ${what} on Shishya (100% free, in your language):`;
+}

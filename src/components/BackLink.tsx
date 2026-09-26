@@ -5,36 +5,18 @@
 // Strategy: prefer browser history (router.back()) when the user actually
 // came from somewhere on the site. If they landed directly (Google search,
 // SEO page, etc.) fall back to a path-derived parent — e.g. /exams/SSC_CGL/
-// topics/quant.percentage → /exams/SSC_CGL.
+// topics/quant.percentage → /exams/SSC_CGL/syllabus.
+//
+// 26 Sep 2026: the parent rule moved to src/lib/url-normalize.ts (inferParent)
+// and is pattern-mapped. Stripping the last segment sent /exams/X/news/{id},
+// /exams/X/results/{id}, /current-affairs/capsule/{month}, /colleges/stream/*,
+// /for/*, /u/*, /c/*, /g/* … to paths with no page (404) or to a redirect.
+// tests/unit/backlink-parent.test.ts walks every route under src/app.
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-
-function inferParent(pathname: string): string | null {
-  const path = (pathname || "/").split("?")[0].split("#")[0];
-
-  // Hand-tuned shortcuts where the literal parent is wrong/missing.
-  const overrides: Record<string, string> = {
-    "/dashboard": "/",
-    "/admin": "/",
-    "/admin/insights": "/admin",
-    "/admin/coverage": "/admin",
-    "/admin/questions": "/admin",
-    "/admin/sme-stats": "/admin",
-    "/exams": "/",
-    "/chat": "/dashboard",
-    "/login": "/",
-    "/logout": "/",
-  };
-  if (overrides[path]) return overrides[path];
-
-  // Generic: strip the last segment.
-  const parts = path.split("/").filter(Boolean);
-  if (parts.length === 0) return null; // already at "/"
-  parts.pop();
-  return "/" + parts.join("/");
-}
+import { inferParent } from "@/lib/url-normalize";
 
 export function BackLink() {
   const router = useRouter();

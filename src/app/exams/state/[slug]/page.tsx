@@ -34,6 +34,13 @@
 // block links the state's NIRF colleges page, its school boards' pages
 // (official board links only) and its scholarships — each a slug or id that
 // exists in the data.
+//
+// 26 Sep 2026 (G4): a "By qualification" block — the state's exams grouped
+// by the lowest qualification each lists (src/lib/exam-qualification.ts, the
+// same helper as /exams/after/{level}), each linked to its hub, with a link
+// to the all-India level page. Same URL, no state × qualification pages.
+// English body only (lc === "en"): the Hindi and Telugu bodies stay as they
+// are, so no English block eats a twin's localisation budget.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -54,6 +61,8 @@ import { tFor } from "@/lib/i18n-server";
 import { isUrlLocale } from "@/lib/seo-locale";
 import { fillState, stateCopy, stateCopyLocale, stateDisplayName, stateOtherNames, type StateCopyLocale } from "@/lib/state-exams-copy";
 import { splitStateExams, stateAlsoLinks, stateJsonLd, stateNameWithNative } from "@/lib/state-exam-sections";
+import { getExamListRows } from "@/lib/exam-list-rows";
+import { PUBLISHED_LEVELS, levelOf } from "@/lib/exam-qualification";
 
 export const revalidate = 3600;
 
@@ -154,6 +163,17 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
   const kindsEn = hasAdmission ? "government and entrance exams" : "government exams";
   const alsoLinks = stateAlsoLinks(code, stateName, { colleges: C.alsoColleges, board: C.alsoBoard, scholarshipMatch: C.alsoScholarshipMatch });
   const pageUrl = `https://shishya.in/exams/state/${slug}`;
+  // 26 Sep 2026 (G4): the state's exams by lowest listed qualification
+  // (English body only; a failed read leaves the block out).
+  const byQualification =
+    lc === "en"
+      ? await getExamListRows()
+          .then((rows) => {
+            const mine = rows.filter((e) => e.state === code);
+            return PUBLISHED_LEVELS.map((level) => ({ level, list: mine.filter((e) => levelOf(e)?.slug === level.slug) })).filter((g) => g.list.length > 0);
+          })
+          .catch(() => [])
+      : [];
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
@@ -306,6 +326,37 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
           )}
           <p className="mt-3 text-xs text-ink-500">{C.tierLegend}</p>
         </div>
+
+        {byQualification.length > 0 && (
+          <section className="mt-6 rounded-lg border border-ink-200 bg-white p-5" aria-labelledby="state-by-qualification">
+            <h2 id="state-by-qualification" className="text-lg font-semibold text-ink-900">
+              {st.name} exams by qualification
+            </h2>
+            <p className="mt-1 text-xs text-ink-500">
+              Grouped by the lowest qualification each exam lists (indicative — a post may ask for more; each exam page and its official
+              notification have the rule).
+            </p>
+            <div className="mt-3 space-y-3 text-sm">
+              {byQualification.map((g) => (
+                <div key={g.level.slug}>
+                  <h3 className="font-semibold text-ink-900">
+                    After {g.level.after} ({g.list.length})
+                  </h3>
+                  <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                    {g.list.map((e) => (
+                      <Link key={e.code} href={`/exams/${e.code}`} className="text-saffron-700 hover:underline">
+                        {e.shortName}
+                      </Link>
+                    ))}
+                    <Link href={`/exams/after/${g.level.slug}`} className="text-xs font-medium text-ink-600 hover:underline">
+                      All exams after {g.level.after} in India →
+                    </Link>
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {portals.length > 0 && (
           <div className="mt-6 rounded-lg border border-ink-200 bg-white p-5">

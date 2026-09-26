@@ -5,6 +5,9 @@
 
 import { describe, it, expect } from "vitest";
 import { canonicalRegion, completeStateFragments, displayCategoryLabel, groupCutoffTables, type OfficialCutoffRow } from "@/lib/official-cutoffs";
+import { cutoffNoun, officialCutoffTitle, pickCutoffHeadline, scoreTypeNoun } from "@/lib/official-cutoff-title";
+import fs from "node:fs";
+import path from "node:path";
 
 const stored = (over: Partial<OfficialCutoffRow>): OfficialCutoffRow => ({
   cycle: "CEN 01/2024",
@@ -128,5 +131,74 @@ describe("groupCutoffTables columns", () => {
       stored({ region: "RRB Mumbai", category: "PWD", categoryLabel: "VI SC", marks: "30.1" }),
     ]);
     expect(t.categories).toEqual(["LD UR", "LD SC", "VI UR", "VI SC"]);
+  });
+});
+
+// 26 Sep 2026 (discoverability wave 2 G3): the page's official headline —
+// the first table's first figure — and the title noun (src/lib/
+// official-cutoff-title.ts). "(Official)" only for a first table wholly from
+// the body's own site; the noun comes from scoreType (percentile / rank
+// figures are not marks). scoreType strings below are prod's own.
+describe("official cutoff headline and title noun", () => {
+  it("reads the noun from scoreType", () => {
+    expect(scoreTypeNoun("normalised marks")).toBe("marks");
+    expect(scoreTypeNoun("Total Marks of last selected candidate (Tier-II)")).toBe("marks");
+    expect(scoreTypeNoun("normalised scores (cut-off marks)")).toBe("marks");
+    expect(scoreTypeNoun("Percentile Score")).toBe("percentile");
+    expect(scoreTypeNoun("NTA percentile")).toBe("percentile");
+    expect(scoreTypeNoun("closing rank")).toBe("rank");
+    expect(scoreTypeNoun("cut-off merit index")).toBe("score");
+    expect(scoreTypeNoun("cut off score")).toBe("score");
+    expect(scoreTypeNoun("कट-ऑफ अंक (Board notice calls them प्रसामान्यीकृत / normalised) - as reproduced by Amar Ujala")).toBe("marks");
+  });
+
+  it("one noun across the page's tables, else 'score' (RRB Group D mixes marks and percentile)", () => {
+    expect(cutoffNoun([{ scoreType: "normalised marks" }, { scoreType: "Cut-off Marks in Section-I" }])).toBe("marks");
+    expect(cutoffNoun([{ scoreType: "Normalized Marks" }, { scoreType: "Percentile Score" }])).toBe("score");
+    expect(cutoffNoun([{ scoreType: "Percentile Score" }])).toBe("percentile");
+  });
+
+  it("the headline is the first table's first category in reservation order, with its document", () => {
+    const tables = groupCutoffTables([
+      stored({ cycle: "CEN 01/2019", region: "RRB Ajmer", categoryLabel: "UR", marks: "40" }),
+      stored({ cycle: "CEN 01/2024", region: "", post: "Assistant Loco Pilot", category: "SC", categoryLabel: "SC", marks: "36.2" }),
+      stored({ cycle: "CEN 01/2024", region: "", post: "Assistant Loco Pilot", category: "UR", categoryLabel: "UR", marks: "54.3" }),
+    ]);
+    const h = pickCutoffHeadline(tables, "https://rrb.indianrailways.gov.in")!;
+    expect(h.cycle).toBe("CEN 01/2024");
+    expect(h.category).toBe("UR");
+    expect(h.marks).toBe("54.3");
+    expect(h.publisher).toBe("RRB");
+    expect(h.publishedOn).toBe("2025-02-26");
+    expect(h.tier).toBe("official");
+    expect(h.tableOfficial).toBe(true);
+    expect(officialCutoffTitle(h)).toBe(true);
+    expect(pickCutoffHeadline([], null)).toBeNull();
+  });
+
+  it("a newspaper's copy, or any non-official document in the first table, never makes the title '(Official)'", () => {
+    const paper = groupCutoffTables([stored({ sourceUrl: "https://www.amarujala.com/cutoff", publisher: "Amar Ujala" })]);
+    const hp = pickCutoffHeadline(paper, "https://uppbpb.gov.in")!;
+    expect(hp.tier).toBe("reported");
+    expect(officialCutoffTitle(hp)).toBe(false);
+    const mixed = groupCutoffTables([
+      stored({ region: "RRB Ajmer" }),
+      stored({ region: "RRB Kolkata", sourceUrl: "https://www.adda247.com/rrb-cutoff", publisher: "Adda247" }),
+    ]);
+    const hm = pickCutoffHeadline(mixed, null)!;
+    expect(hm.tier).toBe("official");
+    expect(hm.tableOfficial).toBe(false);
+    expect(officialCutoffTitle(hm)).toBe(false);
+    expect(officialCutoffTitle(null)).toBe(false);
+  });
+
+  it("wiring: the cutoff page titles, H1 and JSON-LD use the official copy only through officialCutoffTitle", () => {
+    const page = fs.readFileSync(path.join(process.cwd(), "src/app/exams/[code]/cutoff/page.tsx"), "utf8");
+    expect(page).toContain("const official = officialCutoffTitle(headline);");
+    expect(page).toContain('tt("cutoff.metaTitleOfficial")');
+    expect(page).toContain('t("cutoff.h1Official")');
+    expect(page).toContain('tUrl("cutoff.metaTitleOfficial")');
+    // The bands stay below the published tables and are called indicative.
+    expect(page.indexOf('id="published"')).toBeLessThan(page.indexOf('t("cutoff.bands")'));
   });
 });

@@ -27,6 +27,7 @@
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 import { SESSION_HINT_COOKIE, SESSION_HINT_MAX_AGE_S, SESSION_HINT_VALUE } from "@/lib/session-hint";
 import { isCachePilotTwin } from "@/lib/cache-pilot-routes";
+import { canonicalPath } from "@/lib/url-normalize";
 
 const COOKIE = "shishya_attrib";
 // NextAuth v4 JWT session cookie (no custom cookie names in src/lib/auth.ts);
@@ -48,6 +49,9 @@ const AI_BOTS: [string, RegExp][] = [
   ["Perplexity-User", /Perplexity-User/i],
   ["PerplexityBot", /PerplexityBot/i],
   ["Google-Extended", /Google-Extended/i],
+  // 26 Sep 2026: Vertex AI grounding / agent fetches (Google's docs name the
+  // token) — before Googlebot so it is never folded into plain search crawls.
+  ["Google-CloudVertexBot", /Google-CloudVertexBot/i],
   ["GoogleOther", /GoogleOther/i],
   ["Googlebot", /Googlebot/i],
   ["Bingbot", /bingbot/i],
@@ -55,6 +59,10 @@ const AI_BOTS: [string, RegExp][] = [
   ["Meta", /meta-external|FacebookBot/i],
   ["Applebot", /Applebot/i],
   ["Bytespider", /Bytespider/i],
+  // 26 Sep 2026: Amazon's search crawler (Rufus / Alexa answers) and its
+  // user-triggered fetcher — distinct tokens, not "Amazonbot".
+  ["Amzn-SearchBot", /Amzn-SearchBot/i],
+  ["Amzn-User", /Amzn-User/i],
   ["Amazonbot", /Amazonbot/i],
   ["DuckAssistBot", /DuckAssistBot|DuckDuckBot/i],
   ["MistralAI-User", /MistralAI/i],
@@ -70,19 +78,25 @@ const AI_BOTS: [string, RegExp][] = [
 // "crawl nothing").
 // 26 Sep 2026: + /context.md, the whole-platform machine brief
 // (src/app/context.md/route.ts) — same treatment as llms.txt.
-const OBSERVE_ONLY = new Set(["/llms.txt", "/llms-full.txt", "/robots.txt", "/sitemap.xml", "/context.md"]);
+// 27 Sep 2026 (integration): + /sitemap-news.xml, the Bing-only news sitemap
+// (src/app/sitemap-news.xml/route.ts) — whether Bing reads it is the check.
+const OBSERVE_ONLY = new Set(["/llms.txt", "/llms-full.txt", "/robots.txt", "/sitemap.xml", "/sitemap-news.xml", "/context.md"]);
+
+/** The canonical BotVisit name of a known AI crawler / fetcher user agent, else null. */
+export function aiBotName(ua: string): string | null {
+  if (!ua) return null;
+  return AI_BOTS.find(([, rx]) => rx.test(ua))?.[0] ?? null;
+}
 
 /** Fire-and-forget BotVisit row for a known AI crawler / fetcher. */
 function logAiBot(req: NextRequest, event: NextFetchEvent, path: string): void {
-  const ua = req.headers.get("user-agent") ?? "";
-  if (!ua) return;
-  const hit = AI_BOTS.find(([, rx]) => rx.test(ua));
-  if (!hit) return;
+  const bot = aiBotName(req.headers.get("user-agent") ?? "");
+  if (!bot) return;
   event.waitUntil(
     fetch(new URL("/api/ops/bot-hit", req.url), {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ bot: hit[0], path }),
+      body: JSON.stringify({ bot, path }),
     }).catch(() => {}),
   );
 }
@@ -119,7 +133,14 @@ const SECTION_ROOTS = [
   "/insights",
   "/jobs",
   "/post-graduation",
+  // 27 Sep 2026 (integration): the wave's new top-level pages — the free
+  // mock-test catalogue and the cross-exam subject hubs.
+  "/mock-tests",
+  "/subjects",
 ] as const;
+
+/** The native Hindi topic-notes page (src/app/exams/[code]/topics/[topicCode]/hi). */
+const HINDI_NOTES_RE = /^\/exams\/[^/]+\/topics\/[^/]+\/hi$/;
 
 /** True for a section root or any page under it (exact-or-prefix). */
 function isSectionPath(path: string): boolean {
@@ -136,6 +157,22 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
       /* logging must never change what a crawler receives */
     }
     return NextResponse.next();
+  }
+
+  // ── One 308 to the canonical URL (26 Sep 2026, discoverability G2) ──
+  // /exams/ssc_cgl, /exams/jee-main, /Exams/NEET, /exams/X/news,
+  // /schooling/CBSE/10/maths, /colleges/iitb, /colleges/stream, /for … were
+  // 404s (Search Console listed lower-case alias codes and /exams/CLAT).
+  // src/lib/url-normalize.ts decides; it never redirects a canonical path,
+  // never touches /exams/{browse,entrance,state,category,after}, and a code
+  // with no hub (CLAT, GATE, BITSAT, IIT_JAM, CUET_PG) stays an honest 404.
+  // The query string (utm tags) rides along; attribution is recorded on the
+  // canonical request.
+  const canonical = canonicalPath(rawPath);
+  if (canonical) {
+    const to = req.nextUrl.clone();
+    to.pathname = canonical;
+    return NextResponse.redirect(to, 308);
   }
 
   const localeMatch = rawPath.match(/^\/(hi|te)(\/.*)?$/);
@@ -190,6 +227,17 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
     res = NextResponse.next({ request: { headers: reqHeaders } });
   } else {
     res = NextResponse.next();
+  }
+
+  // ── Content-Language (26 Sep 2026) ──
+  // Only on the native Hindi topic notes (/exams/X/topics/T/hi, self-canonical
+  // with hreflang hi-IN) and their /hi twin. NOT on every /hi or /te rewrite:
+  // most twins have English bodies and canonicalise to English, so a blanket
+  // hi-IN / te-IN would be a false language signal (the root layout stays
+  // lang=en; a localised twin can declare its language inside the page, which
+  // knows its localisation verdict).
+  if (HINDI_NOTES_RE.test(path) && (!localeMatch || localeMatch[1] === "hi")) {
+    res.headers.set("Content-Language", "hi-IN");
   }
 
   // ── Signed-in hint sync (13 Sep 2026, phone-first) ──
@@ -324,6 +372,11 @@ export const config = {
     "/login",
     "/mocks/:path*",
     "/exams/:path*",
+    // Capitalised /Exams URLs (26 Sep 2026): matchers are case-sensitive, and
+    // LLM answers and pasted links capitalise the first segment. They only
+    // ever 308 to the lower-case path (src/lib/url-normalize.ts).
+    "/Exams/:path*",
+    "/EXAMS/:path*",
     "/schooling",
     "/colleges",
     "/post-graduation",
@@ -364,14 +417,22 @@ export const config = {
     "/career-map",
     "/distance-learning",
     "/for/:path*",
+    // /for has no page of its own (26 Sep 2026): it 308s to / (url-normalize DEAD_PATHS).
+    "/for",
     "/worldwide/:path*",
     "/insights/:path*",
     "/jobs/:path*",
+    // 27 Sep 2026 (integration): /mock-tests and /subjects (attribution and
+    // AI-crawler logging, the section rule above).
+    "/mock-tests",
+    "/subjects",
+    "/subjects/:path*",
     // Crawler-facing files — logged only (OBSERVE_ONLY above, 14 Sep 2026).
     "/llms.txt",
     "/llms-full.txt",
     "/robots.txt",
     "/sitemap.xml",
+    "/sitemap-news.xml",
     "/context.md",
   ],
 };

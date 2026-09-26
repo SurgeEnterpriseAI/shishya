@@ -21,6 +21,19 @@
 // (308) to /scholarships, which links the aggregator once, labelled as one;
 // static params, related blocks and every count use SCHOLARSHIP_SCHEMES
 // (src/lib/scholarship-schemes.ts).
+// 26 Sep 2026 (G4 honest page families):
+//   • the page leads with this year's date line (src/lib/scholarship-lists.ts
+//     cycleLeadLine): "2026-27: applications close {date} ({tier} — {host},
+//     checked {day})" only when the date was read on the official portal;
+//     otherwise the usual window, called that. The "Deadline" fact is now
+//     "Usual window" — the data's prose was never this year's date;
+//   • the FAQPage questions are rendered visibly (they were JSON-LD only),
+//     from the same array (scholarshipFaq);
+//   • a WebPage node carries dateModified = the day the date was checked;
+//   • a scheme its government discontinued (Scholarship.closed — MANF,
+//     Endeavour) says so at the top, drops "Apply" from its title, is
+//     noindex,follow and is left out of the related block and every list;
+//   • hourly ISR (was daily): the date line turns "closed on" the day after.
 
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -33,8 +46,9 @@ import { SCHOLARSHIP_SCHEMES, isAggregatorListing } from "@/lib/scholarship-sche
 import { loadLiveExams } from "@/lib/live-exam-codes";
 import { relatedScholarships } from "@/lib/section-related";
 import { clipDescription } from "@/lib/section-seo";
+import { cycleLeadLine, hostOf, isOpenScheme, istToday, lastDateOf, scholarshipFaq } from "@/lib/scholarship-lists";
 
-export const revalidate = 86_400;
+export const revalidate = 3600;
 
 interface PageParams { id: string }
 
@@ -55,11 +69,19 @@ export async function generateMetadata({
   // An aggregator listing redirects to /scholarships (see the page below).
   if (isAggregatorListing(s)) return { title: "Scholarships in India | Shishya", robots: { index: false, follow: true } };
   const year = new Date().getUTCFullYear();
-  const title = `${s.name} ${year} — Eligibility, Amount, Apply | Shishya`;
+  const open = isOpenScheme(s);
+  const title = open ? `${s.name} ${year} — Eligibility, Amount, Apply | Shishya` : `${s.name} — Discontinued, No New Applications | Shishya`;
   return {
     title,
-    description: clipDescription(`${s.description} ${s.eligibility.note ?? ""} Amount: ${s.amount}. Free to apply.`),
+    // The date line leads the description only when it is a date still ahead,
+    // read on the official portal; otherwise the description stays as it was.
+    description: open
+      ? clipDescription(
+          `${lastDateOf(s, istToday()).kind === "upcoming" ? `${cycleLeadLine(s, istToday())} ` : ""}${s.description} ${s.eligibility.note ?? ""} Amount: ${s.amount}. Free to apply.`,
+        )
+      : clipDescription(`${s.name} is not open to new applicants. ${s.closed?.note ?? ""}`),
     alternates: { canonical: `https://shishya.in/scholarships/${id}` },
+    ...(open ? {} : { robots: { index: false, follow: true } }),
     keywords: [
       s.name,
       s.awardingBody,
@@ -96,8 +118,14 @@ export default async function ScholarshipDetailPage({
   if (!s) notFound();
   if (isAggregatorListing(s)) permanentRedirect("/scholarships");
   const [live] = await Promise.all([loadLiveExams()]);
-  const related = relatedScholarships(s, SCHOLARSHIP_SCHEMES);
+  // 26 Sep 2026 (G4): never offer a discontinued scheme as "related".
+  const related = relatedScholarships(s, SCHOLARSHIP_SCHEMES, 8).filter(isOpenScheme).slice(0, 6);
   const url = `https://shishya.in/scholarships/${s.id}`;
+  const today = istToday();
+  const leadLine = cycleLeadLine(s, today);
+  const faq = scholarshipFaq(s, today);
+  const checkedOn = s.closed?.checkedOn ?? s.cycle?.checkedOn ?? null;
+  const dateSource = s.closed?.sourceUrl ?? s.cycle?.sourceUrl ?? null;
 
   // MonetaryGrant (26 Sep 2026): what the grant is and who funds it. The
   // amount is the data's own prose ("₹12,000/year for 4 years", "Full
@@ -105,6 +133,7 @@ export default async function ScholarshipDetailPage({
   const grantJsonLd = {
     "@context": "https://schema.org",
     "@type": "MonetaryGrant",
+    "@id": `${url}#grant`,
     name: s.name,
     url,
     description: clipDescription(s.description, 300),
@@ -118,40 +147,25 @@ export default async function ScholarshipDetailPage({
     // Event, Offer and Place, not on MonetaryGrant.
   };
 
-  // FAQ JSON-LD — Google rich result for "what is...", "who is eligible
-  // for...", "how much does X pay" queries.
+  // FAQ (26 Sep 2026, G4): the same items render visibly below ("Questions"),
+  // so the FAQPage markup never describes text a reader cannot see.
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: `Who is eligible for ${s.name}?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text:
-            (s.eligibility.note ?? "") +
-            (s.eligibility.categories ? ` Reserved for ${s.eligibility.categories.join("/")} categories.` : "") +
-            (s.eligibility.incomeMaxLakhs ? ` Family income ceiling ₹${s.eligibility.incomeMaxLakhs}L.` : "") +
-            (s.eligibility.gender === "F" ? " For girls/women only." : "") +
-            (s.eligibility.minMarksPct ? ` Minimum ${s.eligibility.minMarksPct}% marks required.` : ""),
-        },
-      },
-      {
-        "@type": "Question",
-        name: `How much does ${s.name} pay?`,
-        acceptedAnswer: { "@type": "Answer", text: s.amount },
-      },
-      {
-        "@type": "Question",
-        name: `How do I apply for ${s.name}?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: `Apply directly on the awarding body's official portal: ${s.applyUrl}. Shishya does not collect applications. Deadline: ${s.deadline}.`,
-        },
-      },
-    ],
+    mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
   };
+  // WebPage with dateModified = the day this year's date (or the scheme's
+  // closure) was checked on the official source — only when there is one.
+  const pageJsonLd = checkedOn
+    ? {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        url,
+        name: s.name,
+        dateModified: checkedOn,
+        mainEntity: { "@id": `${url}#grant` },
+      }
+    : null;
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -168,6 +182,7 @@ export default async function ScholarshipDetailPage({
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(grantJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      {pageJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }} />}
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
@@ -182,6 +197,24 @@ export default async function ScholarshipDetailPage({
           <SaveScholarshipButton scholarshipId={s.id} scholarshipName={s.name} />
         </div>
         <p className="mt-1 text-sm text-ink-500">{s.awardingBody}</p>
+        {/* This year's date line (26 Sep 2026, G4) — official only when read on the portal. */}
+        <p
+          className={
+            s.closed
+              ? "mt-4 max-w-3xl rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-900"
+              : "mt-4 max-w-3xl rounded-md border border-saffron-200 bg-saffron-50/60 px-3 py-2 text-sm font-medium text-ink-900"
+          }
+        >
+          {leadLine}
+          {dateSource && (
+            <>
+              {" "}
+              <a href={dateSource} target="_blank" rel="noopener noreferrer" className="font-normal text-saffron-700 underline">
+                Source: {hostOf(dateSource)} ↗
+              </a>
+            </>
+          )}
+        </p>
         <p className="mt-4 max-w-3xl text-sm text-ink-700">{s.description}</p>
 
         {/* Quick facts */}
@@ -189,7 +222,7 @@ export default async function ScholarshipDetailPage({
           <Fact label="Amount" value={s.amount} />
           <Fact label="Level" value={s.levels.map((l) => LEVEL_LABEL[l]).join(", ")} />
           <Fact label="State" value={s.state ? s.state : "National (all India)"} />
-          <Fact label="Deadline" value={s.deadline} />
+          <Fact label="Usual window" value={s.deadline} />
           {s.eligibility.categories && (
             <Fact label="Categories" value={s.eligibility.categories.join(", ")} />
           )}
@@ -207,7 +240,8 @@ export default async function ScholarshipDetailPage({
           )}
         </dl>
 
-        {/* Apply CTA */}
+        {/* Apply CTA — not for a discontinued scheme (26 Sep 2026, G4). */}
+        {!s.closed && (
         <div className="mt-6 rounded-lg border border-saffron-200 bg-saffron-50/40 p-5">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-800">
             Apply directly
@@ -235,6 +269,7 @@ export default async function ScholarshipDetailPage({
             </a>
           )}
         </div>
+        )}
 
         {/* Eligibility detail */}
         {s.eligibility.note && (
@@ -243,6 +278,17 @@ export default async function ScholarshipDetailPage({
             <p className="mt-2 text-sm text-ink-700 whitespace-pre-line">{s.eligibility.note}</p>
           </>
         )}
+
+        {/* Questions (26 Sep 2026, G4): the FAQPage items, visible. */}
+        <h2 className="mt-10 text-base font-semibold text-ink-900">Questions</h2>
+        <dl className="mt-3 space-y-4 text-sm">
+          {faq.map((f) => (
+            <div key={f.q}>
+              <dt className="font-semibold text-ink-900">{f.q}</dt>
+              <dd className="mt-1 whitespace-pre-line text-ink-700">{f.a}</dd>
+            </div>
+          ))}
+        </dl>
 
         {/* Related exams */}
         {s.relevantExamCodes && s.relevantExamCodes.length > 0 && (

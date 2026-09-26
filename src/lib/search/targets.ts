@@ -46,7 +46,7 @@ export interface ExamTarget {
 /**
  * The page for an exam + intent, from the exam's facts only.
  *   hub → /exams/C · dates → /updates · syllabus → /syllabus (gate) · cutoff → /cutoff (gate)
- *   pyq → /pyq/Y if Y has rows, else /pyq if any year does, else hub#pyqs + notice
+ *   pyq → /pyq/Y if Y has rows, else hub#pyqs (26 Sep 2026: /pyq itself only 308s there), + notice when the year or every year is missing
  *   mocks → #mocks · subject-tests → #subject-tests (live exams) · topics → /topics (usable notes)
  *   build-mock → /build-mock (gate, sign-in) else #custom-mock (live) · checklist → /checklist
  *   guide / tricks → their page (gate) · score → /score-estimate · eligibility / salary → #anchor (deep block)
@@ -77,7 +77,10 @@ export function examIntentUrl(code: string, intent: ExamIntent | null, facts: Ex
       return g.cutoff ? ok(`${hub}/cutoff`, "cutoff") : down(hub, "hub", "cutoff");
     case "pyq":
       if (year != null && years.includes(year)) return ok(`${hub}/pyq/${year}`, "pyq", `PYQ ${year}`);
-      if (years.length > 0) return year != null ? down(`${hub}/pyq`, "pyq", "pyq") : ok(`${hub}/pyq`, "pyq");
+      // 26 Sep 2026 (G2): /exams/{code}/pyq has no page of its own — it 308s to the hub's
+      // Previous Papers section — so the search links #pyqs itself (no redirect hop for a
+      // click or a crawler). knownUrl still accepts /pyq (a pasted or AI-written link).
+      if (years.length > 0) return year != null ? down(`${hub}#pyqs`, "pyq", "pyq") : ok(`${hub}#pyqs`, "pyq");
       return down(`${hub}#pyqs`, "hub", "pyq");
     // 26 Sep 2026 (search fixer): an exam with no mock and no checked question
     // (facts.live false — NEET PG, NATA, RBI Grade B …) has only the hub's

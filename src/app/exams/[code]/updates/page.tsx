@@ -41,6 +41,7 @@ import { LangTwinLinks } from "@/components/LangTwinLinks";
 import { StateExamsLink } from "@/components/StateExamsLink";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { passedEstimateLine, passedEstimateView } from "@/lib/official-source";
+import { leadDescription, updatesLead } from "@/lib/answer-lead";
 
 /** JSON-LD safe for inline <script>: a "</script>" inside a model- or
  *  web-derived label must not break out of the block. */
@@ -98,7 +99,14 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
     ? `${tt("tracker.kind.EXAM")} ${fmtDay(nextExam.date, urlLocale)}${nextExam.tier !== "official" ? ` (${tt(nextExam.tier === "expected" ? "tracker.expected" : "tracker.reported").toLowerCase()})` : ""} — `
     : "";
   const title = `${exam.shortName} ${year} ${dateLead}${tt("tracker.title")} | Shishya`;
-  const description = `${fill(tt("tracker.intro"), { exam: exam.shortName })} ${exam.name}.`.slice(0, 300);
+  const baseDescription = `${fill(tt("tracker.intro"), { exam: exam.shortName })} ${exam.name}.`.slice(0, 300);
+  // 26 Sep 2026 (G3): on the English URL the answer lead (src/lib/answer-lead.ts)
+  // heads the description — the next exam day the title states, the next
+  // milestone and the last one, each with its tier — ~160 characters in all.
+  const metaLast = [...timeline].reverse().find((r) => r.status === "done" && !r.passedEstimate) ?? null;
+  const metaLead =
+    urlLocale === "en" ? updatesLead({ short: exam.shortName, year, nextExam, next: stageOf(timeline).next, last: metaLast }) : null;
+  const description = metaLead ? leadDescription(metaLead, baseDescription) : baseDescription;
   const path = `/exams/${exam.code}/updates`;
   const url = localizedUrl(path, urlLocale);
   const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
@@ -229,6 +237,8 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   // title. Announced days (official OR reported) carry no qualifier.
   if (statusLine && nextExam && nextExam.tier === "expected") statusLine = `${statusLine} (${t("tracker.expected").toLowerCase()})`;
   const nextLine = next && next !== nextExam ? fill(t("tracker.status.next"), { label: next.label }) : null;
+  const updatesLeadText =
+    locale === "en" && urlLocale === "en" ? updatesLead({ short: exam.shortName, year, nextExam, next, last }) : null;
   const lastLine = last ? fill(t("tracker.status.last"), { label: last.label }) : null;
 
   const kindLabel = (k: DateKind) => t(`tracker.kind.${k}`);
@@ -357,6 +367,11 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
           <Link href={p(`/exams/${exam.code}`)} className="hover:text-ink-800">{short}</Link> · {t("tracker.title")}
         </p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{fill(t("tracker.h1"), { exam: short, year })}</h1>
+        {/* The answer first (26 Sep 2026, G3): the next exam day, the next
+            milestone and the last one, each with its tier word. English body
+            on the English URL only — the /hi and /te twins' native-script
+            gate does not count lib text (critic veto). */}
+        {updatesLeadText && <p className="mt-2 max-w-3xl text-base leading-relaxed text-ink-800">{updatesLeadText}</p>}
         <p className="mt-2 max-w-3xl text-sm text-ink-700">{fill(t("tracker.intro"), { exam: short })}</p>
 
         {/* Language twins — real links for humans AND the crawl graph. */}

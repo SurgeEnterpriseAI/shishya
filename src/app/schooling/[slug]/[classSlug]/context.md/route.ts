@@ -11,7 +11,7 @@
 
 import { istDay } from "@/lib/exam-week";
 import { schoolClassContextMarkdown, schoolClassIdentity } from "@/lib/school/context";
-import { EMPTY_SCHOOL_SURFACE, findSchoolClass, loadSchoolSurface, parseSchoolClassSlug } from "@/lib/school/surface";
+import { EMPTY_SCHOOL_SURFACE, findSchoolClass, loadSchoolSurface, parseSchoolClassSlug, schoolClassPath } from "@/lib/school/surface";
 
 export const revalidate = 3600;
 
@@ -27,6 +27,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
     headers: {
       "content-type": "text/markdown; charset=utf-8",
       "cache-control": "public, max-age=900, s-maxage=3600, stale-while-revalidate=86400",
+      // 26 Sep 2026 (G2): the HTML class page is the canonical URL, as on
+      // /exams/{CODE}/context.md (Bing fetches these files and would
+      // otherwise keep each as a separate document). No noindex: AI search
+      // must still fetch this file.
+      link: `<https://shishya.in${schoolClassPath(slug, c.cls)}>; rel="canonical"`,
     },
   });
 }

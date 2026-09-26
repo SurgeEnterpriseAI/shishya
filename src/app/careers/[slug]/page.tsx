@@ -14,6 +14,7 @@
 //   • links to the /colleges/stream/* pages the career runs through;
 //   • description cut at a sentence / word boundary (was .slice(0, 280));
 //   • revalidate daily (the page now reads the live exam list).
+// 26 Sep 2026 (G4): the FAQPage questions render visibly ("Questions").
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -93,36 +94,18 @@ export default async function CareerPage({
     estimatedSalary: c.salaryBands.map(salaryDistribution),
   };
 
-  // FAQ JSON-LD: high-volume "how to become X / X salary" queries.
+  // FAQ (26 Sep 2026, G4): the three questions render visibly ("Questions"
+  // below) from this one array, so the FAQPage markup never describes text a
+  // reader cannot see. An answer with nothing in it is left out.
+  const faq = [
+    { q: `How to become a ${c.name}?`, a: c.entryRoutes.map((r) => `${r.title}. ${r.body}`).join(" ") },
+    { q: `What is the salary of a ${c.name} in India?`, a: c.salaryBands.map((b) => `${b.experience}: ${b.band}`).join(". ") },
+    { q: `What qualifications are needed to become a ${c.name}?`, a: c.qualifications.join(". ") },
+  ].filter((f) => f.a.trim().length > 0);
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: `How to become a ${c.name}?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: c.entryRoutes.map((r) => `${r.title}. ${r.body}`).join(" "),
-        },
-      },
-      {
-        "@type": "Question",
-        name: `What is the salary of a ${c.name} in India?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: c.salaryBands.map((b) => `${b.experience}: ${b.band}`).join(". "),
-        },
-      },
-      {
-        "@type": "Question",
-        name: `What qualifications are needed to become a ${c.name}?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: c.qualifications.join(". "),
-        },
-      },
-    ],
+    mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
   };
 
   const breadcrumbJsonLd = {
@@ -277,6 +260,21 @@ export default async function CareerPage({
         {/* Outlook */}
         <h2 className="mt-10 text-base font-semibold text-ink-900">Demand outlook</h2>
         <p className="mt-2 text-sm text-ink-700">{c.outlook}</p>
+
+        {/* Questions (26 Sep 2026, G4): the FAQPage items, visible. */}
+        {faq.length > 0 && (
+          <section className="mt-10" aria-labelledby="career-questions">
+            <h2 id="career-questions" className="text-base font-semibold text-ink-900">Questions</h2>
+            <dl className="mt-3 space-y-4 text-sm">
+              {faq.map((f) => (
+                <div key={f.q}>
+                  <dt className="font-semibold text-ink-900">{f.q}</dt>
+                  <dd className="mt-1 text-ink-700">{f.a}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
 
         {/* Related careers */}
         {related.length > 0 && (

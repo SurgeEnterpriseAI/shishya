@@ -305,8 +305,16 @@ export const TWIN_CHROME: Record<TwinSurface, SurfaceChrome> = {
 export const EXAM_WEEK_BLOCK_LATIN: { hi: number; te: number; literalLatin: number } = { hi: 153, te: 151, literalLatin: 196 };
 const EXAM_WEEK_BLOCK_SURFACES: ReadonlySet<TwinSurface> = new Set<TwinSurface>(["hub", "updates"]);
 
-/** English copy in the root layout's SiteFooter (every page). */
-export const SITE_FRAME_LATIN = 124;
+/** English copy in the root layout's SiteFooter (every page).
+ *  27 Sep 2026 (integration): 124 → 142. The footer gained one link on every
+ *  page, "Search or ask Shishya" (18 Latin letters, src/components/SiteFooter.tsx),
+ *  and the root layout is static, so /hi and /te twins print it in English.
+ *  +18 keeps the measure where it was before that link; it flips the three
+ *  marginal twins the review measured (TS_LAWCET /updates te, GJ_GUJCET
+ *  /updates hi, WB_PSC_CLERK /updates te) to canonical → English. The older
+ *  gap (the SECTION_LINKS labels, ~61 letters, never counted) is a separate
+ *  decision: it moves ~13 more twins. */
+export const SITE_FRAME_LATIN = 142;
 
 const NATIVE_RE: Record<UrlLocale, RegExp> = { hi: /[ऀ-ॿ]/g, te: /[ఀ-౿]/g };
 

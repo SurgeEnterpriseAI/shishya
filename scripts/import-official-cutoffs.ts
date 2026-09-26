@@ -30,6 +30,15 @@
 // USAGE (from D:\CodexProjects\shishya):
 //   npx dotenv-cli -e .env.local -- npx tsx scripts/import-official-cutoffs.ts --dir <folder>           # verify only
 //   npx dotenv-cli -e .env.local -- npx tsx scripts/import-official-cutoffs.ts --dir <folder> --apply   # verify + write
+//   … --apply --indexnow   # verify + write, then submit the changed pages to IndexNow
+//
+// --indexnow (26 Sep 2026, G1): opt-in, honoured only with --apply. After the
+// writes it submits, for every exam that had rows written, the hub and — when
+// the page renders (live ExamRankBand rows; /cutoff 404s without them) — the
+// /cutoff page (src/lib/indexnow.ts officialDataUrls), so Bing and ChatGPT
+// search pick up a verified cutoff the same day instead of at the weekly
+// sitemap re-submission. Without --apply the flag is ignored and nothing is
+// sent: a dry run stays a dry run.
 
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
@@ -52,6 +61,7 @@ import {
   type GridVerdict,
 } from "../src/lib/official-cutoffs";
 import { pdfplumberGrid } from "./cutoff-grid";
+import { officialDataUrls, submitIndexNow } from "../src/lib/indexnow";
 
 interface SourceJson {
   id: string;
@@ -274,6 +284,10 @@ async function main() {
   const dir = arg("--dir");
   const apply = process.argv.includes("--apply");
   const allowSaved = process.argv.includes("--allow-saved-copy");
+  // 26 Sep 2026: IndexNow only after real writes — never on a dry run.
+  const indexNow = apply && process.argv.includes("--indexnow");
+  if (process.argv.includes("--indexnow") && !apply) console.log("--indexnow ignored without --apply (dry run: nothing is written or submitted)");
+  const changed: { code: string; examId: string }[] = [];
   if (!dir || !existsSync(dir)) throw new Error("--dir <folder of EXAM_CODE.json files> is required");
   const work = mkdtempSync(join(tmpdir(), "cutoff-verify-"));
   const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
@@ -360,6 +374,20 @@ async function main() {
     }
     writtenTotal += written;
     console.log(`   wrote ${written} rows`);
+    if (written > 0) changed.push({ code: data.exam, examId: exam.id });
+  }
+
+  if (indexNow && changed.length > 0) {
+    const urls: string[] = [];
+    for (const c of changed) {
+      const bands = await prisma.$queryRaw<{ n: number }[]>`
+        SELECT COUNT(*)::int AS n FROM "ExamRankBand" WHERE "examId" = ${c.examId} AND "archivedAt" IS NULL`;
+      urls.push(...officialDataUrls(c.code, { cutoff: Number(bands[0]?.n ?? 0) > 0 }));
+    }
+    const list = [...new Set(urls)];
+    const accepted = await submitIndexNow(list);
+    console.log(`\nIndexNow: ${list.length} URLs for ${changed.length} exams — ${accepted ? "accepted" : "not accepted (the weekly sitemap submission will carry them)"}`);
+    for (const u of list) console.log(`   ${u}`);
   }
 
   console.log(

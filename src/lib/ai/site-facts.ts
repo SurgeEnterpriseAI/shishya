@@ -33,6 +33,30 @@
 
 import { OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { PERSONAS } from "@/data/personas";
+// 26 Sep 2026 (entry points, after G4): the scholarship lists and the
+// closing-soon window come from the module that renders those pages, so the
+// tutor names every list that exists and the window's real length.
+import { CLOSING_SOON_DAYS, SCHOLARSHIP_FILTERS } from "@/lib/scholarship-lists";
+
+/** /exams/category/{slug} hubs the tutor may name (26 Sep 2026). A hub with
+ *  fewer than EXAM_CATEGORY_MIN active exams is a 404
+ *  (src/lib/exam-categories.ts), and which ones clear it needs the DB, which
+ *  this cached, argument-free block cannot read. Read-only probe 26 Sep 2026
+ *  (scripts/tmp-w2-entry-category-live.ts): state-psc 43, teaching 23,
+ *  police 19, engineering-entrance 18 and banking 6 open; law-entrance sits
+ *  exactly on the floor (5) and is left out so that one retired exam cannot
+ *  turn a tutor link into a 404; railway, ssc, defence, upsc-civil-services,
+ *  medical, management and design entrance had fewer than 5 and 404.
+ *  tests/unit/tutor-site-facts.test.ts pins each slug to EXAM_CATEGORIES.
+ *  Re-run the probe and edit this list when a hub opens or closes. */
+export const TUTOR_EXAM_CATEGORY_SLUGS: readonly string[] = ["banking", "police", "teaching", "state-psc", "engineering-entrance"];
+
+/** /exams/after/{level} pages the tutor may name (26 Sep 2026). Same probe:
+ *  10th 23, 12th 71 and graduation 64 exams (indexable); diploma-iti holds 1
+ *  exam (noindex) and is left out; postgraduation is held — a 404 — until
+ *  UGC NET, CSIR NET, CUET PG and IIT JAM have live rows
+ *  (src/lib/exam-qualification.ts). Pinned to PUBLISHED_LEVELS by the test. */
+export const TUTOR_QUALIFICATION_LEVELS: readonly string[] = ["10th", "12th", "graduation"];
 
 export interface SiteFeature {
   /** Path on https://shishya.in. {CODE} = exam code, {TOPIC} = topic code,
@@ -124,6 +148,18 @@ export const SITE_FEATURES: readonly SiteFeature[] = [
   // 26 Sep 2026: the Entrance exams section landing (src/app/exams/entrance/page.tsx).
   { path: "/exams/entrance", name: "Entrance exams", what: "the admission tests on Shishya grouped by kind: engineering, medical, university and design, law, management, defence (NDA), olympiads and state CETs" },
   { path: "/exams/state", name: "Exams by state", what: "government exams grouped by state and union territory" },
+  // 26 Sep 2026 (entry points, after G4): the comparison lists — the value
+  // lists above say which slugs open and why.
+  {
+    path: "/exams/category/{CATEGORY}",
+    name: "Compare exams by category",
+    what: `the exams of one kind on Shishya in one table: next exam day marked official, reported or expected; age limit and qualification (marked checked, or an indicative summary to confirm on the official site); official site; practice on Shishya. {CATEGORY} is one of ${TUTOR_EXAM_CATEGORY_SLUGS.join(", ")}; for any other kind use All exams`,
+  },
+  {
+    path: "/exams/after/{LEVEL}",
+    name: "Exams after 10th, 12th or graduation",
+    what: `government and entrance exams listed under the lowest qualification each one accepts (each exam appears once, so a 12th-pass student should also look at the exams after 10th), in the same table; {LEVEL} is one of ${TUTOR_QUALIFICATION_LEVELS.join(", ")}. There is no list of exams after postgraduation yet`,
+  },
   { path: "/jobs-map", name: "India's Govt Jobs Map", what: "central and state government jobs (Group A to C, banking, defence, police, teaching) with indicative pay bands and the exams Shishya tracks" },
   { path: "/current-affairs", name: "Current affairs", what: "daily digest and monthly capsules" },
   {
@@ -138,9 +174,29 @@ export const SITE_FEATURES: readonly SiteFeature[] = [
     signIn: true,
   },
   { path: "/discussions", name: "Discussions", what: "threads with other aspirants — doubts, strategy, exam-day experiences; reading is open, posting needs sign-in" },
-  { path: "/ask", name: "Ask Shishya", what: "questions about government jobs — which exams fit, eligibility, salaries, vacancies, dates — answered from Shishya's data; no login" },
+  // 26 Sep 2026 (entry points): /ask became the whole-platform search in
+  // 60d3bb6, but this line still said "questions about government jobs", so
+  // the tutor never sent a school, college or career question there. Named as
+  // the page's H1; what it does is read off src/app/ask/page.tsx (its FAQ).
+  {
+    path: "/ask",
+    name: "Search or ask Shishya",
+    what: "one search box for the whole site, in any language or script (English, Hindi, Telugu, romanised Hindi): a school class, subject or chapter; an exam and its dates, syllabus, cutoff or previous-year-pattern page; a college, scholarship, career or study-abroad page. A clear match opens its page, several matches give a short list, and when no page fits Shishya's AI answers from Shishya's own data and links the closest pages — for school subjects it points to the class, subject and chapter pages instead of teaching from the textbook, and Class 1-7 searches get pages only; no login",
+  },
   { path: "/scholarships", name: "Scholarships", what: "central, state and private scholarships, filterable by state, category and level" },
   { path: "/scholarships/match", name: "Scholarship match", what: "5 questions, then the scholarships the student qualifies for" },
+  // 26 Sep 2026 (entry points, after G4): the ready-made lists
+  // (src/lib/scholarship-lists.ts), every one of which renders.
+  {
+    path: "/scholarships/for/{GROUP}",
+    name: "Scholarship lists",
+    what: `one list per student group — amount, family income limit, this year's last date where Shishya read it on the official portal (otherwise the usual window) and where to apply; {GROUP} is one of ${SCHOLARSHIP_FILTERS.map((f) => f.slug).join(", ")}`,
+  },
+  {
+    path: "/scholarships/closing-soon",
+    name: "Scholarships closing soon",
+    what: `schemes whose last date, read on the official portal, falls in the next ${CLOSING_SOON_DAYS} days; the page says so when none does`,
+  },
   {
     path: "/me/report",
     name: "My report",
@@ -183,6 +239,15 @@ export const SITE_FEATURES: readonly SiteFeature[] = [
     name: "Class page",
     what: "one class's subjects, each with its NCERT book or CISCE syllabus documents linked and a count of its chapters that have Shishya's notes or practice; on Class 8-12 pages, the sign-in for the class tutor (students 13 and above)",
   },
+  // 26 Sep 2026 (entry points, after G4): the CBSE board-exam pages
+  // (src/data/board-exams.ts) — CBSE's own links only, never a copy.
+  ...([10, 12] as const).map(
+    (n): SiteFeature => ({
+      path: `/schooling/cbse/class-${n}/board-exam`,
+      name: `CBSE Class ${n} board exam`,
+      what: `links to CBSE's own site for this session's board exam: sample question papers and marking schemes, the curriculum, CBSE's past-papers page, the result portals, notices, and whether the date sheet is out yet — no paper is copied onto Shishya; plus the Class ${n} chapters that have Shishya's notes and checked practice`,
+    }),
+  ),
   { path: "/distance-learning", name: "Distance learning", what: "open and distance learning in India: IGNOU, NIOS and state open universities, and how to judge them" },
   { path: "/post-graduation", name: "Post-graduation", what: "options after a degree: PG entrance exams (GATE, CAT, NEET-PG, UGC-NET and more), research, fellowships, civil services or a job" },
   { path: "/insights", name: "Insights", what: "essays on Indian education decisions, with their sources" },
@@ -229,7 +294,7 @@ function featureLine(f: SiteFeature): string {
 export function siteFeaturesBlock(): string {
   return [
     `What Shishya offers — the features, pages, buttons and settings you may describe:`,
-    `({CODE} = the exam's code from the syllabus block, e.g. SSC_GD; {TOPIC} = a topic code from it. With no exam picked, send the student to https://shishya.in to pick one first. Some exam pages exist only for some exams — the exam facts block says which. {BOARD} = cbse (NCERT books) or icse-cisce; {N} = a class from 1 to 12; {PERSONA} = one of the slugs listed on that line.)`,
+    `({CODE} = the exam's code from the syllabus block, e.g. SSC_GD; {TOPIC} = a topic code from it. With no exam picked, send the student to https://shishya.in to pick one first. Some exam pages exist only for some exams — the exam facts block says which. {BOARD} = cbse (NCERT books) or icse-cisce; {N} = a class from 1 to 12; {PERSONA} = one of the slugs listed on that line; {CATEGORY}, {LEVEL} and {GROUP} likewise = one of the values listed on their own line — never any other.)`,
     ...SITE_FEATURES.map(featureLine),
     ...IN_PAGE_FEATURES.map((s) => `- ${s}`),
     ``,

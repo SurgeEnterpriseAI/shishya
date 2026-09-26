@@ -20,6 +20,13 @@ import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { STATES, stateSlug, languageName } from "@/lib/state-info";
 import { getExamCatalog } from "@/lib/db/exam-cache";
 import { ExamSearchBox } from "./ExamSearchBox";
+// 26 Sep 2026 (G4): crawlable links to the category hubs and the
+// "exams after {level}" pages. The "By category" chips below stay the
+// in-page filter (their ?category= URLs are robots-blocked); these links are
+// the indexable pages, each listed only while it is live.
+import { getExamListRows } from "@/lib/exam-list-rows";
+import { EXAM_CATEGORIES, examsInCategory, isCategoryLive } from "@/lib/exam-categories";
+import { levelCounts } from "@/lib/exam-qualification";
 
 export const revalidate = 300; // 5 min — the underlying list barely changes
 
@@ -273,6 +280,12 @@ export default async function ExamsCatalogPage({
   };
 
   const hasAnyFilter = q || state || lang || category;
+
+  // 26 Sep 2026 (G4): the live category hubs and indexable qualification
+  // pages, from one cached read (a failed read hides the block).
+  const listRows = await getExamListRows().catch(() => []);
+  const liveCategories = EXAM_CATEGORIES.map((c) => ({ c, n: examsInCategory(c, listRows).length })).filter((x) => isCategoryLive(examsInCategory(x.c, listRows)));
+  const liveLevels = levelCounts(listRows).filter((x) => x.indexable);
   const sortedStateChips = Object.keys(STATES)
     .filter((c) => (stateCountMap[c] ?? 0) > 0)
     .sort((a, b) => (stateCountMap[b] ?? 0) - (stateCountMap[a] ?? 0));
@@ -306,6 +319,35 @@ export default async function ExamsCatalogPage({
             Exams by state →
           </Link>
         </p>
+
+        {(liveCategories.length > 0 || liveLevels.length > 0) && (
+          <nav aria-label="Exam comparison pages" className="mt-5 rounded-lg border border-ink-200 bg-white p-4 text-sm">
+            {liveCategories.length > 0 && (
+              <>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">Compare exams by category</p>
+                <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                  {liveCategories.map(({ c, n }) => (
+                    <Link key={c.slug} href={`/exams/category/${c.slug}`} className="font-medium text-saffron-700 hover:underline">
+                      {c.heading.replace(/ in India.*$/, "")} ({n})
+                    </Link>
+                  ))}
+                </p>
+              </>
+            )}
+            {liveLevels.length > 0 && (
+              <>
+                <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-ink-500">By qualification</p>
+                <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                  {liveLevels.map((x) => (
+                    <Link key={x.level.slug} href={`/exams/after/${x.level.slug}`} className="font-medium text-saffron-700 hover:underline">
+                      Exams after {x.level.after} ({x.total})
+                    </Link>
+                  ))}
+                </p>
+              </>
+            )}
+          </nav>
+        )}
 
         {/* Search box */}
         <div className="mt-6">

@@ -1,7 +1,7 @@
 // The doors (26 Sep 2026): five equal, independent sections — School,
 // Entrance exams, Government exams, College & scholarships, Careers — and a
 // quiet dashed "being built" cell for graduation / PG / PhD study, which
-// does not exist yet and links nowhere. Server component, no JS.
+// does not exist yet. Server component, no JS.
 //
 // Honesty, per door (verified 26 Sep 2026 against the routes and, for the
 // two exam doors, a read-only catalogue probe — scripts/tmp-home-fixer-probe.ts):
@@ -10,27 +10,41 @@
 //     the official NCERT book; ICSE / ISC subjects link the official
 //     syllabus; other boards get official links. Shishya's own notes and
 //     practice are being written — the door says so and claims nothing more.
-//   • Entrance exams (review, 26 Sep 2026): no page lists admission tests
-//     alone — /exams/browse takes one ?category= and, unfiltered, leads with
-//     the 128 state-level government exams — so this door is its own hub:
-//     one-tap chips for the exams present in the loaded catalogue (JEE Main,
-//     NEET UG, CUET UG, NDA — src/lib/home-doors.ts ENTRANCE_DOOR_CODES),
-//     Olympiads (?category=OLYMPIAD, a FILTER_CATEGORIES value) and the
-//     catalogue. It has NO whole-card link: a tap that landed on state PSCs
-//     would read as government exams under another name. CLAT is not named
-//     anywhere — it has no exam row, so /exams/CLAT is a 404.
+//     26 Sep 2026 (entry points): "CBSE Class 10 / 12 board exam" chips open
+//     the board-exam hubs (CBSE's own sample papers, marking schemes and
+//     result portals), each only while it clears BOARD_EXAM_MIN_LINKS.
+//   • Entrance exams (entry points, 26 Sep 2026): the whole card opens
+//     /exams/entrance — the entrance-only hub that shipped in 7bab6c7 (the
+//     earlier "no hub page for admission tests exists" no longer holds).
+//     One-tap chips for the exams present in the loaded catalogue (JEE Main,
+//     NEET UG, CUET UG, NDA — src/lib/home-doors.ts ENTRANCE_DOOR_CODES) and
+//     Olympiads, which open the hub's olympiad heading: olympiads have no
+//     category hub, and the old ?category=OLYMPIAD link was robots-blocked
+//     ('/exams/browse?*'). CLAT is not named anywhere — it has no exam row,
+//     so /exams/CLAT is a 404.
 //   • Government exams (review, 26 Sep 2026): the whole card opens the
 //     catalogue, /exams/browse. Its ?category=GOVT_JOBS is SSC / RRB only —
 //     9 of 180 rows — so the card never carries that filter. No count on
 //     this door: the catalogue count is government AND entrance exams
 //     (117 of 180 were government-job exams on the probe day), so the live
 //     count sits on the finder's "Browse all {n} exams" link, which is
-//     exactly the page it counts.
+//     exactly the page it counts. Entry points (26 Sep 2026): Banking opens
+//     /exams/category/banking only while that hub is live (else no chip —
+//     "All exams" already opens the catalogue), and "Exams after 12th" /
+//     "after graduation" open /exams/after/{level} only while indexable.
 //   • College: /colleges, /scholarships, /distance-learning exist. No
-//     graduation-course study is claimed.
+//     graduation-course study is claimed. "Scholarships closing soon" opens
+//     /scholarships/closing-soon only while it clears CLOSING_SOON_MIN today.
 //   • Careers: /careers, /jobs-map, /jobs/internships exist; the count is
 //     CAREERS.length (src/data/careers.ts), never typed, and the card opens
 //     the page that lists all of them.
+//   • Graduation / PG / PhD: study content is being built and the cell says
+//     so. Its one link (entry points, 26 Sep 2026) is "PG entrance exams on
+//     Shishya ({n})" → /post-graduation#pg-entrances, n = the active rows
+//     among PG_ENTRANCE_CODES (src/lib/pg-entrances.ts), hidden at 0.
+// Every data-driven link comes from src/lib/home-door-links.ts, which checks
+// each target against that page's own floor; when the exam rows cannot be
+// read, those links drop out and the fixed ones stay.
 
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -38,13 +52,14 @@ import type { ExamCard } from "@/components/ExamPicker";
 import type { HomeDoorsCopy } from "@/lib/home-doors-copy";
 import { fillHome } from "@/lib/home-strip-copy";
 import { cbseClassHref, type HomeDoorId } from "@/lib/home-doors";
+import { loadHomeDoorLinks, type HomeAfterLevel, type HomeDoorLinks } from "@/lib/home-door-links";
 
 const CHIP =
   "inline-flex min-h-[32px] items-center rounded-full border border-saffron-200 bg-saffron-50 px-3 text-[13px] font-semibold text-saffron-800 transition-colors hover:border-saffron-300 hover:bg-saffron-100";
 const GO = "inline-flex min-h-[32px] items-center pl-1 text-[13px] font-semibold text-ink-500 transition-colors hover:text-ink-800";
 
 const CARD = "relative flex h-full flex-col rounded-2xl border border-ink-200 bg-white p-[18px] shadow-sm sm:p-[22px]";
-// The lift on hover only where the whole card is a tap.
+// Every door is a whole-card tap (26 Sep 2026: the Entrance door gained its hub).
 const CARD_LINKED = " transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md";
 
 function Chip({ href, cta, children, go = false }: { href: string; cta: string; children: ReactNode; go?: boolean }) {
@@ -79,58 +94,42 @@ function Door({
   title: string;
   badge?: string;
   body: string;
-  /** The section's hub page. Omitted when no such page exists (Entrance
-   *  exams): the door's chips are then the taps. */
-  href?: string;
+  /** The section's hub page; the title link covers the whole card. */
+  href: string;
   children?: ReactNode;
 }) {
-  const head = (
-    <>
-      <div className="flex items-center gap-3">
-        <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-saffron-50 text-2xl">
-          {icon}
-        </span>
-        <h2 className="text-lg font-semibold tracking-tight text-ink-900">
-          {title}
-          {badge && (
-            <span className="ml-2 inline-block rounded-full border border-saffron-200 bg-saffron-50 px-2 py-px align-[2px] text-[11px] font-semibold tabular-nums text-saffron-700">
-              {badge}
-            </span>
-          )}
-        </h2>
-      </div>
-      <p className="mt-2.5 text-sm leading-relaxed text-ink-600">{body}</p>
-    </>
-  );
   return (
     <li id={id} className="scroll-mt-4">
-      <article className={`${CARD}${href ? CARD_LINKED : ""}`}>
-        {href ? (
-          /* The title link covers the whole card (one tap anywhere opens the
-             section); the chips below sit above it. */
-          <Link
-            href={href}
-            data-home-cta={`door-${id}`}
-            className="block after:absolute after:inset-0 after:rounded-2xl focus:outline-none focus-visible:after:ring-2 focus-visible:after:ring-saffron-300"
-          >
-            {head}
-          </Link>
-        ) : (
-          <div>{head}</div>
-        )}
+      <article className={`${CARD}${CARD_LINKED}`}>
+        {/* The title link covers the whole card (one tap anywhere opens the
+            section); the chips below sit above it. */}
+        <Link
+          href={href}
+          data-home-cta={`door-${id}`}
+          className="block after:absolute after:inset-0 after:rounded-2xl focus:outline-none focus-visible:after:ring-2 focus-visible:after:ring-saffron-300"
+        >
+          <div className="flex items-center gap-3">
+            <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-saffron-50 text-2xl">
+              {icon}
+            </span>
+            <h2 className="text-lg font-semibold tracking-tight text-ink-900">
+              {title}
+              {badge && (
+                <span className="ml-2 inline-block rounded-full border border-saffron-200 bg-saffron-50 px-2 py-px align-[2px] text-[11px] font-semibold tabular-nums text-saffron-700">
+                  {badge}
+                </span>
+              )}
+            </h2>
+          </div>
+          <p className="mt-2.5 text-sm leading-relaxed text-ink-600">{body}</p>
+        </Link>
         {children && <div className="relative z-[1] mt-3.5">{children}</div>}
       </article>
     </li>
   );
 }
 
-export function HomeDoors({
-  copy,
-  careersCount,
-  cbseClasses,
-  entranceChips,
-  governmentChips,
-}: {
+export interface HomeDoorsProps {
   copy: HomeDoorsCopy;
   /** CAREERS.length. */
   careersCount: number;
@@ -140,8 +139,27 @@ export function HomeDoors({
   entranceChips: ExamCard[];
   /** The Government door's exams, from the loaded catalogue (doorExamChips). */
   governmentChips: ExamCard[];
-}) {
+}
+
+/** The doors with their data-driven links loaded here (26 Sep 2026, entry
+ *  points): the cached exam rows the linked pages read themselves, so a
+ *  chip renders exactly while its page clears its own floor. */
+export async function HomeDoors(props: HomeDoorsProps) {
+  const links = await loadHomeDoorLinks();
+  return <HomeDoorsView {...props} links={links} />;
+}
+
+/** The doors for given links — pure render (tests pass links directly). */
+export function HomeDoorsView({
+  copy,
+  careersCount,
+  cbseClasses,
+  entranceChips,
+  governmentChips,
+  links,
+}: HomeDoorsProps & { links: HomeDoorLinks }) {
   const D = copy.doors;
+  const afterLabel: Record<HomeAfterLevel, string> = { "12th": D.government.after12, graduation: D.government.afterGraduation };
   return (
     <section className="mt-9 sm:mt-11" aria-label={copy.kicker.label}>
       {/* The independence line sits under the hero pills (HomeHero); here
@@ -168,20 +186,25 @@ export function HomeDoors({
           {/* Code-honest: no notes or practice is claimed until it ships. */}
           <p className="mt-2 text-xs text-ink-500">{D.school.being}</p>
           <div className="mt-3 flex flex-wrap gap-2">
+            {links.boardExams.map((b) => (
+              <Chip key={b.cls} href={b.href} cta={`school-board-exam-${b.cls}`}>
+                {fillHome(D.school.boardExam, { n: b.cls })}
+              </Chip>
+            ))}
             <Chip href="/schooling/icse-cisce" cta="school-icse">{D.school.icse}</Chip>
             <Chip href="/schooling" cta="school-all" go>{D.school.all}</Chip>
           </div>
         </Door>
 
-        {/* No hub page for admission tests exists (see the header), so this
-            door has no whole-card link: its chips are the section. */}
-        <Door id="entrance" icon="🎯" title={D.entrance.title} body={D.entrance.body}>
+        {/* 26 Sep 2026 (entry points): the entrance hub exists (7bab6c7), so
+            the whole card opens it. */}
+        <Door id="entrance" icon="🎯" title={D.entrance.title} body={D.entrance.body} href="/exams/entrance">
           <div className="flex flex-wrap gap-2">
             {entranceChips.map((e) => (
               <ExamChip key={e.code} exam={e} door="entrance" />
             ))}
-            <Chip href="/exams/browse?category=OLYMPIAD" cta="entrance-olympiads">{D.entrance.olympiads}</Chip>
-            <Chip href="/exams/browse" cta="entrance-browse" go>{D.entrance.browse}</Chip>
+            {links.olympiads && <Chip href={links.olympiads} cta="entrance-olympiads">{D.entrance.olympiads}</Chip>}
+            <Chip href="/exams/entrance" cta="entrance-all" go>{D.entrance.browse}</Chip>
           </div>
         </Door>
 
@@ -190,8 +213,13 @@ export function HomeDoors({
             {governmentChips.map((e) => (
               <ExamChip key={e.code} exam={e} door="govt" />
             ))}
-            <Chip href="/exams/browse?category=BANKING" cta="govt-banking">{D.government.banking}</Chip>
+            {links.banking && <Chip href={links.banking} cta="govt-banking">{D.government.banking}</Chip>}
             <Chip href="/exams/state" cta="govt-state">{D.government.state}</Chip>
+            {links.after.map((a) => (
+              <Chip key={a.level} href={a.href} cta={`govt-after-${a.level}`}>
+                {afterLabel[a.level]}
+              </Chip>
+            ))}
             <Chip href="/exams/browse" cta="govt-all" go>{D.government.all}</Chip>
           </div>
         </Door>
@@ -200,6 +228,7 @@ export function HomeDoors({
           <div className="flex flex-wrap gap-2">
             <Chip href="/colleges" cta="college-colleges">{D.college.colleges}</Chip>
             <Chip href="/scholarships" cta="college-scholarships">{D.college.scholarships}</Chip>
+            {links.closingSoon && <Chip href={links.closingSoon} cta="college-closing-soon">{D.college.closingSoon}</Chip>}
             <Chip href="/distance-learning" cta="college-distance">{D.college.distance}</Chip>
           </div>
         </Door>
@@ -219,8 +248,9 @@ export function HomeDoors({
           </div>
         </Door>
 
-        {/* Graduation-course, PG and PhD study do not exist yet: a dashed,
-            unlinked cell that says so, never a door. */}
+        {/* Graduation-course, PG and PhD study do not exist yet: a dashed
+            cell that says so, never a door. Its one link is to the PG
+            entrance exams Shishya has (26 Sep 2026, entry points). */}
         <li aria-label={D.soon.tag}>
           <div className="flex h-full flex-col rounded-2xl border border-dashed border-ink-300 p-[18px] sm:p-[22px]">
             <div className="flex items-center gap-3">
@@ -235,6 +265,13 @@ export function HomeDoors({
               </h2>
             </div>
             <p className="mt-2.5 text-sm leading-relaxed text-ink-500">{D.soon.body}</p>
+            {links.pgEntrances && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Chip href={links.pgEntrances.href} cta="soon-pg-entrances" go>
+                  {fillHome(D.soon.pgExams, { n: links.pgEntrances.n })}
+                </Chip>
+              </div>
+            )}
           </div>
         </li>
       </ul>

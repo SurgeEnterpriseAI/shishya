@@ -53,6 +53,48 @@ function hostOf(url: string | null | undefined): string | null {
   }
 }
 
+const suffixHit = (h: string, s: string) => h === s || h.endsWith("." + s);
+
+// ── Source denylist (26 Sep 2026) ────────────────────────────────────────
+// Why: the generator cited copycat and scraper sites as the source of
+// "announced" dates and news, and every one of them was shown as tier
+// "reported" with a "Source" link — a lookalike of the sarkariresult.com
+// portal on a Cameroon / Isle of Man suffix (sarkariresult.com.cm: 11 live
+// tracker rows + 13 news rows; sarkariresult.com.im 4 + 6; sarkarijob.com.im
+// 1), a job-alert scraper (fastjobsearchers.com 6 + 3, ukexamalert.in 11 +
+// 5), a business group's blog (gngroup.org 6 + 1) and a private college's
+// news page (aryacollegejpr.com 6) — counts from scripts/tmp-w2-g1-probe.ts
+// on 26 Sep 2026. A date such a site "announces" is not announced: it
+// classifies as tier "expected" and its link is never offered as a source
+// (citableSourceUrl). Checked before the official lists, so a denylisted
+// host can never read as official.
+//
+// Two kinds of entry:
+//   • SOURCE_DENYLIST_HOSTS — a host and all its subdomains;
+//   • SOURCE_DENYLIST_SUFFIXES — lookalike country suffixes: ".com" typo
+//     domains that clone Indian exam portals (".com.cm", ".com.im" …). No
+//     conducting body, court or newspaper we cite publishes on them.
+export const SOURCE_DENYLIST_HOSTS: readonly string[] = ["gngroup.org", "fastjobsearchers.com", "ukexamalert.in", "aryacollegejpr.com"];
+export const SOURCE_DENYLIST_SUFFIXES: readonly string[] = ["cm", "com.im", "co.im", "com.co", "om"];
+/** Both lists, for surfaces that print them (editorial notes, tests). */
+export const SOURCE_DENYLIST: readonly string[] = [...SOURCE_DENYLIST_HOSTS, ...SOURCE_DENYLIST_SUFFIXES.map((s) => `*.${s}`)];
+
+/** True when `url`'s host is on the source denylist. A missing or unparsable
+ *  URL is not "untrusted" — it is simply not a citation. */
+export function isUntrustedSource(url: string | null | undefined): boolean {
+  const host = hostOf(url);
+  if (!host) return false;
+  return SOURCE_DENYLIST_HOSTS.some((s) => suffixHit(host, s)) || SOURCE_DENYLIST_SUFFIXES.some((s) => host.endsWith("." + s));
+}
+
+/** The URL a surface may link as a row's source: the URL itself, or null
+ *  when its host is denylisted (26 Sep 2026). Surfaces that print a
+ *  "Source" / "Official notice" link take it from here. */
+export function citableSourceUrl(url: string | null | undefined): string | null {
+  if (!url || !/^https?:\/\//i.test(url)) return null;
+  return isUntrustedSource(url) ? null : url;
+}
+
 /** Display label for a secondary source: bare hostname without www. */
 export function sourceHostLabel(url: string): string {
   return hostOf(url) ?? url.replace(/^https?:\/\//, "").split("/")[0];
@@ -60,11 +102,12 @@ export function sourceHostLabel(url: string): string {
 
 /** True when `url` is on the conducting body's own site or a regulated
  *  government/academic domain. `officialUrl` (from ExamEligibility) adds
- *  the exam's specific portal even when it's on a commercial TLD. */
+ *  the exam's specific portal even when it's on a commercial TLD. A
+ *  denylisted host is never official (26 Sep 2026). */
 export function isOfficialSource(url: string | null | undefined, officialUrl?: string | null): boolean {
   const host = hostOf(url);
   if (!host) return false;
-  const suffixHit = (h: string, s: string) => h === s || h.endsWith("." + s);
+  if (isUntrustedSource(url)) return false;
   if (OFFICIAL_SUFFIXES.some((s) => suffixHit(host, s))) return true;
   if (OFFICIAL_HOSTS.some((s) => suffixHit(host, s))) return true;
   const own = hostOf(officialUrl);
@@ -73,7 +116,9 @@ export function isOfficialSource(url: string | null | undefined, officialUrl?: s
 }
 
 /** Tier of one date row. `confidence`/`url` come straight from the DB;
- *  rows written before the tracker fields existed classify as expected. */
+ *  rows written before the tracker fields existed classify as expected.
+ *  26 Sep 2026: a row cited only to a denylisted host (isUntrustedSource)
+ *  is "expected" — nothing trustworthy announced it. */
 export function sourceTier(
   confidence: string | null | undefined,
   url: string | null | undefined,
@@ -81,6 +126,7 @@ export function sourceTier(
 ): SourceTier {
   const announced = (confidence ?? "").toLowerCase() === "official" && !!url && /^https?:\/\//i.test(url);
   if (!announced) return "expected";
+  if (isUntrustedSource(url)) return "expected";
   return isOfficialSource(url, officialUrl) ? "official" : "reported";
 }
 
@@ -140,6 +186,11 @@ export interface EstimateRowLike {
   tier: SourceTier;
   date: Date | string;
   label: string;
+  /** The row's citation, when the caller has it (TimelineRow does). */
+  url?: string | null;
+  /** Set by a caller that strips a denylisted link before this call
+   *  (citableSourceUrl): the row was cited, but only to a denylisted host. */
+  untrustedSource?: boolean;
 }
 
 /** An announced row of the same kind this close to a passed estimate is
@@ -342,8 +393,17 @@ function wentAhead(row: EstimateRowLike, rows: readonly EstimateRowLike[], d: nu
  *  are a mixed bag (counselling rounds, city slips) and always get the line. */
 export function passedEstimateView(row: EstimateRowLike, rows: readonly EstimateRowLike[], now: Date = new Date()): PassedEstimateView {
   if (!isPassedEstimate(row, now)) return "date";
-  if (row.kind === "OTHER") return "line";
+  // 26 Sep 2026 (source denylist): a passed row whose only citation is a
+  // denylisted copycat or scraper is tier "expected", but a copycat usually
+  // copies a real notice — "No official date yet" could be false. 42 of the
+  // 45 live rows the denylist demoted on 26 Sep 2026 were already past
+  // (scripts/tmp-w2-g1-deny.ts). They read "unsure" ("… has passed — check
+  // the official website"), which claims nothing either way, unless an
+  // announced row of the same event settles them ("omit").
+  const untrusted = row.untrustedSource === true || isUntrustedSource(row.url);
+  if (row.kind === "OTHER") return untrusted ? "unsure" : "line";
   if (supersedingRow(row, rows, now)) return "omit";
+  if (untrusted) return "unsure";
   const d = dayOf(row.date);
   if (sameKindUnclear(row, rows, d) || wentAhead(row, rows, d, istDayNumber(now))) return "unsure";
   return "line";

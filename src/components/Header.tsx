@@ -53,8 +53,12 @@ const DEFAULT_LOCALE = "en";
 // (structure is text: the anchor text is what a sitelink displays); the one
 // action, Ask Shishya, is the row's single chip; the exam utilities behind
 // the divider are a shade lighter so the sections read first.
-const SECTION_LINK = "hover:text-saffron-100";
-const UTILITY_LINK = "font-medium text-white/90 hover:text-white";
+// 26 Sep 2026 (G2): py-1 gives every row link a 24 px+ tap target (WCAG 2.5.8
+// target size; the text alone is ~19.5 px tall at 13 px). Vertical padding
+// only: the row stays one 36 px line and its sideways scroll at 360 px is
+// unchanged.
+const SECTION_LINK = "py-1 hover:text-saffron-100";
+const UTILITY_LINK = "py-1 font-medium text-white/90 hover:text-white";
 
 export function Header({ admin = false }: { admin?: boolean }) {
   // Daily-rotating motivational quote shown in the empty middle space
@@ -245,7 +249,7 @@ export function Header({ admin = false }: { admin?: boolean }) {
               prefetch={false}
               data-nav="ask"
               title="Ask Shishya — free, no sign-in"
-              className="rounded-md bg-white px-2.5 py-0.5 text-saffron-700 hover:bg-saffron-50"
+              className="rounded-md bg-white px-2.5 py-1 text-saffron-700 hover:bg-saffron-50"
             >
               Ask Shishya
             </Link>

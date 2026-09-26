@@ -8,6 +8,8 @@
 // 26 vs 27 Sep). Row labels below are the live tracker's own.
 
 import { describe, it, expect } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
 import { buildTimeline, titleCycleYear, type TimelineInput } from "@/lib/exam-timeline";
 import { parseHubTitle } from "@/lib/truth-lint";
 import {
@@ -30,7 +32,13 @@ import {
   sameStage,
   HELD_WINDOW_DAYS,
   type HubTitleExam,
+  hubCourseNameTail,
+  hubPracticeCtaCopy,
+  hubPracticeSuffix,
+  hubShareMessage,
+  type HubOffers,
 } from "@/lib/hub-title";
+import { G3_EXAMS, G3_NOW, type G3Exam } from "../fixtures/g3-exams";
 
 // 16 Sep 2026, 11:30 IST. Dates are midnight-UTC of the IST calendar day.
 const now = new Date("2026-09-16T06:00:00Z");
@@ -538,5 +546,126 @@ describe("clipDescription — the hub meta description at a sentence or word bou
     const out = clipDescription(d, 300);
     expect(out.length).toBeLessThanOrEqual(300);
     expect(out).toMatch(/[.…]$/);
+  });
+});
+
+// 26 Sep 2026 (discoverability wave 2 G3): the title's tail names what the
+// hub holds. "Free Mock Tests" only with a shared mock, "PYQ" only with
+// PYQ-pattern sets or the body's papers, "Syllabus" only where /syllabus
+// renders, "Eligibility" only with the hand-written eligibility block.
+// Fixture rows: tests/fixtures/g3-exams.ts (prod read, 26 Sep).
+describe("hubPracticeSuffix — the title promises only what the hub holds", () => {
+  const all: HubOffers = { hasMocks: true, hasPyq: true, hasSyllabus: true, hasEligibility: true };
+
+  it("every branch, en", () => {
+    expect(hubPracticeSuffix("en", all)).toBe("Free Mock Tests, PYQ");
+    expect(hubPracticeSuffix("en", { ...all, hasPyq: false })).toBe("Free Mock Tests & Syllabus");
+    expect(hubPracticeSuffix("en", { ...all, hasPyq: false, hasSyllabus: false })).toBe("Free Mock Tests & Exam Dates");
+    expect(hubPracticeSuffix("en", { ...all, hasMocks: false })).toBe("PYQ & Syllabus");
+    expect(hubPracticeSuffix("en", { ...all, hasMocks: false, hasSyllabus: false })).toBe("PYQ & Exam Dates");
+    expect(hubPracticeSuffix("en", { hasMocks: false, hasPyq: false, hasSyllabus: true, hasEligibility: true })).toBe("Syllabus, Dates & Eligibility");
+    expect(hubPracticeSuffix("en", { hasMocks: false, hasPyq: false, hasSyllabus: true })).toBe("Syllabus & Exam Dates");
+    expect(hubPracticeSuffix("en", { hasMocks: false, hasPyq: false, hasSyllabus: false, hasEligibility: true })).toBe("Exam Dates & Eligibility");
+    expect(hubPracticeSuffix("en", { hasMocks: false, hasPyq: false, hasSyllabus: false })).toBe("Exam Dates & Updates");
+  });
+
+  it("no variant promises mocks, PYQ or a syllabus it does not have, in any language", () => {
+    for (const lc of ["en", "hi", "te"] as const) {
+      for (const hasSyllabus of [true, false]) {
+        for (const hasEligibility of [true, false]) {
+          const none = hubPracticeSuffix(lc, { hasMocks: false, hasPyq: false, hasSyllabus, hasEligibility });
+          expect(none, lc).not.toMatch(/Mock|PYQ|मॉक|पिछले साल|మాక్|గత సంవత్సరాల/);
+          const noPyq = hubPracticeSuffix(lc, { hasMocks: true, hasPyq: false, hasSyllabus, hasEligibility });
+          expect(noPyq, lc).not.toMatch(/PYQ|पिछले साल|గత సంవత్సరాల/);
+          const noSyl = hubPracticeSuffix(lc, { hasMocks: false, hasPyq: false, hasSyllabus: false, hasEligibility });
+          expect(noSyl, lc).not.toMatch(/Syllabus|सिलेबस|సిలబస్/);
+        }
+      }
+    }
+    // hi/te keep the old tail exactly when both exist.
+    expect(hubPracticeSuffix("hi", all)).toBe("मुफ़्त मॉक टेस्ट, पिछले साल के पेपर");
+    expect(hubPracticeSuffix("te", all)).toBe("ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు");
+  });
+
+  /** The English title as page.tsx assembles it for a fixture exam. */
+  function fixtureTitle(e: G3Exam, offers: HubOffers): string {
+    const t = tl(e.rows, G3_NOW);
+    const lead = hubDateLead(t, e);
+    const dateBit =
+      lead.kind === "held"
+        ? `${heldTitleLead("en", lead, lead.row.tier === "official" ? null : "reported")}, `
+        : lead.kind === "revision"
+          ? `${revisionTitleLead("en")}, `
+          : lead.kind === "announced"
+            ? `Exam Date ${lead.row.date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}, `
+            : "Exam Date Not Announced Yet, ";
+    return `${hubTitlePrefix("en", e.shortName, hubTitleYear(lead, t, e, G3_NOW), dateBit)}${hubPracticeSuffix("en", offers)} | Shishya`;
+  }
+
+  it("SSC CGL (22 shared mocks, 5 PYQ years): unchanged tail, and truth-lint still reads the date", () => {
+    const e = G3_EXAMS.SSC_CGL;
+    const title = fixtureTitle(e, { hasMocks: e.systemMocks > 0, hasPyq: e.pyqYears > 0, hasSyllabus: true, hasEligibility: true });
+    expect(title).toBe("SSC CGL 2026 — Exam Date 30 Sept 2026, Free Mock Tests, PYQ | Shishya");
+    expect(parseHubTitle(title).kind).toBe("date");
+  });
+
+  it("CA Foundation (no shared mock, no PYQ, no syllabus; eligibility block): no practice promise", () => {
+    const e = G3_EXAMS.CA_FOUNDATION;
+    const title = fixtureTitle(e, { hasMocks: e.systemMocks > 0, hasPyq: e.pyqYears > 0 || e.officialPapers > 0, hasSyllabus: false, hasEligibility: true });
+    expect(title).toBe("CA Foundation 2027 — Exam Date Not Announced Yet, Exam Dates & Eligibility | Shishya");
+    expect(title).not.toMatch(/Mock|PYQ/);
+    expect(parseHubTitle(title).kind).toBe("not-announced");
+  });
+
+  it("every variant keeps the date lead parseable in hi and te", () => {
+    for (const lc of ["hi", "te"] as const) {
+      const lead = lc === "hi" ? "परीक्षा तिथि अभी घोषित नहीं" : "పరీక్ష తేదీ ఇంకా ప్రకటించలేదు";
+      for (const o of [
+        { hasMocks: false, hasPyq: false, hasSyllabus: true, hasEligibility: true },
+        { hasMocks: true, hasPyq: false, hasSyllabus: false },
+        { hasMocks: false, hasPyq: false, hasSyllabus: false },
+      ]) {
+        const title = `${hubTitlePrefix(lc, "CDS", { kind: "none" }, `${lead}, `)}${hubPracticeSuffix(lc, o)} | Shishya`;
+        expect(parseHubTitle(title).kind, `${lc} ${title}`).toBe("not-announced");
+      }
+    }
+  });
+
+  it("Course name, sign-in box copy and share line follow the same offers", () => {
+    expect(hubCourseNameTail(all)).toBe("Free Mock Tests, Previous Year Papers, Syllabus & Study Help");
+    expect(hubCourseNameTail({ hasMocks: false, hasPyq: false, hasSyllabus: false })).toBe("Exam Dates & Study Help");
+    expect(hubPracticeCtaCopy("en", all)).toBeNull();
+    for (const lc of ["en", "hi", "te"]) {
+      const c = hubPracticeCtaCopy(lc, { hasMocks: true, hasPyq: false, hasSyllabus: true })!;
+      expect(c.coachTitle, lc).toContain("{short}");
+      expect(`${c.coachTitle} ${c.coachBodyA}`, lc).not.toMatch(/PYQ|previous year|पिछले साल|గత సంవత్సరాల/i);
+    }
+    expect(hubShareMessage("SSC CGL", all, true)).toBe("SSC CGL — free mock tests, previous year papers & full syllabus on Shishya (100% free, in your language):");
+    expect(hubShareMessage("CA Foundation", { hasMocks: false, hasPyq: false, hasSyllabus: false }, false)).toBe(
+      "CA Foundation — exam dates & updates on Shishya (100% free, in your language):",
+    );
+  });
+
+  it("wiring: the hub builds every title, the Course name and the box from these helpers", () => {
+    const hub = fs.readFileSync(path.join(process.cwd(), "src/app/exams/[code]/page.tsx"), "utf8");
+    expect(hub).not.toContain("Free Mock Tests, PYQ | Shishya");
+    expect(hub).not.toContain("मुफ़्त मॉक टेस्ट, पिछले साल के पेपर | Shishya");
+    expect(hub).not.toContain("ఉచిత మాక్ టెస్టులు, గత సంవత్సరాల పేపర్లు | Shishya");
+    expect(hub).toContain('${hubPracticeSuffix("en", offers)} | Shishya');
+    expect(hub).toContain('${hubPracticeSuffix("hi", offers)} | Shishya');
+    expect(hub).toContain('${hubPracticeSuffix("te", offers)} | Shishya');
+    expect(hub).toContain("hubCourseNameTail(hubOffers)");
+    expect(hub).toContain("{!userId && hasContent && (");
+    expect(hub).toContain("hasMocks: shared.systemMocks.length > 0,");
+    expect(hub).toContain("hasMocks: systemMocks.length > 0,");
+  });
+
+  it("hub links: /mocks/{id} nofollow; attempts and the dashboard crumb only when signed in", () => {
+    const hub = fs.readFileSync(path.join(process.cwd(), "src/app/exams/[code]/page.tsx"), "utf8");
+    const mockLinks = [...hub.matchAll(/href=\{`\/mocks\/\$\{[^}]+\}`\}\s*\n\s*([^\n]+)/g)];
+    expect(mockLinks.length).toBe(2);
+    for (const m of mockLinks) expect(m[1].trim()).toBe('rel="nofollow"');
+    expect(hub).toMatch(/\{userId && \(\s*<Link\s*href=\{`\/exams\/\$\{exam\.code\}\/attempts`\}/);
+    expect(hub).toMatch(/\{userId \? \(\s*<>\s*<Link href="\/dashboard"/);
   });
 });

@@ -12,7 +12,8 @@ import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { getT, getUrlLocale, tFor } from "@/lib/i18n-server";
 import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale, twinCanonical } from "@/lib/seo-locale";
-import { getCalendarTwinVerdict } from "@/lib/twin-localisation";
+import { getCalendarTwinVerdict, loadTwinVerdicts } from "@/lib/twin-localisation";
+import { unstable_cache } from "next/cache";
 import { KIND_ICON, MATERIAL_NEWS_RE, buildTimeline, fmtDay, type DateKind, type TimelineRow } from "@/lib/exam-timeline";
 import { sourceTier } from "@/lib/official-source";
 import { istDayNumber } from "@/lib/exam-phase";
@@ -134,6 +135,31 @@ export async function generateMetadata(): Promise<Metadata> {
 
 type Row = TimelineRow & { examCode: string; examShort: string; examId: string };
 
+// 26 Sep 2026 (discoverability G2): on /hi and /te the exam links went to
+// the /hi or /te twin of every hub and /updates page, but most twins have
+// English bodies and canonicalise to English (src/lib/twin-localisation.ts:
+// only ~42 pass the gate). A twin URL is now linked only when its verdict
+// says it is localised; otherwise the English page. One cached read for the
+// exams on the page (keyed by their ids, 30 minutes, busted with the exam
+// payload's tag); a failed read links English — never a twin we could not
+// measure.
+type LinkTwins = Record<string, { hub: { hi: boolean; te: boolean }; updates: { hi: boolean; te: boolean } }>;
+const calendarLinkTwins = unstable_cache(
+  async (examIds: string[]): Promise<LinkTwins> => {
+    const rows = await loadTwinVerdicts(examIds);
+    const out: LinkTwins = {};
+    for (const r of rows) {
+      out[r.code] = {
+        hub: { hi: r.verdicts.hub.hi === true, te: r.verdicts.hub.te === true },
+        updates: { hi: r.verdicts.updates.hi === true, te: r.verdicts.updates.te === true },
+      };
+    }
+    return out;
+  },
+  ["calendar-link-twins-v1"],
+  { revalidate: 1800, tags: ["exam-shared"] },
+);
+
 export default async function ExamCalendarPage() {
   const [{ t: tRaw, locale }, urlLocale] = await Promise.all([getT(), getUrlLocale()]);
   const t = tRaw as TFn;
@@ -187,6 +213,15 @@ export default async function ExamCalendarPage() {
   const path = "/exam-calendar";
   const url = localizedUrl(path, urlLocale);
   const p = (rel: string) => localizedPath(rel, urlLocale);
+  const linkTwins: LinkTwins | null =
+    urlLocale === "en"
+      ? null
+      : await calendarLinkTwins([...new Set([...rows.map((r) => r.examId), ...news.map((n) => n.examId)])].sort()).catch(() => null);
+  /** An exam page link: the /hi or /te twin only when that twin is localised, else the English page. */
+  const ep = (code: string, surface: "hub" | "updates") => {
+    const rel = surface === "hub" ? `/exams/${code}` : `/exams/${code}/updates`;
+    return urlLocale !== "en" && linkTwins?.[code]?.[surface]?.[urlLocale] === true ? localizedPath(rel, urlLocale) : rel;
+  };
   const lang = inLanguage(urlLocale);
   const officialEvents = [...examDays.values()].filter((r) => r.official).slice(0, 50);
   const jsonLd: object[] = [
@@ -264,7 +299,7 @@ export default async function ExamCalendarPage() {
               {thisWeek.map((r) => (
                 <li key={r.id} className="rounded-md border border-ink-200 bg-white p-3 text-sm">
                   <span className="mr-1" aria-hidden>{KIND_ICON[r.kind]}</span>
-                  <Link href={p(`/exams/${r.examCode}/updates`)} className="font-semibold text-ink-900 hover:text-saffron-700">{r.examShort}</Link>
+                  <Link href={ep(r.examCode, "updates")} className="font-semibold text-ink-900 hover:text-saffron-700">{r.examShort}</Link>
                   <span className="text-ink-700"> — {r.label}</span>
                   <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-ink-600">
                     <span className="font-medium">{fmtDay(r.date, locale, true)}</span>
@@ -303,15 +338,15 @@ export default async function ExamCalendarPage() {
                           {r.daysFromToday === 0 && <span className="ml-2 rounded bg-saffron-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{t("tracker.today")}</span>}
                         </td>
                         <td className="px-3 py-2">
-                          <Link href={p(`/exams/${r.examCode}`)} className="font-semibold text-ink-900 hover:text-saffron-700">{r.examShort}</Link>
+                          <Link href={ep(r.examCode, "hub")} className="font-semibold text-ink-900 hover:text-saffron-700">{r.examShort}</Link>
                           <span className="text-ink-600"> — {r.label}</span>
                           {r.url && (
                             <a href={r.url} target="_blank" rel="noopener noreferrer" className="ml-2 text-xs font-medium text-saffron-700 hover:text-saffron-800">{r.official ? t("tracker.officialNotice") : t("tracker.source")}</a>
                           )}
                         </td>
                         <td className="whitespace-nowrap px-3 py-2 text-xs">
-                          <Link href={p(`/exams/${r.examCode}/updates`)} className="mr-3 font-medium text-saffron-700 hover:text-saffron-800">{t("calendar.tracker")}</Link>
-                          <Link href={p(`/exams/${r.examCode}`)} className="font-medium text-ink-600 hover:text-ink-900">{t("calendar.mock")}</Link>
+                          <Link href={ep(r.examCode, "updates")} className="mr-3 font-medium text-saffron-700 hover:text-saffron-800">{t("calendar.tracker")}</Link>
+                          <Link href={ep(r.examCode, "hub")} className="font-medium text-ink-600 hover:text-ink-900">{t("calendar.mock")}</Link>
                         </td>
                       </tr>
                     ))}
@@ -330,7 +365,7 @@ export default async function ExamCalendarPage() {
                 const link = n.url && /^https?:\/\//.test(n.url) ? n.url : null;
                 return (
                   <li key={n.id} className="rounded-md border border-ink-200 bg-white p-3 text-sm">
-                    <Link href={p(`/exams/${n.exam.code}/updates`)} className="font-semibold text-saffron-800 hover:text-saffron-900">{n.exam.shortName}</Link>
+                    <Link href={ep(n.exam.code, "updates")} className="font-semibold text-saffron-800 hover:text-saffron-900">{n.exam.shortName}</Link>
                     <span className="text-ink-700"> — </span>
                     <Link href={`/exams/${n.exam.code}/news/${n.id}`} prefetch={false} className="text-ink-900 hover:text-saffron-700">{n.title}</Link>
                     <span className="ml-2 text-xs text-ink-500">{fmtDay(new Date(n.publishedAt as unknown as string | Date), locale)}</span>

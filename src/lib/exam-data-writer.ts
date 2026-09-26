@@ -37,12 +37,24 @@
 //     dropped: the curated row is the answer for that cycle. An "answer
 //     key" row stored as OTHER is an ANSWER_KEY row and needs an official
 //     citation like any other key date.
+//   • IndexNow on fact changes (26 Sep 2026, G1): when a run changes the
+//     exam's ANNOUNCED dates — a new official / reported date, a tier
+//     upgrade, an announced date gone — the hub, tracker, exam calendar and
+//     state page go to IndexNow for ANY exam, not only inside exam week.
+//     Announced = sourceTier official or reported (src/lib/official-source.ts;
+//     the stored confidence has no "reported" value, and a denylisted
+//     citation is "expected"). The trigger is a DIFF of the announced fact set
+//     (kind, IST day, tier) before and after the write — never "a date row was
+//     written": every regeneration archives and re-creates its rows, so that
+//     would ping unchanged pages on every refresh of every announced exam.
 
 import type { PrismaClient } from "@prisma/client";
 import type { DateKind, ExamInfoResult } from "@/lib/ai/exam-info";
-import { ANSWER_KEY_LABEL, SUPPRESSED_SOURCE, resolveKind } from "@/lib/exam-timeline";
+import { ANSWER_KEY_LABEL, SUPPRESSED_SOURCE, resolveKind, rowCitation } from "@/lib/exam-timeline";
 import { istDayNumber } from "@/lib/exam-phase";
-import { examWeekUrls, submitIndexNow } from "@/lib/indexnow";
+import { examWeekUrls, factUrlsForExam, submitIndexNow } from "@/lib/indexnow";
+import { sourceTier } from "@/lib/official-source";
+import { STATES, stateSlug } from "@/lib/state-info";
 import { planNewsWrites, sameStory, storyFeatures, STORY_LOOKBACK_DAYS, type NewsWritePlan } from "@/lib/news-dedupe";
 import { gateTwinUrls, loadTwinVerdicts } from "@/lib/twin-localisation";
 
@@ -71,6 +83,39 @@ const REVIVE_POOL = 200;
 
 type Db = Pick<PrismaClient, "examNewsItem" | "examImportantDate" | "exam">;
 
+/** One tracker row as the announced-fact diff reads it. */
+export interface FactRow {
+  kind: string | null;
+  label: string;
+  date: Date;
+  isExamDay?: boolean | null;
+  confidence?: string | null;
+  url?: string | null;
+  source?: string | null;
+}
+
+/** The exam's announced facts: "KIND|YYYY-MM-DD|tier" for every row whose
+ *  tier is official or reported (26 Sep 2026). Labels are left out on
+ *  purpose — a reworded label is not a new fact. `officialUrl` = the exam's
+ *  portal (ExamEligibility), the same widening every date surface uses. */
+export function announcedFactKeys(rows: readonly FactRow[], officialUrl?: string | null): Set<string> {
+  const out = new Set<string>();
+  for (const r of rows) {
+    const tier = sourceTier(r.confidence, rowCitation(r), officialUrl);
+    if (tier === "expected") continue;
+    const kind = resolveKind({ kind: r.kind, label: r.label, isExamDay: !!r.isExamDay });
+    out.add(`${kind}|${r.date.toISOString().slice(0, 10)}|${tier}`);
+  }
+  return out;
+}
+
+/** True when the two announced-fact sets differ in any key. */
+export function announcedFactsChanged(before: ReadonlySet<string>, after: ReadonlySet<string>): boolean {
+  if (before.size !== after.size) return true;
+  for (const k of after) if (!before.has(k)) return true;
+  return false;
+}
+
 export interface WriteResult {
   /** Items the generation returned. */
   news: number;
@@ -90,9 +135,11 @@ export interface WriteResult {
   newsSuppressed: number;
   /** Generated dates dropped: suppressed, beside a curated row, or an uncited answer key. */
   datesDropped: number;
-  /** True when the exam is inside its exam week and the URL set was
-   *  handed to IndexNow (fire-and-forget; acceptance is not awaited). */
+  /** True when a URL set was handed to IndexNow — the exam-week set, the
+   *  announced-fact set, or both (acceptance is not reported here). */
   indexNow?: boolean;
+  /** True when this run changed the exam's announced dates (26 Sep 2026). */
+  factsChanged?: boolean;
 }
 
 export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult, now: Date = new Date()): Promise<WriteResult> {
@@ -150,6 +197,11 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
   let keptOfficial = 0;
   let datesDropped = 0;
   let datesWritten = false;
+  // Announced-fact diff inputs (26 Sep 2026): the live rows the run can
+  // change, before and after it. Curated rows are never touched, so they sit
+  // on both sides.
+  const factsBefore: FactRow[] = [];
+  const factsAfter: FactRow[] = [];
   if (info.dates.length > 0) {
     const todayIst = istDayNumber(now);
     const [curated, suppressedDates] = await Promise.all([
@@ -163,7 +215,7 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
           kind: { not: null },
           OR: [{ source: null }, { NOT: { source: { startsWith: "ai-generated" } } }],
         },
-        select: { kind: true, label: true, date: true, isExamDay: true },
+        select: { kind: true, label: true, date: true, isExamDay: true, confidence: true, url: true, source: true },
       }),
       db.examImportantDate.findMany({
         where: { examId, source: SUPPRESSED_SOURCE },
@@ -201,8 +253,9 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
     // Prior official rows the new run did NOT re-confirm as official stay live.
     const prior = await db.examImportantDate.findMany({
       where: { examId, source: GEN_SOURCE, archivedAt: null },
-      select: { id: true, kind: true, label: true, date: true, confidence: true, url: true },
+      select: { id: true, kind: true, label: true, date: true, confidence: true, url: true, isExamDay: true },
     });
+    factsBefore.push(...curated, ...prior);
     const keepIds: string[] = [];
     const keptKeys = new Set<string>();
     for (const p of prior) {
@@ -218,6 +271,7 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
     // Everything the run returned was dropped → keep the live generation.
     if (incoming.length > 0) {
     datesWritten = true;
+    factsAfter.push(...curated, ...prior.filter((p) => keepIds.includes(p.id)));
     await db.examImportantDate.updateMany({
       where: { examId, source: GEN_SOURCE, archivedAt: null, ...(keepIds.length ? { id: { notIn: keepIds } } : {}) },
       data: { archivedAt: now },
@@ -240,20 +294,26 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
           url: d.source ?? null,
         },
       });
+      factsAfter.push({ kind: d.kind, label: d.label, date, isExamDay: d.isExamDay, confidence: d.confidence, url: d.source ?? null, source: GEN_SOURCE });
     }
     }
   }
 
-  // ── exam week → IndexNow ────────────────────────────────────────────
-  // Only when the exam's pages actually changed — a new story, a story that
-  // came back or left, a story whose status or stated facts changed, or a
-  // new tracker generation; a wording-only restatement is not a change
-  // (13 Sep 2026) — and only for an exam with a live TYPED exam-day
-  // row within ±7 days (legacy untyped rows never trigger). Hindi / Telugu
-  // twins go only when localised (src/lib/twin-localisation.ts); a failed
-  // measurement withholds them. The daily indexnow-examweek cron is the
-  // safety net for the last exam of a run.
+  // ── IndexNow: exam week, and announced-fact changes ─────────────────
+  // Exam week: only when the exam's pages actually changed — a new story, a
+  // story that came back or left, a story whose status or stated facts
+  // changed, or a new tracker generation; a wording-only restatement is not
+  // a change (13 Sep 2026) — and only for an exam with a live TYPED
+  // exam-day row within ±7 days (legacy untyped rows never trigger).
+  // Fact changes (26 Sep 2026): for ANY exam whose announced-date set
+  // (announcedFactKeys) differs after this run — hub, tracker, exam
+  // calendar, state page (factUrlsForExam). Both sets are merged,
+  // de-duplicated and sent in ONE submission. Hindi / Telugu twins go only
+  // when localised (src/lib/twin-localisation.ts); a failed measurement
+  // withholds them. The daily indexnow-examweek cron is the safety net for
+  // the last exam of a run.
   let indexNow = false;
+  let factsChanged = false;
   const newsChanged = plan !== null && plan.create.length + plan.archive.length + plan.revived + plan.refreshed > 0;
   if (newsChanged || datesWritten) {
     const todayIst = istDayNumber(now);
@@ -265,18 +325,29 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
         select: { id: true },
       })
       .catch(() => null);
-    if (near) {
-      const exam = await db.exam.findUnique({ where: { id: examId }, select: { code: true } }).catch(() => null);
+    if (near || datesWritten) {
+      const exam = await db.exam
+        .findUnique({ where: { id: examId }, select: { code: true, state: true, eligibility: { select: { officialUrl: true } } } })
+        .catch(() => null);
       if (exam?.code) {
-        indexNow = true;
-        // Awaited (10 s cap inside submitIndexNow): a detached fetch can be
-        // dropped when the cron's function returns right after the last exam.
-        const twins = await loadTwinVerdicts([examId], now).catch(() => []);
-        // /cutoff only when the page renders; a failed gate read withholds it
-        // (16 Sep 2026, src/lib/exam-page-gates.ts).
-        const { examPageGates, GATES_CLOSED } = await import("@/lib/exam-page-gates");
-        const pageGates = await examPageGates(exam.code, GATES_CLOSED);
-        await submitIndexNow(gateTwinUrls(examWeekUrls(exam.code, pageGates), new Map(twins.map((t) => [t.code, t.verdicts]))));
+        const officialUrl = exam.eligibility?.officialUrl ?? null;
+        factsChanged = datesWritten && announcedFactsChanged(announcedFactKeys(factsBefore, officialUrl), announcedFactKeys(factsAfter, officialUrl));
+        const urls: string[] = [];
+        if (factsChanged) urls.push(...factUrlsForExam(exam.code, exam.state && exam.state in STATES ? stateSlug(exam.state) : null));
+        if (near) {
+          // /cutoff only when the page renders; a failed gate read withholds it
+          // (16 Sep 2026, src/lib/exam-page-gates.ts).
+          const { examPageGates, GATES_CLOSED } = await import("@/lib/exam-page-gates");
+          const pageGates = await examPageGates(exam.code, GATES_CLOSED);
+          urls.push(...examWeekUrls(exam.code, pageGates));
+        }
+        if (urls.length > 0) {
+          indexNow = true;
+          // Awaited (10 s cap inside submitIndexNow): a detached fetch can be
+          // dropped when the cron's function returns right after the last exam.
+          const twins = await loadTwinVerdicts([examId], now).catch(() => []);
+          await submitIndexNow(gateTwinUrls([...new Set(urls)], new Map(twins.map((t) => [t.code, t.verdicts]))));
+        }
       }
     }
   }
@@ -293,5 +364,6 @@ export async function writeExamInfo(db: Db, examId: string, info: ExamInfoResult
     newsSuppressed,
     datesDropped,
     indexNow,
+    factsChanged,
   };
 }

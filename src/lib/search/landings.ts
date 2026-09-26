@@ -33,6 +33,12 @@ export const SEARCH_LANDINGS: readonly SearchLanding[] = [
     path: "/exams/browse", section: "government", title: "All exams", sub: "Browse every exam on Shishya by category",
     terms: ["all exams", "exam list", "browse exams", "list of exams", "exams list", "सभी परीक्षाएं", "अन्य परीक्षाएं", "అన్ని పరీక్షలు"],
   },
+  // 26 Sep 2026 (G2): the Entrance section's own hub (src/app/exams/entrance, live since Wave 1) —
+  // also the section fallback for entrance searches (resolve.ts SECTION_FALLBACK).
+  {
+    path: "/exams/entrance", section: "entrance", title: "Entrance exams", sub: "National entrance exams, olympiads and state CETs",
+    terms: ["entrance exams", "entrance exam", "entrance exams in india", "all entrance exams", "list of entrance exams", "entrance tests", "प्रवेश परीक्षाएं", "ప్రవేశ పరీక్షలు"],
+  },
   {
     path: "/exams/state", section: "government", title: "Exams by state", sub: "Government and entrance exams, state by state",
     terms: ["exams by state", "state exams", "state wise exams", "state government exams", "state psc", "राज्य परीक्षाएं", "రాష్ట్ర పరీక్షలు"],

@@ -74,7 +74,55 @@ export interface Scholarship {
   relevantExamCodes?: string[];
   /** Free-text tags for search and the AI tutor's matching. */
   tags: string[];
+  /** 26 Sep 2026 (G4): this year's application window, filled ONLY where the
+   *  date was read on the official portal or notice itself. Absent = no
+   *  2026-27 date checked yet; the page then shows `deadline` as the usual
+   *  window, never as this year's date. */
+  cycle?: ScholarshipCycle;
+  /** 26 Sep 2026 (G4): the scheme no longer takes new applicants, per the
+   *  awarding government's own statement. A closed scheme is kept (its old
+   *  URL still answers) but left out of every list, marked on its page and
+   *  noindexed there (src/lib/scholarship-lists.ts isOpenScheme). */
+  closed?: { note: string; sourceUrl: string; checkedOn: string };
+  /** 27 Sep 2026 (repair): the day this row's name, amount, eligibility and
+   *  apply link were re-checked against the awarding body's own page, and
+   *  that page. Absent = not re-checked since the May 2026 bulk import (the
+   *  catalogue grew 49 → 208 rows in four days). A /scholarships/for/* list
+   *  is indexable only when every row it lists carries this
+   *  (src/lib/scholarship-lists.ts isFilterListIndexable) — a new list
+   *  family must not be built on unverified rows (Google's scaled-content
+   *  policy). A cycle date read on the portal is NOT a review of the row. */
+  reviewed?: { on: string; sourceUrl: string };
+  /** 27 Sep 2026 (repair): why this row is kept out of every
+   *  /scholarships/for/* and closing-soon list — it is not a scholarship (a
+   *  bicycle or uniform scheme, skill training, a coaching institute's fee
+   *  waiver, a sports academy's tryout) or its status is in doubt. Its own
+   *  page still answers; the reason is for the catalogue audit. */
+  unlisted?: string;
 }
+
+/** One academic year's application window (26 Sep 2026, G4).
+ *  tier "official" = read on the awarding body's own portal / notice;
+ *  "reported" = a secondary source that names its official source. Dates are
+ *  IST calendar days (YYYY-MM-DD). A cycle with no closesOn records that the
+ *  official portal was checked and shows no 2026-27 last date yet. */
+export interface ScholarshipCycle {
+  year: "2026-27";
+  opensOn?: string;
+  closesOn?: string;
+  sourceUrl: string;
+  tier: "official" | "reported";
+  checkedOn: string;
+  /** Anything the date alone would misstate (renewal-only windows,
+   *  conflicting dates on the same portal). Shown beside the date. */
+  note?: string;
+}
+
+// NSP's scheme cards, read 26 Sep 2026 (https://scholarships.gov.in/All-Scholarships,
+// "Schemes On NSP", Academic Year 2026-27). One constant per source so the
+// rows below cannot drift apart.
+const NSP_SCHEMES_URL = "https://scholarships.gov.in/All-Scholarships";
+const G4_CHECKED = "2026-09-26";
 
 export const SCHOLARSHIPS: Scholarship[] = [
   // ─── CENTRAL / NATIONAL ───────────────────────────────────────────
@@ -88,13 +136,19 @@ export const SCHOLARSHIPS: Scholarship[] = [
     eligibility: {
       categories: ["SC", "ST", "OBC", "MIN"],
       incomeMaxLakhs: 2.5,
-      note: "Family income ceiling varies by category (₹2.5L SC, ₹1L ST, ₹1.5L OBC). Indian citizen, regular full-time student in a recognised institution.",
+      // 26 Sep 2026 (G4): re-read on each ministry's own scheme guidelines. The
+      // old note said "₹1L ST, ₹1.5L OBC" — the ST guidelines (hosted on NSP)
+      // and the OBC/EBC/DNT guidelines (socialjustice.gov.in, PM YASASVI) both
+      // say ₹2.50 lakh; SC is ₹2,50,000 (socialjustice.gov.in, PMS-SC
+      // guidelines revised March 2021, para 5.3); minorities ₹2.00 lakh with
+      // at least 50% in the previous final exam (minorityaffairs.gov.in).
+      note: "Family income ceiling (parents' income from all sources, per the scheme guidelines): ₹2.5 lakh a year for SC, ST and OBC/EBC/DNT students; ₹2 lakh for minority students, who also need at least 50% marks in the previous final exam. Indian citizen, studying after Class 10 in a recognised institution.",
     },
     amount: "Tuition fees + maintenance allowance ₹230–₹1,200/month + book grant. Total ₹4,000–₹13,500/year depending on hostel/day-scholar status.",
     applyUrl: "https://scholarships.gov.in/",
     officialSite: "https://scholarships.gov.in/",
     description:
-      "Largest central scheme for SC/ST/OBC/Minority students in post-class-10 education. Covers tuition + monthly stipend + book grant. Applied through the National Scholarship Portal (NSP).",
+      "Largest central scheme family for SC/ST/OBC/Minority students in post-class-10 education. Covers tuition + monthly stipend + book grant. Applied through the National Scholarship Portal (NSP) or your state's scholarship portal — each state implements the scheme for its students.",
     deadline: "Usually Oct–Dec each year (check NSP)",
     tags: ["sc", "st", "obc", "minority", "nsp", "post-matric"],
   },
@@ -136,6 +190,20 @@ export const SCHOLARSHIPS: Scholarship[] = [
       "Awarded to ~82,000 fresh class-12 students annually for college and PG study. Pure merit + means; no caste restriction. Applied via NSP.",
     deadline: "Usually Oct–Nov on NSP",
     tags: ["nsp", "merit", "ug", "pg", "central", "general"],
+    // 26 Sep 2026 (G4): NSP card "PM-USP – Central Sector Scheme Of Scholarship
+    // For College And University Students (CSSS)": "Open from (for Renewal):
+    // 01-06-2026", "Student Application Open till (for Renewal): 30-09-2026".
+    // NSP's own announcement on the same portal says the renewal closing date
+    // is 31-10-2026 — the earlier date is kept as the last date; both are shown.
+    cycle: {
+      year: "2026-27",
+      opensOn: "2026-06-01",
+      closesOn: "2026-09-30",
+      sourceUrl: NSP_SCHEMES_URL,
+      tier: "official",
+      checkedOn: G4_CHECKED,
+      note: "Renewal applications only — NSP lists no fresh-application window for 2026-27 yet. The scheme card on NSP says 30 Sep 2026; NSP's announcement on the same portal says 31 Oct 2026.",
+    },
   },
   {
     id: "pm-yasasvi",
@@ -176,6 +244,10 @@ export const SCHOLARSHIPS: Scholarship[] = [
     deadline: "Sep–Nov",
     relevantExamCodes: ["JEE_MAIN", "MH_MHTCET", "AP_EAMCET", "TS_EAMCET", "KA_KCET", "WB_WBJEE", "KL_KEAM"],
     tags: ["aicte", "girls", "engineering", "technical", "pragati"],
+    // 26 Sep 2026 (G4): NSP cards "AICTE - Pragati Scholarship Scheme For Girl
+    // Students" (Technical Degree and Technical Diploma): open 01-06-2026,
+    // student application open till 31-10-2026.
+    cycle: { year: "2026-27", opensOn: "2026-06-01", closesOn: "2026-10-31", sourceUrl: NSP_SCHEMES_URL, tier: "official", checkedOn: G4_CHECKED },
   },
   {
     id: "saksham-aicte",
@@ -195,6 +267,10 @@ export const SCHOLARSHIPS: Scholarship[] = [
     deadline: "Sep–Nov",
     relevantExamCodes: ["JEE_MAIN", "MH_MHTCET", "AP_EAMCET", "TS_EAMCET", "KA_KCET"],
     tags: ["aicte", "disability", "specially-abled", "technical", "saksham"],
+    // 26 Sep 2026 (G4): NSP cards "AICTE - Saksham Scholarship Scheme For
+    // Specially Abled Student" (Technical Degree and Diploma): open
+    // 01-06-2026, student application open till 31-10-2026.
+    cycle: { year: "2026-27", opensOn: "2026-06-01", closesOn: "2026-10-31", sourceUrl: NSP_SCHEMES_URL, tier: "official", checkedOn: G4_CHECKED },
   },
   {
     id: "cbse-single-girl",
@@ -232,6 +308,9 @@ export const SCHOLARSHIPS: Scholarship[] = [
       "Stops bright kids from poor families dropping out of secondary school. ~1L scholarships awarded each year via state-wise selection exam.",
     deadline: "State NMMSS exam usually Nov; NSP application after results",
     tags: ["nsp", "school", "class-9", "class-10", "merit", "means"],
+    // 26 Sep 2026 (G4): NSP card "National Means Cum Merit Scholarship": open
+    // 01-06-2026, student application open till 30-09-2026.
+    cycle: { year: "2026-27", opensOn: "2026-06-01", closesOn: "2026-09-30", sourceUrl: NSP_SCHEMES_URL, tier: "official", checkedOn: G4_CHECKED },
   },
   {
     id: "begum-hazrat-mahal",
@@ -253,6 +332,11 @@ export const SCHOLARSHIPS: Scholarship[] = [
       "Helps girls from minority communities complete secondary education. Renewable if marks stay ≥50%.",
     deadline: "Aug–Oct",
     tags: ["minority", "muslim", "christian", "sikh", "girls", "school"],
+    // 27 Sep 2026 (repair): the Ministry of Minority Affairs ordered MAEF, the
+    // body that ran this scheme, closed on 7 Feb 2024 (widely reported; the
+    // order was challenged in the Delhi High Court). No official statement
+    // on the scheme's 2026-27 status was found, so it is not marked closed.
+    unlisted: "Status in doubt: its implementing body (MAEF) was ordered closed on 7 Feb 2024 (reported). Out of every list until its 2026-27 status is read on an official portal.",
   },
   {
     id: "pm-special-jk",
@@ -271,6 +355,18 @@ export const SCHOLARSHIPS: Scholarship[] = [
     deadline: "Apr–Aug",
     relevantExamCodes: ["JEE_MAIN", "NEET_UG", "JK_JKCET", "JK_JKPSC_KAS"],
     tags: ["jk", "ladakh", "engineering", "medical", "aicte"],
+    // 26 Sep 2026 (G4): NSP card "PM USP Special Scholarship Scheme For Jammu
+    // Kashmir And Ladakh": renewal open 01-06-2026 till 30-09-2026; NSP's
+    // announcement says 31-10-2026 (the same pair as CSSS above).
+    cycle: {
+      year: "2026-27",
+      opensOn: "2026-06-01",
+      closesOn: "2026-09-30",
+      sourceUrl: NSP_SCHEMES_URL,
+      tier: "official",
+      checkedOn: G4_CHECKED,
+      note: "Renewal applications only — NSP lists no fresh-application window for 2026-27 yet. The scheme card on NSP says 30 Sep 2026; NSP's announcement on the same portal says 31 Oct 2026.",
+    },
   },
 
   // ─── STATE GOVERNMENT ─────────────────────────────────────────────
@@ -328,6 +424,9 @@ export const SCHOLARSHIPS: Scholarship[] = [
       "Telangana's flagship Post-Matric scheme. Covers tuition + maintenance for SC, ST, OBC, EBC, EWS, and minority students in approved courses.",
     deadline: "Aug–Dec each year",
     tags: ["telangana", "state", "epass"],
+    // 26 Sep 2026 (G4): the ePASS home page shows only the 2024-25 last date
+    // (30-06-2025) — no 2026-27 date yet. Recorded as checked, with no date.
+    cycle: { year: "2026-27", sourceUrl: "https://telanganaepass.cgg.gov.in/", tier: "official", checkedOn: G4_CHECKED },
   },
   {
     id: "ap-jagananna-vidya",
@@ -679,6 +778,13 @@ export const SCHOLARSHIPS: Scholarship[] = [
       "5-year doctoral fellowship for students from notified religious minorities. Stipend matches UGC-NET-JRF rates. Awarded by Ministry of Minority Affairs.",
     deadline: "Usually called via UGC/MAEF — check portal",
     tags: ["minority", "phd", "research", "fellowship", "maulana azad"],
+    // 26 Sep 2026 (G4): PIB, Ministry of Minority Affairs, 31 Jul 2024: "it has
+    // been decided to discontinue the MANF Scheme from 2022-23 onward".
+    closed: {
+      note: "The Ministry of Minority Affairs discontinued the MANF scheme from 2022-23 onward; fellows already selected continue to the end of their tenure (written reply in the Lok Sabha, PIB, 31 Jul 2024).",
+      sourceUrl: "https://www.pib.gov.in/PressReleaseIframePage.aspx?PRID=2039765",
+      checkedOn: G4_CHECKED,
+    },
   },
 
   {
@@ -795,6 +901,10 @@ export const SCHOLARSHIPS: Scholarship[] = [
       "Central scheme via NSP for PwD students. Covers tuition + monthly maintenance + reader/escort allowance for students with severe disabilities.",
     deadline: "Aligned with NSP cycle (Oct-Dec)",
     tags: ["disability", "pwd", "nsp", "depwd"],
+    // 26 Sep 2026 (G4): NSP card "Post Matric Scholarship For Students With
+    // Disabilities" (Department of Empowerment of Persons with Disabilities):
+    // open 25-07-2026, student application open till 31-10-2026.
+    cycle: { year: "2026-27", opensOn: "2026-07-25", closesOn: "2026-10-31", sourceUrl: NSP_SCHEMES_URL, tier: "official", checkedOn: G4_CHECKED },
   },
 
   {
@@ -1745,6 +1855,7 @@ export const SCHOLARSHIPS: Scholarship[] = [
     description: "Flagship skill-development scheme. Free vocational training across 300+ courses + monetary reward on certification. Strong placement linkage.",
     deadline: "Rolling enrolment",
     tags: ["nsdc", "pmkvy", "skill", "vocational"],
+    unlisted: "Not a scholarship: skill training with a certification reward (27 Sep 2026 repair).",
   },
   {
     id: "super30-anand-kumar",
@@ -1764,6 +1875,7 @@ export const SCHOLARSHIPS: Scholarship[] = [
     deadline: "Selection test held annually",
     tags: ["super 30", "jee", "free coaching", "bihar"],
     relevantExamCodes: ["JEE_MAIN", "JEE_ADVANCED"],
+    unlisted: "Not a scholarship: a free coaching programme selected by its own test (27 Sep 2026 repair).",
   },
   {
     id: "fitjee-talent-scholarship",
@@ -1781,6 +1893,7 @@ export const SCHOLARSHIPS: Scholarship[] = [
     deadline: "Multiple FTRE sittings yearly",
     tags: ["fiitjee", "coaching", "jee"],
     relevantExamCodes: ["JEE_MAIN", "JEE_ADVANCED"],
+    unlisted: "Not a scholarship: a coaching institute's fee waiver on its own coaching (27 Sep 2026 repair).",
   },
   {
     id: "allen-tallentex",
@@ -1798,6 +1911,7 @@ export const SCHOLARSHIPS: Scholarship[] = [
     deadline: "Annual cycle (Oct-Nov sittings)",
     tags: ["allen", "tallentex", "jee", "neet"],
     relevantExamCodes: ["JEE_MAIN", "NEET_UG"],
+    unlisted: "Not a scholarship: a coaching institute's test with prizes and a fee waiver on its own coaching (27 Sep 2026 repair).",
   },
 
   // ── More merit / institute-specific ──────────────────────────────
@@ -2207,8 +2321,8 @@ export const SCHOLARSHIPS: Scholarship[] = [
   { id: "kl-mukhyamantri-kl", name: "Kerala CMSPS — CM's Scholarship", awardingBody: "Govt of Kerala", type: "STATE", state: "KL", levels: ["UG", "PG"], eligibility: { categories: ["GEN", "OBC", "EWS"], incomeMaxLakhs: 4, minMarksPct: 60 }, amount: "₹12,000-₹40,000/year", applyUrl: "https://cmss.scholarship.gov.in/", description: "Kerala CM's UG/PG scholarship for general + EWS students.", deadline: "Sep-Nov", tags: ["kerala", "kl"] },
   { id: "ts-overseas-bc", name: "Telangana CM Overseas Scholarship (BC)", awardingBody: "Telangana BC Welfare Dept", type: "STATE", state: "TS", levels: ["PG"], eligibility: { categories: ["OBC"], incomeMaxLakhs: 5, note: "BC student admitted to ranked overseas PG" }, amount: "Up to ₹20 lakh", applyUrl: "https://telanganaepass.cgg.gov.in/", description: "TS BC welfare's overseas scholarship for PG abroad.", deadline: "Twice yearly", tags: ["telangana", "ts", "obc", "overseas"] },
   { id: "ka-cipriani", name: "Karnataka CIET / Vidyasiri Continuance", awardingBody: "Karnataka SC/ST Welfare", type: "STATE", state: "KA", levels: ["UG", "PG"], eligibility: { categories: ["SC", "ST"], incomeMaxLakhs: 2.5 }, amount: "Tuition + stipend ₹2,500-₹15,000/month", applyUrl: "https://ssp.karnataka.gov.in/", description: "Karnataka SC/ST UG/PG fee + stipend scheme.", deadline: "Sep-Nov", tags: ["karnataka", "ka", "sc", "st"] },
-  { id: "bihar-mukhyamantri-cycle", name: "Bihar Mukhyamantri Balika Cycle Yojana", awardingBody: "Govt of Bihar", type: "STATE", state: "BR", levels: ["CLASS_9_10"], eligibility: { gender: "F", note: "Bihar girls in Class 9-10 of govt schools" }, amount: "₹2,500 for bicycle", applyUrl: "https://educationbihar.gov.in/", description: "Bihar girls' bicycle scheme for school transport.", deadline: "Yearly cycle", tags: ["bihar", "br", "girls", "school"] },
-  { id: "bihar-mukhyamantri-poshak", name: "Bihar Mukhyamantri Poshak Yojana", awardingBody: "Govt of Bihar", type: "STATE", state: "BR", levels: ["CLASS_9_10", "CLASS_11_12"], eligibility: { categories: ["SC", "ST", "OBC"], note: "Bihar Class 1-12 students; uniform support" }, amount: "₹400-₹1500/year for uniforms", applyUrl: "https://educationbihar.gov.in/", description: "Bihar uniform support scheme.", deadline: "Yearly", tags: ["bihar", "br", "uniform"] },
+  { id: "bihar-mukhyamantri-cycle", name: "Bihar Mukhyamantri Balika Cycle Yojana", awardingBody: "Govt of Bihar", type: "STATE", state: "BR", levels: ["CLASS_9_10"], eligibility: { gender: "F", note: "Bihar girls in Class 9-10 of govt schools" }, amount: "₹2,500 for bicycle", applyUrl: "https://educationbihar.gov.in/", description: "Bihar girls' bicycle scheme for school transport.", deadline: "Yearly cycle", tags: ["bihar", "br", "girls", "school"], unlisted: "Not a scholarship: money towards a bicycle (27 Sep 2026 repair)." },
+  { id: "bihar-mukhyamantri-poshak", name: "Bihar Mukhyamantri Poshak Yojana", awardingBody: "Govt of Bihar", type: "STATE", state: "BR", levels: ["CLASS_9_10", "CLASS_11_12"], eligibility: { categories: ["SC", "ST", "OBC"], note: "Bihar Class 1-12 students; uniform support" }, amount: "₹400-₹1500/year for uniforms", applyUrl: "https://educationbihar.gov.in/", description: "Bihar uniform support scheme.", deadline: "Yearly", tags: ["bihar", "br", "uniform"], unlisted: "Not a scholarship: school-uniform support (27 Sep 2026 repair)." },
   { id: "gj-mysy-fees", name: "Gujarat Mukhyamantri Yuva Swavalamban Yojana (Fees)", awardingBody: "Govt of Gujarat", type: "STATE", state: "GJ", levels: ["UG"], eligibility: { minMarksPct: 80, incomeMaxLakhs: 6, note: "Gujarat domicile UG students in eligible courses" }, amount: "50% tuition fee waiver", applyUrl: "https://mysy.guj.nic.in/", description: "Gujarat 50% tuition support for top Class 12 performers.", deadline: "Aug-Oct", tags: ["gujarat", "gj", "mysy", "merit"] },
   { id: "up-savitribai-girls", name: "UP Savitribai Phule Balika Shiksha", awardingBody: "Govt of UP", type: "STATE", state: "UP", levels: ["CLASS_9_10", "CLASS_11_12"], eligibility: { gender: "F", note: "UP Class 9-12 girls in govt schools" }, amount: "₹2000/year + book + dress", applyUrl: "https://scholarship.up.gov.in/", description: "UP girls' Class 9-12 retention scholarship.", deadline: "Yearly", tags: ["uttar pradesh", "up", "girls"] },
   { id: "mh-ekatma-yojana", name: "Maharashtra Mukhyamantri Vishesh Sahayata", awardingBody: "Govt of Maharashtra Social Justice", type: "STATE", state: "MH", levels: ["UG", "PG"], eligibility: { categories: ["SC", "ST", "OBC", "MIN"], incomeMaxLakhs: 2.5 }, amount: "Fee reimbursement + maintenance", applyUrl: "https://mahadbt.maharashtra.gov.in/", description: "Maharashtra welfare dept UG/PG scholarship.", deadline: "Sep-Nov", tags: ["maharashtra", "mh"] },
@@ -2227,13 +2341,15 @@ export const SCHOLARSHIPS: Scholarship[] = [
 
   // ─── Disability / PwD ──────────────────────────────────────────────
   { id: "natt-pwd", name: "National Award for PwD Scholarship", awardingBody: "Department of Empowerment of PwD, MoSJE", type: "CENTRAL", state: null, levels: ["CLASS_9_10", "CLASS_11_12", "UG", "PG"], eligibility: { incomeMaxLakhs: 2.5, note: "40%+ disability cert, full-time studies post Class 9" }, amount: "Tuition + ₹500-₹2,500/month + reader/escort allowance + book grant", applyUrl: "https://scholarships.gov.in/", description: "PwD students scholarship — full disability spectrum.", deadline: "Aligned with NSP", tags: ["pwd", "disability"] },
-  { id: "iim-pwd", name: "Top-Class for PwD (Higher Education)", awardingBody: "MoSJE", type: "CENTRAL", state: null, levels: ["UG", "PG"], eligibility: { categories: ["GEN", "OBC", "SC", "ST", "EWS"], incomeMaxLakhs: 8, note: "PwD students at notified institutions (IITs, NLU, IIMs etc.)" }, amount: "Full tuition + maintenance + book + computer support", applyUrl: "https://scholarships.gov.in/", description: "Centre scheme for PwD students at premier institutions.", deadline: "Yearly via NSP", tags: ["pwd", "disability", "premier"] },
+  { id: "iim-pwd", name: "Top-Class for PwD (Higher Education)", awardingBody: "MoSJE", type: "CENTRAL", state: null, levels: ["UG", "PG"], eligibility: { categories: ["GEN", "OBC", "SC", "ST", "EWS"], incomeMaxLakhs: 8, note: "PwD students at notified institutions (IITs, NLU, IIMs etc.)" }, amount: "Full tuition + maintenance + book + computer support", applyUrl: "https://scholarships.gov.in/", description: "Centre scheme for PwD students at premier institutions.", deadline: "Yearly via NSP", tags: ["pwd", "disability", "premier"],
+    // 26 Sep 2026 (G4): NSP card "Scholarship For Top Class Education For Students With Disabilities": open 01-06-2026, till 31-10-2026.
+    cycle: { year: "2026-27", opensOn: "2026-06-01", closesOn: "2026-10-31", sourceUrl: NSP_SCHEMES_URL, tier: "official", checkedOn: G4_CHECKED } },
   { id: "free-coaching-pwd", name: "Free Coaching for PwD (UPSC/SSC/Banking)", awardingBody: "DEPwD", type: "CENTRAL", state: null, levels: ["UG", "PG"], eligibility: { incomeMaxLakhs: 8, note: "PwD students preparing for UPSC, SSC, banking exams" }, amount: "Free coaching at empanelled institutes", applyUrl: "https://disabilityaffairs.gov.in/", description: "Free coaching cover for PwD aspirants.", deadline: "Notified yearly", tags: ["pwd", "disability", "coaching"] },
 
   // ─── Sports + Cultural (additional) ────────────────────────────────
   { id: "ncpedp-mphasis", name: "NCPEDP-Mphasis Universal Design Awards", awardingBody: "NCPEDP + Mphasis", type: "PRIVATE", state: null, levels: ["UG", "PG"], eligibility: { note: "Persons with disabilities + accessibility champions" }, amount: "₹1 lakh + recognition", applyUrl: "https://www.ncpedp.org/", description: "Universal design + accessibility champion awards.", deadline: "Yearly", tags: ["disability", "design", "award"] },
   { id: "khelo-india-tops-individual", name: "Khelo India Athlete Stipend (Individual Sport)", awardingBody: "SAI + Ministry of Youth Affairs", type: "CENTRAL", state: null, levels: ["CLASS_9_10", "CLASS_11_12", "UG"], eligibility: { note: "Selected via Khelo India Games + state events. Individual + team sport athletes." }, amount: "₹1.2L/year stipend + training + nutrition + tournament expenses", applyUrl: "https://kheloindia.gov.in/", description: "Khelo India ongoing athlete stipend programme.", deadline: "Selected via Games", tags: ["sports", "athlete", "khelo india"] },
-  { id: "tata-football-academy", name: "Tata Football Academy (Jamshedpur)", awardingBody: "Tata Football Academy", type: "PRIVATE", state: "JH", levels: ["CLASS_9_10", "CLASS_11_12"], eligibility: { gender: "M", note: "Boys 14-16 selected via tryouts. Full residential football training." }, amount: "Full scholarship — boarding + training + education", applyUrl: "https://www.tatafootballacademy.com/", description: "India's premier residential football academy.", deadline: "Annual tryouts", tags: ["sports", "football", "tata"] },
+  { id: "tata-football-academy", name: "Tata Football Academy (Jamshedpur)", awardingBody: "Tata Football Academy", type: "PRIVATE", state: "JH", levels: ["CLASS_9_10", "CLASS_11_12"], eligibility: { gender: "M", note: "Boys 14-16 selected via tryouts. Full residential football training." }, amount: "Full scholarship — boarding + training + education", applyUrl: "https://www.tatafootballacademy.com/", description: "India's premier residential football academy.", deadline: "Annual tryouts", tags: ["sports", "football", "tata"], unlisted: "Not a scholarship scheme: a residential football academy selected by tryouts (27 Sep 2026 repair)." },
 
   // ─── Additional private foundations ────────────────────────────────
   { id: "csir-ugc-jrf-net", name: "CSIR-UGC JRF (Junior Research Fellowship)", awardingBody: "CSIR", type: "RESEARCH", state: null, levels: ["PG", "PHD"], eligibility: { note: "Cleared CSIR-NET JRF; MSc/MTech in sciences" }, amount: "₹37,000/month for 2 years + ₹42,000/month for 3 years", applyUrl: "https://csirhrdg.res.in/", description: "CSIR's parallel to UGC NET-JRF for sciences PhD.", deadline: "CSIR NET twice yearly", tags: ["csir", "jrf", "phd", "research"] },
@@ -2306,7 +2422,9 @@ export const SCHOLARSHIPS: Scholarship[] = [
   { id: "rhodes-india", name: "Rhodes Scholarship (Oxford, India region)", awardingBody: "Rhodes Trust", type: "MERIT", state: null, levels: ["PG", "PHD"], eligibility: { incomeMaxLakhs: 99, minMarksPct: 80, note: "Top Indian students for Oxford PG/PhD. Age 18-28." }, amount: "Full tuition + £18,000+/year stipend (~₹20+ lakh/year)", applyUrl: "https://www.rhodeshouse.ox.ac.uk/", description: "Rhodes Trust Oxford scholarship — among most prestigious globally. 5 from India yearly.", deadline: "Aug 1", tags: ["rhodes", "oxford", "overseas", "phd"] },
   { id: "fulbright-nehru-india", name: "Fulbright-Nehru Scholarships", awardingBody: "USIEF / United States-India Educational Foundation", type: "MERIT", state: null, levels: ["PG", "PHD"], eligibility: { note: "Indian academics + students pursuing research / PG in US" }, amount: "Tuition + stipend + travel + health (US-funded)", applyUrl: "https://www.usief.org.in/", description: "USIEF Fulbright-Nehru research + study fellowships.", deadline: "Spring (May/Jun)", tags: ["fulbright", "us", "research", "overseas"] },
   { id: "chevening-india", name: "Chevening Scholarship", awardingBody: "UK Foreign + Commonwealth Office", type: "MERIT", state: null, levels: ["PG"], eligibility: { note: "UK Master's; demonstrated leadership; 2+ years work" }, amount: "Full tuition + ₹15,000+ GBP living + travel + health", applyUrl: "https://www.chevening.org/", description: "Chevening 1-year UK Master's scholarship.", deadline: "Aug-Nov", tags: ["chevening", "uk", "overseas"] },
-  { id: "endeavour-australia", name: "Endeavour Leadership Programme (Australia)", awardingBody: "Govt of Australia", type: "MERIT", state: null, levels: ["PG", "PHD"], eligibility: { note: "PG/PhD in Australia for international students" }, amount: "Tuition + stipend + travel + health (AUD)", applyUrl: "https://internationaleducation.gov.au/", description: "Australian Govt overseas PG/PhD funding.", deadline: "Yearly", tags: ["endeavour", "australia", "overseas"] },
+  { id: "endeavour-australia", name: "Endeavour Leadership Programme (Australia)", awardingBody: "Govt of Australia", type: "MERIT", state: null, levels: ["PG", "PHD"], eligibility: { note: "PG/PhD in Australia for international students" }, amount: "Tuition + stipend + travel + health (AUD)", applyUrl: "https://internationaleducation.gov.au/", description: "Australian Govt overseas PG/PhD funding.", deadline: "Yearly", tags: ["endeavour", "australia", "overseas"],
+    // 26 Sep 2026 (G4): internationaleducation.gov.au: "no further rounds of the Endeavour Leadership Program (ELP)".
+    closed: { note: "The Australian Government has announced there will be no further rounds of the Endeavour Leadership Program; only earlier recipients continue to be supported.", sourceUrl: "https://internationaleducation.gov.au/scholarships/Pages/Endeavour-Leadership-Program.aspx", checkedOn: G4_CHECKED } },
   { id: "mexico-fund-india", name: "MEXT Scholarship (Japan Govt)", awardingBody: "Govt of Japan", type: "MERIT", state: null, levels: ["UG", "PG", "PHD"], eligibility: { note: "Indian students for Japanese universities" }, amount: "Full tuition + ₹1.4-1.7 lakh/month JPY equivalent + travel + airfare", applyUrl: "https://www.in.emb-japan.go.jp/itpr_en/00_000007.html", description: "Japanese Government education scholarship.", deadline: "Yearly cycle", tags: ["japan", "MEXT", "overseas"] },
   { id: "daad-india", name: "DAAD Scholarship — Indian Students", awardingBody: "DAAD (German Academic Exchange Service)", type: "MERIT", state: null, levels: ["PG", "PHD"], eligibility: { note: "Indian students pursuing Master's/PhD in Germany" }, amount: "€934-€1200/month stipend + tuition coverage + insurance", applyUrl: "https://www.daad.in/", description: "DAAD's broad scholarship portfolio for Indians studying in Germany.", deadline: "Variable by programme", tags: ["daad", "germany", "overseas"] },
   { id: "khorana-program", name: "Khorana Programme for Scholars (US-India)", awardingBody: "Indo-US Science + Tech Forum", type: "RESEARCH", state: null, levels: ["UG"], eligibility: { note: "BSc/BTech students in life sciences for 10-12 week US research internship" }, amount: "Travel + stipend ~USD 4,500 for 12 weeks", applyUrl: "https://www.iusstf.org/khorana-program-for-scholars", description: "US-India undergrad research exchange.", deadline: "Sep-Nov", tags: ["khorana", "us", "internship", "research"] },

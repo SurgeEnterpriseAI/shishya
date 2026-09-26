@@ -31,13 +31,19 @@
 // /te hub twins (src/lib/exam-hub-copy.ts). The visible accordion and the
 // FAQPage JSON-LD are still built from the SAME data, so they can never
 // disagree; English output is unchanged.
+//
+// 26 Sep 2026 (discoverability wave 2 G3): the ONE FAQPage on the hub. The
+// hub's own questions (pattern, negative marking, languages, cutoff,
+// full-length mock, topic builder, "prepare for free" — src/lib/hub-faq.ts)
+// were a second, schema-only FAQPage in page.tsx; they now arrive as
+// `extraItems`, join `faqs` after these four (a repeated question keeps the
+// first answer), and render in the accordion AND this component's FAQPage.
+// "How long is the exam?" appears only when the hub passes a durationMin —
+// it passes one only for an exam whose pattern was read from its notice
+// (src/lib/pattern-verified.ts).
 
 import { examHubCopy, faqCountAnswer, fillHub, hubDuration } from "@/lib/exam-hub-copy";
-
-interface FaqItem {
-  q: string;
-  a: string;
-}
+import { mergeFaqItems, type FaqItem } from "@/lib/hub-faq";
 
 export function ExamFaq({
   examShortName,
@@ -48,6 +54,7 @@ export function ExamFaq({
   hasOfficialPapers = false,
   uncheckedCount = null,
   locale,
+  extraItems = [],
 }: {
   examShortName: string;
   examName: string;
@@ -62,6 +69,8 @@ export function ExamFaq({
   hasOfficialPapers?: boolean;
   /** The hub body's language (getT().locale). Defaults to English. */
   locale?: string;
+  /** The hub's own questions (src/lib/hub-faq.ts), rendered here too. */
+  extraItems?: readonly FaqItem[];
 }) {
   const C = examHubCopy(locale);
   const faqs: FaqItem[] = [];
@@ -105,6 +114,9 @@ export function ExamFaq({
       a: fillHub(C.faqLengthA, { name: examName, short: examShortName, dur: hubDuration(C, durationMin) }),
     });
   }
+
+  // The hub's own questions join the same list (26 Sep 2026, G3).
+  faqs.push(...mergeFaqItems(faqs, extraItems).slice(faqs.length));
 
   // Nothing meaningful to show (shouldn't happen — the free Q&A always
   // applies — but guards against an empty section just in case).

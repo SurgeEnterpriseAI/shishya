@@ -1,8 +1,22 @@
 // /exams/[code]/results/[id] — permalink for one declared result.
 // The SEO surface for "{exam} {stage} result 2026" queries (the largest
 // query family in this category): declaration + official link, cutoff
-// read, and the candidate's full next-steps timeline, with NewsArticle
-// + BreadcrumbList JSON-LD.
+// read, and the candidate's full next-steps timeline, with Article
+// + BreadcrumbList + FAQPage JSON-LD.
+//
+// 26 Sep 2026 (G1 index hygiene, src/lib/result-permalink-copy.ts):
+//   • the title and description name "cutoff" only when the row has a
+//     cutoffNote and "next steps" only when it has steps (9 of 52 rows have
+//     a cutoffNote; every page promised one);
+//   • every FAQPage question is printed on the page as a heading with its
+//     answer (resultFaq — one list for both), as Google requires;
+//   • a row without an officialUrl (50 of 52) is Google-only
+//     noindex,follow and is not in the sitemap; Bing and ChatGPT search
+//     keep index,follow;
+//   • Article, not NewsArticle (no image, so Google's news feature never
+//     applied), author + publisher = the site's Organization node;
+//   • the /cutoff and /syllabus links render only when those pages do
+//     (examPageGates), and "study notes" only for an exam with notes.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -10,6 +24,17 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 import { Header } from "@/components/Header";
+import { SHISHYA_ORG_REF } from "@/components/JsonLd";
+import { examPageGates } from "@/lib/exam-page-gates";
+import { examHasNotes } from "@/lib/page-gates-notes";
+import { newsPermalinkCopy } from "@/lib/page-gates-copy";
+import {
+  resultFaq,
+  resultPermalinkDescription,
+  resultPermalinkTitle,
+  resultRobots,
+  type ResultCopyInput,
+} from "@/lib/result-permalink-copy";
 
 export const revalidate = 3600;
 
@@ -44,6 +69,23 @@ async function loadResult(code: string, id: string): Promise<Row | null> {
   return rows[0] ?? null;
 }
 
+function declaredLabelOf(d: Date): string {
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function copyInput(r: Row): ResultCopyInput {
+  return {
+    short: r.short,
+    stage: r.stage,
+    year: r.declaredOn.getFullYear(),
+    headline: r.headline,
+    cutoffNote: r.cutoffNote,
+    nextSteps: Array.isArray(r.nextSteps) ? r.nextSteps : null,
+    officialName: r.officialName,
+    declaredLabel: declaredLabelOf(r.declaredOn),
+  };
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -52,9 +94,9 @@ export async function generateMetadata({
   const { code, id } = await params;
   const r = await loadResult(code, id);
   if (!r) return { title: "Result not found — Shishya" };
-  const year = r.declaredOn.getFullYear();
-  const title = `${r.short} ${r.stage} Result ${year} — declared, cutoff & next steps | Shishya`;
-  const description = `${r.headline} Expected cutoff analysis and the candidate's exact next steps in the ${r.short} selection process — free on Shishya.`;
+  const copy = copyInput(r);
+  const title = resultPermalinkTitle(copy);
+  const description = resultPermalinkDescription(copy);
   const url = `https://shishya.in/exams/${code}/results/${id}`;
   return {
     title,
@@ -70,7 +112,7 @@ export async function generateMetadata({
       publishedTime: r.createdAt.toISOString(),
     },
     twitter: { card: "summary_large_image", title, description },
-    robots: { index: true, follow: true },
+    robots: resultRobots(r.officialUrl),
   };
 }
 
@@ -84,21 +126,18 @@ export default async function ResultPermalinkPage({
   if (!r) notFound();
 
   const url = `https://shishya.in/exams/${code}/results/${id}`;
+  const [gates, hasNotes] = await Promise.all([examPageGates(r.code), examHasNotes(r.code)]);
   const articleJsonLd = {
     "@context": "https://schema.org",
-    "@type": "NewsArticle",
+    "@type": "Article",
     headline: `${r.short} ${r.stage} result declared`,
     description: r.headline,
     datePublished: r.createdAt.toISOString(),
     dateModified: r.createdAt.toISOString(),
     inLanguage: "en-IN",
     isAccessibleForFree: true,
-    publisher: {
-      "@type": "EducationalOrganization",
-      name: "Shishya",
-      url: "https://shishya.in",
-      logo: { "@type": "ImageObject", url: "https://shishya.in/icon.svg" },
-    },
+    author: SHISHYA_ORG_REF,
+    publisher: SHISHYA_ORG_REF,
     about: { "@type": "Course", name: r.examName, url: `https://shishya.in/exams/${code}` },
     mainEntityOfPage: url,
   };
@@ -113,51 +152,20 @@ export default async function ResultPermalinkPage({
     ],
   };
 
-  // FAQPage — mirrors the exact questions aspirants type into ChatGPT/
-  // Gemini/Perplexity ("has X result come?", "cutoff?", "what next?"),
-  // so AI answer engines can lift a direct, citeable Q&A.
-  const declaredLabel = r.declaredOn.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const faqEntities = [
-    {
-      "@type": "Question",
-      name: `Has the ${r.short} ${r.stage} result been declared?`,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: `Yes — declared on ${declaredLabel}. ${r.headline} Verify on the official portal${r.officialName ? ` (${r.officialName})` : ""}.`,
-      },
-    },
-    ...(r.cutoffNote
-      ? [
-          {
-            "@type": "Question",
-            name: `What is the expected cutoff for the ${r.short} ${r.stage}?`,
-            acceptedAnswer: { "@type": "Answer", text: r.cutoffNote },
-          },
-        ]
-      : []),
-    ...(Array.isArray(r.nextSteps) && r.nextSteps.length > 0
-      ? [
-          {
-            "@type": "Question",
-            name: `What happens after the ${r.short} ${r.stage} result?`,
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: r.nextSteps
-                .map((s, i) => `${i + 1}. ${s.step}${s.note ? ` — ${s.note}` : ""}`)
-                .join(" "),
-            },
-          },
-        ]
-      : []),
-  ];
+  // FAQPage — the questions aspirants type into ChatGPT / Gemini /
+  // Perplexity ("has X result come?", "cutoff?", "what next?"). 26 Sep 2026:
+  // each question is also printed on the page as the heading of its answer
+  // (resultFaq is the one list for both; its order is declared, cutoff when
+  // the row has a cutoffNote, next steps when it has steps).
+  const copy = copyInput(r);
+  const faq = resultFaq(copy);
+  const declaredQ = faq[0];
+  const cutoffQ = r.cutoffNote && r.cutoffNote.trim() ? faq[1] : undefined;
+  const stepsQ = Array.isArray(r.nextSteps) && r.nextSteps.length > 0 ? faq[faq.length - 1] : undefined;
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: faqEntities,
+    mainEntity: faq.map((x) => ({ "@type": "Question", name: x.question, acceptedAnswer: { "@type": "Answer", text: x.answer } })),
   };
 
   return (
@@ -173,33 +181,31 @@ export default async function ResultPermalinkPage({
         </p>
 
         <h1 className="mt-2 text-2xl font-bold leading-tight text-ink-900 sm:text-3xl">
-          {r.short} {r.stage} result — declared{" "}
-          {r.declaredOn.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+          {r.short} {r.stage} result — declared {copy.declaredLabel}
         </h1>
-        <p className="mt-3 rounded-lg border border-ink-200 bg-white p-4 text-sm leading-relaxed text-ink-800">
-          {r.headline}
+        <h2 className="mt-4 text-sm font-bold text-ink-900">{declaredQ.question}</h2>
+        <p className="mt-1 rounded-lg border border-ink-200 bg-white p-4 text-sm leading-relaxed text-ink-800">
+          {declaredQ.answer}
         </p>
 
-        {r.cutoffNote && (
+        {cutoffQ && (
           <div className="mt-4 rounded-xl border border-saffron-200 bg-saffron-50/60 p-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-saffron-700">
-              Cutoff read
-            </p>
-            <p className="mt-1 text-sm leading-relaxed text-ink-800">{r.cutoffNote}</p>
-            <Link
-              href={`/exams/${code}/cutoff`}
-              className="mt-2 inline-block text-sm font-semibold text-saffron-700 hover:underline"
-            >
-              Category-wise expected cutoffs →
-            </Link>
+            <h2 className="text-sm font-bold text-saffron-800">{cutoffQ.question}</h2>
+            <p className="mt-1 text-sm leading-relaxed text-ink-800">{cutoffQ.answer}</p>
+            {gates.cutoff && (
+              <Link
+                href={`/exams/${code}/cutoff`}
+                className="mt-2 inline-block text-sm font-semibold text-saffron-700 hover:underline"
+              >
+                Category-wise expected cutoffs →
+              </Link>
+            )}
           </div>
         )}
 
-        {Array.isArray(r.nextSteps) && r.nextSteps.length > 0 && (
+        {stepsQ && Array.isArray(r.nextSteps) && (
           <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-              Your next steps in the {r.short} process
-            </p>
+            <h2 className="text-sm font-bold text-emerald-800">{stepsQ.question}</h2>
             <ol className="mt-2 space-y-2.5 border-l-2 border-emerald-300 pl-4">
               {r.nextSteps.map((s, i) => (
                 <li key={i} className="text-sm leading-relaxed">
@@ -230,12 +236,14 @@ export default async function ResultPermalinkPage({
           >
             Free {r.short} mocks for the next stage →
           </Link>
-          <Link
-            href={`/exams/${code}/syllabus`}
-            className="rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-700 hover:border-saffron-400"
-          >
-            Syllabus &amp; study notes
-          </Link>
+          {gates.syllabus && (
+            <Link
+              href={`/exams/${code}/syllabus`}
+              className="rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-700 hover:border-saffron-400"
+            >
+              {newsPermalinkCopy(r.short, hasNotes).syllabusLabel}
+            </Link>
+          )}
         </div>
         <p className="mt-3 text-xs text-ink-500">
           Compiled by Shishya from official notifications — always verify dates and lists on the

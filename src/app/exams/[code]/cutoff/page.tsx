@@ -32,6 +32,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
+import { cache } from "react";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
@@ -59,6 +60,9 @@ import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
 import { StateExamsLink } from "@/components/StateExamsLink";
 import { inlineMd } from "@/components/NotesMarkdown";
+import { cutoffNoun, officialCutoffTitle, pickCutoffHeadline, type CutoffHeadline } from "@/lib/official-cutoff-title";
+import { cutoffLead, leadDescription } from "@/lib/answer-lead";
+import { latestCheck } from "@/lib/page-freshness";
 
 // 900: the exam-week boundaries (D-1 in, D+7 out) must show up within 15
 // minutes. The page reads the locale (and, inside exam week, the session),
@@ -98,6 +102,33 @@ function fill(s: string, vars: Record<string, string | number>): string {
  *  space before it go ("SSC CGL cutoff: expected score …"). */
 function fillYear(s: string, vars: Record<string, string | number>, year: number | null): string {
   return year === null ? fill(s.replace(/\s*\{year\}/g, ""), vars) : fill(s, { ...vars, year });
+}
+
+// Published cutoff rows (13 Sep 2026) — read once per request: React's
+// cache() shares the one read between generateMetadata and the page (26 Sep
+// 2026, G3: the title now needs the headline table, not only the cycles).
+// verifiedAt = when scripts/import-official-cutoffs.ts found the figure
+// verbatim in its document — the page's only "checked" date.
+type PublishedRow = OfficialCutoffRow & { verifiedAt: Date | string | null };
+const loadPublishedCutoffs = cache(
+  (examId: string): Promise<PublishedRow[]> =>
+    prisma
+      .$queryRaw<PublishedRow[]>`
+        SELECT cycle, stage, post, region, gender, category, "categoryLabel", marks, "maxMarks", "scoreType",
+               "sourceUrl", "sourceTitle", publisher, "publishedOn", "verifiedAt"
+        FROM "OfficialCutoff" WHERE "examId" = ${examId} AND "archivedAt" IS NULL
+      `
+      .catch(() => [] as PublishedRow[]),
+);
+
+/** Title / H1 / description pieces for the published-cutoff headline (26 Sep
+ *  2026, G3). `official` only when the page's first table comes wholly from
+ *  the conducting body's own site (src/lib/official-cutoff-title.ts); the
+ *  noun follows the figures' scoreType. */
+function officialHeadlineCopy(t: TFn, headline: CutoffHeadline | null, tables: Parameters<typeof cutoffNoun>[0]) {
+  const official = officialCutoffTitle(headline);
+  const noun = t(`cutoff.noun.${cutoffNoun(tables)}` as StringKey);
+  return { official, noun };
 }
 
 /** Phases the cutoff block covers: D-1 .. D+7 (not the run-up week). */
@@ -236,13 +267,24 @@ export async function generateMetadata({
   // English one. Same shape as score-estimate/page.tsx now.
   const urlLocale = await getUrlLocale();
   const tt = tFor(urlLocale) as TFn;
-  const cycles = await prisma
-    .$queryRaw<{ cycle: string }[]>`
-      SELECT DISTINCT cycle FROM "OfficialCutoff" WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL
-    `.catch(() => [] as { cycle: string }[]);
-  const year = newestCycleYear(cycles.map((c) => c.cycle));
-  const title = `${fillYear(tt("cutoff.metaTitle"), { exam: exam.shortName }, year)} | Shishya`;
-  const description = fillYear(tt("cutoff.metaDescription"), { exam: exam.shortName, name: exam.name }, year);
+  // 26 Sep 2026 (G3): with published rows whose headline table is the
+  // body's own, the title says "(Official)" and names what the figures are;
+  // otherwise it is the indicative title as before (never "Official").
+  const [publishedRows, { officialUrl }] = await Promise.all([loadPublishedCutoffs(exam.id), getExamWeekInputs(exam.id)]);
+  const tables = groupCutoffTables(publishedRows);
+  const year = newestCycleYear(tables.map((c) => c.cycle));
+  const headline = pickCutoffHeadline(tables, officialUrl);
+  const { official, noun } = officialHeadlineCopy(tt, headline, tables);
+  const title = official
+    ? `${fillYear(tt("cutoff.metaTitleOfficial"), { exam: exam.shortName, noun }, year)} | Shishya`
+    : `${fillYear(tt("cutoff.metaTitle"), { exam: exam.shortName }, year)} | Shishya`;
+  const baseDescription = official
+    ? fillYear(tt("cutoff.metaDescriptionOfficial"), { exam: exam.shortName, name: exam.name, noun: urlLocale === "en" ? noun.toLowerCase() : noun }, year)
+    : fillYear(tt("cutoff.metaDescription"), { exam: exam.shortName, name: exam.name }, year);
+  // English URL: the answer lead (src/lib/answer-lead.ts) heads the
+  // description, ~160 characters in all. The twins keep their own.
+  const lead = urlLocale === "en" ? cutoffLead({ short: exam.shortName, year, headline, officialUrl }) : null;
+  const description = lead ? leadDescription(lead, baseDescription) : baseDescription;
   const path = `/exams/${exam.code}/cutoff`;
   const url = localizedUrl(path, urlLocale);
   const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
@@ -317,13 +359,9 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
     getUrlLocale(),
     // Published previous-recruitment cutoffs (13 Sep 2026): only rows whose
     // figure was verified verbatim in the published document
-    // (scripts/import-official-cutoffs.ts). Raw SQL, like the table above.
-    prisma
-      .$queryRaw<OfficialCutoffRow[]>`
-        SELECT cycle, stage, post, region, gender, category, "categoryLabel", marks, "maxMarks", "scoreType",
-               "sourceUrl", "sourceTitle", publisher, "publishedOn"
-        FROM "OfficialCutoff" WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL
-      `.catch(() => [] as OfficialCutoffRow[]),
+    // (scripts/import-official-cutoffs.ts). Raw SQL, like the table above;
+    // shared with generateMetadata (26 Sep 2026).
+    loadPublishedCutoffs(exam.id),
   ]);
   if (bands.length === 0) notFound();
   const t = tRaw as TFn;
@@ -331,6 +369,19 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
   const short = exam.shortName;
   const published = groupCutoffTables(publishedRows);
   const year = newestCycleYear(published.map((tb) => tb.cycle));
+  // The official headline (26 Sep 2026, G3): the page's first figure, its
+  // publisher and date; "(Official)" only for an all-official first table.
+  const headline = pickCutoffHeadline(published, officialUrl);
+  const bodyHead = officialHeadlineCopy(t, headline, published);
+  const urlHead = officialHeadlineCopy(tFor(urlLocale) as TFn, headline, published);
+  // English body on the English URL only: the answer lead and the "checked"
+  // line are lib/English text the /hi and /te twins' native-script gate does
+  // not count (critic veto, 26 Sep 2026).
+  const englishBody = locale === "en" && urlLocale === "en";
+  const lead = englishBody ? cutoffLead({ short, year, headline, officialUrl }) : null;
+  // "Checked" = when the published figures were verified in their documents
+  // (OfficialCutoff.verifiedAt) — never the request time (src/lib/page-freshness.ts).
+  const checked = latestCheck(publishedRows.map((r) => r.verifiedAt));
 
   const ew = computeExamWeekState(dateRows, officialUrl);
   const view = CUTOFF_PHASES.has(ew.phase) && ew.tier !== "expected" ? await loadExamWeekView(exam, ew, t, locale) : null;
@@ -347,13 +398,23 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: fillYear(tUrl("cutoff.metaTitle"), { exam: exam.shortName }, year),
-    description: fillYear(tUrl("cutoff.metaDescription"), { exam: exam.shortName, name: exam.name }, year),
+    headline: urlHead.official
+      ? fillYear(tUrl("cutoff.metaTitleOfficial"), { exam: exam.shortName, noun: urlHead.noun }, year)
+      : fillYear(tUrl("cutoff.metaTitle"), { exam: exam.shortName }, year),
+    description: urlHead.official
+      ? fillYear(
+          tUrl("cutoff.metaDescriptionOfficial"),
+          { exam: exam.shortName, name: exam.name, noun: urlLocale === "en" ? urlHead.noun.toLowerCase() : urlHead.noun },
+          year,
+        )
+      : fillYear(tUrl("cutoff.metaDescription"), { exam: exam.shortName, name: exam.name }, year),
     url,
     inLanguage: inLanguage(urlLocale),
     isAccessibleForFree: true,
-    // In exam-week mode the page's lead really does change day by day.
-    ...(view ? { dateModified: istDay(new Date()) } : {}),
+    // 26 Sep 2026 (G3): dateModified = when the published figures were last
+    // verified in their documents. It was the request day in exam-week mode —
+    // a render time, not a change to the facts.
+    ...(checked ? { dateModified: checked.iso } : {}),
     about: [{ "@type": "Thing", name: exam.name }, { "@type": "Thing", name: `${exam.shortName} cutoff` }],
     publisher: { "@type": "Organization", name: "Shishya", url: "https://shishya.in" },
     isPartOf: { "@type": "Course", name: `${exam.shortName} preparation`, url: `https://shishya.in/exams/${exam.code}` },
@@ -397,7 +458,13 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
           </Link>{" "}
           · {t("tracker.cutoff")}
         </p>
-        <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{fillYear(t("cutoff.h1"), { exam: short }, year)}</h1>
+        <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">
+          {bodyHead.official ? fillYear(t("cutoff.h1Official"), { exam: short, noun: bodyHead.noun }, year) : fillYear(t("cutoff.h1"), { exam: short }, year)}
+        </h1>
+        {/* The answer first (26 Sep 2026, G3): the published figure, its
+            publisher and date — or, with none, that the bands are indicative
+            and where the body publishes its cutoffs. */}
+        {lead && <p className="mt-2 max-w-3xl text-base leading-relaxed text-ink-800">{lead}</p>}
 
         {/* Language twins — real links for humans AND the crawl graph, the
             same pair the hreflang block in generateMetadata declares. */}
@@ -551,6 +618,9 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
                 </details>
               );
             })}
+            {englishBody && checked && (
+              <p className="mt-2 text-xs text-ink-500">{fill(t("cutoff.checkedOn"), { date: checked.day })}</p>
+            )}
           </section>
         )}
 

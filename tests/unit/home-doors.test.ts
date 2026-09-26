@@ -10,7 +10,9 @@
 //   3. HONESTY (founder, absolute): no "trusted by", no "AI-powered", no
 //      nursery, no testimonial, no typed count — every number on the page
 //      is a placeholder the page fills from data it loads; graduation / PG
-//      / PhD appear only as "being built" and link nowhere;
+//      / PhD study appears only as "being built" — elsewhere those words
+//      only name exam lists (26 Sep 2026, entry points: "Exams after
+//      graduation", "PG entrance exams on Shishya ({n})");
 //   4. INDEPENDENCE: nothing reads as a journey — no "then", "next step",
 //      "after that", "step 1" between sections, in any locale;
 //   5. every internal link the home components render resolves to a page
@@ -202,22 +204,33 @@ describe("home doors copy — honesty (founder, absolute)", () => {
       }
     }
     // The counts the page renders are placeholders, filled from data.
-    for (const k of ["doors.careers.count", "how.ask", "doors.school.classTile", "finder.browse"]) expect(placeholders(EN[k])).toEqual(["n"]);
+    for (const k of ["doors.careers.count", "how.ask", "doors.school.classTile", "doors.school.boardExam", "doors.soon.pgExams", "finder.browse"]) expect(placeholders(EN[k])).toEqual(["n"]);
     // Review, 26 Sep 2026: the Government door carries no count — the
     // catalogue count is government AND entrance exams.
     expect(EN["doors.government.count"]).toBeUndefined();
   });
 
-  it("graduation, PG and PhD appear only in the 'being built' cell, which says it is not open", () => {
+  // 26 Sep 2026 (entry points): graduation / PG / PhD STUDY is still being
+  // built; outside the being-built cell those words may only name an exam
+  // list that exists ("Exams after graduation"), and the cell's one link is
+  // to PG entrance exams, with a computed count.
+  const EXAM_LIST_KEYS = new Set(["doors.government.afterGraduation", "doors.soon.pgExams"]);
+  it("graduation, PG and PhD study appear only in the 'being built' cell, which says it is not open", () => {
     for (const [k, v] of Object.entries(EN)) {
-      if (/\bPhD\b|post-?graduation|\bPG\b|graduation/i.test(v)) expect(k, v).toMatch(/^doors\.soon\./);
+      if (!/\bPhD\b|post-?graduation|\bPG\b|graduation/i.test(v)) continue;
+      if (EXAM_LIST_KEYS.has(k)) expect(v, k).toMatch(/\bexams\b/i);
+      else expect(k, v).toMatch(/^doors\.soon\.(title|tag|body)$/);
     }
     expect(EN["doors.soon.tag"]).toBe("Being built");
-    expect(EN["doors.soon.body"]).toMatch(/Not open yet/);
-    expect(EN["doors.soon.body"]).toMatch(/nothing to click/);
-    // The cell links nowhere: its copy carries no arrow.
+    expect(EN["doors.soon.body"]).toMatch(/Not open yet\.$/);
+    // The cell now carries one link, so it no longer says there is nothing to click.
+    for (const L of [EN, HI, TE]) expect(L["doors.soon.body"]).not.toMatch(/nothing to click|क्लिक|క్లిక్/);
+    // The study copy carries no arrow; the one arrow is the exam link's.
     expect(EN["doors.soon.body"]).not.toMatch(/→/);
     expect(EN["doors.soon.title"]).not.toMatch(/→/);
+    expect(EN["doors.soon.pgExams"]).toBe("PG entrance exams on Shishya ({n}) →");
+    expect(placeholders(EN["doors.soon.pgExams"])).toEqual(["n"]);
+    expect(EN["doors.government.afterGraduation"]).toBe("Exams after graduation");
   });
 
   it("the School door claims no notes or practice — they are being written", () => {
@@ -326,8 +339,18 @@ describe("every link the home page renders resolves to a page under src/app", ()
       cbseClassHref(1),
       cbseClassHref(12),
       "/exams/browse",
-      "/exams/browse?category=OLYMPIAD",
-      "/exams/browse?category=BANKING",
+      // 26 Sep 2026 (entry points): the robots-blocked ?category= chips are
+      // gone; these open only while their page clears its own floor
+      // (src/lib/home-door-links.ts, tests/unit/home-door-links.test.ts).
+      "/exams/entrance",
+      "/exams/entrance#entrance-olympiad",
+      "/exams/category/banking",
+      "/exams/after/12th",
+      "/exams/after/graduation",
+      "/scholarships/closing-soon",
+      "/post-graduation#pg-entrances",
+      "/schooling/cbse/class-10/board-exam",
+      "/schooling/cbse/class-12/board-exam",
       "/exams/state",
       ...[...ENTRANCE_DOOR_CODES, ...GOVERNMENT_DOOR_CODES].map((c) => `/exams/${c}`),
       "/colleges",
@@ -389,13 +412,33 @@ describe("exam doors — destinations", () => {
     expect(tag).not.toMatch(/badge=/);
   });
 
-  it("the Entrance door has no whole-card link (no page lists admission tests alone); its chips are the section", () => {
+  // 26 Sep 2026 (entry points): /exams/entrance shipped in 7bab6c7 — the
+  // entrance-only hub the door lacked — so the whole card opens it.
+  it("the Entrance door opens the entrance hub, /exams/entrance; Olympiads open its olympiad heading, not a robots-blocked filter", () => {
     const tag = doorTag(doors, "entrance");
-    expect(tag).not.toMatch(/href=/);
+    expect(tag).toMatch(/href="\/exams\/entrance"/);
+    expect(tag).not.toMatch(/category=/);
     expect(doors).toMatch(/entranceChips\.map/);
-    expect(doors).toMatch(/href="\/exams\/browse\?category=OLYMPIAD"/);
-    // The body tells the reader what to do instead of a card tap.
-    expect(EN["doors.entrance.body"]).toMatch(/Tap your exam:$/);
+    expect(doors).toMatch(/<Chip href="\/exams\/entrance" cta="entrance-all" go>\{D\.entrance\.browse\}<\/Chip>/);
+    expect(doors).not.toMatch(/\/exams\/browse\?category=/);
+    // A card tap is the section now, so the body no longer asks for a chip tap.
+    for (const L of [EN, HI, TE]) expect(L["doors.entrance.body"]).not.toMatch(/Tap your exam|चुनिए:|నొక్కండి:/);
+    expect(EN["doors.entrance.browse"]).toBe("All entrance exams →");
+  });
+
+  it("every door is a whole-card link to its section hub", () => {
+    for (const [id, href] of [
+      ["school", "/schooling"],
+      ["entrance", "/exams/entrance"],
+      ["government", "/exams/browse"],
+      ["college", "/colleges"],
+      ["careers", "/careers"],
+    ] as const) {
+      const tag = doorTag(doors, id);
+      expect(tag, id).not.toBe("");
+      expect(tag, id).toMatch(new RegExp(`href="${href.replace(/\//g, "\\/")}"`));
+    }
+    expect(doors).toMatch(/  href: string;\n/);
   });
 
   it("no door names CLAT (no exam page) and the finder line names the government-job finder", () => {

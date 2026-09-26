@@ -9,6 +9,11 @@
 // s.id). The 208 detail pages were in the sitemap but no page linked them —
 // crawlers and students reached them only through search. The official
 // apply / awarding-body links stay on the card.
+// 26 Sep 2026 (G4): "Ready lists" — plain links to the crawlable list pages
+// (/scholarships/for/{filter}, /scholarships/closing-soon), passed in by the
+// server page with their computed counts (this client file does not import
+// the list module, so the catalogue ships once). A discontinued scheme
+// (Scholarship.closed) is labelled on its card and has no apply button.
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -86,8 +91,15 @@ const GENDER_FILTERS: Array<{ value: "ALL" | "F" | "M"; label: string }> = [
   { value: "F", label: "Girls / Women only" },
 ];
 
+/** A ready list the server page links (26 Sep 2026, G4). */
+export interface ReadyListLink {
+  href: string;
+  label: string;
+  count: number;
+}
+
 // 26 Sep 2026 (repair): readonly — the page passes SCHOLARSHIP_SCHEMES (src/lib/scholarship-schemes.ts).
-export function ScholarshipBrowser({ scholarships }: { scholarships: readonly Scholarship[] }) {
+export function ScholarshipBrowser({ scholarships, lists = [] }: { scholarships: readonly Scholarship[]; lists?: readonly ReadyListLink[] }) {
   const [q, setQ] = useState("");
   const [state, setState] = useState<string>("ALL");
   const [type, setType] = useState<ScholarshipType | "ALL">("ALL");
@@ -147,6 +159,20 @@ export function ScholarshipBrowser({ scholarships }: { scholarships: readonly Sc
 
   return (
     <div className="mt-8">
+      {lists.length > 0 && (
+        <nav aria-label="Ready scholarship lists" className="mb-4 flex flex-wrap items-center gap-2 text-xs">
+          <span className="font-semibold uppercase tracking-wider text-ink-500">Ready lists:</span>
+          {lists.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="rounded-full border border-ink-200 bg-white px-3 py-1 text-ink-700 hover:border-saffron-400 hover:bg-saffron-50/30"
+            >
+              {l.label} <span className="text-[10px] text-ink-500">{l.count}</span>
+            </Link>
+          ))}
+        </nav>
+      )}
       {/* Search + filter row */}
       <div className="rounded-lg border border-ink-200 bg-white p-4 shadow-sm">
         <input
@@ -264,6 +290,9 @@ function ScholarshipCard({ s }: { s: Scholarship }) {
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${TYPE_TONE[s.type]}`}>
           {s.type.replace("_", " ")}
         </span>
+        {s.closed && (
+          <span className="shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-medium text-rose-800">Discontinued</span>
+        )}
       </div>
       <p className="mt-0.5 text-xs text-ink-500">{s.awardingBody}</p>
 
@@ -285,18 +314,28 @@ function ScholarshipCard({ s }: { s: Scholarship }) {
         {s.eligibility.minMarksPct && (
           <Row label="Min marks" value={`${s.eligibility.minMarksPct}%`} />
         )}
-        <Row label="Deadline" value={s.deadline} />
+        {/* 26 Sep 2026 (G4): this year's date only as read on the official portal, with its tier and check day. */}
+        {s.cycle?.closesOn && (
+          <Row label="2026-27 last date" value={`${isoDayLabel(s.cycle.closesOn)} (${s.cycle.tier}, checked ${isoDayLabel(s.cycle.checkedOn)})`} highlight />
+        )}
+        <Row label="Usual window" value={s.deadline} />
       </dl>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-        <a
-          href={s.applyUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-primary !py-1.5 !px-3 text-xs"
-        >
-          Apply on official portal →
-        </a>
+        {s.closed ? (
+          <Link href={`/scholarships/${s.id}`} className="text-xs font-medium text-rose-800 hover:underline">
+            No new applications — why →
+          </Link>
+        ) : (
+          <a
+            href={s.applyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary !py-1.5 !px-3 text-xs"
+          >
+            Apply on official portal →
+          </a>
+        )}
         {s.officialSite && s.officialSite !== s.applyUrl && (
           <a
             href={s.officialSite}
@@ -321,6 +360,13 @@ function Row({ label, value, highlight = false }: { label: string; value: string
       <dd className={highlight ? "text-ink-900 font-medium" : "text-ink-700"}>{value}</dd>
     </div>
   );
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "2026-10-31" → "31 Oct 2026" (the same words as src/lib/scholarship-lists.ts formatIsoDay; no clock). */
+function isoDayLabel(day: string): string {
+  const [y, m, d] = day.split("-").map(Number);
+  return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
 function prettyLevel(l: ScholarshipLevel): string {

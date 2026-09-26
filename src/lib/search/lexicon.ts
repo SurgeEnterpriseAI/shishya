@@ -465,3 +465,37 @@ export const BRANCH_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   law: ["law", "llb"],
   "math-cs": ["mathematics and computing", "math cs", "mnc"],
 };
+
+// ── 14. Calendar, current affairs and months (26 Sep 2026, discoverability G2) ──
+// "upsc calendar 2026", "upcoming government exams 2026", "current affairs
+// today", "current affairs september 2026": each names a site page (the exam
+// calendar, the daily current affairs, a monthly capsule) that token scoring
+// alone left as a list. resolve.ts reads these; a capsule opens only when the
+// index holds that month (a page.tsx that renders).
+/** Words that ask for the exam calendar. */
+export const CALENDAR_WORDS: readonly string[] = ["calendar", "calender", "calendars", "कैलेंडर", "कैलेण्डर", "క్యాలెండర్"];
+/** "upcoming government exams" — the calendar's upcoming dates. */
+export const UPCOMING_WORDS: readonly string[] = ["upcoming", "आगामी", "రాబోయే"];
+/** Words that may sit beside a calendar / upcoming word without naming another page. */
+export const CALENDAR_SIDE_WORDS: readonly string[] = [
+  "exam", "exams", "examination", "examinations", "government", "govt", "sarkari", "central", "competitive", "recruitment", "list", "all",
+  "annual", "yearly", "full", "new", "परीक्षा", "परीक्षाएं", "सरकारी", "పరీక్ష", "పరీక్షలు", "ప్రభుత్వ",
+];
+/** The phrases that name current affairs (any script). */
+export const CURRENT_AFFAIRS_PHRASES: readonly string[] = [
+  "current affairs", "current affair", "करंट अफेयर्स", "करेंट अफेयर्स", "समसामयिकी", "samsamayiki", "కరెంట్ అఫైర్స్", "వర్తమాన వ్యవహారాలు",
+];
+/** Words that ask for today's current affairs ("current affairs today", "aaj ka current affairs"). */
+export const TODAY_WORDS: readonly string[] = ["today", "todays", "aaj", "daily", "latest", "आज", "ताजा", "ఈరోజు", "నేటి", "gk"];
+/** Words that may sit beside a month in a capsule ask ("current affairs capsule september 2026"). */
+export const CAPSULE_SIDE_WORDS: readonly string[] = ["capsule", "monthly", "month", "gk", "magazine", "compilation", "मासिक", "నెలవారీ"];
+/** Month names → 1-12 (English, short forms, Hindi, Telugu). */
+export const MONTH_WORDS: Readonly<Record<string, number>> = {
+  january: 1, jan: 1, february: 2, feb: 2, march: 3, mar: 3, april: 4, apr: 4, may: 5, june: 6, jun: 6, july: 7, jul: 7, august: 8, aug: 8,
+  september: 9, sept: 9, sep: 9, october: 10, oct: 10, november: 11, nov: 11, december: 12, dec: 12,
+  "जनवरी": 1, "फरवरी": 2, "मार्च": 3, "अप्रैल": 4, "मई": 5, "जून": 6, "जुलाई": 7, "अगस्त": 8, "सितंबर": 9, "सितम्बर": 9, "अक्टूबर": 10, "नवंबर": 11, "नवम्बर": 11,
+  "दिसंबर": 12, "दिसम्बर": 12,
+  "జనవరి": 1, "ఫిబ్రవరి": 2, "మార్చి": 3, "ఏప్రిల్": 4, "మే": 5, "జూన్": 6, "జూలై": 7, "ఆగస్టు": 8, "సెప్టెంబర్": 9, "అక్టోబర్": 10, "నవంబర్": 11, "డిసెంబర్": 12,
+};
+/** English month names, for capsule page titles and match keys (index-core.ts). */
+export const MONTH_NAMES: readonly string[] = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];

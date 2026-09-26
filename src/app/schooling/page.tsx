@@ -8,6 +8,14 @@
 // src/lib/school/surface.ts (the same read the sitemap uses). Below that,
 // the 20 boards with their official links, as before. Indexable.
 //
+// 26 Sep 2026 (entry points): the CBSE Class 10 / 12 board-exam hubs
+// (/schooling/cbse/class-{10,12}/board-exam — CBSE's own sample papers,
+// marking schemes, curriculum and result portals) are linked here, each only
+// while it clears BOARD_EXAM_MIN_LINKS (src/lib/board-exams.ts), with the
+// hub's own computed title as the link text. Before this, the hubs were
+// linked only from the Class 10 and 12 pages. "Past Class 12?" now links the
+// entrance hub and the government-exams catalogue instead of the home page.
+//
 // 25 Sep 2026 (school build, Step 0): the copy said only what was true —
 // English-only, 20 boards, no Shishya practice or notes. That rule stands;
 // what changed is what exists.
@@ -21,6 +29,8 @@ import { HUB_COPY, SCHOOL_SITE } from "@/lib/school/copy";
 import { chapterCounts, getLiveSchoolClasses } from "@/lib/school/db";
 import { SCHOOL_GUEST_QUIZ_MIN } from "@/lib/school/scope";
 import { schoolBoardPath, schoolClassPath, type SchoolSurfaceClass } from "@/lib/school/surface";
+import { BOARD_EXAM_HUBS } from "@/data/board-exams";
+import { boardExamPath, boardExamTitle, isBoardExamIndexable } from "@/lib/board-exams";
 
 // 10 minutes = SCHOOL_REVALIDATE (src/lib/school/scope.ts; Next needs the literal).
 export const revalidate = 600;
@@ -100,6 +110,8 @@ export default async function SchoolingLanding({ searchParams }: { searchParams:
   const [ncertClasses, cisceClasses] = await Promise.all([getLiveSchoolClasses("cbse"), getLiveSchoolClasses("icse-cisce")]);
   const ncert = totalsOf(ncertClasses);
   const cisce = totalsOf(cisceClasses);
+  // The CBSE board-exam hubs that clear their floor (static data, no DB).
+  const cbseBoardExams = BOARD_EXAM_HUBS.filter((h) => h.board === "cbse" && isBoardExamIndexable(h));
 
   const filtered = BOARDS.filter((b) => {
     if (type && b.type !== type) return false;
@@ -187,6 +199,25 @@ export default async function SchoolingLanding({ searchParams }: { searchParams:
             classes={cisceClasses}
           />
         </div>
+
+        {/* 26 Sep 2026 (entry points): the CBSE board-exam hubs, each titled
+            by what it holds (boardExamTitle — "Date Sheet" only once CBSE
+            publishes one). Links only; the files stay on CBSE's site. */}
+        {cbseBoardExams.length > 0 && (
+          <nav aria-label="CBSE board exams" className="mt-4 rounded-lg border border-ink-200 bg-white p-5">
+            <h2 className="text-base font-semibold text-ink-900">CBSE board exams</h2>
+            <ul className="mt-2 space-y-1.5 text-sm">
+              {cbseBoardExams.map((h) => (
+                <li key={h.cls}>
+                  <Link href={boardExamPath(h)} className="font-medium text-saffron-700 hover:underline">
+                    {boardExamTitle(h)} →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-[11px] text-ink-500">Official CBSE links — every file stays on CBSE&apos;s site.</p>
+          </nav>
+        )}
 
         {/* Stream selection CTA — the most consequential Class 10 decision */}
         <div className="mt-6 rounded-lg border border-saffron-300 bg-saffron-50/50 p-5">
@@ -296,10 +327,15 @@ export default async function SchoolingLanding({ searchParams }: { searchParams:
         <div className="mt-12 rounded-lg border border-ink-200 bg-white p-5 text-sm text-ink-700">
           <h3 className="text-base font-semibold text-ink-900">{HUB_COPY.todayHeading}</h3>
           <p className="mt-2">{HUB_COPY.today(ncert)}</p>
+          {/* 26 Sep 2026 (entry points): the two section hubs, not the home page. */}
           <p className="mt-2 text-[11px] text-ink-500">
             Past Class 12? See{" "}
-            <Link href="/" className="text-saffron-700 underline">
-              Entrance &amp; Government Exams
+            <Link href="/exams/entrance" className="text-saffron-700 underline">
+              Entrance exams
+            </Link>{" "}
+            and{" "}
+            <Link href="/exams/browse" className="text-saffron-700 underline">
+              Government exams
             </Link>
             .
           </p>

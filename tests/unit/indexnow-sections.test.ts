@@ -16,7 +16,10 @@ import {
   MACHINE_FILE_PATHS,
   SECTION_HUB_PATHS,
   currentAffairsUrls,
+  examWeekUrls,
+  factUrlsForExam,
   machineFileUrls,
+  officialDataUrls,
   schoolChapterKey,
   schoolChapterUpdateUrls,
   schoolIndexableUrls,
@@ -172,5 +175,69 @@ describe("the news cron sends the new families in its own window", () => {
     // Both new reads carry their own empty fallback.
     expect(src).toMatch(/\.catch\(\(\) => \[\] as \{ d: Date \}\[\]\)/);
     expect(src).toMatch(/take: 5_000,\n\s*\}\)\n\s*\.catch\(\(\) => \[\]\);/);
+  });
+});
+
+// 26 Sep 2026 (G1 index hygiene): fact changes reach Bing the same day.
+describe("factUrlsForExam — the pages that print an exam's announced dates", () => {
+  it("hub, tracker, exam calendar, the state page for a state exam, and the hub / tracker twins", () => {
+    expect(factUrlsForExam("TN_TNPSC_GROUP4", "tamil-nadu")).toEqual([
+      `${S}/exams/TN_TNPSC_GROUP4`,
+      `${S}/exams/TN_TNPSC_GROUP4/updates`,
+      `${S}/exam-calendar`,
+      `${S}/exams/state/tamil-nadu`,
+      `${S}/hi/exams/TN_TNPSC_GROUP4`,
+      `${S}/te/exams/TN_TNPSC_GROUP4`,
+      `${S}/hi/exams/TN_TNPSC_GROUP4/updates`,
+      `${S}/te/exams/TN_TNPSC_GROUP4/updates`,
+    ]);
+  });
+  it("a national exam has no state page", () => {
+    const urls = factUrlsForExam("SSC_CGL", null);
+    expect(urls.some((u) => u.includes("/exams/state/"))).toBe(false);
+    expect(factUrlsForExam("SSC_CGL", undefined)).toEqual(urls);
+    expect(factUrlsForExam("SSC_CGL", "")).toEqual(urls);
+    expect(new Set(urls).size).toBe(urls.length);
+    for (const u of urls) expect(u.startsWith("https://")).toBe(true);
+  });
+  it("twins pass only through gateTwinUrls: unmeasured or non-localised twins are dropped, English pages kept", async () => {
+    const { gateTwinUrls } = await import("@/lib/twin-localisation");
+    const kept = gateTwinUrls(factUrlsForExam("SSC_CGL", null), new Map([["SSC_CGL", { hub: { hi: true, te: false } }]]));
+    expect(kept).toEqual([`${S}/exams/SSC_CGL`, `${S}/exams/SSC_CGL/updates`, `${S}/exam-calendar`, `${S}/hi/exams/SSC_CGL`]);
+  });
+  it("merged with the exam-week set, each URL is sent once", () => {
+    const merged = [...new Set([...factUrlsForExam("SSC_CGL", null), ...examWeekUrls("SSC_CGL", { cutoff: true })])];
+    expect(merged.filter((u) => u === `${S}/exams/SSC_CGL`)).toHaveLength(1);
+    expect(merged).toContain(`${S}/exam-calendar`);
+    expect(merged).toContain(`${S}/exams/SSC_CGL/cutoff`);
+  });
+});
+
+describe("officialDataUrls — what an official-data import changed", () => {
+  it("hub always; /cutoff only when asked (the page renders); each indexable PYQ year once, sorted", () => {
+    expect(officialDataUrls("UPSC_CSE")).toEqual([`${S}/exams/UPSC_CSE`]);
+    expect(officialDataUrls("SSC_GD", { cutoff: true })).toEqual([`${S}/exams/SSC_GD`, `${S}/exams/SSC_GD/cutoff`]);
+    expect(officialDataUrls("UPSC_CSE", { pyqYears: [2024, "2023", 2024, "2023-24", "abc", 1899] })).toEqual([
+      `${S}/exams/UPSC_CSE`,
+      `${S}/exams/UPSC_CSE/pyq/2023`,
+      `${S}/exams/UPSC_CSE/pyq/2024`,
+    ]);
+  });
+});
+
+describe("the writer and the import scripts wire it (source)", () => {
+  const read = (rel: string) => fs.readFileSync(path.resolve(__dirname, "../..", rel), "utf8").replace(/\r\n/g, "\n");
+  it("the writer pings on a DIFF of the announced facts, for any exam, once", () => {
+    const w = read("src/lib/exam-data-writer.ts");
+    expect(w).toMatch(/factsChanged = datesWritten && announcedFactsChanged\(announcedFactKeys\(factsBefore, officialUrl\), announcedFactKeys\(factsAfter, officialUrl\)\);/);
+    expect(w).toMatch(/if \(factsChanged\) urls\.push\(\.\.\.factUrlsForExam\(/);
+    expect(w).toMatch(/await submitIndexNow\(gateTwinUrls\(\[\.\.\.new Set\(urls\)\]/);
+    expect([...w.matchAll(/submitIndexNow\(/g)]).toHaveLength(1);
+  });
+  it.each(["scripts/import-official-cutoffs.ts", "scripts/import-official-papers.ts"])("%s: --indexnow only with --apply", (rel) => {
+    const src = read(rel);
+    expect(src).toMatch(/const indexNow = apply && process\.argv\.includes\("--indexnow"\);/);
+    expect(src).toMatch(/officialDataUrls\(/);
+    expect([...src.matchAll(/submitIndexNow\(/g)]).toHaveLength(1);
   });
 });

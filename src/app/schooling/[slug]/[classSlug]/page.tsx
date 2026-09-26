@@ -38,6 +38,12 @@
 //     stream guide for 9-10; JEE Main / NEET UG / CUET UG, entrance exams,
 //     colleges, scholarships and careers for 11-12), exam hubs only while
 //     live; CA Foundation (live since the stream box said "no page") links.
+// 26 Sep 2026 (G4): the title tail says "on 5 chapters" (it read "on 5");
+// CBSE Class 10 and 12 link their board-exam page (/schooling/cbse/class-N/
+// board-exam, src/data/board-exams.ts) from the board-exam card; the chapters
+// with Shishya's notes AND checked practice are listed on the class page; the
+// Humanities line links the entrance page's law group instead of the
+// robots-blocked /exams/browse?category=LAW.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -49,6 +55,8 @@ import { OfficialLink, SchoolCrumbs } from "@/components/school/SchoolBits";
 import { SchoolNextSteps } from "@/components/school/SchoolNextSteps";
 import { SchoolStudentEntry } from "@/components/school/SchoolStudentEntry";
 import { findBoard, boardExamPapersFor, SCHOOLING_ROBOTS, schoolRobots, type Board } from "@/lib/schooling-data";
+import { findBoardExamHub } from "@/data/board-exams";
+import { boardExamPath } from "@/lib/board-exams";
 import { findClassSyllabus, mainBooks, officialClassSource, SCHOOL_SOURCES_CHECKED_ON, type SchoolSubject } from "@/lib/schooling-subjects";
 import { cisceClassDocuments, cisceSubjectLinks, cisceSubjectsWithPdf, ncertBooksForSubject } from "@/lib/school/books";
 import { schoolClassIdentity } from "@/lib/school/context";
@@ -56,7 +64,7 @@ import { CLASS_COPY, SCHOOL_SITE, cisceDocsPhrase, countsLine } from "@/lib/scho
 import { chapterCounts, getLiveSchoolClass, getSchoolOfficialLinks } from "@/lib/school/db";
 import { SCHOOL_GUEST_QUIZ_MIN, hasSchoolGuestQuiz } from "@/lib/school/scope";
 import { isStudentModeClass } from "@/lib/school/student-classes";
-import { isSchoolSubjectIndexable, parseSchoolClassSlug, schoolBoardPath, schoolClassPath, schoolSubjectPath, type SchoolSurfaceClass } from "@/lib/school/surface";
+import { isSchoolSubjectIndexable, parseSchoolClassSlug, schoolBoardPath, schoolChapterPath, schoolClassPath, schoolSubjectPath, type SchoolSurfaceClass } from "@/lib/school/surface";
 import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { loadLiveExams } from "@/lib/live-exam-codes";
 import { schoolNextSteps } from "@/lib/section-related";
@@ -85,8 +93,9 @@ function classTotals(live: SchoolSurfaceClass) {
   return { subjects, totals };
 }
 
-/** "notes and practice on 5" (chapters with both), else "notes on N" /
- *  "practice on N"; "" when the class has neither. */
+/** "notes and practice on 5 chapters" (chapters with both), else "Shishya
+ *  notes on N chapters" / "practice on N chapters"; "" when the class has
+ *  neither. 26 Sep 2026 (G4): the noun is said — "on 5" read as a bare number. */
 function oursShortBit(live: SchoolSurfaceClass): string {
   let both = 0;
   let notes = 0;
@@ -99,9 +108,10 @@ function oursShortBit(live: SchoolSurfaceClass): string {
       if (quiz) practice++;
     }
   }
-  if (both > 0) return `notes and practice on ${both}`;
-  if (notes > 0) return `Shishya notes on ${notes}`;
-  if (practice > 0) return `practice on ${practice}`;
+  const chapterWord = (n: number) => `${n} ${n === 1 ? "chapter" : "chapters"}`;
+  if (both > 0) return `notes and practice on ${chapterWord(both)}`;
+  if (notes > 0) return `Shishya notes on ${chapterWord(notes)}`;
+  if (practice > 0) return `practice on ${chapterWord(practice)}`;
   return "";
 }
 
@@ -190,6 +200,8 @@ export default async function ClassPage({ params }: { params: Promise<PageParams
   const classNum = cls;
   const st = board.state ? stateInfo(board.state) : null;
   const examPapers = boardExamPapersFor(board, classNum);
+  // 26 Sep 2026 (G4): the board-exam page, where one exists (CBSE 10 and 12).
+  const boardExamHub = findBoardExamHub(board.slug, classNum);
   const showStreams = board.type !== "international" && (classNum === 10 || classNum === 11);
   const path = schoolClassPath(board.slug, cls);
 
@@ -292,8 +304,8 @@ export default async function ClassPage({ params }: { params: Promise<PageParams
               </li>
               <li>
                 <strong>Humanities:</strong> CUET → liberal-arts UG, CLAT → law.{" "}
-                <Link href="/exams/browse?category=LAW" className="text-saffron-700 underline">
-                  Browse law / arts exams
+                <Link href="/exams/entrance#entrance-law" className="text-saffron-700 underline">
+                  Law entrance exams on Shishya
                 </Link>
               </li>
             </ul>
@@ -309,10 +321,15 @@ export default async function ClassPage({ params }: { params: Promise<PageParams
           <div className="mt-6 rounded-lg border border-ink-200 bg-white p-5 text-sm text-ink-700">
             <h3 className="text-base font-semibold text-ink-900">Class {classNum} board exam</h3>
             <p className="mt-2 text-xs text-ink-600">{board.shortName}&apos;s own question-paper page for this exam:</p>
-            <div className="mt-3">
+            <div className="mt-3 flex flex-wrap items-center gap-3">
               <OfficialLink href={examPapers} primary>
                 Official {board.shortName} question papers ↗
               </OfficialLink>
+              {boardExamHub && (
+                <Link href={boardExamPath(boardExamHub)} className="text-xs font-semibold text-saffron-700 underline">
+                  Class {classNum} board exam {boardExamHub.examYear}: official sample papers, marking schemes and result links →
+                </Link>
+              )}
             </div>
           </div>
         )}
@@ -328,6 +345,11 @@ function LiveClass({ board, cls, live }: { board: Board; cls: number; live: Scho
   const { subjects, totals } = classTotals(live);
   const source = officialClassSource(board.slug, cls);
   const cisceDocs = isNcert ? null : cisceClassDocuments(cls);
+  const ready = live.subjects.flatMap((s) =>
+    s.chapters
+      .filter((ch) => ch.hasNotes && hasSchoolGuestQuiz(ch))
+      .map((ch) => ({ href: schoolChapterPath(board.slug, cls, s.slug, ch.slug), subject: s.name, chapter: ch.name })),
+  );
   return (
     <>
       <p className="mt-4 max-w-3xl text-sm text-ink-700">
@@ -385,6 +407,24 @@ function LiveClass({ board, cls, live }: { board: Board; cls: number; live: Scho
           );
         })}
       </ul>
+
+      {/* 26 Sep 2026 (G4): the chapters with Shishya's notes AND checked practice, computed. */}
+      {ready.length > 0 && (
+        <div className="mt-8 rounded-lg border border-emerald-200 bg-emerald-50/40 p-5">
+          <h2 className="text-base font-semibold text-ink-900">
+            Shishya notes and checked practice ({ready.length} {ready.length === 1 ? "chapter" : "chapters"})
+          </h2>
+          <ul className="mt-2 space-y-1 text-sm">
+            {ready.map((r) => (
+              <li key={r.href}>
+                <Link href={r.href} className="text-saffron-700 hover:underline">
+                  {r.subject}: {r.chapter}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-10 rounded-lg border border-dashed border-ink-300 bg-white p-5 text-xs text-ink-600">
         <p className="font-semibold text-ink-800">{CLASS_COPY.todayHeading}</p>
