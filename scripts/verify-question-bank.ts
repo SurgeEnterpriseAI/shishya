@@ -721,8 +721,19 @@ async function runBatchMode() {
   // 5. aggregate — runs in run-index order so the verify prompt reads like the live one
   const solves = new Map<string, SolveResult>();
   const skipped: string[] = [];
+  // 26 Sep 2026: index the solve requests by question ONCE. Scanning all
+  // journal requests per question was quadratic (36,817 × 147,120 on the
+  // full-bank run) and kept the resume at 100% CPU for over 30 minutes
+  // before Phase B could even be submitted.
+  const solveReqsByQuestion = new Map<string, JournalRequest[]>();
+  for (const r of Object.values(journal.requests)) {
+    if (r.phase !== SOLVE) continue;
+    const list = solveReqsByQuestion.get(r.questionId);
+    if (list) list.push(r);
+    else solveReqsByQuestion.set(r.questionId, [r]);
+  }
   for (const id of rows.keys()) {
-    const mine = Object.values(journal.requests).filter((r) => r.phase === SOLVE && r.questionId === id);
+    const mine = solveReqsByQuestion.get(id) ?? [];
     if (mine.some((r) => r.status !== "succeeded" && r.status !== "unusable")) {
       // An API failure on any solve leaves the question unchecked for the next run, as the live path does.
       skipped.push(id);
