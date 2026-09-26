@@ -111,9 +111,13 @@ export default function EditorialPolicyPage() {
 
         <h2 className="mt-6 text-lg font-semibold text-ink-900">Every question can be challenged</h2>
         <p className="mt-2">
-          Every practice question carries a <b>Report</b> action. Reported questions are reviewed by
-          a human and corrected or removed; reporters are notified of the outcome. Aspirants can
-          also bring any doubt to the free expert desk, which a person answers.
+          {/* 27 Sep 2026: the old line said reports are "reviewed by a human"; all 72
+              closed reports were closed by the automated re-check. Say what happens. */}
+          Every practice question carries a <b>Report</b> action. A reported question is re-checked —
+          today by an automated review that solves it again against its answer key — and the key is
+          corrected or the question is withdrawn; reporters are notified by email of the outcome.
+          Aspirants can also send any doubt to the free expert desk: a person answers, and if no one
+          has within a day, Shishya&apos;s AI answers it, labelled as such, and the team follows up.
         </p>
 
         <h2 className="mt-6 text-lg font-semibold text-ink-900">What we will not do</h2>

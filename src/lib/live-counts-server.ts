@@ -136,7 +136,7 @@ export const LIVE_COUNT_DEFINITIONS: Record<keyof LiveCounts, string> = {
   totalPageViews: "PAGE_VIEW events all-time, ingest-tagged bots and pre-30-Jul-2026 phantom ids excluded.",
   pageViewsToday: "PAGE_VIEW events since 00:00 IST today, tagged bots excluded.",
   uniqueVisitors:
-    "Distinct people who came to Shishya: identities on 2+ page views or one referred view, plus identity-less browser landings, overlap-corrected. Proves a visit, not learning.",
+    "Distinct people who came to Shishya: identities on 2+ page views, or one view that arrived from another site or a tagged link (for example utm_source=chatgpt.com — 27 Sep 2026: these were being missed), plus identity-less browser landings, overlap-corrected. Proves a visit, not learning.",
   walkIns: "Identity-less browser page views (single-page landers) — the internal split of uniqueVisitors; not shown.",
   mocksTaken: "Attempt rows with status SUBMITTED or AUTO_SUBMITTED — mocks a student finished, any exam or school chapter.",
   mocksToday: "Attempts submitted since 00:00 IST today.",
@@ -355,8 +355,7 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
         FROM "AnalyticsEvent"
         WHERE kind = 'PAGE_VIEW' AND COALESCE("userId", "anonId") IS NOT NULL
         GROUP BY 1
-        HAVING COUNT(*) >= 2
-           OR (bool_or("refHost" IS NOT NULL) AND COUNT(*) = 1)
+        HAVING COUNT(*) >= 2 OR (bool_or("refHost" IS NOT NULL) AND COUNT(*) = 1) OR (COUNT(*) = 1 AND bool_or("utmSource" IS NOT NULL))
       ) humans
     `,
     // Total PAGE_VIEW rows: ingest-tagged bot fetches excluded, and the

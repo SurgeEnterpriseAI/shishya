@@ -114,7 +114,7 @@ export const POOLED_WEEKS = 4;
  *  never drift from the all-time counter. When the counter gains the
  *  tagged-link clause (27 Sep 2026 recommendation), update this string and
  *  the tagged-link footnote disappears on its own. */
-export const HUMAN_RULE_HAVING = `HAVING COUNT(*) >= 2 OR (bool_or("refHost" IS NOT NULL) AND COUNT(*) = 1)`;
+export const HUMAN_RULE_HAVING = `HAVING COUNT(*) >= 2 OR (bool_or("refHost" IS NOT NULL) AND COUNT(*) = 1) OR (COUNT(*) = 1 AND bool_or("utmSource" IS NOT NULL))`;
 
 /** True while the counter's human rule leaves out single-page visitors who
  *  arrived on a tagged link with no referrer. */
