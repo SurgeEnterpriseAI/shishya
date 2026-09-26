@@ -45,12 +45,24 @@
 // !! (src/lib/ai/batch.ts). Without --apply the script is a dry run: it
 // !! lists the chapters, builds every request, prints the estimate at batch
 // !! prices, writes the journal and submits nothing.
+// !!
+// !! Spend guard (26 Sep 2026, src/lib/ai/batch.ts): the bulk key and the
+// !! tutor's key draw on ONE credit balance, and bulk runs emptied it on
+// !! 25 Sep 23:40 IST and 26 Sep 10:37 IST. So --apply also needs --max-usd
+// !! (a hard ceiling on this journal's ledgered spend; a chunk whose worst
+// !! case would cross it is not submitted) and --i-confirm-auto-reload (the
+// !! operator checked auto-reload in the Console); batches go out --chunk
+// !! requests at a time (default 2000), each collected before the next; the
+// !! production key is probed with one Haiku call before the run and after
+// !! every chunk, and any failure stops the run with the journal saved, what
+// !! was collected written, and the resume command printed.
 //
 //   npx tsx --env-file=.env.local scripts/school-content-batch.ts \
 //     --exams NCERT_C06,NCERT_C07,NCERT_C08,NCERT_C09,NCERT_C10 \
 //     [--subjects Mathematics,Science] [--topics fegp1.ch01,…] [--limit N] \
 //     [--phase notes|generate|all] [--target 40] [--force] [--model <id>] \
-//     [--apply] [--resume <runId>] [--journal <path>] [--poll-seconds 60] [--force-journal]
+//     [--apply --max-usd <usd> --i-confirm-auto-reload [--chunk 2000]] \
+//     [--resume <runId>] [--journal <path>] [--poll-seconds 60] [--force-journal]
 //
 //   --model ID        notes + MCQ model (default: the factory's generate tier,
 //                     i.e. ANTHROPIC_MODEL); Phase V stays on the strong tier
@@ -61,28 +73,50 @@
 //                     questions exist (default: skip chapters with notes /
 //                     ≥ target questions)
 //   --apply           submit the batches and write rows (default: dry run)
+//   --max-usd N       with --apply (required, no default): hard ceiling on the
+//                     journal's ledgered spend at batch prices; checked before
+//                     every chunk against the chunk's worst case
+//   --chunk N         requests per batch (default 2000, max 10,000), submitted
+//                     one at a time, each collected before the next is priced
+//   --i-confirm-auto-reload  with --apply (required): the operator confirmed
+//                     in the Anthropic Console that auto-reload is ON; the
+//                     statement is printed back before anything is submitted
 //   --resume ID       continue a journaled run
 //   --force-journal   start a fresh run (or resume a never-submitted journal)
 //                     although another journal has submitted batches over
 //                     the same chapters — pays for them again
 
+import path from "node:path";
 import { PrismaClient, Prisma } from "@prisma/client";
 import type Anthropic from "@anthropic-ai/sdk";
 import {
   BULK_KEY_ENV,
+  CONFIRM_AUTO_RELOAD_FLAG,
+  CONFIRM_AUTO_RELOAD_STATEMENT,
+  DEFAULT_CHUNK,
+  PROBE_MODEL,
+  PRODUCTION_KEY_ENV,
   assertBulkKey,
+  assertProductionKeyProbe,
+  awaitsSubmit,
   chunk,
+  describeProbe,
   estimateRequestTokens,
+  guardFlags,
   journalPath,
   loadJournal,
   makeCustomId,
   newJournal,
   openJournalsCovering,
+  probeProductionKey,
   runJournalPhase,
   saveJournal,
   tokensUsd,
   type BatchJournal,
   type JournalRequest,
+  type PhaseStop,
+  type ProbeResult,
+  type SpendGuard,
 } from "../src/lib/ai/batch";
 import type { MessageParams } from "../src/lib/ai/client";
 import { DEFAULT_CONFIG } from "../src/lib/ai/factory";
@@ -180,9 +214,31 @@ const GEN = "gen";
 let MODEL = arg("--model") ?? modelFor("generate");
 
 const totals = { notesWritten: 0, questionsWritten: 0, duplicates: 0, errors: 0, costUsd: 0 };
+const fmtUsd = (n: number) => `$${n.toFixed(2)}`;
 
 function journalFileFor(runId: string): string {
   return JOURNAL_FILE ?? journalPath(JOURNAL_DIR, runId);
+}
+
+/** The command line that continues a journal, with the guard flags (26 Sep 2026): the numbers the operator passed, or placeholders on a dry run. */
+const SCRIPT = "npx tsx --env-file=.env.local scripts/school-content-batch.ts";
+function applyFlags(g?: { maxUsd: number; chunkSize: number } | null): string {
+  return `--apply --max-usd ${g ? g.maxUsd : "<usd>"} --chunk ${g ? g.chunkSize : DEFAULT_CHUNK} ${CONFIRM_AUTO_RELOAD_FLAG}`;
+}
+/** --resume takes the journal FILE's name (a renamed journal resumes by that name, never by its runId); one outside JOURNAL_DIR needs --journal as well. */
+function resumeCommand(file: string, g?: { maxUsd: number; chunkSize: number } | null): string {
+  const token = path.basename(file, ".json");
+  const inDir = path.resolve(path.dirname(file)) === path.resolve(JOURNAL_DIR);
+  return `${SCRIPT} --resume ${token}${inDir ? "" : ` --journal "${file}"`} ${applyFlags(g)}`;
+}
+
+/** A guard stop: nothing more was submitted, what had been collected is written, and this is the exact command that continues the journal. */
+function printStop(journal: Journal, file: string, halt: PhaseStop, guard: SpendGuard) {
+  const maxUsd = halt.reason === "ceiling" ? Math.max(1, Math.ceil(halt.spentUsd + (halt.chunk?.worstUsd ?? 0))) : guard.maxUsd;
+  console.log(
+    `\n=== run ${journal.runId} STOPPED by the spend guard (${halt.reason}) — collected work written (notes ${totals.notesWritten}, questions ${totals.questionsWritten}) · journal ${file} (phase ${journal.phase}) · ledger ${fmtUsd(totals.costUsd)} this invocation · ${fmtUsd(journal.spentUsd ?? 0)} in all`,
+  );
+  console.log(`   To continue${halt.reason === "probe" ? " once the production key probe succeeds" : ""}:\n   ${resumeCommand(file, { maxUsd, chunkSize: guard.chunkSize })}`);
 }
 
 function newRunId(): string {
@@ -269,7 +325,7 @@ function resolveChapter(r: Row): { chapter: SchoolChapter | null; skip?: string 
 // Estimate
 // ---------------------------------------------------------------------------
 
-function printEstimate(notesReqs: MessageParams[], genReqs: MessageParams[], chaptersWithoutNotes: number) {
+function printEstimate(title: string, notesReqs: MessageParams[], genReqs: MessageParams[], chaptersWithoutNotes: number) {
   const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
   const nIn = sum(notesReqs.map(estimateRequestTokens));
   const gIn = sum(genReqs.map(estimateRequestTokens));
@@ -291,7 +347,7 @@ function printEstimate(notesReqs: MessageParams[], genReqs: MessageParams[], cha
   const vIn = questions * (DEFAULT_CONFIG.solveRuns * VERIFY_OBSERVED.solve.in + VERIFY_OBSERVED.verify.in);
   const vOut = questions * (DEFAULT_CONFIG.solveRuns * VERIFY_OBSERVED.solve.out + VERIFY_OBSERVED.verify.out);
   const vUsd = tokensUsd(vModel, { input: vIn, output: vOut }, { batch: true });
-  console.log(`\nESTIMATE (no request submitted)`);
+  console.log(`\n${title}`);
   console.log(`   Phase N notes : ${notesReqs.length} requests · ~${nIn.toLocaleString()} prompt tokens · max_tokens ${nMax.toLocaleString()} (expected output ~${nOut.toLocaleString()} at ${OBSERVED_OUT.notes}/req, TopicTeachingNote avg 26 Sep) · ${model}`);
   console.log(`   Phase G mcq   : ${genReqs.length} requests of ${MCQ_SET_SIZE} · ~${gIn.toLocaleString()} prompt tokens${chaptersWithoutNotes ? ` (${chaptersWithoutNotes} chapters priced with placeholder notes of ~1,000 words; real prompts carry the chapter's own Phase N notes)` : ""} · max_tokens ${gMax.toLocaleString()} (expected output ~${gOut.toLocaleString()} at ${OBSERVED_OUT.gen}/set, fresh-questions avg) · ${model}`);
   console.log(`   Batch price   : expected ~$${expected.toFixed(2)} · worst case $${worst.toFixed(2)} (every reply fills max_tokens = $${worstOnce.toFixed(2)}, then every request is retried once) · the same calls live would be ~$${(expected * 2).toFixed(2)}`);
@@ -362,6 +418,20 @@ async function main() {
   if (!["notes", "generate", "all"].includes(PHASE)) throw new Error(`--phase must be notes, generate or all (got ${PHASE})`);
   // Spend gate: nothing that can bill starts while the bulk key is absent, before the first database read.
   if (!DRY) assertBulkKey();
+  // Spend guard (26 Sep 2026): the flags, the operator's statement and the
+  // pre-flight probe of the production key — still before the first database
+  // read, so an empty balance or a missing flag costs nothing.
+  const flags = guardFlags(process.argv, !DRY);
+  let apply: { guard: SpendGuard; preflight: ProbeResult } | null = null;
+  if (!DRY) {
+    const maxUsd = flags.maxUsd!;
+    console.log(`\n=== spend guard: --max-usd ${fmtUsd(maxUsd)} (hard ceiling on this journal's ledgered spend, batch prices) · --chunk ${flags.chunkSize} requests per batch, one batch at a time`);
+    console.log(`   ${CONFIRM_AUTO_RELOAD_STATEMENT}`);
+    const preflight = await probeProductionKey();
+    console.log(`   ${preflight.ok ? "✓" : "✗"} production key probe before the run (${PRODUCTION_KEY_ENV}, ${PROBE_MODEL}, max_tokens 1): ${describeProbe(preflight)}`);
+    assertProductionKeyProbe(preflight);
+    apply = { guard: { maxUsd, chunkSize: flags.chunkSize, probe: probeProductionKey }, preflight };
+  }
 
   // 1. journal
   let journal: Journal;
@@ -466,12 +536,12 @@ async function main() {
     for (const o of openJournalsCovering(JOURNAL_DIR, new Set(rows.keys()))) {
       if (o.runId === journal.runId) continue;
       if (o.submitted) {
-        const msg = `run ${o.runId} (phase ${o.phase}) has submitted batches covering ${o.overlap} of these chapters; continue it with --resume ${o.runId} --apply${DRY ? "" : ", or pass --force-journal to pay for them again"}`;
+        const msg = `run ${o.runId} (phase ${o.phase}) has submitted batches covering ${o.overlap} of these chapters; continue it with --resume ${o.file} ${applyFlags(apply?.guard)}${DRY ? "" : ", or pass --force-journal to pay for them again"}`;
         if (!DRY && !FORCE_JOURNAL) throw new Error(msg);
         console.warn(`   ! ${msg}`);
       } else {
         dryTwins.push(o.runId);
-        console.log(`   note: dry-run journal ${o.runId} covers ${o.overlap} of these chapters${RESUME ? "" : `; --resume ${o.runId} --apply submits exactly those`}`);
+        console.log(`   note: dry-run journal ${o.runId} covers ${o.overlap} of these chapters${RESUME ? "" : `; --resume ${o.file} ${applyFlags(apply?.guard)} submits exactly those`}`);
       }
     }
     if (dryTwins.length) console.log(`   resume ONE journal only; the dry-run journals you will not resume can be deleted (nothing was submitted from them)`);
@@ -508,25 +578,40 @@ async function main() {
   const buildGen = (r: JournalRequest) =>
     buildSchoolMcqRequest(chapters.get(r.questionId)!, notesTextFor(r.questionId) ?? placeholderNotes(chapters.get(r.questionId)!), r.runIndex ?? 0, { model: MODEL, mix: mixForSet(r.runIndex ?? 0), retryFeedback: feedbackFor(r) });
 
-  if (DRY) {
-    const notesReqs = Object.values(journal.requests).filter((r) => r.phase === NOTES && r.status === "built").map(buildNotes);
-    const genBuilt = Object.values(journal.requests).filter((r) => r.phase === GEN && r.status === "built");
+  // What this invocation may still submit: built, or a first attempt due its one retry (both phases retry an unusable reply).
+  const estimate = (title: string) => {
+    const notesReqs = Object.values(journal.requests).filter((r) => r.phase === NOTES && awaitsSubmit(r, true)).map(buildNotes);
+    const genBuilt = Object.values(journal.requests).filter((r) => r.phase === GEN && awaitsSubmit(r, true));
     const genReqs = genBuilt.map(buildGen);
     const placeholders = new Set(genBuilt.filter((r) => !notesTextFor(r.questionId)).map((r) => r.questionId)).size;
-    printEstimate(notesReqs, genReqs, placeholders);
+    printEstimate(title, notesReqs, genReqs, placeholders);
     console.log(`   Chapters: ${rows.size} selected · ${needNotes.size} need notes · ${needSets.size} need questions (${[...needSets.values()].reduce((a, s) => a + s.length, 0)} sets) · ${rows.size - new Set([...needNotes, ...needSets.keys()]).size} nothing to do`);
+  };
+
+  if (DRY) {
+    estimate("ESTIMATE (no request submitted)");
     if (RESUME) {
       console.log(`\nJournal untouched: ${file} (phase ${journal.phase})`);
-      console.log(`To continue it (needs the founder's go-ahead + ${BULK_KEY_ENV}):\n   --resume ${journal.runId} --apply`);
+      console.log(`To continue it (needs the founder's go-ahead + ${BULK_KEY_ENV}; name the ceiling):\n   ${resumeCommand(file)}`);
     } else {
       journal.phase = "built";
       saveJournal(file, journal);
       console.log(`\nJournal written: ${file}`);
-      console.log(`To submit exactly these requests (needs the founder's go-ahead + ${BULK_KEY_ENV}):\n   --resume ${journal.runId} --apply`);
+      console.log(`To submit exactly these requests (needs the founder's go-ahead + ${BULK_KEY_ENV}; name the ceiling):\n   ${resumeCommand(file)}`);
     }
     printVerifyCommand(journal);
     return;
   }
+  if (!apply) throw new Error("internal: --apply without a spend guard");
+  const { guard, preflight } = apply;
+
+  // Spend guard header (26 Sep 2026): what this invocation may submit, priced
+  // before the first batch goes out, the ceiling it runs under, the chunk
+  // size, the probe it passed and the operator's statement.
+  estimate(`TO SUBMIT under the spend guard — --max-usd ${fmtUsd(guard.maxUsd)} · --chunk ${guard.chunkSize} · ledgered by this journal so far ${fmtUsd(journal.spentUsd ?? 0)} · production key probe: ${describeProbe(preflight)}`);
+  console.log(`   ${CONFIRM_AUTO_RELOAD_STATEMENT}`);
+  journal.args.lastGuard = { at: new Date().toISOString(), maxUsd: guard.maxUsd, chunk: guard.chunkSize };
+  const deps = { pollIntervalMs: POLL_MS, guard };
 
   // 5. Phase N
   const notesPending = Object.values(journal.requests).some((r) => r.phase === NOTES && (r.status === "built" || r.status === "submitted"));
@@ -549,9 +634,14 @@ async function main() {
       },
       // A reply that fails validation (length, headings, copy suspect) gets one more try, with the reasons in its prompt.
       true,
-      { pollIntervalMs: POLL_MS },
+      deps,
     );
     totals.costUsd += out.costUsd;
+    if (out.stop) {
+      // The notes collected before the stop are written now, as they would be after the phase: a guard stop loses nothing, like a crash in Phase G.
+      await writeNotes(journal, file, chapters);
+      return printStop(journal, file, out.stop, guard);
+    }
   }
   if (PHASE !== "generate") {
     journal.phase = "notes-writing";
@@ -594,9 +684,14 @@ async function main() {
       return accepted(r);
     },
     true,
-    { pollIntervalMs: POLL_MS },
+    deps,
   );
   totals.costUsd += out.costUsd;
+  if (out.stop) {
+    // The sets collected before the stop are written now; a resume writes only what is still unwritten.
+    await writeQuestions(journal, file, chapters, rows);
+    return printStop(journal, file, out.stop, guard);
+  }
 
   // 7. write question rows
   journal.phase = "gen-writing";
@@ -614,7 +709,7 @@ function finish(journal: Journal, file: string) {
   const unusable = Object.values(journal.requests).filter((r) => r.status === "unusable").length;
   const failed = Object.values(journal.requests).filter((r) => r.status === "failed").length;
   console.log(
-    `\n=== batch run ${journal.runId} done: notes written ${totals.notesWritten} (journal total ${notesOk}) · questions written ${totals.questionsWritten} (validated:false) · duplicate stems dropped ${totals.duplicates} · replies unusable ${unusable} · requests failed ${failed} · write errors ${totals.errors} · ledger $${totals.costUsd.toFixed(2)} at batch prices`,
+    `\n=== batch run ${journal.runId} done: notes written ${totals.notesWritten} (journal total ${notesOk}) · questions written ${totals.questionsWritten} (validated:false) · duplicate stems dropped ${totals.duplicates} · replies unusable ${unusable} · requests failed ${failed} · write errors ${totals.errors} · ledger ${fmtUsd(totals.costUsd)} this invocation · ${fmtUsd(journal.spentUsd ?? 0)} in all at batch prices`,
   );
   printVerifyCommand(journal);
 }
@@ -634,7 +729,7 @@ function printVerifyCommand(journal: Journal) {
   for (const code of exams) {
     console.log(`   npx tsx --env-file=.env.local scripts/verify-question-bank.ts --exams ${code} --scope unvalidated            # dry run: journal + estimate`);
   }
-  console.log(`   npx tsx --env-file=.env.local scripts/verify-question-bank.ts --resume <runId-it-prints> --apply                 # submit + write verdicts (per run)`);
+  console.log(`   npx tsx --env-file=.env.local scripts/verify-question-bank.ts --resume <runId-it-prints> --apply --max-usd <usd> --chunk ${DEFAULT_CHUNK} ${CONFIRM_AUTO_RELOAD_FLAG}   # submit + write verdicts (per run; name the ceiling)`);
   console.log(`   Its ACCEPT sets validated:true (source → AI_VALIDATED); the SCHOOL_BOARD exam rows stay inactive, so nothing is served either way.`);
 }
 

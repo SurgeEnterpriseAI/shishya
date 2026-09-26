@@ -24,6 +24,7 @@ import { GENERATOR_OUTPUT_SCHEMA, coerceCandidate } from "@/lib/ai/factory/gener
 import type { CandidateQuestion } from "@/lib/ai/factory/types";
 import { modelFor } from "@/lib/ai/router";
 import {
+  BATCH_CHUNK_MAX,
   journalPath,
   makeCustomId,
   newJournal,
@@ -31,9 +32,12 @@ import {
   runJournalPhase,
   saveJournal,
   loadJournal,
+  worstCaseUsd,
   type BatchesApi,
   type JournalRequest,
   type MessageBatch,
+  type ProbeResult,
+  type SpendGuard,
 } from "@/lib/ai/batch";
 import {
   COPYRIGHT_RULE,
@@ -679,6 +683,13 @@ function req(journal: ReturnType<typeof newJournal<Outputs>>, phase: string, top
 
 const build = (r: JournalRequest) => buildSchoolNotesRequest({ ...ch6, topicId: r.questionId }, { model: "claude-sonnet-4-5-20250929" });
 
+// The spend guard (26 Sep 2026) is required on every call; tests that are not
+// about it get one that never stops: a ceiling far above any test's spend, one
+// chunk, and a probe that always passes.
+const PROBE_OK: ProbeResult = { ok: true, kind: "ok", status: 200, detail: "stub" };
+const PROBE_BILLING: ProbeResult = { ok: false, kind: "billing", status: 400, detail: "invalid_request_error: Your credit balance is too low to access the Anthropic API" };
+const openGuard = (over: Partial<SpendGuard> = {}): SpendGuard => ({ maxUsd: 1_000_000, chunkSize: BATCH_CHUNK_MAX, probe: async () => PROBE_OK, ...over });
+
 describe("runJournalPhase (stubbed Batches API)", () => {
   it("submits built requests, collects, ledgers once, retries the retryable and the unusable once, then marks the rest failed", async () => {
     const { dir, file, journal } = tempJournal("run-a");
@@ -721,6 +732,7 @@ describe("runJournalPhase (stubbed Batches API)", () => {
             ledgered.push(`${feature}:${r.customId}:${r.attempt}`);
             return 0.01;
           },
+          guard: openGuard(),
         },
       );
       // first batch: all four; second batch: the unusable, the overloaded and the unreported one
@@ -790,7 +802,7 @@ describe("runJournalPhase (stubbed Batches API)", () => {
           return true;
         },
         true,
-        { api, pollIntervalMs: 1, log: () => {}, warn: () => {}, ledger: async () => 0 },
+        { api, pollIntervalMs: 1, log: () => {}, warn: () => {}, ledger: async () => 0, guard: openGuard() },
       );
       expect(bodies).toHaveLength(2);
       expect(bodies[0].map((b) => b.user.includes("rejected by our checker"))).toEqual([false, false]);
@@ -814,7 +826,7 @@ describe("runJournalPhase (stubbed Batches API)", () => {
       const t1 = "cmgb00000000000000000001";
       req(journal, "notes", t1);
       const api = scriptedApi((_, ids) => [ok(ids[0], "GOOD")]);
-      const deps = { api, pollIntervalMs: 1, log: () => {}, warn: () => {}, ledger: async () => 0.5 };
+      const deps = { api, pollIntervalMs: 1, log: () => {}, warn: () => {}, ledger: async () => 0.5, guard: openGuard() };
       const on = (r: JournalRequest) => {
         journal.outputs.notes[r.questionId] = "GOOD";
         return true;
@@ -852,7 +864,7 @@ describe("runJournalPhase (stubbed Batches API)", () => {
           })(),
         list: async () => ({ data: [batch({ id: "msgbatch_adopted", created_at: "2026-09-26T10:00:05Z", request_counts: { processing: 0, succeeded: 2, errored: 0, expired: 0, canceled: 0 } })] }),
       };
-      const out = await runJournalPhase(journal, file, "gen", "school-gen", build, () => true, true, { api, pollIntervalMs: 1, log: () => {}, warn: () => {}, ledger: async () => 0 });
+      const out = await runJournalPhase(journal, file, "gen", "school-gen", build, () => true, true, { api, pollIntervalMs: 1, log: () => {}, warn: () => {}, ledger: async () => 0, guard: openGuard() });
       expect(api.creates).toBe(0);
       expect(journal.batches).toHaveLength(1);
       expect(journal.batches[0]).toMatchObject({ id: "msgbatch_adopted", phase: "gen", collected: true, status: "ended" });
@@ -898,6 +910,7 @@ describe("runJournalPhase (stubbed Batches API)", () => {
         log: () => {},
         warn: () => {},
         ledger: async (_f, r) => (ledgered.push(r.customId), 0.02),
+        guard: openGuard(),
       });
       expect(parsed).toEqual([makeCustomId("notes", t1)]);
       expect(ledgered.sort()).toEqual([makeCustomId("notes", gone), makeCustomId("notes", t1)].sort());
@@ -905,6 +918,320 @@ describe("runJournalPhase (stubbed Batches API)", () => {
       expect(journal.requests[makeCustomId("gen", other, 0)].status).toBe("built");
       expect(out.costUsd).toBeCloseTo(0.04, 6);
       expect(out.failed).toEqual([]);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // spend guard (26 Sep 2026): chunks, the ceiling, the post-chunk probe
+  // -------------------------------------------------------------------------
+
+  it("submits --chunk requests per batch, one batch at a time: each is collected and the production key probed before the next goes out", async () => {
+    const { dir, file, journal } = tempJournal("run-g");
+    try {
+      const ids = Array.from({ length: 10 }, (_, i) => `cmgg000000000000000000${String(i).padStart(2, "0")}`);
+      for (const t of ids) req(journal, "notes", t);
+      const events: string[] = [];
+      const inner = scriptedApi((_, batchIds) => batchIds.map((id) => ok(id, "GOOD")));
+      const api: BatchesApi = {
+        ...inner,
+        create: async (body) => {
+          events.push(`create:${body.requests.length}`);
+          return inner.create(body);
+        },
+        results: async (id) => {
+          events.push(`results:${id}`);
+          return inner.results(id);
+        },
+      };
+      const out = await runJournalPhase(
+        journal,
+        file,
+        "notes",
+        "school-notes",
+        build,
+        (r) => {
+          journal.outputs.notes[r.questionId] = "GOOD";
+          return true;
+        },
+        true,
+        {
+          api,
+          pollIntervalMs: 1,
+          log: () => {},
+          warn: () => {},
+          ledger: async () => 0.01,
+          guard: openGuard({
+            chunkSize: 4,
+            probe: async () => {
+              events.push("probe");
+              return PROBE_OK;
+            },
+          }),
+        },
+      );
+      expect(inner.creates.map((c) => c.length)).toEqual([4, 4, 2]);
+      expect(inner.creates.flat()).toEqual(ids.map((t) => makeCustomId("notes", t)));
+      // strictly sequential: submit → collect → probe, then the next chunk
+      expect(events).toEqual(["create:4", "results:msgbatch_1", "probe", "create:4", "results:msgbatch_2", "probe", "create:2", "results:msgbatch_3", "probe"]);
+      expect(journal.batches.map((b) => [b.count, b.status, b.collected])).toEqual([
+        [4, "ended", true],
+        [4, "ended", true],
+        [2, "ended", true],
+      ]);
+      expect(Object.values(journal.requests).every((r) => r.status === "succeeded" && r.ledgered)).toBe(true);
+      expect(out.costUsd).toBeCloseTo(0.1, 6);
+      expect(journal.spentUsd).toBeCloseTo(0.1, 6);
+      expect(out.stop).toBeUndefined();
+      expect(out.failed).toEqual([]);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("stops submitting after a failed post-chunk probe — what is left stays built, never failed — and a resume with a passing probe finishes the phase", async () => {
+    const { dir, file, journal } = tempJournal("run-h");
+    try {
+      const ids = Array.from({ length: 6 }, (_, i) => `cmgh000000000000000000${String(i).padStart(2, "0")}`);
+      for (const t of ids) req(journal, "notes", t);
+      const api = scriptedApi((_, batchIds) => batchIds.map((id) => ok(id, "GOOD")));
+      let probes = 0;
+      const flaky = async () => (++probes === 2 ? PROBE_BILLING : PROBE_OK);
+      const warned: string[] = [];
+      const deps = { api, pollIntervalMs: 1, log: () => {}, warn: (l: string) => warned.push(l), ledger: async () => 0.25, guard: openGuard({ chunkSize: 2, probe: flaky }) };
+      const first = await runJournalPhase(
+        journal,
+        file,
+        "notes",
+        "school-notes",
+        build,
+        (r) => {
+          journal.outputs.notes[r.questionId] = "GOOD";
+          return true;
+        },
+        true,
+        deps,
+      );
+      // two chunks went out; the probe after the second failed; the third was never submitted
+      expect(api.creates.map((c) => c.length)).toEqual([2, 2]);
+      expect(first.stop).toMatchObject({ reason: "probe", phase: "notes", remaining: 2, spentUsd: 1, probe: PROBE_BILLING });
+      expect(first.stop?.message).toMatch(/no further chunk is submitted/);
+      expect(first.stop?.message).toMatch(/balance is empty; add credit first/);
+      expect(first.costUsd).toBeCloseTo(1, 6);
+      expect(first.failed).toEqual([]);
+      expect(ids.map((t) => journal.requests[makeCustomId("notes", t)].status)).toEqual(["succeeded", "succeeded", "succeeded", "succeeded", "built", "built"]);
+      expect(warned.join(" ")).toMatch(/production key probe after msgbatch_2 failed/);
+      const onDisk = loadJournal<Outputs>(file);
+      expect(onDisk.spentUsd).toBeCloseTo(1, 6);
+      expect(onDisk.pendingSubmit).toBeUndefined();
+      expect(onDisk.args.lastStop).toMatchObject({ phase: "notes", reason: "probe" });
+      expect(Object.values(onDisk.requests).filter((r) => r.status === "built")).toHaveLength(2);
+      // resume from disk: nothing open to settle, the remaining chunk goes out, the probe passes
+      const resumed = loadJournal<Outputs>(file);
+      const second = await runJournalPhase(
+        resumed,
+        file,
+        "notes",
+        "school-notes",
+        build,
+        (r) => {
+          resumed.outputs.notes[r.questionId] = "GOOD";
+          return true;
+        },
+        true,
+        deps,
+      );
+      expect(api.creates).toHaveLength(3);
+      expect(api.creates[2]).toEqual([ids[4], ids[5]].map((t) => makeCustomId("notes", t)));
+      expect(second.stop).toBeUndefined();
+      expect(second.costUsd).toBeCloseTo(0.5, 6);
+      expect(resumed.spentUsd).toBeCloseTo(1.5, 6);
+      expect(Object.values(resumed.requests).every((r) => r.status === "succeeded")).toBe(true);
+      expect(Object.keys(resumed.outputs.notes).sort()).toEqual([...ids].sort());
+      expect(probes).toBe(3);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  // 26 Sep 2026 review: the probe used to follow only a chunk THIS call had
+  // submitted. A batch a killed invocation left polling (or one adopted from a
+  // cut-off submit) was collected by the resume's first settle and the next
+  // chunk went out on the runner's pre-flight probe alone — an hour or more
+  // old after a 2,000-request poll. Every collected chunk is probed now.
+  it("probes the production key after a chunk a resume found open, before the next chunk goes out; a failure there leaves the built requests built, and a resume with a passing probe finishes", async () => {
+    const { dir, file, journal } = tempJournal("run-j");
+    try {
+      const [t1, t2, t3, t4] = Array.from({ length: 4 }, (_, i) => `cmgj000000000000000000${String(i).padStart(2, "0")}`);
+      req(journal, "notes", t1, undefined, { status: "submitted", batchId: "msgbatch_open" });
+      req(journal, "notes", t2, undefined, { status: "submitted", batchId: "msgbatch_open" });
+      req(journal, "notes", t3);
+      req(journal, "notes", t4);
+      journal.batches.push({ id: "msgbatch_open", phase: "notes", attempt: 1, count: 2, submittedAt: "2026-09-26T09:00:00Z", status: "in_progress", collected: false });
+      journal.phase = "notes-submitted";
+      saveJournal(file, journal);
+      const events: string[] = [];
+      const inner = scriptedApi((_, batchIds) => batchIds.map((id) => ok(id, "GOOD")));
+      const api: BatchesApi = {
+        ...inner,
+        create: async (body) => {
+          events.push(`create:${body.requests.length}`);
+          return inner.create(body);
+        },
+        results: async (id) => {
+          events.push(`results:${id}`);
+          if (id !== "msgbatch_open") return inner.results(id);
+          return (async function* () {
+            yield ok(makeCustomId("notes", t1), "GOOD");
+            yield ok(makeCustomId("notes", t2), "GOOD");
+          })();
+        },
+      };
+      let balanceEmpty = true;
+      const warned: string[] = [];
+      const deps = {
+        api,
+        pollIntervalMs: 1,
+        log: () => {},
+        warn: (l: string) => warned.push(l),
+        ledger: async () => 0.25,
+        guard: openGuard({
+          chunkSize: 2,
+          probe: async () => {
+            events.push("probe");
+            return balanceEmpty ? PROBE_BILLING : PROBE_OK;
+          },
+        }),
+      };
+      const on = (j: typeof journal) => (r: JournalRequest) => {
+        j.outputs.notes[r.questionId] = "GOOD";
+        return true;
+      };
+      // the resume: the open batch is collected, the probe runs BEFORE the next chunk — and fails, so t3/t4 never go out
+      const first = await runJournalPhase(journal, file, "notes", "school-notes", build, on(journal), true, deps);
+      expect(events).toEqual(["results:msgbatch_open", "probe"]);
+      expect(inner.creates).toEqual([]);
+      expect(first.stop).toMatchObject({ reason: "probe", phase: "notes", remaining: 2, probe: PROBE_BILLING });
+      expect(first.stop?.spentUsd).toBeCloseTo(0.5, 6);
+      expect(first.stop?.message).toMatch(/production key probe after msgbatch_open failed/);
+      expect(first.stop?.message).toMatch(/balance is empty; add credit first/);
+      expect(first.costUsd).toBeCloseTo(0.5, 6);
+      expect(first.failed).toEqual([]);
+      expect([t1, t2, t3, t4].map((t) => journal.requests[makeCustomId("notes", t)].status)).toEqual(["succeeded", "succeeded", "built", "built"]);
+      expect(journal.batches[0]).toMatchObject({ id: "msgbatch_open", status: "ended", collected: true });
+      expect(warned.join(" ")).toMatch(/probe after msgbatch_open failed/);
+      const onDisk = loadJournal<Outputs>(file);
+      expect(onDisk.args.lastStop).toMatchObject({ phase: "notes", reason: "probe" });
+      expect(Object.values(onDisk.requests).filter((r) => r.status === "built")).toHaveLength(2);
+      expect(onDisk.spentUsd).toBeCloseTo(0.5, 6);
+      // credit added, a later resume: nothing open to collect (so no probe before the submit), the last chunk goes out, its own probe passes
+      balanceEmpty = false;
+      const resumed = loadJournal<Outputs>(file);
+      const second = await runJournalPhase(resumed, file, "notes", "school-notes", build, on(resumed), true, deps);
+      expect(events.slice(2)).toEqual(["create:2", "results:msgbatch_1", "probe"]);
+      expect(inner.creates).toEqual([[t3, t4].map((t) => makeCustomId("notes", t))]);
+      expect(second.stop).toBeUndefined();
+      expect(second.costUsd).toBeCloseTo(0.5, 6);
+      expect(resumed.spentUsd).toBeCloseTo(1, 6);
+      expect(Object.values(resumed.requests).every((r) => r.status === "succeeded" && r.ledgered)).toBe(true);
+      expect(Object.keys(resumed.outputs.notes).sort()).toEqual([t1, t2, t3, t4].sort());
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("an adopted batch (cut-off submit) is a collected chunk too: a failed probe after it stops the phase even with nothing left to submit, so the runner does not go on to the next phase", async () => {
+    const { dir, file, journal } = tempJournal("run-k");
+    try {
+      const t1 = "cmgk00000000000000000001";
+      const t2 = "cmgk00000000000000000002";
+      req(journal, "gen", t1, 0);
+      req(journal, "gen", t2, 0);
+      journal.pendingSubmit = { phase: "gen", attempt: 1, count: 2, at: "2026-09-26T10:00:00Z", customIds: [makeCustomId("gen", t1, 0), makeCustomId("gen", t2, 0)] };
+      const api: BatchesApi & { creates: number } = {
+        creates: 0,
+        create: async () => {
+          api.creates += 1;
+          throw new Error("must not submit again");
+        },
+        retrieve: async (id) => batch({ id, request_counts: { processing: 0, succeeded: 2, errored: 0, expired: 0, canceled: 0 } }),
+        results: async () =>
+          (async function* () {
+            yield ok(makeCustomId("gen", t1, 0), "GOOD");
+            yield ok(makeCustomId("gen", t2, 0), "GOOD");
+          })(),
+        list: async () => ({ data: [batch({ id: "msgbatch_adopted", created_at: "2026-09-26T10:00:05Z", request_counts: { processing: 0, succeeded: 2, errored: 0, expired: 0, canceled: 0 } })] }),
+      };
+      const probes: string[] = [];
+      let probeResult = PROBE_BILLING;
+      const deps = { api, pollIntervalMs: 1, log: () => {}, warn: () => {}, ledger: async () => 0.1, guard: openGuard({ probe: async () => (probes.push("probe"), probeResult) }) };
+      const out = await runJournalPhase(journal, file, "gen", "school-gen", build, () => true, true, deps);
+      expect(api.creates).toBe(0);
+      expect(probes).toEqual(["probe"]);
+      expect(out.stop).toMatchObject({ reason: "probe", phase: "gen", remaining: 0, remainingWorstUsd: 0, probe: PROBE_BILLING });
+      expect(out.stop?.message).toMatch(/probe after msgbatch_adopted failed/);
+      expect(out.costUsd).toBeCloseTo(0.2, 6);
+      expect(journal.batches[0]).toMatchObject({ id: "msgbatch_adopted", phase: "gen", collected: true });
+      expect(Object.values(journal.requests).map((r) => r.status)).toEqual(["succeeded", "succeeded"]);
+      expect(journal.pendingSubmit).toBeUndefined();
+      // the work is kept: a resume with a passing probe has nothing to collect, submits nothing, probes nothing, and the phase completes
+      probeResult = PROBE_OK;
+      const again = await runJournalPhase(loadJournal<Outputs>(file), file, "gen", "school-gen", build, () => true, true, deps);
+      expect(again.stop).toBeUndefined();
+      expect(again.costUsd).toBe(0);
+      expect(probes).toEqual(["probe"]);
+      expect(api.creates).toBe(0);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("refuses a chunk whose worst case would cross --max-usd: nothing submitted, no probe, the rest stays built, and the message names the ceiling to pass", async () => {
+    const { dir, file, journal } = tempJournal("run-i");
+    try {
+      const ids = Array.from({ length: 6 }, (_, i) => `cmgi000000000000000000${String(i).padStart(2, "0")}`);
+      for (const t of ids) req(journal, "notes", t);
+      // W = the worst case of one chunk of two (as the estimate prices it); each reply is ledgered at W so the numbers stay exact
+      const W = worstCaseUsd([{ params: build(journal.requests[makeCustomId("notes", ids[0])]) }, { params: build(journal.requests[makeCustomId("notes", ids[1])]) }]);
+      expect(W).toBeGreaterThan(0);
+      const api = scriptedApi((_, batchIds) => batchIds.map((id) => ok(id, "GOOD")));
+      let probes = 0;
+      const warned: string[] = [];
+      const on = (r: JournalRequest) => {
+        journal.outputs.notes[r.questionId] = "GOOD";
+        return true;
+      };
+      const depsFor = (maxUsd: number) => ({
+        api,
+        pollIntervalMs: 1,
+        log: () => {},
+        warn: (l: string) => warned.push(l),
+        ledger: async () => W,
+        guard: openGuard({ chunkSize: 2, maxUsd, probe: async () => (probes += 1, PROBE_OK) }),
+      });
+      // chunk 1: 0 + W ≤ 2.5 W → submitted, ledgered 2 W; chunk 2: 2 W + W > 2.5 W → refused
+      const first = await runJournalPhase(journal, file, "notes", "school-notes", build, on, true, depsFor(2.5 * W));
+      expect(api.creates.map((c) => c.length)).toEqual([2]);
+      expect(probes).toBe(1);
+      expect(first.stop).toMatchObject({ reason: "ceiling", phase: "notes", remaining: 4, chunk: { count: 2 } });
+      expect(first.stop?.spentUsd).toBeCloseTo(2 * W, 10);
+      expect(first.stop?.chunk?.worstUsd).toBeCloseTo(W, 10);
+      expect(first.stop?.remainingWorstUsd).toBeCloseTo(2 * W, 10);
+      expect(first.stop?.message).toMatch(/was NOT submitted/);
+      expect(first.stop?.message).toContain(`--max-usd ${Math.max(1, Math.ceil(3 * W))} or more`);
+      expect(first.stop?.message).toMatch(/smaller --chunk/);
+      expect(warned.join(" ")).toContain("--max-usd");
+      expect(first.failed).toEqual([]);
+      expect(ids.map((t) => journal.requests[makeCustomId("notes", t)].status)).toEqual(["succeeded", "succeeded", "built", "built", "built", "built"]);
+      expect(loadJournal<Outputs>(file).args.lastStop).toMatchObject({ reason: "ceiling" });
+      // a ceiling that fits lets the same journal go on: 2 W + W ≤ 10 W, then 4 W + W ≤ 10 W
+      const second = await runJournalPhase(journal, file, "notes", "school-notes", build, on, true, depsFor(10 * W));
+      expect(api.creates.map((c) => c.length)).toEqual([2, 2, 2]);
+      expect(second.stop).toBeUndefined();
+      expect(journal.spentUsd).toBeCloseTo(6 * W, 10);
+      expect(Object.values(journal.requests).every((r) => r.status === "succeeded")).toBe(true);
+      expect(probes).toBe(3);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -929,11 +1256,20 @@ describe("runJournalPhase (stubbed Batches API)", () => {
       saveJournal(path.join(dir, "c.json"), c);
       fs.writeFileSync(path.join(dir, "junk.json"), "{not json");
       const warned: string[] = [];
+      // a renamed journal (the full-bank one) resumes by its FILE name, so that is what the hint carries
+      const d = newJournal<Outputs>("20260925-224546-MP_RAEO+MP_MPESB+NDA", {}, { notes: {} });
+      d.questions["t2"] = { code: "NDA" };
+      d.batches.push({ id: "b", phase: "notes", attempt: 1, count: 1, submittedAt: "x", status: "ended", collected: true });
+      d.phase = "verify-collected";
+      saveJournal(path.join(dir, "full-bank-validated-20260925.json"), d);
       const open = openJournalsCovering(dir, new Set(["t1", "t2"]), (l) => warned.push(l));
-      expect(open.map((o) => [o.runId, o.overlap, o.submitted])).toEqual([
-        ["a", 1, true],
-        ["b", 1, false],
+      expect(open.map((o) => [o.runId, o.file, o.overlap, o.submitted])).toEqual([
+        ["a", "a", 1, true],
+        ["b", "b", 1, false],
+        ["20260925-224546-MP_RAEO+MP_MPESB+NDA", "full-bank-validated-20260925", 1, true],
       ]);
+      expect(() => journalPath(dir, open[2].runId)).toThrow(/plain file-name token/);
+      expect(journalPath(dir, open[2].file)).toBe(path.join(dir, "full-bank-validated-20260925.json"));
       expect(warned.join(" ")).toMatch(/junk\.json/);
       expect(openJournalsCovering(dir, new Set(["zzz"]))).toEqual([]);
       expect(openJournalsCovering(path.join(dir, "missing"), new Set(["t1"]))).toEqual([]);

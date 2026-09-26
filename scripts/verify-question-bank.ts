@@ -21,7 +21,7 @@
 // skipped, so the run is resumable. Spend is ledgered as "bank-solve" (blind
 // solves) and "bank-verify" (examiner verdicts).
 //
-// ── Batch mode (22 Sep 2026, the default) ───────────────────────────────────
+// ── Batch mode (22 Sep 2026; the only mode since 26 Sep 2026) ───────────────
 //
 // The 15 Sep 2026 run made 8,614 Opus 4.8 calls in a day ($53.53, 0% cache:
 // each ~550-token prompt is under Opus 4.8's 1,024-token cache minimum). The
@@ -48,50 +48,81 @@
 // !! refuses to start without it. Without --apply the script is a dry run:
 // !! it builds every request, prints the counts and the cost estimate at
 // !! batch prices, writes the journal, and submits nothing.
+// !!
+// !! Spend guard (26 Sep 2026, src/lib/ai/batch.ts): the bulk key and the
+// !! tutor's key draw on ONE credit balance, and full-bank runs emptied it
+// !! on 25 Sep 23:40 IST and 26 Sep 10:37 IST. So --apply also needs
+// !! --max-usd (a hard ceiling on this journal's ledgered spend; a chunk
+// !! whose worst case would cross it is not submitted) and
+// !! --i-confirm-auto-reload (the operator checked auto-reload in the
+// !! Console); batches go out --chunk requests at a time (default 2000),
+// !! each collected before the next; the production key is probed with one
+// !! Haiku call before the run and after every chunk, and any failure stops
+// !! the run with the journal saved and the resume command printed. The
+// !! phase driver is the shared runJournalPhase since 26 Sep 2026 (this
+// !! script's own copy carried ledgered:true across a retry, so the retry's
+// !! reply went unledgered — the 45 pending retries of the paused full-bank
+// !! journal are in that state).
+// !!
+// !! The pre-22-Sep per-call path (--live, --concurrency) was REMOVED on
+// !! 26 Sep 2026: it made four full-price Opus calls per question on the
+// !! shared ANTHROPIC_API_KEY — the tutor's own key — outside the spend
+// !! guard, with no ceiling, and stopped only on the "credit balance" error,
+// !! i.e. once the tutor was already down. --live is refused, not ignored,
+// !! so an old command line cannot quietly run in batch mode either.
 //
 //   npx dotenv-cli -e .env.local -- npx tsx scripts/verify-question-bank.ts \
 //     --exams UK_UKSSSC,AP_APPSC_GROUP2 --scope unvalidated|validated|all \
-//     [--limit N] [--apply] [--resume <runId>] [--journal <path>] \
-//     [--poll-seconds 60] [--force] [--live --apply [--concurrency 3]]
+//     [--limit N] [--apply --max-usd <usd> --i-confirm-auto-reload [--chunk 2000]] \
+//     [--resume <runId>] [--journal <path>] [--poll-seconds 60] [--force]
 //
 //   --apply        submit the batches and write verdicts (default: dry run)
+//   --max-usd N    with --apply (required, no default): hard ceiling on the
+//                  journal's ledgered spend at batch prices; checked before
+//                  every chunk against the chunk's worst case
+//   --chunk N      requests per batch (default 2000, max 10,000), submitted
+//                  one at a time, each collected before the next is priced
+//   --i-confirm-auto-reload  with --apply (required): the operator confirmed
+//                  in the Anthropic Console that auto-reload is ON; the
+//                  statement is printed back before anything is submitted
 //   --resume ID    continue a journaled run (poll / collect / retry / write)
 //   --force        start a fresh run even though an open journal covers rows
-//   --live         the pre-22-Sep per-call path (messages.create, full price,
-//                  on the shared key). It has no free dry run, so it needs
-//                  --apply, and it is refused while the bulk key is unset.
-//   --batch        the default; listed for symmetry with --live
 
-import fs from "node:fs";
+import path from "node:path";
 import { PrismaClient, Prisma } from "@prisma/client";
 import type Anthropic from "@anthropic-ai/sdk";
-import { DEFAULT_CONFIG, gate, solveBlind, verify, type CandidateQuestion, type SolveResult, type VerifyVerdict } from "../src/lib/ai/factory";
+import { DEFAULT_CONFIG, gate, type CandidateQuestion, type SolveResult, type VerifyVerdict } from "../src/lib/ai/factory";
 import { aggregate, buildSolveRequest, parseSolveRun } from "../src/lib/ai/factory/solver";
 import { buildVerifyRequest, parseVerifyVerdict } from "../src/lib/ai/factory/verifier";
 import type { SolveRun } from "../src/lib/ai/factory/types";
-import { estimateCostUsd, type CallStats, type MessageParams } from "../src/lib/ai/client";
-import { recordAiUsageAwaited } from "../src/lib/ai/usage";
+import type { MessageParams } from "../src/lib/ai/client";
 import {
   assertBulkKey,
-  BATCH_CHUNK_MAX,
-  BULK_KEY_ENV,
+  assertProductionKeyProbe,
+  awaitsSubmit,
+  CONFIRM_AUTO_RELOAD_FLAG,
+  CONFIRM_AUTO_RELOAD_STATEMENT,
   chunk,
-  collectResults,
+  DEFAULT_CHUNK,
+  describeProbe,
   estimateRequestTokens,
-  findUnjournaledBatch,
-  isRetryable,
+  guardFlags,
   journalPath,
   loadJournal,
   makeCustomId,
-  mapLimit,
   newJournal,
-  pollBatch,
+  openJournalsCovering,
+  PROBE_MODEL,
+  PRODUCTION_KEY_ENV,
+  probeProductionKey,
+  runJournalPhase,
   saveJournal,
-  submitBatch,
   tokensUsd,
   type BatchJournal,
-  type BatchRequest,
   type JournalRequest,
+  type PhaseStop,
+  type ProbeResult,
+  type SpendGuard,
 } from "../src/lib/ai/batch";
 import type { Difficulty } from "../src/lib/ai/types";
 import { WITHDRAWN_TAG } from "../src/lib/question-withdrawn";
@@ -108,11 +139,9 @@ function arg(name: string): string | undefined {
 }
 const EXAMS = (arg("--exams") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 const SCOPE = (arg("--scope") ?? "unvalidated") as "unvalidated" | "validated" | "all";
-const CONCURRENCY = Math.max(1, Math.min(8, Number(arg("--concurrency") ?? 3)));
 const LIMIT = arg("--limit") ? Math.max(1, Number(arg("--limit"))) : null;
 // Dry run unless --apply is given; --dry-run always wins (22 Sep 2026).
 const DRY = !process.argv.includes("--apply") || process.argv.includes("--dry-run");
-const LIVE = process.argv.includes("--live");
 const FORCE = process.argv.includes("--force");
 const RESUME = arg("--resume") ?? null;
 const JOURNAL_DIR = "D:/CodexProjects/shishya-data/bank-verify-batches";
@@ -144,11 +173,8 @@ type Row = {
 type Outcome = "accepted" | "corrected" | "failed" | "shape";
 
 const totals = { checked: 0, accepted: 0, corrected: 0, failed: 0, shape: 0, newlyValidated: 0, removed: 0, errors: 0, costUsd: 0 };
-let consecutiveErrors = 0;
-let stop = false;
 
 const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === "object" && !Array.isArray(x);
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function shapeOk(options: unknown): options is { key: string; text: string }[] {
   if (!Array.isArray(options) || options.length !== 4) return false;
@@ -172,7 +198,8 @@ function toCandidate(r: Row): CandidateQuestion {
 }
 
 // ---------------------------------------------------------------------------
-// Verdict writing — one implementation for both paths
+// Verdict writing — unchanged from the pre-22-Sep per-call path, so a batch
+// verdict lands in the row exactly as a live one did
 // ---------------------------------------------------------------------------
 
 async function writeShape(r: Row, at: string): Promise<Outcome> {
@@ -283,73 +310,6 @@ async function rowsByIds(ids: string[]): Promise<Row[]> {
 }
 
 // ---------------------------------------------------------------------------
-// Live path (pre-22-Sep per-call flow, kept behind --live)
-// ---------------------------------------------------------------------------
-
-async function checkOne(code: string, r: Row): Promise<Outcome> {
-  const at = new Date().toISOString();
-  if (!rowShapeOk(r)) return writeShape(r, at);
-
-  const candidate = toCandidate(r);
-  const onCost = (s: CallStats) => {
-    totals.costUsd += estimateCostUsd(s);
-  };
-  const solve = await solveBlind(candidate, { runs: SOLVE_RUNS, onCost, feature: BANK_SOLVE, ref: code });
-  const v = await verify(candidate, solve, { onCost, feature: BANK_VERIFY, ref: code });
-  return applyVerdict(r, solve, v, at);
-}
-
-async function runExamLive(code: string) {
-  const rows = await rowsForExam(code);
-  console.log(`\n=== ${code}: ${rows.length} ${SCOPE} questions to check (live, concurrency ${CONCURRENCY}${DRY ? ", DRY RUN" : ""})`);
-  const started = Date.now();
-  const before = { ...totals };
-  let next = 0;
-
-  async function worker() {
-    while (!stop) {
-      const i = next++;
-      if (i >= rows.length) return;
-      const r = rows[i];
-      let attempt = 0;
-      while (!stop) {
-        try {
-          const o = await checkOne(code, r);
-          totals.checked += 1;
-          totals[o] += 1;
-          consecutiveErrors = 0;
-          break;
-        } catch (e) {
-          const msg = String((e as Error)?.message ?? e);
-          attempt += 1;
-          totals.errors += 1;
-          consecutiveErrors += 1;
-          const transient = /429|529|overloaded|rate.?limit|timeout|ECONNRESET|fetch failed|socket/i.test(msg);
-          console.warn(`   ! ${r.id} attempt ${attempt}: ${msg.split("\n")[0].slice(0, 160)}`);
-          if (/credit balance/i.test(msg) || consecutiveErrors >= 12) {
-            console.error(`   ✗ stopping: ${/credit balance/i.test(msg) ? "API credit balance is too low" : "12 consecutive errors"}`);
-            stop = true;
-            return;
-          }
-          if (!transient || attempt >= 4) break; // give up on this row; it stays unchecked for the next run
-          await sleep(2000 * 2 ** attempt);
-        }
-      }
-      if (totals.checked % 25 === 0) {
-        const mins = (Date.now() - started) / 60_000;
-        console.log(
-          `   … ${code} ${totals.checked - before.checked}/${rows.length} · accepted ${totals.accepted - before.accepted} · key corrected ${totals.corrected - before.corrected} · failed ${totals.failed - before.failed} · shape ${totals.shape - before.shape} · ${((totals.checked - before.checked) / Math.max(mins, 0.01)).toFixed(1)}/min · ~$${totals.costUsd.toFixed(2)} total`,
-        );
-      }
-    }
-  }
-  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
-  console.log(
-    `=== ${code} done: checked ${totals.checked - before.checked} · accepted ${totals.accepted - before.accepted} · key corrected ${totals.corrected - before.corrected} · failed ${totals.failed - before.failed} · broken shape ${totals.shape - before.shape} · newly validated ${totals.newlyValidated - before.newlyValidated} · removed from pools ${totals.removed - before.removed} · errors ${totals.errors - before.errors} · ${((Date.now() - started) / 60_000).toFixed(1)} min`,
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Batch path
 // ---------------------------------------------------------------------------
 
@@ -375,205 +335,59 @@ function newRunId(): string {
   return `${stamp}-${slug || "run"}`;
 }
 
-const isTerminal = (s: JournalRequest["status"]) => s !== "built" && s !== "submitted";
+const fmtUsd = (n: number) => `$${n.toFixed(2)}`;
 
+/** The command line that continues a journal, with the guard flags (26 Sep 2026): the numbers the operator passed, or placeholders on a dry run. */
+const SCRIPT = "npx dotenv-cli -e .env.local -- npx tsx scripts/verify-question-bank.ts";
+function applyFlags(g?: { maxUsd: number; chunkSize: number } | null): string {
+  return `--apply --max-usd ${g ? g.maxUsd : "<usd>"} --chunk ${g ? g.chunkSize : DEFAULT_CHUNK} ${CONFIRM_AUTO_RELOAD_FLAG}`;
+}
 /**
- * Drives one phase to completion and is safe to re-enter: it submits what
- * is still "built", polls what is still open, collects what is ended and
- * not yet collected, resubmits retryable failures once, and returns. A
- * resumed run therefore continues from whatever the journal says.
+ * --resume takes the journal FILE's name, not its runId: the full-bank
+ * journal was renamed to full-bank-validated-20260925.json and its runId
+ * joins exam codes with "+", which journalPath() refuses (26 Sep 2026). A
+ * journal outside JOURNAL_DIR needs --journal as well.
  */
-async function runPhase(
-  journal: Journal,
-  file: string,
-  phase: string,
-  feature: string,
-  build: (req: JournalRequest) => MessageParams,
-  onMessage: (req: JournalRequest, message: Anthropic.Messages.Message) => boolean,
-  retryUnusable: boolean,
-) {
-  const reqs = () => Object.values(journal.requests).filter((r) => r.phase === phase);
+function resumeCommand(file: string, g?: { maxUsd: number; chunkSize: number } | null): string {
+  const token = path.basename(file, ".json");
+  const inDir = path.resolve(path.dirname(file)) === path.resolve(JOURNAL_DIR);
+  return `${SCRIPT} --resume ${token}${inDir ? "" : ` --journal "${file}"`} ${applyFlags(g)}`;
+}
 
-  // 0. a submit that was cut off (kill during the create POST): the API may
-  //    hold the batch already, so adopt it instead of submitting the same
-  //    requests a second time.
-  const pending = journal.pendingSubmit;
-  if (pending && pending.phase === phase) {
-    const known = new Set(journal.batches.map((b) => b.id));
-    const found = await findUnjournaledBatch(known, pending.at, pending.count);
-    if (found) {
-      console.log(`   ↩ ${phase} attempt ${pending.attempt}: adopting batch ${found.id} (${pending.count} requests) that the API accepted before the journal was written`);
-      // Recorded as in_progress even if it has ended: the poll step below then fills in endedAt and the counts.
-      journal.batches.push({ id: found.id, phase, attempt: pending.attempt, count: pending.count, submittedAt: pending.at, status: "in_progress", collected: false });
-      for (const id of pending.customIds) {
-        const r = journal.requests[id];
-        if (r && r.status === "built") {
-          r.status = "submitted";
-          r.batchId = found.id;
-        }
-      }
-      journal.phase = `${phase}-submitted`;
-    } else {
-      console.log(`   ↩ ${phase}: the interrupted submit of ${pending.count} requests never reached the API; submitting again`);
-    }
-    delete journal.pendingSubmit;
-    saveJournal(file, journal);
-  }
-
-  for (let pass = 0; pass < 3; pass++) {
-    // 1. submit (attempt by attempt, so a batch never mixes first tries and retries)
-    for (const attempt of [1, 2]) {
-      const toSubmit = reqs().filter((r) => r.status === "built" && r.attempt === attempt);
-      for (const part of chunk(toSubmit, BATCH_CHUNK_MAX)) {
-        const requests: BatchRequest[] = part.map((r) => ({ custom_id: r.customId, params: build(r) }));
-        console.log(`   → ${phase} attempt ${attempt}: submitting ${requests.length} requests…`);
-        journal.pendingSubmit = { phase, attempt, count: requests.length, at: new Date().toISOString(), customIds: part.map((r) => r.customId) };
-        saveJournal(file, journal);
-        const batch = await submitBatch(requests);
-        journal.batches.push({ id: batch.id, phase, attempt, count: requests.length, submittedAt: new Date().toISOString(), status: "in_progress", collected: false });
-        for (const r of part) {
-          r.status = "submitted";
-          r.batchId = batch.id;
-        }
-        delete journal.pendingSubmit;
-        journal.phase = `${phase}-submitted`;
-        saveJournal(file, journal);
-        console.log(`     batch ${batch.id} (expires ${batch.expires_at})`);
-      }
-    }
-
-    // 2. poll
-    for (const b of journal.batches.filter((x) => x.phase === phase && x.status !== "ended")) {
-      console.log(`   … polling ${b.id} every ${POLL_MS / 1000}s`);
-      const ended = await pollBatch(b.id, {
-        intervalMs: POLL_MS,
-        onTick: (m) => {
-          b.counts = m.request_counts;
-          saveJournal(file, journal);
-          const c = m.request_counts;
-          console.log(`     ${new Date().toISOString().slice(11, 19)} ${m.processing_status} · processing ${c.processing} · succeeded ${c.succeeded} · errored ${c.errored} · expired ${c.expired} · canceled ${c.canceled}`);
-        },
-      });
-      b.status = "ended";
-      b.endedAt = ended.ended_at ?? new Date().toISOString();
-      b.counts = ended.request_counts;
-      saveJournal(file, journal);
-    }
-
-    // 3. collect + ledger + parse
-    for (const b of journal.batches.filter((x) => x.phase === phase && x.status === "ended" && !x.collected)) {
-      console.log(`   ← collecting ${b.id}…`);
-      const outcomes = [...(await collectResults(b.id)).values()];
-      let done = 0;
-      await mapLimit(outcomes, LEDGER_PARALLEL, async (o) => {
-        const r = journal.requests[o.customId];
-        if (!r || r.batchId !== b.id) return;
-        // A question that left the run while this batch was open still billed
-        // its tokens: ledger them, but never parse or retry the reply.
-        if (r.status === "stale") {
-          if (o.type === "succeeded" && !r.ledgered) {
-            totals.costUsd += await recordAiUsageAwaited(feature, o.message, { model: o.message.model, ref: r.code, batch: true });
-            r.ledgered = true;
-          }
-          return;
-        }
-        // Already handled (a crash after some rows were ledgered): skip, never ledger twice.
-        if (isTerminal(r.status)) return;
-        if (o.type === "succeeded") {
-          if (!r.ledgered) {
-            totals.costUsd += await recordAiUsageAwaited(feature, o.message, { model: o.message.model, ref: r.code, batch: true });
-            r.ledgered = true;
-          }
-          r.status = onMessage(r, o.message) ? "succeeded" : "unusable";
-        } else if (o.type === "errored") {
-          r.status = o.retryable ? "errored" : "failed";
-          r.error = `${o.errorType}: ${o.error}`;
-        } else {
-          r.status = o.type;
-        }
-        done += 1;
-        if (done % COLLECT_SAVE_EVERY === 0) saveJournal(file, journal);
-      });
-      // Requests the API never reported on (should not happen) count as expired so they get one retry.
-      for (const r of reqs()) if (r.batchId === b.id && r.status === "submitted") r.status = "expired";
-      b.collected = true;
-      journal.phase = `${phase}-collected`;
-      saveJournal(file, journal);
-      const n = { ok: 0, unusable: 0, err: 0, stale: 0 };
-      for (const r of reqs()) {
-        if (r.batchId !== b.id) continue;
-        if (r.status === "succeeded") n.ok += 1;
-        else if (r.status === "unusable") n.unusable += 1;
-        else if (r.status === "stale") n.stale += 1;
-        else n.err += 1;
-      }
-      console.log(`     ${b.id}: ${n.ok} usable · ${n.unusable} unusable replies · ${n.err} errored/expired${n.stale ? ` · ${n.stale} stale (ledgered only)` : ""} · ledger +$${totals.costUsd.toFixed(2)} so far`);
-    }
-
-    // 4. one retry for what is worth retrying
-    const retry = reqs().filter(
-      (r) => r.attempt === 1 && (r.status === "errored" || r.status === "expired" || r.status === "canceled" || (retryUnusable && r.status === "unusable")),
-    );
-    if (!retry.length) break;
-    console.log(`   ↻ ${phase}: resubmitting ${retry.length} requests once`);
-    for (const r of retry) {
-      r.attempt = 2;
-      r.status = "built";
-      r.batchId = undefined;
-    }
-    saveJournal(file, journal);
-  }
-
-  const failed = reqs().filter((r) => r.status !== "succeeded" && r.status !== "unusable" && r.status !== "stale");
-  for (const r of failed) if (r.status !== "failed") r.status = "failed";
-  if (failed.length) {
-    saveJournal(file, journal);
-    console.warn(`   ✗ ${phase}: ${failed.length} requests failed after a retry — first: ${failed
-      .slice(0, 5)
-      .map((r) => `${r.customId} ${r.error ?? r.status}`)
-      .join(" | ")}`);
-  }
-  // A reply that was still unparseable after its retry is not an API failure,
-  // but the question stays unchecked all the same; say so with the parse error.
-  const stuck = retryUnusable ? reqs().filter((r) => r.status === "unusable" && r.attempt === 2) : [];
-  if (stuck.length) {
-    console.warn(`   ✗ ${phase}: ${stuck.length} replies unusable after a retry — first: ${stuck
-      .slice(0, 5)
-      .map((r) => `${r.customId} ${r.error ?? "not JSON"}`)
-      .join(" | ")}`);
-  }
+/** A guard stop: nothing more was submitted, no verdict is written, and this is the exact command that continues the journal. */
+function printStop(journal: Journal, file: string, halt: PhaseStop, guard: SpendGuard) {
+  const maxUsd = halt.reason === "ceiling" ? Math.max(1, Math.ceil(halt.spentUsd + (halt.chunk?.worstUsd ?? 0))) : guard.maxUsd;
+  console.log(
+    `\n=== run ${journal.runId} STOPPED by the spend guard (${halt.reason}) — no verdict written · journal ${file} (phase ${journal.phase}) · ledger ${fmtUsd(totals.costUsd)} this invocation · ${fmtUsd(journal.spentUsd ?? 0)} in all`,
+  );
+  console.log(`   To continue${halt.reason === "probe" ? " once the production key probe succeeds" : ""}:\n   ${resumeCommand(file, { maxUsd, chunkSize: guard.chunkSize })}`);
 }
 
 /**
- * Journals under JOURNAL_DIR that still have submitted batches and cover
- * any of these rows. A fresh --apply over them would pay for the same
- * requests again, because verdicts are written only when a run finishes.
+ * The requests this invocation may still submit, for the estimate: Phase A
+ * requests that are built or due their one retry; Phase B for every
+ * candidate whose verify request is built / due its retry, or does not exist
+ * yet while its solves can all still resolve (a question with a failed solve
+ * is skipped in step 5 and never gets a verify request — 148 of them on the
+ * paused full-bank journal). Priced with a placeholder blind result of three
+ * agreeing runs; the real prompt adds the solver's reasoning.
  */
-function openJournalsCovering(rowIds: Set<string>): Array<{ runId: string; phase: string; overlap: number; submitted: boolean }> {
-  let names: string[];
-  try {
-    names = fs.readdirSync(JOURNAL_DIR).filter((n) => n.endsWith(".json"));
-  } catch (e) {
-    if ((e as NodeJS.ErrnoException).code === "ENOENT") return [];
-    throw e;
-  }
-  const out: Array<{ runId: string; phase: string; overlap: number; submitted: boolean }> = [];
-  for (const name of names) {
-    let j: Journal;
-    try {
-      j = loadJournal<Outputs>(`${JOURNAL_DIR}/${name}`);
-    } catch (e) {
-      console.warn(`   ! skipping unreadable journal ${name}: ${String((e as Error)?.message ?? e).split("\n")[0].slice(0, 120)}`);
-      continue;
-    }
-    if (j.phase === "done") continue;
-    const overlap = Object.keys(j.questions).filter((id) => rowIds.has(id)).length;
-    if (overlap) out.push({ runId: j.runId, phase: j.phase, overlap, submitted: j.batches.length > 0 || !!j.pendingSubmit });
-  }
-  return out;
+function requestsToSubmit(journal: Journal, candidates: Map<string, CandidateQuestion>, buildSolve: (r: JournalRequest) => MessageParams) {
+  const solveReqs = Object.values(journal.requests).filter((r) => r.phase === SOLVE && awaitsSubmit(r, false)).map(buildSolve);
+  const solveWillResolve = (r: JournalRequest) => r.status === "submitted" || r.status === "succeeded" || r.status === "unusable" || awaitsSubmit(r, false);
+  const solvesOk = new Map<string, boolean>();
+  for (const r of Object.values(journal.requests)) if (r.phase === SOLVE) solvesOk.set(r.questionId, (solvesOk.get(r.questionId) ?? true) && solveWillResolve(r));
+  const placeholder: SolveResult = aggregate(Array.from({ length: SOLVE_RUNS }, () => ({ chosen: "A", reasoning: "x".repeat(420), confidence: 0.9 })));
+  const verifyReqs = [...candidates.entries()]
+    .filter(([id]) => {
+      const r = journal.requests[makeCustomId(VERIFY, id)];
+      return r ? awaitsSubmit(r, true) : !journal.outputs.verify[id] && (solvesOk.get(id) ?? true);
+    })
+    .map(([, c]) => buildVerifyRequest(c, placeholder));
+  return { solveReqs, verifyReqs };
 }
 
-function printEstimate(solveReqs: MessageParams[], verifyReqs: MessageParams[]) {
+function printEstimate(title: string, solveReqs: MessageParams[], verifyReqs: MessageParams[]) {
   const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
   const sIn = sum(solveReqs.map(estimateRequestTokens));
   const vIn = sum(verifyReqs.map(estimateRequestTokens));
@@ -585,14 +399,15 @@ function printEstimate(solveReqs: MessageParams[], verifyReqs: MessageParams[]) 
   const vModel = verifyReqs[0]?.model ?? sModel;
   const expected = tokensUsd(sModel, { input: sIn, output: sOut }, { batch: true }) + tokensUsd(vModel, { input: vIn, output: vOut }, { batch: true });
   const worst = tokensUsd(sModel, { input: sIn, output: sMax }, { batch: true }) + tokensUsd(vModel, { input: vIn, output: vMax }, { batch: true });
-  console.log(`\nESTIMATE (no request submitted)`);
+  console.log(`\n${title}`);
   console.log(`   Phase A solve  : ${solveReqs.length} requests · ~${sIn.toLocaleString()} prompt tokens · max_tokens ${sMax.toLocaleString()} (expected output ~${sOut.toLocaleString()} at ${OBSERVED_OUT.solve}/req, 15 Sep avg) · ${sModel}`);
   console.log(`   Phase B verify : ${verifyReqs.length} requests · ~${vIn.toLocaleString()} prompt tokens (placeholder blind result; real prompts add the solver's reasoning) · max_tokens ${vMax.toLocaleString()} (expected output ~${vOut.toLocaleString()} at ${OBSERVED_OUT.verify}/req) · ${vModel}`);
   console.log(`   Batch price    : expected ~$${expected.toFixed(2)} · worst case (every reply fills max_tokens) $${worst.toFixed(2)} · the same calls live would be ~$${(expected * 2).toFixed(2)}`);
   console.log(`   Prompt tokens are a character-count estimate (no count_tokens call was made).`);
 }
 
-async function runBatchMode() {
+/** `apply` is null on a dry run; on --apply it carries the guard main() built and the pre-flight probe it already passed. */
+async function runBatchMode(apply: { guard: SpendGuard; preflight: ProbeResult } | null) {
   // 1. journal
   let journal: Journal;
   let file: string;
@@ -629,13 +444,13 @@ async function runBatchMode() {
 
   // 2b. a fresh run over rows an unfinished journal already paid for
   if (!RESUME) {
-    for (const o of openJournalsCovering(new Set(rows.keys()))) {
+    for (const o of openJournalsCovering(JOURNAL_DIR, new Set(rows.keys()))) {
       if (o.submitted) {
-        const msg = `run ${o.runId} (phase ${o.phase}) has submitted batches covering ${o.overlap} of these rows; continue it with --resume ${o.runId} --apply${DRY ? "" : ", or pass --force to pay for them again"}`;
+        const msg = `run ${o.runId} (phase ${o.phase}) has submitted batches covering ${o.overlap} of these rows; continue it with --resume ${o.file} ${applyFlags(apply?.guard)}${DRY ? "" : ", or pass --force to pay for them again"}`;
         if (!DRY && !FORCE) throw new Error(msg);
         console.warn(`   ! ${msg}`);
       } else {
-        console.log(`   note: dry-run journal ${o.runId} covers ${o.overlap} of these rows; --resume ${o.runId} --apply submits exactly those`);
+        console.log(`   note: dry-run journal ${o.runId} covers ${o.overlap} of these rows; --resume ${o.file} ${applyFlags(apply?.guard)} submits exactly those`);
       }
     }
   }
@@ -678,32 +493,42 @@ async function runBatchMode() {
   const buildSolve = (r: JournalRequest) => buildSolveRequest(candidates.get(r.questionId)!, r.runIndex ?? 0);
 
   if (DRY) {
-    const solveReqs = Object.values(journal.requests).filter((r) => r.phase === SOLVE && r.status === "built").map(buildSolve);
-    // Verify prompts need the blind result; estimate with three agreeing runs of typical length.
-    const placeholder: SolveResult = aggregate(
-      Array.from({ length: SOLVE_RUNS }, () => ({ chosen: "A", reasoning: "x".repeat(420), confidence: 0.9 })),
-    );
-    const verifyReqs = [...candidates.entries()].filter(([id]) => !journal.outputs.verify[id]).map(([, c]) => buildVerifyRequest(c, placeholder));
-    printEstimate(solveReqs, verifyReqs);
+    const { solveReqs, verifyReqs } = requestsToSubmit(journal, candidates, buildSolve);
+    printEstimate("ESTIMATE (no request submitted)", solveReqs, verifyReqs);
     console.log(`   Broken shape rows: ${totals.shape} (would be marked SHAPE)`);
     if (RESUME) {
       // A dry look at a journaled run must not move it; the estimate above is what is still to submit.
       console.log(`\nJournal untouched: ${file} (phase ${journal.phase})`);
-      console.log(`To continue it (needs the founder's go-ahead + the bulk key):\n   --resume ${journal.runId} --apply`);
+      console.log(`To continue it (needs the founder's go-ahead + the bulk key; name the ceiling):\n   ${resumeCommand(file)}`);
     } else {
       journal.phase = "built";
       saveJournal(file, journal);
       console.log(`\nJournal written: ${file}`);
-      console.log(`To submit exactly these requests (needs the founder's go-ahead + the bulk key):\n   --resume ${journal.runId} --apply`);
+      console.log(`To submit exactly these requests (needs the founder's go-ahead + the bulk key; name the ceiling):\n   ${resumeCommand(file)}`);
     }
     return;
   }
+  if (!apply) throw new Error("internal: --apply without a spend guard");
+  const { guard, preflight } = apply;
+
+  // Spend guard header (26 Sep 2026): what this invocation may submit, priced
+  // before the first batch goes out, the ceiling it runs under, the chunk
+  // size, the probe it passed and the operator's statement.
+  const est = requestsToSubmit(journal, candidates, buildSolve);
+  printEstimate(
+    `TO SUBMIT under the spend guard — --max-usd ${fmtUsd(guard.maxUsd)} · --chunk ${guard.chunkSize} · ledgered by this journal so far ${fmtUsd(journal.spentUsd ?? 0)} · production key probe: ${describeProbe(preflight)}`,
+    est.solveReqs,
+    est.verifyReqs,
+  );
+  console.log(`   ${CONFIRM_AUTO_RELOAD_STATEMENT}`);
+  journal.args.lastGuard = { at: new Date().toISOString(), maxUsd: guard.maxUsd, chunk: guard.chunkSize };
+  const deps = { pollIntervalMs: POLL_MS, ledgerParallel: LEDGER_PARALLEL, saveEvery: COLLECT_SAVE_EVERY, guard };
 
   if (journal.phase === "new" || journal.phase === "built") {
     journal.phase = "solve";
     saveJournal(file, journal);
   }
-  await runPhase(
+  const solveOut = await runJournalPhase(
     journal,
     file,
     SOLVE,
@@ -714,9 +539,12 @@ async function runBatchMode() {
       (journal.outputs.solve[r.questionId] ??= {})[String(r.runIndex)] = run;
       return run !== null;
     },
-    // A malformed solve is dropped, as on the live path — fewer valid runs lowers agreement.
+    // A malformed solve is dropped, as the pre-22-Sep live path did — fewer valid runs lowers agreement.
     false,
+    deps,
   );
+  totals.costUsd += solveOut.costUsd;
+  if (solveOut.stop) return printStop(journal, file, solveOut.stop, guard);
 
   // 5. aggregate — runs in run-index order so the verify prompt reads like the live one
   const solves = new Map<string, SolveResult>();
@@ -735,7 +563,7 @@ async function runBatchMode() {
   for (const id of rows.keys()) {
     const mine = solveReqsByQuestion.get(id) ?? [];
     if (mine.some((r) => r.status !== "succeeded" && r.status !== "unusable")) {
-      // An API failure on any solve leaves the question unchecked for the next run, as the live path does.
+      // An API failure on any solve leaves the question unchecked for the next run, as the pre-22-Sep live path did.
       skipped.push(id);
       continue;
     }
@@ -758,7 +586,7 @@ async function runBatchMode() {
     journal.phase = "verify";
     saveJournal(file, journal);
   }
-  await runPhase(
+  const verifyOut = await runJournalPhase(
     journal,
     file,
     VERIFY,
@@ -773,11 +601,14 @@ async function runBatchMode() {
         return false;
       }
     },
-    // The live path gives up on a row whose verdict is not JSON; a batch gets one more try, then the row stays unchecked.
+    // The pre-22-Sep live path gave up on a row whose verdict is not JSON; a batch gets one more try, then the row stays unchecked.
     true,
+    deps,
   );
+  totals.costUsd += verifyOut.costUsd;
+  if (verifyOut.stop) return printStop(journal, file, verifyOut.stop, guard);
 
-  // 7. write verdicts exactly as the live path does
+  // 7. write verdicts exactly as the pre-22-Sep live path did
   journal.phase = "writing";
   saveJournal(file, journal);
   const at = new Date().toISOString();
@@ -804,7 +635,7 @@ async function runBatchMode() {
   const unchecked = [...rows.keys()].filter((id) => !written.has(id));
   const unusableVerdicts = Object.values(journal.requests).filter((r) => r.phase === VERIFY && r.status === "unusable").length;
   console.log(
-    `\n=== batch run ${journal.runId} done: checked ${totals.checked} · accepted ${totals.accepted} · key corrected ${totals.corrected} · failed ${totals.failed} · broken shape ${totals.shape} · newly validated ${totals.newlyValidated} · removed from pools ${totals.removed} · unchecked ${unchecked.length} (verdicts unusable ${unusableVerdicts}) · ledger $${totals.costUsd.toFixed(2)} at batch prices`,
+    `\n=== batch run ${journal.runId} done: checked ${totals.checked} · accepted ${totals.accepted} · key corrected ${totals.corrected} · failed ${totals.failed} · broken shape ${totals.shape} · newly validated ${totals.newlyValidated} · removed from pools ${totals.removed} · unchecked ${unchecked.length} (verdicts unusable ${unusableVerdicts}) · ledger ${fmtUsd(totals.costUsd)} this invocation · ${fmtUsd(journal.spentUsd ?? 0)} in all at batch prices (ceiling ${fmtUsd(guard.maxUsd)})`,
   );
   if (unchecked.length) console.log(`   unchecked questions are picked up by the next run (they carry no factoryVerify): ${unchecked.slice(0, 8).join(", ")}${unchecked.length > 8 ? "…" : ""}`);
 }
@@ -812,24 +643,35 @@ async function runBatchMode() {
 // ---------------------------------------------------------------------------
 
 async function main() {
+  // 26 Sep 2026: the per-call --live path is gone (see the header). It ran
+  // four full-price Opus calls per question on the tutor's own key with no
+  // ceiling, outside guardFlags() and the probe — the one --apply that could
+  // still empty the shared balance. Refused first, before any key or row is
+  // read, and never silently downgraded to a batch run.
+  if (process.argv.includes("--live")) {
+    throw new Error(
+      `--live was removed on 26 Sep 2026: it billed per call at full price on the shared ${PRODUCTION_KEY_ENV} (the tutor's key) outside the spend guard. Run batch mode instead: drop --live (and --concurrency), dry-run first, then --resume <runId> --apply --max-usd <usd> --chunk ${DEFAULT_CHUNK} ${CONFIRM_AUTO_RELOAD_FLAG}.`,
+    );
+  }
   if (!EXAMS.length && !RESUME) throw new Error("--exams CODE[,CODE…] is required (or --resume <runId>)");
-  if (LIVE && DRY) {
-    throw new Error("--live has no free dry run: every question costs four full-price Opus calls. Add --apply to write verdicts, or use batch mode (no --live) for a zero-cost estimate.");
-  }
   // Spend gate (22 Sep 2026): nothing that can bill starts while the bulk key
-  // is absent, batch or live, before the first database read.
+  // is absent, before the first database read.
   if (!DRY) assertBulkKey();
-  if (LIVE) {
-    if (RESUME) throw new Error("--resume is a batch-mode flag; the live path resumes by itself (verified rows are skipped)");
-    console.warn(`live run: per-call, full price, on the shared ANTHROPIC_API_KEY (not ${BULK_KEY_ENV}); batch mode is the half-price path`);
-    for (const code of EXAMS) {
-      if (stop) break;
-      await runExamLive(code);
-    }
-    console.log(`\nTOTAL: ${JSON.stringify({ ...totals, costUsd: Number(totals.costUsd.toFixed(2)) })}${stop ? " (stopped early)" : ""}`);
-    return;
+  // Spend guard (26 Sep 2026): the flags, the operator's statement and the
+  // pre-flight probe of the production key — all before the first database
+  // read, so an empty balance or a missing flag costs nothing.
+  const flags = guardFlags(process.argv, !DRY);
+  let apply: { guard: SpendGuard; preflight: ProbeResult } | null = null;
+  if (!DRY) {
+    const maxUsd = flags.maxUsd!;
+    console.log(`\n=== spend guard: --max-usd ${fmtUsd(maxUsd)} (hard ceiling on this journal's ledgered spend, batch prices) · --chunk ${flags.chunkSize} requests per batch, one batch at a time`);
+    console.log(`   ${CONFIRM_AUTO_RELOAD_STATEMENT}`);
+    const preflight = await probeProductionKey();
+    console.log(`   ${preflight.ok ? "✓" : "✗"} production key probe before the run (${PRODUCTION_KEY_ENV}, ${PROBE_MODEL}, max_tokens 1): ${describeProbe(preflight)}`);
+    assertProductionKeyProbe(preflight);
+    apply = { guard: { maxUsd, chunkSize: flags.chunkSize, probe: probeProductionKey }, preflight };
   }
-  await runBatchMode();
+  await runBatchMode(apply);
 }
 
 main()

@@ -25,6 +25,11 @@
 // The journal is what makes a run survivable: it records every custom_id,
 // which batch carries it, its status and the parsed output, so a killed
 // process resumes with --resume <runId> instead of paying twice.
+//
+// Since 26 Sep 2026 every submit also goes through the spend guard below
+// (--max-usd ceiling, small sequential chunks, a probe of the production
+// key): the bulk key and the tutor's key draw on ONE credit balance, and a
+// large run emptied it twice at peak hours.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -355,12 +360,19 @@ export interface BatchJournal<TOutputs> {
   requests: Record<string, JournalRequest>;
   batches: JournalBatch[];
   pendingSubmit?: PendingSubmit;
+  /**
+   * USD ledgered by this journal at batch prices, across every invocation
+   * (26 Sep 2026): what the --max-usd ceiling reads. Journals written before
+   * the field existed carry none, so their earlier spend counts as 0 and the
+   * ceiling applies to what is ledgered from here on.
+   */
+  spentUsd?: number;
   outputs: TOutputs;
 }
 
 export function newJournal<TOutputs>(runId: string, args: Record<string, unknown>, outputs: TOutputs): BatchJournal<TOutputs> {
   const now = new Date().toISOString();
-  return { version: 1, runId, createdAt: now, updatedAt: now, phase: "new", args, questions: {}, requests: {}, batches: [], outputs };
+  return { version: 1, runId, createdAt: now, updatedAt: now, phase: "new", args, questions: {}, requests: {}, batches: [], spentUsd: 0, outputs };
 }
 
 export function journalPath(dir: string, runId: string): string {
@@ -387,16 +399,16 @@ export function loadJournal<TOutputs>(file: string): BatchJournal<TOutputs> {
  * Journals under `dir` that still have submitted batches (or a cut-off
  * submit) and cover any of these row ids. A fresh --apply over them would
  * pay for the same requests again, because outputs are written only when a
- * run finishes. Additive twin (26 Sep 2026) of the scan in
- * scripts/verify-question-bank.ts, for the school content runner's own
- * journal folder; that script keeps its copy. An unreadable journal is
- * reported through `warn` and skipped, a missing folder means "none".
+ * run finishes. Lifted (26 Sep 2026) from scripts/verify-question-bank.ts,
+ * which now calls this over its own folder, as the school content runner
+ * does over its. An unreadable journal is reported through `warn` and
+ * skipped, a missing folder means "none".
  */
 export function openJournalsCovering(
   dir: string,
   rowIds: Set<string>,
   warn: (line: string) => void = (line) => console.warn(line),
-): Array<{ runId: string; phase: string; overlap: number; submitted: boolean }> {
+): Array<{ runId: string; file: string; phase: string; overlap: number; submitted: boolean }> {
   let names: string[];
   try {
     names = fs.readdirSync(dir).filter((n) => n.endsWith(".json"));
@@ -404,7 +416,7 @@ export function openJournalsCovering(
     if ((e as NodeJS.ErrnoException).code === "ENOENT") return [];
     throw e;
   }
-  const out: Array<{ runId: string; phase: string; overlap: number; submitted: boolean }> = [];
+  const out: Array<{ runId: string; file: string; phase: string; overlap: number; submitted: boolean }> = [];
   for (const name of names) {
     let j: BatchJournal<unknown>;
     try {
@@ -415,33 +427,227 @@ export function openJournalsCovering(
     }
     if (j.phase === "done") continue;
     const overlap = Object.keys(j.questions).filter((id) => rowIds.has(id)).length;
-    if (overlap) out.push({ runId: j.runId, phase: j.phase, overlap, submitted: j.batches.length > 0 || !!j.pendingSubmit });
+    // `file` is what --resume takes: the file's own name. A renamed journal
+    // (26 Sep 2026: full-bank-validated-20260925.json, whose runId joins exam
+    // codes with "+") resumes by that name, never by its runId.
+    if (overlap) out.push({ runId: j.runId, file: name.replace(/\.json$/, ""), phase: j.phase, overlap, submitted: j.batches.length > 0 || !!j.pendingSubmit });
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Spend guard (26 Sep 2026)
+// ---------------------------------------------------------------------------
+//
+// Twice — 25 Sep 2026 23:40 IST and 26 Sep 2026 10:37 IST — a bulk run on
+// ANTHROPIC_BULK_API_KEY emptied the ONE credit balance the organisation has.
+// The production key that serves the tutor draws on that same balance, so
+// the student-facing tutor went down at peak hours both times. The API has
+// no balance endpoint, so the guard works from what a run can see and hold:
+//
+//   • --max-usd <n>   a hard ceiling on the journal's ledgered spend (batch
+//     prices, journal.spentUsd). Before EVERY submit the chunk's worst case —
+//     every reply filling max_tokens, plus its prompt tokens — is priced
+//     exactly as the dry-run estimate prices it; ledgered-so-far + that worst
+//     case above the ceiling refuses the submit, saves the journal and says
+//     what to pass to continue. Required for --apply; there is no default.
+//   • --chunk <n>     requests per batch (default 2000, at most
+//     BATCH_CHUNK_MAX). Chunks go out ONE AT A TIME: each is polled and
+//     collected before the next is priced, so the ledger is current at every
+//     check and a run proceeds in small, refusable steps.
+//   • a probe of the production key (one claude-haiku-4-5-20251001 call,
+//     max_tokens 1, on ANTHROPIC_API_KEY): before the run — a billing error
+//     means the tutor's balance is already empty and nothing starts — and
+//     after every collected chunk, where any failure stops further submits.
+//     Only the outcome is ever logged, never the key.
+//   • --i-confirm-auto-reload: a literal flag the operator passes after
+//     checking in the Console that auto-reload is ON; the runner prints the
+//     statement back before submitting. Friction, not a check.
+
+export const PRODUCTION_KEY_ENV = "ANTHROPIC_API_KEY";
+/** The probe's model: the cheapest tier, pinned so the probe never drifts to an id the production key cannot use. */
+export const PROBE_MODEL = "claude-haiku-4-5-20251001";
+/** --chunk default. */
+export const DEFAULT_CHUNK = 2000;
+export const CONFIRM_AUTO_RELOAD_FLAG = "--i-confirm-auto-reload";
+export const CONFIRM_AUTO_RELOAD_HELP = `${CONFIRM_AUTO_RELOAD_FLAG}  the operator has opened the Anthropic Console (Plans & Billing) and confirmed that auto-reload is ON for this organisation, so the balance the tutor shares refills before a bulk run can drain it. --apply refuses to start without it; it is a friction step, not a check.`;
+export const CONFIRM_AUTO_RELOAD_STATEMENT = "Operator statement (--i-confirm-auto-reload): I checked the Anthropic Console (Plans & Billing) before this run and auto-reload is ON for this organisation.";
+
+export type ProbeKind = "ok" | "billing" | "auth" | "error";
+
+export interface ProbeResult {
+  ok: boolean;
+  kind: ProbeKind;
+  /** HTTP status of the reply; null when there was none (network, missing key). */
+  status: number | null;
+  /** For the log: the API error type and the first line of its message, or what the model replied. Never the key. */
+  detail: string;
+}
+
+export type KeyProbe = () => Promise<ProbeResult>;
+
+/** Anything shaped like an API key is masked before an error line is logged or thrown. */
+function redactKeys(s: string): string {
+  return s.replace(/sk-ant-[A-Za-z0-9_-]+/g, "sk-ant-…");
+}
+
+/** Classifies a messages.create failure: an empty balance, a bad key, or anything else. Exported so tests can feed it the SDK's own error objects. */
+export function classifyProbeError(e: unknown): ProbeResult {
+  const err = e as { status?: unknown; error?: { error?: { type?: unknown; message?: unknown } }; message?: unknown };
+  const status = typeof err?.status === "number" ? err.status : null;
+  const type = typeof err?.error?.error?.type === "string" ? err.error.error.type : "";
+  // The API body's own message when there is one (the SDK's Error.message prefixes it with the status and the whole JSON body).
+  const raw = typeof err?.error?.error?.message === "string" ? err.error.error.message : String(err?.message ?? e);
+  const message = redactKeys(raw).split("\n")[0].slice(0, 160);
+  // An empty balance arrives as a 400 invalid_request_error whose message says
+  // "credit balance is too low … Plans & Billing" (seen 11-13 and 15 Sep 2026);
+  // billing_error is its typed form.
+  const billing = type === "billing_error" || /credit balance|billing|purchase credits/i.test(`${type} ${message}`);
+  const auth = !billing && (status === 401 || status === 403 || type === "authentication_error" || type === "permission_error");
+  return { ok: false, kind: billing ? "billing" : auth ? "auth" : "error", status, detail: `${type || "error"}: ${message}` };
+}
+
+export function describeProbe(p: ProbeResult): string {
+  const http = p.status == null ? "no HTTP status" : `HTTP ${p.status}`;
+  if (p.ok) return `ok · ${http} · ${p.detail}`;
+  const kind = p.kind === "billing" ? "BILLING ERROR (the shared balance is empty)" : p.kind === "auth" ? "AUTH ERROR" : "FAILED";
+  return `${kind} · ${http} · ${p.detail}`;
+}
+
+/**
+ * One tiny live call on the PRODUCTION key — the only call a bulk runner
+ * ever makes on it — asking the one question the API has no endpoint for:
+ * can the tutor still be served right now? About $0.00001 per probe (a
+ * dozen Haiku tokens); not ledgered.
+ */
+export async function probeProductionKey(): Promise<ProbeResult> {
+  const key = process.env[PRODUCTION_KEY_ENV];
+  if (!key) return { ok: false, kind: "error", status: null, detail: `${PRODUCTION_KEY_ENV} is not set — the tutor's key cannot be probed` };
+  // A client of its own on the production key (never the bulk client); the SDK retries 429/5xx/connection errors twice by itself.
+  const client = new Anthropic({ apiKey: key, maxRetries: 2, timeout: 30_000 });
+  try {
+    const m = await client.messages.create({ model: PROBE_MODEL, max_tokens: 1, messages: [{ role: "user", content: "ping" }] });
+    return { ok: true, kind: "ok", status: 200, detail: `${m.model} replied (${m.usage.input_tokens} in / ${m.usage.output_tokens} out)` };
+  } catch (e) {
+    return classifyProbeError(e);
+  }
+}
+
+/** The pre-flight gate: an --apply run starts only on a probe that succeeded. */
+export function assertProductionKeyProbe(p: ProbeResult): void {
+  if (p.ok) return;
+  if (p.kind === "billing") throw new Error(`the tutor's balance is empty; add credit first (production key probe: ${describeProbe(p)})`);
+  throw new Error(`the production key could not be verified (probe: ${describeProbe(p)}); nothing is submitted until a probe succeeds`);
+}
+
+/** Worst case of a batch at batch prices: every reply fills max_tokens, every prompt at its character-count estimate — as the dry-run estimate prices it. */
+export function worstCaseUsd(requests: ReadonlyArray<{ params: Anthropic.Messages.MessageCreateParamsNonStreaming }>): number {
+  let usd = 0;
+  for (const { params } of requests) usd += tokensUsd(params.model, { input: estimateRequestTokens(params), output: params.max_tokens }, { batch: true });
+  return usd;
+}
+
+/** A request the phase driver will (re)submit: still built, or a first attempt that gets its one retry. */
+export function awaitsSubmit(r: JournalRequest, retryUnusable: boolean): boolean {
+  if (r.status === "built") return true;
+  if (r.attempt !== 1) return false;
+  return r.status === "errored" || r.status === "expired" || r.status === "canceled" || (retryUnusable && r.status === "unusable");
+}
+
+export interface GuardFlags {
+  /** null only on a dry run (no --max-usd given). */
+  maxUsd: number | null;
+  chunkSize: number;
+  confirmed: boolean;
+}
+
+/** Reads --max-usd, --chunk and --i-confirm-auto-reload; an --apply run is refused without the first and the last. */
+export function guardFlags(argv: readonly string[], apply: boolean): GuardFlags {
+  // A flag given without a value (last on the line) is malformed, not absent.
+  const arg = (name: string): string | undefined => {
+    const i = argv.indexOf(name);
+    return i >= 0 ? (argv[i + 1] ?? "") : undefined;
+  };
+  const rawMax = arg("--max-usd");
+  const maxUsd = rawMax == null ? null : Number(rawMax);
+  if (maxUsd != null && !(rawMax && Number.isFinite(maxUsd) && maxUsd > 0)) throw new Error(`--max-usd must be a positive number of US dollars (got "${rawMax}")`);
+  const rawChunk = arg("--chunk");
+  const chunkSize = rawChunk == null ? DEFAULT_CHUNK : Number(rawChunk);
+  if (!rawChunk && rawChunk != null) throw new Error(`--chunk must be a whole number of requests per batch, 1 to ${BATCH_CHUNK_MAX} (got "")`);
+  if (!Number.isInteger(chunkSize) || chunkSize < 1 || chunkSize > BATCH_CHUNK_MAX) throw new Error(`--chunk must be a whole number of requests per batch, 1 to ${BATCH_CHUNK_MAX} (got "${rawChunk}")`);
+  const confirmed = argv.includes(CONFIRM_AUTO_RELOAD_FLAG);
+  if (apply) {
+    if (maxUsd == null) {
+      throw new Error(
+        `--apply needs --max-usd <usd>: a hard ceiling on this run's ledgered spend at batch prices, checked before every chunk against the chunk's worst case (26 Sep 2026: two bulk runs emptied the balance the tutor shares). There is no default — name the number.`,
+      );
+    }
+    if (!confirmed) throw new Error(`--apply needs ${CONFIRM_AUTO_RELOAD_FLAG}.\n   ${CONFIRM_AUTO_RELOAD_HELP}`);
+  }
+  return { maxUsd, chunkSize, confirmed };
+}
+
+export interface SpendGuard {
+  /** Hard ceiling on journal.spentUsd (batch prices), checked before every submit. */
+  maxUsd: number;
+  /** Requests per batch, 1..BATCH_CHUNK_MAX; one chunk in flight at a time. */
+  chunkSize: number;
+  /** Probe of the production key, run after every collected chunk: probeProductionKey unless a test stubs it. */
+  probe: KeyProbe;
+}
+
+export interface PhaseStop {
+  reason: "ceiling" | "probe";
+  phase: string;
+  /** journal.spentUsd when the phase stopped. */
+  spentUsd: number;
+  maxUsd: number;
+  /** Requests of this phase still to submit (built, or due their one retry), and their worst case in all. */
+  remaining: number;
+  remainingWorstUsd: number;
+  /** ceiling: the chunk that was refused. */
+  chunk?: { count: number; worstUsd: number };
+  /** probe: the failed probe. */
+  probe?: ProbeResult;
+  /** One paragraph for the operator: what happened and what to pass to continue (the runner adds its command line). */
+  message: string;
 }
 
 // ---------------------------------------------------------------------------
 // Phase driver (26 Sep 2026)
 // ---------------------------------------------------------------------------
 //
-// The re-entrant submit → poll → collect → retry loop that
-// scripts/verify-question-bank.ts runs per phase, as a helper with every
-// side effect injectable (the SDK slice, the ledger, the clock, the log), so
-// the school content runner reuses it and tests drive it with a fake API.
-// The verify runner keeps its own copy: it is mid-run on the full bank and
-// is not touched. Behaviour is the same, step for step:
+// The re-entrant submit → poll → collect → retry loop, with every side
+// effect injectable (the SDK slice, the ledger, the probe, the clock, the
+// log) so both runners (scripts/verify-question-bank.ts since 26 Sep 2026,
+// scripts/school-content-batch.ts) share it and tests drive it with a fake
+// API. Step for step:
 //
 //   0. a submit that was cut off (kill during the create POST) is adopted
 //      from the API rather than submitted twice (findUnjournaledBatch);
-//   1. "built" requests are submitted attempt by attempt, ≤ BATCH_CHUNK_MAX
-//      per batch, and the journal is saved before and after each create;
-//   2. open batches are polled to "ended";
-//   3. ended batches are collected once: every succeeded result is ledgered
-//      exactly once (r.ledgered), parsed by onMessage (true = usable), and a
-//      stale request (its row left the run) is ledgered but never parsed;
-//   4. errored (retryable), expired, canceled — and unusable when
+//   1. every open batch of the phase is settled first — polled to "ended",
+//      then collected once: each succeeded result is ledgered exactly once
+//      (r.ledgered, cleared whenever a request is submitted), parsed by
+//      onMessage (true = usable), and a stale request (its row left the run)
+//      is ledgered but never parsed. It was paid for when it was submitted,
+//      and settling it first keeps the ledger current for step 2. If this
+//      collected anything (a batch a killed invocation left polling, or the
+//      one adopted in step 0), the production key is probed before the next
+//      chunk goes out, exactly as after a chunk this call submitted — the
+//      26 Sep 2026 review found the resume path skipping that probe, so the
+//      next chunk went out on the runner's pre-flight probe alone, an hour
+//      or more old by then;
+//   2. "built" requests are submitted attempt by attempt, ONE CHUNK AT A
+//      TIME (guard.chunkSize, ≤ BATCH_CHUNK_MAX): the chunk is priced at its
+//      worst case and refused if journal.spentUsd + that crosses
+//      guard.maxUsd; otherwise it is submitted (the journal saved before and
+//      after the create), settled, and the production key probed — a failed
+//      probe stops the phase before the next chunk;
+//   3. errored (retryable), expired, canceled — and unusable when
 //      retryUnusable — requests get ONE resubmission (attempt 2);
-// then whatever is not succeeded / unusable / stale is marked failed.
+// then whatever is not succeeded / unusable / stale is marked failed. A
+// guard stop returns before that: what is still to submit stays "built",
+// and PhaseOutcome.stop tells the runner not to go on.
 
 export interface PhaseDeps {
   /** SDK slice; the live bulk-key client when omitted. */
@@ -462,6 +668,8 @@ export interface PhaseDeps {
   saveEvery?: number;
   /** Clock, for the submit timestamps (tests pin it). */
   now?: () => Date;
+  /** 26 Sep 2026: the ceiling, the chunk size and the production-key probe. Every submit goes through it; there is no default. */
+  guard: SpendGuard;
 }
 
 export interface PhaseOutcome {
@@ -471,6 +679,8 @@ export interface PhaseOutcome {
   failed: JournalRequest[];
   /** Replies still unparseable after their retry (only when retryUnusable). */
   stuck: JournalRequest[];
+  /** Set when the guard stopped the phase early: the journal is saved, what is still to submit stays "built", and the runner must not go on to the next phase. */
+  stop?: PhaseStop;
 }
 
 const isTerminalStatus = (s: JournalRequestStatus) => s !== "built" && s !== "submitted";
@@ -478,6 +688,8 @@ const isTerminalStatus = (s: JournalRequestStatus) => s !== "built" && s !== "su
 function defaultLedger(feature: string, req: JournalRequest, message: Anthropic.Messages.Message): Promise<number> {
   return recordAiUsageAwaited(feature, message, { model: message.model, ref: req.code, batch: true });
 }
+
+const fmtUsd = (n: number) => `$${n.toFixed(2)}`;
 
 export async function runJournalPhase<TOutputs>(
   journal: BatchJournal<TOutputs>,
@@ -487,9 +699,12 @@ export async function runJournalPhase<TOutputs>(
   build: (req: JournalRequest) => Anthropic.Messages.MessageCreateParamsNonStreaming,
   onMessage: (req: JournalRequest, message: Anthropic.Messages.Message) => boolean,
   retryUnusable: boolean,
-  deps: PhaseDeps = {},
+  deps: PhaseDeps,
 ): Promise<PhaseOutcome> {
   const api = deps.api;
+  const guard = deps.guard;
+  if (!guard || !Number.isFinite(guard.maxUsd) || guard.maxUsd <= 0) throw new Error(`runJournalPhase(${phase}): a spend guard with a finite --max-usd above zero is required (26 Sep 2026); there is no default`);
+  const chunkSize = Math.max(1, Math.min(BATCH_CHUNK_MAX, Math.floor(guard.chunkSize || DEFAULT_CHUNK)));
   const ledger = deps.ledger ?? defaultLedger;
   const log = deps.log ?? ((line: string) => console.log(line));
   const warn = deps.warn ?? ((line: string) => console.warn(line));
@@ -499,6 +714,22 @@ export async function runJournalPhase<TOutputs>(
   const pollIntervalMs = deps.pollIntervalMs ?? 60_000;
   let costUsd = 0;
   const reqs = () => Object.values(journal.requests).filter((r) => r.phase === phase);
+  const spent = () => journal.spentUsd ?? 0;
+  /** One collected result's USD, into this call's total and the journal's running total (what the ceiling reads). */
+  const book = (usd: number) => {
+    costUsd += usd;
+    journal.spentUsd = spent() + usd;
+  };
+  const stillToSubmit = () => {
+    const rest = reqs().filter((r) => awaitsSubmit(r, retryUnusable));
+    return { remaining: rest.length, remainingWorstUsd: worstCaseUsd(rest.map((r) => ({ params: build(r) }))) };
+  };
+  const stopWith = (stop: PhaseStop): PhaseOutcome => {
+    journal.args.lastStop = { at: now().toISOString(), phase, reason: stop.reason, message: stop.message };
+    saveJournal(file, journal);
+    warn(`   ✋ ${stop.message}`);
+    return { costUsd, failed: [], stuck: [], stop };
+  };
 
   // 0. adopt a batch the API accepted while the journal was not yet written
   const pending = journal.pendingSubmit;
@@ -513,6 +744,7 @@ export async function runJournalPhase<TOutputs>(
         if (r && r.status === "built") {
           r.status = "submitted";
           r.batchId = found.id;
+          delete r.ledgered;
         }
       }
       journal.phase = `${phase}-submitted`;
@@ -523,29 +755,9 @@ export async function runJournalPhase<TOutputs>(
     saveJournal(file, journal);
   }
 
-  for (let pass = 0; pass < 3; pass++) {
-    // 1. submit (attempt by attempt, so a batch never mixes first tries and retries)
-    for (const attempt of [1, 2]) {
-      const toSubmit = reqs().filter((r) => r.status === "built" && r.attempt === attempt);
-      for (const part of chunk(toSubmit, BATCH_CHUNK_MAX)) {
-        const requests: BatchRequest[] = part.map((r) => ({ custom_id: r.customId, params: build(r) }));
-        log(`   → ${phase} attempt ${attempt}: submitting ${requests.length} requests…`);
-        journal.pendingSubmit = { phase, attempt, count: requests.length, at: now().toISOString(), customIds: part.map((r) => r.customId) };
-        saveJournal(file, journal);
-        const batch = await submitBatch(requests, api);
-        journal.batches.push({ id: batch.id, phase, attempt, count: requests.length, submittedAt: now().toISOString(), status: "in_progress", collected: false });
-        for (const r of part) {
-          r.status = "submitted";
-          r.batchId = batch.id;
-        }
-        delete journal.pendingSubmit;
-        journal.phase = `${phase}-submitted`;
-        saveJournal(file, journal);
-        log(`     batch ${batch.id} (expires ${batch.expires_at})`);
-      }
-    }
-
-    // 2. poll
+  /** Polls every open batch of this phase to "ended", then collects, ledgers and parses each ended batch once. Returns the ids this call collected. */
+  const settle = async (): Promise<string[]> => {
+    const collected: string[] = [];
     for (const b of journal.batches.filter((x) => x.phase === phase && x.status !== "ended")) {
       log(`   … polling ${b.id} every ${pollIntervalMs / 1000}s`);
       const ended = await pollBatch(b.id, {
@@ -565,7 +777,6 @@ export async function runJournalPhase<TOutputs>(
       saveJournal(file, journal);
     }
 
-    // 3. collect + ledger + parse
     for (const b of journal.batches.filter((x) => x.phase === phase && x.status === "ended" && !x.collected)) {
       log(`   ← collecting ${b.id}…`);
       const outcomes = [...(await collectResults(b.id, api)).values()];
@@ -574,11 +785,10 @@ export async function runJournalPhase<TOutputs>(
         const r = journal.requests[o.customId];
         if (!r || r.batchId !== b.id) return;
         // `costUsd += await …` would read costUsd before the await and lose
-        // updates across the parallel ledger inserts; add after awaiting.
+        // updates across the parallel ledger inserts; book after awaiting.
         if (r.status === "stale") {
           if (o.type === "succeeded" && !r.ledgered) {
-            const usd = await ledger(feature, r, o.message);
-            costUsd += usd;
+            book(await ledger(feature, r, o.message));
             r.ledgered = true;
           }
           return;
@@ -586,8 +796,7 @@ export async function runJournalPhase<TOutputs>(
         if (isTerminalStatus(r.status)) return;
         if (o.type === "succeeded") {
           if (!r.ledgered) {
-            const usd = await ledger(feature, r, o.message);
-            costUsd += usd;
+            book(await ledger(feature, r, o.message));
             r.ledgered = true;
           }
           r.status = onMessage(r, o.message) ? "succeeded" : "unusable";
@@ -612,10 +821,98 @@ export async function runJournalPhase<TOutputs>(
         else if (r.status === "stale") n.stale += 1;
         else n.err += 1;
       }
-      log(`     ${b.id}: ${n.ok} usable · ${n.unusable} unusable replies · ${n.err} errored/expired${n.stale ? ` · ${n.stale} stale (ledgered only)` : ""} · ledger +$${costUsd.toFixed(2)} so far`);
+      log(`     ${b.id}: ${n.ok} usable · ${n.unusable} unusable replies · ${n.err} errored/expired${n.stale ? ` · ${n.stale} stale (ledgered only)` : ""} · ledger +${fmtUsd(costUsd)} this run · ${fmtUsd(spent())} in all (ceiling ${fmtUsd(guard.maxUsd)})`);
+      collected.push(b.id);
+    }
+    return collected;
+  };
+
+  /**
+   * The production key after every collected chunk: any failure stops
+   * further submits. `after` names the batches just collected — the one this
+   * loop submitted, or whatever a resume found open (left polling by a killed
+   * invocation, or adopted in step 0; 26 Sep 2026 review). Null when the
+   * probe passed; otherwise the stop for stopWith().
+   */
+  const probeAfter = async (after: string[]): Promise<PhaseStop | null> => {
+    const probe = await guard.probe();
+    const label = after.join(", ");
+    log(`   ${probe.ok ? "✓" : "✗"} production key probe after ${label}: ${describeProbe(probe)}`);
+    if (probe.ok) return null;
+    const rest = stillToSubmit();
+    return {
+      reason: "probe",
+      phase,
+      spentUsd: spent(),
+      maxUsd: guard.maxUsd,
+      ...rest,
+      probe,
+      message:
+        `${phase}: no further chunk is submitted — the production key probe after ${label} failed (${describeProbe(probe)}).` +
+        `${probe.kind === "billing" ? " The tutor's balance is empty; add credit first." : ""} ` +
+        `Journal saved; ${rest.remaining} requests of this phase still to submit (worst case ${fmtUsd(rest.remainingWorstUsd)}); ledgered ${fmtUsd(spent())} so far in this run. Resume once a probe succeeds.`,
+    };
+  };
+
+  for (let pass = 0; pass < 3; pass++) {
+    // 1. what is already open was paid for when it was submitted: settle it first, so the ledger is current before the next chunk is priced —
+    //    and, as after any collected chunk, probe the production key before anything else goes out (a resume's open batch may have polled for an hour)
+    const settled = await settle();
+    if (settled.length) {
+      const halt = await probeAfter(settled);
+      if (halt) return stopWith(halt);
     }
 
-    // 4. one retry for what is worth retrying
+    // 2. submit what is built, one chunk at a time, attempt by attempt (so a batch never mixes first tries and retries)
+    for (const attempt of [1, 2]) {
+      for (;;) {
+        const toSubmit = reqs().filter((r) => r.status === "built" && r.attempt === attempt);
+        if (!toSubmit.length) break;
+        const part = toSubmit.slice(0, chunkSize);
+        const requests: BatchRequest[] = part.map((r) => ({ custom_id: r.customId, params: build(r) }));
+        const worst = worstCaseUsd(requests);
+        if (spent() + worst > guard.maxUsd) {
+          const rest = stillToSubmit();
+          const chunkNeeds = spent() + worst;
+          const allNeeds = spent() + rest.remainingWorstUsd;
+          return stopWith({
+            reason: "ceiling",
+            phase,
+            spentUsd: spent(),
+            maxUsd: guard.maxUsd,
+            ...rest,
+            chunk: { count: requests.length, worstUsd: worst },
+            message:
+              `${phase}: the next chunk of ${requests.length} requests was NOT submitted — ledgered ${fmtUsd(spent())} so far in this run + worst case ${fmtUsd(worst)} for the chunk (every reply filling max_tokens) is over --max-usd ${fmtUsd(guard.maxUsd)}. ` +
+              `Journal saved; ${rest.remaining} requests of this phase still to submit, worst case ${fmtUsd(rest.remainingWorstUsd)} in all. ` +
+              `To continue, pass --max-usd ${Math.max(1, Math.ceil(chunkNeeds))} or more (${fmtUsd(chunkNeeds)} lets this chunk through; ${fmtUsd(allNeeds)} covers everything left in this phase at worst), or a smaller --chunk so each step costs less.`,
+          });
+        }
+        log(`   → ${phase} attempt ${attempt}: submitting ${requests.length} of ${toSubmit.length} requests · worst case ${fmtUsd(worst)} · ledgered ${fmtUsd(spent())} so far · ceiling ${fmtUsd(guard.maxUsd)}`);
+        journal.pendingSubmit = { phase, attempt, count: requests.length, at: now().toISOString(), customIds: part.map((r) => r.customId) };
+        saveJournal(file, journal);
+        const batch = await submitBatch(requests, api);
+        journal.batches.push({ id: batch.id, phase, attempt, count: requests.length, submittedAt: now().toISOString(), status: "in_progress", collected: false });
+        for (const r of part) {
+          r.status = "submitted";
+          r.batchId = batch.id;
+          // This submit's reply is a new billable result: `ledgered` from an
+          // earlier attempt must not hide it (26 Sep 2026: the 45 retries of
+          // the paused full-bank journal carry ledgered:true from attempt 1).
+          delete r.ledgered;
+        }
+        delete journal.pendingSubmit;
+        journal.phase = `${phase}-submitted`;
+        saveJournal(file, journal);
+        log(`     batch ${batch.id} (expires ${batch.expires_at})`);
+        await settle();
+        // the production key after every collected chunk: any failure stops further submits
+        const halt = await probeAfter([batch.id]);
+        if (halt) return stopWith(halt);
+      }
+    }
+
+    // 3. one retry for what is worth retrying
     const retry = reqs().filter(
       (r) => r.attempt === 1 && (r.status === "errored" || r.status === "expired" || r.status === "canceled" || (retryUnusable && r.status === "unusable")),
     );

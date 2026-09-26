@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from "vitest";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import type Anthropic from "@anthropic-ai/sdk";
+import Anthropic from "@anthropic-ai/sdk";
 
 const { created } = vi.hoisted(() => ({ created: [] as Array<{ data: Record<string, unknown> }> }));
 vi.mock("@/lib/db/prisma", () => ({
@@ -34,20 +34,28 @@ import { modelFor } from "@/lib/ai/router";
 import { BATCH_PRICE_FACTOR, recordAiUsage, recordAiUsageAwaited, usageCostUsd } from "@/lib/ai/usage";
 import { aggregate, buildSolveRequest, parseSolveRun, SOLVE_FEATURE } from "@/lib/ai/factory/solver";
 import { buildVerifyRequest, parseVerifyVerdict, VERIFY_FEATURE } from "@/lib/ai/factory/verifier";
-import type { CandidateQuestion, SolveResult } from "@/lib/ai/factory/types";
+import type { CandidateQuestion, SolveResult, SolveRun, VerifyVerdict } from "@/lib/ai/factory/types";
 import {
   BATCH_CHUNK_MAX,
   BULK_KEY_ENV,
+  CONFIRM_AUTO_RELOAD_FLAG,
   CUSTOM_ID_PATTERN,
+  DEFAULT_CHUNK,
   POLL_MAX_FAILURES,
+  PROBE_MODEL,
   assertBatchRequests,
   assertBulkKey,
+  assertProductionKeyProbe,
+  awaitsSubmit,
   batchTotal,
   chunk,
+  classifyProbeError,
   collectResults,
+  describeProbe,
   estimateRequestTokens,
   estimateTokens,
   findUnjournaledBatch,
+  guardFlags,
   isRetryable,
   journalPath,
   loadJournal,
@@ -56,12 +64,17 @@ import {
   newJournal,
   parseCustomId,
   pollBatch,
+  runJournalPhase,
   saveJournal,
   submitBatch,
   toOutcome,
   tokensUsd,
+  worstCaseUsd,
   type BatchesApi,
+  type JournalRequest,
   type MessageBatch,
+  type ProbeResult,
+  type SpendGuard,
 } from "@/lib/ai/batch";
 
 // ---------------------------------------------------------------------------
@@ -555,6 +568,297 @@ describe("journal", () => {
       const file = path.join(dir, "junk.json");
       fs.writeFileSync(file, JSON.stringify({ hello: 1 }));
       expect(() => loadJournal(file)).toThrow(/not a v1 batch journal/);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// spend guard (26 Sep 2026): flags, the production-key probe, the worst case
+// ---------------------------------------------------------------------------
+
+const PROBE_OK: ProbeResult = { ok: true, kind: "ok", status: 200, detail: "stub" };
+
+describe("spend guard flags", () => {
+  it("--apply needs --max-usd and --i-confirm-auto-reload; --chunk defaults to 2000 and stays within the API chunk", () => {
+    expect(() => guardFlags(["--apply"], true)).toThrow(/--apply needs --max-usd/);
+    expect(() => guardFlags(["--apply", "--max-usd", "5"], true)).toThrow(/--apply needs --i-confirm-auto-reload/);
+    expect(() => guardFlags(["--apply", "--max-usd", "5"], true)).toThrow(/auto-reload is ON/);
+    expect(guardFlags(["--apply", "--max-usd", "5", CONFIRM_AUTO_RELOAD_FLAG], true)).toEqual({ maxUsd: 5, chunkSize: DEFAULT_CHUNK, confirmed: true });
+    expect(guardFlags(["--max-usd", "0.5", "--chunk", "250", CONFIRM_AUTO_RELOAD_FLAG], true)).toEqual({ maxUsd: 0.5, chunkSize: 250, confirmed: true });
+    expect(DEFAULT_CHUNK).toBe(2000);
+    for (const bad of [["--max-usd", "0"], ["--max-usd", "-3"], ["--max-usd", "abc"], ["--max-usd", "--chunk"], ["--max-usd"]]) {
+      expect(() => guardFlags(bad, false), bad.join(" ")).toThrow(/--max-usd must be a positive number/);
+    }
+    for (const bad of [["--chunk", "0"], ["--chunk", String(BATCH_CHUNK_MAX + 1)], ["--chunk", "2.5"], ["--chunk", "x"]]) {
+      expect(() => guardFlags(bad, false), bad.join(" ")).toThrow(/--chunk must be a whole number/);
+    }
+    expect(guardFlags(["--chunk", String(BATCH_CHUNK_MAX)], false).chunkSize).toBe(BATCH_CHUNK_MAX);
+    // a dry run needs none of them
+    expect(guardFlags([], false)).toEqual({ maxUsd: null, chunkSize: DEFAULT_CHUNK, confirmed: false });
+    expect(guardFlags(["--exams", "NDA", "--scope", "validated"], false).maxUsd).toBeNull();
+  });
+});
+
+describe("production key probe (the SDK's own error objects, no network)", () => {
+  // What the SDK throws for an HTTP error reply: generate() needs a headers record (SDK 0.40's own Record type), or it builds a connection error instead.
+  const apiError = (status: number, type: string, message: string) => Anthropic.APIError.generate(status, { type: "error", error: { type, message } }, message, {});
+
+  it("an empty balance is a billing error whatever the HTTP status says, and the pre-flight gate refuses it in the founder's words", () => {
+    const p = classifyProbeError(apiError(400, "invalid_request_error", "Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."));
+    expect(p).toMatchObject({ ok: false, kind: "billing", status: 400 });
+    // the body's own message, not the SDK's "400 {…json…}" wrapper
+    expect(p.detail).toBe("invalid_request_error: Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.");
+    expect(classifyProbeError(apiError(402, "billing_error", "x")).kind).toBe("billing");
+    expect(describeProbe(p)).toMatch(/BILLING ERROR/);
+    expect(describeProbe(p)).toMatch(/HTTP 400/);
+    expect(() => assertProductionKeyProbe(p)).toThrow(/the tutor's balance is empty; add credit first/);
+  });
+
+  it("a bad key, an outage and a missing status are refused too, and a key never reaches the text", () => {
+    const auth = classifyProbeError(apiError(401, "authentication_error", "invalid x-api-key sk-ant-api03-SECRETSECRET"));
+    expect(auth).toMatchObject({ ok: false, kind: "auth", status: 401 });
+    expect(auth.detail).not.toContain("SECRETSECRET");
+    expect(describeProbe(auth)).not.toContain("SECRETSECRET");
+    expect(() => assertProductionKeyProbe(auth)).toThrow(/could not be verified/);
+    const down = classifyProbeError(new Error("fetch failed"));
+    expect(down).toMatchObject({ ok: false, kind: "error", status: null });
+    expect(describeProbe(down)).toMatch(/FAILED · no HTTP status/);
+    expect(() => assertProductionKeyProbe(down)).toThrow(/could not be verified/);
+    expect(classifyProbeError(apiError(529, "overloaded_error", "Overloaded")).kind).toBe("error");
+    expect(() => assertProductionKeyProbe(PROBE_OK)).not.toThrow();
+    expect(describeProbe(PROBE_OK)).toBe("ok · HTTP 200 · stub");
+    expect(PROBE_MODEL).toBe("claude-haiku-4-5-20251001");
+  });
+});
+
+describe("worst case and what awaits a submit", () => {
+  it("worstCaseUsd prices a chunk as the estimate does: every reply fills max_tokens, prompts at their character count, batch prices", () => {
+    const p = buildSolveRequest(candidate, 0);
+    const one = worstCaseUsd([{ params: p }]);
+    expect(one).toBeCloseTo(tokensUsd(p.model, { input: estimateRequestTokens(p), output: p.max_tokens }, { batch: true }), 12);
+    expect(one).toBeGreaterThan(tokensUsd(p.model, { input: 0, output: p.max_tokens }, { batch: true }));
+    expect(worstCaseUsd([{ params: p }, { params: p }, { params: p }])).toBeCloseTo(one * 3, 12);
+    expect(worstCaseUsd([])).toBe(0);
+    // 2,000 solves at 2,000 max_tokens on the strong tier: the number an operator sees before a full-bank chunk
+    expect(worstCaseUsd(Array.from({ length: 2000 }, () => ({ params: p })))).toBeCloseTo(one * 2000, 8);
+  });
+
+  it("awaitsSubmit: built, or a first attempt due its one retry (unusable only when the phase retries those)", () => {
+    const r = (status: JournalRequest["status"], attempt: number): JournalRequest => ({ customId: "x", phase: "verify", questionId: CUID, code: "NDA", attempt, status });
+    expect(awaitsSubmit(r("built", 1), false)).toBe(true);
+    expect(awaitsSubmit(r("built", 2), false)).toBe(true);
+    for (const s of ["errored", "expired", "canceled"] as const) {
+      expect(awaitsSubmit(r(s, 1), false), s).toBe(true);
+      expect(awaitsSubmit(r(s, 2), false), s).toBe(false);
+    }
+    expect(awaitsSubmit(r("unusable", 1), true)).toBe(true);
+    expect(awaitsSubmit(r("unusable", 1), false)).toBe(false);
+    expect(awaitsSubmit(r("unusable", 2), true)).toBe(false);
+    for (const s of ["submitted", "succeeded", "failed", "stale"] as const) expect(awaitsSubmit(r(s, 1), true), s).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// the paused full-bank journal (26 Sep 2026)
+// ---------------------------------------------------------------------------
+//
+// D:/CodexProjects/shishya-data/bank-verify-batches/full-bank-validated-20260925.json
+// as it stands: phase verify-collected, every solve and verify batch ended
+// and collected, 36,622 verdicts in outputs.verify, 45 verify requests that
+// the old driver had already marked attempt 2 / built (their attempt-1 reply
+// was not JSON) — still carrying ledgered:true from attempt 1 — and a
+// pendingSubmit of exactly those 45 (the retry's create POST was cut off at
+// 11:12 IST). The write step has not run. Scaled down: 8 questions, 3 retries.
+
+type BankOutputs = { solve: Record<string, Record<string, SolveRun | null>>; verify: Record<string, VerifyVerdict> };
+
+const QUESTIONS = 8;
+const RETRIES = 3;
+
+function pausedFullBankJournal(dir: string) {
+  const runId = "full-bank-validated-test";
+  const file = journalPath(dir, runId);
+  const j = newJournal<BankOutputs>(runId, { exams: ["NDA"], scope: "validated", mode: "batch" }, { solve: {}, verify: {} });
+  delete j.spentUsd; // written before the field existed
+  const ids = Array.from({ length: QUESTIONS }, (_, i) => `cmp0000000000000000000${String(i).padStart(2, "0")}`);
+  for (const id of ids) {
+    j.questions[id] = { code: "NDA" };
+    for (let i = 0; i < 3; i++) {
+      const cid = makeCustomId("solve", id, i);
+      j.requests[cid] = { customId: cid, phase: "solve", questionId: id, code: "NDA", runIndex: i, attempt: 1, status: "succeeded", batchId: "msgbatch_solve", ledgered: true };
+      (j.outputs.solve[id] ??= {})[String(i)] = { chosen: "B", reasoning: `working ${i}`, confidence: 0.9 };
+    }
+    const vid = makeCustomId("verify", id);
+    j.requests[vid] = { customId: vid, phase: "verify", questionId: id, code: "NDA", attempt: 1, status: "succeeded", batchId: "msgbatch_verify", ledgered: true };
+    j.outputs.verify[id] = { verdict: "CORRECT", correctKey: "B", confidence: 0.95, difficulty: "EASY", rationale: "fine", issues: [] };
+  }
+  const retryIds = ids.slice(0, RETRIES);
+  for (const id of retryIds) {
+    const r = j.requests[makeCustomId("verify", id)];
+    r.attempt = 2;
+    r.status = "built";
+    delete r.batchId;
+    r.error = "Failed to parse JSON from model output: Unexpected non-whitespace character after JSON at position 379 (line 9 column 1)";
+    delete j.outputs.verify[id];
+  }
+  j.batches.push(
+    { id: "msgbatch_solve", phase: "solve", attempt: 1, count: QUESTIONS * 3, submittedAt: "2026-09-25T17:16:42.863Z", status: "ended", endedAt: "2026-09-25T18:00:00.000Z", collected: true },
+    { id: "msgbatch_verify", phase: "verify", attempt: 1, count: QUESTIONS, submittedAt: "2026-09-26T03:00:00.000Z", status: "ended", endedAt: "2026-09-26T05:00:00.000Z", collected: true },
+  );
+  j.pendingSubmit = { phase: "verify", attempt: 2, count: RETRIES, at: "2026-09-26T05:42:11.955Z", customIds: retryIds.map((id) => makeCustomId("verify", id)) };
+  j.phase = "verify-collected";
+  saveJournal(file, j);
+  return { file, journal: loadJournal<BankOutputs>(file), ids, retryIds };
+}
+
+const VERDICT_JSON = '{"verdict":"CORRECT","correctKey":"B","confidence":0.9,"difficulty":"EASY","rationale":"fine","issues":[]}';
+
+describe("the paused full-bank journal under the spend guard", () => {
+  it("--resume --max-usd 5 --chunk 2000: Phase A has nothing to do, Phase B submits the 45 once, ledgers each retry, probes once, and leaves every question with its verdict for the write step", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bank-verify-paused-"));
+    try {
+      const { file, journal, ids, retryIds } = pausedFullBankJournal(dir);
+      const creates: string[][] = [];
+      const api = fakeApi({
+        create: async (body) => {
+          creates.push(body.requests.map((r) => r.custom_id));
+          return batch({ id: "msgbatch_retry", processing_status: "in_progress" });
+        },
+        retrieve: async (id) => batch({ id, processing_status: "ended" }),
+        results: async () =>
+          (async function* () {
+            for (const id of retryIds) yield { custom_id: makeCustomId("verify", id), result: { type: "succeeded" as const, message: message(VERDICT_JSON) } };
+          })(),
+      });
+      const ledgered: string[] = [];
+      const probes: string[] = [];
+      const log: string[] = [];
+      const guard: SpendGuard = { maxUsd: 5, chunkSize: 2000, probe: async () => (probes.push("probe"), PROBE_OK) };
+      const deps = {
+        api,
+        pollIntervalMs: 1,
+        log: (l: string) => log.push(l),
+        warn: () => {},
+        ledger: async (_f: string, r: JournalRequest) => (ledgered.push(`${r.customId}:${r.attempt}`), 0.0225),
+        guard,
+      };
+      // Phase A, as scripts/verify-question-bank.ts runs it on --resume: nothing built, open or uncollected
+      const a = await runJournalPhase(journal, file, "solve", "bank-solve", (r) => buildSolveRequest(candidate, r.runIndex ?? 0), () => true, false, deps);
+      expect(a).toEqual({ costUsd: 0, failed: [], stuck: [] });
+      expect(creates).toEqual([]);
+      expect(probes).toEqual([]);
+      // Phase B
+      const b = await runJournalPhase(
+        journal,
+        file,
+        "verify",
+        "bank-verify",
+        () => buildVerifyRequest(candidate, solve),
+        (r, m) => {
+          journal.outputs.verify[r.questionId] = parseVerifyVerdict(m, candidate);
+          return true;
+        },
+        true,
+        deps,
+      );
+      // the cut-off submit was looked up on the API, not found, and submitted again — once, as one chunk
+      expect(api.calls.filter((c) => c === "list")).toHaveLength(1);
+      expect(creates).toEqual([retryIds.map((id) => makeCustomId("verify", id))]);
+      expect(b.stop).toBeUndefined();
+      expect(b.failed).toEqual([]);
+      expect(b.stuck).toEqual([]);
+      // the retry's reply is ledgered although attempt 1 had left ledgered:true on the request
+      expect(ledgered.sort()).toEqual(retryIds.map((id) => `${makeCustomId("verify", id)}:2`).sort());
+      expect(b.costUsd).toBeCloseTo(RETRIES * 0.0225, 6);
+      expect(journal.spentUsd).toBeCloseTo(RETRIES * 0.0225, 6);
+      expect(probes).toEqual(["probe"]);
+      for (const id of retryIds) expect(journal.requests[makeCustomId("verify", id)]).toMatchObject({ status: "succeeded", attempt: 2, batchId: "msgbatch_retry", ledgered: true });
+      expect(journal.pendingSubmit).toBeUndefined();
+      expect(journal.phase).toBe("verify-collected");
+      expect(journal.batches.map((x) => [x.id, x.phase, x.attempt, x.count, x.collected])).toEqual([
+        ["msgbatch_solve", "solve", 1, QUESTIONS * 3, true],
+        ["msgbatch_verify", "verify", 1, QUESTIONS, true],
+        ["msgbatch_retry", "verify", 2, RETRIES, true],
+      ]);
+      // the write step's input: every question has its three solves and a verdict
+      for (const id of ids) {
+        expect(Object.keys(journal.outputs.solve[id])).toEqual(["0", "1", "2"]);
+        expect(journal.outputs.verify[id]).toMatchObject({ verdict: "CORRECT", correctKey: "B" });
+      }
+      const back = loadJournal<BankOutputs>(file);
+      expect(back.outputs.verify).toEqual(journal.outputs.verify);
+      expect(back.requests).toEqual(journal.requests);
+      expect(back.spentUsd).toBeCloseTo(RETRIES * 0.0225, 6);
+      expect(log.join("\n")).toMatch(/submitting 3 of 3 requests · worst case \$0\.\d\d · ledgered \$0\.00 so far · ceiling \$5\.00/);
+      // and the real 45 sit well under the ceiling the resume names
+      expect(worstCaseUsd(Array.from({ length: 45 }, () => ({ params: buildVerifyRequest(candidate, solve) })))).toBeLessThan(5);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("refuses the retry chunk when its worst case would cross --max-usd: nothing submitted, no probe, the 45 stay built, and the message names the ceiling to pass", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bank-verify-paused-"));
+    try {
+      const { file, journal, retryIds } = pausedFullBankJournal(dir);
+      const api = fakeApi({
+        create: async () => {
+          throw new Error("must not submit");
+        },
+      });
+      const worst = worstCaseUsd(retryIds.map(() => ({ params: buildVerifyRequest(candidate, solve) })));
+      const guard: SpendGuard = {
+        maxUsd: worst / 2,
+        chunkSize: 2000,
+        probe: async () => {
+          throw new Error("no probe without a collected chunk");
+        },
+      };
+      const warned: string[] = [];
+      const b = await runJournalPhase(journal, file, "verify", "bank-verify", () => buildVerifyRequest(candidate, solve), () => true, true, {
+        api,
+        pollIntervalMs: 1,
+        log: () => {},
+        warn: (l) => warned.push(l),
+        ledger: async () => 0,
+        guard,
+      });
+      expect(b.stop).toMatchObject({ reason: "ceiling", phase: "verify", remaining: RETRIES, spentUsd: 0, maxUsd: worst / 2, chunk: { count: RETRIES } });
+      expect(b.stop?.chunk?.worstUsd).toBeCloseTo(worst, 12);
+      expect(b.stop?.remainingWorstUsd).toBeCloseTo(worst, 12);
+      expect(b.stop?.message).toMatch(/next chunk of 3 requests was NOT submitted/);
+      expect(b.stop?.message).toContain(`--max-usd ${Math.max(1, Math.ceil(worst))} or more`);
+      expect(warned).toHaveLength(1);
+      expect(warned[0]).toContain("--max-usd");
+      expect(b.failed).toEqual([]);
+      expect(b.costUsd).toBe(0);
+      for (const id of retryIds) expect(journal.requests[makeCustomId("verify", id)]).toMatchObject({ status: "built", attempt: 2 });
+      // the cut-off submit was resolved (looked up, not found) before the ceiling check, so a resume does not look again
+      expect(api.calls).toEqual(["list"]);
+      expect(journal.pendingSubmit).toBeUndefined();
+      const back = loadJournal<BankOutputs>(file);
+      expect(back.args.lastStop).toMatchObject({ phase: "verify", reason: "ceiling" });
+      expect(Object.values(back.requests).filter((r) => r.status === "built")).toHaveLength(RETRIES);
+      expect(Object.values(back.requests).filter((r) => r.status === "failed")).toHaveLength(0);
+      expect(back.spentUsd ?? 0).toBe(0);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("runJournalPhase refuses to run without a real ceiling", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bank-verify-paused-"));
+    try {
+      const { file, journal } = pausedFullBankJournal(dir);
+      const api = fakeApi();
+      for (const maxUsd of [0, -1, Number.POSITIVE_INFINITY, Number.NaN]) {
+        await expect(runJournalPhase(journal, file, "verify", "bank-verify", () => buildVerifyRequest(candidate, solve), () => true, true, { api, guard: { maxUsd, chunkSize: 2000, probe: async () => PROBE_OK } })).rejects.toThrow(
+          /spend guard with a finite --max-usd above zero is required/,
+        );
+      }
+      expect(api.calls).toEqual([]);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
