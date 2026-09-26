@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { ok, notFound, serverError, unauth, forbidden } from "@/lib/http";
+import { attemptPaperIds } from "@/lib/attempt-paper";
 
 export async function GET(
   _req: Request,
@@ -22,13 +23,23 @@ export async function GET(
 
     const submitted = attempt.status === "SUBMITTED" || attempt.status === "AUTO_SUBMITTED";
 
+    // 26 Sep 2026: the paper THIS attempt had (its graded list, or the
+    // paper persisted when it started), not the mock's current ids —
+    // src/lib/attempt-paper.ts.
+    const paperIds = attemptPaperIds({
+      questionIds: attempt.mock.questionIds,
+      answers: attempt.answers,
+      startedAt: attempt.startedAt,
+      config: attempt.mock.config,
+    });
+
     // Reveal Q details only after submission
     const questions = await prisma.question.findMany({
-      where: { id: { in: attempt.mock.questionIds } },
+      where: { id: { in: paperIds } },
       include: { topic: { select: { code: true, name: true } } },
     });
     const byId = new Map(questions.map((q) => [q.id, q]));
-    const orderedQs = attempt.mock.questionIds.map((qid) => {
+    const orderedQs = paperIds.map((qid) => {
       const q = byId.get(qid);
       if (!q) return null;
       return {

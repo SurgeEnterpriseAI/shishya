@@ -48,6 +48,8 @@ import {
   type SubmitBody,
 } from "@/lib/attempts-submit";
 import type { AnswerRecord } from "@/lib/attempts-sync";
+import { attemptPaperIds } from "@/lib/attempt-paper";
+import { persistedPaperIds, servedPaperIds } from "@/lib/served-paper";
 
 import { ATTEMPT_ALREADY_GRADED } from "@/lib/attempts-sync";
 
@@ -69,10 +71,13 @@ function persistedResult(
   payload: SubmitBody["answers"],
 ) {
   const graded = attempt.status === "SUBMITTED" || attempt.status === "AUTO_SUBMITTED";
+  // 26 Sep 2026: compared over the paper this attempt was graded on (its
+  // graded list), not the mock's current ids — a paper may be shorter.
+  const paper = attemptPaperIds({ questionIds: attempt.mock.questionIds, answers: attempt.answers });
   if (
     graded &&
     payload &&
-    !samePayloadAsGraded((attempt.answers as AnswerRecord[]) ?? [], payload, attempt.mock.questionIds)
+    !samePayloadAsGraded((attempt.answers as AnswerRecord[]) ?? [], payload, paper)
   ) {
     return bad(ATTEMPT_ALREADY_GRADED, 409);
   }
@@ -130,11 +135,30 @@ export async function POST(
     }
 
     // ── Score ────────────────────────────────────────────────────────────
+    // 26 Sep 2026: graded over the attempt's OWN paper, never the mock's
+    // current list (src/lib/served-paper.ts). An attempt that started with
+    // its paper persisted (skeleton rows with slots) is graded on exactly
+    // that list — a question withdrawn after the start stays, with the key
+    // the bank holds now. An attempt started before that shipped has no
+    // persisted paper: it is graded on the mock's ids that are validated and
+    // not withdrawn today, so a question the site knows is broken is never
+    // scored against a key it knows is wrong. scoreMax follows the list
+    // graded (scoreAttempt: questionIds.length × marksPerQ).
+    const persisted = persistedPaperIds(attempt.answers) != null;
+    const paperIds = attemptPaperIds({
+      questionIds: attempt.mock.questionIds,
+      answers: attempt.answers,
+      startedAt: attempt.startedAt,
+      config: attempt.mock.config,
+    });
     const questions = await prisma.question.findMany({
-      where: { id: { in: attempt.mock.questionIds } },
+      where: { id: { in: paperIds } },
       include: { topic: { select: { id: true, code: true, name: true, subjectId: true } } },
     });
     const exam = attempt.mock.exam;
+    const gradedIds = persisted
+      ? paperIds
+      : servedPaperIds({ questionIds: paperIds }, new Map(questions.map((q) => [q.id, q])));
 
     // Pure scoring computation. The client payload (if any) replaces the
     // autosaved rows question-by-question, then everything is graded from
@@ -143,7 +167,7 @@ export async function POST(
     const { scored, scoreRaw, scoreMax, scorePct, topicAgg, topicScores, dropped } = gradeSubmission({
       stored: (attempt.answers as unknown as AnswerRecord[]) ?? [],
       payload,
-      questionIds: attempt.mock.questionIds,
+      questionIds: gradedIds,
       questionsById: new Map(
         questions.map((q) => [
           q.id,
@@ -161,7 +185,9 @@ export async function POST(
       negativeMark: exam.negativeMark,
     });
     if (dropped.length > 0) {
-      console.warn("[submit] dropped payload answers for questions not in this mock", {
+      // 26 Sep 2026: also an answer to a question withdrawn after an attempt
+      // that started without a persisted paper began (not graded, by design).
+      console.warn("[submit] dropped payload answers for questions not in this attempt's paper", {
         attemptId: id,
         dropped,
       });

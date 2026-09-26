@@ -29,6 +29,8 @@
 //
 // Pure — no DB. Tests: tests/unit/attempt-paper.test.ts
 
+import { persistedPaperIds } from "@/lib/served-paper";
+
 /** One logged slot swap on a shared mock (Mock.config.slotSwaps). */
 export interface SlotSwap {
   /** 0-based index in Mock.questionIds. */
@@ -103,6 +105,15 @@ function answeredIds(answers: unknown): Set<string> {
  *   answers     — Attempt.answers;
  *   startedAt   — Attempt.startedAt (needed for the swap log);
  *   config      — Mock.config (holds the swap log).
+ *
+ * 26 Sep 2026: an attempt now starts with its paper persisted — one
+ * skeleton row per SERVED question, each carrying its slot (src/lib/
+ * served-paper.ts) — so an unfinished attempt's paper is that list, not the
+ * mock's current one: a question withdrawn after the start stays in the
+ * paper the student is sitting, and a PYQ set that shrinks does not shrink
+ * a paper in progress. Order of truth: the graded list (finished), then the
+ * persisted skeleton (in progress), then the mock's current order (an
+ * attempt started before 26 Sep, or a legacy ungraded list).
  */
 export function attemptPaperIds(input: {
   questionIds: readonly string[];
@@ -112,7 +123,7 @@ export function attemptPaperIds(input: {
 }): string[] {
   const paper = isGradedAnswerList(input.answers)
     ? input.answers.map((a) => a.questionId)
-    : [...input.questionIds];
+    : (persistedPaperIds(input.answers) ?? [...input.questionIds]);
 
   const started = input.startedAt == null ? Number.NaN : new Date(input.startedAt).getTime();
   if (!Number.isFinite(started)) return paper;

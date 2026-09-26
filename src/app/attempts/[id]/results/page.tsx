@@ -38,6 +38,7 @@ import { resultsNextStep, setupHref } from "@/lib/results-next-step";
 import { askTutorText, resultsNextStepCopy } from "@/lib/results-next-step-copy";
 import { attemptPaperIds } from "@/lib/attempt-paper";
 import { isWithdrawnForReview, maskWithdrawnReviewItem } from "@/lib/review-withdrawn";
+import { servedPaperCopy } from "@/lib/served-paper";
 
 export default async function ResultsPage({
   params,
@@ -517,6 +518,19 @@ export default async function ResultsPage({
                 {rankCopy.nextLive}
               </Link>
             </p>
+            {/* 26 Sep 2026: only when the RANKED papers of this test differ
+                in length (liveTestRank compares their scoreMax) — questions
+                withdrawn by the answer check while the test was open, so a
+                later starter got a shorter paper; the rank compares scorePct
+                (src/lib/served-paper.ts). A test whose ranked papers are all
+                the same length, shorter or not, shows nothing: a question
+                withdrawn before the window opened shortened every paper the
+                same, and "not everyone had the same number" would be false.
+                A closed test is untouched: its ranked papers were all graded
+                over the full list. */}
+            {airRank.papersDiffer && (
+              <p className="mt-2 text-xs text-ink-600">{servedPaperCopy(locale).livePapersDiffer}</p>
+            )}
           </div>
         )}
         {/* Celebration moments — personal best beats any leaderboard;

@@ -1,10 +1,12 @@
 // POST /api/attempts — start a new attempt on a mock
 
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { ensureEnrollment } from "@/lib/db/enrollment";
 import { bad, notFound, ok, serverError, unauth, forbidden, parseBody } from "@/lib/http";
+import { canServePaper, paperSkeleton, servedPaperIds } from "@/lib/served-paper";
 
 const Body = z.object({
   mockId: z.string(),
@@ -18,10 +20,29 @@ export async function POST(req: Request) {
 
     const mock = await prisma.mock.findUnique({
       where: { id: body.mockId },
-      select: { id: true, userId: true, examId: true, generatedBy: true, exam: { select: { category: true } } },
+      select: {
+        id: true,
+        userId: true,
+        examId: true,
+        generatedBy: true,
+        questionIds: true,
+        exam: { select: { category: true } },
+      },
     });
     if (!mock) return notFound("mock");
     if (mock.userId && mock.userId !== session.user.id) return forbidden();
+
+    // 26 Sep 2026: the same rule as /mocks/[id] (src/lib/served-paper.ts) —
+    // the attempt starts with the paper the mock can serve (validated, not
+    // withdrawn) persisted on it, and a paper too short to start is refused.
+    const qs = await prisma.question.findMany({
+      where: { id: { in: mock.questionIds } },
+      select: { id: true, validated: true, tags: true },
+    });
+    const paperIds = servedPaperIds(mock, new Map(qs.map((q) => [q.id, q])));
+    if (!canServePaper(paperIds)) {
+      return bad("This mock is being rebuilt — its questions are going through an answer check. Please try another mock for now.");
+    }
 
     // Live-test window guard (audit 18 Aug 2026). The shared Sunday paper
     // must not be startable BEFORE it opens (that would leak the
@@ -50,7 +71,9 @@ export async function POST(req: Request) {
         mockId: mock.id,
         userId: session.user.id,
         status: "IN_PROGRESS",
-        answers: [],
+        // The persisted paper: one skeleton row per served question, with
+        // its slot (src/lib/served-paper.ts paperSkeleton).
+        answers: paperSkeleton(paperIds) as unknown as Prisma.InputJsonValue,
       },
     });
 

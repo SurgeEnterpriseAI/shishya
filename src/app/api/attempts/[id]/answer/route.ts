@@ -63,14 +63,23 @@ export async function POST(
       });
     }
     const records = [...byId.values()];
-    const ids = records.map((r) => r.questionId);
     const recordsJson = JSON.stringify(records);
 
-    // Single round-trip: drop any prior answer for these questionIds,
-    // append the new ones, and atomically update — all in one UPDATE.
-    // Previously we did findUnique → mutate JSON in JS → update, which
-    // cost ~2× Asia-DB latency (1.6s+). With 100 saves per long mock
-    // that was a major contributor to mock-taking sluggishness.
+    // Single round-trip: merge these answers into the stored list and
+    // atomically update — all in one UPDATE. Previously we did findUnique →
+    // mutate JSON in JS → update, which cost ~2× Asia-DB latency (1.6s+).
+    // With 100 saves per long mock that was a major contributor to
+    // mock-taking sluggishness.
+    //
+    // 26 Sep 2026: an attempt now starts with its paper persisted as one
+    // skeleton row per served question, each carrying its `slot`
+    // (src/lib/served-paper.ts). The old UPDATE dropped every row for the
+    // saved ids and appended the new records, which would have lost the
+    // slot (and the paper's order) on the first save. Now a saved record is
+    // merged INTO its existing row in place (elem || rec: the new chosen /
+    // timeSec / marked / updatedAt win, the row's slot stays), rows keep
+    // their order, and only a record for a question with no row yet (an
+    // attempt started before the paper was persisted) is appended.
     //
     // Authorisation: the WHERE clause includes userId + status check, so
     // the row only updates for the legitimate owner of an in-progress
@@ -78,14 +87,20 @@ export async function POST(
     // such attempt) updateCount === 0 and we surface that as a 400.
     const updated = await prisma.$executeRaw(Prisma.sql`
       UPDATE "Attempt"
-      SET "answers" = COALESCE(
-        (
-          SELECT jsonb_agg(elem)
-            FROM jsonb_array_elements(COALESCE("answers", '[]'::jsonb)) elem
-           WHERE elem->>'questionId' NOT IN (${Prisma.join(ids)})
-        ),
-        '[]'::jsonb
-      ) || ${recordsJson}::jsonb,
+      SET "answers" = (
+        SELECT COALESCE(
+          jsonb_agg(CASE WHEN n.rec IS NULL THEN o.elem ELSE o.elem || n.rec END ORDER BY o.ord),
+          '[]'::jsonb)
+          FROM jsonb_array_elements(COALESCE("answers", '[]'::jsonb)) WITH ORDINALITY AS o(elem, ord)
+          LEFT JOIN jsonb_array_elements(${recordsJson}::jsonb) AS n(rec)
+            ON n.rec->>'questionId' = o.elem->>'questionId'
+      ) || (
+        SELECT COALESCE(jsonb_agg(n.rec), '[]'::jsonb)
+          FROM jsonb_array_elements(${recordsJson}::jsonb) AS n(rec)
+         WHERE NOT EXISTS (
+           SELECT 1 FROM jsonb_array_elements(COALESCE("answers", '[]'::jsonb)) AS o(elem)
+            WHERE o.elem->>'questionId' = n.rec->>'questionId')
+      ),
           "updatedAt" = NOW()
       WHERE "id" = ${id}
         AND "userId" = ${session.user.id}

@@ -158,6 +158,7 @@ export function MockPlayer({
   initialLocale = "en",
   practice = false,
   userId = null,
+  withdrawnNote = null,
 }: {
   mock: MockMeta;
   attemptId: string;
@@ -166,6 +167,10 @@ export function MockPlayer({
   existingAnswers: AnswerLocal[];
   labels: PlayerLabels;
   initialLocale?: Locale;
+  /** 26 Sep 2026: "K questions were withdrawn after an answer check and are
+   *  not served" — built by the page (src/lib/served-paper.ts) when the
+   *  paper is shorter than the mock's list; null when it is not. */
+  withdrawnNote?: string | null;
   /** Namespaces the on-device answer mirror. Optional — attempt ids are
    *  already unique per user, so the key works without it. */
   userId?: string | null;
@@ -901,6 +906,14 @@ export function MockPlayer({
       <div className="container-prose grid grid-cols-1 gap-6 py-6 lg:grid-cols-[1fr_280px]">
         {/* Question */}
         <article className="rounded-md border border-ink-200 bg-white p-6">
+          {/* 26 Sep 2026: the one honest line when this paper is shorter than
+              the mock's list — the counts above and in the summary are the
+              served ones already (questions.length). */}
+          {withdrawnNote && (
+            <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              {withdrawnNote}
+            </p>
+          )}
           {langHint && locale === "en" && (
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-2">
               <p className="text-xs font-medium text-sky-900">

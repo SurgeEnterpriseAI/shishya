@@ -29,6 +29,7 @@ import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { loadExamWeekExams } from "@/lib/exam-week-aeo";
 import { plainDay, tierWord, whenWithTier } from "@/lib/exam-week-mail";
 import type { SourceTier } from "@/lib/exam-timeline";
+import { liveTestPapersDiffer } from "@/lib/served-paper";
 
 export const LIVE_TEST_QUESTIONS = 25;
 export const LIVE_TEST_DURATION_MIN = 20;
@@ -337,11 +338,15 @@ async function createSundayPapers(opensAt: Date, closesAt: Date): Promise<LiveTe
 
 /** Rank of an attempt among first-submitted-attempts on a live-test
  *  mock. Returns null when the mock isn't a live test. `attemptId` is the
- *  attempt that holds the rank (the student's first in-window attempt). */
+ *  attempt that holds the rank (the student's first in-window attempt).
+ *  26 Sep 2026: `papersDiffer` — whether the ranked papers differ in
+ *  length (their scoreMax is not all the same: questions withdrawn by the
+ *  answer check while the test was open), so the results page can say the
+ *  rank compares percentage scores (src/lib/served-paper.ts). */
 export async function liveTestRank(
   mockId: string,
   userId: string,
-): Promise<{ rank: number; of: number; attemptId: string } | null> {
+): Promise<{ rank: number; of: number; attemptId: string; papersDiffer: boolean } | null> {
   const lt = await prisma.$queryRaw<{ id: string; opensAt: Date; closesAt: Date }[]>`
     SELECT id, "opensAt", "closesAt" FROM "LiveTest" WHERE "mockId" = ${mockId} LIMIT 1`;
   if (!lt[0]) return null;
@@ -351,8 +356,8 @@ export async function liveTestRank(
   // after close, or a Monday resume-submit, must never rewrite the board
   // everyone was emailed on Sunday night (audit 18 Aug + review 22 Aug).
   const freeze = new Date(lt[0].closesAt.getTime() + 60 * 60_000);
-  const rows = await prisma.$queryRaw<{ id: string; userId: string; pct: number | null }[]>`
-    SELECT DISTINCT ON ("userId") id, "userId", "scorePct" AS pct
+  const rows = await prisma.$queryRaw<{ id: string; userId: string; pct: number | null; max: number | null }[]>`
+    SELECT DISTINCT ON ("userId") id, "userId", "scorePct" AS pct, "scoreMax" AS max
     FROM "Attempt"
     WHERE "mockId" = ${mockId} AND status IN ('SUBMITTED', 'AUTO_SUBMITTED')
       AND "startedAt" >= ${lt[0].opensAt} AND "startedAt" <= ${lt[0].closesAt}
@@ -361,7 +366,12 @@ export async function liveTestRank(
   const mine = rows.find((r) => r.userId === userId);
   if (mine?.pct == null) return null;
   const better = rows.filter((r) => r.pct != null && r.pct! > mine.pct!).length;
-  return { rank: better + 1, of: rows.length, attemptId: mine.id };
+  return {
+    rank: better + 1,
+    of: rows.length,
+    attemptId: mine.id,
+    papersDiffer: liveTestPapersDiffer(rows.map((r) => (r.max == null ? null : Number(r.max)))),
+  };
 }
 
 /** Final leaderboard for a closed live test: every in-window participant
