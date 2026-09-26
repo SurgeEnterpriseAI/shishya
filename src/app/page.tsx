@@ -1,109 +1,99 @@
-// / — Shishya homepage. Guided 3-step exam funnel.
+// / — Shishya home page: "Doors" (26 Sep 2026).
 //
-// This IS the entry point of the site now. The older persona-first
-// homepage + the older /exams catalogue have both been retired into a
-// single guided funnel here at the root. /exams still 301-redirects
-// here (preserving query params) so all inbound links keep working.
-// All non-exam surfaces (schooling, careers, colleges, scholarships,
-// ideas) still exist at their original URLs but are not promoted from
-// the header until Shishya hits its first traction milestone.
+// The founder's idea, in his words: Shishya is ONE free platform for anyone
+// who is studying — school (any government board), plus-one / plus-two,
+// graduation, post-graduation, PhD, and competitive or government exams.
+// These are INDEPENDENT sections, not a sequence: a person at any stage of
+// life comes and uses the section for their stage. It sits beside the
+// teaching they already get at school or college; it is their own place to
+// practise and improve towards whatever they want to become.
 //
-//   Step 1   — visitor lands on /. Sees "What are you preparing for?"
-//              and 10 big goal cards (Engineering, Medical, Govt jobs,
-//              Banking, Civil services, Teaching, Law, MBA, Defence,
-//              Olympiad). One tap → step 2.
+// After the unchanged header (src/components/Header.tsx):
+//   1. one sentence + the ungated tutor line + five section jump-pills
+//      (HomeHero), with "Use any one, any time. There is no order.";
+//   2. the week's exam days / live tests, only on such days (unchanged
+//      ExamsTodayStrip + LiveTestTodayBanner);
+//   3. five equal doors — School · Entrance exams · Government exams ·
+//      College & scholarships · Careers — and a dashed "being built" cell
+//      for graduation / PG / PhD study, which does not exist yet (HomeDoors).
+//      26 Sep 2026 (review): the Entrance door is its own hub — one-tap exam
+//      chips from the loaded catalogue and no whole-card link, because no
+//      page lists admission tests alone (the catalogue leads with state-level
+//      government exams); the Government door opens the whole catalogue and
+//      carries no count, since the catalogue count is government AND
+//      entrance exams (a read-only probe that day: 117 of 180 were
+//      government-job exams — scripts/tmp-home-fixer-probe.ts);
+//   4. the one typed exam search + the exams most people sit + the 2-minute
+//      government-exam finder + "Browse all {n} exams", the live catalogue
+//      count on the one link that opens exactly those rows (HomeFinder);
+//   5. the founder's two saffron-edged rails, moved into the flow
+//      (HomeRails: VacancyExplorerPanel + HomeCalendarRail);
+//   6. four steps that hold in every section (HomeHowItWorks);
+//   7. a small sign-in line and the mentor line (HomeSignIn).
 //
-//   Step 2   — ?g=<goal> in the URL. Page asks "National-level or
-//              your state's exams?" via two big buttons. Auto-skipped
-//              for goals that only have one scope (Banking → national
-//              only; Defence → national only; Olympiad → national
-//              only) — those go straight to step 3.
+// Honesty: every section shown as available exists (routes verified in
+// src/components/home/HomeDoors.tsx); counts come only from data this page
+// loads (portalStats.examCount, CAREERS.length, INDIAN_LANGUAGE_COUNT);
+// school notes and practice are "being written". Copy is per locale in
+// src/lib/home-doors-copy.ts for the /hi and /te twins.
 //
-//   Step 3a  — ?g=<goal>&s=national. Lists the national exams under
-//              that goal as cards. Tap → /exams/{CODE}.
-//   Step 3b  — ?g=<goal>&s=state. Shows the state picker; tap a state
-//              to add &st=<code>; that variant lists state-specific
-//              exams under that goal.
-//
-// The left rail (Upcoming exam dates) and right rail (Live discussions)
-// stay across all steps so the social proof never disappears as the
-// visitor drills down.
+// Retired here (26 Sep 2026): the ?g= / ?s= / ?st= goal funnel (inbound
+// links now 308 to the catalogue — legacyFunnelRedirect), the sticky live
+// counters + Ask bar, the vacancy finder hero, the coach story card, the
+// stats band, the Wall of Grinders, the feature cards, the inspiration
+// carousel, the page tour, the chat-router FAB, the persona links and the
+// fixed side rails. tests/unit/home-doors.test.ts pins what may not return.
 
 import type { Metadata } from "next";
+import { permanentRedirect } from "next/navigation";
 import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
-import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL, NOT_SCHOOL_WHERE, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
-import { calendarRailLabels, fillHome, homeStripCopy, type HomeStripCopy } from "@/lib/home-strip-copy";
+import { calendarRailLabels } from "@/lib/home-strip-copy";
+import { homeDoorsCopy } from "@/lib/home-doors-copy";
+import {
+  ENTRANCE_DOOR_CODES,
+  GOVERNMENT_DOOR_CODES,
+  cbseClassTiles,
+  doorExamChips,
+  legacyFunnelRedirect,
+  mostTakenExams,
+} from "@/lib/home-doors";
+import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { CAREERS } from "@/data/careers";
+import { findBoard } from "@/lib/schooling-data";
 import { Header } from "@/components/Header";
 import type { ExamCard } from "@/components/ExamPicker";
 import { computeExamTags } from "@/lib/exam-tags";
 import { isPassedEstimate, sourceTier } from "@/lib/official-source";
-import { type ThreadItem } from "@/components/DiscussionsSidebar";
-import { LiveCountersStrip } from "@/components/LiveCounters";
-import { HomeSearch } from "@/components/HomeSearch";
-import { HomeFeatureCards } from "@/components/HomeFeatureCards";
-import { HomeChatRouter } from "@/components/HomeChatRouter";
-import { PageTour } from "@/components/PageTour";
-import { UpcomingExamsSidebar, type UpcomingEvent, type CalendarBucket } from "@/components/UpcomingExamsSidebar";
-import { VacancyFinderCard } from "@/components/VacancyFinderCard";
-import { PortalStatsBand } from "@/components/PortalStatsBand";
-import { WallOfGrinders } from "@/components/WallOfGrinders";
-import { PersonalSystemStrip } from "@/components/PersonalSystemStrip";
-import { AskSearchBar } from "@/components/AskSearchBar";
-import { loadWallOfGrinders, type GrinderEntry } from "@/lib/wall-of-grinders";
-import { InspirationCarousel, type InspoVideo } from "@/components/InspirationCarousel";
-import { VacancyExplorerSidebar, VacancyExplorerPanel } from "@/components/VacancyExplorer";
+import type { UpcomingEvent, CalendarBucket } from "@/components/UpcomingExamsSidebar";
 import { loadVacancyExplorer, type VacancyExplorer } from "@/lib/vacancy-explorer";
-import { loadTodaysLiveTests, loadUpcomingSunday, type UpcomingSunday } from "@/lib/live-test-today";
+import { loadTodaysLiveTests } from "@/lib/live-test-today";
 import { LiveTestTodayBanner } from "@/components/LiveTestTodayBanner";
 import { ExamsTodayStrip } from "@/components/ExamsTodayStrip";
-import { SundayLiveTestBanner } from "@/components/SundayLiveTestBanner";
-import { buildCuratedSections, type SectionTitleKey } from "@/lib/exam-browse";
 import { resolvePhase, istDayNumber } from "@/lib/exam-phase";
-import { EXAM_GOALS, findGoal, matchesGoal, type ExamGoal } from "@/data/exam-goals";
-import { INDIAN_STATES } from "@/lib/states";
-import type { ExamTag } from "@/lib/exam-tags";
+import { HomeHero } from "@/components/home/HomeHero";
+import { HomeDoors } from "@/components/home/HomeDoors";
+import { HomeFinder } from "@/components/home/HomeFinder";
+import { HomeRails } from "@/components/home/HomeRails";
+import { HomeHowItWorks } from "@/components/home/HomeHowItWorks";
+import { HomeSignIn } from "@/components/home/HomeSignIn";
+import { HomeBeacons } from "@/components/home/HomeBeacons";
 
-// Step-specific metadata so each funnel state has its own title/OG.
-// Useful for share-back links ("here's the page for engineering state
-// exams in Maharashtra") and lets Search Console show distinct titles
-// for the high-traffic permutations.
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ g?: string; s?: string; st?: string }>;
-}): Promise<Metadata> {
-  const sp = await searchParams;
-  const goal = findGoal(sp.g);
-  const scope = sp.s === "state" ? "state" : sp.s === "national" ? "national" : null;
-  const state = sp.st ? INDIAN_STATES.find((s) => s.code === sp.st!.toUpperCase()) : null;
-
-  // Exam count from the same daily-cached DB count the stats band shows
-  // (audit 11 Sep 2026: this string carried a typed "177" that drifted
-  // from the catalogue). Number-free phrasing if the count is unknown.
+// 26 Sep 2026: one title and description for "/" — the per-step funnel
+// metadata went with the funnel. The exam count is the same daily-cached
+// DB count the finder's "Browse all" link shows; number-free phrasing if
+// unknown. It counts the whole catalogue — government AND entrance exams —
+// so it is never called a count of government exams (review, 26 Sep 2026).
+export async function generateMetadata(): Promise<Metadata> {
   const { examCount } = await loadPortalStats().catch(() => ({ examCount: "", questions: "", notes: "" }));
-  const examScope = examCount ? `${examCount} government and entrance exams` : "every government and entrance exam";
-  let title = "Shishya — Free exam prep for India's government & entrance exams";
-  let description =
-    `India's end-to-end free government exam preparation platform — ${examScope}. Tell us what you're preparing for — govt jobs, banking, civil services, engineering, medical — and we'll show you the national and state-level options. Free mocks, previous year papers and PYQ-pattern practice, study notes and AI tutor in every Indian language. 100% free, no credit card.`;
-
-  if (goal && !scope) {
-    title = `${goal.label} entrance exams in India — Shishya`;
-    description = `${goal.blurb} See national + state-level options for ${goal.label.toLowerCase()} and start prepping for free in your language.`;
-  } else if (goal && scope === "national") {
-    title = `National ${goal.label.toLowerCase()} entrance exams — Shishya`;
-    description = `All national-level ${goal.label.toLowerCase()} exams in India. Free mocks, previous-year papers and verified study help.`;
-  } else if (goal && scope === "state" && state) {
-    title = `${goal.label} exams in ${state.name} — Shishya`;
-    description = `${state.name}'s state-level ${goal.label.toLowerCase()} entrance and recruitment exams. Free prep, in your language.`;
-  } else if (goal && scope === "state") {
-    title = `${goal.label} state exams — pick your state | Shishya`;
-    description = `Every state's ${goal.label.toLowerCase()} entrance and recruitment exams in one place.`;
-  }
+  const examScope = examCount ? `${examCount} government and entrance exams` : "government and entrance exams";
+  const title = "Shishya — One free place to study: school, entrance & government exams";
+  const description =
+    `Free practice for anyone studying in India. CBSE and ICSE school chapters with the official book and syllabus links; ${examScope} — JEE, NEET, CUET, SSC, banking, railways, state PSCs, UPSC — with free mocks, previous-year practice, cutoffs and dates; colleges, scholarships and career paths. A tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages. Free, no paywall.`;
 
   return {
     title,
@@ -163,7 +153,7 @@ async function loadExamsRaw(): Promise<ExamCard[]> {
     }));
   } catch (err) {
     // Log loudly so Vercel observability picks it up. Returning the
-    // (now-comprehensive) fallback keeps the funnel visually healthy.
+    // (now-comprehensive) fallback keeps the page visually healthy.
     console.error("[shishya/loadExams] DB query failed, using fallback:", err);
     return FALLBACK_EXAMS;
   }
@@ -287,7 +277,7 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
       : "upcoming";
 
     // For exam-day rows, attach the matching ExamPhaseArticle's
-    // summarySnippet so the sidebar renders the AI-written teaser
+    // summarySnippet so the rail renders the AI-written teaser
     // instead of a bare "Live" pill. Rows outside the live phase
     // windows (Concluded day 4-7, the whole Past tab) look up their
     // REACTIONS article — the verdict/cutoff analysis outlives the
@@ -306,7 +296,7 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
       const examIds = [...new Set(phaseLookups.map((x) => x.row.exam.id))];
       const articles = await prisma.examPhaseArticle.findMany({
         // archivedAt: null → only the live version's snippet feeds the
-        // sidebar chip (phase articles are now versioned).
+        // rail chip (phase articles are now versioned).
         where: { examId: { in: examIds }, archivedAt: null },
         select: { examId: true, phase: true, summarySnippet: true },
       });
@@ -344,7 +334,7 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
     });
     return { events, defaultTab };
   } catch (err) {
-    // Fall back to the static next-6-months list so the left rail
+    // Fall back to the static next-6-months list so the calendar rail
     // never shows "No upcoming dates announced." just because Vercel
     // couldn't reach Neon for a few seconds. The static list is
     // sourced from each exam body's official notification — same
@@ -373,10 +363,9 @@ const loadUpcomingEvents = unstable_cache(
 );
 
 
-// Live government-vacancy explorer data — powers both the homepage
-// finder hero (total + count) and the left-rail Government Vacancies
-// widget (national / state / category drill-down). Cached daily; a DB
-// blip falls back to an empty-but-safe shape.
+// Live government-vacancy explorer data — powers the Government
+// vacancies rail (national / state / category drill-down). Cached daily;
+// a DB blip falls back to an empty-but-safe shape.
 const EMPTY_VACANCY: VacancyExplorer = {
   grandTotal: 0, totalLakh: "0.0", examCount: 0,
   national: { total: 0, exams: [] }, states: [], categories: [], updatedAt: null,
@@ -401,8 +390,13 @@ async function loadVacancyExplorerSafe(): Promise<VacancyExplorer> {
   }
 }
 
-// "Shishya at a glance" content-depth stats for the homepage band —
-// real counts, rounded DOWN to an honest "+" figure. Cached daily.
+// Catalogue-depth counts — real counts, rounded DOWN to an honest "+"
+// figure. Cached daily. 26 Sep 2026: the page shows only examCount (the
+// finder's "Browse all {n} exams" link and the metadata — the whole
+// catalogue, government and entrance, so never a door's count — review,
+// 26 Sep 2026); questions and notes stay in
+// the loader's shape because tests/unit/exam-scope-guard.test.ts pins
+// that these counts join the exam category — see the open questions.
 async function loadPortalStatsRaw(): Promise<{ examCount: string; questions: string; notes: string }> {
   try {
     const [ex, q, n] = await Promise.all([
@@ -433,54 +427,33 @@ async function loadPortalStatsRaw(): Promise<{ examCount: string; questions: str
 }
 const loadPortalStats = unstable_cache(loadPortalStatsRaw, ["home-portal-stats-v2"], { revalidate: 86400 });
 
-// Inspiration carousel — validated topper success-story videos. Cached
-// daily; a DB blip just hides the section.
-async function loadInspirationVideosRaw(): Promise<InspoVideo[]> {
-  try {
-    return await prisma.$queryRaw<InspoVideo[]>`
-      SELECT "youtubeId", title, channel, "thumbnailUrl", reason, "examTag"
-      FROM "InspirationVideo" WHERE active = TRUE ORDER BY "orderIdx" ASC LIMIT 20
-    `;
-  } catch {
-    return [];
-  }
-}
-const loadInspirationVideos = unstable_cache(loadInspirationVideosRaw, ["home-inspiration-v1"], { revalidate: 86400 });
-
-// Wall of Grinders — 5-minute cache keeps it live-feeling without
-// re-running the aggregation on every homepage render.
-const loadGrindersCached = unstable_cache(
-  async () => loadWallOfGrinders(10).catch(() => []),
-  ["wall-of-grinders-v1"],
-  { revalidate: 300 },
-);
-
-export default async function ExamsPage({
+export default async function HomePage({
   searchParams,
 }: {
   searchParams: Promise<{ g?: string; s?: string; st?: string }>;
 }) {
   const sp = await searchParams;
-  const { t, locale } = await getT();
-  // 16 Sep 2026: the strips and rails of "/" read in the visitor's language on
-  // the /hi and /te twins (src/lib/home-strip-copy.ts). generateMetadata above
-  // is untouched — "/" canonicalises to https://shishya.in/ in every locale.
-  const H = homeStripCopy(locale);
+  // 26 Sep 2026: the goal funnel (?g=, ?s=, ?st=) is retired. Indexed and
+  // shared links to it 308 to the catalogue's matching category (or the
+  // state list) instead of landing on a page that no longer reads them.
+  const legacy = legacyFunnelRedirect(sp);
+  if (legacy) permanentRedirect(legacy);
 
-  const [signedIn, exams, calendar, vacancy, portalStats, inspirationVideos, grinders, liveToday, sundayLive] =
-    await Promise.all([
-      auth().then((s) => Boolean(s?.user)).catch(() => false),
-      loadExams(),
-      loadUpcomingEvents(),
-      loadVacancyExplorerSafe(),
-      loadPortalStats(),
-      loadInspirationVideos(),
-      loadGrindersCached(),
-      loadTodaysLiveTests(),
-      loadUpcomingSunday(),
-    ]);
+  // 16 Sep 2026: "/" reads in the visitor's language on the /hi and /te
+  // twins. generateMetadata above is untouched — "/" canonicalises to
+  // https://shishya.in/ in every locale.
+  const { locale } = await getT();
+  const copy = homeDoorsCopy(locale);
+
+  const [signedIn, exams, calendar, vacancy, portalStats, liveToday] = await Promise.all([
+    auth().then((s) => Boolean(s?.user)).catch(() => false),
+    loadExams(),
+    loadUpcomingEvents(),
+    loadVacancyExplorerSafe(),
+    loadPortalStats(),
+    loadTodaysLiveTests(),
+  ]);
   const upcomingEvents = calendar.events;
-  const vacancyStats = { totalLakh: vacancy.totalLakh, examCount: vacancy.examCount };
 
   // SEO/AEO: schema.org Event markup for the upcoming exam days —
   // Google event rich-results + a machine-readable date list AI
@@ -523,73 +496,19 @@ export default async function ExamsPage({
         }
       : null;
 
-  // ── Funnel state from URL ──────────────────────────────────────────
-  const goal = findGoal(sp.g);
-  const requestedScope: "national" | "state" | null =
-    sp.s === "state" ? "state" : sp.s === "national" ? "national" : null;
-  const stateCode = sp.st?.toUpperCase() ?? null;
-
-  // ── Match exams to the active goal so we can:
-  //   (a) count for the National vs State buttons in Step 2
-  //   (b) render the actual list in Step 3
-  // Empty array when no goal is selected.
-  const goalExams: ExamCard[] = goal
-    ? exams.filter((e) => matchesGoal(e.tags as ExamTag[], goal))
-    : [];
-
-  const nationalExams = goalExams.filter((e) => e.tags.includes("national"));
-  const stateExams = goalExams.filter((e) => e.tags.includes("state"));
-
-  // If the goal only has one scope (e.g. Banking is national-only),
-  // auto-resolve `scope` so we skip Step 2 entirely.
-  const effectiveScope: "national" | "state" | null =
-    requestedScope ??
-    (goal
-      ? stateExams.length === 0
-        ? "national"
-        : nationalExams.length === 0
-          ? "state"
-          : null
-      : null);
-
-  // ── Decide which step renders ──────────────────────────────────────
-  type StepKind = "goals" | "scope" | "state-picker" | "exam-list";
-  let step: StepKind;
-  if (!goal) step = "goals";
-  else if (effectiveScope === null) step = "scope";
-  else if (effectiveScope === "state" && !stateCode) step = "state-picker";
-  else step = "exam-list";
+  // The exams most people sit, for the finder chips (curated "popular"
+  // first, then by candidates per year — live data, never a typed list).
+  const chips = mostTakenExams(exams, 8);
+  // The exam doors' one-tap chips (26 Sep 2026, review): only exams present
+  // in the loaded catalogue render, so a chip never links a page that 404s.
+  const entranceChips = doorExamChips(exams, ENTRANCE_DOOR_CODES);
+  const governmentChips = doorExamChips(exams, GOVERNMENT_DOOR_CODES);
+  // CBSE classes for the School door's one-tap tiles, from the board data.
+  const cbseClasses = cbseClassTiles(findBoard("cbse")?.classes);
 
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <Header />
-
-      {/* One sticky unit: live numbers + Ask bar pin together, so the
-          bar can never slide under the strip regardless of how many
-          lines the strip wraps to (the fixed-offset approach broke
-          exactly that way). Bar is desktop-only here; mobile gets the
-          full in-flow bar below instead of losing viewport to a pin. */}
-      {/* pointer-events-none on the wrapper: it spans full width at z-40,
-          but its children only PAINT in the lg:mx-80 middle column — the
-          transparent gutters were swallowing clicks meant for the fixed
-          side rails underneath (the vacancy explorer's Jobs-Map link was
-          unclickable). Children re-enable pointer events on themselves. */}
-      <div className="pointer-events-none sticky top-0 z-40">
-        <LiveCountersStrip
-          sticky={false}
-          labels={{
-            preparingNow:      t("live.preparingNow"),
-            inMockNow:         t("live.inMockNow"),
-            activeDiscussions: t("disc.title"),
-            totalEver:         t("live.totalEver"),
-          }}
-        />
-        <div className="pointer-events-auto hidden border-b border-ink-200 bg-paper-50/95 backdrop-blur-sm lg:mx-80 lg:block">
-          <div className="container-prose py-2">
-            <AskSearchBar compact />
-          </div>
-        </div>
-      </div>
 
       {examDatesJsonLd && (
         <script
@@ -597,919 +516,44 @@ export default async function ExamsPage({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(examDatesJsonLd) }}
         />
       )}
-      {/* Left rail: live Government Vacancies explorer (national / state /
-          category drill-down → exam hub → sign up → personalised funnel).
-          Replaced the exam calendar here. Exam-cycle info (concluded /
-          upcoming / cutoffs) still lives on each exam's page. */}
-      <VacancyExplorerSidebar data={vacancy} signedIn={signedIn} />
+      {/* One delegated CTA_CLICKED beacon for every data-home-cta element. */}
+      <HomeBeacons />
 
-      {/* Right rail: exam calendar (moved here from the left rail, which
-          is now the vacancy explorer). Concluded / Upcoming / Past with
-          verdict-cutoff chips. Discussions moved off the homepage — still
-          at /discussions. */}
-      <UpcomingExamsSidebar events={upcomingEvents} defaultTab={calendar.defaultTab} side="right" labels={calendarRailLabels(locale)} />
+      <div className="container-prose pb-16">
+        <HomeHero copy={copy} />
 
-      {/* Floating chat-router: bottom-left FAB that asks "What are you
-          looking for?" and POSTs the answer to /api/chat-route. Claude
-          interprets intent and the modal navigates to the right page
-          (or surfaces a manual button on low-confidence matches). The
-          right-side bottom corner is already owned by the Discussions
-          FAB, hence we anchor this one left. */}
-      <HomeChatRouter />
-
-      {/* First-visit coach-mark tour — only Step 1 (goals picker)
-          gets a guided walk. Deeper funnel steps don't need one
-          since the visitor has already committed to a path. */}
-      {step === "goals" && (
-        <PageTour
-          tourId="home-v1"
-          steps={[
-            {
-              key: "welcome",
-              icon: "👋",
-              title: "Welcome to Shishya",
-              body: "30 seconds to find your exam. Let me show you the 3 ways to get there — search, browse, or describe what you want.",
-            },
-            {
-              key: "search",
-              anchor: "home-search",
-              title: "Already know your exam? Just type it",
-              body: "Try 'SSC CGL' or 'NEET' or 'मेरी UPSC' — search-as-you-type, picks straight to the exam.",
-              icon: "🔍",
-            },
-            {
-              key: "categories",
-              anchor: "home-categories",
-              title: "Or browse by category",
-              body: "Most popular this week · Government jobs · Engineering · Banking. Tap any exam to open it.",
-              icon: "📚",
-            },
-            {
-              key: "goals",
-              anchor: "home-goals",
-              title: "Or pick a goal",
-              body: "If you only know broadly — 'I want a banking job', 'I'm prepping medical' — pick a tile and we'll narrow down national vs your state.",
-              icon: "🎯",
-            },
-            {
-              key: "chat",
-              anchor: "home-chat-fab",
-              placement: "top",
-              title: "Or just describe it",
-              body: "Stuck? Tap 'What are you looking for?' on the right edge. Type in any language — Claude reads your intent and takes you to the right page.",
-              icon: "🤖",
-            },
-            {
-              key: "done",
-              icon: "✓",
-              title: "That's it. You're set",
-              body: "Pick any path above. Every action is free. We track your weak areas as you take mocks and serve adaptive practice that targets them.",
-            },
-          ]}
-        />
-      )}
-
-      <div className="lg:pl-80 lg:pr-80">
-        <section className="container-prose pt-10 pb-20 sm:pt-14">
-          <Breadcrumbs goal={goal} scope={effectiveScope} stateCode={stateCode} />
-
-          {/* Live-test awareness — renders only when tests are open/opening
-              today; visible on every step so no visitor misses test day. */}
+        {/* The week's events, only on such days: live tests open today and
+            this week's announced exam days (both render nothing otherwise;
+            the wrapper hides itself when empty). Sits under the pills, per
+            the review, so a test-day or exam-day visitor sees it first. */}
+        <div className="mt-7 empty:hidden">
           <LiveTestTodayBanner data={liveToday} />
+          <ExamsTodayStrip />
+        </div>
 
-          {/* Exams being held today (announced dates only; else this
-              week's next announced ones) — renders nothing otherwise. On
-              the goals step it sits with the week's event, below the two
-              decision cards (founder, 18 Sep 2026); the other steps keep
-              it here at the top. */}
-          {step !== "goals" && <ExamsTodayStrip />}
+        <HomeDoors
+          copy={copy}
+          careersCount={CAREERS.length}
+          cbseClasses={cbseClasses}
+          entranceChips={entranceChips}
+          governmentChips={governmentChips}
+        />
 
-          {step === "goals" && <StepGoals exams={exams} t={t} signedIn={signedIn} vacancyStats={vacancyStats} portalStats={portalStats} inspirationVideos={inspirationVideos} grinders={grinders} sundayLive={sundayLive} locale={locale} />}
-          {step === "scope" && goal && (
-            <StepScope
-              goal={goal}
-              nationalCount={nationalExams.length}
-              stateCount={stateExams.length}
-            />
-          )}
-          {step === "state-picker" && goal && (
-            <StepStatePicker goal={goal} stateExams={stateExams} />
-          )}
-          {step === "exam-list" && goal && effectiveScope && (
-            <StepExamList
-              goal={goal}
-              scope={effectiveScope}
-              stateCode={stateCode}
-              exams={effectiveScope === "national" ? nationalExams : stateExams}
-            />
-          )}
+        <HomeFinder copy={copy} exams={exams} chips={chips} examCount={portalStats.examCount} />
 
-          {!signedIn && step !== "goals" && (
-            <div className="mt-14 text-center">
-              <Link href="/login?callbackUrl=%2Fdashboard" className="btn-primary">
-                {H.signupCta}
-              </Link>
-              {/* Audit 11 Sep 2026: was "Verified by students who've cleared
-                  the same path" — unbacked. Say what the account actually
-                  gives (the same offer bare /login makes). */}
-              <p className="mt-2 text-xs text-ink-500">{H.signupLine}</p>
-            </div>
-          )}
+        <HomeRails
+          vacancy={vacancy}
+          signedIn={signedIn}
+          events={upcomingEvents}
+          defaultTab={calendar.defaultTab}
+          labels={calendarRailLabels(locale)}
+          copy={copy}
+        />
 
-          {/* ── Mobile-only inline rails ──────────────────────────────
-              On lg+ the upcoming-exams panel mounts as a fixed left
-              rail and discussions as a fixed right rail. Below lg
-              both rails are hidden (UpcomingExamsSidebar has no
-              mobile FAB at all; DiscussionsSidebar has one but it's
-              easy to miss). On phones / small tablets we surface the
-              same content inline here as horizontal-scroll + vertical
-              list cards, so visitors see the social-proof + calendar
-              without hunting for a FAB. */}
-          {/* Mobile: the vacancy explorer sits above discussions, mirroring
-              the desktop left rail. */}
-          {vacancy.grandTotal > 0 && (
-            <div className="mt-14 overflow-hidden rounded-lg border border-ink-200 bg-white shadow-sm lg:hidden">
-              <div className="flex items-center justify-between border-b border-ink-200 bg-ink-50/40 px-4 py-2.5">
-                <h3 className="flex items-center gap-1.5 text-sm font-semibold text-ink-900">
-                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
-                  Government vacancies
-                </h3>
-              </div>
-              <div className="flex h-[26rem] flex-col">
-                <VacancyExplorerPanel data={vacancy} signedIn={signedIn} />
-              </div>
-            </div>
-          )}
-          {/* Mobile: vacancy explorer (above) + exam calendar. Discussions
-              moved off the homepage — still at /discussions. */}
-          <MobileInlineRails events={upcomingEvents} threads={[]} copy={H} />
-        </section>
+        <HomeHowItWorks copy={copy} languageCount={INDIAN_LANGUAGE_COUNT} />
+
+        <HomeSignIn copy={copy} signedIn={signedIn} />
       </div>
     </main>
   );
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// MobileInlineRails — calendar + discussions surfaced inline on
-// viewports < lg (where the fixed side rails are hidden). Server-
-// rendered; data comes from the same loaders as the desktop rails.
-// ─────────────────────────────────────────────────────────────────────
-function MobileInlineRails({
-  events,
-  threads,
-  copy,
-}: {
-  events: UpcomingEvent[];
-  threads: ThreadItem[];
-  /** Strings in the page's language (16 Sep 2026). */
-  copy: HomeStripCopy;
-}) {
-  // The horizontal strip only carries the fresh windows — just-concluded
-  // (answer-key rush) first, then upcoming. The Past tab is a desktop-
-  // rail affordance; on mobile it would push live dates off-screen.
-  const stripEvents = events.filter((e) => (e.bucket ?? "upcoming") !== "past");
-  if (stripEvents.length === 0 && threads.length === 0) return null;
-  return (
-    <section className="mt-14 space-y-5 lg:hidden">
-      {stripEvents.length > 0 && (
-        <div className="rounded-lg border border-ink-200 bg-white p-4 shadow-sm">
-          <div className="flex items-baseline justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">
-              <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-saffron-500 align-middle" aria-hidden />
-              {copy.calendarKicker}
-            </p>
-            <span className="text-[10px] text-ink-400">{fillHome(copy.datesCount, { n: stripEvents.length })}</span>
-          </div>
-          <ul className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
-            {stripEvents.slice(0, 12).map((e) => (
-              <li key={e.id} className="shrink-0">
-                <Link
-                  href={`/exams/${e.examCode}`}
-                  prefetch={false}
-                  className={`block w-48 rounded-md border px-3 py-2 transition-colors hover:border-saffron-400 ${
-                    e.isExamDay
-                      ? "border-saffron-300 bg-saffron-50/60"
-                      : "border-ink-200 bg-white"
-                  }`}
-                >
-                  <p className="truncate text-sm font-semibold text-ink-900">{e.examShort}</p>
-                  <p className={`mt-0.5 text-[11px] font-medium tabular-nums ${
-                    e.isExamDay ? "text-saffron-800" : "text-ink-600"
-                  }`}>
-                    {new Date(e.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                    {e.isExamDay && (
-                      <span
-                        className={`ml-1.5 rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
-                          e.bucket === "concluded"
-                            ? "bg-sky-100 text-sky-800"
-                            : "bg-saffron-200 text-saffron-900"
-                        }`}
-                      >
-                        {e.bucket === "concluded" ? "Done" : "Exam"}
-                      </span>
-                    )}
-                    {e.expectedExamDay && (
-                      <span className="ml-1.5 rounded bg-ink-100 px-1 py-0.5 text-[9px] font-medium text-ink-600">
-                        {e.bucket === "concluded" || e.bucket === "past" ? copy.rail.wasExpected : copy.rail.expected}
-                      </span>
-                    )}
-                  </p>
-                  <p className="mt-1 line-clamp-2 text-[11px] text-ink-600">{e.label}</p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {threads.length > 0 && (
-        <div className="rounded-lg border border-ink-200 bg-white p-4 shadow-sm">
-          <div className="flex items-baseline justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
-              <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 align-middle" aria-hidden />
-              What students are talking about
-            </p>
-            <Link
-              href="/discussions"
-              prefetch={false}
-              className="text-[10px] font-medium text-saffron-700 hover:text-saffron-800"
-            >
-              All →
-            </Link>
-          </div>
-          <ul className="mt-2 divide-y divide-ink-100">
-            {threads.slice(0, 6).map((th) => (
-              <li key={th.id}>
-                <Link
-                  href={`/discussions/${th.id}`}
-                  prefetch={false}
-                  className="block py-2.5 hover:bg-saffron-50/40"
-                >
-                  <p className="line-clamp-2 text-sm font-medium leading-snug text-ink-900">
-                    {th.title}
-                  </p>
-                  <p className="mt-0.5 truncate text-[11px] text-ink-500">
-                    {th.examShort && (
-                      <span className="mr-1.5 rounded bg-ink-100 px-1 py-0.5 text-[10px] font-medium text-ink-600">
-                        {th.examShort}
-                      </span>
-                    )}
-                    {/* Disclosure: seed threads are Shishya's starter
-                        questions, never shown as student posts. */}
-                    {th.isSeed && (
-                      <span className="mr-1.5 rounded bg-saffron-50 px-1 py-0.5 text-[10px] font-medium text-saffron-800 ring-1 ring-saffron-200">
-                        {copy.starterQuestion}
-                      </span>
-                    )}
-                    <span className="font-medium text-ink-700">
-                      {th.messageCount} {th.messageCount === 1 ? copy.replyOne : copy.replyMany}
-                    </span>
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// Step 1 — Goal picker (the landing state).
-// ─────────────────────────────────────────────────────────────────────
-function StepGoals({
-  exams,
-  t,
-  signedIn,
-  vacancyStats,
-  portalStats,
-  inspirationVideos,
-  grinders,
-  sundayLive,
-  locale,
-}: {
-  exams: ExamCard[];
-  t: (key: SectionTitleKey) => string;
-  signedIn: boolean;
-  vacancyStats: { totalLakh: string; examCount: number };
-  portalStats: { examCount: string; questions: string; notes: string };
-  inspirationVideos: InspoVideo[];
-  sundayLive: UpcomingSunday | null;
-  grinders: GrinderEntry[];
-  /** The page body language, for the stats band and the feature cards. */
-  locale: string;
-}) {
-  // 27 May 2026 funnel telemetry — 96 signups, 0 mock attempts in
-  // last 24h. The page leads visitors into a goal funnel but never
-  // explicitly asks them to sign up + take their first mock. Banner
-  // below the hero fills that gap for signed-out visitors. It sits
-  // BETWEEN hero and search so visitors who don't want to commit
-  // still see search + cards immediately below.
-  // Per-goal exam count for the tile sub-label (e.g. "32 exams").
-  // We compute it here rather than in the data file so it stays
-  // accurate as exams are added/removed from the DB.
-  const countFor = (goal: ExamGoal) =>
-    exams.filter((e) => matchesGoal(e.tags as ExamTag[], goal)).length;
-
-  // Curated category sections rendered under the goal cards. We pull
-  // 4 high-signal sections from the full set buildCuratedSections
-  // would normally return — keeps the page focused while still giving
-  // visitors who think "I want a popular government job" / "show me
-  // banking exams" a one-tap entry that bypasses the goal funnel.
-  const sectionPriority: SectionTitleKey[] = [
-    "land.section.popular",
-    "land.section.govt",
-    "land.section.engineering",
-    "land.section.banking",
-  ];
-  const allSections = buildCuratedSections(exams, t);
-  const featuredSections = sectionPriority
-    .map((key) => allSections.find((s) => t(key) === s.title))
-    .filter((s): s is NonNullable<typeof s> => s !== undefined);
-
-  return (
-    <div>
-      {/* Ask Shishya bar, mobile only — desktop has it pinned in the
-          sticky band with the live numbers; on mobile it lives in flow
-          here (a pinned bar would eat the small viewport). */}
-      <div className="lg:hidden">
-        <AskSearchBar />
-      </div>
-
-      {/* Row 1 — finder card (the "I want a govt job but which one?"
-          entry). Row 2 — "at a glance" content-depth numbers. Both full
-          width, above the pick-your-exam picker. mt-8 only on mobile,
-          where the in-flow Ask bar sits directly above; on desktop the
-          bar lives in the pinned band, so no extra gap is needed. */}
-      <div className="mt-8 lg:mt-0">
-        <VacancyFinderCard totalLakh={vacancyStats.totalLakh} examCount={vacancyStats.examCount} />
-        {/* The newcomer's map — see the WHOLE landscape before choosing. */}
-        <p className="mt-2 text-center">
-          <Link
-            href="/jobs-map"
-            className="text-sm font-semibold text-indigo-700 underline decoration-indigo-300 underline-offset-2 hover:text-indigo-800"
-          >
-            🗺️ New here? See India&apos;s Government Jobs Map →
-          </Link>
-        </p>
-      </div>
-      <div className="mt-6">
-        {/* Personal Coach entry — two voices every aspirant recognizes
-            (the lost newcomer, the missed-days aspirant), one answer.
-            Never a demotivation story: the portal understands where you
-            are, moulds itself to you, and walks with you to selection. */}
-        <div className="mt-3 overflow-hidden rounded-2xl border-2 border-saffron-300 bg-gradient-to-br from-saffron-50 via-amber-50 to-white p-5 shadow-sm sm:p-6">
-          <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
-            🎓 You can crack a government job
-          </p>
-
-          <p className="mt-2 text-lg font-bold leading-snug text-ink-900 sm:text-xl">
-            What you&apos;re missing isn&apos;t{" "}
-            <span className="underline decoration-saffron-400 decoration-2 underline-offset-2">
-              ability
-            </span>{" "}
-            — it&apos;s guidance. Which exam fits you. What the syllabus really demands. What to
-            study today. Coaching that answers those three costs ₹50,000.
-            <br className="hidden sm:block" />{" "}
-            <span className="text-saffron-700">
-              Shishya gives you all three free — and a daily plan rebuilt every morning
-            </span>{" "}
-            — until you crack the job.
-          </p>
-
-          <p className="mt-3 text-sm italic leading-relaxed text-ink-500">
-            &ldquo;I started once. Missed 5 days. My whole plan felt ruined — so I stopped.&rdquo;
-            <span className="not-italic"> Sound familiar? That ends here.</span>
-          </p>
-
-          <p className="mt-2.5 text-sm leading-relaxed text-ink-700">
-            Tell us the job you want — or let us find every exam you&apos;re eligible for by your
-            age, education and state. Then your coach starts you small:{" "}
-            <span className="font-semibold text-ink-900">
-              one topic, one 10-question test, a few minutes today
-            </span>
-            , and grows with you. Miss a day, miss a week —{" "}
-            <span className="font-semibold text-ink-900">
-              you have no backlog here, and nothing to feel guilty about
-            </span>
-            . Your plan simply re-organises around the days you have left and the syllabus you
-            still need: just your best move today, every day,{" "}
-            <span className="font-semibold text-ink-900">
-              from your first step to your appointment letter
-            </span>
-            .
-          </p>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <Link
-              href="/coach"
-              className="inline-flex items-center gap-2 rounded-xl bg-saffron-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
-            >
-              Build my free plan →
-            </Link>
-            <Link
-              href="/find-your-exam"
-              className="rounded-xl border border-saffron-300 bg-white px-4 py-3 text-sm font-semibold text-saffron-800 transition-colors hover:bg-saffron-100"
-            >
-              New here? Find which exams fit me first
-            </Link>
-          </div>
-
-          {/* Zero-commitment on-ramp for hesitant visitors — the AI
-              tutor needs no login. (Moved here from the removed signup
-              banner; it was that block's one unique message.) */}
-          {!signedIn && (
-            <div className="mt-3 border-t border-saffron-200/70 pt-3">
-              <Link
-                href="/chat?general=1"
-                className="text-sm font-medium text-saffron-700 transition-colors hover:text-saffron-900"
-              >
-                Not ready yet? Ask Shishya anything — our free AI tutor, no login needed →
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* The week's events — placed below the vacancy finder and coach
-            cards (founder call): the two decision banners come first, then
-            this week's exam days (announced dates only) and Sunday's
-            All-India Live Tests. */}
-        <div className="mt-6">
-          <ExamsTodayStrip />
-        </div>
-        <div className="mt-6">
-          <SundayLiveTestBanner data={sundayLive} signedIn={signedIn} />
-        </div>
-
-        <PortalStatsBand examCount={portalStats.examCount} questions={portalStats.questions} notes={portalStats.notes} locale={locale} />
-
-        {/* Wall of Grinders — placed here deliberately: the stats band
-            proves the platform is real, this proves it's ALIVE, and the
-            "pick your exam" step follows immediately. Social proof lands
-            hardest right before the ask. Six entries, not ten, so the
-            search box stays within reach on mobile. */}
-        <WallOfGrinders entries={grinders.slice(0, 6)} />
-
-        <PersonalSystemStrip />
-      </div>
-
-      {/* Section header for the three ways to choose an exam that
-          follow (search / categories / goals). The old signed-out
-          signup banner that sat here was a weaker duplicate of the
-          coach card above — removed; its unique ungated-tutor line
-          now lives under the coach card's CTAs. */}
-      <div className="mx-auto mt-12 max-w-3xl text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-ink-900 sm:text-5xl">
-          Pick your exam. We do the rest.
-        </h1>
-        <p className="mt-4 text-base text-ink-600 sm:text-lg">
-          Search it by name, browse by category, or pick a goal — then mocks, previous-year
-          papers, cutoffs and study notes are all waiting, free.{" "}
-          <span className="font-medium text-ink-800">Bet yours is covered.</span>
-        </p>
-
-        {/* Ungated AI tutor — restored to a visible button (it had been
-            demoted to a text link when the old signup banner was
-            removed, and tutor opens dipped the next morning). Zero
-            commitment: no login, any language. */}
-        <Link
-          href="/chat?general=1"
-          className="mt-5 inline-flex items-center gap-2 rounded-xl border-2 border-saffron-300 bg-white px-5 py-3 text-sm font-bold text-saffron-800 shadow-sm transition-colors hover:border-saffron-400 hover:bg-saffron-50"
-        >
-          💬 Ask Shishya anything — free AI tutor, no login needed →
-        </Link>
-      </div>
-
-      {/* ── Search-by-name (highest-intent entry) ─────────────────
-          Visitors who already know "I want SSC CGL" skip the funnel
-          entirely. Search-as-you-type, client-side filter against
-          the full ~165-exam list passed from the server. */}
-      <div data-tour="home-search">
-        <HomeSearch exams={exams} />
-      </div>
-
-      {/* ── Curated category sections (browse by topic) ──────────
-          Visitors who don't know an exact exam but think in
-          categories ("show me popular government jobs", "what are
-          the engineering entrances"). Promoted above the goal-card
-          funnel because top-of-funnel scanning works better than
-          choose-a-goal commitment for most first-time visitors. */}
-      {featuredSections.length > 0 && (
-        <div data-tour="home-categories" className="mt-12 space-y-10">
-          <p className="text-center text-xs font-semibold uppercase tracking-wider text-ink-500">
-            Or browse by category
-          </p>
-          {featuredSections.map((section) => (
-            <CategorySection key={section.id} section={section} />
-          ))}
-        </div>
-      )}
-
-      {/* ── Goal-card funnel (commit to a goal → narrow down) ────
-          For visitors who DO want guided narrowing — pick a goal,
-          then national/state, then specific exam. Lives below the
-          search + categories so the page leads with low-commitment
-          scanning and offers the funnel as the deeper path. */}
-      <p className="mt-16 text-center text-xs font-semibold uppercase tracking-wider text-ink-500">
-        Or pick a goal
-      </p>
-
-      {/* Grid columns: the page has 320px fixed rails on both sides
-          at lg+ (pl-80 pr-80 = 640px total), so the middle column at
-          typical laptop widths (1366-1440px) is only ~730-800px. A
-          3-column grid here would squeeze each card to ~240px, which
-          wrapped the blurb 2-words-per-line. Stay at 2-col through
-          xl and only go 3-wide at 2xl (1536px+) where there's actually
-          breathing room. */}
-      <ul data-tour="home-goals" className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
-        {EXAM_GOALS.map((goal) => {
-          const count = countFor(goal);
-          return (
-            <li key={goal.slug}>
-              <Link
-                href={`/?g=${goal.slug}`}
-                prefetch={false}
-                className="group flex h-full items-start gap-4 rounded-xl border border-ink-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-saffron-300"
-              >
-                <span className="text-3xl" aria-hidden>
-                  {goal.icon}
-                </span>
-                <span className="flex-1">
-                  <span className="block text-base font-semibold text-ink-900">
-                    {goal.label}
-                  </span>
-                  <span className="mt-1 block text-sm leading-snug text-ink-600">
-                    {goal.blurb}
-                  </span>
-                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-saffron-700">
-                    {count} exam{count === 1 ? "" : "s"}
-                    <span aria-hidden>→</span>
-                  </span>
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-
-      {/* ── 6 feature cards: "what we actually do" ───────────────
-          Surfaces the platform's flows in plain language so
-          visitors who scrolled past the funnel see HOW Shishya
-          helps, not just WHAT it asks for. Each card is a Link
-          into the dashboard / signed-out users get bounced
-          through /login first. */}
-      <HomeFeatureCards signedIn={signedIn} locale={locale} />
-
-      {/* Inspiration carousel — topper success stories. Moved to the
-          bottom (was above the finder card) after engagement data showed
-          near-zero clicks up top; kept as an end-of-page motivational
-          send-off. */}
-      {inspirationVideos.length > 0 && (
-        <div className="mt-12">
-          <InspirationCarousel videos={inspirationVideos} />
-        </div>
-      )}
-
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// Single curated category section (e.g. "Popular exams", "Banking").
-// Renders top N exams in a responsive grid of compact cards.
-// ─────────────────────────────────────────────────────────────────────
-function CategorySection({
-  section,
-}: {
-  section: { id: string; title: string; exams: ExamCard[]; totalCount: number };
-}) {
-  return (
-    <section>
-      <div className="flex items-baseline justify-between gap-2">
-        <h3 className="text-base font-semibold text-ink-900">{section.title}</h3>
-        {section.totalCount > section.exams.length && (
-          <span className="text-xs text-ink-500">
-            Showing {section.exams.length} of {section.totalCount}
-          </span>
-        )}
-      </div>
-      <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-        {section.exams.map((e) => (
-          <li key={e.code}>
-            <Link
-              href={`/exams/${e.code}`}
-              prefetch={false}
-              className="block rounded-lg border border-ink-200 bg-white px-3 py-2.5 transition-colors hover:border-saffron-400 hover:bg-saffron-50/40"
-            >
-              <p className="truncate text-sm font-semibold text-ink-900">
-                {e.shortName}
-              </p>
-              {e.candidatesPerYear && e.candidatesPerYear > 0 && (
-                <p className="mt-0.5 text-[11px] text-ink-500">
-                  {formatCandidateCount(e.candidatesPerYear)} / year
-                </p>
-              )}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function formatCandidateCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`;
-  if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
-  return n.toLocaleString("en-IN");
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// Step 2 — National vs State scope chooser.
-// ─────────────────────────────────────────────────────────────────────
-function StepScope({
-  goal,
-  nationalCount,
-  stateCount,
-}: {
-  goal: ExamGoal;
-  nationalCount: number;
-  stateCount: number;
-}) {
-  return (
-    <div>
-      <div className="mx-auto max-w-3xl text-center">
-        <p className="inline-flex items-center gap-2 rounded-full bg-saffron-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-saffron-800">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-saffron-500" aria-hidden />
-          Step 2 of 2
-        </p>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink-900 sm:text-5xl">
-          <span aria-hidden>{goal.icon}</span> {goal.label} — where?
-        </h1>
-        <p className="mt-4 text-base text-ink-600 sm:text-lg">
-          Do you want a national-level exam (same paper across India) or
-          your own state&apos;s exam?
-        </p>
-      </div>
-
-      <div className="mx-auto mt-10 grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
-        <Link
-          href={`/?g=${goal.slug}&s=national`}
-          prefetch={false}
-          className="group flex flex-col items-start gap-2 rounded-xl border-2 border-ink-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-saffron-300"
-        >
-          <span className="text-3xl" aria-hidden>🇮🇳</span>
-          <span className="text-lg font-semibold text-ink-900">National exams</span>
-          <span className="text-sm leading-snug text-ink-600">
-            One paper, all-India. Conducted by central bodies (UPSC, NTA,
-            SSC, IBPS, …).
-          </span>
-          <span className="mt-1 text-xs font-medium text-saffron-700">
-            {nationalCount} exam{nationalCount === 1 ? "" : "s"} →
-          </span>
-        </Link>
-        <Link
-          href={`/?g=${goal.slug}&s=state`}
-          prefetch={false}
-          className="group flex flex-col items-start gap-2 rounded-xl border-2 border-ink-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-saffron-300"
-        >
-          <span className="text-3xl" aria-hidden>📍</span>
-          <span className="text-lg font-semibold text-ink-900">My state&apos;s exams</span>
-          <span className="text-sm leading-snug text-ink-600">
-            Conducted by your state government / PSC / SSC. Pick the
-            state next.
-          </span>
-          <span className="mt-1 text-xs font-medium text-saffron-700">
-            {stateCount} exam{stateCount === 1 ? "" : "s"} across India →
-          </span>
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// Step 3a — State picker (only shown after scope=state).
-// ─────────────────────────────────────────────────────────────────────
-function StepStatePicker({
-  goal,
-  stateExams,
-}: {
-  goal: ExamGoal;
-  stateExams: ExamCard[];
-}) {
-  // Count exams per state code so we can dim states with zero options.
-  const byState = new Map<string, number>();
-  for (const e of stateExams) {
-    if (!e.state) continue;
-    byState.set(e.state, (byState.get(e.state) ?? 0) + 1);
-  }
-  const ordered = INDIAN_STATES.map((s) => ({
-    ...s,
-    examCount: byState.get(s.code) ?? 0,
-  })).sort((a, b) => {
-    if ((a.examCount > 0) !== (b.examCount > 0)) return b.examCount - a.examCount;
-    return a.name.localeCompare(b.name);
-  });
-
-  return (
-    <div>
-      <div className="mx-auto max-w-3xl text-center">
-        <p className="inline-flex items-center gap-2 rounded-full bg-saffron-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-saffron-800">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-saffron-500" aria-hidden />
-          Pick your state
-        </p>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
-          {goal.label} — which state?
-        </h1>
-        <p className="mt-4 text-base text-ink-600">
-          We&apos;ll show {goal.label.toLowerCase()} exams conducted by your
-          state&apos;s government / PSC / board.
-        </p>
-      </div>
-
-      <ul className="mt-10 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-        {ordered.map((s) => {
-          const disabled = s.examCount === 0;
-          return (
-            <li key={s.code}>
-              {disabled ? (
-                <div className="block cursor-not-allowed rounded-lg border border-ink-100 bg-ink-50/40 px-4 py-3 opacity-60">
-                  <p className="text-sm font-medium text-ink-500">{s.name}</p>
-                  <p className="mt-0.5 text-[11px] text-ink-400">No exam yet</p>
-                </div>
-              ) : (
-                <Link
-                  href={`/?g=${goal.slug}&s=state&st=${s.code}`}
-                  prefetch={false}
-                  className="block rounded-lg border border-ink-200 bg-white px-4 py-3 transition-colors hover:border-saffron-400 hover:bg-saffron-50/60"
-                >
-                  <p className="text-sm font-semibold text-ink-900">{s.name}</p>
-                  <p className="mt-0.5 text-[11px] font-medium text-saffron-700">
-                    {s.examCount} exam{s.examCount === 1 ? "" : "s"} →
-                  </p>
-                </Link>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// Step 3b — Final exam list (either national-level or state-specific).
-// ─────────────────────────────────────────────────────────────────────
-function StepExamList({
-  goal,
-  scope,
-  stateCode,
-  exams,
-}: {
-  goal: ExamGoal;
-  scope: "national" | "state";
-  stateCode: string | null;
-  exams: ExamCard[];
-}) {
-  const state = stateCode ? INDIAN_STATES.find((s) => s.code === stateCode) : null;
-  const filtered = scope === "state" && stateCode
-    ? exams.filter((e) => e.state === stateCode)
-    : exams;
-
-  const heading =
-    scope === "state" && state
-      ? `${goal.label} exams in ${state.name}`
-      : scope === "national"
-        ? `National ${goal.label.toLowerCase()} exams`
-        : `${goal.label} exams`;
-
-  return (
-    <div>
-      <div className="mx-auto max-w-3xl text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
-          {heading}
-        </h1>
-        <p className="mt-3 text-base text-ink-600">
-          {filtered.length === 0
-            ? "No exams in this slot yet — try a different state or the national-level option."
-            : `${filtered.length} exam${filtered.length === 1 ? "" : "s"} — tap any to see syllabus, dates, mocks and discussions.`}
-        </p>
-      </div>
-
-      {filtered.length > 0 && (
-        <ul className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {filtered
-            .slice()
-            .sort((a, b) => (b.candidatesPerYear ?? 0) - (a.candidatesPerYear ?? 0))
-            .map((e) => (
-              <li key={e.code}>
-                <Link
-                  href={`/exams/${e.code}`}
-                  prefetch={false}
-                  className="group flex h-full items-start justify-between gap-3 rounded-xl border border-ink-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-saffron-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-saffron-300"
-                >
-                  <span className="flex-1">
-                    <span className="block text-base font-semibold text-ink-900">
-                      {e.shortName}
-                    </span>
-                    <span className="mt-1 block text-sm leading-snug text-ink-600">
-                      {e.name}
-                    </span>
-                    {e.candidatesPerYear && e.candidatesPerYear > 0 && (
-                      <span className="mt-2 block text-[11px] text-ink-500">
-                        {formatCandidates(e.candidatesPerYear)} candidates / year
-                      </span>
-                    )}
-                  </span>
-                  <span
-                    className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${
-                      e.live
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-ink-100 text-ink-600"
-                    }`}
-                  >
-                    {e.live ? "Live" : "Coming"}
-                  </span>
-                </Link>
-              </li>
-            ))}
-        </ul>
-      )}
-
-      {scope === "state" && state && (
-        <p className="mt-8 text-center text-xs text-ink-500">
-          <Link
-            href={`/?g=${goal.slug}&s=state`}
-            className="font-medium text-saffron-700 hover:underline"
-          >
-            ← Pick a different state
-          </Link>
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// Breadcrumb — shown at the top of every step EXCEPT the goals page
-// (which is the root). Lets visitors hop back without using browser back.
-// ─────────────────────────────────────────────────────────────────────
-function Breadcrumbs({
-  goal,
-  scope,
-  stateCode,
-}: {
-  goal: ExamGoal | null;
-  scope: "national" | "state" | null;
-  stateCode: string | null;
-}) {
-  if (!goal) return null;
-  const state = stateCode ? INDIAN_STATES.find((s) => s.code === stateCode) : null;
-  return (
-    <nav className="mb-6 flex flex-wrap items-center gap-1.5 text-xs text-ink-500" aria-label="Breadcrumb">
-      <Link href="/" className="font-medium text-saffron-700 hover:underline">
-        All exams
-      </Link>
-      <span aria-hidden>›</span>
-      {scope ? (
-        <Link
-          href={`/?g=${goal.slug}`}
-          className="font-medium text-saffron-700 hover:underline"
-        >
-          {goal.label}
-        </Link>
-      ) : (
-        <span className="font-medium text-ink-700">{goal.label}</span>
-      )}
-      {scope && (
-        <>
-          <span aria-hidden>›</span>
-          {state ? (
-            <Link
-              href={`/?g=${goal.slug}&s=${scope}`}
-              className="font-medium text-saffron-700 hover:underline"
-            >
-              {scope === "national" ? "National" : "By state"}
-            </Link>
-          ) : (
-            <span className="font-medium text-ink-700">
-              {scope === "national" ? "National" : "By state"}
-            </span>
-          )}
-        </>
-      )}
-      {state && (
-        <>
-          <span aria-hidden>›</span>
-          <span className="font-medium text-ink-700">{state.name}</span>
-        </>
-      )}
-    </nav>
-  );
-}
-
-function formatCandidates(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return n.toLocaleString("en-IN");
 }
