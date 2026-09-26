@@ -313,7 +313,21 @@ export function titleCycleYear(timeline: readonly TimelineRow[], now: Date = new
     ahead.find((r) => r.kind === "EXAM") ??
     ahead.find((r) => PRE_EXAM_KINDS.has(r.kind)) ??
     null;
-  return ref ? ref.date.getUTCFullYear() : null;
+  if (!ref) return null;
+  // 27 Sep 2026: a pre-exam row belongs to the cycle its label names — "GATE
+  // 2027 regular registration closes" is dated 27 Sep 2026 but opens the GATE
+  // 2027 cycle, and the new GATE paper hubs printed "GATE ME 2026 — Exam Date
+  // Not Announced Yet". Only the row's own year or the next one is accepted.
+  if (ref.kind !== "EXAM") return labelCycleYear(ref.label, ref.date.getUTCFullYear());
+  return ref.date.getUTCFullYear();
+}
+
+/** The cycle year a row's label names, when it is the row's own year or the
+ *  year after (an application or notification for next year's sitting);
+ *  otherwise the row's year. */
+export function labelCycleYear(label: string, dateYear: number): number {
+  const named = [...String(label ?? "").matchAll(/(?:^|[^0-9])(20[0-9]{2})(?![0-9])/g)].map((m) => Number(m[1]));
+  return named.includes(dateYear + 1) && !named.includes(dateYear) ? dateYear + 1 : dateYear;
 }
 
 /** Rows of one kind — but an INFERRED kind never outranks a DECLARED one

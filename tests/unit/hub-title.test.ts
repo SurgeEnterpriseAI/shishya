@@ -669,3 +669,16 @@ describe("hubPracticeSuffix — the title promises only what the hub holds", () 
     expect(hub).toMatch(/\{userId \? \(\s*<>\s*<Link href="\/dashboard"/);
   });
 });
+
+// 27 Sep 2026: a pre-exam row belongs to the cycle its label names.
+import { labelCycleYear } from "@/lib/exam-timeline";
+describe("labelCycleYear — pre-exam rows name their cycle", () => {
+  it("uses the next year only when the label names it (and not the row's own year)", () => {
+    expect(labelCycleYear("GATE 2027 regular registration closes (without late fee)", 2026)).toBe(2027);
+    expect(labelCycleYear("SSC CPO 2026 last date for online applications (23:00)", 2026)).toBe(2026);
+    expect(labelCycleYear("Application window closes", 2026)).toBe(2026);
+    expect(labelCycleYear("2026-27 session admissions open", 2026)).toBe(2026);
+    expect(labelCycleYear("Notification for 2028 cycle", 2026)).toBe(2026);
+    expect(labelCycleYear("NEET UG 2027 applications open", 2026)).toBe(2027);
+  });
+});
