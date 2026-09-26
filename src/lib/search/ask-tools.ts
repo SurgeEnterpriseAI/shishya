@@ -69,8 +69,9 @@ export const PAGE_TOOLS: Anthropic.Messages.Tool[] = [
   },
   {
     name: "page_facts",
+    // 27 Sep 2026: the NIRF year follows the data (NIRF_SOURCE_YEAR), not a typed "2024".
     description:
-      "Structured facts for ONE Shishya page (give its https://shishya.in/… link from find_pages or the verified list): a college (NIRF 2024 ranks, type, streams, entry exam, placements and closing ranks with their year and source), a scholarship (awarding body, levels, eligibility, amount and deadline as listed, official link), a career (entry routes, qualifications, indicative salary bands), a study-abroad country / university / test, a school board / class / subject / chapter (status, official book or syllabus link, whether a chat tutor exists for that class), a state's exam list. Never returns page text.",
+      `Structured facts for ONE Shishya page (give its https://shishya.in/… link from find_pages or the verified list): a college (NIRF ${NIRF_SOURCE_YEAR} ranks, type, streams, entry exam, placements and closing ranks with their year and source), a scholarship (awarding body, levels, eligibility, amount and deadline as listed, official link), a career (entry routes, qualifications, indicative salary bands), a study-abroad country / university / test, a school board / class / subject / chapter (status, official book or syllabus link, whether a chat tutor exists for that class), a state's exam list. Never returns page text.`,
     input_schema: {
       type: "object",
       properties: { url: { type: "string", description: "A Shishya link, e.g. https://shishya.in/colleges/iit-madras" } },
@@ -452,6 +453,15 @@ export function pageFacts(index: SearchIndex, input: { url?: unknown }, locale: 
         officialSite: s.officialSite ?? null,
         about: s.description,
         matcher: `${SITE}/scholarships/match`,
+        // 27 Sep 2026 (fixer): whether Shishya lists the scheme at all — a
+        // discontinued scheme, or a row held out of the catalogue as not a
+        // scholarship / not found / in doubt (Scholarship.unlisted), must not
+        // be offered as one.
+        listing: s.closed
+          ? `Discontinued — not open to new applicants: ${s.closed.note}`
+          : s.unlisted
+            ? `Not listed on Shishya: ${s.unlisted} Do not present it as an available scholarship.`
+            : "Listed on Shishya.",
       };
     }
 

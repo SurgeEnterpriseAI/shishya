@@ -11,6 +11,7 @@ import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
 import { examKindLabel } from "@/lib/exam-kind";
 import { examTitleYear } from "@/lib/exam-title-year";
+import { examPracticeState } from "@/lib/db/exam-practice";
 
 export const runtime = "nodejs";
 export const alt = "Shishya — exam preparation";
@@ -40,6 +41,13 @@ export default async function Image({ params }: { params: Promise<{ code: string
   const fullName = exam?.name ?? "One smart place to study for students in India";
   const category = exam ? examKindLabel({ code: exam.code, category: String(exam.category) }) : "";
   const year = exam ? await examTitleYear(exam.code) : null;
+  // 27 Sep 2026: the card said "Free mocks · syllabus · PYQ pattern" for every
+  // exam, the ones with no practice question included (src/lib/exam-practice-state.ts;
+  // a failed read claims none). The generic card (no exam) keeps the line.
+  const practice = exam ? (await examPracticeState(exam.code)).hasPractice : true;
+  // 27 Sep 2026 (fixer): "Exam dates", not "Official dates" — the hub also
+  // lists reported and expected dates (labelled), and some exams have none.
+  const tagline = practice ? "Free mocks · syllabus · PYQ pattern · AI tutor" : "Exam dates · key facts · AI tutor";
 
   return new ImageResponse(
     (
@@ -134,7 +142,7 @@ export default async function Image({ params }: { params: Promise<{ code: string
             fontWeight: 500,
           }}
         >
-          <div style={{ display: "flex" }}>Free mocks · syllabus · PYQ pattern · AI tutor</div>
+          <div style={{ display: "flex" }}>{tagline}</div>
           {year !== null ? <div style={{ display: "flex", color: "#c2410c", fontWeight: 700 }}>{year}</div> : null}
         </div>
       </div>

@@ -269,7 +269,8 @@ describe("exam audiences never hold a school-only account", () => {
     // pickDailyFive: weakness rows and the enrolment fallback are real-exam only.
     const five = read("src/lib/study-day-five.ts");
     expect(five).toMatch(/prisma\.weaknessMap\.findMany\(\{\s*where: \{ userId, exam: NOT_SCHOOL_WHERE \}/);
-    expect(five).toMatch(/prisma\.enrollment\.findFirst\(\{\s*where: \{ userId, active: true, exam: NOT_SCHOOL_WHERE \}/);
+    // 27 Sep 2026 (fixer): findMany — the newest enrolment WITH practice is picked (tests/unit/no-practice-readers.test.ts).
+    expect(five).toMatch(/prisma\.enrollment\.findMany\(\{\s*where: \{ userId, active: true, exam: NOT_SCHOOL_WHERE \}/);
     // coach-morning's own-enrolment rollover joins the exam.
     expect(read("src/app/api/cron/coach-morning/route.ts")).toMatch(/FROM "Enrollment" en JOIN "Exam" e ON e\.id = en\."examId"\n\s+WHERE en\.active = TRUE AND en\."userId" = ANY\(.*?\) AND \$\{NOT_SCHOOL_SQL\}/);
   });

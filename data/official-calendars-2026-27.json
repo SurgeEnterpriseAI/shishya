@@ -1,0 +1,816 @@
+{
+  "about": "Next-cycle OFFICIAL exam calendars (researched 27 Sep 2026). Every entry is a date the conducting body itself published, with the document URL on that body's own host and the exact table cell / line it came from. Read by scripts/import-annual-calendars.ts, which re-downloads every source and re-checks every entry's evidence before anything is written. Dates are Asia/Kolkata calendar days (YYYY-MM-DD). Nothing here is an estimate: a month-only schedule (SSC 2026-27, IBPS RRB notification) is left out, and so is anything an official source could not be fetched for (see notIncluded).",
+  "researchedOn": "2026-09-27",
+  "provenance": "official-calendar:2026-27",
+  "reviewFixes": [
+    "27 Sep 2026 (verify pass): TN_TNPSC_GROUP4 NOTIFICATION 2026-10-06 — removed '2327 vacancies' from notes and quote. On tnpsc.gov.in/english/annual_planner.html that number sits only inside an HTML comment (<!--<td>2327</td>-->) under a commented-out 'No. of Vacancies' header; the live planner says 'The vacancies will be announced in the notification.' (now checked as evidence).",
+    "27 Sep 2026 (verify pass): BR_BPSC_CCE EXAM 2026-10-25 — removed '1189 vacancies' from notes and quote. The calendar (14-08-2026) still shows 1189, but BPSC's corrigendum of 03.09.2026 (bpsc.bihar.gov.in/wp-content/uploads/BPSC_content/Notices/Corrigendum-72nd-CCE-Reduction-of-2-posts-of-BPS_BPSC-20260903-23e57k.pdf) puts the total at 1187; the date 25-10-2026 is unchanged on the re-fetched calendar.",
+    "27 Sep 2026 (verify pass): RJ_RPSC_RAS labels and notes now say the dates are proposed — the RPSC press note of 02.07.2026 reads 'करवाया जाना प्रस्तावित है' (re-read from the page image; sha256 unchanged)."
+  ],
+  "sources": [
+    {
+      "id": "upsc-calendar-2027",
+      "url": "https://www.upsc.gov.in/sites/default/files/Calendar-Year-2027-Engl-200526.pdf",
+      "publisher": "Union Public Service Commission",
+      "title": "Programme of Examinations/Recruitment Tests (RTs) - 2027",
+      "publishedOn": "2026-05-20",
+      "format": "pdf",
+      "verify": "text",
+      "grid": true,
+      "sha256": "74c527732da5ed206b1b675229f7e43d4be51a260f785f307d4b2679cdc90b97",
+      "readingNote": "Ruled table with merged cells: NDA & NA (I) / CDS (I) share one set of date cells (rows 7-8), as do CS(P) / IFS(P) (rows 9-10) and NDA & NA (II) / CDS (II) (rows 20-21). pdftotext -layout misplaces these rows, so every date is checked against pdfplumber's reading of the ruled grid (a merged cell's text repeated over the rows it covers). Footnote: 'The dates of notification, commencement and duration of Examinations/ RTs are liable to alteration, if the circumstances so warrant.'"
+    },
+    {
+      "id": "nta-calendar-2026-09-16",
+      "url": "https://nta.ac.in/Download/Notice/Notice_20260916195948.pdf",
+      "publisher": "National Testing Agency",
+      "title": "Public Notice 16 September 2026: Publication of the Examination Calendar of the National Testing Agency (NTA) up to March 2027 - reg.",
+      "publishedOn": "2026-09-16",
+      "format": "pdf",
+      "verify": "hash",
+      "sha256": "0e54c6b33bff3fe7129b8b3c41816b7dcd9d1994ef7378ab9a84a00dcedd63dd",
+      "readingNote": "Scanned image PDF (no text layer): the table was read from the page image on 27 Sep 2026 and the file is pinned by its SHA-256, so a changed calendar is refused rather than trusted. The same table is at https://nta.ac.in/Download/Notice/Examcalendar.pdf. The notice says the dates 'are tentative and may undergo changes' and that the calendar 'does not constitute a notification for any particular examination'."
+    },
+    {
+      "id": "gate2027-important-dates",
+      "url": "https://gate2027.iitm.ac.in/important_dates",
+      "publisher": "IIT Madras (GATE 2027 Organising Institute)",
+      "title": "GATE 2027 — Important Dates",
+      "publishedOn": null,
+      "format": "html",
+      "verify": "text",
+      "readingNote": "Superseded dates are shown struck through (<del>) on the page — 14 Aug / 27 Aug portal opening, 21 Sep and 30 Sep closings. Struck text is removed before any check, so only the live dates can match. Page footer: '*All dates are liable to change'. The GATE 2027 Information Brochure (https://gate2027ib.iitm.ac.in/GATE2027-IB.pdf, p.5) adds: 'Exact details of the complete examination schedule will be notified later on the GATE 2027 website.'"
+    },
+    {
+      "id": "ibps-calendar-2026-27",
+      "url": "https://www.ibps.in/wp-content/uploads/IBPS_CALENDAR_2026-27_final.pdf",
+      "publisher": "Institute of Banking Personnel Selection",
+      "title": "Tentative Calendar of Online CRP for PSBs & RRBs (2026-2027)",
+      "publishedOn": "2026-01-16",
+      "format": "pdf",
+      "verify": "text",
+      "grid": true,
+      "sha256": "6becd445a94b99b6b08e662375bcbbfdb04df5ffc8f42f55f3a204ec91cfd83b",
+      "readingNote": "Two ruled tables (PSBs; RRBs). Disclaimer: 'IBPS, however, reserves the right to change the dates of examination'."
+    },
+    {
+      "id": "ibps-rrb15-extension",
+      "url": "https://www.ibps.in/wp-content/uploads/Approved_Corrigendum-for-Extension_CRP-RRBs-XV-002.pdf",
+      "publisher": "Institute of Banking Personnel Selection",
+      "title": "CRP RRBs XV — Corrigendum dated 21.09.2026 (extension of online registration)",
+      "publishedOn": "2026-09-21",
+      "format": "pdf",
+      "verify": "text",
+      "sha256": "39c3932b2014fa728a88ec46e0a39235e6dd3aa18717f1af97cf24725e629966"
+    },
+    {
+      "id": "ibps-po-xvi-page",
+      "url": "https://www.ibps.in/index.php/management-trainees-xvi/",
+      "publisher": "Institute of Banking Personnel Selection",
+      "title": "CRP PO/MT-XVI — notices page",
+      "publishedOn": null,
+      "format": "html",
+      "verify": "text"
+    },
+    {
+      "id": "tnpsc-annual-planner-2026",
+      "url": "https://tnpsc.gov.in/english/annual_planner.html",
+      "publisher": "Tamil Nadu Public Service Commission",
+      "title": "Annual Planner - Programme of Examinations - 2026 (Publication Date : 03.12.2025)",
+      "publishedOn": "2025-12-03",
+      "format": "html",
+      "verify": "text",
+      "readingNote": "Only Group IV is imported. The planner's Group I (06.09.2026) and Group II (25.10.2026) exam dates were overtaken by the published notifications (Group I prelims on 27.09.2026 and Group II prelims are on the tracker from the TNPSC notices), so they are not imported. Planner note: 'This planner is tentative'. HTML comments on the page hold older rows; they are removed before any check."
+    },
+    {
+      "id": "uppsc-calendar-2026",
+      "url": "https://uppsc.up.nic.in/Open_PDF_DB.aspx?I4PnQ0tBagmIqec6cDg6BUi0bxHlS/Ba",
+      "publisher": "Uttar Pradesh Public Service Commission",
+      "title": "UPPSC Exam Calendar 2026 — विज्ञप्ति दिनांक 30 जनवरी, 2026 (संख्या: 2920/14/मिस/ई-1/2000-01 टी.सी.)",
+      "publishedOn": "2026-01-30",
+      "format": "pdf",
+      "verify": "hash",
+      "session": "https://uppsc.up.nic.in/",
+      "sha256": "70d206dee13cebfa70ae696cde06ede4a4f9a1a78c6970223cc36c07ea8278d1",
+      "readingNote": "Linked as 'UPPSC Exam Calendar 2026' on the UPPSC home page. The link only serves the PDF inside a session opened on the home page (a bare request is redirected to the home page), and the server appends its HTML page after the PDF's %%EOF; the hash covers the PDF bytes up to %%EOF. The Hindi text uses a legacy font whose text layer is not Unicode, so the row was read from the page image; the dates in the text layer are checked as well. Note 2 on p.4: 'उपर्युक्त तिथियां सम्भावित हैं।' (the above dates are tentative)."
+    },
+    {
+      "id": "rpsc-press-note-2026-07-02",
+      "url": "https://rpsc.rajasthan.gov.in/Static/ForthcomingExamination/D1A23152-5D54-4D83-A97B-EA0A97CEC83D.pdf",
+      "publisher": "Rajasthan Public Service Commission",
+      "title": "Press Note dated 02.07.2026 regarding Forthcoming Examinations Schedule for December 2026 and Raj. State And Sub. Services Comb. Comp Exam - 2026 (Pre/Mains)",
+      "publishedOn": "2026-07-02",
+      "format": "pdf",
+      "verify": "hash",
+      "sha256": "c175de7b06cf30520e38d83a3f40b13de67d86643ac93b35693b451b4ab30277",
+      "readingNote": "Listed on https://rpsc.rajasthan.gov.in/forthcomingexaminations (Tentative Exam Calendar). Kruti Dev text layer: read from the page image; the dates and the Kruti Dev string for 'कार्मिक विभाग' (dkfeZd foHkkx) are checked on the printed lines as well."
+    },
+    {
+      "id": "bpsc-exam-calendar-2026-08-14",
+      "url": "https://bpsc.bihar.gov.in/exam-calendar/",
+      "publisher": "Bihar Public Service Commission",
+      "title": "Exam Calendar (All dates are tentative) Date: 14-08-2026",
+      "publishedOn": "2026-08-14",
+      "format": "html",
+      "verify": "text",
+      "readingNote": "The PDF version linked there (Examination-Calendar-14.08.2026.pdf) is damaged (pdftotext: Missing 'endstream'); the HTML table on the same official page is used."
+    }
+  ],
+  "entries": [
+    {
+      "exam": "UPSC_PRELIMS",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "NOTIFICATION",
+      "date": "2027-01-13",
+      "label": "CSE 2027 notification (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026). The Indian Forest Service (Preliminary) Examination 2027 is held through the same CS(P) exam. UPSC says calendar dates are liable to alteration.",
+      "quote": "9. | Civil Services (Preliminary) Examination, 2027 | Date of Notification: 13.01.2027 | Last Date for receipt of Applications: 02.02.2027 | Date of commencement of Exam: 23.05.2027 (Sunday) | 1 DAY",
+      "evidence": [
+        { "type": "cell", "row": "Civil Services (Preliminary) Examination, 2027", "col": "Date of Notification", "value": "13.01.2027" },
+        { "type": "line", "tokens": ["As on 20.05.2026"] }
+      ]
+    },
+    {
+      "exam": "UPSC_PRELIMS",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "APPLICATION_END",
+      "date": "2027-02-02",
+      "label": "CSE 2027 last date to apply (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): last date for receipt of applications. Liable to alteration — the notification is final.",
+      "quote": "9. | Civil Services (Preliminary) Examination, 2027 | Last Date for receipt of Applications: 02.02.2027",
+      "evidence": [
+        { "type": "cell", "row": "Civil Services (Preliminary) Examination, 2027", "col": "Last Date for receipt of Applications", "value": "02.02.2027" }
+      ]
+    },
+    {
+      "exam": "UPSC_PRELIMS",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "EXAM",
+      "date": "2027-05-23",
+      "label": "CSE Prelims 2027 exam (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): Civil Services (Preliminary) Examination 2027, Sunday 23 May 2027, 1 day. Liable to alteration.",
+      "quote": "9. | Civil Services (Preliminary) Examination, 2027 | Date of commencement of Exam: 23.05.2027 (Sunday) | Duration of Exam: 1 DAY",
+      "evidence": [
+        { "type": "cell", "row": "Civil Services (Preliminary) Examination, 2027", "col": "Date of commencement of Exam", "value": "23.05.2027" }
+      ]
+    },
+    {
+      "exam": "UPSC_PRELIMS",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "EXAM",
+      "date": "2027-08-20",
+      "label": "CSE Mains 2027 begins (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): Civil Services (Main) Examination 2027 commences Friday 20 Aug 2027; duration 5 days. Liable to alteration.",
+      "quote": "19. | Civil Services (Main) Examination, 2027 | Date of commencement of Exam: 20.08.2027 (Friday) | Duration of Exam: 5 DAYS",
+      "evidence": [
+        { "type": "cell", "row": "Civil Services (Main) Examination, 2027", "col": "Date of commencement of Exam", "value": "20.08.2027" },
+        { "type": "cell", "row": "Civil Services (Main) Examination, 2027", "col": "Duration of Exam", "value": "5 DAYS" }
+      ]
+    },
+    {
+      "exam": "NDA",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "NOTIFICATION",
+      "date": "2026-12-02",
+      "label": "NDA & NA (I) 2027 notification (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026). Liable to alteration.",
+      "quote": "7. | N.D.A. & N.A. Examination (I), 2027 | Date of Notification: 02.12.2026 | Last Date for receipt of Applications: 22.12.2026 | Date of commencement of Exam: 11.04.2027 (Sunday) | 1 DAY",
+      "evidence": [
+        { "type": "cell", "row": "N.D.A. & N.A. Examination (I), 2027", "col": "Date of Notification", "value": "02.12.2026" }
+      ]
+    },
+    {
+      "exam": "NDA",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "APPLICATION_END",
+      "date": "2026-12-22",
+      "label": "NDA & NA (I) 2027 last date to apply (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): last date for receipt of applications. Liable to alteration — the notification is final.",
+      "quote": "7. | N.D.A. & N.A. Examination (I), 2027 | Last Date for receipt of Applications: 22.12.2026",
+      "evidence": [
+        { "type": "cell", "row": "N.D.A. & N.A. Examination (I), 2027", "col": "Last Date for receipt of Applications", "value": "22.12.2026" }
+      ]
+    },
+    {
+      "exam": "NDA",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "EXAM",
+      "date": "2027-04-11",
+      "label": "NDA & NA (I) 2027 exam (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): Sunday 11 Apr 2027, 1 day. Liable to alteration.",
+      "quote": "7. | N.D.A. & N.A. Examination (I), 2027 | Date of commencement of Exam: 11.04.2027 (Sunday) | 1 DAY",
+      "evidence": [
+        { "type": "cell", "row": "N.D.A. & N.A. Examination (I), 2027", "col": "Date of commencement of Exam", "value": "11.04.2027" }
+      ]
+    },
+    {
+      "exam": "NDA",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "NOTIFICATION",
+      "date": "2027-05-12",
+      "label": "NDA & NA (II) 2027 notification (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026). Liable to alteration.",
+      "quote": "20. | N.D.A. & N.A. Examination (II), 2027 | Date of Notification: 12.05.2027 | Last Date for receipt of Applications: 01.06.2027 | Date of commencement of Exam: 19.09.2027 (Sunday) | 1 DAY",
+      "evidence": [
+        { "type": "cell", "row": "N.D.A. & N.A. Examination (II), 2027", "col": "Date of Notification", "value": "12.05.2027" }
+      ]
+    },
+    {
+      "exam": "NDA",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "APPLICATION_END",
+      "date": "2027-06-01",
+      "label": "NDA & NA (II) 2027 last date to apply (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): last date for receipt of applications. Liable to alteration — the notification is final.",
+      "quote": "20. | N.D.A. & N.A. Examination (II), 2027 | Last Date for receipt of Applications: 01.06.2027",
+      "evidence": [
+        { "type": "cell", "row": "N.D.A. & N.A. Examination (II), 2027", "col": "Last Date for receipt of Applications", "value": "01.06.2027" }
+      ]
+    },
+    {
+      "exam": "NDA",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "EXAM",
+      "date": "2027-09-19",
+      "label": "NDA & NA (II) 2027 exam (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): Sunday 19 Sep 2027, 1 day. Liable to alteration.",
+      "quote": "20. | N.D.A. & N.A. Examination (II), 2027 | Date of commencement of Exam: 19.09.2027 (Sunday) | 1 DAY",
+      "evidence": [
+        { "type": "cell", "row": "N.D.A. & N.A. Examination (II), 2027", "col": "Date of commencement of Exam", "value": "19.09.2027" }
+      ]
+    },
+    {
+      "exam": "CDS",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "NOTIFICATION",
+      "date": "2026-12-02",
+      "label": "CDS (I) 2027 notification (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): CDS (I) shares its dates with NDA & NA (I). Liable to alteration.",
+      "quote": "8. | C.D.S. Examination (I), 2027 | (date cells merged with row 7, N.D.A. & N.A. Examination (I), 2027) Date of Notification: 02.12.2026 | Last Date for receipt of Applications: 22.12.2026 | Date of commencement of Exam: 11.04.2027 (Sunday)",
+      "evidence": [
+        { "type": "cell", "row": "C.D.S. Examination (I), 2027", "col": "Date of Notification", "value": "02.12.2026" }
+      ]
+    },
+    {
+      "exam": "CDS",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "APPLICATION_END",
+      "date": "2026-12-22",
+      "label": "CDS (I) 2027 last date to apply (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): last date for receipt of applications. Liable to alteration — the notification is final.",
+      "quote": "8. | C.D.S. Examination (I), 2027 | (merged with row 7) Last Date for receipt of Applications: 22.12.2026",
+      "evidence": [
+        { "type": "cell", "row": "C.D.S. Examination (I), 2027", "col": "Last Date for receipt of Applications", "value": "22.12.2026" }
+      ]
+    },
+    {
+      "exam": "CDS",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "EXAM",
+      "date": "2027-04-11",
+      "label": "CDS (I) 2027 exam (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): Sunday 11 Apr 2027. Liable to alteration.",
+      "quote": "8. | C.D.S. Examination (I), 2027 | (merged with row 7) Date of commencement of Exam: 11.04.2027 (Sunday)",
+      "evidence": [
+        { "type": "cell", "row": "C.D.S. Examination (I), 2027", "col": "Date of commencement of Exam", "value": "11.04.2027" }
+      ]
+    },
+    {
+      "exam": "CDS",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "NOTIFICATION",
+      "date": "2027-05-12",
+      "label": "CDS (II) 2027 notification (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): CDS (II) shares its dates with NDA & NA (II). Liable to alteration.",
+      "quote": "21. | C.D.S. Examination (II), 2027 | (date cells merged with row 20, N.D.A. & N.A. Examination (II), 2027) Date of Notification: 12.05.2027 | Last Date for receipt of Applications: 01.06.2027 | Date of commencement of Exam: 19.09.2027 (Sunday)",
+      "evidence": [
+        { "type": "cell", "row": "C.D.S. Examination (II), 2027", "col": "Date of Notification", "value": "12.05.2027" }
+      ]
+    },
+    {
+      "exam": "CDS",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "APPLICATION_END",
+      "date": "2027-06-01",
+      "label": "CDS (II) 2027 last date to apply (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): last date for receipt of applications. Liable to alteration — the notification is final.",
+      "quote": "21. | C.D.S. Examination (II), 2027 | (merged with row 20) Last Date for receipt of Applications: 01.06.2027",
+      "evidence": [
+        { "type": "cell", "row": "C.D.S. Examination (II), 2027", "col": "Last Date for receipt of Applications", "value": "01.06.2027" }
+      ]
+    },
+    {
+      "exam": "CDS",
+      "sourceId": "upsc-calendar-2027",
+      "kind": "EXAM",
+      "date": "2027-09-19",
+      "label": "CDS (II) 2027 exam (tentative)",
+      "notes": "UPSC Calendar 2027 (as on 20.05.2026): Sunday 19 Sep 2027. Liable to alteration.",
+      "quote": "21. | C.D.S. Examination (II), 2027 | (merged with row 20) Date of commencement of Exam: 19.09.2027 (Sunday)",
+      "evidence": [
+        { "type": "cell", "row": "C.D.S. Examination (II), 2027", "col": "Date of commencement of Exam", "value": "19.09.2027" }
+      ]
+    },
+    {
+      "exam": "JEE_MAIN",
+      "sourceId": "nta-calendar-2026-09-16",
+      "kind": "EXAM",
+      "date": "2027-01-22",
+      "label": "JEE Main 2027 Session 1 exam begins (tentative)",
+      "notes": "NTA Examination Calendar (public notice 16 Sep 2026): Session 1 on 22-24 and 28-30 Jan 2027, buffer day 31 Jan 2027 (6 exam days). Application dates come in the Information Bulletin, not yet out.",
+      "quote": "9 | JEE (Main) — Session 1 (January) | 22 – 24, 28 – 30 Jan 2027 (buffer: 31 Jan 2027) | 6 Days",
+      "evidence": []
+    },
+    {
+      "exam": "JEE_MAIN",
+      "sourceId": "nta-calendar-2026-09-16",
+      "kind": "EXAM",
+      "date": "2027-01-30",
+      "label": "JEE Main 2027 Session 1 exam ends (tentative)",
+      "notes": "NTA Examination Calendar (public notice 16 Sep 2026): last scheduled Session 1 day; 31 Jan 2027 is the buffer day.",
+      "quote": "9 | JEE (Main) — Session 1 (January) | 22 – 24, 28 – 30 Jan 2027 (buffer: 31 Jan 2027) | 6 Days",
+      "evidence": []
+    },
+    {
+      "exam": "NIFT",
+      "sourceId": "nta-calendar-2026-09-16",
+      "kind": "EXAM",
+      "date": "2027-01-10",
+      "label": "NIFT 2027 entrance exam (tentative)",
+      "notes": "NTA Examination Calendar (public notice 16 Sep 2026): NIFT Entrance Examination on 10 Jan 2027, 1 day. Application dates come with the NIFT admission notice.",
+      "quote": "8 | NIFT Entrance Examination | 10 January 2027 | 1 Day",
+      "evidence": []
+    },
+    {
+      "exam": "GATE_CSE",
+      "sourceId": "gate2027-important-dates",
+      "kind": "APPLICATION_START",
+      "date": "2026-09-02",
+      "label": "GATE 2027 online application portal (GOAPS) opened",
+      "notes": "IIT Madras, GATE 2027 important dates: GOAPS opened 2 Sep 2026 (the earlier 14 Aug and 27 Aug dates are struck through on the official page).",
+      "quote": "Opening Date of GATE Online Application Processing System (GOAPS) | 2nd September 2026 | Wednesday",
+      "evidence": [
+        { "type": "phrase", "text": "Opening Date of GATE Online Application Processing System (GOAPS) 2nd September 2026 Wednesday" }
+      ]
+    },
+    {
+      "exam": "GATE_CSE",
+      "sourceId": "gate2027-important-dates",
+      "kind": "APPLICATION_END",
+      "date": "2026-09-27",
+      "label": "GATE 2027 regular registration closes (without late fee)",
+      "notes": "IIT Madras, GATE 2027 important dates (extended from 21 Sep 2026).",
+      "quote": "Closing Date of REGULAR online registration (without late fee) | 27th September 2026 | Sunday",
+      "evidence": [
+        { "type": "phrase", "text": "Closing Date of REGULAR online registration (without late fee) 27th September 2026 Sunday" }
+      ]
+    },
+    {
+      "exam": "GATE_CSE",
+      "sourceId": "gate2027-important-dates",
+      "kind": "APPLICATION_END",
+      "date": "2026-10-05",
+      "label": "GATE 2027 extended registration closes (with late fee)",
+      "notes": "IIT Madras, GATE 2027 important dates (extended from 30 Sep 2026).",
+      "quote": "Closing Date of EXTENDED online registration (with late fee) | 5th October 2026 | Monday",
+      "evidence": [
+        { "type": "phrase", "text": "Closing Date of EXTENDED online registration (with late fee) 5th October 2026 Monday" }
+      ]
+    },
+    {
+      "exam": "GATE_CSE",
+      "sourceId": "gate2027-important-dates",
+      "kind": "CORRECTION_WINDOW",
+      "date": "2026-10-14",
+      "label": "GATE 2027 application rectification opens",
+      "notes": "IIT Madras, GATE 2027 important dates: rectification window 14-21 Oct 2026.",
+      "quote": "Opening Date of GATE 2027 Application rectification | 14th October 2026 | Wednesday",
+      "evidence": [
+        { "type": "phrase", "text": "Opening Date of GATE 2027 Application rectification 14th October 2026 Wednesday" }
+      ]
+    },
+    {
+      "exam": "GATE_CSE",
+      "sourceId": "gate2027-important-dates",
+      "kind": "CORRECTION_WINDOW",
+      "date": "2026-10-21",
+      "label": "GATE 2027 application rectification ends",
+      "notes": "IIT Madras, GATE 2027 important dates. The brochure lists 21 Oct 2026 as the last date for change of category, paper and exam city choices.",
+      "quote": "Closing Date of GATE 2027 Application rectification | 21st October 2026 | Wednesday",
+      "evidence": [
+        { "type": "phrase", "text": "Closing Date of GATE 2027 Application rectification 21st October 2026 Wednesday" }
+      ]
+    },
+    {
+      "exam": "GATE_CSE",
+      "sourceId": "gate2027-important-dates",
+      "kind": "OTHER",
+      "date": "2027-01-04",
+      "label": "GATE 2027 exam city allotment notification",
+      "notes": "IIT Madras, GATE 2027 important dates. Admit card download date: TBA on the official page.",
+      "quote": "City allotment notification | 4th January 2027 | Monday",
+      "evidence": [
+        { "type": "phrase", "text": "City allotment notification 4th January 2027 Monday" }
+      ]
+    },
+    {
+      "exam": "GATE_CSE",
+      "sourceId": "gate2027-important-dates",
+      "kind": "EXAM",
+      "date": "2027-02-06",
+      "label": "GATE 2027 exams begin",
+      "notes": "IIT Madras: GATE 2027 exams on 6, 7, 13, 14, 20 and 21 Feb 2027 (forenoon and afternoon sessions). The paper-wise schedule — which day CS is held — will be notified later on the GATE 2027 website.",
+      "quote": "GATE 2027 Examinations | 6th February 2027 7th February 2027 | Saturday Sunday",
+      "evidence": [
+        { "type": "phrase", "text": "GATE 2027 Examinations 6th February 2027 7th February 2027 Saturday Sunday" }
+      ]
+    },
+    {
+      "exam": "GATE_CSE",
+      "sourceId": "gate2027-important-dates",
+      "kind": "EXAM",
+      "date": "2027-02-21",
+      "label": "GATE 2027 exams end",
+      "notes": "IIT Madras: last GATE 2027 exam day. The paper-wise schedule will be notified later on the GATE 2027 website.",
+      "quote": "(GATE 2027 Examinations, third row) 20th February 2027 21st February 2027 | Saturday Sunday",
+      "evidence": [
+        { "type": "phrase", "text": "20th February 2027 21st February 2027 Saturday Sunday Announcement of results" }
+      ]
+    },
+    {
+      "exam": "GATE_CSE",
+      "sourceId": "gate2027-important-dates",
+      "kind": "RESULT",
+      "date": "2027-03-19",
+      "label": "GATE 2027 results announced",
+      "notes": "IIT Madras, GATE 2027 important dates. All dates are liable to change.",
+      "quote": "Announcement of results | 19th March 2027 | Friday",
+      "evidence": [
+        { "type": "phrase", "text": "Announcement of results 19th March 2027 Friday" }
+      ]
+    },
+    {
+      "exam": "IBPS_PO",
+      "sourceId": "ibps-po-xvi-page",
+      "kind": "RESULT",
+      "date": "2026-09-23",
+      "label": "Prelims result status released (CRP PO/MT-XVI)",
+      "notes": "IBPS posted the result status of the online preliminary examination for CRP PO/MT-XVI on 23 Sep 2026; Mains call letters followed on 24 Sep 2026.",
+      "quote": "23 Sep 2026 | Result Status of Online Preliminary Examination for CRP-PO/MT-XVI",
+      "evidence": [
+        { "type": "phrase", "text": "23 Sep 2026 Result Status of Online Preliminary Examination for CRP-PO/MT-XVI" }
+      ]
+    },
+    {
+      "exam": "IBPS_PO",
+      "sourceId": "ibps-calendar-2026-27",
+      "kind": "EXAM",
+      "date": "2026-10-04",
+      "label": "Mains exam (CRP PO/MT-XVI, tentative)",
+      "notes": "IBPS Tentative Calendar 2026-27 (dated 16.01.2026). The Mains call letter is out (24 Sep 2026) — the date on it is final.",
+      "quote": "Main Examination | Probationary Officers/ Management Trainees (PO/MT): 4th October 2026",
+      "evidence": [
+        { "type": "cell", "row": "Main Examination", "col": "Probationary Officers", "value": "4th October 2026" }
+      ]
+    },
+    {
+      "exam": "IBPS_CLERK",
+      "sourceId": "ibps-calendar-2026-27",
+      "kind": "EXAM",
+      "date": "2026-10-10",
+      "label": "Prelims exam — day 1 of 2 (CRP CSA-XVI, tentative)",
+      "notes": "IBPS Tentative Calendar 2026-27 (dated 16.01.2026): CSA prelims on 10 and 11 Oct 2026. Your date is on your call letter.",
+      "quote": "Preliminary Examination | Customer Service Associates (CSA): 10th and 11th October 2026",
+      "evidence": [
+        { "type": "cell", "row": "Preliminary Examination", "col": "Customer Service Associates", "value": "10th and 11th October 2026" }
+      ]
+    },
+    {
+      "exam": "IBPS_CLERK",
+      "sourceId": "ibps-calendar-2026-27",
+      "kind": "EXAM",
+      "date": "2026-10-11",
+      "label": "Prelims exam — day 2 of 2 (CRP CSA-XVI, tentative)",
+      "notes": "IBPS Tentative Calendar 2026-27 (dated 16.01.2026): CSA prelims on 10 and 11 Oct 2026.",
+      "quote": "Preliminary Examination | Customer Service Associates (CSA): 10th and 11th October 2026",
+      "evidence": [
+        { "type": "cell", "row": "Preliminary Examination", "col": "Customer Service Associates", "value": "10th and 11th October 2026" }
+      ]
+    },
+    {
+      "exam": "IBPS_CLERK",
+      "sourceId": "ibps-calendar-2026-27",
+      "kind": "EXAM",
+      "date": "2026-12-27",
+      "label": "Mains exam (CRP CSA-XVI, tentative)",
+      "notes": "IBPS Tentative Calendar 2026-27 (dated 16.01.2026).",
+      "quote": "Main Examination | Customer Service Associates (CSA): 27th December 2026",
+      "evidence": [
+        { "type": "cell", "row": "Main Examination", "col": "Customer Service Associates", "value": "27th December 2026" }
+      ]
+    },
+    {
+      "exam": "IBPS_RRB",
+      "sourceId": "ibps-rrb15-extension",
+      "kind": "APPLICATION_END",
+      "date": "2026-09-27",
+      "label": "Online registration closes, extended (CRP RRBs-XV, all posts)",
+      "notes": "IBPS corrigendum dated 21.09.2026: online registration and fee payment extended from 01.09.2026-21.09.2026 to 01.09.2026-27.09.2026.",
+      "quote": "Website Link Open for Online Registration of Applications and Payment of Fees/Intimation Charges | Existing dates: 01.09.2026 to 21.09.2026 | Revised Dates: 01.09.2026 to 27.09.2026",
+      "evidence": [
+        { "type": "phrase", "text": "It has been decided to extend the period of online registration of applications for CRP RRBs XV" },
+        { "type": "line", "tokens": ["Existing dates", "Revised Dates"] },
+        { "type": "line", "tokens": ["27.09.2026"] }
+      ]
+    },
+    {
+      "exam": "IBPS_RRB",
+      "sourceId": "ibps-calendar-2026-27",
+      "kind": "EXAM",
+      "date": "2026-11-21",
+      "label": "Officer Scale I Prelims — day 1 of 2 (CRP RRBs-XV, tentative)",
+      "notes": "IBPS Tentative Calendar 2026-27 (dated 16.01.2026): Officer Scale I prelims on 21 and 22 Nov 2026.",
+      "quote": "Preliminary Examination | Officer Scale I: 21st and 22nd November 2026",
+      "evidence": [
+        { "type": "cell", "row": "Preliminary Examination", "col": "Officer Scale I", "value": "21st and 22nd November 2026" }
+      ]
+    },
+    {
+      "exam": "IBPS_RRB",
+      "sourceId": "ibps-calendar-2026-27",
+      "kind": "EXAM",
+      "date": "2026-11-22",
+      "label": "Officer Scale I Prelims — day 2 of 2 (CRP RRBs-XV, tentative)",
+      "notes": "IBPS Tentative Calendar 2026-27 (dated 16.01.2026): Officer Scale I prelims on 21 and 22 Nov 2026.",
+      "quote": "Preliminary Examination | Officer Scale I: 21st and 22nd November 2026",
+      "evidence": [
+        { "type": "cell", "row": "Preliminary Examination", "col": "Officer Scale I", "value": "21st and 22nd November 2026" }
+      ]
+    },
+    {
+      "exam": "IBPS_RRB",
+      "sourceId": "ibps-calendar-2026-27",
+      "kind": "EXAM",
+      "date": "2026-12-06",
+      "label": "Office Assistant Prelims — day 1 of 3 (CRP RRBs-XV, tentative)",
+      "notes": "IBPS Tentative Calendar 2026-27 (dated 16.01.2026): Office Assistant prelims on 6, 12 and 13 Dec 2026.",
+      "quote": "Preliminary Examination | Office Assistants: 6th, 12th and 13th December 2026",
+      "evidence": [
+        { "type": "cell", "row": "Preliminary Examination", "col": "Office Assistants", "value": "6th, 12th and 13th December 2026" }
+      ]
+    },
+    {
+      "exam": "IBPS_RRB",
+      "sourceId": "ibps-calendar-2026-27",
+      "kind": "EXAM",
+      "date": "2026-12-12",
+      "label": "Office Assistant Prelims — day 2 of 3 (CRP RRBs-XV, tentative)",
+      "notes": "IBPS Tentative Calendar 2026-27 (dated 16.01.2026): Office Assistant prelims on 6, 12 and 13 Dec 2026.",
+      "quote": "Preliminary Examination | Office Assistants: 6th, 12th and 13th December 2026",
+      "evidence": [
+        { "type": "cell", "row": "Preliminary Examination", "col": "Office Assistants", "value": "6th, 12th and 13th December 2026" }
+      ]
+    },
+    {
+      "exam": "IBPS_RRB",
+      "sourceId": "ibps-calendar-2026-27",
+      "kind": "EXAM",
+      "date": "2026-12-13",
+      "label": "Office Assistant Prelims — day 3 of 3 (CRP RRBs-XV, tentative)",
+      "notes": "IBPS Tentative Calendar 2026-27 (dated 16.01.2026): Office Assistant prelims on 6, 12 and 13 Dec 2026.",
+      "quote": "Preliminary Examination | Office Assistants: 6th, 12th and 13th December 2026",
+      "evidence": [
+        { "type": "cell", "row": "Preliminary Examination", "col": "Office Assistants", "value": "6th, 12th and 13th December 2026" }
+      ]
+    },
+    {
+      "exam": "IBPS_RRB",
+      "sourceId": "ibps-calendar-2026-27",
+      "kind": "EXAM",
+      "date": "2026-12-20",
+      "label": "Officer Scale I Mains exam (CRP RRBs-XV, tentative)",
+      "notes": "IBPS Tentative Calendar 2026-27 (dated 16.01.2026).",
+      "quote": "Main/ Single Examination | Officer Scale I: 20th December 2026",
+      "evidence": [
+        { "type": "cell", "row": "Main/ Single Examination", "col": "Officer Scale I", "value": "20th December 2026" }
+      ]
+    },
+    {
+      "exam": "IBPS_RRB",
+      "sourceId": "ibps-calendar-2026-27",
+      "kind": "EXAM",
+      "date": "2026-12-20",
+      "label": "Officer Scale II & III single exam (CRP RRBs-XV, tentative)",
+      "notes": "IBPS Tentative Calendar 2026-27 (dated 16.01.2026): Scale II and III have no preliminary exam.",
+      "quote": "Preliminary Examination | Officer Scale II and III: NA | Main/ Single Examination | Officer Scale II and III: 20th December 2026",
+      "evidence": [
+        { "type": "cell", "row": "Main/ Single Examination", "col": "Officer Scale II and III", "value": "20th December 2026" }
+      ]
+    },
+    {
+      "exam": "IBPS_RRB",
+      "sourceId": "ibps-calendar-2026-27",
+      "kind": "EXAM",
+      "date": "2027-01-30",
+      "label": "Office Assistant Mains exam (CRP RRBs-XV, tentative)",
+      "notes": "IBPS Tentative Calendar 2026-27 (dated 16.01.2026).",
+      "quote": "Main/ Single Examination | Office Assistants: 30th January 2027",
+      "evidence": [
+        { "type": "cell", "row": "Main/ Single Examination", "col": "Office Assistants", "value": "30th January 2027" }
+      ]
+    },
+    {
+      "exam": "TN_TNPSC_GROUP4",
+      "sourceId": "tnpsc-annual-planner-2026",
+      "kind": "NOTIFICATION",
+      "date": "2026-10-06",
+      "label": "Group IV notification (tentative, TNPSC annual planner)",
+      "notes": "TNPSC Annual Planner 2026 (published 03.12.2025): Combined Civil Services Examination - IV (Group IV Services). The planner is tentative and says the vacancies will be announced in the notification; the notification itself is final.",
+      "quote": "6 | Combined Civil Services Examination – IV (Group IV Services) | Date of Notification: 06.10.2026 | Date of Commencement of Examination: 20.12.2026 | No. of Days of Examination: 1",
+      "evidence": [
+        { "type": "cell", "row": "(Group IV Services)", "col": "Date of Notification", "value": "06.10.2026" },
+        { "type": "phrase", "text": "Publication Date : 03.12.2025" },
+        { "type": "phrase", "text": "This planner is tentative" },
+        { "type": "phrase", "text": "The vacancies will be announced in the notification." }
+      ]
+    },
+    {
+      "exam": "TN_TNPSC_GROUP4",
+      "sourceId": "tnpsc-annual-planner-2026",
+      "kind": "EXAM",
+      "date": "2026-12-20",
+      "label": "Group IV written exam (tentative, TNPSC annual planner)",
+      "notes": "TNPSC Annual Planner 2026 (published 03.12.2025): 1 day. The planner is tentative; the notification and hall ticket are final.",
+      "quote": "6 | Combined Civil Services Examination – IV (Group IV Services) | Date of Commencement of Examination: 20.12.2026 | No. of Days of Examination: 1",
+      "evidence": [
+        { "type": "cell", "row": "(Group IV Services)", "col": "Date of Commencement of Examination", "value": "20.12.2026" }
+      ]
+    },
+    {
+      "exam": "UP_UPPSC_PCS",
+      "sourceId": "uppsc-calendar-2026",
+      "kind": "EXAM",
+      "date": "2026-12-06",
+      "label": "PCS Prelims 2026 exam (tentative, UPPSC calendar)",
+      "notes": "UPPSC Exam Calendar 2026 (notice dated 30 Jan 2026), row 76: Combined State/Upper Subordinate Services (Preliminary) Examination-2026 on Sunday 6 Dec 2026. UPPSC says the dates are tentative.",
+      "quote": "76. | सम्मिलित राज्य/प्रवर अधीनस्थ सेवा (प्रारम्भिक) परीक्षा–2026 | प्रस्तावित परीक्षा तिथि: 06.12.2026 (रविवार)",
+      "evidence": [
+        { "type": "line", "tokens": ["76.", "06.12.2026"] }
+      ]
+    },
+    {
+      "exam": "RJ_RPSC_RAS",
+      "sourceId": "rpsc-press-note-2026-07-02",
+      "kind": "EXAM",
+      "date": "2026-12-06",
+      "label": "RAS Prelims 2026 exam (revised date, proposed by RPSC)",
+      "notes": "RPSC press note dated 02.07.2026, which says the exams are proposed (प्रस्तावित) on these dates: Rajasthan State and Subordinate Services Combined Competitive (Preliminary) Examination 2026 on Sunday 6 Dec 2026 (earlier date 29 Nov 2026).",
+      "quote": "1. | राजस्थान राज्य एवं अधीनस्थ सेवाएं संयुक्त प्रतियोगी (प्रारंभिक) परीक्षा, 2026 | कार्मिक विभाग | 06.12.2026 (रविवार) (पूर्व परीक्षा तिथि 29.11.2026)",
+      "evidence": [
+        { "type": "line", "tokens": ["dkfeZd foHkkx", "06-12-2026"] },
+        { "type": "line", "tokens": ["29-11-2026"] }
+      ]
+    },
+    {
+      "exam": "RJ_RPSC_RAS",
+      "sourceId": "rpsc-press-note-2026-07-02",
+      "kind": "EXAM",
+      "date": "2027-05-01",
+      "label": "RAS Mains 2026 exam — day 1 of 2 (proposed by RPSC)",
+      "notes": "RPSC press note dated 02.07.2026, which says the exams are proposed (प्रस्तावित) on these dates: Rajasthan State and Subordinate Services Combined Competitive (Main) Examination 2026 on 1 and 2 May 2027.",
+      "quote": "4. | राजस्थान राज्य एवं अधीनस्थ सेवाएं संयुक्त प्रतियोगी (मुख्य) परीक्षा, 2026 | कार्मिक विभाग | 01.05.2027 (शनिवार) एवं 02.05.2027 (रविवार)",
+      "evidence": [
+        { "type": "line", "tokens": ["01-05-2027"] }
+      ]
+    },
+    {
+      "exam": "RJ_RPSC_RAS",
+      "sourceId": "rpsc-press-note-2026-07-02",
+      "kind": "EXAM",
+      "date": "2027-05-02",
+      "label": "RAS Mains 2026 exam — day 2 of 2 (proposed by RPSC)",
+      "notes": "RPSC press note dated 02.07.2026, which says the exams are proposed (प्रस्तावित) on these dates: RAS Mains 2026 on 1 and 2 May 2027.",
+      "quote": "4. | राजस्थान राज्य एवं अधीनस्थ सेवाएं संयुक्त प्रतियोगी (मुख्य) परीक्षा, 2026 | कार्मिक विभाग | 01.05.2027 (शनिवार) एवं 02.05.2027 (रविवार)",
+      "evidence": [
+        { "type": "line", "tokens": ["dkfeZd foHkkx", "02-05-2027"] }
+      ]
+    },
+    {
+      "exam": "BR_BPSC_CCE",
+      "sourceId": "bpsc-exam-calendar-2026-08-14",
+      "kind": "EXAM",
+      "date": "2026-10-25",
+      "label": "72nd CCE Prelims exam (tentative, BPSC exam calendar)",
+      "notes": "BPSC Exam Calendar dated 14-08-2026 (all dates tentative): Integrated CCE 72nd, prelims 25 Oct 2026.",
+      "quote": "11 | 72 CCE | Integrated CCE 72nd | Prelims/MCQ Date: 25-10-2026",
+      "evidence": [
+        { "type": "cell", "row": "Integrated CCE 72nd", "col": "Prelims/MCQ", "value": "25-10-2026" },
+        { "type": "phrase", "text": "Exam Calendar (All dates are tentative) Date: 14-08-2026" }
+      ]
+    }
+  ],
+  "archive": [
+    {
+      "exam": "GATE_CSE",
+      "sourceId": "gate2027-important-dates",
+      "date": "2026-08-27",
+      "label": "GATE 2027 registration begins",
+      "reason": "Wrong date: 27 Aug 2026 is struck through on the official GATE 2027 important-dates page; GOAPS opened 2 Sep 2026 (imported)."
+    },
+    {
+      "exam": "GATE_CSE",
+      "sourceId": "gate2027-important-dates",
+      "date": "2027-02-06",
+      "label": "GATE 2027 CSE Exam (Weekend 1)",
+      "reason": "Cited to testbook.com: IIT Madras has not published which day CS is held ('Exact details of the complete examination schedule will be notified later', GATE 2027 brochure p.5). The official exam window rows replace it."
+    },
+    {
+      "exam": "GATE_CSE",
+      "sourceId": "gate2027-important-dates",
+      "date": "2027-02-14",
+      "label": "GATE 2027 CSE exam (expected)",
+      "reason": "Estimate of a paper-wise date IIT Madras has not published; the official exam window (6-21 Feb 2027) replaces it."
+    },
+    {
+      "exam": "IBPS_RRB",
+      "sourceId": "ibps-rrb15-extension",
+      "date": "2026-09-21",
+      "label": "Application deadline (all posts)",
+      "reason": "Revised by the IBPS corrigendum dated 21.09.2026: registration now closes 27.09.2026 (imported)."
+    },
+    {
+      "exam": "NIFT",
+      "sourceId": "nta-calendar-2026-09-16",
+      "date": "2027-01-16",
+      "label": "NIFT 2027 application deadline without late fee (expected)",
+      "reason": "Impossible estimate: dated after the NTA-announced NIFT entrance exam (10 Jan 2027)."
+    },
+    {
+      "exam": "NIFT",
+      "sourceId": "nta-calendar-2026-09-16",
+      "date": "2027-01-19",
+      "label": "NIFT 2027 application deadline with late fee (expected)",
+      "reason": "Impossible estimate: dated after the NTA-announced NIFT entrance exam (10 Jan 2027)."
+    },
+    {
+      "exam": "NIFT",
+      "sourceId": "nta-calendar-2026-09-16",
+      "date": "2027-01-21",
+      "label": "NIFT 2027 application correction window (expected)",
+      "reason": "Impossible estimate: dated after the NTA-announced NIFT entrance exam (10 Jan 2027)."
+    },
+    {
+      "exam": "NIFT",
+      "sourceId": "nta-calendar-2026-09-16",
+      "date": "2027-01-29",
+      "label": "NIFT 2027 city intimation slip (expected)",
+      "reason": "Impossible estimate: dated after the NTA-announced NIFT entrance exam (10 Jan 2027)."
+    },
+    {
+      "exam": "NIFT",
+      "sourceId": "nta-calendar-2026-09-16",
+      "date": "2027-02-04",
+      "label": "NIFT 2027 Stage 1 admit card (expected)",
+      "reason": "Impossible estimate: dated after the NTA-announced NIFT entrance exam (10 Jan 2027)."
+    },
+    {
+      "exam": "NIFT",
+      "sourceId": "nta-calendar-2026-09-16",
+      "date": "2027-02-14",
+      "label": "NIFT 2027 Stage 1 exam - GAT & CAT (expected)",
+      "reason": "Contradicted: NTA's calendar puts the NIFT Entrance Examination on 10 Jan 2027 (imported)."
+    }
+  ],
+  "noExamRow": [
+    { "name": "Engineering Services (Preliminary) Examination, 2027", "body": "UPSC", "sourceId": "upsc-calendar-2027", "facts": "Notification 16.09.2026; last date 06.10.2026; exam 31.01.2027 (Sunday), 1 day" },
+    { "name": "Engineering Services (Main) Examination, 2027", "body": "UPSC", "sourceId": "upsc-calendar-2027", "facts": "Exam 18.06.2027 (Friday), 1 day" },
+    { "name": "Combined Geo-Scientist (Preliminary) Examination, 2027", "body": "UPSC", "sourceId": "upsc-calendar-2027", "facts": "Notification 02.09.2026; last date 22.09.2026; exam 10.01.2027 (Sunday), 1 day" },
+    { "name": "Combined Geo-Scientist (Main) Examination, 2027", "body": "UPSC", "sourceId": "upsc-calendar-2027", "facts": "Exam 19.06.2027 (Saturday), 2 days" },
+    { "name": "Indian Forest Service (Preliminary) Examination, 2027 through CS(P)", "body": "UPSC", "sourceId": "upsc-calendar-2027", "facts": "Same as CS(P): notification 13.01.2027; last date 02.02.2027; exam 23.05.2027" },
+    { "name": "Indian Forest Service (Main) Examination, 2027", "body": "UPSC", "sourceId": "upsc-calendar-2027", "facts": "Exam 21.11.2027 (Sunday), 7 days" },
+    { "name": "I.E.S./I.S.S. Examination, 2027", "body": "UPSC", "sourceId": "upsc-calendar-2027", "facts": "Notification 10.02.2027; last date 02.03.2027; exam 18.06.2027 (Friday), 3 days" },
+    { "name": "Central Armed Police Forces (ACs) Examination, 2027", "body": "UPSC", "sourceId": "upsc-calendar-2027", "facts": "Notification 17.02.2027; last date 09.03.2027; exam 04.07.2027 (Sunday), 1 day" },
+    { "name": "Combined Medical Services Examination, 2027", "body": "UPSC", "sourceId": "upsc-calendar-2027", "facts": "Notification 03.03.2027; last date 23.03.2027; exam 18.07.2027 (Sunday), 1 day" },
+    { "name": "UGC NET (December Cycle) 2026", "body": "NTA", "sourceId": "nta-calendar-2026-09-16", "facts": "14 - 19 Dec 2026 (buffer: 20 - 21 Dec 2026), 6 days" },
+    { "name": "Joint CSIR UGC NET (December Cycle) 2026", "body": "NTA", "sourceId": "nta-calendar-2026-09-16", "facts": "20 - 21 Dec 2026, 2 days" },
+    { "name": "CUET (PG) 2027", "body": "NTA", "sourceId": "nta-calendar-2026-09-16", "facts": "01 - 05, 08, 12 - 20, 24 - 25 March 2027 (buffer: 30 - 31 March 2027), 17 days" },
+    { "name": "Common Management Admission Test (CMAT) 2027", "body": "NTA", "sourceId": "nta-calendar-2026-09-16", "facts": "07 Feb 2027, 1 day" },
+    { "name": "All India Sainik Schools Entrance Examination 2027", "body": "NTA", "sourceId": "nta-calendar-2026-09-16", "facts": "31 Jan 2027, 1 day" },
+    { "name": "IBPS CRP SPL-XVI (Specialist Officers)", "body": "IBPS", "sourceId": "ibps-calendar-2026-27", "facts": "Prelims 29th August 2026; Main 1st November 2026" },
+    { "name": "GATE 2027 ME / EE / EC / CE / DA papers", "body": "IIT Madras", "sourceId": "gate2027-important-dates", "facts": "Same GATE 2027 window (6, 7, 13, 14, 20, 21 Feb 2027); paper-wise schedule not yet published" }
+  ],
+  "notIncluded": [
+    "SSC Calendar 2026-27 (ssc.gov.in, Tentative_Calendar2026_27_08012026.pdf and the ssc-calendar API): month-level only (e.g. GD 2027 advertisement 'September 2026', exam 'January – March 2027') — no calendar dates to store. SSC CGL 2026 Tier-I (30 Sep - 30 Oct 2026) is already on the tracker from SSC's 12.09.2026 notice.",
+    "NEET UG 2027 and CUET UG 2027: not in NTA's calendar (it runs to March 2027); nothing announced.",
+    "JEE Main 2027 application dates and Session 2: not announced (NTA says a separate Information Bulletin will follow).",
+    "GATE 2027 admit card: 'TBA' on the official page; the existing 3 Jan 2027 estimate is left as an estimate.",
+    "IBPS RRB-XV notification (01.09.2026) gives months only for exams, results and interviews; the calendar's day dates are used instead.",
+    "MPSC: mpsc.gov.in/tentative_schedule_for_competitive_exam/19 (read in a browser 27 Sep 2026; page last updated 24-09-2026) lists no 2027 schedule — the latest is the 2026 schedule published 17-10-2025, whose dates later notices have moved (Group C prelims revised to 3 Jan 2027, already on the tracker). Not imported; Rajyaseva Mains 2026 dates on the tracker stay as reported (prepp.in).",
+    "APPSC: the AP Job Calendar 2026 (G.O.Ms.No.81, 22.08.2026, per aggregators) was not found on psc.ap.gov.in / portal-psc.ap.gov.in (its Examination Calendar page lists nothing for 2026-27) — not included.",
+    "TGPSC (Telangana): tspsc.gov.in could not be loaded on 27 Sep 2026 and searches found no calendar on an official host — not included.",
+    "KPSC: KAS 2026-27 already carries curated rows from the KPSC timetable hosted 31-07-2026; nothing new.",
+    "TNPSC Group I / Group II: the planner's dates were overtaken by the notifications — not imported.",
+    "RBI Grade B 2027 and SBI PO/Clerk 2027: no official calendar or 2027 date found (searches of rbi.org.in / sbi.bank.in news on 27 Sep 2026); not included.",
+    "UPPSC RO/ARO 2026: not in the UPPSC Exam Calendar 2026."
+  ]
+}

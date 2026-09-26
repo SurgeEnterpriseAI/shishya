@@ -81,6 +81,14 @@ import { relatedLinks, type RelatedLink } from "@/lib/exam-related-links";
 import { loadSchoolSurface } from "@/lib/school/surface";
 import { CAREERS } from "@/data/careers";
 import { examHasNotes } from "@/lib/page-gates-notes";
+// 27 Sep 2026: one practice rule for the hub, its title, FAQ, sitemap and
+// search (src/lib/exam-practice-state.ts); the no-practice panel's facts.
+import { practiceStateFromCounts, relatedPracticeExams } from "@/lib/exam-practice-state";
+import { practiceCatalog } from "@/lib/db/exam-practice";
+import { officialExamFacts, officialPattern } from "@/lib/official-exam-facts";
+import { noPracticePanel } from "@/lib/no-practice-copy";
+import { NoPracticeExamPanel } from "@/components/NoPracticeExamPanel";
+import { fmtDay } from "@/lib/exam-timeline";
 
 // Honesty line for the Previous Papers cards (7 Sep + 11 Sep 2026).
 // Every PYQ question on the platform is freshly worded in the PATTERN of
@@ -224,6 +232,10 @@ export async function generateMetadata({
   const { loadOfficialPapers: loadOfficialPapersMeta } = await import("@/lib/official-papers-db");
   const hubHasOfficial = (await loadOfficialPapersMeta(exam.id)).some((r) => r.kind !== "answer key" && r.kind !== "listing page");
   const metaGates = await examPageGates(exam.code, GATES_CLOSED);
+  // 27 Sep 2026: the practice rule (src/lib/exam-practice-state.ts) over the
+  // same cached counts the page renders from. No practice → no mock, PYQ or
+  // coach-plan words in the description or keywords.
+  const metaPractice = practiceStateFromCounts({ questions: shared.validatedQuestionCount, systemMocks: shared.systemMocks.length });
   const offers: HubOffers = {
     hasMocks: shared.systemMocks.length > 0,
     hasPyq: shared.pyqYears.length > 0 || hubHasOfficial,
@@ -266,9 +278,30 @@ export async function generateMetadata({
     "AI tutor",
     "a free day-by-day coach plan",
   ].filter((x): x is string => !!x);
-  const descriptionOffer =
-    `Free ${exam.shortName} (${exam.name})${cycleYearText} preparation: ${offerText.slice(0, -1).join(", ")} and ${offerText[offerText.length - 1]} — AI-drafted, checked against the official notification. ` +
-    `${stateCopy}${shared.validatedQuestionCount > 0 ? `Questions available in ${langCopy}. ` : ""}No paywall.`;
+  // 27 Sep 2026: with no practice questions the description names what the
+  // hub holds (dates with their tier, the body's site, the body's own papers
+  // where linked, the AI tutor) and says practice questions are not there.
+  // 27 Sep 2026 (fixer): "No practice questions yet." — it said "Practice
+  // questions are being written", a promise nothing keeps (no scheduled job
+  // in vercel.json writes questions, and bulk AI jobs are on hold).
+  // 27 Sep 2026 (integrate): "exam dates" only when the hub has a date row —
+  // BITSAT passes activation on its syllabus link with no tracker date, and
+  // its description said it held "exam dates with their source tier".
+  const noPracticeHolds = [
+    timeline.length > 0 ? "exam dates with their source tier" : null,
+    officialUrl ? "the conducting body's official site" : null,
+    hubPyqOffer(false, hubHasOfficial),
+    "a free AI tutor",
+  ].filter((x): x is string => !!x);
+  const noPracticeHoldsText =
+    noPracticeHolds.length > 1
+      ? `${noPracticeHolds.slice(0, -1).join(", ")} and ${noPracticeHolds[noPracticeHolds.length - 1]}`
+      : noPracticeHolds[0];
+  const descriptionOffer = metaPractice.hasPractice
+    ? `Free ${exam.shortName} (${exam.name})${cycleYearText} preparation: ${offerText.slice(0, -1).join(", ")} and ${offerText[offerText.length - 1]} — AI-drafted, checked against the official notification. ` +
+      `${stateCopy}${shared.validatedQuestionCount > 0 ? `Questions available in ${langCopy}. ` : ""}No paywall.`
+    : `${exam.shortName} (${exam.name})${cycleYearText} on Shishya: ${noPracticeHoldsText}. ` +
+      `No practice questions yet. ${stateCopy}No paywall.`;
   const description = `${dateCopy}${descriptionOffer}`;
   // The answer lead (26 Sep 2026, G3 — src/lib/answer-lead.ts): the same
   // date decision as the title, the verified pattern, the official site. It
@@ -286,15 +319,20 @@ export async function generateMetadata({
   // Keywords — a wide net mixing English, native-script state name, exam
   // name in native script (transliteration via state's hindi/native name),
   // and the standard long-tail phrases students actually type.
+  // 27 Sep 2026: mock / PYQ / online-test keywords only where the hub has them
+  // (they were on every hub, the 12 with no question included).
   const baseKeywords = [
     `${exam.shortName} syllabus`,
-    `${exam.shortName} mock test`,
-    ...(year !== null ? [`${exam.shortName} mock test ${year}`] : []),
-    `${exam.shortName} previous year papers`,
-    `${exam.shortName} PYQ`,
+    ...(metaPractice.hasPractice
+      ? [
+          `${exam.shortName} mock test`,
+          ...(year !== null ? [`${exam.shortName} mock test ${year}`] : []),
+          `${exam.shortName} free mocks`,
+          `${exam.shortName} online test`,
+        ]
+      : [`${exam.shortName} exam date`, `${exam.shortName} exam pattern`, `${exam.shortName} eligibility`, `${exam.shortName} official website`]),
+    ...(offers.hasPyq ? [`${exam.shortName} previous year papers`, `${exam.shortName} PYQ`] : []),
     `${exam.shortName} preparation`,
-    `${exam.shortName} free mocks`,
-    `${exam.shortName} online test`,
     ...(year !== null ? [`${exam.shortName} ${year}`] : []),
     `${exam.name}`,
     `Shishya ${exam.shortName}`,
@@ -305,13 +343,13 @@ export async function generateMetadata({
     `${st.nativeName} ${exam.shortName}`,
     `${st.hindiName} ${exam.shortName}`,
     ...(year !== null ? [`${exam.shortName} ${st.name} ${year}`] : []),
-    `${st.name} state exam mock test`,
+    ...(metaPractice.hasPractice ? [`${st.name} state exam mock test`] : []),
   ] : [];
   const langKeywords = langs.flatMap((l) => {
     const ln = languageName(l);
     return [
       `${exam.shortName} in ${ln.en}`,
-      `${exam.shortName} mock test in ${ln.en}`,
+      ...(metaPractice.hasPractice ? [`${exam.shortName} mock test in ${ln.en}`] : []),
       `${exam.shortName} ${ln.native}`,
     ];
   });
@@ -353,9 +391,12 @@ export async function generateMetadata({
     metaGates.cutoff ? "కటాఫ్" : null,
     "AI ట్యూటర్",
   ].filter((x): x is string => !!x);
+  // 27 Sep 2026: one offer (a hub with only the AI tutor) reads "… के AI
+  // ट्यूटर", not "… के  और AI ट्यूटर".
+  const hiOfferText = hiOffers.length > 1 ? `${hiOffers.slice(0, -1).join(", ")} और ${hiOffers[hiOffers.length - 1]}` : hiOffers[0];
   const locDescription =
     urlLocale === "hi"
-      ? `${locDateCopy("hi")}${exam.shortName} (${exam.name})${cycleYearText} के ${hiOffers.slice(0, -1).join(", ")} और ${hiOffers[hiOffers.length - 1]} — हिंदी में। ${stateCopy}कोई पेवॉल नहीं।`
+      ? `${locDateCopy("hi")}${exam.shortName} (${exam.name})${cycleYearText} के ${hiOfferText} — हिंदी में। ${stateCopy}कोई पेवॉल नहीं।`
       : urlLocale === "te"
         ? `${locDateCopy("te")}${exam.shortName} (${exam.name})${cycleYearText} ${teOffers.join(", ")} — తెలుగులో. ${stateCopy}పేవాల్ లేదు.`
         : description;
@@ -549,6 +590,11 @@ export default async function ExamPage({
 
   const isEnrolled = !!enrollment;
   const hasContent = validatedQuestionCount > 0;
+  // Practice (27 Sep 2026, src/lib/exam-practice-state.ts): a checked
+  // question or a shared mock. Without it the hub shows the official facts,
+  // one plain line, the AI tutor and related exams with practice — no mock,
+  // PYQ, rank, coach-plan or empty section (NoPracticeExamPanel below).
+  const practice = practiceStateFromCounts({ questions: validatedQuestionCount, systemMocks: systemMocks.length });
   // Discard speculative score boost when user isn't enrolled — no UI uses it.
   const scoreBoost = isEnrolled ? speculativeScoreBoost : null;
   // Exam Week Mode wave 2: what the block knows about THIS student — the
@@ -557,17 +603,20 @@ export default async function ExamPage({
   const examWeekViewer: ExamWeekViewer | null = userId
     ? { enrolled: isEnrolled, shiftDay: shiftDayIso(enrollment?.shiftDate) }
     : null;
-  // Empty-state seed (wave 2): the chat auto-sends the seed as the first
-  // message, so it is a complete ask, not an open-ended prefix.
-  const emptySeed = `I'm preparing for ${exam.shortName} (${exam.name}). There are no ${exam.shortName} practice questions on Shishya yet — ask me what I need (topics, question types, language) so it can be built.`;
+  // 27 Sep 2026: the empty-state seed ("ask me what I need … so it can be
+  // built") went with the Mock Tests empty state — a hub with no practice
+  // renders NoPracticeExamPanel instead of that section.
 
   // Vacancy figure + OFFICIAL source so a student who came to verify "are
   // these vacancies real?" can check at the authoritative site. Raw SQL
   // keeps it independent of the Prisma client typegen. Honest framing:
   // our number is indicative; the link is where the truth lives.
+  // 27 Sep 2026: + the eligibility columns and generatedBy — the no-practice
+  // panel prints eligibility only from a row the official research wrote
+  // (scripts/add-national-exams.ts), never an AI-indicative one.
   const eligRows = await prisma
-    .$queryRaw<{ vacanciesApprox: number | null; vacanciesNote: string | null; officialUrl: string | null; officialName: string | null; generatedAt: Date }[]>`
-      SELECT "vacanciesApprox", "vacanciesNote", "officialUrl", "officialName", "generatedAt"
+    .$queryRaw<{ vacanciesApprox: number | null; vacanciesNote: string | null; officialUrl: string | null; officialName: string | null; generatedAt: Date; minAge: number | null; maxAge: number | null; ageRelaxation: string | null; educationNote: string | null; generatedBy: string | null }[]>`
+      SELECT "vacanciesApprox", "vacanciesNote", "officialUrl", "officialName", "generatedAt", "minAge", "maxAge", "ageRelaxation", "educationNote", "generatedBy"
       FROM "ExamEligibility" WHERE "examId" = ${exam.id} LIMIT 1
     `.catch(() => []);
   const elig = eligRows[0] ?? null;
@@ -685,7 +734,8 @@ export default async function ExamPage({
   const stateInfo2 = lookupState(exam.state);
   // Both names on previous-year content (15 Sep 2026, src/lib/pyq-naming.ts).
   const { loadOfficialPapers: loadOfficialPapersHub } = await import("@/lib/official-papers-db");
-  const hubPageHasOfficial = (await loadOfficialPapersHub(exam.id)).some((r) => r.kind !== "answer key" && r.kind !== "listing page");
+  const hubOfficialRows = await loadOfficialPapersHub(exam.id);
+  const hubPageHasOfficial = hubOfficialRows.some((r) => r.kind !== "answer key" && r.kind !== "listing page");
   // What this hub holds (26 Sep 2026, G3 — the title's rule, src/lib/hub-title.ts).
   const hubOffers: HubOffers = {
     hasMocks: systemMocks.length > 0,
@@ -695,6 +745,37 @@ export default async function ExamPage({
   };
   // Pattern numbers only from a notice read by hand (src/lib/pattern-verified.ts).
   const pattern = verifiedPattern(exam);
+  // The no-practice panel (27 Sep 2026, src/lib/no-practice-copy.ts): the
+  // official facts with their sources — the pattern only while the stored row
+  // agrees with the official research (src/lib/official-exam-facts.ts) or a
+  // hand-read notice, eligibility only from an official-research row — the
+  // next ANNOUNCED dates with their tier word (an estimate is not an official
+  // fact — the Important Dates list below keeps it, labelled), one plain line,
+  // the AI tutor and up to four related exams that HAVE practice.
+  const noPractice = practice.hasPractice
+    ? null
+    : noPracticePanel({
+        locale,
+        examCode: exam.code,
+        examShort: exam.shortName,
+        officialName: elig?.officialName ?? null,
+        officialUrl: officialUrl ?? elig?.officialUrl ?? null,
+        facts: officialExamFacts(exam.code),
+        officialPattern: officialPattern(exam.code, exam),
+        verifiedPattern: pattern,
+        eligibility: elig && (elig.generatedBy ?? "").startsWith("official-research:") ? elig : null,
+        dates: hubDateRows
+          .filter((r) => r.daysFromToday >= 0 && r.tier !== "expected")
+          .slice(0, 6)
+          .map((r) => ({
+            label: r.label,
+            dayText: fmtDay(r.date, locale),
+            tierWord: t(`ew.tier.${r.tier}`),
+            url: r.tier === "official" ? r.url : null,
+          })),
+        related: relatedPracticeExams(exam.code, await practiceCatalog()).map((r) => ({ code: r.code, shortName: r.shortName })),
+        tutorLanguageCount: INDIAN_LANGUAGE_COUNT,
+      });
   // English body on the English URL: the answer lead and the hub's own FAQ
   // questions (the /hi and /te twins keep their localised copy — G3 veto).
   const englishBody = locale === "en" && urlLocale === "en";
@@ -849,10 +930,14 @@ export default async function ExamPage({
     // of the wash so the brand remains intact.
     <main className={`min-h-screen ${theme.pageBg}`}>
       {/* JSON-LD for Google rich-result eligibility */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd) }}
-      />
+      {/* 27 Sep 2026: no Course node for a hub with no practice questions —
+          it offered a free "course" of mocks the page does not hold. */}
+      {practice.hasPractice && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd) }}
+        />
+      )}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
@@ -934,12 +1019,19 @@ export default async function ExamPage({
               <span className="font-normal text-ink-500">({t(`ew.tier.${nextExamDay.tier}`)})</span>
             </span>
           )}
-          <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.totalQuestions} {t("exam.totalQs")}</span>
-          <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.totalMarks} {t("exam.marks")}</span>
-          <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.durationMin} {t("exam.minutes")}</span>
-          <span className="rounded-full bg-white border border-ink-200 px-3 py-1">
-            {t("exam.negative")}: {exam.negativeMark === 0 ? t("exam.no.negative") : `−${formatNegativeMark(exam.negativeMark)}`}
-          </span>
+          {/* 27 Sep 2026: on a hub with no practice questions the stored
+              pattern columns are not chips — the no-practice panel states the
+              pattern with its source, and only while the row agrees with it. */}
+          {practice.hasPractice && (
+            <>
+              <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.totalQuestions} {t("exam.totalQs")}</span>
+              <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.totalMarks} {t("exam.marks")}</span>
+              <span className="rounded-full bg-white border border-ink-200 px-3 py-1">{exam.durationMin} {t("exam.minutes")}</span>
+              <span className="rounded-full bg-white border border-ink-200 px-3 py-1">
+                {t("exam.negative")}: {exam.negativeMark === 0 ? t("exam.no.negative") : `−${formatNegativeMark(exam.negativeMark)}`}
+              </span>
+            </>
+          )}
           {/* Deep links to the dedicated SEO landings — also internal-link
               equity for the "[exam] syllabus/cutoff" pages. Each sub-page
               pill only where that page renders (gates, 16 Sep 2026). */}
@@ -992,12 +1084,16 @@ export default async function ExamPage({
               📖 How to crack it
             </Link>
           )}
-          <Link
-            href="/revision"
-            className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
-          >
-            🔁 Mistake Notebook
-          </Link>
+          {/* The Mistake Notebook holds questions answered wrong — none can
+              exist for an exam with no practice (27 Sep 2026). */}
+          {practice.hasPractice && (
+            <Link
+              href="/revision"
+              className="rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1 font-medium text-saffron-800 hover:bg-saffron-100"
+            >
+              🔁 Mistake Notebook
+            </Link>
+          )}
           {["GOVT_JOBS", "BANKING", "STATE_LEVEL"].includes(exam.category) && (
             <Link
               href="/typing"
@@ -1102,7 +1198,9 @@ export default async function ExamPage({
             motivating true sentence we can show on an exam page. */}
         <PeerProofLine proof={peerProof} examShort={exam.shortName} variant="exam" />
 
-        {!hasCoachPlan && <CoachEntry examCode={exam.code} examShort={exam.shortName} />}
+        {/* 27 Sep 2026: no coach door on a hub with no practice — the plan's
+            menu is a full mock, a Daily 5 and topic drills (src/lib/coach-plan.ts). */}
+        {!hasCoachPlan && practice.hasPractice && <CoachEntry examCode={exam.code} examShort={exam.shortName} />}
 
         {/* Plan-holders don't get re-asked — they get their plan back:
             the next-task breadcrumb (client-side; renders nothing for
@@ -1248,7 +1346,12 @@ export default async function ExamPage({
           />
         )}
 
-        {/* Action panel */}
+        {/* Action panel. 27 Sep 2026: a hub with no practice questions gets the
+            official-facts panel in its place (src/lib/no-practice-copy.ts) —
+            it said "We're seeding questions for this exam. Check back soon." */}
+        {noPractice ? (
+          <NoPracticeExamPanel model={noPractice} />
+        ) : (
         <div className="mt-8 rounded-md border border-ink-200 bg-white p-6">
           {!hasContent ? (
             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1314,6 +1417,7 @@ export default async function ExamPage({
             </p>
           )}
         </div>
+        )}
 
         {/* ── Deep content (eligibility / cutoffs / paper analysis / salary)
             ───────────────────────────────────────────────────────────
@@ -1339,8 +1443,10 @@ export default async function ExamPage({
           pyqYears={pyqYears
             .map((y) => y.pyqYear)
             .filter((n): n is number => typeof n === "number")}
-          durationMin={pattern ? pattern.durationMin : null}
+          durationMin={pattern && practice.hasPractice ? pattern.durationMin : null}
           hasOfficialPapers={hubPageHasOfficial}
+          hasPractice={practice.hasPractice}
+          hasOfficialFacts={officialExamFacts(exam.code) != null}
           locale={locale}
           extraItems={hubFaqExtra}
         />
@@ -1349,20 +1455,27 @@ export default async function ExamPage({
         <div className="lg:col-span-2 min-w-0">
 
         {/* ── Previous Papers ─────────────────────────────────────────── */}
+        {/* 27 Sep 2026: with no practice the section renders only for the
+            conducting body's own papers — no "0 questions", no empty line. */}
+        {(practice.hasPractice || hubOfficialRows.length > 0) && (
         <section id="pyqs" className="mt-10 scroll-mt-20">
           <div className="flex items-baseline justify-between">
             <h2 className="text-base font-semibold text-ink-800">{t("exam.pyq.title")}</h2>
-            <span className="text-xs text-ink-500">
-              {pyqYears.reduce((a, r) => a + r._count, 0)} {t("exam.pyq.totalQs")}
-            </span>
+            {practice.hasPractice && (
+              <span className="text-xs text-ink-500">
+                {pyqYears.reduce((a, r) => a + r._count, 0)} {t("exam.pyq.totalQs")}
+              </span>
+            )}
           </div>
           {/* The real papers first (14 Sep 2026): students and ChatGPT look for
               them, and the sets below are pattern practice, never the paper. */}
           <OfficialPapersBlock examId={exam.id} />
           {pyqYears.length === 0 ? (
-            <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
-              {t("exam.pyq.empty")}
-            </p>
+            practice.hasPractice ? (
+              <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
+                {t("exam.pyq.empty")}
+              </p>
+            ) : null
           ) : (
             <>
               {/* Honesty (11 Sep 2026): none of these is the paper. Every
@@ -1400,8 +1513,12 @@ export default async function ExamPage({
             </>
           )}
         </section>
+        )}
 
         {/* ── Mock Tests ──────────────────────────────────────────────── */}
+        {/* 27 Sep 2026: only with practice — the no-practice panel above says
+            plainly that there are no practice questions yet. */}
+        {practice.hasPractice && (
         <section id="mocks" className="mt-10 scroll-mt-20">
           <div className="flex items-baseline justify-between">
             <h2 className="text-base font-semibold text-ink-800">{t("exam.mocks.title")}</h2>
@@ -1429,24 +1546,10 @@ export default async function ExamPage({
               <a href="#subject-tests" className="font-semibold underline underline-offset-2">Pick a subject test ↓</a>
             </div>
           )}
-          {systemMocks.length === 0 && validatedQuestionCount === 0 ? (
-            /* Exam Week Mode wave 2 — honest empty state: no validated
-               questions AND no shared mocks. Instead of "being curated",
-               the student tells the tutor what they need (the chat seed is
-               auto-sent as the first message) and gets one email when it
-               is live. nofollow: the chat is a per-student surface. */
-            <div className="mt-3 rounded-xl border-2 border-dashed border-saffron-300 bg-white px-4 py-5">
-              <p className="text-sm font-bold text-ink-900">{String(t("ew.empty.title")).replace("{exam}", exam.shortName)}</p>
-              <p className="mt-1 text-sm text-ink-700">{String(t("ew.empty.body")).replace(/\{exam\}/g, exam.shortName)}</p>
-              <Link
-                rel="nofollow"
-                href={`/chat?examCode=${exam.code}&seed=${encodeURIComponent(emptySeed)}`}
-                className="mt-3 inline-block rounded-lg bg-saffron-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-saffron-600"
-              >
-                💬 {t("ew.empty.cta")} →
-              </Link>
-            </div>
-          ) : systemMocks.length === 0 ? (
+          {/* The "no validated questions AND no shared mocks" empty state (Exam
+              Week Mode wave 2) moved out on 27 Sep 2026: that exam has no
+              practice, so this section does not render (NoPracticeExamPanel). */}
+          {systemMocks.length === 0 ? (
             <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">
               {t("exam.mocks.empty")}
             </p>
@@ -1514,6 +1617,7 @@ export default async function ExamPage({
             </div>
           )}
         </section>
+        )}
 
         {/* ── Practice by subject (gap-fill #1) ─────────────────────────
             Users asked for longer subject-wise tests verbatim. One tap per
@@ -1572,6 +1676,9 @@ export default async function ExamPage({
         )}
 
         {/* ── Rank & Leaderboard ──────────────────────────────────────── */}
+        {/* 27 Sep 2026: no rank section without practice (nothing to rank)
+            unless this student somehow holds a scored attempt. */}
+        {(practice.hasPractice || myBest) && (
         <section id="rank" className="mt-10 scroll-mt-20">
           <div className="flex items-baseline justify-between">
             <h2 className="text-base font-semibold text-ink-800">{t("exam.rank.title")}</h2>
@@ -1626,6 +1733,7 @@ export default async function ExamPage({
             </div>
           )}
         </section>
+        )}
 
         {/* ── Performance Analysis ────────────────────────────────────── */}
         {recent.length > 0 && (
@@ -1854,10 +1962,13 @@ export default async function ExamPage({
           </section>
         )}
 
-        {/* Syllabus */}
+        {/* Syllabus. 27 Sep 2026: only with subjects (it was an empty heading
+            on the 12 hubs with none); the "notes + topic test" hint only with
+            practice questions. */}
+        {exam.subjects.length > 0 && (
         <section id="syllabus" data-tour="exam-syllabus" className="mt-10 scroll-mt-20">
           <h2 className="text-base font-semibold text-ink-800">{t("exam.syllabus")}</h2>
-          <p className="mt-1 text-xs text-ink-500">{t("exam.syllabus.clickHint")}</p>
+          {practice.hasPractice && <p className="mt-1 text-xs text-ink-500">{t("exam.syllabus.clickHint")}</p>}
           <div className="mt-4 space-y-6">
             {exam.subjects.map((s) => (
               <div key={s.id}>
@@ -1885,6 +1996,7 @@ export default async function ExamPage({
             ))}
           </div>
         </section>
+        )}
 
         </div>{/* /lg:col-span-2 */}
 
@@ -2080,7 +2192,9 @@ export default async function ExamPage({
           surface="exam"
           promptKey={`exam-${exam.code}`}
           prompt={`What's missing here for your ${exam.shortName} prep?`}
-          chips={["More PYQs", "A full study path", "Cutoff clarity", "Nothing — it's enough"]}
+          /* 27 Sep 2026: "More PYQs" read as if some existed on a hub with no
+             practice; there the first chip asks for practice questions. */
+          chips={[practice.hasPractice ? "More PYQs" : "Practice questions", "A full study path", "Cutoff clarity", "Nothing — it's enough"]}
           signedIn={!!userId}
           examCode={exam.code}
         />
@@ -2098,7 +2212,8 @@ export default async function ExamPage({
           came from search to READ content (cutoffs, syllabus, PYQ) —
           it hurts dwell time + bounce. Signed-in users have committed
           to the platform and benefit from the orientation. */}
-      {userId && (
+      {/* 27 Sep 2026: its steps point at Start Mock — only with practice. */}
+      {userId && practice.hasPractice && (
       <PageTour
         tourId="exam-v1"
         steps={[

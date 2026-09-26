@@ -31,6 +31,7 @@ import { liveExamCategories } from "@/lib/exam-categories";
 import { loadSubjectHubs } from "@/lib/db/subject-hubs-db";
 import { subjectHubIndexRows } from "@/lib/subject-hubs";
 import { buildSearchIndex, toLiteIndex, type SearchExamRow, type SearchIndexInputs, type SearchTopicRow } from "./index-core";
+import { practiceStateFromCounts } from "@/lib/exam-practice-state";
 import { resolveQuery } from "./resolve";
 import type { ExamGatesLike, Resolution, SearchIndex } from "./types";
 
@@ -47,7 +48,8 @@ async function readExams(): Promise<SearchExamRow[]> {
       category: true,
       state: true,
       candidatesPerYear: true,
-      _count: { select: { questions: { where: { validated: true } }, mocks: { where: { userId: null } } } },
+      // 27 Sep 2026: shared mocks as the hub counts them — live-test papers excluded.
+      _count: { select: { questions: { where: { validated: true } }, mocks: { where: { userId: null, NOT: { generatedBy: "live-test" } } } } },
     },
   });
   return rows.map((e) => ({
@@ -57,8 +59,11 @@ async function readExams(): Promise<SearchExamRow[]> {
     category: String(e.category),
     state: e.state ?? null,
     candidatesPerYear: e.candidatesPerYear ?? null,
-    // The hub's practice sections render for an exam with checked questions or a system mock (page.tsx loadExamsRaw).
-    live: (e._count?.questions ?? 0) > 0 || (e._count?.mocks ?? 0) > 0,
+    // The hub's practice sections render for an exam with checked questions or
+    // a shared mock — 27 Sep 2026: the one rule, src/lib/exam-practice-state.ts
+    // (the hub, its FAQ, the sub-pages, context.md, llms-full.txt and the sitemap
+    // read the same). No practice → the search says "Coming" for mocks.
+    live: practiceStateFromCounts({ questions: e._count?.questions, systemMocks: e._count?.mocks }).hasPractice,
   }));
 }
 

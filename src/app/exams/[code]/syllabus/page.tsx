@@ -33,6 +33,10 @@ import { cache } from "react";
 import { leadDescription, syllabusLead } from "@/lib/answer-lead";
 import { isoDayText, markText, patternCitation, verifiedPattern } from "@/lib/pattern-verified";
 import { latestCheck, freshnessLine } from "@/lib/page-freshness";
+// 27 Sep 2026: the practice rule (src/lib/exam-practice-state.ts) — the
+// diagnostic-mock box, the quiz link and the coach door only with practice.
+import { examPracticeState } from "@/lib/db/exam-practice";
+import { fillNoPractice, noPracticeCopy } from "@/lib/no-practice-copy";
 
 export const revalidate = 3600;
 
@@ -68,11 +72,12 @@ export async function generateMetadata({
     select: { id: true, code: true, shortName: true, name: true, ...PATTERN_SELECT },
   });
   if (!exam) return { title: "Exam syllabus — Shishya" };
-  const [tree, gates, year, site] = await Promise.all([
+  const [tree, gates, year, site, metaPractice] = await Promise.all([
     loadSyllabusTree(exam.id),
     examPageGates(exam.code),
     examTitleYear(exam.code),
     loadOfficialSite(exam.id),
+    examPracticeState(exam.code),
   ]);
   const counts = syllabusCounts(tree);
   const { title, description: baseDescription, keywords } = syllabusPageCopy({
@@ -81,6 +86,7 @@ export async function generateMetadata({
     year,
     ...counts,
     buildMock: gates.buildMock,
+    practice: metaPractice.hasPractice,
   });
   // The answer lead heads the description, ~160 characters in all (26 Sep 2026, G3).
   const lead = syllabusLead({
@@ -170,7 +176,10 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
 
   const counts = syllabusCounts(subjects);
   const topicCount = counts.topicCount;
-  const copy = syllabusPageCopy({ examShort: exam.shortName, examName: exam.name, year, ...counts, buildMock: gates.buildMock });
+  // A syllabus can land before its questions do; a failed read claims none.
+  const practice = await examPracticeState(exam.code);
+  const copy = syllabusPageCopy({ examShort: exam.shortName, examName: exam.name, year, ...counts, buildMock: gates.buildMock, practice: practice.hasPractice });
+  const NP = noPracticeCopy("en");
 
   const lead = syllabusLead({
     short: exam.shortName,
@@ -317,7 +326,9 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
 
         {/* Coach entry — peak intent: the student is looking at the
             whole syllabus and wondering how to get through it. */}
-        <CoachEntry examCode={exam.code} examShort={exam.shortName} variant="syllabus" />
+        {/* 27 Sep 2026: only with practice — the plan's menu is a full mock,
+            a Daily 5 and topic drills (src/lib/coach-plan.ts). */}
+        {practice.hasPractice && <CoachEntry examCode={exam.code} examShort={exam.shortName} variant="syllabus" />}
 
         {subjects.map((s) => (
           <section key={s.code} className="mt-8">
@@ -351,6 +362,16 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
           </section>
         ))}
 
+        {!practice.hasPractice ? (
+          <div className="mt-10 rounded-xl border border-ink-200 bg-white p-5">
+            <p className="text-base font-bold text-ink-900">{fillNoPractice(NP.boxTitle, { exam: exam.shortName })}</p>
+            <p className="mt-1 text-sm text-ink-700">{fillNoPractice(NP.line, { exam: exam.shortName })}</p>
+            <p className="mt-1 text-sm text-ink-700">{fillNoPractice(NP.boxBody, { exam: exam.shortName })}</p>
+            <Link href={`/exams/${exam.code}`} className="btn-secondary mt-3 inline-block !py-2 !px-4 text-sm">
+              {fillNoPractice(NP.boxCta, { exam: exam.shortName })}
+            </Link>
+          </div>
+        ) : (
         <div className="mt-10 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
           <p className="text-base font-bold text-ink-900">
             Don&apos;t just read the syllabus — find out which topics YOU need
@@ -371,6 +392,7 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
             </Link>
           </div>
         </div>
+        )}
       </section>
     </main>
   );

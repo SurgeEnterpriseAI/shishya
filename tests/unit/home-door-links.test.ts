@@ -21,7 +21,7 @@ import { describe, it, expect } from "vitest";
 import type { ExamLike } from "@/lib/exam-categories";
 import { EXAM_CATEGORY_MIN } from "@/lib/exam-categories";
 import { QUALIFICATION_MIN, findQualificationLevel } from "@/lib/exam-qualification";
-import { CLOSING_SOON_MIN, addDays, closingSoon } from "@/lib/scholarship-lists";
+import { CLOSING_SOON_MIN, addDays, closingSoon, isReviewedScheme } from "@/lib/scholarship-lists";
 import { ENTRANCE_GROUPS } from "@/lib/exam-kind";
 import { BOARD_EXAM_HUBS } from "@/data/board-exams";
 import { isBoardExamIndexable } from "@/lib/board-exams";
@@ -114,14 +114,19 @@ describe("home door links — each renders only while its page clears its own fl
     expect(indexableAfterLinks(low)).toEqual([]);
   });
 
-  it("Scholarships closing soon → the page only while CLOSING_SOON_MIN schemes close in the window (real catalogue, every day of a year)", () => {
+  it("Scholarships closing soon → the page only while CLOSING_SOON_MIN schemes close in the window, every one reviewed (real catalogue, every day of a year)", () => {
     for (let i = 0; i < 366; i++) {
       const day = addDays("2026-01-01", i);
-      const n = closingSoon(day).length;
-      expect(closingSoonHref(day), day).toBe(n >= CLOSING_SOON_MIN ? CLOSING_SOON_HREF : null);
+      const list = closingSoon(day);
+      const indexable = list.length >= CLOSING_SOON_MIN && list.every(isReviewedScheme);
+      expect(closingSoonHref(day), day).toBe(indexable ? CLOSING_SOON_HREF : null);
     }
-    // 26 Sep 2026 itself: 3 schemes close by 26 Oct (probe) — below the floor.
-    expect(closingSoon("2026-09-26").length).toBeLessThan(CLOSING_SOON_MIN);
+    // 26 Sep 2026: 3 schemes closed by 26 Oct (probe) — below the floor.
+    // 27 Sep 2026 (official-data wave): Karnataka SSP and PM YASASVI got
+    // official 30 Sep dates, so 5 close by 26 Oct — the floor — but only
+    // PM YASASVI is reviewed: the page is noindex, so no door.
+    expect(closingSoon("2026-09-26").length).toBe(CLOSING_SOON_MIN);
+    expect(closingSoon("2026-09-26").filter(isReviewedScheme).length).toBe(1);
     expect(closingSoonHref("2026-09-26")).toBeNull();
   });
 

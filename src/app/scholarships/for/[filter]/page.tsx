@@ -142,7 +142,7 @@ export default async function ScholarshipListPage({ params }: { params: Promise<
         {reviewLine && <p className="mt-2 max-w-3xl text-xs font-medium text-ink-600">{reviewLine}</p>}
 
         {list.length > 0 ? (
-          <ScholarshipTable rows={list} today={today} />
+          <ScholarshipTable rows={list} today={today} level={filter.level} />
         ) : (
           <p className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-4 py-8 text-center text-sm text-ink-600">
             No open scheme in the catalogue matches this list today.

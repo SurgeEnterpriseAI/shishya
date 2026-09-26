@@ -272,6 +272,13 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
   // A school chat (schoolCtx) enrols nobody: the student's class enrolment
   // belongs to the school profile flow (src/lib/school/student-db.ts), not
   // to the chat.
+  // 27 Sep 2026 (fixer): an enrolment on an exam with NO practice
+  // (src/lib/exam-practice-state.ts) is still made here and by /chat's page
+  // (its picker, switcher and scope are built from enrolments), so the
+  // readers that would promise practice skip such an exam instead: the
+  // Daily-5 mail (src/app/api/cron/daily-five/route.ts), /today and the
+  // dashboard card (src/lib/study-day-five.ts pickDailyFive) and the coach
+  // intake (src/app/coach/page.tsx, src/app/api/coach/route.ts).
   if (exam && userId && !schoolCtx) {
     await ensureEnrollment(userId, exam);
   }

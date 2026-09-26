@@ -6,6 +6,7 @@
 import Link from "next/link";
 import { scholarshipsForExam, type Scholarship } from "@/data/scholarships";
 import { scholarshipAmountHead } from "@/lib/scholarship-amount";
+import { isOfferedScheme } from "@/lib/scholarship-schemes";
 
 export function ScholarshipsForExamSection({
   examCode,
@@ -21,6 +22,12 @@ export function ScholarshipsForExamSection({
 }) {
   // 1) Exam-targeted matches (relevantExamCodes / requiresExam / category heuristic)
   let matched: Scholarship[] = scholarshipsForExam(examCode, examCategory);
+
+  // 27 Sep 2026 (fixer): only schemes Shishya offers (src/lib/scholarship-schemes.ts
+  // isOfferedScheme) — scholarshipsForExam reads the raw catalogue, so the
+  // sidebar could show the outside aggregator, a discontinued scheme or a
+  // row held out as not a scholarship / not found.
+  matched = matched.filter(isOfferedScheme);
 
   // 2) For state-level exams, also fold in state-specific scholarships
   //    (e.g. TN exam → Tamil Nadu Medical Free Tuition).

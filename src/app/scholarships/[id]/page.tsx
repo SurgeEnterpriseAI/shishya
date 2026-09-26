@@ -34,6 +34,17 @@
 //     Endeavour) says so at the top, drops "Apply" from its title, is
 //     noindex,follow and is left out of the related block and every list;
 //   • hourly ISR (was daily): the date line turns "closed on" the day after.
+// 27 Sep 2026 (fixer): a row marked Scholarship.unlisted (not a scholarship,
+// not found on any official page, or its status in doubt —
+// src/lib/scholarship-schemes.ts unlistedKind) was rendered like any scheme:
+// indexable, an Apply button, MonetaryGrant and FAQPage markup. Its URL still
+// answers, but the page now leads with the reason ("Not listed on Shishya"),
+// is noindex,follow, and carries no Apply button, no save button, no
+// MonetaryGrant / FAQ / WebPage markup and no visible FAQ; for a "not found"
+// row it also prints none of the row's own claims (amount, eligibility,
+// description, exams) — nothing there could be vouched for. Static params
+// come from SCHOLARSHIP_SCHEMES, which no longer holds these rows, so they
+// render on demand.
 
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -42,7 +53,7 @@ import { Header } from "@/components/Header";
 import { ExamChip } from "@/components/ExamChip";
 import { SaveScholarshipButton } from "@/components/SaveScholarshipButton";
 import { SCHOLARSHIPS, type Scholarship } from "@/data/scholarships";
-import { SCHOLARSHIP_SCHEMES, isAggregatorListing } from "@/lib/scholarship-schemes";
+import { SCHOLARSHIP_SCHEMES, isAggregatorListing, unlistedKind, type UnlistedKind } from "@/lib/scholarship-schemes";
 import { loadLiveExams } from "@/lib/live-exam-codes";
 import { relatedScholarships } from "@/lib/section-related";
 import { clipDescription } from "@/lib/section-seo";
@@ -60,6 +71,13 @@ function findScholarship(id: string): Scholarship | undefined {
   return SCHOLARSHIPS.find((s) => s.id === id);
 }
 
+/** Title word for an unlisted row (27 Sep 2026 fixer). */
+const UNLISTED_TITLE: Record<UnlistedKind, string> = {
+  "not-scholarship": "Not a Scholarship",
+  "not-found": "Not Verified",
+  "in-doubt": "Status Unconfirmed",
+};
+
 export async function generateMetadata({
   params,
 }: { params: Promise<PageParams> }): Promise<Metadata> {
@@ -68,6 +86,16 @@ export async function generateMetadata({
   if (!s) return { title: "Scholarship not found — Shishya" };
   // An aggregator listing redirects to /scholarships (see the page below).
   if (isAggregatorListing(s)) return { title: "Scholarships in India | Shishya", robots: { index: false, follow: true } };
+  // An unlisted row (27 Sep 2026 fixer): the reason, noindex — never "Apply".
+  const unlisted = unlistedKind(s);
+  if (unlisted) {
+    return {
+      title: `${s.name} — ${UNLISTED_TITLE[unlisted]} | Shishya`,
+      description: clipDescription(`${s.name} is not listed on Shishya. ${s.unlisted ?? ""}`),
+      alternates: { canonical: `https://shishya.in/scholarships/${id}` },
+      robots: { index: false, follow: true },
+    };
+  }
   const year = new Date().getUTCFullYear();
   const open = isOpenScheme(s);
   const title = open ? `${s.name} ${year} — Eligibility, Amount, Apply | Shishya` : `${s.name} — Discontinued, No New Applications | Shishya`;
@@ -117,6 +145,9 @@ export default async function ScholarshipDetailPage({
   const s = findScholarship(id);
   if (!s) notFound();
   if (isAggregatorListing(s)) permanentRedirect("/scholarships");
+  // 27 Sep 2026 (fixer): held out of the catalogue — see the header note.
+  const unlisted = unlistedKind(s);
+  const vouched = unlisted !== "not-found";
   const [live] = await Promise.all([loadLiveExams()]);
   // 26 Sep 2026 (G4): never offer a discontinued scheme as "related".
   const related = relatedScholarships(s, SCHOLARSHIP_SCHEMES, 8).filter(isOpenScheme).slice(0, 6);
@@ -179,10 +210,10 @@ export default async function ScholarshipDetailPage({
 
   return (
     <main className="min-h-screen bg-ink-50/40">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(grantJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      {!unlisted && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(grantJsonLd) }} />}
+      {!unlisted && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      {pageJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }} />}
+      {pageJsonLd && !unlisted && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }} />}
       <Header />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
@@ -194,10 +225,19 @@ export default async function ScholarshipDetailPage({
           <span className="rounded bg-saffron-100 px-2 py-0.5 text-[10px] font-medium text-saffron-800">
             {s.type.replace(/_/g, " ")}
           </span>
-          <SaveScholarshipButton scholarshipId={s.id} scholarshipName={s.name} />
+          {!unlisted && <SaveScholarshipButton scholarshipId={s.id} scholarshipName={s.name} />}
         </div>
         <p className="mt-1 text-sm text-ink-500">{s.awardingBody}</p>
-        {/* This year's date line (26 Sep 2026, G4) — official only when read on the portal. */}
+        {/* Not listed (27 Sep 2026 fixer): the reason from the catalogue audit, in place of the date line. */}
+        {unlisted ? (
+        <p className="mt-4 max-w-3xl rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-900">
+          Not listed on Shishya. {s.unlisted}{" "}
+          <Link href="/scholarships" className="font-normal underline">
+            See the scholarships Shishya lists →
+          </Link>
+        </p>
+        ) : (
+        /* This year's date line (26 Sep 2026, G4) — official only when read on the portal. */
         <p
           className={
             s.closed
@@ -215,9 +255,11 @@ export default async function ScholarshipDetailPage({
             </>
           )}
         </p>
-        <p className="mt-4 max-w-3xl text-sm text-ink-700">{s.description}</p>
+        )}
+        {vouched && <p className="mt-4 max-w-3xl text-sm text-ink-700">{s.description}</p>}
 
         {/* Quick facts */}
+        {vouched && (
         <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Fact label="Amount" value={s.amount} />
           <Fact label="Level" value={s.levels.map((l) => LEVEL_LABEL[l]).join(", ")} />
@@ -239,9 +281,10 @@ export default async function ScholarshipDetailPage({
             <Fact label="Requires exam" value={s.eligibility.requiresExam.map((e) => e.replace(/_/g, " ")).join(", ")} />
           )}
         </dl>
+        )}
 
-        {/* Apply CTA — not for a discontinued scheme (26 Sep 2026, G4). */}
-        {!s.closed && (
+        {/* Apply CTA — not for a discontinued scheme (26 Sep 2026, G4), nor an unlisted row (27 Sep 2026 fixer). */}
+        {!s.closed && !unlisted && (
         <div className="mt-6 rounded-lg border border-saffron-200 bg-saffron-50/40 p-5">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-800">
             Apply directly
@@ -272,14 +315,16 @@ export default async function ScholarshipDetailPage({
         )}
 
         {/* Eligibility detail */}
-        {s.eligibility.note && (
+        {vouched && s.eligibility.note && (
           <>
             <h2 className="mt-10 text-base font-semibold text-ink-900">Eligibility</h2>
             <p className="mt-2 text-sm text-ink-700 whitespace-pre-line">{s.eligibility.note}</p>
           </>
         )}
 
-        {/* Questions (26 Sep 2026, G4): the FAQPage items, visible. */}
+        {/* Questions (26 Sep 2026, G4): the FAQPage items, visible — not on an unlisted row. */}
+        {!unlisted && (
+        <>
         <h2 className="mt-10 text-base font-semibold text-ink-900">Questions</h2>
         <dl className="mt-3 space-y-4 text-sm">
           {faq.map((f) => (
@@ -289,9 +334,11 @@ export default async function ScholarshipDetailPage({
             </div>
           ))}
         </dl>
+        </>
+        )}
 
         {/* Related exams */}
-        {s.relevantExamCodes && s.relevantExamCodes.length > 0 && (
+        {vouched && s.relevantExamCodes && s.relevantExamCodes.length > 0 && (
           <>
             <h2 className="mt-10 text-base font-semibold text-ink-900">Relevant for these exams</h2>
             <div className="mt-2 flex flex-wrap gap-2">

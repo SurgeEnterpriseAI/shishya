@@ -16,6 +16,7 @@ import {
   SCHOLARSHIP_LIST_MIN,
   addDays,
   closingSoon,
+  cycleFor,
   cycleLeadLine,
   filterFaq,
   filterLeadLine,
@@ -126,7 +127,7 @@ describe("the six lists (vetoed: undergraduate, postgraduate, separate sc-st / o
 
   it("the page says how many of its rows were re-checked — the list's own count", () => {
     const three = [scheme({ id: "a" }), scheme({ id: "b" }), scheme({ id: "c", reviewed: REVIEWED })];
-    expect(listReviewLine(three)).toMatch(/^1 of these 3 rows were re-checked against the awarding body's own page; /);
+    expect(listReviewLine(three)).toMatch(/^1 of these 3 rows was re-checked against the awarding body's own page; /);
     expect(listReviewLine(three.slice(0, 2))).toMatch(/^None of these 2 rows has been re-checked/);
     expect(listReviewLine([three[2]])).toBe("Every row here was re-checked against the awarding body's own page.");
     expect(listReviewLine([])).toBe("");
@@ -178,7 +179,8 @@ describe("this year's date — official only when read on the portal", () => {
     const up = scheme({ id: "up", cycle: { ...cycle, opensOn: "2026-06-01", closesOn: "2026-10-31" } });
     expect(lastDateOf(up, TODAY).kind).toBe("upcoming");
     expect(cycleLeadLine(up, TODAY)).toBe("2026-27: applications close 31 Oct 2026 (official — scholarships.gov.in, checked 26 Sep 2026).");
-    expect(lastDateCell(up, TODAY)).toEqual({ text: "31 Oct 2026 (official)", tier: "official" });
+    // 27 Sep 2026 (fixer): the cell carries the window's note (none here).
+    expect(lastDateCell(up, TODAY)).toEqual({ text: "31 Oct 2026 (official)", tier: "official", note: null });
 
     const later = scheme({ id: "later", cycle: { ...cycle, opensOn: "2026-10-01", closesOn: "2026-11-30" } });
     expect(cycleLeadLine(later, TODAY)).toBe("2026-27: applications open 1 Oct 2026 and close 30 Nov 2026 (official — scholarships.gov.in, checked 26 Sep 2026).");
@@ -198,7 +200,7 @@ describe("this year's date — official only when read on the portal", () => {
     const line = cycleLeadLine(usual, TODAY);
     expect(line).toBe("Shishya has not checked a 2026-27 date for this scheme yet — the usual window is Oct–Dec each year (check NSP). Confirm the date on the official portal before applying.");
     expect(line).not.toMatch(/official —|applications close/);
-    expect(lastDateCell(usual, TODAY)).toEqual({ text: "Usual window: Oct–Dec each year (check NSP)", tier: null });
+    expect(lastDateCell(usual, TODAY)).toEqual({ text: "Usual window: Oct–Dec each year (check NSP)", tier: null, note: null });
 
     const gone = scheme({ id: "gone", closed: { note: "Discontinued from 2022-23.", sourceUrl: "https://pib.gov.in/x", checkedOn: "2026-09-26" } });
     expect(cycleLeadLine(gone, TODAY)).toBe("Not open to new applicants: Discontinued from 2022-23.");
@@ -210,6 +212,40 @@ describe("this year's date — official only when read on the portal", () => {
     expect(line).toContain("applications close 30 Sep 2026 (official — scholarships.gov.in, checked 26 Sep 2026)");
     expect(line).toContain("Renewal applications only");
     expect(line).toContain("31 Oct 2026");
+  });
+
+  it("27 Sep 2026 (fixer): list cells and list FAQs carry the window's note; a level-scoped list dates from that level's own window", () => {
+    // PM YASASVI: "30 Sep 2026 (official)" is a renewals-only window — the cell says so.
+    const yasasvi = SCHOLARSHIPS.find((s) => s.id === "pm-yasasvi")!;
+    const cell = lastDateCell(yasasvi, "2026-09-27");
+    expect(cell.text).toBe("30 Sep 2026 (official)");
+    expect(cell.note).toMatch(/^Renewal applications only/);
+    expect(closingSoon("2026-09-27").some((s) => s.id === "pm-yasasvi")).toBe(true);
+    expect(read("src/app/scholarships/ScholarshipTable.tsx")).toContain("{cell.note && <p className=\"mt-0.5 text-[11px] text-ink-500\">{cell.note}</p>}");
+
+    // UP: 31 Oct is the after-Class-12 window; the Class 11–12 one closed on 21 Sep (same portal, same check).
+    const up = SCHOLARSHIPS.find((s) => s.id === "ed-cell-up")!;
+    expect(lastDateCell(up, "2026-09-27").text).toBe("31 Oct 2026 (official)");
+    const c1112 = findScholarshipFilter("class-11-12")!;
+    expect(c1112.level).toBe("CLASS_11_12");
+    const own = lastDateCell(up, "2026-09-27", c1112.level);
+    expect(own.text).toBe("Closed 21 Sep 2026 (official)");
+    expect(own.note).toBe("Class 11 fresh applications; Class 12 renewals closed on 19 Sep 2026.");
+    for (const day of ["2026-09-27", "2026-10-01", "2026-10-20"]) {
+      const list = schemesForFilter(c1112, day);
+      expect(list.some((s) => s.id === "ed-cell-up"), day).toBe(true);
+      expect(lastDateOf(up, day, c1112.level).kind, day).toBe("passed");
+      expect(filterFaq(c1112, list, day).a, day).not.toContain(up.name);
+    }
+    expect(cycleFor(up)).toBe(up.cycle);
+    expect(cycleFor(up, "UG")).toBe(up.cycle);
+    expect(read("src/app/scholarships/for/[filter]/page.tsx")).toContain("<ScholarshipTable rows={list} today={today} level={filter.level} />");
+
+    // A list FAQ names each shown date's note after the list (a note may hold semicolons).
+    const f = findScholarshipFilter("class-9-10")!;
+    const renew = scheme({ id: "renew", levels: ["CLASS_9_10"], cycle: { ...cycle, closesOn: "2026-10-05", note: "Renewal applications only; fresh not open" } });
+    const a = filterFaq(f, [renew], TODAY).a;
+    expect(a).toContain(": renew — 5 Oct 2026 (official, scholarships.gov.in). renew: Renewal applications only; fresh not open.");
   });
 
   it("every cycle in the catalogue was read on an official host, is 2026-27, and is internally consistent", () => {
@@ -252,12 +288,30 @@ describe("closing soon", () => {
       expect(s.cycle!.closesOn! >= TODAY && s.cycle!.closesOn! <= end, s.id).toBe(true);
     }
     for (let i = 1; i < list.length; i++) expect(list[i - 1].cycle!.closesOn! <= list[i].cycle!.closesOn!).toBe(true);
-    expect(isClosingSoonIndexable(list)).toBe(list.length >= CLOSING_SOON_MIN);
+    expect(isClosingSoonIndexable(list)).toBe(list.length >= CLOSING_SOON_MIN && list.every(isReviewedScheme));
     // 26 Sep 2026: CSSS, the J&K special scheme and NMMSS close on 30 Sep.
-    expect(list.map((s) => s.id).sort()).toEqual(["csss", "nmmss", "pm-special-jk"]);
+    // 27 Sep 2026 (official-data wave): Karnataka SSP (ka-vidyasiri) and PM
+    // YASASVI now carry official 30 Sep 2026 last dates too — five rows, the
+    // floor. Only PM YASASVI is reviewed, so the page stays noindex and out
+    // of the sitemap; it still renders for people.
+    expect(list.map((s) => s.id).sort()).toEqual(["csss", "ka-vidyasiri", "nmmss", "pm-special-jk", "pm-yasasvi"]);
+    expect(list.length).toBe(CLOSING_SOON_MIN);
+    expect(list.filter(isReviewedScheme).map((s) => s.id)).toEqual(["pm-yasasvi"]);
     expect(isClosingSoonIndexable(list)).toBe(false);
     // Nothing is "closing soon" by its usual window.
     expect(closingSoon(TODAY, 30, [scheme({ id: "u", deadline: "Sep–Oct" })])).toEqual([]);
+  });
+
+  it("27 Sep 2026: indexable only at the floor AND with every listed row reviewed (as sitemap-sections says)", () => {
+    const rows = Array.from({ length: CLOSING_SOON_MIN }, (_, i) => scheme({ id: `c${i}`, reviewed: REVIEWED }));
+    expect(isClosingSoonIndexable(rows)).toBe(true);
+    expect(isClosingSoonIndexable(rows.slice(1))).toBe(false);
+    // One unreviewed row is enough to hold the page back.
+    expect(isClosingSoonIndexable([...rows.slice(1), scheme({ id: "unchecked" })])).toBe(false);
+    // Today's real list would clear it once its rows are re-checked.
+    const real = closingSoon(TODAY, CLOSING_SOON_DAYS, ALL_REVIEWED);
+    expect(real.length).toBeGreaterThanOrEqual(CLOSING_SOON_MIN);
+    expect(isClosingSoonIndexable(real)).toBe(true);
   });
 
   it("IST day and calendar helpers", () => {
@@ -297,7 +351,10 @@ describe("sitemap entries (for src/lib/sitemap-sections.ts)", () => {
       if (e.lastModified) expect(checkedDays.has(String(e.lastModified))).toBe(true);
     }
     const expected = SCHOLARSHIP_FILTERS.filter((f) => isFilterListIndexable(schemesForFilter(f, "2026-09-26"))).map((f) => `https://shishya.in/scholarships/for/${f.slug}`);
+    if (isClosingSoonIndexable(closingSoon("2026-09-26"))) expected.push("https://shishya.in/scholarships/closing-soon");
     expect(entries.map((e) => e.url)).toEqual(expected);
+    // 27 Sep 2026: closing-soon reaches the floor (5) with 1 reviewed row — not in the sitemap.
+    expect(entries.map((e) => e.url)).not.toContain("https://shishya.in/scholarships/closing-soon");
   });
 });
 
@@ -323,5 +380,9 @@ describe("the lists are linked as plain crawlable links", () => {
     expect(list).toContain("{reviewLine && <p");
     const soon = read("src/app/scholarships/closing-soon/page.tsx");
     expect(soon).toContain("robots: isClosingSoonIndexable(list) ? undefined : { index: false, follow: true },");
+    // 27 Sep 2026: like the lists, the page counts its re-checked rows and promises apply links.
+    expect(soon).toContain("{reviewLine && <p");
+    expect(soon).toContain("Each row links the scheme's apply page.");
+    expect(soon).not.toMatch(/links the official portal/);
   });
 });

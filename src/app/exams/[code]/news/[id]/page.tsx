@@ -57,6 +57,9 @@ import { StateExamsLink } from "@/components/StateExamsLink";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { examHasNotes } from "@/lib/page-gates-notes";
 import { newsPermalinkCopy } from "@/lib/page-gates-copy";
+// 27 Sep 2026: "Free {exam} mock tests" only where the exam has practice
+// questions (src/lib/exam-practice-state.ts; a failed read claims none).
+import { examPracticeState } from "@/lib/db/exam-practice";
 import { SHISHYA_ORG_REF } from "@/components/JsonLd";
 import { newsCanonicalMap, newsRobots } from "@/lib/news-index-policy";
 
@@ -106,12 +109,13 @@ export async function generateMetadata({
   // everything here is free.
   const title = `${row.title} — ${row.exam.shortName} | Shishya`;
   const bodyLead = row.body.slice(0, 140).replace(/\s+/g, " ").replace(/\s+\S*$/, "").trim();
-  const [hasNotes, canonicals] = await Promise.all([
+  const [hasNotes, canonicals, metaPractice] = await Promise.all([
     examHasNotes(row.exam.code),
     // A failed read keeps the page self-canonical (its old behaviour).
     loadNewsCanonicals(row.examId).catch(() => ({}) as Record<string, string>),
+    examPracticeState(row.exam.code),
   ]);
-  const { descriptionTail } = newsPermalinkCopy(row.exam.shortName, hasNotes);
+  const { descriptionTail } = newsPermalinkCopy(row.exam.shortName, hasNotes, metaPractice.hasPractice);
   const description = `${bodyLead}… ${descriptionTail}`;
   const canonical = `https://shishya.in/exams/${code}/news/${canonicals[id] ?? id}`;
 
@@ -164,10 +168,11 @@ export default async function NewsPermalinkPage({
   });
   // A story a human suppressed as wrong is gone, not archived history.
   if (!row || row.exam.code !== code || row.source === SUPPRESSED_SOURCE) notFound();
-  const [{ t, locale }, gates, hasNotes] = await Promise.all([
+  const [{ t, locale }, gates, hasNotes, practice] = await Promise.all([
     getT(),
     examPageGates(row.exam.code),
     examHasNotes(row.exam.code),
+    examPracticeState(row.exam.code),
   ]);
 
   const theme = getExamTheme(row.exam.category);
@@ -336,7 +341,8 @@ export default async function NewsPermalinkPage({
               href={`/exams/${row.exam.code}`}
               className="rounded-lg bg-saffron-500 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
             >
-              Free {row.exam.shortName} mock tests →
+              {/* 27 Sep 2026 (fixer): "exam facts", not "official facts" — most no-practice hubs have no official research on file. */}
+              {practice.hasPractice ? `Free ${row.exam.shortName} mock tests →` : `${row.exam.shortName} — exam facts and dates →`}
             </Link>
             <Link
               href={`/exams/${row.exam.code}/updates`}

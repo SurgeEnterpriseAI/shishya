@@ -23,7 +23,7 @@ import { BRANCH_SYNONYMS, CITY_SYNONYMS, MONTH_NAMES, SCHOLARSHIP_ALIASES } from
 import { STATES, stateSlug } from "@/lib/state-info";
 import { ALL_STREAMS, COLLEGES, formatNirfRanks } from "@/lib/colleges-data";
 import { COLLEGE_DETAILS } from "@/data/college-details";
-import { SCHOLARSHIPS } from "@/data/scholarships";
+import { SCHOLARSHIP_SCHEMES } from "@/lib/scholarship-schemes";
 import { CAREERS, CAREER_CATEGORIES } from "@/data/careers";
 import { PERSONAS } from "@/data/personas";
 import { TEST_PREP, WORLDWIDE_COUNTRIES } from "@/lib/worldwide-data";
@@ -519,8 +519,12 @@ export function buildSearchIndex(inputs: SearchIndexInputs, tier: "lite" | "deep
     });
   }
 
-  // Scholarships.
-  for (const s of SCHOLARSHIPS) {
+  // Scholarships. 27 Sep 2026 (fixer): the schemes Shishya presents
+  // (src/lib/scholarship-schemes.ts) — it was the raw catalogue, so search
+  // offered the outside aggregator (its URL redirects) and the rows held out
+  // as not a scholarship, not found or in doubt. A discontinued scheme stays:
+  // its page says so.
+  for (const s of SCHOLARSHIP_SCHEMES) {
     const gender = s.eligibility.gender ?? null;
     push({
       id: `scholarship:${s.id}`,

@@ -1,0 +1,5019 @@
+{
+ "note": "Every NIRF table row behind src/lib/colleges-data.ts nirf / nirfBands / nirfPrevious — read on nirfindia.org by scripts/import-nirf.ts.",
+ "year": 2025,
+ "previousYear": 2024,
+ "pages": [
+  "https://www.nirfindia.org/Rankings/2024/ArchitectureRanking.html",
+  "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+  "https://www.nirfindia.org/Rankings/2024/EngineeringRanking150.html",
+  "https://www.nirfindia.org/Rankings/2024/EngineeringRanking200.html",
+  "https://www.nirfindia.org/Rankings/2024/EngineeringRanking300.html",
+  "https://www.nirfindia.org/Rankings/2024/LawRanking.html",
+  "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+  "https://www.nirfindia.org/Rankings/2024/ManagementRanking150.html",
+  "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+  "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+  "https://www.nirfindia.org/Rankings/2024/OverallRanking150.html",
+  "https://www.nirfindia.org/Rankings/2024/OverallRanking200.html",
+  "https://www.nirfindia.org/Rankings/2024/PharmacyRanking.html",
+  "https://www.nirfindia.org/Rankings/2024/PharmacyRanking150.html",
+  "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+  "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+  "https://www.nirfindia.org/Rankings/2024/UniversityRanking150.html",
+  "https://www.nirfindia.org/Rankings/2024/UniversityRanking200.html",
+  "https://www.nirfindia.org/Rankings/2025/ArchitectureRanking.html",
+  "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+  "https://www.nirfindia.org/Rankings/2025/EngineeringRanking150.html",
+  "https://www.nirfindia.org/Rankings/2025/EngineeringRanking200.html",
+  "https://www.nirfindia.org/Rankings/2025/EngineeringRanking300.html",
+  "https://www.nirfindia.org/Rankings/2025/LawRanking.html",
+  "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+  "https://www.nirfindia.org/Rankings/2025/ManagementRanking150.html",
+  "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+  "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+  "https://www.nirfindia.org/Rankings/2025/OverallRanking150.html",
+  "https://www.nirfindia.org/Rankings/2025/OverallRanking200.html",
+  "https://www.nirfindia.org/Rankings/2025/PharmacyRanking.html",
+  "https://www.nirfindia.org/Rankings/2025/PharmacyRanking150.html",
+  "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+  "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+  "https://www.nirfindia.org/Rankings/2025/UniversityRanking150.html",
+  "https://www.nirfindia.org/Rankings/2025/UniversityRanking200.html"
+ ],
+ "colleges": {
+  "iit-madras": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "1",
+     "instituteId": "IR-O-U-0456",
+     "name": "Indian Institute of Technology Madras",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "87.31",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "1",
+     "instituteId": "IR-E-U-0456",
+     "name": "Indian Institute of Technology Madras",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "88.72",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "13",
+     "instituteId": "IR-M-U-0456",
+     "name": "Indian Institute of Technology Madras",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "66.50",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "2",
+     "instituteId": "IR-R-U-0456",
+     "name": "Indian Institute of Technology Madras",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "82.99",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "1",
+     "instituteId": "IR-O-U-0456",
+     "name": "Indian Institute of Technology Madras",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "86.42",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "1",
+     "instituteId": "IR-E-U-0456",
+     "name": "Indian Institute of Technology Madras",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "89.46",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "16",
+     "instituteId": "IR-M-U-0456",
+     "name": "Indian Institute of Technology Madras",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "61.73",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "2",
+     "instituteId": "IR-R-U-0456",
+     "name": "Indian Institute of Technology Madras",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "83.29",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-delhi": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "4",
+     "instituteId": "IR-O-I-1074",
+     "name": "Indian Institute of Technology Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "80.67",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "2",
+     "instituteId": "IR-E-I-1074",
+     "name": "Indian Institute of Technology Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "85.74",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "4",
+     "instituteId": "IR-M-I-1074",
+     "name": "Indian Institute of Technology Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "78.94",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "3",
+     "instituteId": "IR-R-I-1074",
+     "name": "Indian Institute of Technology Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "80.42",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "4",
+     "instituteId": "IR-O-I-1074",
+     "name": "Indian Institute of Technology Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "80.31",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "2",
+     "instituteId": "IR-E-I-1074",
+     "name": "Indian Institute of Technology Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "86.66",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "4",
+     "instituteId": "IR-M-I-1074",
+     "name": "Indian Institute of Technology Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "76.25",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "3",
+     "instituteId": "IR-R-I-1074",
+     "name": "Indian Institute of Technology Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "81.08",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-bombay": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "3",
+     "instituteId": "IR-O-U-0306",
+     "name": "Indian Institute of Technology Bombay",
+     "city": "Mumbai",
+     "state": "Maharashtra",
+     "score": "81.62",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "3",
+     "instituteId": "IR-E-U-0306",
+     "name": "Indian Institute of Technology Bombay",
+     "city": "Mumbai",
+     "state": "Maharashtra",
+     "score": "83.65",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "14",
+     "instituteId": "IR-M-U-0306",
+     "name": "Indian Institute of Technology Bombay",
+     "city": "Mumbai",
+     "state": "Maharashtra",
+     "score": "65.82",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "4",
+     "instituteId": "IR-R-U-0306",
+     "name": "Indian Institute of Technology Bombay",
+     "city": "Mumbai",
+     "state": "Maharashtra",
+     "score": "77.80",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "3",
+     "instituteId": "IR-O-U-0306",
+     "name": "Indian Institute of Technology Bombay",
+     "city": "Mumbai",
+     "state": "Maharashtra",
+     "score": "81.37",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "3",
+     "instituteId": "IR-E-U-0306",
+     "name": "Indian Institute of Technology Bombay",
+     "city": "Mumbai",
+     "state": "Maharashtra",
+     "score": "83.09",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "10",
+     "instituteId": "IR-M-U-0306",
+     "name": "Indian Institute of Technology Bombay",
+     "city": "Mumbai",
+     "state": "Maharashtra",
+     "score": "67.16",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "4",
+     "instituteId": "IR-R-U-0306",
+     "name": "Indian Institute of Technology Bombay",
+     "city": "Mumbai",
+     "state": "Maharashtra",
+     "score": "77.75",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-kanpur": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "5",
+     "instituteId": "IR-O-I-1075",
+     "name": "Indian Institute of Technology Kanpur",
+     "city": "Kanpur",
+     "state": "Uttar Pradesh",
+     "score": "77.25",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "4",
+     "instituteId": "IR-E-I-1075",
+     "name": "Indian Institute of Technology Kanpur",
+     "city": "Kanpur",
+     "state": "Uttar Pradesh",
+     "score": "81.82",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "27",
+     "instituteId": "IR-M-I-1075",
+     "name": "Indian Institute of Technology Kanpur",
+     "city": "Kanpur",
+     "state": "Uttar Pradesh",
+     "score": "60.15",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "6",
+     "instituteId": "IR-R-I-1075",
+     "name": "Indian Institute of Technology Kanpur",
+     "city": "Kanpur",
+     "state": "Uttar Pradesh",
+     "score": "69.80",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "5",
+     "instituteId": "IR-O-I-1075",
+     "name": "Indian Institute of Technology Kanpur",
+     "city": "Kanpur",
+     "state": "Uttar Pradesh",
+     "score": "77.56",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "4",
+     "instituteId": "IR-E-I-1075",
+     "name": "Indian Institute of Technology Kanpur",
+     "city": "Kanpur",
+     "state": "Uttar Pradesh",
+     "score": "82.79",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "29",
+     "instituteId": "IR-M-I-1075",
+     "name": "Indian Institute of Technology Kanpur",
+     "city": "Kanpur",
+     "state": "Uttar Pradesh",
+     "score": "57.23",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "7",
+     "instituteId": "IR-R-I-1075",
+     "name": "Indian Institute of Technology Kanpur",
+     "city": "Kanpur",
+     "state": "Uttar Pradesh",
+     "score": "70.04",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-kharagpur": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "6",
+     "instituteId": "IR-O-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "73.99",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "5",
+     "instituteId": "IR-E-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "78.69",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "12",
+     "instituteId": "IR-M-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "66.97",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "law",
+     "rank": "6",
+     "instituteId": "IR-L-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "74.09",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/LawRanking.html",
+     "heading": "India Rankings 2025: Law"
+    },
+    {
+     "year": 2025,
+     "category": "architecture",
+     "rank": "3",
+     "instituteId": "IR-A-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "77.38",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ArchitectureRanking.html",
+     "heading": "India Rankings 2025: Architecture and Planning"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "5",
+     "instituteId": "IR-R-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "71.61",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "6",
+     "instituteId": "IR-O-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "74.77",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "5",
+     "instituteId": "IR-E-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "76.88",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "19",
+     "instituteId": "IR-M-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "61.03",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "law",
+     "rank": "7",
+     "instituteId": "IR-L-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "71.47",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/LawRanking.html",
+     "heading": "India Rankings 2024: Law"
+    },
+    {
+     "year": 2024,
+     "category": "architecture",
+     "rank": "2",
+     "instituteId": "IR-A-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "80.71",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ArchitectureRanking.html",
+     "heading": "India Rankings 2024: Architecture and Planning"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "5",
+     "instituteId": "IR-R-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "72.65",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-roorkee": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "7",
+     "instituteId": "IR-O-U-0560",
+     "name": "Indian Institute of Technology Roorkee",
+     "city": "Roorkee",
+     "state": "Uttarakhand",
+     "score": "71.73",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "6",
+     "instituteId": "IR-E-U-0560",
+     "name": "Indian Institute of Technology Roorkee",
+     "city": "Roorkee",
+     "state": "Uttarakhand",
+     "score": "75.44",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "22",
+     "instituteId": "IR-M-U-0560",
+     "name": "Indian Institute of Technology Roorkee",
+     "city": "Roorkee",
+     "state": "Uttarakhand",
+     "score": "61.77",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "architecture",
+     "rank": "1",
+     "instituteId": "IR-A-U-0560",
+     "name": "Indian Institute of Technology Roorkee",
+     "city": "Roorkee",
+     "state": "Uttarakhand",
+     "score": "83.95",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ArchitectureRanking.html",
+     "heading": "India Rankings 2025: Architecture and Planning"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "8",
+     "instituteId": "IR-R-U-0560",
+     "name": "Indian Institute of Technology Roorkee",
+     "city": "Roorkee",
+     "state": "Uttarakhand",
+     "score": "67.27",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "8",
+     "instituteId": "IR-O-U-0560",
+     "name": "Indian Institute of Technology Roorkee",
+     "city": "Roorkee",
+     "state": "Uttarakhand",
+     "score": "71.52",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "6",
+     "instituteId": "IR-E-U-0560",
+     "name": "Indian Institute of Technology Roorkee",
+     "city": "Roorkee",
+     "state": "Uttarakhand",
+     "score": "76.00",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "18",
+     "instituteId": "IR-M-U-0560",
+     "name": "Indian Institute of Technology Roorkee",
+     "city": "Roorkee",
+     "state": "Uttarakhand",
+     "score": "61.21",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "architecture",
+     "rank": "1",
+     "instituteId": "IR-A-U-0560",
+     "name": "Indian Institute of Technology Roorkee",
+     "city": "Roorkee",
+     "state": "Uttarakhand",
+     "score": "84.92",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ArchitectureRanking.html",
+     "heading": "India Rankings 2024: Architecture and Planning"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "9",
+     "instituteId": "IR-R-U-0560",
+     "name": "Indian Institute of Technology Roorkee",
+     "city": "Roorkee",
+     "state": "Uttarakhand",
+     "score": "66.78",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-guwahati": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "11",
+     "instituteId": "IR-O-U-0053",
+     "name": "Indian Institute of Technology Guwahati",
+     "city": "Guwahati",
+     "state": "Assam",
+     "score": "67.67",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "8",
+     "instituteId": "IR-E-U-0053",
+     "name": "Indian Institute of Technology Guwahati",
+     "city": "Guwahati",
+     "state": "Assam",
+     "score": "72.24",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "10",
+     "instituteId": "IR-R-U-0053",
+     "name": "Indian Institute of Technology Guwahati",
+     "city": "Guwahati",
+     "state": "Assam",
+     "score": "64.18",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "9",
+     "instituteId": "IR-O-U-0053",
+     "name": "Indian Institute of Technology Guwahati",
+     "city": "Guwahati",
+     "state": "Assam",
+     "score": "69.04",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "7",
+     "instituteId": "IR-E-U-0053",
+     "name": "Indian Institute of Technology Guwahati",
+     "city": "Guwahati",
+     "state": "Assam",
+     "score": "71.86",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "10",
+     "instituteId": "IR-R-U-0053",
+     "name": "Indian Institute of Technology Guwahati",
+     "city": "Guwahati",
+     "state": "Assam",
+     "score": "64.94",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-hyderabad": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "12",
+     "instituteId": "IR-O-U-0013",
+     "name": "Indian Institute of Technology Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "67.04",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "7",
+     "instituteId": "IR-E-U-0013",
+     "name": "Indian Institute of Technology Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "72.31",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "15",
+     "instituteId": "IR-R-U-0013",
+     "name": "Indian Institute of Technology Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "60.15",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "12",
+     "instituteId": "IR-O-U-0013",
+     "name": "Indian Institute of Technology Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "66.69",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "8",
+     "instituteId": "IR-E-U-0013",
+     "name": "Indian Institute of Technology Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "71.55",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "15",
+     "instituteId": "IR-R-U-0013",
+     "name": "Indian Institute of Technology Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "59.96",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-bhu-varanasi": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "31",
+     "instituteId": "IR-O-U-0701",
+     "name": "Indian Institute of Technology (Banaras Hindu University) Varanasi",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "60.03",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "10",
+     "instituteId": "IR-E-U-0701",
+     "name": "Indian Institute of Technology (Banaras Hindu University) Varanasi",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "67.24",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "22",
+     "instituteId": "IR-R-U-0701",
+     "name": "Indian Institute of Technology (Banaras Hindu University) Varanasi",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "55.81",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "30",
+     "instituteId": "IR-O-U-0701",
+     "name": "Indian Institute of Technology (Banaras Hindu University) Varanasi",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "58.69",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "10",
+     "instituteId": "IR-E-U-0701",
+     "name": "Indian Institute of Technology (Banaras Hindu University) Varanasi",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "66.69",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    }
+   ]
+  },
+  "iit-ism-dhanbad": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "35",
+     "instituteId": "IR-O-U-0205",
+     "name": "Indian Institute of Technology (Indian School of Mines)",
+     "city": "Dhanbad",
+     "state": "Jharkhand",
+     "score": "58.33",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "15",
+     "instituteId": "IR-E-U-0205",
+     "name": "Indian Institute of Technology (Indian School of Mines)",
+     "city": "Dhanbad",
+     "state": "Jharkhand",
+     "score": "65.37",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "48",
+     "instituteId": "IR-M-U-0205",
+     "name": "Indian Institute of Technology (Indian School of Mines)",
+     "city": "Dhanbad",
+     "state": "Jharkhand",
+     "score": "54.34",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "27",
+     "instituteId": "IR-R-U-0205",
+     "name": "Indian Institute of Technology (Indian School of Mines)",
+     "city": "Dhanbad",
+     "state": "Jharkhand",
+     "score": "54.28",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "35",
+     "instituteId": "IR-O-U-0205",
+     "name": "Indian Institute of Technology (Indian School of Mines) Dhanbad",
+     "city": "Dhanbad",
+     "state": "Jharkhand",
+     "score": "56.97",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "15",
+     "instituteId": "IR-E-U-0205",
+     "name": "Indian Institute of Technology (Indian School of Mines) Dhanbad",
+     "city": "Dhanbad",
+     "state": "Jharkhand",
+     "score": "64.83",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "46",
+     "instituteId": "IR-M-U-0205",
+     "name": "Indian Institute of Technology (Indian School of Mines) Dhanbad",
+     "city": "Dhanbad",
+     "state": "Jharkhand",
+     "score": "52.78",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "22",
+     "instituteId": "IR-R-U-0205",
+     "name": "Indian Institute of Technology (Indian School of Mines) Dhanbad",
+     "city": "Dhanbad",
+     "state": "Jharkhand",
+     "score": "54.77",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "nit-trichy": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "30",
+     "instituteId": "IR-O-U-0467",
+     "name": "National Institute of Technology Tiruchirappalli",
+     "city": "Tiruchirappalli",
+     "state": "Tamil Nadu",
+     "score": "60.05",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "9",
+     "instituteId": "IR-E-U-0467",
+     "name": "National Institute of Technology Tiruchirappalli",
+     "city": "Tiruchirappalli",
+     "state": "Tamil Nadu",
+     "score": "68.14",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "57",
+     "instituteId": "IR-M-U-0467",
+     "name": "National Institute of Technology Tiruchirappalli",
+     "city": "Tiruchirappalli",
+     "state": "Tamil Nadu",
+     "score": "52.47",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "architecture",
+     "rank": "9",
+     "instituteId": "IR-A-U-0467",
+     "name": "National Institute of Technology Tiruchirappalli",
+     "city": "Tiruchirappalli",
+     "state": "Tamil Nadu",
+     "score": "64.30",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ArchitectureRanking.html",
+     "heading": "India Rankings 2025: Architecture and Planning"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "33",
+     "instituteId": "IR-R-U-0467",
+     "name": "National Institute of Technology Tiruchirappalli",
+     "city": "Tiruchirappalli",
+     "state": "Tamil Nadu",
+     "score": "51.40",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "31",
+     "instituteId": "IR-O-U-0467",
+     "name": "National Institute of Technology Tiruchirappalli",
+     "city": "Tiruchirappalli",
+     "state": "Tamil Nadu",
+     "score": "58.60",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "9",
+     "instituteId": "IR-E-U-0467",
+     "name": "National Institute of Technology Tiruchirappalli",
+     "city": "Tiruchirappalli",
+     "state": "Tamil Nadu",
+     "score": "66.88",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "51",
+     "instituteId": "IR-M-U-0467",
+     "name": "National Institute of Technology Tiruchirappalli",
+     "city": "Tiruchirappalli",
+     "state": "Tamil Nadu",
+     "score": "51.40",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "architecture",
+     "rank": "8",
+     "instituteId": "IR-A-U-0467",
+     "name": "National Institute of Technology Tiruchirappalli",
+     "city": "Tiruchirappalli",
+     "state": "Tamil Nadu",
+     "score": "65.08",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ArchitectureRanking.html",
+     "heading": "India Rankings 2024: Architecture and Planning"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "31",
+     "instituteId": "IR-R-U-0467",
+     "name": "National Institute of Technology Tiruchirappalli",
+     "city": "Tiruchirappalli",
+     "state": "Tamil Nadu",
+     "score": "50.94",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "nit-rourkela": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "34",
+     "instituteId": "IR-O-U-0357",
+     "name": "National Institute of Technology Rourkela",
+     "city": "Rourkela",
+     "state": "Odisha",
+     "score": "58.55",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "13",
+     "instituteId": "IR-E-U-0357",
+     "name": "National Institute of Technology Rourkela",
+     "city": "Rourkela",
+     "state": "Odisha",
+     "score": "66.62",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "architecture",
+     "rank": "7",
+     "instituteId": "IR-A-U-0357",
+     "name": "National Institute of Technology Rourkela",
+     "city": "Rourkela",
+     "state": "Odisha",
+     "score": "65.72",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ArchitectureRanking.html",
+     "heading": "India Rankings 2025: Architecture and Planning"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "30",
+     "instituteId": "IR-R-U-0357",
+     "name": "National Institute of Technology Rourkela",
+     "city": "Rourkela",
+     "state": "Odisha",
+     "score": "52.69",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "34",
+     "instituteId": "IR-O-U-0357",
+     "name": "National Institute of Technology Rourkela",
+     "city": "Rourkela",
+     "state": "Odisha",
+     "score": "57.04",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "19",
+     "instituteId": "IR-E-U-0357",
+     "name": "National Institute of Technology Rourkela",
+     "city": "Rourkela",
+     "state": "Odisha",
+     "score": "63.38",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "architecture",
+     "rank": "9",
+     "instituteId": "IR-A-U-0357",
+     "name": "National Institute of Technology Rourkela",
+     "city": "Rourkela",
+     "state": "Odisha",
+     "score": "64.88",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ArchitectureRanking.html",
+     "heading": "India Rankings 2024: Architecture and Planning"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "30",
+     "instituteId": "IR-R-U-0357",
+     "name": "National Institute of Technology Rourkela",
+     "city": "Rourkela",
+     "state": "Odisha",
+     "score": "51.16",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "nit-surathkal": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "54",
+     "instituteId": "IR-O-U-0237",
+     "name": "National Institute of Technology Karnataka, Surathkal",
+     "city": "Surathkal",
+     "state": "Karnataka",
+     "score": "55.21",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "17",
+     "instituteId": "IR-E-U-0237",
+     "name": "National Institute of Technology Karnataka, Surathkal",
+     "city": "Surathkal",
+     "state": "Karnataka",
+     "score": "64.59",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "46",
+     "instituteId": "IR-O-U-0237",
+     "name": "National Institute of Technology Karnataka, Surathkal",
+     "city": "Surathkal",
+     "state": "Karnataka",
+     "score": "54.44",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "17",
+     "instituteId": "IR-E-U-0237",
+     "name": "National Institute of Technology Karnataka, Surathkal",
+     "city": "Surathkal",
+     "state": "Karnataka",
+     "score": "64.27",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "42",
+     "instituteId": "IR-R-U-0237",
+     "name": "National Institute of Technology Karnataka, Surathkal",
+     "city": "Surathkal",
+     "state": "Karnataka",
+     "score": "45.41",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "nit-warangal": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "63",
+     "instituteId": "IR-O-U-0025",
+     "name": "National Institute of Technology Warangal",
+     "city": "Warangal",
+     "state": "Telangana",
+     "score": "53.23",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "28",
+     "instituteId": "IR-E-U-0025",
+     "name": "National Institute of Technology Warangal",
+     "city": "Warangal",
+     "state": "Telangana",
+     "score": "61.05",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "53",
+     "instituteId": "IR-O-U-0025",
+     "name": "National Institute of Technology Warangal",
+     "city": "Warangal",
+     "state": "Telangana",
+     "score": "53.74",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "21",
+     "instituteId": "IR-E-U-0025",
+     "name": "National Institute of Technology Warangal",
+     "city": "Warangal",
+     "state": "Telangana",
+     "score": "61.72",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "100",
+     "instituteId": "IR-M-U-0025",
+     "name": "National Institute of Technology Warangal",
+     "city": "Warangal",
+     "state": "Telangana",
+     "score": "42.63",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "anna-university": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "29",
+     "instituteId": "IR-O-U-0439",
+     "name": "Anna University",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "60.06",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "20",
+     "instituteId": "IR-E-U-0439",
+     "name": "Anna University",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "63.51",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "88",
+     "instituteId": "IR-M-U-0439",
+     "name": "Anna University",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "46.92",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "20",
+     "instituteId": "IR-O-U-0439",
+     "name": "Anna University",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "61.22",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "architecture",
+     "rank": "28",
+     "instituteId": "IR-A-U-0439",
+     "name": "Anna University",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "54.60",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ArchitectureRanking.html",
+     "heading": "India Rankings 2025: Architecture and Planning"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "26",
+     "instituteId": "IR-R-U-0439",
+     "name": "Anna University",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "55.09",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "20",
+     "instituteId": "IR-O-U-0439",
+     "name": "Anna University",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "62.77",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "14",
+     "instituteId": "IR-E-U-0439",
+     "name": "Anna University",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "65.34",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "69",
+     "instituteId": "IR-M-U-0439",
+     "name": "Anna University",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "48.92",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "13",
+     "instituteId": "IR-O-U-0439",
+     "name": "Anna University",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "63.85",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "architecture",
+     "rank": "34",
+     "instituteId": "IR-A-U-0439",
+     "name": "Anna University",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "51.16",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ArchitectureRanking.html",
+     "heading": "India Rankings 2024: Architecture and Planning"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "17",
+     "instituteId": "IR-R-U-0439",
+     "name": "Anna University",
+     "city": "Chennai",
+     "state": "Tamil Nadu",
+     "score": "58.39",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "jadavpur-university": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "18",
+     "instituteId": "IR-O-U-0575",
+     "name": "Jadavpur University",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "64.34",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "18",
+     "instituteId": "IR-E-U-0575",
+     "name": "Jadavpur University",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "64.54",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "9",
+     "instituteId": "IR-O-U-0575",
+     "name": "Jadavpur University",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "65.42",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "pharmacy",
+     "rank": "24",
+     "instituteId": "IR-P-U-0575",
+     "name": "Jadavpur University",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "62.18",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/PharmacyRanking.html",
+     "heading": "India Rankings 2025: Pharmacy"
+    },
+    {
+     "year": 2025,
+     "category": "architecture",
+     "rank": "16",
+     "instituteId": "IR-A-U-0575",
+     "name": "Jadavpur University",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "59.30",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ArchitectureRanking.html",
+     "heading": "India Rankings 2025: Architecture and Planning"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "23",
+     "instituteId": "IR-R-U-0575",
+     "name": "Jadavpur University",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "55.53",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "17",
+     "instituteId": "IR-O-U-0575",
+     "name": "Jadavpur University",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "63.84",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "12",
+     "instituteId": "IR-E-U-0575",
+     "name": "Jadavpur University",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "65.62",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "9",
+     "instituteId": "IR-O-U-0575",
+     "name": "Jadavpur University",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "65.39",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "pharmacy",
+     "rank": "18",
+     "instituteId": "IR-P-U-0575",
+     "name": "Jadavpur University",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "64.14",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/PharmacyRanking.html",
+     "heading": "India Rankings 2024: Pharmacy"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "21",
+     "instituteId": "IR-R-U-0575",
+     "name": "Jadavpur University",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "54.85",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-indore": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "27",
+     "instituteId": "IR-O-U-0273",
+     "name": "Indian Institute of Technology Indore",
+     "city": "Indore",
+     "state": "Madhya Pradesh",
+     "score": "60.13",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "12",
+     "instituteId": "IR-E-U-0273",
+     "name": "Indian Institute of Technology Indore",
+     "city": "Indore",
+     "state": "Madhya Pradesh",
+     "score": "66.65",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "24",
+     "instituteId": "IR-R-U-0273",
+     "name": "Indian Institute of Technology Indore",
+     "city": "Indore",
+     "state": "Madhya Pradesh",
+     "score": "55.52",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "33",
+     "instituteId": "IR-O-U-0273",
+     "name": "Indian Institute of Technology Indore",
+     "city": "Indore",
+     "state": "Madhya Pradesh",
+     "score": "57.31",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "16",
+     "instituteId": "IR-E-U-0273",
+     "name": "Indian Institute of Technology Indore",
+     "city": "Indore",
+     "state": "Madhya Pradesh",
+     "score": "64.72",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "27",
+     "instituteId": "IR-R-U-0273",
+     "name": "Indian Institute of Technology Indore",
+     "city": "Indore",
+     "state": "Madhya Pradesh",
+     "score": "52.70",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-mandi": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "58",
+     "instituteId": "IR-O-U-0184",
+     "name": "Indian Institute of Technology Mandi",
+     "city": "Mandi",
+     "state": "Himachal Pradesh",
+     "score": "54.52",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "26",
+     "instituteId": "IR-E-U-0184",
+     "name": "Indian Institute of Technology Mandi",
+     "city": "Mandi",
+     "state": "Himachal Pradesh",
+     "score": "62.08",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "72",
+     "instituteId": "IR-O-U-0184",
+     "name": "Indian Institute of Technology Mandi",
+     "city": "Mandi",
+     "state": "Himachal Pradesh",
+     "score": "51.68",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "31",
+     "instituteId": "IR-E-U-0184",
+     "name": "Indian Institute of Technology Mandi",
+     "city": "Mandi",
+     "state": "Himachal Pradesh",
+     "score": "59.86",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    }
+   ]
+  },
+  "dtu-delhi": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "62",
+     "instituteId": "IR-O-U-0098",
+     "name": "Delhi Technological University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "53.74",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "30",
+     "instituteId": "IR-E-U-0098",
+     "name": "Delhi Technological University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "60.85",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "42",
+     "instituteId": "IR-O-U-0098",
+     "name": "Delhi Technological University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "54.88",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "66",
+     "instituteId": "IR-O-U-0098",
+     "name": "Delhi Technological University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "52.38",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "27",
+     "instituteId": "IR-E-U-0098",
+     "name": "Delhi Technological University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "60.78",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "48",
+     "instituteId": "IR-O-U-0098",
+     "name": "Delhi Technological University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "53.31",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    }
+   ]
+  },
+  "vit-vellore": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "21",
+     "instituteId": "IR-O-U-0490",
+     "name": "Vellore Institute of Technology",
+     "city": "Vellore",
+     "state": "Tamil Nadu",
+     "score": "62.88",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "16",
+     "instituteId": "IR-E-U-0490",
+     "name": "Vellore Institute of Technology",
+     "city": "Vellore",
+     "state": "Tamil Nadu",
+     "score": "65.25",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "14",
+     "instituteId": "IR-O-U-0490",
+     "name": "Vellore Institute of Technology",
+     "city": "Vellore",
+     "state": "Tamil Nadu",
+     "score": "64.64",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "14",
+     "instituteId": "IR-R-U-0490",
+     "name": "Vellore Institute of Technology",
+     "city": "Vellore",
+     "state": "Tamil Nadu",
+     "score": "60.39",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "19",
+     "instituteId": "IR-O-U-0490",
+     "name": "Vellore Institute of Technology",
+     "city": "Vellore",
+     "state": "Tamil Nadu",
+     "score": "62.97",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "11",
+     "instituteId": "IR-E-U-0490",
+     "name": "Vellore Institute of Technology",
+     "city": "Vellore",
+     "state": "Tamil Nadu",
+     "score": "66.22",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "10",
+     "instituteId": "IR-O-U-0490",
+     "name": "Vellore Institute of Technology",
+     "city": "Vellore",
+     "state": "Tamil Nadu",
+     "score": "64.79",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "13",
+     "instituteId": "IR-R-U-0490",
+     "name": "Vellore Institute of Technology",
+     "city": "Vellore",
+     "state": "Tamil Nadu",
+     "score": "60.28",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "bits-pilani": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "16",
+     "instituteId": "IR-O-U-0391",
+     "name": "Birla Institute of Technology & Science -Pilani",
+     "city": "Pilani",
+     "state": "Rajasthan",
+     "score": "65.06",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "11",
+     "instituteId": "IR-E-U-0391",
+     "name": "Birla Institute of Technology & Science -Pilani",
+     "city": "Pilani",
+     "state": "Rajasthan",
+     "score": "67.02",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "7",
+     "instituteId": "IR-O-U-0391",
+     "name": "Birla Institute of Technology & Science -Pilani",
+     "city": "Pilani",
+     "state": "Rajasthan",
+     "score": "67.24",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "pharmacy",
+     "rank": "2",
+     "instituteId": "IR-P-U-0391",
+     "name": "Birla Institute of Technology & Science -Pilani",
+     "city": "Pilani",
+     "state": "Rajasthan",
+     "score": "82.28",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/PharmacyRanking.html",
+     "heading": "India Rankings 2025: Pharmacy"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "18",
+     "instituteId": "IR-R-U-0391",
+     "name": "Birla Institute of Technology & Science -Pilani",
+     "city": "Pilani",
+     "state": "Rajasthan",
+     "score": "56.71",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "23",
+     "instituteId": "IR-O-U-0391",
+     "name": "Birla Institute of Technology and Science, Pilani",
+     "city": "Pilani",
+     "state": "Rajasthan",
+     "score": "60.87",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "20",
+     "instituteId": "IR-E-U-0391",
+     "name": "Birla Institute of Technology and Science, Pilani",
+     "city": "Pilani",
+     "state": "Rajasthan",
+     "score": "63.04",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "19",
+     "instituteId": "IR-O-U-0391",
+     "name": "Birla Institute of Technology and Science, Pilani",
+     "city": "Pilani",
+     "state": "Rajasthan",
+     "score": "60.03",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "pharmacy",
+     "rank": "3",
+     "instituteId": "IR-P-U-0391",
+     "name": "Birla Institute of Technology and Science, Pilani",
+     "city": "Pilani",
+     "state": "Rajasthan",
+     "score": "78.95",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/PharmacyRanking.html",
+     "heading": "India Rankings 2024: Pharmacy"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "26",
+     "instituteId": "IR-R-U-0391",
+     "name": "Birla Institute of Technology and Science, Pilani",
+     "city": "Pilani",
+     "state": "Rajasthan",
+     "score": "53.06",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iim-ahmedabad": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "1",
+     "instituteId": "IR-M-S-8890",
+     "name": "Indian Institute of Management Ahmedabad",
+     "city": "Ahmedabad",
+     "state": "Gujarat",
+     "score": "83.29",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "1",
+     "instituteId": "IR-M-S-8890",
+     "name": "Indian Institute of Management Ahmedabad",
+     "city": "Ahmedabad",
+     "state": "Gujarat",
+     "score": "83.32",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "iim-bangalore": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "2",
+     "instituteId": "IR-M-S-8903",
+     "name": "Indian Institute of Management Bangalore",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "81.56",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "2",
+     "instituteId": "IR-M-S-8903",
+     "name": "Indian Institute of Management Bangalore",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "81.16",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "iim-kozhikode": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "3",
+     "instituteId": "IR-M-S-8909",
+     "name": "Indian Institute of Management Kozhikode",
+     "city": "Kozhikode",
+     "state": "Kerala",
+     "score": "79.85",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "3",
+     "instituteId": "IR-M-S-8909",
+     "name": "Indian Institute of Management Kozhikode",
+     "city": "Kozhikode",
+     "state": "Kerala",
+     "score": "77.90",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "iim-calcutta": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "7",
+     "instituteId": "IR-M-S-8972",
+     "name": "Indian Institute of Management Calcutta",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "77.34",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "5",
+     "instituteId": "IR-M-S-8972",
+     "name": "Indian Institute of Management Calcutta",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "75.07",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "iim-lucknow": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "5",
+     "instituteId": "IR-M-S-8959",
+     "name": "Indian Institute of Management Lucknow",
+     "city": "Lucknow",
+     "state": "Uttar Pradesh",
+     "score": "77.97",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "7",
+     "instituteId": "IR-M-S-8959",
+     "name": "Indian Institute of Management Lucknow",
+     "city": "Lucknow",
+     "state": "Uttar Pradesh",
+     "score": "74.43",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "iim-indore": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "8",
+     "instituteId": "IR-M-S-8918",
+     "name": "Indian Institute of Management Indore",
+     "city": "Indore",
+     "state": "Madhya Pradesh",
+     "score": "75.68",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "8",
+     "instituteId": "IR-M-S-8918",
+     "name": "Indian Institute of Management Indore",
+     "city": "Indore",
+     "state": "Madhya Pradesh",
+     "score": "73.53",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "xlri-jamshedpur": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "10",
+     "instituteId": "IR-M-S-132",
+     "name": "XLRI - Xavier School of Management",
+     "city": "Jamshedpur",
+     "state": "Jharkhand",
+     "score": "70.63",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "9",
+     "instituteId": "IR-M-S-132",
+     "name": "XLRI - Xavier School of Management",
+     "city": "Jamshedpur",
+     "state": "Jharkhand",
+     "score": "68.13",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "iit-delhi-dms": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "4",
+     "instituteId": "IR-M-I-1074",
+     "name": "Indian Institute of Technology Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "78.94",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "4",
+     "instituteId": "IR-M-I-1074",
+     "name": "Indian Institute of Technology Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "76.25",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "iit-bombay-sjmsom": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "14",
+     "instituteId": "IR-M-U-0306",
+     "name": "Indian Institute of Technology Bombay",
+     "city": "Mumbai",
+     "state": "Maharashtra",
+     "score": "65.82",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "10",
+     "instituteId": "IR-M-U-0306",
+     "name": "Indian Institute of Technology Bombay",
+     "city": "Mumbai",
+     "state": "Maharashtra",
+     "score": "67.16",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "aiims-delhi": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "8",
+     "instituteId": "IR-O-N-15",
+     "name": "All India Institute of Medical Sciences, Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "70.57",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "medical",
+     "rank": "1",
+     "instituteId": "IR-D-N-15",
+     "name": "All India Institute of Medical Sciences, Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "91.80",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+     "heading": "India Rankings 2025: Medical"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "11",
+     "instituteId": "IR-R-N-15",
+     "name": "All India Institute of Medical Sciences, Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "63.61",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "7",
+     "instituteId": "IR-O-N-15",
+     "name": "All India Institute of Medical Sciences Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "74.27",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "medical",
+     "rank": "1",
+     "instituteId": "IR-D-N-15",
+     "name": "All India Institute of Medical Sciences Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "94.46",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+     "heading": "India Rankings 2024: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "8",
+     "instituteId": "IR-R-N-15",
+     "name": "All India Institute of Medical Sciences Delhi",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "67.43",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "pgimer-chandigarh": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "33",
+     "instituteId": "IR-O-U-0079",
+     "name": "Post Graduate Institute of Medical Education and Research",
+     "city": "Chandigarh",
+     "state": "Chandigarh",
+     "score": "59.15",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "medical",
+     "rank": "2",
+     "instituteId": "IR-D-U-0079",
+     "name": "Post Graduate Institute of Medical Education and Research",
+     "city": "Chandigarh",
+     "state": "Chandigarh",
+     "score": "82.58",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+     "heading": "India Rankings 2025: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "medical",
+     "rank": "2",
+     "instituteId": "IR-D-U-0079",
+     "name": "Post Graduate Institute of Medical Education and Research",
+     "city": "Chandigarh",
+     "state": "Chandigarh",
+     "score": "80.83",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+     "heading": "India Rankings 2024: Medical"
+    }
+   ]
+  },
+  "cmc-vellore": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "medical",
+     "rank": "3",
+     "instituteId": "IR-D-C-45654",
+     "name": "Christian Medical College",
+     "city": "Vellore",
+     "state": "Tamil Nadu",
+     "score": "76.48",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+     "heading": "India Rankings 2025: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "medical",
+     "rank": "3",
+     "instituteId": "IR-D-C-45654",
+     "name": "Christian Medical College",
+     "city": "Vellore",
+     "state": "Tamil Nadu",
+     "score": "75.11",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+     "heading": "India Rankings 2024: Medical"
+    }
+   ]
+  },
+  "nimhans-bangalore": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "60",
+     "instituteId": "IR-O-U-0236",
+     "name": "National Institute of Mental Health & Neuro Sciences, Bangalore",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "54.28",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "medical",
+     "rank": "7",
+     "instituteId": "IR-D-U-0236",
+     "name": "National Institute of Mental Health & Neuro Sciences, Bangalore",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "69.77",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+     "heading": "India Rankings 2025: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "medical",
+     "rank": "4",
+     "instituteId": "IR-D-U-0236",
+     "name": "National Institute of Mental Health and Neuro Sciences, Bangalore",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "71.92",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+     "heading": "India Rankings 2024: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "43",
+     "instituteId": "IR-R-U-0236",
+     "name": "National Institute of Mental Health and Neuro Sciences, Bangalore",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "45.18",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "jipmer-puducherry": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "43",
+     "instituteId": "IR-O-U-0368",
+     "name": "Jawaharlal Institute of Post Graduate Medical Education & Research",
+     "city": "Puducherry",
+     "state": "Pondicherry",
+     "score": "56.23",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "medical",
+     "rank": "4",
+     "instituteId": "IR-D-U-0368",
+     "name": "Jawaharlal Institute of Post Graduate Medical Education & Research",
+     "city": "Puducherry",
+     "state": "Pondicherry",
+     "score": "73.30",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+     "heading": "India Rankings 2025: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "39",
+     "instituteId": "IR-O-U-0368",
+     "name": "Jawaharlal Institute of Post Graduate Medical Education and Research",
+     "city": "Puducherry",
+     "state": "Pondicherry",
+     "score": "55.51",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "medical",
+     "rank": "5",
+     "instituteId": "IR-D-U-0368",
+     "name": "Jawaharlal Institute of Post Graduate Medical Education and Research",
+     "city": "Puducherry",
+     "state": "Pondicherry",
+     "score": "70.74",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+     "heading": "India Rankings 2024: Medical"
+    }
+   ]
+  },
+  "sgpgi-lucknow": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "medical",
+     "rank": "5",
+     "instituteId": "IR-D-N-33",
+     "name": "Sanjay Gandhi Postgraduate Institute of Medical Sciences",
+     "city": "Lucknow",
+     "state": "Uttar Pradesh",
+     "score": "70.09",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+     "heading": "India Rankings 2025: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "medical",
+     "rank": "6",
+     "instituteId": "IR-D-N-33",
+     "name": "Sanjay Gandhi Postgraduate Institute of Medical Sciences",
+     "city": "Lucknow",
+     "state": "Uttar Pradesh",
+     "score": "70.07",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+     "heading": "India Rankings 2024: Medical"
+    }
+   ]
+  },
+  "kmc-manipal": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "medical",
+     "rank": "10",
+     "instituteId": "IR-D-C-7242",
+     "name": "Kasturba Medical College, Manipal",
+     "city": "Manipal",
+     "state": "Karnataka",
+     "score": "68.05",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+     "heading": "India Rankings 2025: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "medical",
+     "rank": "9",
+     "instituteId": "IR-D-C-7242",
+     "name": "Kasturba Medical College, Manipal",
+     "city": "Manipal",
+     "state": "Karnataka",
+     "score": "67.42",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+     "heading": "India Rankings 2024: Medical"
+    }
+   ]
+  },
+  "nlsiu-bangalore": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "law",
+     "rank": "1",
+     "instituteId": "IR-L-U-0238",
+     "name": "National Law School of India University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "82.97",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/LawRanking.html",
+     "heading": "India Rankings 2025: Law"
+    },
+    {
+     "year": 2024,
+     "category": "law",
+     "rank": "1",
+     "instituteId": "IR-L-U-0238",
+     "name": "National Law School of India University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "83.83",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/LawRanking.html",
+     "heading": "India Rankings 2024: Law"
+    }
+   ]
+  },
+  "nlu-delhi": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "law",
+     "rank": "2",
+     "instituteId": "IR-L-U-0111",
+     "name": "National Law University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "80.00",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/LawRanking.html",
+     "heading": "India Rankings 2025: Law"
+    },
+    {
+     "year": 2024,
+     "category": "law",
+     "rank": "2",
+     "instituteId": "IR-L-U-0111",
+     "name": "National Law University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "77.48",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/LawRanking.html",
+     "heading": "India Rankings 2024: Law"
+    }
+   ]
+  },
+  "nalsar-hyderabad": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "law",
+     "rank": "3",
+     "instituteId": "IR-L-N-18",
+     "name": "Nalsar University of Law",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "79.50",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/LawRanking.html",
+     "heading": "India Rankings 2025: Law"
+    },
+    {
+     "year": 2024,
+     "category": "law",
+     "rank": "3",
+     "instituteId": "IR-L-N-18",
+     "name": "Nalsar University of Law",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "77.05",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/LawRanking.html",
+     "heading": "India Rankings 2024: Law"
+    }
+   ]
+  },
+  "iit-kgp-rgsoipl": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "law",
+     "rank": "6",
+     "instituteId": "IR-L-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "74.09",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/LawRanking.html",
+     "heading": "India Rankings 2025: Law"
+    },
+    {
+     "year": 2024,
+     "category": "law",
+     "rank": "7",
+     "instituteId": "IR-L-U-0573",
+     "name": "Indian Institute of Technology Kharagpur",
+     "city": "Kharagpur",
+     "state": "West Bengal",
+     "score": "71.47",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/LawRanking.html",
+     "heading": "India Rankings 2024: Law"
+    }
+   ]
+  },
+  "jindal-global-law": {
+   "none": "O.P. Jindal Global University (Sonipat) is in none of the NIRF tables read (Overall, Law, University, Management and the others, with their rank bands).",
+   "rows": []
+  },
+  "wbnujs-kolkata": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "law",
+     "rank": "4",
+     "instituteId": "IR-L-U-0585",
+     "name": "The West Bengal National University of Juridical Sciences",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "79.39",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/LawRanking.html",
+     "heading": "India Rankings 2025: Law"
+    },
+    {
+     "year": 2024,
+     "category": "law",
+     "rank": "4",
+     "instituteId": "IR-L-U-0585",
+     "name": "The West Bengal National University of Juridical Sciences",
+     "city": "Kolkata",
+     "state": "West Bengal",
+     "score": "76.39",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/LawRanking.html",
+     "heading": "India Rankings 2024: Law"
+    }
+   ]
+  },
+  "iisc-bangalore": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "2",
+     "instituteId": "IR-O-U-0220",
+     "name": "Indian Institute of Science",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "85.00",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "1",
+     "instituteId": "IR-O-U-0220",
+     "name": "Indian Institute of Science",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "85.05",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "1",
+     "instituteId": "IR-R-U-0220",
+     "name": "Indian Institute of Science",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "85.01",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "2",
+     "instituteId": "IR-O-U-0220",
+     "name": "Indian Institute of Science, Bengaluru",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "83.28",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "1",
+     "instituteId": "IR-O-U-0220",
+     "name": "Indian Institute of Science, Bengaluru",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "83.29",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "1",
+     "instituteId": "IR-R-U-0220",
+     "name": "Indian Institute of Science, Bengaluru",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "84.98",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "jnu-delhi": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "9",
+     "instituteId": "IR-O-U-0109",
+     "name": "Jawaharlal Nehru University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "69.62",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "2",
+     "instituteId": "IR-O-U-0109",
+     "name": "Jawaharlal Nehru University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "71.00",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "21",
+     "instituteId": "IR-R-U-0109",
+     "name": "Jawaharlal Nehru University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "56.06",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "10",
+     "instituteId": "IR-O-U-0109",
+     "name": "Jawaharlal Nehru University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "68.53",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "2",
+     "instituteId": "IR-O-U-0109",
+     "name": "Jawaharlal Nehru University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "69.80",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "18",
+     "instituteId": "IR-R-U-0109",
+     "name": "Jawaharlal Nehru University",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "56.43",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "jamia-millia-islamia": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "13",
+     "instituteId": "IR-O-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "66.99",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "24",
+     "instituteId": "IR-E-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "62.42",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "28",
+     "instituteId": "IR-M-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "60.06",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "law",
+     "rank": "8",
+     "instituteId": "IR-L-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "66.39",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/LawRanking.html",
+     "heading": "India Rankings 2025: Law"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "4",
+     "instituteId": "IR-O-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "69.10",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "architecture",
+     "rank": "5",
+     "instituteId": "IR-A-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "67.15",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ArchitectureRanking.html",
+     "heading": "India Rankings 2025: Architecture and Planning"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "20",
+     "instituteId": "IR-R-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "56.13",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "13",
+     "instituteId": "IR-O-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "66.00",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "24",
+     "instituteId": "IR-E-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "61.28",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "25",
+     "instituteId": "IR-M-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "60.32",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "law",
+     "rank": "6",
+     "instituteId": "IR-L-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "73.12",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/LawRanking.html",
+     "heading": "India Rankings 2024: Law"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "3",
+     "instituteId": "IR-O-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "68.11",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "architecture",
+     "rank": "7",
+     "instituteId": "IR-A-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "66.21",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ArchitectureRanking.html",
+     "heading": "India Rankings 2024: Architecture and Planning"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "19",
+     "instituteId": "IR-R-U-0108",
+     "name": "Jamia Millia Islamia",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "56.12",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "bhu-varanasi": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "10",
+     "instituteId": "IR-O-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "68.71",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "medical",
+     "rank": "6",
+     "instituteId": "IR-D-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "70.05",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+     "heading": "India Rankings 2025: Medical"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "60",
+     "instituteId": "IR-M-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "52.14",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "6",
+     "instituteId": "IR-O-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "67.28",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "16",
+     "instituteId": "IR-R-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "58.28",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "11",
+     "instituteId": "IR-O-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "67.56",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "medical",
+     "rank": "7",
+     "instituteId": "IR-D-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "69.54",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+     "heading": "India Rankings 2024: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "48",
+     "instituteId": "IR-M-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "52.26",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "law",
+     "rank": "25",
+     "instituteId": "IR-L-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "54.54",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/LawRanking.html",
+     "heading": "India Rankings 2024: Law"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "5",
+     "instituteId": "IR-O-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "66.05",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "16",
+     "instituteId": "IR-R-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "58.52",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "delhi-university": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "15",
+     "instituteId": "IR-O-U-0120",
+     "name": "University of Delhi",
+     "city": "Delhi",
+     "state": "Delhi",
+     "score": "66.19",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "5",
+     "instituteId": "IR-O-U-0120",
+     "name": "University of Delhi",
+     "city": "Delhi",
+     "state": "Delhi",
+     "score": "67.38",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "12",
+     "instituteId": "IR-R-U-0120",
+     "name": "University of Delhi",
+     "city": "Delhi",
+     "state": "Delhi",
+     "score": "62.65",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "15",
+     "instituteId": "IR-O-U-0120",
+     "name": "University of Delhi",
+     "city": "Delhi",
+     "state": "Delhi",
+     "score": "64.81",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "6",
+     "instituteId": "IR-O-U-0120",
+     "name": "University of Delhi",
+     "city": "Delhi",
+     "state": "Delhi",
+     "score": "65.90",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "14",
+     "instituteId": "IR-R-U-0120",
+     "name": "University of Delhi",
+     "city": "Delhi",
+     "state": "Delhi",
+     "score": "60.07",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "hyderabad-university": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "26",
+     "instituteId": "IR-O-U-0042",
+     "name": "University of Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "60.32",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "74",
+     "instituteId": "IR-E-U-0042",
+     "name": "University of Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "49.36",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "101-125",
+     "name": "University of Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking150.html",
+     "heading": "India Rankings 2025: Management (Rank-band: 101-125)"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "18",
+     "instituteId": "IR-O-U-0042",
+     "name": "University of Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "61.83",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "32",
+     "instituteId": "IR-R-U-0042",
+     "name": "University of Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "51.48",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "25",
+     "instituteId": "IR-O-U-0042",
+     "name": "University of Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "60.55",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "70",
+     "instituteId": "IR-E-U-0042",
+     "name": "University of Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "49.30",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "101-125",
+     "name": "University of Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking150.html",
+     "heading": "India Rankings 2024: Management (Rank-band: 101-125)"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "17",
+     "instituteId": "IR-O-U-0042",
+     "name": "University of Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "62.18",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "28",
+     "instituteId": "IR-R-U-0042",
+     "name": "University of Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "51.90",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "manipal-academy": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "14",
+     "instituteId": "IR-O-U-0234",
+     "name": "Manipal Academy of Higher Education-Manipal",
+     "city": "Manipal",
+     "state": "Karnataka",
+     "score": "66.86",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "3",
+     "instituteId": "IR-O-U-0234",
+     "name": "Manipal Academy of Higher Education-Manipal",
+     "city": "Manipal",
+     "state": "Karnataka",
+     "score": "69.25",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "19",
+     "instituteId": "IR-R-U-0234",
+     "name": "Manipal Academy of Higher Education-Manipal",
+     "city": "Manipal",
+     "state": "Karnataka",
+     "score": "56.41",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "14",
+     "instituteId": "IR-O-U-0234",
+     "name": "Manipal Academy of Higher Education, Manipal",
+     "city": "Manipal",
+     "state": "Karnataka",
+     "score": "64.94",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "4",
+     "instituteId": "IR-O-U-0234",
+     "name": "Manipal Academy of Higher Education, Manipal",
+     "city": "Manipal",
+     "state": "Karnataka",
+     "score": "67.18",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "23",
+     "instituteId": "IR-R-U-0234",
+     "name": "Manipal Academy of Higher Education, Manipal",
+     "city": "Manipal",
+     "state": "Karnataka",
+     "score": "54.31",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "amrita-vishwa-vidyapeetham": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "17",
+     "instituteId": "IR-O-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "64.97",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "23",
+     "instituteId": "IR-E-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "62.46",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "medical",
+     "rank": "9",
+     "instituteId": "IR-D-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "68.52",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+     "heading": "India Rankings 2025: Medical"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "26",
+     "instituteId": "IR-M-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "60.25",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "8",
+     "instituteId": "IR-O-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "67.05",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "pharmacy",
+     "rank": "14",
+     "instituteId": "IR-P-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "68.39",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/PharmacyRanking.html",
+     "heading": "India Rankings 2025: Pharmacy"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "31",
+     "instituteId": "IR-R-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "52.48",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "18",
+     "instituteId": "IR-O-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "63.81",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "23",
+     "instituteId": "IR-E-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "61.29",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "medical",
+     "rank": "8",
+     "instituteId": "IR-D-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "68.81",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+     "heading": "India Rankings 2024: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "28",
+     "instituteId": "IR-M-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "57.40",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "7",
+     "instituteId": "IR-O-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "65.73",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "pharmacy",
+     "rank": "13",
+     "instituteId": "IR-P-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "68.07",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/PharmacyRanking.html",
+     "heading": "India Rankings 2024: Pharmacy"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "33",
+     "instituteId": "IR-R-U-0436",
+     "name": "Amrita Vishwa Vidyapeetham",
+     "city": "Coimbatore",
+     "state": "Tamil Nadu",
+     "score": "50.38",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "jamia-hamdard": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "74",
+     "instituteId": "IR-O-U-0107",
+     "name": "Jamia Hamdard",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "52.20",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "201-300",
+     "name": "Jamia Hamdard",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking300.html",
+     "heading": "India Rankings 2025: Engineering (Rank-band: 201-300)"
+    },
+    {
+     "year": 2025,
+     "category": "medical",
+     "rank": "40",
+     "instituteId": "IR-D-U-0107",
+     "name": "Jamia Hamdard",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "52.57",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+     "heading": "India Rankings 2025: Medical"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "87",
+     "instituteId": "IR-M-U-0107",
+     "name": "Jamia Hamdard",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "47.10",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "47",
+     "instituteId": "IR-O-U-0107",
+     "name": "Jamia Hamdard",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "54.10",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "pharmacy",
+     "rank": "1",
+     "instituteId": "IR-P-U-0107",
+     "name": "Jamia Hamdard",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "86.59",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/PharmacyRanking.html",
+     "heading": "India Rankings 2025: Pharmacy"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "62",
+     "instituteId": "IR-O-U-0107",
+     "name": "Jamia Hamdard",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "52.83",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "201-300",
+     "name": "Jamia Hamdard",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking300.html",
+     "heading": "India Rankings 2024: Engineering (Rank-band: 201-300)"
+    },
+    {
+     "year": 2024,
+     "category": "medical",
+     "rank": "37",
+     "instituteId": "IR-D-U-0107",
+     "name": "Jamia Hamdard",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "55.53",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+     "heading": "India Rankings 2024: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "78",
+     "instituteId": "IR-M-U-0107",
+     "name": "Jamia Hamdard",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "47.39",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "40",
+     "instituteId": "IR-O-U-0107",
+     "name": "Jamia Hamdard",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "54.86",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    },
+    {
+     "year": 2024,
+     "category": "pharmacy",
+     "rank": "1",
+     "instituteId": "IR-P-U-0107",
+     "name": "Jamia Hamdard",
+     "city": "New Delhi",
+     "state": "Delhi",
+     "score": "84.01",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/PharmacyRanking.html",
+     "heading": "India Rankings 2024: Pharmacy"
+    }
+   ]
+  },
+  "niper-mohali": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "pharmacy",
+     "rank": "9",
+     "instituteId": "IR-P-U-0380",
+     "name": "National Institute of Pharmaceutical Education and Research, Mohali",
+     "city": "Mohali",
+     "state": "Punjab",
+     "score": "70.96",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/PharmacyRanking.html",
+     "heading": "India Rankings 2025: Pharmacy"
+    },
+    {
+     "year": 2024,
+     "category": "pharmacy",
+     "rank": "9",
+     "instituteId": "IR-P-U-0380",
+     "name": "National Institute of Pharmaceutical Education and Research Mohali",
+     "city": "Mohali",
+     "state": "Punjab",
+     "score": "70.86",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/PharmacyRanking.html",
+     "heading": "India Rankings 2024: Pharmacy"
+    }
+   ]
+  },
+  "iiit-hyderabad": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "89",
+     "instituteId": "IR-O-U-0014",
+     "name": "International Institute of Information Technology Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "49.91",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "38",
+     "instituteId": "IR-E-U-0014",
+     "name": "International Institute of Information Technology Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "58.45",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "55",
+     "instituteId": "IR-O-U-0014",
+     "name": "International Institute of Information Technology Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "52.34",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "101-150",
+     "name": "International Institute of Information Technology Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking150.html",
+     "heading": "India Rankings 2024: Overall (Rank-band: 101-150)"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "47",
+     "instituteId": "IR-E-U-0014",
+     "name": "International Institute of Information Technology Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "54.29",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "74",
+     "instituteId": "IR-O-U-0014",
+     "name": "International Institute of Information Technology Hyderabad",
+     "city": "Hyderabad",
+     "state": "Telangana",
+     "score": "48.32",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    }
+   ]
+  },
+  "iiit-allahabad": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "101-150",
+     "name": "Indian Institute of Information Technology Allahabad",
+     "city": "Prayagraj",
+     "state": "Uttar Pradesh",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking150.html",
+     "heading": "India Rankings 2025: Engineering (Rank-band: 101-150)"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "87",
+     "instituteId": "IR-E-U-0516",
+     "name": "Indian Institute of Information Technology Allahabad",
+     "city": "Prayagraj",
+     "state": "Uttar Pradesh",
+     "score": "45.84",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    }
+   ]
+  },
+  "iiit-bangalore": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "69",
+     "instituteId": "IR-E-U-0221",
+     "name": "International Institute of Information Technology Bangalore",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "50.46",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "74",
+     "instituteId": "IR-E-U-0221",
+     "name": "International Institute of Information Technology Bangalore",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "48.61",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    }
+   ]
+  },
+  "iiser-pune": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "55",
+     "instituteId": "IR-O-U-0305",
+     "name": "Indian Institute of Science Education & Research Pune",
+     "city": "Pune",
+     "state": "Maharashtra",
+     "score": "54.90",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "35",
+     "instituteId": "IR-R-U-0305",
+     "name": "Indian Institute of Science Education & Research Pune",
+     "city": "Pune",
+     "state": "Maharashtra",
+     "score": "50.35",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "42",
+     "instituteId": "IR-O-U-0305",
+     "name": "Indian Institute of Science Education and Research Pune",
+     "city": "Pune",
+     "state": "Maharashtra",
+     "score": "54.86",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "29",
+     "instituteId": "IR-R-U-0305",
+     "name": "Indian Institute of Science Education and Research Pune",
+     "city": "Pune",
+     "state": "Maharashtra",
+     "score": "51.53",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iiser-kolkata": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "67",
+     "instituteId": "IR-O-U-0572",
+     "name": "Indian Institute of Science Education & Research Kolkata",
+     "city": "Mohanpur",
+     "state": "West Bengal",
+     "score": "53.04",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "46",
+     "instituteId": "IR-R-U-0572",
+     "name": "Indian Institute of Science Education & Research Kolkata",
+     "city": "Mohanpur",
+     "state": "West Bengal",
+     "score": "46.42",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "61",
+     "instituteId": "IR-O-U-0572",
+     "name": "Indian Institute of Science Education and Research Kolkata",
+     "city": "Mohanpur",
+     "state": "West Bengal",
+     "score": "52.91",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "38",
+     "instituteId": "IR-R-U-0572",
+     "name": "Indian Institute of Science Education and Research Kolkata",
+     "city": "Mohanpur",
+     "state": "West Bengal",
+     "score": "47.31",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iiser-mohali": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "70",
+     "instituteId": "IR-O-U-0377",
+     "name": "Indian Institute of Science Education & Research, Mohali",
+     "city": "Mohali",
+     "state": "Punjab",
+     "score": "52.68",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "64",
+     "instituteId": "IR-O-U-0377",
+     "name": "Indian Institute of Science Education and Research Mohali",
+     "city": "Mohali",
+     "state": "Punjab",
+     "score": "52.58",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "49",
+     "instituteId": "IR-R-U-0377",
+     "name": "Indian Institute of Science Education and Research Mohali",
+     "city": "Mohali",
+     "state": "Punjab",
+     "score": "44.09",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-gandhinagar": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "39",
+     "instituteId": "IR-O-U-0139",
+     "name": "Indian Institute of Technology Gandhinagar",
+     "city": "Gandhinagar",
+     "state": "Gujarat",
+     "score": "57.01",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "25",
+     "instituteId": "IR-E-U-0139",
+     "name": "Indian Institute of Technology Gandhinagar",
+     "city": "Gandhinagar",
+     "state": "Gujarat",
+     "score": "62.31",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "36",
+     "instituteId": "IR-R-U-0139",
+     "name": "Indian Institute of Technology Gandhinagar",
+     "city": "Gandhinagar",
+     "state": "Gujarat",
+     "score": "49.61",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "29",
+     "instituteId": "IR-O-U-0139",
+     "name": "Indian Institute of Technology Gandhinagar",
+     "city": "Gandhinagar",
+     "state": "Gujarat",
+     "score": "58.77",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "18",
+     "instituteId": "IR-E-U-0139",
+     "name": "Indian Institute of Technology Gandhinagar",
+     "city": "Gandhinagar",
+     "state": "Gujarat",
+     "score": "63.42",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "32",
+     "instituteId": "IR-R-U-0139",
+     "name": "Indian Institute of Technology Gandhinagar",
+     "city": "Gandhinagar",
+     "state": "Gujarat",
+     "score": "50.78",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-jodhpur": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "66",
+     "instituteId": "IR-O-U-0395",
+     "name": "Indian Institute of Technology Jodhpur",
+     "city": "Jodhpur",
+     "state": "Rajasthan",
+     "score": "53.17",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "27",
+     "instituteId": "IR-E-U-0395",
+     "name": "Indian Institute of Technology Jodhpur",
+     "city": "Jodhpur",
+     "state": "Rajasthan",
+     "score": "61.31",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "98",
+     "instituteId": "IR-M-U-0395",
+     "name": "Indian Institute of Technology Jodhpur",
+     "city": "Jodhpur",
+     "state": "Rajasthan",
+     "score": "45.02",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "68",
+     "instituteId": "IR-O-U-0395",
+     "name": "Indian Institute of Technology Jodhpur",
+     "city": "Jodhpur",
+     "state": "Rajasthan",
+     "score": "52.24",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "28",
+     "instituteId": "IR-E-U-0395",
+     "name": "Indian Institute of Technology Jodhpur",
+     "city": "Jodhpur",
+     "state": "Rajasthan",
+     "score": "60.61",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    }
+   ]
+  },
+  "nit-calicut": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "45",
+     "instituteId": "IR-O-U-0263",
+     "name": "National Institute of Technology Calicut",
+     "city": "Kozhikode",
+     "state": "Kerala",
+     "score": "56.16",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "21",
+     "instituteId": "IR-E-U-0263",
+     "name": "National Institute of Technology Calicut",
+     "city": "Kozhikode",
+     "state": "Kerala",
+     "score": "63.05",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "85",
+     "instituteId": "IR-M-U-0263",
+     "name": "National Institute of Technology Calicut",
+     "city": "Kozhikode",
+     "state": "Kerala",
+     "score": "47.30",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "architecture",
+     "rank": "2",
+     "instituteId": "IR-A-U-0263",
+     "name": "National Institute of Technology Calicut",
+     "city": "Kozhikode",
+     "state": "Kerala",
+     "score": "77.89",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ArchitectureRanking.html",
+     "heading": "India Rankings 2025: Architecture and Planning"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "54",
+     "instituteId": "IR-O-U-0263",
+     "name": "National Institute of Technology Calicut",
+     "city": "Kozhikode",
+     "state": "Kerala",
+     "score": "53.66",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "25",
+     "instituteId": "IR-E-U-0263",
+     "name": "National Institute of Technology Calicut",
+     "city": "Kozhikode",
+     "state": "Kerala",
+     "score": "61.19",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "76",
+     "instituteId": "IR-M-U-0263",
+     "name": "National Institute of Technology Calicut",
+     "city": "Kozhikode",
+     "state": "Kerala",
+     "score": "47.55",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "architecture",
+     "rank": "3",
+     "instituteId": "IR-A-U-0263",
+     "name": "National Institute of Technology Calicut",
+     "city": "Kozhikode",
+     "state": "Kerala",
+     "score": "79.51",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ArchitectureRanking.html",
+     "heading": "India Rankings 2024: Architecture and Planning"
+    }
+   ]
+  },
+  "iit-ropar": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "56",
+     "instituteId": "IR-O-U-0378",
+     "name": "Indian Institute of Technology Ropar",
+     "city": "Rupnagar",
+     "state": "Punjab",
+     "score": "54.76",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "32",
+     "instituteId": "IR-E-U-0378",
+     "name": "Indian Institute of Technology Ropar",
+     "city": "Rupnagar",
+     "state": "Punjab",
+     "score": "59.66",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "research",
+     "rank": "47",
+     "instituteId": "IR-R-U-0378",
+     "name": "Indian Institute of Technology Ropar",
+     "city": "Rupnagar",
+     "state": "Punjab",
+     "score": "46.00",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ResearchRanking.html",
+     "heading": "India Rankings 2025: Research Institutions"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "48",
+     "instituteId": "IR-O-U-0378",
+     "name": "Indian Institute of Technology Ropar",
+     "city": "Rupnagar",
+     "state": "Punjab",
+     "score": "54.12",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "22",
+     "instituteId": "IR-E-U-0378",
+     "name": "Indian Institute of Technology Ropar",
+     "city": "Rupnagar",
+     "state": "Punjab",
+     "score": "61.56",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "research",
+     "rank": "45",
+     "instituteId": "IR-R-U-0378",
+     "name": "Indian Institute of Technology Ropar",
+     "city": "Rupnagar",
+     "state": "Punjab",
+     "score": "44.99",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+     "heading": "India Rankings 2024: Research Institutions"
+    }
+   ]
+  },
+  "iit-bhubaneswar": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "80",
+     "instituteId": "IR-O-U-0355",
+     "name": "Indian Institute of Technology Bhubaneswar",
+     "city": "Bhubaneswar",
+     "state": "Odisha",
+     "score": "51.16",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "39",
+     "instituteId": "IR-E-U-0355",
+     "name": "Indian Institute of Technology Bhubaneswar",
+     "city": "Bhubaneswar",
+     "state": "Odisha",
+     "score": "58.22",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "101-150",
+     "name": "Indian Institute of Technology Bhubaneswar",
+     "city": "Bhubaneswar",
+     "state": "Odisha",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking150.html",
+     "heading": "India Rankings 2024: Overall (Rank-band: 101-150)"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "54",
+     "instituteId": "IR-E-U-0355",
+     "name": "Indian Institute of Technology Bhubaneswar",
+     "city": "Bhubaneswar",
+     "state": "Odisha",
+     "score": "52.54",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    }
+   ]
+  },
+  "iim-shillong": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "38",
+     "instituteId": "IR-M-S-8937",
+     "name": "Indian Institute of Management Shillong",
+     "city": "Shillong",
+     "state": "Meghalaya",
+     "score": "57.70",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "24",
+     "instituteId": "IR-M-S-8937",
+     "name": "Indian Institute of Management Shillong",
+     "city": "Shillong",
+     "state": "Meghalaya",
+     "score": "60.49",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "iim-trichy": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "16",
+     "instituteId": "IR-M-S-8948",
+     "name": "Indian Institute of Management Tiruchirappalli",
+     "city": "Tiruchirappalli",
+     "state": "Tamil Nadu",
+     "score": "64.95",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "27",
+     "instituteId": "IR-M-S-8948",
+     "name": "Indian Institute of Management Tiruchirappalli",
+     "city": "Tiruchirappalli",
+     "state": "Tamil Nadu",
+     "score": "57.67",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "mdi-gurgaon": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "9",
+     "instituteId": "IR-M-I-1170",
+     "name": "Management Development Institute",
+     "city": "Gurugram",
+     "state": "Haryana",
+     "score": "71.96",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "11",
+     "instituteId": "IR-M-I-1170",
+     "name": "Management Development Institute",
+     "city": "Gurugram",
+     "state": "Haryana",
+     "score": "66.85",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "spjimr-mumbai": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "20",
+     "instituteId": "IR-M-I-1044",
+     "name": "S. P. Jain Institute of Management and Research",
+     "city": "Mumbai",
+     "state": "Maharashtra",
+     "score": "62.06",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "20",
+     "instituteId": "IR-M-I-1044",
+     "name": "S. P. Jain Institute of Management and Research",
+     "city": "Mumbai",
+     "state": "Maharashtra",
+     "score": "60.97",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    }
+   ]
+  },
+  "amrita-medical-faridabad": {
+   "none": "NIRF's Medical table ranks Amrita Vishwa Vidyapeetham (Coimbatore) as one institution; the Faridabad campus has no rank of its own.",
+   "rows": []
+  },
+  "kgmu-lucknow": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "83",
+     "instituteId": "IR-O-U-0523",
+     "name": "King George`s Medical University",
+     "city": "Lucknow",
+     "state": "Uttar Pradesh",
+     "score": "50.94",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "medical",
+     "rank": "8",
+     "instituteId": "IR-D-U-0523",
+     "name": "King George`s Medical University",
+     "city": "Lucknow",
+     "state": "Uttar Pradesh",
+     "score": "68.77",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+     "heading": "India Rankings 2025: Medical"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "50",
+     "instituteId": "IR-O-U-0523",
+     "name": "King George`s Medical University",
+     "city": "Lucknow",
+     "state": "Uttar Pradesh",
+     "score": "53.13",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "88",
+     "instituteId": "IR-O-U-0523",
+     "name": "King George`s Medical University",
+     "city": "Lucknow",
+     "state": "Uttar Pradesh",
+     "score": "48.98",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "medical",
+     "rank": "19",
+     "instituteId": "IR-D-U-0523",
+     "name": "King George`s Medical University",
+     "city": "Lucknow",
+     "state": "Uttar Pradesh",
+     "score": "61.95",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+     "heading": "India Rankings 2024: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "53",
+     "instituteId": "IR-O-U-0523",
+     "name": "King George`s Medical University",
+     "city": "Lucknow",
+     "state": "Uttar Pradesh",
+     "score": "51.10",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    }
+   ]
+  },
+  "bhu-medical": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "medical",
+     "rank": "6",
+     "instituteId": "IR-D-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "70.05",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/MedicalRanking.html",
+     "heading": "India Rankings 2025: Medical"
+    },
+    {
+     "year": 2024,
+     "category": "medical",
+     "rank": "7",
+     "instituteId": "IR-D-U-0500",
+     "name": "Banaras Hindu University",
+     "city": "Varanasi",
+     "state": "Uttar Pradesh",
+     "score": "69.54",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/MedicalRanking.html",
+     "heading": "India Rankings 2024: Medical"
+    }
+   ]
+  },
+  "gnlu-gandhinagar": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "law",
+     "rank": "5",
+     "instituteId": "IR-L-U-0134",
+     "name": "Gujarat National Law University",
+     "city": "Gandhinagar",
+     "state": "Gujarat",
+     "score": "76.23",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/LawRanking.html",
+     "heading": "India Rankings 2025: Law"
+    },
+    {
+     "year": 2024,
+     "category": "law",
+     "rank": "8",
+     "instituteId": "IR-L-U-0134",
+     "name": "Gujarat National Law University",
+     "city": "Gandhinagar",
+     "state": "Gujarat",
+     "score": "69.56",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/LawRanking.html",
+     "heading": "India Rankings 2024: Law"
+    }
+   ]
+  },
+  "nlu-jodhpur": {
+   "none": "National Law University, Jodhpur is in none of the NIRF tables read (Law, Overall, University and the others, with their rank bands).",
+   "rows": []
+  },
+  "rmnlu-lucknow": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "law",
+     "rank": "21",
+     "instituteId": "IR-L-U-0511",
+     "name": "Dr. Ram Manohar Lohiya National Law University, Lucknow",
+     "city": "Lucknow",
+     "state": "Uttar Pradesh",
+     "score": "60.12",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/LawRanking.html",
+     "heading": "India Rankings 2025: Law"
+    },
+    {
+     "year": 2024,
+     "category": "law",
+     "rank": "20",
+     "instituteId": "IR-L-U-0511",
+     "name": "Dr. Ram Manohar Lohiya National Law University",
+     "city": "Lucknow",
+     "state": "Uttar Pradesh",
+     "score": "55.92",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/LawRanking.html",
+     "heading": "India Rankings 2024: Law"
+    }
+   ]
+  },
+  "vit-vellore-university": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "14",
+     "instituteId": "IR-O-U-0490",
+     "name": "Vellore Institute of Technology",
+     "city": "Vellore",
+     "state": "Tamil Nadu",
+     "score": "64.64",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "10",
+     "instituteId": "IR-O-U-0490",
+     "name": "Vellore Institute of Technology",
+     "city": "Vellore",
+     "state": "Tamil Nadu",
+     "score": "64.79",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    }
+   ]
+  },
+  "christ-university": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "96",
+     "instituteId": "IR-O-U-0217",
+     "name": "Christ University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "49.65",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "76",
+     "instituteId": "IR-E-U-0217",
+     "name": "Christ University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "49.03",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "management",
+     "rank": "57",
+     "instituteId": "IR-M-U-0217",
+     "name": "Christ University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "52.47",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ManagementRanking.html",
+     "heading": "India Rankings 2025: Management"
+    },
+    {
+     "year": 2025,
+     "category": "law",
+     "rank": "24",
+     "instituteId": "IR-L-U-0217",
+     "name": "Christ University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "58.40",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/LawRanking.html",
+     "heading": "India Rankings 2025: Law"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "63",
+     "instituteId": "IR-O-U-0217",
+     "name": "Christ University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "50.92",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2025,
+     "category": "architecture",
+     "rank": "34",
+     "instituteId": "IR-A-U-0217",
+     "name": "Christ University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "51.79",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/ArchitectureRanking.html",
+     "heading": "India Rankings 2025: Architecture and Planning"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "90",
+     "instituteId": "IR-O-U-0217",
+     "name": "Christ University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "48.66",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "engineering",
+     "rank": "93",
+     "instituteId": "IR-E-U-0217",
+     "name": "Christ University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "45.02",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/EngineeringRanking.html",
+     "heading": "India Rankings 2024: Engineering"
+    },
+    {
+     "year": 2024,
+     "category": "management",
+     "rank": "60",
+     "instituteId": "IR-M-U-0217",
+     "name": "Christ University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "50.56",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/ManagementRanking.html",
+     "heading": "India Rankings 2024: Management"
+    },
+    {
+     "year": 2024,
+     "category": "law",
+     "rank": "15",
+     "instituteId": "IR-L-U-0217",
+     "name": "Christ University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "59.39",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/LawRanking.html",
+     "heading": "India Rankings 2024: Law"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "60",
+     "instituteId": "IR-O-U-0217",
+     "name": "Christ University",
+     "city": "Bengaluru",
+     "state": "Karnataka",
+     "score": "49.87",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    }
+   ]
+  },
+  "symbiosis-pune": {
+   "rows": [
+    {
+     "year": 2025,
+     "category": "overall",
+     "rank": "40",
+     "instituteId": "IR-O-U-0329",
+     "name": "Symbiosis International",
+     "city": "Pune",
+     "state": "Maharashtra",
+     "score": "56.86",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/OverallRanking.html",
+     "heading": "India Rankings 2025: Overall"
+    },
+    {
+     "year": 2025,
+     "category": "engineering",
+     "rank": "46",
+     "instituteId": "IR-E-U-0329",
+     "name": "Symbiosis International",
+     "city": "Pune",
+     "state": "Maharashtra",
+     "score": "56.22",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/EngineeringRanking.html",
+     "heading": "India Rankings 2025: Engineering"
+    },
+    {
+     "year": 2025,
+     "category": "university",
+     "rank": "24",
+     "instituteId": "IR-O-U-0329",
+     "name": "Symbiosis International",
+     "city": "Pune",
+     "state": "Maharashtra",
+     "score": "59.16",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2025/UniversityRanking.html",
+     "heading": "India Rankings 2025: University"
+    },
+    {
+     "year": 2024,
+     "category": "overall",
+     "rank": "52",
+     "instituteId": "IR-O-U-0329",
+     "name": "Symbiosis International",
+     "city": "Pune",
+     "state": "Maharashtra",
+     "score": "53.93",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/OverallRanking.html",
+     "heading": "India Rankings 2024: Overall"
+    },
+    {
+     "year": 2024,
+     "category": "university",
+     "rank": "31",
+     "instituteId": "IR-O-U-0329",
+     "name": "Symbiosis International",
+     "city": "Pune",
+     "state": "Maharashtra",
+     "score": "56.41",
+     "sourceUrl": "https://www.nirfindia.org/Rankings/2024/UniversityRanking.html",
+     "heading": "India Rankings 2024: University"
+    }
+   ]
+  }
+ }
+}

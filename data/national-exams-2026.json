@@ -1,0 +1,756 @@
+{
+  "_meta": {
+    "what": "National / PG exams students search for and Shishya had no exam row for (wave 2 search misses). Every fact below was read on the conducting body's own site or its official PDF on that host, with the exact words it came from. Read by scripts/add-national-exams.ts (dry run by default, --apply writes).",
+    "readOn": "2026-09-27",
+    "datesAre": "Asia/Kolkata calendar dates (YYYY-MM-DD); the script stores them at midnight UTC of that day, the repo-wide convention.",
+    "provenance": "official-research:2026-09-27",
+    "patternColumns": "Exam.totalQuestions / totalMarks / durationMin / marksPerQ / negativeMark hold ONE paper. Where the official scheme mixes 1- and 2-mark questions (GATE, JAM) marksPerQ is 1 and negativeMark 1/3 — the true values for a 1-mark MCQ — so marksPerQ x questions != totalMarks and the score-estimate honesty gate withholds the calculator. None of these exams is in src/lib/pattern-verified.ts yet, so no answer lead / FAQ prints pattern numbers; the hub chips print the stored columns raw.",
+    "corrections": [
+      "2026-09-27 (verifier rejections): SSC_CPO description said 'Paper-II is English Comprehension, 200 marks' — corrected to the notice's four-part Paper-II table (PDF page 16). JNVST APPLICATION_END 2026-07-31 row and the description's 'last date to apply was 31 July 2026' dropped — a reported extension (7/10 Aug 2026) could not be confirmed or ruled out on an official host."
+    ],
+    "activeDefault": "Every row is created INACTIVE (src/app/exams/[code]/page.tsx 404s an inactive exam). See activeRecommendation per exam and the zero-question notes in the script header."
+  },
+  "exams": [
+    {
+      "code": "UGC_NET",
+      "exam": {
+        "name": "UGC-NET — National Eligibility Test (NTA, for the University Grants Commission)",
+        "shortName": "UGC NET",
+        "category": "TEACHING",
+        "description": "UGC-NET is conducted by the National Testing Agency (NTA) for the University Grants Commission and decides eligibility for the Junior Research Fellowship (JRF), appointment as Assistant Professor and admission to PhD. December 2026 cycle: NTA's examination calendar (public notice of 16 September 2026) lists the exam for 14–19 December 2026, with 20–21 December as buffer days; NTA calls these dates tentative and says the detailed information bulletin will be issued separately — on 27 September 2026 it has not been published. Pattern as in the June 2026 information bulletin: one computer-based sitting of 3 hours with no break — Paper 1 (teaching and research aptitude) 50 questions for 100 marks and Paper 2 (the chosen subject) 100 questions for 200 marks; every question carries 2 marks and there is no negative marking. Medium: English and Hindi, except language papers. Eligibility (June 2026 bulletin): a master's degree with at least 55% marks (50% for OBC-NCL, SC, ST, PwD/PwBD and third gender candidates); final-year master's students may apply provisionally. JRF: not more than 30 years (relaxations apply); no upper age limit for Assistant Professor or PhD admission.",
+        "durationMin": 180,
+        "totalQuestions": 150,
+        "scoredQuestions": null,
+        "totalMarks": 300,
+        "marksPerQ": 2,
+        "negativeMark": 0,
+        "languages": ["EN", "HI"]
+      },
+      "pattern": {
+        "stage": "Paper 1 + Paper 2 in one sitting",
+        "url": "https://cdnbbsr.s3waas.gov.in/s301eee509ee2f68dc6014898c309e86bf/uploads/2026/04/202604301078678748.pdf",
+        "source": "Information Bulletin of UGC-NET June 2026 as on 30.04.2026 (linked from https://ugcnet.nta.nic.in/information-bulletin/)",
+        "quote": "2.2 Pattern of Examination … Part I 100 marks 50 questions … II 200 marks 100 questions … 03 hours (180 minutes) without any break. 2.5 Marking Scheme … Each question carries 02 (two) marks. … There is no negative marking for incorrect response. 2.4 (i) The medium of Question Paper shall be in English & Hindi only, except language papers.",
+        "note": "The December 2026 bulletin is not out (27 Sep 2026); the pattern is the June 2026 bulletin's."
+      },
+      "eligibility": {
+        "minAge": null,
+        "maxAge": null,
+        "ageRelaxation": "JRF only: not more than 30 years on the 1st day of the month in which the exam concludes; up to 5 years' relaxation for OBC-NCL, SC, ST, PwD/PwBD, third gender and women, research experience (up to 5 years), LL.M. holders (3 years) and armed-forces service; total relaxation capped at 5 years (June 2026 bulletin 3.4). No upper age limit for Assistant Professor or PhD admission.",
+        "educationTags": ["POSTGRADUATE"],
+        "educationNote": "Master's degree or equivalent with at least 55% marks (50% for OBC-NCL, SC, ST, PwD/PwBD and third gender). Final-year master's students may apply provisionally.",
+        "vacanciesApprox": null,
+        "vacanciesNote": "A qualifying test, not a recruitment: there is no vacancy count.",
+        "eligibilityNote": "The JRF age limit applies only to the JRF category (June 2026 bulletin 3.4). Syllabus: the bulletin points to the UGC's syllabus page, https://www.ugcnetonline.in/syllabus-new.php.",
+        "officialUrl": "https://ugcnet.nta.nic.in/",
+        "officialName": "National Testing Agency (NTA), for the University Grants Commission (UGC)",
+        "sources": [
+          {
+            "url": "https://cdnbbsr.s3waas.gov.in/s301eee509ee2f68dc6014898c309e86bf/uploads/2026/04/202604301078678748.pdf",
+            "quote": "3.1 (a) General/Unreserved/General-EWS candidates who have secured at least 55% marks (without rounding off) in Master's Degree or equivalent examination … OBC-NCL/SC/ST/PwD/PwBD/Third gender category candidates who have secured at least 50% marks … 3.4 (i) JRF: Not more than 30 years … (ii) Assistant Professor: There is no upper age limit … (iii) Admission to PhD: There is no upper age limit."
+          }
+        ]
+      },
+      "syllabus": {
+        "url": "https://www.ugcnetonline.in/syllabus-new.php",
+        "quote": "Syllabus for all NET Subjects can be downloaded from the UGC website: https://www.ugcnetonline.in/syllabus-new.php. (June 2026 bulletin 2.3)"
+      },
+      "dates": [
+        {
+          "label": "UGC NET December 2026 exam window begins (NTA calendar: 14–19 Dec 2026, buffer 20–21 Dec — tentative)",
+          "date": "2026-12-14",
+          "kind": "EXAM",
+          "isExamDay": true,
+          "url": "https://nta.ac.in/Download/Notice/Notice_20260916195948.pdf",
+          "quote": "Examination Calendar, December 2026 Cycle onwards — 4. UGC NET (December Cycle) | 14 – 19 Dec 2026 (buffer: 20 – 21 Dec 2026) | 6 Days. Note: Dates are tentative and may undergo changes …",
+          "quoteMethod": "Scanned PDF (no text layer); table cell read from the rendered page image."
+        },
+        {
+          "label": "UGC NET December 2026 exam window ends (tentative, before buffer days 20–21 Dec)",
+          "date": "2026-12-19",
+          "kind": "EXAM",
+          "isExamDay": true,
+          "url": "https://nta.ac.in/Download/Notice/Notice_20260916195948.pdf",
+          "quote": "4. UGC NET (December Cycle) | 14 – 19 Dec 2026 (buffer: 20 – 21 Dec 2026)",
+          "quoteMethod": "Scanned PDF (no text layer); table cell read from the rendered page image."
+        }
+      ],
+      "notAnnounced": ["December 2026 information bulletin, application window, admit card and result dates (NTA notice 16 Sep 2026 para 5: 'Detailed Information Bulletins and examination-specific notices will be issued separately at the appropriate time')."],
+      "activeRecommendation": "Activate once the hub's zero-question copy is gated (see script header)."
+    },
+    {
+      "code": "CSIR_NET",
+      "exam": {
+        "name": "Joint CSIR-UGC NET (NTA, for the Council of Scientific & Industrial Research)",
+        "shortName": "CSIR NET",
+        "category": "TEACHING",
+        "description": "Joint CSIR-UGC NET is conducted by the National Testing Agency (NTA) for the Council of Scientific & Industrial Research and decides eligibility for the Junior Research Fellowship (JRF), Assistant Professor and PhD admission in five subjects: Chemical Sciences; Earth, Atmospheric, Ocean and Planetary Sciences; Life Sciences; Mathematical Sciences; and Physical Sciences. December 2026 cycle: NTA's examination calendar (public notice of 16 September 2026) lists 20–21 December 2026, tentative; the information bulletin has not been published (27 September 2026). Pattern as in the June 2026 bulletin: one 3-hour computer-based paper of 200 marks in Parts A, B and C, in Hindi and English; the number of questions and the marking differ by subject. The question counts shown on this page are the Life Sciences paper's: 145 questions of which 75 are answered (Part A 15 of 20, Part B 35 of 50, Part C 25 of 75), 2, 2 and 4 marks, with 0.5, 0.5 and 1 mark deducted per wrong answer. Chemical Sciences: 120 questions, 75 answered; Earth Sciences: 150, 75; Mathematical Sciences: 120, 60 (no negative marking in Part C); Physical Sciences: 75, 55. Eligibility: a master's degree with at least 55% marks (50% for OBC-NCL, SC, ST, PwD/PwBD and third gender); JRF age limit 30 (relaxations apply), no upper age limit for Assistant Professor or PhD admission.",
+        "durationMin": 180,
+        "totalQuestions": 145,
+        "scoredQuestions": 75,
+        "totalMarks": 200,
+        "marksPerQ": 2,
+        "negativeMark": 0.5,
+        "languages": ["EN", "HI"]
+      },
+      "pattern": {
+        "stage": "Life Sciences (703) paper — the Exam row can hold one subject's scheme; the other four are in the description",
+        "url": "https://cdnbbsr.s3waas.gov.in/s3efdf562ce2fb0ad460fd8e9d33e57f57/uploads/2026/05/202605271224945892.pdf",
+        "source": "Joint CSIR-UGC NET June 2026 Information Bulletin (linked from https://csirnet.nta.nic.in/information-bulletin/)",
+        "quote": "3.2 Pattern of Question Papers … LIFE SCIENCES (703) PART A PART B PART C TOTAL — Total questions 20 50 75 145; Max No of Questions to attempt 15 35 25 75; Marks for each correct answer 2 2 4 200; Marks for each incorrect answer 0.5 0.5 1 (Negative marking for part A, B & C is 25%). CHEMICAL SCIENCES (701) Total questions 20 40 60 120, attempt 15 35 25 75 … EARTH … (702) 20 50 80 150, attempt 15 35 25 75 … MATHEMATICAL SCIENCES (704) 20 40 60 120, attempt 15 25 20 60 … no negative marking in Part C … PHYSICAL SCIENCES (705) 20 25 30 75, attempt 15 20 20 55. 3.3 The Paper will be in bilingual i.e. Hindi and English.",
+        "note": "Hub chips print the stored columns raw, so a CSIR NET hub shows the Life Sciences counts for every subject. Keep inactive until chips are gated (see script header)."
+      },
+      "eligibility": {
+        "minAge": null,
+        "maxAge": null,
+        "ageRelaxation": "JRF only: not more than 30 years on the 1st day of the month in which the exam concludes; up to 5 years' relaxation for OBC-NCL, SC, ST, PwD/PwBD, third gender and women, research experience and armed-forces service; total capped at 5 years (June 2026 bulletin 2.1.2). No upper age limit for Assistant Professor or PhD admission.",
+        "educationTags": ["POSTGRADUATE", "SCIENCE"],
+        "educationNote": "Master's degree or equivalent with at least 55% marks (50% for OBC-NCL, SC, ST, PwD/PwBD and third gender). Final-year master's students may apply provisionally.",
+        "vacanciesApprox": null,
+        "vacanciesNote": "A qualifying test, not a recruitment: there is no vacancy count.",
+        "eligibilityNote": "Syllabus and scheme per subject: CSIR HRDG website, www.csirhrdg.res.in (June 2026 bulletin 3.6).",
+        "officialUrl": "https://csirnet.nta.nic.in/",
+        "officialName": "National Testing Agency (NTA), for the Council of Scientific & Industrial Research (CSIR)",
+        "sources": [
+          {
+            "url": "https://cdnbbsr.s3waas.gov.in/s3efdf562ce2fb0ad460fd8e9d33e57f57/uploads/2026/05/202605271224945892.pdf",
+            "quote": "2.1.1 a) General/ Unreserved/ General-EWS candidates who have secured at least 55% marks (without rounding off) in Master's Degree … at least 50% marks … 2.1.2 a) JRF: Not more than 30 years … b) Assistant Professor: There is no upper age limit … c) Admission to PhD: There is no upper age limit."
+          }
+        ]
+      },
+      "syllabus": {
+        "url": "https://csirhrdg.res.in/",
+        "quote": "3.6 Syllabus of the Test — Syllabus & Scheme of Examination of the MCQ Paper may be seen at CSIR HRDG website: www.csirhrdg.res.in."
+      },
+      "dates": [
+        {
+          "label": "Joint CSIR-UGC NET December 2026 exam begins (NTA calendar: 20–21 Dec 2026 — tentative)",
+          "date": "2026-12-20",
+          "kind": "EXAM",
+          "isExamDay": true,
+          "url": "https://nta.ac.in/Download/Notice/Notice_20260916195948.pdf",
+          "quote": "5. Joint CSIR UGC NET (December Cycle) | 20 – 21 Dec 2026 | 2 Days. Note: Dates are tentative …",
+          "quoteMethod": "Scanned PDF (no text layer); table cell read from the rendered page image."
+        },
+        {
+          "label": "Joint CSIR-UGC NET December 2026 exam ends (tentative)",
+          "date": "2026-12-21",
+          "kind": "EXAM",
+          "isExamDay": true,
+          "url": "https://nta.ac.in/Download/Notice/Notice_20260916195948.pdf",
+          "quote": "5. Joint CSIR UGC NET (December Cycle) | 20 – 21 Dec 2026 | 2 Days",
+          "quoteMethod": "Scanned PDF (no text layer); table cell read from the rendered page image."
+        }
+      ],
+      "notAnnounced": ["December 2026 information bulletin, application window, admit card and result dates."],
+      "activeRecommendation": "Keep inactive until the hub's pattern chips are gated by subject or by src/lib/pattern-verified.ts — the stored counts are one subject's."
+    },
+    {
+      "code": "CUET_PG",
+      "exam": {
+        "name": "CUET (PG) — Common University Entrance Test for Postgraduate Programmes (NTA)",
+        "shortName": "CUET PG",
+        "category": "UNIVERSITY",
+        "description": "CUET (PG), conducted by the National Testing Agency (NTA), is the entrance test for postgraduate programmes of central and other participating universities. 2027: NTA's examination calendar (public notice of 16 September 2026) lists 1–5, 8, 12–20 and 24–25 March 2027, with 30–31 March as buffer days; NTA calls these dates tentative, and the CUET (PG) 2027 information bulletin has not been published (27 September 2026). Pattern as in the CUET (PG) 2026 information bulletin: each question paper has 75 questions in 90 minutes; 4 marks for a correct answer and 1 mark deducted for a wrong one (300 marks per paper); a candidate may choose up to four question paper codes. Medium: English and Hindi, except language papers, M.Tech/Higher Sciences papers (English only) and Acharya papers. Eligibility (2026 bulletin): a bachelor's degree or equivalent, or final-year students; no age limit — each university sets its own programme eligibility.",
+        "durationMin": 90,
+        "totalQuestions": 75,
+        "scoredQuestions": null,
+        "totalMarks": 300,
+        "marksPerQ": 4,
+        "negativeMark": 1,
+        "languages": ["EN", "HI"]
+      },
+      "pattern": {
+        "stage": "One question paper (a candidate may take up to four)",
+        "url": "https://cdnbbsr.s3waas.gov.in/s388a839f2f6f1427879fc33ee4acf4f66/uploads/2025/12/202512161583029269.pdf",
+        "source": "CUET (PG) 2026 Information Bulletin (linked from https://exams.nta.nic.in/document/cuet-pg-information-bulletin/)",
+        "quote": "2.4 … 2. Examination Duration: The duration of the examination will be 90 minutes. 3. Number of Questions: Each question paper will comprise 75 questions. 2.5 Marking Scheme: 1. Each question carries 04 (four) marks. … 3. For each incorrect response, 01 (one) mark will be deducted from the total score. 2.2 The medium of the Question Paper for CUET (PG)-2026 will be in English and Hindi (Bilingual) except for languages, M. Tech/Higher Sciences, and Acharya papers …",
+        "note": "300 marks = 75 questions x 4 marks (arithmetic on the bulletin's figures). The 2027 bulletin is not out (27 Sep 2026)."
+      },
+      "eligibility": {
+        "minAge": null,
+        "maxAge": null,
+        "ageRelaxation": "No age limit (CUET (PG) 2026 bulletin 3.2); universities may set their own.",
+        "educationTags": ["GRADUATE", "ANY_STREAM"],
+        "educationNote": "A bachelor's degree or equivalent, or appearing in its final year. Each university sets its own programme-wise eligibility.",
+        "vacanciesApprox": null,
+        "vacanciesNote": "An admission test; seats are set by each participating university.",
+        "eligibilityNote": "Programme-wise eligibility is the university's (2026 bulletin 3.2). Syllabus per question paper code: https://exams.nta.nic.in/cuet-pg/syllabus/.",
+        "officialUrl": "https://exams.nta.nic.in/cuet-pg/",
+        "officialName": "National Testing Agency (NTA)",
+        "sources": [
+          {
+            "url": "https://cdnbbsr.s3waas.gov.in/s388a839f2f6f1427879fc33ee4acf4f66/uploads/2025/12/202512161583029269.pdf",
+            "quote": "3.1 Educational Qualification — Candidates who have passed a Bachelor's degree or equivalent examination or Candidates who are pursuing their Bachelor's degree or equivalent Examination and appearing in the Final Year … 3.2 There is NO age limit for candidates appearing in the CUET (PG)-2026 examination."
+          }
+        ]
+      },
+      "syllabus": {
+        "url": "https://exams.nta.nic.in/cuet-pg/syllabus/",
+        "quote": "Attention: Candidates are advised to refer to the syllabus currently available on the following link for Test Papers offered in CUET (PG)-2026: https://exams.nta.nic.in/cuet-pg/syllabus/. (CUET PG portal notice)"
+      },
+      "dates": [
+        {
+          "label": "CUET (PG) 2027 exam window begins (NTA calendar: 1–5, 8, 12–20, 24–25 Mar 2027, buffer 30–31 Mar — tentative)",
+          "date": "2027-03-01",
+          "kind": "EXAM",
+          "isExamDay": true,
+          "url": "https://nta.ac.in/Download/Notice/Notice_20260916195948.pdf",
+          "quote": "March 2027 — 13. CUET (PG) — Common University Entrance Test (Post-Graduate) | 01 – 05, 08, 12 – 20, 24 – 25 March 2027 (buffer: 30 – 31 March 2027) | 17 Days. Note: Dates are tentative …",
+          "quoteMethod": "Scanned PDF (no text layer); table cell read from the rendered page image."
+        },
+        {
+          "label": "CUET (PG) 2027 exam window ends (tentative, before buffer days 30–31 Mar)",
+          "date": "2027-03-25",
+          "kind": "EXAM",
+          "isExamDay": true,
+          "url": "https://nta.ac.in/Download/Notice/Notice_20260916195948.pdf",
+          "quote": "13. CUET (PG) … 01 – 05, 08, 12 – 20, 24 – 25 March 2027 (buffer: 30 – 31 March 2027)",
+          "quoteMethod": "Scanned PDF (no text layer); table cell read from the rendered page image."
+        }
+      ],
+      "notAnnounced": ["CUET (PG) 2027 information bulletin, application window, admit card and result dates."],
+      "activeRecommendation": "Activate once the hub's zero-question copy is gated. Also: 'cuet pg' currently opens UP_UPCET because that row is named 'UP Combined Entrance Test (UPCET / CUET PG-style)' — rename it."
+    },
+    {
+      "code": "CLAT",
+      "exam": {
+        "name": "CLAT — Common Law Admission Test (UG), Consortium of National Law Universities",
+        "shortName": "CLAT",
+        "category": "LAW",
+        "description": "CLAT, conducted by the Consortium of National Law Universities, is the admission test for the undergraduate (five-year integrated LLB) programmes of the participating National Law Universities. CLAT 2027 is on Sunday 6 December 2026, 2:00 pm to 4:00 pm; the online application portal is open from 3 August to 31 October 2026 (Consortium press release, 22 July 2026). UG paper: 120 multiple-choice questions of 1 mark each in 2 hours, with 0.25 mark deducted for each wrong answer — English Language 22–26 questions, Current Affairs including General Knowledge 28–32, Legal Reasoning 28–32, Logical Reasoning 22–26 and Quantitative Techniques 10–14 (approximate numbers, per the Consortium). Eligibility: 10+2 or equivalent with 45% marks (40% for SC, ST and PwD); candidates appearing in the qualifying exam in March/April 2027 may apply; no upper age limit. The postgraduate (LL.M.) CLAT is a separate paper not described here.",
+        "durationMin": 120,
+        "totalQuestions": 120,
+        "scoredQuestions": null,
+        "totalMarks": 120,
+        "marksPerQ": 1,
+        "negativeMark": 0.25,
+        "languages": []
+      },
+      "pattern": {
+        "stage": "UG paper",
+        "url": "https://consortiumofnlus.ac.in/clat-2027/ug-question-format.html",
+        "source": "CLAT 2027 UG Question Paper Format (Consortium of NLUs)",
+        "quote": "Maximum Marks 120; Duration of CLAT 2027 Exam 02:00 Hours; Multiple-Choice Questions 120 questions of one mark each; Negative Marking 0.25 Mark for each wrong answer; English Language 22-26 questions, or roughly 20% of the paper; Current Affairs, including General Knowledge 28-32 questions, or roughly 25% of the paper; Legal Reasoning 28-32 questions, or roughly 25% of the paper; Logical Reasoning 22-26 questions, or roughly 20% of the paper; Quantitative Techniques 10-14 questions, or roughly 10% of the paper",
+        "note": "languages left empty: the pages read do not state the question paper's medium, so the hub makes no 'offered in' claim."
+      },
+      "eligibility": {
+        "minAge": null,
+        "maxAge": null,
+        "ageRelaxation": "No upper age limit for the UG programme (CLAT 2027 UG eligibility page).",
+        "educationTags": ["12TH", "ANY_STREAM"],
+        "educationNote": "10+2 or equivalent with at least 45% marks (40% for SC/ST/PwD). Candidates appearing in the qualifying exam in March/April 2027 may apply, with proof of passing at admission.",
+        "vacanciesApprox": null,
+        "vacanciesNote": "An admission test; seats are set by each participating NLU.",
+        "eligibilityNote": "UG syllabus guide: https://consortiumofnlus.ac.in/clat-2027/ug-syllabus.html.",
+        "officialUrl": "https://consortiumofnlus.ac.in/",
+        "officialName": "Consortium of National Law Universities",
+        "sources": [
+          {
+            "url": "https://consortiumofnlus.ac.in/clat-2027/ug-eligibility.html",
+            "quote": "There is no upper age limit for candidates appearing for UG Programme for the CLAT 2027. Candidates who have passed in 10+2 or an equivalent examination with a minimum of: Forty five percent (45%) of marks or its equivalent in grade or Forty Percent (40%) of marks or equivalent in case of candidates belonging to SC/ST/PwD categories. Candidates appearing for the qualifying examination in March/ April, 2027 are also eligible to apply."
+          }
+        ]
+      },
+      "syllabus": {
+        "url": "https://consortiumofnlus.ac.in/clat-2027/ug-syllabus.html",
+        "quote": "GUIDE TO THE UG-CLAT 2027 … The UG-CLAT 2027 shall be a 2-hour test, with 120 multiple-choice questions carrying 1 mark each. There shall be negative marking of 0.25 marks for every wrong answer."
+      },
+      "dates": [
+        {
+          "label": "CLAT 2027 press release: exam on 6 December 2026, applications 3 August – 31 October 2026",
+          "date": "2026-07-22",
+          "kind": "NOTIFICATION",
+          "url": "https://consortiumofnlus.ac.in/clat-2027/",
+          "quote": "Notification 'CLAT 2027 - Press Release' dated 2026-07-22 (listed on consortiumofnlus.ac.in/clat-2027/): 'the Common Law Admission Test (CLAT) 2027 shall be conducted on Sunday, 6th December, 2026, from 2:00 p.m. to 4:00 p.m. The online application portal for CLAT 2027 will be operational from 3rd August, 2026 and will remain open until 31st October, 2026'",
+          "quoteMethod": "The press-release PDF sits on s3.ap-south-1.amazonaws.com (not an official host for the tier rule), so the row cites the Consortium page that lists it and carries the same three dates."
+        },
+        {
+          "label": "CLAT 2027 applications open",
+          "date": "2026-08-03",
+          "kind": "APPLICATION_START",
+          "url": "https://consortiumofnlus.ac.in/clat-2027/",
+          "quote": "3 August, 2026 — Applications Open"
+        },
+        {
+          "label": "CLAT 2027 last date for receiving applications",
+          "date": "2026-10-31",
+          "kind": "APPLICATION_END",
+          "url": "https://consortiumofnlus.ac.in/clat-2027/",
+          "quote": "31 October, 2026 — Last Date for receiving applications"
+        },
+        {
+          "label": "CLAT 2027 exam, 2:00 pm to 4:00 pm",
+          "date": "2026-12-06",
+          "kind": "EXAM",
+          "isExamDay": true,
+          "url": "https://consortiumofnlus.ac.in/clat-2027/",
+          "quote": "6 December, 2026 — CLAT 2027 Exam Date"
+        }
+      ],
+      "notAnnounced": ["Admit card and result dates."],
+      "activeRecommendation": "Activate once the hub's zero-question copy is gated — the strongest single page here (exam in 10 weeks, all dates official)."
+    },
+    {
+      "code": "IIT_JAM",
+      "exam": {
+        "name": "IIT JAM — Joint Admission Test for Masters (JAM 2027, IIT Kharagpur)",
+        "shortName": "IIT JAM",
+        "category": "UNIVERSITY",
+        "description": "JAM (Joint Admission Test for Masters) 2027 is organised by IIT Kharagpur for admission to M.Sc., M.Sc. (Tech), MS (Research), M.Sc.–M.Tech dual degree, joint M.Sc.–PhD, M.Sc.–PhD dual degree and integrated PhD programmes at the IITs and other institutes; the JAM 2027 site lists 3,000 seats. One computer-based exam on Sunday 14 February 2027 in two sessions — forenoon 9:30–12:30: Chemistry, Geology, Mathematics; afternoon 2:30–5:30: Biotechnology, Economics, Mathematical Statistics, Physics. A candidate may take one paper, or two in different sessions. Every paper: 60 questions, 100 marks, 3 hours — Section A 30 multiple-choice questions (one-third of a mark deducted for a wrong 1-mark answer and two-thirds for a wrong 2-mark answer), Section B 10 multiple-select questions and Section C 20 numerical-answer questions, with no negative marking in B or C. Applications 11 September – 19 October 2026; results 18 March 2027. Eligibility: an undergraduate degree, or appearing in its final examination in 2027; open to all nationals, no age restriction.",
+        "durationMin": 180,
+        "totalQuestions": 60,
+        "scoredQuestions": null,
+        "totalMarks": 100,
+        "marksPerQ": 1,
+        "negativeMark": 0.3333333333333333,
+        "languages": []
+      },
+      "pattern": {
+        "stage": "Any one of the seven test papers (identical structure)",
+        "url": "https://jam.iitkgp.ac.in/docs/Info_Brochure_v2.pdf",
+        "source": "JAM 2027 Information Brochure (IIT Kharagpur)",
+        "quote": "2.5 … There will be 60 questions carrying a total of 100 marks. The entire question paper will be divided into three sections namely, A, B and C. … Section A … In case of wrong answer, one-third of a mark will be deducted for 1-mark Question and two-third of a mark will be deducted for 2 marks Question. Section B: Multiple Select Question (MSQ) … No negative or partial marking. Section C: Numerical Answer Type (NAT) … There is no negative marking. 2.6 Table 2.3: Section A: 30 MCQs (Q.1-Q.10 1 mark, Q.11-Q.30 2 marks); Section B: 10 MSQs (2 marks); Section C: 20 NAT (Q.41-Q.50 1 mark, Q.51-Q.60 2 marks). 2.1 … The duration of the examination is 3 hours.",
+        "note": "marksPerQ 1 / negativeMark 1/3 are the 1-mark MCQ's values; the paper mixes 1- and 2-mark questions. languages empty: the brochure does not state the medium."
+      },
+      "eligibility": {
+        "minAge": null,
+        "maxAge": null,
+        "ageRelaxation": "No age restriction (JAM 2027 brochure highlights).",
+        "educationTags": ["GRADUATE", "SCIENCE"],
+        "educationNote": "An undergraduate degree, or appearing in its final examination in 2027. Programme-wise eligibility is set by each admitting institute.",
+        "vacanciesApprox": null,
+        "vacanciesNote": "Admission test. The JAM 2027 site says '3,000 Seats — Wide range of postgraduate programmes offered by the participating IITs.'",
+        "eligibilityNote": "The undergraduate programme must be completed before admission, and proof submitted within the admitting institute's timeline (JAM 2027 eligibility page). Syllabus: https://jam.iitkgp.ac.in/syllabus.html.",
+        "officialUrl": "https://jam.iitkgp.ac.in/",
+        "officialName": "IIT Kharagpur — Organising Institute, JAM 2027",
+        "sources": [
+          {
+            "url": "https://jam.iitkgp.ac.in/exam-eligibilityreq.html",
+            "quote": "Candidates who have completed their undergraduate degree or are appearing for the final examination of their qualifying degree in 2027 are eligible to appear for JAM 2027."
+          },
+          {
+            "url": "https://jam.iitkgp.ac.in/docs/Info_Brochure_v2.pdf",
+            "quote": "JAM 2027 is open to all nationals (Indian/Foreign) and there is no age restriction."
+          }
+        ]
+      },
+      "syllabus": {
+        "url": "https://jam.iitkgp.ac.in/syllabus.html",
+        "quote": "Syllabus page linked from the JAM 2027 site menu (Examination → Syllabus)."
+      },
+      "dates": [
+        {
+          "label": "JAM 2027 online applications open (JOAPS)",
+          "date": "2026-09-11",
+          "kind": "APPLICATION_START",
+          "url": "https://jam.iitkgp.ac.in/docs/Info_Brochure_v2.pdf",
+          "quote": "3.1 JOAPS Registration — Candidates can apply for JAM 2027 through https://jam.iitkgp.ac.in from September 11, 2026 to October 19, 2026."
+        },
+        {
+          "label": "JAM 2027 last date to apply",
+          "date": "2026-10-19",
+          "kind": "APPLICATION_END",
+          "url": "https://jam.iitkgp.ac.in/docs/Info_Brochure_v2.pdf",
+          "quote": "from September 11, 2026 to October 19, 2026."
+        },
+        {
+          "label": "JAM 2027 exam — forenoon 9:30–12:30 (CY, GG, MA), afternoon 2:30–5:30 (BT, EN, MS, PH)",
+          "date": "2027-02-14",
+          "kind": "EXAM",
+          "isExamDay": true,
+          "url": "https://jam.iitkgp.ac.in/test-schedule.html",
+          "quote": "The Joint Admission Test for Masters (JAM) 2027 will be conducted in two sessions on 14 February 2027 (Sunday). 14 February 2027 (Sunday) FN 9:30 - 12:30 Chemistry (CY) Geology (GG) Mathematics (MA); AN 2:30 - 5:30 Biotechnology (BT) Economics (EN) Mathematical Statistics (MS) Physics (PH)"
+        },
+        {
+          "label": "JAM 2027 results",
+          "date": "2027-03-18",
+          "kind": "RESULT",
+          "url": "https://jam.iitkgp.ac.in/",
+          "quote": "18 MAR 2027 RESULTS (JAM 2027 home page, Announcements)"
+        }
+      ],
+      "notAnnounced": ["Admit card date."],
+      "activeRecommendation": "Activate once the hub's zero-question copy is gated."
+    },
+    {
+      "code": "GATE_ME",
+      "gatePaper": { "paperCode": "ME", "paperName": "Mechanical Engineering", "hasEngineeringMath": true }
+    },
+    {
+      "code": "GATE_EE",
+      "gatePaper": { "paperCode": "EE", "paperName": "Electrical Engineering", "hasEngineeringMath": true }
+    },
+    {
+      "code": "GATE_ECE",
+      "gatePaper": { "paperCode": "EC", "paperName": "Electronics and Communication Engineering", "hasEngineeringMath": true }
+    },
+    {
+      "code": "GATE_CE",
+      "gatePaper": { "paperCode": "CE", "paperName": "Civil Engineering", "hasEngineeringMath": true }
+    },
+    {
+      "code": "GATE_DA",
+      "gatePaper": { "paperCode": "DA", "paperName": "Data Science and Artificial Intelligence", "hasEngineeringMath": false }
+    },
+    {
+      "code": "SSC_JE",
+      "exam": {
+        "name": "SSC JE — Junior Engineer Examination (Staff Selection Commission)",
+        "shortName": "SSC JE",
+        "category": "GOVT_JOBS",
+        "description": "The Staff Selection Commission's Junior Engineer Examination 2026 recruits Junior Engineers (Civil, Electrical, Mechanical, Telecom) for central government organisations and Scientific Assistants for the India Meteorological Department — Group B posts in Level-6 (Rs 35,400–1,12,400); 1,748 tentative vacancies. Notice of 2 September 2026: applications closed on 22 September 2026 (fee by 23 September); the correction window is 28–30 September 2026. Paper-I (computer-based, qualifying) is tentatively scheduled for October/November 2026 and Paper-II for December 2026 — no dates yet. Paper-I: 200 questions for 200 marks in 2 hours — General Intelligence and Reasoning 50, General Awareness 50 and the chosen engineering part 100 — with 0.25 mark deducted per wrong answer. Paper-II: 100 questions for 300 marks in 2 hours on the chosen engineering part, 1 mark deducted per wrong answer. Questions in Hindi and English. Age: up to 30 years for most posts and up to 32 for others, on 1 August 2026 (relaxations apply). Education: a degree or diploma in the relevant engineering discipline, as specified post by post.",
+        "durationMin": 120,
+        "totalQuestions": 200,
+        "scoredQuestions": null,
+        "totalMarks": 200,
+        "marksPerQ": 1,
+        "negativeMark": 0.25,
+        "languages": ["EN", "HI"]
+      },
+      "pattern": {
+        "stage": "Paper-I (computer-based, qualifying)",
+        "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_je_2026.pdf",
+        "source": "SSC Notice, Junior Engineer Examination, 2026 (uploaded 02.09.2026)",
+        "quote": "13 Scheme of Examination … Paper-I Computer-Based Examination (i) General Intelligence and Reasoning (ii) General Awareness 50/50 … (iii) … Part-A … OR Part-B … 100/100 … 2 Hours … Paper-II … 100/300 … 2 Hours. 13.9 Paper-I & Paper-II will consist of Objective Type, Multiple-Choice Questions only. The questions will be set in Hindi and English only. 13.10 There will be a negative marking of 0.25 marks for each wrong answer in Paper-I and one (01) mark for each wrong answer in Paper-II.",
+        "note": "Paper-I = 50 + 50 + 100 = 200 questions / 200 marks (sum of the notice's rows)."
+      },
+      "eligibility": {
+        "minAge": 18,
+        "maxAge": 30,
+        "ageRelaxation": "Up to 30 years for most posts (born 02.08.1996–01.08.2008) and up to 32 for others (born 02.08.1994–01.08.2008), on 1 August 2026. Relaxation: SC/ST 5 years, OBC 3, PwBD 10/13/15, ex-servicemen per the notice (para 7).",
+        "educationTags": ["DIPLOMA", "GRADUATE", "ENGINEERING"],
+        "educationNote": "Degree or diploma in the relevant engineering discipline (some posts accept a diploma only with two years' experience) — post by post in para 2 of the notice.",
+        "vacanciesApprox": 1748,
+        "vacanciesNote": "Tentative vacancies: 1748 (notice para 3); final post-wise and category-wise figures come later.",
+        "eligibilityNote": "Paper-I is qualifying; merit is on Paper-II normalised marks (notice para 18). Syllabus: notice section 14.",
+        "officialUrl": "https://ssc.gov.in/",
+        "officialName": "Staff Selection Commission (SSC)",
+        "sources": [
+          {
+            "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_je_2026.pdf",
+            "quote": "3. Vacancies: Tentative Vacancies: 1748 … 7.1 The crucial date for age reckoning is fixed as 01.08.2026 … age limit is up to 30 years … born not earlier than 02.08.1996 and not later than 01.08.2008 … age limit is up to 32 years … 02.08.1994 and not later than 01.08.2008."
+          }
+        ]
+      },
+      "syllabus": {
+        "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_je_2026.pdf",
+        "quote": "14.2 PAPER-I: … (syllabus in section 14 of the notice)"
+      },
+      "dates": [
+        {
+          "label": "SSC JE 2026 notice published",
+          "date": "2026-09-02",
+          "kind": "NOTIFICATION",
+          "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_je_2026.pdf",
+          "quote": "(To be uploaded on the Website of the Commission; i.e., https://ssc.gov.in on 02.09.2026)"
+        },
+        {
+          "label": "SSC JE 2026 online applications open",
+          "date": "2026-09-02",
+          "kind": "APPLICATION_START",
+          "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_je_2026.pdf",
+          "quote": "Dates for Submission of Online Application Form 02.09.2026 to 22.09.2026"
+        },
+        {
+          "label": "SSC JE 2026 last date for online applications (23:00)",
+          "date": "2026-09-22",
+          "kind": "APPLICATION_END",
+          "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_je_2026.pdf",
+          "quote": "Last date and time for receipt of Online Application Form 22.09.2026 (23:00 hours)"
+        },
+        {
+          "label": "SSC JE 2026 application correction window (28–30 Sep 2026, until 23:00)",
+          "date": "2026-09-28",
+          "kind": "CORRECTION_WINDOW",
+          "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_je_2026.pdf",
+          "quote": "Dates of 'Window for Online Application Form Correction and Online payment of Correction Charges' 28.09.2026 to 30.09.2026 (23:00 hours)"
+        }
+      ],
+      "notAnnounced": ["Paper-I date — the notice says only 'October/November, 2026' (tentative).", "Paper-II date — 'December, 2026' (tentative)."],
+      "activeRecommendation": "Activate once the hub's zero-question copy is gated."
+    },
+    {
+      "code": "SSC_CPO",
+      "exam": {
+        "name": "SSC CPO — Sub-Inspector in Delhi Police and Central Armed Police Forces Examination (Staff Selection Commission)",
+        "shortName": "SSC CPO",
+        "category": "GOVT_JOBS",
+        "description": "The Staff Selection Commission's Sub-Inspector in Delhi Police and Central Armed Police Forces Examination 2026 (SSC CPO) recruits Sub-Inspectors (Executive) in Delhi Police, Sub-Inspectors (GD) in the CAPFs and Sub-Inspectors (Fire) in the CISF — Level-6 (Rs 35,400–1,12,400). Notice of 10 September 2026: apply online by 30 September 2026 (23:00), fee by 1 October 2026; correction window 8–10 October 2026; the computer-based exam date is 'to be notified later'. Stages: Paper-I, physical standard and endurance tests, Paper-II and a medical examination. Paper-I: 100 questions for 100 marks in 1 hour (15-minute sectional timer) — General Intelligence and Reasoning, General Knowledge and General Awareness, Quantitative Aptitude and English Comprehension, 25 each — with 0.25 deducted per wrong answer. Paper-II: General Intelligence and Reasoning, General Knowledge and General Awareness, and Quantitative Aptitude, 20 questions for 40 marks each, in 1 hour (20-minute sectional timer), and English Comprehension, 100 questions for 200 marks, in 1 hour — with 0.50 deducted per wrong answer. Parts I–III of both papers are set in Hindi and English. Age 20–25 on 1 August 2026 (18–30 for SI Fire in CISF), relaxations apply. Education: a bachelor's degree (SI Fire: B.Sc. with Physics, Chemistry and Mathematics, or matriculation plus a three-year engineering diploma).",
+        "durationMin": 60,
+        "totalQuestions": 100,
+        "scoredQuestions": null,
+        "totalMarks": 100,
+        "marksPerQ": 1,
+        "negativeMark": 0.25,
+        "languages": ["EN", "HI"]
+      },
+      "pattern": {
+        "stage": "Paper-I",
+        "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_capf_2026.pdf",
+        "source": "SSC Notice, Sub-Inspector in Delhi Police and Central Armed Police Forces Examination, 2026 (uploaded 10.09.2026)",
+        "quote": "12.1 The examination will consist of Paper-I, Physical Standard Test (PST)/Physical Endurance Test (PET), Paper-II and Detailed Medical Examination (DME). Paper-I: I General Intelligence and Reasoning 25 25 … 1 Hours (With sectional timer of 15 Minutes for each part); II General Knowledge and General Awareness 25 25; III Quantitative Aptitude 25 25; IV English Comprehension 25 25. PAPER-II: I General Intelligence and Reasoning 20 40; II General Knowledge and General Awareness 20 40; III Quantitative Aptitude 20 40 — 1 Hour (With sectional timer of 20 Minutes for each part); IV English Comprehension 100 200 — 1 Hour. 12.2 … Questions will be set in Hindi and English in Parts-I, II and III of Paper-I and Paper-II. There will be negative marking of 0.25 marks for each wrong answer in Paper-I and 0.50 marks for each wrong answer in Paper-II.",
+        "note": "Paper-I = 4 x 25 = 100 questions / 100 marks (sum of the notice's rows). Paper-II (27 Sep 2026 fix): read from the rendered table on PDF page 16 — Parts I–III 20 questions / 40 marks each in 1 hour with 20-minute sectional timers, Part IV English Comprehension 100 / 200 in 1 hour. The first draft misread the text layer as 'Paper-II is English Comprehension, 200 marks'. The Exam columns hold Paper-I only."
+      },
+      "eligibility": {
+        "minAge": 20,
+        "maxAge": 25,
+        "ageRelaxation": "20–25 years on 1 August 2026 (born 02.08.2001–01.08.2006) for all posts except SI (Fire) in CISF, which is 18–30 (born 02.08.1996–01.08.2008); category relaxations per notice para 5.3.",
+        "educationTags": ["GRADUATE", "ANY_STREAM"],
+        "educationNote": "Bachelor's degree from a recognised university (final-year candidates must hold it by the closing date). SI (Fire): B.Sc. with Physics, Chemistry and Mathematics, or matriculation with a three-year engineering diploma.",
+        "vacanciesApprox": null,
+        "vacanciesNote": "Tentative vacancies are listed post by post in para 2 of the notice; the notice text read does not print one grand total.",
+        "eligibilityNote": "Physical standards and endurance tests are qualifying (notice para 12). Departmental Delhi Police candidates have separate age rules (notice preamble).",
+        "officialUrl": "https://ssc.gov.in/",
+        "officialName": "Staff Selection Commission (SSC)",
+        "sources": [
+          {
+            "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_capf_2026.pdf",
+            "quote": "5.1 The crucial date for age reckoning is fixed as 01.08.2026 … Age limit for all posts except SI(FIRE) in CISF is 20-25 years … 5.2 Age limit for SI(FIRE) in CISF is 18-30 years … 7.1 Educational Qualification for Sub Inspector in Delhi Police and Sub Inspector (GD) in CAPFs is Bachelor's degree from a recognized university or equivalent."
+          }
+        ]
+      },
+      "syllabus": {
+        "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_capf_2026.pdf",
+        "quote": "Scheme and syllabus in section 12 of the notice."
+      },
+      "dates": [
+        {
+          "label": "SSC CPO (SI in Delhi Police and CAPFs) 2026 notice published; online applications open",
+          "date": "2026-09-10",
+          "kind": "APPLICATION_START",
+          "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_capf_2026.pdf",
+          "quote": "(To be uploaded on the website of the Commission i.e. https://ssc.gov.in on 10.09.2026) … Dates for submission of online applications 10.09.2026 to 30.09.2026"
+        },
+        {
+          "label": "SSC CPO 2026 last date for online applications (23:00)",
+          "date": "2026-09-30",
+          "kind": "APPLICATION_END",
+          "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_capf_2026.pdf",
+          "quote": "Last date and time for receipt of online applications 30.09.2026 (23:00 hrs)"
+        },
+        {
+          "label": "SSC CPO 2026 last date for online fee payment (23:00)",
+          "date": "2026-10-01",
+          "kind": "APPLICATION_END",
+          "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_capf_2026.pdf",
+          "quote": "Last date and time for online fee payment 01.10.2026 (23:00 hrs)"
+        },
+        {
+          "label": "SSC CPO 2026 application correction window (8–10 Oct 2026, until 23:00)",
+          "date": "2026-10-08",
+          "kind": "CORRECTION_WINDOW",
+          "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_capf_2026.pdf",
+          "quote": "Date of 'Window for Application Form Correction' and online payment of Correction Charges. 08.10.2026 to 10.10.2026 (23:00 hrs)"
+        }
+      ],
+      "notAnnounced": ["Computer-based exam date — 'Schedule of Computer Based Examination: To be notified later'."],
+      "activeRecommendation": "Activate once the hub's zero-question copy is gated — applications close 30 Sep 2026, so this is the most time-sensitive row."
+    },
+    {
+      "code": "BITSAT",
+      "exam": {
+        "name": "BITSAT — BITS Admission Test (BITS Pilani)",
+        "shortName": "BITSAT",
+        "category": "ENGINEERING",
+        "description": "BITSAT is BITS Pilani's computer-based admission test for its first-degree programmes (B.E., M.Sc. and B.Pharm.). BITSAT-2027 dates are not announced: on 27 September 2026 the admissions site says the 2026–27 admission cycle is closed. Pattern as in the BITSAT-2026 brochure: one 3-hour sitting with no break, 130 multiple-choice questions — Physics 30, Chemistry 30, English Proficiency 10, Logical Reasoning 20, and Mathematics or Biology 40 — with 3 marks for a correct answer and 1 deducted for a wrong one; a candidate who answers all 130 may attempt 12 extra questions. Questions and instructions are in English only. A candidate may sit up to two sessions; the higher score counts. Eligibility (2026): 12th under the 10+2 system with Physics, Chemistry and Mathematics (or Biology, for B.Pharm., B.E. Environmental and Sustainability Engineering and M.Sc. Biological Sciences), at least 75% aggregate in those three subjects and 60% in each.",
+        "durationMin": 180,
+        "totalQuestions": 130,
+        "scoredQuestions": null,
+        "totalMarks": 390,
+        "marksPerQ": 3,
+        "negativeMark": 1,
+        "languages": ["EN"]
+      },
+      "pattern": {
+        "stage": "One session",
+        "url": "https://admissions.bits-pilani.ac.in/FD/downloads/BITSAT-2026_Brochure.pdf",
+        "source": "BITSAT-2026 brochure (BITS Pilani admissions)",
+        "quote": "Each session of BITSAT-2026 will be of 3 hours duration (without break) … Each correct answer fetches 3 marks, while each incorrect answer has a penalty of 1 mark (-1 mark). … There will be 130 questions in all … Part I Physics 30; Part II Chemistry 30; Part III (a) English Proficiency 10 (b) Logical Reasoning 20; Part IV Mathematics … OR Biology … 40; Total 130. … If a candidate answers all the 130 questions … option of attempting 12 (twelve) extra questions … All the questions and instructions of the test will be in English only.",
+        "note": "390 = 130 x 3 (arithmetic on the brochure's figures); the 12 optional extra questions are not in the stored count."
+      },
+      "eligibility": {
+        "minAge": null,
+        "maxAge": null,
+        "ageRelaxation": null,
+        "educationTags": ["12TH", "SCIENCE"],
+        "educationNote": "12th (10+2) with Physics, Chemistry and Mathematics (or Biology for B.Pharm., B.E. Environmental and Sustainability Engg. and M.Sc. Biological Sciences): at least 75% aggregate in those three subjects and 60% in each (BITSAT-2026 rules).",
+        "vacanciesApprox": null,
+        "vacanciesNote": "An admission test; seats are set by BITS Pilani per programme.",
+        "eligibilityNote": "For 2026, only candidates who appeared in 12th for the first time in 2025 or 2026 were eligible (BITSAT-2026 eligibility page). Syllabus: https://admissions.bits-pilani.ac.in/FD/downloads/BITSAT_Syllabus.pdf.",
+        "officialUrl": "https://admissions.bits-pilani.ac.in/",
+        "officialName": "Birla Institute of Technology and Science (BITS), Pilani",
+        "sources": [
+          {
+            "url": "https://admissions.bits-pilani.ac.in/FD/BITSAT_eligibility.html",
+            "quote": "Candidates must secure: 3.1. An aggregate of 75% marks in Physics, Chemistry, and Mathematics, and 3.2. At least 60% marks in each of Physics, Chemistry, and Mathematics individually."
+          },
+          {
+            "url": "https://admissions.bits-pilani.ac.in/",
+            "quote": "BITSAT-2026: Admission cycle for Academic Year 2026-2027 is now closed. … https://admissions.bits-pilani.ac.in/ is the only official website for BITS Pilani admissions."
+          }
+        ]
+      },
+      "syllabus": {
+        "url": "https://admissions.bits-pilani.ac.in/FD/downloads/BITSAT_Syllabus.pdf",
+        "quote": "BITSAT Syllabus PDF linked from the First Degree admissions page."
+      },
+      "dates": [],
+      "notAnnounced": ["Every BITSAT-2027 date (the 2026-27 cycle is closed; nothing for 2027 is published on 27 Sep 2026)."],
+      "activeRecommendation": "Activate once the hub's zero-question copy is gated; the title will say 'Exam Date Not Announced Yet', which is true."
+    },
+    {
+      "code": "JNVST",
+      "exam": {
+        "name": "JNVST — Jawahar Navodaya Vidyalaya Selection Test, Class VI (Navodaya Vidyalaya Samiti)",
+        "shortName": "JNVST",
+        "category": "OTHER",
+        "description": "The Jawahar Navodaya Vidyalaya Selection Test (JNVST) is Navodaya Vidyalaya Samiti's admission test for Class VI in the Jawahar Navodaya Vidyalayas — co-educational residential schools with free education, board and lodging. JNVST 2027 (for the 2027-28 session) is on 28 November 2026, 11:30 am to 1:30 pm, in a single phase; NVS expects to announce results by the end of March 2027. The test: 80 objective questions for 100 marks in 2 hours on an OMR sheet — Mental Ability Test and Environmental Studies 40 questions (50 marks, 60 minutes), Arithmetic 20 (25 marks, 30 minutes) and Language 20 (25 marks, 30 minutes); 1.25 marks per correct answer and no negative marking. It is held in the languages listed for each state. Eligibility: bona fide residents of the district studying in Class V in 2026-27 at a recognised school, born between 1 May 2015 and 31 July 2017 (both inclusive), who studied a full session in each of Classes III, IV and V.",
+        "durationMin": 120,
+        "totalQuestions": 80,
+        "scoredQuestions": null,
+        "totalMarks": 100,
+        "marksPerQ": 1.25,
+        "negativeMark": 0,
+        "languages": ["EN", "HI", "TE", "TA", "KN", "ML", "MR", "BN", "GU", "PA"]
+      },
+      "pattern": {
+        "stage": "Class VI selection test",
+        "url": "https://cbseitms.rcil.gov.in/nvs/assets/pdf/Final_Prospectus_2027.pdf",
+        "source": "JNVST 2027 Prospectus (NVS registration portal, cbseitms.rcil.gov.in/nvs)",
+        "quote": "5. Composition of the Selection Test — The selection test will be of two-hour duration from 11:30 AM to 01:30 PM and will have 3 sections with only objective type questions. There are 80 questions in all for 100 marks. Mental ability Test and Environmental Studies (EVS) 20 + 20, 25 + 25, 60 Minutes; Arithmetic Test 20, 25, 30 Minutes; Language Test 20, 25, 30 Minutes … e) 1.25 marks will be given for every correct answer. f) No negative marking will be done.",
+        "note": "languages = the prospectus's state-wise list (section 4) restricted to the ten the Language enum holds; Urdu, Odia, Assamese and others are also offered in some states."
+      },
+      "eligibility": {
+        "minAge": null,
+        "maxAge": null,
+        "ageRelaxation": "Born between 01.05.2015 and 31.07.2017, both dates inclusive (JNVST 2027 prospectus).",
+        "educationTags": [],
+        "educationNote": "Studying in Class V in 2026-27 at a Government / Government-aided / recognised school, having passed Classes III, IV and V with a full academic session in each; NIOS 'B' certificate candidates as per the prospectus.",
+        "vacanciesApprox": null,
+        "vacanciesNote": "Seats are per JNV; the prospectus has no national total.",
+        "eligibilityNote": "Candidates must be bona fide residents of the district where they apply (district domicile, not a state one). Qualifying marks in each section apply (prospectus 7D).",
+        "officialUrl": "https://navodaya.gov.in/",
+        "officialName": "Navodaya Vidyalaya Samiti (NVS), Ministry of Education",
+        "sources": [
+          {
+            "url": "https://cbseitms.rcil.gov.in/nvs/assets/pdf/Final_Prospectus_2027.pdf",
+            "quote": "ELIGIBILITY — Candidates (bonafide residents) of the district and studying in class V (2026-27) in recognized school are eligible. Born between 01.05.2015 to 31.07.2017 (Both the dates inclusive). Spent/Studied full academic session in class III, IV and V."
+          }
+        ]
+      },
+      "syllabus": {
+        "url": "https://cbseitms.rcil.gov.in/nvs/assets/pdf/Final_Prospectus_2027.pdf",
+        "quote": "Sections 1–3 of the prospectus (Mental Ability Test and EVS, Arithmetic Test, Language Test) describe what each section covers."
+      },
+      "dates": [
+        {
+          "label": "JNVST 2027 Class VI selection test, 11:30 am to 1:30 pm (single phase)",
+          "date": "2026-11-28",
+          "kind": "EXAM",
+          "isExamDay": true,
+          "url": "https://cbseitms.rcil.gov.in/nvs/assets/pdf/Final_Prospectus_2027.pdf",
+          "quote": "DATE OF EXAM 28-11-2026 … JNV Selection Test for admission to Class-VI in JNVs for the academic session 2027-28 will be held on 28th November, 2026 for Summer bound and Winter bound JNVs in single phase."
+        }
+      ],
+      "notAnnounced": ["Admit card date. The result is 'expected to be announced by end of March, 2027' (prospectus) — an expectation, not stored as a date.", "Application deadline (27 Sep 2026 fix: row dropped). The prospectus says 'LAST DATE TO APPLY 31-07-2026', but news sites (Free Press Journal citing NVS's Instagram; CareerIndia; pw.live) report an extension to 7 or 10 August 2026, and no official extension notice could be read: navodaya.gov.in's public notices API (organisations 1 and 100, 60 current items) lists none, and the NVS registration portal's home page has the registration link commented out. Either way the window has closed."],
+      "activeRecommendation": "Keep inactive: candidates are 9-11 years old, and the standing school-expansion decision requires child consent and the minors sign-off before any surface is aimed at under-18s (the hub's CTAs are sign-in and the AI tutor)."
+    }
+  ],
+  "gateCommon": {
+    "organiser": "IIT Madras — Organising Institute, GATE 2027, for the National Coordination Board – GATE, Department of Higher Education, Ministry of Education",
+    "officialUrl": "https://gate2027.iitm.ac.in/",
+    "patternUrl": "https://gate2027.iitm.ac.in/question_paper_pattern",
+    "patternQuote": "Mode of Examination: Computer Based Test (CBT); Language of examination: English; Duration: 3 Hours*; Number of questions: 10 (General Aptitude) + 55 (Subject) = 65 Questions; Distribution of Marks in all Papers EXCEPT AR, CY, DA, EY, GE, GG, MA, PH, RA, ST, XH, and XL — General Aptitude: 15 marks, Engineering Mathematics**: 13 marks, Subject Questions: 72 marks, Total: 100 marks; Distribution of Marks in papers AR, CY, DA, … — General Aptitude: 15 marks, Subject Questions: 85 marks, Total: 100 marks; Marking Scheme: Questions carry either 1 mark or 2 marks; Negative Marking: For a 1-mark MCQ, 1/3 mark will be deducted for a wrong answer. For a 2-mark MCQ, 2/3 mark will be deducted for a wrong answer. There is no negative marking for wrong answer(s) to MSQ or NAT questions. There is no partial marking in MSQ.",
+    "eligibilityUrl": "https://gate2027.iitm.ac.in/eligibility_criteria",
+    "eligibilityQuote": "Candidates who are currently studying in the 3rd or higher years of any undergraduate degree program or who have completed any government approved degree program in Engineering/Technology/Architecture/Science/Commerce/Arts/Humanities are eligible to appear for GATE 2027.",
+    "homeQuote": "Qualified candidates can use GATE Scores for admission to postgraduate and doctoral programs, with possible financial assistance, in MoE-supported institutions, while several Public Sector Undertakings also use GATE scores for recruitment. GATE 2027 — 30 Test Papers — 3 years validity",
+    "syllabusUrlPattern": "https://gate2027.iitm.ac.in/static/doc/GATE2027_Syllabus/{PAPER}_GATE2027_Syllabus.pdf",
+    "datesUrl": "https://gate2027.iitm.ac.in/important_dates",
+    "dates": [
+      {
+        "label": "GATE 2027 online application (GOAPS) opened",
+        "date": "2026-09-02",
+        "kind": "APPLICATION_START",
+        "quote": "Opening Date of GATE Online Application Processing System (GOAPS) — 2nd September 2026 (earlier 14th August, 27th August 2026, struck through), Wednesday"
+      },
+      {
+        "label": "GATE 2027 regular registration closes (without late fee)",
+        "date": "2026-09-27",
+        "kind": "APPLICATION_END",
+        "quote": "Closing Date of REGULAR online registration (without late fee) — 27th September 2026, Sunday"
+      },
+      {
+        "label": "GATE 2027 extended registration closes (with late fee)",
+        "date": "2026-10-05",
+        "kind": "APPLICATION_END",
+        "quote": "Closing Date of EXTENDED online registration (with late fee) — 5th October 2026, Monday"
+      },
+      {
+        "label": "GATE 2027 application rectification window (14–21 Oct 2026)",
+        "date": "2026-10-14",
+        "kind": "CORRECTION_WINDOW",
+        "quote": "Opening Date of GATE 2027 Application rectification 14th October 2026 Wednesday; Closing Date of GATE 2027 Application rectification 21st October 2026 Wednesday"
+      },
+      {
+        "label": "GATE 2027 exam city allotment notification",
+        "date": "2027-01-04",
+        "kind": "OTHER",
+        "quote": "City allotment notification — 4th January 2027, Monday"
+      },
+      {
+        "label": "GATE 2027 exams on 6, 7, 13, 14, 20 and 21 Feb 2027 — the {PAPER} paper's own date is not announced yet",
+        "date": "2027-02-06",
+        "kind": "OTHER",
+        "quote": "GATE 2027 Examinations — 6th February 2027 Saturday, 7th February 2027 Sunday, 13th February 2027 Saturday, 14th February 2027 Sunday, 20th February 2027 Saturday, 21st February 2027 Sunday. *All dates are liable to change",
+        "why": "Stored as kind OTHER, not EXAM: the paper-wise schedule is not out, and an EXAM row would make the hub title say 'Exam Date 6 Feb 2027' for a paper that may sit on another day."
+      },
+      {
+        "label": "GATE 2027 results announced",
+        "date": "2027-03-19",
+        "kind": "RESULT",
+        "quote": "Announcement of results — 19th March 2027, Friday"
+      }
+    ],
+    "notAnnounced": ["The paper-wise exam schedule (which paper on which of the six days) and the admit card date ('Admit Card download TBA')."]
+  },
+  "leftOut": [
+    {
+      "code": "RRB_JE",
+      "what": "RRB Junior Engineer / DMS / CMA, CEN 04/2026",
+      "why": "No official document could be read. Every RRB regional site (rrbcdg, rrbchennai, rrbkolkata, rrbmumbai …) now serves its home page for every notice URL, the documents themselves sit on rrb.indianrailways.gov.in/-/image/…/examsDocuments which answers 'Request Rejected' (WAF) to curl and to WebFetch, and the in-app browser was not approved for rrbcdg.gov.in. The pattern (questions, marks, negative marking) therefore cannot be sourced, and an Exam row needs it.",
+      "reportedOnly": "Aggregators (testbook.com, adda247.com, careerpower.in, 27 Sep 2026) report: notice CEN 04/2026 of 13 Aug 2026, 4,029 posts, CBT-1 on 27, 28 and 30 October 2026 per an RRB notice of 16 Sep 2026. REPORTED tier at best — not written.",
+      "officialDocSeen": "https://rrb.indianrailways.gov.in/-/image/1787108023956Corrigendum_1_CEN_04-2026.pdf/examsDocuments (listed by search; fetch rejected)"
+    },
+    {
+      "code": "ARMY_AGNIVEER",
+      "what": "Indian Army Agniveer Common Entrance Exam",
+      "why": "The latest official notification read (joinindianarmy.nic.in AV_WMP_2027.pdf, recruiting year 2027) states only '50 questions in one hour or 100 questions in two hours' by category and 'Full marks for every correct answer' — no marks per question, total marks or negative marking. The CEE for that cycle was held 1–12 June 2026 and the next cycle is not notified. Pattern not sourceable, so no row.",
+      "officialDocSeen": "https://joinindianarmy.nic.in/writereaddata/Portal/BRAVO_NotificationPDF/AV_WMP_2027.pdf"
+    },
+    {
+      "code": "NAVY_AGNIVEER",
+      "what": "Indian Navy Agniveer (SSR/MR) — INET",
+      "why": "joinindiannavy.gov.in states eligibility (10+2 with Maths and Physics, 50%; MR: matriculation 50%; age 17½–21) and that Stage I is a computer-based online exam (INET), but no page or PDF read gives the number of questions, marks, duration or negative marking. Pattern not sourceable, so no row.",
+      "officialDocSeen": "https://www.joinindiannavy.gov.in/en/page/selection-procedure-agniveer-ssr-and-agniveer-mr.html"
+    },
+    {
+      "code": "AIRFORCE_AGNIVEER",
+      "what": "Indian Air Force Agniveer Vayu",
+      "why": "agnipathvayu.cdac.in returned HTTP 503 on 27 Sep 2026; no official notice read.",
+      "officialDocSeen": null
+    },
+    {
+      "code": "AFCAT",
+      "what": "Air Force Common Admission Test",
+      "why": "afcat.cdac.in returns HTTP 404 for the portal and for every notification PDF path (including the 2025 ones search engines index) on 27 Sep 2026; no official notice read.",
+      "officialDocSeen": null
+    },
+    {
+      "code": "AILET",
+      "what": "AILET 2027 (row already exists, active, 0 questions)",
+      "why": "Not missing, so not added. Its tracker dates cite lawentrance.com / shiksha.com. nludelhi.ac.in links 'AILET Admissions' to https://nationallawuniversitydelhi.in/ (a JavaScript app that returned no readable text to curl), so official AILET 2027 dates were not read. Note for the main session: ExamEligibility.officialUrl is https://nludelhi.ac.in, so dates cited to nationallawuniversitydelhi.in classify as 'reported' until that portal host is added.",
+      "officialDocSeen": "https://nludelhi.ac.in/"
+    }
+  ]
+}

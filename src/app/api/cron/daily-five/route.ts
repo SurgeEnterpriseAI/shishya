@@ -55,6 +55,7 @@ import {
   type NextExam,
 } from "@/lib/exam-week-mail";
 import { shiftDayIso } from "@/lib/exam-week-student";
+import { practiceExamCodes } from "@/lib/db/exam-practice";
 
 const MAX_SENDS = 200;
 
@@ -202,13 +203,30 @@ export async function GET(req: Request) {
     return line;
   };
 
+  // 27 Sep 2026 (fixer): the mail names only an enrolled exam WITH practice
+  // (src/lib/exam-practice-state.ts). An enrolment on an exam with none —
+  // /chat enrols the exam the AI tutor opens, the one call to action on a
+  // no-practice hub — was mailed
+  // "your Daily 5 for {exam} is ready … 5 quick questions on one of your
+  // weakest {exam} topics" with no question to serve. Such enrolments are
+  // left out before the exam is resolved, and a student with no other
+  // enrolment gets no Daily-5 mail (/today — src/lib/study-day-five.ts
+  // pickDailyFive — skips them the same way). A failed practice read keeps
+  // every enrolment (the old behaviour) rather than stopping the run.
+  const practiceCodes = await practiceExamCodes();
+
   let sent = 0, failed = 0;
   const modes: Record<string, number> = {};
   const sample: { name: string | null; short: string | null; mode: string; examWeek: string | null }[] = [];
   for (const u of users) {
     if (!u.email || !u.enrollments[0]) continue;
+    const mine = practiceCodes ? u.enrollments.filter((e) => practiceCodes.has(e.exam.code)) : u.enrollments;
+    if (mine.length === 0) {
+      modes["skip:no-practice"] = (modes["skip:no-practice"] ?? 0) + 1;
+      continue;
+    }
     const resolved = await resolveMailExam(
-      u.enrollments.map((e) => ({ examId: e.examId, code: e.exam.code, short: e.exam.shortName, createdAt: e.createdAt })),
+      mine.map((e) => ({ examId: e.examId, code: e.exam.code, short: e.exam.shortName, createdAt: e.createdAt })),
       bundles,
       now,
       nextInTrack,
@@ -217,7 +235,7 @@ export async function GET(req: Request) {
     // The student's own shift day for an exam they are enrolled in (null
     // when they never picked one, or the exam isn't theirs).
     const shiftDayFor = (examId: string) =>
-      shiftDayIso(u.enrollments.find((e) => e.examId === examId)?.shiftDate ?? null);
+      shiftDayIso(mine.find((e) => e.examId === examId)?.shiftDate ?? null);
     let examShort: string | null = null;
     let rollover: MailRollover | null = null;
     let examWeek: ExamWeekMailLine | null = null;
@@ -229,7 +247,8 @@ export async function GET(req: Request) {
       // Rollover: the next exam is a suggestion, and the dashboard's Daily 5
       // still serves the ENROLLED exam — so name it only inside the rollover
       // block unless the student is genuinely enrolled in it as well.
-      const alsoEnrolled = u.enrollments.some((e) => e.examId === resolved.examId);
+      // Enrolled in it AND it has practice (`mine`) — else it stays a suggestion.
+      const alsoEnrolled = mine.some((e) => e.examId === resolved.examId);
       examShort = alsoEnrolled ? resolved.short : null;
       rollover = { done: resolved.done.short, next: { code: resolved.code, short: resolved.short, when: resolved.when } };
       examWeek = alsoEnrolled ? await weekLineFor(resolved.examId, shiftDayFor(resolved.examId)) : null;

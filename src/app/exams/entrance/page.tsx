@@ -63,8 +63,8 @@ function counts(exams: readonly EntranceExam[]) {
 function entranceDescription(c: ReturnType<typeof counts>): string {
   return (
     `${c.total} entrance exams on Shishya: ${c.national} national entrance exams (JEE, NEET, CUET, NDA, law, management, ` +
-    `design and university tests), ${c.olympiads} olympiads and ${c.stateCets} state CETs. Free mock tests, previous-year-pattern ` +
-    `practice, syllabus and exam dates marked official, reported or expected — no paywall.`
+    `design and university tests), ${c.olympiads} olympiads and ${c.stateCets} state CETs. Syllabus and exam dates marked official, reported or expected, and free mock tests and ` +
+    `previous-year-pattern practice where an exam has them — no paywall.` // 27 Sep 2026: not every listed exam has practice yet
   );
 }
 

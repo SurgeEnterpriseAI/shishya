@@ -22,6 +22,20 @@
 // and the search index (src/lib/search/index-core.ts) still read the full
 // catalogue — also handed off.
 //
+// 27 Sep 2026 (fixer): rows marked Scholarship.unlisted are left out too. The
+// 27 Sep repair kept them out of the /scholarships/for/* and closing-soon
+// lists only, while every other surface still presented them as schemes —
+// twenty rows, seven of them "Not found … on any official page or in a web
+// search" (e.g. rgvn-women-startups: an indexable page with an amount,
+// eligibility and an Apply link, in the sitemap, the /scholarships browser,
+// the match wizard, the search index, llms-full.txt, context.md and every
+// published count). SCHOLARSHIP_SCHEMES is now what Shishya presents: no
+// aggregator, no unlisted row. Their pages still answer
+// (src/app/scholarships/[id]/page.tsx: noindex,follow, the reason on top, no
+// Apply button, no MonetaryGrant or FAQ markup). The exam-hub sidebar, the
+// tutor's scholarship tool, the state pages and the match wizard read
+// OFFERED_SCHEMES — presented AND still taking applications (no closed row).
+//
 // Pure: no DB, no Next imports (tests/unit/scholarship-schemes.test.ts).
 
 import { SCHOLARSHIPS, type Scholarship } from "@/data/scholarships";
@@ -31,5 +45,38 @@ export function isAggregatorListing(s: Pick<Scholarship, "tags">): boolean {
   return s.tags.includes("aggregator");
 }
 
-/** Every scholarship scheme in the catalogue — never an aggregator. */
-export const SCHOLARSHIP_SCHEMES: readonly Scholarship[] = SCHOLARSHIPS.filter((s) => !isAggregatorListing(s));
+/** A row Shishya presents as a scheme: not an outside aggregator and not
+ *  held out of the catalogue (Scholarship.unlisted — not a scholarship, not
+ *  found on any official page, or its status in doubt). */
+export function isPresentedScheme(s: Pick<Scholarship, "tags" | "unlisted">): boolean {
+  return !isAggregatorListing(s) && !s.unlisted;
+}
+
+/** A presented scheme a student can be pointed at today — not discontinued. */
+export function isOfferedScheme(s: Pick<Scholarship, "tags" | "unlisted" | "closed">): boolean {
+  return isPresentedScheme(s) && !s.closed;
+}
+
+/** What an unlisted row is, from its reason's opening words: "not-scholarship"
+ *  (a bicycle, uniform, training, coaching or academy scheme — it exists),
+ *  "not-found" (no such scheme found on an official page — nothing on its page
+ *  can be vouched for), "in-doubt" (a real scheme whose current status could
+ *  not be read). Null for a listed row. tests/unit/scholarship-schemes.test.ts
+ *  pins that every reason in the data opens with one of these. */
+export type UnlistedKind = "not-scholarship" | "not-found" | "in-doubt";
+export function unlistedKind(s: Pick<Scholarship, "unlisted">): UnlistedKind | null {
+  const r = s.unlisted?.trim();
+  if (!r) return null;
+  if (/^Not a scholarship/i.test(r)) return "not-scholarship";
+  if (/^Status in doubt/i.test(r)) return "in-doubt";
+  // "Not found …", "Not one verifiable scheme …" and anything unrecognised:
+  // the strictest reading.
+  return "not-found";
+}
+
+/** Every scholarship scheme Shishya presents — never an aggregator, never an
+ *  unlisted row (27 Sep 2026 fixer). Closed schemes stay (their pages say so). */
+export const SCHOLARSHIP_SCHEMES: readonly Scholarship[] = SCHOLARSHIPS.filter(isPresentedScheme);
+
+/** The presented schemes still taking applications, in catalogue order. */
+export const OFFERED_SCHEMES: readonly Scholarship[] = SCHOLARSHIP_SCHEMES.filter((s) => !s.closed);

@@ -63,6 +63,11 @@ import { inlineMd } from "@/components/NotesMarkdown";
 import { cutoffNoun, officialCutoffTitle, pickCutoffHeadline, type CutoffHeadline } from "@/lib/official-cutoff-title";
 import { cutoffLead, leadDescription } from "@/lib/answer-lead";
 import { latestCheck } from "@/lib/page-freshness";
+// 27 Sep 2026: the practice rule (src/lib/exam-practice-state.ts) — the
+// 10-question nudge, the coach door and "Take a free mock" only where the
+// exam has practice questions.
+import { examPracticeState } from "@/lib/db/exam-practice";
+import { dropPracticeSentence, fillNoPractice, noPracticeCopy } from "@/lib/no-practice-copy";
 
 // 900: the exam-week boundaries (D-1 in, D+7 out) must show up within 15
 // minutes. The page reads the locale (and, inside exam week, the session),
@@ -281,10 +286,14 @@ export async function generateMetadata({
   const baseDescription = official
     ? fillYear(tt("cutoff.metaDescriptionOfficial"), { exam: exam.shortName, name: exam.name, noun: urlLocale === "en" ? noun.toLowerCase() : noun }, year)
     : fillYear(tt("cutoff.metaDescription"), { exam: exam.shortName, name: exam.name }, year);
+  // 27 Sep 2026: "Take a free mock to see exactly where you stand." only
+  // where the exam has practice questions (a failed read claims none).
+  const metaPractice = await examPracticeState(exam.code);
+  const practiceDescription = metaPractice.hasPractice ? baseDescription : dropPracticeSentence(baseDescription);
   // English URL: the answer lead (src/lib/answer-lead.ts) heads the
   // description, ~160 characters in all. The twins keep their own.
   const lead = urlLocale === "en" ? cutoffLead({ short: exam.shortName, year, headline, officialUrl }) : null;
-  const description = lead ? leadDescription(lead, baseDescription) : baseDescription;
+  const description = lead ? leadDescription(lead, practiceDescription) : practiceDescription;
   const path = `/exams/${exam.code}/cutoff`;
   const url = localizedUrl(path, urlLocale);
   const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
@@ -367,6 +376,11 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
   const t = tRaw as TFn;
   const p = (rel: string) => localizedPath(rel, urlLocale);
   const short = exam.shortName;
+  // Practice (27 Sep 2026): 12 exams with cutoff bands had no question — the
+  // page still offered "Answer 10 questions in this exam's pattern" and "Take
+  // a free {exam} mock". A failed read offers none.
+  const practice = await examPracticeState(exam.code);
+  const NP = noPracticeCopy(locale);
   const published = groupCutoffTables(publishedRows);
   const year = newestCycleYear(published.map((tb) => tb.cycle));
   // The official headline (26 Sep 2026, G3): the page's first figure, its
@@ -701,14 +715,16 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
 
         {/* Signup nudge for anonymous SEO landers at the same anxiety
             moment — session checked client-side; content is never gated. */}
-        <AnonExamNudge
-          examCode={exam.code}
-          headline={fill(t("cutoff.nudge.title"), { exam: short })}
-          body={t("cutoff.nudge.body")}
-          cta={t("cutoff.nudge.cta")}
-          signInLabel={t("cutoff.nudge.signin")}
-          surface="cutoff-nudge"
-        />
+        {practice.hasPractice && (
+          <AnonExamNudge
+            examCode={exam.code}
+            headline={fill(t("cutoff.nudge.title"), { exam: short })}
+            body={t("cutoff.nudge.body")}
+            cta={t("cutoff.nudge.cta")}
+            signInLabel={t("cutoff.nudge.signin")}
+            surface="cutoff-nudge"
+          />
+        )}
 
         {/* Knowing the target score is step one; the plan to reach it is
             step two — the coach's most natural handoff on the site. After
@@ -722,9 +738,9 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
             <span className="min-w-0 text-sm font-semibold text-ink-800">{view.hubLink}</span>
             <span className="shrink-0 text-sm font-bold text-saffron-700">→</span>
           </Link>
-        ) : (
+        ) : practice.hasPractice ? (
           <CoachEntry examCode={exam.code} examShort={short} variant="cutoff" />
-        )}
+        ) : null}
 
         <h2 className="mt-8 text-base font-semibold text-ink-900">{t("cutoff.bands")}</h2>
         <ul className="mt-3 space-y-3">
@@ -750,21 +766,32 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
           ))}
         </ul>
 
-        <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
-          <p className="text-base font-bold text-ink-900">{t("cutoff.land.title")}</p>
-          <p className="mt-1 text-sm text-ink-600">{fill(t("cutoff.land.body"), { exam: short })}</p>
-          <div className="mt-3 flex flex-wrap gap-3">
-            <Link href={p(`/exams/${exam.code}`)} className="btn-primary !py-2 !px-4 text-sm">
-              {t("cutoff.land.cta")}
-            </Link>
-            <Link
-              href={`/exams/${exam.code}/quiz`}
-              className="inline-flex items-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 hover:bg-saffron-50"
-            >
-              {t("tracker.practice.quiz")}
+        {practice.hasPractice ? (
+          <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
+            <p className="text-base font-bold text-ink-900">{t("cutoff.land.title")}</p>
+            <p className="mt-1 text-sm text-ink-600">{fill(t("cutoff.land.body"), { exam: short })}</p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Link href={p(`/exams/${exam.code}`)} className="btn-primary !py-2 !px-4 text-sm">
+                {t("cutoff.land.cta")}
+              </Link>
+              <Link
+                href={`/exams/${exam.code}/quiz`}
+                className="inline-flex items-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 hover:bg-saffron-50"
+              >
+                {t("tracker.practice.quiz")}
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-8 rounded-xl border border-ink-200 bg-white p-5">
+            <p className="text-base font-bold text-ink-900">{fillNoPractice(NP.boxTitle, { exam: short })}</p>
+            <p className="mt-1 text-sm text-ink-700">{fillNoPractice(NP.line, { exam: short })}</p>
+            <p className="mt-1 text-sm text-ink-700">{fillNoPractice(NP.boxBody, { exam: short })}</p>
+            <Link href={p(`/exams/${exam.code}`)} className="btn-secondary mt-3 inline-block !py-2 !px-4 text-sm">
+              {fillNoPractice(NP.boxCta, { exam: short })}
             </Link>
           </div>
-        </div>
+        )}
       </section>
     </main>
   );

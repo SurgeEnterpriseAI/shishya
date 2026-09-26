@@ -37,7 +37,7 @@ function listsContext(today: string): ScholarshipListsContext {
   const dated = SCHOLARSHIP_SCHEMES.flatMap((s) => {
     const d = lastDateOf(s, today);
     return d.kind === "upcoming"
-      ? [{ id: s.id, name: s.name, closesOn: d.closesOn, tier: d.cycle.tier, host: hostOf(d.cycle.sourceUrl), checkedOn: d.cycle.checkedOn }]
+      ? [{ id: s.id, name: s.name, closesOn: d.closesOn, tier: d.cycle.tier, host: hostOf(d.cycle.sourceUrl), checkedOn: d.cycle.checkedOn, note: d.cycle.note ?? null }]
       : [];
   }).sort((a, b) => (a.closesOn < b.closesOn ? -1 : a.closesOn > b.closesOn ? 1 : a.name.localeCompare(b.name)));
   return { lists, dated };

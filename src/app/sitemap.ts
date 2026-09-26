@@ -35,6 +35,8 @@ import { CAREERS } from "@/data/careers";
 import { allBranchPaths } from "@/data/college-details";
 import { PERSONAS } from "@/data/personas";
 import { GATES_CLOSED, loadExamPageGates, type ExamPageGates } from "@/lib/exam-page-gates";
+import { loadExamPracticeStates } from "@/lib/db/exam-practice";
+import type { PracticeCatalogRow } from "@/lib/exam-practice-state";
 import { schoolClassIdentity } from "@/lib/school/context";
 import { schoolLandingSitemapEntries } from "@/lib/school/landings";
 import { EMPTY_SCHOOL_SURFACE, loadSchoolSurface, schoolSitemapEntries } from "@/lib/school/surface";
@@ -152,6 +154,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // them (GATES_CLOSED): a smaller sitemap beats one full of 404s.
   const pageGates = await loadExamPageGates().catch(() => new Map<string, ExamPageGates>());
   const gate = (code: string): ExamPageGates => pageGates.get(code) ?? GATES_CLOSED;
+  // Practice (27 Sep 2026, src/lib/exam-practice-state.ts — the rule the hub,
+  // its FAQ, the sub-pages, context.md, llms-full.txt and the search read):
+  // a page that exists only to practise (the topic-wise builder) is listed
+  // only for an exam with practice questions. A hub WITHOUT practice stays
+  // listed — it carries the official facts with their sources, the dates and
+  // the tutor, and promises no practice. A failed read lists no builder.
+  const practiceByCode = await loadExamPracticeStates().catch(() => new Map<string, PracticeCatalogRow>());
+  const hasPractice = (code: string): boolean => practiceByCode.get(code)?.practice.hasPractice ?? false;
 
   // Honest per-page lastmod (26 Sep 2026, B-machine-crawl; the combiners and
   // why are in src/lib/sitemap-lastmod.ts): one grouped SELECT gives each
@@ -274,7 +284,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // empty builder must never be a sitemap URL. (The buildable rule moved to
   // exam-page-gates on 16 Sep 2026, where the page's noindex reads it too.)
   const builderUrls: MetadataRoute.Sitemap = exams
-    .filter((e) => gate(e.code).buildMock)
+    .filter((e) => gate(e.code).buildMock && hasPractice(e.code))
     .map((e) => ({
       url: `${base}/exams/${e.code}/build-mock`,
       changeFrequency: "weekly" as const,

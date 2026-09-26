@@ -28,6 +28,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL, REAL_EXAM_SQL, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { GATES_CLOSED, loadExamPageGates, type ExamPageGates } from "@/lib/exam-page-gates";
+import { loadExamPracticeStates } from "@/lib/db/exam-practice";
+import type { PracticeCatalogRow } from "@/lib/exam-practice-state";
 import { usableNotesSql } from "@/lib/topic-notes";
 import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
 import { istDay } from "@/lib/exam-week";
@@ -42,6 +44,7 @@ import { ALL_STREAMS, COLLEGES, NIRF_SOURCE_URL, NIRF_SOURCE_YEAR } from "@/lib/
 // 26 Sep 2026 (repair): the schemes, never the one outside aggregator
 // (Buddy4Study) the raw catalogue holds — src/lib/scholarship-schemes.ts.
 import { SCHOLARSHIP_SCHEMES } from "@/lib/scholarship-schemes";
+import { officialExamFacts } from "@/lib/official-exam-facts";
 import { CAREERS, CAREER_CATEGORIES } from "@/data/careers";
 import { TEST_PREP, WORLDWIDE_COUNTRIES } from "@/lib/worldwide-data";
 import { PERSONAS } from "@/data/personas";
@@ -89,6 +92,11 @@ export async function GET() {
   });
 
   const pageGates = await loadExamPageGates().catch(() => new Map<string, ExamPageGates>());
+  // 27 Sep 2026: the practice rule (src/lib/exam-practice-state.ts) — an exam
+  // with no checked question and no shared mock is not listed with "mocks" or
+  // "PYQ-pattern practice". A failed read claims practice for none.
+  const practiceByCode = await loadExamPracticeStates().catch(() => new Map<string, PracticeCatalogRow>());
+  const hasPractice = (code: string): boolean => practiceByCode.get(code)?.practice.hasPractice ?? false;
   const gate = (code: string): ExamPageGates => pageGates.get(code) ?? GATES_CLOSED;
   // Exams with at least one topic holding usable study notes (the topic page's
   // own rule, src/lib/topic-notes.ts). A failed read claims no notes.
@@ -358,7 +366,12 @@ export async function GET() {
       lines.push(`- Official previous-year question papers and answer keys, linked to the conducting body's own files with year and publisher: ${SITE}/exams/${e.code}#official-papers`);
     }
     lines.push(`- Machine-readable context (preferred for LLMs): ${SITE}/exams/${e.code}/context.md`);
-    lines.push(`- Hub (mocks, ${paperCodes.has(e.code) ? "official previous year papers and PYQ-pattern practice" : "previous year paper practice (PYQ-pattern sets)"}, news, dates): ${SITE}/exams/${e.code}`);
+    lines.push(
+      hasPractice(e.code)
+        ? `- Hub (mocks, ${paperCodes.has(e.code) ? "official previous year papers and PYQ-pattern practice" : "previous year paper practice (PYQ-pattern sets)"}, news, dates): ${SITE}/exams/${e.code}`
+        : // 27 Sep 2026 (fixer): "official facts with their sources" only with official research on file.
+          `- Hub (${officialExamFacts(e.code) ? "official facts with their sources" : "the conducting body's site"}${paperCodes.has(e.code) ? ", official previous year papers" : ""}, news, dates; no practice questions or mock tests on Shishya yet): ${SITE}/exams/${e.code}`,
+    );
     // No hi/te suffix (13 Sep 2026, index shape): most tracker twins are
     // English bodies that canonicalise here (src/lib/twin-localisation.ts).
     lines.push(`- Exam tracker — exam date, notification, admit card, answer key, result, cutoff (official vs expected, email alerts): ${SITE}/exams/${e.code}/updates`);

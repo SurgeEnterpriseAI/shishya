@@ -20,7 +20,8 @@ import { getSeenHistory } from "@/lib/answered-questions";
 import { pickWithSeenExclusion } from "@/lib/question-pick";
 import { WITHDRAWN_TAG } from "@/lib/question-withdrawn";
 import { warmupReplyWithSize } from "@/lib/mock-fill";
-import { SCHOLARSHIPS, scholarshipsForExam, type Scholarship } from "@/data/scholarships";
+import { scholarshipsForExam, type Scholarship } from "@/data/scholarships";
+import { OFFERED_SCHEMES, isOfferedScheme } from "@/lib/scholarship-schemes";
 
 export interface ToolContext {
   userId: string;
@@ -463,10 +464,13 @@ function findScholarships(ctx: ToolContext, input: any) {
 
   // Exam-aware base list. Falls back to all scholarships if examCode
   // doesn't map to one (e.g. tutor running in general mode).
+  // 27 Sep 2026 (fixer): offered schemes only (src/lib/scholarship-schemes.ts)
+  // — the raw catalogue let the tutor recommend the outside aggregator, a
+  // discontinued scheme or a row held out as not a scholarship / not found.
   let pool: Scholarship[] = ctx.examCode
-    ? scholarshipsForExam(ctx.examCode, "")
+    ? scholarshipsForExam(ctx.examCode, "").filter(isOfferedScheme)
     : [];
-  if (pool.length === 0) pool = [...SCHOLARSHIPS];
+  if (pool.length === 0) pool = [...OFFERED_SCHEMES];
 
   // Apply filters. A scholarship with no restriction in a dimension
   // is considered "open to anyone" in that dimension — passes the filter.
@@ -485,7 +489,7 @@ function findScholarships(ctx: ToolContext, input: any) {
   let relaxed = false;
   if (filtered.length === 0) {
     relaxed = true;
-    filtered = [...SCHOLARSHIPS].filter((s) => {
+    filtered = [...OFFERED_SCHEMES].filter((s) => {
       if (wantGender && s.eligibility.gender && s.eligibility.gender !== wantGender) return false;
       if (wantCategory && s.eligibility.categories && !s.eligibility.categories.includes(wantCategory as any)) {
         return false;

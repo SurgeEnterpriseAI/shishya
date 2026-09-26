@@ -241,7 +241,8 @@ describe("a cached render: no swallowed read, no link to a page that does not re
   it("guide: the coach (daily plan) entry renders only where the exam has topics to plan from", () => {
     const body = code(read(PAGES.guide));
     expect(body.split("<CoachEntry").length - 1).toBe(1);
-    expect(body).toMatch(/\{gates\.syllabus && <CoachEntry examCode=\{exam\.code\} examShort=\{exam\.shortName\} variant="guide" \/>\}/);
+    // 27 Sep 2026: and only with practice questions (src/lib/exam-practice-state.ts).
+    expect(body).toMatch(/\{gates\.syllabus && practice\.hasPractice && <CoachEntry examCode=\{exam\.code\} examShort=\{exam\.shortName\} variant="guide" \/>\}/);
   });
 
   it("tricks: the free-mock sentence, the quiz button and the description line follow the page gates", () => {

@@ -23,6 +23,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_WHERE } from "@/lib/db/exam-scope";
 import { realEnrollmentExistsSql } from "@/lib/db/enrollment";
+import { practiceExamCodes } from "@/lib/db/exam-practice";
 import { istDay, istDayStartUtc } from "@/lib/study-day";
 import { seenCutoff } from "@/lib/seen-questions";
 
@@ -148,11 +149,20 @@ export async function pickDailyFive(userId: string): Promise<DailyFivePick | nul
     }
   }
 
-  const enrollment = await prisma.enrollment.findFirst({
+  // 27 Sep 2026 (fixer): the newest enrolment on an exam WITH practice
+  // (src/lib/exam-practice-state.ts) — a diagnostic on an exam with no
+  // checked question and no shared mock has nothing to serve, and the
+  // Daily-5 mail (src/app/api/cron/daily-five/route.ts) names the same exam.
+  // No such enrolment → null (as if not enrolled: /today sends the student
+  // to /dashboard). A failed practice read keeps the newest enrolment.
+  const enrollments = await prisma.enrollment.findMany({
     where: { userId, active: true, exam: NOT_SCHOOL_WHERE },
     orderBy: { createdAt: "desc" },
+    take: 20,
     select: { exam: { select: { code: true, shortName: true } } },
   });
+  const practiceCodes = enrollments.length > 0 ? await practiceExamCodes() : null;
+  const enrollment = practiceCodes ? enrollments.find((e) => practiceCodes.has(e.exam.code)) : enrollments[0];
   if (!enrollment) return null;
   return {
     examCode: enrollment.exam.code,

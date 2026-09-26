@@ -27,6 +27,9 @@ import { CoachEntry } from "@/components/CoachEntry";
 import { tFor } from "@/lib/i18n-server";
 import { pilotPageLocale } from "@/lib/cache-pilot-routes";
 import { examPageGates } from "@/lib/exam-page-gates";
+// 27 Sep 2026: the practice rule (src/lib/exam-practice-state.ts), cached —
+// no request-scoped read, so the page stays static.
+import { examPracticeState } from "@/lib/db/exam-practice";
 import { StateExamsLink } from "@/components/StateExamsLink";
 import { examTitleYear, yearSuffix } from "@/lib/exam-title-year";
 
@@ -135,12 +138,15 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
   // syllabus gate too: the coach builds each day from the exam's topics
   // (src/lib/coach-plan.ts), and the 12 active exams with no Subject rows
   // have none — their plan would hold nothing but the Daily-5 slot.
-  const [rows, gates, year] = await Promise.all([
+  // 27 Sep 2026: the coach door also needs practice questions — the plan's
+  // menu is a full mock, a Daily 5 and topic drills; a failed read claims none.
+  const [rows, gates, year, practice] = await Promise.all([
     prisma.$queryRaw<{ content: string; faq: { q: string; a: string }[] | null }[]>`
       SELECT content, faq FROM "ExamGuide" WHERE "examId" = ${exam.id} LIMIT 1
     `,
     examPageGates(exam.code),
     examTitleYear(exam.code),
+    examPracticeState(exam.code),
   ]);
   const guideMd = rows[0]?.content;
   if (!guideMd) notFound();
@@ -241,7 +247,7 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
         {/* Reading strategy is the easy half; the coach turns it into
             the daily execution that actually crack exams. Only where the
             exam has topics to plan from (16 Sep 2026). */}
-        {gates.syllabus && <CoachEntry examCode={exam.code} examShort={exam.shortName} variant="guide" />}
+        {gates.syllabus && practice.hasPractice && <CoachEntry examCode={exam.code} examShort={exam.shortName} variant="guide" />}
 
         <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
           <p className="text-base font-bold text-ink-900">Start your {exam.shortName} prep now — free</p>

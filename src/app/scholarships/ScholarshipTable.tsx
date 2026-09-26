@@ -5,12 +5,15 @@
 // (src/data/scholarships.ts) — the amount is its prose, never a parsed
 // number; the last-date cell is src/lib/scholarship-lists.ts lastDateCell
 // (a date only when read on the official portal, with its tier).
+// 27 Sep 2026 (fixer): the cell prints the window's qualifier (cycle.note —
+// "Renewal applications only …") under the date, and a level-scoped list
+// passes its level so the date is that level's own window.
 
 import Link from "next/link";
-import type { Scholarship } from "@/data/scholarships";
+import type { Scholarship, ScholarshipLevel } from "@/data/scholarships";
 import { hostOf, lastDateCell } from "@/lib/scholarship-lists";
 
-export function ScholarshipTable({ rows, today }: { rows: readonly Scholarship[]; today: string }) {
+export function ScholarshipTable({ rows, today, level }: { rows: readonly Scholarship[]; today: string; level?: ScholarshipLevel }) {
   return (
     <div className="mt-6 overflow-x-auto rounded-lg border border-ink-200 bg-white">
       <table className="w-full min-w-[720px] text-left text-sm">
@@ -25,7 +28,7 @@ export function ScholarshipTable({ rows, today }: { rows: readonly Scholarship[]
         </thead>
         <tbody className="divide-y divide-ink-100 align-top">
           {rows.map((s) => {
-            const cell = lastDateCell(s, today);
+            const cell = lastDateCell(s, today, level);
             return (
               <tr key={s.id}>
                 <td className="px-3 py-3">
@@ -41,6 +44,7 @@ export function ScholarshipTable({ rows, today }: { rows: readonly Scholarship[]
                 </td>
                 <td className="px-3 py-3 text-xs">
                   <span className={cell.tier === "official" ? "font-medium text-ink-900" : "text-ink-600"}>{cell.text}</span>
+                  {cell.note && <p className="mt-0.5 text-[11px] text-ink-500">{cell.note}</p>}
                 </td>
                 <td className="px-3 py-3 text-xs">
                   <a href={s.applyUrl} target="_blank" rel="noopener noreferrer" className="text-saffron-700 hover:underline">

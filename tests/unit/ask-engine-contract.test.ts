@@ -4,7 +4,7 @@
 // Pinned:
 //   1. the prompt: every section of the platform, Graduation / PG / PhD as
 //      "being built", the school honesty lines verbatim, route-only school
-//      answers, date tiers, NIRF 2024 / indicative / "as listed", the web
+//      answers, date tiers, NIRF {NIRF_SOURCE_YEAR} / indicative / "as listed", the web
 //      section, the page block with one "Open next", the question as data —
 //      and none of the old typed literals ("170+", "3,700+ topics", an
 //      "expert help desk", "voice input", "end-to-end government-exam");
@@ -44,6 +44,7 @@ import { knownPath } from "@/lib/ask-links";
 import { resolveQuery } from "@/lib/search/resolve";
 import { schoolContextHonestyLines } from "@/lib/school/context";
 import { siteFeaturesBlock } from "@/lib/ai/site-facts";
+import { NIRF_PREVIOUS_YEAR, NIRF_SOURCE_YEAR } from "@/lib/colleges-data";
 
 const idx = fixtureIndex("deep");
 const create = vi.mocked(anthropic.messages.create);
@@ -73,11 +74,16 @@ describe("system prompt", () => {
     expect(own).toMatch(/do not teach the syllabus content/);
   });
 
-  it("holds the honesty rules: tool facts only, date tiers, NIRF 2024, indicative salaries, as-listed amounts, web in its own section", () => {
+  it("holds the honesty rules: tool facts only, date tiers, NIRF's data year, indicative salaries, as-listed amounts, web in its own section", () => {
     expect(own).toMatch(/ONLY if a tool result in this run/);
     expect(own).toMatch(/OFFICIAL, REPORTED or EXPECTED/);
     expect(own).toMatch(/Never state an EXPECTED date as the date/);
-    expect(own).toContain('"NIRF 2024"');
+    // 27 Sep 2026 (official-data wave): the ranks are NIRF_SOURCE_YEAR's (2025), never a typed older year.
+    expect(own).toContain(`"NIRF ${NIRF_SOURCE_YEAR}"`);
+    expect(own).toContain(`college pages with NIRF ${NIRF_SOURCE_YEAR} ranks`);
+    expect(own).not.toContain(`NIRF ${NIRF_PREVIOUS_YEAR}`);
+    const pageFactsTool = ASK_TOOLS.find((t) => t.name === "page_facts") as { description: string };
+    expect(pageFactsTool.description).toContain(`NIRF ${NIRF_SOURCE_YEAR} ranks`);
     expect(own).toMatch(/salary bands are indicative/);
     expect(own).toContain("as listed — confirm on the official portal");
     expect(own).toContain("🌐 From the web (tentative — verify before acting)");
@@ -178,10 +184,12 @@ describe("page tools (fixture index)", () => {
     expect(out.pages.every((p) => p.section === "school")).toBe(true);
   });
 
-  it("page_facts: a college carries NIRF 2024 and its sources", () => {
+  it("page_facts: a college carries its NIRF year (NIRF_SOURCE_YEAR) and its sources", () => {
     const f = pageFacts(idx, { url: "https://shishya.in/colleges/iit-bombay" });
     expect(f.kind).toBe("college");
-    expect(String(f.nirf)).toMatch(/NIRF .*\(2024\)/);
+    // 27 Sep 2026 (official-data wave): the data year (2025 since scripts/import-nirf.ts), not a typed 2024.
+    expect(String(f.nirf)).toMatch(/^NIRF /);
+    expect(String(f.nirf).endsWith(`(${NIRF_SOURCE_YEAR})`)).toBe(true);
     const b = pageFacts(idx, { url: "https://shishya.in/colleges/iit-bombay/cse" });
     expect(b.kind).toBe("college-branch");
     for (const p of b.placements as { year: number; source: string }[]) {

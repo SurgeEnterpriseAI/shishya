@@ -9,6 +9,14 @@
 // of web-search calls re-verifying numbers that had not moved), and the
 // most-recent-update date is still always today.
 //
+// 27 Sep 2026 (fixer): rows the official research wrote (ExamEligibility
+// generatedBy "official-research:<day>", scripts/add-national-exams.ts — the
+// national / PG exams, e.g. GATE's "there is no vacancy count") are never
+// picked. The UPDATE below leaves generatedBy as it was, so a web-search
+// figure would have sat in a row still labelled official research, and the
+// hub's no-practice panel and vacancy block would have printed it as such.
+// Those rows change only when the official research is re-read.
+//
 // Auth: Bearer ${CRON_SECRET}. Daily per vercel.json.
 
 export const runtime = "nodejs";
@@ -56,6 +64,7 @@ export async function GET(req: Request) {
     `SELECT e.id, e.code, e.name, e."shortName"
      FROM "ExamEligibility" x JOIN "Exam" e ON e.id = x."examId"
      WHERE e.active = TRUE AND ${notSchoolSqlText("e")}
+       AND COALESCE(x."generatedBy", '') NOT LIKE 'official-research:%'
      ORDER BY GREATEST(x."generatedAt", COALESCE(x."vacanciesAttemptedAt", 'epoch'::timestamp)) ASC
      LIMIT ${BATCH}`,
   );

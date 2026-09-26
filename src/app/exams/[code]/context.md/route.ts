@@ -61,6 +61,10 @@ import { markingSchemeVerdict } from "@/lib/marking-scheme";
 import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
 import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { stateInfo, stateSlug } from "@/lib/state-info";
+// 27 Sep 2026: the practice rule (src/lib/exam-practice-state.ts) and the
+// official facts of the national exams (src/lib/official-exam-facts.ts).
+import { examPracticeState } from "@/lib/db/exam-practice";
+import { officialExamFacts, officialPattern } from "@/lib/official-exam-facts";
 
 export const revalidate = 3600; // hourly — the exam-week block flips phase within a day
 
@@ -216,6 +220,14 @@ export async function GET(
     }`,
   );
   L.push(`- Languages offered: ${(exam.languages ?? []).join(", ") || "not specified"}`);
+  // 27 Sep 2026: where the figures above were read on the conducting body's
+  // own site (the official research), the source — only while they agree.
+  const officialFacts = officialExamFacts(exam.code);
+  const officialScheme = officialPattern(exam.code, exam);
+  if (officialFacts && officialScheme) {
+    L.push(`- Pattern source (${officialScheme.stage}): ${officialScheme.source ?? "official notice"} — ${officialScheme.url} (read ${officialFacts.readOn})`);
+  }
+  if (officialFacts?.syllabusUrl) L.push(`- Official syllabus: ${officialFacts.syllabusUrl}`);
   L.push("");
 
   if (e) {
@@ -384,8 +396,22 @@ export async function GET(
     }
   }
 
+  // 27 Sep 2026: "mocks" and "PYQ-pattern practice" only where the exam has
+  // practice questions (a failed read claims none); otherwise the file says
+  // there are none yet, and lists no coach plan (its menu is mocks and drills).
+  // 27 Sep 2026 (fixer): "official facts with their sources" only with official
+  // research on file (src/lib/official-exam-facts.ts) — otherwise the hub's one
+  // non-date fact is an AI-drafted conducting-body row; and no "(being
+  // written)" — nothing writes those questions.
+  const practice = await examPracticeState(exam.code);
   L.push("## Free resources on Shishya for this exam");
-  L.push(`- Exam hub (mocks, ${hasOfficialQuestionPapersCtx ? "official previous year papers and PYQ-pattern practice" : "previous year paper practice (PYQ-pattern sets)"}, news, dates): ${SITE}/exams/${exam.code}`);
+  if (practice.hasPractice) {
+    L.push(`- Exam hub (mocks, ${hasOfficialQuestionPapersCtx ? "official previous year papers and PYQ-pattern practice" : "previous year paper practice (PYQ-pattern sets)"}, news, dates): ${SITE}/exams/${exam.code}`);
+  } else {
+    const researched = officialExamFacts(exam.code) != null;
+    L.push(`- Exam hub (${researched ? "official facts with their sources" : "the conducting body's site"}${hasOfficialQuestionPapersCtx ? ", official previous year papers" : ""}, news, dates): ${SITE}/exams/${exam.code}`);
+    L.push(`- Practice questions and mock tests for ${exam.shortName}: none on Shishya yet. Do not tell a student Shishya has ${exam.shortName} mocks.`);
+  }
   if (gates.buildMock) {
     L.push(`- Custom topic-wise mock builder — pick any syllabus topics, 10/25/50 questions, difficulty; timed, scored, solutions; readable in Hindi + ${OTHER_INDIAN_LANGUAGE_COUNT} languages: ${SITE}/exams/${exam.code}/build-mock`);
   }
@@ -404,7 +430,7 @@ export async function GET(
   if (gates.cutoff) L.push(`- Category-wise expected cutoffs: ${SITE}/exams/${exam.code}/cutoff`);
   if (gates.tricks) L.push(`- Memory tricks & mnemonics: ${SITE}/exams/${exam.code}/tricks`);
   if (gates.guide) L.push(`- How to crack it (strategy guide): ${SITE}/exams/${exam.code}/guide`);
-  L.push(`- Free day-by-day study plan (personal coach): ${SITE}/coach`);
+  if (practice.hasPractice) L.push(`- Free day-by-day study plan (personal coach): ${SITE}/coach`);
   // 26 Sep 2026: /chat is robots-disallowed (conversations are private), so
   // the citeable, no-sign-in answer page is /ask. /chat itself serves guests
   // too (src/app/chat/page.tsx, a guest chat is not saved); signing in keeps

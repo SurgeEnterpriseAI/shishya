@@ -261,7 +261,8 @@ export interface ScholarshipLite {
 export interface ScholarshipListsContext {
   lists: readonly { path: string; label: string; count: number; indexable: boolean }[];
   /** Schemes with a 2026-27 last date still ahead, read on the official portal. */
-  dated: readonly { id: string; name: string; closesOn: string; tier: string; host: string; checkedOn: string }[];
+  /** note: the cycle's own qualifier ("Renewal applications only …") — 27 Sep 2026 fixer. */
+  dated: readonly { id: string; name: string; closesOn: string; tier: string; host: string; checkedOn: string; note?: string | null }[];
 }
 export interface CareerLite {
   slug: string;
@@ -419,7 +420,7 @@ export function scholarshipsContextMarkdown(
     L.push("");
     L.push(`## 2026-27 last dates read on the official portal (${extra.dated.length})`);
     if (extra.dated.length === 0) L.push("- None still ahead. Every other scheme's page shows its usual window, named as such.");
-    for (const d of extra.dated) L.push(`- ${d.name} — closes ${d.closesOn} (${d.tier}, ${d.host}, checked ${d.checkedOn}) — ${site}/scholarships/${d.id}`);
+    for (const d of extra.dated) L.push(`- ${d.name} — closes ${d.closesOn} (${d.tier}, ${d.host}, checked ${d.checkedOn})${d.note ? ` — ${d.note}` : ""} — ${site}/scholarships/${d.id}`);
     L.push("- Every other scheme: no 2026-27 date checked yet; its page gives the usual window. Confirm on the official link.");
     L.push("");
   }

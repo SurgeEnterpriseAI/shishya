@@ -10,7 +10,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
-import { SCHOLARSHIPS } from "@/data/scholarships";
+import { OFFERED_SCHEMES } from "@/lib/scholarship-schemes";
 import { MatchWizard } from "./MatchWizard";
 
 export const metadata: Metadata = {
@@ -48,7 +48,10 @@ export default function MatchWizardPage() {
           your name, email, phone, or family-income details to a server.
         </p>
 
-        <MatchWizard scholarships={SCHOLARSHIPS} />
+        {/* 27 Sep 2026 (fixer): OFFERED_SCHEMES — it was the raw catalogue, so the
+            wizard could recommend the outside aggregator, a discontinued scheme
+            or a row held out as not a scholarship / not found. */}
+        <MatchWizard scholarships={[...OFFERED_SCHEMES]} />
 
         <div className="mt-10 rounded-lg border border-ink-200 bg-white p-5 text-xs text-ink-600">
           <p className="font-semibold text-ink-800">A note on accuracy</p>

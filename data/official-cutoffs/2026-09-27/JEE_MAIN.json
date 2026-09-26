@@ -1,0 +1,101 @@
+{
+ "exam": "JEE_MAIN",
+ "sources": [
+  {
+   "id": "S1",
+   "url": "https://cdnbbsr.s3waas.gov.in/s3f8e59f4b2fe7c5705bf878bbd494ccdf/uploads/2026/04/20260420809492136.pdf",
+   "title": "Press Release, 20 April 2026 — Declaration of the Result/NTA Scores for the Joint Entrance Examination [JEE (Main) - 2026] of Paper 1 (B.E. / B.Tech.) – reg.",
+   "publisher": "National Testing Agency",
+   "domain": "cdnbbsr.s3waas.gov.in",
+   "publishedOn": "2026-04-20",
+   "kind": "pdf (scanned page images, no text layer)"
+  }
+ ],
+ "rows": [
+  {
+   "cycle": "2026",
+   "stage": "Eligibility for JEE (Advanced) 2026 — NTA score cut-off, Paper 1 (B.E./B.Tech.)",
+   "post": "",
+   "region": "",
+   "gender": "",
+   "categoryLabel": "UR-ALL",
+   "category": "UR",
+   "marks": "93.4123549",
+   "maxMarks": "",
+   "scoreType": "NTA score (percentile)",
+   "sourceId": "S1",
+   "evidence": "S.No Category Percentile Candidates\nFrom To\n1 UR-ALL 100.0000000 93.4123549 96,873"
+  },
+  {
+   "cycle": "2026",
+   "stage": "Eligibility for JEE (Advanced) 2026 — NTA score cut-off, Paper 1 (B.E./B.Tech.)",
+   "post": "",
+   "region": "",
+   "gender": "",
+   "categoryLabel": "UR-PwBD",
+   "category": "PWD",
+   "marks": "0.0023186",
+   "maxMarks": "",
+   "scoreType": "NTA score (percentile)",
+   "sourceId": "S1",
+   "evidence": "S.No Category Percentile Candidates\nFrom To\n2 UR-PwBD 93.3244144 0.0023186 4,391"
+  },
+  {
+   "cycle": "2026",
+   "stage": "Eligibility for JEE (Advanced) 2026 — NTA score cut-off, Paper 1 (B.E./B.Tech.)",
+   "post": "",
+   "region": "",
+   "gender": "",
+   "categoryLabel": "EWS-ALL",
+   "category": "EWS",
+   "marks": "82.4164528",
+   "maxMarks": "",
+   "scoreType": "NTA score (percentile)",
+   "sourceId": "S1",
+   "evidence": "S.No Category Percentile Candidates\nFrom To\n3 EWS-ALL 93.4105172 82.4164528 25,009"
+  },
+  {
+   "cycle": "2026",
+   "stage": "Eligibility for JEE (Advanced) 2026 — NTA score cut-off, Paper 1 (B.E./B.Tech.)",
+   "post": "",
+   "region": "",
+   "gender": "",
+   "categoryLabel": "OBC-ALL",
+   "category": "OBC",
+   "marks": "80.9232583",
+   "maxMarks": "",
+   "scoreType": "NTA score (percentile)",
+   "sourceId": "S1",
+   "evidence": "S.No Category Percentile Candidates\nFrom To\n4 OBC-ALL 93.4105172 80.9232583 67,597"
+  },
+  {
+   "cycle": "2026",
+   "stage": "Eligibility for JEE (Advanced) 2026 — NTA score cut-off, Paper 1 (B.E./B.Tech.)",
+   "post": "",
+   "region": "",
+   "gender": "",
+   "categoryLabel": "SC-ALL",
+   "category": "SC",
+   "marks": "63.9172792",
+   "maxMarks": "",
+   "scoreType": "NTA score (percentile)",
+   "sourceId": "S1",
+   "evidence": "S.No Category Percentile Candidates\nFrom To\n5 SC-ALL 93.4105172 63.9172792 37,522"
+  },
+  {
+   "cycle": "2026",
+   "stage": "Eligibility for JEE (Advanced) 2026 — NTA score cut-off, Paper 1 (B.E./B.Tech.)",
+   "post": "",
+   "region": "",
+   "gender": "",
+   "categoryLabel": "ST-ALL",
+   "category": "ST",
+   "marks": "52.0174712",
+   "maxMarks": "",
+   "scoreType": "NTA score (percentile)",
+   "sourceId": "S1",
+   "evidence": "S.No Category Percentile Candidates\nFrom To\n6 ST-ALL 93.4041748 52.0174712 18,790"
+  }
+ ],
+ "notes": "Researched 27 Sep 2026 (Asia/Kolkata). Source S1 is NTA's own press release of 20 April 2026, linked from https://jeemain.nta.nic.in/ as 'Declaration of the Result/NTA Scores for the Joint Entrance Examination [JEE (Main) - 2026] of Paper 1 (B.E. / B.Tech.) - reg.' (host cdnbbsr.s3waas.gov.in is the NIC S3WaaS store behind jeemain.nta.nic.in; *.gov.in = official in src/lib/official-source.ts). Page 3 prints: 'The Category-wise Cut-off of NTA Score for candidates to become eligible for JEE (Advanced) - 2026 for Paper 1 (B.E/ B.Tech.) is given below:-' followed by a table S.No | Category | Percentile (From, To) | Candidates. 'marks' is the 'To' column (the lowest NTA score of the eligible band, i.e. the cut-off); the 'From' column and the candidate count are in the evidence line only. Values were read by eye off a 200-dpi render of page 3 (scratchpad jee_cut_zoom.png) — the PDF is a scan with NO text layer (pdftotext returns nothing), so scripts/import-official-cutoffs.ts cannot prove these rows and will print FAIL for every one; by rule there is no OCR. A second, independent blocker: MARKS_RE in src/lib/official-cutoffs.ts accepts at most 6 decimals and NTA prints 7 (93.4123549). Nothing here is written until the importer gains a reviewed path for scanned official documents and 7-decimal NTA scores — the main session's call. No text-layer copy of this table was found on jeemain.nta.nic.in or nta.ac.in on 27 Sep 2026."
+}

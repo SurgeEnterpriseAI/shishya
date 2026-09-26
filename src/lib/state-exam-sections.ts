@@ -25,7 +25,7 @@
 import { isStateCetCode } from "@/lib/exam-kind";
 import { COLLEGES, NIRF_SOURCE_YEAR } from "@/lib/colleges-data";
 import { BOARDS } from "@/lib/schooling-data";
-import { SCHOLARSHIPS } from "@/data/scholarships";
+import { OFFERED_SCHEMES } from "@/lib/scholarship-schemes";
 import { stateSlug } from "@/lib/state-info";
 
 /** Scholarship links a state page shows (plus the finder). */
@@ -97,7 +97,9 @@ export function stateAlsoLinks(stateCode: string, stateName: string, labels: Sta
   for (const b of BOARDS) {
     if (b.state === stateCode) out.push({ href: `/schooling/${b.slug}`, label: fillVars(labels.board, { board: b.shortName }) });
   }
-  const schol = SCHOLARSHIPS.filter((s) => s.state === stateCode).slice(0, STATE_SCHOLARSHIP_LINKS_MAX);
+  // 27 Sep 2026 (fixer): offered schemes only — not a discontinued one, nor a
+  // row held out as not a scholarship / not found (src/lib/scholarship-schemes.ts).
+  const schol = OFFERED_SCHEMES.filter((s) => s.state === stateCode).slice(0, STATE_SCHOLARSHIP_LINKS_MAX);
   for (const s of schol) out.push({ href: `/scholarships/${s.id}`, label: s.name });
   out.push({ href: "/scholarships/match", label: labels.scholarshipMatch });
   return out;

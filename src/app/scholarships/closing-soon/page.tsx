@@ -6,11 +6,16 @@
 // never treated as a date. noindex,follow until CLOSING_SOON_MIN schemes
 // qualify; with none, the page says so and points to the full catalogue.
 // Hourly ISR — the window moves with the IST day.
+// 27 Sep 2026 (official-data wave): indexable only when every listed row is
+// also reviewed (isClosingSoonIndexable), like the filter lists. The page
+// stays a real page for people either way, and — as the filter lists do
+// since the 27 Sep repair — says how many of its rows were re-checked and
+// promises apply links, not "official portal" links.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
-import { CLOSING_SOON_DAYS, SCHOLARSHIP_FILTERS, closingSoon, formatIsoDay, isClosingSoonIndexable, istToday } from "@/lib/scholarship-lists";
+import { CLOSING_SOON_DAYS, SCHOLARSHIP_FILTERS, closingSoon, formatIsoDay, isClosingSoonIndexable, istToday, listReviewLine } from "@/lib/scholarship-lists";
 import { ScholarshipTable } from "../ScholarshipTable";
 
 export const revalidate = 3600;
@@ -28,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const today = istToday();
   const list = closingSoon(today);
   const title = "Scholarships Closing Soon — Official 2026-27 Last Dates";
-  const description = `${lead(list.length, today)} Each row links the official portal.`;
+  const description = `${lead(list.length, today)} Each row links the scheme's apply page.`;
   return {
     title: `${title} | Shishya`,
     description,
@@ -41,6 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function ClosingSoonPage() {
   const today = istToday();
   const list = closingSoon(today);
+  const reviewLine = listReviewLine(list);
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -78,6 +84,7 @@ export default function ClosingSoonPage() {
           Only dates read on the official portal are counted, with the day they were checked. Most schemes in the catalogue have no
           2026-27 date checked yet — their pages show the usual window instead. Confirm on the official link before you apply.
         </p>
+        {reviewLine && <p className="mt-2 max-w-3xl text-xs font-medium text-ink-600">{reviewLine}</p>}
 
         {list.length > 0 ? (
           <ScholarshipTable rows={list} today={today} />

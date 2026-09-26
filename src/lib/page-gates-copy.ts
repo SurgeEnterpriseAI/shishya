@@ -159,12 +159,17 @@ export function syllabusPageCopy(i: {
   linkedTopics: number;
   weightageShown: boolean;
   buildMock: boolean;
+  /** 27 Sep 2026: the exam has practice questions (src/lib/exam-practice-state.ts).
+   *  False: no "practice questions" / "topic-wise mock tests" / "& practice".
+   *  Omitted = true (the behaviour before). */
+  practice?: boolean;
 }): { title: string; description: string; keywords: string[]; intro: string; jsonLdDescription: string; shareMessage: string } {
   const notes = i.linkedTopics > 0;
-  const offers = [notes ? "free study notes" : null, "practice questions", i.buildMock ? "topic-wise mock tests" : null].filter(
+  const practice = i.practice ?? true;
+  const offers = [notes ? "free study notes" : null, practice ? "practice questions" : null, practice && i.buildMock ? "topic-wise mock tests" : null].filter(
     (x): x is string => x !== null,
   );
-  const offerText = offers.length > 1 ? `${offers.slice(0, -1).join(", ")} and ${offers[offers.length - 1]}` : offers[0];
+  const offerText = offers.length === 0 ? null : offers.length > 1 ? `${offers.slice(0, -1).join(", ")} and ${offers[offers.length - 1]}` : offers[0];
   const y = i.year !== null ? ` ${i.year}` : "";
   const keywords = [
     `${i.examShort} syllabus${y}`,
@@ -181,15 +186,15 @@ export function syllabusPageCopy(i: {
         ? `${i.examShort} Syllabus${y} — Complete Topic List with Weightage | Shishya`
         : `${i.examShort} Syllabus${y} — Complete Topic List | Shishya`,
     description:
-      `Complete ${i.examShort} (${i.examName}) syllabus${y}: every subject and topic${i.weightageShown ? " with weightage" : ""}, ` +
-      `${offerText}. No coaching fees, in your language.`,
+      `Complete ${i.examShort} (${i.examName}) syllabus${y}: every subject and topic${i.weightageShown ? " with weightage" : ""}` +
+      `${offerText ? `, ${offerText}` : ""}. No coaching fees, in your language.`,
     keywords,
     intro: notes
       ? `${head} ${i.linkedTopics === 1 ? "1 topic below links" : `${i.linkedTopics} topics below link`} to free study notes.`
       : `${head} Study notes for this exam are not published yet; every topic is listed so you can see the whole syllabus.`,
     jsonLdDescription: `Full ${i.examName} syllabus: ${i.subjects} subjects, ${i.topicCount} topics${notes ? `, ${i.linkedTopics} with free study notes` : ""}.`,
     shareMessage: notes
-      ? `Complete ${i.examShort} syllabus${y} — topics with free study notes & practice (Shishya):`
+      ? `Complete ${i.examShort} syllabus${y} — topics with free study notes${practice ? " & practice" : ""} (Shishya):`
       : `Complete ${i.examShort} syllabus${y} — every subject & topic (Shishya):`,
   };
 }
@@ -197,7 +202,18 @@ export function syllabusPageCopy(i: {
 /** News permalink copy that names study notes only for an exam with notes
  *  (the funnel link lands on the syllabus page, which says "not published
  *  yet" otherwise). `hasNotes` null = the read failed: claim none. */
-export function newsPermalinkCopy(examShort: string, hasNotes: boolean | null): { descriptionTail: string; syllabusLabel: string } {
+// 27 Sep 2026: `hasPractice` false (src/lib/exam-practice-state.ts — no
+// checked question, no shared mock): the tail names no mock test or PYQ.
+export function newsPermalinkCopy(
+  examShort: string,
+  hasNotes: boolean | null,
+  hasPractice = true,
+): { descriptionTail: string; syllabusLabel: string } {
+  if (!hasPractice) {
+    return hasNotes
+      ? { descriptionTail: `Free ${examShort} study notes, exam dates and an AI tutor on Shishya.`, syllabusLabel: "Syllabus & study notes" }
+      : { descriptionTail: `${examShort} exam dates, official facts and a free AI tutor on Shishya.`, syllabusLabel: "Syllabus" };
+  }
   return hasNotes
     ? { descriptionTail: `Free ${examShort} mock tests, PYQs & study notes on Shishya.`, syllabusLabel: "Syllabus & study notes" }
     : { descriptionTail: `Free ${examShort} mock tests & PYQs on Shishya.`, syllabusLabel: "Syllabus" };

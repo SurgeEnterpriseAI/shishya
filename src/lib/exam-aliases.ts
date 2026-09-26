@@ -568,6 +568,47 @@ const ALIASES: Record<string, AliasHit> = {
 
   "computing olympiad": { codes: ["ZIO"] },
   iarcs: { codes: ["ZIO"] },
+
+  // ── National / PG exams added 27 Sep 2026 (scripts/add-national-exams.ts,
+  // data/national-exams-2026.json). Inert until those rows exist and are
+  // active: the search index only attaches a key to a live exam's code. The
+  // short paper forms ("gate me", "gate ce", "gate da") are left to the
+  // shortName match on purpose — as substrings they would also catch "gate
+  // merit list", "gate certificate" and "gate date".
+  "ugc net": { codes: ["UGC_NET"] },
+  ugcnet: { codes: ["UGC_NET"] },
+  "net jrf": { codes: ["UGC_NET", "CSIR_NET"] },
+  jrf: { codes: ["UGC_NET", "CSIR_NET"] },
+  "csir net": { codes: ["CSIR_NET"] },
+  "csir-net": { codes: ["CSIR_NET"] },
+  "csir ugc net": { codes: ["CSIR_NET"] },
+  "cuet pg": { codes: ["CUET_PG"] },
+  "cuet-pg": { codes: ["CUET_PG"] },
+  cuetpg: { codes: ["CUET_PG"] },
+  "cuet (pg)": { codes: ["CUET_PG"] },
+  clat: { codes: ["CLAT"] },
+  "common law admission test": { codes: ["CLAT"] },
+  "iit jam": { codes: ["IIT_JAM"] },
+  jam: { codes: ["IIT_JAM"] },
+  "joint admission test for masters": { codes: ["IIT_JAM"] },
+  "gate mechanical": { codes: ["GATE_ME"] },
+  "gate electrical": { codes: ["GATE_EE"] },
+  "gate electronics": { codes: ["GATE_ECE"] },
+  "gate civil": { codes: ["GATE_CE"] },
+  "gate data science": { codes: ["GATE_DA"] },
+  "gate dsai": { codes: ["GATE_DA"] },
+  "ssc cpo": { codes: ["SSC_CPO"] },
+  cpo: { codes: ["SSC_CPO"] },
+  "capf si": { codes: ["SSC_CPO"] },
+  "cisf si": { codes: ["SSC_CPO"] },
+  "ssc je": { codes: ["SSC_JE"] },
+  "junior engineer": { codes: ["SSC_JE"] },
+  bitsat: { codes: ["BITSAT"] },
+  "bits pilani": { codes: ["BITSAT"] },
+  navodaya: { codes: ["JNVST"] },
+  jnvst: { codes: ["JNVST"] },
+  jnv: { codes: ["JNVST"] },
+  "नवोदय": { codes: ["JNVST"] },
 };
 
 export interface ExamLike {

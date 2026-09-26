@@ -43,6 +43,16 @@
 // "How long is the exam?" appears only when the hub passes a durationMin —
 // it passes one only for an exam whose pattern was read from its notice
 // (src/lib/pattern-verified.ts).
+//
+// 27 Sep 2026: an exam with NO practice questions (src/lib/exam-practice-state.ts
+// — no checked question, no shared mock) got "Every {short} mock test,
+// PYQ-pattern paper and study tool on Shishya is completely free" here and in
+// the FAQPage JSON-LD: a claim that mock tests exist. With hasPractice false
+// the free answer names what the hub holds and says there are no practice
+// questions or mock tests yet (faqFreeNoPracticeA).
+// 27 Sep 2026 (fixer): "the facts on this page with their sources" only when
+// the exam has official research on file (hasOfficialFacts —
+// src/lib/official-exam-facts.ts); otherwise faqFreeNoPracticePlainA.
 
 import { examHubCopy, faqCountAnswer, fillHub, hubDuration } from "@/lib/exam-hub-copy";
 import { mergeFaqItems, type FaqItem } from "@/lib/hub-faq";
@@ -54,6 +64,8 @@ export function ExamFaq({
   pyqYears,
   durationMin,
   hasOfficialPapers = false,
+  hasPractice = true,
+  hasOfficialFacts = false,
   uncheckedCount = null,
   locale,
   extraItems = [],
@@ -69,6 +81,10 @@ export function ExamFaq({
   durationMin?: number | null;
   /** The conducting body's own question papers are linked on the hub (official-papers-db). */
   hasOfficialPapers?: boolean;
+  /** practiceStateFromCounts(...).hasPractice — false: the no-practice free answer. */
+  hasPractice?: boolean;
+  /** officialExamFacts(code) != null — the no-practice answer may say "with their sources". */
+  hasOfficialFacts?: boolean;
   /** The hub body's language (getT().locale). Defaults to English. */
   locale?: string;
   /** The hub's own questions (src/lib/hub-faq.ts), rendered here too. */
@@ -78,9 +94,10 @@ export function ExamFaq({
   const faqs: FaqItem[] = [];
 
   // Always true — Shishya is free; the question pipeline is stated as it is.
+  // No practice (27 Sep 2026): the answer names no mock test or PYQ paper.
   faqs.push({
     q: fillHub(C.faqFreeQ, { short: examShortName }),
-    a: fillHub(C.faqFreeA, { short: examShortName }),
+    a: fillHub(hasPractice ? C.faqFreeA : hasOfficialFacts ? C.faqFreeNoPracticeA : C.faqFreeNoPracticePlainA, { short: examShortName }),
   });
 
   if (questionCount > 0) {

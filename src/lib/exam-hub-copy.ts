@@ -109,6 +109,18 @@ export interface ExamHubCopy {
   faqHeading: string;
   faqFreeQ: string;
   faqFreeA: string;
+  /** 27 Sep 2026: the free answer on a hub with no practice questions
+   *  (src/lib/exam-practice-state.ts) — names what the hub holds, and says
+   *  plainly that there are no practice questions or mock tests yet.
+   *  27 Sep 2026 (fixer): with official research on file
+   *  (src/lib/official-exam-facts.ts); "the exam dates tracker", not "the
+   *  official dates tracker" — the tracker also lists reported and expected
+   *  dates, labelled; and no "they are being written" — nothing writes them. */
+  faqFreeNoPracticeA: string;
+  /** The same without official research: the page's facts carry no source
+   *  of their own (the conducting body comes from an AI-drafted row), so the
+   *  answer does not say "with their sources". */
+  faqFreeNoPracticePlainA: string;
   faqCountQ: string;
   /** Count answer when the answer-check split could not be read — no check claim. */
   faqCountA: string;
@@ -152,6 +164,10 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     faqFreeQ: "Is Shishya free for {short} preparation?",
     faqFreeA:
       "Yes. Every {short} mock test, PYQ-pattern paper and study tool on Shishya is completely free — no subscription and no credit card. Questions are written with AI to follow each exam's syllabus topics on Shishya, and re-checked whenever a student reports one.",
+    faqFreeNoPracticeA:
+      "Yes. Everything Shishya has for {short} is free — no subscription and no credit card: the exam dates tracker, the official facts on this page with their sources, and the AI tutor. There are no {short} practice questions or mock tests on Shishya yet.",
+    faqFreeNoPracticePlainA:
+      "Yes. Everything Shishya has for {short} is free — no subscription and no credit card: the exam dates tracker, the facts on this page and the AI tutor. There are no {short} practice questions or mock tests on Shishya yet.",
     faqCountQ: "How many {short} practice questions does Shishya have?",
     faqCountA:
       "Shishya has {count} {short} practice questions, written with AI (any question a student reports is re-checked), available as adaptive mock tests with a worked solution for every question.",
@@ -197,6 +213,10 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     faqFreeQ: "क्या {short} की तैयारी के लिए Shishya मुफ़्त है?",
     faqFreeA:
       "हाँ। Shishya पर हर {short} मॉक टेस्ट, PYQ-पैटर्न पेपर और स्टडी टूल पूरी तरह मुफ़्त है — न कोई सब्सक्रिप्शन, न क्रेडिट कार्ड। सवाल Shishya पर हर परीक्षा के सिलेबस के टॉपिक के हिसाब से AI से लिखे जाते हैं, और कोई छात्र किसी सवाल की शिकायत करे तो उसे दोबारा जाँचा जाता है।",
+    faqFreeNoPracticeA:
+      "हाँ। Shishya पर {short} के लिए जो कुछ है, सब मुफ़्त है — न कोई सब्सक्रिप्शन, न क्रेडिट कार्ड: परीक्षा की तारीख़ों का ट्रैकर, इस पेज की आधिकारिक जानकारी उसके स्रोतों के साथ, और AI ट्यूटर। Shishya पर अभी {short} के प्रैक्टिस सवाल या मॉक टेस्ट नहीं हैं।",
+    faqFreeNoPracticePlainA:
+      "हाँ। Shishya पर {short} के लिए जो कुछ है, सब मुफ़्त है — न कोई सब्सक्रिप्शन, न क्रेडिट कार्ड: परीक्षा की तारीख़ों का ट्रैकर, इस पेज की जानकारी और AI ट्यूटर। Shishya पर अभी {short} के प्रैक्टिस सवाल या मॉक टेस्ट नहीं हैं।",
     faqCountQ: "Shishya पर {short} के कितने प्रैक्टिस सवाल हैं?",
     faqCountA:
       "Shishya पर {short} के {count} प्रैक्टिस सवाल हैं, जो AI से लिखे गए हैं (किसी सवाल की शिकायत आने पर उसे दोबारा जाँचा जाता है); ये एडेप्टिव मॉक टेस्ट के रूप में मिलते हैं और हर सवाल का हल दिया रहता है।",
@@ -244,6 +264,10 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     faqFreeQ: "{short} సన్నద్ధతకు Shishya ఉచితమా?",
     faqFreeA:
       "అవును. Shishyaలో ప్రతి {short} మాక్ టెస్ట్, PYQ-ప్యాటర్న్ పేపర్, స్టడీ టూల్ పూర్తిగా ఉచితం — సబ్‌స్క్రిప్షన్ లేదు, క్రెడిట్ కార్డ్ లేదు. ప్రశ్నలను Shishyaలోని ప్రతి పరీక్ష సిలబస్ టాపిక్‌లకు అనుగుణంగా AI రాస్తుంది; ఏ ప్రశ్నపైనైనా విద్యార్థి ఫిర్యాదు చేస్తే దాన్ని మళ్లీ సరిచూస్తారు.",
+    faqFreeNoPracticeA:
+      "అవును. Shishyaలో {short} కోసం ఉన్నవన్నీ ఉచితం — సబ్‌స్క్రిప్షన్ లేదు, క్రెడిట్ కార్డ్ లేదు: పరీక్ష తేదీల ట్రాకర్, ఈ పేజీలోని అధికారిక వివరాలు వాటి మూలాలతో, AI ట్యూటర్. Shishyaలో ఇంకా {short} ప్రాక్టీస్ ప్రశ్నలు లేదా మాక్ టెస్టులు లేవు.",
+    faqFreeNoPracticePlainA:
+      "అవును. Shishyaలో {short} కోసం ఉన్నవన్నీ ఉచితం — సబ్‌స్క్రిప్షన్ లేదు, క్రెడిట్ కార్డ్ లేదు: పరీక్ష తేదీల ట్రాకర్, ఈ పేజీలోని వివరాలు, AI ట్యూటర్. Shishyaలో ఇంకా {short} ప్రాక్టీస్ ప్రశ్నలు లేదా మాక్ టెస్టులు లేవు.",
     faqCountQ: "Shishyaలో {short} ప్రాక్టీస్ ప్రశ్నలు ఎన్ని ఉన్నాయి?",
     faqCountA:
       "Shishyaలో {count} {short} ప్రాక్టీస్ ప్రశ్నలు ఉన్నాయి — AI రాసినవి (విద్యార్థి ఫిర్యాదు చేసిన ప్రశ్నను మళ్లీ సరిచూస్తారు); ఇవి అడాప్టివ్ మాక్ టెస్టులుగా లభిస్తాయి, ప్రతి ప్రశ్నకు వివరణాత్మక సమాధానం ఉంటుంది.",

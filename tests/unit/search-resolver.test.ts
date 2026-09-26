@@ -582,6 +582,13 @@ describe("wire codec and size", () => {
   // every month with current affairs (index-build.ts readCapsuleMonths) and that list only grows, so
   // the index here carries two years of months and the lite tier keeps the latest
   // LITE_CAPSULE_MONTHS (index-core.ts toLiteIndex); the bare snapshot has none and missed them.
+  // 27 Sep 2026 (official-data wave): measured with this test's own inputs — NIRF 2025 in
+  // src/lib/colleges-data.ts takes the served wire from 47,698 to 48,056 bytes gzipped (raw
+  // 182,731 → 184,153), under the 48,128-byte cap by 72 bytes. Cap unchanged; the next data
+  // wave will need a fresh measurement.
+  // 27 Sep 2026 (fixer): search now indexes only the scholarship schemes Shishya presents
+  // (src/lib/scholarship-schemes.ts — no aggregator, no unlisted row): 187 scholarship docs,
+  // 21 fewer. The same measurement: 47,314 bytes gzipped (raw 181,385), 814 under the cap.
   it("the lite index the strip downloads stays small: ≤ 200 KB raw and ≤ 47 KB gzipped, capsule months included", () => {
     const months = Array.from({ length: 24 }, (_, k) => {
       const d = new Date(Date.UTC(2024, 9 + k, 1));

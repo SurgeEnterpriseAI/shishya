@@ -22,7 +22,9 @@
 //     unless the pattern is verified;
 //   • "how can I prepare for free" names mock tests only with checked
 //     questions, previous year papers only where they exist, study notes
-//     only with notes;
+//     only with notes; 27 Sep 2026: the day-by-day coach plan only with checked
+//     questions — the coach's menu is a full mock, a Daily 5 and topic drills
+//     (src/lib/coach-plan.ts), all empty for an exam with none;
 //   • the cutoff answer quotes the published figure and its document when
 //     one exists (src/lib/answer-lead.ts cutoffLead), else points at the
 //     indicative bands as before.
@@ -159,7 +161,7 @@ export function hubFaqExtraItems(i: HubFaqInput): FaqItem[] {
     pyq,
     i.syllabus ? `${i.notes ? "the full syllabus with study notes" : "the full syllabus"} (${SITE}/exams/${i.code}/syllabus)` : null,
     i.tricks ? `subject-wise memory tricks (${SITE}/exams/${i.code}/tricks)` : null,
-    "a free day-by-day coach plan",
+    i.hasContent ? "a free day-by-day coach plan" : null,
     `an AI tutor in ${i.tutorLanguageCount} Indian languages`,
   ].filter((x): x is string => !!x);
   out.push({

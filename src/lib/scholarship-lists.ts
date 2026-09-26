@@ -18,7 +18,8 @@
 //     that no two indexable lists overlap that much either;
 //   • /scholarships/closing-soon — schemes whose official 2026-27 last date
 //     falls in the next CLOSING_SOON_DAYS days (IST), noindex until
-//     CLOSING_SOON_MIN qualify;
+//     CLOSING_SOON_MIN qualify and every one of them is reviewed (see the
+//     27 Sep 2026 notes below and at isClosingSoonIndexable);
 //   • the date line every scholarship page leads with: this year's date only
 //     from a cycle read on the official portal (with its tier, host and
 //     checked day); otherwise the scheme's usual window, said to be that.
@@ -37,6 +38,17 @@
 //     until the catalogue audit marks rows, every list is noindex,follow and
 //     out of the sitemap, and the page says how many rows were re-checked;
 //   • the pages promise "apply links", never "official links".
+//
+// 27 Sep 2026 (fixer): a date is printed with its qualifier. The list table
+// (lastDateCell), the list FAQ (filterFaq, also its FAQPage JSON-LD) and the
+// closing-soon table printed cycle.closesOn without cycle.note — PM YASASVI's
+// "30 Sep 2026 (official)" read as open to fresh applicants although NSP
+// lists renewals only. And a cycle may carry a level's own window
+// (ScholarshipCycle.levelWindows, cycleFor): /scholarships/for/class-11-12
+// showed UP's "31 Oct 2026 (official)" — the after-Class-12 date — when the
+// Class 11–12 window had closed on 21 Sep. A level-scoped list
+// (ScholarshipFilter.level) now dates, sorts, counts and answers from that
+// level's window.
 //
 // Pure: no DB, no Next imports, no clock unless the caller passes `now`
 // (tests/unit/scholarship-lists.test.ts).
@@ -110,7 +122,8 @@ export function listReviewLine(list: readonly Pick<Scholarship, "reviewed">[]): 
   if (k === 0) {
     return `None of these ${n} rows has been re-checked against the awarding body's own page yet — they come from Shishya's scholarship catalogue. Confirm each scheme on its official website before applying.`;
   }
-  return `${k} of these ${n} rows were re-checked against the awarding body's own page; the rest come from Shishya's scholarship catalogue and have not been re-checked yet. Confirm each scheme on its official website before applying.`;
+  // 27 Sep 2026: "1 of these 5 rows was", not "were".
+  return `${k} of these ${n} rows ${k === 1 ? "was" : "were"} re-checked against the awarding body's own page; the rest come from Shishya's scholarship catalogue and have not been re-checked yet. Confirm each scheme on its official website before applying.`;
 }
 
 // ── This year's date ─────────────────────────────────────────────────────
@@ -122,10 +135,22 @@ export type LastDate =
   | { kind: "usual"; deadline: string }
   | { kind: "discontinued"; note: string; sourceUrl: string; checkedOn: string };
 
-/** What Shishya can say about a scheme's 2026-27 last date on `today` (IST). */
-export function lastDateOf(s: Pick<Scholarship, "cycle" | "deadline" | "closed">, today: string): LastDate {
-  if (s.closed) return { kind: "discontinued", ...s.closed };
+/** The 2026-27 window that applies to `level` (27 Sep 2026 fixer): the
+ *  cycle's own window for that level (levelWindows — same year, source, tier
+ *  and check day), else the main cycle. No level → the main cycle. */
+export function cycleFor(s: Pick<Scholarship, "cycle">, level?: ScholarshipLevel): ScholarshipCycle | undefined {
   const c = s.cycle;
+  if (!c || !level) return c;
+  const w = c.levelWindows?.find((x) => x.levels.includes(level));
+  if (!w) return c;
+  return { year: c.year, opensOn: w.opensOn, closesOn: w.closesOn, sourceUrl: c.sourceUrl, tier: c.tier, checkedOn: c.checkedOn, note: w.note };
+}
+
+/** What Shishya can say about a scheme's 2026-27 last date on `today` (IST)
+ *  — for one level's window when `level` is given (cycleFor). */
+export function lastDateOf(s: Pick<Scholarship, "cycle" | "deadline" | "closed">, today: string, level?: ScholarshipLevel): LastDate {
+  if (s.closed) return { kind: "discontinued", ...s.closed };
+  const c = cycleFor(s, level);
   if (!c) return { kind: "usual", deadline: s.deadline };
   if (!c.closesOn) return { kind: "no-date", cycle: c };
   if (c.closesOn < today) return { kind: "passed", closesOn: c.closesOn, cycle: c };
@@ -163,20 +188,26 @@ function usualWindow(deadline: string): string {
   return deadline.replace(/^usually\s+/i, "").trim();
 }
 
-/** The short last-date cell of a list table. */
-export function lastDateCell(s: Pick<Scholarship, "cycle" | "deadline" | "closed">, today: string): { text: string; tier: "official" | "reported" | null } {
-  const d = lastDateOf(s, today);
+/** The short last-date cell of a list table, with the window's qualifier
+ *  (cycle.note — "Renewal applications only …") when it has one; a
+ *  level-scoped list passes its level (27 Sep 2026 fixer). */
+export function lastDateCell(
+  s: Pick<Scholarship, "cycle" | "deadline" | "closed">,
+  today: string,
+  level?: ScholarshipLevel,
+): { text: string; tier: "official" | "reported" | null; note: string | null } {
+  const d = lastDateOf(s, today, level);
   switch (d.kind) {
     case "upcoming":
-      return { text: `${formatIsoDay(d.closesOn)} (${d.cycle.tier})`, tier: d.cycle.tier };
+      return { text: `${formatIsoDay(d.closesOn)} (${d.cycle.tier})`, tier: d.cycle.tier, note: d.cycle.note ?? null };
     case "passed":
-      return { text: `Closed ${formatIsoDay(d.closesOn)} (${d.cycle.tier})`, tier: d.cycle.tier };
+      return { text: `Closed ${formatIsoDay(d.closesOn)} (${d.cycle.tier})`, tier: d.cycle.tier, note: d.cycle.note ?? null };
     case "no-date":
-      return { text: `Not on the portal yet (checked ${formatIsoDay(d.cycle.checkedOn)})`, tier: d.cycle.tier };
+      return { text: `Not on the portal yet (checked ${formatIsoDay(d.cycle.checkedOn)})`, tier: d.cycle.tier, note: d.cycle.note ?? null };
     case "usual":
-      return { text: `Usual window: ${usualWindow(d.deadline)}`, tier: null };
+      return { text: `Usual window: ${usualWindow(d.deadline)}`, tier: null, note: null };
     case "discontinued":
-      return { text: "Discontinued", tier: null };
+      return { text: "Discontinued", tier: null, note: null };
   }
 }
 
@@ -202,6 +233,9 @@ export interface ScholarshipFilter {
   /** How membership is decided — printed on the page, so a reader can check it. */
   rule: string;
   match: (s: Scholarship) => boolean;
+  /** The level the list is scoped to — its dates come from that level's
+   *  window (cycleFor; 27 Sep 2026 fixer). */
+  level?: ScholarshipLevel;
 }
 
 /** Eligibility limited to named categories, none of them General. */
@@ -243,6 +277,7 @@ export const SCHOLARSHIP_FILTERS: readonly ScholarshipFilter[] = [
     label: "Class 9–10",
     rule: "Schemes that fund students in Class 9 or Class 10.",
     match: (s) => hasLevel(s, "CLASS_9_10"),
+    level: "CLASS_9_10",
   },
   {
     slug: "class-11-12",
@@ -251,6 +286,7 @@ export const SCHOLARSHIP_FILTERS: readonly ScholarshipFilter[] = [
     label: "Class 11–12",
     rule: "Schemes that fund students in Class 11 or Class 12.",
     match: (s) => hasLevel(s, "CLASS_11_12"),
+    level: "CLASS_11_12",
   },
   {
     slug: "phd",
@@ -259,6 +295,7 @@ export const SCHOLARSHIP_FILTERS: readonly ScholarshipFilter[] = [
     label: "PhD / research",
     rule: "Scholarships and fellowships that fund PhD or research study.",
     match: (s) => hasLevel(s, "PHD"),
+    level: "PHD",
   },
 ];
 
@@ -270,10 +307,11 @@ export function findScholarshipFilter(slug: string): ScholarshipFilter | undefin
 const TYPE_ORDER: Record<Scholarship["type"], number> = { CENTRAL: 0, MERIT: 1, RESEARCH: 2, EXAM_SPECIFIC: 3, STATE: 4, PRIVATE: 5 };
 
 /** Schemes with an upcoming official last date first (soonest first), then
- *  government before private, then by name. */
-export function sortForList(list: readonly Scholarship[], today: string): Scholarship[] {
+ *  government before private, then by name — dates for `level`'s window when
+ *  the list is level-scoped. */
+export function sortForList(list: readonly Scholarship[], today: string, level?: ScholarshipLevel): Scholarship[] {
   const upcoming = (s: Scholarship) => {
-    const d = lastDateOf(s, today);
+    const d = lastDateOf(s, today, level);
     return d.kind === "upcoming" ? d.closesOn : null;
   };
   return [...list].sort((a, b) => {
@@ -291,7 +329,7 @@ export function schemesForFilter(
   today: string,
   schemes: readonly Scholarship[] = SCHOLARSHIP_SCHEMES,
 ): Scholarship[] {
-  return sortForList(schemes.filter((s) => isListedScheme(s) && filter.match(s)), today);
+  return sortForList(schemes.filter((s) => isListedScheme(s) && filter.match(s)), today, filter.level);
 }
 
 /** |A ∩ B| / |A ∪ B| over scheme ids. */
@@ -317,7 +355,7 @@ export function isFilterListIndexable(list: readonly Scholarship[], schemes: rea
 export function filterLeadLine(filter: ScholarshipFilter, list: readonly Scholarship[], today: string): string {
   const national = list.filter((s) => !s.state).length;
   const oneState = list.length - national;
-  const dated = list.filter((s) => lastDateOf(s, today).kind === "upcoming").length;
+  const dated = list.filter((s) => lastDateOf(s, today, filter.level).kind === "upcoming").length;
   const parts = [
     national > 0 ? `${national} open across India` : "",
     oneState > 0 ? `${oneState} for students of one state` : "",
@@ -339,7 +377,7 @@ export interface FaqItem {
 /** The one visible FAQ item of a list page (also its FAQPage JSON-LD). */
 export function filterFaq(filter: ScholarshipFilter, list: readonly Scholarship[], today: string): FaqItem {
   const dated = list
-    .map((s) => ({ s, d: lastDateOf(s, today) }))
+    .map((s) => ({ s, d: lastDateOf(s, today, filter.level) }))
     .filter((x): x is { s: Scholarship; d: Extract<LastDate, { kind: "upcoming" }> } => x.d.kind === "upcoming");
   const q = `When do scholarships for ${filter.audience} close in 2026-27?`;
   if (dated.length === 0) {
@@ -349,11 +387,19 @@ export function filterFaq(filter: ScholarshipFilter, list: readonly Scholarship[
     };
   }
   const shown = dated.slice(0, 5).map((x) => `${x.s.name} — ${formatIsoDay(x.d.closesOn)} (${x.d.cycle.tier}, ${hostOf(x.d.cycle.sourceUrl)})`);
+  // Each shown date's qualifier, after the list (27 Sep 2026 fixer) — a note
+  // may hold semicolons, so it never goes inside the "; "-joined list.
+  const notes = dated
+    .slice(0, 5)
+    .filter((x) => x.d.cycle.note)
+    .map((x) => ` ${x.s.name}: ${x.d.cycle.note!.trim().replace(/([^.])$/, "$1.")}`)
+    .join("");
   const rest = list.length - dated.length;
   return {
     q,
     a:
       `${dated.length} of the ${list.length} schemes listed here ${dated.length === 1 ? "has" : "have"} a 2026-27 last date still ahead, read on the official portal: ${shown.join("; ")}${dated.length > 5 ? `; and ${dated.length - 5} more in the table` : ""}.` +
+      notes +
       (rest > 0 ? ` For the other ${rest}, the table shows the usual window — confirm on the official link before applying.` : ""),
   };
 }
@@ -368,8 +414,18 @@ export function closingSoon(today: string, days: number = CLOSING_SOON_DAYS, sch
     .sort((a, b) => (a.cycle!.closesOn! < b.cycle!.closesOn! ? -1 : a.cycle!.closesOn! > b.cycle!.closesOn! ? 1 : a.name.localeCompare(b.name)));
 }
 
+/** /scholarships/closing-soon is indexable when at least CLOSING_SOON_MIN
+ *  schemes close in the window AND every one of them was re-checked on the
+ *  awarding body's own page — the same rule as the filter lists.
+ *  27 Sep 2026: the official-data wave read new 2026-27 closing dates, so on
+ *  26-27 Sep five listed schemes close by 26 Oct (the floor) but only one of
+ *  them (pm-yasasvi) is reviewed. Without the review check the page became
+ *  indexable and entered the sitemap although src/lib/sitemap-sections.ts
+ *  registers it only "while every listed row is reviewed". The page itself
+ *  still renders for people (noindex,follow) — only indexing, the sitemap
+ *  entry and the home door wait for the review. */
 export function isClosingSoonIndexable(list: readonly Scholarship[]): boolean {
-  return list.length >= CLOSING_SOON_MIN;
+  return list.length >= CLOSING_SOON_MIN && list.every(isReviewedScheme);
 }
 
 // ── A scheme's own FAQ (the detail page renders it visibly) ──────────────

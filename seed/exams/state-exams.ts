@@ -270,7 +270,9 @@ export const stateExamsSeed = [
     description: "JKCET — J&K state engineering entrance. 180 MCQs in 3 hours covering Phy/Chem/Math.",
     durationMin: 180, totalQuestions: 180, totalMarks: 180, marksPerQ: 1, negativeMark: 0.25,
     languages: ["EN"] as const, candidatesPerYear: 25_000 },
-  { code: "UP_UPCET", state: "UP", name: "UP Combined Entrance Test (UPCET / CUET PG-style)", shortName: "UPCET",
+  // 27 Sep 2026: the name lost "/ CUET PG-style" — "cuet pg" searches opened
+  // this row instead of NTA's CUET (PG) (scripts/rename-upcet.ts renames prod).
+  { code: "UP_UPCET", state: "UP", name: "UP Combined Entrance Test (UPCET)", shortName: "UPCET",
     description: "UPCET — Uttar Pradesh state engineering / management entrance (now via CUET). 100 MCQs in 2 hours.",
     durationMin: 120, totalQuestions: 100, totalMarks: 400, marksPerQ: 4, negativeMark: 1,
     languages: ["EN", "HI"] as const, candidatesPerYear: 70_000 },

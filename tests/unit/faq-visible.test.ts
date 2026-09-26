@@ -61,6 +61,9 @@ const own: FaqItem[] = [
   { q: "How many SSC CGL practice questions are on Shishya?", a: "595." },
 ];
 
+/** The 'prepare for free' answer of a hub. */
+const prepareAnswer = (input: HubFaqInput) => hubFaqExtraItems(input).find((f) => /prepare for/.test(f.q))!.a;
+
 /** What the hub renders: ExamFaq's list = its own items + the hub's extras. */
 function hubRendered(extra: FaqItem[]) {
   const visible = mergeFaqItems(own, extra);
@@ -117,7 +120,10 @@ describe("hub FAQ — every Question in the one FAQPage is in the visible list",
 
   it("'prepare for free' names only what the hub holds", () => {
     const ca = hubFaqExtraItems(caLike).find((f) => /prepare for/.test(f.q))!;
-    expect(ca.a).toBe(`Shishya offers CA Foundation preparation 100% free: a free day-by-day coach plan and an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages.`);
+    // 27 Sep 2026: no coach plan without checked questions — its menu (a full
+    // mock, a Daily 5, topic drills) is empty for CA Foundation (src/lib/coach-plan.ts).
+    expect(ca.a).toBe(`Shishya offers CA Foundation preparation 100% free: an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages.`);
+    expect(prepareAnswer(base)).toContain("a free day-by-day coach plan");
     const ssc = hubFaqExtraItems(base).find((f) => /prepare for/.test(f.q))!;
     expect(ssc.a).toContain("adaptive mock tests");
     expect(ssc.a).toContain("PYQ-pattern papers");

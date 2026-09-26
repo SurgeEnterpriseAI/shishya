@@ -17,6 +17,9 @@
 //     indexable (isLevelIndexable). Postgraduation is held and never linked.
 //   • Scholarships closing soon → /scholarships/closing-soon while it has
 //     CLOSING_SOON_MIN schemes for today's IST date (static data, no DB).
+//     27 Sep 2026: and while every one of them is reviewed — the page's own
+//     index rule (isClosingSoonIndexable). With the official-data wave's
+//     dates, 5 schemes close by 26 Oct but only 1 is reviewed, so no door.
 //   • CBSE Class 10 / 12 board exam → each board-exam hub that clears
 //     BOARD_EXAM_MIN_LINKS (static data, no DB).
 //   • PG entrance exams on Shishya ({n}) → /post-graduation#pg-entrances,
@@ -76,7 +79,8 @@ export function indexableAfterLinks(rows: readonly ExamLike[]): HomeDoorLinks["a
   return out;
 }
 
-/** /scholarships/closing-soon while it clears CLOSING_SOON_MIN on `today` (IST day). */
+/** /scholarships/closing-soon while it is indexable on `today` (IST day):
+ *  CLOSING_SOON_MIN schemes in the window, every one reviewed. */
 export function closingSoonHref(today: string): string | null {
   return isClosingSoonIndexable(closingSoon(today)) ? CLOSING_SOON_HREF : null;
 }

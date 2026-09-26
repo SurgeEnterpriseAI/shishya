@@ -34,7 +34,8 @@
 //     "after graduation" open /exams/after/{level} only while indexable.
 //   • College: /colleges, /scholarships, /distance-learning exist. No
 //     graduation-course study is claimed. "Scholarships closing soon" opens
-//     /scholarships/closing-soon only while it clears CLOSING_SOON_MIN today.
+//     /scholarships/closing-soon only while it clears CLOSING_SOON_MIN today
+//     and (27 Sep 2026) every listed row is reviewed — isClosingSoonIndexable.
 //   • Careers: /careers, /jobs-map, /jobs/internships exist; the count is
 //     CAREERS.length (src/data/careers.ts), never typed, and the card opens
 //     the page that lists all of them.

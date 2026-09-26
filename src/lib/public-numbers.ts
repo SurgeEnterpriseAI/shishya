@@ -671,7 +671,7 @@ async function readCoverage(): Promise<PublicNumber<CoverageGroup[]>> {
       title: "Colleges, scholarships, careers and languages",
       rows: [
         { id: "colleges", label: `Colleges from the NIRF ${NIRF_SOURCE_YEAR} rankings`, value: COLLEGES.length, definition: "Entries in src/lib/colleges-data.ts." },
-        { id: "scholarships", label: "Scholarships", value: SCHOLARSHIP_SCHEMES.length, definition: "Scholarship schemes, each linking its awarding body (the one outside aggregator is not counted)." },
+        { id: "scholarships", label: "Scholarships", value: SCHOLARSHIP_SCHEMES.length, definition: "Scholarship schemes, each linking its awarding body (the one outside aggregator is not counted, nor the rows held out of the catalogue as not a scholarship, not found on an official page, or in doubt)." },
         { id: "careers", label: "Career guides", value: CAREERS.length, definition: "Entries in src/data/careers.ts." },
         { id: "languages", label: "Languages", value: LANGUAGE_COUNT, detail: `English and ${INDIAN_LANGUAGE_COUNT} Indian languages`, definition: LIVE_COUNT_DEFINITIONS.languages },
       ],

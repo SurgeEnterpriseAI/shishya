@@ -14,7 +14,9 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const s = SCHOLARSHIPS.find((x) => x.id === id);
   const name = s?.name ?? "Shishya scholarships";
   const body = s?.awardingBody ?? "Free, sourced, no agents.";
-  const amount = s?.amount ?? "";
+  // 27 Sep 2026 (fixer): no amount on the card of a row held out of the
+  // catalogue (Scholarship.unlisted — its page says why; some were never found).
+  const amount = s && !s.unlisted ? s.amount : "";
   const typeChip = s?.type?.replace(/_/g, " ") ?? "";
 
   // Truncate amount because some entries are long

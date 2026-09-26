@@ -42,6 +42,11 @@ import { StateExamsLink } from "@/components/StateExamsLink";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { passedEstimateLine, passedEstimateView } from "@/lib/official-source";
 import { leadDescription, updatesLead } from "@/lib/answer-lead";
+// 27 Sep 2026: the practice rule (src/lib/exam-practice-state.ts) — no
+// "Take a free mock" box and no "Practice is one tap away" for an exam with
+// no practice questions.
+import { examPracticeState } from "@/lib/db/exam-practice";
+import { fillNoPractice, noPracticeCopy } from "@/lib/no-practice-copy";
 
 /** JSON-LD safe for inline <script>: a "</script>" inside a model- or
  *  web-derived label must not break out of the block. */
@@ -99,7 +104,13 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
     ? `${tt("tracker.kind.EXAM")} ${fmtDay(nextExam.date, urlLocale)}${nextExam.tier !== "official" ? ` (${tt(nextExam.tier === "expected" ? "tracker.expected" : "tracker.reported").toLowerCase()})` : ""} — `
     : "";
   const title = `${exam.shortName} ${year} ${dateLead}${tt("tracker.title")} | Shishya`;
-  const baseDescription = `${fill(tt("tracker.intro"), { exam: exam.shortName })} ${exam.name}.`.slice(0, 300);
+  // 27 Sep 2026: no "Practice is one tap away" where there is no practice (a
+  // failed read claims none).
+  const metaPractice = await examPracticeState(exam.code);
+  const introText = metaPractice.hasPractice
+    ? fill(tt("tracker.intro"), { exam: exam.shortName })
+    : fillNoPractice(noPracticeCopy(urlLocale).trackerIntro, { exam: exam.shortName });
+  const baseDescription = `${introText} ${exam.name}.`.slice(0, 300);
   // 26 Sep 2026 (G3): on the English URL the answer lead (src/lib/answer-lead.ts)
   // heads the description — the next exam day the title states, the next
   // milestone and the last one, each with its tier — ~160 characters in all.
@@ -195,6 +206,10 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
     examPageGates(exam.code),
   ]);
   const dataUpdatedAt = dataTs[0]?.t ? new Date(dataTs[0].t) : null;
+  // Practice (27 Sep 2026): the box below offers a mock and the quiz only
+  // where the exam has practice questions; a failed read offers none.
+  const practice = await examPracticeState(exam.code);
+  const NP = noPracticeCopy(locale);
   const viewer: ExamWeekViewer | null = userId ? { enrolled: !!enrollment, shiftDay: shiftDayIso(enrollment?.shiftDate) } : null;
 
   const year = cycleYear(timeline);
@@ -224,6 +239,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   const examWeek = applyShiftDay(computeExamWeekState(trackerRows, officialUrl), viewer?.shiftDay);
   const hasPyq = Number(pyqCount[0]?.n ?? 0) > 0;
   const short = exam.shortName;
+  const introLine = practice.hasPractice ? fill(t("tracker.intro"), { exam: short }) : fillNoPractice(NP.trackerIntro, { exam: short });
   const path = `/exams/${exam.code}/updates`;
   const url = localizedUrl(path, urlLocale);
   const p = (rel: string) => localizedPath(rel, urlLocale); // locale-preserving internal link
@@ -300,7 +316,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
       "@context": "https://schema.org",
       "@type": "Article",
       headline: `${short} ${year} — ${t("tracker.title")}`,
-      description: fill(t("tracker.intro"), { exam: short }),
+      description: introLine,
       url,
       inLanguage: lang,
       isAccessibleForFree: true,
@@ -334,7 +350,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
       name: `${short} ${year} — ${nextExam.label}`,
       // GSC "improve item appearance" (2 Sep 2026): description, endDate,
       // image were missing on every valid Event.
-      description: `${exam.name} — ${nextExam.label}, ${fmtDay(nextExam.date, "en")}, per the conducting body's official notice. Free mock tests, syllabus, cutoffs and a date tracker on Shishya.`,
+      description: `${exam.name} — ${nextExam.label}, ${fmtDay(nextExam.date, "en")}, per the conducting body's official notice. ${practice.hasPractice ? "Free mock tests, syllabus, cutoffs and a date tracker on Shishya." : "Official dates and a date tracker on Shishya."}`,
       startDate: nextExam.day,
       endDate: nextExam.day,
       image: [`https://shishya.in/exams/${exam.code}/opengraph-image`],
@@ -372,7 +388,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
             on the English URL only — the /hi and /te twins' native-script
             gate does not count lib text (critic veto). */}
         {updatesLeadText && <p className="mt-2 max-w-3xl text-base leading-relaxed text-ink-800">{updatesLeadText}</p>}
-        <p className="mt-2 max-w-3xl text-sm text-ink-700">{fill(t("tracker.intro"), { exam: short })}</p>
+        <p className="mt-2 max-w-3xl text-sm text-ink-700">{introLine}</p>
 
         {/* Language twins — real links for humans AND the crawl graph. */}
         <LangTwinLinks path={path} current={urlLocale} />
@@ -612,18 +628,30 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
           </div>
         </section>
 
-        {/* Practice CTA — the whole point of owning this query. */}
-        <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
-          <p className="text-base font-bold text-ink-900">{t("tracker.practice.title")}</p>
-          <p className="mt-1 text-sm text-ink-700">{fill(t("tracker.practice.body"), { exam: short })}</p>
-          <div className="mt-3 flex flex-wrap gap-3">
-            <Link href={p(`/exams/${exam.code}`)} className="btn-primary !py-2 !px-4 text-sm">{fill(t("tracker.practice.mock"), { exam: short })}</Link>
-            <Link href={`/exams/${exam.code}/quiz`} className="inline-flex items-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 hover:bg-saffron-50">{t("tracker.practice.quiz")}</Link>
-            {hasPyq && (
-              <Link href={`/exams/${exam.code}#pyqs`} className="inline-flex items-center rounded-md border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-800 hover:bg-ink-50">{t("tracker.practice.pyq")}</Link>
-            )}
+        {/* Practice CTA — the whole point of owning this query. 27 Sep 2026:
+            only where the exam has practice questions; otherwise one plain
+            line and the hub, whose official-facts panel and AI tutor are what
+            the exam has on Shishya. */}
+        {practice.hasPractice ? (
+          <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
+            <p className="text-base font-bold text-ink-900">{t("tracker.practice.title")}</p>
+            <p className="mt-1 text-sm text-ink-700">{fill(t("tracker.practice.body"), { exam: short })}</p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Link href={p(`/exams/${exam.code}`)} className="btn-primary !py-2 !px-4 text-sm">{fill(t("tracker.practice.mock"), { exam: short })}</Link>
+              <Link href={`/exams/${exam.code}/quiz`} className="inline-flex items-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 hover:bg-saffron-50">{t("tracker.practice.quiz")}</Link>
+              {hasPyq && (
+                <Link href={`/exams/${exam.code}#pyqs`} className="inline-flex items-center rounded-md border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-800 hover:bg-ink-50">{t("tracker.practice.pyq")}</Link>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mt-8 rounded-xl border border-ink-200 bg-white p-5">
+            <p className="text-base font-bold text-ink-900">{fillNoPractice(NP.boxTitle, { exam: short })}</p>
+            <p className="mt-1 text-sm text-ink-700">{fillNoPractice(NP.line, { exam: short })}</p>
+            <p className="mt-1 text-sm text-ink-700">{fillNoPractice(NP.boxBody, { exam: short })}</p>
+            <Link href={p(`/exams/${exam.code}`)} className="btn-secondary mt-3 inline-block !py-2 !px-4 text-sm">{fillNoPractice(NP.boxCta, { exam: short })}</Link>
+          </div>
+        )}
 
         <div className="mt-4">
           <ShareExamButton url={url} message={shareMessage} surface="tracker" exam={exam.code} />

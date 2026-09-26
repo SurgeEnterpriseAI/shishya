@@ -11,6 +11,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
 import { ensureEnrollment } from "@/lib/db/enrollment";
+import { practiceExamCodes } from "@/lib/db/exam-practice";
 
 const Body = z.object({
   examCode: z.string().min(1),
@@ -38,9 +39,21 @@ export async function POST(req: Request) {
 
   const exam = await prisma.exam.findUnique({
     where: realExamKey({ code: examCode }),
-    select: { id: true, active: true, category: true },
+    select: { id: true, code: true, active: true, category: true },
   });
   if (!exam?.active) return Response.json({ error: "exam not found" }, { status: 404 });
+  // 27 Sep 2026 (fixer): no plan for an exam with NO practice
+  // (src/lib/exam-practice-state.ts) — the plan's menu is a full mock, the
+  // Daily 5 and topic drills, all empty for it, and /coach?exam=CODE is
+  // reachable for any code. The intake no longer offers such an exam
+  // (src/app/coach/page.tsx). A failed practice read lets the plan through.
+  const practiceCodes = await practiceExamCodes();
+  if (practiceCodes && !practiceCodes.has(exam.code)) {
+    return Response.json(
+      { error: "Shishya has no practice questions for this exam yet, so a day-by-day plan would be empty. Pick another exam." },
+      { status: 409 },
+    );
+  }
 
   await prisma.$executeRaw`
     INSERT INTO "CoachPlan" (id, "userId", "examId", "examDate", "dailyMinutes", "createdAt", "updatedAt")

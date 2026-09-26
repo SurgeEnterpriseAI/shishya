@@ -21,6 +21,7 @@ import { getT } from "@/lib/i18n-server";
 import { Header } from "@/components/Header";
 import { SHISHYA_ORG_REF } from "@/components/JsonLd";
 import { computeCoachPlan } from "@/lib/coach-plan";
+import { practiceExamCodes } from "@/lib/db/exam-practice";
 import { coachTaskDoneFlags } from "@/lib/coach-done";
 import { CoachIntake, type CoachRollover, type ExamOption } from "./CoachIntake";
 import { CoachPlanView } from "./CoachPlanView";
@@ -56,6 +57,9 @@ async function loadRollover(userId: string, fromCode: string): Promise<RolloverD
   const hi = new Date(todayUtc.getTime() + 90 * DAY_MS);
   // 25 Sep 2026: the coach plans toward real exams only — school class
   // containers (src/lib/db/exam-scope.ts) are never a rollover or an option.
+  // 27 Sep 2026 (fixer): up to 10 candidates, and the first one WITH practice
+  // is recommended (src/lib/exam-practice-state.ts) — a plan toward an exam
+  // with none would be empty, and /api/coach refuses it.
   const rows = await prisma.$queryRaw<{ id: string; code: string; short: string; date: Date; enrolled: boolean }[]>`
     SELECT e.id, e.code, e."shortName" AS short, MIN(d.date) AS date, (en."userId" IS NOT NULL) AS enrolled
     FROM "ExamImportantDate" d
@@ -69,11 +73,12 @@ async function loadRollover(userId: string, fromCode: string): Promise<RolloverD
       AND d.date >= ${lo} AND d.date <= ${hi}
     GROUP BY e.id, e.code, e."shortName", en."userId"
     ORDER BY (en."userId" IS NOT NULL) DESC, MIN(d.date) ASC
-    LIMIT 1`.catch((err) => {
+    LIMIT 10`.catch((err) => {
     console.error("[coach] rollover next-in-track failed (non-fatal):", err);
     return [] as { id: string; code: string; short: string; date: Date; enrolled: boolean }[];
   });
-  const hit = rows[0] ?? null;
+  const practiceCodes = rows.length > 0 ? await practiceExamCodes() : null;
+  const hit = rows.find((r) => !practiceCodes || practiceCodes.has(r.code)) ?? null;
   const next = hit ? { id: hit.id, code: hit.code, short: hit.short, day: new Date(hit.date).toISOString().slice(0, 10) } : null;
 
   let overlap: string[] = [];
@@ -133,7 +138,10 @@ async function examOptions(userId: string | null): Promise<ExamOption[]> {
     WHERE i."isExamDay" = TRUE AND i."archivedAt" IS NULL AND i.date > NOW() AND ${NOT_SCHOOL_SQL}
     ORDER BY e.code, i.date ASC`;
   const dateByCode = new Map(dates.map((x) => [x.code, x.d.toISOString().slice(0, 10)]));
-  return rows.map((r) => ({
+  // 27 Sep 2026 (fixer): only exams WITH practice (src/lib/exam-practice-state.ts)
+  // — /api/coach refuses a plan for one without; a failed read offers them all.
+  const practiceCodes = await practiceExamCodes();
+  return rows.filter((r) => !practiceCodes || practiceCodes.has(r.code)).map((r) => ({
     code: r.code,
     short: r.short,
     nextDate: dateByCode.get(r.code) ?? null,

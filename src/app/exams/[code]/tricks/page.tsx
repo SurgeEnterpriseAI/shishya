@@ -179,7 +179,11 @@ export default async function TricksPage({ params }: { params: Promise<{ code: s
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">
           Subject-wise short tricks and memory hacks for {exam.name}. Each one is meant to be used
-          in the exam hall — read it, then lock it in with a quick practice question.
+          in the exam hall
+          {/* 27 Sep 2026: "a quick practice question" only where the exam has
+              questions to practise on (the 12 exams with tricks and no
+              question bank said it too). */}
+          {gates.buildMock ? " — read it, then lock it in with a quick practice question." : "."}
         </p>
         <StateExamsLink state={exam.state} label={t("exam.state.more")} locale={locale} />
 
