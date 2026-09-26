@@ -246,7 +246,7 @@ describe("home doors copy — independence (no section reads as a step)", () => 
 
   it("the kicker states independence in plain words", () => {
     expect(EN["kicker.line"]).toBe("Use any one, any time. There is no order.");
-    expect(EN["hero.h1"]).toBe("One free place to study");
+    expect(EN["hero.h1"]).toBe("One smart place to study");
   });
 
   it("'How Shishya works' holds for any section: opens a section, says Shishya is beside the teaching, and names where practice lives", () => {
@@ -262,7 +262,13 @@ describe("home doors copy — independence (no section reads as a step)", () => 
     expect(EN["how.s4b"]).toMatch(/School practice: being written\.$/);
     expect(EN["how.s2b"]).not.toMatch(/chapter|question|practice/i);
     // No block keeps the old government-exams-only framing.
-    for (const k of ["hero.h1", "hero.tagline", "how.h2", "how.lead", "signin.line"]) expect(/crack|government job|govt job/i.test(EN[k]), k).toBe(false);
+    for (const k of ["hero.h1", "how.h2", "how.lead", "signin.line"]) expect(/crack|government job|govt job/i.test(EN[k]), k).toBe(false);
+    // 26 Sep 2026 (founder): the tagline names both halves — Indian education
+    // and government jobs — and says it is free.
+    expect(EN["hero.tagline"]).toMatch(/free/i);
+    expect(EN["hero.tagline"]).toMatch(/school/i);
+    expect(EN["hero.tagline"]).toMatch(/government jobs/i);
+    expect(EN["hero.tagline"]).not.toMatch(/PhD|graduation/i);
   });
 });
 
@@ -448,7 +454,10 @@ describe("src/app/page.tsx — the Doors page", () => {
       expect(src).toMatch(new RegExp(`import \\{ ${name} \\} from "@/components/home/${name}"`));
       expect(src).toMatch(new RegExp(`<${name}\\b`));
     }
-    const order = ["<HomeHero", "<HomeDoors", "<LiveTestTodayBanner", "<ExamsTodayStrip", "<HomeFinder", "<HomeRails", "<HomeHowItWorks", "<HomeSignIn"].map((m) => src.indexOf(m));
+    // 26 Sep 2026: the whole-platform search strip rides in the hero's slot
+    // (under the H1 and tagline), before the doors; the exam finder below
+    // keeps its own box (tests/unit/search-strip.test.ts pins the strip).
+    const order = ["<HomeHero", "<SearchStrip", "<HomeDoors", "<LiveTestTodayBanner", "<ExamsTodayStrip", "<HomeFinder", "<HomeRails", "<HomeHowItWorks", "<HomeSignIn"].map((m) => src.indexOf(m));
     expect(order.every((i) => i >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     for (const r of RETIRED) expect(src.includes(r), `retired block still present: ${r}`).toBe(false);

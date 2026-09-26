@@ -1,12 +1,13 @@
 // Home hero (26 Sep 2026, "Doors"): one sentence that says what Shishya is,
 // the ungated tutor line, and a row of five section jump-pills so a 390 px
 // phone sees every section before the first scroll — the stacked doors
-// below then cannot read as a top-to-bottom order. Server component, no JS.
+// below then cannot read as a top-to-bottom order. Server component, no JS
+// of its own; the search strip it hosts is a client island passed in.
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import type { HomeDoorsCopy } from "@/lib/home-doors-copy";
 import { HOME_DOOR_IDS, type HomeDoorId } from "@/lib/home-doors";
-import { AskSearchBar } from "@/components/AskSearchBar";
 
 const PILL_ICON: Record<HomeDoorId, string> = {
   school: "🏫",
@@ -16,7 +17,7 @@ const PILL_ICON: Record<HomeDoorId, string> = {
   careers: "🧭",
 };
 
-export function HomeHero({ copy }: { copy: HomeDoorsCopy }) {
+export function HomeHero({ copy, search }: { copy: HomeDoorsCopy; search?: ReactNode }) {
   return (
     <section className="pt-10 text-center sm:pt-16" aria-labelledby="home-h1">
       <h1
@@ -28,12 +29,13 @@ export function HomeHero({ copy }: { copy: HomeDoorsCopy }) {
       <p className="mx-auto mt-3.5 max-w-2xl text-balance text-[17px] leading-relaxed text-ink-600 sm:text-lg">
         {copy.hero.tagline}
       </p>
-      {/* 26 Sep 2026 (founder: "bring back the search strip"): the Ask box
-          returns under the tagline, where the whole-platform search strip
-          will sit. It sends the question to /ask, the answer page. */}
-      <div className="mx-auto mt-6 max-w-2xl text-left">
-        <AskSearchBar />
-      </div>
+      {/* 26 Sep 2026 (founder: "bring back the search strip — for the whole
+          platform, in any language"): the page passes the whole-platform
+          search strip (src/components/search/SearchStrip.tsx) into this slot,
+          under the tagline and above the tutor line. It replaces the interim
+          exam-only Ask box; a clear match opens its page, anything else lists
+          pages on /ask with the AI beside them. */}
+      {search && <div className="mx-auto mt-6 max-w-2xl text-left">{search}</div>}
       {/* The proven no-login tutor path stays a text link so the hero keeps
           one accent; tutor opens are watched after this change. */}
       <Link

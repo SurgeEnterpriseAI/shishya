@@ -1,17 +1,34 @@
 // Ask Shishya — the AI answer engine behind /ask.
 //
-// Architecture (deliberate): Claude + DATABASE TOOLS, not a chatbot and
-// not vector RAG. The model never invents an exam fact — it looks it up
-// in our tables and explains contextually. Web search is a clearly-
-// labelled FALLBACK for what Shishya doesn't track (city-level counts,
-// brand-new notices), restricted toward official sources.
+// Architecture (deliberate): Claude + Shishya's own DATA TOOLS, not a chatbot
+// and not vector RAG. The model never invents a fact — it looks it up in our
+// tables and static data and explains contextually. Web search is a clearly
+// labelled FALLBACK for what Shishya does not track, restricted toward
+// official sources.
 //
-// Answer contract (enforced in the system prompt):
-//   • Shishya data first; web only when internal tools can't answer.
-//   • Web findings go in a separate final section marked tentative.
-//   • Every answer ends with Shishya links as next steps.
-//   • Honest about granularity (state-level, not city-level) and about
-//     anything indicative (salaries → "verify in the notification").
+// 26 Sep 2026 — the whole platform (founder brief: "every search takes them to
+// the page we already have; if nothing is there, the AI tutor automatically
+// comes up, answers the query and recommends a page we already have"):
+//   * Scope: school, entrance and government exams, colleges and
+//     scholarships, careers, study abroad — not only government exams. The
+//     page tools (src/lib/search/ask-tools.ts) read the same site-wide search
+//     index the strip and /ask use; the exam tools below still read the exam
+//     tables (REAL_EXAM_SQL: a school class container is never an exam).
+//   * Pre-pass: the search resolution (the pages Shishya already has for the
+//     question) and, when one page is a confident match, its facts go into the
+//     first user turn — most answers need one or two turns, not three.
+//   * Prompt: src/lib/ask-prompt.ts — honesty, date tiers, school route-only,
+//     no typed counts, and every answer ends with 1-3 real pages + "Open next".
+//   * Links: every link of the answer is checked against the index
+//     (src/lib/ask-links.ts) — a guessed page becomes its real parent or plain
+//     text; an outside link survives only if this run saw it.
+//   * Class 1-7: no model call at all (the route refuses first; runAsk
+//     refuses too, for any other caller).
+//   * Observability: latency per turn in AiUsage, and turns, latency and cost
+//     per question in the result.
+// runAsk(question) with no options still works — the teacher-request-sla cron
+// calls it that way — and returns a superset of the old {answer, usedWeb,
+// toolsUsed}.
 
 import type Anthropic from "@anthropic-ai/sdk";
 import { Prisma } from "@prisma/client";
@@ -20,19 +37,26 @@ import { NOT_SCHOOL_SQL, REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
 import { anthropic, MODEL, cachedSystem } from "@/lib/ai/client";
 import { recordAiUsage } from "@/lib/ai/usage";
-import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { resolveAliases } from "@/lib/exam-aliases";
 import { GATES_CLOSED, examPageGates } from "@/lib/exam-page-gates";
 import { askAgeSummary } from "@/lib/page-gates-copy";
 import { sourceTier } from "@/lib/official-source";
+import { resolveQuery } from "@/lib/search/resolve";
+import { DIRECT_MIN, type PageLink, type Resolution, type SearchIndex, type SearchNotice } from "@/lib/search/types";
+import { PAGE_TOOLS, examPages, findPages, looseMatches, pageFacts, searchTopics } from "@/lib/search/ask-tools";
+import { localeTarget } from "@/lib/search/targets";
+import { ASK_MAX_TOKENS, ASK_TIME_BUDGET_MS, ASK_TURN_CAP, ASK_WEB_MAX_USES, askFirstTurn, askSystemPrompt, isRouteOnly, prePassHits } from "@/lib/ask-prompt";
+import { NEXT_MARK, PAGES_MARK, SITE, normUrl, urlsIn, validateAnswerLinks, type WebSource } from "@/lib/ask-links";
 
-// ── Tool definitions ─────────────────────────────────────────────────
+type Locale = "en" | "hi" | "te";
 
-const TOOLS: Anthropic.Messages.Tool[] = [
+// ── Exam tool definitions ────────────────────────────────────────────
+
+const EXAM_TOOLS: Anthropic.Messages.Tool[] = [
   {
     name: "search_exams",
     description:
-      "Search Shishya's 170+ Indian government & entrance exams. Filter by state code (e.g. BR, MH, KA — omit for national), category (GOVT_JOBS, BANKING, CIVIL_SERVICES, TEACHING, STATE_LEVEL, ENGINEERING, MEDICAL), and/or a free-text keyword. The keyword matches CONTEXTUALLY, not just literally — colloquial and vernacular role words work (daroga, sipahi, steno, babu, fauj, shikshak, दरोगा, रेलवे), so pass the aspirant's OWN words rather than translating them. Returns pattern, eligibility, approximate annual vacancies and Shishya links.",
+      "Search Shishya's catalogue of Indian government and entrance exams. Filter by state code (e.g. BR, MH, KA — omit for national), category (GOVT_JOBS, BANKING, CIVIL_SERVICES, TEACHING, STATE_LEVEL, ENGINEERING, MEDICAL, LAW, MBA, UNIVERSITY, OLYMPIAD), and/or a free-text keyword. The keyword matches CONTEXTUALLY, not just literally — colloquial and vernacular role words work (daroga, sipahi, steno, babu, fauj, shikshak, दरोगा, रेलवे), so pass the person's OWN words rather than translating them. Returns pattern, eligibility, approximate annual vacancies and the exam page link.",
     input_schema: {
       type: "object",
       properties: {
@@ -45,7 +69,7 @@ const TOOLS: Anthropic.Messages.Tool[] = [
   {
     name: "get_exam_details",
     description:
-      "Full detail for ONE exam by its Shishya code (from search_exams): pattern, eligibility, vacancies, upcoming dates, declared results, cutoff guidance.",
+      "Full detail for ONE exam by its Shishya code (from search_exams / find_pages): pattern, eligibility with the exam's own age relaxation, vacancies, upcoming dates (each tagged OFFICIAL / REPORTED / EXPECTED), declared results, cutoff guidance, the official portal, and links to the exam pages that exist.",
     input_schema: {
       type: "object",
       properties: { code: { type: "string" } },
@@ -55,7 +79,7 @@ const TOOLS: Anthropic.Messages.Tool[] = [
   {
     name: "search_content",
     description:
-      "Full-text search over Shishya's guides (which include SALARY and career-growth sections per exam), study notes and news. Use for salary questions, 'how to crack', notifications and preparation topics.",
+      "Text search over Shishya's exam guides (which include SALARY and career-growth sections per exam) and exam news. Use for salary questions, 'how to crack', notifications and preparation questions. Matches a phrase as typed — use one or two key words.",
     input_schema: {
       type: "object",
       properties: { query: { type: "string" } },
@@ -65,7 +89,7 @@ const TOOLS: Anthropic.Messages.Tool[] = [
   {
     name: "get_vacancy_stats",
     description:
-      "Aggregate live government-job vacancy counts tracked by Shishya — total and per-exam, optionally filtered by state code. Data is at STATE level, not city level.",
+      "Approximate annual government-job vacancy counts tracked by Shishya — total and per exam, optionally filtered by state code. Data is at STATE level, not city level.",
     input_schema: {
       type: "object",
       properties: { state: { type: "string" } },
@@ -73,7 +97,15 @@ const TOOLS: Anthropic.Messages.Tool[] = [
   },
 ];
 
-// ── Tool executors (raw SQL — grounded, no generation) ───────────────
+/** Every custom tool the model gets, in a fixed order (part of the cached prefix). */
+export const ASK_TOOLS: Anthropic.Messages.Tool[] = [...EXAM_TOOLS, ...PAGE_TOOLS];
+
+interface ToolCtx {
+  index: SearchIndex;
+  locale: Locale;
+}
+
+// ── Exam tool executors (raw SQL — grounded, no generation) ──────────
 
 async function searchExams(input: { state?: string; category?: string; keyword?: string }) {
   // Contextual layer: resolve colloquial/vernacular words ("daroga",
@@ -124,11 +156,29 @@ async function searchExams(input: { state?: string; category?: string; keyword?:
     education: r.educationNote,
     vacanciesApprox: r.vacanciesApprox,
     officialBody: r.officialName,
-    link: `https://shishya.in/exams/${r.code}`,
+    link: `${SITE}/exams/${r.code}`,
   }));
 }
 
-async function getExamDetails(input: { code: string }) {
+/** The exam's page links: from the search index's facts (the sitemap's own gates, PYQ years, notes) when present, else the gate loader. */
+async function examLinks(code: string, ctx: ToolCtx | null): Promise<Record<string, string>> {
+  if (ctx?.index.exams[code]) return Object.fromEntries(examPages(ctx.index, code, ctx.locale).map((p) => [p.key, p.url]));
+  // Links only to pages that render; a failed gate read links none of them (16 Sep 2026).
+  const gates = await examPageGates(code, GATES_CLOSED);
+  return {
+    hub: `${SITE}/exams/${code}`,
+    dates: `${SITE}/exams/${code}/updates`,
+    checklist: `${SITE}/exams/${code}/checklist`,
+    ...(gates.syllabus ? { syllabus: `${SITE}/exams/${code}/syllabus` } : {}),
+    ...(gates.cutoff ? { cutoff: `${SITE}/exams/${code}/cutoff` } : {}),
+    ...(gates.tricks ? { tricks: `${SITE}/exams/${code}/tricks` } : {}),
+    ...(gates.guide ? { guide: `${SITE}/exams/${code}/guide` } : {}),
+    ...(gates.buildMock ? { "build-mock": `${SITE}/exams/${code}/build-mock` } : {}),
+  };
+}
+
+async function getExamDetails(input: { code: string }, ctx: ToolCtx | null) {
+  const code = String(input?.code ?? "").toUpperCase();
   const rows = await prisma.$queryRaw<any[]>`
     SELECT e.id, e.code, e.name, e."shortName", e.category::text AS category, e.state,
            e."totalQuestions", e."totalMarks", e."marksPerQ", e."durationMin", e."negativeMark",
@@ -138,12 +188,10 @@ async function getExamDetails(input: { code: string }) {
     FROM "Exam" e
     LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
     LEFT JOIN "ExamCategoryCutoff" cc ON cc."examId" = e.id
-    WHERE e.code = ${input.code.toUpperCase()} AND ${REAL_EXAM_SQL} LIMIT 1`;
+    WHERE e.code = ${code} AND ${REAL_EXAM_SQL} LIMIT 1`;
   const e = rows[0];
-  if (!e) return { error: "exam not found — use search_exams first" };
-  // Links only to pages that render; a failed gate read links none of them
-  // (16 Sep 2026, src/lib/exam-page-gates.ts).
-  const [dates, results, gates] = await Promise.all([
+  if (!e) return { error: "exam not found — use search_exams or find_pages first" };
+  const [dates, results, links] = await Promise.all([
     prisma.$queryRaw<any[]>`
       SELECT label, date, confidence, url FROM "ExamImportantDate"
       WHERE "examId" = ${e.id} AND "archivedAt" IS NULL AND date > NOW() - INTERVAL '30 days'
@@ -152,22 +200,23 @@ async function getExamDetails(input: { code: string }) {
       SELECT stage, headline, "declaredOn" FROM "ExamResult"
       WHERE "examId" = ${e.id} AND stage <> '__not_a_result__'
       ORDER BY "declaredOn" DESC LIMIT 3`,
-    examPageGates(e.code, GATES_CLOSED),
+    examLinks(e.code, ctx),
   ]);
   return {
-    ...{
-      code: e.code, name: e.name, short: e.shortName, category: e.category,
-      state: e.state ?? "national",
-      pattern: `${e.totalQuestions} questions, ${e.totalMarks} marks, ${e.durationMin} min, negative ${e.negativeMark}/wrong`,
-      // The exam's own stored relaxation (16 Sep 2026) — the hard-coded central
-      // "OBC +3, SC/ST +5" was printed for every exam, 112 state exams among them.
-      age: askAgeSummary(e.minAge, e.maxAge, e.ageRelaxation),
-      education: e.educationNote,
-      vacanciesApprox: e.vacanciesApprox,
-      eligibilityNote: e.eligibilityNote,
-      official: e.officialUrl ? `${e.officialName ?? ""} ${e.officialUrl}` : e.officialName,
-      cutoffGuidance: e.cutoff ? String(e.cutoff).slice(0, 1200) : null,
-    },
+    code: e.code,
+    name: e.name,
+    short: e.shortName,
+    category: e.category,
+    state: e.state ?? "national",
+    pattern: `${e.totalQuestions} questions, ${e.totalMarks} marks, ${e.durationMin} min, negative ${e.negativeMark}/wrong`,
+    // The exam's own stored relaxation (16 Sep 2026) — the hard-coded central
+    // "OBC +3, SC/ST +5" was printed for every exam, 112 state exams among them.
+    age: askAgeSummary(e.minAge, e.maxAge, e.ageRelaxation),
+    education: e.educationNote,
+    vacanciesApprox: e.vacanciesApprox,
+    eligibilityNote: e.eligibilityNote,
+    official: e.officialUrl ? `${e.officialName ?? ""} ${e.officialUrl}` : e.officialName,
+    cutoffGuidance: e.cutoff ? String(e.cutoff).slice(0, 1200) : null,
     // 24 Sep 2026: each date carries its tier (same rule as the tracker), and a
     // passed estimate is dropped — it was never announced and its day is gone.
     upcomingDates: dates.flatMap((d) => {
@@ -182,19 +231,12 @@ async function getExamDetails(input: { code: string }) {
       return [`${d.date.toISOString().slice(0, 10)}: ${d.label} [${tag}]`];
     }),
     recentResults: results.map((r) => `${r.declaredOn.toISOString().slice(0, 10)}: ${r.stage} — ${r.headline}`),
-    links: {
-      hub: `https://shishya.in/exams/${e.code}`,
-      ...(gates.syllabus ? { syllabus: `https://shishya.in/exams/${e.code}/syllabus` } : {}),
-      ...(gates.cutoff ? { cutoff: `https://shishya.in/exams/${e.code}/cutoff` } : {}),
-      ...(gates.tricks ? { tricks: `https://shishya.in/exams/${e.code}/tricks` } : {}),
-      ...(gates.guide ? { guide: `https://shishya.in/exams/${e.code}/guide` } : {}),
-      ...(gates.buildMock ? { buildMock: `https://shishya.in/exams/${e.code}/build-mock` } : {}),
-    },
+    links,
   };
 }
 
-async function searchContent(input: { query: string }) {
-  const q = `%${input.query}%`;
+async function searchContent(input: { query: string }, ctx: ToolCtx | null) {
+  const q = `%${String(input?.query ?? "").slice(0, 120)}%`;
   const [guides, news] = await Promise.all([
     prisma.$queryRaw<any[]>`
       SELECT e.code, e."shortName", LEFT(g.content, 1500) AS excerpt
@@ -206,12 +248,10 @@ async function searchContent(input: { query: string }) {
       WHERE (n.title ILIKE ${q} OR n.body ILIKE ${q}) AND n.source IS DISTINCT FROM ${SUPPRESSED_SOURCE} AND ${NOT_SCHOOL_SQL}
       ORDER BY n."publishedAt" DESC LIMIT 4`,
   ]);
+  // The guide page renders only behind its gate; the hub otherwise.
+  const guideLink = (code: string) => (ctx && ctx.index.exams[code] && !ctx.index.exams[code].gates.guide ? `${SITE}/exams/${code}` : `${SITE}/exams/${code}/guide`);
   return {
-    guides: guides.map((g) => ({
-      exam: g.shortName,
-      excerpt: g.excerpt,
-      link: `https://shishya.in/exams/${g.code}/guide`,
-    })),
+    guides: guides.map((g) => ({ exam: g.shortName, excerpt: g.excerpt, link: guideLink(g.code) })),
     news: news.map((n) => ({
       exam: n.code,
       title: n.title,
@@ -229,145 +269,326 @@ async function getVacancyStats(input: { state?: string }) {
     WHERE ${REAL_EXAM_SQL} AND el."vacanciesApprox" IS NOT NULL
       AND (${state}::text IS NULL OR e.state = ${state} OR e.state IS NULL)
     ORDER BY el."vacanciesApprox" DESC LIMIT 20`;
-  const total = rows.reduce((s, r) => s + (r.vacanciesApprox ?? 0), 0);
+  // 26 Sep 2026 (integrator): totalApprox was the sum of the 20 rows above,
+  // described as the total across tracked exams — an undercount the model
+  // then stated as grounded. The total and the count now cover every row.
+  const [agg] = await prisma.$queryRaw<{ n: bigint | number; total: bigint | number | null }[]>`
+    SELECT COUNT(*) AS n, SUM(el."vacanciesApprox") AS total
+    FROM "Exam" e JOIN "ExamEligibility" el ON el."examId" = e.id
+    WHERE ${REAL_EXAM_SQL} AND el."vacanciesApprox" IS NOT NULL
+      AND (${state}::text IS NULL OR e.state = ${state} OR e.state IS NULL)`;
+  const examsWithFigure = Number(agg?.n ?? 0);
+  const total = Number(agg?.total ?? 0);
+  const scope = state
+    ? `Vacancies are tracked at STATE level. Counting ${state}-specific exams plus national exams open to ${state} candidates.`
+    : "Approximate annual vacancies across tracked exams.";
   return {
-    note: state
-      ? `Vacancies are tracked at STATE level. Showing ${state}-specific exams plus national exams open to ${state} candidates.`
-      : "Approximate annual vacancies across tracked exams.",
+    note: `${scope} totalApprox sums all ${examsWithFigure} exams with a vacancy figure; the list shows the ${rows.length} largest.`,
     totalApprox: total,
+    examsWithFigure,
     exams: rows.map((r) => ({
       exam: r.shortName,
       state: r.state ?? "national",
       vacanciesApprox: r.vacanciesApprox,
-      link: `https://shishya.in/exams/${r.code}`,
+      link: `${SITE}/exams/${r.code}`,
     })),
   };
 }
 
-async function runTool(name: string, input: any): Promise<unknown> {
+/** exam_page_facts: the index's view of an exam's pages, plus the two DB facts it does not carry. */
+async function examPageFacts(input: { code?: unknown }, ctx: ToolCtx) {
+  const code = String(input?.code ?? "").toUpperCase().replace(/[^A-Z0-9_]/g, "");
+  const facts = ctx.index.exams[code];
+  if (!facts) return { error: "unknown exam code — get it from search_exams or find_pages first" };
+  const rows = await prisma.$queryRaw<{ fullPattern: boolean; paperYears: string[] | null }[]>`
+    SELECT
+      EXISTS (SELECT 1 FROM "Mock" m WHERE m."examId" = e.id AND m."userId" IS NULL AND m."generatedBy" = 'system:full-pattern-v1') AS "fullPattern",
+      ARRAY(
+        SELECT DISTINCT p.year FROM "OfficialPaper" p
+        WHERE p."examId" = e.id AND p."archivedAt" IS NULL AND p.kind NOT IN ('answer key', 'listing page')
+        ORDER BY p.year DESC
+      ) AS "paperYears"
+    FROM "Exam" e
+    WHERE e.code = ${code} AND ${REAL_EXAM_SQL}
+    LIMIT 1`;
+  const r = rows[0];
+  return {
+    code,
+    pages: examPages(ctx.index, code, ctx.locale),
+    pyqPracticeYears: facts.pyqYears,
+    pyqNote: "PYQ-pattern practice sets are freshly worded in that year's pattern — never call one the original paper.",
+    officialPaperYears: r?.paperYears ?? [],
+    officialPapersWhere: r?.paperYears?.length ? `the "Official papers" block on ${SITE}/exams/${code}` : null,
+    fullPatternMock: r?.fullPattern ?? null,
+    topicNotes: facts.topicNotes,
+  };
+}
+
+async function runTool(name: string, input: any, ctx: ToolCtx): Promise<unknown> {
   try {
-    if (name === "search_exams") return await searchExams(input ?? {});
-    if (name === "get_exam_details") return await getExamDetails(input ?? {});
-    if (name === "search_content") return await searchContent(input ?? {});
-    if (name === "get_vacancy_stats") return await getVacancyStats(input ?? {});
-    return { error: "unknown tool" };
-  } catch (e) {
+    switch (name) {
+      case "search_exams":
+        return await searchExams(input ?? {});
+      case "get_exam_details":
+        return await getExamDetails(input ?? {}, ctx);
+      case "search_content":
+        return await searchContent(input ?? {}, ctx);
+      case "get_vacancy_stats":
+        return await getVacancyStats(input ?? {});
+      case "find_pages":
+        return findPages(ctx.index, input ?? {}, ctx.locale);
+      case "page_facts":
+        return pageFacts(ctx.index, input ?? {}, ctx.locale);
+      case "exam_page_facts":
+        return await examPageFacts(input ?? {}, ctx);
+      case "search_topics":
+        return searchTopics(ctx.index, input ?? {}, ctx.locale);
+      default:
+        return { error: "unknown tool" };
+    }
+  } catch {
     return { error: "tool failed — answer with what you have" };
   }
 }
 
 // ── The engine ───────────────────────────────────────────────────────
 
-const SYSTEM = `You are Ask Shishya — the answer engine of shishya.in, India's end-to-end free government-exam preparation platform. Aspirants ask anything about government jobs, exams, eligibility, vacancies, salaries, dates, results and preparation, in any language.
+export type AskVia = "strip" | "page" | "ask-page" | "button" | "cron";
 
-LANGUAGE (non-negotiable): MIRROR the language AND the script of the question exactly. English question → English answer. Hindi in Devanagari → Hindi in Devanagari. Hinglish or any romanized Indian language (Telugu/Kannada/Tamil/Marathi typed in Latin letters) → reply in that SAME romanized style with simple English mixed in — never switch to a native script the asker didn't type. Romanized South-Indian languages are easy to confuse (e.g. "manchidi kada" is Telugu, not Kannada) — if you are not CERTAIN which language it is, answer in simple English. NEVER open with commentary about what language the question is in ("I notice you've written…") — just answer the question directly. The rule covers EVERY sentence including the closing encouragement — no Hindi sign-off on an English answer.
-
-RULES (non-negotiable):
-1. SHISHYA FIRST. Always try the database tools before anything else. Never state an exam fact (vacancy count, age limit, pattern, date, cutoff, salary) that didn't come from a tool result or a web search result.
-2. WEB SEARCH is a FALLBACK only — use it when Shishya's data genuinely cannot answer (city-level detail, very fresh notifications, exams we don't track). Prefer official sources (.gov.in, .nic.in, commission portals) and reputable news. NEVER cite job-alert spam sites.
-3. STRUCTURE: answer from Shishya's data first. If (and only if) you used web search, add a final section titled exactly "🌐 From the web (tentative — verify before acting):" containing those findings with source names. Never mix web numbers into the Shishya section.
-4. BE HONEST about granularity and freshness: our vacancy data is state-level and approximate-annual ("~X"); salaries from guides are indicative pay-band figures — say "verify in the official notification".
-5. TONE — you are a mentor sitting beside the aspirant, not an information desk. Guide with warmth and certainty: "here is your path, step by step". NEVER dismiss them outward — no "go and check other websites", "search for the latest notification yourself", "browse the exams". When official verification is genuinely needed, make it the LAST numbered step of their path with the direct portal link ("Final step: confirm the exact date on the official portal — <link>"), never a shrug.
-6. CONTEXTUAL NEXT STEPS — the closing section must be built from THIS question, not generic. For any career/path question ("how do I become a lawyer/teacher/officer", "jobs for my age/state/education"), ALWAYS call search_exams (and get_exam_details for the best matches) with the relevant keywords/state so you can end with the SPECIFIC exams on Shishya that fit this asker — one link per line, like results, using the exact URLs returned by the tools. Only if the tools truly return nothing may you fall back to a generic link.
-7. CLOSING FORMAT — end with a section titled "🎯 Your path on Shishya:" (translated into the asker's language), containing: (a) the specific exam/guide links from rule 6, then (b) exactly one guided CTA in a mentoring voice, e.g. "Take the 2-minute path finder — answer a few questions and I'll line up the exact exams you're eligible for: https://shishya.in/find-your-exam" (or https://shishya.in/coach for a free day-by-day plan when they're past choosing). For lost-newcomer questions ("which govt job should I aim for", "where do I start", "what types of govt jobs exist", "Group A vs B"), the best first link is India's Government Jobs Map: https://shishya.in/jobs-map — every path from UPSC Group A to state police, with pay bands and live vacancies. Shishya is 100% free — no fees ever.
-8. LINKS: every link must be a FULL absolute URL starting with https://shishya.in/ (or the official portal's full URL). Never emit bare relative paths like (/find-your-exam) — they break outside the app. An exam's /syllabus, /cutoff, /tricks, /guide and /build-mock pages do not exist for every exam: link one only when get_exam_details returned it in its links. For previous-year-paper questions ("pyq", "old paper", "{exam} {year} question paper"), link the year's practice set: https://shishya.in/exams/{CODE}/pyq/{YEAR} — PYQ-pattern questions (freshly worded in that paper's pattern, with solutions) exist free for most top exams, years 2021–2025; most years hold part of the paper and each year page says how many of the real paper's questions it has. To practise previous-year-pattern questions topic by topic across years, link https://shishya.in/exams/{CODE}/build-mock?pyq=1 — only when get_exam_details returned a buildMock link. Where the conducting body publishes the real papers, the hub's "Official papers" block links them — never call a PYQ-pattern set the original paper. For MOTHER-TONGUE mock requests ("telugu medium mock", "hindi me test"), Shishya has free full-length natively-authored papers: AP TET & TS Police (Telugu), MP TET & MP Police (Hindi), MPSC Group C (Marathi), KSP Constable (Kannada) — link the exam hub https://shishya.in/exams/{CODE} and say the native-medium mock is on it. Also recently added: TS Police SI (https://shishya.in/exams/TS_POLICE_SI), NSEP physics olympiad (https://shishya.in/exams/NSEP), and a dedicated "MPESB Group 2 Sub Group 4" full mock on https://shishya.in/exams/MP_MPESB — use these for their exact queries instead of saying we lack them. PERSONAL SYSTEM (free, needs sign-in): for "where do I stand / my progress / weak areas" → the daily status report at https://shishya.in/me/report (strong & weak areas, days to exam, week-vs-week comparison, downloadable as PDF); for "study material download / notes PDF / daily study plan material" → the personalised study pack on the same page, rebuilt every day from THEIR weakest topics with practice questions and answers; for "talk to a real person / mentor / guidance from someone who cleared" → mentor sessions requested from that report (a cleared-exam mentor sees their report with consent and meets them online); PRICING when asked: the FIRST mentor session is free, later sessions ₹9 inclusive of GST — that ₹9 pays ONLY for the mentor's personal time, never the platform; every preparation feature on Shishya is free forever with no premium tier (https://shishya.in/pricing). Never say Shishya lacks downloadable material or human mentors. SCORE-STUCK questions ("score not improving", "keep failing mocks", "marks kam aa rahe"): answer with the strategy truth — scores grow by fixing ONE weak topic then re-testing, not by taking more tests; skip when unsure (blank = 0, wrong = negative); their personal report (https://shishya.in/me/report) names their exact weakest topics and the free coach plan (https://shishya.in/coach) turns it into a day-by-day strategy. Encouraging, never blaming — effort is real, it just needs aiming. SUBJECT-WISE & TOPIC-WISE TESTS (they already exist — never say we only have full mocks): for "subject wise test / section wise mock / practice one subject" → Shishya has full-length subject tests (25 questions each, real exam format, instant scoring) in the "Practice by subject" section on the exam hub https://shishya.in/exams/{CODE}; for "topic wise test / practice one topic / drill a single chapter" → topics that have practice questions have their own topic test — open the topic from the syllabus on the hub, e.g. https://shishya.in/exams/{CODE}/topics/{TOPIC_CODE}, or, when get_exam_details returned a buildMock link, use "Build my own mock" there to pick exact topics, size and difficulty. Always point them to these instead of implying they don't exist. DATE / NOTIFICATION / ADMIT CARD / RESULT questions ("{exam} exam date", "admit card kab aayega", "result date", "notification 2026", "last date to apply"): link the exam tracker https://shishya.in/exams/{CODE}/updates (and https://shishya.in/exam-calendar for "upcoming exams" questions) — it lists every milestone with official notices linked and expected dates marked.
-9. FULL CAPABILITIES — Shishya already has ALL of the following, free. NEVER tell an aspirant to wait for, or that we lack, any of these; when asked "do you have X / can I do X", answer "Yes —" and point to the exact place. (Aspirants keep requesting features that already exist because they can't find them — your job is to surface them.)
-   • Mock tests: full-length exam-pattern mocks, PYQ-pattern sets by year 2021–2025 (/exams/{CODE}/pyq/{YEAR} — practice questions freshly worded in each year's pattern, never the original papers; where the conducting body publishes the real question papers and answer keys, the hub's "Official papers" block at /exams/{CODE}#official-papers links its own files), subject-wise tests (25 Q, "Practice by subject" on the hub), topic-wise tests (on topics that have practice questions, from the syllabus at /exams/{CODE}/topics/{TOPIC}), and "Build my own mock" (pick exact topics, count, difficulty — for exams whose get_exam_details returns a buildMock link) — all on the exam hub /exams/{CODE}.
-   • All-India Live Tests every Sunday with a real national rank & leaderboard (/live-test).
-   • AI tutor with VOICE INPUT (a mic button — "speak your question") in ${INDIAN_LANGUAGE_COUNT} Indian languages (/chat). When asked for a "mic / voice / speak" feature, confirm it's already there in the tutor.
-   • Weak-area analysis after EVERY mock: the results page names your weakest topics, and /me/report gives a full strong/weak breakdown + week-vs-week trend, downloadable as PDF.
-   • Descriptive/essay-writing practice with AI evaluation, typing practice, current-affairs capsules, a daily-5 habit quiz, and streaks.
-   • Study notes for 3,700+ topics (Hindi versions for top topics), memory tricks/mnemonics, full syllabus, category-wise cutoffs (published previous-recruitment cutoffs with the source document where we hold them; expected ranges are labelled estimates), eligibility, and an exam calendar with dates. Tricks, syllabus and cutoff pages exist for most exams, not all — link only the exact URL get_exam_details returns, never a guessed /tricks or /cutoff path.
-   • A free day-by-day Personal Coach plan rebuilt every morning (/coach); human Mentors who cleared the exam (first session free, then ₹9 for their time only); and a free teacher/expert help desk.
-   • Vernacular native-medium mocks, India's Government Jobs Map (/jobs-map), and a 2-minute path finder (/find-your-exam).
-   • EXAM TRACKER per exam (/exams/{CODE}/updates): exam date, notification, application window, admit card, answer key, result and cutoff on one page — OFFICIAL dates carry the notice link, EXPECTED dates are marked as estimates; free ALERTS ("alert me") by email or as a notification on the student's phone (no app needed) when the notification / admit card / result actually comes; plus the all-exams calendar at /exam-calendar. For ANY "when is X exam / admit card / result / notification / last date" question, answer from the tools AND link the tracker; say whether the date is official or expected; never state an expected date as fact.
-   • LAST-MINUTE CHECKLIST for every exam (/exams/{CODE}/checklist): exam-day timing with its source tier, what to carry (admit card + original photo ID; anything that varies by conducting body → "check your admit card"), the marking scheme only when it can be stated for that sitting, and what comes after the paper. Link it for "what to carry / exam day guidelines / reporting time / last-minute tips".
-   • EXAM-DAY PAGES: /exams/{CODE}/live on the day and /exams/{CODE}/reactions after it — a one-tap "how was the paper?" rating (tallies only from 10 ratings, self-reported, never a cutoff prediction) plus answer-key / result status from the tracker.
-   • APP: Shishya works like an app on Android without the Play Store — Chrome offers "Add Shishya to your home screen" on a return visit, or browser menu → Install app. For "is there a Shishya app / app download", answer "Yes —" with these steps.
-   • Feature ideas: aspirants suggest and upvote at /ideas, where built items are listed.
-   If a specific exam or paper isn't in the tools, say we can generate/add it — never a flat "we don't have that".
-10. Format: concise markdown. Bold the key numbers. Lists over paragraphs. No preamble — answer directly.
-10. Call tools SILENTLY. Never emit process narration ("Let me search the web…", "Let me check our database…") — every text character you produce is displayed to the aspirant as part of the answer.
-11. AMBIGUOUS/SHORT queries ("ksp", "si", "group 2"): do NOT interrogate the asker with clarifying questions — this is one-shot search, not a chat, and "just reply" leads nowhere. Search Shishya's data, ANSWER the most likely interpretation fully (with its links), then close with one line covering the alternatives: "If you meant X instead, ask 'x…'". An aspirant typing an abbreviation almost always means the exam Shishya tracks.`;
+export interface AskOptions {
+  /** The search resolution of this question (deep index). Computed here when absent. */
+  resolution?: Resolution;
+  /** The deep search index. Loaded here when absent. */
+  index?: SearchIndex;
+  /** The page the search started on (/hi/ask → "hi"): twin links keep the prefix. */
+  locale?: Locale;
+  via?: AskVia;
+  /** The request's signal: a closed tab stops the model call. */
+  signal?: AbortSignal;
+}
 
 export interface AskResult {
   answer: string;
   usedWeb: boolean;
   toolsUsed: string[];
+  /** Checked Shishya pages the answer links, in order (the /ask panel's "Pages on Shishya"). */
+  pages: PageLink[];
+  /** The same list (the contract's older name). */
+  links: PageLink[];
+  /** The one page to open now. */
+  next: PageLink | null;
+  webSources: WebSource[];
+  turns: number;
+  latencyMs: number;
+  costUsd: number;
+  notice?: SearchNotice;
 }
 
-export async function runAsk(question: string): Promise<AskResult> {
-  const messages: Anthropic.Messages.MessageParam[] = [
-    { role: "user", content: question.slice(0, 800) },
-  ];
+const CANNED_LONG =
+  "That took more digging than expected — the pages below are the closest Shishya has. Try a slightly more specific question (the class, exam or state).";
+
+function toPageLink(h: { url: string; label: string; section: PageLink["section"]; status?: PageLink["status"] }): PageLink {
+  return { url: h.url, label: h.label, section: h.section, ...(h.status ? { status: h.status } : {}) };
+}
+
+/** The answer text of the final response: what follows the last web-search block (earlier text is narration). */
+export function finalText(content: readonly any[]): string {
+  let lastServer = -1;
+  content.forEach((b, i) => {
+    if (b?.type === "server_tool_use" || b?.type === "web_search_tool_result") lastServer = i;
+  });
+  let blocks = content.slice(lastServer + 1).filter((b) => b?.type === "text" && typeof b.text === "string");
+  if (blocks.length === 0) blocks = content.filter((b) => b?.type === "text" && typeof b.text === "string");
+  // Cited fragments of one sentence arrive as separate blocks: they join as
+  // written. Separate plain blocks are separate paragraphs.
+  let out = "";
+  let prevCited = false;
+  for (const b of blocks) {
+    const cited = Array.isArray(b.citations) && b.citations.length > 0;
+    if (!out) out = b.text;
+    else if (cited || prevCited || /\s$/.test(out) || /^[\s,.;:!?)]/.test(b.text)) out += b.text;
+    else out += `\n\n${b.text}`;
+    prevCited = cited;
+  }
+  out = out.trim();
+  // Leading narration that slipped through ("Let me search…").
+  const paras = out.split(/\n{2,}/);
+  while (paras.length > 1 && paras[0].length < 200 && /^(let me|i['’]ll|i will|searching|checking|first,? let)/i.test(paras[0].trim())) paras.shift();
+  return paras.join("\n\n").trim();
+}
+
+/** Web sources the model cited (text-block citations of the server web search). */
+function citationsOf(content: readonly any[]): WebSource[] {
+  const out: WebSource[] = [];
+  for (const b of content) {
+    if (b?.type !== "text" || !Array.isArray(b.citations)) continue;
+    for (const c of b.citations) {
+      if (typeof c?.url === "string" && /^https?:\/\//.test(c.url)) out.push({ title: String(c.title ?? "").slice(0, 120) || new URL(c.url).hostname, url: c.url });
+    }
+  }
+  return out;
+}
+
+async function loadDeepIndex(): Promise<SearchIndex> {
+  // Imported on demand: the loader is server-only (next/cache), and callers
+  // that already hold an index (the route, scripts) never load it.
+  const { loadSearchIndex } = await import("@/lib/search/index-build");
+  return loadSearchIndex("deep");
+}
+
+/**
+ * The facts of the confident top page, looked up before the first turn. A
+ * route-only school answer gets its chapter page's facts (status, official
+ * book and chapter PDF) whatever the score — they are static and they are
+ * the whole answer.
+ */
+async function prefetchFor(r: Resolution, ctx: ToolCtx, routeOnly: boolean): Promise<unknown> {
+  const chapter = routeOnly ? prePassHits(r).find((h) => h.kind === "school-chapter") : undefined;
+  if (chapter) return runTool("page_facts", { url: `${SITE}${chapter.url}` }, ctx);
+  const top = r.best ?? r.hits[0];
+  if (!top || top.score < DIRECT_MIN) return undefined;
+  const code = /^\/(?:(?:hi|te)\/)?exams\/([A-Z0-9_]+)(?:[/#?]|$)/.exec(top.url)?.[1];
+  if (top.kind === "exam" && code) return runTool("get_exam_details", { code }, ctx);
+  if (top.kind === "topic-note") return undefined;
+  return runTool("page_facts", { url: `${SITE}${top.url}` }, ctx);
+}
+
+export async function runAsk(question: string, opts: AskOptions = {}): Promise<AskResult> {
+  const t0 = Date.now();
+  const q = String(question ?? "").slice(0, 800);
+  const locale: Locale = opts.locale ?? "en";
+  const index = opts.index ?? (await loadDeepIndex());
+  const resolution = opts.resolution ?? resolveQuery(q, index, { pageLocale: locale });
+  const pre = prePassHits(resolution).map(toPageLink);
+  // Nothing from the resolver: pages whose name shares a word with the question (ask-tools looseMatches).
+  const loose = pre.length === 0 ? looseMatches(index, q).map((d) => ({ label: d.title, url: localeTarget(d.path, locale), section: d.section, sub: d.sub })) : [];
+  const closest: PageLink[] = pre.length ? pre : loose.map(toPageLink);
+  const fallback = closest[0] ?? toPageLink(resolution.fallback);
+  const toolsUsed: string[] = [];
+  let usedWeb = false;
+  let turns = 0;
+  let costUsd = 0;
+
+  const done = (answer: string, extra: Partial<AskResult> = {}): AskResult => {
+    const pages = extra.pages ?? closest.slice(0, 3);
+    return {
+      answer,
+      usedWeb,
+      toolsUsed,
+      pages,
+      links: pages,
+      next: extra.next !== undefined ? extra.next : (pages[0] ?? fallback),
+      webSources: extra.webSources ?? [],
+      turns,
+      latencyMs: Date.now() - t0,
+      costUsd: Math.round(costUsd * 10000) / 10000,
+      ...(extra.notice ? { notice: extra.notice } : {}),
+    };
+  };
+
+  // Class 1-7: pages only, never a model call (the 25 Sep minors decision).
+  if (resolution.schoolScope === "class1to7") return done("", { notice: "no-ai-young-class" });
+
+  const ctx: ToolCtx = { index, locale };
+  const routeOnly = isRouteOnly(resolution);
+  const prefetch = await prefetchFor(resolution, ctx, routeOnly);
+  const first = askFirstTurn(q, resolution, { routeOnly, prefetch, loose });
+
+  // Outside URLs this run met (tool results, web results, citations): the only
+  // outside links the answer may keep. 26 Sep 2026 (search fixer): seeded from
+  // the prefetched facts only — never from the first turn, which carries the
+  // typed question, so a link the person pasted ("is https://fake.example/form
+  // the real form?") is not "seen" and never survives as a live link.
+  const seen = new Set<string>(prefetch === undefined ? [] : urlsIn(JSON.stringify(prefetch)));
+  const cited: WebSource[] = [];
+
+  const messages: Anthropic.Messages.MessageParam[] = [{ role: "user", content: first }];
   // any[]: the installed SDK's Tool union predates the server-side
   // web_search tool type (same workaround as exam-info.ts) — the API
   // itself accepts and executes it.
-  const allTools: any[] = [
-    ...TOOLS,
-    { type: "web_search_20250305", name: "web_search", max_uses: 3 },
-  ];
-  const toolsUsed: string[] = [];
-  let usedWeb = false;
+  const tools: any[] = [...ASK_TOOLS, { type: "web_search_20250305", name: "web_search", max_uses: ASK_WEB_MAX_USES }];
+  const system = cachedSystem(askSystemPrompt());
+  let final: Anthropic.Messages.Message | null = null;
 
-  for (let turn = 0; turn < 6; turn++) {
-    const res = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 1800,
-      system: cachedSystem(SYSTEM),
-      messages,
-      tools: allTools,
-    });
-    recordAiUsage("ask", res, { model: MODEL });
+  for (let turn = 0; turn < ASK_TURN_CAP; turn++) {
+    // The last turn — by count, or by the time budget — must answer with what it has.
+    const lastTurn = turn === ASK_TURN_CAP - 1 || Date.now() - t0 > ASK_TIME_BUDGET_MS;
+    const t = Date.now();
+    const res = await anthropic.messages.create(
+      {
+        model: MODEL,
+        max_tokens: ASK_MAX_TOKENS,
+        system,
+        messages,
+        tools,
+        ...(lastTurn ? { tool_choice: { type: "none" as const } } : {}),
+      },
+      { signal: opts.signal },
+    );
+    turns++;
+    costUsd += recordAiUsage("ask", res, { model: MODEL, latencyMs: Date.now() - t });
 
-    // Track server-side web search (executed by the API itself).
-    if (res.content.some((b: any) => b.type === "server_tool_use" || b.type === "web_search_tool_result")) {
-      usedWeb = true;
-      if (!toolsUsed.includes("web_search")) toolsUsed.push("web_search");
+    for (const b of res.content as any[]) {
+      if (b?.type === "server_tool_use" || b?.type === "web_search_tool_result") {
+        usedWeb = true;
+        if (!toolsUsed.includes("web_search")) toolsUsed.push("web_search");
+      }
+      // A search result list (an error result is an object, not a list).
+      if (b?.type === "web_search_tool_result" && Array.isArray(b.content)) {
+        for (const w of b.content) if (typeof w?.url === "string") seen.add(w.url);
+      }
+    }
+    for (const c of citationsOf(res.content)) {
+      seen.add(c.url);
+      cited.push(c);
     }
 
-    const toolCalls = res.content.filter(
-      (b): b is Anthropic.Messages.ToolUseBlock => b.type === "tool_use",
-    );
+    // The server paused its own web-search loop: send the turn back as is and it
+    // resumes. (The installed SDK's StopReason union predates "pause_turn".)
+    if ((res.stop_reason as string | null) === "pause_turn") {
+      messages.push({ role: "assistant", content: res.content });
+      continue;
+    }
+    const toolCalls = res.content.filter((b): b is Anthropic.Messages.ToolUseBlock => b.type === "tool_use");
     if (toolCalls.length === 0 || res.stop_reason !== "tool_use") {
-      const texts = res.content
-        .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
-        .map((b) => b.text.trim())
-        .filter(Boolean);
-      // Server-side web search interleaves narration ("Let me search
-      // the web…") and the real answer as separate text blocks INSIDE
-      // one response. Rule 10 tells the model not to narrate; this
-      // guard drops any leading narration blocks that slip through so
-      // they never reach the aspirant.
-      while (
-        texts.length > 1 &&
-        texts[0].length < 200 &&
-        /^(let me|i['']ll|i will|searching|checking|first,? let)/i.test(texts[0])
-      ) {
-        texts.shift();
-      }
-      const answer = texts.join("\n\n").trim();
-      return { answer, usedWeb, toolsUsed };
+      final = res;
+      break;
     }
 
     messages.push({ role: "assistant", content: res.content });
-    const results: Anthropic.Messages.ToolResultBlockParam[] = [];
-    for (const tc of toolCalls) {
-      if (!toolsUsed.includes(tc.name)) toolsUsed.push(tc.name);
-      const out = await runTool(tc.name, tc.input);
-      results.push({
-        type: "tool_result",
-        tool_use_id: tc.id,
-        content: JSON.stringify(out).slice(0, 12_000),
-      });
-    }
+    const results = await Promise.all(
+      toolCalls.map(async (tc) => {
+        if (!toolsUsed.includes(tc.name)) toolsUsed.push(tc.name);
+        const text = JSON.stringify(await runTool(tc.name, tc.input, ctx)) ?? "null";
+        for (const u of urlsIn(text)) seen.add(u);
+        return { type: "tool_result" as const, tool_use_id: tc.id, content: text.slice(0, 12_000) };
+      }),
+    );
     messages.push({ role: "user", content: results });
   }
 
-  return {
-    answer:
-      "That took more digging than expected — try asking a slightly more specific question (mention the state or exam name).",
-    usedWeb,
-    toolsUsed,
-  };
+  const raw = final ? finalText(final.content) : "";
+  if (!raw) return done(CANNED_LONG);
+
+  const checked = validateAnswerLinks(raw, index, seen, { fallback });
+  let answer = checked.answer;
+  let pages = checked.pages;
+  let next = checked.next;
+  // The prompt asks for 1-3 pages; when the model named none, the resolver's
+  // closest pages are added as the block (labels are page names, so the block
+  // needs no language of its own).
+  if (pages.length === 0 && closest.length > 0) {
+    pages = closest.slice(0, 3);
+    next = pages[0];
+    answer = `${answer}\n\n${PAGES_MARK}\n${pages.map((p) => `- [${p.label}](${SITE}${p.url})`).join("\n")}\n${NEXT_MARK} [${next.label}](${SITE}${next.url})`;
+  }
+  const webSeen = new Set(checked.webSources.map((w) => normUrl(w.url)));
+  const webSources = [...checked.webSources];
+  for (const c of cited) {
+    if (webSources.length >= 6) break;
+    if (webSeen.has(normUrl(c.url))) continue;
+    webSeen.add(normUrl(c.url));
+    webSources.push(c);
+  }
+  return done(answer, { pages, next, webSources });
 }

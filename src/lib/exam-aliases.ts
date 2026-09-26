@@ -644,3 +644,16 @@ export function resolveAliases(text: string): { codes: Set<string>; expands: Set
   }
   return { codes, expands, category, state };
 }
+
+/** 26 Sep 2026 (site-wide search): the alias table, read-only, so the search
+ *  index can invert it — every alias key becomes a match key of the exams its
+ *  codes name (src/lib/search/index-core.ts). No behaviour change here. */
+export function aliasTable(): ReadonlyArray<readonly [string, Readonly<AliasHit>]> {
+  return Object.entries(ALIASES);
+}
+
+/** 26 Sep 2026 (site-wide search): the state-word table (English and native
+ *  scripts → Exam.state code), read-only, for the search query parser. */
+export function stateWordTable(): ReadonlyArray<readonly [string, string]> {
+  return Object.entries(STATE_WORDS);
+}

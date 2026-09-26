@@ -264,7 +264,7 @@ describe("Header — the top row", () => {
   });
 
   it("the tagline under the wordmark is the home page's h1, verbatim", () => {
-    expect(HOME_DOORS_COPY.en.hero.h1).toBe("One free place to study");
+    expect(HOME_DOORS_COPY.en.hero.h1).toBe("One smart place to study");
     expect(topBlock()).toContain(HOME_DOORS_COPY.en.hero.h1);
   });
 

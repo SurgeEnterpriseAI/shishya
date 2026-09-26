@@ -11,7 +11,7 @@
 // /api/auth/session endpoint — no extra latency on initial paint.
 //
 // 26 Sep 2026 (founder: "this strip ... is only focusing on government
-// exams"): Shishya is now ONE free place to study with independent
+// exams"): Shishya is now ONE smart place to study with independent
 // sections — School, Entrance exams, Government exams, College &
 // scholarships, Careers — and a context-driven tutor, Ask Shishya. The
 // Primary row now says exactly that, in the home page's own words: the
@@ -104,7 +104,7 @@ export function Header({ admin = false }: { admin?: boolean }) {
                     rail (Dashboard, Profile, bell, Sign out) plus this line
                     would overflow the row. */}
                 <span className="hidden text-[11px] font-medium leading-tight text-ink-500 md:block">
-                  One free place to study
+                  One smart place to study
                 </span>
               </span>
             )}

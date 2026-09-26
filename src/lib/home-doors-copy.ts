@@ -58,8 +58,11 @@ export interface HomeDoorsCopy {
 export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = {
   en: {
     hero: {
-      h1: "One free place to study",
-      tagline: "Pick your section and practise on your own, alongside what your school or college teaches.",
+      // 26 Sep 2026 (founder): "One smart place to study"; the tagline says it is
+      // free and names both halves — Indian education and government jobs.
+      // Graduation/PG/PhD study stays out of the promise until those pages exist.
+      h1: "One smart place to study",
+      tagline: "A free platform for Indian education — school, +1/+2, entrance exams and college — and for government jobs, from preparation to the latest updates.",
       ask: "Stuck on something? Ask Shishya — free, no sign-in →",
     },
     pills: { school: "School", entrance: "Entrance", government: "Government", college: "College", careers: "Careers" },
@@ -152,8 +155,8 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
   },
   hi: {
     hero: {
-      h1: "पढ़ाई की एक मुफ़्त जगह",
-      tagline: "अपना सेक्शन चुनिए और स्कूल या कॉलेज की पढ़ाई के साथ-साथ अपने आप अभ्यास कीजिए।",
+      h1: "पढ़ाई की एक स्मार्ट जगह",
+      tagline: "भारतीय शिक्षा के लिए एक मुफ़्त प्लेटफ़ॉर्म — स्कूल, 11वीं-12वीं, प्रवेश परीक्षाएं और कॉलेज — और सरकारी नौकरियों के लिए, तैयारी से लेकर ताज़ा अपडेट तक।",
       ask: "कहीं अटक गए? Shishya से पूछिए — मुफ़्त, बिना साइन-इन →",
     },
     pills: { school: "स्कूल", entrance: "प्रवेश परीक्षा", government: "सरकारी परीक्षा", college: "कॉलेज", careers: "करियर" },
@@ -233,8 +236,8 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
   },
   te: {
     hero: {
-      h1: "చదువుకు ఒకే ఉచిత చోటు",
-      tagline: "మీ విభాగం ఎంచుకోండి, స్కూల్ లేదా కాలేజీ చెప్పే పాఠాలతో పాటు మీ అంతట మీరు సాధన చేయండి.",
+      h1: "చదువుకు ఒకే స్మార్ట్ చోటు",
+      tagline: "భారతీయ విద్యకు ఉచిత వేదిక — స్కూల్, ఇంటర్, ప్రవేశ పరీక్షలు, కాలేజీ — ప్రభుత్వ ఉద్యోగాలకు కూడా, తయారీ నుంచి తాజా అప్‌డేట్‌ల వరకు.",
       ask: "ఎక్కడైనా ఆగిపోయారా? Shishyaను అడగండి — ఉచితం, సైన్-ఇన్ అక్కర్లేదు →",
     },
     pills: { school: "స్కూల్", entrance: "ప్రవేశ పరీక్షలు", government: "ప్రభుత్వ పరీక్షలు", college: "కాలేజీ", careers: "కెరీర్" },

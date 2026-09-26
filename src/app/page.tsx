@@ -83,6 +83,9 @@ import { HomeRails } from "@/components/home/HomeRails";
 import { HomeHowItWorks } from "@/components/home/HomeHowItWorks";
 import { HomeSignIn } from "@/components/home/HomeSignIn";
 import { HomeBeacons } from "@/components/home/HomeBeacons";
+// 26 Sep 2026: the whole-platform search strip in the hero (founder brief).
+import { SearchStrip } from "@/components/search/SearchStrip";
+import { askBaseFor, searchCopy } from "@/lib/search-copy";
 
 // 26 Sep 2026: one title and description for "/" — the per-step funnel
 // metadata went with the funnel. The exam count is the same daily-cached
@@ -92,7 +95,7 @@ import { HomeBeacons } from "@/components/home/HomeBeacons";
 export async function generateMetadata(): Promise<Metadata> {
   const { examCount } = await loadPortalStats().catch(() => ({ examCount: "", questions: "", notes: "" }));
   const examScope = examCount ? `${examCount} government and entrance exams` : "government and entrance exams";
-  const title = "Shishya — One free place to study: school, entrance & government exams";
+  const title = "Shishya — One smart place to study: school, entrance & government exams";
   const description =
     `Free practice for anyone studying in India. CBSE and ICSE school chapters with the official book and syllabus links; ${examScope} — JEE, NEET, CUET, SSC, banking, railways, state PSCs, UPSC — with free mocks, previous-year practice, cutoffs and dates; colleges, scholarships and career paths. A tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages. Free, no paywall.`;
 
@@ -551,7 +554,7 @@ export default async function HomePage({
       </div>
 
       <div className="container-prose pb-16">
-        <HomeHero copy={copy} />
+        <HomeHero copy={copy} search={<SearchStrip variant="hero" copy={searchCopy(locale)} askBase={askBaseFor(locale)} />} />
 
         <HomeDoors
           copy={copy}
