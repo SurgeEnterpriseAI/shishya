@@ -24,6 +24,7 @@
 
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL, realExamKey } from "@/lib/db/exam-scope";
+import { SCHOOL_CONTAINER_WHERE, SCHOOL_GUEST_QUIZ_MIN, SCHOOL_SERVABLE_QUESTION_WHERE } from "@/lib/school/scope";
 import { parseCategoryCutoff } from "@/lib/category-cutoff";
 
 export const ANON_QUIZ_MIN = 5;
@@ -204,4 +205,80 @@ export async function getAnonCutoffRows(
   // Header + at least one category row, else nothing worth showing.
   if (parsed.table.length < 2) return null;
   return { table: parsed.table, notes: parsed.notes.slice(0, 3) };
+}
+
+// ── School chapter guest quiz (26 Sep 2026) ────────────────────────────
+// The chapter pages under /schooling offer the same 5-question, no-account,
+// nothing-stored practice as the exam pages — but a school container is
+// NOT a real exam: getAnonQuiz() goes through realExamKey() and refuses it
+// on purpose (a school code must never reach the tutor, enrolment or the
+// mock loop). This getter is the school-only door: it never looks the exam
+// up as an exam, it resolves the CHAPTER under a SCHOOL_BOARD container
+// (SCHOOL_CONTAINER_WHERE — category-pinned, `active` not read: the
+// containers are inactive by design, see src/lib/school/scope.ts) and serves only
+// answer-checked, non-withdrawn MCQs (SCHOOL_SERVABLE_QUESTION_WHERE).
+// Fewer than SCHOOL_GUEST_QUIZ_MIN such questions = no quiz (null), so a
+// chapter never offers a "5-question practice" it cannot fill. No replay
+// sets, no cutoff rows, no exam-week state: none of that applies to a
+// chapter. The existing exam path above is unchanged.
+
+export async function getSchoolGuestQuiz(opts: {
+  examCode: string;
+  topicCode: string;
+  count?: number;
+}): Promise<AnonQuiz | null> {
+  const topic = await prisma.topic.findFirst({
+    where: { code: opts.topicCode, parentId: null, subject: { exam: { ...SCHOOL_CONTAINER_WHERE, code: opts.examCode } } },
+    select: {
+      id: true,
+      name: true,
+      code: true,
+      children: { select: { id: true } },
+      subject: { select: { exam: { select: { code: true, shortName: true, name: true } } } },
+    },
+  });
+  if (!topic) return null;
+  const topicIds = [topic.id, ...topic.children.map((c) => c.id)];
+
+  const pool = await prisma.question.findMany({
+    where: { ...SCHOOL_SERVABLE_QUESTION_WHERE, topicId: { in: topicIds }, exam: SCHOOL_CONTAINER_WHERE },
+    select: {
+      id: true,
+      body: true,
+      options: true,
+      answerKey: true,
+      solution: true,
+      difficulty: true,
+      topic: { select: { name: true, code: true } },
+    },
+    take: 80,
+  });
+  if (pool.length < SCHOOL_GUEST_QUIZ_MIN) return null;
+
+  const count = Math.min(ANON_QUIZ_MAX, Math.max(ANON_QUIZ_MIN, opts.count ?? ANON_QUIZ_MIN));
+  const picked = pool
+    .map((q) => ({ q, r: Math.random() }))
+    .sort((a, b) => a.r - b.r)
+    .slice(0, count)
+    .map(({ q }) => q);
+
+  const exam = topic.subject.exam;
+  return {
+    examCode: exam.code,
+    examShort: exam.shortName,
+    examName: exam.name,
+    scopeLabel: topic.name,
+    topicCode: topic.code,
+    replay: false,
+    questions: picked.map((q) => ({
+      id: q.id,
+      body: q.body,
+      options: (q.options as { key: string; text: string }[]) ?? [],
+      answerKey: q.answerKey,
+      solution: q.solution,
+      difficulty: q.difficulty,
+      topicName: q.topic.name,
+      topicCode: q.topic.code,
+    })),
+  };
 }

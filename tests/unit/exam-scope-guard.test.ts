@@ -107,7 +107,8 @@ const SRC = path.join(ROOT, "src");
  *  unscoped sites + why. KEYED = one row by id / code / token; OWN = the
  *  viewer's (or a named user's) own rows; ADMIN = operator pages that must
  *  see school rows too; CREATED = rows this path itself created from a
- *  scoped pick. */
+ *  scoped pick; SCHOOL = a school surface reading SCHOOL_BOARD containers by
+ *  category (they are inactive by design, 26 Sep 2026). */
 const UNSCOPED: Record<string, { n: number; why: string }> = {
   // ADMIN
   "src/app/admin/coverage/page.tsx": { n: 1, why: "ADMIN: coverage per exam, school containers included" },
@@ -134,6 +135,13 @@ const UNSCOPED: Record<string, { n: number; why: string }> = {
   // CREATED
   "src/app/api/cron/live-test-close/route.ts": { n: 1, why: "CREATED: closes LiveTest rows the scoped scheduler made" },
   "src/lib/live-test.ts": { n: 1, why: "CREATED: this Sunday's frozen roster, made by the scoped pick below it" },
+  // SCHOOL (26 Sep 2026, go-live): the school surfaces read SCHOOL_BOARD
+  // containers by CATEGORY (src/lib/school/scope.ts SCHOOL_CONTAINER_WHERE),
+  // never by `active` — every school row was seeded inactive and stays so, so
+  // SCHOOL_WHERE would list none of them. Category-pinned, they can never
+  // return a real exam.
+  "src/lib/school/surface.ts": { n: 3, why: "SCHOOL: sitemap / llms-full / context.md loader over SCHOOL_BOARD containers by category (inactive by design)" },
+  "src/lib/school/db.ts": { n: 1, why: "SCHOOL: page loader — one school container by its NCERT_Cnn / CISCE_Cnn code, category pinned (inactive by design)" },
 };
 
 const HELPER_WHERE = /(?:\.\.\.|:|\?|,|\(|\[)\s*(?:REAL_EXAM_WHERE|NOT_SCHOOL_WHERE|SCHOOL_WHERE)\b/;
@@ -331,7 +339,7 @@ describe("every exam list query under src/ is scoped (src/lib/db/exam-scope.ts)"
     for (const [file, { n, why }] of Object.entries(UNSCOPED)) {
       expect(fs.existsSync(path.join(ROOT, file)), file).toBe(true);
       expect(n).toBeGreaterThan(0);
-      expect(why).toMatch(/^(KEYED|OWN|ADMIN|CREATED): \S/);
+      expect(why).toMatch(/^(KEYED|OWN|ADMIN|CREATED|SCHOOL): \S/);
     }
   });
 
@@ -522,6 +530,50 @@ describe("the counters count real exams' content (26 Sep 2026)", () => {
     expect(src).not.toMatch(/prisma\.topic\.count\(\)/);
     expect(src.match(/prisma\.question\.count\(\{ where: \{[^\n]*exam: NOT_SCHOOL_WHERE \}/g)?.length ?? 0).toBe(3);
     expect(src.match(/prisma\.topic\.count\(\{ where: \{[^\n]*subject: \{ exam: NOT_SCHOOL_WHERE \}/g)?.length ?? 0).toBe(2);
+  });
+});
+
+// ── School surfaces (26 Sep 2026, go-live) ──────────────────────────────
+// The school pages and their guest quiz read SCHOOL_BOARD containers by
+// CATEGORY (src/lib/school/scope.ts SCHOOL_CONTAINER_WHERE) — never by
+// `active` (every container is inactive by design) and never through the
+// real-exam helpers, which would turn a school code into an unknown exam.
+describe("school loaders read school containers by category only (src/lib/school/scope.ts)", () => {
+  const SCHOOL_FILES = ["src/lib/school/db.ts", "src/lib/school/surface.ts"];
+
+  it("every exam site in the school loaders carries SCHOOL_CONTAINER_WHERE, and none a real-exam helper", () => {
+    for (const file of SCHOOL_FILES) {
+      const src = read(file);
+      const importLine = src.split("\n").find((l) => /^import \{[^}]*\bSCHOOL_CONTAINER_WHERE\b[^}]*\} from "(?:@\/lib\/school\/scope|\.\/scope)";/.test(l));
+      expect(importLine, `${file}: SCHOOL_CONTAINER_WHERE not imported from school/scope`).toBeTruthy();
+      expect(src, file).not.toMatch(/\b(?:realExamKey|REAL_EXAM_WHERE|REAL_EXAM_SQL|NOT_SCHOOL_WHERE|NOT_SCHOOL_SQL)\b/);
+      const sites = scanSource(src, file).filter((x) => x.kind === "prisma" || x.kind === "keyed" || x.kind === "sql");
+      expect(sites.length, `${file}: no exam site found`).toBeGreaterThan(0);
+      for (const x of sites) {
+        // A Prisma site's args carry the constant; a raw template's category
+        // fragment sits in the SQL (the scan's text window is the FROM only).
+        const text = x.kind === "sql" ? src : x.text;
+        expect(text, `${file}:L${x.line}`).toMatch(/SCHOOL_CONTAINER_WHERE|SCHOOL_CONTAINER_SQL|SCHOOL_CATEGORY/);
+      }
+    }
+  });
+
+  it("the school guest quiz never looks a school container up as an exam", () => {
+    const src = read("src/lib/anon-quiz.ts");
+    const start = src.indexOf("export async function getSchoolGuestQuiz(");
+    expect(start).toBeGreaterThan(0);
+    const body = src.slice(start);
+    expect(body).not.toContain("prisma.exam.");
+    expect(body).not.toMatch(/\brealExamKey\b|\bREAL_EXAM_WHERE\b|\bSCHOOL_WHERE\b/);
+    expect(body).toContain("subject: { exam: { ...SCHOOL_CONTAINER_WHERE, code: opts.examCode } }");
+    expect(body).toContain("...SCHOOL_SERVABLE_QUESTION_WHERE, topicId: { in: topicIds }, exam: SCHOOL_CONTAINER_WHERE");
+    expect(body).toContain("if (pool.length < SCHOOL_GUEST_QUIZ_MIN) return null;");
+  });
+
+  it("SCHOOL_CONTAINER_WHERE pins the category and reads no active flag", () => {
+    const src = read("src/lib/school/scope.ts");
+    expect(src).toContain("export const SCHOOL_CONTAINER_WHERE = { category: SCHOOL_CATEGORY } satisfies Prisma.ExamWhereInput;");
+    expect(src).not.toMatch(/\bactive:\s*(?:true|false)\b/);
   });
 });
 

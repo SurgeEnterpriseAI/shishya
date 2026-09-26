@@ -22,6 +22,7 @@
 //   even then the SCHOOL_BOARD exam stays inactive (founder rule 5).
 
 import type { Prisma } from "@prisma/client";
+import { PROVENANCE_COMMENT_PREFIX, type NotesProvenance } from "./provenance";
 import type { CandidateQuestion } from "../ai/factory/types";
 import { MCQ_PROMPT_VERSION, MCQ_SET_SIZE, MCQ_SETS_PER_CHAPTER, MCQ_SET_MIX, NOTES_PROMPT_VERSION, type DifficultyMix, type SchoolChapter, chapterIdentity } from "./content-prompts";
 
@@ -37,26 +38,11 @@ export function notesGeneratedBy(model: string): string {
 
 // ── Notes ───────────────────────────────────────────────────────────────
 
-export interface NotesProvenance {
-  pipeline: typeof SCHOOL_PIPELINE;
-  promptVersion: string;
-  model: string;
-  runId: string;
-  producedAt: string;
-  class: number;
-  examCode: string;
-  subject: string;
-  book: string;
-  bookTitle: string;
-  chapter: string | null;
-  chapterTitle: string;
-  topicCode: string;
-  officialUrl: string;
-  /** What the model was given: the chapter identity only — never textbook text. */
-  groundedIn: string[];
-}
-
-export const PROVENANCE_COMMENT_PREFIX = "<!-- shishya-school-batch provenance ";
+// 26 Sep 2026: the provenance comment helpers moved to ./provenance so the
+// school pages can strip the comment without importing this file (it pulls
+// content-prompts.ts and the Anthropic client). Same names, re-exported.
+export { PROVENANCE_COMMENT_PREFIX, readProvenanceComment, stripProvenanceComment } from "./provenance";
+export type { NotesProvenance } from "./provenance";
 
 export function notesProvenance(ch: SchoolChapter, opts: { model: string; runId: string; now: Date }): NotesProvenance {
   return {
@@ -81,27 +67,6 @@ export function notesProvenance(ch: SchoolChapter, opts: { model: string; runId:
 export function provenanceComment(p: NotesProvenance): string {
   // "--" may not appear inside an HTML comment; the JSON has none, but keep it safe.
   return `${PROVENANCE_COMMENT_PREFIX}${JSON.stringify(p).replace(/--/g, "- -")} -->`;
-}
-
-/** Stored notes without the provenance comment — what a later Phase G run feeds the MCQ prompt as grounding. */
-export function stripProvenanceComment(content: string): string {
-  const i = content.lastIndexOf(PROVENANCE_COMMENT_PREFIX);
-  if (i < 0) return content;
-  const end = content.indexOf(" -->", i);
-  return (end < 0 ? content.slice(0, i) : content.slice(0, i) + content.slice(end + 4)).trimEnd();
-}
-
-/** Reads the provenance comment back from stored notes (null when absent — a govt-exam note). */
-export function readProvenanceComment(content: string): NotesProvenance | null {
-  const i = content.lastIndexOf(PROVENANCE_COMMENT_PREFIX);
-  if (i < 0) return null;
-  const end = content.indexOf(" -->", i);
-  if (end < 0) return null;
-  try {
-    return JSON.parse(content.slice(i + PROVENANCE_COMMENT_PREFIX.length, end)) as NotesProvenance;
-  } catch {
-    return null;
-  }
 }
 
 export interface NoteWritePlan {

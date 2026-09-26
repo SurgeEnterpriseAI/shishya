@@ -24,6 +24,8 @@ import { usableNotesSql } from "@/lib/topic-notes";
 import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
 import { istDay } from "@/lib/exam-week";
 import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { schoolClassIdentity } from "@/lib/school/context";
+import { EMPTY_SCHOOL_SURFACE, loadSchoolSurface, schoolLlmsFullLines } from "@/lib/school/surface";
 
 export const revalidate = 3600; // hourly — the exam-week block flips phase within a day
 
@@ -273,13 +275,24 @@ export async function GET() {
     lines.push("");
   }
 
+  // School (26 Sep 2026, go-live): the seeded CBSE (NCERT) / CISCE classes
+  // with their context files, one line per subject with computed counts, and
+  // the chapter pages that carry Shishya's own notes or checked practice
+  // (src/lib/school/surface.ts — containers by category, inactive by design).
+  // Omitted while no container exists; a failed read prints nothing.
+  // 26 Sep 2026 (fixer): the spine identity says which CISCE subjects have a
+  // syllabus PDF of their own (Classes 1-8 have one stage document) and
+  // which NCERT subject has no book yet — without it the block claimed a
+  // syllabus link for every CISCE subject.
+  lines.push(...schoolLlmsFullLines(await loadSchoolSurface().catch(() => EMPTY_SCHOOL_SURFACE), SITE, schoolClassIdentity));
+
   lines.push("## Other free resources");
   lines.push(`- Upcoming government exams calendar (next 120 days, official vs expected dates, latest notifications): ${SITE}/exam-calendar`);
   lines.push(`- Scholarships for Indian students: ${SITE}/scholarships`);
   lines.push(`- Colleges (cutoffs, placements, ITI/diploma): ${SITE}/colleges`);
-  // 26 Sep 2026: the Schooling line left with the sitemap entries — the
-  // section is noindex while it is built hidden (SCHOOLING_ROBOTS), so it
-  // stays off llms-full.txt until school content passes the content gate.
+  // 26 Sep 2026: the Schooling line points at the board pages the School
+  // block above lists in full; without containers it is a plain link.
+  lines.push(`- School — CBSE (NCERT textbooks) and CISCE by class, official NCERT book and CISCE document links: ${SITE}/schooling/cbse · ${SITE}/schooling/icse-cisce`);
   lines.push(`- Careers & government jobs: ${SITE}/jobs`);
   lines.push(`- Study abroad: ${SITE}/worldwide`);
   lines.push(`- Aspirant discussions: ${SITE}/discussions`);

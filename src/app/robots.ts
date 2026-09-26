@@ -21,6 +21,13 @@
 // Allow surfaces beneath /me that are public: /u/[handle] is in the
 // /u/ tree (NOT /me/), so it stays indexable for opted-in users.
 //
+// /schooling (26 Sep 2026, school go-live): the school section is public
+// for every crawler above — Googlebot, Bingbot and each AI fetcher — and is
+// named in each rule's allow list so the intent is visible in robots.txt
+// itself (the default "/" already covers it). Which school page a crawler
+// may INDEX is the page's own robots meta (a chapter without Shishya
+// content is noindex, follow); robots.txt only says it may be fetched.
+//
 // Sitemap + host annotations are read by Google + Bing. crawl-delay
 // for archive.org / commoncrawl avoids hammering during nightly
 // scrapes.
@@ -84,13 +91,15 @@ export default function robots(): MetadataRoute.Robots {
     "YouBot",
   ];
   const BURSTY_TRAINING_CRAWLERS = new Set(["ClaudeBot", "anthropic-ai", "Bytespider"]);
+  // Public sections named explicitly beside "/" (see the /schooling note above).
+  const allowPaths = ["/", "/schooling", "/schooling/"];
   return {
     rules: [
       {
         // Default policy for all user agents — open by default, tight
         // on private/auth-gated/operator paths.
         userAgent: "*",
-        allow: "/",
+        allow: allowPaths,
         disallow: privatePaths,
       },
       // Training crawlers that arrive in bursts get a crawl delay (13 Sep
@@ -102,7 +111,7 @@ export default function robots(): MetadataRoute.Robots {
       // Claude-User, Perplexity) are never delayed.
       ...aiCrawlers.map((userAgent) => ({
         userAgent,
-        allow: "/",
+        allow: allowPaths,
         disallow: privatePaths,
         ...(BURSTY_TRAINING_CRAWLERS.has(userAgent) ? { crawlDelay: 2 } : {}),
       })),
@@ -111,7 +120,7 @@ export default function robots(): MetadataRoute.Robots {
         // visibility): allow public content, keep private paths out, be
         // polite on crawl rate (Neon load during full-site crawls).
         userAgent: "CCBot",
-        allow: "/",
+        allow: allowPaths,
         disallow: privatePaths,
         crawlDelay: 5,
       },

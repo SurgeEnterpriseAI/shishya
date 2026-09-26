@@ -17,6 +17,9 @@ import { CAREERS } from "@/data/careers";
 import { allBranchPaths } from "@/data/college-details";
 import { PERSONAS } from "@/data/personas";
 import { GATES_CLOSED, loadExamPageGates, type ExamPageGates } from "@/lib/exam-page-gates";
+import { schoolClassIdentity } from "@/lib/school/context";
+import { schoolLandingSitemapEntries } from "@/lib/school/landings";
+import { EMPTY_SCHOOL_SURFACE, loadSchoolSurface, schoolSitemapEntries } from "@/lib/school/surface";
 
 export const revalidate = 86_400; // 24h
 
@@ -443,7 +446,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Lifecycle section landings — same depth and priority as /exams so
   // Google understands the homepage is a hub, not a single-purpose page.
   // 25 Sep 2026: "/schooling" and "/schooling/streams" left this list with
-  // the rest of the school URLs (see "School pages" further down).
+  // the rest of the school URLs; 26 Sep 2026: the live school pages are
+  // listed from the DB (see "School pages" further down).
   const sectionLandings: MetadataRoute.Sitemap = [
     "/colleges",
     "/scholarships",
@@ -519,12 +523,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // School pages (25 Sep 2026): every /schooling URL (landing, streams,
-  // 20 boards, 10 classes, 77 subjects, 154 chapters = 263 URLs) is out of
-  // the sitemap. The school build made the whole section noindex
-  // (SCHOOLING_ROBOTS, src/app/schooling/layout.tsx) until content passes a
-  // gate, and a noindex URL in the sitemap is a "Submitted URL marked
-  // noindex" error in Search Console (the 17 Sep not-indexed clean-up).
-  // They come back per page, with the content gate, not before.
+  // 20 boards, 10 classes, 77 subjects, 154 chapters = 263 URLs) left the
+  // sitemap while the section was noindex — a noindex URL in the sitemap is
+  // a "Submitted URL marked noindex" error in Search Console (the 17 Sep
+  // not-indexed clean-up).
+  // 26 Sep 2026 (school go-live): the school section is listed from the DB
+  // rows through src/lib/school/surface.ts — the CBSE (NCERT) and CISCE
+  // board pages, every seeded class (SCHOOL_BOARD containers by category:
+  // they are inactive by design, src/lib/school/scope.ts), every subject,
+  // and only the chapters that carry Shishya's own notes or >= 5
+  // answer-checked questions (the chapter page's own indexable rule, so a
+  // listed chapter is never noindex). lastmod comes from the note / question
+  // timestamps or the Exam row's updatedAt, never new Date(). A failed read
+  // lists no school URL. 26 Sep 2026 (fixer): the spine identity keeps a
+  // subject with no book and no chapter (NCERT Class 9 ICT, "Coming Soon" in
+  // NCERT's index — a page of one sentence) off the list.
+  // 26 Sep 2026 (integrator): the section hub, the streams article and the
+  // board pages without a seeded tree are listed by the board page's own
+  // rule (src/lib/school/landings.ts, isSchoolBoardIndexable) — before this
+  // the section's entry page and five indexable pages were unsubmitted.
+  const schoolSurface = await loadSchoolSurface().catch(() => EMPTY_SCHOOL_SURFACE);
+  const schoolUrls: MetadataRoute.Sitemap = [...schoolLandingSitemapEntries(schoolSurface, base), ...schoolSitemapEntries(schoolSurface, base, schoolClassIdentity)];
 
   // Per-scholarship pages — long-tail SEO ("Reliance Foundation UG
   // scholarship 2026", "AICTE Pragati eligibility", etc.)
@@ -636,6 +655,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...streamUrls,
     ...collegeStateUrls,
     ...collegeUrls,
+    ...schoolUrls,
     ...scholarshipUrls,
     ...countryUrls,
     ...universityUrls,

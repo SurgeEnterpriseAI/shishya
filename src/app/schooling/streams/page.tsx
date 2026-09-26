@@ -4,7 +4,8 @@
 // makes. Science (PCM, PCB, PCMB), Commerce, Humanities — each opens and
 // closes specific career doors. This page is the honest decision surface.
 //
-// 25 Sep 2026 (school build, Step 0): noindex like the rest of /schooling.
+// 25 Sep 2026 (school build, Step 0): noindex like the rest of /schooling
+// (indexable again since 26 Sep 2026, see metadata).
 // Removed claims that were unsourced or wrong: NEET "~24L applicants" and
 // "12L aspirants" on the same page, "₹3-4 LPA", "8-15% CA pass rate",
 // "~1300 pages", "humanities students dominate IIM intakes", "Maths is
@@ -17,7 +18,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
-import { SCHOOLING_ROBOTS } from "@/lib/schooling-data";
+import { schoolRobots } from "@/lib/schooling-data";
 import { CAREERS } from "@/data/careers";
 
 export const metadata: Metadata = {
@@ -25,7 +26,9 @@ export const metadata: Metadata = {
   description:
     "Picking your Class 11 stream is the most consequential decision in your school years. Science (PCM/PCB/PCMB), Commerce, Humanities — what each opens up, what each closes, and how to pick honestly. No 'science is best' marketing.",
   alternates: { canonical: "https://shishya.in/schooling/streams" },
-  robots: SCHOOLING_ROBOTS,
+  // 26 Sep 2026 (school go-live): a real article with honest copy — indexable
+  // like the rest of the section (schoolRobots, src/lib/schooling-data.ts).
+  robots: schoolRobots(true),
   keywords: [
     "stream selection class 10",
     "science vs commerce vs humanities",

@@ -1,19 +1,16 @@
 // /schooling/** — shared layout.
 //
-// 25 Sep 2026 (school build, Step 0): the whole school section is noindex
-// (links still followed) until chapter content passes a content gate. The
-// pages stay reachable by URL. Every page under here also sets
-// SCHOOLING_ROBOTS itself, so a page that later adds its own `robots`
-// cannot silently drop the noindex; tests/unit/schooling-honesty.test.ts
-// checks both.
+// 25 Sep 2026 (school build, Step 0): the whole section was noindex here
+// (links followed) until chapter content passed a content gate.
+// 26 Sep 2026 (school go-live): the section is public page by page, so this
+// layout no longer sets robots — a layout-level noindex would override
+// nothing (a page's own `robots` wins) but read as if the section were
+// still hidden. Every page under here sets `robots` itself: SCHOOLING_ROBOTS
+// (noindex) for a page with nothing of its own, schoolRobots(indexable)
+// otherwise (src/lib/schooling-data.ts); tests/unit/schooling-honesty.test.ts
+// checks every metadata return.
 
-import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { SCHOOLING_ROBOTS } from "@/lib/schooling-data";
-
-export const metadata: Metadata = {
-  robots: SCHOOLING_ROBOTS,
-};
 
 export default function SchoolingLayout({ children }: { children: ReactNode }) {
   return <>{children}</>;

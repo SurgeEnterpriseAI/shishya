@@ -18,11 +18,26 @@
 
 export const SCHOOLING_LAST_VERIFIED = "2026-05";
 
-// 25 Sep 2026: every /schooling page is noindex (links still followed) until
-// school content passes a content gate (K-12 plan, Step 0). The pages stay
-// reachable by URL; nothing school-related goes into sitemap / llms.txt /
-// robots / context.md in this phase. Pinned by tests/unit/schooling-honesty.test.ts.
+// 25 Sep 2026: every /schooling page was noindex (links still followed) until
+// school content passed a content gate (K-12 plan, Step 0). 26 Sep 2026: this
+// is now the noindex value for the pages that still have nothing of their own
+// (see schoolRobots below).
 export const SCHOOLING_ROBOTS = { index: false, follow: true } as const;
+
+// 26 Sep 2026 (school go-live): the section is public page by page. A board,
+// class or subject page that lists the official structure with its official
+// links is indexable; a chapter page is indexable only by the ONE rule in
+// src/lib/school/scope.ts (isSchoolChapterIndexable: Shishya notes or a
+// checked guest quiz), and stays SCHOOLING_ROBOTS otherwise. The 25 Sep
+// hardcoded forms (a board with no seeded class tree, a class the seed does
+// not cover) keep SCHOOLING_ROBOTS. Every metadata a school page returns
+// sets one of the two — tests/unit/schooling-honesty.test.ts checks it.
+export const SCHOOLING_INDEX_ROBOTS = { index: true, follow: true } as const;
+
+/** The robots value for a school page: index when it has real content. */
+export function schoolRobots(indexable: boolean): typeof SCHOOLING_ROBOTS | typeof SCHOOLING_INDEX_ROBOTS {
+  return indexable ? SCHOOLING_INDEX_ROBOTS : SCHOOLING_ROBOTS;
+}
 
 export type BoardType =
   | "national-public"   // CBSE, NIOS — central govt boards
@@ -358,6 +373,18 @@ export function boardLinks(board: Board): { syllabus: boolean; samplePapers: boo
     syllabus: Boolean(board.syllabusUrl),
     samplePapers: Boolean(board.samplePaperUrl) || Object.values(board.samplePapersByClass ?? {}).some(Boolean),
   };
+}
+
+// 26 Sep 2026 (integrator): the ONE rule for a board page — its robots meta
+// (src/app/schooling/[slug]/page.tsx) and its sitemap listing
+// (src/lib/school/landings.ts) both read it, so the sitemap can never list a
+// board the page marks noindex, nor skip one it marks indexable. A board
+// page is indexable when it holds more than the board's website link: a
+// seeded class tree (CBSE / CISCE) or a syllabus / sample-paper page.
+/** @param liveClasses seeded classes of the board on the live surface (0 for the rest) */
+export function isSchoolBoardIndexable(board: Board, liveClasses: number): boolean {
+  const links = boardLinks(board);
+  return liveClasses > 0 || links.syllabus || links.samplePapers;
 }
 
 // 26 Sep 2026: the board page's title and description said "Official
