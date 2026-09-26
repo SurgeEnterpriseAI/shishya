@@ -434,3 +434,17 @@ describe("finalText", () => {
     expect(finalText([{ type: "text", text: "Exam on " }, { type: "text", text: "5 Oct", citations: [{ url: "https://x.gov.in" }] }, { type: "text", text: "." }])).toBe("Exam on 5 Oct.");
   });
 });
+
+// 26 Sep 2026 (prod check): an RRB JE answer stated from memory that no
+// notification came in 2024-25. Past, negative and "usually" claims need a
+// source, and pages for a different exam than the one asked count as no page.
+import { readFileSync as readPromptSrc } from "node:fs";
+describe("prompt: no exam facts from memory", () => {
+  it("covers past, negative and cadence claims, and wrong-exam pages trigger the web", () => {
+    const src = readPromptSrc("src/lib/ask-prompt.ts", "utf8");
+    expect(src).toContain("That includes the past and the negative");
+    expect(src).toContain("\"not released yet\"");
+    expect(src).toContain("Pages for a DIFFERENT exam, post or scheme than the one asked");
+    expect(src).toContain("say plainly that Shishya does not track it yet");
+  });
+});
