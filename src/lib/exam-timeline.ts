@@ -318,8 +318,9 @@ export function titleCycleYear(timeline: readonly TimelineRow[], now: Date = new
   // 2027 regular registration closes" is dated 27 Sep 2026 but opens the GATE
   // 2027 cycle, and the new GATE paper hubs printed "GATE ME 2026 — Exam Date
   // Not Announced Yet". Only the row's own year or the next one is accepted.
-  if (ref.kind !== "EXAM") return labelCycleYear(ref.label, ref.date.getUTCFullYear());
-  return ref.date.getUTCFullYear();
+  // Exam-day rows too: CLAT 2027 is held on 6 Dec 2026 and its official row
+  // reads "CLAT 2027 exam" — the cycle students search for.
+  return labelCycleYear(ref.label, ref.date.getUTCFullYear());
 }
 
 /** The cycle year a row's label names, when it is the row's own year or the

@@ -682,3 +682,10 @@ describe("labelCycleYear — pre-exam rows name their cycle", () => {
     expect(labelCycleYear("NEET UG 2027 applications open", 2026)).toBe(2027);
   });
 });
+
+describe("titleCycleYear — an exam-day row that names next year's cycle (27 Sep 2026)", () => {
+  it("CLAT 2027 held on 6 Dec 2026 titles as 2027", () => {
+    expect(labelCycleYear("CLAT 2027 exam, 2:00 pm to 4:00 pm", 2026)).toBe(2027);
+    expect(labelCycleYear("SSC CGL Tier 1 exam begins", 2026)).toBe(2026);
+  });
+});
