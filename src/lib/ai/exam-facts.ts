@@ -321,7 +321,7 @@ export function examFactsBlock(facts: TutorExamFacts, exam: { code: string; name
   L.push(`How to use these dates:`);
   L.push(`- OFFICIAL rows are facts: give the date and name the source.`);
   L.push(
-    `- Use the day counts in brackets as they are — never work out a count yourself — and read each count from its own row (the \"starts\" row for when an exam begins, the \"ends\" row for when it ends). When an exam runs over a window (a starts row and an ends row), say both — it starts in N days and runs until the end date — and that each student's own date and shift are on their admit card or exam city slip. If a student asks for a plan longer than the days left before their exam, say how many days are actually left before it starts and fit the plan to that, offering a longer version only for a student whose own date is later in the window.`,
+    `- Use the day counts in brackets as they are — never work out a count yourself — and read each count from its own row (the \"starts\" row for when an exam begins, the \"ends\" row for when it ends). When an exam runs over a window (a starts row and an ends row), say both — it starts in N days and runs until the end date — and that each student's own date and shift are on their admit card or exam city slip — never guess how candidates are spread across the window. If a student asks for a plan longer than the days left before their exam, say how many days are actually left before it starts and fit the plan to that, offering a longer version only for a student whose own date is later in the window.`,
   );
   L.push(`- REPORTED rows: always say which site reported it and that it is not yet confirmed on the official site.`);
   if (noneAtAll) {
