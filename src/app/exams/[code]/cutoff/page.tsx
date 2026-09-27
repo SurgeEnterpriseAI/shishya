@@ -48,6 +48,7 @@ import type { SourceTier, TimelineRow } from "@/lib/exam-timeline";
 import { examAlertLabels, getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { categoryHeaderKey, parseCategoryCutoff } from "@/lib/category-cutoff";
 import { cutoffCategoryRowsHtml, cutoffRowsHtml, groupCutoffTables, type CutoffSource, type OfficialCutoffRow } from "@/lib/official-cutoffs";
+import { SCANNED_EVIDENCE_PREFIX, scannedDisclosure } from "@/lib/scanned-cutoff";
 import { newestCutoffLabelYear } from "@/lib/cutoff-label-year";
 import { sourceTier } from "@/lib/official-source";
 import { markingSchemeStatable } from "@/lib/marking-scheme";
@@ -114,13 +115,17 @@ function fillYear(s: string, vars: Record<string, string | number>, year: number
 // 2026, G3: the title now needs the headline table, not only the cycles).
 // verifiedAt = when scripts/import-official-cutoffs.ts found the figure
 // verbatim in its document — the page's only "checked" date.
-type PublishedRow = OfficialCutoffRow & { verifiedAt: Date | string | null };
+// scannedRead (27 Sep 2026) = the row came from a scanned PDF through the
+// importer's --scanned-reviewed path (its evidence starts with
+// SCANNED_EVIDENCE_PREFIX); the table then says how it was read.
+type PublishedRow = OfficialCutoffRow & { verifiedAt: Date | string | null; scannedRead: boolean | null };
 const loadPublishedCutoffs = cache(
   (examId: string): Promise<PublishedRow[]> =>
     prisma
       .$queryRaw<PublishedRow[]>`
         SELECT cycle, stage, post, region, gender, category, "categoryLabel", marks, "maxMarks", "scoreType",
-               "sourceUrl", "sourceTitle", publisher, "publishedOn", "verifiedAt"
+               "sourceUrl", "sourceTitle", publisher, "publishedOn", "verifiedAt",
+               starts_with(evidence, ${SCANNED_EVIDENCE_PREFIX}) AS "scannedRead"
         FROM "OfficialCutoff" WHERE "examId" = ${examId} AND "archivedAt" IS NULL
       `
       .catch(() => [] as PublishedRow[]),
@@ -382,6 +387,8 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
   const practice = await examPracticeState(exam.code);
   const NP = noPracticeCopy(locale);
   const published = groupCutoffTables(publishedRows);
+  // Documents whose figures were read from a scanned PDF (27 Sep 2026).
+  const scannedUrls = new Set(publishedRows.filter((r) => r.scannedRead).map((r) => r.sourceUrl));
   const year = newestCycleYear(published.map((tb) => tb.cycle));
   // The official headline (26 Sep 2026, G3): the page's first figure, its
   // publisher and date; "(Official)" only for an all-official first table.
@@ -629,6 +636,23 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
                     {oneTier ? ` (${t(TIER_KEY[tiers[0]])})` : ""}:{" "}
                     {perRow ? t("cutoff.published.perRow") : docLink(tb.sources[0], true)}
                   </p>
+                  {/* Scanned PDF (27 Sep 2026): the document has no text layer, so
+                      the figures were read off its page images — twice, the second
+                      reading blind to the first (--scanned-reviewed). Said next to
+                      the figures, with the PDF one tap away. */}
+                  {tb.sources
+                    .filter((s) => scannedUrls.has(s.url))
+                    .map((s) => {
+                      const note = scannedDisclosure(locale, s.publisher || hostOf(s.url));
+                      return (
+                        <p key={s.url} className="px-3 pb-2 text-xs text-ink-600">
+                          {note.text}{" "}
+                          <a href={s.url} target="_blank" rel="noopener nofollow" className="font-medium text-saffron-800 underline">
+                            {note.link} ↗
+                          </a>
+                        </p>
+                      );
+                    })}
                 </details>
               );
             })}

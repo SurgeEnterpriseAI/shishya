@@ -39,6 +39,26 @@
 // search pick up a verified cutoff the same day instead of at the weekly
 // sitemap re-submission. Without --apply the flag is ignored and nothing is
 // sent: a dry run stays a dry run.
+//
+// --scanned-reviewed (27 Sep 2026, founder-approved): NTA publishes the NEET
+// UG and JEE Main cut-offs only as scanned page images, which every check
+// above refuses. With this flag, rows whose source `kind` says scanned go a
+// reviewed way instead — and ONLY those rows; every other row keeps the checks
+// above. The PDF is re-downloaded (same download code), confirmed to have no
+// text layer, its sha256 and page count recorded, its first 8 pages rendered
+// at ~200 dpi and each page read once, blind, by a vision model
+// (scripts/scanned-cutoff-read.ts; the researcher's figures are never shown to
+// it). A row passes only when one transcribed table row agrees with it digit
+// for digit — label, figure, every figure of the evidence line (candidates
+// count included) — with the figure in a column consistent with the row
+// (src/lib/scanned-cutoff.ts matchScannedRow). Readings are journalled under
+// D:/CodexProjects/shishya-data/scanned-cutoff-reads/<EXAM>-<sha8>.json; the
+// dry run pays for them (hard cap $2 a run, --max-usd lowers it) and --apply
+// only re-uses the journal, never calling the model. Written rows carry
+// "[scanned PDF — read twice, readings agree]" at the start of their evidence,
+// and the cutoff page discloses how they were read. No schema change.
+//   npx tsx --env-file=.env.local scripts/import-official-cutoffs.ts --dir <folder> --scanned-reviewed            # dry run (reads, spends <= $2)
+//   npx tsx --env-file=.env.local scripts/import-official-cutoffs.ts --dir <folder> --scanned-reviewed --apply    # write from the journal
 
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
@@ -62,6 +82,16 @@ import {
 } from "../src/lib/official-cutoffs";
 import { pdfplumberGrid } from "./cutoff-grid";
 import { officialDataUrls, submitIndexNow } from "../src/lib/indexnow";
+import { isScannedSourceKind, matchScannedRow, scannedEvidence } from "../src/lib/scanned-cutoff";
+import {
+  BillingStopError,
+  newSpendState,
+  readScannedPdf,
+  SpendCapError,
+  visionKeyName,
+  type ScannedRead,
+  type SpendState,
+} from "./scanned-cutoff-read";
 
 interface SourceJson {
   id: string;
@@ -78,7 +108,7 @@ interface ExamJson {
   rows: (CutoffCandidate & { sourceId: string })[];
   notes?: string;
 }
-type Via = "download" | "download (pdfplumber)" | "download (grid)" | "saved copy";
+type Via = "download" | "download (pdfplumber)" | "download (grid)" | "saved copy" | "scanned PDF (second reading)";
 interface Extracted {
   via: "download" | "saved copy";
   layout: CutoffSourceIndex;
@@ -90,6 +120,8 @@ interface Passed {
   row: ExamJson["rows"][number];
   src: SourceJson;
   via: Via;
+  /** The agreeing row of the second reading (scanned sources only). */
+  scanned?: { page: number; column: string; cells: string[] };
 }
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ShishyaCutoffVerifier/1.0 (+https://shishya.in/editorial-policy)";
@@ -202,6 +234,46 @@ async function extract(src: SourceJson, work: string): Promise<Extracted> {
   }
 }
 
+/** --scanned-reviewed: download the scan again (the same download code),
+ *  then the blind second reading. null = the PDF has a text layer after all,
+ *  so its rows take the normal checks. */
+async function extractScanned(
+  exam: string,
+  src: SourceJson,
+  work: string,
+  apply: boolean,
+  spend: SpendState,
+): Promise<ScannedRead | null> {
+  const raw = join(work, `${src.id.replace(/[^\w.-]+/g, "_")}.scan.bin`);
+  let buf = await download(src.url, raw);
+  buf = pdfFromJsonEnvelope(buf) ?? buf;
+  if (buf.subarray(0, 5).toString("latin1") !== "%PDF-") throw new Error(`${src.id}: the source is not a PDF, so it cannot be a scanned PDF`);
+  const pdf = raw.replace(/\.bin$/, ".pdf");
+  writeFileSync(pdf, buf);
+  const read = await readScannedPdf({
+    exam,
+    sourceId: src.id,
+    url: src.url,
+    pdfFile: pdf,
+    pdfBytes: buf,
+    pdftotextText: pdftotextLayout(pdf),
+    apply,
+    spend,
+    log: (l) => console.log(l),
+  });
+  if (read.hasTextLayer) {
+    console.log(`    ${src.id}: ${read.problem}; its rows take the normal checks`);
+    return null;
+  }
+  if (!read.ok && read.problem) console.log(`    ! ${src.id} ${read.problem}`);
+  for (const p of read.pageProblems) console.log(`    ! ${src.id} ${p}`);
+  console.log(
+    `    ${src.id}: second reading of pages ${read.pagesRead.join(", ") || "none"} ` +
+      `(${read.reusedPages} from the journal, $${read.costUsd.toFixed(4)} new) — ${read.journalFile}`,
+  );
+  return read;
+}
+
 function verify(row: ExamJson["rows"][number], doc: Extracted | undefined): { verdict: GridVerdict; via: Via | null } {
   if (!doc) return { verdict: { ok: false, reasons: ["source not available"] }, via: null };
   const pdfFile = doc.pdfFile;
@@ -286,6 +358,15 @@ async function main() {
   const allowSaved = process.argv.includes("--allow-saved-copy");
   // 26 Sep 2026: IndexNow only after real writes — never on a dry run.
   const indexNow = apply && process.argv.includes("--indexnow");
+  // 27 Sep 2026: scanned sources take the reviewed second-reading path.
+  const scannedReviewed = process.argv.includes("--scanned-reviewed");
+  const spend = newSpendState(arg("--max-usd"));
+  if (scannedReviewed) {
+    console.log(
+      `--scanned-reviewed: scanned sources are read a second time, blind, by the vision model (key ${visionKeyName()}); ` +
+        (apply ? "--apply re-uses the dry run's journal and never calls the model" : `new spend capped at $${spend.capUsd}`),
+    );
+  }
   if (process.argv.includes("--indexnow") && !apply) console.log("--indexnow ignored without --apply (dry run: nothing is written or submitted)");
   const changed: { code: string; examId: string }[] = [];
   if (!dir || !existsSync(dir)) throw new Error("--dir <folder of EXAM_CODE.json files> is required");
@@ -304,10 +385,28 @@ async function main() {
       continue;
     }
     const docs = new Map<string, Extracted>();
+    const scans = new Map<string, ScannedRead>();
+    const scannedIds = new Set<string>();
     for (const s of data.sources ?? []) {
       if (!/^https:\/\//.test(s.url)) {
         console.log(`   x ${s.id}: not an https URL — its rows will fail`);
         continue;
+      }
+      if (scannedReviewed && isScannedSourceKind(s.kind)) {
+        try {
+          const read = await extractScanned(data.exam, s, work, apply, spend);
+          if (read) {
+            scannedIds.add(s.id);
+            scans.set(s.id, read);
+            continue;
+          }
+        } catch (err) {
+          // The spend cap and a billing stop end the whole run; the journal keeps what was read.
+          if (err instanceof BillingStopError || err instanceof SpendCapError) throw err;
+          scannedIds.add(s.id);
+          console.log(`   x ${s.id} (scanned): ${(err as Error).message}`);
+          continue;
+        }
       }
       try {
         docs.set(s.id, await extract(s, work));
@@ -319,8 +418,26 @@ async function main() {
     const passed: Passed[] = [];
     for (const row of data.rows ?? []) {
       const src = data.sources.find((s) => s.id === row.sourceId);
-      const { verdict, via } = verify(row, src ? docs.get(src.id) : undefined);
       const label = [row.cycle, row.stage, row.post, row.region, row.gender, row.categoryLabel].filter(Boolean).join(" · ");
+      if (src && scannedIds.has(src.id)) {
+        // A scanned source: the second reading decides; the text checks never apply.
+        const read = scans.get(src.id);
+        const sv = read ? matchScannedRow(row, read.readings) : { ok: false, reasons: ["the scanned source could not be read"] };
+        if (sv.ok && "cells" in sv && sv.cells && sv.page !== undefined) {
+          console.log(`   AGREE ${label} = ${row.marks} (page ${sv.page}, under "${sv.column}"; second reading: ${sv.cells.join(" | ")})`);
+          passed.push({
+            row: { ...row, region: canonicalRegion(row.region ?? "") ?? (row.region ?? "").trim() },
+            src,
+            via: "scanned PDF (second reading)",
+            scanned: { page: sv.page, column: sv.column ?? "", cells: sv.cells },
+          });
+        } else {
+          failTotal++;
+          console.log(`   DISAGREE (scanned) ${label} = ${row.marks}: ${sv.reasons.join("; ")}`);
+        }
+        continue;
+      }
+      const { verdict, via } = verify(row, src ? docs.get(src.id) : undefined);
       if (verdict.ok && src && via) {
         // A state / UT in one spelling — read from the printed region cell when
         // the grid proof matched one ("Andhra" in the research, "Andhra Pradesh" on the page).
@@ -355,8 +472,11 @@ async function main() {
 
     if (!apply) continue;
     let written = 0;
-    for (const { row, src, via } of kept) {
+    for (const { row, src, via, scanned } of kept) {
       if (via === "saved copy" && !allowSaved) continue;
+      if (via === "scanned PDF (second reading)" && !scanned) continue;
+      // A scanned-PDF row says so at the start of its evidence (the cutoff page reads it).
+      const evidence = scanned ? scannedEvidence(row.evidence, scanned.page, scanned.cells) : row.evidence;
       const publishedOn = /^\d{4}-\d{2}-\d{2}$/.test(src.publishedOn ?? "") ? new Date(`${src.publishedOn}T00:00:00Z`) : null;
       await prisma.$executeRaw`
         INSERT INTO "OfficialCutoff" (id, "examId", cycle, stage, post, region, gender, category, "categoryLabel", marks,
@@ -364,7 +484,7 @@ async function main() {
         VALUES (${crypto.randomUUID()}, ${exam.id}, ${row.cycle.trim()}, ${row.stage.trim()}, ${(row.post ?? "").trim()},
           ${(row.region ?? "").trim()}, ${(row.gender ?? "").trim()}, ${row.category}, ${row.categoryLabel.trim()},
           ${asciiDigits(row.marks).trim()}, ${asciiDigits(row.maxMarks ?? "").trim()}, ${(row.scoreType ?? "").trim()},
-          ${src.url}, ${(src.title ?? "").trim()}, ${(src.publisher ?? "").trim()}, ${publishedOn}, ${row.evidence}, NOW(), NOW())
+          ${src.url}, ${(src.title ?? "").trim()}, ${(src.publisher ?? "").trim()}, ${publishedOn}, ${evidence}, NOW(), NOW())
         ON CONFLICT ("examId", cycle, stage, post, region, gender, "categoryLabel") DO UPDATE SET
           category = EXCLUDED.category, marks = EXCLUDED.marks, "maxMarks" = EXCLUDED."maxMarks",
           "scoreType" = EXCLUDED."scoreType", "sourceUrl" = EXCLUDED."sourceUrl", "sourceTitle" = EXCLUDED."sourceTitle",
@@ -390,6 +510,12 @@ async function main() {
     for (const u of list) console.log(`   ${u}`);
   }
 
+  if (scannedReviewed) {
+    console.log(
+      `\nScanned second reading: ${spend.calls} new vision call(s), $${spend.spentUsd.toFixed(4)} new spend ` +
+        `(cap $${spend.capUsd}; priced at $3 / $15 per MTok, above Sonnet 5's list price)`,
+    );
+  }
   console.log(
     `\nTOTAL: ${passTotal} rows pass, ${failTotal} fail${apply ? `; ${writtenTotal} written` : " (dry run — nothing written; add --apply)"}`,
   );
