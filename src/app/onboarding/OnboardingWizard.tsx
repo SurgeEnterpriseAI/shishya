@@ -217,10 +217,15 @@ export function OnboardingWizard({
       // The coach intake opens pre-filled with their first pick (exam +
       // official date), so it's ~15 seconds from here. Skipping is one
       // tap (header nav) — no trap.
+      // 27 Sep 2026 (founder, content first): the finish opens content, not a
+      // second form — the first exam's hub (its coach plan is one tap from
+      // there), /schooling for a school stage, else where they came from.
       if (returnTo) {
         router.push(`${returnTo}?setup=done`);
       } else if (prepCodes.length > 0) {
-        router.push(`/coach?exam=${encodeURIComponent(prepCodes[0])}`);
+        router.push(`/exams/${encodeURIComponent(prepCodes[0])}`);
+      } else if (stage === "CLASS_8" || stage === "CLASS_9_10" || stage === "CLASS_11_12") {
+        router.push("/schooling");
       } else {
         router.push(redirectAfter);
       }

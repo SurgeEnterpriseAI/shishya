@@ -103,7 +103,7 @@ export default async function OnboardingPage({
       FROM "Exam"
       WHERE "active" = TRUE AND ${notSchoolSql("")}
       ORDER BY "candidatesPerYear" DESC NULLS LAST, "code" ASC
-      LIMIT 100
+      LIMIT 500 -- 27 Sep 2026: every active exam (192 today), not the first 100 — search must find them all
     `;
   } catch (err) {
     console.error("[onboarding] exam list failed, using fallback:", err);

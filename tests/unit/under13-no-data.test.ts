@@ -240,3 +240,10 @@ describe("client islands send and store nothing identifying on Class 1-7 pages",
     expect(blockedInstallPath("/schooling")).toBe(false);
   });
 });
+
+describe("content first — no timed sign-up sheet (27 Sep 2026)", () => {
+  it("the root layout does not mount SignupNudge", () => {
+    const src = stripComments(read("src/app/layout.tsx"));
+    expect(src).not.toMatch(/SignupNudge/);
+  });
+});

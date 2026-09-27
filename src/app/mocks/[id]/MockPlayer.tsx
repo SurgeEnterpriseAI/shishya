@@ -247,7 +247,7 @@ export function MockPlayer({
     if (target === "en" || ids.length === 0) return;
     const res = await apiPost<{
       locale: Locale;
-      questions: { id: string; body: string; options: { key: string; text: string }[]; solution: string }[];
+      questions: { id: string; body: string; options: { key: string; text: string }[] }[];
     }>(`/api/mocks/${mock.id}/translate`, { locale: target, questionIds: ids });
     setTranslations((prev) => {
       const next = new Map(prev);

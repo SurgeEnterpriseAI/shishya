@@ -6,7 +6,13 @@
 // persisted so the next caller for the same (questionId, locale) is free.
 //
 // Body: { locale: "hi" | "te" | ... }
-// Response: { questions: [{ id, body, options, solution }, ...], locale }
+// Response: { questions: [{ id, body, options }, ...], locale }
+//
+// 27 Sep 2026 (security): no `solution` in the response. This route needs
+// no sign-in and runs DURING a mock, so returning the explanation let anyone
+// read every answer before submitting. The player only ever used body and
+// options; translated solutions are still cached (upsertTranslation) for
+// the attempt-owned results route (/api/attempts/[id]/translate).
 
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
@@ -79,7 +85,6 @@ export async function POST(
           id: q.id,
           body: q.body,
           options: Array.isArray(q.options) ? q.options : [],
-          solution: q.solution,
         }));
       return ok({ locale, questions: out });
     }
@@ -182,7 +187,6 @@ export async function POST(
         id: q.questionId,
         body: q.body,
         options: q.options,
-        solution: q.solution,
       }));
 
     // Silent-failure guard: if the caller asked us to translate some

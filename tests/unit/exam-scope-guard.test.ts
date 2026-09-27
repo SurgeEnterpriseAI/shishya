@@ -375,7 +375,7 @@ const KEYED_PRISMA_FILES = [
   // tutor
   "src/app/api/chat/route.ts",
   "src/app/api/chat/import/route.ts",
-  "src/app/api/chat-route/route.ts",
+  // src/app/api/chat-route/route.ts retired 27 Sep 2026 (410, no lookups)
   "src/app/chat/page.tsx",
   "src/lib/ai/tools.ts",
   "src/lib/ai/adaptive-quiz.ts",

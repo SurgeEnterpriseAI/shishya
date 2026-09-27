@@ -14,6 +14,15 @@ export interface StageOption {
 }
 
 export const STAGE_OPTIONS: StageOption[] = [
+  // 27 Sep 2026: Class 8 had no card although Class 8 has chapter notes,
+  // checked practice and the AI tutor (13 and above). No exam suggestions:
+  // the finish sends school stages to /schooling (OnboardingWizard submit).
+  {
+    value: "CLASS_8",
+    label: "Class 8",
+    description: "Class 8 chapters with notes, practice questions and the AI tutor — free.",
+    suggestedPrepCodes: [],
+  },
   {
     value: "CLASS_9_10",
     label: "Class 9–10",

@@ -47,6 +47,7 @@ import { studentModeCodesOf } from "@/lib/school/student-classes";
 import { readSchoolProfile } from "@/lib/school/student-db";
 
 const ALLOWED_STAGES = new Set([
+  "CLASS_8", // 27 Sep 2026: the wizard's Class 8 card
   "CLASS_9_10",
   "CLASS_11_12",
   "UG",
