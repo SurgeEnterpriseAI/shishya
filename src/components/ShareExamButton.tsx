@@ -18,7 +18,7 @@
 // canonical / hreflang stay bare — only the copy that leaves the site
 // carries tags.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { shareUrl, type ShareChannel } from "@/lib/share-url";
 
 interface Props {
@@ -36,6 +36,14 @@ interface Props {
 
 export function ShareExamButton({ url, message, label, surface, exam }: Props) {
   const [copied, setCopied] = useState(false);
+  // 27 Sep 2026: whether the phone can share natively is read AFTER mount —
+  // reading navigator during render gave the server and the phone different
+  // HTML (no share button vs one), a hydration failure (React #418) that made
+  // every exam page with this button re-render from scratch on phones.
+  const [canShare, setCanShare] = useState(false);
+  useEffect(() => {
+    setCanShare(typeof navigator !== "undefined" && "share" in navigator);
+  }, []);
 
   const campaign = surface ?? "page";
   const tagged = (channel: ShareChannel) => shareUrl(url, { surface: campaign, channel, exam });
@@ -110,7 +118,7 @@ export function ShareExamButton({ url, message, label, surface, exam }: Props) {
       >
         {copied ? "Copied ✓" : "Copy link"}
       </button>
-      {typeof navigator !== "undefined" && "share" in navigator && (
+      {canShare && (
         <button
           type="button"
           onClick={nativeShare}

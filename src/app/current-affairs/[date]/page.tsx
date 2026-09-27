@@ -12,6 +12,7 @@ import { JsonLd, breadcrumbLd } from "@/components/JsonLd";
 import { caNavLinks, loadCaNeighbours } from "@/lib/current-affairs-nav";
 import { LandingActions } from "@/components/LandingActions";
 import { currentAffairsActions } from "@/lib/landing-actions";
+import { SoftWall } from "@/components/SoftWall";
 
 export const revalidate = 3600;
 
@@ -125,6 +126,8 @@ export default async function CurrentAffairsDatePage({ params }: { params: Promi
         </p>
         {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
         <LandingActions actions={currentAffairsActions(pretty, "en")} locale="en" surface="ca-daily" />
+        {/* 27 Sep 2026: sign-up wall EXPERIMENT (src/lib/soft-wall.ts) — half of signed-out visitors see a few lines, the rest blurred behind a free sign-in card; crawlers always get this full HTML. */}
+        <SoftWall>
 
         {[...byCat.entries()].map(([cat, items]) => (
           <section key={cat} className="mt-7">
@@ -181,6 +184,7 @@ export default async function CurrentAffairsDatePage({ params }: { params: Promi
             Practice free on your exam →
           </Link>
         </div>
+        </SoftWall>
       </section>
     </main>
   );

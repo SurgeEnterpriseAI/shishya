@@ -49,6 +49,7 @@ import { examPracticeState } from "@/lib/db/exam-practice";
 import { fillNoPractice, noPracticeCopy } from "@/lib/no-practice-copy";
 import { LandingActions } from "@/components/LandingActions";
 import { examNextActions } from "@/lib/landing-actions";
+import { SoftWall } from "@/components/SoftWall";
 
 /** JSON-LD safe for inline <script>: a "</script>" inside a model- or
  *  web-derived label must not break out of the block. */
@@ -418,6 +419,8 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
           locale={locale}
           surface="exam-updates"
         />
+        {/* 27 Sep 2026: sign-up wall EXPERIMENT (src/lib/soft-wall.ts) — half of signed-out visitors see a few lines, the rest blurred behind a free sign-in card; crawlers always get this full HTML. */}
+        <SoftWall>
 
         {/* Exam Week Mode (6 Sep 2026) — the same phase card as the hub,
             above the key dates and the timeline. Renders nothing outside
@@ -682,6 +685,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
         <p className="mt-6 text-xs text-ink-500">
           <Link href={p("/exam-calendar")} className="font-medium text-saffron-700 hover:text-saffron-800">{t("calendar.title")} →</Link>
         </p>
+        </SoftWall>
       </section>
     </main>
   );

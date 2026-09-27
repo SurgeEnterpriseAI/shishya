@@ -57,7 +57,9 @@ const CHAT_RE = new RegExp(String.raw`^\/${LOCALE}chat(?:[/?#]|$)`);
 
 export function loginIntent(callbackUrl: string, from?: string | null): LoginIntent {
   const cb = callbackPath(callbackUrl);
-  const fromHeader = from === "header";
+  // 27 Sep 2026: the site-wide sign-up offer (from=pitch) and the sign-up wall
+  // experiment (from=wall) are general sign-ins too — no "your mock is one tap away".
+  const fromHeader = from === "header" || from === "pitch" || from === "wall";
   const m = cb.match(EXAM_CODE_RE);
   const examCode = m ? m[1] : null;
   if (isSchoolSignInCallback(callbackUrl)) return { kind: "school", examCode, tryFirst: false };

@@ -71,6 +71,7 @@ import { examPracticeState } from "@/lib/db/exam-practice";
 import { dropPracticeSentence, fillNoPractice, noPracticeCopy } from "@/lib/no-practice-copy";
 import { LandingActions } from "@/components/LandingActions";
 import { examNextActions } from "@/lib/landing-actions";
+import { SoftWall } from "@/components/SoftWall";
 
 // 900: the exam-week boundaries (D-1 in, D+7 out) must show up within 15
 // minutes. The page reads the locale (and, inside exam week, the session),
@@ -505,6 +506,8 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
           locale={locale}
           surface="exam-cutoff"
         />
+        {/* 27 Sep 2026: sign-up wall EXPERIMENT (src/lib/soft-wall.ts) — half of signed-out visitors see a few lines, the rest blurred behind a free sign-in card; crawlers always get this full HTML. */}
+        <SoftWall>
 
         {/* Exam-week block (D-1 .. D+7): the answer the exam-day lander
             came for — when the official cutoff arrives — before the
@@ -825,6 +828,7 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
             </Link>
           </div>
         )}
+        </SoftWall>
       </section>
     </main>
   );

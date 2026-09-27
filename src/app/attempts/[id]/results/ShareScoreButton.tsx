@@ -33,7 +33,7 @@
 // of their own lands on a page in the language of the message, not an
 // English one; the English link is byte-identical to before.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { shareUrl, type ShareChannel } from "@/lib/share-url";
 import { fillTemplate } from "@/lib/i18n";
 import type { ShareScoreCopy } from "@/lib/dashboard-cards-copy";
@@ -51,6 +51,12 @@ interface Props {
 
 export function ShareScoreButton({ attemptId, examCode, examShortName, scoreDisplay, labels, locale }: Props) {
   const [copied, setCopied] = useState(false);
+  // 27 Sep 2026: read after mount — a render-time navigator check gave the server
+  // and the phone different HTML (React #418, the page re-rendered from scratch).
+  const [canShare, setCanShare] = useState(false);
+  useEffect(() => {
+    setCanShare(typeof navigator !== "undefined" && "share" in navigator);
+  }, []);
 
   const tagged = (channel: ShareChannel) =>
     shareUrl(shareLandingPath(attemptId, locale), { surface: "results", channel, exam: examCode });
@@ -146,7 +152,7 @@ export function ShareScoreButton({ attemptId, examCode, examShortName, scoreDisp
           >
             {copied ? labels.copied : labels.copy}
           </button>
-          {typeof navigator !== "undefined" && "share" in navigator && (
+          {canShare && (
             <button
               type="button"
               onClick={nativeShare}

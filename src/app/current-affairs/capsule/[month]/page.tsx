@@ -13,6 +13,7 @@ import { Header } from "@/components/Header";
 import { CapsuleActions } from "./CapsuleActions";
 import { LandingActions } from "@/components/LandingActions";
 import { currentAffairsActions } from "@/lib/landing-actions";
+import { SoftWall } from "@/components/SoftWall";
 
 export const revalidate = 3600;
 
@@ -102,6 +103,8 @@ export default async function CapsulePage({
         <div className="print:hidden">
           <LandingActions actions={currentAffairsActions(label, "en")} locale="en" surface="ca-capsule" />
         </div>
+        {/* 27 Sep 2026: sign-up wall EXPERIMENT (src/lib/soft-wall.ts) — half of signed-out visitors see a few lines, the rest blurred behind a free sign-in card; crawlers always get this full HTML. */}
+        <SoftWall>
 
         {[...byDate.entries()].map(([iso, dayItems]) => (
           <div key={iso} className="mt-7 break-inside-avoid-page">
@@ -144,6 +147,7 @@ export default async function CapsulePage({
           </Link>
           .
         </p>
+        </SoftWall>
       </section>
     </main>
   );
