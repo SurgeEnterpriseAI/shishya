@@ -51,6 +51,8 @@ const fixed = vi.hoisted(() => ({
   exams: 180,
   mocksTaken: 5230,
   mocksToday: 72,
+  guestPapers: 12,
+  guestPapersToday: 3,
   users: 1900,
   users7d: 170,
   usersToday: 14,
@@ -80,6 +82,7 @@ vi.mock("@/lib/db/prisma", () => {
     if (sql.includes(`FROM "Question" q`)) return f.practiceQuestions;
     if (sql.includes(`FROM "TopicTeachingNote"`)) return f.topicNotes;
     if (sql.includes(`kind = 'PAGE_VIEW' AND "createdAt" >=`)) return f.pageViewsToday;
+    if (sql.includes("'guest-paper-graded'")) return sql.includes("'2026-09-27T00:00:00Z'") ? f.guestPapers : f.guestPapersToday;
     throw new Error(`unrouted SQL in test: ${sql.slice(0, 120)}`);
   };
   return {
@@ -157,8 +160,8 @@ const EXPECTED: LiveCounts = {
   pageViewsToday: fixed.pageViewsToday,
   uniqueVisitors: fixed.engaged + (fixed.walkIns - fixed.overlap), // 14,437
   walkIns: fixed.walkIns,
-  mocksTaken: fixed.mocksTaken,
-  mocksToday: fixed.mocksToday,
+  mocksTaken: fixed.mocksTaken + fixed.guestPapers,
+  mocksToday: fixed.mocksToday + fixed.guestPapersToday,
   totalSignups: fixed.users,
   signupsLast7Days: fixed.users7d,
   signupsToday: fixed.usersToday,
@@ -241,7 +244,7 @@ describe("label / definition table", () => {
   it("today / this-week pills sit on the counter they belong to and only when positive", () => {
     const pill = (k: keyof LiveCounts) => items.find((it) => it.key === k)?.pill;
     expect(pill("totalPageViews")).toBe("+918 today");
-    expect(pill("mocksTaken")).toBe("+72 today");
+    expect(pill("mocksTaken")).toBe("+75 today"); // 72 finished attempts + 3 guest papers (27 Sep 2026)
     expect(pill("questionsAnswered")).toBe("+888 today");
     expect(pill("tutorQuestions")).toBe("+54 today");
     expect(pill("totalSignups")).toBe("+170 this week");

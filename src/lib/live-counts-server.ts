@@ -138,8 +138,8 @@ export const LIVE_COUNT_DEFINITIONS: Record<keyof LiveCounts, string> = {
   uniqueVisitors:
     "Distinct people who came to Shishya: identities on 2+ page views, or one view that arrived from another site or a tagged link (for example utm_source=chatgpt.com — 27 Sep 2026: these were being missed), plus identity-less browser landings, overlap-corrected. Proves a visit, not learning.",
   walkIns: "Identity-less browser page views (single-page landers) — the internal split of uniqueVisitors; not shown.",
-  mocksTaken: "Attempt rows with status SUBMITTED or AUTO_SUBMITTED — mocks a student finished, any exam or school chapter.",
-  mocksToday: "Attempts submitted since 00:00 IST today.",
+  mocksTaken: "Attempt rows with status SUBMITTED or AUTO_SUBMITTED — mocks a student finished, any exam or school chapter — plus whole papers guests finished without an account (counted when the server grades one with at least one answer; from 27 Sep 2026, founder call).",
+  mocksToday: "Attempts submitted since 00:00 IST today, plus guest papers graded since then.",
   totalSignups: "User rows (accounts).",
   signupsLast7Days: "Accounts created in the last 7 days (rolling).",
   signupsToday: "Accounts created since 00:00 IST today.",
@@ -332,6 +332,8 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     answeredTodayRows,
     liveTestRows,
     examGoals,
+    guestPapersRows,
+    guestPapersTodayRows,
   ] = await Promise.all([
     getSupplyCounts(now),
     // Distinct HUMAN visitors all-time — definitions audited 16 Aug 2026
@@ -508,6 +510,19 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     // Exam goals set: active enrolments in real exams (a school class
     // enrolment is not an exam goal).
     prisma.enrollment.count({ where: { active: true, exam: NOT_SCHOOL_WHERE } }),
+    // Guest whole papers (27 Sep 2026, founder: they count as mock exams
+    // taken). One anonymous row per paper the grade route graded with at
+    // least one answer (src/app/api/guest-paper/grade/route.ts) — no id,
+    // so no person is counted twice by accident or tracked. The feature
+    // started 27 Sep 2026; the literal lets the createdAt index do the work.
+    prisma.$queryRaw<CountRow[]>`
+      SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent"
+      WHERE kind = 'CTA_CLICKED' AND "createdAt" >= '2026-09-27T00:00:00Z'::timestamptz AND props->>'cta' = 'guest-paper-graded'
+    `,
+    prisma.$queryRaw<CountRow[]>`
+      SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent"
+      WHERE kind = 'CTA_CLICKED' AND "createdAt" >= ${dayStart} AND props->>'cta' = 'guest-paper-graded'
+    `,
   ]);
 
   // Combined "visitors" (founder call, 31 Jul; relabelled 26 Sep 2026):
@@ -525,8 +540,8 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     pageViewsToday: n(pageViewsTodayRows),
     uniqueVisitors: engaged + Math.max(0, landers - overlap),
     walkIns: landers,
-    mocksTaken,
-    mocksToday,
+    mocksTaken: mocksTaken + n(guestPapersRows),
+    mocksToday: mocksToday + n(guestPapersTodayRows),
     totalSignups,
     signupsLast7Days,
     signupsToday,

@@ -96,9 +96,17 @@ describe("guestPaperCopy — en, hi and te carry the same keys and placeholders"
 
 describe("guest paper — no writes, no keys before submit (source)", () => {
   const WRITE = /\.(?:create|createMany|update|updateMany|upsert|delete|deleteMany)\(|\$executeRaw|recordEvent\(|ensureEnrollment\(/;
-  it("the grade route and the loader write nothing", () => {
-    expect(code(read("src/app/api/guest-paper/grade/route.ts"))).not.toMatch(WRITE);
+  it("the loader writes nothing; the grade route writes only one anonymous count row", () => {
     expect(code(read("src/lib/guest-paper-db.ts"))).not.toMatch(WRITE);
+    const route = code(read("src/app/api/guest-paper/grade/route.ts"));
+    // 27 Sep 2026 (founder: guest papers count as mock exams taken): exactly one recordEvent,
+    // with no user id, cookie id or fingerprint, and only when something was answered.
+    expect(route.match(/recordEvent\(/g)?.length).toBe(1);
+    const call = route.slice(route.indexOf("recordEvent({"), route.indexOf("});", route.indexOf("recordEvent({")));
+    expect(call).not.toMatch(/userId|anonId|ipHash|uaHash|refHost/);
+    expect(call).toContain('cta: "guest-paper-graded"');
+    expect(route).toContain("if (answered > 0) {");
+    expect(route.replace(/recordEvent\(/, "")).not.toMatch(WRITE);
   });
   it("the grade route refuses bots and is rate limited", () => {
     const src = code(read("src/app/api/guest-paper/grade/route.ts"));

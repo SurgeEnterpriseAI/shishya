@@ -4,8 +4,11 @@
 // with no sign-in; this route grades it. It re-reads the served paper
 // (loadGuestPaper — the page's own read), grades it with the same pure grader
 // a signed-in submit uses (gradeSubmission → scoreAttempt), and only now
-// returns the answer keys and solutions. It WRITES NOTHING: no Attempt, no
-// Mock, no weakness row, no log. Bots get 403; a guest gets 60 grades an
+// returns the answer keys and solutions. It writes no Attempt, Mock, weakness row or
+// log — only, for a paper with at least one answer, ONE anonymous count row
+// (27 Sep 2026, founder: guest papers count as "mock exams taken"): kind
+// CTA_CLICKED, cta "guest-paper-graded", the exam and the counts, and no
+// user id, cookie id, IP hash or referrer. Bots get 403; a guest gets 60 grades an
 // hour per IP. Live tests and a user's own mocks are refused (not_available).
 //
 // Body: { mockId, answers: [{ questionId, chosen, timeSec, marked }] (≤500) }
@@ -18,6 +21,7 @@ import { classifyClient } from "@/lib/client-class";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 import { loadGuestPaper } from "@/lib/guest-paper-db";
 import { weakestFirst, type GuestGradeResult } from "@/lib/guest-paper";
+import { recordEvent } from "@/lib/analytics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -96,6 +100,15 @@ export async function POST(req: Request) {
         correct: correctById.get(q.id) === true,
       })),
     };
+    const answered = graded.scored.filter((s) => s.chosen != null).length;
+    if (answered > 0) {
+      await recordEvent({
+        kind: "CTA_CLICKED",
+        path: `/mocks/${paper.mockId}`,
+        props: { cta: "guest-paper-graded", examCode: paper.examCode, total: questionIds.length, answered },
+        client: "browser",
+      });
+    }
     return json(result);
   } catch (err) {
     console.error("[guest-paper/grade] failed:", err);
