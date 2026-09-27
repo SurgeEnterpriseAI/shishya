@@ -203,38 +203,54 @@ export const SCHOLARSHIPS: Scholarship[] = [
     relevantExamCodes: ["JEE_MAIN", "JEE_ADVANCED", "NEET_UG"],
     tags: ["science", "research", "jee", "neet", "inspire", "dst", "merit"],
   },
+  // 27 Sep 2026 review: re-read on the guidelines and FAQ linked from the
+  // scheme's NSP card (scholarships.gov.in: CSSS_GUIDLINES_07022024_updated.pdf,
+  // "Applicable for academic year 2022-23 onwards", and FAQ_DOHE_CSSS.pdf).
+  // minMarksPct 80 is removed: the rule is a board percentile, not a marks
+  // percentage (4(i) "above 80th percentile of successful candidates in the
+  // relevant stream from the respective Board of Examination in Class XII").
+  // Name as on the NSP card; awarding body per the FAQ header ("Department of
+  // Higher Education (Scholarship Division)"). Amount per para 7, FAQ Q5-Q6;
+  // eligibility per 4(ii)-(viii), FAQ Q1 (no drop year), Q29 (AISHE); 82,000
+  // awards, half for girls, 15% SC / 7.5% ST / 27% OBC / 5% PwBD (paras 2, 3,
+  // 5). NSP home: "Students may apply for one merit-based scholarship scheme
+  // and one or more welfare-based scholarship schemes from AY 2026–27".
+  // Dates are left to NSP (6(ii)); FAQ Q16: live on NSP "from 2 June, 2025".
   {
     id: "csss",
-    name: "Central Sector Scholarship Scheme (CSSS)",
-    awardingBody: "Ministry of Education, Govt. of India",
+    name: "PM-USP Central Sector Scheme of Scholarship for College and University Students (CSSS)",
+    awardingBody: "Department of Higher Education, Ministry of Education, Govt. of India",
     type: "MERIT",
     state: null,
     levels: ["UG", "PG"],
     eligibility: {
-      minMarksPct: 80,
       incomeMaxLakhs: 4.5,
-      note: "Top 20 percentile in your state's class 12 board (subject to ~₹4.5L family income).",
+      note: "Above the 80th percentile of successful Class 12 candidates in your stream on your board (a state board, CBSE or CISCE; the board's own list decides). You must have passed Class 12 in the last academic year (students who took a drop year are not eligible) and be in the first year of a regular degree course, not distance, correspondence or diploma, at a recognised college with an AISHE code. Gross family income up to ₹4.5 lakh a year. You cannot also hold another merit scholarship, a state-run scholarship, a fee waiver or fee reimbursement. (NSP's 2026-27 notice lets a student apply for one merit-based scheme plus welfare-based schemes, so check your case on NSP.) Renewal each year needs at least 50% marks in the annual exam and 75% attendance.",
     },
-    amount: "₹12,000/year for UG (3 years) + ₹20,000/year for PG (2 years). Total up to ₹76,000.",
+    amount: "₹12,000 a year for the first three years of graduation and ₹20,000 a year at postgraduate level. Five-year or integrated professional courses get ₹20,000 in the 4th and 5th years, and B.Tech/B.E. students get ₹20,000 in the 4th year. At most 5 years in all (up to ₹76,000), paid by DBT into an Aadhaar-seeded bank account.",
     applyUrl: "https://scholarships.gov.in/",
     description:
-      "Awarded to ~82,000 fresh class-12 students annually for college and PG study. Pure merit + means; no caste restriction. Applied via NSP.",
-    deadline: "Usually Oct–Nov on NSP",
+      "A merit-cum-means scholarship from the Ministry of Education for students in the top 20 percentiles of their Class 12 board. It offers up to 82,000 fresh awards a year, half of them for girls, split by board, stream and category (15% SC, 7.5% ST, 27% OBC, 5% for students with benchmark disabilities). It is renewable each year through graduation and postgraduation. Apply only on the National Scholarship Portal; your college and then the state nodal agency verify the application.",
+    deadline: "NSP opens in June (2 Jun 2025; 1 Jun 2026 for renewals). The last date is set on NSP each year.",
     tags: ["nsp", "merit", "ug", "pg", "central", "general"],
     // 26 Sep 2026 (G4): NSP card "PM-USP – Central Sector Scheme Of Scholarship
     // For College And University Students (CSSS)": "Open from (for Renewal):
     // 01-06-2026", "Student Application Open till (for Renewal): 30-09-2026".
     // NSP's own announcement on the same portal says the renewal closing date
     // is 31-10-2026 — the earlier date is kept as the last date; both are shown.
+    // 27 Sep 2026 review: card and announcement re-read on scholarships.gov.in —
+    // unchanged (institute verification: 15-10-2026 on the card, 15-11-2026 in
+    // the announcement).
     cycle: {
       year: "2026-27",
       opensOn: "2026-06-01",
       closesOn: "2026-09-30",
       sourceUrl: NSP_SCHEMES_URL,
       tier: "official",
-      checkedOn: G4_CHECKED,
+      checkedOn: WAVE3_CHECKED,
       note: "Renewal applications only — NSP lists no fresh-application window for 2026-27 yet. The scheme card on NSP says 30 Sep 2026; NSP's announcement on the same portal says 31 Oct 2026.",
     },
+    reviewed: { on: WAVE3_CHECKED, sourceUrl: "https://scholarships.gov.in/public/schemeGuidelines/CSSS_GUIDLINES_07022024_updated.pdf" },
   },
   // 27 Sep 2026 (wave 3 review): re-read on the scheme's guidelines linked
   // from its NSP card, "Central Sector Scheme of Top Class Education in
@@ -350,26 +366,55 @@ export const SCHOLARSHIPS: Scholarship[] = [
     deadline: "Usually Aug–Sep after class-10 results",
     tags: ["cbse", "girls", "single-girl-child", "merit"],
   },
+  // 27 Sep 2026 review: re-read on the Department of School Education &
+  // Literacy's scheme page (dsel-education.gov.in, rendered in a browser; it
+  // is an empty shell to curl): income "not more than Rs. 3,50,000/- per
+  // annum", "Rs. 12000/- per annum"; its guidelines PDF
+  // (https://dsel-education.gov.in/static/uploads/2025/09/d73c6b554775fc1adae8d844474c69d2.pdf):
+  // 2.2 "minimum of 55 % marks ... in Class VII ... (relaxable by 5% for
+  // SC/ST students)", 3.1 "at least 40 % marks in aggregate ... SC/ST ...
+  // 32%", 3.2 "at least 55% mark ... in Class VIII", 4.4 "minimum of 60%
+  // marks in Class X"; KV, JNV, residential and private schools not
+  // eligible (1.2). PIB (pib.gov.in, PRID 2305633, 1 Sep 2026): "one lakh
+  // fresh scholarships every year for Class IX students", renewed "from
+  // Classes X to XII"; last date "extended to September 30, 2026" (it was
+  // 31 Aug, PIB 6 Aug 2026); INO verification 15.10.2026, DNO 31.10.2026;
+  // students "may apply for one merit-based scholarship scheme and one or
+  // more welfare-based scholarship schemes simultaneously". Re-check on the
+  // PDF or PIB — the scheme page needs a JS browser.
   {
     id: "nmmss",
-    name: "National Means-cum-Merit Scholarship (NMMSS)",
-    awardingBody: "Ministry of Education",
+    name: "National Means-cum-Merit Scholarship Scheme (NMMSS)",
+    awardingBody: "Department of School Education & Literacy, Ministry of Education",
     type: "MERIT",
     state: null,
     levels: ["CLASS_9_10", "CLASS_11_12"],
     eligibility: {
+      minMarksPct: 55,
       incomeMaxLakhs: 3.5,
-      note: "Class 8 students from govt / aided schools. Cleared state NMMSS exam. Continued in classes 9–12 in govt / aided / local-body schools.",
+      note: "Class 8 regular student in a government, government-aided or local-body school, with at least 55% in Class 7 (50% for SC/ST) to sit the State/UT NMMSS exam (MAT + SAT, passed with 40% aggregate; 32% for SC/ST) and at least 55% in Class 8 at selection (50% for SC/ST). Kendriya Vidyalaya, Navodaya, government residential-school and private-school students are not eligible. Paid in Classes 9–12. To continue, clear promotion in the first attempt from Class 9 to 10 and Class 11 to 12, and at least 60% in Class 10 (55% for SC/ST) for Classes 11–12. From 2026-27 a student may apply for one merit scholarship plus one or more welfare scholarships.",
     },
     amount: "₹12,000/year from class 9 through class 12.",
     applyUrl: "https://scholarships.gov.in/",
+    officialSite: "https://www.dsel-education.gov.in/offerings/schemes-and-services/details/national-means-cum-merit-scholarship-scheme-IzNyYTMtQWa",
     description:
-      "Stops bright kids from poor families dropping out of secondary school. ~1L scholarships awarded each year via state-wise selection exam.",
+      "Stops bright students from poor families dropping out after Class 8. 1 lakh fresh scholarships a year for Class 9 students picked by each State/UT's own selection exam (fixed state quotas), renewed through Class 12.",
     deadline: "State NMMSS exam usually Nov; NSP application after results",
-    tags: ["nsp", "school", "class-9", "class-10", "merit", "means"],
+    tags: ["nsp", "school", "class-9", "class-10", "class-11", "class-12", "merit", "means", "nmms"],
     // 26 Sep 2026 (G4): NSP card "National Means Cum Merit Scholarship": open
     // 01-06-2026, student application open till 30-09-2026.
-    cycle: { year: "2026-27", opensOn: "2026-06-01", closesOn: "2026-09-30", sourceUrl: NSP_SCHEMES_URL, tier: "official", checkedOn: G4_CHECKED },
+    // 27 Sep 2026 review: card re-read on scholarships.gov.in (unchanged;
+    // "DNO/SNO/MNO Verification Open till:31-10-2026"); note from PIB above.
+    cycle: {
+      year: "2026-27",
+      opensOn: "2026-06-01",
+      closesOn: "2026-09-30",
+      sourceUrl: NSP_SCHEMES_URL,
+      tier: "official",
+      checkedOn: WAVE3_CHECKED,
+      note: "Only for students already selected in their State/UT NMMSS exam (fresh, Class 9) or renewing (Classes 10–12). The date was extended from 31 Aug 2026. School (INO) verification till 15 Oct 2026, district (DNO) verification till 31 Oct 2026.",
+    },
+    reviewed: { on: WAVE3_CHECKED, sourceUrl: "https://www.dsel-education.gov.in/offerings/schemes-and-services/details/national-means-cum-merit-scholarship-scheme-IzNyYTMtQWa" },
   },
   {
     id: "begum-hazrat-mahal",
@@ -403,35 +448,58 @@ export const SCHOLARSHIPS: Scholarship[] = [
     // not marked closed, still out of every list.
     unlisted: "Status in doubt: its implementing body (MAEF) was ordered closed on 7 Feb 2024 (reported); on 27 Sep 2026 maef.nic.in did not answer and NSP's 2026-27 lists carried no Ministry of Minority Affairs scheme. Out of every list until its 2026-27 status is read on an official portal.",
   },
+  // 27 Sep 2026 review: re-read on AICTE's own pages (aicte.gov.in; the old
+  // aicte-india.org/bureaus/jk link redirects to aicte.gov.in/bureaus/jk):
+  // the 2026-27 advertisement (Advt. No. AICTE/SSSJKL Cell/07(02)/2026,
+  // https://aicte.gov.in/downloads/pmsss/2026/PM-USP-2026-English.pdf):
+  // "General Degree Upto Rs. 30,000/- p.a.", professional "Upto Rs. 1.25 lakh
+  // p.a.", "Medical/BDS or equivalent Upto Rs. 3.00 lakh p.a.", maintenance
+  // "Rs. 1.00 lakh per annum (in Ten equal instalments) through NSP"; Class
+  // 12 from "JKBOSE or CBSE schools located in the Union Territories of
+  // Jammu &Kashmir or Ladakh"; the bureau page: 2070 general, 2830
+  // professional/engineering, 100 medical. Income ₹8 lakh and the exclusions
+  // from the Methodology 2025-26 (no 2026-27 methodology is posted; the live
+  // SSSJKL form still asks "0 - 8,00,000"). Fresh registration 16–29 Jul
+  // 2026 (HSC) and 17–29 Jul 2026 (Diploma), AICTE's revised calendar of
+  // 25-08-2026 ("tentative"); 2025: 1 May–13 Jun (revised 26-06-2025);
+  // 2024: 18 Jun–29 Jul. The "On-My-Own" notice (22 Sep–3 Oct 2026) is for
+  // "Students who are already registered on the SSSJKL portal". AICTE acts
+  // for the Ministry of Education (public notice, 15 Jun 2026). The old
+  // "₹1.25 lakh general / ₹1.5 lakh B.Tech" amounts were wrong.
   {
     id: "pm-special-jk",
-    name: "PM Special Scholarship Scheme for J&K and Ladakh",
-    awardingBody: "AICTE, Govt. of India",
+    name: "PM-USP Special Scholarship Scheme for J&K and Ladakh (SSSJKL, also called PMSSS)",
+    awardingBody: "AICTE, for the Ministry of Education, Govt. of India",
     type: "CENTRAL",
     state: "JK",
     levels: ["UG"],
     eligibility: {
-      note: "Domicile of J&K or Ladakh. Cleared class 12 from J&K/Ladakh state board or CBSE. Admitted to recognised college OUTSIDE J&K/Ladakh.",
+      incomeMaxLakhs: 8,
+      note: "Domicile of the UTs of J&K or Ladakh. Passed Class 12 from JKBOSE or a CBSE school located in J&K or Ladakh (for 2026-27: passed in 2025 or 2026), or passed an engineering Diploma in 2025/2026 from the J&K Board of Technical Education (lateral entry into 2nd-year engineering). Family income up to ₹8 lakh a year. You must register on AICTE's SSSJKL portal. The UG seat must be outside J&K and Ladakh: either allotted through AICTE's SSSJKL counselling, or taken on your own (by registered students) in listed institutions: medical via NEET; Delhi University, Jamia, AMU and other central universities via CUET; IITs/NITs; NLUs via CLAT. Not for students taking any other Central/State/UT government scholarship, management-quota admissions, open-university courses, diplomas or PG study.",
     },
-    amount: "Up to ₹1.25 lakh/year for general UG + ₹1.5 lakh/year for B.Tech + ₹3 lakh/year for medical.",
-    applyUrl: "https://www.aicte-india.org/bureaus/jk",
+    amount: "Academic fee paid to the college: up to ₹30,000 a year for a general degree; up to ₹1.25 lakh a year for professional courses (engineering, nursing, pharmacy, hotel management, architecture subject to NATA, BA LLB at an NLU) and for Diploma lateral entry into 2nd-year engineering; up to ₹3 lakh a year for medical/BDS. Plus a fixed maintenance allowance of ₹1 lakh a year paid to the student in instalments through NSP. 5,000 fresh scholarships a year (2,070 general, 2,830 professional/engineering, 100 medical).",
+    applyUrl: "https://www.aicte.gov.in/bureaus/jk",
     description:
-      "Covers tuition + maintenance for J&K and Ladakh students pursuing UG outside their home state — engineering, medical, or general degree.",
-    deadline: "Apr–Aug",
-    relevantExamCodes: ["JEE_MAIN", "NEET_UG", "JK_JKCET", "JK_JKPSC_KAS"],
+      "The Ministry of Education's special scholarship, run by AICTE, pays college fees up to a cap by stream and a fixed ₹1 lakh yearly maintenance allowance for students from J&K and Ladakh who take a UG seat outside the two UTs through AICTE's SSSJKL counselling (or on their own in listed institutions). Register once a year on AICTE's SSSJKL portal; renewals are on NSP.",
+    deadline: "Register once a year on AICTE's SSSJKL portal. In recent years registration ran between May and July (2024: 18 Jun–29 Jul; 2025: 1 May–13 Jun; 2026: 16–29 Jul), and counselling follows it (in 2026 Round 3 ran to 30 Sep). Renewals are on NSP; 2026-27 renewals opened 1 Jun 2026.",
+    relevantExamCodes: ["NEET_UG", "CUET_UG", "JEE_MAIN", "CLAT", "NATA"],
     tags: ["jk", "ladakh", "engineering", "medical", "aicte"],
     // 26 Sep 2026 (G4): NSP card "PM USP Special Scholarship Scheme For Jammu
     // Kashmir And Ladakh": renewal open 01-06-2026 till 30-09-2026; NSP's
     // announcement says 31-10-2026 (the same pair as CSSS above).
+    // 27 Sep 2026 review: NSP card and announcement re-read (unchanged). The
+    // renewal window stays the dated window — it is still open; the closed
+    // fresh window (AICTE, July 2026) is in the note, not the date.
     cycle: {
       year: "2026-27",
       opensOn: "2026-06-01",
       closesOn: "2026-09-30",
       sourceUrl: NSP_SCHEMES_URL,
       tier: "official",
-      checkedOn: G4_CHECKED,
-      note: "Renewal applications only — NSP lists no fresh-application window for 2026-27 yet. The scheme card on NSP says 30 Sep 2026; NSP's announcement on the same portal says 31 Oct 2026.",
+      checkedOn: WAVE3_CHECKED,
+      note: "Renewal applications only (NSP scheme card 30 Sep 2026; NSP homepage announcement 31 Oct 2026). Fresh 2026-27 applications are not on NSP: they were taken on AICTE's SSSJKL portal 16–29 Jul 2026 (10+2) and 17–29 Jul 2026 (Diploma lateral entry), per AICTE's revised calendar of 25 Aug 2026, which AICTE marks tentative; that window has closed and Round 3 counselling ends 30 Sep 2026.",
     },
+    reviewed: { on: WAVE3_CHECKED, sourceUrl: "https://aicte.gov.in/downloads/pmsss/2026/PM-USP-2026-English.pdf" },
   },
 
   // ─── STATE GOVERNMENT ─────────────────────────────────────────────
@@ -525,39 +593,56 @@ export const SCHOLARSHIPS: Scholarship[] = [
     tags: ["andhra-pradesh", "state", "jagananna", "vidya-deevena"],
     unlisted: "Status in doubt (27 Sep 2026): the Jagananna Vidya Deevena site no longer resolves and AP's Jnanabhumi portal lists the scheme as Post Matric Scholarship (RTF); name, income limit and amount not yet re-read there.",
   },
+  // 27 Sep 2026 review: re-read on the Backward Classes Welfare Department's
+  // own site (bcwd.karnataka.gov.in): the scheme page (/44/vidyasiri, Kannada
+  // and English), GO 518 BMS 2024 (26.09.2024: "ರೂ.1,500/- ರಂತೆ ಶೈಕ್ಷಣಿಕ
+  // ವರ್ಷದ 10 ತಿಂಗಳಿಗೆ ಒಟ್ಟು ರೂ.15,000/-" by DBT; 55% for Category-1 and
+  // students with disabilities, 65% for other backward-class categories;
+  // hostel seat OR this scheme), the GO 516 BMS 2013 annexure (Social
+  // Welfare / ST / Minorities students are not eligible under BCWD; income
+  // ₹2.5 lakh Category-1, ₹1 lakh 2A/3A/3B) and BCWD notice
+  // BCWD-17017/17/2026-BCWD_SCHLR-BCWD (28.08.2026) extending 2026-27
+  // applications to 30.09.2026. The row had said "OBC, minority and EWS",
+  // "₹1L (or ₹2L for minorities)" and "+ tuition fee reimbursement" (Fee
+  // Concession is a separate BCWD scheme). No official page names PUC /
+  // Class 11-12, so that level is dropped.
   {
     id: "ka-vidyasiri",
-    name: "Karnataka Vidyasiri Scholarship",
-    awardingBody: "Government of Karnataka",
+    name: "Karnataka Vidyasiri (Food and Accommodation Assistance Scheme)",
+    awardingBody: "Backward Classes Welfare Department, Government of Karnataka",
     type: "STATE",
     state: "KA",
-    levels: ["CLASS_11_12", "DIPLOMA", "UG", "PG"],
+    levels: ["DIPLOMA", "UG", "PG"],
     eligibility: {
-      categories: ["OBC", "MIN", "EWS"],
-      incomeMaxLakhs: 1,
-      note: "Karnataka domicile. Family income ≤₹1L (or ₹2L for minorities).",
+      categories: ["OBC"],
+      incomeMaxLakhs: 2.5,
+      note: "Permanent resident of Karnataka from a notified backward class (Category-1, 2A, 3A or 3B), studying a post-matric course, and NOT admitted to any department's government or government-aided hostel or residential college. Family gross annual income up to ₹2.5 lakh (Category-1) or ₹1 lakh (Categories 2A, 3A, 3B). Must have passed the previous year's annual exam with at least 55% (Category-1 and students with disabilities) or 65% (other backward-class categories). Must be from a rural area at least 5 km from the college, or from a different city/town. Only two sons per family are eligible; the limit does not apply to daughters.",
     },
-    amount: "Up to ₹1,500/month for hostellers + tuition fee reimbursement.",
+    amount: "₹1,500 a month for 10 months of the academic year (₹15,000 in all), credited by DBT in one payment to the student's Aadhaar-seeded bank account. The scheme covers food and accommodation only and pays no tuition fees; BCWD's Fee Concession is a separate scheme.",
     applyUrl: "https://ssp.karnataka.gov.in/",
+    officialSite: "https://bcwd.karnataka.gov.in/44/vidyasiri/en",
     description:
-      "Maintenance + fees scholarship for OBC, minority, and EWS students. Combined with the Karnataka State Scholarship Portal (SSP).",
-    deadline: "Sep–Dec",
-    tags: ["karnataka", "state", "ssp", "vidyasiri"],
+      "Karnataka Backward Classes Welfare Department's food and accommodation allowance for backward-class students in post-matric courses who did not get a seat in a government or government-aided hostel: ₹1,500 a month for 10 months. Students apply on the State Scholarship Portal (SSP). It cannot be held together with a hostel seat.",
+    deadline: "Check the SSP portal (dates are set each year)",
+    tags: ["karnataka", "state", "ssp", "vidyasiri", "obc", "backward-classes", "food-accommodation"],
     // 27 Sep 2026 (wave 3): SSP's "Last Dates" section, Postmatric (Class
     // 11+): "Backward Classes Welfare Department — Last date to Submit
     // Application for Backward Classes Welfare Department Scheme is:
     // 30/09/2026" (the scheme list under that department names "Vidyasiri
     // Food and Accommodation Scheme"); the Minorities Welfare Department's
-    // post-matric schemes also close 30/09/2026. A date read on the portal,
-    // not a review of this row (its income and amount lines are unchecked).
+    // post-matric schemes also close 30/09/2026.
+    // 27 Sep 2026 review: SSP timed out on the re-check, so the date is now
+    // sourced to BCWD's own 2026-27 page ("Last date to apply: 30.09.2026")
+    // and its 28.08.2026 extension notice.
     cycle: {
       year: "2026-27",
       closesOn: "2026-09-30",
-      sourceUrl: "https://ssp.karnataka.gov.in/",
+      sourceUrl: "https://bcwd.karnataka.gov.in/163/2026-27-post-matric-scholarship/en",
       tier: "official",
       checkedOn: WAVE3_CHECKED,
-      note: "SSP's last date for Backward Classes Welfare Department post-matric schemes, which include Vidyasiri; Minorities Welfare Department post-matric schemes close the same day.",
+      note: "Extended last date. BCWD notice No. BCWD-17017/17/2026-BCWD_SCHLR-BCWD (28 Aug 2026) extends online applications for 2026-27 Post-Matric Scholarship, Fee Concession and Vidyasiri to 30 Sep 2026. Apply on SSP.",
     },
+    reviewed: { on: WAVE3_CHECKED, sourceUrl: "https://bcwd.karnataka.gov.in/44/vidyasiri/kn" },
   },
 
   // ─── PRIVATE / FOUNDATION ─────────────────────────────────────────
@@ -1537,6 +1622,12 @@ export const SCHOLARSHIPS: Scholarship[] = [
     deadline: "Yearly cycle, Aug-Oct",
     tags: ["himachal", "hp", "loan", "merit"],
   },
+  // 27 Sep 2026 review: the same AICTE scheme as pm-special-jk (SSSJKL, also
+  // called PMSSS; reviewed that day on aicte.gov.in). Kept — its URL still
+  // answers — but held out of every list as a duplicate. "Pays full tuition"
+  // was wrong: AICTE's Methodology 2025-26 caps the academic fee at "Rs. 1.25
+  // Lakh for Professional / Engineering Stream; Rs. 30,000/- for General
+  // Stream and Rs. 3.00 Lakh for Medical Stream".
   {
     id: "jk-pmss",
     name: "PMSS for J&K and Ladakh",
@@ -1550,9 +1641,10 @@ export const SCHOLARSHIPS: Scholarship[] = [
     },
     amount: "Up to ₹1.25 lakh/year (tuition) + ₹1 lakh/year (maintenance for outside-state)",
     applyUrl: "https://www.aicte-india.org/schemes/students-development-schemes",
-    description: "PM Special Scholarship Scheme for J&K + Ladakh students pursuing UG outside the union territories. Pays full tuition + maintenance.",
+    description: "PM Special Scholarship Scheme for J&K + Ladakh students pursuing UG outside the union territories. Pays the academic fee up to a cap by stream (₹30,000 general, ₹1.25 lakh professional/engineering, ₹3 lakh medical) + maintenance.",
     deadline: "Apply early Jun-Aug each cycle",
     tags: ["jk", "ladakh", "pmss"],
+    unlisted: "Not found (27 Sep 2026) as a separate scheme: duplicate of pm-special-jk, the PM-USP Special Scholarship Scheme for J&K and Ladakh (same AICTE scheme, SSSJKL/PMSSS).",
   },
 
   // ── Defence + Sports + Arts ───────────────────────────────────────

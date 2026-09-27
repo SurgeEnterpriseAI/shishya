@@ -209,7 +209,8 @@ describe("this year's date — official only when read on the portal", () => {
   it("a cycle's note rides with the date (renewal-only windows, conflicting dates)", () => {
     const csss = SCHOLARSHIPS.find((s) => s.id === "csss")!;
     const line = cycleLeadLine(csss, TODAY);
-    expect(line).toContain("applications close 30 Sep 2026 (official — scholarships.gov.in, checked 26 Sep 2026)");
+    // 27 Sep 2026 review: the NSP card was re-read (same dates), so the check day moved.
+    expect(line).toContain("applications close 30 Sep 2026 (official — scholarships.gov.in, checked 27 Sep 2026)");
     expect(line).toContain("Renewal applications only");
     expect(line).toContain("31 Oct 2026");
   });
@@ -292,12 +293,14 @@ describe("closing soon", () => {
     // 26 Sep 2026: CSSS, the J&K special scheme and NMMSS close on 30 Sep.
     // 27 Sep 2026 (official-data wave): Karnataka SSP (ka-vidyasiri) and PM
     // YASASVI now carry official 30 Sep 2026 last dates too — five rows, the
-    // floor. Only PM YASASVI is reviewed, so the page stays noindex and out
-    // of the sitemap; it still renders for people.
+    // floor. Only PM YASASVI was reviewed then, so the page stayed noindex.
+    // 27 Sep 2026 review: CSSS, NMMSS, the J&K special scheme and Vidyasiri
+    // were re-read on their awarding bodies' own pages and carry `reviewed`
+    // — all five are reviewed, so the list is indexable (until 30 Sep passes).
     expect(list.map((s) => s.id).sort()).toEqual(["csss", "ka-vidyasiri", "nmmss", "pm-special-jk", "pm-yasasvi"]);
     expect(list.length).toBe(CLOSING_SOON_MIN);
-    expect(list.filter(isReviewedScheme).map((s) => s.id)).toEqual(["pm-yasasvi"]);
-    expect(isClosingSoonIndexable(list)).toBe(false);
+    expect(list.filter(isReviewedScheme).map((s) => s.id).sort()).toEqual(["csss", "ka-vidyasiri", "nmmss", "pm-special-jk", "pm-yasasvi"]);
+    expect(isClosingSoonIndexable(list)).toBe(true);
     // Nothing is "closing soon" by its usual window.
     expect(closingSoon(TODAY, 30, [scheme({ id: "u", deadline: "Sep–Oct" })])).toEqual([]);
   });
@@ -353,8 +356,9 @@ describe("sitemap entries (for src/lib/sitemap-sections.ts)", () => {
     const expected = SCHOLARSHIP_FILTERS.filter((f) => isFilterListIndexable(schemesForFilter(f, "2026-09-26"))).map((f) => `https://shishya.in/scholarships/for/${f.slug}`);
     if (isClosingSoonIndexable(closingSoon("2026-09-26"))) expected.push("https://shishya.in/scholarships/closing-soon");
     expect(entries.map((e) => e.url)).toEqual(expected);
-    // 27 Sep 2026: closing-soon reaches the floor (5) with 1 reviewed row — not in the sitemap.
-    expect(entries.map((e) => e.url)).not.toContain("https://shishya.in/scholarships/closing-soon");
+    // 27 Sep 2026: closing-soon reached the floor (5) with 1 reviewed row — it was not in the sitemap.
+    // 27 Sep 2026 review: all five rows are now reviewed, so it is (lastModified = the review day).
+    expect(entries.map((e) => e.url)).toContain("https://shishya.in/scholarships/closing-soon");
   });
 });
 

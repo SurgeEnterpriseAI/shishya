@@ -124,10 +124,13 @@ describe("home door links — each renders only while its page clears its own fl
     // 26 Sep 2026: 3 schemes closed by 26 Oct (probe) — below the floor.
     // 27 Sep 2026 (official-data wave): Karnataka SSP and PM YASASVI got
     // official 30 Sep dates, so 5 close by 26 Oct — the floor — but only
-    // PM YASASVI is reviewed: the page is noindex, so no door.
+    // PM YASASVI was reviewed: the page was noindex, so no door.
+    // 27 Sep 2026 review: the other four (CSSS, NMMSS, the J&K special
+    // scheme, Vidyasiri) were re-read on their awarding bodies' own pages —
+    // all five are reviewed, so the door shows (until 30 Sep passes).
     expect(closingSoon("2026-09-26").length).toBe(CLOSING_SOON_MIN);
-    expect(closingSoon("2026-09-26").filter(isReviewedScheme).length).toBe(1);
-    expect(closingSoonHref("2026-09-26")).toBeNull();
+    expect(closingSoon("2026-09-26").filter(isReviewedScheme).length).toBe(CLOSING_SOON_MIN);
+    expect(closingSoonHref("2026-09-26")).toBe(CLOSING_SOON_HREF);
   });
 
   it("CBSE board exam chips = the hubs that clear BOARD_EXAM_MIN_LINKS, as /schooling/cbse/class-N/board-exam", () => {

@@ -250,8 +250,15 @@ describe("page tools (fixture index)", () => {
     const direct = findPages(idx, { query: "NMMS scholarship" }) as Found;
     expect(direct.pages[0]).toEqual(expect.objectContaining({ url: "https://shishya.in/scholarships/nmmss" }));
     expect(direct.pages[0].match).toBeUndefined();
+    // 27 Sep 2026 (scholarship review): the row's tags now carry "nmms" too
+    // (the deep index's soft keys), so the miss is rebuilt without it as well.
     const ALIAS = new Set(["nmms", "nmms scholarship", "एनएमएमएस"]);
-    const noAlias = { ...idx, docs: idx.docs.map((d) => (d.path === "/scholarships/nmmss" ? { ...d, terms: d.terms.filter((t) => !ALIAS.has(t)) } : d)) };
+    const noAlias = {
+      ...idx,
+      docs: idx.docs.map((d) =>
+        d.path === "/scholarships/nmmss" ? { ...d, terms: d.terms.filter((t) => !ALIAS.has(t)), ...(d.soft ? { soft: d.soft.filter((t) => !ALIAS.has(t)) } : {}) } : d,
+      ),
+    };
     const out = findPages(noAlias, { query: "NMMS scholarship" }) as Found;
     expect(out.pages[0]).toMatchObject({ url: "https://shishya.in/scholarships/nmmss", match: expect.stringMatching(/loose name match/) });
     const first = askFirstTurn("NMMS scholarship", resolveQuery("NMMS scholarship", noAlias), {
