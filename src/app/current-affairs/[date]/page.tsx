@@ -10,6 +10,8 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { JsonLd, breadcrumbLd } from "@/components/JsonLd";
 import { caNavLinks, loadCaNeighbours } from "@/lib/current-affairs-nav";
+import { LandingActions } from "@/components/LandingActions";
+import { currentAffairsActions } from "@/lib/landing-actions";
 
 export const revalidate = 3600;
 
@@ -121,6 +123,8 @@ export default async function CurrentAffairsDatePage({ params }: { params: Promi
           The day&apos;s most exam-relevant current affairs for UPSC, SSC, banking, railways and
           state exams — free, factual, revision-ready. {rows.length} updates.
         </p>
+        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
+        <LandingActions actions={currentAffairsActions(pretty, "en")} locale="en" surface="ca-daily" />
 
         {[...byCat.entries()].map(([cat, items]) => (
           <section key={cat} className="mt-7">

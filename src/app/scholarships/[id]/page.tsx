@@ -58,6 +58,8 @@ import { loadLiveExams } from "@/lib/live-exam-codes";
 import { relatedScholarships } from "@/lib/section-related";
 import { clipDescription } from "@/lib/section-seo";
 import { cycleLeadLine, hostOf, isOpenScheme, istToday, lastDateOf, scholarshipFaq } from "@/lib/scholarship-lists";
+import { LandingActions } from "@/components/LandingActions";
+import { scholarshipActions } from "@/lib/landing-actions";
 
 export const revalidate = 3600;
 
@@ -257,6 +259,8 @@ export default async function ScholarshipDetailPage({
         </p>
         )}
         {vouched && <p className="mt-4 max-w-3xl text-sm text-ink-700">{s.description}</p>}
+        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
+        <LandingActions actions={scholarshipActions(s.name, "en")} locale="en" surface="scholarship" />
 
         {/* Quick facts */}
         {vouched && (

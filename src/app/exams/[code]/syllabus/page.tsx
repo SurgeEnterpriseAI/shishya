@@ -37,6 +37,8 @@ import { latestCheck, freshnessLine } from "@/lib/page-freshness";
 // diagnostic-mock box, the quiz link and the coach door only with practice.
 import { examPracticeState } from "@/lib/db/exam-practice";
 import { fillNoPractice, noPracticeCopy } from "@/lib/no-practice-copy";
+import { LandingActions } from "@/components/LandingActions";
+import { examNextActions } from "@/lib/landing-actions";
 
 export const revalidate = 3600;
 
@@ -242,6 +244,12 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
           )}
         </p>
         <StateExamsLink state={exam.state} label={tr("exam.state.more")} locale={locale} />
+        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
+        <LandingActions
+          actions={examNextActions({ code: exam.code, shortName: exam.shortName }, practice.hasPractice, "syllabus", locale)}
+          locale={locale}
+          surface="exam-syllabus"
+        />
 
         {/* Exam pattern — only as read from the body's notice (26 Sep 2026,
             G3, src/lib/pattern-verified.ts); every figure is the notice's. */}

@@ -11,6 +11,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { Header } from "@/components/Header";
 import { CapsuleActions } from "./CapsuleActions";
+import { LandingActions } from "@/components/LandingActions";
+import { currentAffairsActions } from "@/lib/landing-actions";
 
 export const revalidate = 3600;
 
@@ -95,6 +97,10 @@ export default async function CapsulePage({
             </p>
           </div>
           <CapsuleActions month={month} label={label} />
+        </div>
+        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
+        <div className="print:hidden">
+          <LandingActions actions={currentAffairsActions(label, "en")} locale="en" surface="ca-capsule" />
         </div>
 
         {[...byDate.entries()].map(([iso, dayItems]) => (

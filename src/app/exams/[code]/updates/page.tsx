@@ -47,6 +47,8 @@ import { leadDescription, updatesLead } from "@/lib/answer-lead";
 // no practice questions.
 import { examPracticeState } from "@/lib/db/exam-practice";
 import { fillNoPractice, noPracticeCopy } from "@/lib/no-practice-copy";
+import { LandingActions } from "@/components/LandingActions";
+import { examNextActions } from "@/lib/landing-actions";
 
 /** JSON-LD safe for inline <script>: a "</script>" inside a model- or
  *  web-derived label must not break out of the block. */
@@ -409,6 +411,13 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
           {nextLine && <span className="rounded-full border border-ink-200 bg-white px-3 py-1 text-ink-800">{nextLine}</span>}
           {lastLine && <span className="rounded-full border border-ink-200 bg-white px-3 py-1 text-ink-600">{lastLine}</span>}
         </div>
+
+        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
+        <LandingActions
+          actions={examNextActions({ code: exam.code, shortName: short }, practice.hasPractice, "updates", locale, p)}
+          locale={locale}
+          surface="exam-updates"
+        />
 
         {/* Exam Week Mode (6 Sep 2026) — the same phase card as the hub,
             above the key dates and the timeline. Renders nothing outside

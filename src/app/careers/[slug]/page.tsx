@@ -25,6 +25,8 @@ import { CAREERS, findCareer, careerCategoryLabel, type CareerSalaryBand } from 
 import { loadLiveExams } from "@/lib/live-exam-codes";
 import { CAREER_SALARY_SOURCES, careerCollegeStreams, careerExamCodes, salaryBandRange } from "@/lib/section-related";
 import { clipDescription, examHubHref } from "@/lib/section-seo";
+import { LandingActions } from "@/components/LandingActions";
+import { careerActions } from "@/lib/landing-actions";
 
 export const revalidate = 86_400;
 
@@ -141,6 +143,8 @@ export default async function CareerPage({
           </span>
         </div>
         <p className="mt-3 max-w-3xl text-base text-ink-700">{c.dek}</p>
+        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
+        <LandingActions actions={careerActions(c.name, "en")} locale="en" surface="career" />
 
         {/* What they do */}
         <h2 className="mt-10 text-base font-semibold text-ink-900">What they actually do</h2>
