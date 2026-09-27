@@ -202,6 +202,7 @@ export function buildTutorExamFacts(input: ExamFactsInput): TutorExamFacts {
     tier: r.tier === "official" ? "official" : "reported",
     host: sourceHostLabel(r.url ?? ""),
     status: r.status === "done" ? "past" : r.status,
+    daysFromToday: r.daysFromToday,
   }));
 
   return {
@@ -270,7 +271,16 @@ function dateLine(d: TutorTrackerDate): string {
     d.tier === "official"
       ? `OFFICIAL (notice on ${d.host})`
       : `REPORTED by ${d.host} — a secondary source, not the conducting body`;
-  return `- ${d.day} · ${kindWord(d.kind)} · ${d.label} · ${d.status} · ${source}`;
+  return `- ${d.day} · ${kindWord(d.kind)} · ${d.label} · ${d.status}${daysPhrase(d.daysFromToday)} · ${source}`;
+}
+
+/** " (in 3 days)", " (today)", " (5 days ago)" — the count the model must use. */
+export function daysPhrase(n: number | undefined): string {
+  if (n == null || !Number.isFinite(n)) return "";
+  if (n === 0) return " (today)";
+  if (n === 1) return " (tomorrow, in 1 day)";
+  if (n > 0) return ` (in ${n} days)`;
+  return n === -1 ? " (yesterday)" : ` (${-n} days ago)`;
 }
 
 /**
@@ -310,6 +320,9 @@ export function examFactsBlock(facts: TutorExamFacts, exam: { code: string; name
   }
   L.push(`How to use these dates:`);
   L.push(`- OFFICIAL rows are facts: give the date and name the source.`);
+  L.push(
+    `- Use the day counts in brackets as they are — never work out a count yourself. If a student asks for a plan longer than the days left before an announced exam day, say how many days are actually left and fit the plan to those days.`,
+  );
   L.push(`- REPORTED rows: always say which site reported it and that it is not yet confirmed on the official site.`);
   if (noneAtAll) {
     L.push(`- For any date the student asks about, say no official date has been announced on Shishya's tracker yet.`);

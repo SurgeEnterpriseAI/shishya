@@ -23,6 +23,7 @@ import {
   TRACKER_DATE_CAP,
   type ExamFactsExam,
   type ExamFactsInput,
+  daysPhrase,
 } from "@/lib/ai/exam-facts";
 import { syllabusBlock } from "@/lib/ai/prompts";
 import { tutorSystemBlocks } from "@/lib/ai/tutor";
@@ -168,18 +169,18 @@ describe("tracker dates", () => {
   });
 
   it("labels a reported row with its secondary source and its kind", () => {
-    expect(block).toContain("- 2026-09-10 · admit card · Admit card · past · REPORTED by testbook.com — a secondary source, not the conducting body");
+    expect(block).toContain("- 2026-09-10 · admit card · Admit card · past (14 days ago) · REPORTED by testbook.com — a secondary source, not the conducting body");
   });
 
   it("labels an official row with the notice host and its kind", () => {
-    expect(block).toContain("- 2026-10-23 · exam · CBT exam · upcoming · OFFICIAL (notice on ssc.gov.in)");
+    expect(block).toContain("- 2026-10-23 · exam · CBT exam · upcoming (in 29 days) · OFFICIAL (notice on ssc.gov.in)");
   });
 
   it("always lists each kind's latest past row, whatever its age", () => {
     // 115 and 101 days back — outside the 60-day window, but the latest
     // notification / answer key on the tracker: the tutor must see them.
-    expect(block).toContain("- 2026-06-01 · notification · Notification released · past · OFFICIAL (notice on ssc.gov.in)");
-    expect(block).toContain("- 2026-06-15 · answer key · Provisional answer key released · past · REPORTED by pw.live");
+    expect(block).toContain("- 2026-06-01 · notification · Notification released · past (115 days ago) · OFFICIAL (notice on ssc.gov.in)");
+    expect(block).toContain("- 2026-06-15 · answer key · Provisional answer key released · past (101 days ago) · REPORTED by pw.live");
     expect(facts.dates.map((r) => r.label)).toEqual([
       "Notification released",
       "Provisional answer key released",
@@ -217,7 +218,7 @@ describe("tracker dates", () => {
     // UPSC prelims: the official result row is 101 days old.
     const f = buildTutorExamFacts(input(SSC_GD, [row("2026-06-15", "Prelims result announced", "official", "https://upsc.gov.in/r.pdf", "RESULT")]));
     const b = examFactsBlock(f, { code: "UPSC_PRELIMS", name: "UPSC Prelims" });
-    expect(b).toContain("- 2026-06-15 · result · Prelims result announced · past · OFFICIAL (notice on upsc.gov.in)");
+    expect(b).toContain("- 2026-06-15 · result · Prelims result announced · past (101 days ago) · OFFICIAL (notice on upsc.gov.in)");
     expect(f.notAnnouncedKinds).not.toContain("RESULT");
     expect(b).not.toMatch(/Not announced on Shishya's tracker yet[^\n]*result/);
   });
@@ -398,5 +399,16 @@ describe("tutorSystemBlocks", () => {
     // Without facts the syllabus block is the plain one.
     expect(blocks[1].text).toBe(syllabusBlock(syllabus));
     warn.mockRestore();
+  });
+});
+
+describe("day counts (27 Sep 2026: the tutor said \"30 days until the exam (September 30)\" on 27 Sep)", () => {
+  it("daysPhrase states the count the model must use", () => {
+    expect(daysPhrase(3)).toBe(" (in 3 days)");
+    expect(daysPhrase(1)).toBe(" (tomorrow, in 1 day)");
+    expect(daysPhrase(0)).toBe(" (today)");
+    expect(daysPhrase(-1)).toBe(" (yesterday)");
+    expect(daysPhrase(-14)).toBe(" (14 days ago)");
+    expect(daysPhrase(undefined)).toBe("");
   });
 });

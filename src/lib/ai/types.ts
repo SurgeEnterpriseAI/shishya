@@ -300,6 +300,10 @@ export interface TutorTrackerDate {
   /** Host of the cited notice, e.g. "ssc.gov.in" or "testbook.com". */
   host: string;
   status: "past" | "today" | "upcoming";
+  /** IST days from the facts' day to this row (negative = past). 27 Sep 2026:
+   *  the tutor counted "30 days until the exam (September 30)" on 27 Sep —
+   *  the prompt now states the count so the model never works it out. */
+  daysFromToday?: number;
 }
 
 /** The facts as the prompt states them, worked out for one moment. */
