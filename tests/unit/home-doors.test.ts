@@ -531,7 +531,9 @@ describe("src/app/page.tsx — the Doors page", () => {
 
   it("stays a server component that loads what it needs in parallel, keeps the JSON-LD event list and the locale copy", () => {
     expect(src.startsWith('"use client"')).toBe(false);
-    expect(src).toMatch(/const \[signedIn, exams, calendar, vacancy, portalStats, liveToday\] = await Promise\.all\(\[/);
+    // 27 Sep 2026: the session's user id rides along for the signed-in "For you" block (HomeForYou).
+    expect(src).toMatch(/const \[sessionUser, exams, calendar, vacancy, portalStats, liveToday\] = await Promise\.all\(\[/);
+    expect(src).toContain("const signedIn = Boolean(sessionUser);");
     expect(src).toMatch(/application\/ld\+json/);
     expect(src).toMatch(/const copy = homeDoorsCopy\(locale\)/);
     expect(src).toMatch(/labels=\{calendarRailLabels\(locale\)\}/);

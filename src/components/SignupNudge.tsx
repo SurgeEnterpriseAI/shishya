@@ -34,6 +34,8 @@
 //     this path + query), never into a questionnaire.
 
 import { useEffect, useRef, useState } from "react";
+import { pitchAllowedPath, signupPitchCopy } from "@/lib/signup-pitch";
+import { clientUiLocale } from "@/lib/ui-locale-copy";
 import { usePathname } from "next/navigation";
 import { fetchSignedIn } from "@/lib/session-hint";
 import { isUnder13SchoolPath } from "@/lib/school/student-classes";
@@ -49,21 +51,11 @@ const SS_VIEWS = "shishya_nudge_views";
 const SS_SECONDS = "shishya_nudge_seconds";
 
 function blockedPath(p: string): boolean {
-  return (
-    p.startsWith("/mocks/") ||
-    p.startsWith("/live-test/") ||
-    p.startsWith("/attempts/") ||
-    p.startsWith("/login") ||
-    p.startsWith("/admin") ||
-    p.startsWith("/i/") ||
-    p.startsWith("/join/") ||
-    p.startsWith("/aptitude") ||
-    // 27 Sep 2026: school pages have their own save-practice line and
-    // children must not be asked; the chat has its own after-value save card.
-    /^\/schooling(\/|$)/.test(p) ||
-    p === "/chat" ||
-    p.startsWith("/chat?")
-  );
+  // 27 Sep 2026 (evening): the site-wide offer's rule (src/lib/signup-pitch.ts)
+  // — no child school page (Class 1-7, /schooling, board hubs), no paper in
+  // progress, no chat, login or admin — plus live tests. Class 8-12 school
+  // pages DO get it now (founder: sign-ups everywhere except below Class 8).
+  return !pitchAllowedPath(p) || p.startsWith("/live-test/");
 }
 
 // NOTE (4 Aug 2026 incident): the original check read document.cookie
@@ -187,6 +179,8 @@ export function SignupNudge() {
   }, [show, anon]);
 
   if (!show) return null;
+  // Same offer as the site card, in the reader's language (27 Sep 2026).
+  const pitch = signupPitchCopy(clientUiLocale());
 
   return (
     <div
@@ -197,9 +191,7 @@ export function SignupNudge() {
       <div className="animate-[slideup_.3s_ease-out] rounded-t-2xl border-2 border-saffron-300 bg-white p-4 shadow-xl sm:rounded-2xl">
         <style>{`@keyframes slideup{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-bold text-ink-900">
-            🎯 You&apos;ve been studying for 5 minutes — make Shishya yours.
-          </p>
+          <p className="text-sm font-bold text-ink-900">🎯 {pitch.title}</p>
           <button
             type="button"
             aria-label="Maybe later"
@@ -218,10 +210,8 @@ export function SignupNudge() {
             ✕
           </button>
         </div>
-        <p className="mt-1 text-xs leading-relaxed text-ink-600">
-          Free forever. One tap with Google keeps your chats and practice, tracks your weak topics and,
-          for an exam, builds a day-by-day plan.
-        </p>
+        <p className="mt-1 text-xs leading-relaxed text-ink-600">{pitch.short}</p>
+        <p className="mt-1 text-[11px] leading-relaxed text-ink-500">{pitch.privacy}</p>
         <div className="mt-3 flex items-center gap-3">
           <a
             href={`/login?callbackUrl=${encodeURIComponent(location.pathname + location.search)}&from=header`}
@@ -231,7 +221,7 @@ export function SignupNudge() {
             }}
             className="rounded-xl bg-saffron-500 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
           >
-            Sign up free →
+            {pitch.cta}
           </a>
           <button
             type="button"
@@ -247,7 +237,7 @@ export function SignupNudge() {
             }}
             className="text-xs font-medium text-ink-500 hover:text-ink-700"
           >
-            Maybe later
+            {pitch.later}
           </button>
         </div>
       </div>

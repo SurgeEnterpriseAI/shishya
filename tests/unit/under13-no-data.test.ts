@@ -217,11 +217,12 @@ describe("client islands send and store nothing identifying on Class 1-7 pages",
     expect(stripComments(read("src/components/Header.tsx"))).toMatch(/\{!childSafe && \(\s*<Link\s+href="\/chat"/);
   });
 
-  it("SignupNudge never shows on /schooling or /chat, and writes no counter on Class 1-7 pages", () => {
+  it("SignupNudge never shows on a child school page or the chat, and writes no counter on Class 1-7 pages", () => {
     const src = stripComments(read("src/components/SignupNudge.tsx"));
     const blocked = src.slice(src.indexOf("function blockedPath("), src.indexOf("function beacon("));
-    expect(blocked).toContain("/^\\/schooling(\\/|$)/.test(p)");
-    expect(blocked).toContain('p === "/chat"');
+    // 27 Sep 2026 (evening): the site-wide offer's rule (src/lib/signup-pitch.ts pitchAllowedPath —
+    // tests/unit/signup-pitch.test.ts pins it: no Class 1-7, /schooling or board hub, no chat).
+    expect(blocked).toContain('return !pitchAllowedPath(p) || p.startsWith("/live-test/");');
     // The page-view counter and the active-seconds tick both return first on Class 1-7.
     expect(src.match(/if \(isUnder13SchoolPath\(location\.pathname\)\) return;/g)?.length).toBe(2);
     expect(src.indexOf("if (isUnder13SchoolPath(location.pathname)) return;")).toBeLessThan(src.indexOf("sessionStorage.setItem(SS_VIEWS"));
@@ -241,9 +242,16 @@ describe("client islands send and store nothing identifying on Class 1-7 pages",
   });
 });
 
-describe("content first — no timed sign-up sheet (27 Sep 2026)", () => {
-  it("the root layout does not mount SignupNudge", () => {
+describe("sign-ups everywhere except child school pages (27 Sep 2026, evening)", () => {
+  it("the root layout mounts the offer card and the timed sheet", () => {
     const src = stripComments(read("src/app/layout.tsx"));
-    expect(src).not.toMatch(/SignupNudge/);
+    expect(src).toContain("<SignupPitch />");
+    expect(src).toContain("<SignupNudge />");
+  });
+  it("the card renders nothing on the server and checks the page and the session first", () => {
+    const src = stripComments(read("src/components/SignupPitch.tsx"));
+    expect(src).toContain("if (!pitchAllowedPath(pathname)) return;");
+    expect(src).toContain("if (!alive || signedIn !== false) return;");
+    expect(src).toContain("if (!copy) return null;");
   });
 });

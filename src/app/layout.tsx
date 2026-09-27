@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { SignupPitch } from "@/components/SignupPitch";
+import { SignupNudge } from "@/components/SignupNudge";
 import { Inter, Noto_Sans_Devanagari } from "next/font/google";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
@@ -244,11 +246,17 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
         {children}
+        {/* 27 Sep 2026 (founder, evening): a free sign-up offer everywhere
+            except school pages below Class 8 — after the content, for guests
+            only (src/lib/signup-pitch.ts). */}
+        <SignupPitch />
         <SiteFooter />
         <FeedbackWidget />
-        {/* 27 Sep 2026 (founder, content first): no timed sign-up sheet —
-            sign-in is offered only where it is needed (saving a result or
-            progress). src/components/SignupNudge.tsx is no longer mounted. */}
+        {/* The timed sign-up sheet (5 active minutes + 3 page views, courtesy
+            caps inside): unmounted in the morning of 27 Sep, back the same
+            evening on the founder's "sign-ups everywhere" — never on child
+            school pages, mid-paper or in the chat (pitchAllowedPath). */}
+        <SignupNudge />
         {/* First-party analytics tracker (no 3rd-party network calls).
             Wrapped in Suspense because useSearchParams() must be inside
             a Suspense boundary in App Router. */}

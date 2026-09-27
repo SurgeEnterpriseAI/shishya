@@ -162,7 +162,7 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
     },
     signin: {
       cta: "Sign in free",
-      line: "Chats and scores saved · weak topics tracked · a day-by-day plan for your exam · in your language",
+      line: "Signed in, Shishya remembers you: this page opens where you left off, with your exams, weak topics, saved results and a personal plan. Free — we get only your name, email and profile picture from Google.",
       back: "Welcome back — Today's 5 →",
     },
     foot: { mentor: "Cleared an exam? Mentor the next batch →" },
@@ -248,7 +248,7 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
     },
     signin: {
       cta: "मुफ़्त साइन-इन",
-      line: "बातचीत और स्कोर सेव · कमज़ोर टॉपिक पर नज़र · आपकी परीक्षा के लिए रोज़-ब-रोज़ प्लान · आपकी भाषा में",
+      line: "साइन इन करने पर Shishya आपको याद रखता है: यह पेज वहीं से खुलता है जहाँ आपने छोड़ा — आपकी परीक्षाएँ, कमज़ोर टॉपिक, सेव परिणाम और आपका प्लान। मुफ़्त — Google से हमें केवल आपका नाम, ईमेल और प्रोफ़ाइल फ़ोटो मिलती है।",
       back: "वापसी पर स्वागत — आज के 5 →",
     },
     foot: { mentor: "परीक्षा पास कर चुके हैं? अगले बैच के मेंटर बनिए →" },
@@ -334,7 +334,7 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
     },
     signin: {
       cta: "ఉచిత సైన్-ఇన్",
-      line: "సంభాషణలు, స్కోర్లు సేవ్ · బలహీన టాపిక్‌లపై దృష్టి · మీ పరీక్షకు రోజువారీ ప్లాన్ · మీ భాషలో",
+      line: "సైన్ ఇన్ చేస్తే Shishya మిమ్మల్ని గుర్తుంచుకుంటుంది: ఈ పేజీ మీరు ఆపిన చోటు నుంచే తెరుచుకుంటుంది — మీ పరీక్షలు, బలహీన టాపిక్‌లు, సేవ్ అయిన ఫలితాలు, మీ ప్లాన్. ఉచితం — Google నుంచి మాకు మీ పేరు, ఈమెయిల్, ప్రొఫైల్ ఫోటో మాత్రమే వస్తాయి.",
       back: "మళ్ళీ స్వాగతం — ఈరోజు 5 →",
     },
     foot: { mentor: "పరీక్ష పాసయ్యారా? తర్వాతి బ్యాచ్‌కు మెంటర్ అవ్వండి →" },

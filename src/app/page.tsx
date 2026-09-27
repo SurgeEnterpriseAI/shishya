@@ -45,6 +45,8 @@
 // fixed side rails. tests/unit/home-doors.test.ts pins what may not return.
 
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { HomeForYou } from "@/components/home/HomeForYou";
 import { permanentRedirect } from "next/navigation";
 import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
 import { unstable_cache } from "next/cache";
@@ -452,14 +454,15 @@ export default async function HomePage({
   const { locale, t } = await getT();
   const copy = homeDoorsCopy(locale);
 
-  const [signedIn, exams, calendar, vacancy, portalStats, liveToday] = await Promise.all([
-    auth().then((s) => Boolean(s?.user)).catch(() => false),
+  const [sessionUser, exams, calendar, vacancy, portalStats, liveToday] = await Promise.all([
+    auth().then((s) => (s?.user ? { id: s.user.id ?? null } : null)).catch(() => null),
     loadExams(),
     loadUpcomingEvents(),
     loadVacancyExplorerSafe(),
     loadPortalStats(),
     loadTodaysLiveTests(),
   ]);
+  const signedIn = Boolean(sessionUser);
   const upcomingEvents = calendar.events;
 
   // SEO/AEO: schema.org Event markup for the upcoming exam days —
@@ -558,6 +561,13 @@ export default async function HomePage({
 
       <div className="container-prose pb-16">
         <HomeHero copy={copy} search={<SearchStrip variant="hero" copy={searchCopy(locale)} askBase={askBaseFor(locale)} />} />
+
+        {/* 27 Sep 2026: a signed-in student's own home — where they left off (src/components/home/HomeForYou.tsx). */}
+        {sessionUser?.id && (
+          <Suspense fallback={null}>
+            <HomeForYou userId={sessionUser.id} locale={locale} />
+          </Suspense>
+        )}
 
         <HomeDoors
           copy={copy}

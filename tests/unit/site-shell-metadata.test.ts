@@ -58,6 +58,7 @@ const STUBS: Record<string, unknown> = {
   "@/components/FeedbackWidget": { FeedbackWidget: nullComponent },
   "@/components/AnalyticsTracker": { AnalyticsTracker: nullComponent },
   "@/components/SignupNudge": { SignupNudge: nullComponent },
+  "@/components/SignupPitch": { SignupPitch: nullComponent },
   "@/components/SiteFooter": { SiteFooter: nullComponent },
   "./globals.css": {},
 };
