@@ -158,7 +158,10 @@ export default async function MeProfilePage() {
     FROM "User" WHERE "id" = ${userId} LIMIT 1
   `;
   const user = userRows[0];
-  if (!user) redirect("/login?callbackUrl=/me");
+  // A session whose User row is gone (JWT sessions outlive a removed row):
+  // /login now sends a signed-in visitor back to the callback, so a /login
+  // bounce here would loop /me → /login → /me. /logout lets them sign out.
+  if (!user) redirect("/logout");
 
   // Last-20 activity (was 15) + Fact.section join so the timeline
   // shows what each item is.

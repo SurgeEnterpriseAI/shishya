@@ -2,20 +2,31 @@
 //
 // Founder decision (26 Sep 2026): classes whose students are 13 and above —
 // Class 8 to 12 (NCERT_C08..C12, CISCE_C08..C12) — get student sign-in, the
-// AI tutor and account practice on their school pages. Classes 1-7 stay
-// content + no-account practice only. Everything that decides "is this a
-// student-mode class / container", "has this account answered the age
-// band", "how many questions does a chapter practice hold" and "where do
-// the sign-in and tutor links go" lives here, so the chapter page, the
+// AI tutor and account practice on their school pages (27 Sep 2026: the
+// tutor for guests too, with no sign-in). Classes 1-7 stay content +
+// no-account practice only, and take no data. Everything that decides "is
+// this a student-mode class / container", "is this a Class 1-7 page", "how
+// many questions does a chapter practice hold" and "where do the sign-in
+// and tutor links go" lives here, so the chapter page, the
 // class page, the enrolment door (src/lib/db/enrollment.ts), the mock
 // builders and the profile route cannot disagree.
 //
-// Age band (Anthropic usage policy for minors applies to the tutor NOW;
-// DPDP child rules from ~May 2027 — see the 25 Sep rules lens): every school
-// sign-in entry carries the line "for students 13 and above", and the first
-// school sign-in asks a one-time self-declared band — 13-17 student / 18+
-// student / parent / teacher. It is stored in EXISTING User fields, no
-// migration:
+// 27 Sep 2026 (founder: content first — no question before content): the
+// one-time age-band card (13-17 student / 18+ student / parent / teacher) was
+// REMOVED. Nobody is asked their age or role any more: a guest on a Class
+// 8-12 chapter page gets the AI tutor with no sign-in, a signed-in account
+// gets practice and the tutor at once, and the school-mode safeguards come
+// from the CONTEXT (a Class 8-12 container), never from a declaration. Every
+// school sign-in entry still carries the line "for students 13 and above".
+// Class 1-7 pages take no data at all (isUnder13SchoolPath below). The
+// school-only marker is now the class-container enrolment (written at the
+// sign-in that returns to a school page, and by practice). Bands that
+// accounts ALREADY stored are still read — never deleted, never asked again
+// — through the exports in the "Age band" section, in the encoding below.
+//
+// Legacy age band (26 Sep 2026 – 27 Sep 2026; Anthropic usage policy for
+// minors, DPDP child rules from ~May 2027): the card stored a self-declared
+// band in EXISTING User fields, no migration:
 //   • User.onbStage  = the band, in the wizard's own vocabulary:
 //       a 13-17 student → CLASS_8 | CLASS_9_10 | CLASS_11_12 (from the class
 //       of the container they signed in on — CLASS_8 is new; the wizard's
@@ -27,7 +38,8 @@
 //     answered: only the school flow writes a school container there (the
 //     wizard validates its codes against real exams and keeps existing
 //     school codes). A wizard-only CLASS_9_10 user never declared an age, so
-//     schoolBandOfProfile() is null for them until they answer the card.
+//     schoolBandOfProfile() is null for them (and stays null: the card is
+//     gone, and null now means "no declared band", nothing more).
 //
 // Pure and import-free: the client island (src/components/school/
 // SchoolStudentEntry.tsx) bundles this file, so nothing here may reach
@@ -63,6 +75,11 @@ export function isStudentModeClass(cls: number): boolean {
   return Number.isInteger(cls) && cls >= STUDENT_MODE_MIN_CLASS && cls <= STUDENT_MODE_MAX_CLASS;
 }
 
+/** True for a Class 1-7 school page (/schooling/{board}/class-1 … class-7 and everything under it) — the pages that take no data (founder, 27 Sep 2026: below 13, content only). Query and hash ignored; class-10/11/12 do not match. */
+export function isUnder13SchoolPath(p: string | null | undefined): boolean {
+  return typeof p === "string" && /^\/schooling\/[^/?#]+\/class-[1-7](?:[/?#]|$)/.test(p);
+}
+
 /** NCERT_C09 → 9 when that is a student-mode class; null for NCERT_C05, a
  *  real exam code, or anything else. */
 export function studentModeClassOfExamCode(code: string): number | null {
@@ -77,7 +94,9 @@ export function isStudentModeContainer(exam: { code: string; category: string })
   return isSchoolCategory(exam.category) && studentModeClassOfExamCode(exam.code) !== null;
 }
 
-// ── Age band ──────────────────────────────────────────────────────────
+// ── Age band (legacy: read only since 27 Sep 2026) ────────────────────
+// Nothing asks for a band any more; these read the bands accounts already
+// stored (the declared-minor chat redirect, the band on school turns).
 
 export const SCHOOL_BANDS = ["STUDENT_13_17", "STUDENT_18", "PARENT", "TEACHER"] as const;
 export type SchoolBand = (typeof SCHOOL_BANDS)[number];
@@ -211,7 +230,8 @@ export function schoolTutorSeed(i: { chapterName: string; cls: number; subjectNa
 }
 
 /** "/chat?examCode=NCERT_C09&topicCode=…&seed=…" — the school tutor entry
- *  for a signed-in student of a student-mode class (the chat route reads the
+ *  for anyone on a student-mode class page — guest or signed in, since 27
+ *  Sep 2026 (the chat route reads the
  *  container and the chapter; src/app/api/chat/route.ts owns the persona).
  *  `seed` replaces the default opening line (the results page passes the
  *  attempt's own). */
@@ -225,7 +245,8 @@ export function schoolTutorHref(i: { examCode: string; topicCode: string; chapte
  *  container>). 26 Sep 2026 (fixer): NextAuth's createUser event reads the
  *  callback-url cookie through this so a FIRST sign-in from a school page
  *  sends no exam-prep welcome mail (src/lib/auth.ts) — it fires before the
- *  age band exists, so where the sign-in returns to is the only signal.
+ *  school context is known, so where the sign-in returns to is the only
+ *  signal (27 Sep 2026: there is no age band to wait for any more).
  *  Any school container counts (a Class 6 return is still the school
  *  surface). Unparseable or empty → false: the exam welcome is the default
  *  and the school skip needs a positive match. The host is not checked —
@@ -250,24 +271,18 @@ export function isSchoolSignInCallback(url: string | null | undefined): boolean 
 export type StudentEntryView =
   /** Not a student-mode class: the page renders nothing of this. */
   | { kind: "none" }
-  /** The sign-in CTA with the age line. */
-  | { kind: "signed-out" }
-  /** Signed in, band not answered yet: the age-band card. */
-  | { kind: "band-card" }
-  /** Signed in and answered: the tutor entry and, when the chapter has enough
-   *  checked questions, the practice button with its honest count. */
-  | { kind: "ready"; practiceCount: number | null; band: SchoolBand };
+  /** A guest (or not known yet — also the SSR / crawler HTML): the AI tutor
+   *  entry with no sign-in (27 Sep 2026, founder: content first). */
+  | { kind: "guest" }
+  /** Signed in: the tutor entry and, when the chapter has enough checked
+   *  questions, the practice button with its honest count. Nothing asked. */
+  | { kind: "ready"; practiceCount: number | null };
 
 /** ONE decision for the chapter / class entry, so the island and the tests
- *  agree. `signedIn` null = not known yet (before the session probe). */
-export function studentEntryView(i: {
-  cls: number;
-  signedIn: boolean | null;
-  band: SchoolBand | null;
-  validatedQuestions: number;
-}): StudentEntryView {
+ *  agree. `signedIn` null = not known yet (before the session probe). No
+ *  band: since 27 Sep 2026 nobody is asked one. */
+export function studentEntryView(i: { cls: number; signedIn: boolean | null; validatedQuestions: number }): StudentEntryView {
   if (!isStudentModeClass(i.cls)) return { kind: "none" };
-  if (!i.signedIn) return { kind: "signed-out" };
-  if (!i.band) return { kind: "band-card" };
-  return { kind: "ready", practiceCount: schoolChapterMockCount(i.validatedQuestions), band: i.band };
+  if (!i.signedIn) return { kind: "guest" };
+  return { kind: "ready", practiceCount: schoolChapterMockCount(i.validatedQuestions) };
 }

@@ -61,7 +61,7 @@ export default function EditorialPolicyPage() {
           is cited through a secondary source, such as a news or coaching site, is marked{" "}
           <b>Reported</b>: real, but worth confirming. Anything else is marked <b>Expected</b>: an
           estimate from previous cycles, never presented as an announcement. We also show when each
-          exam&apos;s data was last updated, and we always tell aspirants to confirm on the
+          exam&apos;s data was last updated, and we always tell students to confirm on the
           conducting body&apos;s website before acting.
         </p>
 
@@ -76,8 +76,10 @@ export default function EditorialPolicyPage() {
           page shows the official link only.
         </p>
         <p className="mt-2">
-          Class 1-7 pages are content only: no sign-in and no chat tutor. On Class 8-12 pages,
-          students aged 13 and above can sign in for an AI tutor scoped to their class.
+          Class 1-7 pages are content only: no sign-in, no chat tutor and no visitor identifier
+          stored. On CBSE Class 8-12 chapter pages anyone can ask the AI tutor about the chapter
+          without an account (study questions only, with a daily message limit); students aged 13
+          and above can sign in to save practice.
         </p>
 
         <h2 className="mt-6 text-lg font-semibold text-ink-900">Colleges, scholarships and careers data</h2>
@@ -116,15 +118,24 @@ export default function EditorialPolicyPage() {
           Every practice question carries a <b>Report</b> action. A reported question is re-checked —
           today by an automated review that solves it again against its answer key — and the key is
           corrected or the question is withdrawn; reporters are notified by email of the outcome.
-          Aspirants can also send any doubt to the free expert desk: a person answers, and if no one
+          Students can also send any doubt to the free expert desk: a person answers, and if no one
           has within a day, Shishya&apos;s AI answers it, labelled as such, and the team follows up.
+        </p>
+
+        <h2 className="mt-6 text-lg font-semibold text-ink-900">The AI tutor (Ask Shishya)</h2>
+        <p className="mt-2">
+          Ask Shishya is an AI tutor for a student&apos;s studies in India — school (Class 8–12),
+          entrance and government exams, colleges and courses, scholarships and careers. It says it
+          is an AI and answers study questions only. For school subjects it explains concepts in its
+          own words and points to the official textbook; it never copies, summarises or translates
+          textbook text. Class 1–7 pages have no tutor.
         </p>
 
         <h2 className="mt-6 text-lg font-semibold text-ink-900">What we will not do</h2>
         <ul className="mt-2 list-disc pl-5 space-y-1">
           <li>No paywall on preparation — mocks, papers, notes, tutor, plans stay free.</li>
           <li>No invented vacancy counts, cutoffs or dates presented as fact.</li>
-          <li>No ads, no affiliate links, no selling of aspirant data.</li>
+          <li>No ads, no affiliate links, no selling of student data.</li>
         </ul>
 
         <h2 className="mt-6 text-lg font-semibold text-ink-900">Corrections</h2>

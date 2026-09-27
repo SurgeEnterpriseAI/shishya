@@ -230,6 +230,16 @@ export default async function PYQYearPage({
   // AEO answer below. Either way the questions are pattern-modelled, and
   // `modelled` is the one sentence every surface on this page uses.
   const partial = isPartialPaper(questions.length, exam.totalQuestions);
+  // 27 Sep 2026 (founder, content first): a guest practises up to 10 of this
+  // set's own questions on the no-sign-in quiz player (/exams/{code}/quiz
+  // ?set=…, ids validated there against this exam). A link only — nothing is
+  // written for a guest or a crawler. Only the ids the player replays (MCQs
+  // not withdrawn — getAnonQuiz's own filter, src/lib/anon-quiz.ts), so the
+  // "{n} questions from this set" on the button is the count it serves.
+  const guestSet = questions
+    .filter((q) => q.type === "MCQ" && !q.tags.includes("rejected"))
+    .slice(0, 10)
+    .map((q) => q.id);
   const counts = { n: questions.length, m: exam.totalQuestions, year: yearNum };
   const modelled = fillPyq(P.modelled, { n: questions.length, year: yearNum, m: exam.totalQuestions });
   // The structured data below stays English in every locale (inLanguage
@@ -298,7 +308,8 @@ export default async function PYQYearPage({
     });
 
     // Has the user already submitted ANY mock on this exam? Drives whether
-    // the StartFullMockButton shows the warmup-vs-full-mock dialog.
+    // the StartFullMockButton offers the optional warm-up link (27 Sep 2026:
+    // a link under the button, no longer a dialog).
     const submittedHistoryCount = await prisma.attempt.count({
       where: {
         userId,
@@ -448,7 +459,10 @@ export default async function PYQYearPage({
         <div className="mt-6 rounded-md border border-ink-200 bg-white p-6">
           {!userId || !mock ? (
             // Anonymous (and crawler) view — the paper is fully described
-            // above; attempting needs a free account for scoring + history.
+            // above. 27 Sep 2026 (founder, content first): a guest practises
+            // up to 10 of this set's questions now with no sign-in; the whole
+            // timed set with a saved score still needs a free account, offered
+            // as the secondary link. Links only — no DB write for a guest.
             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-ink-900">
@@ -458,20 +472,37 @@ export default async function PYQYearPage({
                 </p>
                 <p className="mt-0.5 text-xs text-ink-500">{fillPyq(P.ctaBody, { modelled })}</p>
               </div>
-              <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-                <Link
-                  href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}`}
-                  className="btn-primary text-center"
-                >
-                  {P.ctaSignIn}
-                </Link>
-                <Link
-                  href={`/exams/${code}/quiz`}
-                  className="text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"
-                >
-                  {P.ctaQuiz}
-                </Link>
-              </div>
+              {!userId && guestSet.length >= 5 ? (
+                <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                  <Link
+                    href={`/exams/${code}/quiz?set=${guestSet.join(",")}&n=${guestSet.length}`}
+                    className="btn-primary text-center"
+                  >
+                    {fillPyq(P.ctaPractise, { n: guestSet.length })}
+                  </Link>
+                  <Link
+                    href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}`}
+                    className="text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"
+                  >
+                    {P.ctaSave}
+                  </Link>
+                </div>
+              ) : (
+                <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                  <Link
+                    href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}`}
+                    className="btn-primary text-center"
+                  >
+                    {P.ctaSignIn}
+                  </Link>
+                  <Link
+                    href={`/exams/${code}/quiz`}
+                    className="text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"
+                  >
+                    {P.ctaQuiz}
+                  </Link>
+                </div>
+              )}
             </div>
           ) : (
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">

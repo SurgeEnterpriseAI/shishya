@@ -42,7 +42,9 @@ export default async function SettingsPage() {
     FROM "User" WHERE "id" = ${session.user.id} LIMIT 1
   `;
   const user = userRows[0];
-  if (!user) redirect("/login?callbackUrl=/me/settings");
+  // Stale session with no User row: /login would bounce straight back here
+  // (a signed-in visitor goes to the callback), so send them to sign out.
+  if (!user) redirect("/logout");
 
   return (
     <main className="min-h-screen bg-saffron-50/30">

@@ -77,7 +77,7 @@ export default async function AdminPulsePage() {
         <p className="text-xs text-ink-500">
           <Link href="/admin" className="hover:text-ink-800">← Admin</Link> · Pulse
         </p>
-        <h1 className="mt-1 text-2xl font-bold text-ink-900">What aspirants are telling us</h1>
+        <h1 className="mt-1 text-2xl font-bold text-ink-900">What students are telling us</h1>
         <p className="mt-1 text-sm text-ink-600">
           One-tap chips + one-line notes from the PulseAsk rows (results, coach, exam hub, tracker, PYQ).
         </p>

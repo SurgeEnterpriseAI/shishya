@@ -57,9 +57,9 @@ async function activeExams(): Promise<Exam[]> {
 
 // 26 Sep 2026: no typed exam count in the bot's help ("170+" went stale).
 const HELP = [
-  `<b>Shishya</b> — free government-exam prep: practice, exam dates and results. Try:`,
+  `<b>Shishya</b> — one smart, free place to study: school, entrance and government exams, colleges, scholarships and careers. In this chat: exam practice, dates and results. Try:`,
   `• /today — 5 practice questions, right here`,
-  `• /exam SSC CGL — exam date, admit card, result (official / announced / expected)`,
+  `• /exam SSC CGL — exam date, admit card, result (official / reported / expected)`,
   `• /calendar — exam days in the next 30 days`,
   `• /livetest — this Sunday's All-India Live Test`,
   `Or just type an exam name: <i>rrb ntpc date</i>`,
@@ -155,9 +155,9 @@ async function examCard(exam: Exam): Promise<{ text: string; buttons: InlineButt
   const line = (label: string, kind: Parameters<typeof upcomingOfKind>[1]) => {
     const r = upcomingOfKind(timeline, kind) ?? latestOfKind(timeline, kind);
     if (!r) return `• ${label}: not announced yet`;
-    // official = conducting-body notice · reported = announced via press ·
+    // official = conducting-body notice · reported = per press reports ·
     // expected = estimate (the footer explains "expected").
-    const tag = r.tier === "official" ? "official" : r.tier === "reported" ? "announced" : "expected";
+    const tag = r.tier === "official" ? "official" : r.tier === "reported" ? "reported" : "expected";
     // A passed estimate was never confirmed — it must not read as "done".
     const when = r.displayStatus === "passed-estimate"
       ? "was expected — not confirmed"
@@ -182,7 +182,7 @@ async function examCard(exam: Exam): Promise<{ text: string; buttons: InlineButt
     line("Answer key", "ANSWER_KEY"),
     line("Result", "RESULT"),
     news ? `\n🆕 ${tgEscape(news.title)}${news.url ? ` — <a href="${news.url}">source</a>` : ""}` : "",
-    `\n<i>Announced = per press reports · expected = estimate from previous cycles, not an announcement. Always confirm on the official site.</i>`,
+    `\n<i>Reported = per press reports · expected = estimate from previous cycles, not an announcement. Always confirm on the official site.</i>`,
   ]
     .filter(Boolean)
     .join("\n");

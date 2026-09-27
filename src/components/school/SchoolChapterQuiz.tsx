@@ -16,11 +16,18 @@
 // the same endpoint every page view sends to) so the founder can see
 // whether practice is used; the page copy says exactly that (26 Sep 2026
 // fixer: it used to say "nothing is saved", which this beacon made untrue).
+// 27 Sep 2026 (founder rule 5: below 13, no data taken): on a Class 1-7
+// page the same event goes out with no cookie and no referrer
+// (sendChildSafeEvent, src/components/AnalyticsTracker.tsx — credentials
+// omit, referrerPolicy no-referrer), and the ingest route stores it as a
+// bare count with no visitor identifier. Class 8-12 pages keep the beacon.
 
 import { useState } from "react";
 import type { AnonQuiz } from "@/lib/anon-quiz";
 import { fillTemplate } from "@/lib/i18n";
 import { quizDifficultyLabel, type QuizLabels } from "@/lib/challenge-copy";
+import { isUnder13SchoolPath } from "@/lib/school/student-classes";
+import { sendChildSafeEvent } from "@/components/AnalyticsTracker";
 
 export interface SchoolQuizCopy {
   /** "Practice: {n} questions on {scope}" */
@@ -66,19 +73,14 @@ export function SchoolChapterQuiz({ quiz, labels, copy, backToNotes = true }: { 
     if (idx + 1 >= n) {
       setDone(true);
       try {
-        navigator.sendBeacon?.(
-          "/api/analytics",
-          new Blob(
-            [
-              JSON.stringify({
-                kind: "QUIZ_ATTEMPTED",
-                path: typeof location !== "undefined" ? location.pathname : undefined,
-                props: { anon: true, school: true, exam: quiz.examCode, topic: quiz.topicCode, score: nextAnswers.filter((a) => a.correct).length, total: n },
-              }),
-            ],
-            { type: "application/json" },
-          ),
-        );
+        const path = typeof location !== "undefined" ? location.pathname : undefined;
+        const props = { anon: true, school: true, exam: quiz.examCode, topic: quiz.topicCode, score: nextAnswers.filter((a) => a.correct).length, total: n };
+        if (isUnder13SchoolPath(path)) {
+          // Class 1-7: no cookie, no referrer (founder rule 5).
+          sendChildSafeEvent("QUIZ_ATTEMPTED", path as string, props);
+        } else {
+          navigator.sendBeacon?.("/api/analytics", new Blob([JSON.stringify({ kind: "QUIZ_ATTEMPTED", path, props })], { type: "application/json" }));
+        }
       } catch {
         /* analytics is best-effort */
       }

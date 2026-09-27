@@ -571,9 +571,16 @@ export function chapterContentLabel(ch: Pick<SchoolSurfaceChapter, "hasNotes" | 
  *  26 Sep 2026 (student mode): the founder opened Class 8-12 pages to
  *  student sign-in, the AI tutor and account practice
  *  (src/lib/school/student-classes.ts); Classes 1-7 stay as they were. The
- *  line says both, and the age line the pages carry. */
+ *  line says both, and the age line the pages carry.
+ *  27 Sep 2026 (founder: content first): no age band — nobody is asked
+ *  their age or role; guests get the Class 8-12 tutor with no sign-in
+ *  (sign-in only saves practice); Class 1-7 pages take no data (their
+ *  analytics carry no cookie or other visitor identifier).
+ *  27 Sep 2026 (review): the guest practice exists only on chapters with 5+
+ *  checked questions (Class 6-10 Maths and Science so far, none in Class
+ *  11-12), so the line says "where the chapter has one", never "every". */
 export const SCHOOL_CHILDREN_LINE =
-  "Class 1-7 school pages have no chat tutor, offer no sign-in and ask no child to create an account. On Class 8-12 pages a student may sign in to practise a chapter with Shishya's own answer-checked questions and to ask the AI tutor about it — for students 13 and above, with a one-time self-declared age band, and the tutor says it is an AI. The 5-question practice on every chapter page needs no account, and no result is saved to any account or profile from it: Shishya records only an anonymous usage event (which chapter was practised and the score), the same cookie-based analytics every page view sends. A signed-in student's own practice set is saved to that account.";
+  "Class 1-7 school pages have no chat tutor, offer no sign-in and ask no child to create an account. On Class 8-12 pages a student may sign in to save practice to an account — for students 13 and above; no school page asks anyone their age or role — and anyone can read a chapter, take its practice where the chapter has one and ask the AI tutor about it without signing in; the tutor says it is an AI and answers study questions only, with a daily message limit. The 5-question practice on the chapter pages that have it needs no account, and no result is saved to any account or profile from it: Shishya records only an anonymous usage event (which chapter was practised and the score) — on Class 8-12 pages with the same cookie-based analytics every page view sends, on Class 1-7 pages with no cookie, account or other visitor identifier. A signed-in student's own practice set is saved to that account.";
 
 /** The CISCE class line of llms-full.txt: per-subject syllabus PDFs where
  *  the council publishes them (ICSE / ISC classes), the stage curriculum

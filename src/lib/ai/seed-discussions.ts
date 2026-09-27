@@ -21,7 +21,7 @@ export interface SeedThreadTitle {
   title: string;
 }
 
-const SYSTEM_PROMPT = `You are writing sample discussion thread TITLES for an Indian exam-prep platform's homepage right-rail.
+const SYSTEM_PROMPT = `You are writing sample discussion thread TITLES for the discussions rail of Shishya, a free Indian study platform whose discussions are mostly about entrance and government exams.
 
 GOAL
 Generate 6 plausible thread titles that real student aspirants might post about the upcoming exam. The titles give the discussion sidebar starter questions for an exam that's about to happen — they are posted under the platform's own name and CLEARLY LABELLED "Starter question · Shishya" in the UI, so don't try to fake authenticity, just write what real students actually ask.

@@ -24,6 +24,12 @@
 // users the lifecycle nav (Schooling, Colleges, Scholarships, etc.) is
 // hidden") no longer holds: those sections ARE the header now. Each
 // section stands alone; nothing in the header reads as an order.
+//
+// 27 Sep 2026 (founder rule 5: below 13, content only): childSafe — set by
+// the Class 1-7 school pages (/schooling/{board}/class-1 … class-7) — drops
+// the Ask Shishya chip from the orange row; HeaderAuthControls drops Sign in
+// on those paths by itself (isUnder13SchoolPath), so no child is offered a
+// tutor or an account from the header.
 
 import Link from "next/link";
 import { BackLink } from "./BackLink";
@@ -60,7 +66,7 @@ const DEFAULT_LOCALE = "en";
 const SECTION_LINK = "py-1 hover:text-saffron-100";
 const UTILITY_LINK = "py-1 font-medium text-white/90 hover:text-white";
 
-export function Header({ admin = false }: { admin?: boolean }) {
+export function Header({ admin = false, childSafe = false }: { admin?: boolean; childSafe?: boolean }) {
   // Daily-rotating motivational quote shown in the empty middle space
   // of the header. Picked deterministically by IST calendar day so
   // every visitor sees the same quote within a day, swaps at midnight.
@@ -244,15 +250,18 @@ export function Header({ admin = false }: { admin?: boolean }) {
                 no sign-in, members their exam tutor, Class 8-12 school
                 accounts their class chat. prefetch off: /chat runs auth()
                 and the database, and ~135 pages must not prefetch it. */}
-            <Link
-              href="/chat"
-              prefetch={false}
-              data-nav="ask"
-              title="Ask Shishya — free, no sign-in"
-              className="rounded-md bg-white px-2.5 py-1 text-saffron-700 hover:bg-saffron-50"
-            >
-              Ask Shishya
-            </Link>
+            {/* 27 Sep 2026: no tutor link on Class 1-7 school pages (founder: below 13, content only) */}
+            {!childSafe && (
+              <Link
+                href="/chat"
+                prefetch={false}
+                data-nav="ask"
+                title="Ask Shishya — free, no sign-in"
+                className="rounded-md bg-white px-2.5 py-1 text-saffron-700 hover:bg-saffron-50"
+              >
+                Ask Shishya
+              </Link>
+            )}
             {/* 26 Sep 2026 (integration): the section and utility links carry
                 no title tooltips — only Ask Shishya keeps one. The /hi and /te
                 twin gate (src/lib/twin-localisation.ts) counts every twin

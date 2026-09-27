@@ -1,6 +1,6 @@
 // /admin/demand — the demand heatmap (1 Sep 2026).
 //
-// What aspirants keep asking for, mined daily from free-form text
+// What students keep asking for, mined daily from free-form text
 // (tutor chat, PulseAsk notes, teacher requests, /ideas) by
 // src/lib/demand-mine.ts. Three reads, most-detailed first:
 //   1. cluster × week heatmap, grouped under the fixed category
@@ -213,7 +213,7 @@ export default async function AdminDemandPage() {
                 })}
               </tbody>
             </table>
-            <p className="mt-2 text-xs text-ink-500">Click a need for recent quotes in the aspirant&apos;s own words.</p>
+            <p className="mt-2 text-xs text-ink-500">Click a need for recent quotes in the student&apos;s own words.</p>
           </div>
         )}
 

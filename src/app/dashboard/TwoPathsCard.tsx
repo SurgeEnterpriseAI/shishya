@@ -1,8 +1,10 @@
 "use client";
 
-// Short informational card on /dashboard explaining the two intended
-// ways to use Shishya. Shown after the welcome heading until the user
-// dismisses it once — flag stored in localStorage so it stays gone.
+// Short informational card on /dashboard explaining the ways to use
+// Shishya. Shown after the welcome heading until the user dismisses it
+// once — flag stored in localStorage so it stays gone.
+// 27 Sep 2026: a third way for the whole-education platform (school,
+// stream, college, scholarship, career), not only exam prep.
 //
 // Intentionally plain (no gradients, no emojis on bullets). The point
 // is to set expectations once, not to decorate.
@@ -36,7 +38,7 @@ export function TwoPathsCard() {
     <section className="mt-6 rounded-md border border-ink-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-semibold text-ink-900">
-          Two ways to use Shishya
+          Ways to use Shishya
         </p>
         <button
           type="button"
@@ -50,15 +52,19 @@ export function TwoPathsCard() {
       <ol className="mt-3 space-y-2 text-sm text-ink-700">
         <li>
           <span className="font-medium text-ink-900">1.</span>{" "}
-          Take a mock from your enrolled exam, see which topics cost you
-          marks, drill the weakest ones, then mock again. Repeat until
-          your score climbs.
+          Preparing for an exam? Take a mock, see which topics cost you
+          marks, drill the weakest ones, then mock again.
         </li>
         <li>
           <span className="font-medium text-ink-900">2.</span>{" "}
-          New to an exam? Take a diagnostic mock to see where you stand
-          versus the rankers&apos; cut-offs. Then Ask Shishya to help
-          you close the gap.
+          New to an exam? Take a diagnostic mock to see where you stand,
+          then Ask Shishya to help you close the gap.
+        </li>
+        <li>
+          <span className="font-medium text-ink-900">3.</span>{" "}
+          Studying for something else — school, a stream, a college, a
+          scholarship or a career? Ask Shishya, or open that section from
+          the orange bar at the top.
         </li>
       </ol>
     </section>

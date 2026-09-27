@@ -487,7 +487,9 @@ describe("src/app/llms-full.txt/route.ts", () => {
   });
   it("/chat appears once, as the chat tutor beside the /ask link", () => {
     expect(src.match(/\$\{SITE\}\/chat\b/g)?.length).toBe(1);
-    expect(src).toMatch(/- AI tutor — \$\{SITE\}\/ask — free answers with no sign-in/);
+    expect(src).toMatch(/- AI tutor — \$\{SITE\}\/ask — free, no sign-in, in English and \$\{INDIAN_LANGUAGE_COUNT\} Indian languages, for a student's studies/);
+    expect(src).toContain("a guest chat is not kept in an account");
+    expect(src).not.toMatch(/guest chat is not saved/);
     expect(src).toMatch(/Free AI answers in English and \$\{INDIAN_LANGUAGE_COUNT\} Indian languages, no sign-in: \$\{SITE\}\/ask/);
   });
   it("mentor line: no verified profile, the small-network line", () => {

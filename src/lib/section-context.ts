@@ -637,7 +637,7 @@ export function platformContextMarkdown(p: PlatformContextInput, asOf: string, s
   L.push("");
 
   L.push("## Free tools");
-  L.push(`- Ask Shishya — free answers, no sign-in: ${site}/ask`);
+  L.push(`- Ask Shishya — free AI answers for a student's studies (school, entrance and government exams, colleges, scholarships, careers), no sign-in: ${site}/ask`);
   L.push(`- Personal coach (day-by-day plan): ${site}/coach · all-India live test every Sunday: ${site}/live-test · which exam suits me: ${site}/find-your-exam`);
   L.push("");
 

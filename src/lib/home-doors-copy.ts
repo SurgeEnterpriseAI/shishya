@@ -76,7 +76,7 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       school: {
         title: "School",
         body: "CBSE chapters with the official NCERT book. ICSE and ISC subjects with the official syllabus. Every other board's official links.",
-        being: "Notes and practice: being written.",
+        being: "Shishya's own notes and practice: on the chapters marked as having them — Maths and Science first; more being written.",
         cbse: "CBSE · tap your class",
         classTile: "Class {n}",
         boardExam: "CBSE Class {n} board exam",
@@ -144,8 +144,9 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
     rails: { vacancies: "Government vacancies", findMine: "Find mine" },
     // 26 Sep 2026 (review): four things that are true in every section — the
     // College and Careers doors have no chapters, questions or plans, and
-    // school practice is being written, so the steps name where practice
-    // lives (exam pages) instead of promising it everywhere.
+    // school practice exists only on the chapters marked as having it, so the
+    // steps name where practice lives (exam pages) instead of promising it
+    // everywhere.
     how: {
       h2: "How Shishya works",
       lead: "The same in every section.",
@@ -156,12 +157,12 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       s3t: "Ask when stuck",
       s3b: "Shishya's tutor explains in your language. No sign-in needed.",
       s4t: "Practise and keep score",
-      s4b: "Exam pages carry mocks and past-year sets, each answer checked. Sign in free to save scores, see weak topics and get a day-by-day plan. School practice: being written.",
+      s4b: "Exam pages carry mocks and past-year sets, each answer checked. Sign in free to save scores, see weak topics and get a day-by-day plan. School practice: on the chapters marked as having it.",
       ask: "Stuck at any step? Ask Shishya's tutor — {n} Indian languages, no sign-in →",
     },
     signin: {
       cta: "Sign in free",
-      line: "Scores and rank saved · weak topics tracked · a day-by-day plan to exam day · in your language",
+      line: "Chats and scores saved · weak topics tracked · a day-by-day plan for your exam · in your language",
       back: "Welcome back — Today's 5 →",
     },
     foot: { mentor: "Cleared an exam? Mentor the next batch →" },
@@ -178,7 +179,7 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       school: {
         title: "स्कूल",
         body: "CBSE के हर अध्याय के साथ आधिकारिक NCERT किताब। ICSE और ISC के विषय आधिकारिक सिलेबस के साथ। बाकी हर बोर्ड के आधिकारिक लिंक।",
-        being: "नोट्स और अभ्यास: लिखे जा रहे हैं।",
+        being: "Shishya के अपने नोट्स और अभ्यास: जिन अध्यायों पर चिह्न है, उन पर — पहले गणित और विज्ञान; बाक़ी लिखे जा रहे हैं।",
         cbse: "CBSE · अपनी कक्षा चुनिए",
         classTile: "कक्षा {n}",
         boardExam: "CBSE कक्षा {n} बोर्ड परीक्षा",
@@ -242,12 +243,12 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       s3t: "अटकें तो पूछिए",
       s3b: "Shishya का ट्यूटर आपकी भाषा में समझाता है। साइन-इन की ज़रूरत नहीं।",
       s4t: "अभ्यास कीजिए, स्कोर रखिए",
-      s4b: "परीक्षा पेज पर मॉक और पिछले सालों के सेट, हर जवाब जाँचा हुआ। मुफ़्त साइन-इन से स्कोर सेव, कमज़ोर टॉपिक और रोज़-ब-रोज़ प्लान। स्कूल का अभ्यास: लिखा जा रहा है।",
+      s4b: "परीक्षा पेज पर मॉक और पिछले सालों के सेट, हर जवाब जाँचा हुआ। मुफ़्त साइन-इन से स्कोर सेव, कमज़ोर टॉपिक और रोज़-ब-रोज़ प्लान। स्कूल का अभ्यास: जिन अध्यायों पर चिह्न है, उन पर।",
       ask: "कहीं भी अटकें? Shishya के ट्यूटर से पूछिए — {n} भारतीय भाषाओं में, बिना साइन-इन →",
     },
     signin: {
       cta: "मुफ़्त साइन-इन",
-      line: "स्कोर और रैंक सेव · कमज़ोर टॉपिक पर नज़र · परीक्षा के दिन तक रोज़-ब-रोज़ प्लान · आपकी भाषा में",
+      line: "बातचीत और स्कोर सेव · कमज़ोर टॉपिक पर नज़र · आपकी परीक्षा के लिए रोज़-ब-रोज़ प्लान · आपकी भाषा में",
       back: "वापसी पर स्वागत — आज के 5 →",
     },
     foot: { mentor: "परीक्षा पास कर चुके हैं? अगले बैच के मेंटर बनिए →" },
@@ -264,7 +265,7 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       school: {
         title: "స్కూల్",
         body: "CBSE ప్రతి అధ్యాయానికి అధికారిక NCERT పుస్తకం. ICSE, ISC సబ్జెక్టులకు అధికారిక సిలబస్. మిగతా ప్రతి బోర్డుకు అధికారిక లింకులు.",
-        being: "నోట్స్, సాధన: రాస్తున్నాం.",
+        being: "Shishya సొంత నోట్స్, సాధన: గుర్తు ఉన్న అధ్యాయాల్లో — ముందుగా గణితం, సైన్స్; మిగతావి రాస్తున్నాం.",
         cbse: "CBSE · మీ తరగతి నొక్కండి",
         classTile: "తరగతి {n}",
         boardExam: "CBSE {n}వ తరగతి బోర్డు పరీక్ష",
@@ -328,12 +329,12 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       s3t: "ఆగిపోతే అడగండి",
       s3b: "Shishya ట్యూటర్ మీ భాషలో వివరిస్తుంది. సైన్-ఇన్ అక్కర్లేదు.",
       s4t: "సాధన చేయండి, స్కోరు ఉంచుకోండి",
-      s4b: "పరీక్ష పేజీల్లో మాక్‌లు, గత సంవత్సరాల సెట్లు, ప్రతి జవాబు సరిచూసినదే. ఉచిత సైన్-ఇన్‌తో స్కోర్లు సేవ్, బలహీన టాపిక్‌లు, రోజువారీ ప్లాన్. స్కూల్ సాధన: రాస్తున్నాం.",
+      s4b: "పరీక్ష పేజీల్లో మాక్‌లు, గత సంవత్సరాల సెట్లు, ప్రతి జవాబు సరిచూసినదే. ఉచిత సైన్-ఇన్‌తో స్కోర్లు సేవ్, బలహీన టాపిక్‌లు, రోజువారీ ప్లాన్. స్కూల్ సాధన: గుర్తు ఉన్న అధ్యాయాల్లో.",
       ask: "ఎక్కడైనా ఆగిపోయారా? Shishya ట్యూటర్‌ను అడగండి — {n} భారతీయ భాషల్లో, సైన్-ఇన్ అక్కర్లేదు →",
     },
     signin: {
       cta: "ఉచిత సైన్-ఇన్",
-      line: "స్కోర్లు, ర్యాంకు సేవ్ · బలహీన టాపిక్‌లపై దృష్టి · పరీక్ష రోజు వరకు రోజువారీ ప్లాన్ · మీ భాషలో",
+      line: "సంభాషణలు, స్కోర్లు సేవ్ · బలహీన టాపిక్‌లపై దృష్టి · మీ పరీక్షకు రోజువారీ ప్లాన్ · మీ భాషలో",
       back: "మళ్ళీ స్వాగతం — ఈరోజు 5 →",
     },
     foot: { mentor: "పరీక్ష పాసయ్యారా? తర్వాతి బ్యాచ్‌కు మెంటర్ అవ్వండి →" },

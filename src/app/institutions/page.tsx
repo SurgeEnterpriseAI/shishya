@@ -15,7 +15,7 @@ import { prisma } from "@/lib/db/prisma";
 export const metadata: Metadata = {
   title: "Coaching institutes & training centres in India — Shishya",
   description:
-    "Free directory of coaching centres for India's entrance and government exams. Browse by exam, state and format — verified by Shishya.",
+    "Free directory of coaching centres for India's entrance and government exams. Browse by exam, state and format; verified listings are marked.",
   alternates: { canonical: "https://shishya.in/institutions" },
 };
 

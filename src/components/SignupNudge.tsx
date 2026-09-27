@@ -23,10 +23,20 @@
 //     not assumed. (11 Sep 2026: the beacon used to carry only
 //     surface+action while the CTA report groups by props.cta — 386
 //     events collapsed into one "(none)" row.)
+//
+// 27 Sep 2026 (founder, content first):
+//   • never on /schooling (school pages carry their own after-practice
+//     save line, and children must not be asked) or on /chat (the chat has
+//     its own after-value save card);
+//   • on Class 1-7 school pages (below 13: no data taken) not even the
+//     session page-view / active-seconds counters are written;
+//   • "Sign up free" returns to the page it was clicked on (callbackUrl =
+//     this path + query), never into a questionnaire.
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { fetchSignedIn } from "@/lib/session-hint";
+import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 
 const ACTIVE_SECONDS_NEEDED = 5 * 60;
 const MIN_PAGEVIEWS = 3;
@@ -47,7 +57,12 @@ function blockedPath(p: string): boolean {
     p.startsWith("/admin") ||
     p.startsWith("/i/") ||
     p.startsWith("/join/") ||
-    p.startsWith("/aptitude")
+    p.startsWith("/aptitude") ||
+    // 27 Sep 2026: school pages have their own save-practice line and
+    // children must not be asked; the chat has its own after-value save card.
+    /^\/schooling(\/|$)/.test(p) ||
+    p === "/chat" ||
+    p.startsWith("/chat?")
   );
 }
 
@@ -109,6 +124,8 @@ export function SignupNudge() {
   // Count route changes as pageviews (sessionStorage survives
   // navigations within the tab, resets on a new tab/session).
   useEffect(() => {
+    // Class 1-7 pages take no data (founder rule 5): not even this counter.
+    if (isUnder13SchoolPath(location.pathname)) return;
     try {
       const v = Number(sessionStorage.getItem(SS_VIEWS) ?? "0") + 1;
       sessionStorage.setItem(SS_VIEWS, String(v));
@@ -124,6 +141,7 @@ export function SignupNudge() {
   useEffect(() => {
     if (anon !== true) return;
     const id = window.setInterval(() => {
+      if (isUnder13SchoolPath(location.pathname)) return; // Class 1-7: no counter (founder rule 5)
       if (document.hidden || show) return;
       try {
         if (localStorage.getItem(LS_DONE)) return;
@@ -201,12 +219,12 @@ export function SignupNudge() {
           </button>
         </div>
         <p className="mt-1 text-xs leading-relaxed text-ink-600">
-          Free forever. One tap with Google saves your practice, maps your weak areas, starts your
-          streak, and unlocks your personal coach.
+          Free forever. One tap with Google keeps your chats and practice, tracks your weak topics and,
+          for an exam, builds a day-by-day plan.
         </p>
         <div className="mt-3 flex items-center gap-3">
           <a
-            href="/login"
+            href={`/login?callbackUrl=${encodeURIComponent(location.pathname + location.search)}&from=header`}
             onClick={() => {
               try { localStorage.setItem(LS_DONE, "1"); } catch { /* ok */ }
               beacon("clicked");

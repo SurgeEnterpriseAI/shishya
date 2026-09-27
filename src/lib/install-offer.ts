@@ -25,8 +25,14 @@
 // language comes from the URL prefix (/hi, /te), else the `shishya-lang`
 // cookie, else English — the order the server uses.
 //
+// Class 1-7 school pages (27 Sep 2026, founder rule 5: below 13, content
+// only, no data taken): blocked like a mock or sign-in page, and the
+// component writes no visit counter there.
+//
 // No DOM access at import — unit-tested in tests/unit/install-offer.test.ts
 // and tests/unit/i18n-a-core.test.ts.
+
+import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 
 /** localStorage: "shown" | "dismissed" | "accepted" — any value = never again. */
 export const INSTALL_OFFER_KEY = "shishya_install_offer";
@@ -108,7 +114,8 @@ export function blockedInstallPath(path: string | null | undefined): boolean {
     p.startsWith("/onboarding") ||
     p.startsWith("/i/") ||
     p.startsWith("/join/") ||
-    p.startsWith("/aptitude")
+    p.startsWith("/aptitude") ||
+    isUnder13SchoolPath(p)
   );
 }
 

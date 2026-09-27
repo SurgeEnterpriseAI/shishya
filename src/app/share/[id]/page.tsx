@@ -115,7 +115,7 @@ export async function generateMetadata({
     alternates: { canonical: `https://shishya.in/share/${id}` },
     openGraph: {
       title: headline,
-      description: `Real Indian exam prep. Free mocks, PYQ, AI tutor — no paywall, no sign-in to try.`,
+      description: `Free mocks, previous-year-pattern practice and an AI tutor on Shishya — one smart place to study. No paywall, no sign-in to try.`,
       url: `https://shishya.in/share/${id}`,
       siteName: "Shishya",
       locale: "en_IN",
@@ -124,7 +124,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title: headline,
-      description: `Real Indian exam prep. Free mocks, PYQ, AI tutor.`,
+      description: `Free mocks, previous-year-pattern practice and an AI tutor on Shishya — one smart place to study.`,
     },
     // A per-attempt landing is a social preview, never a search result
     // (13 Sep 2026, index shape): thousands of near-identical "a friend

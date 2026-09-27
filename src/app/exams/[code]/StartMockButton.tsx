@@ -22,6 +22,10 @@
 // carrying ?start=diagnostic; on the signed-in return the diagnostic they
 // asked for starts by itself, once (sessionStorage guard — never a loop).
 // Same pattern as SubjectTestButton / CustomMockBuilder.
+// 27 Sep 2026 (founder, content first): a 401 no longer goes to /login —
+// the guest gets the hub's no-sign-in 5-question quiz (/exams/CODE/quiz),
+// and sign-in is offered on its result, after value. The ?start=diagnostic
+// auto-start stays for signed-in returns from older links.
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -140,11 +144,9 @@ export function StartMockButton({
         }),
       });
       if (res.status === 401) {
-        // Anonymous visitor: keep the intent instead of printing the error.
-        // The callback brings them back to THIS hub with ?start=diagnostic,
-        // which the effect below turns into the mock they asked for.
-        beacon("diagnostic-401", { examCode, kind });
-        window.location.href = `/login?callbackUrl=${encodeURIComponent(`/exams/${examCode}?start=diagnostic`)}`;
+        // 27 Sep 2026 (founder, content first): a guest gets the no-sign-in 5-question quiz; sign-in is offered on its result, after value.
+        beacon("diagnostic-guest-quiz", { examCode, kind });
+        window.location.href = `/exams/${examCode}/quiz`;
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -160,8 +162,9 @@ export function StartMockButton({
     }
   }
 
-  // Post-login auto-start: /exams/CODE?start=diagnostic is only ever
-  // produced by the 401 path above, so a signed-in arrival with it means
+  // Post-login auto-start: /exams/CODE?start=diagnostic was produced by the
+  // old 401 path above (before 27 Sep 2026) and may still arrive from a
+  // saved link or an in-flight sign-in, so a signed-in arrival with it means
   // "you asked for the diagnostic before the wall — here it is". Guarded
   // by sessionStorage so a reload, back-navigation, Strict Mode double
   // effect or an expired session mid-flight can never loop through

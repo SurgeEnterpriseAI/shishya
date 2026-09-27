@@ -20,6 +20,9 @@
 // words of the machine surfaces' SCHOOL_CHILDREN_LINE
 // (src/lib/school/surface.ts), so HTML, llms-full.txt and context.md agree;
 // tests/unit/school-pages.test.ts pins the two to the same facts.
+// 27 Sep 2026 (founder: content first): on Class 1-7 pages that event goes
+// out with no cookie and is stored with no visitor identifier, and HUB_COPY
+// .today says so; no age or role question is asked anywhere.
 
 import type { SchoolQuizCopy } from "@/components/school/SchoolChapterQuiz";
 
@@ -174,6 +177,6 @@ export const HUB_COPY = {
   noneSeeded: "Class pages for this board are not on Shishya yet; the board's own site is the source.",
   todayHeading: "On these pages today",
   today: (c: { chapters: number; notes: number; practice: number }) =>
-    `NCERT chapters: ${countsLine(c)}. Practice questions are Shishya's own, written by AI and answer-checked before they are shown; a chapter without notes or practice shows the official chapter link only. Class 1-7 pages have no chat tutor and ask for no account. On Class 8-12 pages a student may sign in to practise a chapter and to ask the AI tutor about it — for students 13 and above. The 5-question practice on every chapter page runs without an account, and no result is saved to any account or profile from it — Shishya records only an anonymous usage event (which chapter was practised and the score), the same cookie-based analytics every page view sends. A signed-in student's own practice set is saved to that account.`,
+    `NCERT chapters: ${countsLine(c)}. Practice questions are Shishya's own, written by AI and answer-checked before they are shown; a chapter without notes or practice shows the official chapter link only. Class 1-7 pages have no chat tutor, ask for no account and store no visitor identifier. On Class 8-12 chapter pages anyone can ask the AI tutor about the chapter without an account, and a student may sign in to save practice — for students 13 and above. The 5-question practice on the chapter pages that have it runs without an account, and no result is saved to any account or profile from it — Shishya records only an anonymous usage event (which chapter was practised and the score): on Class 8-12 pages with the same cookie-based analytics every page view sends, on Class 1-7 pages with no cookie or other identifier. A signed-in student's own practice set is saved to that account.`,
   boardsHeading: "All boards: official links",
 } as const;

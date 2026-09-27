@@ -6,7 +6,10 @@
 //   • declareSchoolBand: writes the band into onbStage, adds the container
 //     code to onbPrepCodes (keeping what was there), marks the wizard done,
 //     enrols through the door WITH the school flag;
-//   • buildSchoolChapterMock: 403 before the band, 404 for a Class 6
+//   • declareSchoolBand is legacy since 27 Sep 2026 (no route writes a new
+//     band; stored bands are still read) — its write is still pinned here;
+//   • buildSchoolChapterMock: builds without any band (27 Sep 2026, founder:
+//     content first — nobody is asked their age or role), 404 for a Class 6
 //     container or an unknown chapter, only validated non-withdrawn MCQs,
 //     unseen first, honest size (7 available → 7, 30 → 10, 4 → 422 and no
 //     row), config.school with the chapter and its page, generatedBy
@@ -188,12 +191,17 @@ describe("declareSchoolBand + readSchoolProfile", () => {
 });
 
 describe("buildSchoolChapterMock", () => {
-  it("403 before the band is answered, and nothing is read or written", async () => {
+  it("builds without any band (27 Sep 2026): no band read, no 403 — the Class 8-12 container is the safeguard", async () => {
+    // A brand-new account: no stage, no school code — nothing declared, nothing asked.
     db.questions = Array.from({ length: 12 }, (_, i) => q(`q${i}`));
     const r = await buildSchoolChapterMock({ userId: "u1", examCode: "NCERT_C09", topicCode: "iemh1.ch02", count: 10 });
-    expect(r).toEqual({ ok: false, status: 403, error: "school-band-required" });
-    expect(db.calls.filter((c) => c.model === "question")).toEqual([]);
-    expect(db.created).toEqual([]);
+    expect(r).toMatchObject({ ok: true, id: "m-school-1", count: 10, requested: 10, short: false });
+    expect(db.raws.filter((x) => /"onbStage"/.test(x.sql))).toEqual([]);
+    expect(db.created).toHaveLength(1);
+    // The account is enrolled on the class container (the school-only marker), with the school flag.
+    expect(db.upserts).toEqual([{ where: { userId_examId: { userId: "u1", examId: "e-c9" } }, update: {}, create: { userId: "u1", examId: "e-c9" } }]);
+    // The user row is untouched: no band is written either.
+    expect(db.user).toEqual({ onbStage: null, onbPrepCodes: [] });
   });
 
   it("404 for a Class 6 container, a real exam and an unknown chapter", async () => {
@@ -285,10 +293,11 @@ describe("the routes", () => {
     const unknown = await post(customPost, { examCode: "NCERT_C09", topicIds: ["t1"], count: 10, difficulty: "MIXED" });
     expect(unknown.status).toBe(404);
     expect(unknown.data.error).toBe("unknown exam");
-    // The band first.
+    // 27 Sep 2026: no band needed — an account that never declared one gets the same set.
     db.user = { onbStage: null, onbPrepCodes: [] };
-    const gated = await post(customPost, { examCode: "NCERT_C09", school: true, topicCode: "iemh1.ch02", count: 10, difficulty: "MIXED" });
-    expect(gated).toEqual({ status: 403, data: { error: "school-band-required" } });
+    const noBand = await post(customPost, { examCode: "NCERT_C09", school: true, topicCode: "iemh1.ch02", count: 10, difficulty: "MIXED" });
+    expect(noBand.status).toBe(200);
+    expect(noBand.data).toMatchObject({ id: "m-school-1", count: 8, school: true });
     // A school request without a chapter code is a bad request.
     const bad = await post(customPost, { examCode: "NCERT_C09", school: true, count: 10, difficulty: "MIXED" });
     expect(bad.status).toBe(400);

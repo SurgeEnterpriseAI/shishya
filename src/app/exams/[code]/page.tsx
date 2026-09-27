@@ -28,7 +28,6 @@ import { buildTimeline } from "@/lib/exam-timeline";
 import { passedEstimateLine, passedEstimateView } from "@/lib/official-source";
 import { ExamWeekBlock, type ExamWeekViewer } from "@/components/ExamWeekBlock";
 import { HubSignInLink, StartMockButton } from "./StartMockButton";
-import { PageTour } from "@/components/PageTour";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { computeScoreBoost } from "@/lib/focus-topics";
 import { ScholarshipsForExamSection } from "@/components/ScholarshipsForExamSection";
@@ -1166,26 +1165,25 @@ export default async function ExamPage({
               {H.coachBodyB}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              {/* Click beacon (16 Sep 2026): the one hub CTA that sent no
-                  CTA_CLICKED, so its volume could only be guessed from
-                  /login views. Same <a>: href, class and text unchanged. */}
-              <HubSignInLink
-                examCode={exam.code}
-                href={`/login?callbackUrl=${encodeURIComponent(`/exams/${exam.code}`)}`}
-                className="btn-primary inline-block !py-2 !px-4 text-sm"
-              >
-                {H.coachButton}
-              </HubSignInLink>
-              {/* Lever #2 — anonymous 5-question diagnostic. Lets a signed-out
-                  visitor experience the mock loop before the login gate (44%
-                  bail there). Was a text link — got ~zero organic clicks, so
-                  it's a proper button with equal visual weight now. */}
+              {/* 27 Sep 2026: value first — the free quiz is the primary action, sign-in a secondary link. */}
+              {/* Lever #2 — anonymous 5-question diagnostic: a signed-out
+                  visitor experiences the mock loop with no sign-in. */}
               <Link
                 href={`/exams/${exam.code}/quiz`}
-                className="inline-flex items-center justify-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 transition-colors hover:bg-saffron-50"
+                className="btn-primary inline-block !py-2 !px-4 text-sm"
               >
                 Try a free 5-question quiz — no signup →
               </Link>
+              {/* Click beacon (16 Sep 2026): the one hub CTA that sent no
+                  CTA_CLICKED, so its volume could only be guessed from
+                  /login views. Same <a>: href and text unchanged. */}
+              <HubSignInLink
+                examCode={exam.code}
+                href={`/login?callbackUrl=${encodeURIComponent(`/exams/${exam.code}`)}`}
+                className="text-sm font-semibold text-saffron-700 underline-offset-2 hover:underline"
+              >
+                {H.coachButton}
+              </HubSignInLink>
             </div>
           </div>
         )}
@@ -2200,61 +2198,9 @@ export default async function ExamPage({
         />
       </section>
 
-      {/* First-visit coach-mark tour for the per-exam page. tourId is
-          shared across all per-exam pages (`exam-v1`) — once a user
-          has been guided through one exam's layout they don't need it
-          again on another exam (the layout is identical). Steps point
-          at the three primary actions: Start Mock, Ask Shishya, and
-          the syllabus block.
-
-          Gated to SIGNED-IN users only. A full-page dimming coach-mark
-          over a signed-out SEO landing page interrupts the visitor who
-          came from search to READ content (cutoffs, syllabus, PYQ) —
-          it hurts dwell time + bounce. Signed-in users have committed
-          to the platform and benefit from the orientation. */}
-      {/* 27 Sep 2026: its steps point at Start Mock — only with practice. */}
-      {userId && practice.hasPractice && (
-      <PageTour
-        tourId="exam-v1"
-        steps={[
-          {
-            key: "exam-welcome",
-            icon: "👋",
-            title: `You're on ${exam.shortName}`,
-            body: "Three things matter here — start a mock, ask Shishya if you're stuck, or browse the syllabus. Let me show you each.",
-          },
-          {
-            key: "exam-start",
-            anchor: "exam-start-mock",
-            placement: "bottom",
-            icon: "🎯",
-            title: "Start an adaptive mock",
-            body: "Tap this to begin. The first attempt is a diagnostic — Shishya uses it to spot your weak topics. Every next mock targets those.",
-          },
-          {
-            key: "exam-ask",
-            anchor: "exam-ask",
-            placement: "bottom",
-            icon: "💬",
-            title: "Stuck on a topic? Ask Shishya",
-            body: "Free AI tutor that knows this exam's syllabus + your mock history. Answers in English, Hindi, or your language.",
-          },
-          {
-            key: "exam-syllabus",
-            anchor: "exam-syllabus",
-            icon: "📚",
-            title: "Browse the syllabus",
-            body: "Every topic is clickable — see PYQs, practice questions, and your mastery score per topic.",
-          },
-          {
-            key: "exam-done",
-            icon: "✓",
-            title: "Take your first mock now",
-            body: "Scroll back up and tap Start. 30 minutes, free, with full solutions after. Your weak topics get mapped automatically.",
-          },
-        ]}
-      />
-      )}
+      {/* 27 Sep 2026 (founder rule 1: no overlay before content): the
+          first-visit coach-mark tour (PageTour exam-v1) no longer opens on
+          the hub. */}
     </main>
   );
 }

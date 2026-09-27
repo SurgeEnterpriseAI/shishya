@@ -110,7 +110,7 @@ export default function MentorsPage() {
           You cleared the exam. Guide the ones still fighting for it.
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-600">
-          Shishya is free for every aspirant — and the one thing an AI can&apos;t give them is a
+          Shishya is free for every student — and the one thing an AI can&apos;t give them is a
           senior who&apos;s actually been selected. That&apos;s you. We&apos;re hand-picking the
           founding batch of mentors: one exam each, real credentials, personally verified.
         </p>

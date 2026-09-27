@@ -1,5 +1,6 @@
-// School tutor (26 Sep 2026) — the pure rules behind the signed-in Class
-// 8-12 chat: which containers a student may chat on (src/lib/school/
+// School tutor (26 Sep 2026) — the pure rules behind the Class 8-12 chat
+// (guest or signed in since 27 Sep 2026, founder: content first — no
+// sign-in card, no age-band question): which containers a chat may open on (src/lib/school/
 // tutor-scope.ts), the persona and safety rules — present, and specific to
 // the class (tutor-persona.ts), the daily cap (tutor-cap.ts), the school
 // branch of tutorSystemBlocks, and the ONE thing the exam tutor must keep:
@@ -41,13 +42,10 @@ import {
   type SchoolTutorScope,
 } from "@/lib/school/tutor-persona";
 import {
-  SCHOOL_BAND_REQUIRED_CODE,
-  SCHOOL_BAND_REQUIRED_COPY,
   SCHOOL_ONLY_TUTOR_CODE,
   SCHOOL_ONLY_TUTOR_COPY,
   SCHOOL_TUTOR_MIN_CLASS,
   isSchoolTutorRequest,
-  schoolBandRequiredErrorFrame,
   schoolOnlyChatPath,
   schoolOnlyTutorErrorFrame,
   schoolStudentExamKey,
@@ -59,31 +57,33 @@ const sha = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
 
 // ── Scope ─────────────────────────────────────────────────────────────
 
-describe("schoolStudentExamKey — a signed-in student on Class 8-12 only", () => {
+describe("schoolStudentExamKey — Class 8-12 only, guest or signed in (27 Sep 2026)", () => {
   it("shares the class rule with student-classes.ts (Class 8 is the first)", () => {
     expect(SCHOOL_TUTOR_MIN_CLASS).toBe(8);
     expect(SCHOOL_TUTOR_MIN_CLASS).toBe(STUDENT_MODE_MIN_CLASS);
   });
 
-  it("C09 signed in → the category-pinned key; C08 and C12, CISCE too", () => {
-    expect(schoolStudentExamKey({ code: "NCERT_C09", userId: "u1" })).toEqual({ category: "SCHOOL_BOARD", code: "NCERT_C09", cls: 9 });
-    expect(schoolStudentExamKey({ code: "NCERT_C08", userId: "u1" })?.cls).toBe(8);
-    expect(schoolStudentExamKey({ code: "NCERT_C12", userId: "u1" })?.cls).toBe(12);
-    expect(schoolStudentExamKey({ code: "CISCE_C10", userId: "u1" })).toEqual({ category: "SCHOOL_BOARD", code: "CISCE_C10", cls: 10 });
+  it("C09 → the category-pinned key; C08 and C12, CISCE too", () => {
+    expect(schoolStudentExamKey({ code: "NCERT_C09" })).toEqual({ category: "SCHOOL_BOARD", code: "NCERT_C09", cls: 9 });
+    expect(schoolStudentExamKey({ code: "NCERT_C08" })?.cls).toBe(8);
+    expect(schoolStudentExamKey({ code: "NCERT_C12" })?.cls).toBe(12);
+    expect(schoolStudentExamKey({ code: "CISCE_C10" })).toEqual({ category: "SCHOOL_BOARD", code: "CISCE_C10", cls: 10 });
   });
 
-  it("a guest gets null for every school code (404 via realExamKey, as today)", () => {
-    for (const code of ["NCERT_C09", "NCERT_C12", "CISCE_C11"]) {
-      expect(schoolStudentExamKey({ code, userId: null })).toBeNull();
-      expect(schoolStudentExamKey({ code, userId: undefined })).toBeNull();
-      expect(isSchoolTutorRequest({ code, userId: "" })).toBe(false);
+  it("a guest gets the same key (27 Sep 2026: guests get the Class 8-12 tutor)", () => {
+    // The key no longer takes the caller at all: the safeguards come from the
+    // context (school persona, study-only pre-filter, daily cap), not sign-in.
+    for (const [code, cls] of [["NCERT_C09", 9], ["NCERT_C12", 12], ["CISCE_C11", 11]] as const) {
+      expect(schoolStudentExamKey({ code })).toEqual({ category: "SCHOOL_BOARD", code, cls });
+      expect(isSchoolTutorRequest({ code })).toBe(true);
     }
   });
 
-  it("Classes 1-7 stay 404 even signed in; a real exam or garbage is never a school key", () => {
-    for (const code of ["NCERT_C01", "NCERT_C05", "NCERT_C07", "CISCE_C07"]) expect(schoolStudentExamKey({ code, userId: "u1" })).toBeNull();
-    for (const code of ["SSC_CGL", "NCERT_C13", "NCERT_C9", "ncert_c09", "", null, undefined]) expect(schoolStudentExamKey({ code, userId: "u1" })).toBeNull();
-    expect(isSchoolTutorRequest({ code: "NCERT_C09", userId: "u1" })).toBe(true);
+  it("Classes 1-7 stay 404 for everyone; a real exam or garbage is never a school key", () => {
+    for (const code of ["NCERT_C01", "NCERT_C05", "NCERT_C07", "CISCE_C07"]) expect(schoolStudentExamKey({ code })).toBeNull();
+    for (const code of ["SSC_CGL", "NCERT_C13", "NCERT_C9", "ncert_c09", "", null, undefined]) expect(schoolStudentExamKey({ code })).toBeNull();
+    expect(isSchoolTutorRequest({ code: "NCERT_C07" })).toBe(false);
+    expect(isSchoolTutorRequest({ code: "NCERT_C09" })).toBe(true);
   });
 });
 
@@ -346,22 +346,31 @@ describe("the exam tutor's shared 1-hour prefix is byte-identical to before scho
   // 27 Sep 2026 (public numbers): re-pinned for the site-facts entries
   // /shishya-in-numbers and /pulse. Before: signedIn f7d43f0a…, guest
   // 3ed9ecbf…, general e4b68670….
+  // 27 Sep 2026 (whole-platform tutor + content first): re-pinned for the new SCOPE_RULES, SAFETY_RULES, PLATFORM_PERSONA lines, GENERAL_MODE_NOTE (no sign-in nudge in general mode) and the site-facts /chat, /schooling and routing lines. Before: signedIn 86383356…, guest 2dba7e47…, general 575643b1….
+  // 27 Sep 2026 (review): re-pinned for the under-13 line in SAFETY_RULES
+  // (every mode; it left GENERAL_MODE_NOTE) and the scoped graduation / PG /
+  // PhD line in GENERAL_MODE_NOTE. Before: signedIn 423f1992…, guest
+  // 27851324…, general 29a6e922….
   const PINNED = {
-    signedIn: "86383356d79827e13fcf53d6715380e37d7147a69a9b49d55560a26ec2937136",
-    guest: "2dba7e47555b1f2b1db70befe431051de783e70f3ab9fe6125d250b9b67302db",
-    general: "575643b1e97081a47565add5f627759df4b928b150968ebb77b50db207c6adb7",
+    signedIn: "30f34719a6e04281066e3e975798cf4845ee29b547e27ef2d5e4d3782b79df80",
+    guest: "65de703dc5c306bd20bc8289cae29c429c7173f801f68b73e387fee4776b3f2f",
+    general: "67425908c32fc5a931257910a7d4469ea59aa045251a7851e96acf850339465a",
   };
 
   it("signed-in (tools on), guest (tools off) and general mode", () => {
-    expect(sha(tutorSystemBlocks({ syllabus: EMPTY, toolsOn: true })[0].text)).toBe(PINNED.signedIn);
-    expect(sha(tutorSystemBlocks({ syllabus: EMPTY, toolsOn: false })[0].text)).toBe(PINNED.guest);
-    expect(sha(tutorSystemBlocks({ syllabus: EMPTY, toolsOn: false, generalMode: true })[0].text)).toBe(PINNED.general);
+    // One object, so a re-pin shows all three new hashes at once.
+    expect({
+      signedIn: sha(tutorSystemBlocks({ syllabus: EMPTY, toolsOn: true })[0].text),
+      guest: sha(tutorSystemBlocks({ syllabus: EMPTY, toolsOn: false })[0].text),
+      general: sha(tutorSystemBlocks({ syllabus: EMPTY, toolsOn: false, generalMode: true })[0].text),
+    }).toEqual(PINNED);
   });
 
   it("carries nothing of the school persona, and `school: null` is the exam layout", () => {
     for (const args of [{ toolsOn: true }, { toolsOn: false }, { toolsOn: false, generalMode: true }]) {
       const text = tutorSystemBlocks({ syllabus: EMPTY, ...args, school: null })[0].text;
-      expect(text).not.toContain("Childline");
+      // 27 Sep 2026: SAFETY_RULES now name Childline 1098 for every chat (the
+      // general chat may be a minor's), so only the persona's own words are checked.
       expect(text).not.toContain("school tutor");
       expect(text).toContain(PLATFORM_PERSONA);
     }
@@ -452,31 +461,6 @@ describe("a declared 13-17 student gets the school tutor only (26 Sep 2026 fixer
 
 // ── Source guards ─────────────────────────────────────────────────────
 
-describe("a school turn without the declared band is refused at the API (26 Sep 2026 integrator)", () => {
-  it("has its own line in en, hi and te — the mock builder's code, never an exam word", () => {
-    expect(SCHOOL_BAND_REQUIRED_CODE).toBe("school-band-required");
-    expect(SCHOOL_BAND_REQUIRED_COPY.en).toBe("One question before the tutor — tell Shishya once who is using it. It is asked on your class page.");
-    expect(SCHOOL_BAND_REQUIRED_COPY.hi).toMatch(/[ऀ-ॿ]/);
-    expect(SCHOOL_BAND_REQUIRED_COPY.te).toMatch(/[ఀ-౿]/);
-    for (const lang of ["en", "hi", "te"] as const) expect(SCHOOL_BAND_REQUIRED_COPY[lang].toLowerCase()).not.toMatch(/exam|phone|whatsapp|sign in|streak/);
-    // The same code the chapter mock builder answers with (student-db.ts, 403).
-    expect(read("src/lib/school/student-db.ts")).toContain('"school-band-required"');
-  });
-
-  it("is one error event with the code and the page that asks — no meta, no done", () => {
-    const frame = schoolBandRequiredErrorFrame("/schooling/cbse/class-9?from=school", "te");
-    expect(frame).toBe(
-      `event: error\ndata: ${JSON.stringify({ error: SCHOOL_BAND_REQUIRED_COPY.te, code: "school-band-required", next: "/schooling/cbse/class-9?from=school" })}\n\n`,
-    );
-    expect(frame).not.toContain("event: meta");
-    expect(frame).not.toContain("event: done");
-  });
-
-  it("the class page's entry asks the band too, so that `next` is a page that asks", () => {
-    expect(read("src/components/school/SchoolStudentEntry.tsx")).toContain('if (p.variant === "class" && view.kind !== "band-card") {');
-  });
-});
-
 describe("the school loaders read school containers by category and fetch no textbook text", () => {
   const src = read("src/lib/school/tutor-context.ts");
 
@@ -504,7 +488,7 @@ describe("POST /api/chat — the school path (source)", () => {
   const src = read("src/app/api/chat/route.ts");
 
   it("resolves a school container only through schoolStudentExamKey, keeps realExamKey for the rest", () => {
-    expect(src).toContain("const schoolKey = schoolStudentExamKey({ code: examCodeForChat, userId });");
+    expect(src).toContain("const schoolKey = schoolStudentExamKey({ code: examCodeForChat });");
     expect(src).toContain("const schoolCtx = schoolKey ? await getSchoolTutorContext(schoolKey.code) : null;");
     expect(src).toMatch(/schoolCtx\s*\n?\s*\?\s*schoolCtx\.exam\s*\n?\s*:\s*await prisma\.exam\.findUnique\(\{ where: realExamKey\(/);
   });
@@ -524,7 +508,7 @@ describe("POST /api/chat — the school path (source)", () => {
   });
 
   it("sends a school student back to the chapter or class page, never /exams", () => {
-    expect(src).toContain("const backPath = schoolCtx ? schoolCtx.scope.classPath : examCodeForChat ? `/exams/${examCodeForChat}` : \"/exams\";");
+    expect(src).toContain("const backPath = schoolCtx ? schoolCtx.scope.classPath : examCodeForChat ? `/exams/${examCodeForChat}` : \"/\";");
     expect(src).toContain("next: schoolFocus?.path ?? backPath");
     expect(src).toContain("Meanwhile the chapter's notes and practice are open at https://shishya.in${schoolFocus?.path ?? backPath}");
   });
@@ -544,18 +528,24 @@ describe("POST /api/chat — the school path (source)", () => {
     expect(src).toContain("if (schoolCtx) band = schoolProfile?.band ?? null;");
   });
 
-  it("refuses a school turn without the band after the profile read and before the cap, enrolment and the first write (integrator)", () => {
-    const profile = src.indexOf("const schoolProfile = schoolBandOfProfile(profile);");
-    const gate = src.indexOf("if (schoolCtx && userId && !schoolProfile?.band) {");
-    const cap = src.indexOf("countSchoolTutorMessagesToday(userId)");
-    const enrol = src.indexOf("await ensureEnrollment(userId, exam);");
+  // 27 Sep 2026 (founder, content first): no band gate — a guest or an
+  // undeclared account is served; the study-only pre-filter runs first and a
+  // guest's school turns are capped per browser before any model call.
+  it("serves a school turn with no band: no band gate, the pre-filter first, a guest cap before the model", () => {
+    expect(src).not.toContain("schoolBandRequiredErrorFrame");
+    expect(src).not.toContain("!schoolProfile?.band");
+    const scope = src.indexOf("const scopeReply = chatScopeReply(body.message,");
+    const ctx = src.indexOf("const schoolCtx = schoolKey ? await getSchoolTutorContext(schoolKey.code) : null;");
+    const guestCap = src.indexOf('await checkRateLimit("schoolGuest", anonId ? `anon:${anonId}` : `anonip:${clientIp(req)}`);');
     const firstWrite = src.indexOf("prisma.chatMessage.create(");
-    expect(profile).toBeGreaterThan(0);
-    expect(gate).toBeGreaterThan(profile);
-    expect(cap).toBeGreaterThan(gate);
-    expect(enrol).toBeGreaterThan(gate);
-    expect(firstWrite).toBeGreaterThan(gate);
-    expect(src).toContain("schoolBandRequiredErrorFrame(schoolReturnPath(schoolCtx.scope.classPath), schoolUiLang(jar.get(\"shishya-lang\")?.value))");
+    const model = src.indexOf("const ai = tutorStream({");
+    expect(scope).toBeGreaterThan(0);
+    expect(ctx).toBeGreaterThan(scope);
+    expect(guestCap).toBeGreaterThan(ctx);
+    expect(firstWrite).toBeGreaterThan(guestCap);
+    expect(model).toBeGreaterThan(guestCap);
+    // A guest's school chat keeps no linkable id in the tutor log.
+    expect(src.match(/anonId: schoolCtx \? null : anonId,/g)?.length).toBe(2);
   });
 
   it("drops a named conversation of another scope, so the cap always sees a school turn (fixer review)", () => {
@@ -582,11 +572,15 @@ describe("/chat page — the school branch (source)", () => {
     expect(branch).toContain("const schoolCls = !generalMode && sp.examCode ? schoolContainerClassOf(sp.examCode) : null;");
   });
 
-  it("shows the age line on the signed-out card and the band card, and never enrols or reads the exam picker", () => {
-    expect(branch.match(/t\("chat\.school\.ageLine"\)/g)?.length).toBe(2);
-    expect(branch).toContain("<GoogleSignInButton callbackUrl={selfUrl}");
-    expect(branch).toContain("schoolBandOfProfile(profile)?.band ?? null");
-    expect(branch).toContain("schoolReturnPath(backHref)");
+  it("shows the age line and asks nothing first (27 Sep 2026: no sign-in card, no band card); never enrols or reads the exam dropdown", () => {
+    expect(branch.match(/t\("chat\.school\.ageLine"\)/g)?.length).toBe(1);
+    expect(branch).not.toContain("GoogleSignInButton");
+    expect(branch).not.toContain("schoolBandOfProfile");
+    expect(branch).not.toContain("schoolReturnPath");
+    expect(branch).not.toContain("chat.school.band.");
+    expect(branch).not.toContain("chat.school.signin.");
+    expect(branch).toContain("const memberId = session?.user?.id ?? null;");
+    expect(branch).toContain("messagesLeft: memberId ? schoolTutorMessagesLeft(usedToday) : null,");
     expect(branch).not.toContain("ensureEnrollment");
     expect(branch).not.toContain("enrollments");
     expect(branch).not.toContain("weaknessMap");
@@ -594,7 +588,7 @@ describe("/chat page — the school branch (source)", () => {
 
   it("hands the island the AI line, the cap state and hint-first starters; the seed is accepted", () => {
     expect(branch).toContain('aiLine: t("chat.school.aiLine")');
-    expect(branch).toContain("capReached: schoolTutorCapReached(usedToday)");
+    expect(branch).toContain("capReached: memberId ? schoolTutorCapReached(usedToday) : false");
     expect(branch).toContain("capLine: SCHOOL_TUTOR_CAP_COPY[schoolUiLang(locale)]");
     expect(branch).toContain("initialSeed={sp.seed ?? null}");
     expect(branch).toContain('t("chat.school.starter.2")');
@@ -626,7 +620,8 @@ describe("the chat island — a school chat shows the AI line and no exam CTA (s
   it("AI line always visible; diagnostic, teacher, actions and topic starters gated on !school", () => {
     expect(src).toContain("{school.aiLine}");
     expect(src).toContain("{!school && (\n            <button\n              type=\"button\"\n              onClick={takeTopicDiagnostic}");
-    expect(src).toContain("{!school && !busy && messages.filter((m) => m.role === \"assistant\" && m.content).length >= 2 && (");
+    // 27 Sep 2026: the teacher row (a phone form) only in an exam chat — never general, guest-general or school.
+    expect(src).toContain("{!school && examCode != null && !busy && messages.filter((m) => m.role === \"assistant\" && m.content).length >= 2 && (");
     expect(src).toContain("{!school && actions.length > 0 && (");
     expect(src).toContain("const starters: string[] = school\n    ? labels.starters");
   });
@@ -634,9 +629,12 @@ describe("the chat island — a school chat shows the AI line and no exam CTA (s
   it("the cap closes the composer on the cap code and on load; no share / challenge / group surface", () => {
     expect(src).toContain("if (parsed?.code === SCHOOL_CAP_CODE) setCapped(true);");
     expect(src).toContain("useState<boolean>(school?.capReached ?? false)");
-    expect(src).toContain("if (!text.trim() || busy || capped) return;");
+    expect(src).toContain("if (!text.trim() || busy || capped || under13) return;");
     // The cap closes the composer with or without the school prop (fixer review).
-    expect(src).toContain("{capped ? (");
+    expect(src).toContain(") : capped ? (");
+    // 27 Sep 2026: a declared under-13 closes the chat too, ahead of the cap (src/lib/under13.ts).
+    expect(src).toContain("{under13 ? (");
+    expect(src).toContain("if (parsed?.code === \"scope-under13\") setUnder13(true);");
     expect(src).toContain("<p>{school ? school.capLine : SCHOOL_TUTOR_CAP_COPY[navLang]}</p>");
     // No social surface is imported into the chat island (comments may name them).
     expect(src).not.toMatch(/^import .*\b(?:ChallengeCard|StudyGroupsCard|ResultCardShare|ShareExamButton|Leaderboard)\b/m);
@@ -649,7 +647,8 @@ describe("i18n — the chat.school.* keys exist in en, hi and te with the same p
   const placeholders = (s: string) => [...new Set(s.match(/\{\w+\}/g) ?? [])].sort();
 
   it("the family is the size this wave built", () => {
-    expect(keys.length).toBe(24);
+    // 27 Sep 2026: 24 → 18 (the sign-in card and the band card keys are gone).
+    expect(keys.length).toBe(18);
     expect(keys).toContain("chat.school.ageLine");
     expect(keys).toContain("chat.school.aiLine");
     expect(dict.en["chat.school.ageLine"]).toBe("Shishya's school tutor is for students 13 and above (Class 8 to 12).");
@@ -672,5 +671,36 @@ describe("i18n — the chat.school.* keys exist in en, hi and te with the same p
     expect(dict.en["chat.school.subtitle"]).toContain("not NCERT exercises");
     expect(raw("hi", "chat.school.subtitle")).toContain("NCERT");
     expect(raw("te", "chat.school.subtitle")).toContain("NCERT");
+  });
+});
+
+// ── Under 13 (27 Sep 2026 review): guests reach the school and exam chats
+// with no sign-in, so every mode's static prompt carries the rule, and the
+// distress rule comes first.
+
+describe("a person who says they are in Class 1-7 or under 13", () => {
+  const RULE = "If the person says they are in Class 1-7 or younger than 13, do not tutor, quiz or keep chatting";
+  it("is in SAFETY_RULES (every exam and general chat) and in the school tutor's static prompt", () => {
+    expect(SAFETY_RULES).toContain(RULE);
+    expect(SCHOOL_TUTOR_STATIC_PROMPT).toContain(RULE);
+    for (const p of [SAFETY_RULES, SCHOOL_TUTOR_STATIC_PROMPT]) {
+      expect(p).toContain("Shishya's tutor is for students aged 13 and above");
+      expect(p).toContain("https://shishya.in/schooling");
+      expect(p).toMatch(/distress rule (below )?comes first: give Childline 1098 and 112 before anything else/);
+    }
+  });
+  it("reaches every mode once (the general note no longer carries its own copy)", () => {
+    for (const args of [{ toolsOn: true }, { toolsOn: false }, { toolsOn: false, generalMode: true }]) {
+      const text = tutorSystemBlocks({ syllabus: EMPTY, ...args })[0].text;
+      expect(text.split(RULE).length - 1).toBe(1);
+    }
+    const school = tutorSystemBlocks({ syllabus: EMPTY, toolsOn: false, school: SCOPE_C09 })[0].text;
+    expect(school.split(RULE).length - 1).toBe(1);
+  });
+  it("the general note scopes 'being built' to course study pages and names the real post-graduation pages", () => {
+    const text = tutorSystemBlocks({ syllabus: EMPTY, toolsOn: false, generalMode: true })[0].text;
+    expect(text).toContain("Study pages for graduation, PG or PhD course subjects are being built; there are none yet, so never describe or link one.");
+    expect(text).toContain("The /post-graduation page (options after a degree) and the exams-after-graduation list (/exams/after/graduation) do exist.");
+    expect(text).not.toContain("Graduation, PG and PhD study help is being built: there is no page for it yet");
   });
 });

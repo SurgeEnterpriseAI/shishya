@@ -80,7 +80,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     ? `${firstName} scored`
     : exam
       ? `${exam} mock`
-      : "Free Indian exam prep";
+      : "One smart place to study";
   const subline = showScore
     ? `on ${exam}`
     : exam
@@ -135,7 +135,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", fontSize: "28px", fontWeight: 700, color: "#0f172a" }}>Shishya</div>
             <div style={{ display: "flex", fontSize: "16px", color: "#475569", marginTop: "2px" }}>
-              Free Indian exam prep
+              One smart place to study
             </div>
           </div>
         </div>

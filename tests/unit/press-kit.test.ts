@@ -324,7 +324,7 @@ describe("only company facts that are already public", () => {
     expect(FREE_FACTS[1]).toContain(`later ones are ${MENTOR_FEE} each, inclusive of GST, paid only after a mentor accepts the request.`);
     expect(about).toContain("later ones are ${MENTOR_FEE} each, inclusive of GST, paid only after a mentor accepts the request.");
     expect(pricing).toContain("first session free");
-    expect(editorial).toMatch(/No ads, no affiliate links, no selling of aspirant data/);
+    expect(editorial).toMatch(/No ads, no affiliate links, no selling of student data/);
     expect(FREE_FACTS[2]).toMatch(/No ads, no affiliate links and no selling of student data/);
   });
 });

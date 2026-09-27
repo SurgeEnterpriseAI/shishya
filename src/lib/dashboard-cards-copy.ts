@@ -46,7 +46,9 @@ const INVITE: Readonly<Record<CopyLocale, InviteCopy>> = {
     msgPersonalBest: "{who}I just hit my personal best{score} on a {exam} mock on Shishya — {free}. Study with me:",
     msgFirstMock: "{who}I just took my first {exam} mock on Shishya — {free}. Take yours and let's compare:",
     msgExam: "{who}I'm prepping for {exam} free on Shishya — {free}, all free. Study with me:",
-    msgGeneric: "{who}I'm prepping on Shishya — {free} for government exams. Study with me:",
+    // 27 Sep 2026: with no exam named the line speaks for the whole
+    // platform (school, entrance and government exams, colleges, careers).
+    msgGeneric: "{who}I'm studying on Shishya — free for school, entrance and government exams, colleges and careers, with an AI tutor in your own language. Study with me:",
     headingMoment: "📣 Bring your batch along",
     headingDefault: "📣 Prep is easier with your batch",
     bodyPersonalBest:
@@ -69,7 +71,7 @@ const INVITE: Readonly<Record<CopyLocale, InviteCopy>> = {
     // first-person verbs are gendered ("कर रहा/रही हूँ"), and a slash reads
     // like a form, not like a message a student would type.
     msgExam: "{who}मेरी {exam} की तैयारी Shishya पर मुफ़्त में चल रही है — {free}, सब मुफ़्त। मेरे साथ पढ़ो:",
-    msgGeneric: "{who}मेरी तैयारी Shishya पर चल रही है — सरकारी परीक्षाओं के लिए {free}। मेरे साथ पढ़ो:",
+    msgGeneric: "{who}मेरी पढ़ाई Shishya पर चल रही है — स्कूल, प्रवेश और सरकारी परीक्षाओं, कॉलेज और करियर के लिए मुफ़्त, अपनी भाषा में AI ट्यूटर के साथ। मेरे साथ पढ़ो:",
     headingMoment: "📣 अपने बैच को भी साथ लाओ",
     headingDefault: "📣 अपने बैच के साथ तैयारी आसान है",
     bodyPersonalBest:
@@ -88,7 +90,8 @@ const INVITE: Readonly<Record<CopyLocale, InviteCopy>> = {
       "{who}నేను ఇప్పుడే Shishya లో {exam} మాక్‌లో నా అత్యుత్తమ స్కోరు{score} సాధించాను — {free}. నాతో కలిసి చదువు:",
     msgFirstMock: "{who}నేను ఇప్పుడే Shishya లో నా మొదటి {exam} మాక్ రాశాను — {free}. నువ్వూ రాయి, పోల్చుకుందాం:",
     msgExam: "{who}నేను Shishya లో {exam} కోసం ఉచితంగా ప్రిపేర్ అవుతున్నాను — {free}, అంతా ఉచితం. నాతో కలిసి చదువు:",
-    msgGeneric: "{who}నేను Shishya లో ప్రిపేర్ అవుతున్నాను — ప్రభుత్వ పరీక్షల కోసం {free}. నాతో కలిసి చదువు:",
+    // "సొంత భాషలో" without మీ — the line says నాతో కలిసి చదువు to the friend.
+    msgGeneric: "{who}నేను Shishya లో చదువుతున్నాను — స్కూల్, ప్రవేశ, ప్రభుత్వ పరీక్షలు, కాలేజీ, కెరీర్ కోసం ఉచితం, సొంత భాషలో AI ట్యూటర్‌తో. నాతో కలిసి చదువు:",
     headingMoment: "📣 మీ బ్యాచ్‌ని కూడా తీసుకురండి",
     headingDefault: "📣 మీ బ్యాచ్‌తో కలిసి ప్రిపరేషన్ సులభం",
     bodyPersonalBest:

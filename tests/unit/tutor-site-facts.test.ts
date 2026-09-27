@@ -180,7 +180,9 @@ describe("siteFeaturesBlock", () => {
     const school = block.split("\n").find((l) => l.startsWith("- School — https://shishya.in/schooling:"));
     expect(school, "the /schooling line").toBeTruthy();
     // The class-scoped tutor: Class 8-12, students 13 and above; Class 1-7 content only.
-    expect(school).toMatch(/Class 8-12 pages a student aged 13 or above can sign in to ask the AI tutor/);
+    // 27 Sep 2026 (content first): the chapter tutor needs no sign-in; an account only saves practice.
+    expect(school).toMatch(/On CBSE Class 8-12 chapter pages anyone can ask the AI tutor about that chapter with no sign-in/);
+    expect(school).toMatch(/a student aged 13 or above can sign in to save practice/);
     expect(school).toMatch(/Class 1-7 pages have no sign-in and no chat tutor/);
     // Official books linked, Shishya's notes only where they exist, no typed chapter count.
     expect(school).toMatch(/official book PDF/);

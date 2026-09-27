@@ -204,7 +204,9 @@ export const SITE_FEATURES: readonly SiteFeature[] = [
     signIn: true,
   },
   { path: "/me/settings", name: "Profile settings", what: "public profile on/off (off by default) and its URL handle, plus a link to re-run onboarding", signIn: true },
-  { path: "/chat", name: "Shishya tutor (this chat)", what: "the exam dropdown in the chat changes which exam it is about" },
+  // 27 Sep 2026 (whole-platform tutor + content first): the chat answers any
+  // study question with or without an account; the exam dropdown is optional.
+  { path: "/chat", name: "Ask Shishya tutor (this chat)", what: "free, with or without an account (a guest chat is not kept in an account). With no exam picked it answers study questions — school (Class 8-12), +1/+2, entrance and government exams, college, scholarships and careers. Signed in, a chat on one exam also uses the student's mocks and weak topics, and the dropdown above the chat switches between general and the student's exams" },
   {
     path: "/onboarding?rerun=1",
     name: "Re-run onboarding wizard",
@@ -235,12 +237,14 @@ export const SITE_FEATURES: readonly SiteFeature[] = [
   {
     path: "/schooling",
     name: "School",
-    what: "school section: CBSE (NCERT textbooks) and CISCE class pages for Classes 1-12 — each NCERT chapter linked to its official book PDF, with Shishya's own chapter notes and checked practice questions on the chapters that have them (not every chapter yet) — and each school board's official website, with syllabus links for CBSE, CISCE, NIOS, IB, Cambridge and Tamil Nadu and sample-paper links for CBSE, CISCE and NIOS. On Class 8-12 pages a student aged 13 or above can sign in to ask the AI tutor about their class; Class 1-7 pages have no sign-in and no chat tutor",
+    what: "school section: CBSE (NCERT textbooks) and CISCE class pages for Classes 1-12 — each NCERT chapter linked to its official book PDF, with Shishya's own chapter notes and checked practice questions on the chapters that have them (not every chapter yet) — and each school board's official website, with syllabus links for CBSE, CISCE, NIOS, IB, Cambridge and Tamil Nadu and sample-paper links for CBSE, CISCE and NIOS. On CBSE Class 8-12 chapter pages anyone can ask the AI tutor about that chapter with no sign-in (study questions only, with a daily message limit), and a student aged 13 or above can sign in to save practice; Class 1-7 pages have no sign-in and no chat tutor",
   },
+  // 27 Sep 2026 (content first): the tutor no longer waits behind a sign-in;
+  // the chapter page is where it is asked (the /schooling line above).
   {
     path: "/schooling/{BOARD}/class-{N}",
     name: "Class page",
-    what: "one class's subjects, each with its NCERT book or CISCE syllabus documents linked and a count of its chapters that have Shishya's notes or practice; on Class 8-12 pages, the sign-in for the class tutor (students 13 and above)",
+    what: "one class's subjects, each with its NCERT book or CISCE syllabus documents linked and a count of its chapters that have Shishya's notes or practice; the AI tutor for a chapter is asked from its CBSE Class 8-12 chapter page, with no sign-in",
   },
   // 26 Sep 2026 (entry points, after G4): the CBSE board-exam pages
   // (src/data/board-exams.ts) — CBSE's own links only, never a copy.
@@ -297,7 +301,7 @@ function featureLine(f: SiteFeature): string {
 export function siteFeaturesBlock(): string {
   return [
     `What Shishya offers — the features, pages, buttons and settings you may describe:`,
-    `({CODE} = the exam's code from the syllabus block, e.g. SSC_GD; {TOPIC} = a topic code from it. With no exam picked, send the student to https://shishya.in to pick one first. Some exam pages exist only for some exams — the exam facts block says which. {BOARD} = cbse (NCERT books) or icse-cisce; {N} = a class from 1 to 12; {PERSONA} = one of the slugs listed on that line; {CATEGORY}, {LEVEL} and {GROUP} likewise = one of the values listed on their own line — never any other.)`,
+    `({CODE} = the exam's code from the syllabus block, e.g. SSC_GD; {TOPIC} = a topic code from it. With no exam in the conversation, never ask the student to pick an exam first and never build a {CODE} link from memory: link the section that fits — https://shishya.in/schooling, https://shishya.in/exams/entrance, https://shishya.in/exams/browse, https://shishya.in/colleges, https://shishya.in/scholarships or https://shishya.in/careers. Some exam pages exist only for some exams — the exam facts block says which. {BOARD} = cbse (NCERT books) or icse-cisce; {N} = a class from 1 to 12; {PERSONA} = one of the slugs listed on that line; {CATEGORY}, {LEVEL} and {GROUP} likewise = one of the values listed on their own line — never any other.)`,
     ...SITE_FEATURES.map(featureLine),
     ...IN_PAGE_FEATURES.map((s) => `- ${s}`),
     ``,

@@ -1,39 +1,22 @@
 "use client";
 
-// Click-time guard for long pre-built mocks (PYQs, full-length SME
-// mocks). Catches first-time users before they walk into a 60-min /
-// 100-Q wall and bounce.
+// The start button for long pre-built mocks (PYQs, full-length SME mocks).
 //
-// Behaviour:
-//   - If the user already has a submitted attempt on this exam OR the
-//     mock has <=20 questions, the button is just a Link — no modal.
-//   - Otherwise the click opens a small dialog with two paths:
-//       (a) "Take a 10-Q warmup with Shishya AI" → /chat?examCode=...
-//           seeded with a "Quiz me" prompt the tutor turns into a
-//           warmup using start_adaptive_quiz.
-//       (b) "Start the full mock anyway" → /mocks/[id]
+// 27 Sep 2026 (founder rule 1: no overlay or picker before content): the
+// click-time "full mock or warm-up?" dialog is gone. The button is always a
+// plain link to /mocks/[id]. Where the dialog used to open — no submitted
+// attempt on this exam, and a set of more than 20 questions / 25 minutes —
+// an optional text link under the button offers the 10-question warm-up
+// (/chat?examCode=… seeded with the "Quiz me" prompt the tutor turns into a
+// warm-up via start_adaptive_quiz). Nothing is asked before the paper.
 //
-// Why click-time and not page-time: the warmup button needs to fire
-// the user's intent to start *something*. Showing this before they've
-// clicked anything just adds friction. Showing it AFTER they've
-// landed in /mocks/[id] is too late (the timer starts).
-//
-// 15 Sep 2026: the dialog called every set over 20 questions "a full-length
-// timed mock", including PYQ-pattern years holding 20 of a 150-question
-// paper. It says "full-length" only when the set holds at least 80% of the
-// real paper (the year page's own rule).
-//
-// Language (16 Sep 2026): the dialog takes the year page's `locale` when it
-// is passed and otherwise reads the shishya-lang cookie after mount — its
-// server caller is outside this partition, and the dialog only ever opens on
-// a click, long after mount, so nothing is repainted under the student. The
-// "in the pattern of the N-question paper" hedge is kept in every language;
-// the warmup seed stays English because the tutor matches on its wording to
+// Language (16 Sep 2026): the link takes the year page's `locale` when it
+// is passed and otherwise reads the shishya-lang cookie after mount. The
+// warmup seed stays English because the tutor matches on its wording to
 // fire start_adaptive_quiz.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { fillTemplate } from "@/lib/i18n";
 import { clientUiLocale, type CopyLocale } from "@/lib/ui-locale-copy";
 import { fullMockCopy } from "@/lib/quiz-entry-copy";
 
@@ -48,7 +31,7 @@ interface Props {
   hasSubmittedHistory: boolean;
   label: string;
   /** The page's locale when the server already has one (16 Sep 2026);
-   *  without it the dialog reads the shishya-lang cookie after mount. */
+   *  without it the warm-up link reads the shishya-lang cookie after mount. */
   locale?: string;
 }
 
@@ -63,24 +46,23 @@ export function StartFullMockButton({
   label,
   locale,
 }: Props) {
-  const [open, setOpen] = useState(false);
   const [cookieLocale, setCookieLocale] = useState<CopyLocale>("en");
   useEffect(() => {
     if (locale == null) setCookieLocale(clientUiLocale());
   }, [locale]);
   const C = fullMockCopy(locale ?? cookieLocale);
-  const fullLength = !(paperQuestions > 0) || totalQuestions >= 0.8 * paperQuestions;
+  // Kept in the props for the caller; the dialog that used them is gone.
+  void paperQuestions;
 
-  // Bypass the modal when the user knows what they're doing (already
-  // taken at least one mock on this exam) or the mock is short.
-  const skipGuard = hasSubmittedHistory || totalQuestions <= 20 || durationMin <= 25;
-  if (skipGuard) {
-    return (
-      <Link href={`/mocks/${mockId}`} prefetch={false} className="btn-primary">
-        {label}
-      </Link>
-    );
-  }
+  // The warm-up link shows where the old dialog opened: a first-timer on
+  // this exam facing a long set. Everyone else gets the button alone.
+  const offerWarmup = !(hasSubmittedHistory || totalQuestions <= 20 || durationMin <= 25);
+  const button = (
+    <Link href={`/mocks/${mockId}`} prefetch={false} className="btn-primary">
+      {label}
+    </Link>
+  );
+  if (!offerWarmup) return button;
 
   // The "Quiz me" seed below is the same wording the tutor recognises
   // to fire its start_adaptive_quiz tool — keep it stable so the chat
@@ -89,67 +71,11 @@ export function StartFullMockButton({
   const warmupHref = `/chat?examCode=${examCode}&seed=${encodeURIComponent(warmupSeed)}`;
 
   return (
-    <>
-      <button type="button" onClick={() => setOpen(true)} className="btn-primary">
-        {label}
-      </button>
-
-      {open && (
-        <div
-          className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="full-mock-confirm-title"
-        >
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            aria-label={C.close}
-            className="absolute inset-0 bg-ink-900/55"
-          />
-          <div className="relative w-full max-w-md rounded-xl border border-saffron-200 bg-white p-6 shadow-2xl">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">
-              {C.headsUp}
-            </p>
-            <h3 id="full-mock-confirm-title" className="mt-1 text-lg font-semibold text-ink-900">
-              {fillTemplate(C.qMin, { q: totalQuestions, m: durationMin })}
-            </h3>
-            <p className="mt-2 text-sm text-ink-700">
-              {fullLength
-                ? C.fullLength
-                : fillTemplate(C.patternSet, { q: totalQuestions, paper: paperQuestions })}{" "}
-              {C.clockNote}
-            </p>
-            <p className="mt-2 text-sm text-ink-700">
-              {fillTemplate(C.warmupNote, { exam: examShortName })}
-            </p>
-
-            <div className="mt-5 flex flex-col gap-2">
-              <Link
-                href={warmupHref}
-                prefetch={false}
-                className="btn-primary block w-full text-center"
-              >
-                {C.warmupCta}
-              </Link>
-              <Link
-                href={`/mocks/${mockId}`}
-                prefetch={false}
-                className="btn-secondary block w-full text-center"
-              >
-                {fillTemplate(fullLength ? C.startFull : C.startSet, { q: totalQuestions })}
-              </Link>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="mt-1 text-xs text-ink-500 hover:text-ink-800"
-              >
-                {C.cancel}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    <div className="flex flex-col items-stretch sm:items-end">
+      {button}
+      <Link href={warmupHref} prefetch={false} className="mt-2 block text-xs font-semibold text-saffron-700 hover:underline">
+        {C.warmupCta}
+      </Link>
+    </div>
   );
 }

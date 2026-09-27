@@ -474,7 +474,7 @@ export default async function HomePage({
       ? {
           "@context": "https://schema.org",
           "@type": "ItemList",
-          name: "Upcoming Indian government exam dates",
+          name: "Upcoming Indian government and entrance exam dates",
           description:
             "Official exam-day calendar for Indian government and entrance exams, with free mock tests, syllabus and cutoff analysis for each.",
           itemListElement: jsonLdEvents.map((e, i) => ({

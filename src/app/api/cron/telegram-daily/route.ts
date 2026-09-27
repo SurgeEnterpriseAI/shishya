@@ -133,9 +133,9 @@ export async function GET(req: Request) {
     }
   }
   lines.push(``);
-  lines.push(`🗺 <b>New:</b> India's Government Jobs Map — every path from UPSC Group A to state police, with live vacancies: ${tgUrl("/jobs-map", "channel")}`);
+  lines.push(`🗺 India's Government Jobs Map — every path from UPSC Group A to state police, with live vacancies: ${tgUrl("/jobs-map", "channel")}`);
   lines.push(``);
-  lines.push(`🎯 <b>Free on Shishya:</b> mock tests, PYQs, syllabus, tricks & an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages for ${examScope} govt & entrance exams — 100% free.`);
+  lines.push(`🎯 <b>Free on Shishya:</b> mock tests, previous-year-pattern practice, syllabus and tricks for ${examScope} govt & entrance exams; school chapters, colleges, scholarships and careers; and an AI tutor in ${INDIAN_LANGUAGE_COUNT} Indian languages.`);
   lines.push(`Start: https://shishya.in`);
   lines.push(``);
   lines.push(`Forward this to your prep group 🙏`);

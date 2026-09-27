@@ -13,7 +13,6 @@ import { ExamPicker, type ExamCard } from "@/components/ExamPicker";
 import { computeExamTags, TAG_ORDER } from "@/lib/exam-tags";
 import { buildCuratedSections, buildStateInfo } from "@/lib/exam-browse";
 import { formatDisplayScorePct } from "@/lib/scoring";
-import { OnboardingTour } from "@/components/OnboardingTour";
 import { TwoPathsCard } from "./TwoPathsCard";
 import { QuickStartDiagnostic } from "./QuickStartDiagnostic";
 import { captureSignupAttribution } from "@/lib/signup-attribution";
@@ -53,7 +52,9 @@ import { YouAskedWeBuilt } from "@/components/YouAskedWeBuilt";
 // 26 Sep 2026 (student mode, fixer): a school-only account's own home.
 import { NOT_SCHOOL_WHERE } from "@/lib/db/exam-scope";
 import { fillTemplate } from "@/lib/i18n";
-import { schoolBandOfProfile, schoolContainerClassOf } from "@/lib/school/student-classes";
+import { schoolContainerClassOf, studentModeClassOfExamCode, studentModeCodesOf } from "@/lib/school/student-classes";
+import { SCHOOL_CONTAINER_WHERE } from "@/lib/school/scope";
+import { dashboardStartCopy } from "@/lib/dashboard-start-copy";
 import { schoolDashboardCopy } from "@/lib/school/student-copy";
 import { schoolBoardForExamCode, schoolClassPath } from "@/lib/school/surface";
 
@@ -141,8 +142,9 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
   //     27 May 2026 telemetry showed 96 signups, 0 mocks attempted,
   //     because new users land here on a generic dashboard with no
   //     clear first action.
-  //   onboardedAt — the in-dashboard guided TOUR (separate UX). Once
-  //     true, the <OnboardingTour /> popover is suppressed forever.
+  //   onboardedAt — the in-dashboard guided TOUR (separate UX). Since
+  //     27 Sep 2026 the tour never auto-opens (founder rule 1: no overlay
+  //     before content), so the flag is read but no longer used here.
   //
   // Single $queryRaw fetches both so we only round-trip to Neon once.
   // Wrapped in try/catch so a transient Neon outage doesn't crash the
@@ -156,7 +158,9 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
   // picker step. See src/app/dashboard/DiagnosticHero.tsx.
   let onbPrepCodes: string[] = [];
   // 26 Sep 2026: onbStage too — with a school container code in
-  // onbPrepCodes it is the school age band (src/lib/school/student-classes.ts).
+  // onbPrepCodes it was the school age band (src/lib/school/student-classes.ts).
+  // 27 Sep 2026: the band is no longer asked; the school home below keys on
+  // context (class-container enrolment / legacy school code), not on it.
   let onbStage: string | null = null;
   try {
     const onboardedRows = await prisma.$queryRaw<{
@@ -184,11 +188,11 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
   // capture the prep signal without the form). Onboarding stays available
   // as an opt-in for personalised suggestions.
   //
-  // showOnboarding still drives the dashboard guided tour (separate UX);
   // onbCompletedAt is kept only to suppress the soft "personalise" nudge
   // for users who already did the wizard.
-  const showOnboarding = !onboardedAt;
+  void onboardedAt; // 27 Sep 2026: the first-visit tour no longer auto-opens (founder rule 1)
   void onbCompletedAt;
+  void onbStage;
 
   const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs, dueRevisions, streak, dailyPick] =
     await Promise.all([
@@ -272,18 +276,25 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
     ]);
 
   // ── School-only account (26 Sep 2026, student mode — fixer) ──────────
-  // The age band was declared on a Class 8-12 school page
-  // (schoolBandOfProfile: a school container code in onbPrepCodes + a school
-  // stage) and the account holds NO real-exam enrolment: it gets its own
-  // small home — its classes, its recent practice, the AI line — and nothing
-  // of the exam dashboard renders (founder rules 5 and 6: no streak, study
-  // group, Daily-5, coach, invite, live-test or "pick your exam" piece on a
-  // school account). An account that also enrolled on a real exam is an
-  // aspirant too and sees the exam dashboard as before.
-  const schoolProfile = schoolBandOfProfile({ onbStage, onbPrepCodes });
-  if (schoolProfile && enrollments.length === 0) {
+  // A school account with NO real-exam enrolment gets its own small home —
+  // its classes, its recent practice, the AI line — and nothing of the exam
+  // dashboard renders (founder rules 5 and 6: no streak, study group,
+  // Daily-5, coach, invite, live-test or "pick your exam" piece on a school
+  // account). An account that also enrolled on a real exam is an aspirant
+  // too and sees the exam dashboard as before.
+  // School-only account (27 Sep 2026: by context, not by the age band): a class-container enrolment (made at a school sign-in or by chapter practice) or a legacy school code in onbPrepCodes, and no real-exam enrolment.
+  let schoolEnrolCodes: string[] = [];
+  if (enrollments.length === 0) {
+    try {
+      schoolEnrolCodes = (await prisma.enrollment.findMany({ where: { userId, active: true, exam: SCHOOL_CONTAINER_WHERE }, select: { exam: { select: { code: true } } } }))
+        .map((e) => e.exam.code)
+        .filter((c) => studentModeClassOfExamCode(c) !== null);
+    } catch { schoolEnrolCodes = []; }
+  }
+  const schoolClassCodes = [...new Set([...studentModeCodesOf(onbPrepCodes), ...schoolEnrolCodes])];
+  if (schoolClassCodes.length > 0 && enrollments.length === 0) {
     const sc = schoolDashboardCopy(locale);
-    const classes = schoolProfile.classCodes.flatMap((code) => {
+    const classes = schoolClassCodes.flatMap((code) => {
       const board = schoolBoardForExamCode(code);
       const cls = schoolContainerClassOf(code);
       return board && cls !== null
@@ -739,12 +750,14 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
   // IST day-of-week (0=Sun) for labelling the streak card's dot calendar.
   const istTodayDow = new Date(Date.now() + 5.5 * 3600_000).getUTCDay();
 
+  // 27 Sep 2026 (founder rule 4): the no-exam block — doors, never a demand.
+  const start = dashboardStartCopy(locale);
+
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
-      {/* First-time onboarding tour. Renders nothing once the user has
-          finished or skipped it (onboardedAt set on the User row). */}
-      {showOnboarding && <OnboardingTour />}
+      {/* 27 Sep 2026 (founder rule 1: no overlay before content): the
+          first-visit guided tour no longer auto-opens here. */}
       <section className="container-prose py-10">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -753,15 +766,15 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
             </h1>
             <p className="mt-1 text-sm text-ink-600">{t("dash.subtitle")}</p>
           </div>
-          {enrollments.length > 0 && (
-            <Link
-              href="/chat"
-              data-onboard="header-tutor"
-              className="btn-secondary !py-2 !px-4 text-xs sm:text-sm"
-            >
-              {t("nav.tutor")}
-            </Link>
-          )}
+          {/* 27 Sep 2026: for every signed-in user — /chat opens the
+              general tutor when there is no exam. */}
+          <Link
+            href="/chat"
+            data-onboard="header-tutor"
+            className="btn-secondary !py-2 !px-4 text-xs sm:text-sm"
+          >
+            {t("nav.tutor")}
+          </Link>
         </div>
 
         {/* Live-test day banner — the Sunday ritual's front door. */}
@@ -791,21 +804,20 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
             nothing otherwise (no generic marketing, no counts). */}
         <YouAskedWeBuilt locale={locale} userId={userId} />
 
-        {/* Enrollment hardening (retention data: 0% of never-enrolled users
-            EVER return; ~20% of signups slip through without picking an
-            exam). Loud blocking-style banner until they enroll. */}
+        {/* No exam yet (27 Sep 2026, founder rule 4: a dashboard with no
+            target exam shows search + the site's doors, never a demand to
+            choose). Picking an exam stays one optional link. */}
         {enrollments.length === 0 && (
-          <section className="mt-6 rounded-xl border-2 border-saffron-400 bg-gradient-to-r from-saffron-50 to-amber-50 p-5 shadow-sm">
-            <p className="text-base font-bold text-ink-900">
-              👋 One step left — pick your exam
-            </p>
-            <p className="mt-1 text-sm text-ink-700">
-              Everything on Shishya (mocks, weak-topic tracking, your daily plan) starts from your
-              target exam. Takes 10 seconds.
-            </p>
-            <Link href="/" className="btn-primary mt-3 inline-block !py-2 !px-5 text-sm">
-              Choose my exam →
-            </Link>
+          <section className="mt-6 rounded-xl border border-saffron-200 bg-saffron-50/60 p-5">
+            <p className="text-base font-bold text-ink-900">{start.heading}</p>
+            <p className="mt-1 text-sm text-ink-700">{start.body}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link href="/chat" className="btn-primary !py-2 !px-4 text-sm">{start.ask}</Link>
+              {start.doors.map((d) => (
+                <Link key={d.href} href={d.href} className="rounded-md border border-ink-200 bg-white px-3 py-2 text-sm font-medium text-ink-800 hover:border-saffron-400">{d.label}</Link>
+              ))}
+            </div>
+            <Link href="/exams/browse" className="mt-3 inline-block text-xs font-semibold text-saffron-700 hover:underline">{start.pickExam}</Link>
           </section>
         )}
 

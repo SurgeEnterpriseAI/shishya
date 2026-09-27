@@ -492,7 +492,11 @@ describe("the one enrolment door (src/lib/db/enrollment.ts, 26 Sep 2026)", () =>
   // and only the school flows pass it: the age-band write and the chapter
   // mock builder (src/lib/school/student-db.ts), the mock player and the
   // attempt start for a "school-chapter" set. Nothing else under src/.
-  it("the school flag is passed by the four school flows only, each on a student-mode set", () => {
+  // 27 Sep 2026 (founder: no age question — context marking): plus the
+  // first sign-in that returns to a Class 8-12 page or the school chat
+  // (src/lib/auth.ts createUser), on the container findStudentModeContainer
+  // returns — never a Class 1-7 row.
+  it("the school flag is passed by the school flows only, each on a student-mode set", () => {
     const re = /ensureEnrollment\([^;]*?\{\s*school:\s*([^}]*)\},?\s*\)/gs;
     const found: string[] = [];
     for (const abs of walk(SRC)) {
@@ -505,6 +509,7 @@ describe("the one enrolment door (src/lib/db/enrollment.ts, 26 Sep 2026)", () =>
     expect(found.sort()).toEqual([
       'src/app/api/attempts/route.ts: mock.generatedBy === "school-chapter"',
       'src/app/mocks/[id]/page.tsx: mock.generatedBy === "school-chapter"',
+      "src/lib/auth.ts: true",
       "src/lib/school/student-db.ts: true",
       "src/lib/school/student-db.ts: true",
     ]);

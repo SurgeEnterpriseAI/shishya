@@ -17,14 +17,29 @@
 //
 // The "Today" link in the Primary nav row (TodayNavLink, 11 Sep 2026) uses
 // the same probe. Header is on ~127 pages.
+//
+// 27 Sep 2026 (founder, content first):
+//   • rule 4 — sign-in returns to the page it was clicked on: the guest
+//     "Sign in" link carries callbackUrl = this path + query (never /login,
+//     /logout or an /api route), computed after mount so the cached HTML
+//     stays the same for everyone (plain /login until then), plus
+//     from=header so /login never reads a header click as a gated action
+//     (no "your mock is one tap away" or "Welcome back" card);
+//   • rule 5 — no sign-in on Class 1-7 school pages (below 13, content
+//     only): on /schooling/{board}/class-1 … class-7 the guest branch
+//     renders nothing (isUnder13SchoolPath; usePathname also works during
+//     SSR, so crawlers and first paint get no button either). The
+//     signed-in rail is unchanged.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { LangSwitcher } from "./LangSwitcher";
 import { NotificationBell } from "./NotificationBell";
 import { locales, type Locale } from "@/lib/i18n";
 import { NAV_TODAY, NAV_TODAY_TITLE } from "@/lib/study-day-copy";
 import { fetchSignedIn } from "@/lib/session-hint";
+import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 
 // Re-exported so any import of fetchSignedIn from this file keeps working.
 // Resolves true (signed in) / false (guest) / null (probe failed).
@@ -51,6 +66,8 @@ export function HeaderAuthControls({
   // the "Sign in" CTA as the optimistic default so the anonymous case
   // (the common one for a marketing page) has no visible flicker.
   const [session, setSession] = useState<SessionLite | null>(null);
+  const pathname = usePathname();
+  const [loginHref, setLoginHref] = useState("/login");
 
   useEffect(() => {
     let alive = true;
@@ -61,6 +78,17 @@ export function HeaderAuthControls({
       alive = false;
     };
   }, []);
+
+  // Rule 4: back to this page after sign-in (re-read on every navigation).
+  useEffect(() => {
+    try {
+      const p = location.pathname;
+      if (p !== "/login" && p !== "/logout" && !p.startsWith("/api/")) setLoginHref(`/login?callbackUrl=${encodeURIComponent(p + location.search)}&from=header`);
+      else setLoginHref("/login");
+    } catch {
+      setLoginHref("/login");
+    }
+  }, [pathname]);
 
   const signedIn = session?.signedIn ?? false;
   const safeLocale: Locale = (locales as readonly string[]).includes(locale)
@@ -90,8 +118,8 @@ export function HeaderAuthControls({
             {labels.signout}
           </Link>
         </>
-      ) : (
-        <Link rel="nofollow" href="/login" className="btn-primary !py-2 !px-4 text-xs sm:text-sm">
+      ) : isUnder13SchoolPath(pathname) ? null : (
+        <Link rel="nofollow" href={loginHref} className="btn-primary !py-2 !px-4 text-xs sm:text-sm">
           {labels.signinShort}
         </Link>
       )}

@@ -127,7 +127,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "Shishya",
       locale: ogLocale(urlLocale),
       type: "website",
-      images: [{ url: "https://shishya.in/opengraph-image", width: 1200, height: 630, alt: "Shishya — free Indian exam prep" }],
+      images: [{ url: "https://shishya.in/opengraph-image", width: 1200, height: 630, alt: "Shishya — one smart place to study: school, entrance exams, government exams, colleges and scholarships, careers" }],
     },
     twitter: { card: "summary_large_image", title, description, images: ["https://shishya.in/opengraph-image"] },
   };

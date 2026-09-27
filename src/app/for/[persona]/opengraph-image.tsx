@@ -32,7 +32,7 @@ export async function generateImageMetadata({
       id: persona.slug,
       contentType: "image/png",
       size,
-      alt: `Shishya — ${persona.label} · curated exam prep`,
+      alt: `Shishya — ${persona.label} · a free starting page`,
     },
   ];
 }
@@ -50,10 +50,10 @@ export default async function Image({ params }: { params: Promise<{ persona: str
     ? await loadShortNames(persona.examCodes.slice(0, 5))
     : [];
 
-  const title = persona ? persona.label.replace(/^I'm\s+/, "") : "Free Indian entrance exam prep";
+  const title = persona ? persona.label.replace(/^I'm\s+/, "") : "One smart place to study";
   const subtitle = persona
-    ? "Curated prep map — exams, articles, next steps"
-    : "Pick your stage. See your curated prep.";
+    ? "Your starting page — exams, articles, next steps"
+    : "Pick your stage — school, entrance, college, government jobs.";
 
   return new ImageResponse(
     (

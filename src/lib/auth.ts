@@ -10,7 +10,7 @@ import { prisma } from "./db/prisma";
 import type { SignupAttribution } from "./signup-attribution";
 import { SESSION_HINT_COOKIE, SESSION_HINT_MAX_AGE_S, SESSION_HINT_VALUE } from "./session-hint";
 // Pure and import-free (no prisma, no next): safe at module scope here.
-import { isSchoolSignInCallback } from "./school/student-classes";
+import { isSchoolSignInCallback, studentModeClassOfExamCode } from "./school/student-classes";
 
 declare module "next-auth" {
   interface Session {
@@ -115,11 +115,13 @@ export const authOptions: NextAuthOptions = {
       // school tutor is known here only by where NextAuth will send the
       // browser next — its callback-url cookie, in scope in this handler
       // exactly as the attribution cookie is (read-only; NextAuth clears it
-      // itself). The age band is declared AFTER this event, so none of the
-      // enrolment-keyed audience helpers (src/lib/db/enrollment.ts) can
-      // see a school account yet. Unreadable → false → the exam path as
-      // before.
-      const schoolSignIn = await isSchoolSignInFromCookies();
+      // itself). 27 Sep 2026: no age band is asked any more — a Class 8-12
+      // return also enrols the account on that class container below, the
+      // context marker the enrolment-keyed audience helpers
+      // (src/lib/db/enrollment.ts) read. Unreadable → null → false → the
+      // exam path as before.
+      const signInCallback = await readSignInCallbackCookie();
+      const schoolSignIn = isSchoolSignInCallback(signInCallback);
       try {
         // Inline import avoids a circular dep (analytics → prisma → auth).
         const { recordEvent } = await import("./analytics");
@@ -146,6 +148,22 @@ export const authOptions: NextAuthOptions = {
         });
       } catch (err) {
         console.error("[auth] SIGNUP event record failed (non-fatal):", err);
+      }
+      // 27 Sep 2026 (founder: no age question — safeguards by context): a first sign-in that returns to a Class 8-12 school page or the school chat enrols the account on that class container (school flag), the marker that keeps it out of the exam-prep mail audiences (schoolOnlyAccountSql) and gives it the dashboard's school home. Best-effort, never fatal, nothing asked.
+      if (schoolSignIn) {
+        try {
+          const code = await schoolContainerOfCallback(signInCallback);
+          if (code) {
+            const { findStudentModeContainer } = await import("./school/student-db");
+            const exam = await findStudentModeContainer(code);
+            if (exam) {
+              const { ensureEnrollment } = await import("./db/enrollment");
+              await ensureEnrollment(user.id, exam, {}, { school: true });
+            }
+          }
+        } catch (err) {
+          console.error("[auth] school class enrolment failed (non-fatal):", err);
+        }
       }
       // Welcome email — best-effort, never blocks the auth callback.
       // sendEmail() is stub-safe when RESEND_API_KEY is unset, so this
@@ -174,19 +192,34 @@ export const authOptions: NextAuthOptions = {
 
 /** NextAuth v4 keeps the sign-in's callbackUrl (already passed through the
  *  redirect callback, so same-origin) in `next-auth.callback-url`, prefixed
- *  `__Secure-` when NEXTAUTH_URL is https — both are read. True when it
- *  returns to a school page or the school tutor
- *  (src/lib/school/student-classes.ts isSchoolSignInCallback). Never throws. */
-async function isSchoolSignInFromCookies(): Promise<boolean> {
+ *  `__Secure-` when NEXTAUTH_URL is https — both are read. The caller asks
+ *  whether it returns to a school page or the school tutor
+ *  (src/lib/school/student-classes.ts isSchoolSignInCallback) and which
+ *  class container it names (schoolContainerOfCallback). null when absent
+ *  or on any error. Never throws. */
+async function readSignInCallbackCookie(): Promise<string | null> {
   try {
     const { cookies } = await import("next/headers");
     const jar = await cookies();
-    const value = jar.get("__Secure-next-auth.callback-url")?.value ?? jar.get("next-auth.callback-url")?.value ?? null;
-    return isSchoolSignInCallback(value);
+    return jar.get("__Secure-next-auth.callback-url")?.value ?? jar.get("next-auth.callback-url")?.value ?? null;
   } catch (err) {
     console.error("[auth] callback-url cookie read failed (non-fatal):", err);
-    return false;
+    return null;
   }
+}
+
+/** The Class 8-12 container a school sign-in returns to — /chat?examCode=<container> or /schooling/{board}/class-{n}/… — or null. */
+async function schoolContainerOfCallback(url: string | null): Promise<string | null> {
+  if (!url) return null;
+  let u: URL;
+  try { u = new URL(url, "https://shishya.in"); } catch { return null; }
+  let code: string | null = null;
+  if (u.pathname === "/chat" || u.pathname === "/chat/") code = u.searchParams.get("examCode");
+  else {
+    const m = /^\/schooling\/([^/]+)\/class-(\d{1,2})(?:\/|$)/.exec(u.pathname);
+    if (m) { const { schoolExamCode } = await import("./school/surface"); code = schoolExamCode(m[1], Number(m[2])); }
+  }
+  return code && studentModeClassOfExamCode(code) !== null ? code : null;
 }
 
 export const auth = () => getServerSession(authOptions);

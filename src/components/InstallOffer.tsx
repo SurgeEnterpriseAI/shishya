@@ -31,6 +31,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 import {
   INSTALL_OFFER_BY_LOCALE,
   INSTALL_OFFER_KEY,
@@ -132,21 +133,28 @@ export function InstallOffer() {
       /* old browser */
     }
 
-    try {
-      const counted = sessionStorage.getItem(VISIT_COUNTED_KEY) === "1";
-      const visits = nextVisitCount(localStorage.getItem(VISITS_KEY), counted);
-      if (!counted) {
-        localStorage.setItem(VISITS_KEY, String(visits));
-        sessionStorage.setItem(VISIT_COUNTED_KEY, "1");
+    // Class 1-7 school pages (27 Sep 2026, founder rule 5): no visit counter
+    // or offer state is written or read there — ctx stays null, so the bar
+    // is never offered in this tab. The listeners below still run, so
+    // Chrome's own install infobar stays suppressed on those pages too.
+    const child = isUnder13SchoolPath(location.pathname);
+    if (!child) {
+      try {
+        const counted = sessionStorage.getItem(VISIT_COUNTED_KEY) === "1";
+        const visits = nextVisitCount(localStorage.getItem(VISITS_KEY), counted);
+        if (!counted) {
+          localStorage.setItem(VISITS_KEY, String(visits));
+          sessionStorage.setItem(VISIT_COUNTED_KEY, "1");
+        }
+        setCtx({
+          visits,
+          state: readOfferState(localStorage.getItem(INSTALL_OFFER_KEY)),
+          standalone,
+          android: isAndroidBrowserUA(navigator.userAgent),
+        });
+      } catch {
+        /* private mode — stay silent */
       }
-      setCtx({
-        visits,
-        state: readOfferState(localStorage.getItem(INSTALL_OFFER_KEY)),
-        standalone,
-        android: isAndroidBrowserUA(navigator.userAgent),
-      });
-    } catch {
-      /* private mode — stay silent */
     }
 
     if (standalone) return;
@@ -157,7 +165,7 @@ export function InstallOffer() {
       setHasPrompt(true);
     };
     const onInstalled = () => {
-      store("accepted");
+      if (!child) store("accepted");
       promptRef.current = null;
       setPhase("done");
     };

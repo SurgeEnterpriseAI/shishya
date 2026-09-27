@@ -722,7 +722,7 @@ export function SearchStrip({
             spellCheck={false}
             enterKeyHint="search"
             inputMode="search"
-            className={`h-full min-w-0 flex-1 bg-transparent px-1.5 text-[17px] text-ink-900 outline-none placeholder:text-ink-400 placeholder:transition-opacity placeholder:duration-200 sm:text-lg ${
+            className={`h-full min-w-0 flex-1 bg-transparent px-1.5 text-[17px] text-ink-900 outline-none placeholder:text-ink-500 placeholder:transition-opacity placeholder:duration-200 sm:text-lg ${
               fade ? "placeholder:opacity-100" : "placeholder:opacity-0"
             }`}
           />

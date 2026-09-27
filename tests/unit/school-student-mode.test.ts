@@ -13,15 +13,19 @@
 //     hasRealExamEnrollment / schoolOnlyUserIds against the stub, and a
 //     source scan — no cron or mail predicate keys on a bare Enrollment
 //     EXISTS any more;
-//  4. the age band in existing fields: stage per band and class, the
-//     profile reader (a wizard-only CLASS_9_10 account has NO band), the
-//     minor test;
+//  4. the age band in existing fields (legacy since 27 Sep 2026 — read,
+//     never asked): stage per band and class, the profile reader (a
+//     wizard-only CLASS_9_10 account has NO band), the minor test; the
+//     profile route answers 410 to the old card's POST;
 //  5. chapter practice honesty: 4 → no button, 7 → 7, 25 → 10;
 //  6. what the entry renders per class band and auth state
-//     (studentEntryView), the links, and the pages: the island only under
-//     isStudentModeClass, the results page's exam pieces off for a school
-//     attempt, the copy's age line and AI line, no forbidden literal in the
-//     island.
+//     (studentEntryView: guest → the tutor with no sign-in, signed in →
+//     practice + tutor, never a question), the links, and the pages: the
+//     island only under isStudentModeClass (the tutor slot and the
+//     after-practice save slot), the childSafe header on Class 1-7, the
+//     results page's exam pieces off for a school attempt, the copy's age
+//     line and AI line, no forbidden literal in the island;
+//  7. isUnder13SchoolPath: the Class 1-7 page rule (27 Sep 2026).
 // No DB, no network. Run: npx vitest run tests/unit/school-student-mode.test.ts
 
 import fs from "node:fs";
@@ -54,6 +58,8 @@ vi.mock("@/lib/db/prisma", () => ({
     },
   },
 }));
+// 27 Sep 2026: the profile route's POST is called once (the 410 below).
+vi.mock("@/lib/auth", () => ({ auth: async () => ({ user: { id: "u1" } }) }));
 
 import { SCHOOL_CATEGORY, isSchoolCategory } from "@/lib/db/exam-scope";
 import { SCHOOL_TUTOR_DAILY_CAP } from "@/lib/school/tutor-cap";
@@ -70,6 +76,7 @@ import {
   isSchoolSignInCallback,
   isStudentModeClass,
   isStudentModeContainer,
+  isUnder13SchoolPath,
   schoolBandOfProfile,
   schoolBandOfStage,
   schoolChapterMockCount,
@@ -326,19 +333,34 @@ describe("the age band lives in onbStage + onbPrepCodes", () => {
     expect(studentModeCodesOf(null)).toEqual([]);
   });
 
-  it("the profile route accepts the band, keeps school codes through the wizard, and reads them back", () => {
-    const src = read("src/app/api/me/onboarding-profile/route.ts");
+  // 27 Sep 2026 (founder: content first): the card is gone. The route still
+  // READS a stored band (GET ?school=1) and the wizard still keeps school
+  // codes, but the old card's POST answers 410 and never falls into the
+  // wizard save.
+  it("the profile route: POST { school } answers 410 (the card is gone); GET still reads a stored band; the wizard keeps school codes", async () => {
+    const src = stripComments(read("src/app/api/me/onboarding-profile/route.ts"));
     expect(src).toMatch(/export async function GET\(/);
     expect(src).toMatch(/searchParams\.get\("school"\) !== "1"/);
-    expect(src).toMatch(/if \(body\.school !== undefined\) \{/);
-    expect(src).toMatch(/isSchoolBand\(s\.band\)/);
-    expect(src).toMatch(/declareSchoolBand\(session\.user\.id, band, examCode\)/);
+    expect(src).toMatch(/if \(body\.school !== undefined\) return NextResponse\.json\(\{ error: "gone" \}, \{ status: 410 \}\);/);
+    expect(src).not.toMatch(/declareSchoolBand|isSchoolBand|school_band_declared/);
+    // The 410 comes before the wizard reads stage / state / prepCodes.
+    expect(src.indexOf('{ error: "gone" }')).toBeLessThan(src.indexOf("const stage ="));
     // The wizard's write keeps the school marker codes read from the ROW.
     expect(src).toMatch(/studentModeCodesOf\(rows\[0\]\?\.onbPrepCodes\)/);
     expect(src).toMatch(/"onbPrepCodes" = \$\{storedCodes\}::text\[\]/);
-    // The analytics event carries the band and the class only.
-    expect(src).toMatch(/props: \{ kind: "school_band_declared", band, examCode \}/);
-    expect(src).not.toMatch(/props: \{ kind: "school_band_declared"[^}]*(?:name|email)/);
+    // And at runtime: a signed-in POST with the old card's body is 410, with no write.
+    const { POST } = await import("@/app/api/me/onboarding-profile/route");
+    const res = await POST(
+      new Request("http://x/api/me/onboarding-profile", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ school: { band: "STUDENT_13_17", examCode: "NCERT_C09" } }),
+      }),
+    );
+    expect(res.status).toBe(410);
+    expect(await res.json()).toEqual({ error: "gone" });
+    expect(db.raws).toEqual([]);
+    expect(db.upserts).toEqual([]);
   });
 });
 
@@ -360,21 +382,58 @@ describe("schoolChapterMockCount: the honest size, or no button", () => {
 describe("the student entry per class band and auth state", () => {
   it("Class 1-7: nothing, whatever the state", () => {
     for (const cls of [1, 6, 7]) {
-      expect(studentEntryView({ cls, signedIn: false, band: null, validatedQuestions: 40 })).toEqual({ kind: "none" });
-      expect(studentEntryView({ cls, signedIn: true, band: "STUDENT_13_17", validatedQuestions: 40 })).toEqual({ kind: "none" });
+      expect(studentEntryView({ cls, signedIn: null, validatedQuestions: 40 })).toEqual({ kind: "none" });
+      expect(studentEntryView({ cls, signedIn: false, validatedQuestions: 40 })).toEqual({ kind: "none" });
+      expect(studentEntryView({ cls, signedIn: true, validatedQuestions: 40 })).toEqual({ kind: "none" });
     }
   });
 
-  it("Class 8-12: signed out → the sign-in CTA; signed in without a band → the card; with a band → the buttons", () => {
+  // 27 Sep 2026 (founder: content first): no band card — a guest gets the
+  // tutor with no sign-in, a signed-in account the buttons at once.
+  it("Class 8-12: a guest (or not known yet) → the tutor entry; signed in → the buttons, nothing asked", () => {
     for (const cls of [8, 9, 12]) {
-      expect(studentEntryView({ cls, signedIn: null, band: null, validatedQuestions: 40 })).toEqual({ kind: "signed-out" });
-      expect(studentEntryView({ cls, signedIn: false, band: null, validatedQuestions: 40 })).toEqual({ kind: "signed-out" });
-      expect(studentEntryView({ cls, signedIn: true, band: null, validatedQuestions: 40 })).toEqual({ kind: "band-card" });
-      expect(studentEntryView({ cls, signedIn: true, band: "STUDENT_13_17", validatedQuestions: 40 })).toEqual({ kind: "ready", practiceCount: 10, band: "STUDENT_13_17" });
-      expect(studentEntryView({ cls, signedIn: true, band: "PARENT", validatedQuestions: 7 })).toEqual({ kind: "ready", practiceCount: 7, band: "PARENT" });
+      expect(studentEntryView({ cls, signedIn: null, validatedQuestions: 40 })).toEqual({ kind: "guest" });
+      expect(studentEntryView({ cls, signedIn: false, validatedQuestions: 40 })).toEqual({ kind: "guest" });
+      expect(studentEntryView({ cls, signedIn: true, validatedQuestions: 40 })).toEqual({ kind: "ready", practiceCount: 10 });
+      expect(studentEntryView({ cls, signedIn: true, validatedQuestions: 7 })).toEqual({ kind: "ready", practiceCount: 7 });
       // Fewer than 5 checked questions: the tutor entry only, no practice button.
-      expect(studentEntryView({ cls, signedIn: true, band: "TEACHER", validatedQuestions: 3 })).toEqual({ kind: "ready", practiceCount: null, band: "TEACHER" });
+      expect(studentEntryView({ cls, signedIn: true, validatedQuestions: 3 })).toEqual({ kind: "ready", practiceCount: null });
     }
+  });
+
+  it("isUnder13SchoolPath: Class 1-7 school pages and everything under them; never Class 8-12 or another section", () => {
+    for (const p of [
+      "/schooling/cbse/class-1",
+      "/schooling/cbse/class-7",
+      "/schooling/cbse/class-7/science",
+      "/schooling/cbse/class-6/mathematics/playing-with-constructions",
+      "/schooling/icse-cisce/class-5/mathematics/x?y=1",
+      "/schooling/up-board/class-3#top",
+      "/schooling/cbse/class-4/",
+    ]) {
+      expect(isUnder13SchoolPath(p), p).toBe(true);
+    }
+    for (const p of [
+      "/schooling/cbse/class-8",
+      "/schooling/cbse/class-9/science",
+      "/schooling/cbse/class-10",
+      "/schooling/cbse/class-11/physics",
+      "/schooling/cbse/class-12",
+      "/schooling",
+      "/schooling/cbse",
+      "/schooling/streams",
+      "/schooling/cbse/class-1x",
+      "/exams/SSC_CGL",
+      "/chat?examCode=NCERT_C05",
+      "/hi/schooling/cbse/class-5",
+      "",
+    ]) {
+      expect(isUnder13SchoolPath(p), p).toBe(false);
+    }
+    expect(isUnder13SchoolPath(null)).toBe(false);
+    expect(isUnder13SchoolPath(undefined)).toBe(false);
+    // The same line as the student-mode rule: a Class N page is under-13 exactly when N is not a student-mode class.
+    for (let c = 1; c <= 12; c++) expect(isUnder13SchoolPath(`/schooling/cbse/class-${c}`), `class ${c}`).toBe(!isStudentModeClass(c));
   });
 
   it("the links: Google sign-in back to the page with from=school; the tutor with the container, the chapter and a hint-first seed", () => {
@@ -422,13 +481,32 @@ describe("the student entry per class band and auth state", () => {
     expect(isSchoolSignInCallback("http://[bad")).toBe(false);
   });
 
-  it("the copy: the age line at every sign-in entry, the AI line at the tutor entry, the honest practice label", () => {
+  it("the copy: the age line at every sign-in entry and the tutor entry, the AI line at the tutor entry, the honest practice label, no band question", () => {
     expect(AGE_LINE).toBe("For students 13 and above.");
-    expect(STUDENT_ENTRY_COPY.signedOutBody).toContain(AGE_LINE);
-    expect(STUDENT_ENTRY_COPY.classBody).toContain(AGE_LINE);
-    expect(STUDENT_ENTRY_COPY.bandBody).toContain("13 and above");
-    expect(STUDENT_ENTRY_COPY.signInButton).toMatch(/^Sign in to practise and ask the tutor/);
+    // 27 Sep 2026 (founder: content first): the tutor needs no sign-in; sign-in only saves practice.
+    expect(STUDENT_ENTRY_COPY.guestHeading).toBe("Ask the AI tutor about this chapter");
+    expect(STUDENT_ENTRY_COPY.guestBody).toMatch(/^No sign-in needed/);
+    expect(STUDENT_ENTRY_COPY.guestBody).toContain("13 and above");
+    expect(STUDENT_ENTRY_COPY.saveBody).toMatch(/^Want your practice kept\? Sign in with Google/);
+    expect(STUDENT_ENTRY_COPY.saveBody).toContain("13 and above");
+    expect(STUDENT_ENTRY_COPY.saveLink).toMatch(/^Sign in to save your practice/);
+    expect(STUDENT_ENTRY_COPY.classGuest).toContain("13 and above");
+    expect(STUDENT_ENTRY_COPY.classGuest).toMatch(/no sign-in needed/);
     expect(STUDENT_ENTRY_COPY.under13).toMatch(/^Younger than 13\?/);
+    // 27 Sep 2026 (review): "practice" is promised only where it exists — the
+    // plain under-13 line and the no-practice class lines never say it.
+    expect(STUDENT_ENTRY_COPY.under13).not.toMatch(/practi[cs]e/i);
+    expect(STUDENT_ENTRY_COPY.under13Practice).toMatch(/^Younger than 13\? Read this page and try its practice/);
+    expect(STUDENT_ENTRY_COPY.classGuest).not.toMatch(/practi[cs]e/i);
+    expect(STUDENT_ENTRY_COPY.classSignedIn).not.toMatch(/practi[cs]e/i);
+    expect(STUDENT_ENTRY_COPY.classHeading(11)).toBe("Class 11 students: ask the AI tutor");
+    expect(STUDENT_ENTRY_COPY.classHeading(9, true)).toBe("Class 9 students: practise and ask the AI tutor");
+    expect(STUDENT_ENTRY_COPY.classGuestPractice).toMatch(/where it has some — no sign-in needed\. For students 13 and above\.$/);
+    // The band card and its words are gone.
+    for (const gone of ["bandHeading", "bandBody", "bandOption", "bandContinue", "bandSaving", "bandNote", "bandPick", "signedOutHeading", "signedOutBody", "signInButton", "classBody"]) {
+      expect(Object.keys(STUDENT_ENTRY_COPY), gone).not.toContain(gone);
+    }
+    expect(JSON.stringify(STUDENT_ENTRY_COPY)).not.toMatch(/who you are|I am a (student|parent|teacher)|aged 13 to 17/i);
     expect(STUDENT_ENTRY_COPY.aiLine).toBe(AI_TUTOR_LINE);
     expect(AI_TUTOR_LINE).toMatch(/^You will be talking to an AI tutor, not a person\./);
     // 26 Sep 2026 (integrator): the number the entry promises IS the cap the route enforces.
@@ -438,11 +516,6 @@ describe("the student entry per class band and auth state", () => {
     expect(STUDENT_ENTRY_COPY.practiceButton(1)).toBe("Practise this chapter — 1 question →");
     expect(STUDENT_ENTRY_COPY.practiceHonesty).toContain(PRACTICE_LABEL);
     expect(PRACTICE_LABEL).toMatch(/^Shishya's own questions, answer-checked/);
-    // 26 Sep 2026 (integrator): honest after a Google sign-in (the account's
-    // name and picture come from Google) — the promise is about the tutor.
-    expect(STUDENT_ENTRY_COPY.bandNote).toMatch(/^The tutor never asks for your school, address, phone number or photos\./);
-    expect(STUDENT_ENTRY_COPY.bandNote).not.toMatch(/never asks for a name/);
-    expect(STUDENT_ENTRY_COPY.bandOption("STUDENT_13_17", 9)).toBe("I am a student aged 13 to 17, in Class 9");
     const all = JSON.stringify(STUDENT_ENTRY_COPY) + Object.values(STUDENT_ENTRY_COPY).filter((v) => typeof v === "function").map((f) => (f as (n: number) => string)(9)).join(" ");
     expect(all).not.toMatch(/NCERT exercise|board question|leaderboard|streak|challenge|share|teacher request|coach/i);
     for (const locale of ["en", "hi", "te"]) {
@@ -466,11 +539,32 @@ describe("the student entry per class band and auth state", () => {
     expect(chapter).toMatch(/pagePath=\{chapterPath\}/);
     expect(chapter).not.toMatch(/from "@\/lib\/auth"|searchParams/);
     const cls = stripComments(read("src/app/schooling/[slug]/[classSlug]/page.tsx"));
-    expect(cls).toMatch(/\{isStudentModeClass\(cls\) && <SchoolStudentEntry variant="class"/);
+    // 27 Sep 2026 (review): only an NCERT class with a chapter map (CISCE has no chapter pages), and "practise" only with checked practice.
+    expect(cls).toMatch(/\{isStudentModeClass\(cls\) && isNcert && totals\.chapters > 0 && <SchoolStudentEntry variant="class"[^>]*hasPractice=\{totals\.practice > 0\}/);
     expect(cls).not.toMatch(/from "@\/lib\/auth"|searchParams/);
-    // Exactly one SchoolStudentEntry per page, so a Class 6 page has none.
-    expect(chapter.match(/<SchoolStudentEntry/g)?.length).toBe(1);
+    // 27 Sep 2026: the chapter page has two slots — the tutor entry before the
+    // notes and the guest's save line after the practice — both guarded, so a
+    // Class 6 page has none. The class page has one.
+    expect(chapter.match(/<SchoolStudentEntry/g)?.length).toBe(2);
+    expect(chapter.match(/\{isStudentModeClass\(cls\) && \(\s*<SchoolStudentEntry\b/g)?.length).toBe(2);
+    expect(chapter).toMatch(/\{isStudentModeClass\(cls\) && \(\s*<SchoolStudentEntry\s+slot="save"\s+variant="chapter"/);
+    // The save slot sits after the practice block; the tutor slot before the notes.
+    expect(chapter.indexOf('slot="save"')).toBeGreaterThan(chapter.indexOf("<SchoolChapterQuiz"));
+    expect(chapter.search(/<SchoolStudentEntry\s+variant="chapter"/)).toBeLessThan(chapter.indexOf("<NotesMarkdown"));
     expect(cls.match(/<SchoolStudentEntry/g)?.length).toBe(1);
+  });
+
+  it("Class 1-7 pages get the child-safe header (no Ask Shishya, no Sign in): every <Header> on the class, subject and chapter pages", () => {
+    for (const f of [
+      "src/app/schooling/[slug]/[classSlug]/page.tsx",
+      "src/app/schooling/[slug]/[classSlug]/[subject]/page.tsx",
+      "src/app/schooling/[slug]/[classSlug]/[subject]/[chapter]/page.tsx",
+    ]) {
+      const src = stripComments(read(f));
+      const headers = src.match(/<Header\b[^>]*\/>/g) ?? [];
+      expect(headers.length, f).toBeGreaterThan(0);
+      for (const h of headers) expect(h, f).toBe("<Header childSafe={!isStudentModeClass(cls)} />");
+    }
   });
 
   it("the island holds no literal route, no storage and no session import; every word comes from student-copy", () => {
@@ -479,10 +573,22 @@ describe("the student entry per class band and auth state", () => {
     expect(src).not.toMatch(/["'`]\/chat\b|["'`]\/login\b|["'`]\/onboarding\b|["'`]\/dashboard\b/);
     expect(src).not.toMatch(/localStorage|sessionStorage|document\.cookie|from "@\/lib\/auth"/);
     expect(src).not.toMatch(/\bsign[\s-]?(in|up)\b/i);
-    expect(src).toMatch(/studentEntryView\(\{ cls: p\.cls, signedIn, band, validatedQuestions: p\.validatedQuestions \?\? 0 \}\)/);
+    expect(src).toMatch(/studentEntryView\(\{ cls: p\.cls, signedIn, validatedQuestions: p\.validatedQuestions \?\? 0 \}\)/);
     expect(src).toMatch(/if \(view\.kind === "none"\) return null;/);
     expect(src).toMatch(/school: true, topicCode: p\.topicCode, count: view\.practiceCount, difficulty: "MIXED"/);
-    expect(src).toMatch(/data\.error === "school-band-required"/);
+    // 27 Sep 2026 (founder: content first): no band card, no band read, no band gate.
+    expect(src).not.toMatch(/school-band-required|onboarding-profile|SCHOOL_BANDS|\bband\b/);
+    // The guest view is the tutor link (no sign-in link); the save line shows
+    // only to a known guest on a chapter with practice.
+    expect(src).toMatch(/if \(!\(signedIn === false && schoolChapterMockCount\(p\.validatedQuestions \?\? 0\) !== null\)\) return null;/);
+    const guestStart = src.indexOf('if (view.kind === "guest") {');
+    expect(guestStart).toBeGreaterThan(src.indexOf('if (slot === "save") {'));
+    const guest = src.slice(guestStart, src.indexOf("const practise = async"));
+    expect(guest).toMatch(/href=\{tutorHref\}/);
+    expect(guest).toMatch(/rel="nofollow"/);
+    expect(guest).not.toMatch(/signInHref/);
+    expect(guest).toMatch(/\{C\.aiLine\}/);
+    expect(guest).toMatch(/\{schoolChapterMockCount\(p\.validatedQuestions \?\? 0\) !== null \? C\.under13Practice : C\.under13\}/);
     expect(src).toMatch(/import \{ STUDENT_ENTRY_COPY as C \} from "@\/lib\/school\/student-copy"/);
     // No leaderboard / share / challenge / streak piece.
     expect(src).not.toMatch(/ChallengeCard|ShareScoreButton|InviteFriends|Streak|StudyGroup|TalkToTeacher/);
@@ -538,11 +644,15 @@ describe("the student entry per class band and auth state", () => {
     expect(mocks).toMatch(/buildSchoolChapterMock\(\{\s*userId: session\.user\.id,\s*examCode: body\.examCode,\s*topicCode: body\.request\.topicCode,\s*count: body\.request\.questionCount,\s*\}\)/);
   });
 
-  // 26 Sep 2026 (integrator): the class page asks the band too (the chat's
-  // band card and the route's band-required event send a class-level chat
-  // there), and a school set's player exits never point at /exams/<container>.
-  it("the class page's island asks the band, and a school set's player exits go back to the chapter, never /exams/<container>", () => {
-    expect(read("src/components/school/SchoolStudentEntry.tsx")).toContain('if (p.variant === "class" && view.kind !== "band-card") {');
+  // 26 Sep 2026 (integrator): a school set's player exits never point at
+  // /exams/<container>. 27 Sep 2026: the class page's island asks nothing —
+  // one "open a chapter" line (the band card is gone).
+  it("the class page's island asks nothing, and a school set's player exits go back to the chapter, never /exams/<container>", () => {
+    const island = read("src/components/school/SchoolStudentEntry.tsx");
+    expect(island).toContain('if (p.variant === "class") {');
+    // 27 Sep 2026 (review): "practise" only when the class has practice.
+    expect(island).toContain("{p.hasPractice ? (signedIn ? C.classSignedInPractice : C.classGuestPractice) : signedIn ? C.classSignedIn : C.classGuest}");
+    expect(island).not.toContain("band-card");
     const player = read("src/app/mocks/[id]/page.tsx");
     expect(player).toContain('const schoolCfg = mock.generatedBy === "school-chapter" ? schoolMockConfigOf(mock.config) : null;');
     expect(player).toContain('const schoolBack = schoolCfg ? { href: schoolCfg.chapterPath ?? "/schooling", label: schoolResultsCopy(locale).backToChapter } : null;');

@@ -18,6 +18,7 @@ import {
   SAFETY_RULES,
   SCOPE_RULES,
   SIGNIN_NUDGE,
+  GENERAL_MODE_NOTE,
   syllabusBlock,
   studentStateBlock,
   journeyBlock,
@@ -77,8 +78,8 @@ When find_questions_on_topic returns a question, present it WITHOUT the answer f
  * baked into it. The block still caches: it only changes when the rows or
  * the IST day do.
  *
- * School mode (26 Sep 2026): a signed-in student of Class 8-12 chatting from
- * a school chapter page gets the SCHOOL persona instead — its own 1-hour
+ * School mode (26 Sep 2026): a Class 8-12 chat (guest or signed in) opened
+ * from a school chapter or class page gets the SCHOOL persona instead — its own 1-hour
  * static block and a per-class 5-minute block (src/lib/school/tutor-persona.ts),
  * and nothing of the exam layout below runs, so the exam prefix stays
  * byte-identical for every exam chat (tests/unit/school-tutor.test.ts pins
@@ -101,16 +102,18 @@ export function tutorSystemBlocks(args: {
   // Tools are only wired when we have an exam-scoped ctx (signed-in
   // student). Anonymous / general chats have no ctx, so drop the
   // tool-use guide rather than advertise tools the model can't call.
-  // Signed-out (tools-off) tutor can't pull real questions/mocks/mastery —
-  // so it gets the sign-in nudge to convert "give me questions" moments.
-  const nudge = toolsOn ? "" : `\n\n${SIGNIN_NUDGE}`;
-  // SCOPE_RULES go in EVERY mode — the tutor must stay an exam-prep tutor
-  // whether the chat is exam-scoped, general, or anonymous. It is not a
-  // general-purpose assistant. SITE_FEATURES too (24 Sep 2026): a guest or
+  // A tools-off EXAM chat (a guest on one exam) can't pull real
+  // questions/mocks/mastery, so it gets the sign-in nudge for "give me
+  // questions" moments.
+  // SCOPE_RULES go in EVERY mode — the tutor is a study tutor for students
+  // in India (school Class 8-12, entrance and government exams, college,
+  // scholarships, careers), never a general-purpose assistant. General mode
+  // gets GENERAL_MODE_NOTE and never the sign-in nudge: signing in unlocks no
+  // tools there (27 Sep 2026). SITE_FEATURES too (24 Sep 2026): a guest or
   // general-mode student asking "is there an app?" gets the same truth.
   const STATIC_PROMPT = generalMode
-    ? `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${SITE_FEATURES}\n\nThis chat is in GENERAL mode — exam-agnostic. The student wants help with cross-exam questions, career advice, study technique, or choosing an exam. You have no syllabus to reference and no student mastery data. Answer based on general knowledge of Indian entrance exams; ask one short clarifying question if a specific exam would change your answer. Stay within the scope rules above.${nudge}`
-    : `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${SITE_FEATURES}${toolsOn ? `\n\n${TOOL_USE_GUIDE}` : nudge}`;
+    ? `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${SITE_FEATURES}\n\n${GENERAL_MODE_NOTE}`
+    : `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${SITE_FEATURES}${toolsOn ? `\n\n${TOOL_USE_GUIDE}` : `\n\n${SIGNIN_NUDGE}`}`;
   // The static prompt is the same for every exam, but quiet hours leave 5-60
   // minutes between tutor calls (week to 14 Sep 2026: 95 of 540 signed-in and
   // 114 of 246 signed-out calls), and each of those re-wrote it. It keeps a

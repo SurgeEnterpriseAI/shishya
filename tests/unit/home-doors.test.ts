@@ -233,8 +233,8 @@ describe("home doors copy — honesty (founder, absolute)", () => {
     expect(EN["doors.government.afterGraduation"]).toBe("Exams after graduation");
   });
 
-  it("the School door claims no notes or practice — they are being written", () => {
-    expect(EN["doors.school.being"]).toBe("Notes and practice: being written.");
+  it("the School door names Shishya's notes and practice only where chapters are marked", () => {
+    expect(EN["doors.school.being"]).toBe("Shishya's own notes and practice: on the chapters marked as having them — Maths and Science first; more being written.");
     expect(EN["doors.school.body"]).not.toMatch(/notes|practice|quiz/i);
   });
 
@@ -267,12 +267,13 @@ describe("home doors copy — independence (no section reads as a step)", () => 
     expect(EN["how.s1b"]).toMatch(/not a replacement/i);
     expect(EN["how.lead"]).toMatch(/every section/i);
     // Review, 26 Sep 2026: College and Careers have no chapters, questions
-    // or plans, and school practice is being written — so no step promises
+    // or plans, and school practice is only on the chapters marked as having
+    // it — so no step promises
     // checked questions or a plan in every section; practice is scoped to
     // exam pages and the school line matches the School door.
     for (const k of ["how.lead", "how.s1b", "how.s2b", "how.s3b"]) expect(/checked|weak topic|day-by-day/i.test(EN[k]), k).toBe(false);
     expect(EN["how.s4b"]).toMatch(/^Exam pages carry/);
-    expect(EN["how.s4b"]).toMatch(/School practice: being written\.$/);
+    expect(EN["how.s4b"]).toMatch(/School practice: on the chapters marked as having it\.$/);
     expect(EN["how.s2b"]).not.toMatch(/chapter|question|practice/i);
     // No block keeps the old government-exams-only framing.
     for (const k of ["hero.h1", "how.h2", "how.lead", "signin.line"]) expect(/crack|government job|govt job/i.test(EN[k]), k).toBe(false);

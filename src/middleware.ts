@@ -23,11 +23,15 @@
 //    the difference to know whether marketing attribution is working
 //    end-to-end.
 //  - Lets the request through unchanged otherwise.
+//  - Never on a Class 1-7 school page (27 Sep 2026, founder rule 5: below
+//    13, no data taken) — no attribution cookie there; the AI-crawler log
+//    (BotVisit) still runs.
 
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 import { SESSION_HINT_COOKIE, SESSION_HINT_MAX_AGE_S, SESSION_HINT_VALUE } from "@/lib/session-hint";
 import { isCachePilotTwin } from "@/lib/cache-pilot-routes";
 import { canonicalPath } from "@/lib/url-normalize";
+import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 
 const COOKIE = "shishya_attrib";
 // NextAuth v4 JWT session cookie (no custom cookie names in src/lib/auth.ts);
@@ -288,6 +292,7 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
   // no attribution. Exact path or a path under it (so "/jobs" never matches
   // "/jobs-map"). Same rule as before: utm tags or an outside referrer only.
   const isSectionLanding = isSectionPath(path);
+  if (isUnder13SchoolPath(path)) return res; // 27 Sep 2026: Class 1-7 pages take no data — no signup attribution cookie (founder rule 5)
   const isLogin = path === "/login";
   const isOAuthEntry = path.startsWith("/api/auth/signin/");
   // Score-share landings (13 Sep 2026): a friend arriving from a WhatsApp

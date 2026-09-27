@@ -136,7 +136,7 @@ export async function gatherItems(
   return items.slice(0, cap);
 }
 
-const SYSTEM = `You classify what Indian government-exam aspirants are ASKING FOR on a free prep platform (Shishya). Input: numbered user texts (tutor chat, feedback notes, requests). Output: STRICT JSON only.
+const SYSTEM = `You classify what students in India are ASKING FOR on Shishya, a free study platform (school, entrance and government exams, colleges, scholarships and careers). Input: numbered user texts (tutor chat, feedback notes, requests). Output: STRICT JSON only.
 
 For each item decide:
 - "demand": true only if the text expresses a want/need/gap/complaint the platform could act on (a feature, more content, better info, help, a language). Pure study questions ("what is Article 356?"), greetings, answers to the tutor ("b", "Q1 answer is A"), and gibberish are demand:false. A bare language name ("Marathi", "in hindi") IS demand: the student wants that language.
@@ -309,7 +309,7 @@ export async function consolidateDemand(db: PrismaClient): Promise<{ merges: num
     messages: [
       {
         role: "user",
-        content: `Demand clusters from an Indian govt-exam prep platform (key | label | category | total | last7d):\n${listing}\n\nTasks:\n1. "merges": pairs where two keys describe the SAME need — [{"from":"key-a","into":"key-b"}] (survivor = higher total). Only merge when clearly identical; empty array is fine.\n2. "digest": 3-5 sentences for the founder — which needs are rising, which ONE feature to build next and why, grounded ONLY in these counts. Plain text, no hype.\n\nSTRICT JSON: {"merges":[...],"digest":"..."}`,
+        content: `Demand clusters from Shishya, a free Indian study platform (key | label | category | total | last7d):\n${listing}\n\nTasks:\n1. "merges": pairs where two keys describe the SAME need — [{"from":"key-a","into":"key-b"}] (survivor = higher total). Only merge when clearly identical; empty array is fine.\n2. "digest": 3-5 sentences for the founder — which needs are rising, which ONE feature to build next and why, grounded ONLY in these counts. Plain text, no hype.\n\nSTRICT JSON: {"merges":[...],"digest":"..."}`,
       },
     ],
   });

@@ -63,6 +63,9 @@ import {
 import { shareUrl } from "@/lib/share-url";
 import { discussionLabelsCopy } from "@/lib/discussion-labels-copy";
 import { homeStripCopy } from "@/lib/home-strip-copy";
+import { dashboardStartCopy } from "@/lib/dashboard-start-copy";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import {
   BUILT_WITHOUT_RECORD_LINE,
   FEATURE_REQUEST_STATUSES,
@@ -315,12 +318,13 @@ describe("English is unchanged — dashboard and results cards (i18n.8)", () => 
     expect(inviteMessage("en", { firstName: "Ravi", examShort: "CTET" })).toBe(
       `Ravi here — I'm prepping for CTET free on Shishya — ${FREE}, all free. Study with me:`,
     );
+    // 27 Sep 2026: the no-exam line speaks for the whole platform.
     expect(inviteMessage("en", { firstName: null, examShort: null })).toBe(
-      `I'm prepping on Shishya — ${FREE} for government exams. Study with me:`,
+      "I'm studying on Shishya — free for school, entrance and government exams, colleges and careers, with an AI tutor in your own language. Study with me:",
     );
     // A moment with no exam falls back to the plain lines, as before.
     expect(inviteMessage("en", { firstName: null, examShort: null, moment: "first-mock" })).toBe(
-      `I'm prepping on Shishya — ${FREE} for government exams. Study with me:`,
+      "I'm studying on Shishya — free for school, entrance and government exams, colleges and careers, with an AI tutor in your own language. Study with me:",
     );
   });
 
@@ -686,5 +690,69 @@ describe("product names stay in Latin script", () => {
         }
       }
     }
+  });
+});
+
+// ── 27 Sep 2026 (founder: content first) — the dashboard with no exam ────
+// A signed-in student with no exam sees "What do you want to study today?",
+// Ask Shishya and the site's doors — never the old "One step left — pick
+// your exam" demand, and no tour overlay. Picking an exam is one optional link.
+describe("dashboard no-exam block (src/lib/dashboard-start-copy.ts)", () => {
+  const DOORS = ["/schooling", "/exams/entrance", "/exams/browse", "/colleges", "/scholarships", "/careers"];
+
+  it("English, byte for byte", () => {
+    const C = dashboardStartCopy("en");
+    expect(C.heading).toBe("What do you want to study today?");
+    expect(C.body).toBe(
+      "Ask Shishya any study question, or open a section. Mocks, weak-topic tracking and a daily plan start when you pick an exam — that is optional.",
+    );
+    expect(C.ask).toBe("Ask Shishya →");
+    expect(C.pickExam).toBe("Pick an exam (optional) →");
+    expect(C.doors).toEqual([
+      { href: "/schooling", label: "School" },
+      { href: "/exams/entrance", label: "Entrance exams" },
+      { href: "/exams/browse", label: "Government exams" },
+      { href: "/colleges", label: "Colleges" },
+      { href: "/scholarships", label: "Scholarships" },
+      { href: "/careers", label: "Careers" },
+    ]);
+  });
+
+  it("hi and te carry every string in their own script, the same doors, and fall back to English", () => {
+    for (const [lc, script] of [["hi", /[ऀ-ॿ]/], ["te", /[ఀ-౿]/]] as const) {
+      const C = dashboardStartCopy(lc);
+      for (const s of [C.heading, C.body, C.ask, C.pickExam, ...C.doors.map((d) => d.label)]) expect(s, `${lc}: ${s}`).toMatch(script);
+      expect(C.doors.map((d) => d.href)).toEqual(DOORS);
+    }
+    for (const lc of ["ta", "", null, undefined]) expect(dashboardStartCopy(lc)).toBe(dashboardStartCopy("en"));
+  });
+
+  it("claims nothing it cannot back (no rank, no counts)", () => {
+    for (const lc of ["en", "hi", "te"]) {
+      const C = dashboardStartCopy(lc);
+      const all = [C.heading, C.body, C.ask, C.pickExam, ...C.doors.map((d) => d.label)].join(" ");
+      expect(all).not.toMatch(/#1|\bbest\b|\btrusted\b|\d/i);
+    }
+  });
+
+  it("the dashboard renders it with no demand, no tour, and the Ask Shishya button for everyone", () => {
+    const page = readFileSync(path.join(process.cwd(), "src/app/dashboard/page.tsx"), "utf8");
+    expect(page).toContain("const start = dashboardStartCopy(locale);");
+    expect(page).toContain("{start.doors.map((d) => (");
+    expect(page).toContain('<Link href="/exams/browse" className="mt-3 inline-block text-xs font-semibold text-saffron-700 hover:underline">{start.pickExam}</Link>');
+    expect(page).not.toContain("One step left");
+    expect(page).not.toContain("<OnboardingTour");
+    expect(page).not.toMatch(/enrollments\.length > 0 && \(\s*<Link\s+href="\/chat"/);
+    // School home by context: class-container enrolment or a legacy school code, never the age band.
+    expect(page).not.toContain("schoolBandOfProfile");
+    expect(page).toContain("exam: SCHOOL_CONTAINER_WHERE");
+    expect(page).toContain("const schoolClassCodes = [...new Set([...studentModeCodesOf(onbPrepCodes), ...schoolEnrolCodes])];");
+  });
+
+  it("the Ways-to-use card names the non-exam path too", () => {
+    const card = readFileSync(path.join(process.cwd(), "src/app/dashboard/TwoPathsCard.tsx"), "utf8").replace(/\s+/g, " ");
+    expect(card).toContain("Ways to use Shishya");
+    expect(card).toContain("Studying for something else — school, a stream, a college, a scholarship or a career? Ask Shishya, or open that section from the orange bar at the top.");
+    expect(card).not.toContain("Two ways to use Shishya");
   });
 });

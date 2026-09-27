@@ -12,9 +12,20 @@
 // UTM params on the current URL get attached automatically. Once
 // captured, they're persisted in sessionStorage so that subsequent
 // in-app navigation still credits the original source.
+//
+// Class 1-7 school pages (27 Sep 2026, founder rule 5: below 13, content
+// only and NO DATA TAKEN): on /schooling/{board}/class-1 … class-7 every
+// event goes out "anonymous" — no cookie (credentials omit), no referrer
+// (neither document.referrer in the body nor the Referer header), no utm,
+// and nothing captured into sessionStorage. The ingest route
+// (src/app/api/analytics/route.ts) stores a bare count for those paths and
+// issues no cookie, so a stale client cannot undo this either.
+// sendChildSafeEvent is the same send for other islands on those pages
+// (the school chapter quiz's finish).
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 
 type EventKind =
   | "PAGE_VIEW"
@@ -85,24 +96,35 @@ async function send(
   path: string,
   props: Record<string, unknown> | undefined,
   utm: UtmBlob,
+  opts: { anonymous?: boolean } = {},
 ): Promise<void> {
   try {
+    // Class 1-7 pages (see the header): a bare event — no cookie, no
+    // referrer, no utm.
+    const anonymous = opts.anonymous === true;
     // The API can't see the TRUE referrer from its own request headers —
     // the fetch's Referer is always our own page (same-host, dropped). Send
     // document.referrer explicitly so channel attribution (google /
     // chatgpt / whatsapp / …) actually works. Meaningful on the landing
     // page-view; harmless (same-host, dropped server-side) after that.
-    const referrer = typeof document !== "undefined" ? document.referrer || undefined : undefined;
+    const referrer = !anonymous && typeof document !== "undefined" ? document.referrer || undefined : undefined;
     await fetch("/api/analytics", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       // keepalive lets the request finish even if the user is navigating away
       keepalive: true,
-      body: JSON.stringify({ kind, path, props, referrer, ...utm }),
+      ...(anonymous ? { credentials: "omit" as const, referrerPolicy: "no-referrer" as const } : {}),
+      body: JSON.stringify(anonymous ? { kind, path, props } : { kind, path, props, referrer, ...utm }),
     });
   } catch {
     /* analytics failures must never disturb the user */
   }
+}
+
+/** One event with no cookie, no referrer and no utm — for islands on the
+ *  Class 1-7 school pages (founder rule 5, 27 Sep 2026). Fire-and-forget. */
+export function sendChildSafeEvent(kind: EventKind, path: string, props?: Record<string, unknown>): void {
+  void send(kind, path, props, {}, { anonymous: true });
 }
 
 export function AnalyticsTracker() {
@@ -115,6 +137,11 @@ export function AnalyticsTracker() {
     if (typeof window === "undefined") return;
     const utm = readUtmFromStorage();
     window.shishyaTrack = (kind, props) => {
+      // Class 1-7 pages: the anonymous send (founder rule 5).
+      if (isUnder13SchoolPath(window.location.pathname)) {
+        sendChildSafeEvent(kind, window.location.pathname, props);
+        return;
+      }
       void send(kind, window.location.pathname, props, { ...utm, ...readUtmFromStorage() });
     };
   }, []);
@@ -127,7 +154,10 @@ export function AnalyticsTracker() {
     // via the dashboard's own instrumentation.
     if (pathname.startsWith("/api/")) return;
 
-    const utm = { ...readUtmFromStorage(), ...captureUtmFromUrl(searchParams ?? new URLSearchParams()) };
+    // Class 1-7 pages (founder rule 5): no utm captured into sessionStorage,
+    // and the view goes out with no cookie, referrer or utm.
+    const child = isUnder13SchoolPath(pathname);
+    const utm = child ? {} : { ...readUtmFromStorage(), ...captureUtmFromUrl(searchParams ?? new URLSearchParams()) };
     // Dedupe: don't fire the same pathname twice in a row (React Strict
     // Mode + back-forward cache cause double fires).
     const fullKey = pathname + (searchParams?.toString() ?? "");
@@ -141,7 +171,7 @@ export function AnalyticsTracker() {
             ...(searchParams?.get("error") ? { error: (searchParams.get("error") ?? "").slice(0, 40) } : {}),
           }
         : undefined;
-    void send("PAGE_VIEW", pathname, props, utm);
+    void send("PAGE_VIEW", pathname, props, utm, { anonymous: child });
   }, [pathname, searchParams]);
 
   return null;

@@ -95,11 +95,13 @@ export default async function AboutPage() {
 
       <h2 className="mt-8 text-lg font-semibold text-ink-900">Why it exists</h2>
       <p className="mt-2">
-        Crores of Indians prepare for government and entrance exams every year, and most are told
-        the serious way to prepare costs ₹30,000–₹1,50,000 at a coaching institute. Shishya exists
-        to delete that fee: everything a coaching institute sells — mock tests for entrance and
-        government exams, previous-year papers, study notes, a personal AI tutor in {INDIAN_LANGUAGE_COUNT} Indian languages, a day-by-day
-        coach plan, cutoffs and exam-day analysis — free, in the student&apos;s own language.
+        Every year crores of students in India study for board exams, entrance exams, college
+        admissions and government jobs, and many are told the serious way to prepare is a paid
+        coaching institute. Shishya exists to remove that cost: school chapter pages with the
+        official books linked (and Shishya&apos;s own notes and checked practice where they are
+        ready), mock tests and previous-year-pattern papers for entrance and government exams, a
+        personal AI tutor in {INDIAN_LANGUAGE_COUNT} Indian languages, a day-by-day coach plan,
+        cutoffs, and college, scholarship and career pages — free, in the student&apos;s own language.
       </p>
       <p className="mt-3">
         The platform is AI-first and runs with a tiny team, which is why it can stay free for

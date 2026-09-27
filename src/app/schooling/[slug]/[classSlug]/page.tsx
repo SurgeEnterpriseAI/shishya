@@ -251,7 +251,7 @@ export default async function ClassPage({ params }: { params: Promise<PageParams
     <main className="min-h-screen bg-saffron-50/30">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {collectionJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />}
-      <Header />
+      <Header childSafe={!isStudentModeClass(cls)} />
       <section className="container-prose py-10">
         <SchoolCrumbs
           crumbs={[
@@ -375,10 +375,13 @@ function LiveClass({ board, cls, live }: { board: Board; cls: number; live: Scho
         </div>
       )}
 
-      {/* 26 Sep 2026 (student mode): Class 8-12 only — the sign-in line with
-          the age line (students 13 and above); a signed-in account is told to
-          open a chapter. A Class 1-7 page renders nothing here. */}
-      {isStudentModeClass(cls) && <SchoolStudentEntry variant="class" cls={cls} examCode={live.examCode} pagePath={schoolClassPath(board.slug, cls)} />}
+      {/* 26 Sep 2026 (student mode): Class 8-12 only — "open a chapter to read
+          it or ask the AI tutor", with the age line. A Class 1-7 page renders
+          nothing here. 27 Sep 2026 (review): only where there are chapter
+          pages to open — an NCERT class with a chapter map, the same rule as
+          `tutor` in generateMetadata (CISCE has none) — and "practise" only
+          when a chapter of the class has checked practice. */}
+      {isStudentModeClass(cls) && isNcert && totals.chapters > 0 && <SchoolStudentEntry variant="class" cls={cls} examCode={live.examCode} pagePath={schoolClassPath(board.slug, cls)} hasPractice={totals.practice > 0} />}
 
       <h2 className="mt-8 text-base font-semibold text-ink-900">{CLASS_COPY.subjectsHeading}</h2>
       <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

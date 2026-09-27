@@ -18,6 +18,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { apiPost } from "@/lib/api";
 import { fetchSignedIn } from "@/lib/session-hint";
+import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 
 const AREAS = [
   "Mock tests",
@@ -92,7 +93,9 @@ export function FeedbackWidget({ signedIn: signedInProp }: { signedIn?: boolean 
     pathname === "/login" ||
     pathname === "/logout" ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/mocks/");
+    pathname.startsWith("/mocks/") ||
+    // 27 Sep 2026: no form on Class 1-7 school pages (founder rule 5).
+    isUnder13SchoolPath(pathname);
 
   const [snoozedUntil, setSnoozedUntil] = useState<number>(0);
   useEffect(() => {

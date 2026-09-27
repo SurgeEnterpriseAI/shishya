@@ -111,7 +111,7 @@ export default async function AdminHome() {
             href="/admin/pulse"
             className="btn-secondary !py-2 !px-4 text-sm"
           >
-            Pulse — aspirant minds
+            Pulse — student minds
           </Link>
           <Link
             href="/admin/demand"

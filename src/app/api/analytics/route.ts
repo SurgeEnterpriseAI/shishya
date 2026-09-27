@@ -11,6 +11,11 @@
 //   - Always returns 204 No Content quickly (fire-and-forget)
 //   - Swallows internal errors (analytics failures must not break user flows)
 //   - Validates kind against the EventKind enum; rejects unknown kinds
+//   - Class 1-7 school pages (27 Sep 2026, founder rule 5: below 13, no
+//     data taken): an event whose path is /schooling/{board}/class-1 …
+//     class-7 is stored as a bare count — kind, path, props and client
+//     only; no userId, anonId, utm, referrer host or fingerprint — and no
+//     cookie is issued (isUnder13SchoolPath, src/lib/school/student-classes.ts)
 
 import { createHmac } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
@@ -18,6 +23,7 @@ import { auth } from "@/lib/auth";
 import { recordEvent, type EventKind } from "@/lib/analytics";
 import { isWebVitalsBeacon } from "@/lib/analytics-beacons";
 import { classifyClient } from "@/lib/client-class";
+import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 
 export const runtime = "nodejs";
 
@@ -154,6 +160,8 @@ export async function POST(req: NextRequest) {
 
   // Bound path to keep table neat
   const path = body.path ? body.path.slice(0, 256) : null;
+  // Class 1-7 school pages (27 Sep 2026, founder rule 5): a bare count only — no userId, anonId, utm, referrer host or fingerprint, and no cookie issued
+  const child = isUnder13SchoolPath(path ?? "");
 
   // Identity decision (needs refHost, so it lives after referrer parse).
   //   • bot → never an identity.
@@ -184,24 +192,24 @@ export async function POST(req: NextRequest) {
 
   await recordEvent({
     kind,
-    userId: userId,
-    anonId: userId ? null : anonId, // dedupe — if userId is set, don't store the anon side
+    userId: child ? null : userId,
+    anonId: child ? null : userId ? null : anonId, // dedupe — if userId is set, don't store the anon side
     path,
     props: body.props,
-    utmSource: body.utmSource?.slice(0, 64) ?? null,
-    utmMedium: body.utmMedium?.slice(0, 64) ?? null,
-    utmCampaign: body.utmCampaign?.slice(0, 128) ?? null,
-    refHost,
+    utmSource: child ? null : (body.utmSource?.slice(0, 64) ?? null),
+    utmMedium: child ? null : (body.utmMedium?.slice(0, 64) ?? null),
+    utmCampaign: child ? null : (body.utmCampaign?.slice(0, 128) ?? null),
+    refHost: child ? null : refHost,
     client,
     // Unidentified rows only (see fingerprint block comment) — the
     // stealth-sweep class always lands here; identified humans and
-    // page-speed rows never do.
-    uaHash: !userId && !anonId && !measurement ? fingerprint(req.headers.get("user-agent"), "ua") : null,
-    ipHash: !userId && !anonId && !measurement ? fingerprint(clientIp(req), "ip") : null,
+    // page-speed rows never do. Class 1-7 rows never get one either.
+    uaHash: !child && !userId && !anonId && !measurement ? fingerprint(req.headers.get("user-agent"), "ua") : null,
+    ipHash: !child && !userId && !anonId && !measurement ? fingerprint(clientIp(req), "ip") : null,
   });
 
   const res = new NextResponse(null, { status: 204 });
-  if (shouldSetCookie) {
+  if (shouldSetCookie && !child) {
     res.cookies.set(ANON_COOKIE, issuedAnon, {
       httpOnly: true,
       sameSite: "lax",

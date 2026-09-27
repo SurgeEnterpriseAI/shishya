@@ -10,7 +10,7 @@ import { InstitutionLoginForm } from "./LoginForm";
 export const metadata: Metadata = {
   title: "Institution login | Shishya",
   description:
-    "Log in to your institution's Shishya dashboard. Manage cohorts, share mocks, and reach more aspirants.",
+    "Log in to your institution's Shishya dashboard. Manage cohorts, share mocks, and reach more students.",
   alternates: { canonical: "https://shishya.in/login/institution" },
   robots: { index: false }, // login surfaces should not appear in search results
 };

@@ -31,8 +31,9 @@
 // a known code (the route's "still-answering") show this chat's own en/hi/te
 // line instead of the route's English.
 //
-// School chat (26 Sep 2026): with the `school` prop (a signed-in Class 8-12
-// student on their class container, src/app/chat/page.tsx) the island shows
+// School chat (26 Sep 2026): with the `school` prop (a Class 8-12 chat,
+// guest or signed in (27 Sep 2026), on its class container,
+// src/app/chat/page.tsx) the island shows
 // the "You are talking to an AI tutor" line above the messages, keeps the
 // page's hint-first starters, hides every exam CTA — the topic diagnostic,
 // "Still stuck? talk to a teacher", the guest save card, suggested actions —
@@ -41,14 +42,21 @@
 // and the way back to the chapter. No leaderboard, challenge, share or
 // study-group surface is ever reachable from here. Fixer review, same day:
 // the cap code closes the composer WITHOUT the `school` prop too (the line
-// in the UI language, no back link) — a page rendered before the account's
-// band was declared still talks to the school path on the server.
+// in the UI language, no back link). A guest's school chat shows no counter
+// (the server caps it per browser) and never imports a saved guest chat.
+//
+// Whole-platform chat (27 Sep 2026): a general chat's save card offers to
+// keep the conversation in an account (it no longer promises "mock
+// mistakes"), the empty state names the exam by its short name, and the
+// "talk to a teacher" row (a phone form) shows only in an exam chat — never
+// in a general, guest-general or school chat, where minors may be.
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { SCHOOL_CAP_CODE, SCHOOL_TUTOR_CAP_COPY, SCHOOL_TUTOR_DAILY_CAP } from "@/lib/school/tutor-cap";
+import { UNDER13_CLOSED } from "@/lib/under13";
 import { markSeedFired, seedFingerprint, stripSeedParam, wasSeedFiredRecently } from "@/lib/chat-seed-once";
 import {
   canRetryAt,
@@ -91,10 +99,10 @@ interface TopicFocus {
   examShortName: string;
 }
 
-/** A school chat (26 Sep 2026): a signed-in Class 8-12 student on their
- *  class container. The chat then shows the "AI tutor" line, hides every
- *  exam CTA (diagnostic, teacher, save-conversation, suggested actions) and
- *  keeps the daily cap (src/lib/school/tutor-cap.ts). */
+/** A school chat (26 Sep 2026): a Class 8-12 chat on its class container,
+ *  guest or signed in (27 Sep 2026). The chat then shows the "AI tutor"
+ *  line, hides every exam CTA (diagnostic, teacher, save-conversation,
+ *  suggested actions) and keeps the daily cap (src/lib/school/tutor-cap.ts). */
 interface SchoolChat {
   /** "You are talking to an AI tutor…" — always visible above the messages. */
   aiLine: string;
@@ -104,8 +112,8 @@ interface SchoolChat {
   capReached: boolean;
   /** The end-of-day line, in the site UI language. */
   capLine: string;
-  /** Messages the account may still send today. */
-  messagesLeft: number;
+  /** Messages the account may still send today; null = a guest (no counter). */
+  messagesLeft: number | null;
   /** "{n} of {cap} tutor messages left today". */
   leftTemplate: string;
   /** The chapter (or class) page, for the capped state. */
@@ -136,18 +144,22 @@ const SAVE_COPY = {
     saved: "Your guest conversation is saved to your account.",
     // The nudge is split around the sign-in link (16 Sep 2026, i18n.10).
     nudge: "Save this conversation and let the tutor see your mock mistakes — ",
+    // A general chat (27 Sep 2026): no mocks in view there.
+    nudgeGeneral: "Keep this conversation in a free Shishya account — ",
     nudgeLink: "sign in, free",
     nudgeEnd: ".",
   },
   hi: {
     saved: "आपकी गेस्ट बातचीत आपके अकाउंट में सेव हो गई है।",
     nudge: "इस बातचीत को सेव करें और ट्यूटर को अपनी मॉक की गलतियाँ देखने दें — ",
+    nudgeGeneral: "इस बातचीत को मुफ़्त Shishya अकाउंट में रखें — ",
     nudgeLink: "साइन इन करें, मुफ़्त",
     nudgeEnd: "।",
   },
   te: {
     saved: "మీ గెస్ట్ సంభాషణ మీ అకౌంట్‌లో సేవ్ అయింది.",
     nudge: "ఈ సంభాషణను సేవ్ చేసి, మీ మాక్ తప్పులను ట్యూటర్ చూడనివ్వండి — ",
+    nudgeGeneral: "ఈ సంభాషణను ఉచిత Shishya అకౌంట్‌లో ఉంచుకోండి — ",
     nudgeLink: "సైన్ ఇన్ చేయండి, ఉచితం",
     nudgeEnd: ".",
   },
@@ -164,6 +176,7 @@ const TURN_COPY = {
     retry: "Retry",
     seedHeld: "You asked this here a little while ago, so it was not sent again. Send it when you want to.",
     unavailable: "The guest tutor isn't available in this browser. Sign in (free) to use the tutor.",
+    stuck: "Still stuck after chatting with Shishya?",
   },
   hi: {
     notAnswered: "जवाब नहीं आया",
@@ -171,6 +184,7 @@ const TURN_COPY = {
     retry: "फिर से भेजें",
     seedHeld: "आपने यह यहाँ कुछ देर पहले पूछा था, इसलिए इसे दोबारा नहीं भेजा गया। जब चाहें, भेज दें।",
     unavailable: "इस ब्राउज़र में गेस्ट ट्यूटर उपलब्ध नहीं है। ट्यूटर के लिए साइन इन करें (मुफ़्त)।",
+    stuck: "Shishya से बात करके भी अटके हैं?",
   },
   te: {
     notAnswered: "సమాధానం రాలేదు",
@@ -178,6 +192,7 @@ const TURN_COPY = {
     retry: "మళ్లీ పంపండి",
     seedHeld: "మీరు ఇది ఇక్కడ కొద్దిసేపటి క్రితం అడిగారు, కాబట్టి మళ్లీ పంపలేదు. కావాలనుకున్నప్పుడు పంపండి.",
     unavailable: "ఈ బ్రౌజర్‌లో గెస్ట్ ట్యూటర్ అందుబాటులో లేదు. ట్యూటర్ కోసం సైన్ ఇన్ చేయండి (ఉచితం).",
+    stuck: "Shishya తో మాట్లాడినా ఇంకా అర్థం కాలేదా?",
   },
 } as const;
 
@@ -218,6 +233,7 @@ function beacon(props: Record<string, unknown>) {
 
 export function ChatInterface({
   examCode,
+  examShortName,
   topicFocus,
   initialSeed,
   seedScope,
@@ -230,6 +246,8 @@ export function ChatInterface({
    *  and the tutor uses a generic system prompt with no syllabus /
    *  student-state / journey injection. */
   examCode: string | null;
+  /** The exam's short name for the empty state ("SSC CGL", not "SSC_CGL") — 27 Sep 2026. */
+  examShortName?: string | null;
   topicFocus?: TopicFocus | null;
   initialSeed?: string | null;
   /** Signed-in: the student's latest attempt as this page rendered it — part
@@ -259,6 +277,11 @@ export function ChatInterface({
   // turn's done event carries the cap code — the composer closes and the
   // line stays; a reload asks the server again.
   const [capped, setCapped] = useState<boolean>(school?.capReached ?? false);
+  // Under 13 (27 Sep 2026, founder: below 13, content only and no data): the
+  // server answered "I am 11" / "I am in class 6" with its fixed 13-and-above
+  // line (code "scope-under13", src/lib/chat-scope.ts). The chat closes — no
+  // composer, no starters, no sign-in card — and points to the class pages.
+  const [under13, setUnder13] = useState(false);
   const [messagesLeft, setMessagesLeft] = useState<number | null>(school ? school.messagesLeft : null);
   // This island's own lines in the site UI language (16 Sep 2026). Read after
   // mount — the server cannot see the shishya-lang cookie, and the guest save
@@ -336,7 +359,7 @@ export function ChatInterface({
   // server-side but not swapped into the screen.
   const sentRef = useRef(false);
   useEffect(() => {
-    if (guestSignInHref || importTriedRef.current) return;
+    if (guestSignInHref || school || importTriedRef.current) return;
     importTriedRef.current = true;
     let saved: { v?: number; examCode?: string | null; savedAt?: number; turns?: { role: string; content: string }[] } | null = null;
     try {
@@ -459,7 +482,7 @@ export function ChatInterface({
   }
 
   async function send(text: string, opts: { retry?: boolean; turnId?: string } = {}) {
-    if (!text.trim() || busy || capped) return;
+    if (!text.trim() || busy || capped || under13) return;
     sentRef.current = true;
     setImportedNote(null);
     setSeedHeld(false);
@@ -564,8 +587,10 @@ export function ChatInterface({
               setToolStatus(null);
               // School chat: the cap line came instead of a reply, or one
               // more of today's messages was used (a replayed reply used none).
+              if (parsed?.code === "scope-under13") setUnder13(true);
               if (parsed?.code === SCHOOL_CAP_CODE) setCapped(true);
-              else if (school && !parsed?.replayed) setMessagesLeft((n) => (n == null ? n : Math.max(0, n - 1)));
+              // A pre-filtered reply (src/lib/chat-scope.ts, "scope-…" code) is not stored, so it used none either.
+              else if (school && !parsed?.replayed && !String(parsed?.code ?? "").startsWith("scope-")) setMessagesLeft((n) => (n == null ? n : Math.max(0, n - 1)));
             } catch {}
           } else if (event === "error") {
             seen.error = true;
@@ -696,12 +721,12 @@ export function ChatInterface({
                 <>
                   {" "}
                   <strong>
-                    {labels.emptyExamPrefix} {topicFocus ? topicFocus.name : school ? school.classLabel : examCode}
+                    {labels.emptyExamPrefix} {topicFocus ? topicFocus.name : school ? school.classLabel : (examShortName ?? examCode)}
                   </strong>.
                 </>
               )}
             </p>
-            {!capped && (
+            {!capped && !under13 && (
             <ul className="mt-5 grid grid-cols-1 gap-2">
               {starters.map((s) => (
                 <li key={s}>
@@ -786,10 +811,10 @@ export function ChatInterface({
             them straight back to this chat (general chats to /chat?general=1,
             the page that can pick the saved conversation up), where the
             conversation is saved (16 Sep 2026 — it used to be lost). */}
-        {guestSignInHref && !busy && messages.filter((m) => m.role === "assistant" && m.content).length >= 2 && (
+        {guestSignInHref && !under13 && !busy && messages.filter((m) => m.role === "assistant" && m.content).length >= 2 && (
           <div className="rounded-md border border-saffron-200 bg-saffron-50/60 px-3 py-2">
             <p className="text-xs text-ink-700">
-              {SAVE_COPY[navLang].nudge}
+              {examCode == null ? SAVE_COPY[navLang].nudgeGeneral : SAVE_COPY[navLang].nudge}
               <a
                 href={examCode == null ? `/login?callbackUrl=${encodeURIComponent("/chat?general=1")}` : guestSignInHref}
                 onClick={() => {
@@ -808,11 +833,13 @@ export function ChatInterface({
         {/* Human escalation — "still stuck?" appears once the student has
             had a real exchange with the AI (2+ completed replies) and the
             tutor isn't mid-answer. The AI absorbs volume; a real teacher is
-            the escape hatch when it isn't landing (human-connection pilot). */}
-        {!school && !busy && messages.filter((m) => m.role === "assistant" && m.content).length >= 2 && (
+            the escape hatch when it isn't landing (human-connection pilot).
+            27 Sep 2026: exam chats only — its form asks for a phone number,
+            and a general or school chat may be a minor's. */}
+        {!school && examCode != null && !busy && messages.filter((m) => m.role === "assistant" && m.content).length >= 2 && (
           <div className="flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50/60 px-3 py-2">
             <p className="text-xs text-ink-600">
-              Still stuck after chatting with Shishya?
+              {TURN_COPY[navLang].stuck}
             </p>
             <TalkToTeacher surface="chat" examCode={examCode} variant="link" />
           </div>
@@ -854,7 +881,14 @@ export function ChatInterface({
 
       {/* School chat, cap reached: the end-of-day line and the way back to
           the chapter, in place of the composer (26 Sep 2026). */}
-      {capped ? (
+      {under13 ? (
+        <div className="border-t border-ink-200 bg-saffron-50/60 px-4 py-3 text-sm text-ink-800">
+          <p>{UNDER13_CLOSED[navLang].line}</p>
+          <a href="/schooling" className="mt-2 inline-block text-sm font-medium text-saffron-700 hover:underline">
+            {UNDER13_CLOSED[navLang].link}
+          </a>
+        </div>
+      ) : capped ? (
         <div className="border-t border-ink-200 bg-saffron-50/60 px-4 py-3 text-sm text-ink-800">
           <p>{school ? school.capLine : SCHOOL_TUTOR_CAP_COPY[navLang]}</p>
           {school && (

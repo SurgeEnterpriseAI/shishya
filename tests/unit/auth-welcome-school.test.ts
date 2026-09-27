@@ -14,6 +14,12 @@
 //   • an exam return, no cookie, or an unreadable jar → the welcome exactly
 //     as before, with the SIGNUP props byte-identical to before;
 //   • no email on the account → no mail either way (unchanged).
+// 27 Sep 2026 (founder: no age question — safeguards by context): a first
+// sign-in that returns to a Class 8-12 school page or the school chat also
+// enrols the account on that class container with the school flag (the
+// marker the mail audiences and the dashboard's school home read); a
+// Class 1-7 return, an exam return or no cookie enrols nothing, and a
+// failing enrolment is swallowed.
 // No DB, no network. Run: npx vitest run tests/unit/auth-welcome-school.test.ts
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -23,6 +29,9 @@ const state = vi.hoisted(() => ({
   cookiesThrow: false,
   welcome: [] as unknown[],
   events: [] as Record<string, unknown>[],
+  containerLookups: [] as string[],
+  enrolments: [] as { userId: string; exam: { id: string; code: string; category: string }; patch: unknown; opts: unknown }[],
+  enrolThrows: false,
 }));
 
 vi.mock("next/headers", () => ({
@@ -53,6 +62,24 @@ vi.mock("@/lib/email", () => ({
     return true;
   },
 }));
+vi.mock("@/lib/school/student-db", () => ({
+  // A Class 8-12 container row (the real helper returns null for Class 1-7
+  // and real exam codes; the caller filters those before asking).
+  findStudentModeContainer: async (code: string) => {
+    state.containerLookups.push(code);
+    const cls = Number(/_C(\d{2})$/.exec(code)?.[1] ?? NaN);
+    return cls >= 8 && cls <= 12
+      ? { id: `exam-${code}`, code, category: "SCHOOL_BOARD", shortName: `Class ${cls}`, name: `Class ${cls}`, durationMin: 30, totalQuestions: 10, cls }
+      : null;
+  },
+}));
+vi.mock("@/lib/db/enrollment", () => ({
+  ensureEnrollment: async (userId: string, exam: { id: string; code: string; category: string }, patch: unknown, opts: unknown) => {
+    if (state.enrolThrows) throw new Error("db down");
+    state.enrolments.push({ userId, exam, patch, opts });
+    return {};
+  },
+}));
 
 import { authOptions } from "@/lib/auth";
 
@@ -77,6 +104,9 @@ beforeEach(() => {
   state.cookiesThrow = false;
   state.welcome = [];
   state.events = [];
+  state.containerLookups = [];
+  state.enrolments = [];
+  state.enrolThrows = false;
 });
 
 describe("createUser: no exam-prep welcome mail on a school sign-in", () => {
@@ -134,6 +164,67 @@ describe("createUser: no exam-prep welcome mail on a school sign-in", () => {
     state.events = [];
     state.cookies[SECURE] = "https://shishya.in/schooling/cbse/class-9";
     await signUp({ id: "u-3", email: null, name: null, emailVerified: null });
+    expect(state.welcome).toEqual([]);
+  });
+});
+
+describe("createUser: a school sign-in enrols the account on its class container (27 Sep 2026, context marking)", () => {
+  it("a Class 9 chapter return → enrolled on NCERT_C09 with { school: true }", async () => {
+    state.cookies[SECURE] = "https://shishya.in/schooling/cbse/class-9/mathematics/polynomials?from=school";
+    await signUp();
+    expect(state.enrolments).toHaveLength(1);
+    expect(state.enrolments[0].userId).toBe("u-1");
+    expect(state.enrolments[0].exam.code).toBe("NCERT_C09");
+    expect(state.enrolments[0].patch).toEqual({});
+    expect(state.enrolments[0].opts).toEqual({ school: true });
+    // Still no exam-prep welcome on a school sign-in.
+    expect(state.welcome).toEqual([]);
+  });
+
+  it("a class-page return (plain cookie, dev) → enrolled on that class", async () => {
+    state.cookies[PLAIN] = "http://localhost:3000/schooling/cbse/class-12";
+    await signUp();
+    expect(state.enrolments.map((e) => e.exam.code)).toEqual(["NCERT_C12"]);
+  });
+
+  it("a school-tutor return (/chat?examCode=NCERT_C09) → enrolled on NCERT_C09", async () => {
+    state.cookies[SECURE] = "https://shishya.in/chat?examCode=NCERT_C09&topicCode=iemh1.ch02&seed=Help+me&from=school";
+    await signUp();
+    expect(state.enrolments).toHaveLength(1);
+    expect(state.enrolments[0].exam.code).toBe("NCERT_C09");
+    expect(state.enrolments[0].opts).toEqual({ school: true });
+  });
+
+  it("a Class 5 return enrols nothing (Class 1-7 never holds an enrolment) and asks for no container", async () => {
+    state.cookies[SECURE] = "https://shishya.in/schooling/cbse/class-5/mathematics";
+    await signUp();
+    expect(state.enrolments).toEqual([]);
+    expect(state.containerLookups).toEqual([]);
+    state.events = [];
+    state.cookies[SECURE] = "https://shishya.in/chat?examCode=NCERT_C05";
+    await signUp();
+    expect(state.enrolments).toEqual([]);
+  });
+
+  it("an exam return, an exam-tutor return, the /schooling index or no cookie enrols nothing", async () => {
+    for (const url of ["https://shishya.in/exams/SSC_CGL", "http://localhost:3000/chat?examCode=SSC_CGL", "https://shishya.in/schooling"]) {
+      state.events = [];
+      state.cookies = { [SECURE]: url };
+      await signUp();
+    }
+    state.events = [];
+    state.cookies = {};
+    await signUp();
+    expect(state.enrolments).toEqual([]);
+    expect(state.containerLookups).toEqual([]);
+  });
+
+  it("a failing enrolment never throws and leaves the SIGNUP row and the welcome skip intact", async () => {
+    state.enrolThrows = true;
+    state.cookies[SECURE] = "https://shishya.in/schooling/cbse/class-9";
+    await expect(signUp()).resolves.toBeUndefined();
+    expect(state.enrolments).toEqual([]);
+    expect(signupRow().props).toEqual({ provider: "google", school: true });
     expect(state.welcome).toEqual([]);
   });
 });

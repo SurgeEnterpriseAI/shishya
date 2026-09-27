@@ -42,7 +42,7 @@ export function ResultCardImage({ c }: { c: ResultCardCopy }) {
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", fontSize: "52px", fontWeight: 800, color: "#0f172a" }}>Shishya</div>
-          <div style={{ display: "flex", fontSize: "30px", color: "#475569", marginTop: "4px" }}>Free Indian exam prep</div>
+          <div style={{ display: "flex", fontSize: "30px", color: "#475569", marginTop: "4px" }}>One smart place to study</div>
         </div>
       </div>
 

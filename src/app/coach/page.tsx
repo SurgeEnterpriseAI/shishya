@@ -102,13 +102,13 @@ async function loadRollover(userId: string, fromCode: string): Promise<RolloverD
 }
 
 export const metadata: Metadata = {
-  title: "Free Personal Coach for Government Exams — day-by-day plan | Shishya",
+  title: "Free Personal Coach for entrance and government exams — day-by-day plan | Shishya",
   description:
     "Can't afford ₹50,000 coaching? Shishya's free personal coach builds your day-by-day plan to the exam — and rebuilds it every morning around what you actually did. Syllabus, mocks, weak-area focus, honest triage when time runs short. 100% free.",
   alternates: { canonical: "https://shishya.in/coach" },
   openGraph: {
     title: 'Free Personal Coach for government exams — a plan rebuilt every morning | Shishya'.replace(" | Shishya", ""),
-    description: 'A day-by-day study plan to your exam date, rebuilt each morning around what you actually did. Honest triage when days run short. The free replacement for Rs 30,000-50,000 coaching guidance.',
+    description: 'A day-by-day study plan to your exam date, rebuilt each morning around what you actually did. Honest triage when days run short. Free, in your language.',
     url: "https://shishya.in/coach",
     siteName: "Shishya",
     locale: "en_IN",
@@ -117,7 +117,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: 'Free Personal Coach for government exams — a plan rebuilt every morning | Shishya'.replace(" | Shishya", ""),
-    description: 'A day-by-day study plan to your exam date, rebuilt each morning around what you actually did. Honest triage when days run short. The free replacement for Rs 30,000-50,000 coaching guidance.',
+    description: 'A day-by-day study plan to your exam date, rebuilt each morning around what you actually did. Honest triage when days run short. Free, in your language.',
   },
 };
 

@@ -23,11 +23,14 @@
 // 26 Sep 2026 (student mode): on a Class 8-12 chapter only
 // (isStudentModeClass, src/lib/school/student-classes.ts) the page also
 // carries the student entry island (src/components/school/SchoolStudentEntry.tsx):
-// sign-in for students 13 and above, "Practise this chapter" (an account
-// set of up to 10 of the chapter's checked questions) and "Ask the AI tutor
-// about this chapter". The page itself reads no session — it stays public
-// and ISR-cached; the island asks after mount. A Class 1-7 page renders
-// none of it.
+// "Ask the AI tutor about this chapter" for everyone with no sign-in (27 Sep
+// 2026, founder: content first — no question before content), "Practise
+// this chapter" (an account set of up to 10 of the chapter's checked
+// questions) once signed in, and — after the practice, for a guest on a
+// chapter with practice — the save-practice sign-in line for students 13
+// and above. The page itself reads no session — it stays public and
+// ISR-cached; the island asks after mount. A Class 1-7 page renders none of
+// it, and its header shows no sign-in and no Ask Shishya link (childSafe).
 // Old URLs (the 25 Sep hand-picked subject segments and chapter slugs that
 // differ from the seeded title) 308 to today's address
 // (src/lib/school/legacy-urls.ts, resolved against the LIVE chapter list —
@@ -252,7 +255,7 @@ export default async function ChapterPage({ params }: { params: Promise<PagePara
     <main className="min-h-screen bg-saffron-50/30">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {notesJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(notesJsonLd) }} />}
-      <Header />
+      <Header childSafe={!isStudentModeClass(cls)} />
       <section className="container-prose py-10">
         <SchoolCrumbs
           crumbs={[
@@ -287,8 +290,8 @@ export default async function ChapterPage({ params }: { params: Promise<PagePara
           </div>
         </div>
 
-        {/* 26 Sep 2026 (student mode): Class 8-12 only — sign-in for
-            students 13 and above, account practice and the AI tutor entry.
+        {/* 26 Sep 2026 (student mode): Class 8-12 only — the AI tutor entry
+            (no sign-in since 27 Sep 2026) and, signed in, account practice.
             A Class 1-7 chapter renders nothing here. */}
         {isStudentModeClass(cls) && (
           <SchoolStudentEntry
@@ -322,6 +325,23 @@ export default async function ChapterPage({ params }: { params: Promise<PagePara
         ) : !notes ? (
           <p className="mt-10 rounded-lg border border-dashed border-ink-300 bg-white p-5 text-sm text-ink-700">{CHAPTER_COPY.notReady}</p>
         ) : null}
+
+        {/* 27 Sep 2026 (content first): after the practice, a guest on a
+            Class 8-12 chapter with practice may keep it in an account — the
+            island shows the line only then (never in the cached HTML). */}
+        {isStudentModeClass(cls) && (
+          <SchoolStudentEntry
+            slot="save"
+            variant="chapter"
+            cls={cls}
+            examCode={examCode}
+            pagePath={chapterPath}
+            topicCode={chapter.code}
+            chapterName={chapter.name}
+            subjectName={subject.name}
+            validatedQuestions={chapter.validatedQuestions}
+          />
+        )}
 
         {/* Pieces printed inside this chapter's PDF: poems after a prose
             lesson, the lessons of a Poorvi unit, numbered parts. Titles as
@@ -393,7 +413,7 @@ function LegacyChapterPage({ board, cls, s, ch }: { board: Board; cls: number; s
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <Header />
+      <Header childSafe={!isStudentModeClass(cls)} />
       <section className="container-prose py-10">
         <SchoolCrumbs
           crumbs={[

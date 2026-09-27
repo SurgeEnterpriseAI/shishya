@@ -33,6 +33,28 @@ const OURS = [
   "I have 2 hours a day. How should I split it across mock tests, revision, and weak topics?",
   "What's the difference between SSC CGL and a state-level PSC exam?",
   "रोज़ 2 घंटे हैं। मॉक टेस्ट, रिवीज़न और कमज़ोर विषयों में कैसे बाँटूँ?",
+  // 27 Sep 2026: the whole-platform general starters (en / hi / te)
+  "Explain Newton's three laws of motion with everyday examples.",
+  "Which entrance exams can I take after Class 12 with PCM or PCB, and how are they different?",
+  "How do scholarships for college work, and how do I find ones I qualify for?",
+  "Which government jobs can I aim for after graduation, and how are their exams different?",
+  "न्यूटन के गति के तीनों नियम रोज़मर्रा के उदाहरणों से समझाइए।",
+  "12वीं के बाद PCM या PCB से कौन-सी प्रवेश परीक्षाएँ दी जा सकती हैं, और उनमें क्या फ़र्क़ है?",
+  "कॉलेज के लिए छात्रवृत्ति कैसे मिलती है, और अपने लिए सही छात्रवृत्ति कैसे ढूँढूँ?",
+  "ग्रेजुएशन के बाद किन सरकारी नौकरियों की तैयारी कर सकते हैं, और उनकी परीक्षाओं में क्या फ़र्क़ है?",
+  "న్యూటన్ మూడు గమన నియమాలను రోజువారీ ఉదాహరణలతో వివరించండి.",
+  "ఇంటర్ (MPC లేదా BiPC) తర్వాత ఏ ప్రవేశ పరీక్షలు రాయవచ్చు, వాటి మధ్య తేడా ఏమిటి?",
+  "కాలేజీ చదువుకు స్కాలర్‌షిప్‌లు ఎలా వస్తాయి, నాకు అర్హత ఉన్నవాటిని ఎలా కనుక్కోవాలి?",
+  "డిగ్రీ తర్వాత ఏ ప్రభుత్వ ఉద్యోగాలకు ప్రయత్నించవచ్చు, వాటి పరీక్షల మధ్య తేడా ఏమిటి?",
+  // the school chat: starters, a filled class starter (en / hi / te) and the three seeds
+  "I'm stuck on a question from this chapter — give me a hint, not the answer.",
+  "ఈ అధ్యాయం ముఖ్య ఆలోచనను సులభమైన మాటల్లో వివరించండి.",
+  "Help me plan this week's study for Class 9 · CBSE.",
+  "कक्षा 9 · CBSE के लिए इस हफ़्ते की पढ़ाई की योजना बनाने में मदद कीजिए।",
+  "9వ తరగతి · CBSE కోసం ఈ వారం చదువు ప్రణాళిక వేయడంలో సహాయం చేయండి.",
+  'Help me understand "Matter in Our Surroundings" (Class 9 Science) step by step. Start with what the chapter is about in simple words, then ask me one question to check what I already know.',
+  'I practised "Matter in Our Surroundings" (Class 9) and got 2 questions wrong — mostly on States of matter. Go through my mistakes one at a time: give me a hint first, then show the working step by step.',
+  'On question 3 of my "Number Systems" (Class 9) practice I picked B but the answer was C. The question was: "Which of these is irrational?". Give me a hint first, then show the working step by step.',
 ];
 
 // Typed by students (from production, 1–14 Sep 2026) — these are demand signals.

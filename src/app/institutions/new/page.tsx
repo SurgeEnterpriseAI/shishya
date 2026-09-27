@@ -13,7 +13,7 @@ import { InstitutionSignupForm } from "./SignupForm";
 export const metadata: Metadata = {
   title: "List your coaching institute — free | Shishya",
   description:
-    "Create your institution's free listing on Shishya. Manage cohorts, share Shishya mocks with your students, and reach aspirants across India.",
+    "Create your institution's free listing on Shishya. Manage cohorts, share Shishya mocks with your students, and reach students across India.",
   alternates: { canonical: "https://shishya.in/institutions/new" },
 };
 
@@ -30,7 +30,7 @@ export default function NewInstitutionPage() {
             List your coaching centre on Shishya
           </h1>
           <p className="mt-3 text-sm text-ink-600">
-            Free forever. Reach aspirants across India, manage your in-house
+            Free forever. Reach students across India, manage your in-house
             cohorts, and share Shishya&apos;s adaptive mocks with every student
             you teach.{" "}
             <span className="font-medium text-ink-800">

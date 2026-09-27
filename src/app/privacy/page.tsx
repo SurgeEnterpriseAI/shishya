@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — Shishya",
-  description: "How Shishya (shishya.in) collects, uses and protects aspirant data.",
+  description: "How Shishya (shishya.in) collects, uses and protects students' data.",
   // Self canonical (16 Sep 2026): one of 7 sitemap landings the crawl found without one.
   alternates: { canonical: "https://shishya.in/privacy" },
 };
@@ -14,13 +14,14 @@ export default function PrivacyPage() {
   return (
     <main className="container-prose max-w-3xl py-10 text-sm leading-relaxed text-ink-700">
       <h1 className="text-2xl font-bold text-ink-900">Privacy Policy</h1>
-      <p className="mt-1 text-xs text-ink-500">Last updated: 14 September 2026</p>
+      <p className="mt-1 text-xs text-ink-500">Last updated: 27 September 2026</p>
 
       <h2 className="mt-6 text-base font-bold text-ink-900">What we collect</h2>
       <ul className="mt-2 list-disc space-y-1 pl-5">
-        <li><b>Account:</b> name and email from Google sign-in. We never see or store passwords.</li>
-        <li><b>Preparation activity:</b> test attempts and scores, topics studied, tutor questions, coach-plan settings — the data that powers your reports, packs and plans. What students ask the tutor (signed in or not, with emails and phone numbers removed) is also read in aggregate to decide which content and features to build next.</li>
+        <li><b>Account:</b> name, email and profile picture from Google sign-in. We never see or store passwords. Accounts are for people aged 13 and above.</li>
+        <li><b>Study activity:</b> test attempts and scores, topics studied, tutor questions, coach-plan settings — the data that powers your reports, packs and plans. What students ask the tutor (signed in or not, with emails and phone numbers removed) is also read in aggregate to decide which content and features to build next.</li>
         <li><b>Usage analytics:</b> pages viewed, with a first-party cookie identifier. Automated crawlers are tagged and excluded from human metrics.</li>
+        <li><b>School pages:</b> Class 1-7 school pages have no sign-in, no tutor and no forms, and a visit to them stores no cookie identifier, account, IP address or browser fingerprint — only a count of the page viewed and, for the 5-question practice, the chapter and the score. On Class 8-12 chapter pages anyone can ask the AI tutor without an account (study questions only, with a daily message limit); what a guest asks it is kept like other tutor questions, but without the analytics identifier, and the tutor never asks for a phone number, school, address or photo. No page asks your age or role before showing content; the optional personalise step asks your stage (for example Class 9-10, college or working) only if you open it. An account that answered the older one-time school question keeps that answer: a student who said 13-17 keeps the class tutor only, and the class tutor is told the answer.</li>
         <li><b>Page speed (about half of page loads):</b> how quickly the page loaded and responded, the connection type (such as 4G), whether the device has a touch screen, the page language, whether you were signed in, and the page&apos;s address pattern (never a record id). It is sent without cookies and stored without your account, a device identifier or your IP address.</li>
         <li><b>Phone alerts (only if you turn them on):</b> the push-notification address your browser creates for this device, and the exam you chose to follow. Used only to send that exam&apos;s alerts; switch them off in your browser&apos;s site settings for shishya.in.</li>
         <li><b>Challenges (only if you make or play one):</b> the questions, your answers and score, and a first name only if you type one. Anyone who opens a challenge link sees the challenger&apos;s score and typed name; a friend&apos;s score (and typed name) goes only to the challenger, and only if the friend chooses to send it. Challenge links stop working after 30 days. If a challenger asks to be told when a friend plays, we keep that device&apos;s push-notification address for that challenge.</li>
@@ -33,6 +34,7 @@ export default function PrivacyPage() {
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li>To run your personal features: weakness maps, daily coach plans, status reports, study packs, week-over-week comparisons.</li>
         <li>To send preparation emails (daily practice, reminders, exam-eve wishes). Every email can be ignored without losing access; write to us to stop them entirely.</li>
+        <li>School-only accounts get no exam-preparation emails.</li>
         <li>To send the exam alerts you asked for — by email, or as a notification on your phone — only when something real changes for that exam.</li>
         <li>To improve the platform with aggregate, de-identified statistics.</li>
       </ul>

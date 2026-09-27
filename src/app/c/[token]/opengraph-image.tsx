@@ -25,7 +25,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
   const name = ch?.creatorName && LATIN_NAME.test(ch.creatorName) ? ch.creatorName : null;
 
   const kicker = ch ? "Challenge" : "Shishya";
-  const headline = ch ? `${name ?? "Your friend"} scored` : "Free Indian exam prep";
+  const headline = ch ? `${name ?? "Your friend"} scored` : "One smart place to study";
   const score = ch ? `${ch.creatorCorrect}/${ch.questionCount}` : null;
   const subline = ch
     ? ch.source === "mock"
@@ -78,7 +78,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", fontSize: "28px", fontWeight: 700, color: "#0f172a" }}>Shishya</div>
-            <div style={{ display: "flex", fontSize: "16px", color: "#475569", marginTop: "2px" }}>Free Indian exam prep</div>
+            <div style={{ display: "flex", fontSize: "16px", color: "#475569", marginTop: "2px" }}>One smart place to study</div>
           </div>
         </div>
 

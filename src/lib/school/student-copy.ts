@@ -3,10 +3,13 @@
 // tests/unit/schooling-honesty.test.ts and tests/unit/school-student-mode.test.ts
 // can read the whole voice of student mode.
 //
-// Rules (founder decision 26 Sep 2026; Anthropic usage policy for minors):
-//   • the age line "for students 13 and above" at EVERY sign-in entry, and a
-//     plain line for anyone younger (notes and no-account practice with a
-//     parent — no account needed);
+// Rules (founder decisions 26 + 27 Sep 2026; Anthropic usage policy for minors):
+//   • the age line "for students 13 and above" at EVERY sign-in entry and on
+//     the tutor entry, and a plain line for anyone younger (the notes and
+//     the practice on the page with a parent);
+//   • no age or role question is asked, anywhere (27 Sep 2026, founder:
+//     content first — the one-time age-band card is gone); the tutor needs
+//     no sign-in, and sign-in is offered only AFTER the practice, to save it;
 //   • the tutor is always called an AI tutor, and the entry says so in one
 //     visible line before the student opens it;
 //   • practice = "Shishya's own questions, answer-checked" — never an NCERT
@@ -18,7 +21,6 @@
 
 import { fillTemplate } from "@/lib/i18n";
 import { pickCopy, type CopyLocale } from "@/lib/ui-locale-copy";
-import type { SchoolBand } from "./student-classes";
 
 /** The one age line every school sign-in entry carries. */
 export const AGE_LINE = "For students 13 and above.";
@@ -30,37 +32,25 @@ export const AI_TUTOR_LINE = "You will be talking to an AI tutor, not a person. 
 export const PRACTICE_LABEL = "Shishya's own questions, answer-checked before they are shown — not taken from the NCERT book or any board paper.";
 
 export const STUDENT_ENTRY_COPY = {
-  // Signed out (chapter page)
-  signedOutHeading: "Practise this chapter and ask the AI tutor",
-  signedOutBody: `Sign in with Google to practise this chapter with Shishya's own answer-checked questions and to ask the AI tutor about it, step by step. ${AGE_LINE}`,
-  signInButton: "Sign in to practise and ask the tutor →",
-  under13: "Younger than 13? Use the notes and the practice on this page with a parent — no account is needed for those.",
-  // Signed out (class page)
-  classHeading: (cls: number) => `Class ${cls} students: practise and ask the AI tutor`,
-  classBody: `Sign in with Google, then open any chapter of this class to practise it with Shishya's own answer-checked questions and to ask the AI tutor about it. ${AGE_LINE}`,
-  classSignedIn: "You are signed in. Open any chapter below to practise it or to ask the AI tutor about it.",
-  // Age band card
-  bandHeading: "One thing before you start",
-  bandBody: `Shishya's tutor and practice are for students 13 and above. Tell Shishya who you are — it is saved to your account once. ${AGE_LINE}`,
-  bandOption: (band: SchoolBand, cls: number): string => {
-    switch (band) {
-      case "STUDENT_13_17":
-        return `I am a student aged 13 to 17, in Class ${cls}`;
-      case "STUDENT_18":
-        return "I am a student aged 18 or older";
-      case "PARENT":
-        return "I am a parent";
-      case "TEACHER":
-        return "I am a teacher";
-    }
-  },
-  bandContinue: "Continue →",
-  bandSaving: "Saving…",
-  // 26 Sep 2026 (integrator): the account's name and picture come from the
-  // Google sign-in above this card, so the promise is about the tutor.
-  bandNote: "The tutor never asks for your school, address, phone number or photos. Younger than 13? Use the notes and the practice on this page with a parent — no account is needed for those.",
-  bandPick: "Pick one to continue.",
-  // Ready
+  // Anyone on a Class 8-12 chapter page (27 Sep 2026, founder: content first) — the tutor needs no sign-in and asks nothing first.
+  guestHeading: "Ask the AI tutor about this chapter",
+  guestBody: `No sign-in needed — it helps with your studies only. ${AGE_LINE}`,
+  // 27 Sep 2026 (review): the practice clause only on a chapter that has the
+  // guest practice (5+ checked questions); every other chapter gets the plain line.
+  under13: "Younger than 13? Read this page with a parent.",
+  under13Practice: "Younger than 13? Read this page and try its practice with a parent.",
+  // Guest, after the practice on the page (the "save" slot): sign-in only to keep practice in an account.
+  saveBody: `Want your practice kept? Sign in with Google to practise this chapter with your score saved to your account. ${AGE_LINE}`,
+  saveLink: "Sign in to save your practice →",
+  // Class page (CBSE / NCERT classes with a chapter map only — CISCE has no
+  // chapter pages to open). "Practise" only when at least one chapter of the
+  // class has checked practice; NCERT Class 11-12 have none yet.
+  classHeading: (cls: number, hasPractice = false) => `Class ${cls} students: ${hasPractice ? "practise and " : ""}ask the AI tutor`,
+  classGuest: `Open any chapter below to read it or ask the AI tutor about it — no sign-in needed. ${AGE_LINE}`,
+  classGuestPractice: `Open any chapter below to read it, ask the AI tutor about it, or try its practice where it has some — no sign-in needed. ${AGE_LINE}`,
+  classSignedIn: "You are signed in. Open any chapter below to ask the AI tutor about it.",
+  classSignedInPractice: "You are signed in. Open any chapter below to practise it (where it has practice) or to ask the AI tutor about it.",
+  // Signed in (chapter page)
   readyHeading: "Practise and ask the AI tutor",
   practiceButton: (n: number) => `Practise this chapter — ${n} ${n === 1 ? "question" : "questions"} →`,
   practiceBuilding: "Building your set…",
@@ -185,7 +175,8 @@ export function schoolQuestionSeed(i: { chapterName: string; cls: number; index:
 // ── Dashboard (school-only account) ─────────────────────────────────
 // 26 Sep 2026 (fixer): /dashboard is bilingual (en / hi / te), so its school
 // block speaks the three languages like the results page does. A
-// school-only account (band declared, no real-exam enrolment) sees its
+// school-only account (a class-container enrolment and no real-exam
+// enrolment; 27 Sep 2026: marked by the school context, no band needed) sees its
 // classes and its recent practice — never a streak, group, Daily-5, coach
 // or invite piece.
 

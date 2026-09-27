@@ -272,9 +272,34 @@ describe("Header — the top row", () => {
     expect(topBlock()).toContain(HOME_DOORS_COPY.en.hero.h1);
   });
 
-  it("Sign in stays the filled primary button (HeaderAuthControls, read-only check)", () => {
-    const controls = read("src/components/HeaderAuthControls.tsx");
-    expect(controls).toMatch(/<Link rel="nofollow" href="\/login" className="btn-primary/);
+  // 27 Sep 2026 (founder, content first): the link returns to the page it was
+  // clicked on (callbackUrl, set after mount), and there is no Sign in on a
+  // Class 1-7 school page.
+  it("Sign in stays the filled primary button (HeaderAuthControls, read-only check), returns to this page, and is absent on Class 1-7 pages", () => {
+    const controls = code(read("src/components/HeaderAuthControls.tsx"));
+    expect(controls).toMatch(/<Link rel="nofollow" href=\{loginHref\} className="btn-primary/);
+    expect(controls).toMatch(/const \[loginHref, setLoginHref\] = useState\("\/login"\);/);
+    // 27 Sep 2026 (review): + from=header, so /login never reads a header click as a gated action.
+    expect(controls).toContain("setLoginHref(`/login?callbackUrl=${encodeURIComponent(p + location.search)}&from=header`)");
+    expect(controls).toMatch(/if \(p !== "\/login" && p !== "\/logout" && !p\.startsWith\("\/api\/"\)\)/);
+    expect(controls).toMatch(/\) : isUnder13SchoolPath\(pathname\) \? null : \(\s*<Link rel="nofollow" href=\{loginHref\}/);
+    expect(controls).toMatch(/import \{ isUnder13SchoolPath \} from "@\/lib\/school\/student-classes";/);
+  });
+
+  it("childSafe (Class 1-7 school pages) drops the Ask Shishya chip and nothing else", () => {
+    expect(HEADER).toMatch(/export function Header\(\{ admin = false, childSafe = false \}: \{ admin\?: boolean; childSafe\?: boolean \}\)/);
+    const block = primaryBlock();
+    // The chip — and only the chip — sits inside {!childSafe && (…)}.
+    expect(block).toMatch(/\{!childSafe && \(\s*<Link\s+href="\/chat"[\s\S]*?data-nav="ask"[\s\S]*?<\/Link>\s*\)\}/);
+    expect(block.match(/childSafe/g)).toHaveLength(1);
+    // The school pages pass it for Class 1-7 only.
+    for (const f of [
+      "src/app/schooling/[slug]/[classSlug]/page.tsx",
+      "src/app/schooling/[slug]/[classSlug]/[subject]/page.tsx",
+      "src/app/schooling/[slug]/[classSlug]/[subject]/[chapter]/page.tsx",
+    ]) {
+      expect(read(f), f).toContain("<Header childSafe={!isStudentModeClass(cls)} />");
+    }
   });
 });
 

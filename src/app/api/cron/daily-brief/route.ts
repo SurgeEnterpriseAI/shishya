@@ -278,7 +278,7 @@ Output ONLY the note, no quotes, no formatting markers.`;
           const response = await client.messages.create({
             model: MODEL,
             max_tokens: 300,
-            system: "You are Shishya, an AI tutor for Indian competitive exam students. You write tight, personal daily notes that respect the student's time.",
+            system: "You are Shishya, a free AI study companion for students in India. For this student's exam you write tight, personal daily notes that respect their time.",
             messages: [{ role: "user", content: userPrompt }],
           });
           stats.in += response.usage.input_tokens;

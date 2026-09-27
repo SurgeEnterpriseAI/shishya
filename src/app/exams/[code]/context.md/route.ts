@@ -433,10 +433,11 @@ export async function GET(
   if (practice.hasPractice) L.push(`- Free day-by-day study plan (personal coach): ${SITE}/coach`);
   // 26 Sep 2026: /chat is robots-disallowed (conversations are private), so
   // the citeable, no-sign-in answer page is /ask. /chat itself serves guests
-  // too (src/app/chat/page.tsx, a guest chat is not saved); signing in keeps
-  // the conversation.
+  // too (src/app/chat/page.tsx); a guest chat is not kept in an account
+  // (27 Sep 2026: never "not saved" — guest turns are logged, /privacy says
+  // so); signing in keeps the conversation.
   L.push(`- Ask Shishya (free answers, no sign-in): ${SITE}/ask`);
-  L.push(`- Chat tutor (free; sign in to keep the conversation — a guest chat is not saved; English and ${INDIAN_LANGUAGE_COUNT} Indian languages): ${SITE}/chat`);
+  L.push(`- Chat tutor (free; a guest chat is not kept in an account, and signing in keeps the conversation; English and ${INDIAN_LANGUAGE_COUNT} Indian languages): ${SITE}/chat`);
   L.push("");
   L.push(
     `Everything is free — no paywall, no subscription, no credit card. Platform index for LLMs: ${SITE}/llms.txt and ${SITE}/llms-full.txt`,

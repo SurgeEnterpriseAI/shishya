@@ -13,6 +13,10 @@
 // src/lib/chat-turn-dedupe.ts (24 Sep 2026). A turn whose row another run
 // is still answering waits for that reply (up to 45 s; then an error event
 // asks the student to Retry in a moment).
+// Every turn first passes the study-only pre-filter (27 Sep 2026,
+// src/lib/chat-scope.ts): distress and obvious unsafe or injection asks get
+// a fixed reply (delta + done with a "scope-…" code) and never reach the
+// model.
 
 // Tool-use loops + long Anthropic streams need more than the default 10s. We
 // keep this on Node runtime (not edge) because Prisma engines need it.
@@ -48,11 +52,12 @@ import {
 } from "@/lib/chat-turn-dedupe";
 import { locales } from "@/lib/i18n";
 import { detectLanguageRequest, langToReplyLanguage, resolvePreferredLocale, TUTOR_LANG_COOKIE, tutorMessageFor } from "@/lib/preferred-lang";
-import { schoolBandRequiredErrorFrame, schoolOnlyChatPath, schoolOnlyTutorErrorFrame, schoolStudentExamKey } from "@/lib/school/tutor-scope";
+import { schoolOnlyChatPath, schoolOnlyTutorErrorFrame, schoolStudentExamKey } from "@/lib/school/tutor-scope";
 import { countSchoolTutorMessagesToday, getSchoolChapterFocus, getSchoolTutorContext } from "@/lib/school/tutor-context";
 import { schoolCapFrames, schoolTutorCapReached, schoolUiLang } from "@/lib/school/tutor-cap";
-import { isMinorBand, schoolBandOfProfile, schoolReturnPath, type SchoolBand } from "@/lib/school/student-classes";
+import { isMinorBand, schoolBandOfProfile, type SchoolBand } from "@/lib/school/student-classes";
 import type { SchoolChapterFocus } from "@/lib/school/tutor-persona";
+import { chatScopeReply, chatScopeFrames, CHAT_SCOPE_CODE } from "@/lib/chat-scope";
 
 const Body = z
   .object({
@@ -145,8 +150,10 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
   // Ungated: the AI tutor is open to signed-out visitors too. `userId` is
   // null for anonymous callers; every account-dependent step below
   // (enrollment, persisted session/messages, personalized context, tools)
-  // is branched on it. Anonymous chat is stateless + tools-off + scoped to
-  // the exam syllabus only.
+  // is branched on it. Anonymous chat is stateless + tools-off and scoped to
+  // the exam's syllabus, the class (Class 8-12 school chat, 27 Sep 2026) or
+  // general study; the study-only pre-filter and the scope rules hold for
+  // every caller.
   const userId = session?.user?.id ?? null;
   // Pseudonymous anon id (shishya_anon cookie UUID) — used only to GROUP an
   // anonymous tutor conversation for product analysis. Not PII.
@@ -182,20 +189,36 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
   }
 
   // ── General mode (no exam scope) ──────────────────────────────────
-  // Reached via the "General Interaction" tile or ?general=1. No exam,
-  // no syllabus, no student-state, no journey injection — just a
-  // direct Q&A with Shishya's persona + safety rules.
+  // /chat and ?general=1 with no exam named (27 Sep 2026: the default chat,
+  // for any study question — school, entrance and government exams,
+  // college, scholarships, careers). No exam, no syllabus, no student-state,
+  // no journey injection — Shishya's persona, scope and safety rules plus
+  // the general-mode note (src/lib/ai/prompts.ts GENERAL_MODE_NOTE).
   const isGeneral = body.general === true;
   const examCodeForChat = isGeneral ? null : body.examCode!;
 
   // ── School tutor (26 Sep 2026) ────────────────────────────────────
-  // A signed-in student of Class 8-12 may chat on their school container
-  // (NCERT_C08..C12 / CISCE_C08..C12 — src/lib/school/tutor-scope.ts). The
-  // container is read by category through src/lib/school/tutor-context.ts,
-  // never through realExamKey(); for a guest, a Class 1-7 container or any
-  // other code the key is null and the real-exam lookup below runs, under
-  // which a school row is an unknown exam: 404, exactly as before.
-  const schoolKey = schoolStudentExamKey({ code: examCodeForChat, userId });
+  // A Class 8-12 chat runs on its school container (NCERT_C08..C12 /
+  // CISCE_C08..C12 — src/lib/school/tutor-scope.ts), guest or signed in
+  // since 27 Sep 2026. The container is read by category through
+  // src/lib/school/tutor-context.ts, never through realExamKey(); for a
+  // Class 1-7 container or any other code the key is null and the real-exam
+  // lookup below runs, under which a school row is an unknown exam: 404,
+  // exactly as before.
+  // School container (27 Sep 2026: guests too — founder, content first). Pure; the class loads below.
+  const schoolKey = schoolStudentExamKey({ code: examCodeForChat });
+  const jar = await cookies();
+  // Study-only pre-filter (27 Sep 2026) — the /ask checks, before any DB work or model call: distress gets the helplines (Tele-MANAS 14416, Childline 1098, 112), obvious unsafe or injection asks get the one-line study-only answer. Nothing is stored for a member; a guest turn is logged like any guest turn.
+  const scopeReply = chatScopeReply(body.message, schoolUiLang(jar.get("shishya-lang")?.value));
+  if (scopeReply) {
+    // A child who says they are under 13 leaves nothing behind (27 Sep 2026, founder: below 13, no data).
+    if (!userId && scopeReply.code !== CHAT_SCOPE_CODE.under13) {
+      try {
+        await prisma.anonTutorLog.create({ data: { anonId: schoolKey ? null : anonId, examCode: examCodeForChat ?? null, userMessage: body.message.slice(0, 2000), reply: scopeReply.text.slice(0, 1500), replyChars: scopeReply.text.length } });
+      } catch (err) { console.error("[chat] anon tutor log failed:", err); }
+    }
+    return new Response(chatScopeFrames(scopeReply), { headers: SSE_HEADERS });
+  }
   const schoolCtx = schoolKey ? await getSchoolTutorContext(schoolKey.code) : null;
 
   const exam: { id: string; code: string; category: string } | null = isGeneral
@@ -211,28 +234,19 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
   }
 
   // The signed-in account's profile, read once (26 Sep 2026 fixer review):
-  // the school age band (src/lib/school/student-classes.ts — onbStage plus
-  // the container code in onbPrepCodes, written once by the school profile
-  // flow) gates the exam tutor just below and rides on a school turn;
-  // preferredLang feeds the general / school prompt state further down.
+  // a school age band stored before 27 Sep 2026 (src/lib/school/student-classes.ts
+  // — onbStage plus the container code in onbPrepCodes) still keeps a
+  // declared 13-17 account on the school tutor just below and rides on a
+  // school turn; preferredLang feeds the general / school prompt state
+  // further down.
+  // 27 Sep 2026 (founder, content first): no band is asked or required. A
+  // school turn with no stored band — a guest, or an account that never
+  // declared one — is served with the school persona's safeguards (the
+  // persona treats the person as a student aged 13 to 17).
   const profile = userId
     ? await prisma.user.findUnique({ where: { id: userId }, select: { preferredLang: true, onbStage: true, onbPrepCodes: true } })
     : null;
   const schoolProfile = schoolBandOfProfile(profile);
-  const jar = await cookies();
-
-  // The one-time age band is a safety requirement (founder, 26 Sep 2026 —
-  // integrator; src/lib/school/tutor-scope.ts says why): a school turn from
-  // an account that has not declared it is refused with the localised line
-  // and the page that asks — before the cap read, before any write, with no
-  // model call — so the persona is never told a declaration that was not
-  // made. /chat shows its band card first; this is the rule for a direct call.
-  if (schoolCtx && userId && !schoolProfile?.band) {
-    return new Response(
-      schoolBandRequiredErrorFrame(schoolReturnPath(schoolCtx.scope.classPath), schoolUiLang(jar.get("shishya-lang")?.value)),
-      { headers: SSE_HEADERS },
-    );
-  }
 
   // The school tutor's daily cap (src/lib/school/tutor-cap.ts): 20 USER
   // messages per account per IST day, counted from the stored rows of the
@@ -247,9 +261,15 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
       });
     }
   }
+  // A guest's school turns (27 Sep 2026): the same daily cap, per browser (the analytics cookie) or else per IP, before any model call.
+  if (schoolCtx && !userId) {
+    const g = await checkRateLimit("schoolGuest", anonId ? `anon:${anonId}` : `anonip:${clientIp(req)}`);
+    if (!g.ok) return new Response(schoolCapFrames(null, schoolUiLang(jar.get("shishya-lang")?.value)), { headers: SSE_HEADERS });
+  }
 
   // A declared 13-17 student gets the school tutor ONLY (26 Sep 2026 fixer
-  // review — src/lib/school/tutor-scope.ts says why): a general or real-exam
+  // review — src/lib/school/tutor-scope.ts says why; since 27 Sep 2026 only
+  // for accounts that stored the band before then): a general or real-exam
   // turn from such an account is refused here with the localised line and
   // the way to its class chat — before enrolment (a real-exam turn used to
   // enrol the child on that exam), before any write, and with no model call.
@@ -262,16 +282,18 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
     );
   }
   // Where an error event sends the student back to: a school chat to its
-  // class page (or the chapter, once known), an exam chat to its hub.
-  const backPath = schoolCtx ? schoolCtx.scope.classPath : examCodeForChat ? `/exams/${examCodeForChat}` : "/exams";
+  // class page (or the chapter, once known), an exam chat to its hub, a
+  // general chat to the home page (27 Sep 2026: every section starts there).
+  const backPath = schoolCtx ? schoolCtx.scope.classPath : examCodeForChat ? `/exams/${examCodeForChat}` : "/";
 
   // Signed-in only: track enrollment for the exam they're chatting about.
   // 26 Sep 2026: `exam` came through realExamKey() (a school container is
   // 404 above, exactly like an unknown code) and the upsert goes through the
   // one enrolment door, so a child's class never enters the mail loops here.
-  // A school chat (schoolCtx) enrols nobody: the student's class enrolment
-  // belongs to the school profile flow (src/lib/school/student-db.ts), not
-  // to the chat.
+  // A school chat (schoolCtx) enrols nobody, guest or signed in: an
+  // account's class enrolment belongs to the school flows
+  // (src/lib/school/student-db.ts and the sign-in context marking), not to
+  // the chat.
   // 27 Sep 2026 (fixer): an enrolment on an exam with NO practice
   // (src/lib/exam-practice-state.ts) is still made here and by /chat's page
   // (its picker, switcher and scope are built from enrolments), so the
@@ -499,8 +521,9 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
   // from the User row (read once above) when signed in; anon defaults to EN.
   let generalStudentState = studentState;
   // 26 Sep 2026: the school tutor also carries the account's declared age
-  // band (schoolProfile above) in its turn context; /chat shows the band
-  // card until it exists.
+  // band (schoolProfile above) in its turn context. 27 Sep 2026: no band is
+  // asked any more, so it is null for a guest or an undeclared account; a
+  // band stored before then still rides along.
   let band: SchoolBand | null = null;
   if (!generalStudentState) {
     if (schoolCtx) band = schoolProfile?.band ?? null;
@@ -622,7 +645,8 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
           journey: journey ?? undefined,
           generalMode: isGeneral,
           // 26 Sep 2026: the school persona, class block, chapter focus and
-          // declared band (src/lib/school/tutor-persona.ts); tools stay off.
+          // any stored band (src/lib/school/tutor-persona.ts); tools stay
+          // off. Guests too since 27 Sep 2026.
           school: schoolCtx ? { scope: schoolCtx.scope, focus: schoolFocus, band } : undefined,
           // Tool use needs an exam scope AND a signed-in user to look up
           // the student's mastery / attempts. General mode, anonymous and
@@ -663,11 +687,13 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
         } else if (!userId) {
           // Anonymous tutor turn — log it (pseudonymous anonId, capped text)
           // so the ungated-tutor experience is analysable. Best-effort.
+          // A guest school chat (27 Sep 2026) keeps no linkable id: the
+          // person is likely 13-17.
           anonLogged = true;
           try {
             await prisma.anonTutorLog.create({
               data: {
-                anonId,
+                anonId: schoolCtx ? null : anonId,
                 examCode: examCodeForChat ?? null,
                 userMessage: body.message.slice(0, 2000),
                 reply: full.slice(0, 1500),
@@ -702,7 +728,7 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
           ? ` Meanwhile the chapter's notes and practice are open at https://shishya.in${schoolFocus?.path ?? backPath}`
           : examCodeForChat
           ? ` Meanwhile you can still practise without the tutor: free questions and mocks at https://shishya.in/exams/${examCodeForChat}`
-          : " Meanwhile you can still practise without the tutor: pick your exam at https://shishya.in/exams and take a free quiz or mock.";
+          : " Meanwhile Shishya's pages work without the tutor: school chapters at https://shishya.in/schooling, all exams at https://shishya.in/exams/browse, and colleges, scholarships and careers from https://shishya.in.";
         const friendly = /credit balance|billing|invalid_request_error/i.test(raw)
           ? `Shishya's tutor is briefly unavailable. Please try again in a little while.${practice}`
           : /overloaded|rate.?limit|429|529/i.test(raw)
@@ -721,7 +747,7 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
           try {
             await prisma.anonTutorLog.create({
               data: {
-                anonId,
+                anonId: schoolCtx ? null : anonId,
                 examCode: examCodeForChat ?? null,
                 userMessage: body.message.slice(0, 2000),
                 reply: full ? full.slice(0, 1500) : null,

@@ -1,19 +1,26 @@
 // Student mode on school pages (26 Sep 2026) — the server side.
 //
 // The pure rules live in src/lib/school/student-classes.ts; this module is
-// every DB read and write the student flows make, so the three routes that
-// serve them (POST /api/me/onboarding-profile for the age band, POST
+// every DB read and write the student flows make, so the routes that serve
+// them (GET /api/me/onboarding-profile?school=1 for a stored band, POST
 // /api/mocks/custom and POST /api/mocks for "Practise this chapter") hold
-// no school query of their own:
+// no school query of their own.
+// 27 Sep 2026 (founder: content first — no question before content): the
+// age-band card is gone and nothing here asks for or requires a band. The
+// Class 8-12 container check (findStudentModeContainer) is the safeguard for
+// practice; bands accounts already stored are still read, never deleted.
 //   • findStudentModeContainer — ONE school container by its code, category
 //     pinned (SCHOOL_CONTAINER_WHERE, never `active`: every container is
 //     inactive by design, src/lib/school/scope.ts), and null unless it is a
 //     student-mode class (8-12). tests/unit/exam-scope-guard.test.ts
 //     allow-lists this file for that one keyed read (reason "SCHOOL").
-//   • readSchoolProfile / declareSchoolBand — the one-time age band, in the
-//     EXISTING User fields (onbStage + onbPrepCodes, see student-classes.ts),
-//     and the account's enrolment on the class container through the one
-//     enrolment door with the school flag (src/lib/db/enrollment.ts).
+//   • readSchoolProfile / declareSchoolBand — the legacy age band (26 Sep
+//     2026, asked by the card that was removed 27 Sep 2026), in the EXISTING
+//     User fields (onbStage + onbPrepCodes, see student-classes.ts), and the
+//     account's enrolment on the class container through the one enrolment
+//     door with the school flag (src/lib/db/enrollment.ts). readSchoolProfile
+//     still reads stored bands; no route writes a new one (the profile
+//     route answers 410 to the old card's POST).
 //   • buildSchoolChapterMock — "Practise this chapter": up to
 //     SCHOOL_CHAPTER_MOCK_MAX of the chapter's answer-checked, non-withdrawn
 //     MCQs (SCHOOL_SERVABLE_QUESTION_WHERE — the same test the guest quiz and
@@ -72,9 +79,9 @@ export async function findStudentModeContainer(code: string): Promise<StudentMod
   return { ...exam, cls };
 }
 
-// ── Age band ──────────────────────────────────────────────────────────
+// ── Age band (legacy; nothing asks for it since 27 Sep 2026) ──────────
 
-/** The account's school band, or null until the card was answered. */
+/** The account's stored school band, or null when it never declared one. */
 export async function readSchoolProfile(userId: string): Promise<SchoolBandProfile | null> {
   const rows = await prisma.$queryRaw<{ onbStage: string | null; onbPrepCodes: string[] | null }[]>`
     SELECT "onbStage", "onbPrepCodes" FROM "User" WHERE "id" = ${userId} LIMIT 1`;
@@ -142,7 +149,7 @@ export function schoolMockConfigOf(config: unknown): SchoolMockConfig | null {
 
 export type SchoolChapterMockResult =
   | { ok: true; id: string; title: string; count: number; requested: number; short: boolean; line: string | null; durationMin: number; bank: (BankStats & { line: string }) | null; chapterPath: string | null }
-  | { ok: false; status: 403 | 404 | 422; error: string; available?: number };
+  | { ok: false; status: 404 | 422; error: string; available?: number };
 
 /** The chapter page of (container, chapter) from the cached surface; null
  *  when the surface does not list it (or the read failed — the mock still
@@ -163,18 +170,15 @@ async function chapterPathOf(examCode: string, topicCode: string): Promise<strin
 }
 
 /**
- * Build "Practise this chapter" for a signed-in student of a student-mode
- * class: `count` (at most SCHOOL_CHAPTER_MOCK_MAX) of the chapter's checked
+ * Build "Practise this chapter" for a signed-in account on a student-mode
+ * class (27 Sep 2026: no band is needed — the account is never asked one):
+ * `count` (at most SCHOOL_CHAPTER_MOCK_MAX) of the chapter's checked
  * questions, unseen first — never-shown, then shown-but-unanswered, then
  * least-recently-answered (src/lib/question-pick.ts) — and an honest size.
  */
 export async function buildSchoolChapterMock(i: { userId: string; examCode: string; topicCode: string; count: number }): Promise<SchoolChapterMockResult> {
   const exam = await findStudentModeContainer(i.examCode);
   if (!exam) return { ok: false, status: 404, error: "unknown exam" };
-  // The age band comes first: no practice set for an account that has not
-  // answered the card (the page shows the card instead of this button).
-  const profile = await readSchoolProfile(i.userId);
-  if (!profile) return { ok: false, status: 403, error: "school-band-required" };
 
   const topic = await prisma.topic.findFirst({
     where: { code: i.topicCode, parentId: null, subject: { examId: exam.id } },

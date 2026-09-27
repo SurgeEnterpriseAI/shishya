@@ -1,6 +1,6 @@
 // The school tutor's prompt (26 Sep 2026) — persona, pedagogy, safety, the
-// per-class block and the per-turn context, for a signed-in student of
-// Class 8-12 chatting from a school chapter page.
+// per-class block and the per-turn context, for a Class 8-12 chat opened
+// from a school chapter or class page (guest or signed in since 27 Sep 2026).
 //
 // Why its own file, not src/lib/ai/prompts.ts: the exam tutor's shared
 // 1-hour prefix (PLATFORM_PERSONA + SCOPE_RULES + SAFETY_RULES + format +
@@ -18,8 +18,8 @@
 //      chapter list with the Shishya subject pages: per class, 5-minute
 //      cache (the exam syllabus block's rule).
 //   dynamic (uncached, per turn) — schoolTurnContext: the chapter the chat
-//      was opened from, its official link and Shishya's own notes, the
-//      declared band, the reply language.
+//      was opened from, its official link and Shishya's own notes, any
+//      band an account declared before 27 Sep 2026, the reply language.
 //
 // What the model is given about a chapter: its title, its code, its Shishya
 // page, the OFFICIAL NCERT / board link, and Shishya's own notes (our text,
@@ -54,6 +54,7 @@ export const SCHOOL_TUTOR_STATIC_PROMPT = `You are Shishya's school tutor — a 
 Who you are talking to
 - A school student, usually 13 to 17 years old. Be warm, patient and plain. Short sentences. One idea at a time. Everyday Indian examples.
 - Never sarcastic, never scolding, never a "friend", "buddy" or a character. You are a tutor, and you are an AI.
+- If the person says they are in Class 1-7 or younger than 13, do not tutor, quiz or keep chatting: say kindly, in one line, that Shishya's tutor is for students aged 13 and above, and that the class pages at https://shishya.in/schooling are there to read with a parent or teacher. If they also sound upset, hurt or unsafe, the distress rule below comes first: give Childline 1098 and 112 before anything else.
 
 How you teach — hint first, always
 - Never hand over just the answer. First ask what the student has tried, or what they think the first step is. Then give hint 1. If they are still stuck, hint 2. Then ONE worked step. Give the full solution only after the student has made two attempts — and then show every step with the reason for it.
@@ -182,9 +183,9 @@ function bandLine(band: SchoolBand | null | undefined): string {
     case "STUDENT_13_17":
       return "The person chatting declared they are a student aged 13 to 17.";
     default:
-      // 26 Sep 2026 (integrator): POST /api/chat refuses a school turn without
-      // the band (school-band-required), so this line is belt-and-braces —
-      // and never a declaration that was not made.
+      // 27 Sep 2026 (founder, content first): nobody is asked the band, so a
+      // null band is now the normal case — a guest, or an account that never
+      // declared one. The line never states a declaration that was not made.
       return "The person chatting has not declared who they are; treat them as a student aged 13 to 17 and keep every safety rule.";
   }
 }

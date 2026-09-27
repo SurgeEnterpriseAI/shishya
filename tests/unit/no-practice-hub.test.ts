@@ -303,7 +303,8 @@ describe("the hub page gates every practice promise on the rule (source)", () =>
     expect(hub).toContain("{!hasCoachPlan && practice.hasPractice && <CoachEntry examCode={exam.code} examShort={exam.shortName} />}");
     expect(hub).toMatch(/\{practice\.hasPractice && \(\s*<Link\s+href="\/revision"/);
     expect(hub).toMatch(/\{practice\.hasPractice && \(\s*<>\s*<span className="rounded-full bg-white border border-ink-200 px-3 py-1">\{exam\.totalQuestions\}/);
-    expect(hub).toContain("{userId && practice.hasPractice && (");
+    // 27 Sep 2026 (founder rule 1: no overlay before content): the hub tour is gone for everyone.
+    expect(hub).not.toContain("<PageTour");
     expect(hub).toMatch(/\{practice\.hasPractice && \(\s*<script\s+type="application\/ld\+json"\s+dangerouslySetInnerHTML=\{\{ __html: JSON\.stringify\(courseJsonLd\) \}\}/);
     expect(hub).toContain("hasPractice={practice.hasPractice}");
     expect(hub).toContain("durationMin={pattern && practice.hasPractice ? pattern.durationMin : null}");

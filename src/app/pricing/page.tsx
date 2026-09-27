@@ -63,7 +63,7 @@ const pricingFaq = {
       name: "Why does Shishya charge for mentors but not the platform?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Software scales for free; a human's time does not. The small fee honours the mentor who sits down personally with an aspirant, keeps sessions serious, and lets Shishya keep every AI-powered preparation feature free for every aspirant forever.",
+        text: "Software scales for free; a human's time does not. The small fee honours the mentor who sits down personally with a student, keeps sessions serious, and lets Shishya keep every AI-powered preparation feature free for every student forever.",
       },
     },
   ],

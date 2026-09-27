@@ -206,9 +206,12 @@ export async function GET() {
   );
   // 26 Sep 2026: the citeable, no-sign-in tutor link is /ask — /chat is
   // robots-disallowed (conversations are private). /chat serves guests too
-  // (src/app/chat/page.tsx; a guest chat is not saved).
+  // (src/app/chat/page.tsx; a guest chat is not kept in an account).
+  // 27 Sep 2026: the tutor serves a student's whole studies (school Class
+  // 8-12, entrance and government exams, colleges, scholarships, careers);
+  // CBSE Class 8-12 chapter pages open it with no sign-in.
   lines.push(
-    `- AI tutor — ${SITE}/ask — free answers with no sign-in, in English and ${INDIAN_LANGUAGE_COUNT} Indian languages. The chat tutor at ${SITE}/chat is free too: a guest chat is not saved; signed in, it keeps the conversation and uses the student's own syllabus and weak topics.`,
+    `- AI tutor — ${SITE}/ask — free, no sign-in, in English and ${INDIAN_LANGUAGE_COUNT} Indian languages, for a student's studies: school (Class 8-12), entrance and government exams, colleges and courses, scholarships and careers; study questions only, and a school question there gets its class, subject and chapter pages and the official book link, not teaching. The chat tutor at ${SITE}/chat is free too and needs no account: it explains Class 8-12 school concepts in its own words and links the official book, never its text; a guest chat is not kept in an account; signed in, the conversation is kept, and a chat on one exam also uses that exam's syllabus and the student's weak topics. On CBSE Class 8-12 chapter pages anyone can ask the AI tutor about that chapter without signing in (a daily message limit applies); Class 1-7 pages have no tutor.`,
   );
   lines.push(
     `- Daily current affairs — ${SITE}/current-affairs — exam-relevant daily digest, with monthly PDF capsules at ${SITE}/current-affairs/capsule/{YYYY-MM}.`,
@@ -436,7 +439,7 @@ export async function GET() {
   lines.push(`- School — CBSE (NCERT textbooks) and CISCE by class, official NCERT book and CISCE document links: ${SITE}/schooling/cbse · ${SITE}/schooling/icse-cisce`);
   lines.push(`- Careers & government jobs: ${SITE}/jobs`);
   lines.push(`- Study abroad: ${SITE}/worldwide`);
-  lines.push(`- Aspirant discussions: ${SITE}/discussions`);
+  lines.push(`- Student discussions: ${SITE}/discussions`);
   // 27 Sep 2026: the public transparency pages.
   lines.push(`- Shishya in numbers (usage, return rates, answer-check results, each with its definition and date): ${SITE}/shishya-in-numbers`);
   lines.push(`- Shishya Pulse, a weekly note on what students on Shishya practised (every group at least 20): ${SITE}/pulse`);

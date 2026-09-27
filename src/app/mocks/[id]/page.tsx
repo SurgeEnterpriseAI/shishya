@@ -15,14 +15,10 @@ import { resolvePreferredLocale } from "@/lib/preferred-lang";
 import {
   gateCallbackPath,
   gateLoginRedirectPath,
-  isFromSignin,
   mockDurationMin,
-  mockPathAfterChoice,
-  shouldOfferShortOrFull,
 } from "@/lib/mock-gate";
 import { mockGateCopy } from "@/lib/mock-gate-copy";
 import { loadGuestQuizEmbed } from "@/lib/guest-quiz-embed";
-import { mockStartCopy } from "@/lib/quiz-entry-copy";
 import {
   adoptPaper,
   answeredInPaper,
@@ -35,7 +31,6 @@ import {
   withdrawnCount,
   withdrawnLine,
 } from "@/lib/served-paper";
-import { Header } from "@/components/Header";
 import { MockPlayer } from "./MockPlayer";
 
 // 25 Sep 2026: a guest now gets a real page here (the sign-in gate) instead
@@ -63,10 +58,11 @@ export default async function MockPlayerPage({
   // src/lib/login-return.ts) so the return after sign-in counts as email.
   //
   // Sign-in gate (25 Sep 2026). The bounce is now a page ON this URL: the
-  // mock's exam, title and real size / timer, the /login page's Google
-  // button first (callback = this mock + from=signin + those utm tags), and
-  // below it the exam's 5-question guest quiz for anyone not ready to sign
-  // in (MockGate.tsx; src/lib/mock-gate.ts has the why and the numbers).
+  // mock's exam, title and real size / timer, and the /login page's Google
+  // button (callback = this mock + from=signin + those utm tags); 27 Sep
+  // 2026 (founder, content first): the exam's 5-question guest quiz now
+  // comes first, with no sign-in (MockGate.tsx; src/lib/mock-gate.ts has
+  // the why and the numbers).
   // An unknown id is a 404 straight away (it was one after sign-in). A
   // student-built mock (userId set) still bounces to /login — a guest may
   // not see another student's set — with from=signin in the callback too.
@@ -317,49 +313,9 @@ export default async function MockPlayerPage({
       {},
       { school: mock.generatedBy === "school-chapter" },
     );
-    // Full paper or warm up first? (25 Sep 2026) Only for the return from
-    // Google sign-in (?from=signin, set by the gate and the private-mock
-    // bounce above) to a paper-length mock with nothing in progress — not a
-    // live test. September: 41 first attempts started on load after /login
-    // finished 54% (20% left at 0 answers); the hub's short diagnostic
-    // finishes 84-87%. Nothing is created here: "full" comes back to this
-    // URL without from=signin and takes the path below exactly as before;
-    // "short" starts the hub's own 5-question diagnostic. The student is
-    // already enrolled (above), as the old start-on-load path did.
-    // 26 Sep 2026: the choice is offered on the same rule as before (the
-    // mock's own list length); what it DISPLAYS is the served count and the
-    // honest title, with the withdrawn line under them when any were.
-    if (
-      shouldOfferShortOrFull({
-        fromSignin: isFromSignin(sp),
-        questionCount: mock.questionIds.length,
-        hasInProgress: inProgress != null,
-        isLiveTest: mock.generatedBy === "live-test",
-      })
-    ) {
-      const { ShortOrFullChoice } = await import("./ShortOrFullChoice");
-      return (
-        <main className="min-h-screen bg-ink-50/40">
-          <Header />
-          <section className="container-prose py-6 sm:py-10">
-            <ShortOrFullChoice
-              mockId={mock.id}
-              title={displayTitle}
-              examCode={mock.exam.code}
-              examShort={mock.exam.shortName}
-              questionCount={paperIds.length}
-              durationMin={mockDurationMin(mock.config)}
-              fullHref={mockPathAfterChoice(mock.id, sp)}
-              copy={mockGateCopy(locale)}
-              errCopy={mockStartCopy(locale)}
-            />
-            {withdrawnNote && (
-              <p className="mx-auto mt-3 max-w-xl text-center text-xs text-ink-600">{withdrawnNote}</p>
-            )}
-          </section>
-        </main>
-      );
-    }
+    // 27 Sep 2026 (founder: sign-in never triggers a question): a return from sign-in starts the paper the student asked for.
+    // (The 25 Sep "full paper or warm up first?" screen — ShortOrFullChoice
+    // on ?from=signin — is no longer shown; the component file is kept.)
     // 26 Sep 2026: the attempt starts WITH its paper — one skeleton row per
     // served question, carrying its slot — so a resume and the submit read
     // exactly this list (src/lib/served-paper.ts, src/lib/attempt-paper.ts).

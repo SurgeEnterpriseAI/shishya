@@ -43,10 +43,21 @@ const TEMPLATES: readonly RegExp[] = [
   /^I'm solving PYQ-pattern questions modelled on the /u,
   /^I'm solving the .{1,80} \d{4} /u,
   /^My .{1,80} exam is in \S+ days\. What should I revise and what should I skip\?/u,
+  // school chat (26-27 Sep 2026): chat.school.classStarter.1 in en / hi / te,
+  // and the seeds of the chapter page and the school results page
+  // (src/lib/school/student-classes.ts schoolTutorSeed,
+  // src/lib/school/student-copy.ts schoolMistakesSeed / schoolQuestionSeed)
+  /^Help me plan this week's study for .{1,60}\.$/u,
+  /^.{1,60} के लिए इस हफ़्ते की पढ़ाई की योजना बनाने में मदद कीजिए।$/u,
+  /^.{1,60} కోసం ఈ వారం చదువు ప్రణాళిక వేయడంలో సహాయం చేయండి\.$/u,
+  /^Help me understand ".{1,200}" \(Class \d+ .{1,80}\) step by step\./u,
+  /^I practised ".{1,200}" \(Class \d+\) and got \d+ questions? wrong/u,
+  /^On question \d+ of my ".{1,200}" \(Class \d+\) practice /u,
 ];
 
-// General-mode starters (src/lib/i18n.ts; Hindi has its own, other languages
-// fall back to the English ones).
+// General-mode starters (src/lib/i18n.ts; Hindi and Telugu have their own, other languages fall back to English) and the school chat starters.
+// The first eight are the pre-27 Sep 2026 general starters, kept so older
+// logged turns still classify as ours.
 const EXACT = new Set([
   "Which exam should I prepare for if I want a stable government job?",
   "How do I study consistently for 6 months without burning out?",
@@ -56,6 +67,41 @@ const EXACT = new Set([
   "6 महीने तक बिना थके लगातार कैसे पढ़ूँ?",
   "SSC CGL और राज्य-स्तर PSC परीक्षा में क्या फ़र्क़ है?",
   "रोज़ 2 घंटे हैं। मॉक टेस्ट, रिवीज़न और कमज़ोर विषयों में कैसे बाँटूँ?",
+  // 27 Sep 2026: the whole-platform general starters (en / hi / te)
+  "Explain Newton's three laws of motion with everyday examples.",
+  "Which entrance exams can I take after Class 12 with PCM or PCB, and how are they different?",
+  "How do scholarships for college work, and how do I find ones I qualify for?",
+  "Which government jobs can I aim for after graduation, and how are their exams different?",
+  "न्यूटन के गति के तीनों नियम रोज़मर्रा के उदाहरणों से समझाइए।",
+  "12वीं के बाद PCM या PCB से कौन-सी प्रवेश परीक्षाएँ दी जा सकती हैं, और उनमें क्या फ़र्क़ है?",
+  "कॉलेज के लिए छात्रवृत्ति कैसे मिलती है, और अपने लिए सही छात्रवृत्ति कैसे ढूँढूँ?",
+  "ग्रेजुएशन के बाद किन सरकारी नौकरियों की तैयारी कर सकते हैं, और उनकी परीक्षाओं में क्या फ़र्क़ है?",
+  "న్యూటన్ మూడు గమన నియమాలను రోజువారీ ఉదాహరణలతో వివరించండి.",
+  "ఇంటర్ (MPC లేదా BiPC) తర్వాత ఏ ప్రవేశ పరీక్షలు రాయవచ్చు, వాటి మధ్య తేడా ఏమిటి?",
+  "కాలేజీ చదువుకు స్కాలర్‌షిప్‌లు ఎలా వస్తాయి, నాకు అర్హత ఉన్నవాటిని ఎలా కనుక్కోవాలి?",
+  "డిగ్రీ తర్వాత ఏ ప్రభుత్వ ఉద్యోగాలకు ప్రయత్నించవచ్చు, వాటి పరీక్షల మధ్య తేడా ఏమిటి?",
+  // chat.school.starter.1-4 and chat.school.classStarter.2-4 (en / hi / te)
+  "Explain the main idea of this chapter in simple words.",
+  "I'm stuck on a question from this chapter — give me a hint, not the answer.",
+  "Ask me 3 quick questions to check I understood this chapter.",
+  "What should I remember from this chapter for a class test?",
+  "इस अध्याय का मुख्य विचार आसान शब्दों में समझाइए।",
+  "इस अध्याय के एक सवाल में अटका हूँ — जवाब नहीं, एक संकेत दीजिए।",
+  "यह अध्याय समझ आया या नहीं, यह जाँचने के लिए मुझसे 3 छोटे सवाल पूछिए।",
+  "क्लास टेस्ट के लिए इस अध्याय से क्या याद रखना चाहिए?",
+  "ఈ అధ్యాయం ముఖ్య ఆలోచనను సులభమైన మాటల్లో వివరించండి.",
+  "ఈ అధ్యాయంలోని ఒక ప్రశ్న దగ్గర ఆగిపోయాను — సమాధానం కాదు, ఒక సూచన ఇవ్వండి.",
+  "ఈ అధ్యాయం అర్థమైందో లేదో చూడటానికి నన్ను 3 చిన్న ప్రశ్నలు అడగండి.",
+  "క్లాస్ టెస్ట్ కోసం ఈ అధ్యాయం నుంచి ఏమి గుర్తుంచుకోవాలి?",
+  "I have a class test coming — how do I revise a chapter well?",
+  "Explain a topic I'm finding hard — I'll tell you which.",
+  "Ask me 3 quick questions on a chapter I've just read.",
+  "क्लास टेस्ट आने वाला है — किसी अध्याय को अच्छे से कैसे दोहराऊँ?",
+  "जो टॉपिक मुझे कठिन लग रहा है, उसे समझाइए — मैं बताता हूँ कौन-सा।",
+  "अभी-अभी पढ़े अध्याय पर मुझसे 3 छोटे सवाल पूछिए।",
+  "క్లాస్ టెస్ట్ రాబోతోంది — ఒక అధ్యాయాన్ని బాగా రివైజ్ ఎలా చేయాలి?",
+  "నాకు కష్టంగా ఉన్న ఒక టాపిక్ వివరించండి — ఏదో నేను చెబుతాను.",
+  "నేను ఇప్పుడే చదివిన అధ్యాయంపై నన్ను 3 చిన్న ప్రశ్నలు అడగండి.",
 ]);
 
 /** True when a tutor message is one of Shishya's own prefilled prompts. */

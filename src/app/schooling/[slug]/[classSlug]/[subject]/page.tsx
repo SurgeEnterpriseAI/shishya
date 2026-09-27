@@ -307,7 +307,7 @@ export default async function SubjectPage({ params }: { params: Promise<PagePara
     <main className="min-h-screen bg-saffron-50/30">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
-      <Header />
+      <Header childSafe={!isStudentModeClass(cls)} />
       <section className="container-prose py-10">
         <SchoolCrumbs
           crumbs={[
@@ -548,7 +548,7 @@ async function LegacySubjectPage({ board, cls, syllabus, s }: { board: Board; cl
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <Header />
+      <Header childSafe={!isStudentModeClass(cls)} />
       <section className="container-prose py-10">
         <SchoolCrumbs
           crumbs={[

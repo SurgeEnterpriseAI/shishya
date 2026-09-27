@@ -271,7 +271,8 @@ function schoolTutor(index: SearchIndex, doc: SearchDoc): { tutor: string | null
   if (doc.board !== "cbse") {
     return { tutor: "Shishya's AI tutor and account practice are on CBSE (NCERT) Class 8-12 chapter pages, not on this board's pages — do not promise them here." };
   }
-  const TUTOR = "A student aged 13 or above can sign in on a Class 8-12 chapter page to ask Shishya's AI tutor about that chapter.";
+  // 27 Sep 2026 (content first): the chapter tutor needs no sign-in; an account only saves practice.
+  const TUTOR = "Anyone can ask Shishya's AI tutor about a chapter from its CBSE Class 8-12 chapter page, with no sign-in; a student aged 13 or above can sign in there to save practice.";
   if (doc.kind === "school-chapter") {
     return {
       tutor:

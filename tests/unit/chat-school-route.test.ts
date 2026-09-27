@@ -1,7 +1,10 @@
 // POST /api/chat — the school tutor path (26 Sep 2026), run against the
 // real route handler with the DB, auth, cookies, rate limit and the model
 // stubbed. What it pins:
-//   • a guest with a school code is 404 (the guest tutor never sees a class);
+//   • 27 Sep 2026 (founder, content first): a guest on NCERT_C09 is served
+//     the school tutor — band null, tools off, nothing written, no
+//     enrolment, no linkable id in the guest log — and capped per browser
+//     (the schoolGuest bucket) before any model call;
 //   • a signed-in student on a Class 1-7 container is 404;
 //   • a signed-in student on NCERT_C09 is served: the class is the syllabus,
 //     the chapter focus carries the official link and OUR notes, the band
@@ -9,11 +12,11 @@
 //   • at 20 USER messages today the friendly line streams instead of a
 //     model call, and nothing is written;
 //   • a real exam is unchanged: enrolled, tools on, no school turn.
-// Integrator, same day:
-//   • a school turn from an account that never declared the age band is
-//     refused with the band-required event (the class page asks it) — no
-//     model, no write, no enrolment; the persona is never told a
-//     declaration that was not made.
+// Integrator, same day (reversed 27 Sep 2026, content first):
+//   • an account with no declared band is now served the school tutor with
+//     band null (the persona treats the person as 13-17); nobody is asked.
+// 27 Sep 2026: the study-only pre-filter (src/lib/chat-scope.ts) answers a
+// distress message with the helplines before any DB work or model call.
 // Fixer review, same day:
 //   • a declared 13-17 account (the school band) is refused the general and
 //     every real-exam tutor with the localised line and its class chat —
@@ -33,6 +36,9 @@ const state = vi.hoisted(() => ({
   enrollCalls: [] as unknown[][],
   created: [] as Array<{ model: string; data: Record<string, unknown> }>,
   user: { preferredLang: "EN", onbStage: "CLASS_9_10", onbPrepCodes: ["NCERT_C09"] } as Record<string, unknown>,
+  anonLogs: [] as Array<Record<string, unknown>>,
+  rateCalls: [] as Array<{ name: string; key: string }>,
+  schoolGuestBlocked: false,
 }));
 
 const EXAM_C09 = { id: "e-c09", code: "NCERT_C09", name: "NCERT Class 9", shortName: "NCERT 9", category: "SCHOOL_BOARD" };
@@ -60,7 +66,13 @@ vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => undefined, s
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 vi.mock("next/server", () => ({ after: () => {} }));
 vi.mock("@/lib/rate-limit", () => ({
-  checkRateLimit: async () => ({ ok: true, limit: 30, remaining: 29, reset: 0 }),
+  // Name-aware (27 Sep 2026): the guest school bucket can be exhausted on its own.
+  checkRateLimit: async (name: string, key: string) => {
+    state.rateCalls.push({ name, key });
+    return name === "schoolGuest" && state.schoolGuestBlocked
+      ? { ok: false, limit: 20, remaining: 0, reset: 0 }
+      : { ok: true, limit: 30, remaining: 29, reset: 0 };
+  },
   rateLimited: () => new Response("rate limited", { status: 429 }),
 }));
 vi.mock("@/lib/db/enrollment", () => ({
@@ -143,13 +155,18 @@ vi.mock("@/lib/db/prisma", () => ({
     },
     attempt: { findFirst: async () => null },
     user: { findUnique: async () => state.user },
-    anonTutorLog: { create: async () => ({}) },
+    anonTutorLog: {
+      create: async ({ data }: { data: Record<string, unknown> }) => {
+        state.anonLogs.push(data);
+        return {};
+      },
+    },
   },
 }));
 
 import { POST } from "@/app/api/chat/route";
 import { SCHOOL_TUTOR_CAP_COPY } from "@/lib/school/tutor-cap";
-import { SCHOOL_BAND_REQUIRED_CODE, SCHOOL_BAND_REQUIRED_COPY, SCHOOL_ONLY_TUTOR_CODE, SCHOOL_ONLY_TUTOR_COPY } from "@/lib/school/tutor-scope";
+import { SCHOOL_ONLY_TUTOR_CODE, SCHOOL_ONLY_TUTOR_COPY } from "@/lib/school/tutor-scope";
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128.0 Safari/537.36";
 
@@ -170,15 +187,69 @@ beforeEach(() => {
   state.enrollCalls = [];
   state.created = [];
   state.user = { preferredLang: "EN", onbStage: "CLASS_9_10", onbPrepCodes: ["NCERT_C09"] };
+  state.anonLogs = [];
+  state.rateCalls = [];
+  state.schoolGuestBlocked = false;
 });
 
 describe("POST /api/chat — school containers", () => {
-  it("a guest with NCERT_C09 is 404 (unknown exam), and no model is called", async () => {
-    const res = await post({ examCode: "NCERT_C09", message: "Explain matter" });
-    expect(res.status).toBe(404);
-    expect(await res.json()).toEqual({ error: "exam not found" });
+  it("a guest with NCERT_C09 is served the school tutor: band null, tools off, nothing written, no enrolment", async () => {
+    const res = await post({ examCode: "NCERT_C09", topicCode: "iesc1.ch01", message: "Explain matter", history: [] });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/event-stream");
+    const text = await res.text();
+    expect(text).toContain(`event: meta\ndata: {"sessionId":"anon"}`);
+    expect(text).toContain("event: done");
+    expect(text).not.toContain("event: error");
+    expect(state.tutorCalls).toHaveLength(1);
+    const call = state.tutorCalls[0] as { school: { scope: { examCode: string }; focus: { code: string } | null; band: unknown }; ctx: unknown; generalMode: boolean };
+    expect(call.school.scope.examCode).toBe("NCERT_C09");
+    expect(call.school.focus?.code).toBe("iesc1.ch01");
+    expect(call.school.band).toBeNull();
+    expect(call.ctx).toBeUndefined();
+    expect(call.generalMode).toBe(false);
+    // Nothing stored in an account, no enrolment; the guest log keeps no linkable id.
+    expect(state.created).toHaveLength(0);
+    expect(state.enrollCalls).toHaveLength(0);
+    expect(state.anonLogs).toHaveLength(1);
+    expect(state.anonLogs[0].anonId).toBeNull();
+    expect(state.anonLogs[0].examCode).toBe("NCERT_C09");
+    // The guest was checked against the per-browser school bucket.
+    expect(state.rateCalls.map((r) => r.name)).toContain("schoolGuest");
+  });
+
+  it("a guest over the schoolGuest limit gets the cap line, no model call", async () => {
+    state.schoolGuestBlocked = true;
+    const res = await post({ examCode: "NCERT_C09", message: "One more?", history: [] });
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    expect(text).not.toContain("event: meta");
+    expect(text).toContain(JSON.stringify(SCHOOL_TUTOR_CAP_COPY.en));
+    expect(text).toContain('"code":"school-daily-cap"');
     expect(state.tutorCalls).toHaveLength(0);
     expect(state.created).toHaveLength(0);
+    expect(state.anonLogs).toHaveLength(0);
+  });
+
+  it("a guest's distress message gets the helpline reply (14416, 1098) with no model call", async () => {
+    for (const body of [
+      { examCode: "NCERT_C09", message: "I want to die", history: [] },
+      { general: true, message: "I want to die", history: [] },
+    ]) {
+      state.tutorCalls = [];
+      state.anonLogs = [];
+      const res = await post(body);
+      expect(res.status).toBe(200);
+      const text = await res.text();
+      expect(text).toContain("14416");
+      expect(text).toContain("1098");
+      expect(text).toContain('"code":"scope-distress"');
+      expect(text).not.toContain("event: meta");
+      expect(state.tutorCalls).toHaveLength(0);
+      expect(state.created).toHaveLength(0);
+      expect(state.anonLogs).toHaveLength(1);
+      expect(state.anonLogs[0].anonId).toBeNull();
+    }
   });
 
   it("a signed-in student on NCERT_C05 is 404 — Classes 1-7 have no tutor", async () => {
@@ -239,7 +310,7 @@ describe("POST /api/chat — school containers", () => {
     expect(roles).toEqual(["USER", "ASSISTANT"]);
   });
 
-  it("without a declared band the school turn is refused with the band-required event — no model, no write, no enrolment (integrator)", async () => {
+  it("an account with no band is served, band null — nobody is asked (27 Sep 2026, content first)", async () => {
     state.session = { user: { id: "u1" } };
     for (const user of [
       { preferredLang: "EN", onbStage: null, onbPrepCodes: [] },
@@ -248,15 +319,18 @@ describe("POST /api/chat — school containers", () => {
     ]) {
       state.user = user;
       state.tutorCalls = [];
+      state.created = [];
       const res = await post({ examCode: "NCERT_C09", topicCode: "iesc1.ch01", message: "hi", sessionId: "s-school" });
       expect(res.status).toBe(200);
       expect(res.headers.get("content-type")).toContain("text/event-stream");
-      expect(await res.text()).toBe(
-        `event: error\ndata: ${JSON.stringify({ error: SCHOOL_BAND_REQUIRED_COPY.en, code: SCHOOL_BAND_REQUIRED_CODE, next: "/schooling/cbse/class-9?from=school" })}\n\n`,
-      );
-      expect(state.tutorCalls).toHaveLength(0);
-      expect(state.created).toHaveLength(0);
+      const text = await res.text();
+      expect(text).not.toContain("event: error");
+      expect(text).toContain("event: done");
+      expect(state.tutorCalls).toHaveLength(1);
+      expect((state.tutorCalls[0] as { school: { band: unknown } }).school.band).toBeNull();
       expect(state.enrollCalls).toHaveLength(0);
+      // A member's school turn still goes through the account cap, not the guest bucket.
+      expect(state.rateCalls.map((r) => r.name)).not.toContain("schoolGuest");
     }
   });
 

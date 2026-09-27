@@ -60,7 +60,8 @@ describe("wave-3 core families — presence and shape", () => {
     expect(KEYS.filter((k) => k.startsWith("mark.")).length).toBeGreaterThanOrEqual(13);
     expect(KEYS.filter((k) => k.startsWith("phase.")).length).toBeGreaterThanOrEqual(55);
     expect(KEYS.filter((k) => k.startsWith("ew.night.")).length).toBe(9);
-    expect(KEYS.filter((k) => k.startsWith("login.")).length).toBe(19);
+    // 27 Sep 2026: + login.intent.chat.h1/.body and login.intent.school.h1/.body.
+    expect(KEYS.filter((k) => k.startsWith("login.")).length).toBe(23);
   });
 
   for (const locale of ["hi", "te"] as const) {

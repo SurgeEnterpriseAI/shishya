@@ -45,7 +45,7 @@ export async function generateMetadata({
       persona.label,
       persona.pageTitle,
       "indian student preparation",
-      "free exam prep india",
+      "free study platform india",
       "Shishya",
     ],
     openGraph: {
@@ -262,22 +262,24 @@ export default async function PersonaPage({
           </>
         )}
 
-        {/* Sign-up CTA */}
+        {/* Sign-up CTA. 27 Sep 2026 (founder rule 4): sign-in returns to
+            this page and never into the onboarding wizard; an exam page's free
+            quiz (on the exams that have practice questions) needs no sign-in. */}
         <div className="mt-14 rounded-xl border border-saffron-300 bg-saffron-50/60 p-6 text-center">
           <h3 className="text-lg font-semibold text-ink-900">
-            Start preparing — free, no credit card
+            Start with any exam here — free
           </h3>
           <p className="mt-2 text-sm text-ink-700">
-            Pin your target exam, take a diagnostic mock, see where you stand. Shishya is free
-            because we&apos;re funded by Surge Enterprise AI&apos;s separate consulting business
-            — not by you.
+            Exam pages with practice questions have a free 5-question quiz with no sign-in. Sign in (free, for ages 13
+            and above) when you want your scores and a day-by-day plan saved. Shishya is free: it
+            is built and paid for by Surge Software Solutions Pvt Ltd, not by students.
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href={`/login?callbackUrl=${encodeURIComponent(`/onboarding?p=${persona.slug}`)}`}
+              href={`/login?callbackUrl=${encodeURIComponent(`/for/${persona.slug}`)}`}
               className="btn-primary inline-block !py-2 !px-5 text-sm"
             >
-              Sign up — auto-pin these exams →
+              Sign in free →
             </Link>
             <Link
               href="/exams/browse"

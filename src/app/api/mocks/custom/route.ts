@@ -48,8 +48,7 @@
 // through src/lib/school/student-db.ts buildSchoolChapterMock, which is the
 // only place that reads a school container; this route keeps realExamKey()
 // for every other request, so a school code without the flag stays an
-// unknown exam. An account that has not answered the age-band card gets
-// 403 { error: "school-band-required" } and the page shows the card.
+// unknown exam. No age or role question is asked (27 Sep 2026).
 
 import { z } from "zod";
 import { NextResponse } from "next/server";

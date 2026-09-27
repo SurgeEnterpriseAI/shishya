@@ -37,8 +37,8 @@ type LabelKey = "title" | "sub" | "thanks" | "skip" | FoundViaValue;
 
 const DEFAULTS: Record<"title" | "sub" | "thanks" | "skip", string> = {
   title: "How did you find Shishya?",
-  sub: "One tap. Helps us reach more aspirants.",
-  thanks: "Thanks — that helps us reach more aspirants.",
+  sub: "One tap. Helps us reach more students.",
+  thanks: "Thanks — that helps us reach more students.",
   skip: "Skip",
 };
 
