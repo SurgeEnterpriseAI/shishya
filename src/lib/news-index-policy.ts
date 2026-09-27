@@ -49,10 +49,12 @@
 import { sourceTier } from "@/lib/official-source";
 
 /** Founder flag — see the header. true = Google-only noindex + out of /sitemap.xml. */
-// 27 Sep 2026 (main session): OFF until the founder decides — he reverted the
-// last news index change himself on 27 Aug 2026. The canonical-only filter
-// and lastmod = publishedAt apply either way. Flip to true only on his yes.
-export const NEWS_GOOGLE_NOINDEX: boolean = false;
+// 27 Sep 2026: ON — founder approved ("go ahead", 27 Sep 2026 morning
+// decisions, item 3) after the trade-off above was put to him. He reverted
+// the last news index change himself on 27 Aug 2026 — if Google first
+// landings on other page families drop after this deploy, this is the first
+// suspect (feedback: search-surface changes). Set false to undo.
+export const NEWS_GOOGLE_NOINDEX: boolean = true;
 
 /** robots metadata that keeps a page out of Google only (26 Sep 2026): every
  *  other engine gets index,follow; Googlebot gets noindex,follow. */

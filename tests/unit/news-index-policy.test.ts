@@ -40,7 +40,7 @@ const row = (id: string, title: string, day: number, o: { archived?: boolean; ur
 
 describe("the founder flag and the robots it sets", () => {
   it("is on by default, pending the founder's approval before deploy", () => {
-    expect(NEWS_GOOGLE_NOINDEX).toBe(false); // 27 Sep 2026: off pending the founder's decision
+    expect(NEWS_GOOGLE_NOINDEX).toBe(true); // 27 Sep 2026: founder approved Google-only noindex
     const src = read("src/lib/news-index-policy.ts");
     expect(src).toMatch(/FOUNDER APPROVAL REQUIRED BEFORE DEPLOY/);
     // Both Google numbers the founder decides on (the quality critic's note).
