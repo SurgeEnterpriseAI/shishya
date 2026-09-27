@@ -376,7 +376,11 @@ describe("content first: practice before sign-in, no question after it", () => {
     // withdrawn — getAnonQuiz's filter), so "{n} questions from this set" holds.
     expect(pyq).toMatch(/const guestSet = questions\s*\.filter\(\(q\) => q\.type === "MCQ" && !q\.tags\.includes\("rejected"\)\)\s*\.slice\(0, 10\)\s*\.map\(\(q\) => q\.id\);/);
     expect(read("src/lib/anon-quiz.ts")).toContain('validated: true, type: "MCQ", NOT: { tags: { has: "rejected" } } },');
-    expect(pyq).toContain("{!userId && guestSet.length >= 5 ? (");
+    // 27 Sep 2026 (content first, wave 2): with the year's shared paper, the guest's main button is the WHOLE set
+    // on the guest paper player; the 10-question practice stays as a second link. Without it, as before.
+    expect(pyq).toContain("{!userId && guestPaperId ? (");
+    expect(pyq).toContain("{P.ctaWhole}");
+    expect(pyq).toContain(") : !userId && guestSet.length >= 5 ? (");
     expect(pyq).toContain("href={`/exams/${code}/quiz?set=${guestSet.join(\",\")}&n=${guestSet.length}`}");
     expect(pyq).toContain("{fillPyq(P.ctaPractise, { n: guestSet.length })}");
     expect(pyq).toContain("{P.ctaSave}");

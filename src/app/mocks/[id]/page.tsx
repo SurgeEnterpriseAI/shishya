@@ -32,6 +32,10 @@ import {
   withdrawnLine,
 } from "@/lib/served-paper";
 import { MockPlayer } from "./MockPlayer";
+import { headers } from "next/headers";
+import { classifyClient } from "@/lib/client-class";
+import { loadGuestPaper } from "@/lib/guest-paper-db";
+import { guestPaperCopy } from "@/lib/guest-paper-copy";
 
 // 25 Sep 2026: a guest now gets a real page here (the sign-in gate) instead
 // of a redirect, so the page says noindex itself, like /login — on top of
@@ -74,6 +78,7 @@ export default async function MockPlayerPage({
           id: true,
           title: true,
           userId: true,
+          generatedBy: true,
           questionIds: true,
           config: true,
           exam: { select: { code: true, shortName: true } },
@@ -83,6 +88,64 @@ export default async function MockPlayerPage({
     ]);
     if (!guestMock) notFound();
     if (guestMock.userId) redirect(gateLoginRedirectPath(guestMock.id, sp));
+    // 27 Sep 2026 (founder, content first): a guest takes the WHOLE shared
+    // paper here — timer, palette, submit, score and every answer — with no
+    // sign-in and nothing stored on the server (src/lib/guest-paper.ts,
+    // POST /api/guest-paper/grade). Sign-in is offered on the result, to keep
+    // future results. Live tests keep the gate below (a rank needs an
+    // account); crawlers keep it too (no question bodies for bots). A paper
+    // too short to serve falls through to the notice below.
+    if (guestMock.generatedBy !== "live-test" && classifyClient((await headers()).get("user-agent")) !== "bot") {
+      const load = await loadGuestPaper(guestMock.id);
+      if (load.ok) {
+        const { GuestPaperPlayer } = await import("./GuestPaperPlayer");
+        const pp = load.paper;
+        return (
+          <GuestPaperPlayer
+            mock={{
+              id: pp.mockId,
+              title: pp.title,
+              examCode: pp.examCode,
+              examShort: pp.examShort,
+              durationMin: pp.durationMin,
+              marksPerQ: pp.marksPerQ,
+              negativeMark: pp.negativeMark,
+            }}
+            questions={pp.questions.map((q) => ({
+              id: q.id,
+              type: q.type,
+              difficulty: q.difficulty,
+              body: q.body,
+              options: q.options,
+              topic: q.topic,
+            }))}
+            labels={{
+              qOf: t("player.q.of"),
+              mark: t("player.mark"),
+              marked: t("player.marked"),
+              prev: t("player.prev"),
+              saveNext: t("player.saveNext"),
+              reviewSubmit: t("player.reviewSubmit"),
+              submitMock: t("player.submitMock"),
+              sumAnswered: t("player.summary.answered"),
+              sumMarked: t("player.summary.marked"),
+              sumLeft: t("player.summary.left"),
+              confirmTitle: t("player.confirm.title"),
+              confirmBodyPrefix: t("player.confirm.body.prefix"),
+              confirmBodyOf: t("player.confirm.body.of"),
+              confirmKeep: t("player.confirm.keep"),
+              confirmSubmit: t("player.confirm.submit"),
+              confirmSubmitting: t("player.confirm.submitting"),
+              marksPerQ: t("exam.marks"),
+              negativeNone: t("exam.no.negative"),
+            }}
+            copy={guestPaperCopy(locale)}
+            initialLocale={locale}
+            signInHref={`/login?callbackUrl=${encodeURIComponent(`/exams/${pp.examCode}`)}`}
+          />
+        );
+      }
+    }
     // 26 Sep 2026: the gate shows the size the mock really SERVES (validated
     // questions not withdrawn — src/lib/served-paper.ts) and a title with
     // that count; a paper too short to start shows the same "being rebuilt"

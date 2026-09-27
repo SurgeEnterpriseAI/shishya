@@ -33,6 +33,7 @@ const limits = {
   studyGroup: { limit: 5, windowSec: 3_600 },    // study groups made per user per hour
   studyGroupJoin: { limit: 30, windowSec: 3_600 }, // study-group joins + leaves per user per hour
   schoolGuest: { limit: 20, windowSec: 86_400 }, // a guest's school-tutor turns per browser (or IP) per day = SCHOOL_TUTOR_DAILY_CAP (27 Sep 2026)
+  guestPaper: { limit: 60, windowSec: 3_600 },  // whole-paper grades for guests per IP per hour (27 Sep 2026, content first; no writes)
 } as const;
 
 export type LimitName = keyof typeof limits;

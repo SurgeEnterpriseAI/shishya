@@ -65,6 +65,9 @@ export interface PyqYearCopy {
    *  with sign-in a secondary link to take the whole set and keep the score. */
   ctaPractise: string;
   ctaSave: string;
+  /** 27 Sep 2026 (content first, wave 2): the whole set on the guest paper
+   *  player (/mocks/{id}, no sign-in) when the year's shared paper exists. */
+  ctaWhole: string;
   /** Ask Shishya block. */
   tutorHeading: string;
   tutorBody: string;
@@ -108,6 +111,7 @@ export const PYQ_YEAR_COPY: Readonly<Record<PyqCopyLocale, PyqYearCopy>> = {
     ctaQuiz: "or try a 5-question quiz first — no signup",
     ctaPractise: "Practise {n} questions from this set now — no sign-in →",
     ctaSave: "Sign in to take the whole set and save your score →",
+    ctaWhole: "Take the whole set now — no sign-in →",
     tutorHeading: "Stuck on a question from this set?",
     tutorBody:
       "Ask Shishya — your free AI tutor — to explain any {short} {year}-pattern question, concept, or shortcut, step by step, in your language.",
@@ -138,6 +142,7 @@ export const PYQ_YEAR_COPY: Readonly<Record<PyqCopyLocale, PyqYearCopy>> = {
     ctaQuiz: "या पहले 5 सवालों की क्विज़ आज़माएँ — बिना साइन-अप",
     ctaPractise: "इस सेट के {n} सवाल अभी हल करें — बिना साइन-इन →",
     ctaSave: "पूरा सेट देने और स्कोर सेव करने के लिए साइन इन करें →",
+    ctaWhole: "पूरा सेट अभी दें — बिना साइन-इन →",
     tutorHeading: "इस सेट का कोई सवाल अटका रहा है?",
     tutorBody:
       "Shishya से पूछें — आपका मुफ़्त AI ट्यूटर — {short} {year} के पैटर्न का कोई भी सवाल, कॉन्सेप्ट या शॉर्टकट आपकी भाषा में, कदम-दर-कदम समझाएगा।",
@@ -168,6 +173,7 @@ export const PYQ_YEAR_COPY: Readonly<Record<PyqCopyLocale, PyqYearCopy>> = {
     ctaQuiz: "లేదా ముందు 5 ప్రశ్నల క్విజ్ ప్రయత్నించండి — సైన్-అప్ అవసరం లేదు",
     ctaPractise: "ఈ సెట్‌లోని {n} ప్రశ్నలు ఇప్పుడే సాధన చేయండి — సైన్-ఇన్ అవసరం లేదు →",
     ctaSave: "పూర్తి సెట్ రాసి మీ స్కోర్ సేవ్ చేసుకోవడానికి సైన్ ఇన్ చేయండి →",
+    ctaWhole: "పూర్తి సెట్ ఇప్పుడే రాయండి — సైన్-ఇన్ అవసరం లేదు →",
     tutorHeading: "ఈ సెట్‌లో ఏదైనా ప్రశ్న దగ్గర ఆగిపోయారా?",
     tutorBody:
       "Shishyaని అడగండి — మీ ఉచిత AI ట్యూటర్ — {short} {year} ప్యాటర్న్‌లోని ఏ ప్రశ్ననైనా, కాన్సెప్ట్‌నైనా, షార్ట్‌కట్‌నైనా మీ భాషలో దశలవారీగా వివరిస్తుంది.",

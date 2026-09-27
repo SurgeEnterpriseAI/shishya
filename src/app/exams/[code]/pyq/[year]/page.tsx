@@ -257,6 +257,16 @@ export default async function PYQYearPage({
   // A key-only year is named as the answer key, like the visible heading.
   const officialPaperNote = officialYearFaqNote(officialForYear, yearNum);
 
+  // 27 Sep 2026 (content first, wave 2): a guest takes the WHOLE set on the
+  // guest paper player (/mocks/{id}, src/lib/guest-paper.ts) when the year's
+  // shared paper already exists — a read only; a guest or crawler never
+  // creates it (the signed-in branch below does).
+  const guestPaperId = !userId
+    ? ((await prisma.mock
+        .findFirst({ where: { examId: exam.id, userId: null, generatedBy: `system:pyq:${code}:${yearNum}` }, select: { id: true } })
+        .catch(() => null))?.id ?? null)
+    : null;
+
   // Signed-in only: find-or-create the system Mock + the user's attempt
   // state. Anonymous visitors (and crawlers) get a read-only landing — no
   // DB writes on crawl traffic.
@@ -472,7 +482,21 @@ export default async function PYQYearPage({
                 </p>
                 <p className="mt-0.5 text-xs text-ink-500">{fillPyq(P.ctaBody, { modelled })}</p>
               </div>
-              {!userId && guestSet.length >= 5 ? (
+              {!userId && guestPaperId ? (
+                <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                  <Link href={`/mocks/${guestPaperId}`} rel="nofollow" prefetch={false} className="btn-primary text-center">
+                    {P.ctaWhole}
+                  </Link>
+                  {guestSet.length >= 5 && (
+                    <Link
+                      href={`/exams/${code}/quiz?set=${guestSet.join(",")}&n=${guestSet.length}`}
+                      className="text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"
+                    >
+                      {fillPyq(P.ctaPractise, { n: guestSet.length })}
+                    </Link>
+                  )}
+                </div>
+              ) : !userId && guestSet.length >= 5 ? (
                 <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
                   <Link
                     href={`/exams/${code}/quiz?set=${guestSet.join(",")}&n=${guestSet.length}`}
