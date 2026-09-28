@@ -1165,25 +1165,31 @@ export default async function ExamPage({
               {H.coachBodyB}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              {/* 27 Sep 2026: value first — the free quiz is the primary action, sign-in a secondary link. */}
-              {/* Lever #2 — anonymous 5-question diagnostic: a signed-out
-                  visitor experiences the mock loop with no sign-in. */}
-              <Link
-                href={`/exams/${exam.code}/quiz`}
-                className="btn-primary inline-block !py-2 !px-4 text-sm"
-              >
-                Try a free 5-question quiz — no signup →
-              </Link>
+              {/* 28 Sep 2026 (founder: the sign-up must be there as it was):
+                  the free sign-in is the filled button again and the quiz the
+                  outlined one beside it. 27 Sep had made sign-in a small text
+                  link under a filled quiz button — sign-ups that began on a
+                  hub went from about 11 a day (21–26 Sep) to 4 (27–28 Sep). */}
               {/* Click beacon (16 Sep 2026): the one hub CTA that sent no
                   CTA_CLICKED, so its volume could only be guessed from
-                  /login views. Same <a>: href and text unchanged. */}
+                  /login views. */}
               <HubSignInLink
                 examCode={exam.code}
                 href={`/login?callbackUrl=${encodeURIComponent(`/exams/${exam.code}`)}`}
-                className="text-sm font-semibold text-saffron-700 underline-offset-2 hover:underline"
+                className="btn-primary inline-block !py-2 !px-4 text-sm"
               >
                 {H.coachButton}
               </HubSignInLink>
+              {/* Lever #2 — anonymous 5-question diagnostic. Lets a signed-out
+                  visitor experience the mock loop before the sign-in. A
+                  proper button with equal visual weight (as a text link it
+                  got ~zero clicks). */}
+              <Link
+                href={`/exams/${exam.code}/quiz`}
+                className="inline-flex items-center justify-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 transition-colors hover:bg-saffron-50"
+              >
+                Try a free 5-question quiz — no signup →
+              </Link>
             </div>
           </div>
         )}

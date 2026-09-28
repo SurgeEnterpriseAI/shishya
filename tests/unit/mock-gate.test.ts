@@ -27,6 +27,8 @@ import {
 } from "@/lib/mock-gate";
 import { MOCK_GATE_COPY, mockGateCopy, type MockGateCopy } from "@/lib/mock-gate-copy";
 import { isSameOriginPath } from "@/lib/login-return";
+import { GUEST_WHOLE_PAPER_OPEN } from "@/lib/guest-paper";
+import { examHubCopy } from "@/lib/exam-hub-copy";
 
 const ID = "cmtimrgem005b102t2e7u9iyh";
 // What src/lib/email.ts withMailUtm() puts on a win-back link.
@@ -331,9 +333,13 @@ describe("mock gate copy — en, hi, te", () => {
   });
 });
 
-// 27 Sep 2026 (founder: content first; sign-in never gates or questions).
+// 27 Sep 2026 (founder: content first; sign-in never questions).
+// 28 Sep 2026 (founder: "the sign-up has to be there, the way it was"): the
+// free sign-in is the main action again on the hub box, the mock page and
+// the past-year page; the no-sign-in quiz sits beside or under it. Sign-ups
+// had gone from about 25 a day to 10 in the two days it was a side link.
 // Source pins for the practice surfaces a guest or a fresh sign-in meets.
-describe("content first: practice before sign-in, no question after it", () => {
+describe("sign-in is the main action on practice surfaces; no question after it", () => {
   const root = path.resolve(__dirname, "../..");
   const read = (rel: string) => readFileSync(path.join(root, rel), "utf8").replace(/\r\n/g, "\n");
 
@@ -344,46 +350,59 @@ describe("content first: practice before sign-in, no question after it", () => {
     expect(page).toContain("a return from sign-in starts the paper the student asked for");
   });
 
-  it("the guest gate shows the no-sign-in quiz before the sign-in card", () => {
+  it("the guest gate shows the sign-in card first, then the no-sign-in quiz", () => {
     const gate = read("src/app/mocks/[id]/MockGate.tsx");
     const quiz = gate.indexOf("<GuestQuizGate");
     const signIn = gate.indexOf("<GateSignInButton");
-    expect(quiz).toBeGreaterThan(-1);
-    expect(signIn).toBeGreaterThan(quiz);
-    expect(gate).toContain('${guestQuiz ? "mt-4 " : ""}rounded-xl border');
+    expect(signIn).toBeGreaterThan(-1);
+    expect(quiz).toBeGreaterThan(signIn);
   });
 
-  it("the hub's diagnostic button sends a guest to the no-sign-in quiz, not /login", () => {
+  it("a guest on /mocks/{id} gets the sign-in card: the guest whole paper is closed", () => {
+    expect(GUEST_WHOLE_PAPER_OPEN).toBe(false);
+    const page = read("src/app/mocks/[id]/page.tsx");
+    expect(page).toContain('if (GUEST_WHOLE_PAPER_OPEN && guestMock.generatedBy !== "live-test"');
+    const pyq = read("src/app/exams/[code]/pyq/[year]/page.tsx");
+    expect(pyq).toContain("const guestPaperId = !userId && GUEST_WHOLE_PAPER_OPEN");
+  });
+
+  it("the hub's diagnostic button sends a guest to /login and back to the diagnostic", () => {
     const src = read("src/app/exams/[code]/StartMockButton.tsx");
-    expect(src).toMatch(/if \(res\.status === 401\) \{[\s\S]{0,400}?window\.location\.href = `\/exams\/\$\{examCode\}\/quiz`;/);
-    expect(src).not.toContain("?start=diagnostic`)}`");
+    expect(src).toMatch(/if \(res\.status === 401\) \{[\s\S]{0,500}?beacon\("diagnostic-401"[\s\S]{0,200}?window\.location\.href = `\/login\?callbackUrl=/);
+    expect(src).toContain("?start=diagnostic`)}`");
+    expect(src).not.toContain("window.location.href = `/exams/${examCode}/quiz`");
   });
 
-  it("the exam hub: no tour overlay; the free quiz is the primary guest action, sign-in a link", () => {
+  it("the exam hub: no tour overlay; the free sign-in is the filled button, the quiz the outlined one beside it", () => {
     const hub = read("src/app/exams/[code]/page.tsx");
     expect(hub).not.toContain("<PageTour");
     const box = hub.slice(hub.indexOf("{!userId && hasContent && ("));
     const quiz = box.indexOf("href={`/exams/${exam.code}/quiz`}");
     const signIn = box.indexOf("<HubSignInLink");
-    expect(quiz).toBeGreaterThan(-1);
-    expect(signIn).toBeGreaterThan(quiz);
-    expect(box.slice(quiz, signIn)).toContain('className="btn-primary inline-block !py-2 !px-4 text-sm"');
+    expect(signIn).toBeGreaterThan(-1);
+    expect(quiz).toBeGreaterThan(signIn);
+    expect(box.slice(signIn, quiz)).toContain('className="btn-primary inline-block !py-2 !px-4 text-sm"');
+    expect(box.slice(quiz, quiz + 400)).toContain("border-2 border-saffron-500");
+    expect(examHubCopy("en").coachButton).toBe("Sign in free — start practising →");
   });
 
-  it("the PYQ year page: a guest practises this set's own questions with no sign-in; the full set needs one", () => {
+  it("the PYQ year page: the free sign-in is the guest's main button; this set's own questions with no sign-in is the link under it", () => {
     const pyq = read("src/app/exams/[code]/pyq/[year]/page.tsx");
     // 27 Sep 2026 (review): only ids the no-sign-in player replays (MCQ, not
     // withdrawn — getAnonQuiz's filter), so "{n} questions from this set" holds.
     expect(pyq).toMatch(/const guestSet = questions\s*\.filter\(\(q\) => q\.type === "MCQ" && !q\.tags\.includes\("rejected"\)\)\s*\.slice\(0, 10\)\s*\.map\(\(q\) => q\.id\);/);
     expect(read("src/lib/anon-quiz.ts")).toContain('validated: true, type: "MCQ", NOT: { tags: { has: "rejected" } } },');
-    // 27 Sep 2026 (content first, wave 2): with the year's shared paper, the guest's main button is the WHOLE set
-    // on the guest paper player; the 10-question practice stays as a second link. Without it, as before.
+    // 28 Sep 2026: the whole-set branch stays in the file behind GUEST_WHOLE_PAPER_OPEN (closed); in the
+    // branch a guest gets, the sign-in button comes first and is the filled one.
     expect(pyq).toContain("{!userId && guestPaperId ? (");
-    expect(pyq).toContain("{P.ctaWhole}");
-    expect(pyq).toContain(") : !userId && guestSet.length >= 5 ? (");
-    expect(pyq).toContain("href={`/exams/${code}/quiz?set=${guestSet.join(\",\")}&n=${guestSet.length}`}");
-    expect(pyq).toContain("{fillPyq(P.ctaPractise, { n: guestSet.length })}");
-    expect(pyq).toContain("{P.ctaSave}");
+    const branch = pyq.slice(pyq.indexOf(") : !userId && guestSet.length >= 5 ? ("));
+    const signIn = branch.indexOf("{P.ctaSignIn}");
+    const practise = branch.indexOf("{fillPyq(P.ctaPractise, { n: guestSet.length })}");
+    expect(signIn).toBeGreaterThan(-1);
+    expect(practise).toBeGreaterThan(signIn);
+    expect(branch.slice(0, signIn)).toContain('className="btn-primary text-center"');
+    expect(branch.slice(0, signIn)).toContain("href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}`}");
+    expect(branch).toContain("href={`/exams/${code}/quiz?set=${guestSet.join(\",\")}&n=${guestSet.length}`}");
   });
 
   it("the PYQ start button opens no dialog; the warm-up is an optional link", () => {

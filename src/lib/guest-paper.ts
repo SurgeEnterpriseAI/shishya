@@ -20,6 +20,16 @@
 // generated mock stays theirs.
 //
 // Pure and import-free: used by the client player and the grade route.
+//
+// 28 Sep 2026 (founder: "the sign-up has to be there, the way it was"): the
+// guest whole paper is CLOSED. In its two days open, 5 guest papers were
+// graded while sign-ups that began on a mock or past-year page went from
+// about 3.5 a day to 0 and all sign-ups from about 25 a day to 10. A whole
+// mock or past-year set needs the free sign-in again (the sign-in card on
+// /mocks/{id}); the 5-question guest quiz, the 10-question past-year
+// practice, notes, cutoffs and the tutor stay open with no sign-in. The
+// player and the grade route stay in the code behind this one switch.
+export const GUEST_WHOLE_PAPER_OPEN: boolean = false;
 
 export interface GuestAnswer {
   questionId: string;

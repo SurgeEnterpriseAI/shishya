@@ -35,6 +35,7 @@ import { MockPlayer } from "./MockPlayer";
 import { headers } from "next/headers";
 import { classifyClient } from "@/lib/client-class";
 import { loadGuestPaper } from "@/lib/guest-paper-db";
+import { GUEST_WHOLE_PAPER_OPEN } from "@/lib/guest-paper";
 import { guestPaperCopy } from "@/lib/guest-paper-copy";
 
 // 25 Sep 2026: a guest now gets a real page here (the sign-in gate) instead
@@ -63,10 +64,9 @@ export default async function MockPlayerPage({
   //
   // Sign-in gate (25 Sep 2026). The bounce is now a page ON this URL: the
   // mock's exam, title and real size / timer, and the /login page's Google
-  // button (callback = this mock + from=signin + those utm tags); 27 Sep
-  // 2026 (founder, content first): the exam's 5-question guest quiz now
-  // comes first, with no sign-in (MockGate.tsx; src/lib/mock-gate.ts has
-  // the why and the numbers).
+  // button (callback = this mock + from=signin + those utm tags), then the
+  // exam's 5-question guest quiz below it, with no sign-in (MockGate.tsx;
+  // src/lib/mock-gate.ts has the why and the numbers).
   // An unknown id is a 404 straight away (it was one after sign-in). A
   // student-built mock (userId set) still bounces to /login — a guest may
   // not see another student's set — with from=signin in the callback too.
@@ -95,7 +95,9 @@ export default async function MockPlayerPage({
     // future results. Live tests keep the gate below (a rank needs an
     // account); crawlers keep it too (no question bodies for bots). A paper
     // too short to serve falls through to the notice below.
-    if (guestMock.generatedBy !== "live-test" && classifyClient((await headers()).get("user-agent")) !== "bot") {
+    // 28 Sep 2026: closed by GUEST_WHOLE_PAPER_OPEN (src/lib/guest-paper.ts) —
+    // a guest gets the sign-in card below, as before 27 Sep.
+    if (GUEST_WHOLE_PAPER_OPEN && guestMock.generatedBy !== "live-test" && classifyClient((await headers()).get("user-agent")) !== "bot") {
       const load = await loadGuestPaper(guestMock.id);
       if (load.ok) {
         const { GuestPaperPlayer } = await import("./GuestPaperPlayer");

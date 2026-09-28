@@ -33,6 +33,7 @@ import {
 import { OfficialYearPapers, WholePaperLinks } from "./WholePaperLinks";
 import { PYQ_TEXT_QUESTIONS, pyqFaqItems, pyqModelledEn, pyqOptions, pyqTextShownLine } from "@/lib/pyq-faq";
 import { faqPageJsonLd } from "@/lib/hub-faq";
+import { GUEST_WHOLE_PAPER_OPEN } from "@/lib/guest-paper";
 
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
@@ -261,7 +262,9 @@ export default async function PYQYearPage({
   // guest paper player (/mocks/{id}, src/lib/guest-paper.ts) when the year's
   // shared paper already exists — a read only; a guest or crawler never
   // creates it (the signed-in branch below does).
-  const guestPaperId = !userId
+  // 28 Sep 2026: closed with GUEST_WHOLE_PAPER_OPEN — no lookup, and the
+  // guest's main button is the free sign-in again (below).
+  const guestPaperId = !userId && GUEST_WHOLE_PAPER_OPEN
     ? ((await prisma.mock
         .findFirst({ where: { examId: exam.id, userId: null, generatedBy: `system:pyq:${code}:${yearNum}` }, select: { id: true } })
         .catch(() => null))?.id ?? null)
@@ -497,18 +500,21 @@ export default async function PYQYearPage({
                   )}
                 </div>
               ) : !userId && guestSet.length >= 5 ? (
+                // 28 Sep 2026 (founder: the sign-up must be there as it was):
+                // the free sign-in is the main button again; the no-sign-in
+                // practice on this set's own questions is the link under it.
                 <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
                   <Link
-                    href={`/exams/${code}/quiz?set=${guestSet.join(",")}&n=${guestSet.length}`}
+                    href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}`}
                     className="btn-primary text-center"
                   >
-                    {fillPyq(P.ctaPractise, { n: guestSet.length })}
+                    {P.ctaSignIn}
                   </Link>
                   <Link
-                    href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}`}
+                    href={`/exams/${code}/quiz?set=${guestSet.join(",")}&n=${guestSet.length}`}
                     className="text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"
                   >
-                    {P.ctaSave}
+                    {fillPyq(P.ctaPractise, { n: guestSet.length })}
                   </Link>
                 </div>
               ) : (

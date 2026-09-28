@@ -121,6 +121,8 @@ describe("guest paper — no writes, no keys before submit (source)", () => {
     const block = src.slice(src.indexOf("questions={pp.questions.map", i), src.indexOf("labels={{", i));
     expect(block).not.toMatch(/answerKey|solution/);
     expect(src).toContain('guestMock.generatedBy !== "live-test" && classifyClient((await headers()).get("user-agent")) !== "bot"');
+    // 28 Sep 2026: and the whole branch is closed by one switch.
+    expect(src).toContain("if (GUEST_WHOLE_PAPER_OPEN && guestMock.generatedBy");
   });
   it("the player reads keys only from the grade response", () => {
     const src = code(read("src/app/mocks/[id]/GuestPaperPlayer.tsx"));

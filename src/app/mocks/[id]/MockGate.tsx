@@ -1,16 +1,18 @@
 // Signed-out /mocks/[id] (25 Sep 2026): a light page instead of the bare
 // bounce to /login.
-// 27 Sep 2026 (founder, content first — quiz first): when the exam has a
-// guest quiz, it comes FIRST (no sign-in needed), then the sign-in card.
+// 28 Sep 2026 (founder: the sign-up must be there as it was): the sign-in
+// card is first again; for one day (27 Sep) the quiz came first.
 // Order on the page, phone-first:
-//   1. The exam's 5-question guest quiz, collapsed until asked for, ending
-//      on "sign in — back to this mock". Absent when the exam has none.
-//   2. The mock itself — exam, title, and its REAL size and timer (the
+//   1. The mock itself — exam, title, and its REAL size and timer (the
 //      question list and the duration the player would run) — with the
 //      /login page's Google button (same component, same label key), whose
 //      callback is this mock + from=signin + the email's utm tags
-//      (src/lib/mock-gate.ts), and /login's "Free · No credit card" line;
-//      the title clamped to three lines.
+//      (src/lib/mock-gate.ts), and /login's "Free · No credit card" line.
+//      It sits in the first screen on a phone; the title is clamped to
+//      three lines.
+//   2. Below: the exam's 5-question guest quiz, collapsed until asked for,
+//      ending on "sign in — back to this mock". Absent when the exam has
+//      none.
 // The page view is the root layout's AnalyticsTracker PAGE_VIEW of
 // /mocks/{id} (no userId = a guest on the gate). Server component; only the
 // button and the quiz are client islands.
@@ -57,25 +59,7 @@ export function MockGate({
       <Header />
       <section className="container-prose py-5 sm:py-10">
         <div className="mx-auto max-w-xl">
-          {guestQuiz && (
-            <GuestQuizGate
-              quiz={guestQuiz.quiz}
-              translation={guestQuiz.translation}
-              labels={guestQuiz.labels}
-              challengeLabels={guestQuiz.challengeLabels}
-              locale={guestQuiz.locale}
-              copy={{
-                heading: copy.quizHeading,
-                line: copy.quizLine,
-                start: copy.quizStart,
-                endSignIn: copy.quizEndSignIn,
-              }}
-              signInCallbackUrl={callbackUrl}
-              beacons={{ start: "mock-gate-quiz-start", done: "mock-gate-quiz-done", signin: "mock-gate-signin-click" }}
-              beaconProps={beaconProps}
-            />
-          )}
-          <div className={`${guestQuiz ? "mt-4 " : ""}rounded-xl border border-ink-200 bg-white p-5 shadow-sm sm:p-6`}>
+          <div className="rounded-xl border border-ink-200 bg-white p-5 shadow-sm sm:p-6">
             <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
               <Link href={`/exams/${examCode}`} className="hover:text-saffron-800">
                 {fillTemplate(copy.kicker, { exam: examShort })}
@@ -97,6 +81,25 @@ export function MockGate({
               {fillTemplate(freeLine, { n: INDIAN_LANGUAGE_COUNT })}
             </p>
           </div>
+
+          {guestQuiz && (
+            <GuestQuizGate
+              quiz={guestQuiz.quiz}
+              translation={guestQuiz.translation}
+              labels={guestQuiz.labels}
+              challengeLabels={guestQuiz.challengeLabels}
+              locale={guestQuiz.locale}
+              copy={{
+                heading: copy.quizHeading,
+                line: copy.quizLine,
+                start: copy.quizStart,
+                endSignIn: copy.quizEndSignIn,
+              }}
+              signInCallbackUrl={callbackUrl}
+              beacons={{ start: "mock-gate-quiz-start", done: "mock-gate-quiz-done", signin: "mock-gate-signin-click" }}
+              beaconProps={beaconProps}
+            />
+          )}
         </div>
       </section>
     </main>
