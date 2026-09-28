@@ -18,6 +18,7 @@ import { Header } from "@/components/Header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
+import { stripInventedCounts } from "@/lib/note-claims";
 import { getT } from "@/lib/i18n-server";
 import { findTranslations } from "@/lib/db/questionTranslations";
 import { ShareExamButton } from "@/components/ShareExamButton";
@@ -340,9 +341,10 @@ export default async function TopicPage({
                 <div>
                   <p className="text-sm font-bold text-ink-900">Test yourself on {topic.name}</p>
                   <p className="mt-0.5 text-xs text-ink-600">
+                    {/* 29 Sep 2026: "real {exam} questions" said they came from the exam's papers; they are Shishya's practice questions, written with AI and answer-checked. */}
                     {practiceQs.length >= 5
-                      ? `5 real ${exam.shortName} questions with instant answers — no signup, ~3 minutes.`
-                      : `Real ${exam.shortName} questions on this topic with instant answers — no signup.`}
+                      ? `5 practice questions for ${exam.shortName} with instant answers — no signup, ~3 minutes.`
+                      : `Practice questions for ${exam.shortName} on this topic with instant answers — no signup.`}
                   </p>
                 </div>
                 <Link
@@ -363,8 +365,12 @@ export default async function TopicPage({
                 (they printed as raw "**" and "|---|"), and the note's own "# "
                 heading is an <h2>: the page keeps one <h1>. Every piece of
                 text is escaped (src/lib/notes-markdown.ts). */}
+            {/* 29 Sep 2026: the stored notes state how many questions or
+                marks the exam gives the topic ("Expect 4–6 questions…") and
+                nobody counted them. Those sentences are not shown
+                (src/lib/note-claims.ts); the stored text is unchanged. */}
             <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
-              <NotesMarkdown markdown={notes} rich demoteH1 />
+              <NotesMarkdown markdown={stripInventedCounts(notes)} rich demoteH1 />
             </article>
             {/* Provenance, as it is (26 Sep 2026, G3). 27 Sep 2026
                 (integration): "from Shishya's syllabus outline", not "from

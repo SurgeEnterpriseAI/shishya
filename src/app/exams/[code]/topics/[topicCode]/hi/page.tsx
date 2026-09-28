@@ -12,6 +12,7 @@ import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
 import { NotesMarkdown } from "@/components/NotesMarkdown";
+import { stripInventedCounts } from "@/lib/note-claims";
 import { ShareExamButton } from "@/components/ShareExamButton";
 
 export const revalidate = 3600;
@@ -113,13 +114,14 @@ export default async function HindiTopicPage({
         </div>
 
         <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
-          <NotesMarkdown markdown={hi.content} />
+          {/* 29 Sep 2026: invented question and mark counts are not shown (src/lib/note-claims.ts). */}
+          <NotesMarkdown markdown={stripInventedCounts(hi.content)} />
         </article>
 
         <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
           <p className="text-base font-bold text-ink-900">अब खुद को परखें</p>
           <p className="mt-1 text-sm text-ink-600">
-            {topic.name} पर 5 असली {exam.shortName} सवाल — तुरंत जवाब, कोई साइनअप नहीं, ~3 मिनट।
+            {topic.name} पर {exam.shortName} के लिए अभ्यास के सवाल — तुरंत जवाब, कोई साइनअप नहीं।
           </p>
           <Link
             href={`/exams/${exam.code}/topics/${topic.code}/quiz`}
