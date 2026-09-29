@@ -140,9 +140,10 @@ describe("wiring", () => {
     expect(c).toContain("rich?: boolean;");
     expect(c).toContain("demoteH1?: boolean;");
     expect(c).toContain("notesMarkdownHtml(markdown, { demoteH1 })");
+    // 29 Sep 2026: the Hindi topic page uses the full renderer too (it printed raw "---" and "*italic*").
+    expect(read("src/app/exams/[code]/topics/[topicCode]/hi/page.tsx")).toMatch(/<NotesMarkdown[^>]*rich demoteH1/);
     // The other callers pass neither prop.
     for (const p of [
-      "src/app/exams/[code]/topics/[topicCode]/hi/page.tsx",
       "src/app/exams/[code]/guide/page.tsx",
       "src/app/exams/[code]/tricks/page.tsx",
       "src/app/schooling/[slug]/[classSlug]/[subject]/[chapter]/page.tsx",

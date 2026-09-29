@@ -118,7 +118,7 @@ describe("the topic pages use the filter (source)", () => {
   const read = (f: string) => fs.readFileSync(path.join(ROOT, f), "utf8");
   it("English and Hindi topic pages pass the note through stripInventedCounts", () => {
     expect(read("src/app/exams/[code]/topics/[topicCode]/page.tsx")).toContain("<NotesMarkdown markdown={stripInventedCounts(notes)} rich demoteH1 />");
-    expect(read("src/app/exams/[code]/topics/[topicCode]/hi/page.tsx")).toContain("<NotesMarkdown markdown={stripInventedCounts(hi.content)} />");
+    expect(read("src/app/exams/[code]/topics/[topicCode]/hi/page.tsx")).toContain("<NotesMarkdown markdown={stripInventedCounts(hi.content)} rich demoteH1 />");
   });
   it('the quiz box no longer calls the practice questions "real" exam questions', () => {
     const page = read("src/app/exams/[code]/topics/[topicCode]/page.tsx");

@@ -19,6 +19,9 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
 import { stripInventedCounts } from "@/lib/note-claims";
+import { pickShownQuestions } from "@/lib/topic-question-display";
+import { printsQuestionsInFull } from "@/lib/topic-pages-stage1";
+import { TopicQuestionsInFull } from "@/components/TopicQuestionsInFull";
 import { getT } from "@/lib/i18n-server";
 import { findTranslations } from "@/lib/db/questionTranslations";
 import { ShareExamButton } from "@/components/ShareExamButton";
@@ -167,6 +170,24 @@ export default async function TopicPage({
       topic: { select: { name: true } },
     },
   });
+
+  // 29 Sep 2026: the questions this page prints in full — stem, options,
+  // answer and worked solution (src/lib/topic-question-display.ts chooses
+  // them: answer check passed with full agreement, whole, no twins). The
+  // first one is the inline try-one question under the notes; the rest are
+  // listed below it. A page without notes lists them all, first.
+  // Stage 1: the pages people land on (src/lib/topic-pages-stage1.ts);
+  // every other topic page reads as before.
+  const shownQs = printsQuestionsInFull(exam.code, topic.code)
+    ? pickShownQuestions(
+        await prisma.question.findMany({
+          where: { validated: true, type: "MCQ", topicId: { in: topicIdsForPractice }, validatedBy: { startsWith: "factory:" } },
+          take: 80,
+          orderBy: { id: "asc" },
+          select: { id: true, type: true, difficulty: true, body: true, options: true, answerKey: true, solution: true, tags: true, validatedBy: true, metadata: true },
+        }),
+      )
+    : [];
 
   // Server-side translation lookup: if the visitor is on a non-English
   // locale AND we already have cached translations for these previews,
@@ -398,7 +419,14 @@ export default async function TopicPage({
                 inline MCQ right where reading ends (readers who reach a
                 quiz finish it 93% of the time — the question must come
                 before anything else interrupts). */}
-            {practiceQs[0] && (
+            {shownQs[0] ? (
+              <InlineTopicQuestion
+                examCode={code}
+                topicCode={topic.code}
+                topicName={topic.name}
+                question={{ body: shownQs[0].body, options: shownQs[0].options, answerKey: shownQs[0].answerKey, solution: shownQs[0].solution }}
+              />
+            ) : practiceQs[0] ? (
               <InlineTopicQuestion
                 examCode={code}
                 topicCode={topic.code}
@@ -410,7 +438,17 @@ export default async function TopicPage({
                   solution: practiceQs[0].solution,
                 }}
               />
-            )}
+            ) : null}
+
+            {/* 29 Sep 2026: the rest of the questions, printed whole. */}
+            <TopicQuestionsInFull
+              questions={shownQs.slice(1)}
+              topicName={topic.name}
+              examShort={exam.shortName}
+              examCode={code}
+              topicCode={topic.code}
+              locale={locale}
+            />
 
             {/* Mastery loop — signed-in only (anon visitors see nothing;
                 page stays clean + cached). */}
@@ -430,6 +468,18 @@ export default async function TopicPage({
             />
           </>
         ) : (
+          <>
+          {/* 29 Sep 2026: 63% of the people who land on a topic page land on
+              one with no notes. They get the questions with answers first. */}
+          <TopicQuestionsInFull
+            questions={shownQs}
+            topicName={topic.name}
+            examShort={exam.shortName}
+            examCode={code}
+            topicCode={topic.code}
+            locale={locale}
+            className="mt-6"
+          />
           <div className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-5 py-6">
             <p className="text-sm font-medium text-ink-800">{t("topic.notes.empty.headline")}</p>
             <p className="mt-1 text-sm text-ink-600">{t("topic.notes.empty.body")}</p>
@@ -440,6 +490,7 @@ export default async function TopicPage({
               {t("topic.notes.empty.cta")}
             </Link>
           </div>
+          </>
         )}
 
         {/* ── Ask Shishya for more (always shown — the closed loop) ── */}
@@ -485,8 +536,9 @@ export default async function TopicPage({
           </div>
         </section>
 
-        {/* ── Practice questions (secondary, collapsed-feel) ────────── */}
-        {practiceQs.length > 0 && (
+        {/* ── Practice question stems — only where no question passes the
+            rules for printing in full (29 Sep 2026) ───────────────────── */}
+        {practiceQs.length > 0 && shownQs.length === 0 && (
           <section className="mt-10">
             <div className="flex items-baseline justify-between">
               <h2 className="text-sm font-semibold text-ink-700">{t("topic.practice.title")}</h2>

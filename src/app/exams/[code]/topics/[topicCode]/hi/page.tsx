@@ -115,7 +115,7 @@ export default async function HindiTopicPage({
 
         <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
           {/* 29 Sep 2026: invented question and mark counts are not shown (src/lib/note-claims.ts). */}
-          <NotesMarkdown markdown={stripInventedCounts(hi.content)} />
+          <NotesMarkdown markdown={stripInventedCounts(hi.content)} rich demoteH1 />
         </article>
 
         <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
