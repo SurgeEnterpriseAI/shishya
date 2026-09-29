@@ -593,43 +593,6 @@ export const READ_PATTERNS: Readonly<Record<string, VerifiedPattern>> = {
     },
     "checkedOn": "2026-09-29"
   },
-  "RJ_REAP": {
-    "code": "RJ_REAP",
-    "stage": "JEE (Main) Paper 1",
-    "questions": 75,
-    "marks": 300,
-    "durationMin": 180,
-    "negativePerWrong": 1,
-    "answerFormat": "Section A: Multiple-Choice Questions. Section B: enter the correct integer value using the on-screen virtual numeric keypad, rounded off to the nearest integer",
-    "practiceFormatDiffers": true,
-    "sections": [
-      {
-        "name": "Mathematics (Section A: 20 questions, Section B: 5 questions)",
-        "questions": null,
-        "marks": 100
-      },
-      {
-        "name": "Physics (Section A: 20 questions, Section B: 5 questions)",
-        "questions": null,
-        "marks": 100
-      },
-      {
-        "name": "Chemistry (Section A: 20 questions, Section B: 5 questions)",
-        "questions": null,
-        "marks": 100
-      }
-    ],
-    "languages": "",
-    "source": {
-      "url": "https://cdnbbsr.s3waas.gov.in/s3f8e59f4b2fe7c5705bf878bbd494ccdf/uploads/2025/11/202511021649722475.pdf",
-      "publisher": "National Testing Agency",
-      "publisherShort": "NTA",
-      "title": "Information Bulletin - 2026, Joint Entrance Examination (Main) - 2026",
-      "publishedOn": "",
-      "para": "Chapter 2 Examination Scheme: para 2.4 Pattern of Examination, Paper 1, items 1-3"
-    },
-    "checkedOn": "2026-09-29"
-  },
   "RJ_RPSC_RAS": {
     "code": "RJ_RPSC_RAS",
     "stage": "Preliminary Examination",

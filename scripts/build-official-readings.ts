@@ -103,7 +103,10 @@ const OVERRIDES: Record<string, {
   // ── Batch 2 (29 Sep 2026) ──
   // REAP admits through JEE (Main); the reading's documents are NTA's JEE (Main) bulletin and syllabus. A REAP
   // topic page cannot cite them without a line that explains the link, so none is placed yet.
-  RJ_REAP: { noPlaces: "the documents are NTA's JEE (Main) bulletin and syllabus, not REAP's own" },
+  RJ_REAP: {
+    noPlaces: "the documents are NTA's JEE (Main) bulletin and syllabus, not REAP's own",
+    noPattern: "the pattern is NTA's JEE (Main) Paper 1, not a REAP document",
+  },
   // JAC, JTET Rules 2026, Rule 11: papers in Hindi and English, medium Hindi or English; language subjects in
   // their own language.
   JH_TET: { languages: "Hindi and English (medium Hindi or English); the language papers in their own language" },
