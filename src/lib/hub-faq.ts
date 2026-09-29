@@ -32,7 +32,7 @@
 // twins keep ExamFaq's localised four). Pure
 // (tests/unit/faq-visible.test.ts).
 
-import { markText, patternCitation, type VerifiedPattern } from "@/lib/pattern-verified";
+import { markText, negativeMarkingText, patternCitation, sectionText, type VerifiedPattern } from "@/lib/pattern-verified";
 
 export interface FaqItem {
   q: string;
@@ -113,19 +113,24 @@ export function hubFaqExtraItems(i: HubFaqInput): FaqItem[] {
   if (p) {
     out.push({
       q: `What is the exam pattern of ${i.short}?`,
-      a: `${i.short} ${p.stage} has ${p.questions} questions for ${p.marks} marks in ${p.durationMin} minutes: ${p.sections
-        .map((s) => `${s.name} ${s.questions} questions (${s.marks} marks)`)
-        .join(", ")}. Source: ${patternCitation(p)} — ${p.source.url}`,
+      // 29 Sep 2026: sections, the answer format and the spread of marks
+      // only as the notice prints them (a section may print its questions
+      // or its marks and not both; a paper may name no sections).
+      a: `${i.short} ${p.stage} has ${p.questions} questions for ${p.marks} marks in ${p.durationMin} minutes${
+        p.sections.length > 0 ? `: ${p.sections.map(sectionText).join(", ")}` : ""
+      }.${p.answerFormat ? ` Answers: ${p.answerFormat}.` : ""}${p.marksNote ? ` Marks: ${p.marksNote}.` : ""} Source: ${patternCitation(p)} — ${p.source.url}`,
     });
     out.push({
       q: `Is there negative marking in ${i.short}?`,
-      a:
-        p.negativePerWrong > 0
+      a: p.negativeText
+        ? `In ${i.short} ${p.stage}: ${p.negativeText} (${patternCitation(p)}).`
+        : p.negativePerWrong > 0
           ? `Yes — ${markText(p.negativePerWrong)} mark is deducted for every wrong answer in ${i.short} ${p.stage} (${patternCitation(p)}).`
           : `No — ${i.short} ${p.stage} has no negative marking (${patternCitation(p)}).`,
     });
   }
-  if (p) {
+  // The languages answer only where the notice states the paper's language.
+  if (p && p.languages) {
     out.push({ q: `In which languages is ${i.short} conducted?`, a: `${i.short} ${p.stage} question paper: ${p.languages} (${patternCitation(p)}).` });
   }
   if (i.cutoffPage) {
@@ -144,7 +149,11 @@ export function hubFaqExtraItems(i: HubFaqInput): FaqItem[] {
   if (i.realPatternMock) {
     out.push({
       q: `Is there a full-length ${i.short} mock test in the real exam pattern?`,
-      a: p
+      // 29 Sep 2026: where the paper's answer format differs from Shishya's
+      // practice questions, the answer says so and claims no pattern.
+      a: p?.practiceFormatDiffers
+        ? `Shishya has a free full-length ${i.name} practice set, scored with solutions, but not in the paper's answer format: in the real paper ${p.answerFormat ?? "the answer format is different"} (${patternCitation(p)}), while Shishya's practice questions give four options. Use it to practise the ideas.`
+        : p
         ? `Yes — Shishya has a free full-length ${i.name} mock in the ${p.stage} pattern: ${p.questions} questions in ${p.durationMin} minutes, sections in the paper's order, scored with solutions. It is the "Full-Length Mock (Real Pattern)" tile on this page.`
         : `Yes — Shishya has a free full-length ${i.name} mock built to the exam's pattern, with sections in the paper's order, scored with solutions. It is the "Full-Length Mock (Real Pattern)" tile on this page.`,
     });

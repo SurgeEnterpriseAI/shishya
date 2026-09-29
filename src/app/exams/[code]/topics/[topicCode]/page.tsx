@@ -21,6 +21,8 @@ import { realExamKey } from "@/lib/db/exam-scope";
 import { stripInventedCounts } from "@/lib/note-claims";
 import { pickShownQuestions } from "@/lib/topic-question-display";
 import { printsQuestionsInFull } from "@/lib/topic-pages-stage1";
+import { officialSyllabusPlace, syllabusPlaceCopy } from "@/lib/official-syllabus-lines";
+import { isoDayText, patternCitation, verifiedPattern } from "@/lib/pattern-verified";
 import { TopicQuestionsInFull } from "@/components/TopicQuestionsInFull";
 import { getT } from "@/lib/i18n-server";
 import { findTranslations } from "@/lib/db/questionTranslations";
@@ -189,6 +191,17 @@ export default async function TopicPage({
       )
     : [];
 
+  // 29 Sep 2026: what the conducting body's own documents say — where its
+  // syllabus names this topic (src/lib/official-syllabus-lines.ts), and,
+  // where the paper's answer format differs from these practice questions
+  // (IOQM asks for an integer, with no options), a line that says so.
+  const syllabusPlace = officialSyllabusPlace(exam.code, topic.code);
+  const officialPattern = verifiedPattern(exam);
+  const formatNote =
+    officialPattern?.practiceFormatDiffers && officialPattern.answerFormat
+      ? `In the ${exam.shortName} paper ${officialPattern.answerFormat} (${patternCitation(officialPattern)}). These practice questions give four options: use them to practise the ideas, not the answer format.`
+      : null;
+
   // Server-side translation lookup: if the visitor is on a non-English
   // locale AND we already have cached translations for these previews,
   // surface them. We never trigger a fresh Anthropic call here — that's
@@ -311,6 +324,18 @@ export default async function TopicPage({
         </div>
         {topic.description && (
           <p className="mt-2 max-w-3xl text-sm text-ink-600 sm:text-base">{topic.description}</p>
+        )}
+        {syllabusPlace && (
+          <p className="mt-2 max-w-3xl text-xs text-ink-600" data-official-syllabus>
+            <span className="font-semibold text-ink-800">{syllabusPlaceCopy(locale).label}:</span>{" "}
+            <a href={syllabusPlace.doc.url} target="_blank" rel="noopener nofollow" className="font-medium text-saffron-800 underline underline-offset-2">
+              {syllabusPlace.doc.publisherShort} — {syllabusPlace.doc.name}
+            </a>
+            , {syllabusPlace.where} (
+            {syllabusPlace.doc.scanned ? `${syllabusPlaceCopy(locale).scanned}; ` : ""}
+            {syllabusPlaceCopy(locale).readOn.replace("{date}", isoDayText(syllabusPlace.doc.readOn))}).
+            {syllabusPlace.doc.caveat ? ` ${syllabusPlace.doc.caveat}` : ""}
+          </p>
         )}
 
         {/* Share — only when there are real notes worth forwarding to a
@@ -443,6 +468,7 @@ export default async function TopicPage({
             {/* 29 Sep 2026: the rest of the questions, printed whole. */}
             <TopicQuestionsInFull
               questions={shownQs.slice(1)}
+              formatNote={formatNote}
               topicName={topic.name}
               examShort={exam.shortName}
               examCode={code}
@@ -473,6 +499,7 @@ export default async function TopicPage({
               one with no notes. They get the questions with answers first. */}
           <TopicQuestionsInFull
             questions={shownQs}
+            formatNote={formatNote}
             topicName={topic.name}
             examShort={exam.shortName}
             examCode={code}

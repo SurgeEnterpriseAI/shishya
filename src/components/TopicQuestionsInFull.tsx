@@ -19,6 +19,7 @@ export function TopicQuestionsInFull({
   locale,
   firstOpen = true,
   className = "mt-8",
+  formatNote = null,
 }: {
   questions: readonly ShownQuestion[];
   topicName: string;
@@ -29,6 +30,8 @@ export function TopicQuestionsInFull({
   /** Show the first question's solution open. */
   firstOpen?: boolean;
   className?: string;
+  /** Where the paper's answer format differs from these questions, the line that says so. */
+  formatNote?: string | null;
 }) {
   if (questions.length === 0) return null;
   const C = topicQuestionsCopy(locale);
@@ -39,6 +42,7 @@ export function TopicQuestionsInFull({
         {fillTopicQuestions(questions.length === 1 ? C.headingOne : C.heading, vars)}
       </h2>
       <p className="mt-1 text-xs text-ink-500">{C.notice}</p>
+      {formatNote && <p className="mt-1 text-xs font-medium text-ink-700">{formatNote}</p>}
       <ol className="mt-4 space-y-4">
         {questions.map((q, i) => {
           const correct = q.options.find((o) => o.key === q.answerKey);

@@ -32,6 +32,7 @@ import { examTitleYear, yearSuffix } from "@/lib/exam-title-year";
 import { cache } from "react";
 import { leadDescription, syllabusLead } from "@/lib/answer-lead";
 import { isoDayText, markText, patternCitation, verifiedPattern } from "@/lib/pattern-verified";
+import { scannedDisclosure } from "@/lib/scanned-cutoff";
 import { latestCheck, freshnessLine } from "@/lib/page-freshness";
 // 27 Sep 2026: the practice rule (src/lib/exam-practice-state.ts) — the
 // diagnostic-mock box, the quiz link and the coach door only with practice.
@@ -268,11 +269,12 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
                   </tr>
                 </thead>
                 <tbody>
+                  {/* 29 Sep 2026: "—" = the notice does not print it (never a 0). */}
                   {pattern.sections.map((s) => (
                     <tr key={s.name} className="border-b border-ink-100">
                       <td className="px-4 py-2 font-medium text-ink-900">{s.name}</td>
-                      <td className="px-4 py-2 tabular-nums text-ink-700">{s.questions}</td>
-                      <td className="px-4 py-2 tabular-nums text-ink-700">{s.marks}</td>
+                      <td className="px-4 py-2 tabular-nums text-ink-700">{s.questions ?? "—"}</td>
+                      <td className="px-4 py-2 tabular-nums text-ink-700">{s.marks ?? "—"}</td>
                     </tr>
                   ))}
                   <tr>
@@ -285,13 +287,26 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
             </div>
             <p className="mt-2 text-xs text-ink-600">
               Time: {pattern.durationMin} minutes · Negative marking:{" "}
-              {pattern.negativePerWrong > 0 ? `${markText(pattern.negativePerWrong)} mark per wrong answer` : "none"} · Language:{" "}
-              {pattern.languages} · Source:{" "}
+              {pattern.negativeText ?? (pattern.negativePerWrong > 0 ? `${markText(pattern.negativePerWrong)} mark per wrong answer` : "none")}
+              {pattern.answerFormat ? ` · Answers: ${pattern.answerFormat}` : ""}
+              {pattern.marksNote ? ` · Marks: ${pattern.marksNote}` : ""}
+              {pattern.languages ? ` · Language: ${pattern.languages}` : ""} · Source:{" "}
               <a href={pattern.source.url} target="_blank" rel="noopener nofollow" className="font-medium text-saffron-800 underline">
                 {patternCitation(pattern)}
               </a>{" "}
-              ({pattern.source.para}, dated {isoDayText(pattern.source.publishedOn)}).
+              ({pattern.source.para}
+              {pattern.source.publishedOn ? `, dated ${isoDayText(pattern.source.publishedOn)}` : ", the document prints no date"}).
+              {pattern.sections.some((s) => s.questions == null || s.marks == null) ? " “—” = not printed in the notice." : ""}
             </p>
+            {pattern.source.scanned && (
+              <p className="mt-1 text-xs text-ink-500">{scannedDisclosure(locale, pattern.source.publisher).text}</p>
+            )}
+            {pattern.practiceFormatDiffers && (
+              <p className="mt-1 text-xs text-ink-600">
+                Shishya&apos;s practice questions for {exam.shortName} give four options to choose from; the paper does not. Use them to practise the
+                ideas, not the answer format.
+              </p>
+            )}
             {checked && <p className="mt-1 text-xs text-ink-500">{freshnessLine(checked, "Exam pattern")}</p>}
           </section>
         )}

@@ -65,8 +65,8 @@ describe("verifiedPattern — numbers only as read from the notice", () => {
   it("SSC CGL Tier-I agrees with the SSC 2026 notice", () => {
     const v = verifiedPattern(G3_EXAMS.SSC_CGL);
     expect(v?.stage).toBe("Tier-I");
-    expect(v?.sections.reduce((a, s) => a + s.questions, 0)).toBe(v?.questions);
-    expect(v?.sections.reduce((a, s) => a + s.marks, 0)).toBe(v?.marks);
+    expect(v?.sections.reduce((a, s) => a + (s.questions ?? 0), 0)).toBe(v?.questions);
+    expect(v?.sections.reduce((a, s) => a + (s.marks ?? 0), 0)).toBe(v?.marks);
     expect(v?.source.url.startsWith("https://ssc.gov.in/")).toBe(true);
     expect(patternSentence(v!)).toBe("Tier-I: 100 questions, 200 marks, 60 minutes, −0.5 per wrong answer (SSC notice, 21 May 2026).");
   });
