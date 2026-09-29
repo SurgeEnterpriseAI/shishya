@@ -97,8 +97,9 @@ describe("hub questions and answers", () => {
 });
 
 describe("where the official syllabus names a topic", () => {
-  it("30 places, each on the body's own site, each a stage-1 topic page", () => {
-    const keys = Object.keys(OFFICIAL_SYLLABUS_PLACES);
+  it("the 30 hand-read places, each on the body's own site, each a stage-1 topic page", () => {
+    // 29 Sep 2026: generated readings add more places (src/data/official-readings.ts, tested there).
+    const keys = Object.keys(OFFICIAL_SYLLABUS_PLACES).filter((k) => /^(TN_TNPSC_GROUP1|UP_UPSSSC_PET|AP_APPSC_GROUP2|IOQM)\//.test(k));
     expect(keys).toHaveLength(30);
     for (const k of keys) {
       expect(TOPIC_PAGES_STAGE1.has(k), k).toBe(true);

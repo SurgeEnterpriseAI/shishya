@@ -122,8 +122,8 @@ export function hubFaqExtraItems(i: HubFaqInput): FaqItem[] {
     });
     out.push({
       q: `Is there negative marking in ${i.short}?`,
-      a: p.negativeText
-        ? `In ${i.short} ${p.stage}: ${p.negativeText} (${patternCitation(p)}).`
+      a: p.negativeText || p.negativeNotPrinted
+        ? `In ${i.short} ${p.stage}: ${negativeMarkingText(p)} (${patternCitation(p)}).`
         : p.negativePerWrong > 0
           ? `Yes — ${markText(p.negativePerWrong)} mark is deducted for every wrong answer in ${i.short} ${p.stage} (${patternCitation(p)}).`
           : `No — ${i.short} ${p.stage} has no negative marking (${patternCitation(p)}).`,

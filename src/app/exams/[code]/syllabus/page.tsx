@@ -31,7 +31,7 @@ import { syllabusPageCopy } from "@/lib/page-gates-copy";
 import { examTitleYear, yearSuffix } from "@/lib/exam-title-year";
 import { cache } from "react";
 import { leadDescription, syllabusLead } from "@/lib/answer-lead";
-import { isoDayText, markText, patternCitation, verifiedPattern } from "@/lib/pattern-verified";
+import { NEGATIVE_NOT_PRINTED, isoDayText, markText, patternCitation, verifiedPattern } from "@/lib/pattern-verified";
 import { scannedDisclosure } from "@/lib/scanned-cutoff";
 import { latestCheck, freshnessLine } from "@/lib/page-freshness";
 // 27 Sep 2026: the practice rule (src/lib/exam-practice-state.ts) — the
@@ -287,7 +287,12 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
             </div>
             <p className="mt-2 text-xs text-ink-600">
               Time: {pattern.durationMin} minutes · Negative marking:{" "}
-              {pattern.negativeText ?? (pattern.negativePerWrong > 0 ? `${markText(pattern.negativePerWrong)} mark per wrong answer` : "none")}
+              {pattern.negativeText ??
+                (pattern.negativeNotPrinted
+                  ? NEGATIVE_NOT_PRINTED
+                  : pattern.negativePerWrong > 0
+                    ? `${markText(pattern.negativePerWrong)} mark per wrong answer`
+                    : "none")}
               {pattern.answerFormat ? ` · Answers: ${pattern.answerFormat}` : ""}
               {pattern.marksNote ? ` · Marks: ${pattern.marksNote}` : ""}
               {pattern.languages ? ` · Language: ${pattern.languages}` : ""} · Source:{" "}

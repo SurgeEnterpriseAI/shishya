@@ -32,6 +32,8 @@
 // the 26 Sep fetch): JEE_MAIN (NTA bulletin), UPSC_PRELIMS (GS Paper I, UPSC
 // notice 05/2026-CSE).
 
+import { READ_PATTERNS } from "@/data/official-readings";
+
 export interface VerifiedSection {
   name: string;
   /** null = the notice does not print it. */
@@ -50,6 +52,9 @@ export interface VerifiedPattern {
   /** Marks deducted per wrong answer; 0 = none printed. The number the
    *  stored Exam row is compared with. */
   negativePerWrong: number;
+  /** The notice prints no rule for a wrong answer: the stored row's figure
+   *  is not compared, and the page says the notice is silent. */
+  negativeNotPrinted?: boolean;
   /** The deduction as the notice words it, when a bare number would say less
    *  or something else. Printed in place of "−x per wrong answer" / "no
    *  negative marking". */
@@ -84,7 +89,8 @@ export interface VerifiedPattern {
   checkedOn: string;
 }
 
-export const PATTERN_VERIFIED: Readonly<Record<string, VerifiedPattern>> = {
+/** Read and typed by hand. An entry here wins over a generated one. */
+const HAND_READ: Readonly<Record<string, VerifiedPattern>> = {
   SSC_CGL: {
     code: "SSC_CGL",
     stage: "Tier-I",
@@ -220,6 +226,10 @@ export const PATTERN_VERIFIED: Readonly<Record<string, VerifiedPattern>> = {
   },
 };
 
+/** Every exam whose pattern was read from its notice: the generated
+ *  readings (src/data/official-readings.ts) and the hand-read ones. */
+export const PATTERN_VERIFIED: Readonly<Record<string, VerifiedPattern>> = { ...READ_PATTERNS, ...HAND_READ };
+
 export interface StoredPattern {
   code: string;
   totalQuestions: number;
@@ -240,7 +250,7 @@ export function verifiedPattern(exam: StoredPattern | null | undefined): Verifie
     close(exam.totalQuestions, v.questions) &&
     close(exam.totalMarks, v.marks) &&
     close(exam.durationMin, v.durationMin) &&
-    close(exam.negativeMark, v.negativePerWrong);
+    (v.negativeNotPrinted === true || close(exam.negativeMark, v.negativePerWrong));
   return agrees ? v : null;
 }
 
@@ -264,9 +274,13 @@ export function patternCitation(v: VerifiedPattern): string {
   return v.source.publishedOn ? `${doc}, ${isoDayText(v.source.publishedOn)}` : `${doc}, read ${isoDayText(v.checkedOn)}`;
 }
 
+/** What the page says when the notice is silent on wrong answers. */
+export const NEGATIVE_NOT_PRINTED = "the notice prints no rule on marks for a wrong answer";
+
 /** "−0.5 per wrong answer", "no negative marking", or the notice's own wording. */
 export function negativeMarkingText(v: VerifiedPattern): string {
   if (v.negativeText) return v.negativeText;
+  if (v.negativeNotPrinted) return NEGATIVE_NOT_PRINTED;
   return v.negativePerWrong > 0 ? `−${markText(v.negativePerWrong)} per wrong answer` : "no negative marking";
 }
 

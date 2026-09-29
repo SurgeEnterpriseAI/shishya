@@ -16,6 +16,8 @@
 //
 // The page shows the place, not the syllabus text. Key: "{EXAM}/{topic.code}".
 
+import { READ_DOCUMENTS, READ_PLACES } from "@/data/official-readings";
+
 export interface SyllabusDocument {
   publisherShort: string;
   /** The document's name as the page prints it. */
@@ -71,7 +73,8 @@ const APT_II = "Part B: Aptitude and Mental Ability, Unit II: Reasoning";
 const AP_SCREEN = "Screening Test, General Studies and Mental Ability";
 const AP_MAIN_1A = "Main Examination, Paper-I, Section A: Social and Cultural History of Andhra Pradesh";
 
-export const OFFICIAL_SYLLABUS_PLACES: Readonly<Record<string, SyllabusPlace>> = {
+/** Read and typed by hand. An entry here wins over a generated one. */
+const HAND_READ_PLACES: Readonly<Record<string, SyllabusPlace>> = {
   "TN_TNPSC_GROUP1/apt.si_ci": { doc: TNPSC_G1, where: APT_I },
   "TN_TNPSC_GROUP1/apt.dice": { doc: TNPSC_G1, where: APT_II },
   "TN_TNPSC_GROUP1/gs.freedom.leaders": { doc: TNPSC_G1, where: UNIT_III },
@@ -106,6 +109,16 @@ export const OFFICIAL_SYLLABUS_PLACES: Readonly<Record<string, SyllabusPlace>> =
   "IOQM/math.geometry.triangles": { doc: OLYMPIAD, where: "Plane Geometry" },
   "IOQM/math.algebra.sequences": { doc: OLYMPIAD, where: "Algebra" },
 };
+
+const generatedPlaces: Record<string, SyllabusPlace> = {};
+for (const [key, place] of Object.entries(READ_PLACES)) {
+  const doc = READ_DOCUMENTS[place.doc];
+  if (doc) generatedPlaces[key] = { doc, where: place.where };
+}
+
+/** Every topic page with a place in its exam's official syllabus: the
+ *  generated readings (src/data/official-readings.ts) and the hand-read ones. */
+export const OFFICIAL_SYLLABUS_PLACES: Readonly<Record<string, SyllabusPlace>> = { ...generatedPlaces, ...HAND_READ_PLACES };
 
 export function officialSyllabusPlace(examCode: string, topicCode: string): SyllabusPlace | null {
   return OFFICIAL_SYLLABUS_PLACES[`${examCode}/${topicCode}`] ?? null;
