@@ -394,6 +394,17 @@ export async function GET(
       L.push(`On the exam hub: ${SITE}/exams/${exam.code}#official-papers`);
       L.push("");
     }
+    // 29 Sep 2026: the body's own SAMPLE papers — practice papers for the coming exam, not past papers.
+    const { loadOfficialSamplePapers } = await import("@/lib/official-papers-db");
+    const { samplePaperContextLines } = await import("@/lib/official-papers");
+    const sampleLines = samplePaperContextLines(await loadOfficialSamplePapers(exam.id));
+    if (sampleLines.length) {
+      L.push("## Official sample papers (free)");
+      L.push("Sample papers the conducting body publishes free on its own site for the coming exam. They are its practice papers, not previous years' papers; each line links the body's file.");
+      L.push(...sampleLines);
+      L.push(`On the exam hub: ${SITE}/exams/${exam.code}#official-sample-papers`);
+      L.push("");
+    }
   }
 
   // 27 Sep 2026: "mocks" and "PYQ-pattern practice" only where the exam has

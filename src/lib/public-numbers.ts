@@ -534,8 +534,8 @@ async function readCoverage(): Promise<PublicNumber<CoverageGroup[]>> {
         AND NOT (${WITHDRAWN_TAG} = ANY(q.tags)) AND NOT COALESCE(q.metadata ? 'factoryVerify', FALSE)`,
     prisma.$queryRaw<{ papers: number; paper_exams: number; cutoffs: number; cutoff_exams: number }[]>`
       SELECT
-        (SELECT COUNT(*)::int FROM "OfficialPaper" p JOIN "Exam" e ON e.id = p."examId" WHERE p."archivedAt" IS NULL AND ${REAL_EXAM_SQL}) AS papers,
-        (SELECT COUNT(DISTINCT p."examId")::int FROM "OfficialPaper" p JOIN "Exam" e ON e.id = p."examId" WHERE p."archivedAt" IS NULL AND ${REAL_EXAM_SQL}) AS paper_exams,
+        (SELECT COUNT(*)::int FROM "OfficialPaper" p JOIN "Exam" e ON e.id = p."examId" WHERE p."archivedAt" IS NULL AND p.kind <> 'sample paper' AND ${REAL_EXAM_SQL}) AS papers,
+        (SELECT COUNT(DISTINCT p."examId")::int FROM "OfficialPaper" p JOIN "Exam" e ON e.id = p."examId" WHERE p."archivedAt" IS NULL AND p.kind <> 'sample paper' AND ${REAL_EXAM_SQL}) AS paper_exams,
         (SELECT COUNT(*)::int FROM "OfficialCutoff" c JOIN "Exam" e ON e.id = c."examId" WHERE c."archivedAt" IS NULL AND ${REAL_EXAM_SQL}) AS cutoffs,
         (SELECT COUNT(DISTINCT c."examId")::int FROM "OfficialCutoff" c JOIN "Exam" e ON e.id = c."examId" WHERE c."archivedAt" IS NULL AND ${REAL_EXAM_SQL}) AS cutoff_exams`,
     prisma.examImportantDate.findMany({

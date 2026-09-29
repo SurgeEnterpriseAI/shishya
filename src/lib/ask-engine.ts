@@ -320,7 +320,7 @@ async function examPageFacts(input: { code?: unknown }, ctx: ToolCtx) {
       EXISTS (SELECT 1 FROM "Mock" m WHERE m."examId" = e.id AND m."userId" IS NULL AND m."generatedBy" = 'system:full-pattern-v1') AS "fullPattern",
       ARRAY(
         SELECT DISTINCT p.year FROM "OfficialPaper" p
-        WHERE p."examId" = e.id AND p."archivedAt" IS NULL AND p.kind NOT IN ('answer key', 'listing page')
+        WHERE p."examId" = e.id AND p."archivedAt" IS NULL AND p.kind NOT IN ('answer key', 'listing page', 'sample paper')
         ORDER BY p.year DESC
       ) AS "paperYears"
     FROM "Exam" e

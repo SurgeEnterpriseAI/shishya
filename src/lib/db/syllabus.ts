@@ -83,7 +83,7 @@ export async function loadTutorExamFactsSource(exam: ExamRow): Promise<TutorExam
       // answer key alone or a listing page.
       prisma.$queryRaw<{ year: string }[]>`
         SELECT DISTINCT year FROM "OfficialPaper"
-        WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL AND kind NOT IN ('answer key', 'listing page')`,
+        WHERE "examId" = ${exam.id} AND "archivedAt" IS NULL AND kind NOT IN ('answer key', 'listing page', 'sample paper')`,
       loadExamPageGates()
         .then((m) => m.get(exam.code) ?? null)
         .catch(() => null),

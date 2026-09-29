@@ -50,6 +50,7 @@ import { examPeerProof } from "@/lib/peer-proof";
 import { REHEARSAL_CLOSE_IST_HOUR } from "@/lib/live-test";
 import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { OfficialPapersBlock } from "@/components/OfficialPapersBlock";
+import { OfficialSamplePapersBlock } from "@/components/OfficialSamplePapersBlock";
 import { hubPyqPhrase } from "@/lib/pyq-naming";
 import { examHubCopy, fillHub, type ExamHubCopy } from "@/lib/exam-hub-copy";
 import { examPageGates, GATES_CLOSED } from "@/lib/exam-page-gates";
@@ -1474,6 +1475,8 @@ export default async function ExamPage({
           {/* The real papers first (14 Sep 2026): students and ChatGPT look for
               them, and the sets below are pattern practice, never the paper. */}
           <OfficialPapersBlock examId={exam.id} />
+          {/* The body's own sample papers (29 Sep 2026) — labelled, never a past paper. */}
+          <OfficialSamplePapersBlock examId={exam.id} />
           {pyqYears.length === 0 ? (
             practice.hasPractice ? (
               <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">

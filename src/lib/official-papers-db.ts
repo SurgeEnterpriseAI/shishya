@@ -3,6 +3,11 @@
 // Cached per exam for an hour — they change only when the importer runs —
 // and a failed read is never cached: it shows no papers for that request.
 // Raw SQL, like OfficialCutoff.
+//
+// 29 Sep 2026: official SAMPLE papers share the table (kind 'sample paper').
+// They are never a previous year's paper, so the past-paper loader and the
+// exam-code list leave them out, and loadOfficialSamplePapers reads them for
+// their own block (src/components/OfficialSamplePapersBlock.tsx).
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
@@ -13,8 +18,8 @@ const cachedPapers = unstable_cache(
   async (examId: string): Promise<OfficialPaperRow[]> =>
     prisma.$queryRaw<OfficialPaperRow[]>`
       SELECT year, paper, kind, language, url, "listingUrl", publisher, bytes, pages, scan
-      FROM "OfficialPaper" WHERE "examId" = ${examId} AND "archivedAt" IS NULL`,
-  ["official-papers-v1"],
+      FROM "OfficialPaper" WHERE "examId" = ${examId} AND "archivedAt" IS NULL AND kind <> 'sample paper'`,
+  ["official-papers-v2"],
   { revalidate: 3600, tags: ["exam-shared"] },
 );
 
@@ -26,12 +31,41 @@ export async function loadOfficialPapers(examId: string): Promise<OfficialPaperR
   }
 }
 
+const cachedSamples = unstable_cache(
+  async (examId: string): Promise<OfficialPaperRow[]> =>
+    prisma.$queryRaw<OfficialPaperRow[]>`
+      SELECT year, paper, kind, language, url, "listingUrl", publisher, bytes, pages, scan
+      FROM "OfficialPaper" WHERE "examId" = ${examId} AND "archivedAt" IS NULL AND kind = 'sample paper'`,
+  ["official-sample-papers-v1"],
+  { revalidate: 3600, tags: ["exam-shared"] },
+);
+
+/** The body's own sample papers for the coming exam (not past papers); [] on a failed read. */
+export async function loadOfficialSamplePapers(examId: string): Promise<OfficialPaperRow[]> {
+  try {
+    return await cachedSamples(examId);
+  } catch {
+    return [];
+  }
+}
+
+/** Codes of the exams holding official sample papers (29 Sep 2026). */
+export async function examCodesWithOfficialSamplePapers(): Promise<Set<string>> {
+  try {
+    const rows = await prisma.$queryRaw<{ code: string }[]>`
+      SELECT DISTINCT e.code FROM "OfficialPaper" p JOIN "Exam" e ON e.id = p."examId" WHERE p."archivedAt" IS NULL AND p.kind = 'sample paper' AND ${NOT_SCHOOL_SQL}`;
+    return new Set(rows.map((r) => r.code));
+  } catch {
+    return new Set();
+  }
+}
+
 /** Codes of the exams holding at least one verified official paper or listing page.
  *  25 Sep 2026: real exams only (src/lib/db/exam-scope.ts). */
 export async function examCodesWithOfficialPapers(): Promise<Set<string>> {
   try {
     const rows = await prisma.$queryRaw<{ code: string }[]>`
-      SELECT DISTINCT e.code FROM "OfficialPaper" p JOIN "Exam" e ON e.id = p."examId" WHERE p."archivedAt" IS NULL AND ${NOT_SCHOOL_SQL}`;
+      SELECT DISTINCT e.code FROM "OfficialPaper" p JOIN "Exam" e ON e.id = p."examId" WHERE p."archivedAt" IS NULL AND p.kind <> 'sample paper' AND ${NOT_SCHOOL_SQL}`;
     return new Set(rows.map((r) => r.code));
   } catch {
     return new Set();

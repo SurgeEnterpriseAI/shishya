@@ -306,6 +306,8 @@ export async function GET() {
   // Exams holding verified official previous-year papers (14 Sep 2026): the
   // hub links the conducting body's own files (src/lib/official-papers.ts).
   const paperCodes = await (await import("@/lib/official-papers-db")).examCodesWithOfficialPapers();
+  // 29 Sep 2026: exams whose body publishes free official sample papers (not past papers).
+  const sampleCodes = await (await import("@/lib/official-papers-db")).examCodesWithOfficialSamplePapers();
 
   // 26 Sep 2026 (B-machine-crawl): the exams sit under the platform's own
   // sections instead of bare enum headings ("## GOVT_JOBS"): "## Entrance
@@ -367,6 +369,9 @@ export async function GET() {
     }
     if (paperCodes.has(e.code)) {
       lines.push(`- Official previous-year question papers and answer keys, linked to the conducting body's own files with year and publisher: ${SITE}/exams/${e.code}#official-papers`);
+    }
+    if (sampleCodes.has(e.code)) {
+      lines.push(`- Official sample papers, free, class by class — the conducting body's own practice papers for the coming exam (not previous years' papers), linked to its own files: ${SITE}/exams/${e.code}#official-sample-papers`);
     }
     lines.push(`- Machine-readable context (preferred for LLMs): ${SITE}/exams/${e.code}/context.md`);
     lines.push(

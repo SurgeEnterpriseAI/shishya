@@ -52,7 +52,10 @@ import { officialDataUrls, submitIndexNow } from "../src/lib/indexnow";
 const prisma = new PrismaClient();
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ShishyaPaperVerifier/1.0 (+https://shishya.in/editorial-policy)";
 const MAX_BYTES = 80_000_000;
-const FILE_KINDS = new Set(["question paper", "question paper with answer key", "answer key"]);
+// "sample paper" (29 Sep 2026): a body's own practice paper for the coming exam (SOF's per-class
+// "SAMPLE PAPER 2026-27"); same checks, its year is the session it prints, and it never feeds a
+// /pyq/{year} page (src/lib/official-papers.ts isSamplePaper).
+const FILE_KINDS = new Set(["question paper", "question paper with answer key", "answer key", "sample paper"]);
 
 interface PaperJson {
   year: string;
@@ -530,7 +533,7 @@ async function main() {
       for (const p of passed) {
         const e = byExamWritten.get(p.code) ?? { examId: p.examId, years: new Set<string>() };
         const y = paperYear(p.year);
-        if (y) e.years.add(y);
+        if (y && p.kind !== "sample paper") e.years.add(y);
         byExamWritten.set(p.code, e);
       }
       for (const [code, e] of byExamWritten) {

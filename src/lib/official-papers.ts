@@ -10,8 +10,20 @@
 // from the body's listing page, and finds its year beside that link or on the
 // file's first page. The pure rules the importer and the pages share live here.
 
-export const PAPER_KINDS = ["question paper", "question paper with answer key", "answer key", "listing page"] as const;
+export const PAPER_KINDS = ["question paper", "question paper with answer key", "answer key", "listing page", "sample paper"] as const;
 export type PaperKind = (typeof PAPER_KINDS)[number];
+
+// Official SAMPLE papers (29 Sep 2026): a body's own practice paper for the
+// coming exam (SOF prints "SAMPLE PAPER 2026-27" on each class's paper). A
+// student asked for them. They are never a previous year's paper, so every
+// past-paper path leaves them out — the loader (src/lib/official-papers-db.ts),
+// the year grouping below, the "has an official question paper" rule, the
+// public counts — and they render only in their own labelled block.
+export const SAMPLE_PAPER = "sample paper";
+
+export function isSamplePaper(r: Pick<OfficialPaperRow, "kind">): boolean {
+  return r.kind === SAMPLE_PAPER;
+}
 
 export interface OfficialPaperRow {
   year: string;
@@ -222,11 +234,11 @@ export interface PaperYearGroup {
   rows: OfficialPaperRow[];
 }
 
-/** Latest year first; within a year, question papers before keys. Listing pages are left out. */
+/** Latest year first; within a year, question papers before keys. Listing pages and sample papers are left out. */
 export function groupPapersByYear(rows: readonly OfficialPaperRow[]): PaperYearGroup[] {
   const byYear = new Map<string, OfficialPaperRow[]>();
   for (const r of rows) {
-    if (r.kind === "listing page") continue;
+    if (r.kind === "listing page" || isSamplePaper(r)) continue;
     const list = byYear.get(r.year) ?? [];
     list.push(r);
     byYear.set(r.year, list);
@@ -267,6 +279,54 @@ export function paperContextLines(rows: readonly OfficialPaperRow[], max = 40): 
   }
   for (const r of listingPages(rows)) {
     lines.push(`- ${r.publisher} lists its ${r.paper} on its own site (files open from that page): ${r.url}`);
+  }
+  return lines.slice(0, max);
+}
+
+// ── sample papers ─────────────────────────────────────────────────────
+
+/** The class number a sample paper names ("Class 8", "Class 11 · Level 1"); null when none. */
+export function sampleClassOf(paper: string): number | null {
+  const m = (paper ?? "").match(/\bclass\s*(\d{1,2})\b/i);
+  return m ? Number(m[1]) : null;
+}
+
+export interface SamplePaperGroup {
+  /** The session the files print, e.g. "2026-27". */
+  session: string;
+  publisher: string;
+  rows: OfficialPaperRow[];
+}
+
+/** Sample papers by session (latest first), each in class order (Class 1 … Class 12, then anything unnumbered). */
+export function samplePaperGroups(rows: readonly OfficialPaperRow[]): SamplePaperGroup[] {
+  const bySession = new Map<string, OfficialPaperRow[]>();
+  for (const r of rows) {
+    if (!isSamplePaper(r)) continue;
+    const list = bySession.get(r.year) ?? [];
+    list.push(r);
+    bySession.set(r.year, list);
+  }
+  const order = (r: OfficialPaperRow) => sampleClassOf(r.paper) ?? 99;
+  return [...bySession.entries()]
+    .map(([session, list]) => ({
+      session,
+      publisher: [...new Set(list.map((r) => r.publisher).filter(Boolean))].join(" · "),
+      rows: list.sort((a, b) => order(a) - order(b) || a.paper.localeCompare(b.paper)),
+    }))
+    .sort((a, b) => Number(paperYear(b.session) ?? 0) - Number(paperYear(a.session) ?? 0) || b.session.localeCompare(a.session));
+}
+
+/** context.md / answer-engine lines for sample papers — each says it is not a past paper. */
+export function samplePaperContextLines(rows: readonly OfficialPaperRow[], max = 40): string[] {
+  const lines: string[] = [];
+  for (const g of samplePaperGroups(rows)) {
+    for (const r of g.rows) {
+      const about = [`official sample paper ${g.session}, not a previous year's paper`, r.language, r.scan ? "scanned PDF" : "PDF", formatPdfSize(r.bytes)]
+        .filter(Boolean)
+        .join(", ");
+      lines.push(`- ${r.paper} (${about}) — published by ${r.publisher}: ${r.url}`);
+    }
   }
   return lines.slice(0, max);
 }
