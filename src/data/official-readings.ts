@@ -10,6 +10,46 @@ import type { VerifiedPattern } from "@/lib/pattern-verified";
 import type { SyllabusDocument } from "@/lib/official-syllabus-lines";
 
 export const READ_PATTERNS: Readonly<Record<string, VerifiedPattern>> = {
+  "AP_TET": {
+    "code": "AP_TET",
+    "stage": "Paper-2A",
+    "questions": 150,
+    "marks": 150,
+    "durationMin": 150,
+    "negativePerWrong": 0,
+    "sections": [
+      {
+        "name": "Child Development and Pedagogy",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Language-I (optional: Telugu, Urdu, Hindi, Kannada, Tamil, Odiya or Sanskrit)",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Language-II (compulsory: English)",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Mathematics and Science, or Social Studies, or Language",
+        "questions": 60,
+        "marks": 60
+      }
+    ],
+    "languages": "",
+    "source": {
+      "url": "https://tet2dsc.apcfss.in/TET-PDF/APTET%20Information%20Bulliten.pdf",
+      "publisher": "Department of School Education, Government of Andhra Pradesh (Commissioner / Director of School Education)",
+      "publisherShort": "CSE AP",
+      "title": "Information Bulletin for APTET - JUNE - 2026 (read with Notification No.01-APTET-JUNE-2026, Dt: 05-06-2026)",
+      "publishedOn": "2026-06-05",
+      "para": "Information Bulletin APTET-June-2026: para 6(a) on page 8"
+    },
+    "checkedOn": "2026-09-29"
+  },
   "CTET": {
     "code": "CTET",
     "stage": "Paper I",
@@ -138,6 +178,136 @@ export const READ_PATTERNS: Readonly<Record<string, VerifiedPattern>> = {
     "checkedOn": "2026-09-29",
     "negativeNotPrinted": true
   },
+  "IBPS_PO": {
+    "code": "IBPS_PO",
+    "stage": "Preliminary Examination",
+    "questions": 100,
+    "marks": 100,
+    "durationMin": 60,
+    "negativePerWrong": 0,
+    "negativeText": "one fourth (0.25) of the marks assigned to a question is deducted for each wrong answer; a blank answer has no penalty",
+    "marksNote": "Marks do not follow question counts: Quantitative Aptitude has 35 questions for 30 marks, Reasoning Ability 35 for 40, English Language 30 for 30",
+    "sections": [
+      {
+        "name": "English Language",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Quantitative Aptitude",
+        "questions": 35,
+        "marks": 30
+      },
+      {
+        "name": "Reasoning Ability",
+        "questions": 35,
+        "marks": 40
+      }
+    ],
+    "languages": "English Language in English; Quantitative Aptitude and Reasoning Ability in English and Hindi",
+    "source": {
+      "url": "https://www.ibps.in/wp-content/uploads/Detailed-Notification_CRP-PO-XVI_Final_V1_30.06.2026.pdf",
+      "publisher": "Institute of Banking Personnel Selection",
+      "publisherShort": "IBPS",
+      "title": "Notification: Common Recruitment Process (CRP) for Recruitment of Probationary Officers/Management Trainees in…",
+      "publishedOn": "2026-07-01",
+      "para": "Clause D 'Structure of Examination', (a) Preliminary Examination (Objective Test), notification page 12"
+    },
+    "checkedOn": "2026-09-29",
+    "negativeNotPrinted": true
+  },
+  "JH_TET": {
+    "code": "JH_TET",
+    "stage": "Level-1",
+    "questions": 150,
+    "marks": 150,
+    "durationMin": 150,
+    "negativePerWrong": 0,
+    "sections": [
+      {
+        "name": "Child Development and Pedagogy (compulsory)",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Language-I: any two of Hindi, Sanskrit, Urdu and English",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Language-II: one regional or tribal language listed in Schedule-I of the Rules",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Mathematics",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Environmental Studies",
+        "questions": 30,
+        "marks": 30
+      }
+    ],
+    "languages": "Hindi and English (medium Hindi or English); the language papers in their own language",
+    "source": {
+      "url": "https://jac.jharkhand.gov.in/jac/web_notice/2026_JHTET_NOTIFICATION.pdf",
+      "publisher": "Jharkhand Academic Council, Ranchi",
+      "publisherShort": "JAC",
+      "title": "Jharkhand Teacher Eligibility Test Rules 2026 (Jharkhand Shikshak Patrata Pariksha Niyamavali-2026), Notification No.…",
+      "publishedOn": "2026-03-26",
+      "para": "Rule 11(ख) duration, 11(ग) multiple-choice and no negative marking, 11(घ) Level-1 table, all on page 10",
+      "scanned": true
+    },
+    "checkedOn": "2026-09-29"
+  },
+  "KA_KARTET": {
+    "code": "KA_KARTET",
+    "stage": "Paper-1",
+    "questions": 150,
+    "marks": 150,
+    "durationMin": 150,
+    "negativePerWrong": 0,
+    "sections": [
+      {
+        "name": "Language-1 (compulsory)",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Language-2 (compulsory)",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Child Development and Pedagogy (compulsory)",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Mathematics",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Environmental Studies",
+        "questions": 30,
+        "marks": 30
+      }
+    ],
+    "languages": "Kannada, English, Urdu, Tamil, Telugu, Hindi and Marathi, except the language papers",
+    "source": {
+      "url": "https://schooleducation.karnataka.gov.in/uploads/media_to_upload1760804593.pdf",
+      "publisher": "Centralised Admission Cell (CAC), Commissioner's Office, Department of School Education, Government of Karnataka, Bengal",
+      "publisherShort": "Karnataka School Education Dept",
+      "title": "Karnataka Teacher Eligibility Test - 2025, Notification (Adhisuchane), No. DPI-CPI0CAC(KTET)/4/2025-CAC",
+      "publishedOn": "2025-10-18",
+      "para": "Notification dated 18/10/2025: para 8.2 (page 7) for questions, marks, options and negative evaluation",
+      "scanned": true
+    },
+    "checkedOn": "2026-09-29"
+  },
   "MH_MPSC_GROUP_C": {
     "code": "MH_MPSC_GROUP_C",
     "stage": "Combined Preliminary Examination",
@@ -180,6 +350,100 @@ export const READ_PATTERNS: Readonly<Record<string, VerifiedPattern>> = {
       "title": "Government of Meghalaya, Personnel & A.R. (A) Department, Notification No. PER.6/97/225 - syllabus and pattern of…",
       "publishedOn": "2025-08-11",
       "para": "Marks, duration, objective type: Section II, A. Preliminary Examination, paras (1)-(4) I, page 1 of 3 of…"
+    },
+    "checkedOn": "2026-09-29"
+  },
+  "MP_POLICE_PC": {
+    "code": "MP_POLICE_PC",
+    "stage": "First Stage Written Examination",
+    "questions": 100,
+    "marks": 100,
+    "durationMin": 120,
+    "negativePerWrong": 0,
+    "sections": [
+      {
+        "name": "General Knowledge and Logical Knowledge",
+        "questions": null,
+        "marks": 40
+      },
+      {
+        "name": "Intellectual Ability and Mental Aptitude",
+        "questions": null,
+        "marks": 30
+      },
+      {
+        "name": "Science and Simple Arithmetic",
+        "questions": null,
+        "marks": 30
+      }
+    ],
+    "languages": "Hindi/English medium",
+    "source": {
+      "url": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_GD_2026_RuleBook_09092026.pdf",
+      "publisher": "Madhya Pradesh Employees Selection Board, Bhopal",
+      "publisherShort": "MPESB",
+      "title": "Departmental Recruitment Rules and Examination Conduct Rule Book for the Selection Examination 2026 for direct…",
+      "publishedOn": "",
+      "para": "Chapter 1, para (8) Pariksha Yojana and para (9) Pratham Charan Pariksha Yojana, page 8"
+    },
+    "checkedOn": "2026-09-29"
+  },
+  "RJ_REAP": {
+    "code": "RJ_REAP",
+    "stage": "JEE (Main) Paper 1",
+    "questions": 75,
+    "marks": 300,
+    "durationMin": 180,
+    "negativePerWrong": 1,
+    "answerFormat": "Section A: Multiple-Choice Questions. Section B: enter the correct integer value using the on-screen virtual numeric keypad, rounded off to the nearest integer",
+    "practiceFormatDiffers": true,
+    "sections": [
+      {
+        "name": "Mathematics (Section A: 20 questions, Section B: 5 questions)",
+        "questions": null,
+        "marks": 100
+      },
+      {
+        "name": "Physics (Section A: 20 questions, Section B: 5 questions)",
+        "questions": null,
+        "marks": 100
+      },
+      {
+        "name": "Chemistry (Section A: 20 questions, Section B: 5 questions)",
+        "questions": null,
+        "marks": 100
+      }
+    ],
+    "languages": "",
+    "source": {
+      "url": "https://cdnbbsr.s3waas.gov.in/s3f8e59f4b2fe7c5705bf878bbd494ccdf/uploads/2025/11/202511021649722475.pdf",
+      "publisher": "National Testing Agency",
+      "publisherShort": "NTA",
+      "title": "Information Bulletin - 2026, Joint Entrance Examination (Main) - 2026",
+      "publishedOn": "",
+      "para": "Chapter 2 Examination Scheme: para 2.4 Pattern of Examination, Paper 1, items 1-3"
+    },
+    "checkedOn": "2026-09-29"
+  },
+  "RJ_RPSC_RAS": {
+    "code": "RJ_RPSC_RAS",
+    "stage": "Preliminary Examination",
+    "questions": 150,
+    "marks": 200,
+    "durationMin": 180,
+    "negativePerWrong": 0.3333333333333333,
+    "negativeText": "1/3 mark is deducted for each wrong answer, and 1/3 of the question's marks if none of the five circles is darkened",
+    "sections": [],
+    "languages": "",
+    "source": {
+      "url": "https://rpsc.rajasthan.gov.in/Static/RecruitmentAdvertisements/76C02A7D61A54708AFFCDD7A2A60DBB2.pdf",
+      "publisher": "Rajasthan Public Service Commission, Ajmer",
+      "publisherShort": "RPSC",
+      "title": "Detailed Advertisement No. 02/Exam/RAS&RTS/RPSC/EP-I/2026-27 for Rajasthan State and Subordinate Services Combined…",
+      "publishedOn": "2026-05-27",
+      "para": "Scheme & Syllabus of Examination (Preliminary) dated 09-01-2026, page 1: scheme paragraph, subject table,…",
+      "kind": "advertisement",
+      "scanned": true
     },
     "checkedOn": "2026-09-29"
   },
@@ -347,6 +611,99 @@ export const READ_PATTERNS: Readonly<Record<string, VerifiedPattern>> = {
     },
     "checkedOn": "2026-09-29",
     "negativeNotPrinted": true
+  },
+  "TS_POLICE_SI": {
+    "code": "TS_POLICE_SI",
+    "stage": "Preliminary Written Test",
+    "questions": 200,
+    "marks": 200,
+    "durationMin": 180,
+    "negativePerWrong": 0,
+    "negativeText": "a wrong answer, or more than one bubble darkened, is marked minus 20% of the question's full marks; a question left blank gets zero",
+    "sections": [
+      {
+        "name": "Arithmetic and Test of Reasoning / Mental Ability",
+        "questions": 100,
+        "marks": null
+      },
+      {
+        "name": "General Studies",
+        "questions": 100,
+        "marks": null
+      }
+    ],
+    "languages": "English-Telugu and English-Urdu versions",
+    "source": {
+      "url": "https://doc.tgprb.in/SI+(Civil+et+al)+2026+Notification+dated+29-07-2026.pdf",
+      "publisher": "Telangana State Level Police Recruitment Board",
+      "publisherShort": "TSLPRB",
+      "title": "Notification Rc. No. 225 / Rect. / Rect.1 / 2026 - direct recruitment to SCT Sub Inspector of Police (Civil) and…",
+      "publishedOn": "2026-07-29",
+      "para": "Para 16 (A), Selection Procedure / Scheme: opening lines on page 19, scheme table and Notes 1-5 on page 20 of…"
+    },
+    "checkedOn": "2026-09-29",
+    "negativeNotPrinted": true
+  },
+  "TS_TSPSC_GROUP1": {
+    "code": "TS_TSPSC_GROUP1",
+    "stage": "Preliminary Test",
+    "questions": 150,
+    "marks": 150,
+    "durationMin": 150,
+    "negativePerWrong": 0,
+    "negativeNotPrinted": true,
+    "sections": [],
+    "languages": "English, Telugu and Urdu",
+    "source": {
+      "url": "https://websitenew.tgpsc.gov.in/preview/RElSRUNUUkVDUlVJVE1FTlROT1RJL05PVElGSUNBVElPTl9OT18wMi0yMDI0X0dyb3VwLUlfU2VydmljZXMgKDEpMjAyNDAyMjAxNDA3MzcucGRmr95v17a0y2d8i13v",
+      "publisher": "Telangana State Public Service Commission (now Telangana Public Service Commission)",
+      "publisherShort": "TSPSC",
+      "title": "Notification No. 02/2024, dated 19/02/2024 - Group-I Services (General Recruitment)",
+      "publishedOn": "2024-02-19",
+      "para": "Para 9 (page 14) prescribes the scheme as per G.O. Ms. No. 55 GA (Ser.A) Dt.25/04/2022 as amended by G.O. Ms.…"
+    },
+    "checkedOn": "2026-09-29"
+  },
+  "UK_UKPSC_PCS": {
+    "code": "UK_UKPSC_PCS",
+    "stage": "Preliminary Examination, First Paper",
+    "questions": 150,
+    "marks": 150,
+    "durationMin": 120,
+    "negativePerWrong": 0.25,
+    "sections": [],
+    "languages": "",
+    "source": {
+      "url": "https://psc.uk.gov.in/public/uploads/recruitment/1843959203.pdf",
+      "publisher": "Uttarakhand Public Service Commission",
+      "publisherShort": "UKPSC",
+      "title": "Advertisement No. A-1/E-1/2026-27: Uttarakhand Combined State Civil/Upper Subordinate Services Examination-2026",
+      "publishedOn": "2026-09-09",
+      "para": "Annexure-2, section '1",
+      "kind": "advertisement"
+    },
+    "checkedOn": "2026-09-29"
+  },
+  "UP_POLICE_CONSTABLE": {
+    "code": "UP_POLICE_CONSTABLE",
+    "stage": "Written Examination",
+    "questions": 150,
+    "marks": 300,
+    "durationMin": 120,
+    "negativePerWrong": 0,
+    "negativeNotPrinted": true,
+    "sections": [],
+    "languages": "Hindi and English, except General Hindi; the English version prevails in case of doubt",
+    "source": {
+      "url": "https://uppbpb.gov.in/FilesUploaded/Notice/CONST-25OMRVIGGYAPTI05-02-2026590e47bd-d973-4a45-9007-b2a0a048b4f4.pdf",
+      "publisher": "Uttar Pradesh Police Recruitment and Promotion Board",
+      "publisherShort": "UPPRPB",
+      "title": "UP Police Constable Civil Police and Equivalent Posts Direct Recruitment-2025: Written Examination Process and OMR…",
+      "publishedOn": "2026-02-05",
+      "para": "Notice of 05-02-2026, paras 1, 2, 4 and 6 (pages 1-2) and para 16 (page 3)",
+      "scanned": true
+    },
+    "checkedOn": "2026-09-29"
   }
 };
 
@@ -355,6 +712,18 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "publisherShort": "APPSC",
     "name": "Annexure to Brief Notification No.07/2026: Scheme and Syllabus for Recruitment to the Posts falling under…",
     "url": "https://psc.ap.gov.in/Documents/NotificationDocuments/Group_I_072026.pdf",
+    "readOn": "2026-09-29"
+  },
+  "AP_TET": {
+    "publisherShort": "CSE AP",
+    "name": "Suggestive Syllabus for APTET - JUNE - 2026 (Government of Andhra Pradesh, Department of School Education)",
+    "url": "https://tet2dsc.apcfss.in/TET-PDF/APTET%202026%20Syllabus%201.pdf",
+    "readOn": "2026-09-29"
+  },
+  "BR_BPSC_CCE": {
+    "publisherShort": "BPSC",
+    "name": "Bihar Gazette (Extraordinary), Patna, 23 August 2017: updated structure and syllabus of the BPSC Combined…",
+    "url": "https://bpsc.bihar.gov.in/wp-content/uploads/BPSC_content/Syllabus/Syllabus-CC-Exam-Updated_20250410_092923_d897d7c5.pdf",
     "readOn": "2026-09-29"
   },
   "CDS": {
@@ -376,6 +745,20 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "url": "https://gsssb.gujarat.gov.in/ViewFile?fileName=4naZ%E2%9C%BF8wS64TzwZ61AZrbMP4tvDBt3Mj8UPSd1xKcshtZxTB5t5ltTF2mrczYtutOJGDlDeTKGm0IBe3QAs0YsAvhcBHVUA7rWLv6ae41Hda0d6MmkmlJGOJcCYvEzD6nnekULO9MvmUb8i9F7qJMxg%E2%99%AC%E2%99%AC",
     "readOn": "2026-09-29"
   },
+  "JH_TET": {
+    "publisherShort": "JAC",
+    "name": "JHTET Examination 2026 Syllabus (Jharkhand Shikshak Patrata Pariksha 2026 Pathyakram), both levels, posted by…",
+    "url": "https://jac.jharkhand.gov.in/jac/web_notice/2026_JHTET_SYLLABUS.pdf",
+    "readOn": "2026-09-29",
+    "scanned": true
+  },
+  "KA_KARTET": {
+    "publisherShort": "Karnataka School Education Dept",
+    "name": "KARTET-2025 Syllabus (Pathyakrama), subject-wise for Paper-1 and Paper-2, linked as '2. Syllabus' under the…",
+    "url": "https://schooleducation.karnataka.gov.in/uploads/media_to_upload1760804671.pdf",
+    "readOn": "2026-09-29",
+    "scanned": true
+  },
   "KA_KPSC_KAS": {
     "publisherShort": "KPSC",
     "name": "Syllabus for Gazetted Probationers Exam",
@@ -396,6 +779,12 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "url": "https://mpsc.meghalaya.gov.in/syllabus/MCS_Syllabus2025.pdf",
     "readOn": "2026-09-29"
   },
+  "MP_RAEO": {
+    "publisherShort": "MP-ESB",
+    "name": "Chapter 04: Syllabus (Pathyakram), Krishi Vistar Adhikari Recruitment Test - 2026, in the same rule book",
+    "url": "https://esb.mp.gov.in/Rulebooks/RB_2026/Group2_SG1_RuleBook_2026_02072026.pdf",
+    "readOn": "2026-09-29"
+  },
   "NDA": {
     "publisherShort": "UPSC",
     "name": "Appendix-I, Part B 'Syllabus of the Examination' in Examination Notice No. 10/2026-NDA-II",
@@ -403,12 +792,42 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "readOn": "2026-09-29",
     "caveat": "The syllabus is printed inside the examination notice."
   },
+  "NSEA": {
+    "publisherShort": "IAPT",
+    "name": "Syllabus for National Standard Examination and Indian National Olympiad in Physics, Chemistry, Biology,…",
+    "url": "https://iapt.org.in/wp-content/uploads/images/syllabus-for-nse-ino-2022-2023.pdf",
+    "readOn": "2026-09-29"
+  },
+  "NSEB": {
+    "publisherShort": "IAPT",
+    "name": "Syllabus for National Standard Examination and Indian National Olympiad in Physics, Chemistry, Biology,…",
+    "url": "https://iapt.org.in/wp-content/uploads/images/syllabus-for-nse-ino-2022-2023.pdf",
+    "readOn": "2026-09-29"
+  },
+  "NSEC": {
+    "publisherShort": "IAPT",
+    "name": "Syllabus for National Standard Examination and Indian National Olympiad in Physics, Chemistry, Biology,…",
+    "url": "https://iapt.org.in/wp-content/uploads/images/syllabus-for-nse-ino-2022-2023.pdf",
+    "readOn": "2026-09-29"
+  },
   "NSEJS": {
     "publisherShort": "IAPT",
     "name": "Syllabus for National Standard Examination and Indian National Olympiad in Physics, Chemistry, Biology,…",
     "url": "https://iapt.org.in/wp-content/uploads/images/syllabus-for-nse-ino-2022-2023.pdf",
     "readOn": "2026-09-29",
     "caveat": "The file is titled 2022-2023; IAPT's site links it as the syllabus for NSE 2026-27."
+  },
+  "RJ_RPSC_RAS": {
+    "publisherShort": "RPSC",
+    "name": "Rajasthan State and Subordinate Services Combined Competitive (Preliminary) Examination: Scheme & Syllabus of…",
+    "url": "https://rpsc.rajasthan.gov.in/Static/Syllabus/7D943B35-2D9E-4E50-BC3E-3726268AE18B.pdf",
+    "readOn": "2026-09-29"
+  },
+  "RRB_GROUP_D": {
+    "publisherShort": "RRB",
+    "name": "CEN No. 09/2025, Para 14.1 'Question Type and Syllabus'",
+    "url": "https://rrb.indianrailways.gov.in/-/image/1785986914371examsDocuments.pdf/examsDocuments",
+    "readOn": "2026-09-29"
   },
   "SSC_GD": {
     "publisherShort": "SSC",
@@ -434,6 +853,24 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "url": "https://tnusrb.tn.gov.in/pdfs/SI_2025_Syllabus.pdf",
     "readOn": "2026-09-29"
   },
+  "TS_POLICE_SI": {
+    "publisherShort": "TSLPRB",
+    "name": "Annexure II - Syllabus for Preliminary Written Test (200 Questions - 200 Marks), in Notification Rc. No. 225…",
+    "url": "https://doc.tgprb.in/SI+(Civil+et+al)+2026+Notification+dated+29-07-2026.pdf",
+    "readOn": "2026-09-29"
+  },
+  "TS_TSPSC_GROUP1": {
+    "publisherShort": "TSPSC",
+    "name": "Annexure-II, Scheme and Syllabus for Recruitment to the Posts of Group-I Services",
+    "url": "https://websitenew.tgpsc.gov.in/preview/RElSRUNUUkVDUlVJVE1FTlROT1RJL05PVElGSUNBVElPTl9OT18wMi0yMDI0X0dyb3VwLUlfU2VydmljZXMgKDEpMjAyNDAyMjAxNDA3MzcucGRmr95v17a0y2d8i13v",
+    "readOn": "2026-09-29"
+  },
+  "TS_TSPSC_GROUP2": {
+    "publisherShort": "TGPSC",
+    "name": "Scheme and Syllabus for Recruitment to the Posts of Group-II Services",
+    "url": "https://websitenew.tgpsc.gov.in/preview/UFJFU1NOT1RFL0dyb3VwLUlJIFNjaGVtZSBhbmQgU3lsbGFidXMyMDIyMTIzMDE0Mzg0NC5wZGY=r95v17a0y2d8i13v",
+    "readOn": "2026-09-29"
+  },
   "UK_TET": {
     "publisherShort": "UBSE",
     "name": "Structure and Content of Syllabus - UTET I (classes I to V) and UTET II (classes VI to VIII), listed by the…",
@@ -441,6 +878,19 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "readOn": "2026-09-29",
     "scanned": true,
     "caveat": "The pages print no date; UBSE's site lists them for UTET."
+  },
+  "UK_UKPSC_PCS": {
+    "publisherShort": "UKPSC",
+    "name": "Annexure-2 of Advertisement A-1/E-1/2026-27: Uttarakhand Combined State (Civil) Upper Sub-ordinate…",
+    "url": "https://psc.uk.gov.in/public/uploads/recruitment/1843959203.pdf",
+    "readOn": "2026-09-29"
+  },
+  "UP_POLICE_CONSTABLE": {
+    "publisherShort": "UPPRPB",
+    "name": "Appendix-1: Syllabus of the Written Examination, in the UPPRPB Advertisement for Constable Civil Police and…",
+    "url": "https://uppbpb.gov.in/FilesUploaded/Notice/CONSTABLE-VIGYAPTIc7be0cc8-3365-471e-9237-447c528d341a.pdf",
+    "readOn": "2026-09-29",
+    "scanned": true
   }
 };
 
@@ -462,6 +912,14 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
     "doc": "AP_APPSC_GROUP1",
     "where": "Screening Test Paper II General Aptitude, Part (A) General Mental and Psychological Abilities, item 11 (page 9)"
   },
+  "AP_TET/aptet.ms.chemistry.elements": {
+    "doc": "AP_TET",
+    "where": "Paper-II(A), D.1 Mathematics and Science, D.1.2 Physical Science (Content), Unit 15: Matter"
+  },
+  "BR_BPSC_CCE/bihar.1857_revolt": {
+    "doc": "BR_BPSC_CCE",
+    "where": "Main Examination, General Studies Paper I: Modern History of India and Indian Culture"
+  },
   "CDS/math.geometry": {
     "doc": "CDS",
     "where": "Elementary Mathematics (Code No. 13), heading Geometry, page 20"
@@ -477,6 +935,14 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
   "GJ_GSSSB/rea.coding": {
     "doc": "GJ_GSSSB",
     "where": "Preliminary Exam syllabus, (5) Reasoning (60 Marks), item 1, page 5"
+  },
+  "JH_TET/cdp.assessment.nep": {
+    "doc": "JH_TET",
+    "where": "Child Development and Pedagogy, Level-1 (Classes 1-5), Part (A) Concepts, items 2 and 5; repeated for Level-2"
+  },
+  "KA_KARTET/lang1.sandhi": {
+    "doc": "KA_KARTET",
+    "where": "Kannada syllabus, Paper-1 and Paper-2: Kannada Language, Literature and Grammar, Grammar"
   },
   "KA_KPSC_KAS/gs.current_affairs": {
     "doc": "KA_KPSC_KAS",
@@ -494,6 +960,10 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
     "doc": "ML_MPSC",
     "where": "Section II, A. Preliminary Examination, Paper I, item (i)"
   },
+  "MP_RAEO/horti.package": {
+    "doc": "MP_RAEO",
+    "where": "Chapter 4 Syllabus (single paper), Unit 7: Horticulture"
+  },
   "NDA/math.integral_calculus": {
     "doc": "NDA",
     "where": "Paper-I Mathematics (Code No. 01), heading 6, page 20"
@@ -501,6 +971,30 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
   "NDA/math.trigonometry": {
     "doc": "NDA",
     "where": "Paper-I Mathematics (Code No. 01), heading 3, page 20"
+  },
+  "NSEA/astro.phy.units_measurement": {
+    "doc": "NSEA",
+    "where": "Astronomy syllabus, Part 1: Physics (refers to Physics syllabus), Unit I: Units and Measurements"
+  },
+  "NSEA/astro.phy.kinematics": {
+    "doc": "NSEA",
+    "where": "Astronomy syllabus, Part 1: Physics, Unit II: Motion in a Straight Line; Unit III: Motion in a Plane"
+  },
+  "NSEA/astro.astro.celestial_mechanics": {
+    "doc": "NSEA",
+    "where": "Astronomy syllabus, Part 1: Physics, Unit VII: Gravitation"
+  },
+  "NSEA/astro.astro.telescopes": {
+    "doc": "NSEA",
+    "where": "Astronomy syllabus, Part 3: Elementary Astronomical notions"
+  },
+  "NSEB/bio.human_welfare": {
+    "doc": "NSEB",
+    "where": "Biology syllabus for NSEB and INBO, Unit VIII: Biology and Human Welfare"
+  },
+  "NSEC/chem.periodicity": {
+    "doc": "NSEC",
+    "where": "Chemistry, Unit III: Classification of Elements and Periodicity in Properties"
   },
   "NSEJS/js.chem.matter_states": {
     "doc": "NSEJS",
@@ -513,6 +1007,18 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
   "NSEJS/js.chem.acids_bases_salts": {
     "doc": "NSEJS",
     "where": "Junior Science, Unit II: Chemical Substances - Nature and Behaviour (page 19)"
+  },
+  "RJ_RPSC_RAS/rj.culture.painting": {
+    "doc": "RJ_RPSC_RAS",
+    "where": "Preliminary paper, heading: History, Art, Culture, Literature, Tradition & Heritage of Rajasthan"
+  },
+  "RJ_RPSC_RAS/rj.polity.rj_govt": {
+    "doc": "RJ_RPSC_RAS",
+    "where": "Preliminary paper, heading: Political and Administrative System of Rajasthan"
+  },
+  "RRB_GROUP_D/rrbd.gs.chemistry": {
+    "doc": "RRB_GROUP_D",
+    "where": "Computer Based Test, Question Type and Syllabus, item c: General Science"
   },
   "SSC_GD/gd.reason.relationships": {
     "doc": "SSC_GD",
@@ -554,6 +1060,34 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
     "doc": "TN_TNUSRB_SI",
     "where": "Main Written Examination, Part-A: General Knowledge (page 2)"
   },
+  "TS_POLICE_SI/gs.telangana": {
+    "doc": "TS_POLICE_SI",
+    "where": "Preliminary Written Test syllabus (Annexure II), Part B: General Studies, Item 6"
+  },
+  "TS_TSPSC_GROUP1/telangana_movement.society.culture": {
+    "doc": "TS_TSPSC_GROUP1",
+    "where": "Preliminary Test syllabus (General Studies and Mental Ability), item 11"
+  },
+  "TS_TSPSC_GROUP1/telangana_movement.economy": {
+    "doc": "TS_TSPSC_GROUP1",
+    "where": "Main Examination Paper-IV Economy and Development, Part II: Telangana Economy"
+  },
+  "TS_TSPSC_GROUP1/gs.international_relations.current": {
+    "doc": "TS_TSPSC_GROUP1",
+    "where": "Preliminary Test syllabus (General Studies and Mental Ability), items 1 and 2"
+  },
+  "TS_TSPSC_GROUP1/gs.geography": {
+    "doc": "TS_TSPSC_GROUP1",
+    "where": "Preliminary Test syllabus (General Studies and Mental Ability), item 6"
+  },
+  "TS_TSPSC_GROUP1/gs.geography.indian": {
+    "doc": "TS_TSPSC_GROUP1",
+    "where": "Preliminary Test syllabus (General Studies and Mental Ability), item 6"
+  },
+  "TS_TSPSC_GROUP2/gs.economy": {
+    "doc": "TS_TSPSC_GROUP2",
+    "where": "Paper III: Economy and Development, Part I: Indian Economy: Issues and Challenges, Unit 5: Planning, NITI Aayog and Public Finance"
+  },
   "UK_TET/lang2.comprehension": {
     "doc": "UK_TET",
     "where": "UTET I, III. Language-II, a) Comprehension (page 2); same heading in UTET II, III. Language-II (page 5)"
@@ -565,5 +1099,21 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
   "UK_TET/math_sci.science_content.natural_resources": {
     "doc": "UK_TET",
     "where": "UTET II, IV. Mathematics and Science, Science, a. Content (page 6)"
+  },
+  "UK_UKPSC_PCS/gs.geog.india": {
+    "doc": "UK_UKPSC_PCS",
+    "where": "Preliminary Paper I General Studies, Unit 2: Indian and World Geography"
+  },
+  "UK_UKPSC_PCS/gs.env.ecology": {
+    "doc": "UK_UKPSC_PCS",
+    "where": "Preliminary Paper I General Studies, Unit 5: General Science and Technology"
+  },
+  "UP_POLICE_CONSTABLE/hindi.vilom": {
+    "doc": "UP_POLICE_CONSTABLE",
+    "where": "Appendix-1, Part 2: General Hindi, item 2: Basic knowledge of Hindi grammar"
+  },
+  "UP_POLICE_CONSTABLE/gk.geography": {
+    "doc": "UP_POLICE_CONSTABLE",
+    "where": "Appendix-1, Part 1: General Knowledge"
   }
 };

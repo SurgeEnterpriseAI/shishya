@@ -89,7 +89,42 @@ const OVERRIDES: Record<string, {
   syllabusCaveat?: string;
   syllabusScanned?: boolean;
   marksNote?: string;
+  /** The body's short name for the citation, when the reader's would not be recognised. */
+  short?: string;
+  /** Keep only these section names (the reader listed sections of more than one paper). */
+  sectionsOnly?: string[];
 }> = {
+  // ── Batch 2 (29 Sep 2026) ──
+  // REAP admits through JEE (Main); the reading's documents are NTA's JEE (Main) bulletin and syllabus. A REAP
+  // topic page cannot cite them without a line that explains the link, so none is placed yet.
+  RJ_REAP: { noPlaces: "the documents are NTA's JEE (Main) bulletin and syllabus, not REAP's own" },
+  // JAC, JTET Rules 2026, Rule 11: papers in Hindi and English, medium Hindi or English; language subjects in
+  // their own language.
+  JH_TET: { languages: "Hindi and English (medium Hindi or English); the language papers in their own language" },
+  // Department of School Education, Karnataka (its Centralised Admission Cell), KARTET-2025 notification, para 9:
+  // non-language questions in Kannada, English, Urdu, Tamil, Telugu, Hindi and Marathi.
+  KA_KARTET: {
+    short: "Karnataka School Education Dept",
+    // Para 8.2: Paper-1 is Language-1, Language-2, Child Development and Pedagogy, Mathematics and Environmental
+    // Studies, 30 each (150). Social Studies (60) is a Paper-2 section.
+    sectionsOnly: ["Language-1 (compulsory)", "Language-2 (compulsory)", "Child Development and Pedagogy (compulsory)", "Mathematics", "Environmental Studies"],
+    languages: "Kannada, English, Urdu, Tamil, Telugu, Hindi and Marathi, except the language papers",
+  },
+  // RPSC, Scheme & Syllabus 09-01-2026, Note 2: "1/3 mark will be deducted for each wrong answer"; advertisement
+  // p.5/8, OMR instruction 3: if none of the five circles is darkened, "one third (1/3) part of the marks of
+  // question shall be deducted".
+  RJ_RPSC_RAS: { negativeText: "1/3 mark is deducted for each wrong answer, and 1/3 of the question's marks if none of the five circles is darkened" },
+  // UPPRPB written-examination notice 05-02-2026, para 16: all questions except General Hindi in Hindi and
+  // English; the English version prevails in case of doubt. No wrong-answer rule is printed.
+  UP_POLICE_CONSTABLE: { languages: "Hindi and English, except General Hindi; the English version prevails in case of doubt" },
+  // IBPS CRP PO/MT notification, clause E: "one fourth or 0.25 of the marks assigned to that question" is
+  // deducted for a wrong answer; a blank answer has no penalty.
+  IBPS_PO: { negativeText: "one fourth (0.25) of the marks assigned to a question is deducted for each wrong answer; a blank answer has no penalty" },
+  // TSLPRB SI notification (Rc. No. 225), page 20, Note 3 and Note 4 — same rule and versions as the constable notice.
+  TS_POLICE_SI: {
+    negativeText: "a wrong answer, or more than one bubble darkened, is marked minus 20% of the question's full marks; a question left blank gets zero",
+    languages: "English-Telugu and English-Urdu versions",
+  },
   // IAPT home page, block "NSE-2026-27": links this file as the syllabus; the file itself is named and titled 2022-2023.
   NSEJS: { syllabusCaveat: "The file is titled 2022-2023; IAPT's site links it as the syllabus for NSE 2026-27." },
   // UBSE's UTET list links eight scanned pages with no printed date (Appendix Six of an earlier brochure).
@@ -233,6 +268,7 @@ for (const code of [...codes].sort()) {
       ? (s.sections ?? [])
           .map((x: any) => ({ name: brief(x.name, 90), questions: posInt(x.questions) ? x.questions : null, marks: posInt(x.marks) ? x.marks : null }))
           .filter((x: VerifiedSection) => x.name && (x.questions !== null || x.marks !== null))
+          .filter((x: VerifiedSection) => !o.sectionsOnly || o.sectionsOnly.includes(x.name))
       : [];
     const fraction = negNumber && (Math.abs(s.negativePerWrong * 3 - Math.round(s.negativePerWrong * 3)) < 1e-3) && Math.abs(s.negativePerWrong * 100 - Math.round(s.negativePerWrong * 100)) > 1e-3;
     const v: VerifiedPattern = {
@@ -258,7 +294,7 @@ for (const code of [...codes].sort()) {
       source: {
         url: r.document.url,
         publisher: clean(r.body.name, 120),
-        publisherShort: clean(r.body.short, 24),
+        publisherShort: o.short ?? clean(r.body.short, 32),
         title: brief(r.document.title, 120),
         publishedOn: ok(p.documentDate) && isDay(r.document.publishedOn) ? r.document.publishedOn : "",
         para: brief(s.para, 110, true),
@@ -291,7 +327,7 @@ for (const code of [...codes].sort()) {
   if (o.noPlaces) { report.push(`${code}: topics placed 0 — ${o.noPlaces}`); continue; }
   if (found.length && c.hostIsOfficial === true && c.documentOpens === true && sy?.url && hostOk(sy.url, r.body?.host ?? "", true) && clean(sy.title) && clean(r.body?.short)) {
     documents[code] = {
-      publisherShort: clean(r.body.short, 24),
+      publisherShort: o.short ?? clean(r.body.short, 32),
       name: brief(sy.title, 110),
       url: sy.url,
       readOn,
