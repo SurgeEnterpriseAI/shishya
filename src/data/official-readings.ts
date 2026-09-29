@@ -50,6 +50,52 @@ export const READ_PATTERNS: Readonly<Record<string, VerifiedPattern>> = {
     },
     "checkedOn": "2026-09-29"
   },
+  "AS_TET": {
+    "code": "AS_TET",
+    "stage": "Special TET-2026, Paper I (Lower Primary)",
+    "questions": 150,
+    "marks": 150,
+    "durationMin": 150,
+    "negativePerWrong": 0,
+    "sections": [
+      {
+        "name": "Child Development & Pedagogy",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Language I - Bodo, Garo, Manipuri and Hmar (any one)",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Language II - English",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Mathematics",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Environmental Studies",
+        "questions": 30,
+        "marks": 30
+      }
+    ],
+    "languages": "Assamese, Bengali, Bodo, English",
+    "source": {
+      "url": "https://ssa.assam.gov.in/sites/default/files/swf_utility_folder/departments/ssam_medhassu_in_oid_5/latest/final_advt_special_tet_2026.pdf",
+      "publisher": "State Level Empowered Committee, TET, Government of Assam (Department of School Education), notices published by Samagra",
+      "publisherShort": "SSA Assam",
+      "title": "Advertisement on Special Assam Teacher Eligibility Test (TET)-2026 for Lower Primary & Upper Primary Level (for Bodo,…",
+      "publishedOn": "2026-01-06",
+      "para": "Para 3 (Structure and Content of Special Assam TET-2026, Paper I table), pages 2-3",
+      "kind": "advertisement"
+    },
+    "checkedOn": "2026-09-29"
+  },
   "CTET": {
     "code": "CTET",
     "stage": "Paper I",
@@ -92,6 +138,57 @@ export const READ_PATTERNS: Readonly<Record<string, VerifiedPattern>> = {
       "title": "Information Bulletin, CTET-September, 2026 (22nd Edition)",
       "publishedOn": "",
       "para": "Para 7, Structure and Content of CTET, printed Page 3 (PDF page 9)"
+    },
+    "checkedOn": "2026-09-29"
+  },
+  "DL_DSSSB_TGT": {
+    "code": "DL_DSSSB_TGT",
+    "stage": "One-tier examination (Technical / Teaching)",
+    "questions": 200,
+    "marks": 200,
+    "durationMin": 120,
+    "negativePerWrong": 0.25,
+    "sections": [
+      {
+        "name": "Section A: General Awareness",
+        "questions": null,
+        "marks": 20
+      },
+      {
+        "name": "Section A: General Intelligence & Reasoning Ability",
+        "questions": null,
+        "marks": 20
+      },
+      {
+        "name": "Section A: Arithmetical & Numerical Ability",
+        "questions": null,
+        "marks": 20
+      },
+      {
+        "name": "Section A: Test of Hindi Language & Comprehension",
+        "questions": null,
+        "marks": 20
+      },
+      {
+        "name": "Section A: Test of English Language & Comprehension",
+        "questions": null,
+        "marks": 20
+      },
+      {
+        "name": "Section B: Subject concerned, including questions on teaching methodology/B.Ed",
+        "questions": 100,
+        "marks": 100
+      }
+    ],
+    "languages": "Bilingual (Hindi & English), except the language papers, which are in the language concerned only",
+    "source": {
+      "url": "https://dsssb.delhi.gov.in/sites/default/files/DSSSB/circulars-orders/final_advt-03-2026.pdf",
+      "publisher": "Delhi Subordinate Services Selection Board",
+      "publisherShort": "DSSSB",
+      "title": "Vacancy Notice, Advertisement No. 03/2026 (Post Codes 21/26 to 45/26, including Trained Graduate Teacher (Computer…",
+      "publishedOn": "2026-05-29",
+      "para": "Para 4 (Examination Scheme), Row 3 One Tier (Technical / Teaching), page 30",
+      "kind": "advertisement"
     },
     "checkedOn": "2026-09-29"
   },
@@ -388,6 +485,114 @@ export const READ_PATTERNS: Readonly<Record<string, VerifiedPattern>> = {
     },
     "checkedOn": "2026-09-29"
   },
+  "MZ_MPSC": {
+    "code": "MZ_MPSC",
+    "stage": "Preliminary Examination, Paper-I",
+    "questions": 100,
+    "marks": 200,
+    "durationMin": 120,
+    "negativePerWrong": 0,
+    "negativeText": "For each question for which a wrong answer is given, one-third of the marks assigned to that question will be deducted as penalty",
+    "sections": [
+      {
+        "name": "Current events of Mizoram, national and international importance",
+        "questions": 14,
+        "marks": null
+      },
+      {
+        "name": "History of India and Indian national movement",
+        "questions": 12,
+        "marks": null
+      },
+      {
+        "name": "Indian and World Geography - physical, social, economic geography of India and the world",
+        "questions": 12,
+        "marks": null
+      },
+      {
+        "name": "Indian polity and governance - Constitution, political system, panchayati raj, public…",
+        "questions": 12,
+        "marks": null
+      },
+      {
+        "name": "Economic and social development - sustainable development, poverty, inclusion,…",
+        "questions": 12,
+        "marks": null
+      },
+      {
+        "name": "General issues on environmental ecology, bio-diversity and climate change that do not…",
+        "questions": 12,
+        "marks": null
+      },
+      {
+        "name": "General Science",
+        "questions": 12,
+        "marks": null
+      },
+      {
+        "name": "General Awareness on Mizo Society, its culture and heritage",
+        "questions": 14,
+        "marks": null
+      }
+    ],
+    "languages": "",
+    "source": {
+      "url": "https://mpsc.mizoram.gov.in/uploads/attachments/2025/08/d89bfbc71ea5cda75b0957627c877416/scheme-of-examination-for-mizoram-civil-services-combined-competitive-examination-2025.pdf",
+      "publisher": "Mizoram Public Service Commission",
+      "publisherShort": "MPSC",
+      "title": "Notification No.A.12034/18/2025-MPSC(EXAM): Scheme of Examination for Mizoram Civil Services (Combined Competitive)…",
+      "publishedOn": "2025-08-27",
+      "para": "Scheme notification of 27 Aug 2025, Part A 'Preliminary Examination', items (a) Time Allowed, (b) Maximum…",
+      "scanned": true
+    },
+    "checkedOn": "2026-09-29",
+    "negativeNotPrinted": true
+  },
+  "NSTSE": {
+    "code": "NSTSE",
+    "stage": "Classes 6 to 10 question paper",
+    "questions": 60,
+    "marks": 60,
+    "durationMin": 60,
+    "negativePerWrong": 0,
+    "sections": [
+      {
+        "name": "Physics",
+        "questions": null,
+        "marks": 15
+      },
+      {
+        "name": "Chemistry",
+        "questions": null,
+        "marks": 15
+      },
+      {
+        "name": "Biology",
+        "questions": null,
+        "marks": 15
+      },
+      {
+        "name": "Mathematics",
+        "questions": null,
+        "marks": 10
+      },
+      {
+        "name": "Critical Thinking",
+        "questions": null,
+        "marks": 5
+      }
+    ],
+    "languages": "English only",
+    "source": {
+      "url": "https://www.unifiedcouncil.com/about-nstse.html",
+      "publisher": "Unified Council",
+      "publisherShort": "Unified Council",
+      "title": "About NSTSE - 'NSTSE EXAM PATTERN' (National Level Science Talent Search Examination), 2026-27 cycle",
+      "publishedOn": "",
+      "para": "'NSTSE EXAM PATTERN' panel and 'Division of marks in the Question Paper : For Classes 6 to 10', About NSTSE…"
+    },
+    "checkedOn": "2026-09-29"
+  },
   "RJ_REAP": {
     "code": "RJ_REAP",
     "stage": "JEE (Main) Paper 1",
@@ -446,6 +651,28 @@ export const READ_PATTERNS: Readonly<Record<string, VerifiedPattern>> = {
       "scanned": true
     },
     "checkedOn": "2026-09-29"
+  },
+  "RJ_RSMSSB": {
+    "code": "RJ_RSMSSB",
+    "stage": "Common Eligibility Test",
+    "questions": 150,
+    "marks": 300,
+    "durationMin": 180,
+    "negativePerWrong": 0,
+    "negativeText": "There will be negative marking of one-third (1/3) of the total marks for each wrong answer",
+    "sections": [],
+    "languages": "",
+    "source": {
+      "url": "https://rssb.rajasthan.gov.in/storage/advertisement_item/1782966142.pdf",
+      "publisher": "Rajasthan Staff Selection Board (राजस्थान कर्मचारी चयन बोर्ड), formerly Rajasthan Subordinate and Ministerial Services S",
+      "publisherShort": "RSSB",
+      "title": "Advertisement No. 09/2026 (विज्ञापन सं. 09/2026), Common Eligibility Test (Graduation Level)-2026, Detailed…",
+      "publishedOn": "2026-07-01",
+      "para": "Para 17, 'Scheme of the Examination' (परीक्षा की स्कीम) table and notes, page 15 of 24",
+      "kind": "advertisement"
+    },
+    "checkedOn": "2026-09-29",
+    "negativeNotPrinted": true
   },
   "SBI_CLERK": {
     "code": "SBI_CLERK",
@@ -664,6 +891,26 @@ export const READ_PATTERNS: Readonly<Record<string, VerifiedPattern>> = {
     },
     "checkedOn": "2026-09-29"
   },
+  "TS_TSPSC_GROUP3": {
+    "code": "TS_TSPSC_GROUP3",
+    "stage": "Paper-I",
+    "questions": 150,
+    "marks": 150,
+    "durationMin": 150,
+    "negativePerWrong": 0,
+    "negativeNotPrinted": true,
+    "sections": [],
+    "languages": "English, Telugu and Urdu",
+    "source": {
+      "url": "https://websitenew.tgpsc.gov.in/preview/RElSRUNUUkVDUlVJVE1FTlROT1RJLzI5LTIwMjItR1JPVVAtSUlJLTIwMjIyMDIzMDEyNDE5NDgyOC5wZGY=r95v17a0y2d8i13v",
+      "publisher": "Telangana State Public Service Commission",
+      "publisherShort": "TSPSC",
+      "title": "Notification No. 29/2022, Group-III Services (General Recruitment), Telangana State Public Service Commission",
+      "publishedOn": "2022-12-30",
+      "para": "Annexure-III, Scheme of Examination, page 55 (PARA-VII on page 14 points to it)"
+    },
+    "checkedOn": "2026-09-29"
+  },
   "UK_UKPSC_PCS": {
     "code": "UK_UKPSC_PCS",
     "stage": "Preliminary Examination, First Paper",
@@ -704,6 +951,139 @@ export const READ_PATTERNS: Readonly<Record<string, VerifiedPattern>> = {
       "scanned": true
     },
     "checkedOn": "2026-09-29"
+  },
+  "UP_POLICE_SI": {
+    "code": "UP_POLICE_SI",
+    "stage": "Written Examination",
+    "questions": 160,
+    "marks": 400,
+    "durationMin": 120,
+    "negativePerWrong": 0,
+    "negativeNotPrinted": true,
+    "sections": [
+      {
+        "name": "General Hindi",
+        "questions": 40,
+        "marks": 100
+      },
+      {
+        "name": "Basic Law / Constitution / General Knowledge",
+        "questions": 40,
+        "marks": 100
+      },
+      {
+        "name": "Numerical and Mental Ability Test",
+        "questions": 40,
+        "marks": 100
+      },
+      {
+        "name": "Mental Aptitude Test / Intelligence Test / Reasoning Test",
+        "questions": 40,
+        "marks": 100
+      }
+    ],
+    "languages": "Hindi and English for all subjects except General Hindi; the English version prevails in case of doubt",
+    "source": {
+      "url": "https://uppbpb.gov.in/FilesUploaded/Notice/VK-SI-omr-nOTICE11d5a429-62f9-46d6-b01c-0957d21b2919.pdf",
+      "publisher": "Uttar Pradesh Police Recruitment and Promotion Board",
+      "publisherShort": "UPPRPB",
+      "title": "SI Civil Police and Equivalent Posts Direct Recruitment-2025: publication of the written examination process and OMR…",
+      "publishedOn": "2026-01-14",
+      "para": "Notice dated 14 Jan 2026, paras 1-6 and 16, pages 1-3",
+      "scanned": true
+    },
+    "checkedOn": "2026-09-29"
+  },
+  "UP_UPTET": {
+    "code": "UP_UPTET",
+    "stage": "Paper I - Primary Level",
+    "questions": 150,
+    "marks": 150,
+    "durationMin": 150,
+    "negativePerWrong": 0,
+    "sections": [
+      {
+        "name": "Child Development and Teaching Methods",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Language I (Hindi)",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Language II (English / Urdu / Sanskrit)",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Mathematics",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Environmental Studies",
+        "questions": 30,
+        "marks": 30
+      }
+    ],
+    "languages": "Hindi and English (except the language subjects)",
+    "source": {
+      "url": "https://upessc.up.gov.in/Advertisment/ef95e113-7ed8-4e56-99d3-50952353009d.pdf",
+      "publisher": "Uttar Pradesh Education Service Selection Commission",
+      "publisherShort": "UPESSC",
+      "title": "Uttar Pradesh Teacher Eligibility Test (UPTET)-2026, Adv. No. 01/UPTET/2026, Information Booklet",
+      "publishedOn": "2026-03-20",
+      "para": "Para 7 (Scheme of Examination and Syllabus) table, booklet page 4 of 9 (PDF page 7)",
+      "kind": "advertisement"
+    },
+    "checkedOn": "2026-09-29"
+  },
+  "WB_TET": {
+    "code": "WB_TET",
+    "stage": "TET-2023 (For Primary)",
+    "questions": 150,
+    "marks": 150,
+    "durationMin": 150,
+    "negativePerWrong": 0,
+    "sections": [
+      {
+        "name": "Part A: Child Development and Pedagogy",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Part B: Language I (Bengali/Hindi/Oriya/Telugu/Nepali/Santhali/Urdu)",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Part C: Language II (English)",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Part D: Mathematics",
+        "questions": 30,
+        "marks": 30
+      },
+      {
+        "name": "Part E: Environmental Studies",
+        "questions": 30,
+        "marks": 30
+      }
+    ],
+    "languages": "Bilingual (Bengali and English), except the Language I and Language II parts",
+    "source": {
+      "url": "https://wbbpe.wb.gov.in/file/INFORMATION_PART-WISE_MODEL_QUESTIONS_TET-2023_16102023.pdf",
+      "publisher": "West Bengal Board of Primary Education",
+      "publisherShort": "WBBPE",
+      "title": "Relevant Information and Part-wise Model Questions for Teacher Eligibility Test-2023 (TET-2023) (For Primary)",
+      "publishedOn": "",
+      "para": "'Structure and Content' table and the three notes below it, page 1 of the 9-page information bulletin for…"
+    },
+    "checkedOn": "2026-09-29"
   }
 };
 
@@ -714,10 +1094,22 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "url": "https://psc.ap.gov.in/Documents/NotificationDocuments/Group_I_072026.pdf",
     "readOn": "2026-09-29"
   },
+  "AP_APPSC_GROUP3": {
+    "publisherShort": "APPSC",
+    "name": "Annexure-II: Scheme and Syllabus for Recruitment to the Post of Panchayat Secretary (Grade-IV) in A.P.…",
+    "url": "https://psc.ap.gov.in/UserManuals/LatestNotifications/13_2018.pdf",
+    "readOn": "2026-09-29"
+  },
   "AP_TET": {
     "publisherShort": "CSE AP",
     "name": "Suggestive Syllabus for APTET - JUNE - 2026 (Government of Andhra Pradesh, Department of School Education)",
     "url": "https://tet2dsc.apcfss.in/TET-PDF/APTET%202026%20Syllabus%201.pdf",
+    "readOn": "2026-09-29"
+  },
+  "AS_TET": {
+    "publisherShort": "SSA Assam",
+    "name": "Syllabus for Special TET, 2026 - Language II (English), Paper I (For Classes I-V), Total Marks: 30",
+    "url": "https://ssa.assam.gov.in/sites/default/files/swf_utility_folder/departments/ssam_medhassu_in_oid_5/latest/paper_i_language_ii_english.pdf",
     "readOn": "2026-09-29"
   },
   "BR_BPSC_CCE": {
@@ -733,16 +1125,35 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "readOn": "2026-09-29",
     "caveat": "The syllabus is printed inside the examination notice."
   },
+  "CG_CGPSC_SSE": {
+    "publisherShort": "CGPSC",
+    "name": "Annexure-II 'State Service Preliminary Examination' paper-wise syllabus, in Advertisement No. 06/2025/Exam…",
+    "url": "https://psc.cg.gov.in/PDFs/advertisement/STATE_SERVICE_EXAMINATION-2025_ADVERTISEMENT%20(26-11-2025).pdf",
+    "readOn": "2026-09-29"
+  },
   "CTET": {
     "publisherShort": "CBSE",
     "name": "Appendix-I, Structure and Content of Syllabus (Paper I and Paper II), in the Information Bulletin…",
     "url": "https://cdnbbsr.s3waas.gov.in/s3443dec3062d0286986e21dc0631734c9/uploads/2026/05/202605111250310617.pdf",
     "readOn": "2026-09-29"
   },
+  "DL_DSSSB_TGT": {
+    "publisherShort": "DSSSB",
+    "name": "SYLLABUS: I-T-T One Tier (Technical / Teaching) 200 Marks",
+    "url": "https://dsssb.delhi.gov.in/sites/default/files/DSSSB/universal-tab/syllabus_i-t-t_one_tier_technical_i_teaching_200_marks.pdf",
+    "readOn": "2026-09-29",
+    "scanned": true
+  },
   "GJ_GSSSB": {
     "publisherShort": "GSSSB",
     "name": "Advt. 378/202526 - Combined Competitive Examination, Stage 1: Preliminary Exam detailed syllabus",
     "url": "https://gsssb.gujarat.gov.in/ViewFile?fileName=4naZ%E2%9C%BF8wS64TzwZ61AZrbMP4tvDBt3Mj8UPSd1xKcshtZxTB5t5ltTF2mrczYtutOJGDlDeTKGm0IBe3QAs0YsAvhcBHVUA7rWLv6ae41Hda0d6MmkmlJGOJcCYvEzD6nnekULO9MvmUb8i9F7qJMxg%E2%99%AC%E2%99%AC",
+    "readOn": "2026-09-29"
+  },
+  "HR_TET": {
+    "publisherShort": "BSEH",
+    "name": "Haryana Teacher Eligibility Test-2024 Information Bulletin, Annexure-I: Content of Syllabus for Level-I,…",
+    "url": "https://bseh.org.in/uploads/files/3d7b5cf7d6d3c91133a80e9ef3fbfae9.pdf",
     "readOn": "2026-09-29"
   },
   "JH_TET": {
@@ -756,6 +1167,13 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "publisherShort": "Karnataka School Education Dept",
     "name": "KARTET-2025 Syllabus (Pathyakrama), subject-wise for Paper-1 and Paper-2, linked as '2. Syllabus' under the…",
     "url": "https://schooleducation.karnataka.gov.in/uploads/media_to_upload1760804671.pdf",
+    "readOn": "2026-09-29",
+    "scanned": true
+  },
+  "KA_KCET": {
+    "publisherShort": "KEA",
+    "name": "UGCET - 2026 Syllabus 29-01-2026",
+    "url": "https://cetonline.karnataka.gov.in/keawebentry456/ugcet2026/PHYSICS_SYB_29012026english.pdf",
     "readOn": "2026-09-29",
     "scanned": true
   },
@@ -783,6 +1201,12 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "publisherShort": "MP-ESB",
     "name": "Chapter 04: Syllabus (Pathyakram), Krishi Vistar Adhikari Recruitment Test - 2026, in the same rule book",
     "url": "https://esb.mp.gov.in/Rulebooks/RB_2026/Group2_SG1_RuleBook_2026_02072026.pdf",
+    "readOn": "2026-09-29"
+  },
+  "MZ_MPSC": {
+    "publisherShort": "MPSC",
+    "name": "Mizoram Civil Services (Combined Competitive Examination) Rules, 2025 - Schedule-I: Scheme and Syllabus for…",
+    "url": "https://mpsc.mizoram.gov.in/uploads/attachments/2026/04/de7d05fc97a84c398208444a121c9249/mizoram-civil-servicescombined-competitive-examination-rules-2025.pdf",
     "readOn": "2026-09-29"
   },
   "NDA": {
@@ -817,16 +1241,34 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "readOn": "2026-09-29",
     "caveat": "The file is titled 2022-2023; IAPT's site links it as the syllabus for NSE 2026-27."
   },
+  "NSTSE": {
+    "publisherShort": "Unified Council",
+    "name": "National Science Talent Search Examination - Syllabus (Classes 1 to 10)",
+    "url": "https://www.unifiedcouncil.com/documents/syllabus/NSTSE-Syllabus.pdf",
+    "readOn": "2026-09-29"
+  },
   "RJ_RPSC_RAS": {
     "publisherShort": "RPSC",
     "name": "Rajasthan State and Subordinate Services Combined Competitive (Preliminary) Examination: Scheme & Syllabus of…",
     "url": "https://rpsc.rajasthan.gov.in/Static/Syllabus/7D943B35-2D9E-4E50-BC3E-3726268AE18B.pdf",
     "readOn": "2026-09-29"
   },
+  "RJ_RSMSSB": {
+    "publisherShort": "RSSB",
+    "name": "Syllabus (पाठ्यक्रम विवरण) of CET (Graduation Level)-2026, printed in para 17 of Advertisement No. 09/2026,…",
+    "url": "https://rssb.rajasthan.gov.in/storage/advertisement_item/1782966142.pdf",
+    "readOn": "2026-09-29"
+  },
   "RRB_GROUP_D": {
     "publisherShort": "RRB",
     "name": "CEN No. 09/2025, Para 14.1 'Question Type and Syllabus'",
     "url": "https://rrb.indianrailways.gov.in/-/image/1785986914371examsDocuments.pdf/examsDocuments",
+    "readOn": "2026-09-29"
+  },
+  "SSC_CHSL": {
+    "publisherShort": "SSC",
+    "name": "Indicative Syllabus (Tier-I), para 13.10 of the Notice of Combined Higher Secondary (10+2) Level Examination,…",
+    "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_chsle_2026.pdf",
     "readOn": "2026-09-29"
   },
   "SSC_GD": {
@@ -853,6 +1295,12 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "url": "https://tnusrb.tn.gov.in/pdfs/SI_2025_Syllabus.pdf",
     "readOn": "2026-09-29"
   },
+  "TS_EAMCET": {
+    "publisherShort": "JNTUH",
+    "name": "Syllabus for TG EAPCET 2026-A&P Stream (Agriculture, Pharmacy, Veterinary etc.)",
+    "url": "https://eapcet.tgche.ac.in/TGEAPCET/Doc2026/Syllabus-AP.pdf",
+    "readOn": "2026-09-29"
+  },
   "TS_POLICE_SI": {
     "publisherShort": "TSLPRB",
     "name": "Annexure II - Syllabus for Preliminary Written Test (200 Questions - 200 Marks), in Notification Rc. No. 225…",
@@ -871,6 +1319,12 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "url": "https://websitenew.tgpsc.gov.in/preview/UFJFU1NOT1RFL0dyb3VwLUlJIFNjaGVtZSBhbmQgU3lsbGFidXMyMDIyMTIzMDE0Mzg0NC5wZGY=r95v17a0y2d8i13v",
     "readOn": "2026-09-29"
   },
+  "TS_TSPSC_GROUP3": {
+    "publisherShort": "TSPSC",
+    "name": "Scheme and Syllabus for Recruitment to the Posts of Group-III Services",
+    "url": "https://websitenew.tgpsc.gov.in/preview/UFJFU1NOT1RFL0dyb3VwLUlJSSBTY2hlbWUgYW5kIFN5bGxhYnVzMjAyMzAxMDIxMzEyMTgucGRmr95v17a0y2d8i13v",
+    "readOn": "2026-09-29"
+  },
   "UK_TET": {
     "publisherShort": "UBSE",
     "name": "Structure and Content of Syllabus - UTET I (classes I to V) and UTET II (classes VI to VIII), listed by the…",
@@ -885,12 +1339,37 @@ export const READ_DOCUMENTS: Readonly<Record<string, SyllabusDocument>> = {
     "url": "https://psc.uk.gov.in/public/uploads/recruitment/1843959203.pdf",
     "readOn": "2026-09-29"
   },
+  "UPSC_PRELIMS": {
+    "publisherShort": "UPSC",
+    "name": "Examination Notice No. 05/2026-CSE, Appendix I, Section III: Syllabi for the Examination, Part A: Preliminary…",
+    "url": "https://www.upsc.gov.in/sites/default/files/Notif-CSP-2026-Engl-060226Rev.pdf",
+    "readOn": "2026-09-29"
+  },
   "UP_POLICE_CONSTABLE": {
     "publisherShort": "UPPRPB",
     "name": "Appendix-1: Syllabus of the Written Examination, in the UPPRPB Advertisement for Constable Civil Police and…",
     "url": "https://uppbpb.gov.in/FilesUploaded/Notice/CONSTABLE-VIGYAPTIc7be0cc8-3365-471e-9237-447c528d341a.pdf",
     "readOn": "2026-09-29",
     "scanned": true
+  },
+  "UP_POLICE_SI": {
+    "publisherShort": "UPPRPB",
+    "name": "Appendix-1: Syllabus of the written examination (लिखित परीक्षा का पाठ्यक्रम), in advertisement no. PRPB-B (SI…",
+    "url": "https://uppbpb.gov.in/FilesUploaded/Notice/SI_vigyapti_202567e84cf2-8d04-4072-bdbc-56f3c8e1ccbe.pdf",
+    "readOn": "2026-09-29",
+    "scanned": true
+  },
+  "UP_UPTET": {
+    "publisherShort": "UPESSC",
+    "name": "UPTET-2026 syllabus, Annexure-5 of the Information Booklet (Adv. No. 01/UPTET/2026): Paper I Primary Level…",
+    "url": "https://upessc.up.gov.in/Advertisment/ef95e113-7ed8-4e56-99d3-50952353009d.pdf",
+    "readOn": "2026-09-29"
+  },
+  "WB_TET": {
+    "publisherShort": "WBBPE",
+    "name": "Relevant Information and Part-wise Model Questions for Teacher Eligibility Test-2023 (TET-2023) (For…",
+    "url": "https://wbbpe.wb.gov.in/file/INFORMATION_PART-WISE_MODEL_QUESTIONS_TET-2023_16102023.pdf",
+    "readOn": "2026-09-29"
   }
 };
 
@@ -912,9 +1391,17 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
     "doc": "AP_APPSC_GROUP1",
     "where": "Screening Test Paper II General Aptitude, Part (A) General Mental and Psychological Abilities, item 11 (page 9)"
   },
+  "AP_APPSC_GROUP3/gs.logical_reasoning": {
+    "doc": "AP_APPSC_GROUP3",
+    "where": "Screening Test Part-A: General Studies and Mental Ability, item 10; also Main Paper-I, item 10"
+  },
   "AP_TET/aptet.ms.chemistry.elements": {
     "doc": "AP_TET",
     "where": "Paper-II(A), D.1 Mathematics and Science, D.1.2 Physical Science (Content), Unit 15: Matter"
+  },
+  "AS_TET/lang2.tense": {
+    "doc": "AS_TET",
+    "where": "Paper I, Language II (English), Grammar (10 marks), item 3"
   },
   "BR_BPSC_CCE/bihar.1857_revolt": {
     "doc": "BR_BPSC_CCE",
@@ -924,9 +1411,21 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
     "doc": "CDS",
     "where": "Elementary Mathematics (Code No. 13), heading Geometry, page 20"
   },
+  "CG_CGPSC_SSE/gs.geog.indian": {
+    "doc": "CG_CGPSC_SSE",
+    "where": "Paper 1 General Studies, Part 1: General Studies, item 2"
+  },
+  "CG_CGPSC_SSE/cg.eco.economy": {
+    "doc": "CG_CGPSC_SSE",
+    "where": "Paper 1 General Studies, Part 2: General Knowledge of Chhattisgarh, item 5"
+  },
   "CTET/cdp.child_development.intelligence": {
     "doc": "CTET",
     "where": "Paper I, I. Child Development and Pedagogy, a) Child Development (Primary School Child)"
+  },
+  "DL_DSSSB_TGT/eng.comprehension": {
+    "doc": "DL_DSSSB_TGT",
+    "where": "Section-A: English Language & Comprehension (20 Marks)"
   },
   "GJ_GSSSB/gj.current_affairs_gj": {
     "doc": "GJ_GSSSB",
@@ -936,6 +1435,14 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
     "doc": "GJ_GSSSB",
     "where": "Preliminary Exam syllabus, (5) Reasoning (60 Marks), item 1, page 5"
   },
+  "HR_TET/cdp.child_development": {
+    "doc": "HR_TET",
+    "where": "Annexure-I, Level-I, Part-I: Child Development and Pedagogy, item A"
+  },
+  "HR_TET/haryana.history": {
+    "doc": "HR_TET",
+    "where": "Annexure-I, Level-I, Part-III: General Studies, item A"
+  },
   "JH_TET/cdp.assessment.nep": {
     "doc": "JH_TET",
     "where": "Child Development and Pedagogy, Level-1 (Classes 1-5), Part (A) Concepts, items 2 and 5; repeated for Level-2"
@@ -943,6 +1450,18 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
   "KA_KARTET/lang1.sandhi": {
     "doc": "KA_KARTET",
     "where": "Kannada syllabus, Paper-1 and Paper-2: Kannada Language, Literature and Grammar, Grammar"
+  },
+  "KA_KCET/phy.units_measurement": {
+    "doc": "KA_KCET",
+    "where": "Physics syllabus, Class XI (Theory), Unit I: Units and Measurements"
+  },
+  "KA_KCET/math.linear_inequalities": {
+    "doc": "KA_KCET",
+    "where": "Mathematics syllabus, Class XI, Unit II: Algebra, 2. Linear Inequalities"
+  },
+  "KA_KCET/bio.biological_classification": {
+    "doc": "KA_KCET",
+    "where": "Biology syllabus, Class XI, I. Diversity in the Living World, Chapter-2"
   },
   "KA_KPSC_KAS/gs.current_affairs": {
     "doc": "KA_KPSC_KAS",
@@ -963,6 +1482,10 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
   "MP_RAEO/horti.package": {
     "doc": "MP_RAEO",
     "where": "Chapter 4 Syllabus (single paper), Unit 7: Horticulture"
+  },
+  "MZ_MPSC/mz.culture.mizo_society": {
+    "doc": "MZ_MPSC",
+    "where": "Preliminary Examination, Paper-I: General Studies, item (h)"
   },
   "NDA/math.integral_calculus": {
     "doc": "NDA",
@@ -1008,6 +1531,10 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
     "doc": "NSEJS",
     "where": "Junior Science, Unit II: Chemical Substances - Nature and Behaviour (page 19)"
   },
+  "NSTSE/math.triangles": {
+    "doc": "NSTSE",
+    "where": "Class 9 paper, Mathematics section; also Class 10 paper, Mathematics section (syllabus page 2)"
+  },
   "RJ_RPSC_RAS/rj.culture.painting": {
     "doc": "RJ_RPSC_RAS",
     "where": "Preliminary paper, heading: History, Art, Culture, Literature, Tradition & Heritage of Rajasthan"
@@ -1016,9 +1543,21 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
     "doc": "RJ_RPSC_RAS",
     "where": "Preliminary paper, heading: Political and Administrative System of Rajasthan"
   },
+  "RJ_RSMSSB/lang.eng_idioms": {
+    "doc": "RJ_RSMSSB",
+    "where": "Para 17 syllabus, Language Knowledge, General English (page 23 of 24)"
+  },
   "RRB_GROUP_D/rrbd.gs.chemistry": {
     "doc": "RRB_GROUP_D",
     "where": "Computer Based Test, Question Type and Syllabus, item c: General Science"
+  },
+  "SSC_CHSL/eng.synonyms": {
+    "doc": "SSC_CHSL",
+    "where": "Tier-I, Part I: English Language (Basic Knowledge), para 13.10.1, page 21"
+  },
+  "SSC_CHSL/ga.geography.india": {
+    "doc": "SSC_CHSL",
+    "where": "Tier-I, Part IV: General Awareness, para 13.10.4, page 22"
   },
   "SSC_GD/gd.reason.relationships": {
     "doc": "SSC_GD",
@@ -1060,6 +1599,10 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
     "doc": "TN_TNUSRB_SI",
     "where": "Main Written Examination, Part-A: General Knowledge (page 2)"
   },
+  "TS_EAMCET/bot.morphology_plants": {
+    "doc": "TS_EAMCET",
+    "where": "A&P Stream syllabus, Botany, topic 2: Structural Organisation in Plants - Morphology"
+  },
   "TS_POLICE_SI/gs.telangana": {
     "doc": "TS_POLICE_SI",
     "where": "Preliminary Written Test syllabus (Annexure II), Part B: General Studies, Item 6"
@@ -1088,6 +1631,14 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
     "doc": "TS_TSPSC_GROUP2",
     "where": "Paper III: Economy and Development, Part I: Indian Economy: Issues and Challenges, Unit 5: Planning, NITI Aayog and Public Finance"
   },
+  "TS_TSPSC_GROUP3/gs.social_inclusion": {
+    "doc": "TS_TSPSC_GROUP3",
+    "where": "Paper-I: General Studies and General Abilities, item 9"
+  },
+  "TS_TSPSC_GROUP3/gs.current_affairs": {
+    "doc": "TS_TSPSC_GROUP3",
+    "where": "Paper-I: General Studies and General Abilities, item 1"
+  },
   "UK_TET/lang2.comprehension": {
     "doc": "UK_TET",
     "where": "UTET I, III. Language-II, a) Comprehension (page 2); same heading in UTET II, III. Language-II (page 5)"
@@ -1108,6 +1659,10 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
     "doc": "UK_UKPSC_PCS",
     "where": "Preliminary Paper I General Studies, Unit 5: General Science and Technology"
   },
+  "UPSC_PRELIMS/gs.history": {
+    "doc": "UPSC_PRELIMS",
+    "where": "Part A: Preliminary Examination, Paper I (General Studies), page 32"
+  },
   "UP_POLICE_CONSTABLE/hindi.vilom": {
     "doc": "UP_POLICE_CONSTABLE",
     "where": "Appendix-1, Part 2: General Hindi, item 2: Basic knowledge of Hindi grammar"
@@ -1115,5 +1670,21 @@ export const READ_PLACES: Readonly<Record<string, { doc: string; where: string }
   "UP_POLICE_CONSTABLE/gk.geography": {
     "doc": "UP_POLICE_CONSTABLE",
     "where": "Appendix-1, Part 1: General Knowledge"
+  },
+  "UP_POLICE_SI/hindi.varnamala": {
+    "doc": "UP_POLICE_SI",
+    "where": "Written Examination, Appendix-1, Section 1: General Hindi, item 2: basic knowledge of Hindi grammar"
+  },
+  "UP_POLICE_SI/gk.computer_basics": {
+    "doc": "UP_POLICE_SI",
+    "where": "Written Examination, Appendix-1, Section 2: Basic Law / Constitution / General Knowledge, general knowledge paragraph"
+  },
+  "UP_UPTET/lang2.comprehension": {
+    "doc": "UP_UPTET",
+    "where": "Paper I (Classes I to V), III. Language II, English, (a) Content"
+  },
+  "WB_TET/evs.pedagogy.scope_relations": {
+    "doc": "WB_TET",
+    "where": "Part E: Environmental Studies, (b) Pedagogical Issues"
   }
 };

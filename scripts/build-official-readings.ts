@@ -94,6 +94,12 @@ const OVERRIDES: Record<string, {
   /** Keep only these section names (the reader listed sections of more than one paper). */
   sectionsOnly?: string[];
 }> = {
+  // ── Batch 3 (29 Sep 2026) ──
+  // SSA Assam advertisement of 6 Jan 2026 is for the SPECIAL Assam TET-2026 (Language I: Bodo, Garo, Manipuri or
+  // Hmar). The stage name says so, so no reader takes it for the regular TET.
+  AS_TET: { stage: "Special TET-2026, Paper I (Lower Primary)" },
+  // DSSSB Advertisement 03/2026, para 4, Row 3: "One Tier (Technical / Teaching)".
+  DL_DSSSB_TGT: { stage: "One-tier examination (Technical / Teaching)" },
   // ── Batch 2 (29 Sep 2026) ──
   // REAP admits through JEE (Main); the reading's documents are NTA's JEE (Main) bulletin and syllabus. A REAP
   // topic page cannot cite them without a line that explains the link, so none is placed yet.
@@ -250,6 +256,8 @@ for (const code of [...codes].sort()) {
 
   if (c.hostIsOfficial !== true) why.push("host not confirmed as the body's own");
   if (c.documentOpens !== true) why.push("document did not open on the second reading");
+  // A later notice on the body's site replaces this one: its pattern and syllabus may have changed.
+  if (c.noticeIsLatest === "no") why.push("the second reading found a later notice on the body's site");
   if (!hostOk(r.document?.url ?? "", r.body?.host ?? "", c.hostIsOfficial === true)) why.push(`document URL is not on ${r.body?.host}`);
   if (o.noPattern) why.push(o.noPattern);
   if (!posInt(s.questions) || !ok(p.questions)) why.push("questions not confirmed");
@@ -325,6 +333,7 @@ for (const code of [...codes].sort()) {
   const topicOk = new Map<string, string>((c.topics ?? []).map((t: any) => [t.topicCode, t.verdict]));
   const found = (r.topics ?? []).filter((t: any) => t.found && clean(t.where) && topicOk.get(t.topicCode) === "confirmed" && TOPIC_PAGES_STAGE1.has(`${code}/${t.topicCode}`));
   if (o.noPlaces) { report.push(`${code}: topics placed 0 — ${o.noPlaces}`); continue; }
+  if (c.noticeIsLatest === "no") { report.push(`${code}: topics placed 0 — a later notice exists`); continue; }
   if (found.length && c.hostIsOfficial === true && c.documentOpens === true && sy?.url && hostOk(sy.url, r.body?.host ?? "", true) && clean(sy.title) && clean(r.body?.short)) {
     documents[code] = {
       publisherShort: o.short ?? clean(r.body.short, 32),
