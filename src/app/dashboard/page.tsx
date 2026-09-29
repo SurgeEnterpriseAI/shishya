@@ -1159,7 +1159,7 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
                           ))}
                         </ul>
                         {/* Human escalation at the weak-areas moment — the
-                            Surge expert desk gives specific guidance (and
+                            A mentor gives specific guidance (and
                             routes to nearby coaching where useful). */}
                         <div className="mt-2">
                           <TalkToTeacher
@@ -1170,7 +1170,7 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
                             defaultName={session.user.name ?? null}
                             defaultEmail={session.user.email ?? null}
                             variant="link"
-                            linkLabel="📞 Talk to a subject expert about these →"
+                            linkLabel="📞 Talk to a mentor about these →"
                           />
                         </div>
                       </div>

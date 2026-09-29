@@ -62,6 +62,18 @@ describe("copy, markup and the sign-in page", () => {
   });
 });
 
+// 29 Sep 2026 (founder: "stop blur"): the experiment is off — no wall, no registration-wall markup.
+describe("stopped", () => {
+  const ROOT = path.resolve(__dirname, "../..");
+  it("SOFT_WALL_ON is false and <SoftWall> renders its children only", async () => {
+    const { SOFT_WALL_ON } = await import("@/lib/soft-wall");
+    expect(SOFT_WALL_ON).toBe(false);
+    const src = fs.readFileSync(path.join(ROOT, "src/components/SoftWall.tsx"), "utf8");
+    expect(src).toContain("if (!SOFT_WALL_ON) return <>{children}</>;");
+    expect(src.indexOf("if (!SOFT_WALL_ON)")).toBeLessThan(src.indexOf("application/ld+json"));
+  });
+});
+
 describe("placement and gates (source)", () => {
   const ROOT = path.resolve(__dirname, "../..");
   const read = (f: string) => fs.readFileSync(path.join(ROOT, f), "utf8");

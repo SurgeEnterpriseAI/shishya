@@ -33,7 +33,7 @@ export default function ContactPage() {
       </ul>
       <p className="mt-6 text-xs text-ink-500">
         For help inside the platform, the fastest route is the AI tutor (free, any language) or the
-        &ldquo;talk to a subject expert&rdquo; option on any exam page.
+        &ldquo;talk to a mentor&rdquo; option on any exam page.
       </p>
     </main>
   );

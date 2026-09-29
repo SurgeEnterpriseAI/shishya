@@ -1,7 +1,7 @@
 // /editorial-policy — how Shishya's content is produced and checked
 // (25 Aug 2026, E-E-A-T). Every claim on this page is verifiable in the
 // product: official-source links on trackers, the report-a-question
-// loop, the expert desk. No puffery — raters and users read this page
+// loop, the mentor desk. No puffery — raters and users read this page
 // the same way.
 
 import Link from "next/link";
@@ -118,7 +118,7 @@ export default function EditorialPolicyPage() {
           Every practice question carries a <b>Report</b> action. A reported question is re-checked —
           today by an automated review that solves it again against its answer key — and the key is
           corrected or the question is withdrawn; reporters are notified by email of the outcome.
-          Students can also send any doubt to the free expert desk: a person answers, and if no one
+          Students can also send any doubt to a mentor, free: a person answers, and if no one
           has within a day, Shishya&apos;s AI answers it, labelled as such, and the team follows up.
         </p>
 

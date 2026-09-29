@@ -475,7 +475,7 @@ function ReviewBody({
               Report this question
             </button>
             {/* Human escalation right where a wrong answer stings — call the
-                Surge expert desk / request a callback (closed-loop enquiry).
+                Mentor call / request a callback (closed-loop enquiry).
                 26 Sep 2026: never on a school attempt. */}
             {!school && !q.correct && (
               <TalkToTeacher
@@ -484,7 +484,7 @@ function ReviewBody({
                 topicCode={q.topic.code}
                 contextLabel={q.topic.name}
                 variant="link"
-                linkLabel="📞 Talk to a subject expert"
+                linkLabel="📞 Talk to a mentor"
               />
             )}
           </div>

@@ -4,10 +4,12 @@
 // the full content inside SoftWallClient.
 
 import type { ReactNode } from "react";
-import { SOFT_WALL_JSON_LD } from "@/lib/soft-wall";
+import { SOFT_WALL_JSON_LD, SOFT_WALL_ON } from "@/lib/soft-wall";
 import { SoftWallClient } from "./SoftWallClient";
 
 export function SoftWall({ children }: { children: ReactNode }) {
+  // 29 Sep 2026: experiment stopped (SOFT_WALL_ON) — the page as it is, no markup, no client island.
+  if (!SOFT_WALL_ON) return <>{children}</>;
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SOFT_WALL_JSON_LD) }} />

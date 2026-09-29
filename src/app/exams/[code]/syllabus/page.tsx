@@ -344,7 +344,7 @@ export default async function SyllabusPage({ params }: { params: Promise<{ code:
             examCode={exam.code}
             variant="link"
             contextLabel={`${exam.shortName} syllabus — where should I start?`}
-            linkLabel="Ask our subject expert where to start — free"
+            linkLabel="Ask a mentor where to start — free"
           />
         </p>
 

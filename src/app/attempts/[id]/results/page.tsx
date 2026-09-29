@@ -538,7 +538,7 @@ export default async function ResultsPage({
                 defaultEmail={session.user.email ?? null}
                 contextLabel={topicArr[0]?.name}
                 variant="link"
-                linkLabel="📞 Talk to a subject expert about your plan →"
+                linkLabel="📞 Talk to a mentor about your plan →"
               />
             </div>
           </div>

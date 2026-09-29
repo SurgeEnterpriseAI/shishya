@@ -231,7 +231,7 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
             examCode={exam.code}
             variant="link"
             contextLabel={`${exam.shortName} — is my self-study plan realistic?`}
-            linkLabel="Ask our subject expert — free"
+            linkLabel="Ask a mentor — free"
           />
         </p>
 

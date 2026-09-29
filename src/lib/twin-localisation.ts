@@ -279,9 +279,10 @@ export const TWIN_CHROME: Record<TwinSurface, SurfaceChrome> = {
     literalLatin: 1092,
     when: { dates: { hi: { native: 255, latin: 4 }, te: { native: 238, latin: 4 } } },
   },
+  // 29 Sep 2026: "Ask a mentor, free" replaced "Ask our subject expert, free" (hi 505 → 497, te 550 → 537).
   cutoff: {
-    hi: { native: 505, latin: 69 },
-    te: { native: 550, latin: 69 },
+    hi: { native: 497, latin: 69 },
+    te: { native: 537, latin: 69 },
     literalLatin: 1648,
     when: { cutoffTable: { hi: { native: 29, latin: 0 }, te: { native: 31, latin: 0 } } },
   },

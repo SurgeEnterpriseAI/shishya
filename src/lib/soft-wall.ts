@@ -20,6 +20,12 @@
 // clicks, sign-ups joined by the SIGNUP event's anonId, pages per visit).
 // Pure: rules, bucket, copy.
 
+// 29 Sep 2026 (founder: "stop blur"): the experiment is OFF. Every visitor
+// gets the whole page, and the pages no longer carry the registration-wall
+// markup (isAccessibleForFree: false) — it told search engines and AI
+// assistants these pages were gated. The code stays behind this switch.
+export const SOFT_WALL_ON: boolean = false;
+
 export const SOFT_WALL_KEY = "shishya_wall_ab_v1";
 export type WallBucket = "wall" | "open";
 
