@@ -85,6 +85,7 @@ import { HomeFinder } from "@/components/home/HomeFinder";
 import { HomeRails } from "@/components/home/HomeRails";
 import { HomeHowItWorks } from "@/components/home/HomeHowItWorks";
 import { HomeSignIn } from "@/components/home/HomeSignIn";
+import { SignupPitch } from "@/components/SignupPitch";
 import { HomeBeacons } from "@/components/home/HomeBeacons";
 // 26 Sep 2026: the whole-platform search strip in the hero (founder brief).
 import { SearchStrip } from "@/components/search/SearchStrip";
@@ -581,10 +582,16 @@ export default async function HomePage({
             this week's announced exam days (both render nothing otherwise;
             the wrapper hides itself when empty). 26 Sep 2026: the founder
             moved them from under the pills to between the sections and the
-            exam finder, side by side on wide screens. */}
-        <div className="mt-7 grid gap-4 empty:hidden lg:grid-cols-2 lg:items-start">
+            exam finder, side by side on wide screens.
+            30 Sep 2026 (founder): the free sign-up card sits to their right
+            from lg (guests only; client island, so nothing in the server
+            HTML). One event → [event | card]; both events → the card spans
+            the row below them; no event → the card spans the row. Phones
+            keep it at the end of the page (src/components/SignupPitch.tsx). */}
+        <div className="mt-7 grid gap-4 empty:hidden lg:grid-cols-2 lg:items-start max-lg:[&:has(>[data-signup-pitch]:only-child)]:hidden">
           <LiveTestTodayBanner data={liveToday} />
           <ExamsTodayStrip />
+          <SignupPitch placement="home-side" surface="home-beside-events" />
         </div>
 
         <HomeFinder copy={copy} exams={exams} chips={chips} examCount={portalStats.examCount} />

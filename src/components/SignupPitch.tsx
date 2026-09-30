@@ -8,6 +8,12 @@
 // (pitchAllowedPath). It renders nothing on the server: crawlers and the
 // /hi /te twins' literal budgets never see it, and a signed-in student never
 // sees a flash of it. Content is never covered: it sits after the page.
+//
+// 30 Sep 2026 (founder: "move the sign-in card to the right of" Exams today):
+// on the home page, from lg up, the card sits beside the week's events
+// (placement "home-side", mounted by src/app/page.tsx) and this footer copy
+// hides at lg there. Phones keep the page's flow — content first, the offer
+// at the end — so below lg nothing moves. Same guest / path / server rules.
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -26,7 +32,17 @@ function beacon(cta: string, surface: string) {
   }
 }
 
-export function SignupPitch({ surface = "site-card" }: { surface?: string }) {
+/** Home page paths (the /hi and /te twins included), where the card also sits beside the events at lg. */
+const HOME_PATHS = new Set(["/", "/hi", "/te"]);
+
+export function SignupPitch({
+  surface = "site-card",
+  placement = "footer",
+}: {
+  surface?: string;
+  /** "footer" = the root layout's card above the footer; "home-side" = beside the home page's events, lg and up only. */
+  placement?: "footer" | "home-side";
+}) {
   const pathname = usePathname();
   const [copy, setCopy] = useState<SignupPitchCopy | null>(null);
   const [href, setHref] = useState("/login");
@@ -48,8 +64,14 @@ export function SignupPitch({ surface = "site-card" }: { surface?: string }) {
   }, [pathname]);
 
   if (!copy) return null;
+  const side = placement === "home-side";
+  // The home page shows the card beside its events from lg (side), so the footer copy steps aside there.
+  const footerOnHome = !side && HOME_PATHS.has(pathname ?? "");
+  const sectionClass = side
+    ? "hidden lg:block lg:[&:first-child]:col-span-2 lg:[&:nth-child(3)]:col-span-2"
+    : `container-prose my-10${footerOnHome ? " lg:hidden" : ""}`;
   return (
-    <section aria-label={copy.title} className="container-prose my-10">
+    <section aria-label={copy.title} className={sectionClass} data-signup-pitch={placement}>
       <div className="rounded-2xl border border-saffron-200 bg-gradient-to-br from-saffron-50 to-white p-5 sm:p-6">
         <h2 className="text-lg font-bold text-ink-900">{copy.title}</h2>
         <p className="mt-1 text-sm text-ink-700">{copy.lead}</p>
