@@ -540,3 +540,15 @@ describe("official listing adapters in the run", () => {
     expect(still.aiCalls).toHaveLength(1); // as before: no readable page for the kind yet
   });
 });
+
+// 1 Oct 2026: the scheduled runs report only while WATCH_WRITES_PAUSED is true
+// (the dry crawl's labels and exam naming were wrong on 5 of 6 releases).
+describe("writes paused until the gate fix ships", () => {
+  it("the cron handler forces a dry run while paused", async () => {
+    const fs = await import("node:fs");
+    const src = fs.readFileSync("src/lib/answer-key-watch-run.ts", "utf8");
+    expect(src).toContain(`const dry = q.get("dry") === "1" || WATCH_WRITES_PAUSED;`);
+    const { WATCH_WRITES_PAUSED } = await import("@/lib/answer-key-watch");
+    expect(WATCH_WRITES_PAUSED).toBe(true);
+  });
+});

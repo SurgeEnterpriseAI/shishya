@@ -42,6 +42,7 @@ import {
   RUN_AI_CAP_USD,
   RUN_AI_MAX_EXAMS,
   TIME_GUARD_MS,
+  WATCH_WRITES_PAUSED,
   classifyLink,
   examTermsFor,
   isoOfDay,
@@ -677,7 +678,8 @@ export async function handleAnswerKeyWatchCron(req: Request, defaultMode: WatchM
   const q = new URL(req.url).searchParams;
   const modeParam = q.get("mode");
   const mode: WatchMode = modeParam === "plan" || modeParam === "check" || modeParam === "evening" ? modeParam : defaultMode;
-  const dry = q.get("dry") === "1";
+  // WATCH_WRITES_PAUSED (1 Oct 2026): report only until the gate fix ships.
+  const dry = q.get("dry") === "1" || WATCH_WRITES_PAUSED;
   const ai = q.get("ai") !== "0";
   const maxUsdRaw = q.get("maxUsd");
   const maxUsd = maxUsdRaw !== null && Number.isFinite(Number(maxUsdRaw)) ? Number(maxUsdRaw) : null;

@@ -69,6 +69,7 @@ import { isStopError } from "../src/lib/ai/answer-key-check";
 import {
   AiBudget,
   RESULT_DUE_EXAM_DAYS,
+  WATCH_WRITES_PAUSED,
   classifyLink,
   crawlAiOff,
   crawlNeedsProbe,
@@ -418,6 +419,8 @@ async function main() {
     orderBy: [{ date: "asc" }, { id: "asc" }],
   });
   const known = await loadKnownLinks(prisma, withPortal.map((e) => e.id), []);
+  // 1 Oct 2026: no writes while the release gate is being fixed (WATCH_WRITES_PAUSED).
+  if (apply && WATCH_WRITES_PAUSED) throw new Error("--apply refused: WATCH_WRITES_PAUSED is true in src/lib/answer-key-watch.ts (labels and exam naming under repair)");
   if (apply) await ensureOfficialWatchTables(prisma);
 
   const report: ExamVerification[] = [];

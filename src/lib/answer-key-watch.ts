@@ -116,6 +116,14 @@ export const AI_CHECK_COST_USD = 0.15;
 export type WatchMode = "plan" | "check" | "evening";
 /** Hard AI caps per run: the Monday plan $3.00, the 12:00 IST check $0
  *  (HTML only), the 21:00 IST check $0.90 for at most 6 hot exams. */
+/** 1 Oct 2026: the scheduled runs REPORT ONLY (dry) while this is true. The
+ *  dry crawl of 30 Sep found 6 current releases and only 1 was right: labels
+ *  came from the latest sitting on our tracker, not the body's row ("PET"
+ *  for a final selection result, "PCM" for a PCB result), and word-bag exam
+ *  naming let "Gujarat Administrative Service, Class-I" match another GPSC
+ *  recruitment's row. Flip to false only in the commit that fixes both. */
+export const WATCH_WRITES_PAUSED = true;
+
 export const RUN_AI_CAP_USD: Readonly<Record<WatchMode, number>> = { plan: 3.0, check: 0, evening: 0.9 };
 export const RUN_AI_MAX_EXAMS: Readonly<Record<WatchMode, number>> = { plan: 20, check: 0, evening: 6 };
 export const FETCH_TIMEOUT_MS = 12_000;
