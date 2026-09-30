@@ -260,12 +260,16 @@ describe("1. the words students type open the family's page", () => {
     }
   });
 
-  it("what already worked still does: a state's police exam, the finder for a jobs ask, a bare 'after 12th' lists", () => {
+  it("what already worked still does: a state's police exam, the finder for a jobs ask, a bare '12th pass' lists", () => {
     expect(resolveQuery("ap police", deep).best?.url).toBe("/exams/AP_POLICE_PC");
     expect(resolveQuery("bihar police", deep).best?.url).toBe("/exams/BR_POLICE_PC");
     expect(resolveQuery("govt jobs after 12th", deep).best?.url).toBe("/find-your-exam");
     expect(resolveQuery("govt jobs after 12th", deep).hits.map((h) => h.url)).toContain("/exams/after/12th");
-    const after = resolveQuery("after 12th", deep);
+    // 30 Sep 2026 (P1 build 1): a bare "after 12th" now opens its life-stage hub, which compares every
+    // path after Class 12 (government jobs and the exams after 12th included); a bare "12th pass"
+    // still lists the finder with the exams after 12th.
+    expect(resolveQuery("after 12th", deep).best?.url).toBe("/after-12th");
+    const after = resolveQuery("12th pass", deep);
     expect(after.outcome).toBe("list");
     expect(after.hits.map((h) => h.url)).toContain("/exams/after/12th");
     expect(resolveQuery("10वीं पास नौकरी", deep).hits[0].url).toBe("/find-your-exam");

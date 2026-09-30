@@ -54,6 +54,8 @@ import { INSIGHTS_ARTICLES } from "@/data/insights-articles";
 import { loadCheckedQuestionCount } from "@/lib/platform-counts";
 // 27 Sep 2026 (wave 2 search): the wave's page families, from the sitemap's own list.
 import { familyBriefLines, loadFamilyLinks } from "@/lib/page-families-brief";
+// 30 Sep 2026 (P1 build 1): the life-stage spine (src/lib/paths/path-llms.ts).
+import { pathLlmsFullLines } from "@/lib/paths/path-llms";
 import {
   careersLlmsFullLines,
   collegesLlmsFullLines,
@@ -164,6 +166,10 @@ export async function GET() {
     `- ${SITE}/shishya-in-numbers/context.md — every public number about Shishya with its definition and as-of date`,
     `- ${SITE}/pulse/context.md — the latest Shishya Pulse weekly data note (mocks by exam, most-practised topics, official exam dates; every group at least 20)`,
     "",
+    // 30 Sep 2026 (P1 build 1, spec §2.6): "By life stage" — one line per
+    // stage hub and one per INDEXABLE option page after Class 10, counts
+    // computed, from the path registry. No DB read.
+    ...pathLlmsFullLines(SITE),
   ];
 
   // Free tools — platform-wide surfaces that answer whole query

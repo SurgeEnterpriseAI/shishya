@@ -142,6 +142,8 @@ export function schoolNextSteps(cls: number, subjectName?: string): NextStep[] {
       return [
         ...OLYMPIAD_STEPS,
         { label: "Choosing a Class 11 stream", href: "/schooling/streams" },
+        // 30 Sep 2026 (P1 build 1, spec §2.6): every option after Class 10 side by side.
+        { label: "What can I do after Class 10?", href: "/after-10th" },
         { label: "Class 10 student: what to focus on", href: "/for/class-10-student" },
         { label: "Career map", href: "/career-map" },
         { label: "Scholarships", href: "/scholarships" },

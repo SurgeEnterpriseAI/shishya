@@ -85,6 +85,11 @@ export type SitemapEntryProvider = (base: string) => MetadataRoute.Sitemap | Pro
 //   • /exams/after/{level} — ≥ 5 exams at that level;
 //   • /mock-tests — lastmod = the newest shared mock (never invented);
 //   • /subjects/{slug} — the hubs past the data floor (5 of 7 on 27 Sep).
+// 30 Sep 2026 (P1 build 1, spec §2.6): the life-stage hubs /after-10th and
+// /after-12th, each while its own index gate holds (at least 5 options with a
+// page to open; src/lib/paths/path-sitemap.ts). Pure — no DB read. The option
+// pages after Class 10 are /schooling URLs and come through
+// src/lib/school/landings.ts instead (spec F6).
 export const EXTRA_SITEMAP_PROVIDERS: SitemapEntryProvider[] = [
   async (base) => (await import("@/lib/scholarship-lists")).scholarshipListSitemapEntries(base),
   async (base) => (await import("@/lib/board-exams")).boardExamSitemapEntries(base),
@@ -104,6 +109,7 @@ export const EXTRA_SITEMAP_PROVIDERS: SitemapEntryProvider[] = [
     ]);
     return subjectHubSitemapEntries(await loadSubjectHubs(), base);
   },
+  async (base) => (await import("@/lib/paths/path-sitemap")).stageHubSitemapEntries(base),
 ];
 
 /** Every registered provider's entries, each provider guarded. */

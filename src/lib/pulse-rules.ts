@@ -552,7 +552,11 @@ export function pulseSectionOfPath(path: string | null | undefined, categoryByCo
   const bare = clean.replace(/^\/(hi|te)(?=\/|$)/, "") || "/";
   const seg = bare.split("/").filter(Boolean);
   const first = seg[0] ?? "";
-  if (first === "schooling") return "school";
+  // 30 Sep 2026 (P1 build 1, P1-D3 — the learner-sections rule): the life-stage
+  // hubs. /after-10th is school (its option pages are /schooling already);
+  // /after-12th is entrance. Before this they fell to "other".
+  if (first === "schooling" || first === "after-10th") return "school";
+  if (first === "after-12th") return "entrance";
   if (first === "colleges" || first === "scholarships" || first === "post-graduation" || first === "distance-learning" || first === "worldwide") return "colleges";
   if (first === "careers" || first === "career-map" || first === "jobs" || first === "jobs-map" || first === "soft-skills") return "careers";
   if (first === "exams") {

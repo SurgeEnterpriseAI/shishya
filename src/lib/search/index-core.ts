@@ -19,7 +19,7 @@ import type { DocKind, ExamFacts, ExamGatesLike, SearchDoc, SearchIndex, SearchS
 import { normaliseTerm } from "./normalize";
 import { SEARCH_LANDINGS } from "./landings";
 import { scholarshipSub } from "./labels";
-import { BRANCH_SYNONYMS, CITY_SYNONYMS, MONTH_NAMES, SCHOLARSHIP_ALIASES } from "./lexicon";
+import { BRANCH_SYNONYMS, CITY_SYNONYMS, MONTH_NAMES, SCHOLARSHIP_ALIASES, STAGE_EXAM_WORDS } from "./lexicon";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { ALL_STREAMS, COLLEGES, formatNirfRanks } from "@/lib/colleges-data";
 import { COLLEGE_DETAILS } from "@/data/college-details";
@@ -40,6 +40,11 @@ import { BOARD_EXAM_HUBS } from "@/data/board-exams";
 import { boardExamPath } from "@/lib/board-exams";
 import { CLOSING_SOON_DAYS, SCHOLARSHIP_FILTERS } from "@/lib/scholarship-lists";
 import { SUBJECT_HUBS, SUBJECT_HUB_ROOT, subjectHubPath } from "@/lib/subject-hubs";
+// 30 Sep 2026 (P1 build 1, spec §2.6): the option pages after Class 10, one
+// doc per STREAM_OPTIONS row, with the words the path registry keeps for them.
+import { STREAM_OPTIONS } from "@/data/paths";
+import { PATH_SEARCH_TERMS } from "@/lib/paths/copy";
+import { STREAM_PAGE_ROOT, streamPagePath, streamSearchTerms } from "@/lib/paths/index-helpers";
 
 // ── Inputs (what the server loader reads from the DB) ────────────────────
 
@@ -748,8 +753,70 @@ export function buildSearchIndex(inputs: SearchIndexInputs, tier: "lite" | "deep
     weight: 0.4,
   });
 
+  // ── Life-stage pages (30 Sep 2026, P1 build 1) ──
+  // One doc per option after Class 10 (/schooling/streams/{option}), every
+  // option — like the scholarship lists, a page that renders is a real page
+  // for people even while it is noindex. Strong keys: the option's own names
+  // ("MPC", "PCM", "BiPC", "एमपीसी") and "{name} after 10th". The generic
+  // stream phrases ("which group after 10th", "MPC or BiPC") name the
+  // /after-10th hub instead (landings.ts), so they are kept off the nine pages.
+  const genericStreamWords = new Set(uniqTerms([...PATH_SEARCH_TERMS.en.streams, ...PATH_SEARCH_TERMS.hi.streams, ...PATH_SEARCH_TERMS.te.streams]));
+  for (const o of STREAM_OPTIONS) {
+    const path = streamPagePath(o.slug);
+    push({
+      id: `landing:${path}`,
+      kind: "landing",
+      section: "school",
+      title: o.title,
+      sub: o.whatItIs,
+      path,
+      terms: uniqTerms(streamSearchTerms(o)).filter((t) => !genericStreamWords.has(t)),
+      weight: 0.5,
+    });
+  }
+  demoteLifeStageCollisions(docs);
+
   const index: SearchIndex ={ v: 1, builtAt: inputs.builtAt, tier: "deep", docs: dedupeIds(docs), exams };
   return tier === "lite" ? toLiteIndex(index) : index;
+}
+
+/** The life-stage pages (P1): the two hubs and the option pages after Class 10. */
+export const LIFE_STAGE_PATHS: readonly string[] = ["/after-10th", "/after-12th", ...STREAM_OPTIONS.map((o) => streamPagePath(o.slug))];
+
+/**
+ * 30 Sep 2026 (P1 build 1): a life-stage page never takes a name another page
+ * already answers to. Its strong key becomes a weak one when it is
+ *   • any other page's strong key ("commerce" is the CISCE Class 12 subject
+ *     page, "iti" and "diploma" /colleges/iti-diploma, "nios" the NIOS board
+ *     page, "stream selection" /schooling/streams), or
+ *   • one word of an exam's name ("polycet" of AP POLYCET, "polytechnic" of
+ *     UK Polytechnic) — the exams keep their list, or
+ *   • an exams ask ("entrance exams after 12th", "12वीं के बाद परीक्षा"):
+ *     /exams/after/{level} answers those (resolve.ts afterLevelDoc).
+ * A key under three characters ("ia" of "I.A.") is weak too. Checked
+ * mechanically at build time, so an alias added to the registry
+ * later can never silently steal a search that already opens a page.
+ */
+export function demoteLifeStageCollisions(docs: SearchDoc[]): void {
+  const mine = new Set(LIFE_STAGE_PATHS);
+  const isMine = (d: SearchDoc) => mine.has(d.path) || d.path.startsWith(`${STREAM_PAGE_ROOT}/`);
+  const taken = new Set<string>();
+  const examWords = new Set(STAGE_EXAM_WORDS.map((w) => normaliseTerm(w)));
+  for (const d of docs) {
+    if (isMine(d)) continue;
+    for (const t of d.terms) {
+      taken.add(t);
+      if (d.kind === "exam") for (const w of t.split(" ")) taken.add(w);
+    }
+  }
+  for (const d of docs) {
+    if (!isMine(d)) continue;
+    // A two-letter key ("ia" of "I.A.") is too short to name a page on its own.
+    const weak = d.terms.filter((t) => taken.has(t) || t.length < 3 || t.split(" ").some((w) => examWords.has(w)));
+    if (weak.length === 0) continue;
+    d.terms = d.terms.filter((t) => !weak.includes(t));
+    d.soft = [...new Set([...(d.soft ?? []), ...weak])];
+  }
 }
 
 function dedupeIds(docs: SearchDoc[]): SearchDoc[] {
@@ -772,11 +839,18 @@ const CAPSULE_PATH = /^\/current-affairs\/capsule\/\d{4}-\d{2}$/;
 /** The lite (client) tier of a deep index: every page but LITE_SKIP, without
  *  the weak keys (career keywords, scholarship tags) — the server's deep index
  *  still ranks with them when a search reaches /ask — and only the latest
- *  LITE_CAPSULE_MONTHS capsules. */
+ *  LITE_CAPSULE_MONTHS capsules.
+ *  30 Sep 2026 (P1 build 1): and without the nine option pages after Class 10
+ *  (/schooling/streams/{option}), which are deep-only. Measured with
+ *  tests/unit/search-resolver.test.ts's own inputs: with them the served wire
+ *  was 48,785 bytes gzipped, 657 over the 48,128-byte cap; without them (the
+ *  two life-stage hubs kept) 47,701. A strip search for "MPC" opens no page on
+ *  the client, goes to /ask, and the deep index there opens the page (a 307),
+ *  so every option page is still one search away. */
 export function toLiteIndex(full: SearchIndex): SearchIndex {
   const capsules = full.docs.filter((d) => d.kind === "landing" && CAPSULE_PATH.test(d.path)).map((d) => d.path).sort();
   const oldCapsules = new Set(capsules.slice(0, Math.max(0, capsules.length - LITE_CAPSULE_MONTHS)));
-  const docs = full.docs.filter((d) => !LITE_SKIP.has(d.kind) && !oldCapsules.has(d.path)).map((d) => {
+  const docs = full.docs.filter((d) => !LITE_SKIP.has(d.kind) && !oldCapsules.has(d.path) && !d.path.startsWith(`${STREAM_PAGE_ROOT}/`)).map((d) => {
     if (!d.soft) return d;
     const { soft: _soft, ...rest } = d;
     void _soft;

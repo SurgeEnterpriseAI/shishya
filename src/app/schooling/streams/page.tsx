@@ -13,6 +13,15 @@
 // commerce, "42 career paths" (the careers page lists CAREERS.length).
 // Exam chips without a page on Shishya (CLAT, IPMAT, BITSAT, CA, NID,
 // NIFT) are plain labels now: /exams/CLAT was a 404 and /exams 308s to /.
+//
+// 30 Sep 2026 (P1 build 1, spec §2.4): this page stays the parent of the
+// nine option pages /schooling/streams/{option} (MPC / PCM … NIOS). Every
+// section id (pcm, pcb, pcmb, commerce, humanities), the H1, the canonical
+// and the copy are kept; added are the "All options after Class 10" nav under
+// the TL;DR, one "Full page" link inside each section (joined through the
+// registry's legacyAnchor, src/data/paths/streams.ts) and an ItemList of the
+// nine children beside the CollectionPage JSON-LD. The STREAMS exam chips
+// stay as they are (swapping them for registry edges would change copy).
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -20,6 +29,8 @@ import { Header } from "@/components/Header";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { schoolRobots } from "@/lib/schooling-data";
 import { CAREERS } from "@/data/careers";
+import { STREAM_OPTIONS } from "@/data/paths";
+import { streamPagePath, streamPageUrl, streamShortLabel } from "@/lib/paths/index-helpers";
 
 export const metadata: Metadata = {
   title: "Stream Selection After Class 10 — Science vs Commerce vs Humanities | Shishya",
@@ -50,6 +61,11 @@ export const metadata: Metadata = {
 };
 
 export const revalidate = 86_400;
+
+/** Section id on this page → the option page that continues it (legacyAnchor join). */
+const FULL_PAGE_BY_SECTION: ReadonlyMap<string, (typeof STREAM_OPTIONS)[number]> = new Map(
+  STREAM_OPTIONS.filter((o) => o.legacyAnchor !== null).map((o) => [o.legacyAnchor as string, o]),
+);
 
 interface Stream {
   slug: string;
@@ -267,6 +283,14 @@ export default function StreamsPage() {
             path: "/schooling/streams",
           }),
           breadcrumbLd([["Schooling", "/schooling"], ["Streams", "/schooling/streams"]]),
+          {
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "@id": "https://shishya.in/schooling/streams#options",
+            name: "All options after Class 10",
+            numberOfItems: STREAM_OPTIONS.length,
+            itemListElement: STREAM_OPTIONS.map((o, i) => ({ "@type": "ListItem", position: i + 1, name: o.title, url: streamPageUrl(o.slug) })),
+          },
         ]}
       />
       <Header />
@@ -298,6 +322,32 @@ export default function StreamsPage() {
           </p>
         </div>
 
+        {/* 30 Sep 2026 (P1): the nine option pages, both vocabularies. */}
+        <nav aria-label="All options after Class 10" className="mt-6 rounded-lg border border-ink-200 bg-white p-5">
+          <p className="text-sm font-semibold text-ink-900">All options after Class 10, one page each</p>
+          <p className="mt-1 text-xs text-ink-600">
+            Subjects as each board prints them, what each option keeps open, its exams and careers, with official sources.
+          </p>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {STREAM_OPTIONS.map((o) => (
+              <li key={o.slug}>
+                <Link
+                  href={streamPagePath(o.slug)}
+                  prefetch={false}
+                  className="inline-block rounded-md border border-saffron-300 bg-saffron-50/40 px-3 py-1 text-xs font-medium text-saffron-800 hover:bg-saffron-100"
+                >
+                  {streamShortLabel(o.slug)} →
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs">
+            <Link href="/after-10th" prefetch={false} className="font-semibold text-saffron-700 underline hover:text-saffron-800">
+              Compare them side by side: what can I do after Class 10? →
+            </Link>
+          </p>
+        </nav>
+
         {/* Streams comparison */}
         {STREAMS.map((s) => (
           <section key={s.slug} id={s.slug} className="mt-12">
@@ -307,6 +357,17 @@ export default function StreamsPage() {
             </div>
             <p className="mt-1 text-xs text-ink-500">{s.subjects}</p>
             <p className="mt-3 text-sm text-ink-700">{s.blurb}</p>
+            {FULL_PAGE_BY_SECTION.has(s.slug) && (
+              <p className="mt-2 text-sm">
+                <Link
+                  href={streamPagePath(FULL_PAGE_BY_SECTION.get(s.slug)!.slug)}
+                  prefetch={false}
+                  className="font-semibold text-saffron-700 underline hover:text-saffron-800"
+                >
+                  Full page: {streamShortLabel(FULL_PAGE_BY_SECTION.get(s.slug)!.slug)} →
+                </Link>
+              </p>
+            )}
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border border-emerald-200 bg-emerald-50/30 p-4">

@@ -37,6 +37,10 @@ import { PERSONAS } from "@/data/personas";
 // closing-soon window come from the module that renders those pages, so the
 // tutor names every list that exists and the window's real length.
 import { CLOSING_SOON_DAYS, SCHOLARSHIP_FILTERS } from "@/lib/scholarship-lists";
+// 30 Sep 2026 (P1 build 1): the life-stage pages — their option names come
+// from the path registry, so the line never drifts from the pages.
+import { STREAM_OPTIONS, STREAM_OPTION_SLUGS, courseFamiliesAfter } from "@/data/paths";
+import { streamShortLabel } from "@/lib/paths/index-helpers";
 
 /** /exams/category/{slug} hubs the tutor may name (26 Sep 2026). A hub with
  *  fewer than EXAM_CATEGORY_MIN active exams is a 404
@@ -227,7 +231,27 @@ export const SITE_FEATURES: readonly SiteFeature[] = [
   { path: "/jobs", name: "Jobs & careers", what: "government job catalogue, internships, resume and interview prep — information, not a job board" },
   { path: "/colleges", name: "Colleges", what: "NIRF-ranked colleges by stream and state" },
   { path: "/careers", name: "Careers", what: "career paths with entry routes and salary bands" },
-  { path: "/career-map", name: "Career Map", what: "one map from Class 9 to the first job: stream choice, Class 11-12 and entrance exams, college and the first career decision" },
+  // 30 Sep 2026 (P1 build 1): the map now runs from Class 1 to working life (src/app/career-map/page.tsx).
+  { path: "/career-map", name: "Career Map", what: "one map from Class 1 to working life: school, the options after Class 10, Class 11-12 and entrance exams, college, the first job and learning at any age" },
+  // 30 Sep 2026 (P1 build 1, spec §2.6): the two life-stage hubs and the
+  // option pages after Class 10 — what they show today, so the general tutor
+  // may send a student there. Every rule on them is quoted from an official
+  // page with the day it was read; they print no salary.
+  {
+    path: "/after-10th",
+    name: "What can I do after Class 10?",
+    what: `every option after Class 10 side by side — ${STREAM_OPTIONS.map((o) => streamShortLabel(o.slug)).join(", ")} — with what each is, how long it takes where an official page says so, what it leads to and the rules to know, each quoted from an official page with the day it was read; plus the scholarships open at that stage`,
+  },
+  {
+    path: "/after-12th",
+    name: "What can I do after Class 12?",
+    what: `the paths after Class 12 side by side — ${courseFamiliesAfter("12th").map((f) => f.name).join(", ")}, government jobs and exams after Class 12, open and distance learning, and study abroad — each with its entrance exams and the colleges and careers it leads to, the subject rules quoted from official pages, and the scholarships open at that stage`,
+  },
+  {
+    path: "/schooling/streams/{OPTION}",
+    name: "One option after Class 10",
+    what: `one option in depth: the subjects each board prints for it (a board whose document could not be read is only linked), what it keeps open or closes, the exams on the path and where it leads; {OPTION} is one of ${STREAM_OPTION_SLUGS.join(", ")}`,
+  },
   // 26 Sep 2026: the school section is live — class and subject pages for
   // CBSE (NCERT books) and CISCE, chapter pages that link the official NCERT
   // PDF, and Shishya's own notes and checked practice only on the chapters
@@ -301,7 +325,7 @@ function featureLine(f: SiteFeature): string {
 export function siteFeaturesBlock(): string {
   return [
     `What Shishya offers — the features, pages, buttons and settings you may describe:`,
-    `({CODE} = the exam's code from the syllabus block, e.g. SSC_GD; {TOPIC} = a topic code from it. With no exam in the conversation, never ask the student to pick an exam first and never build a {CODE} link from memory: link the section that fits — https://shishya.in/schooling, https://shishya.in/exams/entrance, https://shishya.in/exams/browse, https://shishya.in/colleges, https://shishya.in/scholarships or https://shishya.in/careers. Some exam pages exist only for some exams — the exam facts block says which. {BOARD} = cbse (NCERT books) or icse-cisce; {N} = a class from 1 to 12; {PERSONA} = one of the slugs listed on that line; {CATEGORY}, {LEVEL} and {GROUP} likewise = one of the values listed on their own line — never any other.)`,
+    `({CODE} = the exam's code from the syllabus block, e.g. SSC_GD; {TOPIC} = a topic code from it. With no exam in the conversation, never ask the student to pick an exam first and never build a {CODE} link from memory: link the section that fits — https://shishya.in/schooling, https://shishya.in/exams/entrance, https://shishya.in/exams/browse, https://shishya.in/colleges, https://shishya.in/scholarships or https://shishya.in/careers. Some exam pages exist only for some exams — the exam facts block says which. {BOARD} = cbse (NCERT books) or icse-cisce; {N} = a class from 1 to 12; {PERSONA} = one of the slugs listed on that line; {CATEGORY}, {LEVEL}, {GROUP} and {OPTION} likewise = one of the values listed on their own line — never any other.)`,
     ...SITE_FEATURES.map(featureLine),
     ...IN_PAGE_FEATURES.map((s) => `- ${s}`),
     ``,

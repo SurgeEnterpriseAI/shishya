@@ -313,7 +313,8 @@ describe("/context.md (the platform file)", () => {
     expect(md).toContain(`- ${INSIGHTS_ARTICLES.length} articles`);
   });
   it("lists every context file, the five new ones included", () => {
-    expect(SECTION_CONTEXT_FILES.map((f) => f.path)).toEqual(["/context.md", "/schooling/context.md", "/colleges/context.md", "/scholarships/context.md", "/careers/context.md"]);
+    // 30 Sep 2026 (P1 build 1): plus the two life-stage hubs (indexable today; gated in tests/unit/paths-context-md.test.ts).
+    expect(SECTION_CONTEXT_FILES.map((f) => f.path)).toEqual(["/context.md", "/schooling/context.md", "/colleges/context.md", "/scholarships/context.md", "/careers/context.md", "/after-10th/context.md", "/after-12th/context.md"]);
     for (const f of SECTION_CONTEXT_FILES) expect(md).toContain(`${SITE}${f.path}`);
     expect(md).toContain(`${SITE}/exams/{CODE}/context.md`);
     expect(md).toContain(`${SITE}/exams/state/{slug}/context.md`);

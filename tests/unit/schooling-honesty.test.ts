@@ -84,7 +84,8 @@ describe("/schooling robots (26 Sep 2026: public page by page)", () => {
   });
 
   // 27 Sep 2026 (repair): + the CBSE Class 10 / 12 board-exam hub (G4).
-  it("finds every page (landing, streams, board, class, board-exam hub, subject, chapter)", () => {
+  // 30 Sep 2026 (P1 build 1): + the nine option pages /schooling/streams/{option}.
+  it("finds every page (landing, streams, stream options, board, class, board-exam hub, subject, chapter)", () => {
     expect(pageFiles.map(rel).sort()).toEqual([
       "src/app/schooling/[slug]/[classSlug]/[subject]/[chapter]/page.tsx",
       "src/app/schooling/[slug]/[classSlug]/[subject]/page.tsx",
@@ -92,6 +93,7 @@ describe("/schooling robots (26 Sep 2026: public page by page)", () => {
       "src/app/schooling/[slug]/[classSlug]/page.tsx",
       "src/app/schooling/[slug]/page.tsx",
       "src/app/schooling/page.tsx",
+      "src/app/schooling/streams/[option]/page.tsx",
       "src/app/schooling/streams/page.tsx",
     ]);
   });
@@ -360,7 +362,9 @@ describe("school practice is answer-checked rows through the school-only getter"
 // storage, no session import in any school file; the pages render the
 // island under isStudentModeClass(cls) alone (tests/unit/school-student-mode.test.ts).
 describe("school pages carry no tutor, sign-in, account or storage entry of their own", () => {
-  const files = [...walk(SCHOOL_APP).filter((f) => /\.tsx?$/.test(f)), ...walk(SCHOOL_COMPONENTS).filter((f) => /\.tsx?$/.test(f)), SCHOOL_COPY];
+  const TUTOR_ENTRY_WHY = "the life-stage tutor entry";
+  const TUTOR_ENTRY_PAGE = "src/app/schooling/streams/[option]/page.tsx";
+  const files =[...walk(SCHOOL_APP).filter((f) => /\.tsx?$/.test(f)), ...walk(SCHOOL_COMPONENTS).filter((f) => /\.tsx?$/.test(f)), SCHOOL_COPY];
   const FORBIDDEN: Array<[RegExp, string]> = [
     [/["'`]\/chat\b/, "the AI tutor"],
     [/["'`]\/login\b|["'`]\/onboarding\b|["'`]\/dashboard\b/, "sign-in / account flows"],
@@ -368,6 +372,12 @@ describe("school pages carry no tutor, sign-in, account or storage entry of thei
     [/\bAnonQuizPlayer\b|\bTalkToTeacher\b|\bChallengeCard\b|\bExamAlertBox\b|\bStudyTogether\b|\bTopicMasteryPanel\b|\bCoachNextTask\b/, "the exam pages' conversion pieces"],
     [/localStorage|sessionStorage|document\.cookie/, "nothing is stored for a guest"],
     [/from "@\/lib\/auth"/, "no session read on a school page"],
+    // 30 Sep 2026 (P1 build 1 review): founder rule — the life-stage tutor
+    // entry is for readers choosing after Class 10 (13+), never a Class 1-7
+    // page. /schooling/streams/{option} is that post-Class-10 page (spec §5)
+    // and the ONLY school file allowed to render it; any other school file
+    // that reaches for it fails here.
+    [/\bStageTutorEntry\b|\bstageTutorHref\b|\bStreamOptionView\b|@\/lib\/paths\/stage-tutor/, TUTOR_ENTRY_WHY],
   ];
 
   it.each(files.map((f) => [rel(f), f]))("%s", (_name, f) => {
@@ -376,10 +386,25 @@ describe("school pages carry no tutor, sign-in, account or storage entry of thei
     // session to enable the operator's click-to-verify; that is the one
     // allowed auth import and it renders no CTA.
     const allowAuth = rel(f) === "src/app/schooling/[slug]/page.tsx";
+    const allowTutorEntry = rel(f) === TUTOR_ENTRY_PAGE;
     for (const [re, why] of FORBIDDEN) {
       if (allowAuth && re.source.includes("lib\\/auth")) continue;
+      if (allowTutorEntry && why === TUTOR_ENTRY_WHY) continue;
       const m = src.match(re);
       expect(m?.[0] ?? null, why).toBeNull();
+    }
+  });
+
+  it("the one allowed life-stage tutor entry is really there, and the rule would catch it in any other school file (30 Sep 2026)", () => {
+    const tutorRule = FORBIDDEN.find(([, why]) => why === TUTOR_ENTRY_WHY)![0];
+    expect(files.map(rel)).toContain(TUTOR_ENTRY_PAGE);
+    expect(stripComments(read(path.join(ROOT, TUTOR_ENTRY_PAGE)))).toMatch(tutorRule);
+    for (const probe of [
+      'import { StageTutorEntry } from "@/components/paths/StageTutorEntry";',
+      'import { stageTutorHref } from "@/lib/paths/stage-tutor";',
+      "<StreamOptionView model={m} locale={locale} />",
+    ]) {
+      expect(probe).toMatch(tutorRule);
     }
   });
 

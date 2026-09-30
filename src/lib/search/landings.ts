@@ -15,6 +15,11 @@
 // is listed below.
 
 import type { SearchSection } from "./types";
+// 30 Sep 2026 (P1 build 1): the words students type for the two life-stage
+// hubs, from the path copy (a data-free module: its only import is a type).
+import { PATH_SEARCH_TERMS } from "@/lib/paths/copy";
+
+const T = PATH_SEARCH_TERMS;
 
 export interface SearchLanding {
   path: string;
@@ -34,6 +39,21 @@ export const SEARCH_LANDINGS: readonly SearchLanding[] = [
   {
     path: "/schooling/streams", section: "school", title: "Streams after Class 10", sub: "Science, commerce and humanities, and what each leads to",
     terms: ["streams", "stream selection", "streams after 10th", "which stream", "science commerce arts", "stream after class 10", "कौन सा स्ट्रीम", "స్ట్రీమ్"],
+  },
+  // 30 Sep 2026 (P1 build 1, spec §2.6): the life-stage hubs. /after-10th
+  // compares every option after Class 10 (the nine /schooling/streams/{option}
+  // pages are built in index-core.ts from the path registry, never typed);
+  // /after-12th the paths after Class 12. Section: the learner-sections rule
+  // (P1-D3) — after 10th is school, after 12th is entrance. A word another
+  // page already owns ("stream selection" → /schooling/streams) stays that
+  // page's: index-core.ts demotes a colliding life-stage word to a weak key.
+  {
+    path: "/after-10th", section: "school", title: "What can I do after Class 10?", sub: "Every option after Class 10 side by side: the streams, vocational, diploma, ITI and NIOS",
+    terms: [...T.en.after10, ...T.hi.after10, ...T.te.after10, "after 10th options", "options after class 10", "10th ke baad kya kare", "10th ke baad kya karen", "10th ke baad kaun sa subject le", "what after 10th"],
+  },
+  {
+    path: "/after-12th", section: "entrance", title: "What can I do after Class 12?", sub: "Courses with their entrance exams, government jobs, open learning and study abroad",
+    terms: [...T.en.after12, ...T.hi.after12, ...T.te.after12, "after 12th options", "options after class 12", "12th ke baad kya kare", "12th ke baad kya karen", "what after 12th"],
   },
   {
     path: "/exams/browse", section: "government", title: "All exams", sub: "Browse every exam on Shishya by category",

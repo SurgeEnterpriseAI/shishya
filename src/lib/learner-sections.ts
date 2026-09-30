@@ -32,6 +32,14 @@
 // (/exams, browse, state, category and level lists, the exam calendar,
 // results, alerts, live tests) do not vote, like home and Ask.
 //
+// 30 Sep 2026 (P1 build 1, founder decision P1-D3): the life-stage hubs vote
+// — /after-10th with the school students (the option pages after Class 10,
+// /schooling/streams/{option}, already do, being /schooling), /after-12th
+// with the entrance aspirants. COUNTER CHANGE (metric-reconciliation rule):
+// before this they were unknown paths and voted "exploring"; the learners
+// total is unchanged, only the split between the groups moves. Say so in the
+// commit message.
+//
 // Labels name what people look at, not who they are: a PG entrance group
 // holds final-year students too, a school group holds parents. Review
 // (30 Sep 2026): totals are exact; the per-group split carries a small
@@ -73,7 +81,8 @@ function codeList(codes: readonly string[]): string {
  *  the page belongs to an exam). */
 export function sectionCaseSql(): string {
   return `CASE
-      WHEN sp ~ '^/schooling(/|$)' THEN 'school'
+      WHEN sp ~ '^/(schooling|after-10th)(/|$)' THEN 'school'
+      WHEN sp ~ '^/after-12th(/|$)' THEN 'entrance'
       WHEN sp ~ '^/post-graduation(/|$)' THEN 'graduate'
       WHEN sp ~ '^/(colleges|scholarships|distance-learning|worldwide|careers|career-map|jobs|soft-skills|alumni-stories|internships)(/|$)' THEN 'college'
       WHEN sp ~ '^/exams/?$' OR sp ~ '^/exams/(browse|state|category|after)(/|$)'

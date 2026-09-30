@@ -273,7 +273,8 @@ describe("school pages", () => {
     expect(hrefs(6)).toEqual([]);
     expect(hrefs(8)).toEqual([]);
     for (const cls of [9, 10]) {
-      expect(hrefs(cls)).toEqual(["IOQM", "NSEJS", "SOF_NSO", "SOF_IMO", "/schooling/streams", "/for/class-10-student", "/career-map", "/scholarships"]);
+      // 30 Sep 2026 (P1 build 1): plus the /after-10th hub beside the streams article.
+      expect(hrefs(cls)).toEqual(["IOQM", "NSEJS", "SOF_NSO", "SOF_IMO", "/schooling/streams", "/after-10th", "/for/class-10-student", "/career-map", "/scholarships"]);
     }
     for (const cls of [11, 12]) {
       // 26 Sep 2026 (entry points): the qualification list /exams/after/12th.

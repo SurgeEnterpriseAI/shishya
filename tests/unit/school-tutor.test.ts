@@ -351,10 +351,15 @@ describe("the exam tutor's shared 1-hour prefix is byte-identical to before scho
   // (every mode; it left GENERAL_MODE_NOTE) and the scoped graduation / PG /
   // PhD line in GENERAL_MODE_NOTE. Before: signedIn 423f1992…, guest
   // 27851324…, general 29a6e922….
+  // 30 Sep 2026 (P1 build 1, spec §2.6): re-pinned ON PURPOSE for the
+  // site-facts entries /after-10th, /after-12th, /schooling/streams/{OPTION},
+  // the {OPTION} placeholder line and the /career-map line (Class 1 to
+  // working life). Before: signedIn 30f34719…, guest 65de703d…, general
+  // 67425908….
   const PINNED = {
-    signedIn: "30f34719a6e04281066e3e975798cf4845ee29b547e27ef2d5e4d3782b79df80",
-    guest: "65de703dc5c306bd20bc8289cae29c429c7173f801f68b73e387fee4776b3f2f",
-    general: "67425908c32fc5a931257910a7d4469ea59aa045251a7851e96acf850339465a",
+    signedIn: "4fef5e778f8555b29834b57d2a67dc40f3986b521b3dfcfbf9fcb08f07c40129",
+    guest: "b0a0f34bb625831465813a07578e62e2afcecdb70643e0d7fb05fd8d1db5df3c",
+    general: "1e90807a37bca6ef7e8a6ce83427db414be0fdaa11455fd129f1a1d5fe4026c4",
   };
 
   it("signed-in (tools on), guest (tools off) and general mode", () => {

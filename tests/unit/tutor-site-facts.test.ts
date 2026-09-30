@@ -71,6 +71,10 @@ const EXPECTED_PATHS = [
   "/careers",
   // 26 Sep 2026 (whole-education identity): the other sections.
   "/career-map",
+  // 30 Sep 2026 (P1 build 1): the life-stage hubs and the option pages after Class 10.
+  "/after-10th",
+  "/after-12th",
+  "/schooling/streams/{OPTION}",
   "/schooling",
   "/schooling/{BOARD}/class-{N}",
   "/schooling/cbse/class-10/board-exam",
@@ -99,6 +103,8 @@ function routeFile(p: string): string {
     .replace(/\{CATEGORY\}/g, "[slug]")
     .replace(/\{LEVEL\}/g, "[level]")
     .replace(/\{GROUP\}/g, "[filter]")
+    // 30 Sep 2026 (P1 build 1)
+    .replace(/\{OPTION\}/g, "[option]")
     .replace(/^\/schooling\/cbse\/class-\d+\//, "/schooling/[slug]/[classSlug]/");
   return path.join(APP, dir, "page.tsx");
 }
@@ -263,7 +269,8 @@ describe("whole-platform /ask and the G4 pages (26 Sep 2026, entry points)", () 
   });
 
   it("tells the tutor the placeholder values are the listed ones only", () => {
-    expect(block).toContain("{CATEGORY}, {LEVEL} and {GROUP} likewise = one of the values listed on their own line — never any other");
+    // 30 Sep 2026 (P1 build 1): {OPTION} joins them (the option pages after Class 10).
+    expect(block).toContain("{CATEGORY}, {LEVEL}, {GROUP} and {OPTION} likewise = one of the values listed on their own line — never any other");
   });
 });
 

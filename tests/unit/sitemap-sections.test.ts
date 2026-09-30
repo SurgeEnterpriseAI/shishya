@@ -71,10 +71,11 @@ describe("newsSitemapXml — /sitemap-news.xml", () => {
 describe("the extension point for other groups' families", () => {
   // 27 Sep 2026 (integration): the wave's six new families are registered;
   // their output is pinned in tests/unit/sitemap-families.test.ts (DB mocked).
-  it("registers the six new families, each imported lazily (no DB import at load)", () => {
-    expect(EXTRA_SITEMAP_PROVIDERS).toHaveLength(6);
+  // 30 Sep 2026 (P1 build 1): plus the life-stage hubs (/after-10th, /after-12th).
+  it("registers the six new families and the life-stage hubs, each imported lazily (no DB import at load)", () => {
+    expect(EXTRA_SITEMAP_PROVIDERS).toHaveLength(7);
     const src = fs.readFileSync(path.resolve(__dirname, "../../src/lib/sitemap-sections.ts"), "utf8");
-    for (const m of ["scholarship-lists", "board-exams", "exam-categories", "exam-qualification", "mock-catalogue", "db/mock-catalogue-db", "subject-hubs", "db/subject-hubs-db"]) {
+    for (const m of ["scholarship-lists", "board-exams", "exam-categories", "exam-qualification", "mock-catalogue", "db/mock-catalogue-db", "subject-hubs", "db/subject-hubs-db", "paths/path-sitemap"]) {
       expect(src, m).toContain(`import("@/lib/${m}")`);
     }
     expect(src).not.toMatch(/^import .*(prisma|\/db\/)/m);

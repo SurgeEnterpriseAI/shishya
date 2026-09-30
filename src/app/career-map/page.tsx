@@ -12,15 +12,33 @@ import { CAREERS } from "@/data/careers";
 import { COLLEGES, NIRF_SOURCE_YEAR } from "@/lib/colleges-data";
 import { loadLiveExams } from "@/lib/live-exam-codes";
 import { examHubHref } from "@/lib/section-seo";
+import { StageTutorEntry } from "@/components/paths/StageTutorEntry";
+import { findStage, type PathStageId } from "@/data/paths";
+import { streamPagePath } from "@/lib/paths/index-helpers";
+import { stageTutorHref } from "@/lib/paths/stage-tutor";
 
 // 26 Sep 2026 (every-education-search wave): an exam node names its code and
 // links its exam hub only when that exam is live — CLAT and BITSAT have no
 // page (CLAT linked a 404, BITSAT the bare exams path, a 308 to the home
 // page) and are plain labels now. The typed "170+ exams", "Top 77" and
 // "42 careers" are gone or computed; own openGraph.
-const TITLE = "Career Map — From Class 9 to your first job in one rail";
+//
+// 30 Sep 2026 (P1 build 1, spec §2.5 — agent B): the rail runs from Class 1
+// to working life. New rows: "Class 1-8" at the top (content links only —
+// /schooling; no tutor, the school stage may include children) and "Working /
+// learning at any age" at the bottom. Every row has an id; a row that IS a
+// life stage of the path registry (src/data/paths/stages.ts) uses the
+// stage's id, so /career-map#after-10th, #after-12th, #college,
+// #after-graduation and #working land on it, and the Class 10 and Class
+// 11-12 rows link the new hubs /after-10th and /after-12th. Those stage rows
+// from "after-10th" on carry the seeded tutor link (spec §5); the "school"
+// rows (Class 1-8, Class 9-10) never do. The stage count in the heading is
+// computed. Two unsourced hints went: "lateral entry to BTech possible"
+// (AICTE's lateral-entry rule was not read) and ITI "Class 10 entry" (DGT:
+// after Class VIII or Class X, by trade).
+const TITLE = "Career Map: From Class 1 to Working Life, in One Rail";
 const DESCRIPTION =
-  "Visual lifecycle map of Indian education + career choices. From Class 9 → stream → Class 11-12 → entrance exam → college → first job → mid-career evolution. All paths visible at once.";
+  "Visual map of Indian education and career choices, from Class 1 to working life: school, the options after Class 10, Class 11-12 and entrance exams, college, the first job and learning at any age. All paths visible at once.";
 
 export const metadata: Metadata = {
   title: `${TITLE} | Shishya`,
@@ -30,6 +48,7 @@ export const metadata: Metadata = {
     "career path india",
     "education to career map",
     "lifecycle indian student",
+    "what after class 8",
     "what after class 10",
     "what after class 12",
     "what after graduation",
@@ -56,7 +75,13 @@ function nodeHref(p: PathNode, live: ReadonlyMap<string, string>): string | null
 }
 
 interface Stage {
-  age: string;
+  /** Anchor id (#…). A row that is a registry life stage uses the stage's id. */
+  id: string;
+  /** Set only on the row that IS that registry stage: drives the tutor entry
+   *  (none for "school", which may include children). */
+  stage?: PathStageId;
+  /** Typical age; left out where a row has none ("at any age"). */
+  age?: string;
   title: string;
   icon: string;
   description: string;
@@ -65,6 +90,18 @@ interface Stage {
 
 const LIFECYCLE: Stage[] = [
   {
+    id: "school",
+    stage: "school",
+    title: "Class 1-8",
+    icon: "🏫",
+    description:
+      "Reading, writing, maths and curiosity come first. Shishya's school pages link each board's official site.",
+    paths: [
+      { label: "Schooling — official board links", href: "/schooling", hint: "CBSE / ICSE / state boards, Class 1 to 8" },
+    ],
+  },
+  {
+    id: "class-9-10",
     age: "13-15",
     title: "Class 9-10",
     icon: "📘",
@@ -79,19 +116,24 @@ const LIFECYCLE: Stage[] = [
     ],
   },
   {
+    id: "after-10th",
+    stage: "after-10th",
     age: "15-16",
     title: "Class 10 → Stream Decision",
     icon: "🔀",
     description:
-      "5 stream paths: PCM, PCB, PCMB, Commerce, Humanities. Each opens AND closes specific careers. Don't pick the 'high-status' one without genuine engagement.",
+      "The Class 11-12 streams (PCM, PCB, PCMB, Commerce, Humanities), vocational Class 11-12, a polytechnic diploma, ITI or NIOS. Each opens AND closes specific careers. Don't pick the 'high-status' one without genuine engagement.",
     paths: [
+      { label: "What can I do after Class 10?", href: "/after-10th", hint: "Every option side by side, with official rules" },
       { label: "Stream selection deep-dive", href: "/schooling/streams" },
-      { label: "ITI Trades (alt to Class 11-12)", href: "/colleges/iti-diploma", hint: "Class 10 entry; trade courses of one or two years" },
-      { label: "Polytechnic Diploma (alt to Class 11-12)", href: "/colleges/iti-diploma", hint: "3-year; lateral entry to BTech possible" },
+      { label: "ITI Trades (alt to Class 11-12)", href: streamPagePath("iti"), hint: "After Class 8 or Class 10, by trade; courses of one or two years" },
+      { label: "Polytechnic Diploma (alt to Class 11-12)", href: streamPagePath("diploma-polytechnic"), hint: "Taken after Class 10 in place of Class 11-12" },
       { label: "Career paths feeding each stream", href: "/careers" },
     ],
   },
   {
+    id: "after-12th",
+    stage: "after-12th",
     age: "16-18",
     title: "Class 11-12 + Entrance Prep",
     icon: "🎯",
@@ -101,6 +143,7 @@ const LIFECYCLE: Stage[] = [
       // 26 Sep 2026: the school quizzes are off until answer-checked
       // (SCHOOL_QUIZZES_ANSWER_CHECKED), and only CBSE Maths / Physics /
       // Chemistry / Biology list chapters — the hint says only that.
+      { label: "What can I do after Class 12?", href: "/after-12th", hint: "Courses, entrance exams and government jobs compared" },
       { label: "Class 11 + 12 subject pages", href: "/schooling", hint: "NCERT book links; CBSE chapter lists for Maths, Physics, Chemistry, Biology" },
       { label: "JEE Main / Advanced (Engineering)", exam: "JEE_MAIN" },
       { label: "NEET UG (Medical)", exam: "NEET_UG" },
@@ -111,6 +154,8 @@ const LIFECYCLE: Stage[] = [
     ],
   },
   {
+    id: "college",
+    stage: "college",
     age: "17-22",
     title: "Undergraduate (UG)",
     icon: "🎓",
@@ -126,6 +171,8 @@ const LIFECYCLE: Stage[] = [
     ],
   },
   {
+    id: "after-graduation",
+    stage: "after-graduation",
     age: "21-24",
     title: "First Career Decision (After UG)",
     icon: "🌳",
@@ -141,6 +188,7 @@ const LIFECYCLE: Stage[] = [
     ],
   },
   {
+    id: "early-career",
     age: "23-30",
     title: "Early Career (First 5-7 years)",
     icon: "🚀",
@@ -155,6 +203,7 @@ const LIFECYCLE: Stage[] = [
     ],
   },
   {
+    id: "mid-career",
     age: "28-40",
     title: "Mid-Career Pivots",
     icon: "🔄",
@@ -167,6 +216,20 @@ const LIFECYCLE: Stage[] = [
       { label: "Career journey examples (composite stories)", href: "/alumni-stories" }, // 26 Sep 2026: composites, not real alumni
     ],
   },
+  {
+    id: "working",
+    stage: "working",
+    title: "Working / learning at any age",
+    icon: "🌱",
+    description:
+      "Learning does not stop at a job. Change track, add a skill, prepare for a government exam or study again, at any age.",
+    paths: [
+      { label: "Careers: what the work is and how to enter", href: "/careers" },
+      { label: "Distance learning (study while working)", href: "/distance-learning" },
+      { label: "Skill-based careers", href: "/jobs/skill-careers" },
+      { label: "Government and entrance exams on Shishya", href: "/exams/browse" },
+    ],
+  },
 ];
 
 const SHORTCUTS: Array<{ persona: string; do: string; links: PathNode[] }> = [
@@ -174,6 +237,7 @@ const SHORTCUTS: Array<{ persona: string; do: string; links: PathNode[] }> = [
     persona: "🎒 I'm in Class 10",
     do: "Read the stream selection guide → explore 5-7 careers → pick Class 11 stream",
     links: [
+      { label: "All options after Class 10", href: "/after-10th" },
       { label: "Stream selection", href: "/schooling/streams" },
       { label: "All careers", href: "/careers" },
     ],
@@ -264,7 +328,7 @@ export default async function CareerMapPage() {
           <Link href="/" className="hover:text-ink-800">Home</Link> · Career Map
         </p>
         <h1 className="mt-2 text-3xl font-bold text-ink-900 sm:text-4xl">
-          Career Map — Class 9 to mid-career, in one rail
+          Career Map — Class 1 to working life, in one rail
         </h1>
         <p className="mt-2 max-w-3xl text-base text-ink-700">
           The full Indian-education-to-career lifecycle. Use this to see
@@ -304,7 +368,7 @@ export default async function CareerMapPage() {
 
         {/* Full lifecycle rail */}
         <h2 className="mt-12 text-base font-semibold text-ink-900">
-          The full lifecycle — 7 stages
+          The full lifecycle — {LIFECYCLE.length} stages
         </h2>
         <p className="mt-1 text-xs text-ink-500">
           Each stage links to the relevant Shishya section. Read in order if
@@ -313,7 +377,7 @@ export default async function CareerMapPage() {
 
         <ol className="mt-6 space-y-6">
           {LIFECYCLE.map((stage, i) => (
-            <li key={i} className="relative rounded-lg border border-ink-200 bg-white p-5">
+            <li key={stage.id} id={stage.id} className="relative scroll-mt-20 rounded-lg border border-ink-200 bg-white p-5">
               {/* Connecting line to next stage (visual) */}
               {i < LIFECYCLE.length - 1 && (
                 <div className="absolute -bottom-6 left-1/2 h-6 w-0.5 -translate-x-1/2 bg-saffron-300" aria-hidden />
@@ -321,9 +385,11 @@ export default async function CareerMapPage() {
               <div className="flex flex-wrap items-baseline gap-3">
                 <span className="text-3xl">{stage.icon}</span>
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">
-                    Age {stage.age}
-                  </p>
+                  {stage.age && (
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-saffron-700">
+                      Age {stage.age}
+                    </p>
+                  )}
                   <h3 className="text-lg font-semibold text-ink-900">{stage.title}</h3>
                 </div>
               </div>
@@ -351,6 +417,10 @@ export default async function CareerMapPage() {
                   );
                 })}
               </ul>
+              {/* 30 Sep 2026 (P1 §5): the seeded tutor link on a registry stage row; StageTutorEntry renders nothing for "school". */}
+              {stage.stage && (
+                <StageTutorEntry stage={findStage(stage.stage)} href={stageTutorHref(`stage:${stage.stage}`)} heading={false} />
+              )}
             </li>
           ))}
         </ol>

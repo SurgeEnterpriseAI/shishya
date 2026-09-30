@@ -36,6 +36,11 @@ import {
   type SchoolSurface,
 } from "@/lib/school/surface";
 import { STATES, stateSlug } from "@/lib/state-info";
+// 30 Sep 2026 (P1 build 1, spec §2.6): the life-stage spine — the "By life
+// stage" block and the new hubs' context files, each only while the page's
+// own index gate holds (src/lib/paths/path-sitemap.ts, path-llms.ts).
+import { lifeStageContextLines } from "@/lib/paths/path-llms";
+import { indexableStageHubs } from "@/lib/paths/path-sitemap";
 
 export const SITE = "https://shishya.in";
 
@@ -190,6 +195,12 @@ export function languagesLine(locales: readonly string[]): string {
 
 // ── Machine files ───────────────────────────────────────────────────────
 
+/** 30 Sep 2026 (P1): what each new stage hub's context file holds. */
+const STAGE_HUB_CONTEXT_WHAT: Readonly<Record<string, string>> = {
+  "after-10th": "After Class 10 — every option side by side (Class 11-12 streams, vocational, polytechnic diploma, ITI, NIOS), each rule with its official source and read day",
+  "after-12th": "After Class 12 — courses with their entrance exams, government jobs, open learning and study abroad side by side, each rule with its official source and read day",
+};
+
 /** The section context files (exact URLs) and the per-page patterns. */
 export const SECTION_CONTEXT_FILES: readonly { path: string; what: string }[] = [
   { path: "/context.md", what: "the whole platform, one block per section" },
@@ -197,6 +208,8 @@ export const SECTION_CONTEXT_FILES: readonly { path: string; what: string }[] = 
   { path: "/colleges/context.md", what: "Colleges — every college by stream and by state" },
   { path: "/scholarships/context.md", what: "Scholarships — every scholarship with its official link" },
   { path: "/careers/context.md", what: "Careers — every career guide and the jobs pages" },
+  // 30 Sep 2026 (P1 build 1): the two life-stage hubs, only while indexable.
+  ...indexableStageHubs().map((m) => ({ path: `${m.path}/context.md`, what: STAGE_HUB_CONTEXT_WHAT[m.stage.id] ?? m.stage.label })),
 ];
 
 export const CONTEXT_FILE_PATTERNS: readonly { pattern: string; what: string }[] = [
@@ -204,6 +217,8 @@ export const CONTEXT_FILE_PATTERNS: readonly { pattern: string; what: string }[]
   { pattern: "/exams/state/{slug}/context.md", what: "one state's exams and announced dates" },
   { pattern: `${SCHOOL_HUB_PATH}/{board}/class-{n}/context.md`, what: "one school class: subjects, official books, every chapter" },
   { pattern: `${SCHOOL_HUB_PATH}/{board}/class-{n}/{subject}/context.md`, what: "one school subject" },
+  // 30 Sep 2026 (P1 build 1): one option after Class 10 (the pages "By life stage" names).
+  { pattern: `${SCHOOL_STREAMS_PATH}/{option}/context.md`, what: "one option after Class 10: subjects board by board as each board prints them, what it keeps open, each rule with its official source and read day" },
 ];
 
 /** Lines listing every context file (exact ones first, then patterns). */
@@ -529,7 +544,9 @@ export function schoolSectionContextMarkdown(surface: Pick<SchoolSurface, "class
   L.push(...(withOurs.length ? withOurs : ["- None yet."]));
   L.push("");
   L.push("## More on Shishya");
-  L.push(`- Choosing a stream after Class 10: ${site}${SCHOOL_STREAMS_PATH}`);
+  // 30 Sep 2026 (P1): plus the after-Class-10 hub (every option side by side), while indexable.
+  const after10 = indexableStageHubs().find((m) => m.stage.id === "after-10th");
+  L.push(`- Choosing a stream after Class 10: ${site}${SCHOOL_STREAMS_PATH}${after10 ? ` · every option after Class 10 side by side: ${site}${after10.path}` : ""}`);
   L.push(`- Platform context: ${site}/context.md · full index for LLMs (the School block lists every class and subject page): ${site}/llms-full.txt`);
   L.push("");
   return L.join("\n");
@@ -570,6 +587,11 @@ export function platformContextMarkdown(p: PlatformContextInput, asOf: string, s
   );
   L.push(`> ${p.languages}`);
   L.push("");
+
+  // 30 Sep 2026 (P1 build 1): the life-stage spine first — one line per
+  // stage with its hub, the two decision pages and the option pages after
+  // Class 10, each only while its page is indexable (src/lib/paths/path-llms.ts).
+  L.push(...lifeStageContextLines(site));
 
   // School
   const sc = p.school && p.school.classes.length ? schoolSurfaceCounts(p.school) : null;

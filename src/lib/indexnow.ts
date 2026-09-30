@@ -11,6 +11,8 @@
 
 import type { ExamPageGates } from "@/lib/exam-page-gates";
 import { SCHOOL_HUB_PATH, SCHOOL_STREAMS_PATH } from "@/lib/school/landings";
+// 30 Sep 2026 (P1 build 1): the life-stage pages, by their own index gates.
+import { indexableStageHubs, lifeStageIndexablePaths } from "@/lib/paths/path-sitemap";
 import {
   SCHOOL_BOARDS,
   isSchoolChapterIndexable,
@@ -241,6 +243,9 @@ export const SECTION_HUB_PATHS: readonly string[] = [
   "/current-affairs",
   "/exam-calendar",
   "/ask",
+  // 30 Sep 2026 (P1 build 1, spec §2.6): the life-stage hubs /after-10th and
+  // /after-12th — only while their own index gate holds.
+  ...indexableStageHubs().map((m) => m.path),
 ];
 
 export function sectionHubUrls(base: string = SITE_ORIGIN): string[] {
@@ -257,8 +262,20 @@ export const MACHINE_FILE_PATHS: readonly string[] = [
   "/colleges/context.md",
   "/scholarships/context.md",
   "/careers/context.md",
+  // 30 Sep 2026 (P1 build 1): the life-stage hubs' context files, while the hubs are indexable.
+  ...indexableStageHubs().map((m) => `${m.path}/context.md`),
 ];
 
 export function machineFileUrls(base: string = SITE_ORIGIN): string[] {
   return MACHINE_FILE_PATHS.map((p) => `${base}${p}`);
+}
+
+/** 30 Sep 2026 (P1 build 1, spec §2.6): every indexable life-stage page — the
+ *  two hubs and the option pages after Class 10 (src/lib/paths/path-sitemap.ts,
+ *  the sitemap's own gates) — with its context file, for the post-deploy
+ *  submit of a change to them. A noindex page is never submitted. */
+export function lifeStageUrls(base: string = SITE_ORIGIN): string[] {
+  const out: string[] = [];
+  for (const p of lifeStageIndexablePaths()) out.push(`${base}${p}`, `${base}${p}/context.md`);
+  return out;
 }

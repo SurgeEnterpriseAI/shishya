@@ -141,6 +141,11 @@ const SECTION_ROOTS = [
   // mock-test catalogue and the cross-exam subject hubs.
   "/mock-tests",
   "/subjects",
+  // 30 Sep 2026 (P1 build 1, spec §2.6): the life-stage hubs record tagged
+  // landings like every section page. Not twins: TWIN_PUBLIC_RE is unchanged,
+  // so /hi/after-10th redirects to the English page (spec F7).
+  "/after-10th",
+  "/after-12th",
 ] as const;
 
 /** The native Hindi topic-notes page (src/app/exams/[code]/topics/[topicCode]/hi). */
@@ -432,6 +437,15 @@ export const config = {
     "/mock-tests",
     "/subjects",
     "/subjects/:path*",
+    // 30 Sep 2026 (P1 build 1): the life-stage hubs (SECTION_ROOTS above) —
+    // without a matcher entry the section rule never runs on them — and their
+    // context files (AI-crawler logging: the S1 read counts GPTBot /
+    // ChatGPT-User fetches of them). The option pages after Class 10 and
+    // their context files sit under /schooling/:path* already.
+    "/after-10th",
+    "/after-10th/:path*",
+    "/after-12th",
+    "/after-12th/:path*",
     // Crawler-facing files — logged only (OBSERVE_ONLY above, 14 Sep 2026).
     "/llms.txt",
     "/llms-full.txt",

@@ -853,6 +853,27 @@ const STAGE_EXAM = wordSet(STAGE_EXAM_WORDS);
 const BOARD_EXAM_OK = wordSet([...BOARD_EXAM_WORDS.flatMap((w) => normaliseTerm(w).split(" ")), ...BOARD_EXAM_SIDE_WORDS]);
 const STAGE_GOVT = wordSet(STAGE_GOVT_WORDS);
 const STAGE_STREAM = wordSet(STAGE_STREAM_WORDS);
+/** 30 Sep 2026 (P1 build 1): words that make a bare stage a jobs or exams ask ("10th pass jobs",
+ *  "12th ke baad naukri") — the life-stage hub (study options) is not listed beside them. */
+const STAGE_NOT_STUDY = wordSet([...STAGE_EXAM_WORDS, ...STAGE_GOVT_WORDS, "job", "jobs", "naukri", "naukari", "bharti", "recruitment", "vacancy", "vacancies", "नौकरी", "ఉద్యోగం", "ఉద్యోగాలు"]);
+/** 30 Sep 2026 (P1 build 1): the option pages after Class 10 (src/lib/paths, index-core.ts). */
+const STREAM_OPTION_PAGE_PREFIX = "/schooling/streams/";
+/** 30 Sep 2026 (P1 build 1): a stream word beside "after 10th" names that option's page
+ *  ("after 10th commerce"); "science", "maths" and "biology" fit more than one option and name none. */
+const AFTER_10_STREAM_PAGE: ReadonlyMap<string, string> = new Map(
+  (
+    [
+      ["pcm", "/schooling/streams/mpc-pcm"],
+      ["pcb", "/schooling/streams/bipc-pcb"],
+      ["commerce", "/schooling/streams/commerce-cec-mec"],
+      ["वाणिज्य", "/schooling/streams/commerce-cec-mec"],
+      ["arts", "/schooling/streams/arts-hec-humanities"],
+      ["art", "/schooling/streams/arts-hec-humanities"],
+      ["humanities", "/schooling/streams/arts-hec-humanities"],
+      ["कला", "/schooling/streams/arts-hec-humanities"],
+    ] as const
+  ).map(([w, p]) => [normaliseTerm(w), p]),
+);
 
 /**
  * "cbse class 10 sample paper", "cbse marking scheme", "class 12 board exam 2027", "cbse date sheet
@@ -878,6 +899,19 @@ function boardExamHubs(P: Prep, parsed: ParsedQuery): number[] {
     if (m && (parsed.cls == null || Number(m[1]) === parsed.cls)) hubs.push([Number(m[1]), i]);
   }
   return hubs.sort((a, b) => a[0] - b[0]).map(([, i]) => i);
+}
+
+/**
+ * 30 Sep 2026 (P1 build 1, spec §2.6): the life-stage hub of a stage, as a
+ * [path, score] row for the stage-and-stream / stage-and-career lists — after
+ * the careers pages and the career map (0.9, 0.88), before the streams article:
+ * after 10th → /after-10th (0.87) then /schooling/streams (0.86); after 12th →
+ * /after-12th (0.87). A path the index does not hold is dropped by the caller.
+ */
+function stageHubRows(stage: ParsedQuery["stage"]): [string, number][] {
+  if (stage === "after-10") return [["/after-10th", 0.87], ["/schooling/streams", 0.86]];
+  if (stage === "after-12") return [["/after-12th", 0.87]];
+  return [];
 }
 
 /** "exams after 12th": the /exams/after/{level} page of the stage, when the index holds it. */
@@ -1153,6 +1187,14 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
         const i = P.landing.get(p);
         if (i != null) scored.push(structHit(i, sc, "landing"));
       }
+      // 30 Sep 2026 (P1 build 1): a stage the student named with no exam or job
+      // word ("12th pass", "10th ke baad") also lists its life-stage hub, just
+      // under the finder. Never beside an exam word ("12th exam" is often the
+      // board exam; its list stays led by CBSE's board-exam hub) or a job word
+      // ("10th pass jobs" is the finder's).
+      const hubPath = parsed.stage === "after-10" ? "/after-10th" : parsed.stage === "after-12" ? "/after-12th" : null;
+      const hubI = hubPath && parsed.stageExplicit && !parsed.tokens.some((t) => STAGE_NOT_STUDY.has(t)) ? P.landing.get(hubPath) : undefined;
+      if (hubI != null) scored.push(structHit(hubI, 0.715, "landing"));
       // 27 Sep 2026 (wave 2 search): an exam word beside the stage ("12th ke baad exam", "12वीं के बाद
       // परीक्षा") opens the exams after that level; without one it is a row under the finder.
       // 27 Sep 2026 (wave 2 fixer): only for a stage the student named. A bare "12th" beside an exam
@@ -1185,7 +1227,14 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
       landingComplete = true;
     } else if (stageAsk === "stream") {
       const rest = qts.filter((q) => q.role === "hard").map((q) => q.orig);
-      const rows: [string, number][] = [["/careers", 0.9], ["/career-map", 0.88], ...(parsed.stage === "after-10" ? ([["/schooling/streams", 0.86]] as [string, number][]) : [])];
+      const rows: [string, number][] = [["/careers", 0.9], ["/career-map", 0.88], ...stageHubRows(parsed.stage)];
+      // 30 Sep 2026 (P1 build 1): "after 10th commerce" also lists the Commerce option page.
+      if (parsed.stage === "after-10") {
+        for (const q of qts) {
+          const page = q.role === "hard" ? AFTER_10_STREAM_PAGE.get(q.t) : undefined;
+          if (page && !rows.some(([p]) => p === page)) rows.push([page, 0.865]);
+        }
+      }
       for (const [p, sc] of rows) {
         const i = P.landing.get(p);
         if (i != null) scored.push(structHit(i, sc, "landing", rest));
@@ -1231,7 +1280,7 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
   // career word and a stream word: the career pages, not Class 6-8 Science.
   if (parsed.stage && parsed.kindHint === "career" && hasHardTok && !school) {
     const rest = qts.filter((q) => q.role === "hard").map((q) => q.orig);
-    const rows: [string, number][] = [["/careers", 0.9], ["/career-map", 0.88], ...(parsed.stage === "after-10" ? ([["/schooling/streams", 0.86]] as [string, number][]) : [])];
+    const rows: [string, number][] = [["/careers", 0.9], ["/career-map", 0.88], ...stageHubRows(parsed.stage)];
     for (const [p, sc] of rows) {
       const i = P.landing.get(p);
       if (i != null) scored.push(structHit(i, sc, "landing", rest));
@@ -1286,6 +1335,13 @@ export function resolveQuery(raw: string, index: SearchIndex, opts: ResolveOptio
   if (maxScore < LIST_MIN && qts.length === 1 && !qts[0].known && qts[0].alts.length === 0 && isLatinToken(qts[0].t) && qts[0].t.length >= 4) {
     const examDocs = P.docs.flatMap((d, i) => (d.kind === "exam" && d.examCode ? [{ code: d.examCode, name: d.sub, shortName: d.title, state: d.state ?? null, i }] : []));
     for (const n of nearestExams(qts[0].t, examDocs, 4)) scored.push(structHit(n.exam.i, Math.min(0.6, 0.4 + 0.25 * n.score), "nearest", [qts[0].orig]));
+  }
+
+  // 30 Sep 2026 (P1 build 1): an exams ask ("exams after iti", "polycet exam") is for exam pages. An
+  // option page after Class 10 (/schooling/streams/{option}, a study path) stays a row under them —
+  // capped below the direct bar, never above the exam page the words name.
+  if (parsed.tokens.some((t) => STAGE_EXAM.has(t))) {
+    scored = scored.map((s) => (P.docs[s.i].path.startsWith(STREAM_OPTION_PAGE_PREFIX) && s.score > 0.7 ? { ...s, score: 0.7 } : s));
   }
 
   // The whole phrase is a page's name, page words included ("typing test",

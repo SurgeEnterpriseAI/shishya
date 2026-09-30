@@ -20,9 +20,18 @@
 // sitemap.ts never names a /schooling URL by hand and never imports the
 // hardcoded schooling-* data (tests/unit/schooling-honesty.test.ts); this
 // module is the one place that joins the two.
+//
+// 30 Sep 2026 (P1 build 1, spec §2.6 / F6): the option pages after Class 10,
+// /schooling/streams/{option}, are /schooling URLs too, so they join the
+// sitemap HERE — each while its own page's index gate holds
+// (src/lib/paths/stream-pages.ts isStreamPageIndexable, read through
+// path-sitemap.ts streamPageSitemapRows), never all nine by hand. No
+// lastModified: they are computed from the path registry, which has no
+// per-page timestamp.
 
 import type { MetadataRoute } from "next";
 import { BOARDS, isSchoolBoardIndexable } from "@/lib/schooling-data";
+import { streamPageSitemapRows } from "@/lib/paths/path-sitemap";
 import { schoolBoardPath, type SchoolSurface } from "./surface";
 
 export const SCHOOL_HUB_PATH = "/schooling";
@@ -35,10 +44,10 @@ export function liveClassesByBoard(surface: Pick<SchoolSurface, "classes">): Map
   return out;
 }
 
-/** The hub, the streams article, and every board page that is indexable
- *  by the board page's own rule and NOT already listed from the DB tree
- *  (a board with a seeded class is listed by schoolSitemapEntries with its
- *  real lastmod). */
+/** The hub, the streams article, every board page that is indexable by
+ *  the board page's own rule and NOT already listed from the DB tree (a
+ *  board with a seeded class is listed by schoolSitemapEntries with its
+ *  real lastmod), and the indexable option pages after Class 10. */
 export function schoolLandingSitemapEntries(surface: Pick<SchoolSurface, "classes">, base: string): MetadataRoute.Sitemap {
   const live = liveClassesByBoard(surface);
   let newest: string | null = null;
@@ -56,5 +65,8 @@ export function schoolLandingSitemapEntries(surface: Pick<SchoolSurface, "classe
     if (!isSchoolBoardIndexable(b, n)) continue;
     out.push({ url: `${base}${schoolBoardPath(b.slug)}`, changeFrequency: "monthly", priority: 0.6 });
   }
+  // 30 Sep 2026 (P1): the stream pages list whatever the school surface read
+  // returned — they come from the path registry, not the DB tree.
+  out.push(...streamPageSitemapRows(base));
   return out;
 }

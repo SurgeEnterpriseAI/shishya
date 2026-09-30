@@ -67,6 +67,7 @@ import {
 import { SCHOOL_GUEST_QUIZ_MIN, isSchoolChapterIndexable as scopeRule } from "@/lib/school/scope";
 import { schoolClassContextMarkdown, schoolClassIdentity, schoolContextHonestyLines, schoolSubjectContextMarkdown } from "@/lib/school/context";
 import { liveClassesByBoard, schoolLandingSitemapEntries } from "@/lib/school/landings";
+import { indexableStreamSlugs } from "@/lib/paths/stream-pages";
 import { BOARDS, isSchoolBoardIndexable } from "@/lib/schooling-data";
 import robots from "@/app/robots";
 
@@ -78,6 +79,9 @@ const stripComments = (src: string) =>
     .replace(/^\s*\/\/.*$/gm, "");
 
 const SITE = "https://shishya.in";
+/** 30 Sep 2026 (P1 build 1): the indexable /schooling/streams/{option} pages
+ *  schoolLandingSitemapEntries appends (computed by the page's gate, never typed). */
+const STREAM_ROWS = indexableStreamSlugs().map((s) => `/schooling/streams/${s}`);
 const NOTE_AT = "2026-09-26T03:17:57.452Z";
 const Q_AT = "2026-09-26T03:39:12.567Z";
 const EXAM_AT = "2026-09-26T01:00:00.000Z";
@@ -399,6 +403,8 @@ describe("schoolLandingSitemapEntries", () => {
       "/schooling/ib",
       "/schooling/cambridge-igcse",
       "/schooling/tn-state-board",
+      // 30 Sep 2026 (P1): the option pages after Class 10, by their own index gate.
+      ...STREAM_ROWS,
     ]);
     expect(landing[0].lastModified).toEqual(new Date(Q_AT));
     expect(landing[1].lastModified).toBeUndefined();
@@ -427,6 +433,7 @@ describe("schoolLandingSitemapEntries", () => {
       "/schooling/ib",
       "/schooling/cambridge-igcse",
       "/schooling/tn-state-board",
+      ...STREAM_ROWS,
     ]);
     for (const e of landing) expect(e.lastModified).toBeUndefined();
   });
