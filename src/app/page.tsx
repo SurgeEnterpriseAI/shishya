@@ -556,6 +556,14 @@ export default async function HomePage({
             languages: t("live.languages"),
             today: t("live.today"),
             thisWeek: t("live.thisWeek"),
+            secLead: t("live.sec.lead"),
+            secGovt: t("live.sec.govt"),
+            secSchool: t("live.sec.school"),
+            secEntrance: t("live.sec.entrance"),
+            secCollege: t("live.sec.college"),
+            secGraduate: t("live.sec.graduate"),
+            secPostgraduate: t("live.sec.postgraduate"),
+            secExploring: t("live.sec.exploring"),
           }}
         />
       </div>

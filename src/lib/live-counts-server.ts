@@ -34,6 +34,7 @@ import { LANGUAGE_COUNT } from "@/lib/languages";
 import { WITHDRAWN_TAG } from "@/lib/question-withdrawn";
 import { usableNotesSql } from "@/lib/topic-notes";
 import { loadSchoolSurface, schoolSurfaceCounts } from "@/lib/school/surface";
+import { SECTION_TTL_MS, foldSectionRows, learnerSectionsSql, type LearnerSectionCounts } from "@/lib/learner-sections";
 
 export interface LiveCounts {
   /** Distinct people with ANY activity in the last 30 minutes: a human
@@ -66,6 +67,51 @@ export interface LiveCounts {
    *  landings, less the gap-era overlap that closed today. 30 Sep 2026
    *  (founder: "how many learners increased today"). */
   uniqueVisitorsToday: number;
+  // The 14 learners-by-section fields are OPTIONAL (30 Sep 2026 review): a
+  // reply without them (no same-day read yet, or the read failed) leaves the
+  // strip's last-known groups on screen — never a fake 0 (mergeCounts).
+  /** Learners in one group (src/lib/learner-sections.ts) — govt exam aspirants: government recruitment exam pages, current affairs, jobs map, exam calendar, results, live tests. Each learner
+   *  counts in one group; the groups add up to uniqueVisitors (memoised
+   *  SECTION_TTL_MS, so they can trail it by minutes). */
+  learnersGovt?: number;
+  /** The same group's learners added since IST midnight. */
+  learnersGovtToday?: number;
+  /** Learners in one group (src/lib/learner-sections.ts) — school students: /schooling pages and olympiads. Each learner
+   *  counts in one group; the groups add up to uniqueVisitors (memoised
+   *  SECTION_TTL_MS, so they can trail it by minutes). */
+  learnersSchool?: number;
+  /** The same group's learners added since IST midnight. */
+  learnersSchoolToday?: number;
+  /** Learners in one group (src/lib/learner-sections.ts) — entrance aspirants: admission tests after Class 12 (engineering, medical, law, management, university, NDA, state CETs, CA / CS foundation). Each learner
+   *  counts in one group; the groups add up to uniqueVisitors (memoised
+   *  SECTION_TTL_MS, so they can trail it by minutes). */
+  learnersEntrance?: number;
+  /** The same group's learners added since IST midnight. */
+  learnersEntranceToday?: number;
+  /** Learners in one group (src/lib/learner-sections.ts) — scholarship & college seekers: scholarships, colleges, distance learning, study abroad, careers, jobs, soft skills. Each learner
+   *  counts in one group; the groups add up to uniqueVisitors (memoised
+   *  SECTION_TTL_MS, so they can trail it by minutes). */
+  learnersCollege?: number;
+  /** The same group's learners added since IST midnight. */
+  learnersCollegeToday?: number;
+  /** Learners in one group (src/lib/learner-sections.ts) — PG entrance aspirants: CAT, NEET PG, CUET PG, IIT JAM, every GATE paper, AP / TS ICET, MAH-CET MBA and /post-graduation. Each learner
+   *  counts in one group; the groups add up to uniqueVisitors (memoised
+   *  SECTION_TTL_MS, so they can trail it by minutes). */
+  learnersGraduate?: number;
+  /** The same group's learners added since IST midnight. */
+  learnersGraduateToday?: number;
+  /** Learners in one group (src/lib/learner-sections.ts) — NET aspirants: UGC NET and CSIR NET (lectureship, JRF, PhD admission). Each learner
+   *  counts in one group; the groups add up to uniqueVisitors (memoised
+   *  SECTION_TTL_MS, so they can trail it by minutes). */
+  learnersPostgraduate?: number;
+  /** The same group's learners added since IST midnight. */
+  learnersPostgraduateToday?: number;
+  /** Learners in one group (src/lib/learner-sections.ts) — general pages only: no page in any section so far (home, Ask, sign-in, dashboard, pages listing every kind of exam). Each learner
+   *  counts in one group; the groups add up to uniqueVisitors (memoised
+   *  SECTION_TTL_MS, so they can trail it by minutes). */
+  learnersExploring?: number;
+  /** The same group's learners added since IST midnight. */
+  learnersExploringToday?: number;
   /** Walk-ins: page views by verified BROWSERS that carry no identity —
    *  the single-page landers. They're humans too (a crawler can't be
    *  classified 'browser' AND they reached us somehow), we just don't
@@ -150,6 +196,27 @@ export const LIVE_COUNT_DEFINITIONS: Record<keyof LiveCounts, string> = {
     "Distinct people who came to Shishya: identities on 2+ page views, or one view that arrived from another site or a tagged link (for example utm_source=chatgpt.com — 27 Sep 2026: these were being missed), plus identity-less browser landings, overlap-corrected. Proves a visit, not learning.",
   uniqueVisitorsToday:
     "Learners added since 00:00 IST today: the learners count now minus the same count at midnight — people who first met the learner rule today (a second page view, or a first view from another site or a tagged link) plus today's identity-less browser landings.",
+  learnersGovt:
+    "Learners whose most-viewed section is government recruitment and eligibility exams (SSC, banking, railways, police, state PSCs, UPSC, TET / CTET), current affairs, jobs map, typing, descriptive and the government-exam finder (pages outside every section — home, Ask, the AI tutor chat, sign-in, dashboard, and pages listing every kind of exam — do not count; one view is enough; a tie goes to the section viewed last). Each learner is in one group, so the groups add up to learners as of the last refresh (every 5 minutes); a group under 20 people is not shown.",
+  learnersGovtToday: "Learners who first counted today (since 00:00 IST) and whose group is this one; the groups' today numbers add up to the learners' +N today.",
+  learnersSchool:
+    "Learners whose most-viewed section is school pages (/schooling) and olympiads (pages outside every section — home, Ask, the AI tutor chat, sign-in, dashboard, and pages listing every kind of exam — do not count; one view is enough; a tie goes to the section viewed last). Each learner is in one group, so the groups add up to learners as of the last refresh (every 5 minutes); a group under 20 people is not shown.",
+  learnersSchoolToday: "Learners who first counted today (since 00:00 IST) and whose group is this one; the groups' today numbers add up to the learners' +N today.",
+  learnersEntrance:
+    "Learners whose most-viewed section is admission tests after Class 12 — engineering, medical, law, management, university, NDA, the state CETs, CA / CS foundation (pages outside every section — home, Ask, the AI tutor chat, sign-in, dashboard, and pages listing every kind of exam — do not count; one view is enough; a tie goes to the section viewed last). Each learner is in one group, so the groups add up to learners as of the last refresh (every 5 minutes); a group under 20 people is not shown.",
+  learnersEntranceToday: "Learners who first counted today (since 00:00 IST) and whose group is this one; the groups' today numbers add up to the learners' +N today.",
+  learnersCollege:
+    "Learners whose most-viewed section is scholarships, colleges, distance learning, study abroad, careers, jobs and soft skills (pages outside every section — home, Ask, the AI tutor chat, sign-in, dashboard, and pages listing every kind of exam — do not count; one view is enough; a tie goes to the section viewed last). Each learner is in one group, so the groups add up to learners as of the last refresh (every 5 minutes); a group under 20 people is not shown.",
+  learnersCollegeToday: "Learners who first counted today (since 00:00 IST) and whose group is this one; the groups' today numbers add up to the learners' +N today.",
+  learnersGraduate:
+    "Learners whose most-viewed section is PG entrance tests — CAT, NEET PG, CUET PG, IIT JAM, every GATE paper, AP ICET, TS ICET, MAH-CET MBA — and /post-graduation (pages outside every section — home, Ask, the AI tutor chat, sign-in, dashboard, and pages listing every kind of exam — do not count; one view is enough; a tie goes to the section viewed last). Each learner is in one group, so the groups add up to learners as of the last refresh (every 5 minutes); a group under 20 people is not shown.",
+  learnersGraduateToday: "Learners who first counted today (since 00:00 IST) and whose group is this one; the groups' today numbers add up to the learners' +N today.",
+  learnersPostgraduate:
+    "Learners whose most-viewed section is UGC NET and CSIR NET (lectureship, JRF, PhD admission) (pages outside every section — home, Ask, the AI tutor chat, sign-in, dashboard, and pages listing every kind of exam — do not count; one view is enough; a tie goes to the section viewed last). Each learner is in one group, so the groups add up to learners as of the last refresh (every 5 minutes); a group under 20 people is not shown.",
+  learnersPostgraduateToday: "Learners who first counted today (since 00:00 IST) and whose group is this one; the groups' today numbers add up to the learners' +N today.",
+  learnersExploring:
+    "Learners whose page views are all outside every section so far — home, Ask, the AI tutor chat, sign-in, dashboard, coach, and pages listing every kind of exam (browse, calendar, results, alerts, live tests). Refreshed every 5 minutes; under 20 people not shown.",
+  learnersExploringToday: "Learners who first counted today (since 00:00 IST) and whose page views are all outside every section.",
   walkIns: "Identity-less browser page views (single-page landers) — the internal split of uniqueVisitors; not shown.",
   mocksTaken: "Attempt rows with status SUBMITTED or AUTO_SUBMITTED — mocks a student finished, any exam or school chapter — plus whole papers guests finished without an account (counted when the server grades one with at least one answer; from 27 Sep 2026, founder call).",
   mocksToday: "Attempts submitted since 00:00 IST today, plus guest papers graded since then.",
@@ -184,6 +251,20 @@ export const ZERO_LIVE_COUNTS: LiveCounts = {
   pageViewsToday: 0,
   uniqueVisitors: 0,
   uniqueVisitorsToday: 0,
+  learnersGovt: 0,
+  learnersGovtToday: 0,
+  learnersSchool: 0,
+  learnersSchoolToday: 0,
+  learnersEntrance: 0,
+  learnersEntranceToday: 0,
+  learnersCollege: 0,
+  learnersCollegeToday: 0,
+  learnersGraduate: 0,
+  learnersGraduateToday: 0,
+  learnersPostgraduate: 0,
+  learnersPostgraduateToday: 0,
+  learnersExploring: 0,
+  learnersExploringToday: 0,
   walkIns: 0,
   mocksTaken: 0,
   mocksToday: 0,
@@ -246,6 +327,7 @@ let supplyPending: Promise<SupplyCounts> | null = null;
 export function resetLiveCountsMemo(): void {
   supplyMemo = null;
   supplyPending = null;
+  resetSectionMemo();
 }
 
 async function readSupplyCounts(): Promise<SupplyCounts> {
@@ -325,6 +407,95 @@ async function getSupplyCounts(now: Date): Promise<SupplyCounts> {
   return supplyPending;
 }
 
+// ── Learners by section (memoised) ────────────────────────────────────
+// 30 Sep 2026: the learners counter split by the section each person
+// studies in (src/lib/learner-sections.ts). The read scans every page view
+// (1.6–3.6 s), so (review, same day):
+//   • a same-day memo is served AT ONCE; past SECTION_TTL_MS it is refreshed
+//     in the background, never on the reply's clock;
+//   • with no same-day memo the read is awaited for at most
+//     SECTION_FIRST_READ_MS, then the reply goes out WITHOUT the fields — the
+//     strip keeps its last-known groups (mergeCounts) instead of a fake 0;
+//   • a read belongs to its IST day: one started before midnight never
+//     answers after it; a failure is remembered for SECTION_RETRY_MS so a
+//     broken read is not re-run on every poll.
+
+const SECTION_FIRST_READ_MS = 4_000;
+const SECTION_RETRY_MS = 60_000;
+
+let sectionMemo: { readAt: number; dayStart: number; counts: LearnerSectionCounts } | null = null;
+let sectionPending: { dayStart: number; p: Promise<LearnerSectionCounts | null> } | null = null;
+let sectionFailedAt = 0;
+
+export function resetSectionMemo(): void {
+  sectionMemo = null;
+  sectionPending = null;
+  sectionFailedAt = 0;
+}
+
+function startSectionRead(now: Date, dayStart: Date): Promise<LearnerSectionCounts | null> {
+  const day = dayStart.getTime();
+  if (sectionPending && sectionPending.dayStart === day) return sectionPending.p;
+  const p = prisma
+    .$queryRaw<{ sec: string; part: string; n: number; today: number }[]>(learnerSectionsSql(dayStart))
+    .then((rows) => {
+      const counts = foldSectionRows(rows);
+      sectionMemo = { readAt: now.getTime(), dayStart: day, counts };
+      return counts;
+    })
+    .catch((err) => {
+      sectionFailedAt = Date.now();
+      console.error("[live-counts] learner sections unavailable", err);
+      return null;
+    })
+    .finally(() => {
+      if (sectionPending?.p === p) sectionPending = null;
+    });
+  sectionPending = { dayStart: day, p };
+  return p;
+}
+
+/** The section counts for this IST day, or null — never zeros standing in for a failure. */
+async function getSectionCounts(now: Date, dayStart: Date): Promise<LearnerSectionCounts | null> {
+  const day = dayStart.getTime();
+  const memo = sectionMemo && sectionMemo.dayStart === day ? sectionMemo : null;
+  const mayRead = now.getTime() - sectionFailedAt >= SECTION_RETRY_MS;
+  if (memo) {
+    if (now.getTime() - memo.readAt >= SECTION_TTL_MS && mayRead) void startSectionRead(now, dayStart);
+    return memo.counts;
+  }
+  if (!mayRead) return null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), SECTION_FIRST_READ_MS);
+  });
+  try {
+    return await Promise.race([startSectionRead(now, dayStart), timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+/** The LiveCounts fields of the section counts — spelled out so the compiler checks each one. */
+function sectionFields(c: LearnerSectionCounts) {
+  return {
+    learnersGovt: c.govt.total,
+    learnersGovtToday: c.govt.today,
+    learnersSchool: c.school.total,
+    learnersSchoolToday: c.school.today,
+    learnersEntrance: c.entrance.total,
+    learnersEntranceToday: c.entrance.today,
+    learnersCollege: c.college.total,
+    learnersCollegeToday: c.college.today,
+    learnersGraduate: c.graduate.total,
+    learnersGraduateToday: c.graduate.today,
+    learnersPostgraduate: c.postgraduate.total,
+    learnersPostgraduateToday: c.postgraduate.today,
+    learnersExploring: c.exploring.total,
+    learnersExploringToday: c.exploring.today,
+  } satisfies Partial<LiveCounts>;
+}
+
 // ── The read ──────────────────────────────────────────────────────────
 
 export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts> {
@@ -356,6 +527,7 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     walkInsTodayRows,
     liveTestTodayRows,
     examGoalsToday,
+    sections,
   ] = await Promise.all([
     getSupplyCounts(now),
     // Distinct HUMAN visitors all-time — definitions audited 16 Aug 2026
@@ -591,6 +763,8 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     `,
     // Exam goals set today that are still active, real exams only.
     prisma.enrollment.count({ where: { active: true, createdAt: { gte: dayStart }, exam: NOT_SCHOOL_WHERE } }),
+    // Learners by section (memoised, never throws; null → the fields are left out).
+    getSectionCounts(now, dayStart),
   ]);
 
   // Combined "visitors" (founder call, 31 Jul; relabelled 26 Sep 2026):
@@ -608,6 +782,7 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     pageViewsToday: n(pageViewsTodayRows),
     uniqueVisitors: engaged + Math.max(0, landers - overlap),
     uniqueVisitorsToday: Math.max(0, n(learnersTodayRows) + n(walkInsTodayRows)),
+    ...(sections ? sectionFields(sections) : {}),
     walkIns: landers,
     mocksTaken: mocksTaken + n(guestPapersRows),
     mocksToday: mocksToday + n(guestPapersTodayRows),

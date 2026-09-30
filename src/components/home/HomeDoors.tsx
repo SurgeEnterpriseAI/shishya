@@ -100,7 +100,7 @@ function Door({
   children?: ReactNode;
 }) {
   return (
-    <li id={id} className="scroll-mt-4">
+    <li id={id} className="scroll-mt-4 sm:scroll-mt-[70px] lg:scroll-mt-[92px]">
       <article className={`${CARD}${CARD_LINKED}`}>
         {/* The title link covers the whole card (one tap anywhere opens the
             section); the chips below sit above it. */}

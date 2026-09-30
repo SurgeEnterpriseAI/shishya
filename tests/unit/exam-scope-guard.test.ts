@@ -126,6 +126,10 @@ const UNSCOPED: Record<string, { n: number; why: string }> = {
   // KEYED by id, reading the category themselves (26 Sep 2026)
   "src/lib/exam-week-mail.ts": { n: 1, why: "KEYED: reads the exam's own category to pick the checklist link" },
   "src/lib/exam-data-writer.ts": { n: 1, why: "KEYED: id → code for the IndexNow ping of a row the scoped refresher wrote" },
+  // KEYED by a viewed page (30 Sep 2026): the learners-by-section read joins Exam by the code or mock /
+  // attempt id in a page path only to read that exam's category — which section the page belongs to. An
+  // exam made inactive since still says who its visitors were; nothing here lists or counts exams.
+  "src/lib/learner-sections.ts": { n: 3, why: "KEYED: a viewed page's exam (by code / mock / attempt) → its section; lists no exams" },
   // OWN
   "src/app/api/bookmarks/route.ts": { n: 1, why: "OWN: the viewer's bookmarks for one exam code" },
   "src/app/dashboard/page.tsx": { n: 2, why: "OWN: the viewer's own study state and open attempts" },

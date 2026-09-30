@@ -31,7 +31,7 @@ export function HomeFinder({
     <section
       id="exams"
       aria-labelledby="home-finder-h2"
-      className="mt-8 scroll-mt-4 rounded-2xl border border-ink-200 bg-white p-5 shadow-sm sm:p-7"
+      className="mt-8 scroll-mt-4 sm:scroll-mt-[70px] lg:scroll-mt-[92px] rounded-2xl border border-ink-200 bg-white p-5 shadow-sm sm:p-7"
     >
       <p className="text-[11px] font-semibold uppercase tracking-wider text-saffron-700">{F.kicker}</p>
       <h2 id="home-finder-h2" className="mt-1 text-xl font-semibold tracking-tight text-ink-900">

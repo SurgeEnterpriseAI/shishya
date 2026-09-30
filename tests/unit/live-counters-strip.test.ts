@@ -63,6 +63,8 @@ const fixed = vi.hoisted(() => ({
   walkInsToday: 44,
   liveTestsToday: 2,
   examGoalsToday: 18,
+  // 30 Sep 2026: learners by section — rows the section query returns (sec, part, n, today).
+  sections: [{"sec":"govt","part":"engaged","n":6600,"today":90},{"sec":"govt","part":"walkin","n":4520,"today":30},{"sec":"govt","part":"overlap","n":950,"today":1},{"sec":"school","part":"engaged","n":850,"today":8},{"sec":"school","part":"walkin","n":480,"today":4},{"sec":"school","part":"overlap","n":76,"today":0},{"sec":"entrance","part":"engaged","n":345,"today":5},{"sec":"entrance","part":"walkin","n":487,"today":2},{"sec":"entrance","part":"overlap","n":9,"today":0},{"sec":"college","part":"engaged","n":364,"today":1},{"sec":"college","part":"walkin","n":214,"today":1},{"sec":"college","part":"overlap","n":14,"today":0},{"sec":"graduate","part":"engaged","n":81,"today":2},{"sec":"graduate","part":"walkin","n":52,"today":0},{"sec":"graduate","part":"overlap","n":3,"today":0},{"sec":"postgraduate","part":"engaged","n":0,"today":0},{"sec":"postgraduate","part":"walkin","n":0,"today":0},{"sec":"postgraduate","part":"overlap","n":0,"today":0},{"sec":"exploring","part":"engaged","n":803,"today":3},{"sec":"exploring","part":"walkin","n":751,"today":2},{"sec":"exploring","part":"overlap","n":58,"today":0}],
 }));
 
 const sqlLog = vi.hoisted(() => [] as string[]);
@@ -107,6 +109,7 @@ vi.mock("@/lib/db/prisma", () => {
           else if (i < values.length) sql += "?";
         });
         sqlLog.push(sql);
+        if (sql.includes("learner_sections AS")) return fixed.sections;
         return [{ count: BigInt(route(sql)) }];
       },
       exam: { count: async (args: unknown) => (calls.exam.push(args), fixed.exams) },
@@ -151,6 +154,7 @@ import {
 import {
   HIDDEN_WHEN_ZERO,
   LIVE_COUNT_KEYS,
+  SECTION_FLOOR,
   PHONE_KEYS,
   STRIP_DEFAULT_LABELS,
   buildStripItems,
@@ -170,6 +174,21 @@ const EXPECTED: LiveCounts = {
   pageViewsToday: fixed.pageViewsToday,
   uniqueVisitors: fixed.engaged + (fixed.walkIns - fixed.overlap), // 14,437
   uniqueVisitorsToday: fixed.learnersToday + fixed.walkInsToday, // 175
+  // engaged + walk-ins − overlap per group (the fixture's section rows)
+  learnersGovt: 10170,
+  learnersGovtToday: 119,
+  learnersSchool: 1254,
+  learnersSchoolToday: 12,
+  learnersEntrance: 823,
+  learnersEntranceToday: 7,
+  learnersCollege: 564,
+  learnersCollegeToday: 2,
+  learnersGraduate: 130,
+  learnersGraduateToday: 2,
+  learnersPostgraduate: 0,
+  learnersPostgraduateToday: 0,
+  learnersExploring: 1496,
+  learnersExploringToday: 5,
   walkIns: fixed.walkIns,
   mocksTaken: fixed.mocksTaken + fixed.guestPapers,
   mocksToday: fixed.mocksToday + fixed.guestPapersToday,
@@ -195,7 +214,7 @@ const EXPECTED: LiveCounts = {
 
 /** key → English label, in strip order (phone = shown on phones). This is
  *  the table agreed on 26 Sep 2026; change it only with the founder. */
-const TABLE: Array<{ key: keyof LiveCounts; label: string; row: 1 | 2; phone: boolean }> = [
+const TABLE: Array<{ key: keyof LiveCounts; label: string; row: 1 | 2 | 3; phone: boolean }> = [
   { key: "activeNow", label: "active now", row: 1, phone: false },
   { key: "uniqueVisitors", label: "learners", row: 1, phone: true },
   { key: "mocksTaken", label: "mock exams taken", row: 1, phone: true },
@@ -207,6 +226,13 @@ const TABLE: Array<{ key: keyof LiveCounts; label: string; row: 1 | 2; phone: bo
   { key: "questionsAnswered", label: "questions answered", row: 2, phone: false },
   { key: "liveTestsTaken", label: "live tests taken", row: 2, phone: false },
   { key: "examGoals", label: "exam goals set", row: 2, phone: false },
+  // 30 Sep 2026: learners by section (NET aspirants are 0 in the fixture: under the floor, hidden).
+  { key: "learnersGovt", label: "govt exam aspirants", row: 3, phone: false },
+  { key: "learnersSchool", label: "school students", row: 3, phone: false },
+  { key: "learnersEntrance", label: "entrance aspirants", row: 3, phone: false },
+  { key: "learnersCollege", label: "scholarship & college seekers", row: 3, phone: false },
+  { key: "learnersGraduate", label: "PG entrance aspirants", row: 3, phone: false },
+  { key: "learnersExploring", label: "general pages only", row: 3, phone: false },
 ];
 
 describe("label / definition table", () => {
@@ -263,18 +289,42 @@ describe("label / definition table", () => {
     expect(pill("examGoals")).toBe("+18 today");
     // Every counter on the strip moves daily and carries a pill, except the live "active now".
     expect(items.filter((it) => it.key !== "activeNow").every((it) => it.pill !== undefined)).toBe(true);
-    const quiet = buildStripItems({ ...EXPECTED, pageViewsToday: 0, mocksToday: 0, questionsAnsweredToday: 0, tutorQuestionsToday: 0, signupsLast7Days: 0, uniqueVisitorsToday: 0, liveTestsToday: 0, examGoalsToday: 0 });
+    expect(pill("learnersGovt")).toBe("+119 today"); // 90 identities + 30 landings − 1 overlap
+    const quiet = buildStripItems({ ...EXPECTED, pageViewsToday: 0, mocksToday: 0, questionsAnsweredToday: 0, tutorQuestionsToday: 0, signupsLast7Days: 0, uniqueVisitorsToday: 0, liveTestsToday: 0, examGoalsToday: 0, learnersGovtToday: 0, learnersSchoolToday: 0, learnersEntranceToday: 0, learnersCollegeToday: 0, learnersGraduateToday: 0, learnersPostgraduateToday: 0, learnersExploringToday: 0 });
     expect(quiet.every((it) => it.pill === undefined)).toBe(true);
   });
 
   it("only the counters that read wrong at 0 are hidden at 0 — and only then", () => {
     expect([...HIDDEN_WHEN_ZERO].sort()).toEqual(["activeNow", "examGoals", "liveTestsTaken"]);
-    const zeros = buildStripItems({ ...EXPECTED, activeNow: 0, liveTestsTaken: 0, examGoals: 0 });
-    expect(zeros.map((it) => it.key)).toEqual(TABLE.map((t) => t.key).filter((k) => !HIDDEN_WHEN_ZERO.has(k)));
+    const zeros = buildStripItems({ ...EXPECTED, activeNow: 0, liveTestsTaken: 0, examGoals: 0, learnersGovt: 0, learnersSchool: 0, learnersEntrance: 0, learnersCollege: 0, learnersGraduate: 0, learnersPostgraduate: 0, learnersExploring: 0 });
+    expect(zeros.map((it) => it.key)).toEqual(TABLE.filter((t) => t.row !== 3).map((t) => t.key).filter((k) => !HIDDEN_WHEN_ZERO.has(k)));
     // A genuine 0 elsewhere stays on screen — never hidden, never padded.
     const early = buildStripItems({ ...ZERO_LIVE_COUNTS });
     expect(early.find((it) => it.key === "mocksTaken")?.value).toBe(0);
     expect(early.find((it) => it.key === "totalSignups")?.value).toBe(0);
+  });
+
+  it("a learner group shows only from K_MIN (20) people; row 3 can be switched off; its pills are wide-screen only", () => {
+    expect(SECTION_FLOOR).toBe(20);
+    const at = (v: number) => buildStripItems({ ...EXPECTED, learnersGraduate: v }).some((it) => it.key === "learnersGraduate");
+    expect(at(19)).toBe(false);
+    expect(at(20)).toBe(true);
+    // A reply without the groups (no same-day read yet) shows none of them — never a 0.
+    const { learnersGovt, learnersSchool, learnersEntrance, learnersCollege, learnersGraduate, learnersPostgraduate, learnersExploring, ...noGroups } = EXPECTED;
+    void [learnersGovt, learnersSchool, learnersEntrance, learnersCollege, learnersGraduate, learnersPostgraduate, learnersExploring];
+    expect(buildStripItems(noGroups as LiveCounts).filter((it) => it.row === 3)).toEqual([]);
+    expect(buildStripItems(EXPECTED, {}, { sections: false }).filter((it) => it.row === 3)).toEqual([]);
+    expect(items.filter((it) => it.row === 3).every((it) => it.pillWide === true)).toBe(true);
+    expect(items.filter((it) => it.row !== 3).some((it) => it.pillWide)).toBe(false);
+  });
+
+  it("a poll reply without the groups keeps the last-known groups on screen (never a fake 0)", () => {
+    const prev = mergeCounts(null, EXPECTED);
+    const { learnersGovt, learnersGovtToday, ...rest } = EXPECTED;
+    void [learnersGovt, learnersGovtToday];
+    const merged = mergeCounts(prev, rest);
+    expect(merged.learnersGovt).toBe(EXPECTED.learnersGovt);
+    expect(merged.learnersGovtToday).toBe(EXPECTED.learnersGovtToday);
   });
 
   it("caller labels override the English defaults; blank ones do not; legacy fields are ignored", () => {
@@ -305,6 +355,14 @@ describe("label / definition table", () => {
       ["languages", "live.languages"],
       ["today", "live.today"],
       ["thisWeek", "live.thisWeek"],
+      ["secLead", "live.sec.lead"],
+      ["secGovt", "live.sec.govt"],
+      ["secSchool", "live.sec.school"],
+      ["secEntrance", "live.sec.entrance"],
+      ["secCollege", "live.sec.college"],
+      ["secGraduate", "live.sec.graduate"],
+      ["secPostgraduate", "live.sec.postgraduate"],
+      ["secExploring", "live.sec.exploring"],
     ];
     expect(pairs.length).toBe(Object.keys(STRIP_DEFAULT_LABELS).length);
     for (const [field, key] of pairs) expect(STRIP_DEFAULT_LABELS[field], key).toBe(en[key]);
@@ -327,8 +385,8 @@ const OTHER_SCRIPTS: Record<"hi" | "te", RegExp> = {
 const hasLetters = (s: string) => /[A-Za-z]/.test(s.replace(/\{\w+\}/g, ""));
 
 describe("i18n live.* — en, hi, te", () => {
-  it("the family has the strip's 16 keys plus the 7 pre-existing ones", () => {
-    expect(LIVE_KEYS.length).toBe(23);
+  it("the family has the strip's 16 keys, the 8 learners-by-section keys (30 Sep 2026) and the 7 pre-existing ones", () => {
+    expect(LIVE_KEYS.length).toBe(31);
     expect(LIVE_KEYS).toContain("live.visitors");
     expect(LIVE_KEYS).toContain("live.mocksTaken");
     expect(LIVE_KEYS).toContain("live.tutorQuestions");
@@ -445,7 +503,11 @@ describe("getLiveCounts — the read", () => {
     expect(tutorToday).toContain(`<> ?`);
     for (const q of sqlLog.filter((x) => x.includes(`"AnonTutorLog"`))) expect(q).toContain(`"anonId" IS NOT NULL`);
     expect(find(`FROM "Question" q`)).toContain("= ANY(q.tags)");
-    for (const s of sqlLog.filter((x) => /JOIN "Exam"/.test(x))) expect(s).toContain(REAL_EXAM_SQL.sql);
+    // Every query that COUNTS exams keeps to real, live exams. The learners-by-section read (30 Sep 2026)
+    // joins Exam only to learn which kind of exam a viewed page belongs to — an exam made inactive since
+    // still says who its visitors were — so it is the one exempt join.
+    for (const s of sqlLog.filter((x) => /JOIN "Exam"/.test(x) && !x.includes("learner_sections AS"))) expect(s).toContain(REAL_EXAM_SQL.sql);
+    expect(sqlLog.some((x) => x.includes("learner_sections AS"))).toBe(true);
     expect(calls.exam[0]).toEqual({ where: { active: true, category: { not: "SCHOOL_BOARD" } } });
     expect(calls.enrollment[0]).toEqual({ where: { active: true, exam: { category: { not: "SCHOOL_BOARD" } } } });
     expect(calls.attempt).toContainEqual({ where: { status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] } } });
@@ -510,7 +572,8 @@ describe("the API route and the client shape", () => {
     const src = read("src/app/page.tsx");
     const band = src.slice(src.indexOf("<LiveCountersStrip"), src.indexOf("/>", src.indexOf("<LiveCountersStrip")));
     for (const field of Object.keys(STRIP_DEFAULT_LABELS)) {
-      const key = ({ questions: "live.questions", notes: "live.notes" } as Record<string, string>)[field] ?? `live.${field}`;
+      // 30 Sep 2026: secLead / secGovt … read live.sec.lead / live.sec.govt ….
+      const key = ({ questions: "live.questions", notes: "live.notes" } as Record<string, string>)[field] ?? (field.startsWith("sec") ? `live.sec.${field.slice(3).toLowerCase()}` : `live.${field}`);
       expect(band, field).toMatch(new RegExp(`${field}: t\\("${key.replace(".", "\\.")}"\\)`));
     }
     expect(band).not.toMatch(/preparingNow|inMockNow|totalEver|activeDiscussions/);
@@ -555,9 +618,9 @@ describe("the API route and the client shape", () => {
 /** sm+ item widths in px at 12 px (sm:text-xs), pill included, the
  *  trailing "·" separator NOT included (SEP_PX each, all but the last). */
 const MEASURED_SM: Record<"en" | "hi" | "te", Partial<Record<keyof LiveCounts, number>>> = {
-  en: { activeNow: 83, uniqueVisitors: 188, totalPageViews: 210, mocksTaken: 231, questionsAnswered: 260, tutorQuestions: 226, liveTestsTaken: 189, totalSignups: 207, examGoals: 211, exams: 67, practiceQuestions: 153, topicNotes: 104, schoolChapters: 120, languages: 81 },
-  hi: { activeNow: 74, uniqueVisitors: 167, totalPageViews: 167, mocksTaken: 185, questionsAnswered: 227, tutorQuestions: 196, liveTestsTaken: 159, totalSignups: 196, examGoals: 185, exams: 63, practiceQuestions: 100, topicNotes: 96, schoolChapters: 86, languages: 50 },
-  te: { activeNow: 107, uniqueVisitors: 228, totalPageViews: 212, mocksTaken: 240, questionsAnswered: 307, tutorQuestions: 236, liveTestsTaken: 216, totalSignups: 247, examGoals: 289, exams: 74, practiceQuestions: 130, topicNotes: 107, schoolChapters: 107, languages: 61 },
+  en: { activeNow: 83, uniqueVisitors: 188, totalPageViews: 210, mocksTaken: 231, questionsAnswered: 260, tutorQuestions: 226, liveTestsTaken: 189, totalSignups: 207, examGoals: 211, exams: 67, practiceQuestions: 153, topicNotes: 104, schoolChapters: 120, languages: 81, learnersGovt: 251, learnersSchool: 209, learnersEntrance: 217, learnersCollege: 256, learnersGraduate: 250, learnersPostgraduate: 216, learnersExploring: 195 },
+  hi: { activeNow: 74, uniqueVisitors: 167, totalPageViews: 167, mocksTaken: 185, questionsAnswered: 227, tutorQuestions: 196, liveTestsTaken: 159, totalSignups: 196, examGoals: 185, exams: 63, practiceQuestions: 100, topicNotes: 96, schoolChapters: 86, languages: 50, learnersGovt: 232, learnersSchool: 171, learnersEntrance: 194, learnersCollege: 251, learnersGraduate: 189, learnersPostgraduate: 174, learnersExploring: 180 },
+  te: { activeNow: 107, uniqueVisitors: 228, totalPageViews: 212, mocksTaken: 240, questionsAnswered: 307, tutorQuestions: 236, liveTestsTaken: 216, totalSignups: 247, examGoals: 289, exams: 74, practiceQuestions: 130, topicNotes: 107, schoolChapters: 107, languages: 61, learnersGovt: 287, learnersSchool: 228, learnersEntrance: 247, learnersCollege: 285, learnersGraduate: 250, learnersPostgraduate: 232, learnersExploring: 223 },
 };
 /** Phone cell widths in px at 11 px (number + label, no pill). */
 const MEASURED_PHONE: Record<"en" | "hi" | "te", Partial<Record<keyof LiveCounts, number>>> = {
@@ -566,6 +629,8 @@ const MEASURED_PHONE: Record<"en" | "hi" | "te", Partial<Record<keyof LiveCounts
   te: { uniqueVisitors: 128, mocksTaken: 146, tutorQuestions: 141, totalSignups: 137 },
 };
 const SEP_PX = 13; // "·" with pl-1, 12 px
+/** Row 3's "Learners by section" lead at 10 px uppercase (measured 30 Sep 2026). */
+const SEC_LEAD_PX: Record<"en" | "hi" | "te", number> = { en: 124, hi: 114, te: 135 };
 const LIVE_PX = 38; // the dot + "LIVE" lead on row 1
 const ROW_GAP_PX = 16; // gap-x-4 between row elements
 const PHONE_LEAD_PX = 12; // the dot + gap-1 in the first phone cell
@@ -575,16 +640,17 @@ const contentWidth = (viewport: number) => viewport - 2 * (viewport >= 1024 ? 32
 
 describe("layout budget (measured widths)", () => {
   // Everything that can render, at its widest (no counter hidden at 0).
-  const all = buildStripItems({ ...EXPECTED, activeNow: 99, liveTestsTaken: 840, examGoals: 17950, schoolChapters: 500 });
-  const rowWidth = (locale: "en" | "hi" | "te", row: 1 | 2) => {
+  const all = buildStripItems({ ...EXPECTED, activeNow: 99, liveTestsTaken: 840, examGoals: 17950, schoolChapters: 500, learnersPostgraduate: 500 });
+  const rowWidth = (locale: "en" | "hi" | "te", row: 1 | 2 | 3) => {
     const keys = all.filter((it) => it.row === row).map((it) => it.key);
     const items = keys.map((k) => {
       const w = MEASURED_SM[locale][k];
       if (w === undefined) throw new Error(`no measured width for ${k} (${locale}) — measure it before adding it to the strip`);
       return w;
     });
-    const elements = items.length + (row === 1 ? 1 : 0);
-    return items.reduce((a, b) => a + b, 0) + SEP_PX * (items.length - 1) + (row === 1 ? LIVE_PX : 0) + ROW_GAP_PX * (elements - 1);
+    const elements = items.length + (row === 1 || row === 3 ? 1 : 0);
+    const lead = row === 1 ? LIVE_PX : row === 3 ? SEC_LEAD_PX[locale] : 0;
+    return items.reduce((a, b) => a + b, 0) + SEP_PX * (items.length - 1) + lead + ROW_GAP_PX * (elements - 1);
   };
 
   it("sm+: both rows fit whole at 1366 px in en and hi, and at 1536 px in te (10x headroom)", () => {
@@ -595,6 +661,32 @@ describe("layout budget (measured widths)", () => {
     // Sanity: the rows really are too wide for a tablet — that is what the
     // sideways scroll inside a fixed-height line is for.
     expect(rowWidth("en", 1)).toBeGreaterThan(contentWidth(768));
+  });
+
+  it("lg+: row 3 (learners by section) fits whole without pills on laptops; its pills (from 1800 px) fit there", () => {
+    // Measured 30 Sep 2026 on shishya.in's fonts, 12 px, at 2x today's group sizes
+    // (learner groups split the learners count, so 2x is their headroom), renamed labels.
+    const W: Record<"en" | "hi" | "te", { lead: number; pill: Record<string, number>; bare: Record<string, number> }> = {
+      en: { lead: 124, pill: { govt: 237, school: 201, entrance: 217, college: 278, graduate: 225, net: 165, general: 217 }, bare: { govt: 162, school: 130, entrance: 146, college: 209, graduate: 155, net: 101, general: 149 } },
+      hi: { lead: 114, pill: { govt: 219, school: 165, entrance: 194, college: 238, graduate: 171, net: 137, general: 180 }, bare: { govt: 152, school: 103, entrance: 131, college: 178, graduate: 109, net: 82, general: 120 } },
+      te: { lead: 135, pill: { govt: 274, school: 220, entrance: 247, college: 314, graduate: 255, net: 172, general: 252 }, bare: { govt: 196, school: 146, entrance: 173, college: 243, graduate: 182, net: 105, general: 180 } },
+    };
+    const row3 = (loc: "en" | "hi" | "te", pills: boolean, groups: string[]) => {
+      const w = groups.map((g) => (pills ? W[loc].pill : W[loc].bare)[g]);
+      return W[loc].lead + w.reduce((a, b) => a + b, 0) + SEP_PX * (w.length - 1) + ROW_GAP_PX * w.length;
+    };
+    const all7 = ["govt", "school", "entrance", "college", "graduate", "net", "general"];
+    const today6 = all7.filter((g) => g !== "net"); // NET aspirants are under the floor today
+    // Without pills (below 1800 px): all seven groups fit whole from 1440 (en), 1366 (hi), 1680 (te).
+    expect(row3("en", false, all7)).toBeLessThanOrEqual(contentWidth(1440));
+    expect(row3("hi", false, all7)).toBeLessThanOrEqual(contentWidth(1366));
+    expect(row3("te", false, all7)).toBeLessThanOrEqual(contentWidth(1680));
+    // With pills (1800 px and up), today's six groups fit whole in en and hi; te from 1936.
+    expect(row3("en", true, today6)).toBeLessThanOrEqual(contentWidth(1800));
+    expect(row3("hi", true, today6)).toBeLessThanOrEqual(contentWidth(1800));
+    expect(row3("te", true, today6)).toBeLessThanOrEqual(contentWidth(1936));
+    // Why the pills wait for 1800 px: with them, en does not fit a 1440 laptop.
+    expect(row3("en", true, today6)).toBeGreaterThan(contentWidth(1440));
   });
 
   it("phones: every cell fits its half of a 360 px screen in en, hi and te", () => {
@@ -619,7 +711,7 @@ describe("layout budget (measured widths)", () => {
     // Phones: a 2 × 2 grid of fixed height → exactly two lines.
     expect(strip).toMatch(/grid h-9 grid-cols-\[minmax\(0,1fr\)_minmax\(0,1fr\)\] grid-rows-2 items-center gap-x-3 sm:hidden/);
     // sm+: two rows of fixed height that never wrap (they scroll sideways).
-    expect(strip.match(/<StripRow[\s>]/g)?.length).toBe(2);
+    expect(strip.match(/<StripRow[\s>]/g)?.length).toBe(3); // 30 Sep 2026: row 3 = learners by section
     expect(strip).toMatch(/h-\[22px\] overflow-x-auto overflow-y-hidden/);
     expect(strip).not.toMatch(/flex-wrap/);
     // The shell is the same frame (one return, no guessed min-height), so

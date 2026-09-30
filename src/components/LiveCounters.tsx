@@ -27,8 +27,8 @@
 //     phones — and the shell was shorter than the loaded strip, so the
 //     hero jumped when the numbers landed). Height is now fixed by
 //     construction: phones get a 2 × 2 grid of four counters (always two
-//     lines, 49 px band); from sm, exactly two single-line rows (57 px
-//     band) — a row wider than the screen scrolls sideways inside its
+//     lines, 49 px band); from sm, two single-line rows (57 px band), and
+//     from lg a third, learners by section (79 px band; 30 Sep 2026) — a row wider than the screen scrolls sideways inside its
 //     line, it never wraps. The shell before the first reply is the same
 //     frame with the Live dot only, so nothing below it moves.
 //   • A failed poll (the API answers 503) changes nothing on screen: the
@@ -45,7 +45,7 @@ import { useEffect, useState } from "react";
 import { formatCount } from "@/lib/live-counters";
 // Type-only: erased at build, so the client bundle never sees Prisma.
 import type { LiveCounts } from "@/lib/live-counts-server";
-import { buildStripItems, mergeCounts, type StripItem, type StripLabels } from "./live-counters-strip";
+import { STRIP_DEFAULT_LABELS, buildStripItems, mergeCounts, type StripItem, type StripLabels } from "./live-counters-strip";
 
 export type { StripLabels } from "./live-counters-strip";
 
@@ -100,8 +100,11 @@ function useLiveCounts(): LiveCounts | null {
 export function LiveCountersStrip({
   labels,
   sticky = true,
+  sections = true,
 }: {
   labels: StripLabels;
+  /** Row 3, learners by section (lg+). /for/[persona] passes false: its labels are English-only. */
+  sections?: boolean;
   /** Homepage passes false and provides its own sticky wrapper. */
   sticky?: boolean;
 }) {
@@ -110,10 +113,12 @@ export function LiveCountersStrip({
 
   // No items until the first reply (or while it keeps failing): the same
   // fixed-height frame renders with the Live dot only.
-  const items = counts ? buildStripItems(counts, labels) : [];
+  const items = counts ? buildStripItems(counts, labels, { sections }) : [];
   const phone = items.filter((it) => it.phone);
   const row1 = items.filter((it) => it.row === 1);
   const row2 = items.filter((it) => it.row === 2);
+  const row3 = items.filter((it) => it.row === 3);
+  const secLead = labels.secLead?.trim() || STRIP_DEFAULT_LABELS.secLead;
 
   return (
     <div className={wrapper} data-live-strip={counts ? "live" : "shell"}>
@@ -128,7 +133,7 @@ export function LiveCountersStrip({
             phone.map((it, i) => <PhoneCell key={it.key} item={it} pulse={i === 0} />)
           )}
         </div>
-        {/* sm+: exactly two single-line rows. */}
+        {/* sm+: two single-line rows; lg+: a third (learners by section). */}
         <div className="hidden sm:block">
           <StripRow>
             <LivePulse />
@@ -141,6 +146,18 @@ export function LiveCountersStrip({
               <Counter key={it.key} item={it} last={i === row2.length - 1} />
             ))}
           </StripRow>
+          {/* 30 Sep 2026: the learners by section (src/lib/learner-sections.ts), lg and up
+              only (a fixed height per breakpoint — no shift when the numbers land). */}
+          {sections && (
+            <div className="hidden lg:block">
+              <StripRow muted>
+                {row3.length > 0 && <span className="text-[10px] font-medium uppercase tracking-wider text-emerald-700">{secLead}</span>}
+                {row3.map((it, i) => (
+                  <Counter key={it.key} item={it} last={i === row3.length - 1} />
+                ))}
+              </StripRow>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -169,13 +186,13 @@ function StripRow({ children, muted = false }: { children: React.ReactNode; mute
 
 function Counter({ item, last }: { item: StripItem; last: boolean }) {
   return (
-    <span className="inline-flex items-center gap-1.5" data-counter={item.key}>
+    <span className="inline-flex items-center gap-1.5" data-counter={item.key} title={item.pillWide ? item.pill : undefined}>
       <span className={`tabular-nums ${item.key === "totalSignups" ? "font-semibold" : "font-medium"}`}>
         {formatCount(item.value)}
       </span>{" "}
       {item.label}
       {item.pill && (
-        <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800">
+        <span className={`ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800${item.pillWide ? " hidden min-[1800px]:inline" : ""}`}>
           {item.pill}
         </span>
       )}

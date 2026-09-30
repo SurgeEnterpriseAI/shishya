@@ -138,6 +138,7 @@ export default async function PersonaPage({
       <Header />
 
       <LiveCountersStrip
+        sections={false}
         labels={{
           preparingNow: "preparing now",
           inMockNow: "in a mock right now",

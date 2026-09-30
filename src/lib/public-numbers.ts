@@ -457,6 +457,14 @@ export interface CounterRow {
 export const COUNTER_ROWS: readonly { key: keyof LiveCounts; label: string; people: boolean }[] = [
   { key: "totalSignups", label: "Accounts", people: true },
   { key: "uniqueVisitors", label: "People who came (the home page strip's 'learners')", people: true },
+  // 30 Sep 2026: the strip's third row, learners by section — each learner in one group.
+  { key: "learnersGovt", label: "Learners by section: govt exam aspirants", people: true },
+  { key: "learnersSchool", label: "Learners by section: school students", people: true },
+  { key: "learnersEntrance", label: "Learners by section: entrance aspirants", people: true },
+  { key: "learnersCollege", label: "Learners by section: scholarship & college seekers", people: true },
+  { key: "learnersGraduate", label: "Learners by section: PG entrance aspirants", people: true },
+  { key: "learnersPostgraduate", label: "Learners by section: NET aspirants", people: true },
+  { key: "learnersExploring", label: "Learners by section: general pages only", people: true },
   { key: "mocksTaken", label: "Mocks taken", people: true },
   { key: "tutorQuestions", label: "Questions to the AI tutor", people: true },
   { key: "questionsAnswered", label: "Questions answered in mocks", people: true },
@@ -475,7 +483,11 @@ async function readCounters(): Promise<PublicNumber<CounterRow[]>> {
   return {
     id: "all-time-counters",
     label: "All-time counters",
-    value: COUNTER_ROWS.map((r) => ({ key: r.key, label: r.label, value: counts[r.key], definition: LIVE_COUNT_DEFINITIONS[r.key], people: r.people })),
+    // A counter the read left out (the learner groups before their first same-day read) is not printed — never as 0.
+    value: COUNTER_ROWS.flatMap((r) => {
+      const value = counts[r.key];
+      return typeof value === "number" ? [{ key: r.key, label: r.label, value, definition: LIVE_COUNT_DEFINITIONS[r.key], people: r.people }] : [];
+    }),
     definition: "The site's live counters (the strip on the home page), each with its own definition, word for word.",
     asOf: istDayString(new Date()),
     period: "all time",
