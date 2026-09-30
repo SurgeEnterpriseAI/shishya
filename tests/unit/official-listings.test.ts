@@ -14,11 +14,13 @@ import {
   ibpsCyclePages,
   isFirewallPage,
   isScriptShell,
+  isUpscWhatsNewItem,
   istDdMmYyyy,
   listingAdapterFor,
   listingReadKey,
   parseRrbTable,
   parseSscRecords,
+  parseUpscItemFiles,
   parseUpscListing,
   readOfficialListing,
   romanValue,
@@ -28,6 +30,7 @@ import {
   sscContentType,
   sscFileUrl,
   sscRecordsUrl,
+  UPSC_ITEM_MAX,
   type ListingFetch,
   type ListingPage,
 } from "@/lib/official-listings";
@@ -180,6 +183,98 @@ describe("UPSC: the page heading names the kind of every table row", () => {
     expect(first).toMatchObject({ ok: false, gate: 5 });
     const later = releaseGate(cand("RESULT", cmsWn, "https://www.upsc.gov.in/whats-new"), { ...c, baselined: true }, html200);
     expect(later.ok && later.release.dateSource).toBe("first-seen");
+  });
+});
+
+describe("UPSC What's New: an item page is followed to its files", () => {
+  const WN = "https://www.upsc.gov.in/whats-new";
+  const CMS_ITEM = "https://www.upsc.gov.in/whats-new/Combined%20Medical%20Services%20Examination%2C%202026/Written%20Result";
+  const CMS_PDF = "https://www.upsc.gov.in/sites/default/files/WR-RollList-CMSE-2026-Engl-010926.pdf";
+
+  it("knows an item page: /whats-new/{exam}/{document type} on UPSC only", () => {
+    expect(isUpscWhatsNewItem(CMS_ITEM)).toBe(true);
+    expect(isUpscWhatsNewItem("https://upsc.gov.in/whats-new/X/Final%20Result")).toBe(true);
+    expect(isUpscWhatsNewItem(WN)).toBe(false);
+    expect(isUpscWhatsNewItem("https://www.upsc.gov.in/whats-new/12%20-%202026")).toBe(false);
+    expect(isUpscWhatsNewItem("https://ssc.gov.in/whats-new/X/Result")).toBe(false);
+  });
+
+  it("an item page carries its PDFs; one that left What's New prints only its breadcrumb", () => {
+    expect(parseUpscItemFiles(fx("upsc-whats-new-item-cmse-2026-wr.html"), CMS_ITEM)).toEqual([CMS_PDF]);
+    expect(parseUpscItemFiles(fx("upsc-whats-new-item-emptied.html"), CMS_ITEM)).toEqual([]);
+  });
+
+  /** What's New plus every answer-key / result item page it links: the CMS
+   *  page and the emptied page are the saved ones, the rest one PDF each. */
+  function whatsNewPages() {
+    const { links } = parseUpscListing(fx("upsc-whats-new.html"), WN);
+    const items = links.filter((l) => {
+      const c = classifyLink(`${l.anchorText} ${l.rowText}`);
+      return isUpscWhatsNewItem(l.url) && (c.ak || c.result);
+    });
+    const pages: Record<string, ListingPage> = { [WN]: html(fx("upsc-whats-new.html")) };
+    items.forEach((l, i) => {
+      pages[l.url] = html(`<div class="view view-what-new"><table class="views-table cols-4"><tr><td>x</td><td>y</td><td><a href="https://www.upsc.gov.in/sites/default/files/item-${i}.pdf">(1 MB)</a></td></tr></table></div>`);
+    });
+    const emptied = items.find((l) => l.url !== CMS_ITEM)!.url;
+    pages[CMS_ITEM] = html(fx("upsc-whats-new-item-cmse-2026-wr.html"));
+    pages[emptied] = html(fx("upsc-whats-new-item-emptied.html"));
+    return { pages, items, emptied };
+  }
+
+  it("the row keeps its words; its link becomes the file (an emptied item page stays as it is)", async () => {
+    const { pages, items, emptied } = whatsNewPages();
+    expect(items.length).toBeGreaterThan(3);
+    expect(items.length).toBeLessThanOrEqual(UPSC_ITEM_MAX);
+    const { fetchPage, calls } = fakeFetch(pages);
+    const r = await readOfficialListing(WN, "RESULT", fetchPage, { portalUrl: "https://upsc.gov.in" });
+    expect(r.fetchMode).toBe("html");
+    expect(r.status).toContain(`followed ${items.length} What's New item page(s) to their files`);
+    expect(calls).toHaveLength(1 + items.length);
+    const cms = r.links.find((l) => l.url === CMS_PDF)!;
+    expect(cms.anchorText).toBe("Written Result: Combined Medical Services Examination, 2026");
+    expect(r.links.some((l) => l.url === CMS_ITEM)).toBe(false);
+    expect(r.links.filter((l) => isUpscWhatsNewItem(l.url) && items.some((i) => i.url === l.url)).map((l) => l.url)).toEqual([emptied]);
+  });
+
+  it("the same read for either kind (the run shares one read of the page)", async () => {
+    const { pages } = whatsNewPages();
+    const ak = await readOfficialListing(WN, "ANSWER_KEY", fakeFetch(pages).fetchPage, { portalUrl: "https://upsc.gov.in" });
+    const res = await readOfficialListing(WN, "RESULT", fakeFetch(pages).fetchPage, { portalUrl: "https://upsc.gov.in" });
+    expect(ak.links.map((l) => l.url)).toEqual(res.links.map((l) => l.url));
+  });
+
+  it("never a partial read: a dead item page blocks the read; the time guard leaves it unread", async () => {
+    const { pages } = whatsNewPages();
+    delete pages[CMS_ITEM];
+    const dead1 = await readOfficialListing(WN, "RESULT", fakeFetch(pages).fetchPage, { portalUrl: "https://upsc.gov.in" });
+    expect(dead1.fetchMode).toBe("blocked");
+    expect(dead1.status).toMatch(/^UPSC What's New item page: unreachable/);
+    expect(dead1.links).toEqual([]);
+
+    let n = 0;
+    const guarded = await readOfficialListing(WN, "RESULT", fakeFetch(whatsNewPages().pages).fetchPage, {
+      portalUrl: "https://upsc.gov.in",
+      outOfTime: () => ++n > 2,
+    });
+    expect(guarded.timeGuard).toBe(true);
+    expect(guarded.links).toEqual([]);
+  });
+
+  it("the file passes the unchanged gate once the page has a baseline (first-seen date)", async () => {
+    const { pages } = whatsNewPages();
+    const r = await readOfficialListing(WN, "RESULT", fakeFetch(pages).fetchPage, { portalUrl: "https://upsc.gov.in" });
+    const cms = r.links.find((l) => l.url === CMS_PDF)!;
+    const c = ctx({
+      portalUrl: "https://upsc.gov.in",
+      examTerms: examTermsFor({ shortName: "CMS", name: "Combined Medical Services Examination" }),
+      cycleYears: ["2026"],
+      notBefore: day("2026-07-19"),
+      baselined: true,
+    });
+    const v = releaseGate(cand("RESULT", cms, WN), c, pdf);
+    expect(v.ok && v.release.url).toBe(CMS_PDF);
+    expect(v.ok && v.release.dateSource).toBe("first-seen");
   });
 });
 

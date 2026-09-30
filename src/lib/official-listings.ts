@@ -227,6 +227,32 @@ export function parseUpscListing(html: string, pageUrl: string): { heading: stri
   return { heading: h1, links };
 }
 
+/** Most What's New item pages followed per read, newest first (rows only move
+ *  down the list, so an item past the cap never comes back into it). */
+export const UPSC_ITEM_MAX = 24;
+
+/** A What's New row's own page, /whats-new/{exam}/{document type}. */
+export function isUpscWhatsNewItem(url: string): boolean {
+  const u = safeUrl(url);
+  if (!u || bareHost(u) !== "upsc.gov.in") return false;
+  const parts = u.pathname.split("/").filter(Boolean);
+  return parts.length === 3 && parts[0] === "whats-new";
+}
+
+/** The files a What's New item page carries: the PDFs in its views-table
+ *  (30 Sep 2026: "Name of Examination | Document Type | Documents"). An item
+ *  page that has left What's New prints only its breadcrumb — no files. */
+export function parseUpscItemFiles(html: string, pageUrl: string): string[] {
+  const files = new Set<string>();
+  for (const m of (html ?? "").matchAll(/<table[^>]*class=["'][^"']*views-table[^"']*["'][^>]*>[\s\S]*?<\/table>/gi)) {
+    for (const l of extractLinks(m[0], pageUrl)) {
+      const u = safeUrl(l.url);
+      if (u && bareHost(u) === "upsc.gov.in" && /\.pdf$/i.test(u.pathname)) files.add(l.url);
+    }
+  }
+  return [...files];
+}
+
 // ── ssc ──────────────────────────────────────────────────────────────────
 
 export const SSC_RECORDS_API = "https://ssc.gov.in/api/general-website/portal/records";
@@ -559,7 +585,39 @@ export async function readOfficialListing(listingUrl: string, kind: WatchKind, f
   if (adapter === "upsc") {
     const { heading, links } = parseUpscListing(first.body, first.url);
     texts.push(htmlText(first.body));
-    return ok(first.url, heading, links, `read as a UPSC page ("${heading}")`);
+    // What's New rows link an item page, not the file, and the item page
+    // empties once the row leaves What's New (30 Sep 2026: NDA-II 2026's
+    // "Provisional Answer Key" printed only its breadcrumb). A row naming an
+    // answer key or a result — either kind: the run shares one read of the
+    // page between kinds (listingReadKey) — is followed to the PDFs it
+    // carries, permanent links the importer can read. Never a partial read: a
+    // failed item page or the time guard ends the read, so a link never flips
+    // from item page to file between runs (the baseline would take the file
+    // for a new release).
+    const items = links.filter((l) => {
+      if (!isUpscWhatsNewItem(l.url)) return false;
+      const c = classifyLink(`${l.anchorText} ${l.rowText}`);
+      return c.ak || c.result;
+    });
+    const follow = new Set(items.slice(0, UPSC_ITEM_MAX).map((l) => l.url));
+    const out: ListingLink[] = [];
+    let followed = 0;
+    for (const l of links) {
+      if (!follow.has(l.url)) {
+        out.push(l);
+        continue;
+      }
+      const r = await get(l.url);
+      if (!r.ok) return stop(r, "UPSC What's New item page: ", l.url);
+      const files = parseUpscItemFiles(r.body, r.url);
+      followed++;
+      // No files: the item page is the release's only page — the gate decides.
+      if (files.length === 0) out.push(l);
+      else for (const f of files) out.push({ ...l, url: f });
+    }
+    const capped = items.length - follow.size;
+    const note = followed ? `; followed ${followed} What's New item page(s) to their files${capped ? ` (${capped} older not followed, cap ${UPSC_ITEM_MAX})` : ""}` : "";
+    return ok(first.url, heading, out, `read as a UPSC page ("${heading}")${note}`);
   }
 
   if (adapter === "ibps") {
