@@ -103,7 +103,12 @@ export const LATE_WINDOW_MS = 72 * 3600_000;
 /** Answers per run (hard cap). */
 export const LATE_MAX_ANSWERS = 20;
 /** USD per run (hard cap), by the AiUsage cost of the run's own calls. */
-export const LATE_MAX_USD = 1.0;
+// 1 Oct 2026: $1.00 → $4.00. The first real run (03:20 IST) answered 1 of 21:
+// a tools-on exam answer is priced ~$0.8 worst case (every round at the 1-h
+// cache-write rate), so after one answer the next student's group no longer
+// fit, and 28 Sep's questions would have left the 72-h window unanswered.
+// Spend happens only after an outage (no candidates → no call at all).
+export const LATE_MAX_USD = 4.0;
 /**
  * A PLANNING cost per answer, for "does this student's whole group fit in
  * what is left of the run?" (a typical tutor turn is a few cents; a tools-on

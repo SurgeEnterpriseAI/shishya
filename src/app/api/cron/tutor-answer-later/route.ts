@@ -7,7 +7,7 @@
 // question is saved and will be answered here (src/lib/tutor-unavailable.ts);
 // this run keeps that promise: failed member questions of the last 72 hours,
 // oldest first, one cheap probe first, stop at the first AI-unavailable
-// error, at most 20 answers and $1.00 a run, the chat's own pipeline, an
+// error, at most 20 answers and $4.00 a run, the chat's own pipeline, an
 // atomic claim per question, then the pick-up card and one mail per student
 // (at most one a day). Every rule: src/lib/tutor-late-answer.ts; the steps:
 // src/lib/db/tutor-late-answer.ts.

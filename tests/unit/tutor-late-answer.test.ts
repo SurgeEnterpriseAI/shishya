@@ -617,12 +617,14 @@ describe("runLateAnswers — probe, stop, caps", () => {
     expect(f.log.releases).toEqual([{ id: "a", reason: "other", final: false, refundTry: false }]);
   });
 
-  it("hard caps: at most 20 answers; an answer starts only when its own worst case fits in what is left of $1.00", async () => {
+  it("hard caps: at most 20 answers and $4.00 a run; an answer starts only when its own worst case fits in what is left", async () => {
     expect(lateRunCaps({})).toEqual({ maxAnswers: LATE_MAX_ANSWERS, capUsd: LATE_MAX_USD });
     expect(LATE_MAX_ANSWERS).toBe(20);
-    expect(LATE_MAX_USD).toBe(1);
+    // 1 Oct 2026: $1.00 → $4.00 — at $1.00 the first real run answered 1 of 21
+    // (a tools-on exam answer is priced ~$0.8 worst case).
+    expect(LATE_MAX_USD).toBe(4);
     // A caller can only lower them.
-    expect(lateRunCaps({ maxAnswers: 500, maxUsd: 9 })).toEqual({ maxAnswers: 20, capUsd: 1 });
+    expect(lateRunCaps({ maxAnswers: 500, maxUsd: 9 })).toEqual({ maxAnswers: 20, capUsd: 4 });
     expect(lateRunCaps({ maxAnswers: 3, maxUsd: 0.5 })).toEqual({ maxAnswers: 3, capUsd: 0.5 });
 
     const many = Array.from({ length: 30 }, (_, i) => row({ id: `q${String(i).padStart(2, "0")}`, userId: `u${i}`, createdAt: hoursAgo(40 - i) }));
@@ -636,11 +638,11 @@ describe("runLateAnswers — probe, stop, caps", () => {
     // then $0.60 left is less than the next answer's $0.65 worst: not asked.
     const one = Array.from({ length: 6 }, (_, i) => row({ id: `p${i}`, createdAt: hoursAgo(20 - i) }));
     const pricey = fakeDeps({ rows: one, worstUsd: 0.65, answer: () => okAnswer(0.2) });
-    const r2 = await runLateAnswers(pricey.deps, { now: NOW });
+    const r2 = await runLateAnswers(pricey.deps, { now: NOW, maxUsd: 1 });
     expect(r2.stopped).toBe("max-usd");
     expect(r2.answered).toBe(2);
-    expect(r2.spentUsd).toBeLessThanOrEqual(LATE_MAX_USD);
-    expect(r2.spentUsd + 0.65).toBeGreaterThan(LATE_MAX_USD);
+    expect(r2.spentUsd).toBeLessThanOrEqual(1);
+    expect(r2.spentUsd + 0.65).toBeGreaterThan(1);
     // The question that did not fit was never asked: back as it was, its try given back.
     expect(pricey.log.releases).toEqual([{ id: "p2", reason: null, final: false, refundTry: true }]);
     expect(pricey.meta.get("p2")!.lateTries).toBe(0);
@@ -671,12 +673,12 @@ describe("runLateAnswers — probe, stop, caps", () => {
     expect(f.log.claims).toEqual(["a1", "a2"]);
     expect(f.log.mails.map((m) => m.userId)).toEqual(["ua"]);
     expect(r.emails.deferred).toBe(1);
-    // By planning cost too: $1.00 − spent must hold 0.25 per question.
+    // By planning cost too: the cap − spent must hold 0.25 per question ($1.00 here).
     const g = fakeDeps({
       rows: [row({ id: "a1", userId: "ua", createdAt: hoursAgo(9) }), ...Array.from({ length: 4 }, (_, i) => row({ id: `b${i}`, userId: "ub", createdAt: hoursAgo(8 - i) }))],
       answer: () => okAnswer(0.01),
     });
-    const rg = await runLateAnswers(g.deps, { now: NOW });
+    const rg = await runLateAnswers(g.deps, { now: NOW, maxUsd: 1 });
     expect(rg.stopped).toBe("max-usd");
     expect(g.log.claims).toEqual(["a1"]);
   });
