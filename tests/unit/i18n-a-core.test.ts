@@ -161,7 +161,10 @@ describe("/login and /onboarding", () => {
     expect(dict.en["login.body.noCount"]).toBe(dict.en["login.body"].replace(/\s*—\s*for any of \{n\} exams/, ""));
   });
 
-  it("hi and te login.body carry the 11 Sep offer (plan, scores, result email) and the {n} clause", () => {
+  // 30 Sep 2026 (sign-up build 1): the offer is now the founder's "an account
+  // makes Shishya yours" line (exam, weak topics, mocks, questions asked); the
+  // shape below is unchanged. tests/unit/signin-measure.test.ts pins the words.
+  it("hi and te login.body carry the account offer and the {n} clause", () => {
     for (const locale of ["hi", "te"] as const) {
       const body = raw(locale, "login.body") ?? "";
       expect(body).toContain("{n}");

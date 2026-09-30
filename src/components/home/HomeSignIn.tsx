@@ -16,7 +16,8 @@ export function HomeSignIn({ copy, signedIn }: { copy: HomeDoorsCopy; signedIn: 
         </Link>
       ) : (
         <>
-          <Link href="/login?callbackUrl=%2Fdashboard" data-home-cta="signin" className="btn-secondary">
+          {/* 30 Sep 2026: counted as the one sign-in beacon (surface "home-signin") by the root layout's /login-link listener. */}
+          <Link href="/login?callbackUrl=%2Fdashboard" data-home-cta="signin" data-signin-surface="home-signin" className="btn-secondary">
             {copy.signin.cta}
           </Link>
           <p className="mx-auto mt-2 max-w-xl text-xs text-ink-500">{copy.signin.line}</p>

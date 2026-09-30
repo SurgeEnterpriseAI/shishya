@@ -12,9 +12,17 @@
 // `challengeLabels` from the server page (src/lib/challenge-copy.ts), so a
 // Hindi or Telugu quiz or challenge speaks the reader's language around the
 // questions (which carry their own cached translations).
+//
+// 30 Sep 2026 (sign-up build 1): the result screen's own sign-in (when no
+// signInSlot replaces it) is the shared in-page sign-in button
+// (src/components/SignInLink.tsx) — one "signin-click" beacon (surface
+// "quiz-end"; it had none), from= on the /login link, and the skip-/login
+// test's direct arm.
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
+import { SignInLink } from "@/components/SignInLink";
+import { loginHrefFor } from "@/lib/signin-cta";
 import type { AnonQuiz } from "@/lib/anon-quiz";
 import { fillTemplate, type Locale } from "@/lib/i18n";
 import type { ExamWeekPhase } from "@/lib/exam-week";
@@ -316,7 +324,7 @@ export function AnonQuizPlayer({
   if (done) {
     const score = answers.filter((a) => a.correct).length;
     const pct = Math.round((score / qs.length) * 100);
-    const loginHref = `/login?callbackUrl=${encodeURIComponent(`/exams/${quiz.examCode}`)}`;
+    const loginHref = loginHrefFor(`/exams/${quiz.examCode}`, "quiz-end");
     // Give the tutor the ACTUAL questions the student missed so it can
     // explain them, instead of a vague "the ones I got wrong" (audit
     // 18 Aug 2026).
@@ -398,12 +406,14 @@ export function AnonQuizPlayer({
           {signInSlot ? (
             <div className="flex flex-1 flex-col">{signInSlot}</div>
           ) : (
-            <Link
+            <SignInLink
               href={loginHref}
+              surface="quiz-end"
+              beaconProps={{ examCode: quiz.examCode, score, total: qs.length }}
               className="inline-flex flex-1 items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300"
             >
               {QL["quiz.signIn"]}
-            </Link>
+            </SignInLink>
           )}
           <Link
             href={tutorHref}

@@ -368,8 +368,10 @@ describe("sign-in is the main action on practice surfaces; no question after it"
 
   it("the hub's diagnostic button sends a guest to /login and back to the diagnostic", () => {
     const src = read("src/app/exams/[code]/StartMockButton.tsx");
-    expect(src).toMatch(/if \(res\.status === 401\) \{[\s\S]{0,500}?beacon\("diagnostic-401"[\s\S]{0,200}?window\.location\.href = `\/login\?callbackUrl=/);
-    expect(src).toContain("?start=diagnostic`)}`");
+    // 30 Sep 2026 (sign-up build 1): the 401 sends the site-wide sign-in beacon
+    // (surface "hub-start-401"; it was cta "diagnostic-401") and names its door (from=).
+    expect(src).toMatch(/if \(res\.status === 401\) \{[\s\S]{0,500}?signinBeacon\("hub-start-401"[\s\S]{0,200}?window\.location\.href = loginHrefFor\(/);
+    expect(src).toContain('loginHrefFor(`/exams/${examCode}?start=diagnostic`, "hub-start-401")');
     expect(src).not.toContain("window.location.href = `/exams/${examCode}/quiz`");
   });
 
@@ -401,7 +403,11 @@ describe("sign-in is the main action on practice surfaces; no question after it"
     expect(signIn).toBeGreaterThan(-1);
     expect(practise).toBeGreaterThan(signIn);
     expect(branch.slice(0, signIn)).toContain('className="btn-primary text-center"');
-    expect(branch.slice(0, signIn)).toContain("href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}`}");
+    // 30 Sep 2026 (sign-up build 1): the same filled button as the shared in-page
+    // sign-in (SignInLink, surface "pyq-year"), its /login link naming the door.
+    expect(branch.slice(0, signIn)).toContain("<SignInLink");
+    expect(branch.slice(0, signIn)).toContain('surface="pyq-year"');
+    expect(branch.slice(0, signIn)).toContain("href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}");
     expect(branch).toContain("href={`/exams/${code}/quiz?set=${guestSet.join(\",\")}&n=${guestSet.length}`}");
   });
 

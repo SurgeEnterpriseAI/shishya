@@ -89,3 +89,28 @@ describe("loginIntent — from=header (the header Sign in and the SignupNudge)",
     }
   });
 });
+
+// 30 Sep 2026 (sign-up build 1): in-page sign-in buttons name their door on
+// /login with from=<surface id> (src/lib/signin-cta.ts). Only header, pitch and
+// wall are general sign-ins; every new door keeps the card its callback gives,
+// and the hub box's new ?start=practice callback is still the mock card.
+describe("loginIntent — the doors' from= ids keep today's cards", () => {
+  it("hub-box / pyq-year / quiz-end / hub-try-one / *-401 read like no from at all", () => {
+    for (const from of ["hub-box", "pyq-year", "quiz-end", "hub-try-one", "hub-start-401", "subject-test-401", "topic-quiz-401", "custom-mock-401", "build-mock-form"]) {
+      for (const cb of ["/exams/SSC_CGL", "/exams/SSC_CGL/pyq/2024", "/exams/SSC_CGL/syllabus", "/coach", "/chat?general=1", "/dashboard"]) {
+        expect(loginIntent(cb, from), `${from} ${cb}`).toEqual(loginIntent(cb));
+      }
+    }
+  });
+
+  it("the hub box's callback /exams/CODE?start=practice gets the mock card and the try-first link", () => {
+    expect(loginIntent("/exams/SSC_CGL?start=practice", "hub-box")).toEqual({ kind: "mock", examCode: "SSC_CGL", tryFirst: true });
+    expect(loginIntent("/hi/exams/SSC_CGL?start=practice", "hub-box")).toMatchObject({ kind: "mock", examCode: "SSC_CGL" });
+  });
+
+  it("header, pitch and wall stay general", () => {
+    for (const from of ["header", "pitch", "wall"]) {
+      expect(loginIntent("/exams/SSC_CGL?start=practice", from).kind).toBeNull();
+    }
+  });
+});

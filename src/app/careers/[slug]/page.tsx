@@ -26,6 +26,7 @@ import { loadLiveExams } from "@/lib/live-exam-codes";
 import { CAREER_SALARY_SOURCES, careerCollegeStreams, careerExamCodes, salaryBandRange } from "@/lib/section-related";
 import { clipDescription, examHubHref } from "@/lib/section-seo";
 import { LandingActions } from "@/components/LandingActions";
+import { SignupInline } from "@/components/SignupInline";
 import { careerActions } from "@/lib/landing-actions";
 import { SoftWall } from "@/components/SoftWall";
 
@@ -144,7 +145,9 @@ export default async function CareerPage({
           </span>
         </div>
         <p className="mt-3 max-w-3xl text-base text-ink-700">{c.dek}</p>
-        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
+        {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, right after the answer — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+        <SignupInline surface="career" />
+        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). 30 Sep 2026 (sign-up build 3): links only now — the sign-up line is the SignupInline mounted above (src/lib/content-signup.ts). */}
         <LandingActions actions={careerActions(c.name, "en")} locale="en" surface="career" />
         {/* 27 Sep 2026: sign-up wall EXPERIMENT (src/lib/soft-wall.ts) — half of signed-out visitors see a few lines, the rest blurred behind a free sign-in card; crawlers always get this full HTML. */}
         <SoftWall>

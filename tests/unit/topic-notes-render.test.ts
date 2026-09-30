@@ -128,7 +128,11 @@ describe("wiring", () => {
   it("the topic page renders its notes through NotesMarkdown (rich, demoteH1); the local renderer is gone", () => {
     const page = read("src/app/exams/[code]/topics/[topicCode]/page.tsx");
     // 29 Sep 2026: the note passes through stripInventedCounts first (src/lib/note-claims.ts).
-    expect(page).toContain("<NotesMarkdown markdown={stripInventedCounts(notes)} rich demoteH1 />");
+    // 30 Sep 2026 (sign-up build 3): whole, or in two parts around the guest sign-up line.
+    expect(page).toContain('const notesMd = notes ? stripInventedCounts(notes) : "";');
+    expect(page).toContain("<NotesMarkdown markdown={notesMd} rich demoteH1 />");
+    expect(page).toContain("<NotesMarkdown markdown={notesParts[0]} rich demoteH1 />");
+    expect(page).toContain("<NotesMarkdown markdown={notesParts[1]} rich demoteH1 />");
     expect(page).not.toMatch(/function NotesRenderer/);
     expect(page).not.toContain("<NotesRenderer");
   });

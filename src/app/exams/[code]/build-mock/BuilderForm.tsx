@@ -33,9 +33,15 @@
 // gives only bounds that always hold ("at least N of these 25 will be
 // medium", levelMix): the API picks every unanswered question, whatever the
 // level, before an answered one, so "hard first" was not true.
+//
+// 30 Sep 2026 (sign-up build 1): the signed-out sign-in button is the shared
+// in-page sign-in (src/components/SignInLink.tsx) — one "signin-click" beacon
+// (surface "build-mock-form"; it had none), from= on the /login link, and
+// the skip-/login test's direct arm.
 
 import { Fragment, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { SignInLink } from "@/components/SignInLink";
 import { useRouter, usePathname } from "next/navigation";
 import { OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { fillTemplate } from "@/lib/i18n";
@@ -482,12 +488,14 @@ export function BuilderForm({
                 {busy ? labels.building : labels.start}
               </button>
             ) : (
-              <Link
-                href={`/login?callbackUrl=${encodeURIComponent(`${pathname ?? `/exams/${examCode}/build-mock`}${pyqOnly ? "?pyq=1" : ""}`)}`}
+              <SignInLink
+                href={`/login?callbackUrl=${encodeURIComponent(`${pathname ?? `/exams/${examCode}/build-mock`}${pyqOnly ? "?pyq=1" : ""}`)}&from=build-mock-form`}
+                surface="build-mock-form"
+                beaconProps={{ examCode }}
                 className="btn-primary mt-4 block w-full text-center !py-2.5 text-sm"
               >
                 {labels.signin}
-              </Link>
+              </SignInLink>
             )}
             {err && <p className="mt-2 text-xs text-red-600">{err}</p>}
             <p className="mt-3 text-xs text-ink-500">

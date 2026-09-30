@@ -22,10 +22,35 @@
 // issues no cookie, so a stale client cannot undo this either.
 // sendChildSafeEvent is the same send for other islands on those pages
 // (the school chapter quiz's finish).
+//
+// 30 Sep 2026 (sign-up build 1, src/lib/signin-cta.ts):
+//   • the /login PAGE_VIEW also carries ?from= (the door that sent the
+//     visitor) and, in an in-app browser, its family label (inApp) — never
+//     the raw user agent;
+//   • the browser's first page view writes its path into the first-party
+//     `shishya_land` cookie (path only, 30 days), which the SIGNUP event
+//     reads — never on a Class 1-7 page;
+//   • a click on any plain link to /login (a server-rendered one, or one in a
+//     file with no beacon of its own) sends the one sign-in beacon
+//     { cta: "signin-click", surface: data-signin-surface or "link" };
+//     buttons that beacon themselves carry data-signin-beacon="self".
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { isUnder13SchoolPath } from "@/lib/school/student-classes";
+import { inAppBrowser } from "@/lib/in-app-browser";
+import {
+  cleanFrom,
+  cookieHasLanding,
+  landingCookieString,
+  loginCallbackFamily,
+  signinBeacon,
+  signinLinkBeaconProps,
+} from "@/lib/signin-cta";
+
+// The families moved to src/lib/signin-cta.ts (30 Sep 2026) so the server's
+// SIGNUP event shares them; re-exported for existing importers.
+export { loginCallbackFamily };
 
 type EventKind =
   | "PAGE_VIEW"
@@ -60,23 +85,6 @@ function readUtmFromStorage(): UtmBlob {
   } catch {
     return {};
   }
-}
-
-// /login is the most-viewed page on the site and its views were one
-// undifferentiated number. The callbackUrl says WHAT the visitor was
-// trying to do when the wall appeared; this folds it into a small family
-// so login views can be split by intent (11 Sep 2026 signup-leak audit).
-// Order matters: /exams/X/pyq/... is "pyq", not "exam". "none" = a bare
-// /login visit (cold arrival / header link) — /login itself defaults
-// that to /dashboard, but it is not a dashboard intent.
-export function loginCallbackFamily(cb: string | null | undefined): string {
-  if (!cb) return "none";
-  if (/\/pyq(\/|$|\?|#)/.test(cb)) return "pyq";
-  if (/\/mocks\//.test(cb)) return "mock";
-  if (/\/coach(\/|$|\?|#)/.test(cb)) return "coach";
-  if (/\/dashboard(\/|$|\?|#)/.test(cb)) return "dashboard";
-  if (/\/exams\//.test(cb)) return "exam";
-  return "other";
 }
 
 function captureUtmFromUrl(params: URLSearchParams): UtmBlob {
@@ -132,6 +140,26 @@ export function AnalyticsTracker() {
   const searchParams = useSearchParams();
   const lastFiredRef = useRef<string | null>(null);
 
+  // Sign-in clicks on plain /login links (30 Sep 2026): one delegated
+  // listener, capture phase, so a next/link soft navigation still counts.
+  // Class 1-7 pages carry no sign-in and take no data: nothing is sent there.
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      try {
+        if (isUnder13SchoolPath(window.location.pathname)) return;
+        const el = e.target instanceof Element ? e.target.closest("a[href]") : null;
+        const props = signinLinkBeaconProps(el, window.location.origin);
+        if (!props) return;
+        const { surface, ...rest } = props;
+        signinBeacon(surface, { ...rest, via: "login" });
+      } catch {
+        /* analytics is best-effort */
+      }
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, []);
+
   // Install window.shishyaTrack once on mount.
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -163,12 +191,29 @@ export function AnalyticsTracker() {
     const fullKey = pathname + (searchParams?.toString() ?? "");
     if (lastFiredRef.current === fullKey) return;
     lastFiredRef.current = fullKey;
+    // First landing (30 Sep 2026): written once per browser, never on a
+    // Class 1-7 page; the SIGNUP event reads it (src/lib/auth.ts).
+    if (!child) {
+      try {
+        if (!cookieHasLanding(document.cookie)) {
+          const c = landingCookieString(pathname, location.protocol === "https:");
+          if (c) document.cookie = c;
+        }
+      } catch {
+        /* cookies disabled */
+      }
+    }
+    const from = pathname === "/login" ? cleanFrom(searchParams?.get("from")) : null;
+    const inApp = pathname === "/login" ? inAppBrowser(typeof navigator !== "undefined" ? navigator.userAgent : "") : null;
     const props =
       pathname === "/login"
         ? {
             callbackFamily: loginCallbackFamily(searchParams?.get("callbackUrl")),
             // A failed Google sign-in comes back as /login?error=… — count it.
             ...(searchParams?.get("error") ? { error: (searchParams.get("error") ?? "").slice(0, 40) } : {}),
+            // 30 Sep 2026: the door that sent them, and an in-app browser's family.
+            ...(from ? { from } : {}),
+            ...(inApp ? { inApp } : {}),
           }
         : undefined;
     void send("PAGE_VIEW", pathname, props, utm, { anonymous: child });

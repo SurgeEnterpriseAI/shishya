@@ -14,23 +14,19 @@
 // (placement "home-side", mounted by src/app/page.tsx) and this footer copy
 // hides at lg there. Phones keep the page's flow — content first, the offer
 // at the end — so below lg nothing moves. Same guest / path / server rules.
+//
+// 30 Sep 2026 (sign-up build 1): the card's button is the shared in-page
+// sign-in (src/components/SignInLink.tsx) — one "signin-click" beacon with
+// surface "signup-pitch" and this card's placement (it was cta
+// "signup-pitch-click" with surface = placement), and the skip-/login test's
+// direct arm. Its /login link keeps from=pitch (a general sign-in card).
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { fetchSignedIn } from "@/lib/session-hint";
 import { clientUiLocale } from "@/lib/ui-locale-copy";
 import { pitchAllowedPath, signupHref, signupPitchCopy, type SignupPitchCopy } from "@/lib/signup-pitch";
-
-function beacon(cta: string, surface: string) {
-  try {
-    navigator.sendBeacon?.(
-      "/api/analytics",
-      new Blob([JSON.stringify({ kind: "CTA_CLICKED", path: location.pathname, props: { cta, surface } })], { type: "application/json" }),
-    );
-  } catch {
-    /* analytics is best-effort */
-  }
-}
+import { SignInLink } from "@/components/SignInLink";
 
 /** Home page paths (the /hi and /te twins included), where the card also sits beside the events at lg. */
 const HOME_PATHS = new Set(["/", "/hi", "/te"]);
@@ -83,13 +79,14 @@ export function SignupPitch({
             </li>
           ))}
         </ul>
-        <a
+        <SignInLink
           href={href}
-          onClick={() => beacon("signup-pitch-click", surface)}
+          surface="signup-pitch"
+          beaconProps={{ placement: surface }}
           className="mt-4 inline-block rounded-xl bg-saffron-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
         >
           {copy.cta}
-        </a>
+        </SignInLink>
         <p className="mt-2 text-[11px] leading-relaxed text-ink-500">{copy.privacy}</p>
       </div>
     </section>

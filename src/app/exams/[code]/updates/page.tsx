@@ -48,6 +48,7 @@ import { leadDescription, updatesLead } from "@/lib/answer-lead";
 import { examPracticeState } from "@/lib/db/exam-practice";
 import { fillNoPractice, noPracticeCopy } from "@/lib/no-practice-copy";
 import { LandingActions } from "@/components/LandingActions";
+import { SignupInline } from "@/components/SignupInline";
 import { examNextActions } from "@/lib/landing-actions";
 import { SoftWall } from "@/components/SoftWall";
 
@@ -413,7 +414,9 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
           {lastLine && <span className="rounded-full border border-ink-200 bg-white px-3 py-1 text-ink-600">{lastLine}</span>}
         </div>
 
-        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
+        {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, right after the answer — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+        <SignupInline surface="exam-updates" exam={short} practice={practice.hasPractice} />
+        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). 30 Sep 2026 (sign-up build 3): links only now — the sign-up line is the SignupInline mounted above (src/lib/content-signup.ts). */}
         <LandingActions
           actions={examNextActions({ code: exam.code, shortName: short }, practice.hasPractice, "updates", locale, p)}
           locale={locale}

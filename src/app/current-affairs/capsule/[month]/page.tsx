@@ -7,6 +7,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { Header } from "@/components/Header";
@@ -14,6 +15,7 @@ import { CapsuleActions } from "./CapsuleActions";
 import { LandingActions } from "@/components/LandingActions";
 import { currentAffairsActions } from "@/lib/landing-actions";
 import { SoftWall } from "@/components/SoftWall";
+import { SignupInline } from "@/components/SignupInline";
 
 export const revalidate = 3600;
 
@@ -99,15 +101,16 @@ export default async function CapsulePage({
           </div>
           <CapsuleActions month={month} label={label} />
         </div>
-        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
+        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). 30 Sep 2026 (sign-up build 3): links only now — the sign-up line is the SignupInline after the first day below (src/lib/content-signup.ts). */}
         <div className="print:hidden">
           <LandingActions actions={currentAffairsActions(label, "en")} locale="en" surface="ca-capsule" />
         </div>
         {/* 27 Sep 2026: sign-up wall EXPERIMENT (src/lib/soft-wall.ts) — half of signed-out visitors see a few lines, the rest blurred behind a free sign-in card; crawlers always get this full HTML. */}
         <SoftWall>
 
-        {[...byDate.entries()].map(([iso, dayItems]) => (
-          <div key={iso} className="mt-7 break-inside-avoid-page">
+        {[...byDate.entries()].map(([iso, dayItems], di) => (
+          <Fragment key={iso}>
+          <div className="mt-7 break-inside-avoid-page">
             <h2 className="border-b-2 border-saffron-300 pb-1 text-base font-bold text-ink-900">
               {new Date(iso + "T00:00:00Z").toLocaleDateString("en-IN", {
                 weekday: "long",
@@ -135,6 +138,9 @@ export default async function CapsulePage({
               ))}
             </ul>
           </div>
+          {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, after the first day's items (print:hidden) — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+          {di === 0 && <SignupInline surface="ca-capsule" revealOffscreen />}
+          </Fragment>
         ))}
 
         {/* 26 Sep 2026: the site's one-line description (src/lib/site-description.ts

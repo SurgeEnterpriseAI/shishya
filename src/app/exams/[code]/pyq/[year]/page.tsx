@@ -34,6 +34,7 @@ import { OfficialYearPapers, WholePaperLinks } from "./WholePaperLinks";
 import { PYQ_TEXT_QUESTIONS, pyqFaqItems, pyqModelledEn, pyqOptions, pyqTextShownLine } from "@/lib/pyq-faq";
 import { faqPageJsonLd } from "@/lib/hub-faq";
 import { GUEST_WHOLE_PAPER_OPEN } from "@/lib/guest-paper";
+import { SignInLink } from "@/components/SignInLink";
 
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
@@ -503,13 +504,19 @@ export default async function PYQYearPage({
                 // 28 Sep 2026 (founder: the sign-up must be there as it was):
                 // the free sign-in is the main button again; the no-sign-in
                 // practice on this set's own questions is the link under it.
+                // 30 Sep 2026 (sign-up build 1): the same filled button, now the
+                // shared in-page sign-in (src/components/SignInLink.tsx): one
+                // "signin-click" beacon (surface "pyq-year"; it had none),
+                // from=pyq-year on /login, and the skip-/login test's direct arm.
                 <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-                  <Link
-                    href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}`}
+                  <SignInLink
+                    href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}
+                    surface="pyq-year"
+                    beaconProps={{ examCode: code }}
                     className="btn-primary text-center"
                   >
                     {P.ctaSignIn}
-                  </Link>
+                  </SignInLink>
                   <Link
                     href={`/exams/${code}/quiz?set=${guestSet.join(",")}&n=${guestSet.length}`}
                     className="text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"
@@ -519,12 +526,14 @@ export default async function PYQYearPage({
                 </div>
               ) : (
                 <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-                  <Link
-                    href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}`}
+                  <SignInLink
+                    href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}
+                    surface="pyq-year"
+                    beaconProps={{ examCode: code }}
                     className="btn-primary text-center"
                   >
                     {P.ctaSignIn}
-                  </Link>
+                  </SignInLink>
                   <Link
                     href={`/exams/${code}/quiz`}
                     className="text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"

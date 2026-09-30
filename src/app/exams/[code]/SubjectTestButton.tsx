@@ -7,9 +7,14 @@
 // button. One tap creates the subject test from the validated pool and
 // drops the student into the player. Anonymous users go to login with a
 // callback so the intent isn't lost.
+// 30 Sep 2026 (sign-up build 1): that 401 sends the site-wide sign-in beacon
+// (surface "subject-test-401", src/lib/signin-cta.ts; it sent none) and
+// names its door on /login (from=). It stays a /login redirect: the student
+// pressed "start", so /login says why an account is needed.
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { loginHrefFor, signinBeacon } from "@/lib/signin-cta";
 
 interface Props {
   examCode: string;
@@ -40,7 +45,8 @@ export function SubjectTestButton({ examCode, subjectCode, subjectName, availabl
         }),
       });
       if (res.status === 401) {
-        window.location.href = `/login?callbackUrl=${encodeURIComponent(`/exams/${examCode}#subject-tests`)}`;
+        signinBeacon("subject-test-401", { examCode, via: "login" });
+        window.location.href = loginHrefFor(`/exams/${examCode}#subject-tests`, "subject-test-401");
         return;
       }
       const data = await res.json().catch(() => ({}));

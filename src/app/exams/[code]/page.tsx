@@ -588,7 +588,12 @@ export default async function ExamPage({
       ])
     : ([null, [], [], null, null] as const);
 
-  const isEnrolled = !!enrollment;
+  // 30 Sep 2026 (sign-up build 2): an ACTIVE enrolment, as every other
+  // reader of "the student's exam" counts it (the dashboard, Daily 5 and the
+  // exam mails filter active = TRUE). The strip's "Change exam" (POST
+  // /api/me/welcome) DELETES an untouched sign-up goal rather than writing
+  // active: false, so a later mock re-enrols it as active.
+  const isEnrolled = !!enrollment?.active;
   const hasContent = validatedQuestionCount > 0;
   // Practice (27 Sep 2026, src/lib/exam-practice-state.ts): a checked
   // question or a shared mock. Without it the hub shows the official facts,
@@ -1174,9 +1179,18 @@ export default async function ExamPage({
               {/* Click beacon (16 Sep 2026): the one hub CTA that sent no
                   CTA_CLICKED, so its volume could only be guessed from
                   /login views. */}
+              {/* 30 Sep 2026 (sign-up build 1): the sign-in keeps its promise —
+                  it returns to /exams/CODE?start=practice, where StartMockButton's
+                  guarded auto-start opens the 5-question diagnostic for a member
+                  with no mock here yet (a returning member just gets the start
+                  panel, no surprise mock). from=hub-box names the door on /login;
+                  the button is the shared in-page sign-in (one "signin-click"
+                  beacon, the skip-/login test). 19 of 75 hub sign-ups (25%) had
+                  started nothing within an hour; the 401 path that carried the
+                  intent: 9 of 9 started. */}
               <HubSignInLink
                 examCode={exam.code}
-                href={`/login?callbackUrl=${encodeURIComponent(`/exams/${exam.code}`)}`}
+                href={`/login?callbackUrl=${encodeURIComponent(`/exams/${exam.code}?start=practice`)}&from=hub-box`}
                 className="btn-primary inline-block !py-2 !px-4 text-sm"
               >
                 {H.coachButton}
@@ -1369,11 +1383,16 @@ export default async function ExamPage({
             <>
               <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
+                  {/* 30 Sep 2026 (sign-up build 2): "Continue practising — an
+                      adaptive mock built around your weak topics" only with real
+                      history here, like StartMockButton's hasHistory below. An
+                      enrolment alone — the sign-up goal createUser now writes,
+                      or /chat?examCode's silent one — has no weak topics yet. */}
                   <p className="text-sm font-semibold text-ink-900">
-                    {isEnrolled ? t("exam.action.continue") : t("exam.action.start")}
+                    {isEnrolled && recent.length > 0 ? t("exam.action.continue") : t("exam.action.start")}
                   </p>
                   <p className="mt-0.5 text-xs text-ink-500">
-                    {isEnrolled ? t("exam.action.continue.body") : t("exam.action.start.body")}
+                    {isEnrolled && recent.length > 0 ? t("exam.action.continue.body") : t("exam.action.start.body")}
                   </p>
                 </div>
                 <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">

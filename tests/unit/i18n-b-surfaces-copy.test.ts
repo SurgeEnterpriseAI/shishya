@@ -187,7 +187,7 @@ describe("English output is unchanged", () => {
       "Free SSC CGL mock tests and previous year paper practice — start now.",
     );
     expect(H.coachBodyA + "Shishya " + H.coachBodyB).toBe(
-      "Full-length mocks with instant scoring and solutions, PYQ-pattern papers, topic-wise tests and Ask Shishya when you're stuck. Your scores, rank and a free day-by-day plan are saved to your account. All free, no credit card. Content is AI-drafted and checked against the official notification.",
+      "Full-length mocks with instant scoring and solutions, PYQ-pattern papers, topic-wise tests and Ask Shishya when you're stuck. Your scores and a free day-by-day plan are saved to your account. All free, no credit card. Content is AI-drafted and checked against the official notification.",
     );
     expect(fillHub(H.langLine, { n: 9 })).toBe("· every mock readable in हिंदी + 9 languages inside the test");
   });
@@ -261,6 +261,12 @@ describe("honesty survives translation", () => {
     }
     expect(EXAM_HUB_COPY.hi.faqPyqA).toContain("पेपर खुद नहीं");
     expect(EXAM_HUB_COPY.te.faqPyqA).toContain("పేపర్ మాత్రం కాదు");
+  });
+
+  it("the hub sign-in box claims no rank (30 Sep 2026: its sign-in starts the rank-less diagnostic)", () => {
+    expect(EXAM_HUB_COPY.en.coachBodyB).not.toMatch(/\brank/i);
+    expect(EXAM_HUB_COPY.hi.coachBodyB).not.toContain("रैंक");
+    expect(EXAM_HUB_COPY.te.coachBodyB).not.toMatch(/ర్యాంక/);
   });
 
   it("the calendar rail still separates an estimate from a date", () => {

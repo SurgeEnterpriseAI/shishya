@@ -15,6 +15,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { computeExamTags, type ExamTag } from "@/lib/exam-tags";
@@ -383,6 +384,9 @@ export default async function JobsMapPage() {
             </div>
           </div>
         </div>
+
+        {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, after the map — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+        <SignupInline surface="jobs-map" revealOffscreen />
 
         {/* How to read the map */}
         <div className="mt-10 rounded-xl border border-ink-200 bg-white p-5">

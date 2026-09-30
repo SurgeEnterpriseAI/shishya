@@ -70,6 +70,7 @@ import { latestCheck } from "@/lib/page-freshness";
 import { examPracticeState } from "@/lib/db/exam-practice";
 import { dropPracticeSentence, fillNoPractice, noPracticeCopy } from "@/lib/no-practice-copy";
 import { LandingActions } from "@/components/LandingActions";
+import { SignupInline } from "@/components/SignupInline";
 import { examNextActions } from "@/lib/landing-actions";
 import { SoftWall } from "@/components/SoftWall";
 
@@ -500,7 +501,9 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
           <StateExamsLink state={exam.state} label={t("exam.state.more")} locale={locale} />
         )}
 
-        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
+        {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, right after the answer — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+        <SignupInline surface="exam-cutoff" exam={short} practice={practice.hasPractice} />
+        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). 30 Sep 2026 (sign-up build 3): links only now — the sign-up line is the SignupInline mounted above (src/lib/content-signup.ts). */}
         <LandingActions
           actions={examNextActions({ code: exam.code, shortName: short }, practice.hasPractice, "cutoff", locale, p)}
           locale={locale}

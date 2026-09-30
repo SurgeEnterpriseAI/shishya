@@ -117,8 +117,16 @@ describe("the topic pages use the filter (source)", () => {
   const ROOT = path.resolve(__dirname, "../..");
   const read = (f: string) => fs.readFileSync(path.join(ROOT, f), "utf8");
   it("English and Hindi topic pages pass the note through stripInventedCounts", () => {
-    expect(read("src/app/exams/[code]/topics/[topicCode]/page.tsx")).toContain("<NotesMarkdown markdown={stripInventedCounts(notes)} rich demoteH1 />");
-    expect(read("src/app/exams/[code]/topics/[topicCode]/hi/page.tsx")).toContain("<NotesMarkdown markdown={stripInventedCounts(hi.content)} rich demoteH1 />");
+    // 30 Sep 2026 (sign-up build 3): the filtered note is rendered whole or in two
+    // parts around the guest sign-up line (tests/unit/content-signup.test.ts).
+    const en = read("src/app/exams/[code]/topics/[topicCode]/page.tsx");
+    expect(en).toContain('const notesMd = notes ? stripInventedCounts(notes) : "";');
+    expect(en).toContain("const notesParts = splitAfterFirstSection(notesMd);");
+    expect(en).toContain("<NotesMarkdown markdown={notesMd} rich demoteH1 />");
+    const hi = read("src/app/exams/[code]/topics/[topicCode]/hi/page.tsx");
+    expect(hi).toContain("const hiMd = stripInventedCounts(hi.content);");
+    expect(hi).toContain("const hiParts = splitAfterFirstSection(hiMd);");
+    expect(hi).toContain("<NotesMarkdown markdown={hiMd} rich demoteH1 />");
   });
   it('the quiz box no longer calls the practice questions "real" exam questions', () => {
     const page = read("src/app/exams/[code]/topics/[topicCode]/page.tsx");

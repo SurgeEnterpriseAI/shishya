@@ -11,6 +11,8 @@ import type { SignupAttribution } from "./signup-attribution";
 import { SESSION_HINT_COOKIE, SESSION_HINT_MAX_AGE_S, SESSION_HINT_VALUE } from "./session-hint";
 // Pure and import-free (no prisma, no next): safe at module scope here.
 import { isSchoolSignInCallback, studentModeClassOfExamCode } from "./school/student-classes";
+// Pure (no prisma, no next; its one import is the tiny beacon helper).
+import { LANDING_COOKIE, signupEventProps } from "./signin-cta";
 
 declare module "next-auth" {
   interface Session {
@@ -135,9 +137,14 @@ export const authOptions: NextAuthOptions = {
           // visitor was the OAuth return with refHost accounts.google.com.
           anonId,
           path: "/login",
-          // props.school only on a school sign-in, so every exam SIGNUP row
-          // stays byte-identical and the school ones can be counted apart.
-          props: schoolSignIn ? { provider: "google", school: true } : { provider: "google" },
+          // props.school only on a school sign-in, so the school ones can be
+          // counted apart.
+          // 30 Sep 2026 (sign-up build 1, src/lib/signin-cta.ts): + where the
+          // account was made from — the callback's family and path (the page
+          // it signed up from) — and the browser's first landing path, so a
+          // sign-up whose anonymous trail is missing is still placed. Paths
+          // only, no query; no new table.
+          props: signupEventProps({ school: schoolSignIn, callback: signInCallback, landing: await readFirstLandingCookie() }),
           // Same trail on the SIGNUP row itself, so attributionSources()
           // (which groups SIGNUP by utmSource / refHost) stops reading
           // every signup as "(direct)".
@@ -164,6 +171,21 @@ export const authOptions: NextAuthOptions = {
         } catch (err) {
           console.error("[auth] school class enrolment failed (non-fatal):", err);
         }
+      }
+      // 30 Sep 2026 (sign-up build 2, founder: the account is "the entire
+      // Shishya in their hand" because it is personalised): the profile the
+      // account starts with, from signals the student already gave — the
+      // exam of the page it signed up from becomes its goal (never on a
+      // school sign-in; real exams only), the page language fills
+      // preferredLang, the guest's challenges and exam alerts are linked,
+      // and an exam-side sign-up gets the one-time "Your Shishya is ready"
+      // strip's cookie. Rules in src/lib/signup-profile.ts; each step is
+      // best-effort, never fatal, nothing asked.
+      try {
+        const { applySignupProfile } = await import("./signup-profile");
+        await applySignupProfile({ userId: user.id, email: user.email ?? null, anonId, callback: signInCallback, school: schoolSignIn });
+      } catch (err) {
+        console.error("[auth] sign-up profile failed (non-fatal):", err);
       }
       // Welcome email — best-effort, never blocks the auth callback.
       // sendEmail() is stub-safe when RESEND_API_KEY is unset, so this
@@ -204,6 +226,20 @@ async function readSignInCallbackCookie(): Promise<string | null> {
     return jar.get("__Secure-next-auth.callback-url")?.value ?? jar.get("next-auth.callback-url")?.value ?? null;
   } catch (err) {
     console.error("[auth] callback-url cookie read failed (non-fatal):", err);
+    return null;
+  }
+}
+
+/** The browser's first landing path (the `shishya_land` cookie the root
+ *  layout's tracker writes on the first page view — never on a Class 1-7
+ *  page), raw; signupEventProps() validates it. null when absent or on any
+ *  error. Never throws. (30 Sep 2026) */
+async function readFirstLandingCookie(): Promise<string | null> {
+  try {
+    const { cookies } = await import("next/headers");
+    return (await cookies()).get(LANDING_COOKIE)?.value ?? null;
+  } catch (err) {
+    console.error("[auth] landing cookie read failed (non-fatal):", err);
     return null;
   }
 }

@@ -31,6 +31,8 @@ import { examPageGates } from "@/lib/exam-page-gates";
 // no request-scoped read, so the page stays static.
 import { examPracticeState } from "@/lib/db/exam-practice";
 import { StateExamsLink } from "@/components/StateExamsLink";
+import { SignupInline } from "@/components/SignupInline";
+import { splitAfterFirstSection } from "@/lib/content-signup";
 import { examTitleYear, yearSuffix } from "@/lib/exam-title-year";
 
 export const revalidate = 3600;
@@ -150,6 +152,10 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
   ]);
   const guideMd = rows[0]?.content;
   if (!guideMd) notFound();
+  // 30 Sep 2026 (sign-up build 3): the guest sign-up line goes after the
+  // first section (the markdown renders in two parts, same blocks — see
+  // splitAfterFirstSection); a short article gets it after the article.
+  const guideParts = splitAfterFirstSection(guideMd);
   const t = tFor(locale);
   const faq = Array.isArray(rows[0]?.faq) ? rows[0]!.faq! : [];
 
@@ -236,8 +242,18 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
         </p>
 
         <article className="prose prose-sm sm:prose-base mt-6 max-w-none rounded-xl border border-ink-200 bg-white p-5 sm:p-7">
-          <NotesMarkdown markdown={guideMd} />
+          {guideParts ? (
+            <>
+              <NotesMarkdown markdown={guideParts[0]} />
+              {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, after the first section — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+              <SignupInline surface="guide" exam={exam.shortName} practice={practice.hasPractice} revealOffscreen />
+              <NotesMarkdown markdown={guideParts[1]} />
+            </>
+          ) : (
+            <NotesMarkdown markdown={guideMd} />
+          )}
         </article>
+        {!guideParts && <SignupInline surface="guide" exam={exam.shortName} practice={practice.hasPractice} revealOffscreen />}
 
         <p className="mt-3 text-xs text-ink-500">
           AI-curated guidance — pay bands and cutoffs are indicative; always confirm with the

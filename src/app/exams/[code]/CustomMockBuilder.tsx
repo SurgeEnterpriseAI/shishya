@@ -13,10 +13,15 @@
 // titles it with the real number and returns requestedCount + shortLine;
 // when the set holds fewer than asked we say so here, with a Start link and
 // the topic builder as the alternative, instead of redirecting straight in.
+//
+// 30 Sep 2026 (sign-up build 1): the guest's 401 → /login sends the
+// site-wide sign-in beacon (surface "custom-mock-401", src/lib/signin-cta.ts)
+// and names its door on /login (from=).
 
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { loginHrefFor, signinBeacon } from "@/lib/signin-cta";
 
 const COUNTS = [10, 25, 50] as const;
 const DIFFS = ["Mixed", "Easy", "Medium", "Hard"] as const;
@@ -69,7 +74,8 @@ export function CustomMockBuilder({ examCode }: { examCode: string }) {
         body: JSON.stringify({ examCode, request }),
       });
       if (res.status === 401) {
-        window.location.href = `/login?callbackUrl=${encodeURIComponent(`/exams/${examCode}#custom-mock`)}`;
+        signinBeacon("custom-mock-401", { examCode, via: "login" });
+        window.location.href = loginHrefFor(`/exams/${examCode}#custom-mock`, "custom-mock-401");
         return;
       }
       const data = await res.json().catch(() => ({}));

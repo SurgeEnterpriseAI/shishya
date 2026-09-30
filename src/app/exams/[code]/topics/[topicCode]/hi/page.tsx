@@ -14,6 +14,11 @@ import { realExamKey } from "@/lib/db/exam-scope";
 import { NotesMarkdown } from "@/components/NotesMarkdown";
 import { stripInventedCounts } from "@/lib/note-claims";
 import { ShareExamButton } from "@/components/ShareExamButton";
+import { SignupInline } from "@/components/SignupInline";
+import { splitAfterFirstSection } from "@/lib/content-signup";
+// 30 Sep 2026 (sign-up build 3 review): the practice rule for the sign-up
+// line (src/lib/exam-practice-state.ts), cached; a failed read claims none.
+import { examPracticeState } from "@/lib/db/exam-practice";
 
 export const revalidate = 3600;
 
@@ -69,6 +74,13 @@ export default async function HindiTopicPage({
   const data = await load(code, topicCode);
   if (!data) notFound();
   const { exam, topic, hi } = data;
+  // 30 Sep 2026 (sign-up build 3): the guest sign-up line (in Hindi) after
+  // the notes' first section; short notes get it after the notes.
+  const hiMd = stripInventedCounts(hi.content);
+  const hiParts = splitAfterFirstSection(hiMd);
+  // 30 Sep 2026 (sign-up build 3 review): "mocks, scores and weak topics"
+  // only where the exam has practice.
+  const examHasPractice = (await examPracticeState(exam.code)).hasPractice;
   const enUrl = `https://shishya.in/exams/${exam.code}/topics/${topic.code}`;
 
   const jsonLd = {
@@ -115,8 +127,18 @@ export default async function HindiTopicPage({
 
         <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
           {/* 29 Sep 2026: invented question and mark counts are not shown (src/lib/note-claims.ts). */}
-          <NotesMarkdown markdown={stripInventedCounts(hi.content)} rich demoteH1 />
+          {hiParts ? (
+            <>
+              <NotesMarkdown markdown={hiParts[0]} rich demoteH1 />
+              {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, after the first section — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+              <SignupInline surface="topic" exam={exam.shortName} practice={examHasPractice} locale="hi" revealOffscreen />
+              <NotesMarkdown markdown={hiParts[1]} rich demoteH1 />
+            </>
+          ) : (
+            <NotesMarkdown markdown={hiMd} rich demoteH1 />
+          )}
         </article>
+        {!hiParts && <SignupInline surface="topic" exam={exam.shortName} practice={examHasPractice} locale="hi" revealOffscreen />}
 
         <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
           <p className="text-base font-bold text-ink-900">अब खुद को परखें</p>

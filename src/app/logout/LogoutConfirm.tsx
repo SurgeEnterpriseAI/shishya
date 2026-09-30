@@ -8,6 +8,7 @@ import { signOut } from "next-auth/react";
 import { useState } from "react";
 import Link from "next/link";
 import { clearSessionHint } from "@/lib/session-hint";
+import { dropKeptGuestChat } from "@/lib/guest-chat-carry";
 
 export function LogoutConfirm({
   labels,
@@ -25,6 +26,11 @@ export function LogoutConfirm({
           // Backup to the server's signOut event (src/lib/auth.ts): drop the
           // signed-in hint now, so the next page's islands never probe.
           clearSessionHint();
+          // 30 Sep 2026 (review): an imported guest chat stays in this
+          // browser for up to 30 minutes so its chat page can restore it
+          // (src/lib/guest-chat-carry.ts). Signing out ends that — the next
+          // account on a shared phone must never see this conversation.
+          dropKeptGuestChat();
           signOut({ callbackUrl: "/" });
         }}
         className="btn-primary flex-1 disabled:opacity-60"

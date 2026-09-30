@@ -212,6 +212,7 @@ describe("words and wiring", () => {
     expect(css).toContain("list-style: disc;");
     expect(css).toContain(".prose :where(th, td) {");
     expect(css).toContain(".prose-base {");
-    expect(read("src/app/exams/[code]/topics/[topicCode]/hi/page.tsx")).toContain("<NotesMarkdown markdown={stripInventedCounts(hi.content)} rich demoteH1 />");
+    // 30 Sep 2026 (sign-up build 3): whole, or in two parts around the guest sign-up line.
+    expect(read("src/app/exams/[code]/topics/[topicCode]/hi/page.tsx")).toContain("<NotesMarkdown markdown={hiMd} rich demoteH1 />");
   });
 });

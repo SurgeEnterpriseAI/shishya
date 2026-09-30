@@ -4,6 +4,7 @@
 // CurrentAffair rows for that IST date (raw SQL — no client typegen dep).
 
 import Link from "next/link";
+import { Fragment } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
@@ -13,6 +14,7 @@ import { caNavLinks, loadCaNeighbours } from "@/lib/current-affairs-nav";
 import { LandingActions } from "@/components/LandingActions";
 import { currentAffairsActions } from "@/lib/landing-actions";
 import { SoftWall } from "@/components/SoftWall";
+import { SignupInline } from "@/components/SignupInline";
 
 export const revalidate = 3600;
 
@@ -124,13 +126,14 @@ export default async function CurrentAffairsDatePage({ params }: { params: Promi
           The day&apos;s most exam-relevant current affairs for UPSC, SSC, banking, railways and
           state exams — free, factual, revision-ready. {rows.length} updates.
         </p>
-        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
+        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). 30 Sep 2026 (sign-up build 3): links only now — the sign-up line is the SignupInline after the first category below (src/lib/content-signup.ts). */}
         <LandingActions actions={currentAffairsActions(pretty, "en")} locale="en" surface="ca-daily" />
         {/* 27 Sep 2026: sign-up wall EXPERIMENT (src/lib/soft-wall.ts) — half of signed-out visitors see a few lines, the rest blurred behind a free sign-in card; crawlers always get this full HTML. */}
         <SoftWall>
 
-        {[...byCat.entries()].map(([cat, items]) => (
-          <section key={cat} className="mt-7">
+        {[...byCat.entries()].map(([cat, items], ci) => (
+          <Fragment key={cat}>
+          <section className="mt-7">
             <h2 className="text-sm font-bold uppercase tracking-wide text-saffron-700">{cat}</h2>
             <ul className="mt-3 space-y-3">
               {items.map((r) => (
@@ -164,6 +167,9 @@ export default async function CurrentAffairsDatePage({ params }: { params: Promi
               ))}
             </ul>
           </section>
+          {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, after the day's first items — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+          {ci === 0 && <SignupInline surface="ca-daily" revealOffscreen />}
+          </Fragment>
         ))}
 
         <nav aria-label="More current affairs" className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm">

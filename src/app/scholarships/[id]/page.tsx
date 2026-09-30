@@ -59,6 +59,7 @@ import { relatedScholarships } from "@/lib/section-related";
 import { clipDescription } from "@/lib/section-seo";
 import { cycleLeadLine, hostOf, isOpenScheme, istToday, lastDateOf, scholarshipFaq } from "@/lib/scholarship-lists";
 import { LandingActions } from "@/components/LandingActions";
+import { SignupInline } from "@/components/SignupInline";
 import { scholarshipActions } from "@/lib/landing-actions";
 import { SoftWall } from "@/components/SoftWall";
 
@@ -260,7 +261,9 @@ export default async function ScholarshipDetailPage({
         </p>
         )}
         {vouched && <p className="mt-4 max-w-3xl text-sm text-ink-700">{s.description}</p>}
-        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). */}
+        {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, right after the answer — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+        <SignupInline surface="scholarship" />
+        {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). 30 Sep 2026 (sign-up build 3): links only now — the sign-up line is the SignupInline mounted above (src/lib/content-signup.ts). */}
         <LandingActions actions={scholarshipActions(s.name, "en")} locale="en" surface="scholarship" />
         {/* 27 Sep 2026: sign-up wall EXPERIMENT (src/lib/soft-wall.ts) — half of signed-out visitors see a few lines, the rest blurred behind a free sign-in card; crawlers always get this full HTML. */}
         <SoftWall>

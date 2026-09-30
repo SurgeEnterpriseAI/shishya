@@ -1,21 +1,23 @@
 // "Next on Shishya" (27 Sep 2026) — see src/lib/landing-actions.ts. Server
-// component: the links are in the HTML (crawlers follow them); the sign-up
-// block inside is a client island shown to guests only.
+// component: the links are in the HTML (crawlers follow them).
+//
+// 30 Sep 2026 (sign-up build 3): the guest sign-up block that sat at the
+// bottom of this box (src/components/SignupInline.tsx) moved out: each
+// content page mounts it once, on its own, right after the page's first
+// answer block (src/lib/content-signup.ts), so a page never shows it twice.
+// The box, its links and its place on every page are unchanged.
 
 import Link from "next/link";
 import { landingHeading, type LandingAction } from "@/lib/landing-actions";
-import { SignupInline } from "./SignupInline";
 
 export function LandingActions({
   actions,
   locale,
   surface,
-  signup = true,
 }: {
   actions: LandingAction[];
   locale: string;
   surface: string;
-  signup?: boolean;
 }) {
   if (actions.length === 0) return null;
   return (
@@ -38,7 +40,6 @@ export function LandingActions({
           </li>
         ))}
       </ul>
-      {signup && <SignupInline surface={surface} />}
     </nav>
   );
 }

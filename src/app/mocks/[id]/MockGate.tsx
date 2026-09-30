@@ -13,6 +13,10 @@
 //   2. Below: the exam's 5-question guest quiz, collapsed until asked for,
 //      ending on "sign in — back to this mock". Absent when the exam has
 //      none.
+// 30 Sep 2026: both sign-in buttons send the site-wide sign-in beacon
+// (surface "mock-gate" / "mock-gate-quiz-end", src/lib/signin-cta.ts). The
+// in-app escape line shows once, above the top button (inAppHint={false} on
+// the quiz's end button).
 // The page view is the root layout's AnalyticsTracker PAGE_VIEW of
 // /mocks/{id} (no userId = a guest on the gate). Server component; only the
 // button and the quiz are client islands.
@@ -73,8 +77,8 @@ export function MockGate({
             <GateSignInButton
               callbackUrl={callbackUrl}
               label={signInLabel}
-              cta="mock-gate-signin-click"
-              beaconProps={{ ...beaconProps, surface: "gate" }}
+              surface="mock-gate"
+              beaconProps={beaconProps}
               className="[&>button]:mt-4"
             />
             <p className="mt-2 text-center text-xs text-ink-500">
@@ -96,8 +100,10 @@ export function MockGate({
                 endSignIn: copy.quizEndSignIn,
               }}
               signInCallbackUrl={callbackUrl}
-              beacons={{ start: "mock-gate-quiz-start", done: "mock-gate-quiz-done", signin: "mock-gate-signin-click" }}
+              beacons={{ start: "mock-gate-quiz-start", done: "mock-gate-quiz-done" }}
+              signinSurface="mock-gate-quiz-end"
               beaconProps={beaconProps}
+              inAppHint={false}
             />
           )}
         </div>

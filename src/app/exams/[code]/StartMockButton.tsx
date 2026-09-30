@@ -26,42 +26,36 @@
 // to /login again, with the ?start=diagnostic return. For one day (27 Sep)
 // it sent the guest to the no-sign-in quiz instead; the quiz keeps its own
 // button beside the sign-in on the hub.
+//
+// 30 Sep 2026 (sign-up build 1):
+//   • the 401 sends the site-wide sign-in beacon (surface "hub-start-401";
+//     it was cta "diagnostic-401") and names its door on /login (from=);
+//   • HUB START: the hub box's "Sign in free — start practising" returns to
+//     /exams/CODE?start=practice (src/app/exams/[code]/page.tsx), and the
+//     same guarded auto-start below keeps that promise: a member with no
+//     mock on this exam yet gets the 5-question diagnostic started — the
+//     button a first-timer sees — once; a returning member who already has
+//     mocks here is NOT dropped into a surprise diagnostic: the page just
+//     scrolls to their own start panel (length picker). ?start=diagnostic
+//     (the 401 path: they pressed the diagnostic itself) starts it as before.
+//   • HubSignInLink is the shared in-page sign-in button (SignInLink:
+//     beacon + the skip-/login test).
 
 import { useEffect, useState, type ReactNode } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchSignedIn } from "@/lib/session-hint";
 import { clientUiLocale, type CopyLocale } from "@/lib/ui-locale-copy";
 import { mockStartCopy } from "@/lib/quiz-entry-copy";
+import { SignInLink } from "@/components/SignInLink";
+import { hubAutoStart, loginHrefFor, signinBeacon } from "@/lib/signin-cta";
 
-// First-party analytics beacon (same shape as ShareExamButton) — the 401
-// path is counted so the audit can see how much mock intent the wall
-// receives and how much of it returns signed in.
-function beacon(cta: string, extra?: Record<string, unknown>) {
-  try {
-    navigator.sendBeacon?.(
-      "/api/analytics",
-      new Blob(
-        [
-          JSON.stringify({
-            kind: "CTA_CLICKED",
-            path: typeof location !== "undefined" ? location.pathname : "/",
-            props: { cta, ...extra },
-          }),
-        ],
-        { type: "application/json" },
-      ),
-    );
-  } catch {
-    /* analytics is best-effort */
-  }
-}
-
-/** The signed-out hub banner's "Sign in free — build my plan" link (16 Sep
- *  2026). It was the one hub CTA with no CTA_CLICKED, so the /coach
- *  callback's volume could only be guessed from /login views. Renders the
- *  same <a> the server page did — href, class and text passed through —
- *  and beacons on click (sendBeacon survives the navigation). */
+/** The signed-out hub box's "Sign in free — start practising" button (16
+ *  Sep 2026: it was the one hub CTA with no CTA_CLICKED). Renders the same
+ *  link the server page did — href, class and text passed through — as the
+ *  shared in-page sign-in button (30 Sep 2026, src/components/SignInLink.tsx):
+ *  one "signin-click" beacon (surface "hub-box"; it was cta
+ *  "hub-signin-practice"), and in the skip-/login test's direct arm the tap
+ *  goes straight to Google with the same callback. */
 export function HubSignInLink({
   examCode,
   href,
@@ -74,9 +68,9 @@ export function HubSignInLink({
   children: ReactNode;
 }) {
   return (
-    <Link href={href} className={className} onClick={() => beacon("hub-signin-practice", { surface: "hub-banner", examCode })}>
+    <SignInLink href={href} surface="hub-box" className={className} beaconProps={{ examCode }}>
       {children}
-    </Link>
+    </SignInLink>
   );
 }
 
@@ -147,8 +141,8 @@ export function StartMockButton({
         // Anonymous visitor: keep the intent instead of printing the error.
         // The callback brings them back to THIS hub with ?start=diagnostic,
         // which the effect below turns into the mock they asked for.
-        beacon("diagnostic-401", { examCode, kind });
-        window.location.href = `/login?callbackUrl=${encodeURIComponent(`/exams/${examCode}?start=diagnostic`)}`;
+        signinBeacon("hub-start-401", { examCode, kind, via: "login" });
+        window.location.href = loginHrefFor(`/exams/${examCode}?start=diagnostic`, "hub-start-401");
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -164,15 +158,18 @@ export function StartMockButton({
     }
   }
 
-  // Post-login auto-start: /exams/CODE?start=diagnostic is only ever
-  // produced by the 401 path above, so a signed-in arrival with it means
-  // "you asked for the diagnostic before the wall — here it is". Guarded
-  // by sessionStorage so a reload, back-navigation, Strict Mode double
-  // effect or an expired session mid-flight can never loop through
-  // /login again, and by a session probe so a pasted URL just shows the
-  // button to a guest. No storage → no guard → no auto-start.
+  // Post-login auto-start: /exams/CODE?start=diagnostic comes back from the
+  // 401 path above ("you asked for the diagnostic before the wall — here it
+  // is"), and since 30 Sep 2026 /exams/CODE?start=practice from the hub
+  // box's "Sign in free — start practising" (hubAutoStart decides: the
+  // diagnostic for a member with no mock here yet, the start panel for a
+  // returning one). Guarded by sessionStorage so a reload, back-navigation,
+  // Strict Mode double effect or an expired session mid-flight can never
+  // loop through /login again, and by a session probe so a pasted URL just
+  // shows the button to a guest. No storage → no guard → no auto-start.
   useEffect(() => {
-    if (searchParams?.get("start") !== "diagnostic") return;
+    const startParam = searchParams?.get("start");
+    if (hubAutoStart(startParam, hasHistory) === null) return;
     const key = `shishya_autostart_diag:${examCode}`;
     try {
       if (sessionStorage.getItem(key)) return;
@@ -180,11 +177,33 @@ export function StartMockButton({
     } catch {
       return;
     }
-    // Forced probe (never trusts a missing `shishya_in` hint): this URL only
-    // comes back from the 401 → /login path, so a casual guest never pays
-    // for it. null (probe failed) → leave the button to the student.
+    // 30 Sep 2026 (review): once the guard is set, drop ?start= from the
+    // address bar. Otherwise it stays there for a returning member (the
+    // panel branch only scrolls) and after a failed start, and a copied hub
+    // link would start a surprise diagnostic for a signed-in friend with no
+    // mock here. The effect re-runs on the new searchParams and stops at
+    // hubAutoStart(null); this run keeps its own startParam.
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.delete("start");
+      window.history.replaceState(window.history.state, "", u.pathname + u.search + u.hash);
+    } catch {
+      /* keep the URL */
+    }
+    // Forced probe (never trusts a missing `shishya_in` hint): these URLs
+    // only come back from a sign-in, so a casual guest never pays for it.
+    // null (probe failed) → leave the button to the student.
     fetchSignedIn({ force: true }).then((v) => {
-      if (v === true) void start("DIAGNOSTIC");
+      if (v !== true) return;
+      const what = hubAutoStart(startParam, hasHistory);
+      if (what === "diagnostic") void start("DIAGNOSTIC");
+      else if (what === "panel") {
+        try {
+          document.querySelector('[data-tour="exam-start-mock"]')?.scrollIntoView({ block: "center", behavior: "smooth" });
+        } catch {
+          /* no scroll — the panel is still on the page */
+        }
+      }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, examCode]);

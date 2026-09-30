@@ -8,18 +8,41 @@
 // goes straight back to the page it came from (the callback), never into a
 // questionnaire; a chat or school callback gets its own short card, and the
 // smallprint says accounts are for ages 13 and above.
+//
+// 30 Sep 2026 (founder brief: sign-up must say it puts "the entire Shishya in
+// their hand" because it is personalised — sign-up build 1):
+//   • the words: the default heading and body say what an account does, in
+//     the founder's idea and honest words — it keeps your exam, your weak
+//     topics, your mocks and the questions you ask, and picks up from them
+//     next time (login.h1 / login.body / login.bullets.*, en, hi, te). Gone:
+//     "5 seconds" (measured median 17 s, /login view → account, 16-29 Sep),
+//     "opens straight away" (most callbacks return to a page, not a running
+//     mock — the card now says it brings you back here), "rank" (only some
+//     papers have one) and the result-day email line;
+//   • the order: the Google button comes first after the card; the "try 5
+//     questions first" alternative sits under it (content first stays: it
+//     is still on the page, no wall);
+//   • in an in-app browser (Instagram, Facebook… where Google blocks
+//     sign-in) one line above the button says how to get out
+//     (src/components/InAppBrowserHint.tsx; elsewhere only above the
+//     straight-to-Google gate buttons, src/components/GuestQuizGate.tsx);
+//   • the button hands off to Google in one request and sends one
+//     "login-google-click" beacon with the callback family and ?from=
+//     (src/components/GoogleSignInButton.tsx).
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { InAppBrowserHint } from "@/components/InAppBrowserHint";
 import { getT } from "@/lib/i18n-server";
 import { fillTemplate } from "@/lib/i18n";
 import { getExamCatalog } from "@/lib/db/exam-cache";
 import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { isSameOriginPath } from "@/lib/login-return";
 import { loginIntent } from "@/lib/login-intent";
+import { loginCallbackFamily } from "@/lib/signin-cta";
 
 // Belt-and-braces alongside the robots.txt disallow: a Disallow-ed URL
 // can still be indexed (link-only, no description) and would then be a
@@ -132,7 +155,15 @@ export default async function LoginPage({
             {t("login.error")}
           </p>
         )}
-        <GoogleSignInButton callbackUrl={cb} label={t("login.continue")} />
+        {/* 30 Sep 2026: only in an in-app browser (Google blocks sign-in there). */}
+        <InAppBrowserHint />
+        <GoogleSignInButton
+          callbackUrl={cb}
+          label={t("login.continue")}
+          beacon={{ from: sp.from ?? null, family: loginCallbackFamily(sp.callbackUrl) }}
+        />
+        {/* The alternative comes AFTER the main action (30 Sep 2026): Google
+            first, then "not ready? try 5 questions first". */}
         {examCode && li.tryFirst && (
           <Link
             href={`/exams/${examCode}/quiz`}

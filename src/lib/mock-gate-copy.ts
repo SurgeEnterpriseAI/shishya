@@ -14,6 +14,8 @@
 //   • The guest quiz saves nothing to an account, so no line here says it
 //     does; after sign-in the MOCK saves score and weak topics (true of every
 //     attempt). No rank claim: a rank exists only for some papers.
+//   • 30 Sep 2026: no "5 seconds" — the measured time from /login to an
+//     account is a median of 17 s (p25 13 s, p90 53 s, 16-29 Sep).
 //   • The quiz-end button says it goes back to this mock, not that the mock
 //     starts: a paper-length mock first asks full-or-warm-up.
 //   • The warm-up is the hub diagnostic: a separate set, NOT part of the
@@ -73,7 +75,7 @@ const COPY: Readonly<Record<CopyLocale, MockGateCopy>> = {
   en: {
     kicker: "{exam} mock test",
     size: "{n} questions · {min} min",
-    body: "One Google sign-in (5 seconds, no password) brings you straight back to this mock. Your score and weak topics are saved.",
+    body: "One Google sign-in (no password) brings you straight back to this mock. Your score and weak topics are saved.",
     quizHeading: "Not ready to sign in?",
     quizLine: "Try {n} {exam} questions now — no sign-in. Each answer shows its solution.",
     quizStart: "Try {n} questions now →",
@@ -91,7 +93,7 @@ const COPY: Readonly<Record<CopyLocale, MockGateCopy>> = {
   hi: {
     kicker: "{exam} मॉक टेस्ट",
     size: "{n} प्रश्न · {min} मिनट",
-    body: "एक बार Google से साइन इन करें (5 सेकंड, कोई पासवर्ड नहीं) — आप सीधे इसी मॉक पर लौट आएँगे। आपका स्कोर और कमज़ोर टॉपिक सेव रहेंगे।",
+    body: "एक बार Google से साइन इन करें (कोई पासवर्ड नहीं) — आप सीधे इसी मॉक पर लौट आएँगे। आपका स्कोर और कमज़ोर टॉपिक सेव रहेंगे।",
     quizHeading: "अभी साइन इन नहीं करना?",
     quizLine: "अभी {exam} के {n} प्रश्न आज़माएँ — बिना साइन इन। हर उत्तर के साथ उसका हल दिखता है।",
     quizStart: "अभी {n} प्रश्न आज़माएँ →",
@@ -109,7 +111,7 @@ const COPY: Readonly<Record<CopyLocale, MockGateCopy>> = {
   te: {
     kicker: "{exam} మాక్ టెస్ట్",
     size: "{n} ప్రశ్నలు · {min} నిమిషాలు",
-    body: "ఒకసారి Googleతో sign in చేయండి (5 సెకన్లు, పాస్‌వర్డ్ లేదు) — నేరుగా ఇదే మాక్‌కు తిరిగి వస్తారు. మీ స్కోర్, బలహీన టాపిక్‌లు సేవ్ అవుతాయి.",
+    body: "ఒకసారి Googleతో sign in చేయండి (పాస్‌వర్డ్ లేదు) — నేరుగా ఇదే మాక్‌కు తిరిగి వస్తారు. మీ స్కోర్, బలహీన టాపిక్‌లు సేవ్ అవుతాయి.",
     quizHeading: "ఇప్పుడే sign in చేయాలని లేదా?",
     quizLine: "ఇప్పుడే {n} {exam} ప్రశ్నలు ప్రయత్నించండి — sign in అవసరం లేదు. ప్రతి జవాబుతో దాని పరిష్కారం కనిపిస్తుంది.",
     quizStart: "ఇప్పుడే {n} ప్రశ్నలు ప్రయత్నించండి →",

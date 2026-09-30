@@ -36,6 +36,7 @@ import { ClickableVerificationBadge } from "@/components/ClickableVerificationBa
 import { getFactMap, factToBadgeProps } from "@/lib/db/facts";
 import { auth } from "@/lib/auth";
 import { findCollegeDetail } from "@/data/college-details";
+import { SignupInline } from "@/components/SignupInline";
 
 export async function generateStaticParams() {
   return COLLEGES.map((c) => ({ slug: c.slug }));
@@ -224,6 +225,8 @@ export default async function CollegePage({
 
         <h2 className="mt-8 text-base font-semibold text-ink-900">About {c.shortName}</h2>
         <p className="mt-2 max-w-3xl text-sm text-ink-700">{c.blurb}</p>
+        {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, after "About" — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+        <SignupInline surface="college" revealOffscreen />
 
         {/* Branch-level placement + cutoff data, when authored */}
         {(() => {

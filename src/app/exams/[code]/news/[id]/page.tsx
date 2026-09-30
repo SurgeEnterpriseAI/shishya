@@ -62,6 +62,7 @@ import { newsPermalinkCopy } from "@/lib/page-gates-copy";
 import { examPracticeState } from "@/lib/db/exam-practice";
 import { SHISHYA_ORG_REF } from "@/components/JsonLd";
 import { newsCanonicalMap, newsRobots } from "@/lib/news-index-policy";
+import { SignupInline } from "@/components/SignupInline";
 
 interface RouteParams {
   code: string;
@@ -368,6 +369,9 @@ export default async function NewsPermalinkPage({
             )}
           </div>
         </div>
+
+        {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, right after the news and its follow-ups — client-only, never on Class 1-7 (src/lib/content-signup.ts). Review: after the funnel card, not above it — both open with "Preparing for {exam}?" and carry a saffron button, and stacked back to back they read like a glitch. */}
+        <SignupInline surface="news" exam={row.exam.shortName} practice={practice.hasPractice} revealOffscreen />
       </section>
     </main>
   );

@@ -19,38 +19,59 @@
 // sign-in step works and stays first — while 200-257 guests reached /login and
 // left, and 131 of 183 signed-out builder visitors never signed in. This gives
 // them a way on without moving sign-in down.
+//
+// 30 Sep 2026 (sign-up build 1): the click beacon is the site-wide sign-in
+// one — { cta: "signin-click", surface } (src/lib/signin-cta.ts; it was
+// "mock-gate-signin-click" / "build-gate-signin-click" with surface
+// "gate" / "quiz-end") — and an in-app browser (Instagram, Facebook… where
+// Google blocks sign-in) gets the escape line above the button
+// (src/components/InAppBrowserHint.tsx, nothing anywhere else). The gate's
+// button stays straight-to-Google; it is not part of the skip-/login test.
+// 30 Sep 2026 (review): one escape line per page — the mock gate's quiz-end
+// button passes inAppHint={false} (its top button already shows the line,
+// and a second copy would count "shown" twice); the build-mock gate's
+// quiz-end button, the only straight-to-Google button there, keeps it.
 
 import { useRef, useState } from "react";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { InAppBrowserHint } from "@/components/InAppBrowserHint";
 import { AnonQuizPlayer, type AnonQuizTranslationPack } from "@/components/AnonQuizPlayer";
 import type { AnonQuiz } from "@/lib/anon-quiz";
 import type { ChallengeLabels, QuizLabels } from "@/lib/challenge-copy";
 import { fillTemplate } from "@/lib/i18n";
 import { ctaBeacon } from "@/lib/cta-beacon";
+import { signinBeacon, type SigninSurface } from "@/lib/signin-cta";
 
 type BeaconProps = { examCode: string; mockId?: string };
 
 export function GateSignInButton({
   callbackUrl,
   label,
-  cta,
+  surface,
   beaconProps,
   className,
+  inAppHint = true,
 }: {
   /** Same-origin relative path (src/lib/mock-gate.ts builds it). */
   callbackUrl: string;
   label: string;
-  /** CTA_CLICKED name, e.g. "mock-gate-signin-click". */
-  cta: string;
-  beaconProps: BeaconProps & { surface: string };
+  /** Sign-in door id, e.g. "mock-gate" (src/lib/signin-cta.ts). */
+  surface: SigninSurface;
+  beaconProps: BeaconProps;
   /** Wrapper classes — e.g. "[&>button]:mt-0" where the button's own mt-6
    *  would misalign it. */
   className?: string;
+  /** The in-app escape line above the button (default on); off where the
+   *  page already shows it above another button. */
+  inAppHint?: boolean;
 }) {
   return (
-    <div className={className} onClickCapture={() => ctaBeacon(cta, beaconProps)}>
-      <GoogleSignInButton callbackUrl={callbackUrl} label={label} />
-    </div>
+    <>
+      {inAppHint && <InAppBrowserHint />}
+      <div className={className} onClickCapture={() => signinBeacon(surface, { ...beaconProps, via: "google" })}>
+        <GoogleSignInButton callbackUrl={callbackUrl} label={label} />
+      </div>
+    </>
   );
 }
 
@@ -73,7 +94,9 @@ export function GuestQuizGate({
   copy,
   signInCallbackUrl,
   beacons,
+  signinSurface,
   beaconProps,
+  inAppHint = true,
 }: {
   quiz: AnonQuiz;
   translation?: AnonQuizTranslationPack;
@@ -82,9 +105,13 @@ export function GuestQuizGate({
   locale: string;
   copy: GuestQuizGateCopy;
   signInCallbackUrl: string;
-  /** CTA_CLICKED names for this surface. */
-  beacons: { start: string; done: string; signin: string };
+  /** CTA_CLICKED names for this surface's quiz. */
+  beacons: { start: string; done: string };
+  /** The result screen's sign-in door, e.g. "mock-gate-quiz-end". */
+  signinSurface: SigninSurface;
   beaconProps: BeaconProps;
+  /** Passed to the result screen's GateSignInButton (default on). */
+  inAppHint?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const doneSent = useRef(false);
@@ -128,9 +155,10 @@ export function GuestQuizGate({
               <GateSignInButton
                 callbackUrl={signInCallbackUrl}
                 label={copy.endSignIn}
-                cta={beacons.signin}
-                beaconProps={{ ...beaconProps, surface: "quiz-end" }}
+                surface={signinSurface}
+                beaconProps={beaconProps}
                 className="[&>button]:mt-0"
+                inAppHint={inAppHint}
               />
             }
           />

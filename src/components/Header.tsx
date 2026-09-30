@@ -30,10 +30,17 @@
 // the Ask Shishya chip from the orange row; HeaderAuthControls drops Sign in
 // on those paths by itself (isUnder13SchoolPath), so no child is offered a
 // tutor or an account from the header.
+//
+// 30 Sep 2026 (sign-up build 2): under the orange row, the WelcomeStrip
+// island — the one-time "Your Shishya is ready" strip after a sign-up and
+// the guest-chat carry-over (src/components/WelcomeStrip.tsx). It renders
+// nothing on the server and nothing without its cookie; not on admin or
+// childSafe pages.
 
 import Link from "next/link";
 import { BackLink } from "./BackLink";
 import { HeaderAuthControls, TodayNavLink } from "./HeaderAuthControls";
+import { WelcomeStrip } from "./WelcomeStrip";
 import { getDailyQuote } from "@/data/motivational-quotes";
 
 // English labels for the auth-aware right rail. We keep this static so
@@ -42,10 +49,14 @@ import { getDailyQuote } from "@/data/motivational-quotes";
 // language; the three CTA labels here stay in English for now — a
 // reasonable tradeoff for the edge-cache win until we set up a
 // client-side i18n provider.
+// 30 Sep 2026 (founder: sign-up invitations clear and visible): the guest
+// button reads "Sign in free" (it is free — no new claim); HeaderAuthControls
+// swaps in the Hindi / Telugu words after mount (HEADER_SIGNIN_LABEL in
+// src/lib/signin-cta.ts). Still hidden on Class 1-7 pages.
 const RAIL_LABELS = {
   dashboard: "Dashboard",
   signout: "Sign out",
-  signinShort: "Sign in",
+  signinShort: "Sign in free",
 } as const;
 
 // Default locale chip shown in the LangSwitcher trigger. The switcher
@@ -312,6 +323,7 @@ export function Header({ admin = false, childSafe = false }: { admin?: boolean; 
           </div>
         </nav>
       )}
+      {!admin && !childSafe && <WelcomeStrip />}
     </header>
   );
 }

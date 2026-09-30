@@ -36,6 +36,11 @@ import { StudyTogether } from "./StudyTogether";
 import { hasUsableNotes } from "@/lib/topic-notes";
 import { topicPageMeta } from "@/lib/page-gates-copy";
 import { NotesMarkdown } from "@/components/NotesMarkdown";
+import { SignupInline } from "@/components/SignupInline";
+import { splitAfterFirstSection } from "@/lib/content-signup";
+// 30 Sep 2026 (sign-up build 3 review): the practice rule for the sign-up
+// line (src/lib/exam-practice-state.ts), cached; a failed read claims none.
+import { examPracticeState } from "@/lib/db/exam-practice";
 
 // Public SEO page; data barely changes (notes regen weekly via cron).
 // Revalidate every 10 min so a content update propagates without
@@ -217,6 +222,14 @@ export default async function TopicPage({
 
   const notes = (topic as any).teachingNote?.content as string | null ?? null;
   const notesAt = (topic as any).teachingNote?.generatedAt as Date | null ?? null;
+  // 30 Sep 2026 (sign-up build 3): the guest sign-up line goes after the
+  // notes' first section (two parts, same blocks — splitAfterFirstSection);
+  // short notes get it after the notes→quiz bridge, which stays first.
+  const notesMd = notes ? stripInventedCounts(notes) : "";
+  const notesParts = splitAfterFirstSection(notesMd);
+  // 30 Sep 2026 (sign-up build 3 review): the sign-up line promises the
+  // exam's "mocks, scores and weak topics" only where the exam has practice.
+  const examHasPractice = (await examPracticeState(exam.code)).hasPractice;
   // 26 Sep 2026 (G3): dateModified = when the note itself last changed
   // (TopicTeachingNote.updatedAt), never the render time. The reviewer line
   // shows only when a person marked the note reviewed (validatedAt AND
@@ -416,7 +429,16 @@ export default async function TopicPage({
                 nobody counted them. Those sentences are not shown
                 (src/lib/note-claims.ts); the stored text is unchanged. */}
             <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
-              <NotesMarkdown markdown={stripInventedCounts(notes)} rich demoteH1 />
+              {notesParts ? (
+                <>
+                  <NotesMarkdown markdown={notesParts[0]} rich demoteH1 />
+                  {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, after the first section — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+                  <SignupInline surface="topic" exam={exam.shortName} practice={examHasPractice} revealOffscreen />
+                  <NotesMarkdown markdown={notesParts[1]} rich demoteH1 />
+                </>
+              ) : (
+                <NotesMarkdown markdown={notesMd} rich demoteH1 />
+              )}
             </article>
             {/* Provenance, as it is (26 Sep 2026, G3). 27 Sep 2026
                 (integration): "from Shishya's syllabus outline", not "from
@@ -464,6 +486,7 @@ export default async function TopicPage({
                 }}
               />
             ) : null}
+            {!notesParts && <SignupInline surface="topic" exam={exam.shortName} practice={examHasPractice} revealOffscreen />}
 
             {/* 29 Sep 2026: the rest of the questions, printed whole. */}
             <TopicQuestionsInFull
@@ -507,6 +530,8 @@ export default async function TopicPage({
             locale={locale}
             className="mt-6"
           />
+          {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, after the questions — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+          <SignupInline surface="topic" exam={exam.shortName} practice={examHasPractice} revealOffscreen />
           <div className="mt-8 rounded-md border border-dashed border-ink-300 bg-white px-5 py-6">
             <p className="text-sm font-medium text-ink-800">{t("topic.notes.empty.headline")}</p>
             <p className="mt-1 text-sm text-ink-600">{t("topic.notes.empty.body")}</p>

@@ -223,9 +223,15 @@ describe("client islands send and store nothing identifying on Class 1-7 pages",
     // 27 Sep 2026 (evening): the site-wide offer's rule (src/lib/signup-pitch.ts pitchAllowedPath —
     // tests/unit/signup-pitch.test.ts pins it: no Class 1-7, /schooling or board hub, no chat).
     expect(blocked).toContain('return !pitchAllowedPath(p) || p.startsWith("/live-test/");');
-    // The page-view counter and the active-seconds tick both return first on Class 1-7.
-    expect(src.match(/if \(isUnder13SchoolPath\(location\.pathname\)\) return;/g)?.length).toBe(2);
-    expect(src.indexOf("if (isUnder13SchoolPath(location.pathname)) return;")).toBeLessThan(src.indexOf("sessionStorage.setItem(SS_VIEWS"));
+    // 30 Sep 2026 (sign-up build 3): content pages only (src/lib/content-signup.ts
+    // contentFamily is null on every child school page — tests/unit/content-signup.test.ts),
+    // and the counters live in memory: no session page-view or active-seconds
+    // counter is stored anywhere. The tick still returns first on Class 1-7.
+    expect(src).toContain("return blockedPath(p) ? null : contentFamily(p);");
+    expect(src).not.toContain("sessionStorage");
+    const tick = src.slice(src.indexOf("const id = window.setInterval("));
+    expect(tick.indexOf("if (isUnder13SchoolPath(location.pathname)) return;")).toBeGreaterThan(-1);
+    expect(tick.indexOf("if (isUnder13SchoolPath(location.pathname)) return;")).toBeLessThan(tick.indexOf("pageSeconds.current += 1"));
     // Its CTA returns to the page, never a bare /login (27 Sep 2026 review: + from=header, not a gated action).
     expect(src).not.toMatch(/href="\/login"/);
     expect(src).toContain("href={`/login?callbackUrl=${encodeURIComponent(location.pathname + location.search)}&from=header`}");

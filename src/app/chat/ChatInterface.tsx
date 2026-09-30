@@ -50,6 +50,16 @@
 // mistakes"), the empty state names the exam by its short name, and the
 // "talk to a teacher" row (a phone form) shows only in an exam chat — never
 // in a general, guest-general or school chat, where minors may be.
+//
+// 30 Sep 2026 (sign-up build 2; 1 save tap since 16 Sep, 0 imports ever):
+// ANY sign-in the guest starts from this chat keeps it — the save card, now a
+// full-width button shown after the FIRST reply, and every link to /login on
+// the page (the top "Sign in free" line, the header's Sign in), caught by one
+// click listener. The import then runs on whichever page the sign-in lands
+// (src/components/WelcomeStrip.tsx); back here, a conversation imported
+// elsewhere is restored and continued instead of imported twice. Storage,
+// TTL and decisions: src/lib/guest-chat-carry.ts. A school chat never keeps
+// one, and the under-13 line drops a kept one.
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -58,6 +68,15 @@ import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { SCHOOL_CAP_CODE, SCHOOL_TUTOR_CAP_COPY, SCHOOL_TUTOR_DAILY_CAP } from "@/lib/school/tutor-cap";
 import { UNDER13_CLOSED } from "@/lib/under13";
 import { markSeedFired, seedFingerprint, stripSeedParam, wasSeedFiredRecently } from "@/lib/chat-seed-once";
+import {
+  GUEST_CHAT_MAX_TURNS,
+  carryDecision,
+  dropKeptGuestChat,
+  isLoginLink,
+  keepGuestChat,
+  postGuestChatImport,
+  readKeptGuestChat,
+} from "@/lib/guest-chat-carry";
 import {
   canRetryAt,
   chatErrorText,
@@ -134,34 +153,34 @@ function prettyTool(name?: string): string {
   }
 }
 
-const GUEST_CHAT_KEY = "shishya_guest_chat";
-/** How long after the save tap the sign-in may pick the chat up. */
-const GUEST_CHAT_TTL_MS = 30 * 60_000;
-const GUEST_CHAT_MAX_TURNS = 24;
-
+// The guest save card (30 Sep 2026: a full-width button, not a text-xs link).
+// Honest words only: signing in keeps THIS conversation in the account (the
+// import, src/lib/guest-chat-carry.ts), and the signed-in exam tutor can read
+// the student's mock mistakes and weak topics (src/lib/ai/tools.ts). No claim
+// that the tutor "remembers it tomorrow" — there is no way to reopen an old
+// chat from a later visit yet.
 const SAVE_COPY = {
   en: {
     saved: "Your guest conversation is saved to your account.",
-    // The nudge is split around the sign-in link (16 Sep 2026, i18n.10).
-    nudge: "Save this conversation and let the tutor see your mock mistakes — ",
+    button: "Save this chat to your account — sign in free",
     // A general chat (27 Sep 2026): no mocks in view there.
-    nudgeGeneral: "Keep this conversation in a free Shishya account — ",
-    nudgeLink: "sign in, free",
-    nudgeEnd: ".",
+    buttonGeneral: "Keep this chat in a free Shishya account — sign in",
+    sub: "Signed in, the tutor also sees your mock mistakes and weak topics.",
+    subGeneral: "Free, with Google. Accounts are for ages 13 and above.",
   },
   hi: {
     saved: "आपकी गेस्ट बातचीत आपके अकाउंट में सेव हो गई है।",
-    nudge: "इस बातचीत को सेव करें और ट्यूटर को अपनी मॉक की गलतियाँ देखने दें — ",
-    nudgeGeneral: "इस बातचीत को मुफ़्त Shishya अकाउंट में रखें — ",
-    nudgeLink: "साइन इन करें, मुफ़्त",
-    nudgeEnd: "।",
+    button: "यह बातचीत अपने अकाउंट में सेव करें — मुफ़्त साइन इन",
+    buttonGeneral: "यह बातचीत मुफ़्त Shishya अकाउंट में रखें — साइन इन",
+    sub: "साइन इन के बाद ट्यूटर आपकी मॉक की गलतियाँ और कमज़ोर टॉपिक भी देखता है।",
+    subGeneral: "मुफ़्त, Google से। अकाउंट 13 साल और उससे ऊपर के लिए हैं।",
   },
   te: {
     saved: "మీ గెస్ట్ సంభాషణ మీ అకౌంట్‌లో సేవ్ అయింది.",
-    nudge: "ఈ సంభాషణను సేవ్ చేసి, మీ మాక్ తప్పులను ట్యూటర్ చూడనివ్వండి — ",
-    nudgeGeneral: "ఈ సంభాషణను ఉచిత Shishya అకౌంట్‌లో ఉంచుకోండి — ",
-    nudgeLink: "సైన్ ఇన్ చేయండి, ఉచితం",
-    nudgeEnd: ".",
+    button: "ఈ చాట్‌ను మీ అకౌంట్‌లో సేవ్ చేయండి — ఉచితంగా సైన్ ఇన్",
+    buttonGeneral: "ఈ చాట్‌ను ఉచిత Shishya అకౌంట్‌లో ఉంచుకోండి — సైన్ ఇన్",
+    sub: "సైన్ ఇన్ అయ్యాక ట్యూటర్ మీ మాక్ తప్పులు, బలహీన టాపిక్‌లు కూడా చూస్తుంది.",
+    subGeneral: "ఉచితం, Google తో. అకౌంట్‌లు 13 ఏళ్లు, ఆపై వయసు వారికి.",
   },
 } as const;
 
@@ -335,23 +354,37 @@ export function ChatInterface({
     recog.start();
   }
 
-  // Guest tapped "Save this conversation": keep the finished turns so the
+  // The guest pressed sign-in on this chat: keep the finished turns so the
   // sign-in can save them (see header). Only complete user→assistant
-  // exchanges; a turn too long for the import route is left out.
+  // exchanges; a turn too long for the import route is left out. Never for
+  // a school chat, never once the under-13 line has closed the chat.
+  const messagesRef = useRef<Message[]>([]);
+  messagesRef.current = messages;
+  const under13Ref = useRef(false);
+  under13Ref.current = under13;
   function keepGuestChatForSignIn() {
-    const turns = messages
-      .filter((m) => m.content.trim() && m.content.length <= 8000)
-      .map((m) => ({ role: m.role, content: m.content }));
-    if (turns.length && turns[turns.length - 1].role === "user") turns.pop();
-    let tail = turns.slice(-GUEST_CHAT_MAX_TURNS);
-    if (tail[0]?.role === "assistant") tail = tail.slice(1);
-    if (!tail.some((t) => t.role === "assistant")) return;
-    try {
-      localStorage.setItem(GUEST_CHAT_KEY, JSON.stringify({ v: 1, examCode: examCode ?? null, savedAt: Date.now(), turns: tail }));
-    } catch {
-      /* storage blocked — the chat still works, it just isn't carried over */
-    }
+    if (!guestSignInHref || school || under13Ref.current) return;
+    keepGuestChat(examCode ?? null, messagesRef.current);
   }
+
+  // 30 Sep 2026: every sign-in link on the guest chat's page keeps it — the
+  // save card, the page's top "Sign in free" line, the header's Sign in.
+  // Capture phase, so it runs before the navigation starts.
+  useEffect(() => {
+    if (!guestSignInHref || school) return;
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.("a[href]");
+      if (a && isLoginLink(a.getAttribute("href"), location.origin)) keepGuestChatForSignIn();
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guestSignInHref, school]);
+
+  // A chat the under-13 line closed is never carried into an account.
+  useEffect(() => {
+    if (under13) dropKeptGuestChat();
+  }, [under13]);
 
   // Signed in: a guest chat from this browser for this same chat → save it once.
   const importTriedRef = useRef(false);
@@ -361,52 +394,44 @@ export function ChatInterface({
   useEffect(() => {
     if (guestSignInHref || school || importTriedRef.current) return;
     importTriedRef.current = true;
-    let saved: { v?: number; examCode?: string | null; savedAt?: number; turns?: { role: string; content: string }[] } | null = null;
-    try {
-      saved = JSON.parse(localStorage.getItem(GUEST_CHAT_KEY) ?? "null");
-    } catch {
+    const kept = readKeptGuestChat();
+    // Another chat (other exam, or general) keeps the key for its own page;
+    // a seeded chat starts its own turn right away — don't race it.
+    const action = carryDecision(kept, {
+      childPath: false,
+      chatScope: { examCode: examCode ?? null, seeded: !!(initialSeed && initialSeed.trim()) },
+    });
+    if (action === "drop") return dropKeptGuestChat();
+    if (!kept || kept === "expired" || action === "none") return;
+    const show = (sid: string, turns: { role: string; content: string }[]) => {
+      if (!sentRef.current) {
+        setMessages(
+          turns.map((t, i) => ({
+            id: `g-${i}`,
+            role: t.role === "assistant" ? ("assistant" as const) : ("user" as const),
+            content: t.content,
+          })),
+        );
+        setSessionId(sid);
+      }
+      setImportedNote(SAVE_COPY[uiLang()].saved);
+    };
+    // 30 Sep 2026: imported on the page the sign-in landed on — show it and
+    // continue that conversation (the chat route accepts the owner's session
+    // of the same scope); no second import.
+    if (action === "restore" && kept.importedSessionId) {
+      dropKeptGuestChat();
+      show(kept.importedSessionId, kept.turns);
+      beacon({ cta: "chat-guest-restored", surface: "chat", examCode, pairs: Math.floor(kept.turns.length / 2) });
       return;
     }
-    if (!saved || saved.v !== 1 || !Array.isArray(saved.turns) || typeof saved.savedAt !== "number") return;
-    const drop = () => {
-      try {
-        localStorage.removeItem(GUEST_CHAT_KEY);
-      } catch {
-        /* ignore */
-      }
-    };
-    if (Date.now() - saved.savedAt > GUEST_CHAT_TTL_MS) return drop();
-    // Another chat (other exam, or general) keeps the key for its own page.
-    if ((saved.examCode ?? null) !== (examCode ?? null)) return;
-    // A seeded chat starts its own turn right away; don't race it.
-    if (initialSeed && initialSeed.trim()) return;
-    fetch("/api/chat/import", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ examCode: examCode ?? null, turns: saved.turns.slice(-GUEST_CHAT_MAX_TURNS) }),
-    })
-      .then(async (res) => {
-        if (res.status === 429 || res.status >= 500) return; // try again on a later visit
-        drop();
-        const j = res.ok ? await res.json().catch(() => null) : null;
-        const turns = Array.isArray(j?.turns) ? (j.turns as { role: string; content: string }[]) : [];
-        if (typeof j?.sessionId !== "string" || turns.length === 0) return;
-        if (!sentRef.current) {
-          setMessages(
-            turns.map((t, i) => ({
-              id: `g-${i}`,
-              role: t.role === "assistant" ? ("assistant" as const) : ("user" as const),
-              content: t.content,
-            })),
-          );
-          setSessionId(j.sessionId);
-        }
-        setImportedNote(SAVE_COPY[uiLang()].saved);
-        beacon({ cta: "chat-guest-imported", surface: "chat", examCode, pairs: Math.floor(turns.length / 2) });
-      })
-      .catch(() => {
-        /* network: the key stays for the next visit */
-      });
+    void postGuestChatImport({ ...kept, turns: kept.turns.slice(-GUEST_CHAT_MAX_TURNS) }).then((r) => {
+      if (r.status === "retry") return; // the key stays for a later visit
+      dropKeptGuestChat();
+      if (r.status !== "imported") return;
+      show(r.sessionId, r.turns);
+      beacon({ cta: "chat-guest-imported", surface: "chat", examCode, pairs: Math.floor(r.turns.length / 2) });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -805,27 +830,26 @@ export function ChatInterface({
           <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">✓ {importedNote}</p>
         )}
 
-        {/* Guest save card — after the second completed reply the guest has
-            seen the tutor work; this is the one moment the sign-in ask is
-            earned. Plain link, no timer, no counter; the callback brings
-            them straight back to this chat (general chats to /chat?general=1,
-            the page that can pick the saved conversation up), where the
-            conversation is saved (16 Sep 2026 — it used to be lost). */}
-        {guestSignInHref && !under13 && !busy && messages.filter((m) => m.role === "assistant" && m.content).length >= 2 && (
-          <div className="rounded-md border border-saffron-200 bg-saffron-50/60 px-3 py-2">
-            <p className="text-xs text-ink-700">
-              {examCode == null ? SAVE_COPY[navLang].nudgeGeneral : SAVE_COPY[navLang].nudge}
-              <a
-                href={examCode == null ? `/login?callbackUrl=${encodeURIComponent("/chat?general=1")}` : guestSignInHref}
-                onClick={() => {
-                  keepGuestChatForSignIn();
-                  beacon({ cta: "chat-guest-save", surface: "chat", examCode });
-                }}
-                className="font-semibold text-saffron-700 hover:underline"
-              >
-                {SAVE_COPY[navLang].nudgeLink}
-              </a>
-              {SAVE_COPY[navLang].nudgeEnd}
+        {/* Guest save card — once the tutor has answered; the callback brings
+            them straight back to this chat (general chats to /chat?general=1),
+            where the conversation is saved (16 Sep 2026 — it used to be lost).
+            30 Sep 2026 (sign-up build 2): after the FIRST completed reply (was
+            the second), and a full-width button instead of a text-xs link —
+            1 tap in two weeks. No timer, no counter, never over the chat. */}
+        {guestSignInHref && !school && !under13 && !busy && messages.some((m) => m.role === "assistant" && m.content && !m.failed) && (
+          <div className="rounded-md border border-saffron-200 bg-saffron-50/60 p-3">
+            <a
+              href={examCode == null ? `/login?callbackUrl=${encodeURIComponent("/chat?general=1")}` : guestSignInHref}
+              onClick={() => {
+                keepGuestChatForSignIn();
+                beacon({ cta: "chat-guest-save", surface: "chat", examCode });
+              }}
+              className="btn-primary flex w-full items-center justify-center !py-2.5 text-center text-sm"
+            >
+              {examCode == null ? SAVE_COPY[navLang].buttonGeneral : SAVE_COPY[navLang].button}
+            </a>
+            <p className="mt-1.5 text-center text-[11px] text-ink-600">
+              {examCode == null ? SAVE_COPY[navLang].subGeneral : SAVE_COPY[navLang].sub}
             </p>
           </div>
         )}

@@ -151,8 +151,11 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     rehearsalSoon: "opens soon, closes {time} IST on exam eve",
     coachTitle: "Free {short} mock tests and previous year paper practice — start now.",
     coachBodyA: "Full-length mocks with instant scoring and solutions, PYQ-pattern papers, topic-wise tests and Ask ",
+    // 30 Sep 2026: no rank claim (en / hi / te). The box's sign-in now starts
+    // the 5-question diagnostic, which has no rank — a rank exists only for a
+    // ranked attempt with 30+ takers.
     coachBodyB:
-      "when you're stuck. Your scores, rank and a free day-by-day plan are saved to your account. All free, no credit card. Content is AI-drafted and checked against the official notification.",
+      "when you're stuck. Your scores and a free day-by-day plan are saved to your account. All free, no credit card. Content is AI-drafted and checked against the official notification.",
     coachButton: "Sign in free — start practising →",
     buildMock: "Build your own mock — pick exact topics →",
     langLine: "· every mock readable in हिंदी + {n} languages inside the test",
@@ -201,7 +204,7 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     coachBodyA:
       "पूरी लंबाई के मॉक, तुरंत स्कोर और हल के साथ; PYQ-पैटर्न पेपर, टॉपिक-वार टेस्ट, और अटकने पर पूछिए ",
     coachBodyB:
-      "से। आपके स्कोर, रैंक और एक मुफ़्त रोज़-ब-रोज़ प्लान आपके अकाउंट में सेव रहते हैं। सब मुफ़्त, कोई क्रेडिट कार्ड नहीं। सामग्री AI से तैयार है और आधिकारिक अधिसूचना से मिलाकर जाँची जाती है।",
+      "से। आपके स्कोर और एक मुफ़्त रोज़-ब-रोज़ प्लान आपके अकाउंट में सेव रहते हैं। सब मुफ़्त, कोई क्रेडिट कार्ड नहीं। सामग्री AI से तैयार है और आधिकारिक अधिसूचना से मिलाकर जाँची जाती है।",
     coachButton: "मुफ़्त साइन इन करें — अभ्यास शुरू करें →",
     buildMock: "अपना मॉक खुद बनाएँ — ठीक वही टॉपिक चुनें →",
     langLine: "· हर मॉक टेस्ट के अंदर हिंदी + {n} भाषाओं में पढ़ा जा सकता है",
@@ -250,7 +253,7 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     coachBodyA:
       "వెంటనే స్కోరు, పరిష్కారాలతో పూర్తి నిడివి మాక్‌లు, PYQ-ప్యాటర్న్ పేపర్లు, టాపిక్-వారీ టెస్టులు, ఆగిపోయినప్పుడు అడగడానికి ",
     coachBodyB:
-      "ఉంది. మీ స్కోర్లు, ర్యాంకు, ఉచిత రోజువారీ ప్లాన్ మీ అకౌంట్‌లో సేవ్ అవుతాయి. అంతా ఉచితం, క్రెడిట్ కార్డ్ అవసరం లేదు. కంటెంట్ AI రూపొందించినది, అధికారిక నోటిఫికేషన్‌తో సరిచూసినది.",
+      "ఉంది. మీ స్కోర్లు, ఉచిత రోజువారీ ప్లాన్ మీ అకౌంట్‌లో సేవ్ అవుతాయి. అంతా ఉచితం, క్రెడిట్ కార్డ్ అవసరం లేదు. కంటెంట్ AI రూపొందించినది, అధికారిక నోటిఫికేషన్‌తో సరిచూసినది.",
     coachButton: "ఉచితంగా సైన్ ఇన్ చేయండి — సాధన మొదలుపెట్టండి →",
     buildMock: "మీ సొంత మాక్ తయారుచేయండి — కావలసిన టాపిక్‌లు ఎంచుకోండి →",
     // "हिंदी + {n}" = Hindi plus {n} OTHER languages (OTHER_INDIAN_LANGUAGE_COUNT);

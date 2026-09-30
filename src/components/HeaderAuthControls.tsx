@@ -30,6 +30,17 @@
 //     renders nothing (isUnder13SchoolPath; usePathname also works during
 //     SSR, so crawlers and first paint get no button either). The
 //     signed-in rail is unchanged.
+//
+// 30 Sep 2026 (sign-up build 1, founder: invitations clear and visible, not
+// small links):
+//   • the guest button reads "Sign in free" — English in the cached HTML,
+//     the reader's language (hi / te, URL prefix then cookie) after mount;
+//   • a phone tap target of 44 px (min-h-[44px], the btn-primary height)
+//     while the text stays text-xs below sm, so the row still fits 360 px;
+//   • its click is counted as the one sign-in beacon (surface "header") by
+//     the root layout's /login-link listener (src/components/AnalyticsTracker.tsx)
+//     — data-signin-surface names it. It always goes to /login: the header
+//     is not part of the skip-/login test.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -40,6 +51,8 @@ import { locales, type Locale } from "@/lib/i18n";
 import { NAV_TODAY, NAV_TODAY_TITLE } from "@/lib/study-day-copy";
 import { fetchSignedIn } from "@/lib/session-hint";
 import { isUnder13SchoolPath } from "@/lib/school/student-classes";
+import { clientUiLocale, type CopyLocale } from "@/lib/ui-locale-copy";
+import { HEADER_SIGNIN_LABEL } from "@/lib/signin-cta";
 
 // Re-exported so any import of fetchSignedIn from this file keeps working.
 // Resolves true (signed in) / false (guest) / null (probe failed).
@@ -68,6 +81,12 @@ export function HeaderAuthControls({
   const [session, setSession] = useState<SessionLite | null>(null);
   const pathname = usePathname();
   const [loginHref, setLoginHref] = useState("/login");
+  // English on the server and first paint; the reader's language after mount.
+  const [lang, setLang] = useState<CopyLocale>("en");
+  useEffect(() => {
+    setLang(clientUiLocale());
+  }, [pathname]);
+  const signinLabel = lang === "en" ? labels.signinShort : HEADER_SIGNIN_LABEL[lang];
 
   useEffect(() => {
     let alive = true;
@@ -119,8 +138,8 @@ export function HeaderAuthControls({
           </Link>
         </>
       ) : isUnder13SchoolPath(pathname) ? null : (
-        <Link rel="nofollow" href={loginHref} className="btn-primary !py-2 !px-4 text-xs sm:text-sm">
-          {labels.signinShort}
+        <Link rel="nofollow" href={loginHref} className="btn-primary min-h-[44px] whitespace-nowrap !py-2 !px-4 text-xs sm:text-sm" data-signin-surface="header">
+          {signinLabel}
         </Link>
       )}
     </>

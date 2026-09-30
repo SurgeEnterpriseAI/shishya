@@ -9,9 +9,13 @@
 // pool (instant + free — no Claude call) and drops the reader straight into
 // the player. Anonymous readers get bounced to login with a callback so the
 // intent isn't lost (lever #2 will let them taste it before the gate).
+// 30 Sep 2026 (sign-up build 1): that 401 sends the site-wide sign-in beacon
+// (surface "topic-quiz-401", src/lib/signin-cta.ts; it sent none) and names
+// its door on /login (from=).
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { loginHrefFor, signinBeacon } from "@/lib/signin-cta";
 
 interface Props {
   examCode: string;
@@ -40,7 +44,8 @@ export function TopicQuizButton({ examCode, topicCode, topicName, examShort }: P
       if (res.status === 401) {
         // Not signed in — keep the intent: return them here after login.
         const cb = `/exams/${examCode}/topics/${topicCode}`;
-        window.location.href = `/login?callbackUrl=${encodeURIComponent(cb)}`;
+        signinBeacon("topic-quiz-401", { examCode, via: "login" });
+        window.location.href = loginHrefFor(cb, "topic-quiz-401");
         return;
       }
       const data = await res.json().catch(() => ({}));

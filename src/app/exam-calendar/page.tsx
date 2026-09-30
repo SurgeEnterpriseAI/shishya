@@ -6,7 +6,7 @@
 
 import Link from "next/link";
 import type { Metadata } from "next";
-import { cache } from "react";
+import { Fragment, cache } from "react";
 import { Header } from "@/components/Header";
 import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
@@ -18,6 +18,7 @@ import { KIND_ICON, MATERIAL_NEWS_RE, buildTimeline, fmtDay, type DateKind, type
 import { sourceTier } from "@/lib/official-source";
 import { istDayNumber } from "@/lib/exam-phase";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
+import { SignupInline } from "@/components/SignupInline";
 
 export const revalidate = 1800;
 
@@ -313,12 +314,15 @@ export default async function ExamCalendarPage() {
             </ul>
           </section>
         )}
+        {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page: after this week's dates, or (none this week) after the first month — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+        {thisWeek.length > 0 && <SignupInline surface="exam-calendar" revealOffscreen />}
 
         {byMonth.size === 0 ? (
           <p className="mt-6 rounded-md border border-dashed border-ink-300 bg-white px-4 py-5 text-sm text-ink-500">{t("calendar.empty")}</p>
         ) : (
-          [...byMonth.entries()].map(([month, list]) => (
-            <section key={month} className="mt-8">
+          [...byMonth.entries()].map(([month, list], mi) => (
+            <Fragment key={month}>
+            <section className="mt-8">
               <h2 className="text-base font-semibold text-ink-800">{month}</h2>
               <div className="mt-3 overflow-x-auto rounded-xl border border-ink-200 bg-white">
                 <table className="w-full min-w-[560px] text-sm">
@@ -354,6 +358,8 @@ export default async function ExamCalendarPage() {
                 </table>
               </div>
             </section>
+            {mi === 0 && thisWeek.length === 0 && <SignupInline surface="exam-calendar" revealOffscreen />}
+            </Fragment>
           ))
         )}
 

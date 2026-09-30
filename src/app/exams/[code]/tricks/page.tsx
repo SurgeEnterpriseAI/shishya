@@ -23,7 +23,13 @@ import { ShareExamButton } from "@/components/ShareExamButton";
 import { tFor } from "@/lib/i18n-server";
 import { pilotPageLocale } from "@/lib/cache-pilot-routes";
 import { examPageGates } from "@/lib/exam-page-gates";
+// 30 Sep 2026 (sign-up build 3 review): the practice rule
+// (src/lib/exam-practice-state.ts), cached — no request-scoped read, so the
+// page stays static; a failed read claims none (never throws).
+import { examPracticeState } from "@/lib/db/exam-practice";
 import { StateExamsLink } from "@/components/StateExamsLink";
+import { SignupInline } from "@/components/SignupInline";
+import { splitAfterFirstSection } from "@/lib/content-signup";
 import { examTitleYear, yearSuffix } from "@/lib/exam-title-year";
 
 export const revalidate = 3600;
@@ -129,14 +135,22 @@ export default async function TricksPage({ params }: { params: Promise<{ code: s
   // Gates (16 Sep 2026, src/lib/exam-page-gates.ts): the "free mock" line
   // and the quiz button appear only where the exam has a question bank; a
   // failed gate read keeps both (GATES_OPEN), it never throws.
-  const [rows, gates] = await Promise.all([
+  // 30 Sep 2026 (sign-up build 3 review): + the practice state, for the
+  // sign-up line's "{exam} mocks, scores and weak topics" (only with
+  // practice). Not the buildMock gate: that one fails OPEN.
+  const [rows, gates, practice] = await Promise.all([
     prisma.$queryRaw<{ content: string }[]>`
       SELECT content FROM "ExamTricks" WHERE "examId" = ${exam.id} LIMIT 1
     `,
     examPageGates(exam.code),
+    examPracticeState(exam.code),
   ]);
   const tricksMd = rows[0]?.content;
   if (!tricksMd) notFound();
+  // 30 Sep 2026 (sign-up build 3): the guest sign-up line goes after the
+  // first section (the markdown renders in two parts, same blocks — see
+  // splitAfterFirstSection); a short article gets it after the article.
+  const tricksParts = splitAfterFirstSection(tricksMd);
   const t = tFor(locale);
 
   const url = `https://shishya.in/exams/${exam.code}/tricks`;
@@ -197,8 +211,18 @@ export default async function TricksPage({ params }: { params: Promise<{ code: s
         </div>
 
         <article className="prose prose-sm sm:prose-base mt-6 max-w-none rounded-xl border border-ink-200 bg-white p-5 sm:p-7">
-          <NotesMarkdown markdown={tricksMd} />
+          {tricksParts ? (
+            <>
+              <NotesMarkdown markdown={tricksParts[0]} />
+              {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, after the first section — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
+              <SignupInline surface="tricks" exam={exam.shortName} practice={practice.hasPractice} revealOffscreen />
+              <NotesMarkdown markdown={tricksParts[1]} />
+            </>
+          ) : (
+            <NotesMarkdown markdown={tricksMd} />
+          )}
         </article>
+        {!tricksParts && <SignupInline surface="tricks" exam={exam.shortName} practice={practice.hasPractice} revealOffscreen />}
 
         <p className="mt-3 text-xs text-ink-500">
           AI-curated from widely-used exam techniques — always sanity-check a trick on a practice

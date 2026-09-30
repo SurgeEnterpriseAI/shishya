@@ -11,9 +11,16 @@
 //
 // No auth-gated data here: the question + answer + solution are a public
 // sample, the whole point is to show the experience.
+//
+// 30 Sep 2026 (sign-up build 1): "Sign in & keep practising" is the shared
+// in-page sign-in button (src/components/SignInLink.tsx) — one
+// "signin-click" beacon (surface "hub-try-one"; it had none), from= on the
+// /login link, and the skip-/login test's direct arm.
 
 import { useState } from "react";
 import Link from "next/link";
+import { SignInLink } from "@/components/SignInLink";
+import { loginHrefFor } from "@/lib/signin-cta";
 
 interface Props {
   examCode: string;
@@ -32,7 +39,7 @@ export function TryOneQuestion({ examCode, examShortName, topicName, question }:
   const revealed = picked !== null;
   const correct = picked === question.answerKey;
 
-  const loginHref = `/login?callbackUrl=${encodeURIComponent(`/exams/${examCode}`)}`;
+  const loginHref = loginHrefFor(`/exams/${examCode}`, "hub-try-one");
 
   return (
     <div className="mt-6 rounded-xl border-2 border-saffron-300 bg-white p-5 shadow-sm sm:p-6">
@@ -117,12 +124,14 @@ export function TryOneQuestion({ examCode, examShortName, topicName, question }:
               Sign in free → adaptive mocks, PYQs, and Ask Shishya tracks your
               weak topics. No credit card.
             </p>
-            <Link
+            <SignInLink
               href={loginHref}
+              surface="hub-try-one"
+              beaconProps={{ examCode }}
               className="mt-3 inline-flex items-center justify-center rounded-lg bg-saffron-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
             >
               Sign in & keep practising →
-            </Link>
+            </SignInLink>
             {/* Lower-friction path — they just answered ONE question; 5 more
                 with no signup is the natural next step for the hesitant. */}
             <Link
