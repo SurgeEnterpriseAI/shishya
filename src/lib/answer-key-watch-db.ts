@@ -27,7 +27,7 @@ import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { GEN_SOURCE } from "@/lib/exam-data-writer";
 import { OFFICIAL_WATCH_SOURCE, SUPPRESSED_SOURCE, resolveKind } from "@/lib/exam-timeline";
 import { istDayNumber } from "@/lib/exam-phase";
-import { markerConflict, releaseVersion, sittingMarkers, sittingMarkersOf } from "@/lib/sitting-markers";
+import { examFamilyMarkers, familyOf, hasFamily, markerConflict, releaseVersion, sittingMarkers, sittingMarkersOf } from "@/lib/sitting-markers";
 import {
   RESULT_DUE_EXAM_DAYS,
   ROW_DUE_AHEAD_DAYS,
@@ -252,6 +252,10 @@ export interface WriteReleaseArgs {
   exam: { id: string; code: string; state: string | null; shortName?: string };
   release: VerifiedRelease;
   label: string;
+  /** The VERIFIED stage (VerifiedRelease.stage — what the body printed), for
+   *  the hit log and the twin filter. 1 Oct 2026: it was the tracker's latest
+   *  sitting, so a PCB result carried "PCM Group Second Attempt exam" and
+   *  would have archived the PCM estimate row. release.stage wins when set. */
   stage: string;
   cycleYear: string;
   watchId: string | null;
@@ -279,10 +283,15 @@ export interface WriteReleaseResult {
  *  provisional key archived the "Final answer key (expected)" row and a Tier 1
  *  result archived the row announcing another stage's result — information
  *  lost, not the planned upgrade. Now a twin must name no other stage /
- *  sitting than the release (its text + the sitting's label;
- *  src/lib/sitting-markers.ts) and no other version (provisional vs final
- *  key, written vs final result). Any tier: a same-stage AI row citing a
- *  coaching site IS the row the official one replaces. */
+ *  sitting than the release (its text + the VERIFIED stage — 1 Oct 2026:
+ *  never the tracker's latest sitting, which let a PCB result's "PCM Group
+ *  Second Attempt exam" archive the PCM estimate; src/lib/sitting-markers.ts)
+ *  and no other version (provisional vs final key, written vs final result).
+ *  Any tier: a same-stage AI row citing a coaching site IS the row the
+ *  official one replaces. 1 Oct 2026 (independent review of the gate fix): a
+ *  row naming a family the release does not name at all ("Tier 2 result
+ *  (expected)" beside SSC's FRTA shortlist, whose row and verified stage name
+ *  no tier) is kept — never archived on a guess. */
 export function isTwinOfRelease(
   row: { label: string },
   release: Pick<VerifiedRelease, "kind" | "text">,
@@ -290,7 +299,10 @@ export function isTwinOfRelease(
   names: readonly string[],
 ): boolean {
   const mine = sittingMarkersOf([release.text, stage], names);
-  if (markerConflict(mine, sittingMarkers(row.label, names))) return false;
+  for (const m of examFamilyMarkers(names)) mine.add(m);
+  const its = sittingMarkers(row.label, names);
+  if (markerConflict(mine, its)) return false;
+  if ([...its].some((m) => !hasFamily(mine, familyOf(m)))) return false;
   const a = releaseVersion(release.kind, release.text);
   const b = releaseVersion(release.kind, row.label);
   return !(a && b && a !== b);
@@ -309,7 +321,14 @@ async function twinIds(db: WatchDb, a: WriteReleaseArgs): Promise<string[]> {
     select: { id: true, kind: true, label: true, isExamDay: true },
   });
   const names = [a.exam.shortName ?? a.exam.code.replace(/_/g, " ")];
-  return gen.filter((g) => resolveKind(g) === release.kind && isTwinOfRelease(g, release, a.stage, names)).map((g) => g.id);
+  const stage = verifiedStageOf(a);
+  return gen.filter((g) => resolveKind(g) === release.kind && isTwinOfRelease(g, release, stage, names)).map((g) => g.id);
+}
+
+/** The stage a write may use: the gate's verified one when the release
+ *  carries it (1 Oct 2026), else the caller's. */
+function verifiedStageOf(a: WriteReleaseArgs): string {
+  return typeof a.release.stage === "string" ? a.release.stage : a.stage;
 }
 
 export async function writeRelease(db: WatchDb, a: WriteReleaseArgs): Promise<WriteReleaseResult> {
@@ -360,7 +379,7 @@ export async function writeRelease(db: WatchDb, a: WriteReleaseArgs): Promise<Wr
       INSERT INTO "OfficialWatchHit" (id, "examId", "watchId", kind, url, "listingUrl", host, "anchorText", "releasedOn", "dateSource", via,
         "dateRowId", "isPdf", "cycleYear", stage, "importStatus", "importNote", "createdAt")
       VALUES (${crypto.randomUUID()}, ${exam.id}, ${a.watchId}, ${r.kind}, ${r.url}, ${r.listingUrl ?? ""}, ${r.host}, ${r.text || r.anchorText},
-        ${r.releasedOn}, ${r.dateSource}, ${via}, ${row.id}, ${r.isPdf}, ${a.cycleYear}, ${a.stage},
+        ${r.releasedOn}, ${r.dateSource}, ${via}, ${row.id}, ${r.isPdf}, ${a.cycleYear}, ${verifiedStageOf(a)},
         ${needsImport ? "needs-import" : "n/a"}, ${i === 0 ? null : "sibling link of the same release"}, ${a.now})
       ON CONFLICT ("examId", url) DO NOTHING`;
   }

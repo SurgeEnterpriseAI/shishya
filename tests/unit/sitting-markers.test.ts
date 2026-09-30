@@ -4,7 +4,7 @@
 // SBI PO rows on 30 Sep 2026) and the bodies' printed wording. No DB.
 
 import { describe, it, expect } from "vitest";
-import { hasFamily, markerConflict, releaseVersion, sittingMarkers, sittingMarkersOf } from "@/lib/sitting-markers";
+import { examFamilyMarkers, hasFamily, markerConflict, markerSpans, releaseVersion, sittingMarkers, sittingMarkersOf, stripMarkerSpans } from "@/lib/sitting-markers";
 
 const m = (text: string, names: string[] = []) => [...sittingMarkers(text, names)].sort();
 
@@ -75,7 +75,91 @@ describe("markerConflict — both sides name the family and share nothing", () =
   });
 });
 
+// 1 Oct 2026 (the dry crawl of 30 Sep): MHT-CET's PCB second-attempt result
+// was labelled PCM and grouped with the PCM / PCB first-attempt notes and the
+// Nursing and DPN/PHN CET results of the same State CET Cell page. The rows
+// and file names below are that page's own.
+describe("group / attempt / cet — the families of a body that runs several CETs", () => {
+  it("PCM / PCB subject group; never a numbered 'Group 2' / 'Group-IV' (an exam or a post), never PCMB", () => {
+    expect(m("MHT-CET (PCB Group) Result Summary :MHT-CET 2026 ((PCB ) Second Attempt)")).toEqual(["attempt:2", "cet:mht", "group:pcb"]);
+    expect(m("MHT-CET 2026 ((PCM ) First Attempt)) Result Summary")).toEqual(["attempt:1", "cet:mht", "group:pcm"]);
+    expect(m("Press-Note-MHT-CET-PCB-Group-2nd-Attempt-2026")).toEqual(["attempt:2", "cet:mht", "group:pcb"]);
+    expect(m("TSPSC Group-II Services Preliminary Key")).toEqual([]);
+    expect(m("KCET PCMB rank list")).toEqual([]);
+  });
+  it("attempt numbers, before or after the word", () => {
+    expect(m("Notification PCB 1st-Attempt Result")).toEqual(["attempt:1", "group:pcb"]);
+    expect(m("Result of Attempt-II")).toEqual(["attempt:2"]);
+    expect(m("Examination 2026 — 1st shift")).toEqual([]);
+  });
+  it("which CET: MHT-CET, Nursing, DPN/PHN, B.Ed, LL.B / Law, MBA/MMS; the AP / TS one-word CETs", () => {
+    expect(m("MH – DPN/PHN CET NOTICE NO. 09: MH – DPN/PHN CET-2026 DECLARATION OF RESULT")).toEqual(["cet:dpn-phn"]);
+    expect(m("MH – NURSING CET NOTICE NO. 09: MH – NURSING CET-2026 DECLARATION OF RESULT")).toEqual(["cet:nursing"]);
+    expect(m("MAH-B.Ed-CET 2026 result")).toEqual(["cet:bed"]);
+    expect(m("MAH-B.P.Ed-CET 2026 result")).toEqual(["cet:bped"]);
+    expect(m("MAH-LL.B.(3 Yrs.)-CET 2026 result")).toEqual(["cet:law"]);
+    expect(m("MAH-MBA/MMS-CET 2026 score card")).toEqual(["cet:mba"]);
+    expect(m("AP EAPCET 2026 results")).toEqual(["cet:eapcet"]);
+    expect(m("TS EAMCET 2025 results")).toEqual(["cet:eapcet"]);
+    expect(m("TS LAWCET 2026 preliminary key")).toEqual(["cet:law"]);
+  });
+  it("conflicts: PCB vs PCM, first vs second attempt, Nursing CET vs MHT-CET", () => {
+    const due = sittingMarkersOf(["PCB Group Second Attempt exam", "PCM Group Second Attempt exam"]);
+    for (const x of examFamilyMarkers(["MHT-CET", "Maharashtra Common Entrance Test (MHT-CET)"])) due.add(x);
+    expect(markerConflict(due, sittingMarkers("MHT-CET 2026 (PCB Group First Attempt)"))).toBe("attempt");
+    expect(markerConflict(due, sittingMarkers("MH – NURSING CET-2026 DECLARATION OF RESULT"))).toBe("cet");
+    expect(markerConflict(due, sittingMarkers("MHT-CET 2026 ((PCB ) Second Attempt)"))).toBeNull();
+    expect(markerConflict(sittingMarkersOf(["PCB Group Second Attempt exam"]), sittingMarkers("Result for PCM Second Attempt"))).toBe("group");
+  });
+  it("examFamilyMarkers takes only the CET from an exam's names — never a stage its name carries", () => {
+    expect([...examFamilyMarkers(["MHT-CET", "Maharashtra Common Entrance Test (MHT-CET)"])]).toEqual(["cet:mht"]);
+    expect([...examFamilyMarkers(["SSC CHSL", "SSC Combined Higher Secondary Level (Tier 1)"])]).toEqual([]);
+  });
+});
+
+// 1 Oct 2026 (independent review of the gate fix): the verified stage
+// compares only a marker's own span as a marker; every other word of a
+// tracker label is a claim the body must print.
+describe("markerSpans / stripMarkerSpans — exactly what sittingMarkers reads", () => {
+  const strip = (t: string, names: string[] = []) => stripMarkerSpans(t, names).replace(/\s+/g, " ").trim();
+  it("strips the marker spans, keeps every other word", () => {
+    expect(strip("CEN 01/2025 CBT 2 Exam")).toBe("exam");
+    expect(strip("PCB Group Second Attempt exam")).toBe("group exam");
+    expect(strip("SSC CGL 2025 Tier-II exam")).toBe("ssc cgl 2025 exam");
+    expect(strip("Preliminary Examination")).toBe("examination");
+    expect(strip("MHT-CET 2026 ((PCB ) Second Attempt)")).toBe("2026 (( ) )");
+    expect(strip("NDA 2 2026 exam", ["NDA"])).toBe("2026 exam");
+  });
+  it("ordinal words, numbers and CET-ish words no marker read stay (they are claims)", () => {
+    expect(strip("CUET UG 2026 Second Phase exam")).toBe("cuet ug 2026 second phase exam");
+    expect(strip("CTET Paper 2 exam")).toBe("ctet paper 2 exam");
+    expect(strip("MP TET Varg 3 2026 exam")).toBe("mp tet varg 3 2026 exam");
+    expect(strip("Nursing college result")).toBe("nursing college result");
+    expect(strip("Nursing CET result")).toBe("result");
+    // "Paper (I)" is no sitting ordinal → kept; "Varg (2)" is → only the bracket goes.
+    expect(strip("Answer key Paper (I)")).toBe("answer key paper (i)");
+    expect(strip("Varg (2) result")).toBe("varg result");
+    // "Preliminary Key" is a provisional key, not the prelims: kept.
+    expect(strip("Preliminary Key of Group-II")).toBe("preliminary key of group-ii");
+  });
+  it("spans are merged, sorted and line up with the normalised text", () => {
+    const { text, spans } = markerSpans("Tier-I & II  result  (CBT 2)");
+    expect(text).toBe("tier-i & ii result (cbt 2)");
+    expect(spans.map(([a, b]) => text.slice(a, b))).toEqual(["tier-i & ii", "cbt 2"]);
+  });
+  it("every text whose markers are non-empty loses them all once stripped", () => {
+    for (const t of ["Answer key — CBT 2 Undergraduate (CEN 07/2025)", "Combined Defence Services Examination (II), 2026", "MH – DPN/PHN CET-2026", "Attempt-II result", "UPSC CSE Mains result"]) {
+      expect(sittingMarkers(t).size).toBeGreaterThan(0);
+      expect([...sittingMarkers(stripMarkerSpans(t))]).toEqual([]);
+    }
+  });
+});
+
 describe("releaseVersion", () => {
+  it("UPPRPB's spelling of final ('अन्तिम चयन परिणाम') is final (1 Oct 2026)", () => {
+    expect(releaseVersion("RESULT", "उपनिरीक्षक … सीधी भर्ती – 2025 के अन्तिम चयन परिणाम की सूचना")).toBe("final");
+    expect(releaseVersion("ANSWER_KEY", "अनन्तिम उत्तर कुंजी")).toBe("provisional");
+  });
   it("provisional vs final key; written vs final result; neither or both → null", () => {
     expect(releaseVersion("ANSWER_KEY", "Provisional Answer Key")).toBe("provisional");
     expect(releaseVersion("ANSWER_KEY", "Tentative answer keys")).toBe("provisional");

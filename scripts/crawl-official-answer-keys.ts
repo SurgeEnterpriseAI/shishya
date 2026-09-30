@@ -31,6 +31,12 @@
 //      180 days) go through releaseGate (src/lib/answer-key-watch.ts) — AND,
 //      on this first read, must carry a date printed beside the link: with no
 //      baseline yet, an undated link cannot be told from an older cycle's.
+//      1 Oct 2026 (the dry crawl of 30 Sep: 6 releases, 1 right): the exam is
+//      named only as a phrase; verified links are grouped into releases
+//      (groupReleases — siblings name the exam on their own row, no other
+//      stage / group / attempt / CET, same printed day or row); each label
+//      names only what the body printed (verifiedStage). The report prints
+//      each release's row and siblings so a human can check them.
 //   4. Answer-key PDFs → importer JSON (<out>/papers/<CODE>.json) for
 //      scripts/import-official-papers.ts --dir <out>/papers (its own checks).
 //
@@ -76,15 +82,18 @@ import {
   crawlResearchStep,
   examNamed,
   examTermsFor,
+  groupReleases,
   kindMatches,
   latestHeldSitting,
   looksLikePdf,
   normLink,
   officialHostsFor,
   parsePrintedDates,
+  pickReleaseDay,
   releaseGate,
   releaseLabel,
   releasedSince,
+  termsPrinted,
   type FetchMode,
   type GateContext,
   type TrackerRowLite,
@@ -145,7 +154,10 @@ interface ExamVerification {
   code: string;
   pass: boolean;
   watches: WatchPlan[];
-  releases: { kind: WatchKind; release: VerifiedRelease; siblings: VerifiedRelease[]; label: string; stage: string; cycleYear: string }[];
+  /** 1 Oct 2026: one entry per release (groupReleases), its label and stage
+   *  from the body's own words (VerifiedRelease.stage), never the tracker's
+   *  latest sitting unverified. */
+  releases: { kind: WatchKind; release: VerifiedRelease; siblings: VerifiedRelease[]; label: string; stage: string; stageFrom: string; cycleYear: string }[];
   rejected: { kind: WatchKind; url: string; reason: string }[];
   papers: { year: string; paper: string; kind: "answer key"; url: string; listingUrl: string; publisher: string }[];
   notes: string[];
@@ -175,8 +187,10 @@ async function verifyExam(
   const read = async (url: string, kind: WatchKind): Promise<ListingRead> => (await listingReads.read(url, kind, watchFetch, { portalUrl: exam.portalUrl })).read;
   /** The research's terms the page itself prints (its text, as the crawl
    *  always checked; SSC: the records' headlines). Only served text: the
-   *  adapters never put a heading of their own into it. */
-  const termsOn = (r: ListingRead) => research.examTerms.filter((t) => examNamed(r.pageText, examTermsFor({ shortName: t, name: t })));
+   *  adapters never put a heading of their own into it. 1 Oct 2026: as a
+   *  phrase, in the text or in one of the adapter's rows (termsPrinted —
+   *  RRB prints the CEN under its "CEN Number" header). */
+  const termsOn = (r: ListingRead) => termsPrinted(research.examTerms, r);
 
   for (const kind of KINDS) {
     // The research's listing, the body's own listings (bodyListingsFor), and —
@@ -211,6 +225,7 @@ async function verifyExam(
             lastExamDay: sitting.lastDay,
             sittingLabels: sitting.sittingLabels,
             ordinalNames: [exam.shortName],
+            examNames: [exam.name],
             otherSittingThisYear: sitting.otherSittingThisYear,
             known,
             baselined: false,
@@ -220,6 +235,9 @@ async function verifyExam(
         : null;
     const verified: { r: VerifiedRelease; listingUrl: string }[] = [];
     const tried = new Set<string>();
+    /** Every research term a listing of this kind printed — the grouping
+     *  step's terms (a sibling must name the exam on its own row). */
+    const kindTerms = new Set<string>();
     let loginLinks = 0;
     /** Gates 1, 3, 4 and 5 first (no request for an old cycle's link), then
      *  our own fetch and the full gate. */
@@ -232,8 +250,14 @@ async function verifyExam(
       const pre = releaseGate(c, ctx, { status: 200, contentType: looksLikePdf(l.url, null) ? "application/pdf" : "text/html", head: "%PDF-", finalUrl: null });
       if (!pre.ok) {
         // Old cycles are expected here (the whole page is read for the first
-        // time); an undated link fails gate 5 (baselined: false).
+        // time); an undated link fails gate 5 (baselined: false). 1 Oct 2026:
+        // a gate-3 refusal dated inside the current window (after the sitting,
+        // by today) is a near miss — reported with its reason, so a human sees
+        // why another recruitment's row was not taken for this exam's.
         if (pre.gate !== 3) out.rejected.push({ kind, url: l.url, reason: `gate ${pre.gate}: ${pre.reason}` });
+        else if (pickReleaseDay(`${l.anchorText} ${l.rowText}`, ctx.notBefore, ctx.now, ctx.lastExamDay).source === "printed") {
+          out.rejected.push({ kind, url: l.url, reason: `gate 3: ${pre.reason} (dated inside the current window: ${l.rowText.slice(0, 140)})` });
+        }
         return;
       }
       const fetched = await watchFetch(l.url, { maxBytes: 65_536 });
@@ -266,6 +290,7 @@ async function verifyExam(
       const heading = r.heading;
       // Terms the page itself prints — the research's other words are dropped.
       const verifiedTerms = termsOn(r);
+      for (const t of verifiedTerms) kindTerms.add(t);
       const terms = examTermsFor(exam, verifiedTerms);
       // Readable, but nothing of the kind on it: "empty" — never browser-only.
       const fetchMode: FetchMode = kindLinks.length > 0 ? "html" : "empty";
@@ -328,32 +353,43 @@ async function verifyExam(
           out.rejected.push({ kind, url: c.url, reason: `the page it was proposed with does not link it (as we read it: ${lp.status})` });
           continue;
         }
-        const terms = examTermsFor(exam, termsOn(lp));
+        const onPage = termsOn(lp);
+        for (const t of onPage) kindTerms.add(t);
+        const terms = examTermsFor(exam, onPage);
         const single = lp.heading && examNamed(lp.heading, terms) ? lp.heading : null;
         await tryCandidate(hit, c.listingUrl, ctxFor(terms, single)!);
       }
     }
 
     if (sitting && verified.length) {
-      const [first, ...rest] = verified.map((v) => v.r);
-      out.releases.push({
-        kind,
-        release: first,
-        siblings: rest,
-        label: releaseLabel(kind, first.text, sitting.stage),
-        stage: sitting.stage,
-        cycleYear: sitting.cycleYears[sitting.cycleYears.length - 1] ?? "",
-      });
-      if (kind === "ANSWER_KEY") {
-        for (const v of verified.filter((x) => x.r.isPdf)) {
-          out.papers.push({
-            year: out.releases[out.releases.length - 1].cycleYear,
-            paper: v.r.text.slice(0, 200) || "Answer key",
-            kind: "answer key",
-            url: v.r.url,
-            listingUrl: v.listingUrl,
-            publisher: v.r.host,
-          });
+      // 1 Oct 2026: one release per group (a sibling names the exam on its own
+      // row, no other stage / group / attempt / CET, and shares the printed
+      // day or the row); label and stage from the body's words.
+      const { groups, held } = groupReleases(verified, (v) => v.r, ctxFor(examTermsFor(exam, [...kindTerms]), null)!);
+      for (const h of held) out.rejected.push({ kind, url: h.item.r.url, reason: `verified, not written: ${h.reason}` });
+      const cycleYear = sitting.cycleYears[sitting.cycleYears.length - 1] ?? "";
+      for (const g of groups) {
+        const first = g.release.r;
+        out.releases.push({
+          kind,
+          release: first,
+          siblings: g.siblings.map((s) => s.r),
+          label: releaseLabel(kind, first.text, first.stage),
+          stage: first.stage ?? "",
+          stageFrom: first.stageFrom ?? "none",
+          cycleYear,
+        });
+        if (kind === "ANSWER_KEY") {
+          for (const v of [g.release, ...g.siblings].filter((x) => x.r.isPdf)) {
+            out.papers.push({
+              year: cycleYear,
+              paper: v.r.text.slice(0, 200) || "Answer key",
+              kind: "answer key",
+              url: v.r.url,
+              listingUrl: v.listingUrl,
+              publisher: v.r.host,
+            });
+          }
         }
       }
     }
@@ -491,10 +527,24 @@ async function main() {
       report.push(v);
       console.log(`\n== ${e.code}: ${v.pass ? "PASS" : "FAIL"}`);
       for (const w of v.watches) console.log(`   ${w.kind} ${modeLabel(w)} ${w.listingUrl}${w.proposedBy === "body" ? " (body's listing)" : ""} — ${w.status}${w.lagDays !== null ? ` · last-cycle lag ${w.lagDays} d (${w.lastCycle?.dateSource})` : ""}`);
-      for (const r of v.releases) console.log(`   RELEASE ${r.kind} ${r.release.releasedOn.toISOString().slice(0, 10)} ${r.release.url} — "${r.label}"${r.siblings.length ? ` (+${r.siblings.length} sibling links)` : ""}`);
+      for (const r of v.releases) {
+        console.log(
+          `   RELEASE ${r.kind} ${r.release.releasedOn.toISOString().slice(0, 10)} ${r.release.url} — "${r.label}"${r.siblings.length ? ` (+${r.siblings.length} sibling links)` : ""} · stage from ${r.stageFrom === "sitting" ? "a sitting label the row names" : r.stageFrom === "body" ? "the body's own title" : "nothing (none verified)"}`,
+        );
+        console.log(`       row: ${r.release.text.slice(0, 300)}`);
+        for (const s of r.siblings) console.log(`       + sibling ${s.releasedOn.toISOString().slice(0, 10)} ${s.url} — ${s.text.slice(0, 160)}`);
+      }
       for (const r of v.rejected.slice(0, 8)) console.log(`   x ${r.kind} ${r.url}: ${r.reason}`);
       for (const n of v.notes) console.log(`   · ${n}`);
-      if (v.papers.length) writeFileSync(join(outDir, "papers", `${e.code}.json`), JSON.stringify({ exam: e.code, papers: v.papers }, null, 2));
+      const papersPath = join(outDir, "papers", `${e.code}.json`);
+      if (v.papers.length) writeFileSync(papersPath, JSON.stringify({ exam: e.code, papers: v.papers }, null, 2));
+      else if (existsSync(papersPath)) {
+        // 1 Oct 2026: a --resume run left the 30 Sep file in place, so the
+        // importer would still have read GPSC's District Education Officer key
+        // as GJ_GPSC_CLASS12's paper. This run verified none: the list is emptied.
+        writeFileSync(papersPath, JSON.stringify({ exam: e.code, papers: [] }, null, 2));
+        console.log(`   · papers/${e.code}.json from an earlier run emptied: this run verified no answer-key PDF`);
+      }
 
       if (apply) {
         for (const w of v.watches) {

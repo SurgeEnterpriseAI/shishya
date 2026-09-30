@@ -445,7 +445,12 @@ describe("official listing adapters in the run", () => {
     expect(s.writes[0].release).toMatchObject({ url: sscKey, listingUrl: "https://ssc.gov.in/home/answer-key", dateSource: "first-seen" });
     expect(s.writes[0].release.note).not.toMatch(/printed beside the link/);
     expect(s.writes[0].release.releasedOn.toISOString().slice(0, 10)).toBe("2026-09-30");
-    expect(s.writes[0].label).toBe("Answer key (provisional) — Stenographer Grade C and D 2026 skill-free CBE");
+    // 1 Oct 2026: this pinned the tracker's label ("… 2026 skill-free CBE"),
+    // words SSC's headline never prints. The label now names only the body's
+    // own title ("Stenographer Grade C and D Examination 2026 : Uploading of
+    // Tentative Answer Keys …" — the part after the colon only restates the key).
+    expect(s.writes[0].label).toBe("Answer key (provisional) — Stenographer Grade C and D Examination 2026");
+    expect(s.writes[0].stage).toBe("Stenographer Grade C and D Examination 2026");
     expect(r.pagesFetched).toBe(1);
     expect(s.marked[0]).toMatch(/^w-ssc:ok: 10 links, 10 new answer-key links$/);
   });
@@ -541,14 +546,50 @@ describe("official listing adapters in the run", () => {
   });
 });
 
-// 1 Oct 2026: the scheduled runs report only while WATCH_WRITES_PAUSED is true
+// 1 Oct 2026 (the dry crawl of 30 Sep): labels named the tracker's latest
+// sitting whatever the row said, and every verified link was the first one's
+// sibling. The writer now gets the gate's verified stage, one release per
+// group (siblings: own-named, no other stage, same printed day or row).
+describe("labels, stages and siblings come from the body's rows", () => {
+  it("a tracker 'Typing Test' the row never names is not the label; another day's key is its own release", async () => {
+    const ex = exam(1, 5);
+    ex.rows[0].label = "EX1 2026 Typing Test";
+    const d2 = isoAgo(2).split("-").reverse().join("/");
+    const d1 = isoAgo(1).split("-").reverse().join("/");
+    const listing = html(`<table>
+      <tr><td>EX1 2026 exam — Provisional Answer Key</td><td><a href="/keys/ex1-2026.pdf">Download</a></td><td>${d2}</td></tr>
+      <tr><td>EX1 2026 — Response sheet</td><td><a href="/keys/ex1-2026-resp.pdf">Download</a></td><td>${d2}</td></tr>
+      <tr><td>EX1 2026 Paper 2 — Answer Key</td><td><a href="/keys/ex1-2026-p2.pdf">Download</a></td><td>${d1}</td></tr>
+    </table>`);
+    const s = setup({
+      exams: [ex],
+      watches: [watch(1)],
+      pages: {
+        "https://board1.gov.in/answer-keys": listing,
+        "https://board1.gov.in/keys/ex1-2026.pdf": pdf,
+        "https://board1.gov.in/keys/ex1-2026-resp.pdf": pdf,
+        "https://board1.gov.in/keys/ex1-2026-p2.pdf": pdf,
+      },
+    });
+    const r = await run("check", s.deps, { dry: true });
+    expect(s.writes).toHaveLength(2);
+    expect(s.writes[0]).toMatchObject({ label: "Answer key (provisional) — EX1 2026 exam", stage: "EX1 2026 exam" });
+    expect(s.writes[0].siblings!.map((x) => x.url)).toEqual(["https://board1.gov.in/keys/ex1-2026-resp.pdf"]);
+    expect(s.writes[1]).toMatchObject({ label: "Answer key — EX1 2026 Paper 2", stage: "EX1 2026 Paper 2" });
+    expect(s.writes.map((w) => w.label).join(" ")).not.toMatch(/typing/i);
+    expect(r.released).toHaveLength(2);
+  });
+});
+
+// 1 Oct 2026: the scheduled runs report only while WATCH_WRITES_PAUSED is true;
+// writes came back on after the re-verified dry report was read by hand.
 // (the dry crawl's labels and exam naming were wrong on 5 of 6 releases).
-describe("writes paused until the gate fix ships", () => {
-  it("the cron handler forces a dry run while paused", async () => {
+describe("the writes switch", () => {
+  it("the cron handler forces a dry run whenever the switch is on", async () => {
     const fs = await import("node:fs");
     const src = fs.readFileSync("src/lib/answer-key-watch-run.ts", "utf8");
     expect(src).toContain(`const dry = q.get("dry") === "1" || WATCH_WRITES_PAUSED;`);
     const { WATCH_WRITES_PAUSED } = await import("@/lib/answer-key-watch");
-    expect(WATCH_WRITES_PAUSED).toBe(true);
+    expect(WATCH_WRITES_PAUSED).toBe(false);
   });
 });

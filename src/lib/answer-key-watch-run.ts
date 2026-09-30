@@ -45,6 +45,7 @@ import {
   WATCH_WRITES_PAUSED,
   classifyLink,
   examTermsFor,
+  groupReleases,
   isoOfDay,
   kindMatches,
   looksLikePdf,
@@ -432,6 +433,7 @@ export async function runAnswerKeyWatch(opts: WatchRunOptions, deps: WatchRunDep
     lastExamDay: d.lastExamDay,
     sittingLabels: d.sittingLabels,
     ordinalNames: [exam.shortName],
+    examNames: [exam.name],
     otherSittingThisYear: d.otherSittingThisYear,
     known: knownOf(d.examId),
     baselined: !!watch && watch.baselineLinks.length > 0,
@@ -439,35 +441,44 @@ export async function runAnswerKeyWatch(opts: WatchRunOptions, deps: WatchRunDep
     now,
   });
 
-  /** Gate + write one (exam, kind): the first verified candidate is the
-   *  release; the other verified links of the same run are its siblings. */
+  /** Gate + write one (exam, kind). 1 Oct 2026 (groupReleases): a verified
+   *  link is a sibling of a release only when its own row names the exam, it
+   *  names no other stage / group / attempt / CET, and it shares the
+   *  release's printed day or row; another own-named release is written as
+   *  its own; the rest are reported, not written. Labels and the twin filter
+   *  use the gate's verified stage (the body's words), never d.stage. */
   const settle = async (d: DueItem, exam: DueExamRecord, verified: { r: VerifiedRelease; watchId: string | null }[]) => {
     if (verified.length === 0) return;
-    const [first, ...rest] = verified;
-    const res = await deps.writeRelease({
-      exam: { id: exam.examId, code: exam.code, state: exam.state, shortName: exam.shortName },
-      release: first.r,
-      label: releaseLabel(d.kind, first.r.text, d.stage),
-      stage: d.stage,
-      cycleYear: d.cycleYears[d.cycleYears.length - 1] ?? "",
-      watchId: first.watchId,
-      siblings: rest.map((x) => x.r),
-      now,
-      dry: opts.dry,
-      indexNow: !opts.dry && opts.indexNow !== false,
-    });
-    for (const v of verified) knownOf(d.examId).add(normLink(v.r.url));
-    report.released.push({
-      code: d.code,
-      kind: d.kind,
-      url: first.r.url,
-      releasedOn: first.r.releasedOn.toISOString().slice(0, 10),
-      dateSource: first.r.dateSource,
-      via: first.r.via,
-      status: res.status,
-      reason: res.reason,
-      archivedTwins: res.archivedTwins,
-    });
+    const { groups, held } = groupReleases(verified, (x) => x.r, contextFor(d, exam, null));
+    for (const h of held) reject(d, h.item.r.url, 3, `verified, not written: ${h.reason}`, h.item.r.via);
+    for (const g of groups) {
+      const first = g.release;
+      const stage = first.r.stage ?? "";
+      const res = await deps.writeRelease({
+        exam: { id: exam.examId, code: exam.code, state: exam.state, shortName: exam.shortName },
+        release: first.r,
+        label: releaseLabel(d.kind, first.r.text, stage),
+        stage,
+        cycleYear: d.cycleYears[d.cycleYears.length - 1] ?? "",
+        watchId: first.watchId,
+        siblings: g.siblings.map((x) => x.r),
+        now,
+        dry: opts.dry,
+        indexNow: !opts.dry && opts.indexNow !== false,
+      });
+      for (const v of [first, ...g.siblings]) knownOf(d.examId).add(normLink(v.r.url));
+      report.released.push({
+        code: d.code,
+        kind: d.kind,
+        url: first.r.url,
+        releasedOn: first.r.releasedOn.toISOString().slice(0, 10),
+        dateSource: first.r.dateSource,
+        via: first.r.via,
+        status: res.status,
+        reason: res.reason,
+        archivedTwins: res.archivedTwins,
+      });
+    }
   };
 
   /** Our fetch of one candidate link, then the gate. Returns the failing

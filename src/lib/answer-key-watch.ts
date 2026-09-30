@@ -50,6 +50,17 @@
 //          script-built page, a page only the AI named) needs the printed
 //          date: an undated link there cannot be told from an older cycle's.
 //     AI output never writes by itself: its URLs go through the same gate.
+//     1 Oct 2026 (the dry crawl of 30 Sep: 6 current releases, 1 right): the
+//     exam is named only by a PHRASE (examNamed — a term's words in order and
+//     adjacent; a class / stage / place / body word is never a term's only
+//     distinctive word); the exam's own CET ("MHT-CET") joins the due
+//     sitting's markers.
+//   • verifiedStage / releaseLabel — a label names only what the body printed
+//     (a sitting label whose markers and words the body's text names, else
+//     the body's own title), never our tracker's latest sitting unverified.
+//   • groupReleases — a sibling names the exam on its own row, no other
+//     stage / group / attempt / CET than the release, and shares its printed
+//     day or row; another own-named release is its own; the rest are held.
 //   • AiBudget — the per-run hard cap, charged BEFORE each call (the
 //     exam-refresh-run pattern) and trued up to the recorded cost after it.
 //
@@ -63,7 +74,7 @@ import { asciiDigits, yearPrinted } from "@/lib/official-papers";
 import { isOfficialSource } from "@/lib/official-source";
 import { OFFICIAL_BODIES } from "@/lib/official-domains";
 import { istDayNumber } from "@/lib/exam-phase";
-import { hasFamily, markerConflict, sittingMarkers, sittingMarkersOf } from "@/lib/sitting-markers";
+import { examFamilyMarkers, familyOf, hasFamily, markerConflict, markerSpans, sittingMarkers, sittingMarkersOf } from "@/lib/sitting-markers";
 import {
   FIRST_SEEN_NOTE_PREFIX,
   OFFICIAL_WATCH_SOURCE,
@@ -121,8 +132,13 @@ export type WatchMode = "plan" | "check" | "evening";
  *  came from the latest sitting on our tracker, not the body's row ("PET"
  *  for a final selection result, "PCM" for a PCB result), and word-bag exam
  *  naming let "Gujarat Administrative Service, Class-I" match another GPSC
- *  recruitment's row. Flip to false only in the commit that fixes both. */
-export const WATCH_WRITES_PAUSED = true;
+ *  recruitment's row. Both are fixed (verifiedStage, phrase examNamed,
+ *  groupReleases). 1 Oct 2026: the re-verified dry report (crawl-2026-09-30-
+ *  reverify2: 4 releases, each checked by hand against the body's row — RRB ALP
+ *  CBT-2 key, SSC CHSL FRTA shortlist, UP SI final selection, MHT-CET PCB 2nd
+ *  attempt; GPSC refused) was read, so writes are back on. Set true again to
+ *  make every scheduled run report-only. */
+export const WATCH_WRITES_PAUSED = false;
 
 export const RUN_AI_CAP_USD: Readonly<Record<WatchMode, number>> = { plan: 3.0, check: 0, evening: 0.9 };
 export const RUN_AI_MAX_EXAMS: Readonly<Record<WatchMode, number>> = { plan: 20, check: 0, evening: 6 };
@@ -234,12 +250,51 @@ export function kindMatches(kind: WatchKind, c: LinkClass): boolean {
   return kind === "ANSWER_KEY" ? c.ak : c.result;
 }
 
-/** Words that name no exam by themselves. */
+/** Words that name no exam by themselves — skipped on both sides when a
+ *  term is matched ("Gujarat Administrative Service, Class-I" reads as
+ *  "gujarat administrative class 1"). */
 const GENERIC_TERMS = new Set([
   "exam", "exams", "examination", "examinations", "test", "tests", "recruitment", "result", "results", "answer", "key",
   "keys", "notice", "notices", "provisional", "final", "board", "commission", "service", "services", "public", "staff",
   "selection", "india", "indian", "state", "level", "post", "posts", "paper", "the", "and", "of", "for", "cbt", "online",
+  // 1 Oct 2026 (review of the gate fix): RRB prints "CEN No. 01/2025" as
+  // often as "CEN 01/2025" — "no" broke the phrase; "Advt. No." likewise.
+  "no", "advt",
 ]);
+
+/** 1 Oct 2026 (the dry crawl of 30 Sep): words that say which class / stage /
+ *  level / group / attempt of an exam — or where, or who conducts it — but
+ *  never WHICH exam. They stay in a term's phrase (in order, adjacent) but are
+ *  never its only distinctive words: "Gujarat Administrative Service,
+ *  Class-I" matched a District Education Officer row (Gujarat …, Class-1,
+ *  (Administrative Branch)) as a bag of words, and "GPSC Class 1-2" matched a
+ *  Law Officer row (… in GPSC | Class-2 | … 1 [vacancy]). */
+const STAGE_WORDS = new Set([
+  "class", "prelim", "prelims", "preliminary", "mains", "main", "tier", "phase", "stage", "group", "grade", "paper", "written",
+  "interview", "attempt", "first", "second", "third",
+]);
+const PLACE_WORDS = new Set([
+  "andhra", "pradesh", "telangana", "karnataka", "kerala", "tamil", "nadu", "tamilnadu", "maharashtra", "gujarat", "rajasthan",
+  "uttar", "madhya", "bihar", "jharkhand", "odisha", "orissa", "west", "bengal", "assam", "punjab", "haryana", "himachal",
+  "uttarakhand", "chhattisgarh", "goa", "delhi", "jammu", "kashmir", "ladakh", "manipur", "meghalaya", "mizoram", "nagaland",
+  "sikkim", "tripura", "arunachal", "puducherry", "pondicherry", "chandigarh", "up", "mp", "ap", "hp", "uk", "tn", "wb", "jk",
+  "cg", "ts", "tg", "mh", "gj", "rj", "ka", "kl", "hr", "pb", "od", "br", "jh", "उत्तर", "प्रदेश", "मध्य", "बिहार", "राजस्थान",
+  "गुजरात", "महाराष्ट्र", "हरियाणा", "झारखंड", "छत्तीसगढ़", "ఆంధ్ర", "ప్రదేశ్", "తెలంగాణ",
+]);
+/** Conducting bodies named by acronym (the commissions / boards / agencies
+ *  that run many exams). Plus every "…psc" and "…ssc" / "…ssb" / "…sssb". */
+const BODY_WORDS = new Set([
+  "rrb", "rrc", "ibps", "nta", "nbe", "nbems", "cbse", "sbi", "rbi", "lic", "nabard", "epfo", "esic", "uppbpb", "upprpb",
+  "mpesb", "vyapam", "kea", "tnusrb", "cetcell",
+]);
+function isBodyWord(w: string): boolean {
+  return BODY_WORDS.has(w) || /^[a-z]{0,5}psc$/.test(w) || /^[a-z]{0,5}ss[bc]$/.test(w);
+}
+/** A word that tells one exam from another: not generic, not a stage /
+ *  place / body word, not a number. */
+function isDistinctive(w: string): boolean {
+  return !!w && !GENERIC_TERMS.has(w) && !STAGE_WORDS.has(w) && !PLACE_WORDS.has(w) && !isBodyWord(w) && !/^\d+$/.test(w);
+}
 
 const ROMAN: Record<string, string> = { i: "1", ii: "2", iii: "3", iv: "4", v: "5", vi: "6", vii: "7", viii: "8", ix: "9", x: "10" };
 
@@ -256,37 +311,72 @@ function normText(s: string): string {
   return ` ${words.join(" ")} `;
 }
 
-/** The words of a term that must all appear: generic words dropped. */
+/** The words of a term (or a text) in order, generic words dropped. */
 function keyWords(term: string): string[] {
   return term.split(" ").filter((w) => w && !GENERIC_TERMS.has(w));
+}
+
+/** May the exam's OWN name stand as a term? With a distinctive word, yes;
+ *  with none, only as a body / place word plus its class / stage words and
+ *  numbers, matched as a whole phrase ("GPSC Class 1-2", "TNPSC Group 4") —
+ *  never class / stage words alone ("Class 1-2 Prelims", "Group 4"). */
+function ownTermOk(words: readonly string[]): boolean {
+  if (words.some(isDistinctive)) return true;
+  return words.length >= 2 && words.some((w) => isBodyWord(w) || PLACE_WORDS.has(w)) && words.some((w) => !isBodyWord(w) && !PLACE_WORDS.has(w));
 }
 
 /** The ways a page may name the exam: its short name, its name (with and
  *  without the bracketed stage, and without a leading body acronym — SSC's
  *  own pages say "Combined Graduate Level Examination", not "SSC Combined
- *  …"), and the crawl's recorded terms — each normalised. A term with no
- *  distinctive word ("Examination 2026") is dropped. */
+ *  …"), and the crawl's recorded terms — each normalised, words kept in
+ *  order. 1 Oct 2026: a recorded (research) term needs a distinctive word
+ *  ("Preliminary Examination" names no exam: dropped); the body acronym is
+ *  never stripped when what remains is only class / stage words ("GPSC Class
+ *  1-2 Prelims" stays whole, never "class 1 2 prelims"). */
 export function examTermsFor(exam: { shortName: string; name: string }, extra: readonly string[] = []): string[] {
   const noStage = exam.name.replace(/\([^)]*\)/g, " ");
   const noBody = noStage.replace(/^\s*[A-Z]{2,6}\s+(?=\S)/, "");
-  const raw = [exam.shortName, exam.name, noStage, noBody, ...extra];
   const out = new Set<string>();
-  for (const r of raw) {
+  const add = (r: string, ok: (words: readonly string[]) => boolean) => {
     const words = keyWords(normText(r).trim());
-    if (words.length === 0 || words.every((w) => /^\d+$/.test(w))) continue;
+    if (words.length === 0 || words.every((w) => /^\d+$/.test(w)) || !ok(words)) return;
     out.add(words.join(" "));
-  }
+  };
+  for (const r of [exam.shortName, exam.name, noStage]) add(r, ownTermOk);
+  if (noBody !== noStage) add(noBody, (w) => w.some(isDistinctive));
+  for (const r of extra) add(r, (w) => w.some(isDistinctive));
   return [...out];
 }
 
-/** True when the text names the exam: every distinctive word of one of its
- *  terms appears as a whole word ("National Defence Academy", "NDA"). */
+/** True when the text names the exam: one of its terms appears as a PHRASE
+ *  — its words in order and adjacent, generic words skipped on both sides
+ *  ("National Defence Academy", "NDA", "Combined Higher Secondary (10+2)
+ *  Level Examination" for "combined higher secondary"). 1 Oct 2026: it was a
+ *  bag of words, so "gujarat administrative class 1" matched "Gujarat
+ *  Educational Service, Class-1, (Administrative Branch)". */
 export function examNamed(text: string, terms: readonly string[]): boolean {
-  const t = normText(text);
+  const seq = ` ${keyWords(normText(text).trim()).join(" ")} `;
   return terms.some((term) => {
-    const words = keyWords(term);
-    return words.length > 0 && words.every((w) => t.includes(` ${w} `));
+    const words = keyWords(normText(term).trim());
+    return words.length > 0 && words.some((w) => !/^\d+$/.test(w)) && seq.includes(` ${words.join(" ")} `);
   });
+}
+
+/** The recorded (research) terms a listing itself prints, as a phrase: in
+ *  its text, or in one of its rows as its adapter read them. 1 Oct 2026: RRB's
+ *  tables print "01/2025" under the column header "CEN Number" — the page's
+ *  text never holds "CEN 01/2025" as a phrase, the adapter's row ("CEN 01/2025
+ *  · …", the column named by its header) does. Rows never join into one
+ *  phrase. */
+export function termsPrinted(terms: readonly string[], page: { pageText: string; links: readonly { anchorText: string; rowText: string }[] }): string[] {
+  const seq = (t: string) => keyWords(normText(t).trim()).join(" ");
+  const hay = ` ${[seq(page.pageText), ...new Set(page.links.map((l) => seq(`${l.anchorText} ${l.rowText}`)))].join(" # ")} `;
+  return terms.filter((t) =>
+    examTermsFor({ shortName: t, name: t }).some((term) => {
+      const words = keyWords(normText(term).trim());
+      return words.some((w) => !/^\d+$/.test(w)) && hay.includes(` ${words.join(" ")} `);
+    }),
+  );
 }
 
 /** The years a sitting may be named by: the exam day's year and every year
@@ -487,6 +577,11 @@ export interface GateContext {
   sittingLabels: readonly string[];
   /** The exam's short names, for its printed ordinal ("NDA 2", "CDS-II"). */
   ordinalNames: readonly string[];
+  /** The exam's full names (Exam.name). 1 Oct 2026: with the short names,
+   *  their "cet" markers (sitting-markers examFamilyMarkers: MHT-CET, never
+   *  the Nursing CET) join the due sitting's; they also tell the verified
+   *  stage which label words are only the exam's name. */
+  examNames?: readonly string[];
   /** Another announced sitting of the exam falls in the same calendar year:
    *  a text naming a sitting number ("(I)") is then refused while the due
    *  sitting's labels name none — the tracker cannot say which it is. */
@@ -534,6 +629,15 @@ export interface VerifiedRelease {
   text: string;
   isPdf: boolean;
   via: "html" | "ai";
+  /** 1 Oct 2026. The row text alone (≤ 400 chars): two links in one row are
+   *  one release (groupReleases). */
+  row?: string;
+  /** The stage the label and the twin filter may name — only what the body
+   *  printed (verifiedStage): a sitting label of ours whose markers and
+   *  words the body's text names, else the body's own title; "" when
+   *  neither. */
+  stage?: string;
+  stageFrom?: StageFrom;
 }
 
 export type GateVerdict = { ok: true; release: VerifiedRelease } | { ok: false; gate: 1 | 2 | 3 | 4 | 5; reason: string };
@@ -581,9 +685,21 @@ export function releaseGate(c: ReleaseCandidate, ctx: GateContext, fetched: Link
   // UPSC's page headed "National Defence Academy … Examination (I), 2026"
   // prints rows with no sitting marker, and the year inside a row's date
   // passes the year check — its (I) result must never pass as the (II) one).
+  // 1 Oct 2026: the exam's own CET ("MHT-CET") is due too — a row on the
+  // State CET Cell's page naming only the Nursing CET is another exam's.
   const want = sittingMarkersOf(ctx.sittingLabels, ctx.ordinalNames);
-  const got = sittingMarkers(text, ctx.ordinalNames);
-  if (ctx.singleExamHeading) for (const m of sittingMarkers(ctx.singleExamHeading, ctx.ordinalNames)) got.add(m);
+  for (const m of examFamilyMarkers([...ctx.ordinalNames, ...(ctx.examNames ?? [])])) want.add(m);
+  // 1 Oct 2026 (review of the gate fix): the link's file name is the body's
+  // words here too, as in verifiedStage and siblingRefusal — a row silent on
+  // the CBT whose file says "CBT-1" is not the due CBT-2's.
+  const got = sittingMarkers(`${text} ${fileWords(c.url)}`, ctx.ordinalNames);
+  // 1 Oct 2026: the heading speaks only for the families the row is silent
+  // on — a "Nursing CET" row on a page headed "MHT-CET", or a "(I)" row on a
+  // page headed "(II)", is the row's own, never the union of both.
+  if (ctx.singleExamHeading) {
+    const rowFamilies = new Set([...got].map(familyOf));
+    for (const m of sittingMarkers(ctx.singleExamHeading, ctx.ordinalNames)) if (!rowFamilies.has(familyOf(m))) got.add(m);
+  }
   const clash = markerConflict(want, got);
   if (clash) {
     return {
@@ -616,6 +732,8 @@ export function releaseGate(c: ReleaseCandidate, ctx: GateContext, fetched: Link
         : pick.why === "several"
           ? `${seen}; the body printed more than one date beside the link (${pick.printed.slice(0, 4).join(", ")})`
           : `${seen}; no date printed beside the link falls between the exam and today (${pick.printed.slice(0, 4).join(", ")})`;
+  const textRead = [c.anchorText, c.rowText].filter(Boolean).join(" · ").replace(/\s+/g, " ").slice(0, 400);
+  const st = verifiedStage({ url: c.url, anchorText: c.anchorText, rowText: c.rowText }, ctx);
   return {
     ok: true,
     release: {
@@ -627,21 +745,359 @@ export function releaseGate(c: ReleaseCandidate, ctx: GateContext, fetched: Link
       dateSource: pick.source,
       note,
       anchorText: c.anchorText.slice(0, 300),
-      text: [c.anchorText, c.rowText].filter(Boolean).join(" · ").replace(/\s+/g, " ").slice(0, 400),
+      text: textRead,
       isPdf,
       via: c.via,
+      row: c.rowText.replace(/\s+/g, " ").trim().slice(0, 400),
+      stage: st.stage,
+      stageFrom: st.from,
     },
   };
 }
 
+// ── the verified stage (1 Oct 2026) ─────────────────────────────────────
+//
+// Why: the dry crawl of 30 Sep labelled every release with the LATEST
+// sitting on our tracker, whatever the body's row said — "Result — PET
+// conducted (SI Civil Police)" on UP Police's final selection result, "Result
+// — PCM Group Second Attempt exam" on MHT-CET's PCB press note, "Result — SSC
+// CHSL 2025 Typing Test" on SSC's allocation shortlist. A label may name only
+// what the body printed: one of the sitting's labels when the body's text
+// names every marker it carries (sitting-markers) and every other word of it
+// that is not the exam's own name, a year it printed, or a date word ("Tier 1
+// exam begins"); else the body's own title, trimmed; else nothing. 1 Oct
+// 2026, independent review: "every other word" is read as phrases and pairs
+// (labelClaims) — a number, a letter, "first" / "second", "nursing" are
+// claims like any word unless a marker regex compared them.
+
+export type StageFrom = "sitting" | "body" | "none";
+
+/** Most characters of a stage (a label is "Answer key (provisional) — " +
+ *  the stage). */
+export const STAGE_MAX = 140;
+const LABEL_MAX = 170;
+
+/** Tracker-label words that name no stage: when a sitting was held, not
+ *  which one it was. */
+const LABEL_FILLER = new Set([
+  "begin", "begins", "start", "starts", "started", "end", "ends", "conclude", "concludes", "concluded", "conducted", "held",
+  "commence", "commences", "day", "days", "date", "dates", "window", "last", "onwards", "from", "to", "on", "at", "in", "by",
+  "all", "expected", "tentative", "scheduled", "slot", "slots", "shift", "shifts",
+]);
+
+/** The words of a link's own file name — the body named its file
+ *  ("…Objection_CEN_No._01_2025(ALP)_CBT-2__English.pdf": RRB's row prints
+ *  only "CEN 01/2025", its file says CBT-2). Only path segments ending in a
+ *  document extension; "_" and "+" read as spaces. */
+export function fileWords(url: string): string {
+  let path: string;
+  try {
+    path = new URL(url).pathname;
+  } catch {
+    return "";
+  }
+  const out: string[] = [];
+  for (const seg of path.split("/")) {
+    if (!/\.(?:pdf|docx?|xlsx?|html?)$/i.test(seg)) continue;
+    let s = seg;
+    try {
+      s = decodeURIComponent(seg);
+    } catch {
+      /* keep the raw segment */
+    }
+    // " (1)" before the extension is a re-downloaded copy's suffix, not a
+    // sitting "(I)" (1 Oct 2026: the gate now reads file names too).
+    out.push(s.replace(/\.[a-z0-9]+$/i, "").replace(/[_+]+/g, " ").replace(/\s\(\d{1,2}\)$/, ""));
+  }
+  return out.join(" ").slice(0, 300);
+}
+
+const bodyText = (r: { anchorText: string; rowText: string; url: string }) => `${r.anchorText} ${r.rowText} ${fileWords(r.url)}`;
+
+/** What a tracker label asserts beyond its markers (1 Oct 2026, independent
+ *  review of the gate fix — the first version dropped every marker-ish word,
+ *  every number and every word of the research terms, so "CTET Paper 2" was
+ *  verified on a "Paper-I" row, "Second Phase" on a "First Phase" row, "Female
+ *  PE&MT" on a "Male PE&MT" row and "HSSC CET Group D" on a "Group C" row):
+ *    runs   the label's words between markers (markerSpans: compared as
+ *           markers), the exam's OWN name (its short name / name as phrases,
+ *           never a research term), date words and years — each run must be
+ *           printed in the body as a phrase (generic words skipped on both
+ *           sides, as examNamed): "female pe mt", "primary school tet";
+ *    years  printed somewhere in the body;
+ *    pairs  every other number or single letter with the label word before
+ *           it (generic words count: "paper 2", "varg 3", "group d") — printed
+ *           side by side in the body. */
+interface LabelClaims {
+  runs: string[];
+  years: string[];
+  pairs: string[];
+}
+
+function labelClaims(label: string, ownTerms: readonly string[], names: readonly string[]): LabelClaims {
+  const { text, spans } = markerSpans(label, names);
+  const toks = [...text.matchAll(/[\p{L}\p{M}\p{N}]+/gu)].map((m) => ({ w: ROMAN[m[0]] ?? m[0], at: m.index ?? 0, end: (m.index ?? 0) + m[0].length }));
+  const removed = toks.map((t) => spans.some(([a, b]) => t.at < b && t.end > a));
+  // The exam's own name, as a phrase over the label's non-generic words
+  // (marker words included: "UPSC Prelims" is the name, its marker is
+  // compared as a marker).
+  const idx = toks.map((_, i) => i).filter((i) => !GENERIC_TERMS.has(toks[i].w));
+  for (const term of [...ownTerms].sort((a, b) => b.split(" ").length - a.split(" ").length)) {
+    const tw = term.split(" ");
+    for (let k = 0; k + tw.length <= idx.length; k++) {
+      if (!tw.every((w, j) => toks[idx[k + j]].w === w)) continue;
+      for (let i = idx[k]; i <= idx[k + tw.length - 1]; i++) removed[i] = true;
+    }
+  }
+  const out: LabelClaims = { runs: [], years: [], pairs: [] };
+  let run: string[] = [];
+  const flush = () => {
+    const kw = run.filter((w) => !GENERIC_TERMS.has(w));
+    if (kw.length) out.runs.push(kw.join(" "));
+    run = [];
+  };
+  toks.forEach((t, i) => {
+    if (removed[i] || LABEL_FILLER.has(t.w)) return flush();
+    if (/^(?:19|20)\d{2}$/.test(t.w)) {
+      out.years.push(t.w);
+      return flush();
+    }
+    run.push(t.w);
+    if (/^\d+$/.test(t.w) || /^\p{L}$/u.test(t.w)) {
+      const prev = toks[i - 1]?.w;
+      const next = toks[i + 1]?.w;
+      out.pairs.push(prev ? `${prev} ${t.w}` : next ? `${t.w} ${next}` : t.w);
+    }
+  });
+  flush();
+  return out;
+}
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&#(\d{1,6});/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]{1,6});/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'");
+}
+
+/** A listing's own furniture beside a title: "[ Notice Board ]", "Click to
+ *  view more", "Download", file sizes, times, "Date :". */
+const FURNITURE_RES: readonly RegExp[] = [
+  /\[[^\]]{0,40}\]/g,
+  /\bclick\s+(?:here\s+)?(?:to\s+)?(?:view|download|open|see)(?:\s+more)?\b/gi,
+  /\bclick\s+here\b/gi,
+  /\b(?:view|read)\s+more\b/gi,
+  /\bdownload\b/gi,
+  /\(\s*\d+(?:\.\d+)?\s*[kmg]b\s*\)/gi,
+  /\b\d+(?:\.\d+)?\s*[kmg]b\b/gi,
+  /\b\d{1,2}:\d{2}(?::\d{2})?\s*(?:am|pm)?\b/gi,
+];
+
+function stripDates(s: string): string {
+  return s
+    .replace(/(?<!\d)\d{4}-\d{1,2}-\d{1,2}(?!\d)/g, " ")
+    .replace(/(?<![\d/-])\d{1,2}[./-]\d{1,2}[./-]\d{4}(?!\d)/g, " ")
+    .replace(new RegExp(`(?<!\\d)\\d{1,2}(?:st|nd|rd|th)?[\\s.-]*(?:${MONTH_ALT})\\.?,?[\\s.-]*\\d{4}(?!\\d)`, "giu"), " ")
+    .replace(new RegExp(`(?:^|(?<=[^\\p{L}]))(?:${MONTH_ALT})\\.?[\\s.-]*\\d{1,2}(?:st|nd|rd|th)?,?[\\s.-]*\\d{4}(?!\\d)`, "giu"), " ");
+}
+
+/** One segment of a row, cleaned to the body's title words. */
+function cleanSegment(seg: string): string {
+  let s = asciiDigits(decodeEntities(seg ?? ""));
+  s = stripDates(s);
+  for (const re of FURNITURE_RES) s = s.replace(re, " ");
+  s = s
+    .replace(/\b(?:date|dated|uploaded\s+on|published\s+on)\s*[:\-–]?\s*(?=$|[|·])/gi, " ")
+    .replace(/\b(?:date|dated)\s*:\s*/gi, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([:,;)])/g, "$1")
+    .replace(/:(?=\S)/g, ": ")
+    .trim();
+  s = s.replace(/^\d{1,3}\s+(?=\p{L})/u, "");
+  return s.replace(/^[\s|:;,.\-–·]+|[\s|:;,.\-–·।]+$/gu, "").trim();
+}
+
+/** Has the segment any word beyond the kind's own words ("Result", "Write
+ *  Up", "Answer Key")? */
+const AK_TERM_ALL = new RegExp(AK_TERM_RE.source, "gi");
+const RESULT_TERM_ALL = new RegExp(RESULT_TERM_RE.source, "gi");
+function saysMore(seg: string): boolean {
+  return keyWords(normText(seg.replace(AK_TERM_ALL, " ").replace(RESULT_TERM_ALL, " ")).trim()).some((w) => /\p{L}/u.test(w));
+}
+
+const kindNamedIn = (s: string) => AK_TERM_RE.test(s) || RESULT_TERM_RE.test(s);
+
+/** The body's own title for the link: the anchor / row segment that names
+ *  the exam (else the longest that says more than "Result"), cleaned; its
+ *  part after the first colon kept only when it adds something (no kind word
+ *  — "…: List of Candidates … shortlisted for First Round …" — or a stage
+ *  marker). Over STAGE_MAX: format phrases dropped ("in Roll Number Order",
+ *  "the post of", "Uploading of"), then the exam's printed name before the
+ *  colon shortened to our short name + its year, then cut at a word with "…". */
+export function bodyTitle(r: { anchorText: string; rowText: string }, ctx: Pick<GateContext, "examTerms" | "ordinalNames">): string {
+  const segs = [...`${r.anchorText ?? ""} · ${r.rowText ?? ""}`.split(/\s·\s/)].map(cleanSegment).filter((s) => s && saysMore(s));
+  if (segs.length === 0) return "";
+  const named = segs.filter((s) => examNamed(s, ctx.examTerms));
+  const pool = named.length ? named : segs;
+  let title = pool.reduce((a, b) => (b.length > a.length ? b : a));
+  // A dash-set clause that only restates the kind ("EX1 2026 exam —
+  // Provisional Answer Key") adds nothing to the stage.
+  for (;;) {
+    const dashes = [...title.matchAll(/\s[—–-]\s/g)];
+    if (dashes.length === 0) break;
+    const first = dashes[0];
+    const last = dashes[dashes.length - 1];
+    const lastAt = last.index ?? 0;
+    const firstEnd = (first.index ?? 0) + first[0].length;
+    if (!saysMore(title.slice(lastAt + last[0].length))) title = title.slice(0, lastAt).trim();
+    else if (!saysMore(title.slice(0, first.index ?? 0))) title = title.slice(firstEnd).trim();
+    else break;
+  }
+  const colon = title.indexOf(":");
+  let head = colon === -1 ? title : title.slice(0, colon).trim();
+  const tail = colon === -1 ? "" : title.slice(colon + 1).trim();
+  const headSays = head && saysMore(head);
+  if (!headSays && tail) head = "";
+  const tailAdds = !!tail && (!kindNamedIn(tail) || sittingMarkers(tail, ctx.ordinalNames).size > 0);
+  const join = (h: string, t: string) => (h && t ? `${h}: ${t}` : h || t);
+  let stage = tailAdds || !head ? join(head, tail) : head;
+  if (stage.length > STAGE_MAX) {
+    const trim = (s: string) =>
+      s
+        .replace(/\s+in\s+(?:roll\s+(?:number|no\.?)|alphabetical)\s+order\b/gi, "")
+        .replace(/\bfor\s+the\s+posts?\s+of\b/gi, "for")
+        .replace(/\buploading\s+of\s+/gi, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    stage = tailAdds || !head ? join(trim(head), trim(tail)) : trim(head);
+    const short = (ctx.ordinalNames[0] ?? "").trim();
+    // 1 Oct 2026 (review): only a short name that adds no stage — "UPSC
+    // Prelims" would turn a Civil Services final-result row into a prelims one.
+    const shortAddsNoStage = !!short && sittingMarkers(short, ctx.ordinalNames).size === 0 && !keyWords(normText(short).trim()).some((w) => STAGE_WORDS.has(w));
+    if (stage.length > STAGE_MAX && tailAdds && head && shortAddsNoStage && examNamed(head, ctx.examTerms) && sittingMarkers(head, ctx.ordinalNames).size === 0) {
+      const year = /(?<!\d)(?:19|20)\d{2}(?!\d)/.exec(head)?.[0];
+      stage = join(year ? `${short} ${year}` : short, trim(tail));
+    }
+  }
+  return capStage(stage);
+}
+
+function capStage(s: string): string {
+  const t = s.replace(/\s+/g, " ").trim();
+  if (t.length <= STAGE_MAX) return t;
+  const cut = t.slice(0, STAGE_MAX - 1);
+  const at = cut.lastIndexOf(" ");
+  return `${(at > STAGE_MAX / 2 ? cut.slice(0, at) : cut).replace(/[\s,;:(\-–/]+$/, "")}…`;
+}
+
+/** The stage a release may be labelled with (see the section header). The
+ *  due sitting's labels are tried latest first. */
+export function verifiedStage(
+  r: { url: string; anchorText: string; rowText: string },
+  ctx: Pick<GateContext, "sittingLabels" | "examTerms" | "ordinalNames" | "examNames">,
+): { stage: string; from: StageFrom } {
+  const names = ctx.ordinalNames;
+  const body = bodyText(r);
+  const got = sittingMarkers(body, names);
+  const norm = normText(body);
+  const words = new Set(norm.trim().split(" "));
+  const seq = ` ${keyWords(norm.trim()).join(" ")} `;
+  // The exam's OWN names only (1 Oct 2026 review): a research term such as
+  // "Constable (Executive) Male and Female in Delhi Police Examination" made
+  // "female" part of "the exam's name", so "Female PE&MT" passed on a Male row.
+  const own = examTermsFor({ shortName: names[0] ?? "", name: ctx.examNames?.[0] ?? names[0] ?? "" });
+  for (const label of [...ctx.sittingLabels].reverse()) {
+    const lm = sittingMarkers(label, names);
+    if (![...lm].every((m) => got.has(m))) continue;
+    const c = labelClaims(label, own, names);
+    if (!c.years.every((y) => words.has(y))) continue;
+    if (!c.runs.every((run) => seq.includes(` ${run} `))) continue;
+    if (!c.pairs.every((p) => norm.includes(` ${p} `))) continue;
+    return { stage: capStage(label), from: "sitting" };
+  }
+  const title = bodyTitle(r, ctx);
+  return title ? { stage: title, from: "body" } : { stage: "", from: "none" };
+}
+
 /** The tracker label of a release row. Every label names "answer key" or
  *  "result", so resolveKind and the tracker's answer-key rules read it.
- *  `text` = what the body printed at the link (VerifiedRelease.text). */
+ *  `text` = what the body printed at the link (VerifiedRelease.text);
+ *  `stage` = VerifiedRelease.stage (1 Oct 2026: never the tracker's latest
+ *  sitting unverified). */
 export function releaseLabel(kind: WatchKind, text: string, stage: string | null | undefined): string {
-  const st = (stage ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
-  if (kind === "RESULT") return (st ? `Result — ${st}` : "Result").slice(0, 120);
+  const st = capStage(stage ?? "");
+  if (kind === "RESULT") return (st ? `Result — ${st}` : "Result").slice(0, LABEL_MAX);
   const which = /\bfinal\b/i.test(text) ? "final" : /provisional|tentative|(?:preliminary|initial)\s+(?:answer\s+)?key/i.test(text) ? "provisional" : null;
-  return `Answer key${which ? ` (${which})` : ""}${st ? ` — ${st}` : ""}`.slice(0, 120);
+  return `Answer key${which ? ` (${which})` : ""}${st ? ` — ${st}` : ""}`.slice(0, LABEL_MAX);
+}
+
+// ── one release and its siblings (1 Oct 2026) ───────────────────────────
+//
+// Why: the first verified link was "the release" and EVERY other verified
+// link of the run its sibling — MHT-CET's PCB second-attempt result carried
+// the PCM first-attempt press note, the PCB first-attempt notification and the
+// Nursing and DPN/PHN CET results. A sibling must (a) name the exam on its
+// OWN row / anchor (a page heading is not enough), (b) name no other stage /
+// sitting / group / attempt / CET than the release (sitting-markers, the file
+// names included), and (c) share the release's printed day or its row. A
+// verified link that is no sibling but names the exam on its own row is a
+// release of its own; one named only by the page heading is held (reported,
+// not written).
+
+function sameRow(a: string | undefined, b: string | undefined): boolean {
+  const n = (s: string | undefined) => (s ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+  return !!n(a) && n(a) === n(b);
+}
+
+/** Why `v` is not a sibling of `release` — null when it is. */
+export function siblingRefusal(release: VerifiedRelease, v: VerifiedRelease, ctx: Pick<GateContext, "examTerms" | "ordinalNames">): string | null {
+  if (!examNamed(v.text, ctx.examTerms)) return "its own row does not name the exam (only the page heading does)";
+  const mine = sittingMarkers(`${release.text} ${fileWords(release.url)}`, ctx.ordinalNames);
+  const its = sittingMarkers(`${v.text} ${fileWords(v.url)}`, ctx.ordinalNames);
+  const clash = markerConflict(mine, its);
+  if (clash) return `it names another ${clash} (${[...its].join(", ")}; the release: ${[...mine].join(", ")})`;
+  const sameDay = release.dateSource === "printed" && v.dateSource === "printed" && release.releasedOn.getTime() === v.releasedOn.getTime();
+  if (!sameDay && !sameRow(release.row, v.row)) {
+    return `another day and another row (${isoOfDay(dayOf(v.releasedOn))} ${v.dateSource}; the release: ${isoOfDay(dayOf(release.releasedOn))} ${release.dateSource})`;
+  }
+  return null;
+}
+
+export interface ReleaseGroup<T> {
+  release: T;
+  siblings: T[];
+}
+
+/** Verified links (in the order read) → releases, each with its siblings,
+ *  and the held ones with the reason. */
+export function groupReleases<T>(
+  items: readonly T[],
+  get: (x: T) => VerifiedRelease,
+  ctx: Pick<GateContext, "examTerms" | "ordinalNames">,
+): { groups: ReleaseGroup<T>[]; held: { item: T; reason: string }[] } {
+  const groups: ReleaseGroup<T>[] = [];
+  const held: { item: T; reason: string }[] = [];
+  for (const x of items) {
+    const v = get(x);
+    if (groups.length === 0) {
+      groups.push({ release: x, siblings: [] });
+      continue;
+    }
+    const g = groups.find((gr) => siblingRefusal(get(gr.release), v, ctx) === null);
+    if (g) {
+      g.siblings.push(x);
+      continue;
+    }
+    if (examNamed(v.text, ctx.examTerms)) {
+      groups.push({ release: x, siblings: [] });
+      continue;
+    }
+    held.push({ item: x, reason: `not the same release as ${get(groups[0].release).url}: ${siblingRefusal(get(groups[0].release), v, ctx)}` });
+  }
+  return { groups, held };
 }
 
 // ── due set ──────────────────────────────────────────────────────────────

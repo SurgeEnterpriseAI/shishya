@@ -23,14 +23,25 @@
 //            every notice by CEN, and one exam (RRB NTPC) runs two CENs at
 //            once — graduate 06/2025 and undergraduate 07/2025 — whose stages
 //            carry the same names ("CBT-2")
-// Parts of ONE sitting (paper, day, shift, set, group, level, slot) and test
-// types (PET, typing, interview) are never compared: a "Paper-I key" belongs
-// to the sitting whose last day held Paper 2, and "qualified for the skill
-// test" is still that stage's result.
+// 1 Oct 2026 (the dry crawl of 30 Sep: MHT-CET's PCB second-attempt result
+// was labelled "PCM Group Second Attempt", and its "siblings" were the PCM
+// first-attempt press note, the PCB first-attempt notification and the
+// Nursing and DPN/PHN CET results, all on the State CET Cell's one page):
+//   group    the PCM / PCB subject group ("PCM Group", "(PCB)") — never a
+//            numbered "Group 2" / "Group-IV", which names an exam or a post
+//   attempt  "First Attempt", "2nd-Attempt", "Attempt-II"
+//   cet      which CET of a body that runs several on one page: MHT-CET,
+//            Nursing CET, DPN/PHN CET, B.Ed / M.Ed / B.P.Ed CET, LL.B / Law
+//            CET, MBA/MMS CET, MCA CET … and the AP / TS EAPCET, ECET, ICET,
+//            EdCET, PGECET, PECET, LAWCET, PGLCET
+// Parts of ONE sitting (paper, day, shift, set, level, slot, a numbered
+// group) and test types (PET, typing, interview) are never compared: a
+// "Paper-I key" belongs to the sitting whose last day held Paper 2, and
+// "qualified for the skill test" is still that stage's result.
 
 import { asciiDigits } from "@/lib/official-papers";
 
-export type MarkerFamily = "pm" | "tier" | "phase" | "cbt" | "stage" | "session" | "sitting" | "cen";
+export type MarkerFamily = "pm" | "tier" | "phase" | "cbt" | "stage" | "session" | "sitting" | "cen" | "group" | "attempt" | "cet";
 
 const ROMAN: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 };
 
@@ -56,6 +67,42 @@ const MAINS_RE = /(?<![\p{L}])mains(?![\p{L}])|(?<![\p{L}])main\s*(?:exam|examin
 
 // "CEN 06/2025", "CEN No. 06/2025", "CEN-06/2025", "CEN No 6/2025".
 const CEN_RE = /(?<![\p{L}\p{N}])cen\s*(?:no\.?\s*)?[-–:]?\s*(\d{1,2})\s*\/\s*(20\d{2})(?!\d)/giu;
+
+// 1 Oct 2026. "PCM Group", "(PCB )", "PCB-Group" — never "PCMB".
+const GROUP_RE = /(?<![\p{L}\p{N}])(pcm|pcb)(?![\p{L}\p{N}])/giu;
+const ATTEMPT_WORD: Readonly<Record<string, string>> = { first: "1", second: "2", third: "3", fourth: "4", "1st": "1", "2nd": "2", "3rd": "3", "4th": "4" };
+// "Second Attempt", "2nd-Attempt", "1st Attempt"; "Attempt-2", "Attempt II".
+const ATTEMPT_BEFORE_RE = /(?<![\p{L}\p{N}])(first|second|third|fourth|1st|2nd|3rd|4th)[\s\-–_]*attempt(?![\p{L}])/giu;
+const ATTEMPT_AFTER_RE = /(?<![\p{L}])attempt[\s\-–:_]*(iv|i{1,3}|[1-4])(?![\p{L}\p{N}])/giu;
+// Which CET of a body that runs several (the State CET Cell of Maharashtra
+// lists them all on one page; AP / TS councils name theirs as one word).
+const SEP = "[\\s\\-–_]*";
+const CET_FAMILIES: readonly (readonly [string, RegExp])[] = [
+  ["mht", new RegExp(`(?<![\\p{L}])mht${SEP}cet(?![\\p{L}])`, "iu")],
+  ["nursing", new RegExp(`(?<![\\p{L}])nursing${SEP}cet(?![\\p{L}])`, "iu")],
+  ["dpn-phn", new RegExp(`(?<![\\p{L}])(?:dpn|phn)(?:\\s*[/&]\\s*(?:dpn|phn))?${SEP}cet(?![\\p{L}])`, "iu")],
+  ["bped", new RegExp(`(?<![\\p{L}])b\\.?\\s*p\\.?\\s*ed\\.?${SEP}cet(?![\\p{L}])`, "iu")],
+  ["mped", new RegExp(`(?<![\\p{L}])m\\.?\\s*p\\.?\\s*ed\\.?${SEP}cet(?![\\p{L}])`, "iu")],
+  // "B.Ed CET", "B.Ed-M.Ed (Integrated) CET", "B.A./B.Sc.-B.Ed CET".
+  ["bed", new RegExp(`(?<![\\p{L}])b\\.?\\s*ed\\.?(?:\\s*[-–/]\\s*m\\.?\\s*ed\\.?)?(?:\\s*\\([^)]{0,40}\\))?${SEP}cet(?![\\p{L}])`, "iu")],
+  ["med", new RegExp(`(?<![\\p{L}])m\\.?\\s*ed\\.?${SEP}cet(?![\\p{L}])`, "iu")],
+  // "MAH-LL.B.(3 Yrs.)-CET", "LLB 5 Yrs CET", "Law CET", "LAWCET".
+  ["law", new RegExp(`(?<![\\p{L}])(?:ll\\.?\\s*b\\.?(?:\\s*\\([^)]{0,20}\\)|\\s*\\d\\s*yrs?\\.?)?|law)${SEP}cet(?![\\p{L}])`, "iu")],
+  ["mba", new RegExp(`(?<![\\p{L}])(?:mba|mms)(?:\\s*/\\s*(?:mba|mms))?${SEP}cet(?![\\p{L}])`, "iu")],
+  ["mca", new RegExp(`(?<![\\p{L}])mca${SEP}cet(?![\\p{L}])`, "iu")],
+  ["bhmct", new RegExp(`(?<![\\p{L}])b\\.?\\s*hmct${SEP}cet(?![\\p{L}])`, "iu")],
+  ["march", new RegExp(`(?<![\\p{L}])m\\.?\\s*arch\\.?${SEP}cet(?![\\p{L}])`, "iu")],
+  ["bdesign", new RegExp(`(?<![\\p{L}])b\\.?\\s*design${SEP}cet(?![\\p{L}])`, "iu")],
+  ["bplanning", new RegExp(`(?<![\\p{L}])b\\.?\\s*planning${SEP}cet(?![\\p{L}])`, "iu")],
+  ["eapcet", /(?<![\p{L}])(?:eapcet|eamcet)(?![\p{L}])/iu],
+  ["ecet", /(?<![\p{L}])ecet(?![\p{L}])/iu],
+  ["icet", /(?<![\p{L}])icet(?![\p{L}])/iu],
+  ["edcet", /(?<![\p{L}])edcet(?![\p{L}])/iu],
+  ["pgecet", /(?<![\p{L}])pgecet(?![\p{L}])/iu],
+  ["pecet", /(?<![\p{L}])pecet(?![\p{L}])/iu],
+  ["law", /(?<![\p{L}])lawcet(?![\p{L}])/iu],
+  ["pglcet", /(?<![\p{L}])pglcet(?![\p{L}])/iu],
+];
 
 /** Words before a bracketed numeral that make it a part of one sitting
  *  ("Paper (I)", "Annexure (2)"), not the exam's ordinal. */
@@ -91,10 +138,16 @@ function sittingOrdinals(lower: string, names: readonly string[]): string[] {
   return out;
 }
 
+/** The text every marker regex reads: Indic digits → ASCII, lower case, runs
+ *  of white space → one space. */
+function markerText(text: string): string {
+  return asciiDigits(text ?? "").toLowerCase().replace(/\s+/g, " ");
+}
+
 /** The markers of one text, as "family:value" ("tier:1", "pm:prelims",
  *  "sitting:2"). */
 export function sittingMarkers(text: string, names: readonly string[] = []): Set<string> {
-  const lower = asciiDigits(text ?? "").toLowerCase().replace(/\s+/g, " ");
+  const lower = markerText(text);
   const out = new Set<string>();
   if (PRELIMS_RE.test(lower)) out.add("pm:prelims");
   if (MAINS_RE.test(lower)) out.add("pm:mains");
@@ -106,6 +159,84 @@ export function sittingMarkers(text: string, names: readonly string[] = []): Set
   }
   for (const o of sittingOrdinals(lower, names)) out.add(`sitting:${o}`);
   for (const m of lower.matchAll(CEN_RE)) out.add(`cen:${m[1].padStart(2, "0")}/${m[2]}`);
+  for (const m of lower.matchAll(GROUP_RE)) out.add(`group:${m[1]}`);
+  for (const m of lower.matchAll(ATTEMPT_BEFORE_RE)) out.add(`attempt:${ATTEMPT_WORD[m[1]]}`);
+  for (const m of lower.matchAll(ATTEMPT_AFTER_RE)) {
+    const o = ordinal(m[1]);
+    if (o) out.add(`attempt:${o}`);
+  }
+  for (const [value, re] of CET_FAMILIES) if (re.test(lower)) out.add(`cet:${value}`);
+  return out;
+}
+
+const PRELIMS_ALL = new RegExp(PRELIMS_RE.source, "giu");
+const MAINS_ALL = new RegExp(MAINS_RE.source, "giu");
+const CET_ALL: readonly RegExp[] = CET_FAMILIES.map(([, re]) => new RegExp(re.source, "giu"));
+
+/** 1 Oct 2026 (independent review of the gate fix). The spans of a text that
+ *  make a marker — exactly the matches sittingMarkers counts, on the same
+ *  normalised text (`text` in the result: Indic digits → ASCII, lower case,
+ *  one space per run of white space). A bracketed sitting numeral's span is
+ *  the bracket only ("Varg (2)" keeps "varg"); a "(I)" after "Paper" is no
+ *  marker and no span. Why: the verified stage dropped every word a marker
+ *  regex COULD read ("first", "second", "phase", "nursing", "law" …) and every
+ *  number, so "Second Phase" was verified on a "First Phase" row and "Paper
+ *  2" on a "Paper-I" row. Now only a marker's own span is compared as a
+ *  marker; every other word of a label is a claim the body must print. */
+export function markerSpans(text: string, names: readonly string[] = []): { text: string; spans: [number, number][] } {
+  const lower = markerText(text);
+  const spans: [number, number][] = [];
+  const add = (m: RegExpMatchArray, from = 0) => {
+    const at = m.index ?? 0;
+    spans.push([at + from, at + m[0].length]);
+  };
+  for (const m of lower.matchAll(PRELIMS_ALL)) add(m);
+  for (const m of lower.matchAll(MAINS_ALL)) add(m);
+  for (const m of lower.matchAll(NUMBERED_RE)) if (m[2].split(/\s*(?:,|&|\/|and|or)\s*/).some((p) => ordinal(p))) add(m);
+  for (const m of lower.matchAll(BRACKET_RE)) {
+    if (m[1] && NOT_SITTING_WORDS.has(m[1])) continue;
+    if (ordinal(m[2])) add(m, m[0].indexOf("("));
+  }
+  const heads = ["examination", "exam", ...names.map((n) => n.toLowerCase().replace(/_/g, " ").trim()).filter((n) => n.length >= 2)];
+  for (const h of heads) {
+    const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(h)}s?[\\s\\-–]*(iv|i{1,3}|0?[1-4])(?![\\p{L}\\p{N}])`, "giu");
+    for (const m of lower.matchAll(re)) if (ordinal(m[1])) add(m);
+  }
+  for (const m of lower.matchAll(CEN_RE)) add(m);
+  for (const m of lower.matchAll(GROUP_RE)) add(m);
+  for (const m of lower.matchAll(ATTEMPT_BEFORE_RE)) add(m);
+  for (const m of lower.matchAll(ATTEMPT_AFTER_RE)) if (ordinal(m[1])) add(m);
+  for (const re of CET_ALL) for (const m of lower.matchAll(re)) add(m);
+  spans.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const merged: [number, number][] = [];
+  for (const s of spans) {
+    const last = merged[merged.length - 1];
+    if (last && s[0] <= last[1]) last[1] = Math.max(last[1], s[1]);
+    else merged.push([s[0], s[1]]);
+  }
+  return { text: lower, spans: merged };
+}
+
+/** The text (normalised as markerSpans) with every marker span replaced by
+ *  `by` — what a label says beyond its markers. */
+export function stripMarkerSpans(text: string, names: readonly string[] = [], by = " "): string {
+  const { text: lower, spans } = markerSpans(text, names);
+  let out = "";
+  let at = 0;
+  for (const [a, b] of spans) {
+    out += `${lower.slice(at, a)}${by}`;
+    at = b;
+  }
+  return out + lower.slice(at);
+}
+
+/** The markers an exam's own names carry that hold for every row of it: only
+ *  the "cet" family (MHT-CET is never the Nursing CET). A name's tier /
+ *  stage ("SSC CHSL (Tier 1)") is the tracker's first stage, not the exam's —
+ *  never taken from a name. */
+export function examFamilyMarkers(names: readonly string[]): Set<string> {
+  const out = new Set<string>();
+  for (const n of names) for (const m of sittingMarkers(n)) if (familyOf(m) === "cet") out.add(m);
   return out;
 }
 
@@ -143,10 +274,11 @@ export function markerConflict(a: ReadonlySet<string>, b: ReadonlySet<string>): 
  *  the "final key (expected)" row). */
 export function releaseVersion(kind: "ANSWER_KEY" | "RESULT", text: string): string | null {
   const t = (text ?? "").toLowerCase();
-  const fin = /(?<![\p{L}])final(?![\p{L}])|अंतिम|తుది/u.test(t);
+  // 1 Oct 2026: "अन्तिम" is how UPPRPB spells "final" ("अन्तिम चयन परिणाम").
+  const fin = /(?<![\p{L}])final(?![\p{L}])|अंतिम|अन्तिम|తుది/u.test(t);
   const other =
     kind === "ANSWER_KEY"
-      ? /provisional|tentative|(?:preliminary|initial)\s*(?:answer\s*)?key|model\s+answer|अनंतिम|ప్రాథమిక|ప్రారంభ/u.test(t)
+      ? /provisional|tentative|(?:preliminary|initial)\s*(?:answer\s*)?key|model\s+answer|अनंतिम|अनन्तिम|ప్రాథమిక|ప్రారంభ/u.test(t)
       : /(?<![\p{L}])written(?![\p{L}])|लिखित|రాత/u.test(t);
   if (fin === other) return null;
   return fin ? "final" : kind === "ANSWER_KEY" ? "provisional" : "written";
