@@ -79,10 +79,17 @@ export { OFFICIAL_WATCH_SOURCE };
 export type WatchKind = "ANSWER_KEY" | "RESULT";
 export const WATCH_KINDS: readonly WatchKind[] = ["ANSWER_KEY", "RESULT"];
 
-/** How the crawl could read a listing page: plain HTML, only in a browser
- *  (a script-built page — ssc.gov.in serves an 80 KB SPA shell), or not at
- *  all (timeouts, 403). Only "html" pages are fetched by the daily check. */
-export type FetchMode = "html" | "browser-only" | "blocked";
+/** How the crawl could read a listing page: "html" readable — as plain HTML
+ *  or through the body's own machine-readable source (src/lib/
+ *  official-listings.ts: ssc.gov.in's SPA is read through SSC's records
+ *  endpoint); "browser-only" only in a browser (a script-built page with no
+ *  machine-readable source known — the report says "browser-needed"); "blocked"
+ *  not at all (timeouts, 403, a firewall page); "empty" (30 Sep 2026) readable
+ *  but listing nothing of the kind (IBPS prints no answer keys) — never
+ *  called browser-only. The daily check fetches "html" and "empty" pages
+ *  (review, 30 Sep 2026: an "empty" page — a new cycle's page before its
+ *  first key — is readable and must not wait for the next crawl). */
+export type FetchMode = "html" | "browser-only" | "blocked" | "empty";
 
 // ── windows (plan of 30 Sep 2026, measured on the live tracker) ─────────
 /** Keys come a median 3 days after the exam; 45 days covers the late ones. */
@@ -487,7 +494,9 @@ export interface GateContext {
   baselined: boolean;
   /** The listing page is about this exam alone (the crawl checked its
    *  heading): the row need not repeat the exam's name when the heading
-   *  names it. */
+   *  names it — and the heading's sitting / stage markers ("(I)", "Tier-II")
+   *  are checked against the due sitting's as the row's own are. Only a
+   *  heading the body printed (never an adapter's). */
   singleExamHeading?: string | null;
   now: Date;
 }
@@ -559,9 +568,14 @@ export function releaseGate(c: ReleaseCandidate, ctx: GateContext, fetched: Link
   }
   // 3b. the due sitting / stage, not another one of the same exam and year
   // (review, 30 Sep 2026: "(I)" passed while (II) was due; "Tier-I" while
-  // Tier 2 was due).
+  // Tier 2 was due). A single-exam page's heading speaks for every row on it,
+  // so its markers count too (review of the listing adapters, 30 Sep 2026:
+  // UPSC's page headed "National Defence Academy … Examination (I), 2026"
+  // prints rows with no sitting marker, and the year inside a row's date
+  // passes the year check — its (I) result must never pass as the (II) one).
   const want = sittingMarkersOf(ctx.sittingLabels, ctx.ordinalNames);
   const got = sittingMarkers(text, ctx.ordinalNames);
+  if (ctx.singleExamHeading) for (const m of sittingMarkers(ctx.singleExamHeading, ctx.ordinalNames)) got.add(m);
   const clash = markerConflict(want, got);
   if (clash) {
     return {
@@ -823,7 +837,7 @@ export function orderDue(items: readonly DueItem[], now: Date): DueItem[] {
  *  Monday plan ($3.00) and the evening check ($0.90, ≤ 6) only for HOT pairs
  *  (answer key: exam 1–10 days ago; result: expected within ±7 days) — and
  *  only when the HTML check could not settle it: no readable watch page for
- *  the kind (none found by the crawl, browser-only, blocked, or down now),
+ *  the kind (none found by the crawl, browser-only, blocked, empty, or down now),
  *  or new links that named the kind but failed the exam / year check
  *  (ambiguous). */
 export function needsAi(mode: WatchMode, item: Pick<DueItem, "hot">, html: { readablePages: number; ambiguous: boolean; found: number }): boolean {

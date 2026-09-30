@@ -12,13 +12,20 @@
 //      the exam, the latest cycle's links, the previous cycle's. Spend is
 //      recorded as 'akr-crawl' (AiUsage), charged before each call against
 //      --max-usd, trued up to the recorded cost.
-//   2. A deterministic verifier fetches every proposed URL itself and keeps
-//      only what passes: an official host; the listing answers as HTML
-//      ("html"), or only in a browser / not at all ("browser-only" /
-//      "blocked" — those exams stay "not announced yet"; a coaching link is
-//      never shown instead); exam terms the page itself prints; every link on
-//      the page as the baseline (old cycles); the previous cycle's link and,
-//      where the page prints it, its date → the lag that drives the
+//   2. A deterministic verifier fetches every proposed URL itself — and, since
+//      the pilot of 30 Sep 2026, the body's own listings (bodyListingsFor:
+//      UPSC's answer-key / result tables and What's New, SSC's answer-key and
+//      candidate-result pages, RRB's objection-tracker and exam-results tables)
+//      — reading each with its body's adapter (src/lib/official-listings.ts:
+//      plain HTML, UPSC tables, SSC's records endpoint behind its script-built
+//      pages, IBPS cycle pages, RRB tables behind a cookie firewall). It keeps
+//      only what passes: an official host; the listing is readable ("html"),
+//      readable but lists nothing of the kind ("empty"), only in a browser
+//      ("browser-only", printed BROWSER-NEEDED — never guessed at) or not at
+//      all ("blocked") — those exams stay "not announced yet"; a coaching link
+//      is never shown instead); exam terms the page itself prints; every link
+//      on the page as the baseline (old cycles); the previous cycle's link
+//      and, where the page prints it, its date → the lag that drives the
 //      "expected" window (never a tracker row).
 //   3. Current-cycle releases (the latest announced sitting held in the last
 //      180 days) go through releaseGate (src/lib/answer-key-watch.ts) — AND,
@@ -68,27 +75,24 @@ import {
   crawlResearchStep,
   examNamed,
   examTermsFor,
-  extractLinks,
-  htmlText,
   kindMatches,
   latestHeldSitting,
   looksLikePdf,
   normLink,
   officialHostsFor,
-  pageHeading,
   parsePrintedDates,
   releaseGate,
   releaseLabel,
   releasedSince,
   type FetchMode,
   type GateContext,
-  type PageLink,
   type TrackerRowLite,
   type VerifiedRelease,
   type WatchKind,
 } from "../src/lib/answer-key-watch";
 import { ensureOfficialWatchTables, loadKnownLinks, upsertWatch, writeRelease, type LastCycle } from "../src/lib/answer-key-watch-db";
-import { fetchForWatch } from "../src/lib/answer-key-watch-run";
+import { CookieJar, fetchForWatch } from "../src/lib/answer-key-watch-run";
+import { ListingReadCache, bodyListingsFor, sharesKinds, type ListingAdapter, type ListingLink, type ListingRead } from "../src/lib/official-listings";
 
 const prisma = new PrismaClient();
 /** Estimated cost of one research call (Sonnet + ≤5 searches; measured
@@ -96,6 +100,12 @@ const prisma = new PrismaClient();
 const RESEARCH_COST_USD = 0.22;
 const KINDS: readonly WatchKind[] = ["ANSWER_KEY", "RESULT"];
 const DAY_MS = 86_400_000;
+/** One cookie jar for the crawl: RRB's firewall wants its session cookies. */
+const jar = new CookieJar();
+const watchFetch = (url: string, o: { maxBytes: number }) => fetchForWatch(url, { ...o, jar });
+/** One read per listing for the whole crawl (review, 30 Sep 2026): every SSC,
+ *  UPSC or RRB exam lists its body's shared listings — read them once. */
+const listingReads = new ListingReadCache();
 
 function arg(name: string): string | null {
   const i = process.argv.indexOf(name);
@@ -116,6 +126,11 @@ interface WatchPlan {
   listingUrl: string;
   host: string;
   fetchMode: FetchMode;
+  /** Report only (not stored): the body's adapter and the URLs it read. */
+  adapter: ListingAdapter;
+  sources: string[];
+  /** Report only: where the listing came from. */
+  proposedBy: "research" | "body";
   singleExam: boolean;
   heading: string;
   examTerms: string[];
@@ -137,6 +152,15 @@ interface ExamVerification {
 
 const dayNo = (iso: string) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / DAY_MS);
 
+/** The report's word for a fetch mode ("browser-only" is printed
+ *  BROWSER-NEEDED: the page needs a browser and no machine-readable source of
+ *  it is known). */
+function modeLabel(w: Pick<WatchPlan, "fetchMode" | "adapter">): string {
+  if (w.fetchMode === "html") return w.adapter === "html" ? "HTML" : `READABLE (${w.adapter})`;
+  if (w.fetchMode === "browser-only") return "BROWSER-NEEDED";
+  return w.fetchMode.toUpperCase();
+}
+
 async function verifyExam(
   exam: { id: string; code: string; name: string; shortName: string; portalUrl: string | null; rows: TrackerRowLite[] },
   research: AnswerKeyResearch,
@@ -145,128 +169,172 @@ async function verifyExam(
 ): Promise<ExamVerification> {
   const out: ExamVerification = { code: exam.code, pass: false, watches: [], releases: [], rejected: [], papers: [], notes: [] };
   const sitting = latestHeldSitting(exam, now, RESULT_DUE_EXAM_DAYS);
-  const pages = new Map<string, Awaited<ReturnType<typeof fetchForWatch>>>();
-  const page = async (url: string) => {
-    if (!pages.has(url)) pages.set(url, await fetchForWatch(url, { maxBytes: 3_000_000 }));
-    return pages.get(url)!;
-  };
+  // One read per listing for the crawl (per kind for RRB, whose tables are
+  // per category): listingReadKey.
+  const read = async (url: string, kind: WatchKind): Promise<ListingRead> => (await listingReads.read(url, kind, watchFetch, { portalUrl: exam.portalUrl })).read;
+  /** The research's terms the page itself prints (its text, as the crawl
+   *  always checked; SSC: the records' headlines). Only served text: the
+   *  adapters never put a heading of their own into it. */
+  const termsOn = (r: ListingRead) => research.examTerms.filter((t) => examNamed(r.pageText, examTermsFor({ shortName: t, name: t })));
 
   for (const kind of KINDS) {
-    const listingUrl = kind === "ANSWER_KEY" ? research.answerKeyListing : research.resultListing;
-    if (!listingUrl) {
-      out.notes.push(`${kind}: no listing page proposed`);
-      continue;
-    }
-    if (!isOfficialSource(listingUrl, exam.portalUrl)) {
-      out.rejected.push({ kind, url: listingUrl, reason: "listing host not official" });
-      continue;
-    }
-    const p = await page(listingUrl);
-    const host = new URL(listingUrl).hostname.toLowerCase().replace(/^www\./, "");
-    // A listing whose redirect left the official hosts is not an official
-    // page (review, 30 Sep 2026).
-    const offHost = !!p.finalUrl && !isOfficialSource(p.finalUrl, exam.portalUrl);
-    if (p.status !== 200 || !p.body || offHost) {
-      out.watches.push({
-        kind, listingUrl, host, fetchMode: "blocked", singleExam: false, heading: "", examTerms: [], baselineLinks: [], lastCycle: null, lagDays: null,
-        status: offHost ? `redirected off the official host (${p.finalUrl})` : p.status === 0 ? `unreachable (${p.error ?? "network"})` : `HTTP ${p.status}`,
-      });
-      continue;
-    }
-    const links = extractLinks(p.body, p.finalUrl ?? listingUrl);
-    const kindLinks = links.filter((l) => kindMatches(kind, classifyLink(`${l.anchorText} ${l.rowText}`)));
-    const heading = pageHeading(p.body);
-    const pageText = htmlText(p.body);
-    // Terms the page itself prints — the research's other words are dropped.
-    const verifiedTerms = research.examTerms.filter((t) => examNamed(pageText, examTermsFor({ shortName: t, name: t })));
-    const terms = examTermsFor(exam, verifiedTerms);
-    const fetchMode: FetchMode = kindLinks.length > 0 ? "html" : "browser-only";
-    const plan: WatchPlan = {
-      kind, listingUrl, host, fetchMode, singleExam: examNamed(heading, terms), heading, examTerms: verifiedTerms,
-      baselineLinks: [...new Set(links.map((l) => normLink(l.url)))], lastCycle: null, lagDays: null,
-      status: `${links.length} links, ${kindLinks.length} name the ${kind === "ANSWER_KEY" ? "answer key" : "result"}`,
+    // The research's listing, the body's own listings (bodyListingsFor), and —
+    // IBPS — the other kind's listing: a cycle page carries every notice of
+    // the recruitment.
+    const proposed = kind === "ANSWER_KEY" ? research.answerKeyListing : research.resultListing;
+    const other = kind === "ANSWER_KEY" ? research.resultListing : research.answerKeyListing;
+    const listings: { url: string; by: WatchPlan["proposedBy"] }[] = [];
+    const addListing = (url: string | null | undefined, by: WatchPlan["proposedBy"]) => {
+      if (url && !listings.some((l) => normLink(l.url) === normLink(url))) listings.push({ url, by });
     };
-
-    // The previous cycle: its link must be on this page (or answer our fetch
-    // on an official host); its date is the one printed beside it, else the
-    // research's (drives only the expected window).
-    const lc = research.lastCycle[kind];
-    if (lc?.url && isOfficialSource(lc.url, exam.portalUrl)) {
-      const onPage = links.find((l) => normLink(l.url) === normLink(lc.url!));
-      const printed = onPage ? parsePrintedDates(`${onPage.anchorText} ${onPage.rowText}`) : [];
-      const releasedOn = printed.length === 1 ? printed[0] : lc.releasedOn;
-      const lag = lc.examDay && releasedOn ? dayNo(releasedOn) - dayNo(lc.examDay) : null;
-      plan.lastCycle = { examDay: lc.examDay, releasedOn, url: lc.url, dateSource: printed.length === 1 ? "printed" : "research" };
-      plan.lagDays = lag !== null && lag >= 0 && lag <= 365 ? lag : null;
-      if (kind === "ANSWER_KEY" && onPage && looksLikePdf(lc.url, null)) {
-        out.papers.push({
-          year: (lc.examDay ?? releasedOn ?? "").slice(0, 4),
-          paper: onPage.anchorText.slice(0, 200) || "Answer key",
-          kind: "answer key",
-          url: onPage.url,
-          listingUrl,
-          publisher: host,
-        });
-      }
-    }
-    out.watches.push(plan);
-
-    // Current-cycle release, only while none is on the tracker yet.
-    if (!sitting) continue;
-    if (releasedSince(exam.rows, kind, sitting.notBefore)) {
-      out.notes.push(`${kind}: an official-watch row already covers the current sitting`);
+    addListing(proposed, "research");
+    if (!proposed && other && sharesKinds(other)) addListing(other, "research");
+    for (const u of bodyListingsFor(exam.portalUrl, kind)) addListing(u, "body");
+    if (listings.length === 0) {
+      out.notes.push(`${kind}: no listing page proposed, and none of this body's listings is known`);
       continue;
     }
+    const current = !!sitting && !releasedSince(exam.rows, kind, sitting.notBefore);
+    if (sitting && !current) out.notes.push(`${kind}: an official-watch row already covers the current sitting`);
     // baselined: false — this IS the first read, so gate 5 needs a date
     // printed beside the link (an undated link cannot be told from an older
-    // cycle's). The sitting fields keep "(I)" / "Tier-I" off a (II) / Tier 2
-    // sitting (review, 30 Sep 2026).
-    const ctx: GateContext = {
-      portalUrl: exam.portalUrl,
-      examTerms: terms,
-      cycleYears: sitting.cycleYears,
-      notBefore: sitting.notBefore,
-      lastExamDay: sitting.lastDay,
-      sittingLabels: sitting.sittingLabels,
-      ordinalNames: [exam.shortName],
-      otherSittingThisYear: sitting.otherSittingThisYear,
-      known,
-      baselined: false,
-      singleExamHeading: plan.singleExam ? heading : null,
-      now,
-    };
-    const candidates: PageLink[] = [...kindLinks];
-    for (const c of research.current.filter((x) => x.kind === kind)) {
-      if (candidates.some((l) => normLink(l.url) === normLink(c.url))) continue;
-      if (!c.listingUrl || !isOfficialSource(c.listingUrl, exam.portalUrl)) {
-        out.rejected.push({ kind, url: c.url, reason: "proposed without an official page that lists it" });
-        continue;
-      }
-      const lp = await page(c.listingUrl);
-      const hit = lp.status === 200 && lp.body ? extractLinks(lp.body, lp.finalUrl ?? c.listingUrl).find((l) => normLink(l.url) === normLink(c.url)) : null;
-      if (hit) candidates.push(hit);
-      else out.rejected.push({ kind, url: c.url, reason: "the page it was proposed with does not link it (as we read it)" });
-    }
-    const verified: VerifiedRelease[] = [];
-    for (const l of candidates.slice(0, 25)) {
+    // cycle's). The sitting fields keep "(I)" / "Tier-I" / another CEN off the
+    // due sitting (review, 30 Sep 2026).
+    const ctxFor = (terms: string[], singleExamHeading: string | null): GateContext | null =>
+      sitting
+        ? {
+            portalUrl: exam.portalUrl,
+            examTerms: terms,
+            cycleYears: sitting.cycleYears,
+            notBefore: sitting.notBefore,
+            lastExamDay: sitting.lastDay,
+            sittingLabels: sitting.sittingLabels,
+            ordinalNames: [exam.shortName],
+            otherSittingThisYear: sitting.otherSittingThisYear,
+            known,
+            baselined: false,
+            singleExamHeading,
+            now,
+          }
+        : null;
+    const verified: { r: VerifiedRelease; listingUrl: string }[] = [];
+    const tried = new Set<string>();
+    let loginLinks = 0;
+    /** Gates 1, 3, 4 and 5 first (no request for an old cycle's link), then
+     *  our own fetch and the full gate. */
+    const tryCandidate = async (l: ListingLink, listingUrl: string, ctx: GateContext) => {
+      if (tried.has(normLink(l.url))) return;
+      tried.add(normLink(l.url));
       // Never request a link off the official hosts (gate 1 would refuse it anyway).
-      if (!isOfficialSource(l.url, exam.portalUrl)) continue;
-      const fetched = await fetchForWatch(l.url, { maxBytes: 65_536 });
-      const v = releaseGate(
-        { kind, url: l.url, listingUrl, anchorText: l.anchorText, rowText: l.rowText, via: "html" },
-        ctx,
-        fetched.status === 0 ? null : fetched,
-      );
-      if (!v.ok) {
+      if (!isOfficialSource(l.url, exam.portalUrl)) return;
+      const c = { kind, url: l.url, listingUrl, anchorText: l.anchorText, rowText: l.rowText, via: "html" as const };
+      const pre = releaseGate(c, ctx, { status: 200, contentType: looksLikePdf(l.url, null) ? "application/pdf" : "text/html", head: "%PDF-", finalUrl: null });
+      if (!pre.ok) {
         // Old cycles are expected here (the whole page is read for the first
         // time); an undated link fails gate 5 (baselined: false).
-        if (v.gate !== 3) out.rejected.push({ kind, url: l.url, reason: `gate ${v.gate}: ${v.reason}` });
+        if (pre.gate !== 3) out.rejected.push({ kind, url: l.url, reason: `gate ${pre.gate}: ${pre.reason}` });
+        return;
+      }
+      const fetched = await watchFetch(l.url, { maxBytes: 65_536 });
+      const v = releaseGate(c, ctx, fetched.status === 0 ? null : fetched);
+      if (!v.ok) {
+        const why = `gate ${v.gate}: ${fetched.status === 0 ? `fetch failed (${fetched.error ?? "network"})` : v.reason}`;
+        out.rejected.push({ kind, url: l.url, reason: l.access === "login" && v.gate === 2 ? `${why} — a candidate-login page (browser-needed)` : why });
+        return;
+      }
+      verified.push({ r: v.release, listingUrl });
+    };
+
+    for (const { url: listingUrl, by } of listings) {
+      if (!isOfficialSource(listingUrl, exam.portalUrl)) {
+        out.rejected.push({ kind, url: listingUrl, reason: "listing host not official" });
         continue;
       }
-      verified.push(v.release);
+      const r = await read(listingUrl, kind);
+      const host = new URL(listingUrl).hostname.toLowerCase().replace(/^www\./, "");
+      if (r.fetchMode !== "html") {
+        out.watches.push({
+          kind, listingUrl, host, fetchMode: r.fetchMode, adapter: r.adapter, sources: r.sources, proposedBy: by,
+          singleExam: false, heading: "", examTerms: [], baselineLinks: [], lastCycle: null, lagDays: null, status: r.status,
+        });
+        continue;
+      }
+      const links = r.links;
+      const kindLinks = links.filter((l) => kindMatches(kind, classifyLink(`${l.anchorText} ${l.rowText}`)));
+      loginLinks += kindLinks.filter((l) => l.access === "login").length;
+      const heading = r.heading;
+      // Terms the page itself prints — the research's other words are dropped.
+      const verifiedTerms = termsOn(r);
+      const terms = examTermsFor(exam, verifiedTerms);
+      // Readable, but nothing of the kind on it: "empty" — never browser-only.
+      const fetchMode: FetchMode = kindLinks.length > 0 ? "html" : "empty";
+      const plan: WatchPlan = {
+        kind, listingUrl, host, fetchMode, adapter: r.adapter, sources: r.sources, proposedBy: by,
+        // Only a heading the body printed may name the exam for every row
+        // (ssc-api / rrb have none: ""); its sitting markers are then checked
+        // by the gate as the row's own (review, 30 Sep 2026).
+        singleExam: !!heading && examNamed(heading, terms), heading, examTerms: verifiedTerms,
+        baselineLinks: [...new Set(links.map((l) => normLink(l.url)))], lastCycle: null, lagDays: null,
+        status: `${r.status}; ${links.length} links, ${kindLinks.length} name the ${kind === "ANSWER_KEY" ? "answer key" : "result"}`,
+      };
+
+      // The previous cycle: its link must be on this page (or answer our fetch
+      // on an official host); its date is the one printed beside it, else the
+      // research's (drives only the expected window). Recorded on the
+      // research's listing, or on the page that links it.
+      const lc = research.lastCycle[kind];
+      if (lc?.url && isOfficialSource(lc.url, exam.portalUrl)) {
+        const onPage = links.find((l) => normLink(l.url) === normLink(lc.url!));
+        if (onPage || (!!proposed && normLink(listingUrl) === normLink(proposed))) {
+          const printed = onPage ? parsePrintedDates(`${onPage.anchorText} ${onPage.rowText}`) : [];
+          const releasedOn = printed.length === 1 ? printed[0] : lc.releasedOn;
+          const lag = lc.examDay && releasedOn ? dayNo(releasedOn) - dayNo(lc.examDay) : null;
+          plan.lastCycle = { examDay: lc.examDay, releasedOn, url: lc.url, dateSource: printed.length === 1 ? "printed" : "research" };
+          plan.lagDays = lag !== null && lag >= 0 && lag <= 365 ? lag : null;
+          if (kind === "ANSWER_KEY" && onPage && looksLikePdf(lc.url, null) && !out.papers.some((p) => normLink(p.url) === normLink(onPage.url))) {
+            out.papers.push({
+              year: (lc.examDay ?? releasedOn ?? "").slice(0, 4),
+              paper: onPage.anchorText.slice(0, 200) || "Answer key",
+              kind: "answer key",
+              url: onPage.url,
+              listingUrl,
+              publisher: host,
+            });
+          }
+        }
+      }
+      out.watches.push(plan);
+
+      // Current-cycle release, only while none is on the tracker yet.
+      const ctx = current ? ctxFor(terms, plan.singleExam ? heading : null) : null;
+      if (!ctx) continue;
+      for (const l of kindLinks.slice(0, 25)) await tryCandidate(l, listingUrl, ctx);
     }
-    if (verified.length) {
-      const [first, ...rest] = verified;
+    if (loginLinks > 0) out.notes.push(`${kind}: ${loginLinks} link(s) are candidate-login pages (browser-needed: gate 2 needs our own fetch of the link)`);
+
+    // The research's current-cycle links: each must be on an official page
+    // that lists it, as WE read that page with its adapter.
+    if (current) {
+      for (const c of research.current.filter((x) => x.kind === kind)) {
+        if (tried.has(normLink(c.url))) continue;
+        if (!c.listingUrl || !isOfficialSource(c.listingUrl, exam.portalUrl)) {
+          out.rejected.push({ kind, url: c.url, reason: "proposed without an official page that lists it" });
+          continue;
+        }
+        const lp = await read(c.listingUrl, kind);
+        const hit = lp.fetchMode === "html" ? lp.links.find((l) => normLink(l.url) === normLink(c.url)) : undefined;
+        if (!hit) {
+          out.rejected.push({ kind, url: c.url, reason: `the page it was proposed with does not link it (as we read it: ${lp.status})` });
+          continue;
+        }
+        const terms = examTermsFor(exam, termsOn(lp));
+        const single = lp.heading && examNamed(lp.heading, terms) ? lp.heading : null;
+        await tryCandidate(hit, c.listingUrl, ctxFor(terms, single)!);
+      }
+    }
+
+    if (sitting && verified.length) {
+      const [first, ...rest] = verified.map((v) => v.r);
       out.releases.push({
         kind,
         release: first,
@@ -276,8 +344,15 @@ async function verifyExam(
         cycleYear: sitting.cycleYears[sitting.cycleYears.length - 1] ?? "",
       });
       if (kind === "ANSWER_KEY") {
-        for (const r of verified.filter((x) => x.isPdf)) {
-          out.papers.push({ year: out.releases[out.releases.length - 1].cycleYear, paper: r.text.slice(0, 200) || "Answer key", kind: "answer key", url: r.url, listingUrl, publisher: host });
+        for (const v of verified.filter((x) => x.r.isPdf)) {
+          out.papers.push({
+            year: out.releases[out.releases.length - 1].cycleYear,
+            paper: v.r.text.slice(0, 200) || "Answer key",
+            kind: "answer key",
+            url: v.r.url,
+            listingUrl: v.listingUrl,
+            publisher: v.r.host,
+          });
         }
       }
     }
@@ -412,7 +487,7 @@ async function main() {
       );
       report.push(v);
       console.log(`\n== ${e.code}: ${v.pass ? "PASS" : "FAIL"}`);
-      for (const w of v.watches) console.log(`   ${w.kind} ${w.fetchMode.toUpperCase()} ${w.listingUrl} — ${w.status}${w.lagDays !== null ? ` · last-cycle lag ${w.lagDays} d (${w.lastCycle?.dateSource})` : ""}`);
+      for (const w of v.watches) console.log(`   ${w.kind} ${modeLabel(w)} ${w.listingUrl}${w.proposedBy === "body" ? " (body's listing)" : ""} — ${w.status}${w.lagDays !== null ? ` · last-cycle lag ${w.lagDays} d (${w.lastCycle?.dateSource})` : ""}`);
       for (const r of v.releases) console.log(`   RELEASE ${r.kind} ${r.release.releasedOn.toISOString().slice(0, 10)} ${r.release.url} — "${r.label}"${r.siblings.length ? ` (+${r.siblings.length} sibling links)` : ""}`);
       for (const r of v.rejected.slice(0, 8)) console.log(`   x ${r.kind} ${r.url}: ${r.reason}`);
       for (const n of v.notes) console.log(`   · ${n}`);
@@ -420,7 +495,10 @@ async function main() {
 
       if (apply) {
         for (const w of v.watches) {
-          await upsertWatch(prisma, { examId: e.id, ...w, now });
+          await upsertWatch(prisma, {
+            examId: e.id, kind: w.kind, listingUrl: w.listingUrl, host: w.host, fetchMode: w.fetchMode, singleExam: w.singleExam,
+            heading: w.heading, examTerms: w.examTerms, baselineLinks: w.baselineLinks, lastCycle: w.lastCycle, lagDays: w.lagDays, now,
+          });
         }
         for (const r of v.releases) {
           const res = await writeRelease(prisma, {

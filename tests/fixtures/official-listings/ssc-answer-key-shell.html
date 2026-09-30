@@ -1,0 +1,69 @@
+<!-- fixture: https://ssc.gov.in/home/answer-key, fetched 30 Sep 2026 and trimmed (CSS, scripts and unrelated sections removed; markup of the kept sections unchanged) -->
+<!doctype html>
+<html lang="en" data-critters-container>
+  <head>
+    <meta charset="UTF-8">
+    <title>Home | Staff Selection Commission | GoI</title>
+    <base href="/">
+    <meta name="description" content="This is Official Website of Staff Selection Commission.">
+    <meta name="keywords" content="SSC, CGL, GD constable, CAPFS and DP, Stenographers, JE, CPO, CHSL, Scientific Assistant">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="icon" type="image/png" href="/assets/fav.png">
+    <link rel="stylesheet" href="/assets/library/bootstrap/css/bootstrap.min.css" type="text/css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="/assets/library/bootstrap/css/bootstrap.min.css"></noscript>
+    <link rel="preload" fetchpriority="high" href="/assets/sscLogo.webp" as="image">
+    <link rel="preload" fetchpriority="high" href="/assets/banner/New SSC Banners 01 1.webp" as="image">
+    <script>
+      (function () {
+        var GA_ID = "G-PGXLWF9037";
+        var GA_LOADED = false;
+        window.dataLayer = window.dataLayer || [];
+        window.gtag =
+          window.gtag ||
+          function () {
+            window.dataLayer.push(arguments);
+          };
+        function loadGoogleAnalytics() {
+          if (GA_LOADED) {
+            return;
+          }
+          GA_LOADED = true;
+          var script = document.createElement("script");
+          script.async = true;
+          script.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_ID;
+          script.onload = function () {
+            window.gtag("js", new Date());
+            window.gtag("config", GA_ID, {
+              cookie_path: "/",
+              cookie_expires: 1800,
+              cookie_flags: "Secure; SameSite=Strict",
+              /*
+                If Angular route tracking service is NOT added yet,
+                keep this true.
+                If Angular route tracking service is added,
+                change this to false.
+              */
+              send_page_view: true,
+            });
+          };
+          script.onerror = function () {
+            console.warn("Google Analytics failed to load.");
+          };
+          document.head.appendChild(script);
+        }
+        if ("requestIdleCallback" in window) {
+          window.requestIdleCallback(loadGoogleAnalytics, { timeout: 3000 });
+        } else {
+          window.addEventListener("load", function () {
+            setTimeout(loadGoogleAnalytics, 1500);
+          });
+        }
+      })();
+    </script>
+  <link rel="stylesheet" href="styles.eb7771032326c04b.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="styles.eb7771032326c04b.css"></noscript></head>
+  <body>
+    <app-root></app-root>
+    <script src="/assets/library/jquery/js/jquery.min.js" type="application/javascript" defer></script>
+    <script src="/assets/library/bootstrap/js/bootstrap.min.js" type="application/javascript" defer></script>
+  <script src="runtime.7e16bf388964ce6c.js" type="module"></script><script src="polyfills.0367287dae1c626f.js" type="module"></script><script src="scripts.5e76a86e5a5c00e2.js" defer></script><script src="main.f59f9d376dc06a98.js" type="module"></script></body>
+</html>

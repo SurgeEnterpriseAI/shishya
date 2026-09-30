@@ -30,7 +30,9 @@ describe("sittingMarkers — the families that tell sittings apart", () => {
     expect(m("Tier 1 exam concludes")).toEqual(["tier:1"]);
     expect(m("Result of Tier-I & II")).toEqual(["tier:1", "tier:2"]);
     expect(m("CBT-I exam Phase 2 (Undergraduate posts)")).toEqual(["cbt:1", "phase:2"]);
-    expect(m("Answer key — CBT 2 Undergraduate (CEN 07/2025)")).toEqual(["cbt:2"]);
+    // The CEN is no stage number; since 30 Sep 2026 it is its own family (RRB
+    // lists by CEN — tests/unit/official-listings.test.ts "cen markers").
+    expect(m("Answer key — CBT 2 Undergraduate (CEN 07/2025)")).toEqual(["cbt:2", "cen:07/2025"]);
     expect(m("JEE Main 2026 Session 2 exam (Paper 1)")).toEqual(["session:2"]);
   });
   it("prelims / mains — 'JEE Main' is the exam, 'Preliminary Key' is a provisional key", () => {

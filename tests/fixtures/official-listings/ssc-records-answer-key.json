@@ -1,0 +1,245 @@
+{
+ "statusCode": "200",
+ "statusMessage": "Document Found!",
+ "isCache": true,
+ "data": [
+  {
+   "id": "4a2z9dsugemhpfwnbik6n",
+   "headline": "Stenographer Grade C and D Examination 2026 : Uploading of Tentative Answer Keys along with Candidates’ Response Sheet(s) and inviting challenges thereon",
+   "examId": "steno0svofmeb26",
+   "examYear": "2026",
+   "contentType": "answer-key",
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-09-23T17:00:17.512Z",
+   "attachments": [
+    {
+     "id": "61gkyvfsxg0qkj8w51p39",
+     "attIdtyfrId": "4a2z9dsugemhpfwnbik6n",
+     "fileName": "Approved_WriteUp_23092026.pdf",
+     "type": "application/pdf",
+     "size": 27113,
+     "path": "uploads\\masterData\\AnswerKeys\\Approved_WriteUp_23092026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "t2jg9x1e27ree0wqkhrlp",
+   "headline": "Combined Hindi Translators Examination, 2026: Uploading of Tentative Answer Key(s) along with Candidates’ Response Sheet(s)",
+   "examId": "nri55c0igljht26",
+   "examYear": "2026",
+   "contentType": "answer-key",
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-09-21T17:23:04.983Z",
+   "attachments": [
+    {
+     "id": "ahshiktaggpp7vvq7iyfu",
+     "attIdtyfrId": "t2jg9x1e27ree0wqkhrlp",
+     "fileName": "writeup_21092026.pdf",
+     "type": "application/pdf",
+     "size": 117542,
+     "path": "uploads\\masterData\\AnswerKeys\\writeup_21092026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "tuipj50fxdp14dyjbdwpt",
+   "headline": "Grade 'C' Stenographers Limited Departmental Competitive Examination, 2025 : Uploading of Final Answer Key and Final Marks",
+   "examId": "q5zvwlkwna3s17u",
+   "examYear": "2025",
+   "contentType": "answer-key",
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-09-17T12:41:31.830Z",
+   "attachments": [
+    {
+     "id": "x5r7js0zqso9gslcbxddh",
+     "attIdtyfrId": "tuipj50fxdp14dyjbdwpt",
+     "fileName": "writeup_finalanswerkey_17092026.pdf",
+     "type": "application/pdf",
+     "size": 276125,
+     "path": "uploads\\masterData\\AnswerKeys\\writeup_finalanswerkey_17092026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "nk5qiwnxvyxhj04gw32ys",
+   "headline": "Assistant Section Officer/ Assistant Grade Limited Departmental Competitive Examination, 2025: Uploading of Tentative Answer Keys along with Candidates’ Response Sheet(s).",
+   "examId": "q5zvwlkwna3s17u",
+   "examYear": "2025",
+   "contentType": "answer-key",
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-09-09T13:47:10.072Z",
+   "attachments": [
+    {
+     "id": "k3p9n9kgz7veq3rywhoyp",
+     "attIdtyfrId": "nk5qiwnxvyxhj04gw32ys",
+     "fileName": "Write_up_answerkey_09092026.pdf",
+     "type": "application/pdf",
+     "size": 388119,
+     "path": "uploads\\masterData\\AnswerKeys\\Write_up_answerkey_09092026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "fbpb3tgn1uhecitgo980e",
+   "headline": "Senior Secretariat Assistant/ Upper Division Clerk Grade Limited Departmental Competitive Examination, 2025: Uploading of Tentative Answer Keys along with Candidates’ Response Sheet(s).",
+   "examId": "q5zvwlkwna3s17u",
+   "examYear": "2025",
+   "contentType": "answer-key",
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-09-09T13:32:59.380Z",
+   "attachments": [
+    {
+     "id": "7lz6wc6uowv6dsgxfh28f",
+     "attIdtyfrId": "fbpb3tgn1uhecitgo980e",
+     "fileName": "Writeup_09092026.pdf",
+     "type": "application/pdf",
+     "size": 388320,
+     "path": "uploads\\masterData\\AnswerKeys\\Writeup_09092026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "rio8kukx4zzknp8cxe98o",
+   "headline": "Junior Secretariat Assistant/ Lower Division Clerk Grade Limited Departmental Competitive Examination, 2025: Uploading of Tentative Answer Keys along with Candidates’ Response Sheet(s).",
+   "examId": "q5zvwlkwna3s17u",
+   "examYear": "2025",
+   "contentType": "answer-key",
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-09-09T13:30:55.438Z",
+   "attachments": [
+    {
+     "id": "r066wvyxaaseabu176wwx",
+     "attIdtyfrId": "rio8kukx4zzknp8cxe98o",
+     "fileName": "Write_up_09092026.pdf",
+     "type": "application/pdf",
+     "size": 388865,
+     "path": "uploads\\masterData\\AnswerKeys\\Write_up_09092026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "i78lwwlgiu3esk6li26ax",
+   "headline": "Senior Secretariat Assistant / Upper Division Clerk Grade Limited Departmental Competitive Examination, 2025 [Central Secretariat Clerical Service (CSCS) Cadre of Department of Personnel and Training (DoPT)]: Uploading of Tentative Answer Keys along with Candidates’ Response Sheet(s).",
+   "examId": "q5zvwlkwna3s17u",
+   "examYear": "2025",
+   "contentType": "answer-key",
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-09-09T13:28:39.337Z",
+   "attachments": [
+    {
+     "id": "fp1gecynxdz9pmkjpuqcc",
+     "attIdtyfrId": "i78lwwlgiu3esk6li26ax",
+     "fileName": "writeup_tentative_answer_key_09092026.pdf",
+     "type": "application/pdf",
+     "size": 211630,
+     "path": "uploads\\masterData\\AnswerKeys\\writeup_tentative_answer_key_09092026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "h4vz52vrmxradgqm7uujn",
+   "headline": "Junior Engineer (Civil, Mechanical and Electrical) Examination, 2025: Uploading of Final Answer Keys along with Question Paper(s) cum Response Sheet(s) and Marks of Paper-II.",
+   "examId": "g21irqg6pmtxbag",
+   "examYear": "2025",
+   "contentType": "answer-key",
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-08-21T12:49:09.393Z",
+   "attachments": [
+    {
+     "id": "qv1q0nscztbwparpux219",
+     "attIdtyfrId": "h4vz52vrmxradgqm7uujn",
+     "fileName": "Final_Answer_Key_21082026.pdf",
+     "type": "application/pdf",
+     "size": 199946,
+     "path": "uploads\\masterData\\AnswerKeys\\Final_Answer_Key_21082026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "lxli5hs5m1lawgeeewa4v",
+   "headline": "Grade 'C' Stenographers Limited Departmental Competitive Examination, 2025 : Uploading of Tentative Answer Keys along with Candidates’ Response Sheet(s)",
+   "examId": "q5zvwlkwna3s17u",
+   "examYear": "2025",
+   "contentType": "answer-key",
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-07-16T12:32:36.557Z",
+   "attachments": [
+    {
+     "id": "w6puzrvalquo0w490s9o0",
+     "attIdtyfrId": "lxli5hs5m1lawgeeewa4v",
+     "fileName": "Writeup_english_16072026.pdf",
+     "type": "application/pdf",
+     "size": 206780,
+     "path": "uploads\\masterData\\AnswerKeys\\Writeup_english_16072026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "maq45artge5eozefn9f9h",
+   "headline": "Constable (Executive) Male and Female in Delhi Police Examination, 2025: Uploading of Final Answer Keys along with Question Papers cum Response Sheets of CBE along with the Marks.",
+   "examId": "ooqnwrr4dyev3hw",
+   "examYear": "2025",
+   "contentType": "answer-key",
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-07-07T12:45:19.641Z",
+   "attachments": [
+    {
+     "id": "h8jgoov1txw4uo25wa8t5",
+     "attIdtyfrId": "maq45artge5eozefn9f9h",
+     "fileName": "Write_up_Final_Answer_Keys_CBE_Executive_2025..pdf",
+     "type": "application/pdf",
+     "size": 197814,
+     "path": "uploads\\masterData\\AnswerKeys\\Write_up_Final_Answer_Keys_CBE_Executive_2025..pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  }
+ ],
+ "paginate": {
+  "totalRecords": 76,
+  "totalPerpage": "10",
+  "totalPage": 8,
+  "currentPage": 1,
+  "nextPage": 2,
+  "previousPage": 0
+ }
+}

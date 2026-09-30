@@ -18,6 +18,11 @@
 //            ("Tier-I & II", "CBT 1 and 2") names every number in it
 //   sitting  the exam's own ordinal: "(I)", "(II)", "Examination-II",
 //            "NDA 2", "CDS II", "AFCAT 01/2026"
+//   cen      a railway recruitment's own number, "CEN 06/2025" / "CEN No.
+//            07/2025" (30 Sep 2026, official listing adapters): RRB lists
+//            every notice by CEN, and one exam (RRB NTPC) runs two CENs at
+//            once — graduate 06/2025 and undergraduate 07/2025 — whose stages
+//            carry the same names ("CBT-2")
 // Parts of ONE sitting (paper, day, shift, set, group, level, slot) and test
 // types (PET, typing, interview) are never compared: a "Paper-I key" belongs
 // to the sitting whose last day held Paper 2, and "qualified for the skill
@@ -25,7 +30,7 @@
 
 import { asciiDigits } from "@/lib/official-papers";
 
-export type MarkerFamily = "pm" | "tier" | "phase" | "cbt" | "stage" | "session" | "sitting";
+export type MarkerFamily = "pm" | "tier" | "phase" | "cbt" | "stage" | "session" | "sitting" | "cen";
 
 const ROMAN: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 };
 
@@ -48,6 +53,9 @@ const PRELIMS_RE = /(?<![\p{L}])prelims?(?![\p{L}])|(?<![\p{L}])preliminary(?![\
 // "JEE Main 2026" names the exam, not a mains stage: bare "main" counts only
 // as "(Main)" or before exam / examination / written.
 const MAINS_RE = /(?<![\p{L}])mains(?![\p{L}])|(?<![\p{L}])main\s*(?:exam|examination|written)(?![\p{L}])|\(\s*main\s*\)|मुख्य\s*परीक्षा|మెయిన్స్|ప్రధాన\s*పరీక్ష/iu;
+
+// "CEN 06/2025", "CEN No. 06/2025", "CEN-06/2025", "CEN No 6/2025".
+const CEN_RE = /(?<![\p{L}\p{N}])cen\s*(?:no\.?\s*)?[-–:]?\s*(\d{1,2})\s*\/\s*(20\d{2})(?!\d)/giu;
 
 /** Words before a bracketed numeral that make it a part of one sitting
  *  ("Paper (I)", "Annexure (2)"), not the exam's ordinal. */
@@ -97,6 +105,7 @@ export function sittingMarkers(text: string, names: readonly string[] = []): Set
     }
   }
   for (const o of sittingOrdinals(lower, names)) out.add(`sitting:${o}`);
+  for (const m of lower.matchAll(CEN_RE)) out.add(`cen:${m[1].padStart(2, "0")}/${m[2]}`);
   return out;
 }
 

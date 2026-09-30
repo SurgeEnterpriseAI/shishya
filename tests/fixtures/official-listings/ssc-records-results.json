@@ -1,0 +1,355 @@
+{
+ "statusCode": "200",
+ "statusMessage": "Document Found!",
+ "isCache": true,
+ "data": [
+  {
+   "id": "oek19fmpzuiwlk8cwua5g",
+   "headline": "Declaration of Result of Annual Departmental Typewriting Skill Test – 2024: List of the qualified candidates (List-I)",
+   "examId": "q5zvwlkwna3s17u",
+   "examYear": "2024",
+   "contentType": "results",
+   "redirectUrl": null,
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-09-09T14:44:21.770Z",
+   "attachments": [
+    {
+     "id": "05utr8xeyusel9a7kudfg",
+     "attIdtyfrId": "oek19fmpzuiwlk8cwua5g",
+     "fileName": "Result_writeup_typing_09092026.pdf",
+     "type": "application/pdf",
+     "size": 194179,
+     "path": "uploads\\masterData\\Results\\Result_writeup_typing_09092026.pdf",
+     "documentType": "writeup",
+     "comment": null
+    },
+    {
+     "id": "gqlcq4v5tewsfkuvzr4bi",
+     "attIdtyfrId": "oek19fmpzuiwlk8cwua5g",
+     "fileName": "Typing_qualified_candidates_List1_09092026.pdf",
+     "type": "application/pdf",
+     "size": 59209,
+     "path": "uploads\\masterData\\Results\\Typing_qualified_candidates_List1_09092026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "bwwl0w3maqx8ybkkpy5u3",
+   "headline": "Declaration of Result of Annual Departmental Typewriting Skill Test – 2024: List of the candidates deemed to have made genuine attempt (List-II)",
+   "examId": "q5zvwlkwna3s17u",
+   "examYear": "2024",
+   "contentType": "results",
+   "redirectUrl": null,
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-09-09T14:37:47.080Z",
+   "attachments": [
+    {
+     "id": "4driq8mk4c13wg1fpitqc",
+     "attIdtyfrId": "bwwl0w3maqx8ybkkpy5u3",
+     "fileName": "Result_writeup_typing_09092026.pdf",
+     "type": "application/pdf",
+     "size": 194179,
+     "path": "uploads\\masterData\\Results\\Result_writeup_typing_09092026.pdf",
+     "documentType": "writeup",
+     "comment": null
+    },
+    {
+     "id": "muhyjybcrmn3tgnkd5dlx",
+     "attIdtyfrId": "bwwl0w3maqx8ybkkpy5u3",
+     "fileName": "Deemed_List2_09092026.pdf",
+     "type": "application/pdf",
+     "size": 50024,
+     "path": "uploads\\masterData\\Results\\Deemed_List2_09092026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "bbanvl2awoad13b09a21o",
+   "headline": "Declaration of Result of Annual Departmental Stenography Skill Test – 2024: List of the qualified candidates",
+   "examId": "q5zvwlkwna3s17u",
+   "examYear": "2024",
+   "contentType": "results",
+   "redirectUrl": null,
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-09-09T14:36:39.599Z",
+   "attachments": [
+    {
+     "id": "7eao85xoy9kxftw2kitmo",
+     "attIdtyfrId": "bbanvl2awoad13b09a21o",
+     "fileName": "Steno_qualified_candidates_09092026.pdf",
+     "type": "application/pdf",
+     "size": 45870,
+     "path": "uploads\\masterData\\Results\\Steno_qualified_candidates_09092026.pdf",
+     "documentType": null,
+     "comment": null
+    },
+    {
+     "id": "lfpufhg7ntgzbkqjupfyp",
+     "attIdtyfrId": "bbanvl2awoad13b09a21o",
+     "fileName": "Result_writeup_stenography_09092026.pdf",
+     "type": "application/pdf",
+     "size": 192417,
+     "path": "uploads\\masterData\\Results\\Result_writeup_stenography_09092026.pdf",
+     "documentType": "writeup",
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "cgyu40w7q3axom3t0lklh",
+   "headline": "Stenographer Grade 'C' and 'D' Examination, 2025: List of candidates in Roll No. order provisionally shortlisted for Document Verification and subsequent Appointment",
+   "examId": "59g9y0svsteno25",
+   "examYear": "2025",
+   "contentType": "results",
+   "redirectUrl": null,
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-08-25T12:17:37.209Z",
+   "attachments": [
+    {
+     "id": "sh09e1k9b8687l3ctxae3",
+     "attIdtyfrId": "cgyu40w7q3axom3t0lklh",
+     "fileName": "Final_Result_Write_up_25082026.pdf",
+     "type": "application/pdf",
+     "size": 941873,
+     "path": "uploads\\masterData\\Results\\Final_Result_Write_up_25082026.pdf",
+     "documentType": "writeup",
+     "comment": null
+    },
+    {
+     "id": "mml54ut608sfhgcvx2ywp",
+     "attIdtyfrId": "cgyu40w7q3axom3t0lklh",
+     "fileName": "STENO_RESULT_25082026.pdf",
+     "type": "application/pdf",
+     "size": 413994,
+     "path": "uploads\\masterData\\Results\\STENO_RESULT_25082026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "pwsoqrfz2sc6ku6kjqrqw",
+   "headline": "Grade ‘C’ Stenographers Limited Departmental Competitive Examination, 2025: List of the Candidates qualified in Computer Based Examination for appearing in the Stenography Skill Test",
+   "examId": "q5zvwlkwna3s17u",
+   "examYear": "2025",
+   "contentType": "results",
+   "redirectUrl": null,
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-08-25T11:57:17.720Z",
+   "attachments": [
+    {
+     "id": "hvv0p2qcdmb6lf9gikjsg",
+     "attIdtyfrId": "pwsoqrfz2sc6ku6kjqrqw",
+     "fileName": "writeup_25082026.pdf",
+     "type": "application/pdf",
+     "size": 718680,
+     "path": "uploads\\masterData\\Results\\writeup_25082026.pdf",
+     "documentType": "writeup",
+     "comment": null
+    },
+    {
+     "id": "1jpnqrhz2aagiauud4i1k",
+     "attIdtyfrId": "pwsoqrfz2sc6ku6kjqrqw",
+     "fileName": "ROLL_CBE_25082026.pdf",
+     "type": "application/pdf",
+     "size": 104775,
+     "path": "uploads\\masterData\\Results\\ROLL_CBE_25082026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "gsnhl7k5fqtrfr3zzmtfj",
+   "headline": "Combined Higher Secondary (10+2) Level Examination, 2025: List of Candidates in Roll Number Order provisionally shortlisted for First Round of Tentative Allocation (FRTA) for  the post of DEO/LDC/JSA/JHAA",
+   "examId": "s40d16nackd16h0",
+   "examYear": "2025",
+   "contentType": "results",
+   "redirectUrl": null,
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-08-17T13:12:01.499Z",
+   "attachments": [
+    {
+     "id": "aajt3ato6ca19lknm57xe",
+     "attIdtyfrId": "gsnhl7k5fqtrfr3zzmtfj",
+     "fileName": "FRTA_CHSLE_2025_17082026.pdf",
+     "type": "application/pdf",
+     "size": 830689,
+     "path": "uploads\\masterData\\Results\\FRTA_CHSLE_2025_17082026.pdf",
+     "documentType": "writeup",
+     "comment": null
+    },
+    {
+     "id": "xrgirwft42myw15oax0mn",
+     "attIdtyfrId": "gsnhl7k5fqtrfr3zzmtfj",
+     "fileName": "ROLL_17082026.pdf",
+     "type": "application/pdf",
+     "size": 654351,
+     "path": "uploads\\masterData\\Results\\ROLL_17082026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "ks1y3ftv35fjjhfbv2mvk",
+   "headline": "Multi Tasking (Non-Technical) Staff, and Havaldar (CBIC and CBN) Examination, 2025 : List of candidates qualified in CBE for appearing in PET/PST (List-I)",
+   "examId": "wzeujzxj8ts5z9n",
+   "examYear": "2025",
+   "contentType": "results",
+   "redirectUrl": null,
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-08-03T12:58:08.381Z",
+   "attachments": [
+    {
+     "id": "t6je8nldxun5rtm8a6oza",
+     "attIdtyfrId": "ks1y3ftv35fjjhfbv2mvk",
+     "fileName": "writeup_mts_03082026.pdf",
+     "type": "application/pdf",
+     "size": 894631,
+     "path": "uploads\\masterData\\Results\\writeup_mts_03082026.pdf",
+     "documentType": "writeup",
+     "comment": null
+    },
+    {
+     "id": "w5nhn7kfsuc9fzawqe10h",
+     "attIdtyfrId": "ks1y3ftv35fjjhfbv2mvk",
+     "fileName": "List1_03082026.pdf",
+     "type": "application/pdf",
+     "size": 1401455,
+     "path": "uploads\\masterData\\Results\\List1_03082026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "kacgiw0ipnr0ug55z7vov",
+   "headline": "Multi Tasking (Non-Technical) Staff, and Havaldar (CBIC and CBN) Examination, 2025 : List of candidates whose result were not processed due to malpractices  (List-II)",
+   "examId": "wzeujzxj8ts5z9n",
+   "examYear": "2025",
+   "contentType": "results",
+   "redirectUrl": null,
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-08-03T12:57:35.369Z",
+   "attachments": [
+    {
+     "id": "acjqdxztkrg776uw2wh6d",
+     "attIdtyfrId": "kacgiw0ipnr0ug55z7vov",
+     "fileName": "writeup_mts_03082026.pdf",
+     "type": "application/pdf",
+     "size": 894631,
+     "path": "uploads\\masterData\\Results\\writeup_mts_03082026.pdf",
+     "documentType": "writeup",
+     "comment": null
+    },
+    {
+     "id": "gw30a9atjtplspoi2v45k",
+     "attIdtyfrId": "kacgiw0ipnr0ug55z7vov",
+     "fileName": "List2_03082026.pdf",
+     "type": "application/pdf",
+     "size": 108739,
+     "path": "uploads\\masterData\\Results\\List2_03082026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "agew7yp23fvgpy0eht2tg",
+   "headline": "Multi Tasking (Non-Technical) Staff, and Havaldar (CBIC and CBN) Examination, 2025 : List of debarred candidates (List-III)",
+   "examId": "wzeujzxj8ts5z9n",
+   "examYear": "2025",
+   "contentType": "results",
+   "redirectUrl": null,
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-08-03T12:57:03.189Z",
+   "attachments": [
+    {
+     "id": "ez0ksmj51baz8ufdylfzv",
+     "attIdtyfrId": "agew7yp23fvgpy0eht2tg",
+     "fileName": "writeup_mts_03082026.pdf",
+     "type": "application/pdf",
+     "size": 894631,
+     "path": "uploads\\masterData\\Results\\writeup_mts_03082026.pdf",
+     "documentType": "writeup",
+     "comment": null
+    },
+    {
+     "id": "9gexxth6pihz4684unn0e",
+     "attIdtyfrId": "agew7yp23fvgpy0eht2tg",
+     "fileName": "List3_03082026.pdf",
+     "type": "application/pdf",
+     "size": 58195,
+     "path": "uploads\\masterData\\Results\\List3_03082026.pdf",
+     "documentType": null,
+     "comment": null
+    }
+   ]
+  },
+  {
+   "id": "as63zor8lw57ou4yp5lni",
+   "headline": "Junior Engineer (Civil, Mechanical and Electrical) Examination, 2025- List of candidates provisionally shortlisted for document verification and subsequent appointment",
+   "examId": "g21irqg6pmtxbag",
+   "examYear": "2025",
+   "contentType": "results",
+   "redirectUrl": null,
+   "startDate": null,
+   "endDate": null,
+   "language": "english",
+   "createdAt": "2026-08-03T06:48:56.244Z",
+   "attachments": [
+    {
+     "id": "7a2v3gbcaiv2491ssd8n4",
+     "attIdtyfrId": "as63zor8lw57ou4yp5lni",
+     "fileName": "result_03082026.pdf",
+     "type": "application/pdf",
+     "size": 371608,
+     "path": "uploads\\masterData\\Results\\result_03082026.pdf",
+     "documentType": null,
+     "comment": null
+    },
+    {
+     "id": "aum32k8ijzhd1dm6sj13y",
+     "attIdtyfrId": "as63zor8lw57ou4yp5lni",
+     "fileName": "writeup_03082026.pdf",
+     "type": "application/pdf",
+     "size": 332541,
+     "path": "uploads\\masterData\\Results\\writeup_03082026.pdf",
+     "documentType": "writeup",
+     "comment": null
+    }
+   ]
+  }
+ ],
+ "paginate": {
+  "totalRecords": 298,
+  "totalPerpage": "20",
+  "totalPage": 15,
+  "currentPage": 1,
+  "nextPage": 2,
+  "previousPage": 0
+ }
+}

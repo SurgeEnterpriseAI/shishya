@@ -2298,7 +2298,7 @@ model OfficialWatch {
   kind          String // ANSWER_KEY | RESULT
   listingUrl    String
   host          String
-  fetchMode     String    @default("html") // html | browser-only | blocked
+  fetchMode     String    @default("html") // html | browser-only | blocked | empty (readable, nothing of the kind)
   singleExam    Boolean   @default(false) // the page is about this exam alone (its heading names it)
   heading       String    @default("") @db.Text
   examTerms     String[]  @default([]) // how the body names the exam on this page

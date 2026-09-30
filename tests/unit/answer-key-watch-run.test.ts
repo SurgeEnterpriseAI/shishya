@@ -388,3 +388,155 @@ describe("time guard", () => {
     expect(s.aiCalls).toHaveLength(0);
   });
 });
+
+// 30 Sep 2026 (the pilot passed 1 of 6): listings are read with their body's
+// adapter (src/lib/official-listings.ts). ssc.gov.in's answer-key page is a
+// script-built shell; the run reads SSC's own records endpoint behind it
+// (saved 30 Sep 2026: tests/fixtures/official-listings/) and the gate is
+// unchanged. A firewall page is an unreadable listing, never a candidate.
+describe("official listing adapters in the run", () => {
+  const fixture = (name: string) => fs.readFileSync(path.join(process.cwd(), "tests/fixtures/official-listings", name), "utf8");
+
+  function steno(): DueExamRecord {
+    return {
+      examId: "e-steno",
+      code: "SSC_STENO",
+      shortName: "SSC Stenographer",
+      name: "SSC Stenographer Grade C and D",
+      portalUrl: "https://ssc.gov.in",
+      state: null,
+      rows: [
+        {
+          id: "x-steno",
+          label: "Stenographer Grade C and D 2026 skill-free CBE",
+          date: new Date("2026-09-12T00:00:00Z"),
+          isExamDay: true,
+          kind: "EXAM",
+          confidence: "official",
+          url: "https://ssc.gov.in/notice.pdf",
+          source: "ai-generated:claude",
+        },
+      ],
+      lagDays: {},
+    };
+  }
+
+  const sscKey = "https://ssc.gov.in/api/attachment/uploads/masterData/AnswerKeys/Approved_WriteUp_23092026.pdf";
+  const sscJson = (): FetchedPage => ({ status: 200, contentType: "application/json", head: "{", body: fixture("ssc-records-answer-key.json"), finalUrl: null });
+  const sscWatch = (over: Partial<WatchRow> = {}) =>
+    watch(1, {
+      id: "w-ssc",
+      examId: "e-steno",
+      listingUrl: "https://ssc.gov.in/home/answer-key",
+      host: "ssc.gov.in",
+      baselineLinks: ["https://ssc.gov.in/api/attachment/uploads/masterData/AnswerKeys/Final_Answer_Key_2025.pdf"],
+      ...over,
+    });
+
+  // Review, 30 Sep 2026: SSC's answer-key page prints no date (only the
+  // headline and the file size), so the key is "first seen" on a baselined
+  // watch page — never "printed".
+  it("SSC: the records endpoint's file is written as first seen on a baselined page — the key page prints no date", async () => {
+    const { sscRecordsUrl } = await import("@/lib/official-listings");
+    const s = setup({ exams: [steno()], watches: [sscWatch()], pages: { [sscRecordsUrl("answer-key")]: sscJson(), [sscKey]: pdf } });
+    const r = await run("check", s.deps);
+    expect(s.fetched[0]).toBe(sscRecordsUrl("answer-key")); // never the script-built page
+    expect(s.writes).toHaveLength(1);
+    expect(s.writes[0].release).toMatchObject({ url: sscKey, listingUrl: "https://ssc.gov.in/home/answer-key", dateSource: "first-seen" });
+    expect(s.writes[0].release.note).not.toMatch(/printed beside the link/);
+    expect(s.writes[0].release.releasedOn.toISOString().slice(0, 10)).toBe("2026-09-30");
+    expect(s.writes[0].label).toBe("Answer key (provisional) — Stenographer Grade C and D 2026 skill-free CBE");
+    expect(r.pagesFetched).toBe(1);
+    expect(s.marked[0]).toMatch(/^w-ssc:ok: 10 links, 10 new answer-key links$/);
+  });
+
+  it("SSC: with no baseline for the page, the undated key is refused (gate 5)", async () => {
+    const { sscRecordsUrl } = await import("@/lib/official-listings");
+    const s = setup({ exams: [steno()], watches: [sscWatch({ baselineLinks: [] })], pages: { [sscRecordsUrl("answer-key")]: sscJson(), [sscKey]: pdf } });
+    const r = await run("check", s.deps);
+    expect(s.writes).toEqual([]);
+    expect(r.rejected.find((x) => x.url === sscKey)).toMatchObject({ gate: 5 });
+    expect(s.fetched).not.toContain(sscKey); // gate 5 is checked before any fetch of the link
+  });
+
+  it("one read per listing for the run: two due SSC exams share the records endpoint", async () => {
+    const { sscRecordsUrl } = await import("@/lib/official-listings");
+    const cht: DueExamRecord = {
+      ...steno(),
+      examId: "e-cht",
+      code: "SSC_CHT",
+      shortName: "SSC CHT",
+      name: "SSC Combined Hindi Translators",
+      rows: [{ ...steno().rows[0], id: "x-cht", label: "Combined Hindi Translators 2026 Paper-I" }],
+    };
+    const s = setup({
+      exams: [steno(), cht],
+      watches: [sscWatch(), sscWatch({ id: "w-cht", examId: "e-cht" })],
+      pages: { [sscRecordsUrl("answer-key")]: sscJson(), [sscKey]: pdf },
+    });
+    const r = await run("check", s.deps);
+    expect(s.fetched.filter((u) => u === sscRecordsUrl("answer-key"))).toHaveLength(1);
+    expect(r.pagesFetched).toBe(1);
+    expect(s.marked.map((m) => m.split(":")[0]).sort()).toEqual(["w-cht", "w-ssc"]);
+  });
+
+  it("RRB: a firewall page is an unreadable listing — no candidate, the report says why", async () => {
+    const tracker = "https://rrb.indianrailways.gov.in/getdata?loc=chandigarh&category=Objection%20Tracker";
+    const ex = exam(1, 5);
+    ex.portalUrl = "https://rrb.indianrailways.gov.in";
+    const s = setup({
+      exams: [ex],
+      watches: [watch(1, { listingUrl: tracker, host: "rrb.indianrailways.gov.in" })],
+      pages: {
+        "https://rrb.indianrailways.gov.in/chandigarh": html("<html><title>RRB</title></html>"),
+        [tracker]: html(fixture("rrb-request-rejected.html")),
+      },
+    });
+    const r = await run("check", s.deps);
+    expect(s.fetched).toEqual(["https://rrb.indianrailways.gov.in/chandigarh", tracker]);
+    expect(s.writes).toEqual([]);
+    expect(r.pagesUnreadable[0].status).toMatch(/firewall 'Request Rejected' page/);
+  });
+
+  // Review, 30 Sep 2026: a listing may take 2–3 requests; the guard is
+  // checked before each, so at most one fetch runs past it.
+  it("the time guard stops a listing between its requests: 'time guard', the watch is not marked", async () => {
+    const tracker = "https://rrb.indianrailways.gov.in/getdata?loc=chandigarh&category=Objection%20Tracker";
+    const ex = exam(1, 5);
+    ex.portalUrl = "https://rrb.indianrailways.gov.in";
+    let fetchedSoFar: string[] = [];
+    const s = setup({
+      exams: [ex],
+      watches: [watch(1, { listingUrl: tracker, host: "rrb.indianrailways.gov.in" })],
+      pages: { "https://rrb.indianrailways.gov.in/chandigarh": html("<html><title>RRB</title></html>"), [tracker]: html(fixture("rrb-chandigarh-objection-tracker.html")) },
+      clock: () => (fetchedSoFar.length >= 1 ? 250_000 : 0),
+    });
+    fetchedSoFar = s.fetched;
+    const r = await run("check", s.deps);
+    expect(s.fetched).toEqual(["https://rrb.indianrailways.gov.in/chandigarh"]);
+    expect(r.timeGuardHit).toBe(true);
+    expect(r.pagesUnreadable).toEqual([{ code: "EX1", url: tracker, status: `time guard: stopped before ${tracker}` }]);
+    expect(s.marked).toEqual([]);
+    expect(s.writes).toEqual([]);
+  });
+
+  it("'empty' watches are read too; they count as readable only once they list something of the kind", async () => {
+    const withKey = setup({
+      exams: [exam(1, 5)],
+      watches: [watch(1, { fetchMode: "empty" })],
+      pages: { "https://board1.gov.in/answer-keys": listing1, "https://board1.gov.in/keys/ex1-2026.pdf": pdf, "https://board1.gov.in/keys/ex1-2026-resp.pdf": pdf },
+    });
+    await run("check", withKey.deps);
+    expect(withKey.writes).toHaveLength(1);
+
+    const still = setup({
+      exams: [exam(1, 3)],
+      watches: [watch(1, { fetchMode: "empty" })],
+      pages: { "https://board1.gov.in/answer-keys": html("<p>nothing yet</p>") },
+      ai: async () => ({ candidates: [], costUsd: 0.1 }),
+    });
+    await run("evening", still.deps);
+    expect(still.fetched[0]).toBe("https://board1.gov.in/answer-keys");
+    expect(still.aiCalls).toHaveLength(1); // as before: no readable page for the kind yet
+  });
+});

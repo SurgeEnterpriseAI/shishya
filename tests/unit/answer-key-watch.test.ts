@@ -169,6 +169,22 @@ describe("releaseGate — the five conditions", () => {
       expect(releaseGate(row, ctx(), pdf200)).toMatchObject({ ok: false, gate: 3 });
       expect(releaseGate(row, ctx({ singleExamHeading: "NDA & NA Examination — UPSC" }), pdf200).ok).toBe(true);
     });
+    // Review of the listing adapters, 30 Sep 2026: UPSC's per-sitting pages
+    // are headed by the sitting; their rows carry no marker, and the year
+    // inside a row's date passes the year check.
+    it("a single-exam heading's sitting marker is checked against the due sitting's", () => {
+      const row = cand({ kind: "RESULT", anchorText: "Written Result", rowText: "Written Result (1.2 MB) 29/09/2026" });
+      const headed = (h: string) => releaseGate(row, ctx({ singleExamHeading: h }), pdf200);
+      const i = headed("National Defence Academy and Naval Academy Examination (I), 2026");
+      expect(i).toMatchObject({ ok: false, gate: 3 });
+      expect(!i.ok && i.reason).toMatch(/^the text names another sitting\/stage \(sitting: /);
+      expect(headed("National Defence Academy and Naval Academy Examination (II), 2026").ok).toBe(true);
+      // No sitting on the due labels, another sitting this year, the heading names one: refused.
+      expect(releaseGate(row, ctx({ singleExamHeading: "National Defence Academy and Naval Academy Examination (II), 2026", sittingLabels: ["NDA 2026 exam"] }), pdf200)).toMatchObject({
+        ok: false,
+        gate: 3,
+      });
+    });
     it("Hindi and Telugu key / result words count", () => {
       expect(classifyLink("उत्तर कुंजी 2026").ak).toBe(true);
       expect(classifyLink("आंसर की जारी").ak).toBe(true);
