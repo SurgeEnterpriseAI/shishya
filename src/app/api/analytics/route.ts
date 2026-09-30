@@ -18,6 +18,7 @@
 //     cookie is issued (isUnder13SchoolPath, src/lib/school/student-classes.ts)
 
 import { createHmac } from "node:crypto";
+import { withUtmContent } from "@/lib/utm-content";
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { recordEvent, type EventKind } from "@/lib/analytics";
@@ -117,6 +118,8 @@ export async function POST(req: NextRequest) {
     utmSource?: string;
     utmMedium?: string;
     utmCampaign?: string;
+    /** 30 Sep 2026: utm_content, kept in props.utmContent (src/lib/utm-content.ts). */
+    utmContent?: string;
   };
   try {
     body = await req.json();
@@ -195,7 +198,8 @@ export async function POST(req: NextRequest) {
     userId: child ? null : userId,
     anonId: child ? null : userId ? null : anonId, // dedupe — if userId is set, don't store the anon side
     path,
-    props: body.props,
+    // utm_content rides in props (no column); never on Class 1-7 rows.
+    props: child ? body.props : withUtmContent(body.props, body.utmContent),
     utmSource: child ? null : (body.utmSource?.slice(0, 64) ?? null),
     utmMedium: child ? null : (body.utmMedium?.slice(0, 64) ?? null),
     utmCampaign: child ? null : (body.utmCampaign?.slice(0, 128) ?? null),

@@ -69,6 +69,8 @@ interface UtmBlob {
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
+  /** 30 Sep 2026: utm_content (e.g. the ITV YouTube test's video slug); stored in props.utmContent. */
+  utmContent?: string;
 }
 
 declare global {
@@ -91,8 +93,9 @@ function captureUtmFromUrl(params: URLSearchParams): UtmBlob {
   const utmSource = params.get("utm_source") ?? undefined;
   const utmMedium = params.get("utm_medium") ?? undefined;
   const utmCampaign = params.get("utm_campaign") ?? undefined;
+  const utmContent = params.get("utm_content") ?? undefined;
   if (!utmSource && !utmMedium && !utmCampaign) return {};
-  const blob: UtmBlob = { utmSource, utmMedium, utmCampaign };
+  const blob: UtmBlob = { utmSource, utmMedium, utmCampaign, utmContent };
   try {
     window.sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(blob));
   } catch { /* sessionStorage disabled */ }
