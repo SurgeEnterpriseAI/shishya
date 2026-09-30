@@ -21,7 +21,8 @@ export function MemberPickupStrip({ examCode, locale }: { examCode: string; loca
     fetch(url, { credentials: "same-origin", cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((j: { view?: PickupView | null } | null) => {
-        if (alive && j?.view && (j.view.question || j.view.mock)) setView(j.view);
+        // 1 Oct 2026: a late answer alone is something to pick up too.
+        if (alive && j?.view && (j.view.answered || j.view.question || j.view.mock)) setView(j.view);
       })
       .catch(() => {
         /* best-effort: the hub is complete without it */

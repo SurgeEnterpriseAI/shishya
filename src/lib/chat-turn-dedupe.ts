@@ -193,11 +193,15 @@ export function settleWait(row: StoredTurn | null, next: StoredTurn | null, now:
 /**
  * The SSE frames for a replayed reply — the live stream's meta / delta /
  * done events, same names and payload shape (done adds replayed: true).
+ * 1 Oct 2026 review: a reply the late-answer run stored (metadata.lateAnswer,
+ * src/lib/tutor-late-answer.ts) — a Retry pressed while or after that run
+ * answered — also carries lateAnswer: true, so the chat shows its "Answered
+ * later — our AI tutor was unavailable when you asked." note here too.
  */
 export function replayFrames(sessionId: string, reply: StoredTurn): string[] {
   const meta =
     reply.metadata && typeof reply.metadata === "object" && !Array.isArray(reply.metadata)
-      ? (reply.metadata as { actions?: unknown; toolCalls?: unknown })
+      ? (reply.metadata as { actions?: unknown; toolCalls?: unknown; lateAnswer?: unknown })
       : null;
   return [
     `event: meta\ndata: ${JSON.stringify({ sessionId })}\n\n`,
@@ -207,6 +211,7 @@ export function replayFrames(sessionId: string, reply: StoredTurn): string[] {
       actions: Array.isArray(meta?.actions) ? meta.actions : [],
       toolCalls: Array.isArray(meta?.toolCalls) ? meta.toolCalls : [],
       replayed: true,
+      ...(meta?.lateAnswer === true ? { lateAnswer: true } : {}),
     })}\n\n`,
   ];
 }

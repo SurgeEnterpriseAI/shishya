@@ -491,6 +491,16 @@ describe("the school loaders read school containers by category and fetch no tex
 
 describe("POST /api/chat — the school path (source)", () => {
   const src = read("src/app/api/chat/route.ts");
+  // 1 Oct 2026: the turn's context and the tutorStream input moved, unchanged,
+  // to src/lib/tutor-turn.ts (the late answer shares them); the route calls it.
+  const turn = read("src/lib/tutor-turn.ts");
+
+  it("loads the turn's context and builds the tutor input through src/lib/tutor-turn.ts", () => {
+    expect(src).toContain("const turnContext = await loadTutorTurnContext(turnScope);");
+    expect(src).toContain("tutorStream(tutorStreamArgs({ scope: turnScope, context: turnContext, history, language: replyLanguage }))");
+    expect(src).toContain("schoolBand: schoolProfile?.band ?? null,");
+    expect(src).toContain("topicCode: body.topicCode ?? null,");
+  });
 
   it("resolves a school container only through schoolStudentExamKey, keeps realExamKey for the rest", () => {
     expect(src).toContain("const schoolKey = schoolStudentExamKey({ code: examCodeForChat });");
@@ -506,10 +516,10 @@ describe("POST /api/chat — the school path (source)", () => {
     expect(enrol).toBeGreaterThan(cap);
     expect(firstWrite).toBeGreaterThan(cap);
     expect(src).toContain("return new Response(schoolCapFrames(body.sessionId ?? null, schoolUiLang(jar.get(\"shishya-lang\")?.value))");
-    expect(src).toContain("school: schoolCtx ? { scope: schoolCtx.scope, focus: schoolFocus, band } : undefined,");
-    expect(src).toContain("examCodeForChat && userId && !schoolCtx");
-    expect(src).toContain("? ([null, schoolCtx.syllabus, null] as const)");
-    expect(src).toContain("if (exam && !schoolCtx && body.topicCode) {");
+    expect(turn).toContain("school: schoolCtx ? { scope: schoolCtx.scope, focus: schoolFocus, band } : undefined,");
+    expect(turn).toContain("examCodeForChat && userId && !schoolCtx");
+    expect(turn).toContain("? ([null, schoolCtx.syllabus, null] as const)");
+    expect(turn).toContain("if (exam && !schoolCtx && s.topicCode) {");
   });
 
   it("sends a school student back to the chapter or class page, never /exams", () => {
@@ -530,7 +540,7 @@ describe("POST /api/chat — the school path (source)", () => {
     expect(src).toContain("schoolOnlyTutorErrorFrame(schoolOnlyChatPath(schoolProfile.classCodes, examCodeForChat), schoolUiLang(jar.get(\"shishya-lang\")?.value))");
     // One User read per turn; the band on the school turn comes from it.
     expect(src.match(/prisma\.user\.findUnique\(/g)?.length).toBe(1);
-    expect(src).toContain("if (schoolCtx) band = schoolProfile?.band ?? null;");
+    expect(turn).toContain("if (schoolCtx) band = s.schoolBand ?? null;");
   });
 
   // 27 Sep 2026 (founder, content first): no band gate — a guest or an
@@ -543,7 +553,7 @@ describe("POST /api/chat — the school path (source)", () => {
     const ctx = src.indexOf("const schoolCtx = schoolKey ? await getSchoolTutorContext(schoolKey.code) : null;");
     const guestCap = src.indexOf('await checkRateLimit("schoolGuest", anonId ? `anon:${anonId}` : `anonip:${clientIp(req)}`);');
     const firstWrite = src.indexOf("prisma.chatMessage.create(");
-    const model = src.indexOf("const ai = tutorStream({");
+    const model = src.indexOf("const ai = tutorStream(");
     expect(scope).toBeGreaterThan(0);
     expect(ctx).toBeGreaterThan(scope);
     expect(guestCap).toBeGreaterThan(ctx);

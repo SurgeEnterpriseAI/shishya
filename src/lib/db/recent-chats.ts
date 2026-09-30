@@ -1,6 +1,8 @@
 // DB reads behind saved tutor chats (30 Sep 2026) — rules and why in
 // src/lib/recent-chats.ts. Every read is the member's OWN rows (by userId);
-// nothing here writes.
+// nothing here writes — except (1 Oct 2026) the one mark a reopened chat
+// leaves on a late answer it shows (lateSeenAt), so the pick-up card stops
+// leading with "Your question is answered" once the student has seen it.
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
@@ -8,10 +10,24 @@ import { REAL_EXAM_WHERE, isSchoolCategory } from "./exam-scope";
 import {
   RECENT_CHATS_DAYS,
   RESUME_TURNS,
+  isUnseenLateAnswer,
   reviewTagOf,
   type RecentChatRow,
   type StoredChatRow,
 } from "@/lib/recent-chats";
+
+/** Marks these late answers seen (the member's own rows, just read). Best-effort, idempotent. */
+async function markLateAnswersSeen(ids: string[], nowMs: number): Promise<void> {
+  if (ids.length === 0) return;
+  try {
+    await prisma.$executeRaw`
+      UPDATE "ChatMessage"
+      SET metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('lateSeenAt', ${String(nowMs)}::bigint)
+      WHERE id = ANY(${ids}) AND role = 'ASSISTANT' AND metadata->>'lateSeenAt' IS NULL`;
+  } catch (err) {
+    console.error("[recent-chats] could not mark late answers seen:", err);
+  }
+}
 
 /**
  * Which conversations a list shows:
@@ -132,6 +148,11 @@ export async function loadResumableChat(userId: string, sessionId: string): Prom
   ]);
   if (rows.length === 0) return null;
   rows.reverse();
+  // 1 Oct 2026: the late answers this reopened chat now shows have been seen.
+  await markLateAnswersSeen(
+    rows.filter((r) => String(r.role) === "ASSISTANT" && isUnseenLateAnswer(r.metadata)).map((r) => r.id),
+    Date.now(),
+  );
   const lastRowAt = rows[rows.length - 1].createdAt;
   return {
     id: s.id,

@@ -112,6 +112,38 @@ import {
   stripFollowUpParam,
   type PickupFollowUp,
 } from "@/lib/pickup-followup";
+import {
+  GUEST_RESTORED_NOTE,
+  TUTOR_UNAVAILABLE_CODE,
+  dropGuestUnanswered,
+  isTutorUnavailableCode,
+  keepGuestUnanswered,
+  lateAnswerNote,
+  readGuestUnanswered,
+  tutorUnavailableState,
+  tutorUnavailableText,
+  type StorageLike,
+} from "@/lib/tutor-unavailable";
+
+// AI unavailable (1 Oct 2026, src/lib/tutor-unavailable.ts): an error event
+// with a "tutor-unavailable…" code shows this chat's own line in the UI
+// language — a member's question is saved and answered here later (and
+// emailed only when the route says the account can receive our mails); a
+// guest's is kept in this browser for 6 hours and put back in the box when
+// they return (never in a school chat, never once the under-13 line closed
+// it; a member's chat in the same browser drops it), and the line says
+// "saved in this browser" only when the browser actually kept it. A reply
+// the late-answer run stored carries "Answered later — our AI tutor was
+// unavailable when you asked." (a replayed one too).
+
+/** localStorage, or null when the browser blocks it. */
+function localStore(): StorageLike | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
 
 interface Message {
   id: string;
@@ -121,6 +153,8 @@ interface Message {
   failed?: boolean;
   /** User turns: this turn's id, sent again by its Retry so the server knows which turn failed. */
   turnId?: string;
+  /** A reply the late-answer run stored after an outage (1 Oct 2026). */
+  lateAnswer?: boolean;
 }
 
 interface ChatLabels {
@@ -431,6 +465,42 @@ export function ChatInterface({
     if (under13) dropKeptGuestChat();
   }, [under13]);
 
+  // A guest's question an outage left unanswered (1 Oct 2026): this browser
+  // kept it for this chat's scope, so it goes back in the box, unsent, with a
+  // line saying so — never over a seed, never in a school chat.
+  const [guestRestored, setGuestRestored] = useState(false);
+  useEffect(() => {
+    if (!guestSignInHref || school || (initialSeed && initialSeed.trim())) return;
+    const kept = readGuestUnanswered(localStore(), { examCode: examCode ?? null }, Date.now());
+    if (!kept) return;
+    setInput((cur) => (cur.trim() ? cur : kept));
+    setGuestRestored(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (under13) dropGuestUnanswered(localStore());
+  }, [under13]);
+  // 1 Oct 2026 review: a member's general or exam chat lets go of any guest's
+  // kept question in this browser — on a shared device (a cyber-café PC) it
+  // must not wait in the box for the next person. (A school chat takes no
+  // guestSignInHref for guests either, so it is left out.)
+  useEffect(() => {
+    if (!guestSignInHref && !school) dropGuestUnanswered(localStore());
+  }, [guestSignInHref, school]);
+
+  /** The line for an AI-unavailable error event, or null for any other error. */
+  function unavailableLine(payload: unknown, question: string): string | null {
+    const p = payload && typeof payload === "object" && !Array.isArray(payload) ? (payload as Record<string, unknown>) : null;
+    const code = p?.code;
+    if (!isTutorUnavailableCode(code)) return null;
+    let saved = false;
+    if (code === TUTOR_UNAVAILABLE_CODE.guest && guestSignInHref && !school && !under13Ref.current) {
+      saved = keepGuestUnanswered(localStore(), { text: question, examCode: examCode ?? null }, Date.now());
+    }
+    const more = typeof p?.more === "string" && p.more.trim() ? ` ${p.more.trim()}` : "";
+    return `${tutorUnavailableText(tutorUnavailableState(code, saved), uiLang())}${more}`;
+  }
+
   // Signed in: a guest chat from this browser for this same chat → save it once.
   const importTriedRef = useRef(false);
   // Set by send(): once the student has sent a turn, a late import is saved
@@ -594,6 +664,7 @@ export function ChatInterface({
     sentRef.current = true;
     setImportedNote(null);
     setSeedHeld(false);
+    setGuestRestored(false);
     // Snapshot prior turns BEFORE we append the new message. Sent in the
     // request body so anonymous (signed-out) chats — which aren't stored
     // server-side — still get multi-turn context. Signed-in chats ignore
@@ -694,6 +765,14 @@ export function ChatInterface({
               const parsed = JSON.parse(data);
               if (Array.isArray(parsed?.actions) && parsed.actions.length) setActions(parsed.actions);
               setToolStatus(null);
+              // 1 Oct 2026 review: a replayed reply the late-answer run stored
+              // carries its "Answered later" note here too.
+              if (parsed?.lateAnswer === true) {
+                setMessages((m) => {
+                  const last = m[m.length - 1];
+                  return last?.role === "assistant" ? [...m.slice(0, -1), { ...last, lateAnswer: true }] : m;
+                });
+              }
               // School chat: the cap line came instead of a reply, or one
               // more of today's messages was used (a replayed reply used none).
               if (parsed?.code === "scope-under13") setUnder13(true);
@@ -710,11 +789,16 @@ export function ChatInterface({
             try {
               parsed = JSON.parse(data);
             } catch {}
-            setError(chatErrorText(parsed, uiLang(), "Chat stream error"));
+            // 1 Oct 2026: the AI was unavailable — the honest line (see the header).
+            setError(unavailableLine(parsed, text) ?? chatErrorText(parsed, uiLang(), "Chat stream error"));
           }
         }
       }
       if (replyStreamFailed(seen)) markLastReplyFailed();
+      // A guest's kept question that has now been answered is let go.
+      else if (guestSignInHref && !school && readGuestUnanswered(localStore(), { examCode: examCode ?? null }, Date.now())?.trim() === text.trim()) {
+        dropGuestUnanswered(localStore());
+      }
     } catch (e: any) {
       // A read that fails after the done event changes nothing: the reply is
       // complete. Otherwise the reply (empty or partial) failed; an error
@@ -943,6 +1027,9 @@ export function ChatInterface({
                     {failedKind === "incomplete" && (
                       <div className="mt-2 border-t border-rose-200 pt-2 text-rose-800">{failedNote}</div>
                     )}
+                    {m.lateAnswer && !failedKind && (
+                      <p className="mt-2 border-t border-ink-200 pt-2 text-xs text-ink-500">{lateAnswerNote(navLang)}</p>
+                    )}
                   </>
                 ) : (
                   <span className="text-ink-500">{toolStatus ?? labels.thinking}</span>
@@ -1047,6 +1134,12 @@ export function ChatInterface({
       {seedHeld && !busy && (
         <p className="border-t border-ink-200 bg-ink-50 px-3 py-2 text-xs text-ink-600">
           {TURN_COPY[navLang].seedHeld}
+        </p>
+      )}
+      {/* A guest's question an outage left unanswered, back in the box (1 Oct 2026). */}
+      {guestRestored && !busy && !seedHeld && (
+        <p className="border-t border-ink-200 bg-ink-50 px-3 py-2 text-xs text-ink-600">
+          {GUEST_RESTORED_NOTE[navLang]}
         </p>
       )}
 

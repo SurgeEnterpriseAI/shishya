@@ -12,7 +12,11 @@
 //     between this attempt and the next one on the same exam;
 //   • the memory loader: 30 days, no school sessions, not the conversation
 //     being continued, no tutor text read, and a general chat reads no brief
-//     or mock.
+//     or mock;
+//   • (1 Oct 2026 review) reopening a chat marks seen ONLY the member's own
+//     late answers it shows that are not seen yet (ASSISTANT rows with
+//     lateAnswer, no lateSeenAt) — one idempotent write, none when there is
+//     nothing to mark, none for someone else's conversation.
 // No DB. Run: npx vitest run tests/unit/recent-chats-db.test.ts
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -24,6 +28,7 @@ const calls = vi.hoisted(() => ({
   unique: null as any,
   attempt: null as any,
   exam: { id: "e-ssc" } as any,
+  raw: [] as Array<{ sql: string; values: unknown[] }>,
 }));
 
 function rec(model: string, op: string, result: (args: any) => unknown) {
@@ -59,6 +64,10 @@ vi.mock("@/lib/db/prisma", () => ({
     attempt: { findFirst: rec("attempt", "findFirst", () => calls.attempt) },
     exam: { findUnique: rec("exam", "findUnique", () => calls.exam) },
     dailyBrief: { findFirst: rec("dailyBrief", "findFirst", () => null) },
+    $executeRaw: async (strings: TemplateStringsArray, ...values: unknown[]) => {
+      calls.raw.push({ sql: strings.join("?"), values });
+      return 1;
+    },
   },
 }));
 
@@ -84,6 +93,7 @@ beforeEach(() => {
   calls.unique = null;
   calls.attempt = null;
   calls.exam = { id: "e-ssc" };
+  calls.raw = [];
 });
 
 describe("listRecentChats", () => {
@@ -173,6 +183,39 @@ describe("loadResumableChat", () => {
     expect(r!.lastAt.getTime()).toBe(at(1).getTime());
     const read = calls.log.find((c) => c.model === "chatMessage" && c.op === "findMany")!;
     expect(read.args).toMatchObject({ where: { sessionId: "s1" }, orderBy: { createdAt: "desc" }, take: 30 });
+    // No late answer among them: nothing is written.
+    expect(calls.raw).toEqual([]);
+  });
+  it("marks seen only the late answers it shows that are not seen yet — one idempotent write (1 Oct 2026)", async () => {
+    calls.unique = { id: "s1", userId: "u1", examId: null, updatedAt: at(1), contextSnapshot: null, exam: null };
+    calls.messages = [
+      msg("s1", "USER", "What is GDP?", 5, { turnId: "t1", lateAnsweredAt: T0 - 3600_000 }),
+      msg("s1", "ASSISTANT", "GDP is…", 4.99, { lateAnswer: true, lateAnsweredAt: T0 - 3600_000 }),
+      msg("s1", "USER", "And GNP?", 4, { turnId: "t2" }),
+      msg("s1", "ASSISTANT", "GNP is…", 3.99, { lateAnswer: true, lateAnsweredAt: T0 - 7200_000, lateSeenAt: T0 - 60_000 }),
+      msg("s1", "USER", "Thanks", 3),
+      msg("s1", "ASSISTANT", "You're welcome", 2.99, { actions: null }),
+      // A USER row carrying late fields is never marked.
+      msg("s1", "USER", "One more?", 2, { lateAnswer: true }),
+    ];
+    const r = await loadResumableChat("u1", "s1");
+    expect(r!.rows).toHaveLength(7);
+    expect(calls.raw).toHaveLength(1);
+    const { sql, values } = calls.raw[0];
+    const flat = sql.replace(/\s+/g, " ");
+    expect(flat).toContain(`UPDATE "ChatMessage" SET metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('lateSeenAt', ?::bigint)`);
+    expect(flat).toContain(`WHERE id = ANY(?) AND role = 'ASSISTANT' AND metadata->>'lateSeenAt' IS NULL`);
+    expect(values[1]).toEqual(["s1-4.99-ASSISTANT"]);
+    // Reopened again once seen: nothing left to mark.
+    calls.raw = [];
+    calls.messages[1].metadata = { ...calls.messages[1].metadata, lateSeenAt: T0 };
+    await loadResumableChat("u1", "s1");
+    expect(calls.raw).toEqual([]);
+    // Another account's conversation: never read, never marked.
+    calls.unique = { ...calls.unique, userId: "u2" };
+    calls.messages[1].metadata = { lateAnswer: true, lateAnsweredAt: T0 - 3600_000 };
+    expect(await loadResumableChat("u1", "s1")).toBeNull();
+    expect(calls.raw).toEqual([]);
   });
 });
 

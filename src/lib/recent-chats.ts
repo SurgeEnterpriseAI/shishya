@@ -257,12 +257,24 @@ export interface ResumeBubble {
   content: string;
   failed?: boolean;
   turnId?: string;
+  /** A reply the late-answer run stored after an outage (1 Oct 2026, src/lib/tutor-late-answer.ts). */
+  lateAnswer?: boolean;
 }
 
 function turnIdOf(metadata: unknown): string | undefined {
   if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return undefined;
   const t = (metadata as Record<string, unknown>).turnId;
   return typeof t === "string" && t ? t : undefined;
+}
+
+/** A stored reply the late-answer run wrote (metadata.lateAnswer === true). */
+export function isLateAnswerRow(metadata: unknown): boolean {
+  return !!metadata && typeof metadata === "object" && !Array.isArray(metadata) && (metadata as Record<string, unknown>).lateAnswer === true;
+}
+
+/** A late answer the student has not opened yet (no lateSeenAt): the pick-up card still leads with it. */
+export function isUnseenLateAnswer(metadata: unknown): boolean {
+  return isLateAnswerRow(metadata) && (metadata as Record<string, unknown>).lateSeenAt == null;
 }
 
 /**
@@ -287,7 +299,9 @@ export function historyToBubbles(rows: readonly StoredChatRow[]): ResumeBubble[]
       if (!next || next.role === "USER") out.push({ id: `h-${r.id}-none`, role: "assistant", content: "", failed: true });
     } else {
       const text = r.content ?? "";
-      out.push({ id: `h-${r.id}`, role: "assistant", content: text, ...(text.trim() ? {} : { failed: true }) });
+      // 1 Oct 2026: a late answer says so on its bubble ("Answered later — …").
+      const late = text.trim() && isLateAnswerRow(r.metadata) ? { lateAnswer: true } : {};
+      out.push({ id: `h-${r.id}`, role: "assistant", content: text, ...(text.trim() ? {} : { failed: true }), ...late });
     }
   }
   return out;

@@ -12,7 +12,12 @@
 //     the member's latest TYPED question; nothing read for an empty batch;
 //   • the route: a guest gets 401 and nothing is read; an exam goes through
 //     realExamKey (a school container / inactive / unknown code is 404); the
-//     answer is private and never cached.
+//     answer is private and never cached;
+//   • (1 Oct 2026 review) the late-answer read: the member's own ASSISTANT
+//     rows whose metadata path lateAnswer equals true, in the card's scope
+//     (general + active real exams, or the hub's one exam), looking back the
+//     card's 3 days plus the 72-hour late window; never a school chat; the
+//     question read is that conversation's USER row before the reply.
 // No DB. Run: npx vitest run tests/unit/pickup-db.test.ts
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -67,7 +72,7 @@ vi.mock("@/lib/db/prisma", () => ({
 }));
 
 import { REAL_EXAM_SQL, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
-import { loadEmailQuestions, loadPickup, loadPickupMock, loadPickupThread } from "@/lib/db/pickup";
+import { loadEmailQuestions, loadPickup, loadPickupLateAnswer, loadPickupMock, loadPickupThread } from "@/lib/db/pickup";
 import { GET } from "@/app/api/me/pickup/route";
 
 const NOW = new Date("2026-09-30T06:00:00Z");
@@ -180,6 +185,49 @@ describe("loadPickupMock / loadPickup", () => {
     const d = await loadPickup("u1", { now: NOW });
     expect(d.mock).toBeNull();
     expect(d.thread?.sessionId).toBe("s1abcdefg");
+  });
+});
+
+describe("loadPickupLateAnswer (1 Oct 2026)", () => {
+  const late = (sessionId: string, h: number, answeredH: number, exam: any, extra: Record<string, unknown> = {}, userId = "u1") => ({
+    sessionId,
+    createdAt: hoursAgo(h),
+    metadata: { lateAnswer: true, lateAnsweredAt: NOW.getTime() - answeredH * 3600_000, ...extra },
+    session: { userId, exam },
+  });
+  const SSC = { code: "SSC_CGL", shortName: "SSC CGL", category: "GOVT_JOBS" };
+
+  it("the member's own ASSISTANT late answers, in the card's scope, back 3 days + the 72-hour window; the question before the reply", async () => {
+    calls.userRows = [
+      late("s-school", 5, 1, { code: "NCERT_C09", shortName: "NCERT 9", category: "SCHOOL_BOARD" }),
+      late("s-seen", 5, 1.5, SSC, { lateSeenAt: NOW.getTime() }),
+      late("s-late", 6, 2, SSC),
+      late("s-general", 7, 3, null),
+    ];
+    calls.lastRow = { content: "Why is 1 not prime?" };
+    const la = await loadPickupLateAnswer("u1", { now: NOW });
+    const q = calls.log.find((c) => c.model === "chatMessage" && c.op === "findMany")!;
+    expect(q.args.where.role).toBe("ASSISTANT");
+    expect(q.args.where.metadata).toEqual({ path: ["lateAnswer"], equals: true });
+    expect(q.args.where.session).toEqual({ userId: "u1", OR: [{ examId: null }, { exam: REAL_EXAM_WHERE }] });
+    expect(q.args.where.createdAt.gte.getTime()).toBe(NOW.getTime() - 3 * DAY - 72 * 3600_000);
+    expect(q.args.orderBy).toEqual({ createdAt: "desc" });
+    // The school row and the opened one never lead; the most recently answered of the rest does.
+    expect(la).toMatchObject({ sessionId: "s-late", examCode: "SSC_CGL", examShort: "SSC CGL", question: "Why is 1 not prime?" });
+    expect(la!.answeredAt.getTime()).toBe(NOW.getTime() - 2 * 3600_000);
+    const qr = calls.log.find((c) => c.model === "chatMessage" && c.op === "findFirst" && c.args.where?.sessionId === "s-late")!;
+    expect(qr.args.where).toEqual({ sessionId: "s-late", role: "USER", createdAt: { lt: hoursAgo(6) } });
+    expect(qr.args.orderBy).toEqual({ createdAt: "desc" });
+  });
+
+  it("the hub strip reads one exam; another account's rows and old answers never lead; nothing → null, no question read", async () => {
+    calls.userRows = [late("s-theirs", 5, 1, SSC, {}, "u2"), late("s-old", 5, 4 * 24, SSC)];
+    expect(await loadPickupLateAnswer("u1", { examId: "e-ssc", now: NOW })).toBeNull();
+    const q = calls.log.find((c) => c.op === "findMany")!;
+    expect(q.args.where.session).toEqual({ userId: "u1", examId: "e-ssc" });
+    expect(calls.log.filter((c) => c.op === "findFirst")).toHaveLength(0);
+    calls.userRows = [];
+    expect(await loadPickupLateAnswer("u1", { now: NOW })).toBeNull();
   });
 });
 

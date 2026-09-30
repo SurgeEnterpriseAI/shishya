@@ -11,15 +11,19 @@ import { REAL_EXAM_SQL, REAL_EXAM_WHERE, isSchoolCategory } from "./exam-scope";
 import { isTypedQuestion } from "@/lib/tutor-memory";
 import { reviewTagOf } from "@/lib/recent-chats";
 import {
+  PICKUP_ANSWERED_DAYS,
   PICKUP_CHAT_DAYS,
   PICKUP_MOCK_DAYS,
   EMAIL_QUOTE_MAX_DAYS,
   pickEmailQuestion,
+  pickLateAnswer,
   type EmailQuestionRow,
   type PickupData,
+  type PickupLateAnswer,
   type PickupMock,
   type PickupThread,
 } from "@/lib/pickup";
+import { LATE_WINDOW_MS } from "@/lib/tutor-late-answer";
 
 const DAY_MS = 86_400_000;
 /** The student's own rows read back from the newest conversation, to find their last typed one. */
@@ -133,9 +137,66 @@ export async function loadPickupMock(userId: string, scope: PickupScope = {}): P
   };
 }
 
-/** Both halves of the card, read in parallel; each best-effort (a failed read shows none). */
+/**
+ * The member's latest late answer they have not opened (1 Oct 2026, rules in
+ * src/lib/pickup.ts pickLateAnswer), with the question it answers, or null.
+ * Same scope as the thread read: general chats and active real exams (or the
+ * hub's one exam), never a school chat. The reply row is dated right after
+ * its question, so the read looks back PICKUP_ANSWERED_DAYS plus the 72-hour
+ * late-answer window and judges by metadata.lateAnsweredAt.
+ */
+export async function loadPickupLateAnswer(userId: string, scope: PickupScope = {}): Promise<PickupLateAnswer | null> {
+  const now = scope.now ?? new Date();
+  const since = new Date(now.getTime() - PICKUP_ANSWERED_DAYS * DAY_MS - LATE_WINDOW_MS);
+  const rows = await prisma.chatMessage.findMany({
+    where: {
+      role: "ASSISTANT",
+      createdAt: { gte: since },
+      metadata: { path: ["lateAnswer"], equals: true },
+      session: {
+        userId,
+        ...(scope.examId ? { examId: scope.examId } : { OR: [{ examId: null }, { exam: REAL_EXAM_WHERE }] }),
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    select: {
+      sessionId: true,
+      createdAt: true,
+      metadata: true,
+      session: { select: { userId: true, exam: { select: { code: true, shortName: true, category: true } } } },
+    },
+  });
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  const pick = pickLateAnswer(
+    rows
+      .filter((r) => r && r.session)
+      .map((r) => ({
+        sessionId: r.sessionId,
+        metadata: r.metadata,
+        ownerId: r.session.userId,
+        examCode: r.session.exam?.code ?? null,
+        examShort: r.session.exam?.shortName ?? null,
+        examCategory: r.session.exam ? String(r.session.exam.category) : null,
+      })),
+    userId,
+    now,
+  );
+  if (!pick) return null;
+  const reply = rows.find((r) => r.sessionId === pick.sessionId && (r.metadata as Record<string, unknown> | null)?.lateAnsweredAt === pick.answeredAt.getTime());
+  const question = reply
+    ? await prisma.chatMessage.findFirst({
+        where: { sessionId: pick.sessionId, role: "USER", createdAt: { lt: reply.createdAt } },
+        orderBy: { createdAt: "desc" },
+        select: { content: true },
+      })
+    : null;
+  return { ...pick, question: question?.content ?? null };
+}
+
+/** The halves of the card, read in parallel; each best-effort (a failed read shows none). */
 export async function loadPickup(userId: string, scope: PickupScope = {}): Promise<PickupData> {
-  const [thread, mock] = await Promise.all([
+  const [thread, mock, lateAnswer] = await Promise.all([
     loadPickupThread(userId, scope).catch((err) => {
       console.error("[pickup] thread read failed:", err);
       return null;
@@ -144,8 +205,12 @@ export async function loadPickup(userId: string, scope: PickupScope = {}): Promi
       console.error("[pickup] mock read failed:", err);
       return null;
     }),
+    loadPickupLateAnswer(userId, scope).catch((err) => {
+      console.error("[pickup] late answer read failed:", err);
+      return null;
+    }),
   ]);
-  return { thread, mock };
+  return { thread, mock, lateAnswer };
 }
 
 type EmailRow = {

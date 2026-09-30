@@ -1831,3 +1831,83 @@ export async function sendLapseNudgeEmail(p: LapseNudgeProps & { to: string; use
   const { subject, html, text } = renderLapseNudgeEmail(p);
   return sendEmail({ to: p.to, subject, html, text, tag: "lapse-d4", unsubUserId: p.userId });
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// "Your question is answered" (1 Oct 2026). A member's tutor question that
+// failed while the AI was unavailable was answered later by the same AI
+// tutor, in the same conversation (src/lib/tutor-late-answer.ts, cron
+// /api/cron/tutor-answer-later). This is the one mail that tells them: their
+// own question quoted (<= 60 characters — the founder allowed quoting the
+// student's own question), said plainly that Shishya's AI tutor answered it
+// once it was back, and a link into that chat. The run sends at most one per
+// student per run and per 24 hours, only to accounts the existing student
+// mails reach; list-unsubscribe like every other student mail. The quotes are
+// private parts: the founder's wave copy never carries them.
+// ─────────────────────────────────────────────────────────────────────
+
+export interface TutorAnsweredEmailProps {
+  name: string | null;
+  /** Oldest question first (src/lib/tutor-late-answer.ts answeredEmailLines). */
+  lines: Array<{ quote: string; when: string; url: string }>;
+}
+
+export function renderTutorAnsweredEmail(p: TutorAnsweredEmailProps): {
+  subject: string;
+  html: string;
+  text: string;
+  /** The parts that quote the student (cut from the founder's copy). */
+  privateParts: string[];
+} | null {
+  const lines = p.lines.filter((l) => l.quote.trim().length > 0);
+  if (lines.length === 0) return null;
+  const first = (p.name ?? "").split(" ")[0] || "Hi";
+  const shown = lines.slice(0, 3);
+  const more = lines.length - shown.length;
+  const many = lines.length > 1;
+  const subject = many ? "Your questions are answered" : "Your question is answered";
+
+  const quotesText = shown
+    .map((l) => `${l.when} you asked Shishya's AI tutor: “${l.quote}”\nRead the answer: ${l.url}`)
+    .join("\n\n");
+  const quotesHtml = shown
+    .map(
+      (l) =>
+        `<p style="font-size:14px;line-height:1.6;margin:14px 0 0;color:#0f172a;">${esc(l.when)} you asked Shishya's AI tutor: <em>“${esc(l.quote)}”</em><br><a href="${esc(l.url)}" style="color:#c2410c;font-weight:600;text-decoration:none;">Read the answer →</a></p>`,
+    )
+    .join("\n    ");
+  // 1 Oct 2026 review: not "each in its own chat" — several failed questions
+  // of one sitting are usually in the same conversation.
+  const moreText = more > 0 ? `\n\n…and ${more} more — open your chats on Shishya to see them.` : "";
+  const moreHtml = more > 0 ? `<p style="font-size:13px;margin:10px 0 0;color:#334155;">…and ${more} more — open your chats on Shishya to see them.</p>` : "";
+  const lead = many
+    ? "Our AI tutor was unavailable when you asked these. It is back, and Shishya's AI tutor has answered each one in your chat."
+    : "Our AI tutor was unavailable when you asked this. It is back, and Shishya's AI tutor has answered it in your chat.";
+
+  const text = `${first},
+
+${lead}
+
+${quotesText}${moreText}
+
+— Shishya (free, always)`;
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-weight:700;font-size:18px;">✅ ${subject}</div>
+    <p style="font-size:14px;line-height:1.6;margin:14px 0 0;">${esc(first)}, ${esc(lead.charAt(0).toLowerCase() + lead.slice(1))}</p>
+    ${quotesHtml}
+    ${moreHtml}
+    <p style="font-size:12px;color:#64748b;margin:18px 0 0;">— Shishya, free always</p>
+  </div>
+</body></html>`;
+  return { subject, html, text, privateParts: [quotesText, quotesHtml] };
+}
+
+export async function sendTutorAnsweredEmail(p: TutorAnsweredEmailProps & { to: string; userId: string }): Promise<boolean> {
+  const mail = renderTutorAnsweredEmail(p);
+  if (!mail) return false;
+  const { subject, html, text, privateParts } = mail;
+  return sendEmail({ to: p.to, subject, html, text, tag: "tutor-answered", unsubUserId: p.userId, privateParts });
+}

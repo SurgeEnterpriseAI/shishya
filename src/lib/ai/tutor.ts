@@ -175,14 +175,39 @@ If you suggest follow-up actions to the student, append a single line in this fo
 Skip if no clear next step.`;
 }
 
-/** Streaming version — yields {delta} for text chunks, {tool} for tool events, {done} when complete. */
-export async function* tutorStream(
-  input: TutorInput & { ctx?: ToolContext; school?: SchoolTurn | null }
-): AsyncGenerator<
-  | { delta: string }
-  | { tool: { name: string; args: any; ok: boolean; ms: number } }
-  | { done: TutorOutput }
-> {
+/**
+ * The spend ledger for one tutorStream run (1 Oct 2026). The late-answer run
+ * (src/lib/tutor-late-answer.ts) books its calls under its own AiUsage
+ * feature and keeps a running total against its $1.00 per-run cap; the chat
+ * route passes nothing and its rows are unchanged ("tutor" / "tutor-school" /
+ * "tutor-anon" / "tutor-wrap"). Never changes the prompt or the request.
+ */
+export interface TutorUsageOpts {
+  /** AiUsage feature for this run's calls; the soft-cap wrap call gets "<feature>-wrap". */
+  feature?: string;
+  /** Called with each call's recorded cost in USD. */
+  onCost?: (usd: number) => void;
+}
+
+/** What tutorStream takes. */
+export type TutorStreamInput = TutorInput & { ctx?: ToolContext; school?: SchoolTurn | null; usage?: TutorUsageOpts };
+
+/**
+ * The first request tutorStream sends for an input: the system blocks, the
+ * conversation (history, then the turn's context and the student's message),
+ * the tools when they are on, and how many calls the tool loop can make at
+ * most (1 Oct 2026 review). Pure. tutorStream builds its request here, and
+ * the late-answer run (src/lib/db/tutor-late-answer.ts) prices this very
+ * request before it calls, so its $1.00 cap holds — every prompt is still
+ * written only in this file.
+ */
+export function tutorRequest(input: TutorStreamInput): {
+  system: ReturnType<typeof tutorSystemBlocks>;
+  messages: Anthropic.Messages.MessageParam[];
+  tools: Anthropic.Messages.Tool[] | undefined;
+  /** Tools on: MAX_TOOL_TURNS rounds, the call after them, and the wrap. Tools off: one. */
+  maxCalls: number;
+} {
   const { studentState, history, userMessage, language, topicFocus, journey, generalMode } = input;
   // 26 Sep 2026: a school turn is tools-off whatever the caller passed (the
   // tools read mastery, attempts and rank bands — a school chat has none)
@@ -204,6 +229,21 @@ ${topicFocus.notesExcerpt ? `\nReference notes (already shown to the student —
     ...history.map((t) => ({ role: t.role, content: t.content })),
     { role: "user" as const, content: `${dynamicContext}\n\n---\n\nUser: ${userMessage}` },
   ];
+  return { system: systemBlocks, messages, tools: ctx ? tutorTools : undefined, maxCalls: ctx ? MAX_TOOL_TURNS + 2 : 1 };
+}
+
+/** Streaming version — yields {delta} for text chunks, {tool} for tool events, {done} when complete. */
+export async function* tutorStream(
+  input: TutorStreamInput
+): AsyncGenerator<
+  | { delta: string }
+  | { tool: { name: string; args: any; ok: boolean; ms: number } }
+  | { done: TutorOutput }
+> {
+  // The request is built by tutorRequest (1 Oct 2026 — moved there unchanged).
+  const school = input.school ?? null;
+  const ctx = school ? undefined : input.ctx;
+  const { system: systemBlocks, messages } = tutorRequest(input);
 
   let finalText = "";
   let toolTurns = 0;
@@ -217,7 +257,8 @@ ${topicFocus.notesExcerpt ? `\nReference notes (already shown to the student —
       messages,
       tools: ctx ? tutorTools : undefined,
     });
-    recordAiUsage(school ? "tutor-school" : ctx ? "tutor" : "tutor-anon", response, { model: MODEL, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
+    const cost = recordAiUsage(input.usage?.feature ?? (school ? "tutor-school" : ctx ? "tutor" : "tutor-anon"), response, { model: MODEL, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
+    input.usage?.onCost?.(cost);
 
     // Append the assistant message to the conversation history (full content blocks
     // — tool_use blocks need to be carried forward so tool_result can reference them).
@@ -264,7 +305,7 @@ ${topicFocus.notesExcerpt ? `\nReference notes (already shown to the student —
         tools: tutorTools,
         tool_choice: { type: "none" },
       });
-      recordAiUsage("tutor-wrap", wrap, { model: MODEL, ref: input.syllabus?.examCode ?? null });
+      input.usage?.onCost?.(recordAiUsage(input.usage?.feature ? `${input.usage.feature}-wrap` : "tutor-wrap", wrap, { model: MODEL, ref: input.syllabus?.examCode ?? null }));
       for (const block of wrap.content) {
         if (block.type === "text") finalText += (finalText ? "\n" : "") + block.text;
       }

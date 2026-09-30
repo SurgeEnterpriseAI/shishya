@@ -32,6 +32,14 @@
 // is none.
 // Never for Classes 1-7: no school session and no school attempt is read, and
 // none of these surfaces is a school page.
+// 1 Oct 2026 (late answers — src/lib/tutor-late-answer.ts): a question an AI
+// outage left unanswered and the late-answer run has since answered comes
+// FIRST on the card — "Your question is answered", the question, "See the
+// answer →" into that conversation — until the student opens that chat (the
+// reopened chat marks it seen) or PICKUP_ANSWERED_DAYS pass. Same scope rules
+// as the rest of the card (general chats and active real exams, never a
+// school chat); when it is the same conversation as the thread below, the
+// thread line is dropped (one line per conversation).
 //
 // Pure — no DB, no React. DB reads: src/lib/db/pickup.ts. Card:
 // src/components/PickupCard.tsx. Tests: tests/unit/pickup.test.ts
@@ -43,6 +51,7 @@ import {
   chatTitle,
   cutText,
   isMistakeReviewOpener,
+  isUnseenLateAnswer,
   istDayLabel,
   recentChatsCopy,
 } from "@/lib/recent-chats";
@@ -63,8 +72,14 @@ export const PICKUP_WEAK_TOPICS = 3;
 export const EMAIL_QUOTE_CHARS = 60;
 /** The mail quotes a question from today or the two IST days before. */
 export const EMAIL_QUOTE_MAX_DAYS = 2;
+/** A late answer leads the card for this long after it was stored (unless opened). */
+export const PICKUP_ANSWERED_DAYS = 3;
 
 export interface PickupCopy {
+  /** 1 Oct 2026: a late answer. */
+  answered: string;
+  answeredNote: string;
+  seeAnswer: string;
   title: string;
   youAsked: string;
   notAnswered: string;
@@ -79,6 +94,9 @@ export interface PickupCopy {
 
 const COPY: Readonly<Record<CopyLocale, PickupCopy>> = {
   en: {
+    answered: "Your question is answered",
+    answeredNote: "Our AI tutor was unavailable when you asked. It has answered now.",
+    seeAnswer: "See the answer →",
     title: "Pick up where you left off",
     youAsked: "You asked the tutor",
     notAnswered: "Your question did not get an answer",
@@ -90,6 +108,9 @@ const COPY: Readonly<Record<CopyLocale, PickupCopy>> = {
     askTutor: "Ask the tutor →",
   },
   hi: {
+    answered: "आपके सवाल का जवाब आ गया है",
+    answeredNote: "जब आपने पूछा था, तब हमारा AI ट्यूटर उपलब्ध नहीं था। अब उसने जवाब दे दिया है।",
+    seeAnswer: "जवाब देखें →",
     title: "जहाँ छोड़ा था, वहीं से शुरू करें",
     youAsked: "आपने ट्यूटर से पूछा था",
     notAnswered: "आपके सवाल का जवाब नहीं आया था",
@@ -101,6 +122,9 @@ const COPY: Readonly<Record<CopyLocale, PickupCopy>> = {
     askTutor: "ट्यूटर से पूछें →",
   },
   te: {
+    answered: "మీ ప్రశ్నకు సమాధానం వచ్చింది",
+    answeredNote: "మీరు అడిగినప్పుడు మా AI ట్యూటర్ అందుబాటులో లేదు. ఇప్పుడు సమాధానం ఇచ్చింది.",
+    seeAnswer: "సమాధానం చూడండి →",
     title: "మీరు ఆపిన చోటు నుంచే కొనసాగించండి",
     youAsked: "మీరు ట్యూటర్‌ను అడిగారు",
     notAnswered: "మీ ప్రశ్నకు సమాధానం రాలేదు",
@@ -149,14 +173,75 @@ export interface PickupMock {
   topicScores: unknown;
 }
 
+/** The member's latest late answer they have not opened, as src/lib/db/pickup.ts reads it (1 Oct 2026). */
+export interface PickupLateAnswer {
+  sessionId: string;
+  /** Null = the general chat. */
+  examCode: string | null;
+  examShort: string | null;
+  /** When the late-answer run stored it. */
+  answeredAt: Date;
+  /** The question it answers (the student's row before it), or null. */
+  question: string | null;
+}
+
 export interface PickupData {
   thread: PickupThread | null;
   mock: PickupMock | null;
+  /** 1 Oct 2026: shown first. */
+  lateAnswer?: PickupLateAnswer | null;
+}
+
+/** A stored late answer as the loader reads it (newest first). */
+export interface LateAnswerRow {
+  sessionId: string;
+  metadata: unknown;
+  /** The conversation's owner. */
+  ownerId: string;
+  examCode: string | null;
+  examShort: string | null;
+  examCategory: string | null;
+}
+
+/**
+ * The late answer the card leads with, or null: the member's own, not opened
+ * yet (no lateSeenAt), stored within PICKUP_ANSWERED_DAYS (by its
+ * lateAnsweredAt — the row itself is dated at its question), never a school
+ * chat; the most recently answered first.
+ */
+export function pickLateAnswer(
+  rows: readonly LateAnswerRow[],
+  userId: string,
+  now: Date,
+): { sessionId: string; examCode: string | null; examShort: string | null; answeredAt: Date } | null {
+  let best: { sessionId: string; examCode: string | null; examShort: string | null; answeredAt: Date } | null = null;
+  for (const r of rows) {
+    if (r.ownerId !== userId || !isUnseenLateAnswer(r.metadata)) continue;
+    if (String(r.examCategory ?? "").toUpperCase() === "SCHOOL_BOARD") continue;
+    const at = (r.metadata as Record<string, unknown>).lateAnsweredAt;
+    if (typeof at !== "number" || !Number.isFinite(at)) continue;
+    const age = now.getTime() - at;
+    if (age < 0 || age > PICKUP_ANSWERED_DAYS * 86_400_000) continue;
+    if (!best || at > best.answeredAt.getTime()) {
+      best = { sessionId: r.sessionId, examCode: r.examCode, examShort: r.examShort, answeredAt: new Date(at) };
+    }
+  }
+  return best;
 }
 
 /** What the card renders — plain strings and links, serialisable (the hub strip gets it as JSON). */
 export interface PickupView {
   title: string;
+  /** 1 Oct 2026: a question an outage left unanswered, answered later — shown first. */
+  answered?: {
+    label: string;
+    text: string;
+    note: string;
+    /** "SSC CGL · today" (the day it was answered) */
+    meta: string;
+    href: string;
+    cta: string;
+  } | null;
   question: {
     answered: boolean;
     label: string;
@@ -240,13 +325,28 @@ export function weakTopicSeed(examShort: string, t: { name: string; correct: num
 
 /** The card, or null when there is nothing to pick up. `now` sets the IST day labels. */
 export function pickupView(data: PickupData | null | undefined, locale: string | null | undefined, now: Date): PickupView | null {
-  if (!data || (!data.thread && !data.mock)) return null;
+  if (!data || (!data.thread && !data.mock && !data.lateAnswer)) return null;
   const c = pickupCopy(locale);
   const rc = recentChatsCopy(locale);
   const lang = asCopyLocale(locale);
 
+  // 1 Oct 2026: the late answer leads (see the header).
+  let answered: PickupView["answered"] = null;
+  const la = data.lateAnswer;
+  if (la) {
+    const q = (la.question ?? "").trim();
+    answered = {
+      label: c.answered,
+      text: q && !isMistakeReviewOpener(q) ? cutText(q, PICKUP_QUESTION_CHARS) : chatTitle({ opener: q || null, reviewMockTitle: null }, rc),
+      note: c.answeredNote,
+      meta: [la.examShort || rc.general, istDayLabel(la.answeredAt, now, rc)].join(" · "),
+      href: chatResumeHref({ examCode: la.examCode, sessionId: la.sessionId }),
+      cta: c.seeAnswer,
+    };
+  }
+
   let question: PickupView["question"] = null;
-  const t = data.thread;
+  const t = data.thread && !(la && data.thread.sessionId === la.sessionId) ? data.thread : null;
   if (t) {
     const answered = !isUnansweredLast(t.lastRole, t.lastContent);
     const href = chatResumeHref({ examCode: t.examCode, sessionId: t.sessionId });
@@ -284,7 +384,8 @@ export function pickupView(data: PickupData | null | undefined, locale: string |
       })),
     };
   }
-  return { title: c.title, question, mock };
+  if (!answered && !question && !mock) return null;
+  return { title: c.title, answered, question, mock };
 }
 
 // ── The next-day mail line ─────────────────────────────────────────────
