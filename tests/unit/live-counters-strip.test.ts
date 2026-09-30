@@ -58,6 +58,11 @@ const fixed = vi.hoisted(() => ({
   usersToday: 14,
   examGoals: 1795,
   schoolChapters: 5,
+  // 30 Sep 2026: today's pills for learners, live tests and exam goals.
+  learnersToday: 131,
+  walkInsToday: 44,
+  liveTestsToday: 2,
+  examGoalsToday: 18,
 }));
 
 const sqlLog = vi.hoisted(() => [] as string[]);
@@ -69,15 +74,18 @@ const NOW = vi.hoisted(() => new Date("2026-09-26T10:21:01.900Z"));
 vi.mock("@/lib/db/prisma", () => {
   const route = (sql: string): number => {
     const f = fixed;
+    if (sql.includes(") learners_today")) return f.learnersToday;
     if (sql.includes(") humans")) return f.engaged;
     if (sql.includes(") gap_era_engaged")) return f.overlap;
     if (sql.includes(") phantoms")) return f.totalPageViews;
+    if (sql.includes(`"client" = 'browser'`) && sql.includes(`"createdAt" >=`)) return f.walkInsToday;
     if (sql.includes(`"client" = 'browser'`)) return f.walkIns;
     if (sql.includes("COUNT(DISTINCT k)")) return f.activeNow;
     if (sql.includes(`WHERE "anonId" IS NOT NULL AND "createdAt" >=`)) return f.tutorToday;
     if (sql.includes(`FROM "AnonTutorLog" WHERE "anonId" IS NOT NULL)`)) return f.tutor;
     if (sql.includes("jsonb_array_elements") && sql.includes(`"finishedAt"`)) return f.answeredToday;
     if (sql.includes("jsonb_array_elements")) return f.answered;
+    if (sql.includes(`JOIN "LiveTest"`) && sql.includes(`"finishedAt" >=`)) return f.liveTestsToday;
     if (sql.includes(`JOIN "LiveTest"`)) return f.liveTests;
     if (sql.includes(`FROM "Question" q`)) return f.practiceQuestions;
     if (sql.includes(`FROM "TopicTeachingNote"`)) return f.topicNotes;
@@ -113,7 +121,9 @@ vi.mock("@/lib/db/prisma", () => {
           return gte.getTime() === DAY_START.getTime() ? fixed.usersToday : fixed.users7d;
         },
       },
-      enrollment: { count: async (args: unknown) => (calls.enrollment.push(args), fixed.examGoals) },
+      enrollment: {
+        count: async (args: { where?: { createdAt?: unknown } }) => (calls.enrollment.push(args), args?.where?.createdAt ? fixed.examGoalsToday : fixed.examGoals),
+      },
     },
   };
 });
@@ -159,6 +169,7 @@ const EXPECTED: LiveCounts = {
   totalPageViews: fixed.totalPageViews,
   pageViewsToday: fixed.pageViewsToday,
   uniqueVisitors: fixed.engaged + (fixed.walkIns - fixed.overlap), // 14,437
+  uniqueVisitorsToday: fixed.learnersToday + fixed.walkInsToday, // 175
   walkIns: fixed.walkIns,
   mocksTaken: fixed.mocksTaken + fixed.guestPapers,
   mocksToday: fixed.mocksToday + fixed.guestPapersToday,
@@ -170,7 +181,9 @@ const EXPECTED: LiveCounts = {
   questionsAnswered: fixed.answered,
   questionsAnsweredToday: fixed.answeredToday,
   liveTestsTaken: fixed.liveTests,
+  liveTestsToday: fixed.liveTestsToday,
   examGoals: fixed.examGoals,
+  examGoalsToday: fixed.examGoalsToday,
   exams: fixed.exams,
   practiceQuestions: fixed.practiceQuestions,
   topicNotes: fixed.topicNotes,
@@ -188,15 +201,12 @@ const TABLE: Array<{ key: keyof LiveCounts; label: string; row: 1 | 2; phone: bo
   { key: "mocksTaken", label: "mock exams taken", row: 1, phone: true },
   { key: "tutorQuestions", label: "AI tutor questions", row: 1, phone: true },
   { key: "totalSignups", label: "signed up", row: 1, phone: true },
-  { key: "totalPageViews", label: "page views", row: 1, phone: false },
+  // 30 Sep 2026 (founder): only counters that move every day, each with its
+  // own pill; page views moved to row 2 to keep row 1 inside its width.
+  { key: "totalPageViews", label: "page views", row: 2, phone: false },
   { key: "questionsAnswered", label: "questions answered", row: 2, phone: false },
   { key: "liveTestsTaken", label: "live tests taken", row: 2, phone: false },
   { key: "examGoals", label: "exam goals set", row: 2, phone: false },
-  { key: "exams", label: "exams", row: 2, phone: false },
-  { key: "practiceQuestions", label: "practice questions", row: 2, phone: false },
-  { key: "topicNotes", label: "topic notes", row: 2, phone: false },
-  { key: "schoolChapters", label: "school chapters", row: 2, phone: false },
-  { key: "languages", label: "languages", row: 2, phone: false },
 ];
 
 describe("label / definition table", () => {
@@ -224,7 +234,7 @@ describe("label / definition table", () => {
     expect(LIVE_COUNT_DEFINITIONS.liveTestsTaken).toMatch(/inside the test's window/);
     expect(LIVE_COUNT_DEFINITIONS.practiceQuestions).toMatch(/not-withdrawn/);
     expect(LIVE_COUNT_DEFINITIONS.activeNow).toMatch(/last 30 minutes/);
-    for (const k of ["pageViewsToday", "mocksToday", "signupsToday", "tutorQuestionsToday", "questionsAnsweredToday"] as const) {
+    for (const k of ["pageViewsToday", "mocksToday", "signupsToday", "tutorQuestionsToday", "questionsAnsweredToday", "uniqueVisitorsToday", "liveTestsToday", "examGoalsToday"] as const) {
       expect(LIVE_COUNT_DEFINITIONS[k], k).toMatch(/00:00 IST/);
     }
   });
@@ -248,14 +258,18 @@ describe("label / definition table", () => {
     expect(pill("questionsAnswered")).toBe("+888 today");
     expect(pill("tutorQuestions")).toBe("+54 today");
     expect(pill("totalSignups")).toBe("+170 this week");
-    expect(pill("uniqueVisitors")).toBeUndefined();
-    const quiet = buildStripItems({ ...EXPECTED, pageViewsToday: 0, mocksToday: 0, questionsAnsweredToday: 0, tutorQuestionsToday: 0, signupsLast7Days: 0 });
+    expect(pill("uniqueVisitors")).toBe("+175 today"); // 131 identities + 44 identity-less landings
+    expect(pill("liveTestsTaken")).toBe("+2 today");
+    expect(pill("examGoals")).toBe("+18 today");
+    // Every counter on the strip moves daily and carries a pill, except the live "active now".
+    expect(items.filter((it) => it.key !== "activeNow").every((it) => it.pill !== undefined)).toBe(true);
+    const quiet = buildStripItems({ ...EXPECTED, pageViewsToday: 0, mocksToday: 0, questionsAnsweredToday: 0, tutorQuestionsToday: 0, signupsLast7Days: 0, uniqueVisitorsToday: 0, liveTestsToday: 0, examGoalsToday: 0 });
     expect(quiet.every((it) => it.pill === undefined)).toBe(true);
   });
 
   it("only the counters that read wrong at 0 are hidden at 0 — and only then", () => {
-    expect([...HIDDEN_WHEN_ZERO].sort()).toEqual(["activeNow", "examGoals", "liveTestsTaken", "schoolChapters"]);
-    const zeros = buildStripItems({ ...EXPECTED, activeNow: 0, liveTestsTaken: 0, examGoals: 0, schoolChapters: 0 });
+    expect([...HIDDEN_WHEN_ZERO].sort()).toEqual(["activeNow", "examGoals", "liveTestsTaken"]);
+    const zeros = buildStripItems({ ...EXPECTED, activeNow: 0, liveTestsTaken: 0, examGoals: 0 });
     expect(zeros.map((it) => it.key)).toEqual(TABLE.map((t) => t.key).filter((k) => !HIDDEN_WHEN_ZERO.has(k)));
     // A genuine 0 elsewhere stays on screen — never hidden, never padded.
     const early = buildStripItems({ ...ZERO_LIVE_COUNTS });
@@ -535,13 +549,15 @@ describe("the API route and the client shape", () => {
 // signed up "+1,700 this week" …) so the budget has growth headroom.
 // Re-measure when a label, the font or the strip's classes change; a new
 // counter fails here until it has measured widths.
+// 30 Sep 2026: learners, live tests and exam goals re-measured WITH their new
+// "+N today" pills (10x values: "+2,150 today", "+140 today", "+430 today").
 
 /** sm+ item widths in px at 12 px (sm:text-xs), pill included, the
  *  trailing "·" separator NOT included (SEP_PX each, all but the last). */
 const MEASURED_SM: Record<"en" | "hi" | "te", Partial<Record<keyof LiveCounts, number>>> = {
-  en: { activeNow: 83, uniqueVisitors: 100, totalPageViews: 210, mocksTaken: 231, questionsAnswered: 260, tutorQuestions: 226, liveTestsTaken: 114, totalSignups: 207, examGoals: 134, exams: 67, practiceQuestions: 153, topicNotes: 104, schoolChapters: 120, languages: 81 },
-  hi: { activeNow: 74, uniqueVisitors: 100, totalPageViews: 167, mocksTaken: 185, questionsAnswered: 227, tutorQuestions: 196, liveTestsTaken: 93, totalSignups: 196, examGoals: 117, exams: 63, practiceQuestions: 100, topicNotes: 96, schoolChapters: 86, languages: 50 },
-  te: { activeNow: 107, uniqueVisitors: 142, totalPageViews: 212, mocksTaken: 240, questionsAnswered: 307, tutorQuestions: 236, liveTestsTaken: 138, totalSignups: 247, examGoals: 209, exams: 74, practiceQuestions: 130, topicNotes: 107, schoolChapters: 107, languages: 61 },
+  en: { activeNow: 83, uniqueVisitors: 188, totalPageViews: 210, mocksTaken: 231, questionsAnswered: 260, tutorQuestions: 226, liveTestsTaken: 189, totalSignups: 207, examGoals: 211, exams: 67, practiceQuestions: 153, topicNotes: 104, schoolChapters: 120, languages: 81 },
+  hi: { activeNow: 74, uniqueVisitors: 167, totalPageViews: 167, mocksTaken: 185, questionsAnswered: 227, tutorQuestions: 196, liveTestsTaken: 159, totalSignups: 196, examGoals: 185, exams: 63, practiceQuestions: 100, topicNotes: 96, schoolChapters: 86, languages: 50 },
+  te: { activeNow: 107, uniqueVisitors: 228, totalPageViews: 212, mocksTaken: 240, questionsAnswered: 307, tutorQuestions: 236, liveTestsTaken: 216, totalSignups: 247, examGoals: 289, exams: 74, practiceQuestions: 130, topicNotes: 107, schoolChapters: 107, languages: 61 },
 };
 /** Phone cell widths in px at 11 px (number + label, no pill). */
 const MEASURED_PHONE: Record<"en" | "hi" | "te", Partial<Record<keyof LiveCounts, number>>> = {

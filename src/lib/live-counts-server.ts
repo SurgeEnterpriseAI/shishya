@@ -59,6 +59,13 @@ export interface LiveCounts {
    *  overlap-corrected. The strip calls this "learners" (founder's
    *  word, 26 Sep 2026): everyone who came to Shishya to study. */
   uniqueVisitors: number;
+  /** Learners added TODAY (since IST midnight): uniqueVisitors now minus
+   *  uniqueVisitors as it stood at midnight — identities that first met
+   *  the learner rule today (a second page view, or a first view from
+   *  another site or a tagged link), plus today's identity-less browser
+   *  landings, less the gap-era overlap that closed today. 30 Sep 2026
+   *  (founder: "how many learners increased today"). */
+  uniqueVisitorsToday: number;
   /** Walk-ins: page views by verified BROWSERS that carry no identity —
    *  the single-page landers. They're humans too (a crawler can't be
    *  classified 'browser' AND they reached us somehow), we just don't
@@ -106,9 +113,13 @@ export interface LiveCounts {
   /** Live tests taken: submitted attempts on a live-test mock that were
    *  started inside that test's window (the ranked ones). */
   liveTestsTaken: number;
+  /** The same, submitted since IST midnight (30 Sep 2026). */
+  liveTestsToday: number;
   /** Exam goals set: active enrolments (a member's chosen target exam),
    *  real exams only — a school class is not an exam goal. */
   examGoals: number;
+  /** Exam goals set since IST midnight that are still active (30 Sep 2026). */
+  examGoalsToday: number;
   /** Exams covered: active real exams (REAL_EXAM_WHERE) — the same count
    *  the home finder's "Browse all" link shows. Memoised. */
   exams: number;
@@ -137,6 +148,8 @@ export const LIVE_COUNT_DEFINITIONS: Record<keyof LiveCounts, string> = {
   pageViewsToday: "PAGE_VIEW events since 00:00 IST today, tagged bots excluded.",
   uniqueVisitors:
     "Distinct people who came to Shishya: identities on 2+ page views, or one view that arrived from another site or a tagged link (for example utm_source=chatgpt.com — 27 Sep 2026: these were being missed), plus identity-less browser landings, overlap-corrected. Proves a visit, not learning.",
+  uniqueVisitorsToday:
+    "Learners added since 00:00 IST today: the learners count now minus the same count at midnight — people who first met the learner rule today (a second page view, or a first view from another site or a tagged link) plus today's identity-less browser landings.",
   walkIns: "Identity-less browser page views (single-page landers) — the internal split of uniqueVisitors; not shown.",
   mocksTaken: "Attempt rows with status SUBMITTED or AUTO_SUBMITTED — mocks a student finished, any exam or school chapter — plus whole papers guests finished without an account (counted when the server grades one with at least one answer; from 27 Sep 2026, founder call).",
   mocksToday: "Attempts submitted since 00:00 IST today, plus guest papers graded since then.",
@@ -149,7 +162,9 @@ export const LIVE_COUNT_DEFINITIONS: Record<keyof LiveCounts, string> = {
   questionsAnswered: "Answer entries with a chosen option inside submitted attempts (unanswered questions not counted); refreshed every 10 minutes.",
   questionsAnsweredToday: "The same inside attempts submitted since 00:00 IST today (live).",
   liveTestsTaken: "Submitted attempts on a live-test mock that started inside the test's window.",
+  liveTestsToday: "The same, submitted since 00:00 IST today.",
   examGoals: "Active enrolments in real exams (a member's chosen target exam).",
+  examGoalsToday: "Active enrolments in real exams created since 00:00 IST today.",
   exams: "Active real exams (REAL_EXAM_WHERE) — the finder's 'Browse all' count; refreshed every 10 minutes.",
   practiceQuestions: "Validated, not-withdrawn questions on live real exams and school chapters; refreshed every 10 minutes.",
   topicNotes: "TopicTeachingNote rows with non-empty content on live real exams and school chapters; refreshed every 10 minutes.",
@@ -168,6 +183,7 @@ export const ZERO_LIVE_COUNTS: LiveCounts = {
   totalPageViews: 0,
   pageViewsToday: 0,
   uniqueVisitors: 0,
+  uniqueVisitorsToday: 0,
   walkIns: 0,
   mocksTaken: 0,
   mocksToday: 0,
@@ -179,7 +195,9 @@ export const ZERO_LIVE_COUNTS: LiveCounts = {
   questionsAnswered: 0,
   questionsAnsweredToday: 0,
   liveTestsTaken: 0,
+  liveTestsToday: 0,
   examGoals: 0,
+  examGoalsToday: 0,
   exams: 0,
   practiceQuestions: 0,
   topicNotes: 0,
@@ -334,6 +352,10 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     examGoals,
     guestPapersRows,
     guestPapersTodayRows,
+    learnersTodayRows,
+    walkInsTodayRows,
+    liveTestTodayRows,
+    examGoalsToday,
   ] = await Promise.all([
     getSupplyCounts(now),
     // Distinct HUMAN visitors all-time — definitions audited 16 Aug 2026
@@ -523,6 +545,52 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
       SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent"
       WHERE kind = 'CTA_CLICKED' AND "createdAt" >= ${dayStart} AND props->>'cta' = 'guest-paper-graded'
     `,
+    // Learners added today, identity part (30 Sep 2026): of the identities
+    // seen today, those that meet the "humans" rule above on all their
+    // views but did not on their views before midnight — the engaged
+    // count's rise since midnight — less the gap-era overlap that closed
+    // today (a gap-era identity whose second view came today). Only
+    // today's identities are aggregated, so this reads a day's rows plus
+    // their history, not the whole table. walkInsTodayRows adds today's
+    // identity-less landings: together, uniqueVisitors now minus at midnight.
+    prisma.$queryRaw<CountRow[]>`
+      SELECT (
+        COUNT(*) FILTER (WHERE (c >= 2 OR (c = 1 AND (r OR u))) AND NOT (cb >= 2 OR (cb = 1 AND (rb OR ub))))
+        - COUNT(*) FILTER (WHERE c >= 2 AND cb < 2 AND first_at >= '2026-07-30T20:00:00Z' AND first_at < '2026-08-16T17:00:00Z')
+      )::bigint AS count
+      FROM (
+        SELECT COALESCE("userId", "anonId") AS k,
+          COUNT(*) AS c,
+          bool_or("refHost" IS NOT NULL) AS r,
+          bool_or("utmSource" IS NOT NULL) AS u,
+          COUNT(*) FILTER (WHERE "createdAt" < ${dayStart}) AS cb,
+          COALESCE(bool_or("refHost" IS NOT NULL) FILTER (WHERE "createdAt" < ${dayStart}), FALSE) AS rb,
+          COALESCE(bool_or("utmSource" IS NOT NULL) FILTER (WHERE "createdAt" < ${dayStart}), FALSE) AS ub,
+          MIN("createdAt") AS first_at
+        FROM "AnalyticsEvent"
+        WHERE kind = 'PAGE_VIEW' AND COALESCE("userId", "anonId") IN (
+          SELECT DISTINCT COALESCE("userId", "anonId") FROM "AnalyticsEvent"
+          WHERE kind = 'PAGE_VIEW' AND "createdAt" >= ${dayStart} AND COALESCE("userId", "anonId") IS NOT NULL
+        )
+        GROUP BY 1
+      ) learners_today
+    `,
+    // Today's identity-less browser landings — the walk-in rule above, since midnight.
+    prisma.$queryRaw<CountRow[]>`
+      SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent"
+      WHERE kind = 'PAGE_VIEW' AND "client" = 'browser' AND "createdAt" >= ${dayStart}
+        AND "userId" IS NULL AND "anonId" IS NULL
+    `,
+    // Live tests taken today: the ranked rule above, submitted since midnight.
+    prisma.$queryRaw<CountRow[]>`
+      SELECT COUNT(*)::bigint AS count
+      FROM "Attempt" a
+      JOIN "LiveTest" lt ON lt."mockId" = a."mockId"
+      WHERE a.status IN ${SUBMITTED_SQL} AND a."finishedAt" >= ${dayStart}
+        AND a."startedAt" >= lt."opensAt" AND a."startedAt" <= lt."closesAt"
+    `,
+    // Exam goals set today that are still active, real exams only.
+    prisma.enrollment.count({ where: { active: true, createdAt: { gte: dayStart }, exam: NOT_SCHOOL_WHERE } }),
   ]);
 
   // Combined "visitors" (founder call, 31 Jul; relabelled 26 Sep 2026):
@@ -539,6 +607,7 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     totalPageViews: n(totalPageViewsRows),
     pageViewsToday: n(pageViewsTodayRows),
     uniqueVisitors: engaged + Math.max(0, landers - overlap),
+    uniqueVisitorsToday: Math.max(0, n(learnersTodayRows) + n(walkInsTodayRows)),
     walkIns: landers,
     mocksTaken: mocksTaken + n(guestPapersRows),
     mocksToday: mocksToday + n(guestPapersTodayRows),
@@ -550,7 +619,9 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     questionsAnswered: supply.questionsAnswered,
     questionsAnsweredToday: n(answeredTodayRows),
     liveTestsTaken: n(liveTestRows),
+    liveTestsToday: n(liveTestTodayRows),
     examGoals,
+    examGoalsToday,
     exams: supply.exams,
     practiceQuestions: supply.practiceQuestions,
     topicNotes: supply.topicNotes,

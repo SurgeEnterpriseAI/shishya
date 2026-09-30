@@ -10,6 +10,12 @@
 //     the people LIVE_COUNT_DEFINITIONS.uniqueVisitors defines;
 //   • nothing typed: values come from the poll reply only;
 //   • a counter that reads wrong at 0 ("0 active now") is hidden only at 0.
+//   • 30 Sep 2026 (founder): the strip shows only counters that move EVERY
+//     day, each with its own "+N today" (sign-ups: "+N this week") — so
+//     learners, live tests and exam goals gained a today pill, and the
+//     catalogue counts that move only when a batch runs (exams, practice
+//     questions, topic notes, school chapters, languages) left the strip.
+//     They stay in the API and on /shishya-in-numbers.
 //
 // Layout (26 Sep 2026 review — the first cut wrapped to 3–7 lines, 113–193 px
 // of sticky band on desktop/tablet and 3 lines on phones). The height is now
@@ -37,6 +43,7 @@ const COUNT_KEY_SET: Record<keyof LiveCounts, true> = {
   totalPageViews: true,
   pageViewsToday: true,
   uniqueVisitors: true,
+  uniqueVisitorsToday: true,
   walkIns: true,
   mocksTaken: true,
   mocksToday: true,
@@ -48,7 +55,9 @@ const COUNT_KEY_SET: Record<keyof LiveCounts, true> = {
   questionsAnswered: true,
   questionsAnsweredToday: true,
   liveTestsTaken: true,
+  liveTestsToday: true,
   examGoals: true,
+  examGoalsToday: true,
   exams: true,
   practiceQuestions: true,
   topicNotes: true,
@@ -149,7 +158,7 @@ export const PHONE_KEYS: ReadonlyArray<keyof LiveCounts> = ["uniqueVisitors", "m
 /** Counters that read wrong at 0 ("0 active now", "0 live tests taken")
  *  and are legitimately 0 early: rendered only when positive. Nothing
  *  else is ever hidden. */
-export const HIDDEN_WHEN_ZERO: ReadonlySet<keyof LiveCounts> = new Set(["activeNow", "liveTestsTaken", "examGoals", "schoolChapters"]);
+export const HIDDEN_WHEN_ZERO: ReadonlySet<keyof LiveCounts> = new Set(["activeNow", "liveTestsTaken", "examGoals"]);
 
 /** The strip's items, in order, from a counts reply and the caller's
  *  labels (English defaults fill any gap). Pure — tests pin the table. */
@@ -164,20 +173,16 @@ export function buildStripItems(c: LiveCounts, labels: StripLabels = {}): StripI
     // Row 1 — people and what they did. Lead with the real-time pulse
     // when anyone's live, then the founder's named counters.
     { key: "activeNow", value: c.activeNow, label: L.activeNow, row: 1 },
-    { key: "uniqueVisitors", value: c.uniqueVisitors, label: L.visitors, row: 1 },
+    { key: "uniqueVisitors", value: c.uniqueVisitors, label: L.visitors, pill: today(c.uniqueVisitorsToday), row: 1 },
     { key: "mocksTaken", value: c.mocksTaken, label: L.mocksTaken, pill: today(c.mocksToday), row: 1 },
     { key: "tutorQuestions", value: c.tutorQuestions, label: L.tutorQuestions, pill: today(c.tutorQuestionsToday), row: 1 },
     { key: "totalSignups", value: c.totalSignups, label: L.signedUp, pill: c.signupsLast7Days > 0 ? fillN(L.thisWeek, c.signupsLast7Days) : undefined, row: 1 },
-    { key: "totalPageViews", value: c.totalPageViews, label: L.pageViews, pill: today(c.pageViewsToday), row: 1 },
-    // Row 2 — depth of use, then what there is to study.
+    // Row 2 — depth of use. Page views moved here on 30 Sep 2026 so row 1
+    // keeps its measured width now that learners carries a pill too.
+    { key: "totalPageViews", value: c.totalPageViews, label: L.pageViews, pill: today(c.pageViewsToday), row: 2 },
     { key: "questionsAnswered", value: c.questionsAnswered, label: L.questionsAnswered, pill: today(c.questionsAnsweredToday), row: 2 },
-    { key: "liveTestsTaken", value: c.liveTestsTaken, label: L.liveTests, row: 2 },
-    { key: "examGoals", value: c.examGoals, label: L.examGoals, row: 2 },
-    { key: "exams", value: c.exams, label: L.exams, row: 2 },
-    { key: "practiceQuestions", value: c.practiceQuestions, label: L.questions, row: 2 },
-    { key: "topicNotes", value: c.topicNotes, label: L.notes, row: 2 },
-    { key: "schoolChapters", value: c.schoolChapters, label: L.schoolChapters, row: 2 },
-    { key: "languages", value: c.languages, label: L.languages, row: 2 },
+    { key: "liveTestsTaken", value: c.liveTestsTaken, label: L.liveTests, pill: today(c.liveTestsToday), row: 2 },
+    { key: "examGoals", value: c.examGoals, label: L.examGoals, pill: today(c.examGoalsToday), row: 2 },
   ];
   return all
     .filter((it) => it.value > 0 || !HIDDEN_WHEN_ZERO.has(it.key))
