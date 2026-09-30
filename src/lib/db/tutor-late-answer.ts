@@ -70,6 +70,7 @@ import {
   LATE_WINDOW_MS,
   answeredEmailLines,
   lateAnswerWorstUsd,
+  lateAskedNote,
   lateTurnMeta,
   questionScriptLocale,
   type LateAnswerDeps,
@@ -287,8 +288,11 @@ async function answer(row: LateCandidateRow, remainingUsd: number): Promise<Late
         }),
       );
 
+    const streamArgs = tutorStreamArgs({ scope, context, history, language: language as any });
     const args = {
-      ...tutorStreamArgs({ scope, context, history, language: language as any }),
+      ...streamArgs,
+      // 1 Oct 2026: the model is told when the question was asked ("just" = then).
+      userMessage: lateAskedNote(row.createdAt) + streamArgs.userMessage,
       usage: { feature: LATE_USAGE_FEATURE, onCost: (usd: number) => (cost += Math.max(0, usd || 0)) },
     };
     // The run's hard cap (1 Oct 2026 review): price THIS request at its worst

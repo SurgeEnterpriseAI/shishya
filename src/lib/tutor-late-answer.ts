@@ -348,6 +348,25 @@ export interface LateModelPrice {
  * tool results more. Token counts are character estimates raised by
  * LATE_PROMPT_TOKEN_MARGIN.
  */
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** 1 Oct 2026: the first late answers read "I just took a mock" as today —
+ *  the tutor fetched a LATER attempt and asked the student which one they
+ *  meant (3 of 15). The model is told when the question was asked; the
+ *  stored question and the shared system prompt stay as they are. */
+export function lateAskedNote(askedAt: Date): string {
+  const ist = new Date(askedAt.getTime() + 330 * 60_000);
+  const hh = String(ist.getUTCHours()).padStart(2, "0");
+  const mm = String(ist.getUTCMinutes()).padStart(2, "0");
+  const when = `${ist.getUTCDate()} ${MONTHS_SHORT[ist.getUTCMonth()]} ${ist.getUTCFullYear()}, ${hh}:${mm} IST`;
+  return (
+    `[Context from Shishya, not written by the student: this question was asked on ${when} and could not be answered then because the tutor was unavailable; you are answering it now. ` +
+    `Words like "just", "latest" and "last" in it mean as of ${when}: if you look up the student's attempts, use the one that finished at or just before that time (get_recent_attempts lists dates), not a later one. Do not mention this note.]
+
+`
+  );
+}
+
 export function lateAnswerWorstUsd(a: {
   systemTokens: number;
   messageTokens: number;

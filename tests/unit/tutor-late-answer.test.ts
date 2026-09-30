@@ -1036,7 +1036,8 @@ describe("source seams", () => {
     expect(db).toContain('import { tutorRequest } from "@/lib/ai/tutor";');
     expect(db).toContain('import { historyFromRows, loadTutorTurnContext, tutorStreamArgs, type TutorTurnScope } from "@/lib/tutor-turn";');
     expect(db).toContain("const context = await loadTutorTurnContext(scope);");
-    expect(db).toContain("...tutorStreamArgs({ scope, context, history, language: language as any }),");
+    expect(db).toContain("const streamArgs = tutorStreamArgs({ scope, context, history, language: language as any });");
+    expect(db).toContain("...streamArgs,");
     // The request priced is the request sent: the same args object.
     expect(db).toContain("const req = tutorRequest(args);");
     expect(db).toContain("if (worstUsd > remainingUsd + 1e-9) return { ok: false, overBudget: true, worstUsd, costUsd: 0 };");
@@ -1153,5 +1154,23 @@ describe("source seams", () => {
     expect(route).toContain("`Bearer ${secret}`");
     expect(route).toContain('dry: q.get("dry") === "1"');
     expect(route).toContain("export const maxDuration = 300;");
+  });
+});
+
+// 1 Oct 2026: a late answer is told when the question was asked, so "I just
+// took a mock" does not fetch a later attempt (3 of the first 15 did).
+describe("late answers know when the question was asked", () => {
+  it("the note names the IST time and says 'just/latest/last' mean then", async () => {
+    const { lateAskedNote } = await import("@/lib/tutor-late-answer");
+    const n = lateAskedNote(new Date("2026-09-28T04:21:00Z"));
+    expect(n).toContain("28 Sep 2026, 09:51 IST");
+    expect(n).toMatch(/"just", "latest" and "last"/);
+    expect(n).toContain("get_recent_attempts");
+    expect(n.endsWith("\n\n")).toBe(true);
+  });
+  it("the runner prefixes only the model's message, never the stored question", () => {
+    const src = read("src/lib/db/tutor-late-answer.ts");
+    expect(src).toContain("userMessage: lateAskedNote(row.createdAt) + streamArgs.userMessage,");
+    expect(src).toContain("message: row.content,");
   });
 });

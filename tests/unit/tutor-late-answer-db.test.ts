@@ -142,7 +142,9 @@ describe("answer() — the chat's pipeline, as the conversation stood when the q
     expect(input.history[0]).toEqual({ role: "user", content: "row 6" });
     expect(input.history[28]).toEqual({ role: "user", content: "row 34" });
     expect(input.history.some((t: any) => t.content === "Why is 1 not a prime number?" || t.content === "Hello?")).toBe(false);
-    expect(input.userMessage).toBe("Why is 1 not a prime number?");
+    // 1 Oct 2026: the model is told when the question was asked; the question follows unchanged.
+    expect(input.userMessage.startsWith("[Context from Shishya, not written by the student: this question was asked on ")).toBe(true);
+    expect(input.userMessage.endsWith("\n\nWhy is 1 not a prime number?")).toBe(true);
     expect(input.generalMode).toBe(true);
     expect(input.ctx).toBeUndefined();
     expect(input.usage.feature).toBe(LATE_USAGE_FEATURE);
