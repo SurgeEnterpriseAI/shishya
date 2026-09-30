@@ -12,7 +12,9 @@
 // will be available"; two-actor rule: every handoff needs "how does the other
 // side know?".
 //
-// The run (GET /api/cron/tutor-answer-later, hourly):
+// The run (GET /api/cron/tutor-answer-later, every 15 minutes since 1 Oct 2026 —
+// a run clears about one student's questions before its time guard, and an
+// idle run is one DB read, no AI call):
 //   • picks member USER rows with failedAt (or a claim a crashed run left
 //     behind, older than LATE_CLAIM_STALE_MS), asked in the last 72 hours,
 //     that the chat PROMISED a late answer (latePromised; rows from before

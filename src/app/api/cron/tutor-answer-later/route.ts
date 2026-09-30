@@ -1,5 +1,6 @@
 // GET /api/cron/tutor-answer-later — answer the questions an AI outage left
-// unanswered (1 Oct 2026). Hourly per vercel.json.
+// unanswered (1 Oct 2026). Every 15 minutes per vercel.json (was hourly: one
+// run clears about one student's questions; an idle run makes no AI call).
 //
 // Why: 30 Sep 06:47-12:01 IST the organisation's Anthropic credit was at
 // zero — 12 member tutor questions from 7 people (4 signed up that day)

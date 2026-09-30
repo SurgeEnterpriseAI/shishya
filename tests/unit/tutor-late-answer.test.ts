@@ -1146,9 +1146,9 @@ describe("source seams", () => {
     expect(island).toContain("if (!guestSignInHref && !school) dropGuestUnanswered(localStore());");
   });
 
-  it("the cron: hourly, Bearer CRON_SECRET, dry run available", () => {
+  it("the cron: every 15 minutes, Bearer CRON_SECRET, dry run available", () => {
     const vercel = JSON.parse(read("vercel.json")) as { crons: Array<{ path: string; schedule: string }> };
-    expect(vercel.crons.find((c) => c.path === "/api/cron/tutor-answer-later")?.schedule).toBe("20 * * * *");
+    expect(vercel.crons.find((c) => c.path === "/api/cron/tutor-answer-later")?.schedule).toBe("5,20,35,50 * * * *");
     const route = read("src/app/api/cron/tutor-answer-later/route.ts");
     expect(route).toContain("`Bearer ${secret}`");
     expect(route).toContain('dry: q.get("dry") === "1"');
